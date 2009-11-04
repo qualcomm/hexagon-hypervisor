@@ -26,9 +26,12 @@ INPUT:
 
 INPUT_ASSERT(kernel_locked)
 
+Argument 0: The value that must be returned by the function.
+
 OUTPUT:
 
 OUTPUT_ASSERT(kernel_locked)
+The specified return value should be returned.
 
 
 FUNCTIONALITY:

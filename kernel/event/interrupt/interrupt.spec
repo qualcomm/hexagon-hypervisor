@@ -29,10 +29,12 @@ If the fast interrupt handler "interrupt check" was interrupted, we vector off
 to the approrpate code to handle it.  See fast interrupts for more information.
 
 Interrupts can be handled by calling the reschedule function, or calling the
-function to handle fast interrupts.
+function to handle fast interrupts.  The fast interrupt handler may be called
+before saving the registers saved by the ABI to improve performance.
 
-Real interrupted threads (as opposed to, for example, the idle thread) should
-have int_context_restore as the end of their continuation function.
+Real interrupted threads (as opposed to, for example, the idle thread) that may 
+reschedule should have int_context_restore as the end of their continuation
+function.
 
 FUNCTION: int_context_restore()
 

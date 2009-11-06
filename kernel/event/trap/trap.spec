@@ -36,7 +36,13 @@ We then check to ensure that the thread can use the requested trap.  This is use
 reduce capabilities of less-priviledged threads, and is also used to assert that fast
 interrupt handlers cannot block.
 
-We then jump to the handler for the requested trap.
+We then jump to the handler for the requested trap.  This is done via the
+traptab, which is a table of pairs of instructions.  One instruction of the
+pair is the jump instruction to the appropriate place, and the other
+instruction in the pair transfers the pointer to the current thread context to
+the appropriate argument register, as this is an argument for most functions.
 
 The trap request can return, or can call the trap continuation.
+
+
 

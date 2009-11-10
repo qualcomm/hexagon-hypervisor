@@ -48,6 +48,62 @@ node.  If ``node->next`` equals ``node``, we point ``ring`` to ``NULL``,
 because the ring is now empty.  Otherwise, we point ``ring`` to ``node->next``.
 
 
+FUNCTION: ring_insert(void *ring, void *node)
 
+The ring_insert function adds ``node`` to ``ring``, as the node pointed to by
+``ring``.
+
+INPUT:
+
+Argument 0: A pointer to the ring to add the node to.
+Argument 1: The node to be added
+
+FUNCTIONALITY:
+
+If ``ring`` points to a NULL pointer, we set ``node->next`` and ``node->prev``
+to ``node``.  Otherwise, we set ``node->next`` to ``*ring``, ``node->prev`` to
+`*ring->prev``, and then set ``node->next->prev`` and ``node->prev->next`` to
+``node``.
+
+We then set ``*ring`` to ``node``.
+
+
+FUNCTION: ring_insert(void *ring, void *node)
+
+The ring_insert function adds ``node`` to ``ring``, as the node previous to the
+node pointed to by ``ring``.
+
+INPUT:
+
+Argument 0: A pointer to the ring to add the node to.
+Argument 1: The node to be added
+
+FUNCTIONALITY:
+
+If ``ring`` points to a NULL pointer, we set ``node->next`` and ``node->prev``
+to ``node``, and set ``*ring`` to ``node``.  Otherwise, we set ``node->next``
+to ``*ring``, ``node->prev`` to `*ring->prev``, and then set
+``node->next->prev`` and ``node->prev->next`` to
+``node``.
+
+
+
+
+FUNCTION: ring_remove_append(void *fromring, void *toring, void *node)
+
+The ring_insert function removes ``node`` from ``fromring`` and adds it to
+``toring``, as the node previous to the node pointed to by ``toring``.
+
+INPUT:
+
+Argument 0: A pointer to the ring to remove the node from.
+Argument 1: A pointer to the ring to add the node to.
+Argument 2: The node to be added
+
+FUNCTIONALITY:
+
+This function removes ``node`` from ``fromring`` in the same manner
+as ring_remove, and then adds ``node`` to ``toring`` in the same 
+manner as ring_append.
 
 

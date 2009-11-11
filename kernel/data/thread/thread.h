@@ -9,6 +9,7 @@
 #include <context.h>
 
 extern BLASTK_thread_context *head;
+extern BLASTK_thread_context BLASTK_idle_context;
 
 #endif
 

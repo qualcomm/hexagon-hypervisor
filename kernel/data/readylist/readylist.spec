@@ -1,6 +1,7 @@
 
 MODULE: readylist
 
+DATA: BLASTK_ready, BLASTK_ready_valids
 
 The ready list contains the threads that are ready for execution.
 
@@ -20,4 +21,17 @@ We find the highest priority ready thread by using the CL0 instruction to find
 the highest priority that has a ready thread.  We then can remove the thread in
 the corresponding list.
 
+FUNCTION: void BLASTK_ready_init()
+
+DESCRIPTION:
+
+Initializes the BLASTK_ready structures.
+
+INPUTS:
+
+OUTPUTS:
+
+FUNCTIONALITY:
+
+Set all elements of BLASTK_ready to NULL, and set BLASTK_ready_valids to zero.
 

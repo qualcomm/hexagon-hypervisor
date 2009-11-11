@@ -3,7 +3,7 @@ ASM_REF_CODE(fastint requires special register changes difficult in C)
 
 UNIT: fastint
 
-FUNCTION: fastint_call(unsigned int intno, BLASTK_thread_context *me, unsigned int hthread, 
+FUNCTION: BLASTK_fastint_call(unsigned int intno, BLASTK_thread_context *me, unsigned int hthread, 
 			void *fastint_contexts, void **fastint_functions, unsigned ciad_mask)
 
 DESCRIPTION:
@@ -40,7 +40,7 @@ TBD: should fast interrupts be able to jump to resched also?  Handy for the comm
 case that a fastint causes a reschedule event...
 
 
-FUNCTION: interrupted_fastint_check()
+FUNCTION: BLASTK_interrupted_fastint_check()
 
 DESCRIPTION:
 

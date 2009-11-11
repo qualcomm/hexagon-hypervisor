@@ -3,7 +3,7 @@ ASM_REF_CODE(Interrupt context save/restore not possible in C)
 
 UNIT: interrupt
 
-FUNCTION: handle_int()
+FUNCTION: BLASTK_handle_int()
 
 DESCRIPTION:
 
@@ -36,7 +36,7 @@ Real interrupted threads (as opposed to, for example, the idle thread) that may
 reschedule should have int_context_restore as the end of their continuation
 function.
 
-FUNCTION: int_context_restore()
+FUNCTION: BLASTK_int_context_restore()
 
 DESCRIPTION:
 

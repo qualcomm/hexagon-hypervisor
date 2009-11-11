@@ -1,11 +1,11 @@
 
 UNIT: resched
 
-FUNCTION: void reschedule_from_wait(int hthread)
+FUNCTION: void BLASTK_reschedule_from_wait(int hthread)
 
 DESCRIPTION:
 
-Reschedule_from_wait handles a rescheduling interrupt from an idle thread.
+BLASTK_reschedule_from_wait handles a rescheduling interrupt from an idle thread.
 
 INPUT:
 
@@ -21,7 +21,7 @@ Next, we acquire the Big Kernel Lock.
 
 We clear the bit corresponding to our hthread out of the waitmask.
 
-We then call dosched.
+We then call BLASTK_dosched.
 
 
 
@@ -29,7 +29,7 @@ FUNCTION: void reschedule_from_lowprio(int hthread)
 
 DESCRIPTION:
 
-Reschedule_from_lowprio handles a rescheduling interrupt from a low priority
+BLASTK_reschedule_from_lowprio handles a rescheduling interrupt from a low priority
 running thread.
 
 INPUT:
@@ -48,6 +48,6 @@ Next, we acquire the Big Kernel Lock.
 
 We remove the currently running thread, and append it to the ready queue.
 
-We then call dosched.
+We then call BLASTK_dosched.
 
 

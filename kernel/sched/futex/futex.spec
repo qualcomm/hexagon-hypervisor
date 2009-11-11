@@ -1,11 +1,11 @@
 
 UNIT: futex
 
-FUNCTION: int futex_wait(unsigned int *ptr, unsigned int expected, thread_context *me)
+FUNCTION: int BLASTK_futex_wait(unsigned int *ptr, unsigned int expected, BLASTK_thread_context *me)
 
 DESCRIPTION:
 
-Futex_wait asks the kernel to block, but only if the value pointed to by "ptr" is equal
+BLASTK_futex_wait asks the kernel to block, but only if the value pointed to by "ptr" is equal
 to "expected".  
 
 If the value has changed, the kernel returns -1.
@@ -56,11 +56,11 @@ it to the futex hash table using the hash key.  We then call for a new thread
 to be scheduled.  The return value must be zero.
 
 
-FUNCTION: int futex_resume(unsigned int *lock, unsigned int n_to_wake, thread_context *me)
+FUNCTION: int BLASTK_futex_resume(unsigned int *lock, unsigned int n_to_wake, BLASTK_thread_context *me)
 
 DESCRIPTION:
 
-Futex_resume wakes threads waiting on the location specified by "lock".  A maximum of 
+BLASTK_futex_resume wakes threads waiting on the location specified by "lock".  A maximum of 
 "n_to_wake" threads are awoken.  
 
 The kernel returns the number of woken threads.
@@ -80,7 +80,7 @@ FUNCTIONALITY:
 If the number of threads to wake is zero, there is nothing to be done.  We return 0.
 
 We compute the hash key based on the specified "lock" value, the same way as we do for 
-futex_wait.  
+BLASTK_futex_wait.  
 
 Next, we acquire the BKL.
 

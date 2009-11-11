@@ -3,7 +3,7 @@ ASM_REF_CODE(Trap context save/restore not possible in C)
 
 UNIT: interrupt
 
-FUNCTION: handle_trap0()
+FUNCTION: BLASTK_handle_trap0()
 
 DESCRIPTION:
 
@@ -41,7 +41,7 @@ We then jump to the handler for the requested trap.
 The trap request can return, or can call the trap continuation.
 
 
-FUNCTION: traptab()
+FUNCTION: BLASTK_traptab()
 
 DESCRIPTION:
 

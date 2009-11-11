@@ -3,7 +3,7 @@ ASM_REF_CODE(Vectors cannot be written in C)
 
 UNIT: vectors
 
-FUNCTION: event_vectors()
+FUNCTION: BLASTK_event_vectors()
 
 DESCRIPTION:
 

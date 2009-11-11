@@ -24,10 +24,10 @@ FUNCTION: void BLASTK_ring_remove(void *ring, void *node);
 
 DESCRIPTION:
 
-The ring_remove function removes "node" from "ring".  
+The BLASTK_ring_remove function removes "node" from "ring".  
 
 By calling the function, you guarantee that "node" is a current member of
-"ring".  The ring_remove function does not check this.
+"ring".  The BLASTK_ring_remove function does not check this.
 
 INPUT:
 
@@ -48,9 +48,9 @@ node.  If ``node->next`` equals ``node``, we point ``ring`` to ``NULL``,
 because the ring is now empty.  Otherwise, we point ``ring`` to ``node->next``.
 
 
-FUNCTION: ring_insert(void *ring, void *node)
+FUNCTION: BLASTK_ring_insert(void *ring, void *node)
 
-The ring_insert function adds ``node`` to ``ring``, as the node pointed to by
+The BLASTK_ring_insert function adds ``node`` to ``ring``, as the node pointed to by
 ``ring``.
 
 INPUT:
@@ -68,9 +68,9 @@ to ``node``.  Otherwise, we set ``node->next`` to ``*ring``, ``node->prev`` to
 We then set ``*ring`` to ``node``.
 
 
-FUNCTION: ring_insert(void *ring, void *node)
+FUNCTION: BLASTK_ring_insert(void *ring, void *node)
 
-The ring_insert function adds ``node`` to ``ring``, as the node previous to the
+The BLASTK_ring_insert function adds ``node`` to ``ring``, as the node previous to the
 node pointed to by ``ring``.
 
 INPUT:
@@ -89,9 +89,9 @@ to ``*ring``, ``node->prev`` to `*ring->prev``, and then set
 
 
 
-FUNCTION: ring_remove_append(void *fromring, void *toring, void *node)
+FUNCTION: BLASTK_ring_remove_append(void *fromring, void *toring, void *node)
 
-The ring_insert function removes ``node`` from ``fromring`` and adds it to
+The BLASTK_ring_remove_append function removes ``node`` from ``fromring`` and adds it to
 ``toring``, as the node previous to the node pointed to by ``toring``.
 
 INPUT:
@@ -103,7 +103,7 @@ Argument 2: The node to be added
 FUNCTIONALITY:
 
 This function removes ``node`` from ``fromring`` in the same manner
-as ring_remove, and then adds ``node`` to ``toring`` in the same 
-manner as ring_append.
+as BLASTK_ring_remove, and then adds ``node`` to ``toring`` in the same 
+manner as BLASTK_ring_append.
 
 

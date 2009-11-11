@@ -1,7 +1,7 @@
 
 UNIT: check_sanity
 
-FUNCTION: unsigned long long int check_sanity(const unsigned long long int returnval);
+FUNCTION: unsigned long long int BLASTK_check_sanity(const unsigned long long int returnval);
 
 DESCRIPTION:
 
@@ -51,7 +51,7 @@ If the priomask is zero, then no thread has been designated the lowest priority
 running thread.  Make the lowest priority running thread interruptable.
 
 
-FUNCTION: unsigned long long int check_sanity_unlock(const unsigned long long int returnval);
+FUNCTION: unsigned long long int BLASTK_check_sanity_unlock(const unsigned long long int returnval);
 
 DESCRIPTION:
 

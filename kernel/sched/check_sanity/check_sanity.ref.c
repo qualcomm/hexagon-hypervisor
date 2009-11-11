@@ -3,8 +3,22 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+/*  Sample optional-automatic-assertion-checking-at-return-time  */
+#define RETURN(retval) {\
+	OUTPUT_ASSERTION;\
+	return(retval);\
+}
+
 unsigned long long int BLASTK_check_sanity(const unsigned long long int retval)
 {
+	unsigned long long int arg0 = retval;  /*  used for assertion  */
+
+/*  Possibly filled in via Sphinx extension  */
+#ifdef CHECK_ASSERTIONS
+assert(kernel_locked());
+#define OUTPUT_ASSERTION assert(retval == arg0);
+#endif
+
 	if (BLASTK_priomask == 0) {
 		lowprio_notify();
 	}
@@ -18,13 +32,23 @@ unsigned long long int BLASTK_check_sanity(const unsigned long long int retval)
 		lowprio_notify();
 		resched_int();
 	}
-	return retval;
+
+	RETURN(retval);
 }
 
 unsigned long long int BLASTK_check_sanity_unlock(const unsigned long long int retval)
 {
+	unsigned long long int arg0 = retval;  /*  used for assertion  */
+
+/*  Possibly filled in via Sphinx extension  */
+#ifdef CHECK_ASSERTIONS
+assert(kernel_locked());
+#define OUTPUT_ASSERTION assert(retval == arg0);\
+assert(kernel_unlocked());
+#endif
+
 	BLASTK_check_sanity(retval);
 	BKL_unlock();
-	return retval;
+	RETURN(retval);
 }
 

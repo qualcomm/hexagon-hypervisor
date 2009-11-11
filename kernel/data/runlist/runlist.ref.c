@@ -16,4 +16,3 @@ void BLASTK_runlist_init(void)
 	}
 	BLASTK_runlist_valids = 0;
 }
-

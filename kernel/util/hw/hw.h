@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#ifndef _HEADER_HW_H
+#define _HEADER_HW_H 1
+
 static inline void ciad(unsigned int mask)
 {
 	asm (" ciad(%0) // clear IAD " : : "r"(mask));
@@ -63,5 +66,7 @@ static inline void BLASTK_mutex_unlock_k0()
 {
 	asm(" k0unlock");
 }
+#endif
+
 #endif
 

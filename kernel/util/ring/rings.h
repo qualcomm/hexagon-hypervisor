@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#ifndef RINGS_H
+#define RINGS_H 1
+
 /*
  * 
  * rings -- Doubly-linked list rings 
@@ -31,4 +34,6 @@ static inline void BLASTK_ring_append(void *ring, void *node) {
 static inline void BLASTK_ring_remove_append(void *fromring, void *toring, void *node) {
 	BLASTK_ring_remove_append_real((BLASTK_ringnode_t **)fromring,(BLASTK_ringnode_t **)toring,(BLASTK_ringnode_t *)node);
 }
+
+#endif
 

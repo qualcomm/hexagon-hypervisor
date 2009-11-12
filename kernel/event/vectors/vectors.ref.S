@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <asm_offsets.h>
+#include <asm_std.h>
+
 	.section .text.event.vectors,"awx",@progbits
 	.p2align 12
 	.global BLASTK_event_vectors
@@ -29,12 +32,12 @@ BLASTK_event_vectors:
         jump BLASTK_handle_int  /* 2 */
         jump BLASTK_handle_int /* 3  -- for resched */
         jump BLASTK_handle_int  // 4
-        jump BLASTK_change_prio // 5
-        jump BLASTK_change_prio // 6 
-        jump BLASTK_change_prio // 7
-        jump BLASTK_change_prio // 8
-        jump BLASTK_change_prio // 9
-        jump BLASTK_change_prio /* 10? */
+        jump BLASTK_handle_int // 5
+        jump BLASTK_handle_int // 6 
+        jump BLASTK_handle_int // 7
+        jump BLASTK_handle_int // 8
+        jump BLASTK_handle_int // 9
+        jump BLASTK_handle_int /* 10? */
         jump BLASTK_handle_int // 11
         jump BLASTK_handle_int // 12
         jump BLASTK_handle_int // 13

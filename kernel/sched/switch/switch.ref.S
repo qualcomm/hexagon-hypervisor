@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <asm_offsets.h>
+#include <asm_std.h>
+
 /*
  * We are switching from thread in r0 to thread in r1
  * We don't care about any registers

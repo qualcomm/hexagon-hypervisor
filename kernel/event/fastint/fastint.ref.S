@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <asm_offsets.h>
+#include <asm_std.h>
+
 	.global BLASTK_fastint_call
 	.global BLASTK_fastint_return
 BLASTK_fastint_call: 

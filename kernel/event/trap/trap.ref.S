@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <asm_offsets.h>
+#include <asm_std.h>
+
 	.global BLASTK_handle_trap0
 BLASTK_handle_trap0:
 	r7 = sgp

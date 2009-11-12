@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <asm_offsets.h>
+#include <asm_std.h>
+
 	.section .text.event.interrupt,"awx",@progbits
 	.p2align 12
 	.global BLASTK_handle_int

@@ -25,3 +25,6 @@ s64: long long int
 
 c_std.h are the definitions for C, and asm_std.h are the definitions for assembly.
 
+asm_std.h are the definitions for assembly, which additionally include function
+begin and end macros.
+

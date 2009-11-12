@@ -8,5 +8,17 @@
 
 #define NULL 0
 
+.macro FUNC_START name, section
+	.section \section,"ax",@progbits
+	.falign
+	.global \name
+	.type \name,function
+\name:
+.endm
+
+.macro FUNC_END name
+	.size \name,.-\name
+.endm
+
 #endif
 

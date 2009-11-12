@@ -41,6 +41,7 @@ PRINT_OFFSET(oncpu_start);
 PRINT_OFFSET(intwait);
 PRINT_OFFSET(futex_ptr);
 PRINT_OFFSET(tid);
+	printf("#define CONTEXT_SIZE %d\n",sizeof(BLATK_thread_context));
 	return 0;
 }
 

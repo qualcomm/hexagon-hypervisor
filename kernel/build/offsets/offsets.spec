@@ -9,6 +9,8 @@ This module creates includes for assembly files that define the structure
 offsets for structures defined in C, ``asm_offsets.h``.  This helps the
 assembly remain correct as structure definitions change.
 
+Additionally, we define the total size of the context structure.
+
 FUNCTIONALITY:
 
 We use the ``offsetof()`` macro in C to generate the byte offsets to elements 

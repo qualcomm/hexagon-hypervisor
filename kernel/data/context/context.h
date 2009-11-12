@@ -65,7 +65,7 @@ typedef struct _blast_thread_context
 	long long int r0302;	// OK FOR DCZEROA
 	long long int lc0sa0;
 	long long int lc1sa1;
-	long long int m0m1;
+	long long int m1m0;
 	// 192
 	long long int sr_preds;	// OK FOR DCZEROA
 	long long int pad0;
@@ -74,7 +74,10 @@ typedef struct _blast_thread_context
 	// 224
 	long long int pad3;	// NO DCZEROA -- need totalcycles
 	long long int pad4;
-	long long int pad5;
+	struct {
+		void *event_handler;
+		unsigned int pad5;
+	}
 	unsigned long long int totalcycles;
 	// 256
 } __attribute__((aligned(32))) BLASTK_thread_context;

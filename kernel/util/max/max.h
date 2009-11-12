@@ -13,3 +13,9 @@
 
 #define KERNEL_STACK_SIZE (8*16)
 
+#define MAX_PRIOS 32
+
+#define RESCHED_INT 3
+
+#define SSR_DEFAULT 0x1c60000
+

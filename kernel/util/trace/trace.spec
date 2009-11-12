@@ -76,5 +76,3 @@ TRACE_MESSAGE(4, "Futex Wait", "Futex Address", "PCYCLELO", "PCYCLEHI")
 TRACE_MESSAGE(5, "Futex Resume", "Futex Address", "PCYCLELO", "PCYCLEHI")
 
 
-
-

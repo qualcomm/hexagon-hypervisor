@@ -6,11 +6,11 @@
 #include <readylist.h>
 
 BLASTK_thread_context *BLASTK_ready[MAX_PRIOS];
-unsigned int BLASTK_ready_valids;
+u32_t BLASTK_ready_valids;
 
 void BLASTK_readylist_init(void) 
 {
-	int i;
+	u32_t i;
 	for (i = 0; i < MAX_PRIOS; i++) {
 		BLASTK_ready[i] = NULL;
 	}

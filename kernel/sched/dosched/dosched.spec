@@ -2,7 +2,7 @@
 
 UNIT: dosched
 
-FUNCTION: void BLASTK_dosched(thread_context *me, int hthread)
+FUNCTION: void BLASTK_dosched(thread_context *me, u32_t hthread)
 
 DESCRIPTION:
 

@@ -9,9 +9,9 @@
 	return(retval);\
 }
 
-unsigned long long int BLASTK_check_sanity(const unsigned long long int retval)
+u64_t BLASTK_check_sanity(const u64_t retval)
 {
-	unsigned long long int arg0 = retval;  /*  used for assertion  */
+	u64_t arg0 = retval;  /*  used for assertion  */
 
 /*  Possibly filled in via Sphinx extension  */
 #ifdef CHECK_ASSERTIONS
@@ -36,9 +36,9 @@ assert(kernel_locked());
 	RETURN(retval);
 }
 
-unsigned long long int BLASTK_check_sanity_unlock(const unsigned long long int retval)
+u64_t BLASTK_check_sanity_unlock(const u64_t retval)
 {
-	unsigned long long int arg0 = retval;  /*  used for assertion  */
+	u64_t arg0 = retval;  /*  used for assertion  */
 
 /*  Possibly filled in via Sphinx extension  */
 #ifdef CHECK_ASSERTIONS

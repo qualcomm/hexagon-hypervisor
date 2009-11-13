@@ -1,7 +1,7 @@
 
 MODULE: thread_create
 
-FUNCTION: int BLASTK_thread_create(unsigned int pc, unsigned int sp, unsigned int arg, unsigned int prio, unsigned int asid, unsigned int trapmask, BLASTK_thread_context *me)
+FUNCTION: s32_t BLASTK_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t asid, u32_t trapmask, BLASTK_thread_context *me)
 
 DESCRIPTION:
 

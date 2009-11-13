@@ -14,9 +14,9 @@ BLASTK_thread_context *BLASTK_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(F
  * be uncached or a bad address space or whatnot.
  */
 
-int BLASTK_futex_wait(unsigned int *lock, unsigned int val, BLASTK_thread_context *me)
+s32_t BLASTK_futex_wait(u32_t *lock, u32_t val, BLASTK_thread_context *me)
 {
-	unsigned int hashval = HASHVAL(lock);
+	u32_t hashval = HASHVAL(lock);
 	BKL_LOCK(&BLASTK_bkl);
 	if (*lock != val) {
 		/* Changed while we were trying to enqueue */
@@ -34,7 +34,7 @@ int BLASTK_futex_wait(unsigned int *lock, unsigned int val, BLASTK_thread_contex
 /* futex_find
  * Find the next thread in haystack that has a matching lock ptr 
  */
-static BLASTK_thread_context *futex_find(BLASTK_thread_context *haystack, BLASTK_thread_context *start, unsigned int *lock)
+static BLASTK_thread_context *futex_find(BLASTK_thread_context *haystack, BLASTK_thread_context *start, u32_t *lock)
 {
 	BLASTK_thread_context *tmp = start;
 	if (haystack == NULL) return haystack;
@@ -49,12 +49,12 @@ static BLASTK_thread_context *futex_find(BLASTK_thread_context *haystack, BLASTK
  * If we are only going to wake one thread, pick the highest priority one 
  * Else, pick oldest ones from queue 
  */
-int BLASTK_futex_resume(unsigned int *lock, unsigned int n_to_wake, BLASTK_thread_context *me)
+u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *me)
 {
 	BLASTK_thread_context *tmp,*tmp2,*BLASTK_futexhash[hashval];
-	unsigned int hashval = HASHVAL(lock);
-	int n_woken = 0;
-	int highest_prio = MAX_PRIOS, prio;
+	u32_t hashval = HASHVAL(lock);
+	u32_t n_woken = 0;
+	u32_t highest_prio = MAX_PRIOS, prio;
 	BKL_LOCK(&BLASTK_bkl);
 	if (BLASTK_futexhash[hashval] == NULL) {
 		BKL_UNLOCK(&BLASTK_bkl);

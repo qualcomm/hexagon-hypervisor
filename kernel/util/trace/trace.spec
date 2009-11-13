@@ -13,15 +13,15 @@ read by software during a crash.  For V3, we will log to a small memory.
 For V3, the trace buffer structure is::
 
 	typedef struct {
-		unsigned int word0;
-		unsigned int word1;
-		unsigned int word2;
-		unsigned int word3;
+		u32_t word0;
+		u32_t word1;
+		u32_t word2;
+		u32_t word3;
 	} __attribute__((aligned(16))) BLASTK_trace_entry_t;
 
 The buffer is defined as:
 
-unsigned int BLASTK_trace_index;
+u32_t BLASTK_trace_index;
 BLASTK_trace_entry_t BLASTK_trace[MAX_TRACE_ENTRIES];
 
 Fatal Kernel Errors have negative Trace IDs.  Informational kernel messages
@@ -29,7 +29,7 @@ have positive Trace IDs.  MAX_TRACE_LEVEL may be used to filter out kernel
 messages.  Recommended MAX_TRACE_LEVEL values are zero for maximum performance,
 or 1000 for maximum tracing.
 
-FUNCTION: static inline void BLASTK_trace(short type, unsigned int arg1, unsigned int arg2, unsigned int arg3, unsigned int hwtnum)
+FUNCTION: static inline void BLASTK_trace(s16_t type, u32_t arg1, u32_t arg2, u32_t arg3, u32_t hwtnum)
 
 DESCRIPTION:
 

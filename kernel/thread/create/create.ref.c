@@ -10,9 +10,9 @@
  * returns threadid/threadptr on success
  */
 
-int BLASTK_thread_create(unsigned int pc, unsigned int sp, unsigned int arg1, unsigned int prio, unsigned int asid, unsigned int trapmask, BLASTK_thread_context *me)
+s32_t BLASTK_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t asid, u32_t trapmask, BLASTK_thread_context *me)
 {       
-	int i;
+	u32_t i;
 	BLASTK_thread_context *tmp;
 	if (prio > MAX_PRIOS) return -1;        // bad prio
 	if (asid > MAX_ASIDS) return -1;        // bad asid
@@ -40,9 +40,8 @@ int BLASTK_thread_create(unsigned int pc, unsigned int sp, unsigned int arg1, un
 	tmp->r2928 = ((unsigned long long int)sp) << 32;
 	tmp->r0100 = arg1;
 
-        BLASTK_fake_stack(tmp);
         ready_append(tmp);
-        if (me) BLASTK_check_sanity_unlock(); // otherwise we're starting up the boot thread, don't wake everyone
-        return (int)tmp;
+        if (me) return BLASTK_check_sanity_unlock((u32_t)tmp); // otherwise we're starting up the boot thread, don't wake everyone
+        return (s32_t)tmp;
 }
 

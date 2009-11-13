@@ -3,8 +3,8 @@ ASM_REF_CODE(fastint requires special register changes difficult in C)
 
 UNIT: fastint
 
-FUNCTION: BLASTK_fastint_call(unsigned int intno, BLASTK_thread_context *me, unsigned int hthread, 
-			void *fastint_contexts, void **fastint_functions, unsigned ciad_mask)
+FUNCTION: BLASTK_fastint_call(u32_t intno, BLASTK_thread_context *me, u32_t hthread, 
+			void *fastint_contexts, void **fastint_functions, u32_t ciad_mask)
 
 DESCRIPTION:
 

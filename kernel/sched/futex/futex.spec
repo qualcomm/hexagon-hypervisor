@@ -1,7 +1,7 @@
 
 UNIT: futex
 
-FUNCTION: int BLASTK_futex_wait(unsigned int *ptr, unsigned int expected, BLASTK_thread_context *me)
+FUNCTION: s32_t BLASTK_futex_wait(u32_t *ptr, u32_t expected, BLASTK_thread_context *me)
 
 DESCRIPTION:
 
@@ -56,7 +56,7 @@ it to the futex hash table using the hash key.  We then call for a new thread
 to be scheduled.  The return value must be zero.
 
 
-FUNCTION: int BLASTK_futex_resume(unsigned int *lock, unsigned int n_to_wake, BLASTK_thread_context *me)
+FUNCTION: u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *me)
 
 DESCRIPTION:
 

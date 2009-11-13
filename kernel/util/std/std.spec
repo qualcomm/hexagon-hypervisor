@@ -6,21 +6,21 @@ This unit defines our standard C environment, including data types.
 
 NULL: (void *)0
 
-u8: unsigned char
+u8_t: unsigned char
 
-u16: unsigned short
+u16_t: unsigned short
 
-u32: unsigned int
+u32_t: unsigned int
 
-u64: unsigned long long int
+u64_t: unsigned long long int
 
-s8: char
+s8_t: char
 
-s16: short
+s16_t: short
 
-s32: int
+s32_t: int
 
-s64: long long int
+s64_t: long long int
 
 
 c_std.h are the definitions for C, and asm_std.h are the definitions for assembly.

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-void BLASTK_dosched(BLASTK_thread_context *me,int hthread)
+void BLASTK_dosched(BLASTK_thread_context *me,u32_t hthread)
 {
 	BLASTK_thread_context *new;
 	new = ready_getbest();

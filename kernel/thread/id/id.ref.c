@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-int BLASTK_thread_id(BLASTK_thread_context *me)
+u32_t BLASTK_thread_id(BLASTK_thread_context *me)
 {       
-        return (int)me;
+        return (s32_t)me;
 }
 

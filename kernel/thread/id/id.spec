@@ -1,7 +1,7 @@
 
 MODULE: thread_id
 
-FUNCTION: int BLASTK_thread_id(thread_context *me)
+FUNCTION: u32_t BLASTK_thread_id(thread_context *me)
 
 DESCRIPTION:
 

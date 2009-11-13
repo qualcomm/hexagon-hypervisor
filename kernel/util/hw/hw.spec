@@ -5,7 +5,7 @@ This unit contains intrinsics which implement interfaces
 to hardware.
 
 
-FUNCTION: static inline void ciad(unsigned int mask)
+FUNCTION: static inline void ciad(u32_t mask)
 
 DESCRIPTION:
 
@@ -23,7 +23,7 @@ FUNCTIONALITY:
 We invoke the CIAD instruction with the designated mask.
 
 
-FUNCTION: static inline void change_imask(int thread, unsigned int imask)
+FUNCTION: static inline void change_imask(u32_t thread, u32_t imask)
 
 DESCRIPTION:
 
@@ -60,7 +60,7 @@ The constant RESCHED_INT_INTMASK is placed into a register, and the SWI
 instruction is invoked with that register.
 
 
-FUNCTION: static inline void highprio_imask(int hthread)
+FUNCTION: static inline void highprio_imask(u32_t hthread)
 
 DESCRIPTION:
 
@@ -80,7 +80,7 @@ most of the interrupts, and then place that value in IMASK.
 
 
 
-FUNCTION: static inline void lowprio_imask(int hthread)
+FUNCTION: static inline void lowprio_imask(u32_t hthread)
 
 DESCRIPTION:
 
@@ -98,7 +98,7 @@ We form the appropriate IMASK value for the current hardware thread to enable
 most of the interrupts, and then place that value in IMASK.
 
 
-FUNCTION: static inline unsigned int get_ssr()
+FUNCTION: static inline u32_t get_ssr()
 
 DESCRIPTION:
 
@@ -117,7 +117,7 @@ The SSR value is transfered to a temporary value that is returned.
 
 
 
-FUNCTION: static inline unsigned int get_hwtnum()
+FUNCTION: static inline u32_t get_hwtnum()
 
 DESCRIPTION:
 

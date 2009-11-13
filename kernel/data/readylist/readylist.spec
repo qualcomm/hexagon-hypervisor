@@ -37,7 +37,7 @@ Set all elements of BLASTK_ready to NULL, and set BLASTK_ready_valids to zero.
 
 
 
-FUNCTION: static inline int BLASTK_ready_best_prio()
+FUNCTION: static inline u32_t BLASTK_ready_best_prio()
 
 DESCRIPTION:
 

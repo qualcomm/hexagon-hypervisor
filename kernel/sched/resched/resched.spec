@@ -1,7 +1,7 @@
 
 UNIT: resched
 
-FUNCTION: void BLASTK_reschedule_from_wait(int hthread)
+FUNCTION: void BLASTK_reschedule_from_wait(u32_t hthread)
 
 DESCRIPTION:
 
@@ -25,7 +25,7 @@ We then call BLASTK_dosched.
 
 
 
-FUNCTION: void reschedule_from_lowprio(int hthread)
+FUNCTION: void reschedule_from_lowprio(u32_t hthread)
 
 DESCRIPTION:
 

@@ -10,11 +10,11 @@
 #include <max.h>
 
 extern BLASTK_thread_context *BLASTK_runlist[MAX_PRIOS];
-extern unsigned int BLASTK_runlist_valids;
+extern u32_t BLASTK_runlist_valids;
 
 static inline void BLASTK_runlist_push(BLASTK_thread_context *newthread)
 {
-	unsigned int prio = newthread->prio;
+	u32_t prio = newthread->prio;
 	newthread->next = BLASTK_runlist[prio];
 	BLASTK_runlist[prio] = newthread;
 	BLASTK_runlist_valids |= 1<<prio;
@@ -28,7 +28,7 @@ static inline int BLASTK_runlist_worst_prio()
 static inline void runlist_remove(BLASTK_thread_context *thread)
 {
 	BLASTK_thread_context *tmp;
-	int prio = thread->prio;
+	u32_t prio = thread->prio;
 	if (BLASTK_runlist[prio] == thread) {
 		BLASTK_runlist[prio] = thread->next;
 	} else {

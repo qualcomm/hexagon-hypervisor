@@ -61,7 +61,7 @@ The bit in runlist_valids corresponding to the priority is set.
 
 
 
-FUNCTION: static inline int BLASTK_runlist_worst_prio()
+FUNCTION: static inline u32_t BLASTK_runlist_worst_prio()
 
 DESCRIPTION:
 

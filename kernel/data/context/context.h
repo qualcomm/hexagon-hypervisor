@@ -6,6 +6,8 @@
 #ifndef BLAST_CONTEXT_H
 #define BLAST_CONTEXT_H
 
+#include <c_std.h>
+
 typedef struct _blast_thread_context
 {
 	/* Kernel Variables */
@@ -16,14 +18,8 @@ typedef struct _blast_thread_context
 	/* Other info */
 	union {
 		struct {
-			unsigned int *futex_ptr;
-			unsigned int futex_val;
-		};
-		long long int intwait;
-		unsigned long long int oncpu_start;
-		struct {
-			unsigned int error_badva;
-			unsigned int error_cause;
+			u32_t *futex_ptr;
+			u32_t futex_val;
 		};
 	};
 	// #16
@@ -31,62 +27,55 @@ typedef struct _blast_thread_context
 	//struct _blast_thread_context **queue;
 	/* Callee-save context... */
 	void *continuation;
-	unsigned char prio;
-	unsigned char hthread;
-	unsigned char valid;
+	u8_t prio;
+	u8_t hthread;
+	u8_t valid;
 	// 24
 	/* status, etc */
 	/* Context */
 	/* Context required for OS calls... callee save + ugp/gp/etc */
 	/* V3 callee-save is a lot bigger. :-| */
-	long long int r3130;
+	u64_t r3130;
 	// 32
-	long long int ssrelr;	// OK FOR DCZEROA
-	long long int r2928;
-	long long int r2726;
-	long long int r2524;
+	u64_t ssrelr;	// OK FOR DCZEROA
+	u64_t r2928;
+	u64_t r2726;
+	u64_t r2524;
 	// 64
-	long long int r2322;	// OK FOR DCZEROA
-	long long int r2120;
-	long long int r1918;
-	long long int r1716;
+	u64_t r2322;	// OK FOR DCZEROA
+	u64_t r2120;
+	u64_t r1918;
+	u64_t r1716;
 	// 96
-	long long int ugpgp;	// OK FOR DCZEROA
-	long long int r0100;	/* used for return value */
+	u64_t ugpgp;	// OK FOR DCZEROA
+	u64_t r0100;	/* used for return value */
 	/* Context required for interrupts... everything else */
-	long long int r1514;
-	long long int r1312;
+	u64_t r1514;
+	u64_t r1312;
 	// 128
-	long long int r0706;	// OK FOR DCZEROA
-	long long int r0504;
-	long long int r1110;
-	long long int r0908;
+	u64_t r0706;	// OK FOR DCZEROA
+	u64_t r0504;
+	u64_t r1110;
+	u64_t r0908;
 	// 160
-	long long int r0302;	// OK FOR DCZEROA
-	long long int lc0sa0;
-	long long int lc1sa1;
-	long long int m1m0;
+	u64_t r0302;	// OK FOR DCZEROA
+	u64_t lc0sa0;
+	u64_t lc1sa1;
+	u64_t m1m0;
 	// 192
-	long long int sr_preds;	// OK FOR DCZEROA
-	long long int pad0;
-	long long int pad1;
-	long long int pad2;
+	u64_t sr_preds;	// OK FOR DCZEROA
+	u64_t pad0;
+	u64_t pad1;
+	u64_t pad2;
 	// 224
-	long long int pad3;	// NO DCZEROA -- need totalcycles
-	long long int pad4;
+	u64_t pad3;	// NO DCZEROA -- need totalcycles
 	struct {
 		void *event_handler;
-		unsigned int pad5;
+		u32_t pad4;
 	}
-	unsigned long long int totalcycles;
+	u64_t oncpu_start;
+	u64_t totalcycles;
 	// 256
 } __attribute__((aligned(32))) BLASTK_thread_context;
-
-/* switch to a new thread */
-/* If from is NULL, we're switching from idle */
-/* If to is NULL, we're switching to idle... unlock bkl and sleep */
-void BLASTK_thread_switch(BLASTK_thread_context *fromthread, BLASTK_thread_context *newthread);
-/* Fake the stack on a context pointer for a new thread so that we can switch to it later */
-void BLASTK_fake_stack(BLASTK_thread_context *thread);
 
 #endif

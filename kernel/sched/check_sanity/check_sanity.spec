@@ -6,7 +6,7 @@
 BLASTK_check_sanity
 -------------------
 
-.. cfunction:: unsigned long long int BLASTK_check_sanity(const unsigned long long int returnval)
+.. cfunction:: u64_t BLASTK_check_sanity(const u64_t returnval)
 
 Description
 ~~~~~~~~~~~
@@ -69,7 +69,7 @@ running thread.  Make the lowest priority running thread interruptible.
 BLASTK_check_sanity_unlock
 --------------------------
 
-.. cfunction:: unsigned long long int BLASTK_check_sanity_unlock(const unsigned long long int returnval)
+.. cfunction:: u64_t BLASTK_check_sanity_unlock(const u64_t returnval)
    
 Description
 ~~~~~~~~~~~

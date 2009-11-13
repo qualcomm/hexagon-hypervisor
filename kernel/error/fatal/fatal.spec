@@ -1,7 +1,7 @@
 
 UNIT: fatal
 
-FUNCTION: void BLASTK_fatal_kernel(short error_id, thread_context *me, int info0, int info1, int hthread)
+FUNCTION: void BLASTK_fatal_kernel(s16_t error_id, thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 DESCRIPTION: 
 
@@ -25,7 +25,7 @@ Next, we shutdown all threads by trapping to the angel handler to exit simulatio
 TBD: how on target?
 
 
-FUNCTION: void BLASTK_fatal_thread(short error_id, BLASTK_thread_context *me, int info0, int info1, int hthread)
+FUNCTION: void BLASTK_fatal_thread(s16_t error_id, BLASTK_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 DESCRIPTION:
 

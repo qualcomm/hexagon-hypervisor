@@ -10,8 +10,8 @@
 /* BLASTK_priomask should be non-zero */
 static inline void lowprio_notify()
 {
-	int prio;
-	int hthread;
+	u32_t prio;
+	u32_t hthread;
 	BLASTK_thread_context *tmp;
 	prio = get_worst_running_prio();
 	tmp = BLASTK_runlist[prio];
@@ -25,7 +25,7 @@ static inline void lowprio_notify()
  * going to get into trouble if you raise the priority of a waiting thread */
 static inline void raise_lowprio()
 {
-	int mask = BLASTK_priomask;
+	u32_t mask = BLASTK_priomask;
 	if (BLASTK_wait_mask) return; // just a sanity check... should be an error
 	BLASTK_priomask = 0;
 	BLASTK_change_imask(Q6_R_ct0_R(mask),-1);

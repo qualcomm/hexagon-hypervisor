@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-void BLASTK_reshcedule_from_wait(int hwtnum)
+void BLASTK_reshcedule_from_wait(u32_t hwtnum)
 {
 	ciad(RESCHED_INT_INTMASK);
 	BKL_LOCK(&BLASTK_bkl);
@@ -11,7 +11,7 @@ void BLASTK_reshcedule_from_wait(int hwtnum)
 	BLASTK_dosched(NULL,hwtnum);
 }
 
-void BLASTK_reschedule_from_lowprio(int unused, BLASTK_thread_context *me, int hwtnum)
+void BLASTK_reschedule_from_lowprio(u32_t unused, BLASTK_thread_context *me, u32_t hwtnum)
 {
 	ciad(RESCHED_INT_INTMASK);
 	BKL_LOCK(&BLASTK_bkl);

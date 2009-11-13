@@ -8,8 +8,8 @@
 
 #include <context.h>
 
-void BLASTK_fatal_kernel(short error_id, BLASTK_thread_context *me, int info0, int info1, int hthread);
-void BLASTK_fatal_thread(short error_id, BLASTK_thread_context *me, int info0, int info1, int hthread);
+void BLASTK_fatal_kernel(s16_t error_id, BLASTK_thread_context *me, u32_t info0, u32_t info1, u32_t hthread);
+void BLASTK_fatal_thread(s16_t error_id, BLASTK_thread_context *me, u32_t info0, u32_t info1, u32_t hthread);
 
 #endif
 

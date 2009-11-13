@@ -14,7 +14,7 @@
  * Otherwise, load continuation into LR and jump to check_sanity_unlock
  */
 
-BLASTK_thread_switch:
+FUNC_START BLASTK_thread_switch .text.sched.switch .p2align 5
 	r25:24 = combine(r1,r0)	// save args for call
 	// Get current pcycle count
 	r27 = PCYCLEHI
@@ -65,8 +65,10 @@ BLASTK_thread_switch:
 	r2 = insert(r3,#3,#16)
 	ssr = r2
 	jump BLASTK_wait_forever
+FUNC_END BLASTK_thread_switch
 
-BLASTK_wait_forever:
+FUNC_BEGIN BLASTK_wait_forever .text.sched.switch .p2align 2
 	wait(r1)
 	jump BLASTK_wait_forever
+FUNC_END BLASTK_wait_forever
 

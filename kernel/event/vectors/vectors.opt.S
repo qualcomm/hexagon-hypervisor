@@ -6,11 +6,7 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 
-	.section .text.event.vectors,"awx",@progbits
-	.p2align 12
-	.global BLASTK_event_vectors
-	.type	BLASTK_event_vectors, @function
-BLASTK_event_vectors:
+FUNC_START BLASTK_event_vectors .text.event.vectors .p2align 12
 	jump BLASTK_handle_reset
 	jump BLASTK_handle_nmi
 	jump BLASTK_handle_error
@@ -59,5 +55,5 @@ BLASTK_event_vectors:
         jump BLASTK_handle_int
         jump BLASTK_handle_int
         jump BLASTK_handle_int /* 31 */
-	.size	BLASTK_event_vectors, .-BLASTK_event_vectors
+FUNC_END BLASTK_event_vectors
 

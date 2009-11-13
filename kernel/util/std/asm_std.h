@@ -8,9 +8,9 @@
 
 #define NULL 0
 
-.macro FUNC_START name, section
+.macro FUNC_START name, section, align, amt
 	.section \section,"ax",@progbits
-	.falign
+	\align \amt
 	.global \name
 	.type \name,function
 \name:

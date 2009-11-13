@@ -6,8 +6,7 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 
-	.global BLASTK_handle_trap0
-BLASTK_handle_trap0:
+FUNC_START BLASTK_handle_trap0 .text.event.trap0 .p2align 2
 	r7 = sgp
 	r8 = elr
 	r9 = ssr
@@ -73,15 +72,14 @@ blast_trap_nogood:
 	r29.h = #hi(BLASTK_idle_stacks+16)
 	r29.l = #lo(BLASTK_idle_stacks+16)
 	jump BLASTK_error
-	.size BLASTK_handle_trap0, .-BLASTK_handle_trap0
+FUNC_END BLASTK_handle_trap0
 
-	.global BLASTK_trap_angel
-BLASTK_trap_angel:
+FUNC_START BLASTK_trap_angel .text.event.trap0 .p2align 2
 	jump 9b
 	.size BLASK_trap_angel, .-BLASTK_trap_angel
+FUNC_END BLASTK_trap_angel
 
-	.p2align 8 // 256bytes ... 2x4 bytes x 32 entries
-traptab:
+FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
 	{
 		jump BLASTK_trap_angel // 0
 		nop
@@ -221,4 +219,5 @@ traptab:
 		r0 = r7
 		jump BLASTK_thread_id // 31
 	}
+FUNC_END BLASTK_traptab
 

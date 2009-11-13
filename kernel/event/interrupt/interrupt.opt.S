@@ -6,11 +6,7 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 
-	.section .text.event.interrupt,"awx",@progbits
-	.p2align 12
-	.global BLASTK_handle_int
-	.type BLASTK_handle_int, @function
-BLASTK_handle_int:
+FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	crswap(r0,sgp)
 	{
 		memd(r0+#CONTEXT_r3130) = r31:30
@@ -217,5 +213,5 @@ int_context_restore:
 	}
 	rte
 	// 16 packets + 28 == 44
-	.size BLASTK_handle_int, .-BLASTK_handle_int
+FUNC_END BLASTK_handle_int
 	

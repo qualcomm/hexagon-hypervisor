@@ -6,9 +6,7 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 
-	.global BLASTK_fastint_call
-	.global BLASTK_fastint_return
-BLASTK_fastint_call: 
+FUNC_START BLASTK_fastint_call .text.event.fastint .p2align 5
 	// r0 = intno
 	// r1 = me
 	// r2 = hthread
@@ -82,10 +80,9 @@ BLASTK_fastint_return:
 		r0 = #0				// all for naught, return
 		jump 2b
 	}
-	
-	.size BLASTK_fastint_call, .-BLASTK_fastint_call
+FUNC_END BLASTK_fastint_call
 
-BLASTK_interrupted_fastint_check:
+FUNC_START BLASTK_interrupted_fastint_check .text.event.fastint .p2align 2
 	// OK, we checked to see if there was a pending 
 	// interrupt, and there sure was!
 	// sgp and r0 have been swapped
@@ -124,4 +121,5 @@ BLASTK_interrupted_fastint_check:
 	{
 		jumpr r4
 	}
+FUNC_END BLASTK_interrupted_fastint_check
 

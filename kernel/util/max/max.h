@@ -17,5 +17,11 @@
 
 #define RESCHED_INT 3
 
+#if __QDSP6_ARCH__ <= 3
+#define RESCHED_INT_INTMASK (0x80000000 >> RESCHED_INT)
+#else
+#define RESCHED_INT_INTMASK (0x00000001 << RESCHED_INT)
+#endif
+
 #define SSR_DEFAULT 0x1c60000
 

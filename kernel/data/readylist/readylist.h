@@ -7,6 +7,8 @@
 #define READYLIST_H 1
 
 #include <context.h>
+#include <rings.h>
+#include <q6protos.h>
 #include <max.h>
 
 extern BLASTK_thread_context *BLASTK_ready[MAX_PRIOS];

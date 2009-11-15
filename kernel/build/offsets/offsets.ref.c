@@ -34,14 +34,12 @@ PRINT_OFFSET(r0302);
 PRINT_OFFSET(r0100);
 PRINT_OFFSET(lc0sa0);
 PRINT_OFFSET(lc1sa1);
-PRINT_OFFSET(m0m1);
+PRINT_OFFSET(m1m0);
 PRINT_OFFSET(sr_preds);
 PRINT_OFFSET(totalcycles);
 PRINT_OFFSET(oncpu_start);
-PRINT_OFFSET(intwait);
 PRINT_OFFSET(futex_ptr);
-PRINT_OFFSET(tid);
-	printf("#define CONTEXT_SIZE %d\n",sizeof(BLATK_thread_context));
+	printf("#define CONTEXT_SIZE %d\n",sizeof(BLASTK_thread_context));
 	return 0;
 }
 

@@ -18,5 +18,7 @@ typedef signed short s16_t;
 typedef signed int s32_t;
 typedef signed long long int s64_t;
 
+#define IS_WORSE_THAN >
+
 #endif
 

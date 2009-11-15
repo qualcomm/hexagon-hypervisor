@@ -6,7 +6,7 @@
 #include <fatal.h>
 #include <context.h>
 #include <trace.h>
-#include <thread_stop.h>
+#include <stop.h>
 
 #define SYS_EXCEPTION 0x18
 
@@ -28,13 +28,13 @@ static void doangel(u32_t what, u32_t arg, u32_t r2)
 
 void BLASTK_fatal_kernel(s16_t error_id, BLASTK_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	BLASTK_trace(error_id, me, info0, info1, hthread);
+	BLASTK_trace(error_id, (u32_t)me, info0, info1, hthread);
 	doangel(SYS_EXCEPTION,1,1);
 }
 
 void BLASTK_fatal_thread(s16_t error_id, BLASTK_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	BLASTK_trace(error_id, me, info0, info1, hthread);
+	BLASTK_trace(error_id, (u32_t)me, info0, info1, hthread);
 	return BLASTK_thread_stop(me);
 }
 

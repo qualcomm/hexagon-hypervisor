@@ -4,6 +4,13 @@
  */
 
 #include <context.h>
+#include <futex.h>
+#include <dosched.h>
+#include <hw.h>
+#include <runlist.h>
+#include <readylist.h>
+#include <rings.h>
+#include <check_sanity.h>
 
 BLASTK_thread_context *BLASTK_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE*4)));
 #define HASHVAL(X) ((((unsigned int)(X)) >> 3) & (FUTEX_HASHSIZE-1))
@@ -17,17 +24,17 @@ BLASTK_thread_context *BLASTK_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(F
 s32_t BLASTK_futex_wait(u32_t *lock, u32_t val, BLASTK_thread_context *me)
 {
 	u32_t hashval = HASHVAL(lock);
-	BKL_LOCK(&BLASTK_bkl);
+	BKL_LOCK();
 	if (*lock != val) {
 		/* Changed while we were trying to enqueue */
-		BKL_UNLOCK(&BLASTK_bkl);
+		BKL_UNLOCK();
 		return -1;
 	}
 	me->futex_ptr = lock;
 	//BLASTK_ring_remove_append(&running,&futexqueue,me);
-	runlist_remove(me);
+	BLASTK_runlist_remove(me);
 	BLASTK_ring_append(&BLASTK_futexhash[hashval],me);
-	BLASTK_dosched_with_lock(me,me->hthread);
+	BLASTK_dosched(me,me->hthread);
 	return 0;
 }
 
@@ -51,13 +58,13 @@ static BLASTK_thread_context *futex_find(BLASTK_thread_context *haystack, BLASTK
  */
 u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *me)
 {
-	BLASTK_thread_context *tmp,*tmp2,*BLASTK_futexhash[hashval];
+	BLASTK_thread_context *tmp,*tmp2;
 	u32_t hashval = HASHVAL(lock);
 	u32_t n_woken = 0;
 	u32_t highest_prio = MAX_PRIOS, prio;
-	BKL_LOCK(&BLASTK_bkl);
+	BKL_LOCK();
 	if (BLASTK_futexhash[hashval] == NULL) {
-		BKL_UNLOCK(&BLASTK_bkl);
+		BKL_UNLOCK();
 		return 0;
 	}
 	tmp = BLASTK_futexhash[hashval];
@@ -77,7 +84,7 @@ u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *m
 			n_woken = 1;
 			prio = highest_prio;
 			BLASTK_ring_remove(&BLASTK_futexhash[hashval],tmp2);
-			ready_append(tmp2);
+			BLASTK_ready_append(tmp2);
 		}
 	} else {
 		tmp2 = BLASTK_futexhash[hashval];
@@ -88,12 +95,15 @@ u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *m
 			prio = tmp->prio;
 			highest_prio = Q6_R_min_RR(highest_prio,prio);
 			BLASTK_ring_remove(&BLASTK_futexhash[hashval],tmp);
-			ready_append(tmp);
+			BLASTK_ready_append(tmp);
 			if (++n_woken >= n_to_wake) break;
 		} while (1);
 	}
-	if (n_woken) BLASTK_check_sanity(); 
-	BKL_UNLOCK(&BLASTK_bkl);
-	return n_woken;
+	if (n_woken) {
+		return BLASTK_check_sanity_unlock(n_woken); 
+	} else {
+		BKL_UNLOCK();
+		return n_woken;
+	}
 }
 

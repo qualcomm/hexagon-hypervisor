@@ -3,6 +3,14 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <c_std.h>
+#include <context.h>
+#include <hw.h>
+#include <runlist.h>
+#include <readylist.h>
+#include <dosched.h>
+#include <lowprio.h>
+
 void BLASTK_reshcedule_from_wait(u32_t hwtnum)
 {
 	ciad(RESCHED_INT_INTMASK);
@@ -15,8 +23,8 @@ void BLASTK_reschedule_from_lowprio(u32_t unused, BLASTK_thread_context *me, u32
 {
 	ciad(RESCHED_INT_INTMASK);
 	BKL_LOCK(&BLASTK_bkl);
-	runlist_remove(me);
-	ready_append(me);
+	BLASTK_runlist_remove(me);
+	BLASTK_ready_append(me);
 	BLASTK_dosched(me, hwtnum);
 }
 

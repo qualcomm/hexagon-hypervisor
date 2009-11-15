@@ -8,6 +8,7 @@
 
 #include <context.h>
 #include <max.h>
+#include <q6protos.h>
 
 extern BLASTK_thread_context *BLASTK_runlist[MAX_PRIOS];
 extern u32_t BLASTK_runlist_valids;
@@ -22,10 +23,10 @@ static inline void BLASTK_runlist_push(BLASTK_thread_context *newthread)
 
 static inline int BLASTK_runlist_worst_prio()
 {
-	return (8*sizeof(BLASTK_runlist_valids)-1-Q6_R_cl0_R(BLASTK_runlist_valids);
+	return ((8*sizeof(BLASTK_runlist_valids))-1)-Q6_R_cl0_R(BLASTK_runlist_valids);
 }
 
-static inline void runlist_remove(BLASTK_thread_context *thread)
+static inline void BLASTK_runlist_remove(BLASTK_thread_context *thread)
 {
 	BLASTK_thread_context *tmp;
 	u32_t prio = thread->prio;

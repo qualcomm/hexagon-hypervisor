@@ -6,6 +6,9 @@
 #ifndef _HEADER_HW_H
 #define _HEADER_HW_H 1
 
+#include <max.h>
+#include <q6protos.h>
+
 static inline void ciad(u32_t mask)
 {
 	asm (" ciad(%0) // clear IAD " : : "r"(mask));
@@ -34,6 +37,7 @@ static inline void resched_int()
 	asm(" swi(%0) // wake up & resched" : : "r"(RESCHED_INT_INTMASK));
 }
 
+#if (ARCHV <= 2)
 static inline void highprio_imask(u32_t hthread)
 {
 	asm(" imask = %0 // set to high priority " : : "r"((-1)-(HW_TH_0_INTMASK << (hthread))));
@@ -43,6 +47,18 @@ static inline void lowprio_imask(u32_t hthread)
 {
 	asm(" imask = %0 // set to low priority " : : "r"(HW_TH_ALL_INTMASK ^ (HW_TH_0_INTMASK << (hthread))));
 }
+#elif (ARCHV >= 3)
+static inline void highprio_imask(u32_t hthread)
+{
+	asm(" imask = %0 // set to high priority " : : "r"(-1));
+}
+
+static inline void lowprio_imask(u32_t hthread)
+{
+	asm(" imask = %0 // set to low priority " : : "r"(0));
+}
+
+#endif
 
 static inline u32_t get_ssr()
 {
@@ -75,6 +91,8 @@ static inline void BLASTK_mutex_unlock_k0()
 {
 	asm(" k0unlock");
 }
+#define BKL_LOCK(...) BLASTK_mutex_lock_k0()
+#define BKL_UNLOCK(...) BLASTK_mutex_lock_k0()
 #endif
 
 #endif

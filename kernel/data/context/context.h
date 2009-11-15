@@ -72,7 +72,7 @@ typedef struct _blast_thread_context
 	struct {
 		void *event_handler;
 		u32_t pad4;
-	}
+	};
 	u64_t oncpu_start;
 	u64_t totalcycles;
 	// 256

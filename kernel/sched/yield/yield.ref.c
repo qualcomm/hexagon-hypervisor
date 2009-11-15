@@ -3,15 +3,22 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <context.h>
+#include <runlist.h>
+#include <readylist.h>
+#include <dosched.h>
+#include <hw.h>
+
 /*
  * BLASTK_sched_yield
  * Run a different thread at the same prio, if available
+ * TBD: detect nothing in readylist @ current prio and return
  */
 void BLASTK_sched_yield(BLASTK_thread_context *me)
 {       
         BKL_LOCK(&BLASTK_bkl);
-        runlist_remove(me);
-        ready_append(me);
-        BLASTK_dosched_with_lock(me,me->hthread);
+        BLASTK_runlist_remove(me);
+        BLASTK_ready_append(me);
+        BLASTK_dosched(me,me->hthread);
 }
 

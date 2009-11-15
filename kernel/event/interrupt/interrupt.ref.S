@@ -51,10 +51,19 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	crswap(r0,sgp)
 	memd(r21+#CONTEXT_r0100) = r1:0
 
-	// XXX: do stuff here
-	// XXX: set up kernel stack
-	call BLASTK_fastint		// or something?
+#if __QDSP6_ARCH__ <= 3
+	r29.h = #hi(BLASTK_stacks)
+	r29.l = #lo(BLASTK_stacks)
+	r28 = ssr
+	r28 = extractu(r28,#3,#19)
+	r29 += mpyi(r28,#KERNEL_STACK_SIZE)
+#else
+	r28 = TNUM
+	r29 = #KERNEL_STACK_SIZE
+	r29 = add(##BLASTK_stacks,mpyi(r28,r29))
+#endif
 
+	call BLASTK_fastint		// or something?
 BLASTK_interrupt_restore:
 	/* Restore all state and return */
 	r0 = sgp

@@ -8,8 +8,10 @@
 
 #include <context.h>
 
-extern BLASTK_thread_context *head;
+extern BLASTK_thread_context *BLASTK_free_threads;
 extern BLASTK_thread_context BLASTK_idle_context;
+
+void BLASTK_thread_context_clear(BLASTK_thread_context *thread);
 
 #endif
 

@@ -8,7 +8,7 @@
  */
 
 #include <rings.h>
-#include <std.h>
+#include <c_std.h>
 
 void BLASTK_ring_remove_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node)
 {
@@ -51,15 +51,15 @@ void BLASTK_ring_remove_append_real(BLASTK_ringnode_t **fromring, BLASTK_ringnod
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
 	if (*fromring == node) {
-		if (node == node->next) *ring = NULL;
-		else *ring = node->next;
+		if (node == node->next) *fromring = NULL;
+		else *fromring = node->next;
 	}
 	if (*toring == NULL) {
 		node->prev = node->next = node;
-		*ring = node;
+		*toring = node;
 	} else {
-		node->next = *ring;
-		node->prev = (*ring)->prev;
+		node->next = *toring;
+		node->prev = (*toring)->prev;
 		node->prev->next = node;
 		node->next->prev = node;
 	}

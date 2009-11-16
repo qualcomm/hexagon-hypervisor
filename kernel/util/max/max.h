@@ -15,6 +15,8 @@
 
 #define MAX_PRIOS 32
 
+#define MAX_ASIDS 32
+
 #define RESCHED_INT 3
 
 #if __QDSP6_ARCH__ <= 3

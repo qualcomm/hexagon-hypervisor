@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <c_std.h>
+#include <context.h>
+
 u32_t BLASTK_thread_id(BLASTK_thread_context *me)
 {       
         return (s32_t)me;

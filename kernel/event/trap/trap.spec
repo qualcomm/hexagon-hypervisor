@@ -32,9 +32,11 @@ semihosting request.  After the branch, we can return immediately.  Note that tr
 should have no effect (other than clobbered registers) for a node not connected to 
 an appropriate semihosting provider.
 
-We then check to ensure that the thread can use the requested trap.  This is used to
-reduce capabilities of less-priviledged threads, and is also used to assert that fast
-interrupt handlers cannot block.
+We then check to ensure that the thread can use the requested trap.  This is
+used to reduce capabilities of less-priviledged threads, and is also used to
+assert that fast interrupt handlers cannot block.  If a user-mode thread cannot
+execute the trap, we call BLASTK_fatal_thread().  If a fast interrupt cannot
+execute the trap, we call BLASTK_fatal_kernel().
 
 We then jump to the handler for the requested trap.  
 

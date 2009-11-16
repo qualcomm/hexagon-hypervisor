@@ -10,34 +10,46 @@ FUNC_START BLASTK_handle_trap0 .text.event.trap0 .p2align 2
 	r7 = sgp
 	r8 = elr
 	r9 = ssr
-	{
-		memd(r7+#CONTEXT_ssrelr) = r9:8
-		r13 = ugp
-		p0 = bitsclr(r9,#0x3f)
-		r11.h = #hi(traptab)
-	}
-	{
-		if (!p0) memd(r7+#CONTEXT_r2928) = r29:28
-		if (p0) jump BLASTK_trap_angel		// angel, abort!
-		r12 = gp
-		r16 = #TRAP_WONTBLOCK_MASK
-	}
-	{
-		memd(r7+#CONTEXT_ugpgp) = r13:12
-		r29 = add(r7,#THREAD_CONTEXT_TOTALSIZE)
-		r11.l = #lo(traptab)
-		p1 = tstbit(r9,#18)
-	}
-	{
-		r15 = zxtb(r9)
-		if (!p1) jump 1f
-		r11 = tableidxd(r9,#5,#0)
-	}
-2:
-	{
-		callr r11
-		memd(r7+#CONTEXT_r3130) = r31:30
-	}
+	// Detect ANGEL cal
+	p0 = bitsclr(r9,#0x1f)
+	if (p0) jump BLASTK_trap_angel
+	// Save trap state
+	memd(r7+#CONTEXT_r3130) = r31:30
+	memd(r7+#CONTEXT_r2928) = r29:28
+	memd(r7+#CONTEXT_r2726) = r27:26
+	memd(r7+#CONTEXT_r2524) = r25:22
+	memd(r7+#CONTEXT_r2322) = r23:24
+	memd(r7+#CONTEXT_r2120) = r21:20
+	memd(r7+#CONTEXT_r1918) = r19:18
+	memd(r7+#CONTEXT_r1716) = r17:16
+	memd(r7+#CONTEXT_ssrelr) = r9:8
+	r13 = ugp
+	r12 = gp
+	memd(r7+#CONTEXT_ugpgp) = r13:12
+
+	// Can we take this trap?
+	r10 = and(r9,#0x1f)
+	r11 = memw(r7+#CONTEXT_trapmask)
+	p0 = tstbit(r11,r10)
+	if (!p0) jump 1f				// no, kill thread or kernel
+
+#if __QDSP6_ARCH__ <= 3
+	r29.h = #hi(BLASTK_stacks)
+	r29.l = #lo(BLASTK_stacks)
+	r28 = ssr
+	r28 = extractu(r28,#3,#19)
+	r29 += mpyi(r28,#KERNEL_STACK_SIZE)
+#else
+	r28 = TNUM
+	r29 = #KERNEL_STACK_SIZE
+	r29 = add(##BLASTK_stacks,mpyi(r28,r29))
+#endif
+
+	r11.h = #hi(BLASTK_traptab)
+	r11.l = #lo(BLASTK_traptab)
+	r10 = addasl(r11,r10,#3)
+	callr r10
+
 blast_trap_nogood:
 	r7 = sgp
 	{
@@ -55,23 +67,20 @@ blast_trap_nogood:
 9:
 	rte
 
-1:	// trap from fastint
-	{
-		p0 = tstbit(r16,r15)
-		if (p0.new) jump:t 2b	// OK, won't block
-	}
-	r1 = badva
-	r3 = ssr
-	{
-		r0 = r8
-		r2 = #0xff
-		r3 = extractu(r3,#3,#19)
-	}
-	r5 = pcyclehi
-	r4 = pcyclelo
-	r29.h = #hi(BLASTK_idle_stacks+16)
-	r29.l = #lo(BLASTK_idle_stacks+16)
-	jump BLASTK_error
+1:
+	// call BLASTK_fatal_thread or BLASTK_fatal_kernel
+	r0 = #-1
+	r1 = r7
+	r3 = pcyclehi
+	r2 = pcyclelo
+	r4 = ssr
+	r4 = extractu(r0,#3,#19)
+	p0 = tstbit(r4,#18)			// interrupts enabled?
+	if (!p0) jump 1f
+	jump BLASTK_fatal_thread		// no, regular thread
+1:
+	jump BLASTK_fatal_kernel		// yes, fast interrupt
+
 FUNC_END BLASTK_handle_trap0
 
 FUNC_START BLASTK_trap_angel .text.event.trap0 .p2align 2

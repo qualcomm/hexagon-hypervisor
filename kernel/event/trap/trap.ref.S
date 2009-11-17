@@ -6,8 +6,17 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 
+/*
+ * optimization note:
+ * 
+ * The first two cache lines of the context should be prefetched.
+ * The next several cache lines of the context should be DCZERO'd.
+ */
+
 FUNC_START BLASTK_handle_trap0 .text.event.trap0 .p2align 2
 	r7 = sgp
+	// dcfetch(r7+#0)
+	// dcfetch(r7+#32)
 	r8 = elr
 	r9 = ssr
 	// Detect ANGEL cal
@@ -95,7 +104,7 @@ FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
 	}
 	{
 		r2 = r7
-		jump BLASTK_interrupt_waitloop // 1
+		jump BLASTK_thread_id // 1
 	}
 	{
 		r2 = r7
@@ -145,16 +154,6 @@ FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
 		r1 = r7
 		jump BLASTK_mask_prios_above // 13
 	}
-#ifdef ERROR_HANDLING
-	{
-		r0 = r7
-		jump BLASTK_error_get // 14
-	}
-	{
-		r1 = r7
-		jump BLASTK_restart_thread // 15
-	}
-#else
 	{
 		r0 = r7
 		jump BLASTK_thread_id // 14
@@ -163,7 +162,6 @@ FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
 		r0 = r7
 		jump BLASTK_thread_id // 15
 	}
-#endif
 	{
 		r0 = r7
 		jump BLASTK_get_pcycles // 16

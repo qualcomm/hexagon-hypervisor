@@ -12,6 +12,13 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	if (r0==#0) jump:t BLASTK_interrupted_waitmode
 
 	/* Save off all context */
+	/* Optimization Note:
+	 * First, we should (maybe) dcfetch r0 and r0+32 
+	 * Next, we should add 64 to r0 and dczeroa
+	 * Then continue to dczeroa the rest of the cache lines
+	 * Finally, we should reset r0 back to the original point 
+	 * so the context offset macros work. 
+	 */
 	memd(r0+#CONTEXT_r3130) = r31:30
 	memd(r0+#CONTEXT_r2928) = r29:28
 	memd(r0+#CONTEXT_r2726) = r27:26

@@ -17,9 +17,6 @@ typedef struct _blast_thread_context
 	// #8
 	/* Other info */
 	u32_t trapmask;
-	/* What ring am I in? */
-	//struct _blast_thread_context **queue;
-	/* Callee-save context... */
 	u8_t prio;
 	u8_t tmpprio;
 	u8_t hthread;
@@ -55,31 +52,31 @@ typedef struct _blast_thread_context
 	u64_t r3130;
 	u64_t r2928;
 	// 96
-	u64_t r2726;
+	u64_t r2726;	// OK FOR DCZEROA
 	u64_t r2524;
-	u64_t r2322;	// OK FOR DCZEROA
+	u64_t r2322;
 	u64_t r2120;
 	// 128
-	u64_t r1918;
+	u64_t r1918;	// OK FOR DCZEROA
 	u64_t r1716;
-	u64_t ugpgp;	// OK FOR DCZEROA
+	u64_t ugpgp;
 	u64_t r0100;	/* used for return value */
 	/* Context required for interrupts... everything else */
 	// 160
-	u64_t r1514;
+	u64_t r1514;	// OK FOR DCZEROA
 	u64_t r1312;
 	u64_t r1110;
 	u64_t r0908;
 	// 192
 	u64_t r0706;	// OK FOR DCZEROA
 	u64_t r0504;
-	u64_t r0302;	// OK FOR DCZEROA
+	u64_t r0302;
 	u64_t lc0sa0;
 	// 224
-	u64_t lc1sa1;
+	u64_t lc1sa1;	// OK FOR DCZEROA
 	u64_t m1m0;
-	u64_t sr_preds;	// NOT OK FOR DCZEROA... need guest regs
-	u64_t cs1cs0;
+	u64_t sr_preds;
+	u64_t cs1cs0;	// V4 regs
 	// 256
 } __attribute__((aligned(32))) BLASTK_thread_context;
 

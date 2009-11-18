@@ -10,22 +10,8 @@
 #include <readylist.h>
 #include <lowprio.h>
 
-/*  Sample optional-automatic-assertion-checking-at-return-time  */
-#define RETURN(retval) {\
-	OUTPUT_ASSERTION;\
-	return(retval);\
-}
-
 u64_t BLASTK_check_sanity(const u64_t retval)
 {
-	u64_t arg0 = retval;  /*  used for assertion  */
-
-/*  Possibly filled in via Sphinx extension  */
-#ifdef CHECK_ASSERTIONS
-assert(kernel_locked());
-#define OUTPUT_ASSERTION assert(retval == arg0);
-#endif
-
 	if (BLASTK_priomask == 0) {
 		BLASTK_lowprio_notify();
 	}
@@ -43,22 +29,13 @@ assert(kernel_locked());
 	}
 #endif
 
-	RETURN(retval);
+	return(retval);
 }
 
 u64_t BLASTK_check_sanity_unlock(const u64_t retval)
 {
-	u64_t arg0 = retval;  /*  used for assertion  */
-
-/*  Possibly filled in via Sphinx extension  */
-#ifdef CHECK_ASSERTIONS
-assert(kernel_locked());
-#define OUTPUT_ASSERTION assert(retval == arg0);\
-assert(kernel_unlocked());
-#endif
-
 	BLASTK_check_sanity(retval);
 	BKL_unlock();
-	RETURN(retval);
+	return(retval);
 }
 

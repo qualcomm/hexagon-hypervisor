@@ -24,7 +24,6 @@ class blast_function_info:
    def set_function_property(self,fdata,property,data):
       self.functions[fdata[0]][property] = data
 
-   #  Todo:  check for voids.  
    def dump_debug_functions(self,indent=""):
       output = ""
       for fname in self.functions.keys():
@@ -39,15 +38,12 @@ class blast_function_info:
          if fdata[1] != "void":
             output += indent + "%s retval;\n" % (fdata[1])
             returnstr = "retval = "
-         #  stuff the input assertions in
          for line in self.functions[fname]['iassert']:
             output += indent + line + "\n"
-         #  stuff the wrapped function call
          output += indent + returnstr + "%s(%s);\n" % (fdata[0],",".join([item[0] for item in fdata[2]]))
 
          for line in self.functions[fname]['oassert']:
             output += indent + line + "\n"
-         #  return and leave
          output += indent + "return(retval);\n"
          indent = indent[:-1]
          output += indent + "}\n\n"

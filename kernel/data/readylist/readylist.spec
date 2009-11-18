@@ -11,7 +11,7 @@ The requirements for the ready list are:
 * O(1) removals of the highest priority
 * Very fast detection of the highest priority ready thread
 
-We acheive this by using an array of linked lists of threads ready at a given
+We achieve this by using an array of linked lists of threads ready at a given
 priority, and a bitmask that has a bit set for each non-empty linked list.
 
 We insert a thread into the ready list by adding the thread to the list at the

@@ -12,7 +12,7 @@ Design of the thread context is important.  For performance, we need to
 organize the structure to minimize cache effects.  For total footprint, we need
 to minimize the size of the structure.  
 
-First, the thread context has two words available for poiters.  This allows 
+First, the thread context has two words available for pointers.  This allows 
 the thread context to be used as a singly- or doubly-linked list node.
 
 Next, the thread context has information about the current thread status.

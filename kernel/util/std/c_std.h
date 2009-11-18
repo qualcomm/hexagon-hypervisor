@@ -6,7 +6,9 @@
 #ifndef BLASTK_C_STD_H
 #define BLASTK_C_STD_H 1
 
+#ifndef NULL
 #define NULL ((void *)0)
+#endif
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;

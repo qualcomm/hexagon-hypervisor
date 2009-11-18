@@ -1,12 +1,19 @@
 
 ALL: dummy
 
+CC := qdsp6-gcc
+SIM := qdsp6-sim
+
+CFLAGS := -Iinclude
+
 REF_CFILES := 
 REF_SFILES := 
 REF_OFILES := 
 SRC_HFILES := 
 DEST_HFILES := 
 HELLO := 
+
+BUILD_DIR := .
 
 MKINCLUDES := $(shell find . -name make.inc)
 

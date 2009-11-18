@@ -20,5 +20,13 @@ typedef signed long long int s64_t;
 
 #define IS_WORSE_THAN >
 
+/*  Debug/assertion wrapper support  */
+
+#ifdef DEBUG
+#define call(fname, ...) fname##_debug(__VA_ARGS__)
+#else
+#define call(fname, ...) fname(__VA_ARGS__)
+#endif
+
 #endif
 

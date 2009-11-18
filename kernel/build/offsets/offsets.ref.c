@@ -39,6 +39,7 @@ PRINT_OFFSET(sr_preds);
 PRINT_OFFSET(totalcycles);
 PRINT_OFFSET(oncpu_start);
 PRINT_OFFSET(futex_ptr);
+PRINT_OFFSET(trapmask);
 	printf("#define CONTEXT_SIZE %d\n",sizeof(BLASTK_thread_context));
 	return 0;
 }

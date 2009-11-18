@@ -1,7 +1,12 @@
 
+ALL: dummy
+
 REF_CFILES := 
 REF_SFILES := 
 REF_OFILES := 
+SRC_HFILES := 
+DEST_HFILES := 
+HELLO := 
 
 MKINCLUDES := $(shell find . -name make.inc)
 
@@ -15,8 +20,14 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
+
 dummy:
 	@echo $(REF_CFILES)
 	@echo $(REF_SFILES)
 	@echo $(REF_OFILES)
-	@#echo $(HELLO)
+	@echo $(SRC_HFILES)
+	@echo $(DEST_HFILES)
+	@echo $(HELLO)
+
+includes: $(DEST_HFILES)
+

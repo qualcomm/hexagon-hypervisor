@@ -19,11 +19,10 @@ $(MOD)_OPT_V4_OFILES = $($(MOD)_OPT_V4_CFILES:%.c=%.o) $($(MOD)_OPT_V4_SFILES:%.
 SRC_HFILES += $($(MOD)_SRC_HFILES)
 DEST_HFILES += $($(MOD)_DEST_HFILES)
 
-define ADD_INC_DEP
 DEST_HFILE = $(addprefix include/,$(notdir $(SRC_HFILE)))
-HELLO += x $(SRC_HFILE) q $(addprefix include/,$(notdir $(SRC_HFILE))) y $(DEST_HFILE) z
+
+define ADD_INC_DEP
 $(DEST_HFILE): $(SRC_HFILE)
-	echo $(DEST_HFILE) $(SRC_HFILE)
 	mkdir -p $(dir $(DEST_HFILE))
 	cp $(SRC_HFILE) $(DEST_HFILE)
 endef

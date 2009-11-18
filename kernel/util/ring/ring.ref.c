@@ -7,7 +7,7 @@
  * Rings -- doubly-linked list rings 
  */
 
-#include <rings.h>
+#include <ring.h>
 #include <c_std.h>
 
 void BLASTK_ring_remove_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node)

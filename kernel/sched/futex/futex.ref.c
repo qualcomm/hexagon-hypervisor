@@ -9,7 +9,7 @@
 #include <hw.h>
 #include <runlist.h>
 #include <readylist.h>
-#include <rings.h>
+#include <ring.h>
 #include <check_sanity.h>
 
 BLASTK_thread_context *BLASTK_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE*4)));

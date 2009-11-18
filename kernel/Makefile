@@ -9,7 +9,7 @@ MAKE_INC_DEFAULT := build/make/make.inc.default
 
 define DO_INCLUDE
 DIR := $(dir $(MODPATH))
-MOD := $(lastword $(strip $(subst /, ,$(dir $(MODPATH)))))
+MOD := $(strip $(shell basename $(dir $(MODPATH))))
 include $(MODPATH)
 endef
 
@@ -19,4 +19,4 @@ dummy:
 	@echo $(REF_CFILES)
 	@echo $(REF_SFILES)
 	@echo $(REF_OFILES)
-
+	@#echo $(HELLO)

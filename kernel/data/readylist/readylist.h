@@ -7,7 +7,7 @@
 #define READYLIST_H 1
 
 #include <context.h>
-#include <rings.h>
+#include <ring.h>
 #include <q6protos.h>
 #include <max.h>
 

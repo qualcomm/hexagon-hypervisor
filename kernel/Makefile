@@ -1,10 +1,14 @@
 
 ALL: dummy
 
-CC := qdsp6-gcc
+ifeq ($(ARCHV),)
+ARCHV = 3
+endif
+
+CC = qdsp6-gcc 
 SIM := qdsp6-sim
 
-CFLAGS := -Iinclude
+CFLAGS := -Iinclude -O2 -mv$(ARCHV) -DARCHV=$(ARCHV)
 
 REF_CFILES := 
 REF_SFILES := 
@@ -19,6 +23,7 @@ MKINCLUDES := $(shell find . -name make.inc)
 
 MAKE_INC_DEFAULT := build/make/make.inc.default
 
+
 define DO_INCLUDE
 DIR := $(dir $(MODPATH))
 MOD := $(strip $(shell basename $(dir $(MODPATH))))
@@ -27,6 +32,16 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
+$(REF_OFILES): $(DEST_HFILES)
+
+%.o : %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+%.o : %.S
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(REF_OFILES) $(DEST_HFILES)
 
 dummy:
 	@echo $(REF_CFILES)
@@ -37,4 +52,7 @@ dummy:
 	@echo $(HELLO)
 
 includes: $(DEST_HFILES)
+
+ref: $(REF_OFILES)
+
 

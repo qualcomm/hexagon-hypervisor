@@ -5,6 +5,7 @@
 
 #include <asm_offsets.h>
 #include <asm_std.h>
+#include <max.h>
 
 FUNC_START BLASTK_fastint_call .text.event.fastint .p2align 5
 	// r0 = intno
@@ -14,72 +15,48 @@ FUNC_START BLASTK_fastint_call .text.event.fastint .p2align 5
 	// r4 = fastint_functions
 	// r5 = mask for ciad
 	// r6 = gp
-	{
-		allocframe(#8)
-		r3 += asl(r2,#THREAD_CONTEXT_TOTALSIZE_LOG2)
-		r11.h = #0x01c0	// new SSR: pf enabled,um=0,ie=0,ex=0,asid=0
-		r4 = addasl(r4,r0,#2)
-	}
-	{
-		memd(r29+#0) = r25:24
-		r11.l = #0
-		r4 = memw(r4)
-		r25:24 = combine(r29,r3)
-	}
-	crswap(r24,sgp)	// swap fastint_context pointer w/ thread pointer
+	allocframe(#8)
+	memd(r29+#0) = r25:24
+	r9 = #CONTEXT_SIZE
+	r3 += mpyi(r2,r9)
+	r11.h = #0x01c0
+	r11.l = #0x0
+	r25:24 = combine(r29,r3)
+	crswap(r24,sgp)
 	ssr = r11
-	{
-		r29 = add(r3,#THREAD_CONTEXT_TOTALSIZE-128)
-		callr r4
-		r30 = r5
-		gp = r6
-	}
+	gp = r6
+	r30 = r5
+	callr r4
 BLASTK_fastint_return:
-	// EJP May 14
-	// It's a real pain to restore all the context, get an interrupt,
-	// and then save it all off again if the interrupt is already pending.
-	// so, let's check it!
-	r0 = IPEND
 	ciad(r30)
+	r0 = IPEND
 2:
-	{
-		p0 = cmp.eq(r0,#0)				// Is IPEND clear?
-		if (!p0.new) jump:nt 1f				// no, try and get it without restore/save
-		if (p0.new) r31:30 = memd(r25+#8)		// inline deallocframe
-		r5.h = #hi(BLASTK_fastint_mask)
-	}
-	crswap(r24,sgp) // swap back to thread pointer
-	// return from fast interrupt, switch back
-	{
-		r25:24 = memd(r25+#0)
-		r29 = add(r25,#16)		// inline deallocframe
-		jumpr r31			// yes, return
-	}
+	p0 = cmp.eq(r0,#0)
+	if (!p0) jump 1f
+	r31:30 = memd(r29+#8)
+	crswap(r24,sgp)
+	r25:24 = memd(r29+#0)
+	jumpr r31
+
 1:
-	{
-		// R0 - R15 will be fine through possible interrupt
-		r11.h = #0x1c4 // pf enabled,ie=1,ex=0,um=0
-		r4.h = #hi(BLASTK_fastint_funcptrs)
-		r5.l = #lo(BLASTK_fastint_mask)
-	}
-	{
-		r11.l = #0
-		r4.l = #lo(BLASTK_fastint_funcptrs)
-		r5 = memw(r5)
-	}
+	r5.h = #hi(BLASTK_fastint_mask)
+	r5.l = #lo(BLASTK_fastint_mask)
+	r5 = memw(r5)
+	r4.h = #hi(BLASTK_fastint_funcptrs)
+	r4.l = #lo(BLASTK_fastint_funcptrs)
+	r11.h = #0x1c4
+	r11.l = #0x0
 	r5 = not(r5)
 	r13 = imask
 	imask = r5
 	r14 = ssr
 	ssr = r11
-	isync					// SHOULD TAKE INTERRUPT IF PENDING
+	isync
 	nop
-	ssr = r14				// interrupts disabled again
-	imask = r13				// restore old imask
-	{
-		r0 = #0				// all for naught, return
-		jump 2b
-	}
+	ssr = r14
+	imask = r13
+	r0 = #0
+	jump 2b
 FUNC_END BLASTK_fastint_call
 
 FUNC_START BLASTK_interrupted_fastint_check .text.event.fastint .p2align 2

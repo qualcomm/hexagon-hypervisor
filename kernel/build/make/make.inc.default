@@ -27,9 +27,9 @@ $(DEST_HFILE): $(SRC_HFILE)
 	cp $(SRC_HFILE) $(DEST_HFILE)
 endef
 
-ifneq ($($(MOD)_SRC_HFILES),)
+#ifneq ($($(MOD)_SRC_HFILES),)
 $(foreach SRC_HFILE,$($(MOD)_SRC_HFILES),$(eval $(ADD_INC_DEP)))
-endif
+#endif
 
 REF_CFILES += $($(MOD)_REF_CFILES)
 REF_SFILES += $($(MOD)_REF_SFILES)

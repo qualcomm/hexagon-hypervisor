@@ -5,6 +5,7 @@
 
 #include <asm_offsets.h>
 #include <asm_std.h>
+#include <max.h>
 
 /*
  * optimization note:
@@ -26,8 +27,8 @@ FUNC_START BLASTK_handle_trap0 .text.event.trap0 .p2align 2
 	memd(r7+#CONTEXT_r3130) = r31:30
 	memd(r7+#CONTEXT_r2928) = r29:28
 	memd(r7+#CONTEXT_r2726) = r27:26
-	memd(r7+#CONTEXT_r2524) = r25:22
-	memd(r7+#CONTEXT_r2322) = r23:24
+	memd(r7+#CONTEXT_r2524) = r25:24
+	memd(r7+#CONTEXT_r2322) = r23:22
 	memd(r7+#CONTEXT_r2120) = r21:20
 	memd(r7+#CONTEXT_r1918) = r19:18
 	memd(r7+#CONTEXT_r1716) = r17:16

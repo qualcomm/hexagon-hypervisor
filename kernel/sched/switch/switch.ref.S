@@ -29,7 +29,7 @@ FUNC_START BLASTK_thread_switch .text.sched.switch .p2align 5
 #else
 	r5 = TNUM
 #endif
-	r0 = #TRACE_switch
+	r0 = #3
 	r3:2 = r27:26
 	call BLASTK_trace
 	r1:0 = r25:24
@@ -61,13 +61,13 @@ FUNC_START BLASTK_thread_switch .text.sched.switch .p2align 5
 
 	// set SSR to enable interrupts
 	r2 = ssr
-	r3 = 4
+	r3 = #4
 	r2 = insert(r3,#3,#16)
 	ssr = r2
 	jump BLASTK_wait_forever
 FUNC_END BLASTK_thread_switch
 
-FUNC_BEGIN BLASTK_wait_forever .text.sched.switch .p2align 2
+FUNC_START BLASTK_wait_forever .text.sched.switch .p2align 2
 	wait(r1)
 	jump BLASTK_wait_forever
 FUNC_END BLASTK_wait_forever

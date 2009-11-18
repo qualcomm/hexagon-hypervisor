@@ -5,6 +5,7 @@
 
 #include <asm_offsets.h>
 #include <asm_std.h>
+#include <max.h>
 
 FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	/* If SGP is null, we've interrupted waitmode. */
@@ -32,11 +33,11 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	memd(r0+#CONTEXT_r1110) = r11:10
 	memd(r0+#CONTEXT_r0908) = r9:8
 	memd(r0+#CONTEXT_r0706) = r7:6
-	memd(r0+#CONTEXT_r0504) = r5:3
+	memd(r0+#CONTEXT_r0504) = r5:4
 	memd(r0+#CONTEXT_r0302) = r3:2
 	r13 = ugp
 	r12 = gp
-	r11 = sr
+	r11 = usr
 	r10 = p3:0
 	r9 = lc0
 	r8 = sa0
@@ -63,7 +64,8 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	r29.l = #lo(BLASTK_stacks)
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)
-	r29 += mpyi(r28,#KERNEL_STACK_SIZE)
+	r29 = #KERNEL_STACK_SIZE
+	r29 += mpyi(r28,r29)
 #else
 	r28 = TNUM
 	r29 = #KERNEL_STACK_SIZE
@@ -89,11 +91,11 @@ BLASTK_interrupt_restore:
 	sa0 = r8
 	lc0 = r9
 	p3:0 = r10
-	sr = r11
+	usr = r11
 	gp = r12
 	ugp = r13
 	r3:2 = memd(r0+#CONTEXT_r0302)
-	r5:3 = memd(r0+#CONTEXT_r0504)
+	r5:4 = memd(r0+#CONTEXT_r0504)
 	r7:6 = memd(r0+#CONTEXT_r0706)
 	r9:8 = memd(r0+#CONTEXT_r0908)
 	r11:10 = memd(r0+#CONTEXT_r1110)

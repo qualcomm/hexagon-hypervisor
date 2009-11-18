@@ -1,0 +1,27 @@
+
+# ==== no modifies below ====
+
+$(MOD)_REF_CFILES = $(wildcard $(DIR)$(MOD).ref.c)
+$(MOD)_REF_SFILES = $(wildcard $(DIR)$(MOD).ref.S)
+$(MOD)_REF_OFILES = $($(MOD)_REF_CFILES:%.c=%.o) $($(MOD)_REF_SFILES:%.S=%.o)
+
+$(MOD)_OPT_V3_CFILES = $(wildcard $(DIR)$(MOD).v3opt.c)
+$(MOD)_OPT_V3_SFILES = $(wildcard $(DIR)$(MOD).v3opt.S)
+$(MOD)_OPT_V3_OFILES = $($(MOD)_OPT_V3_CFILES:%.c=%.o) $($(MOD)_OPT_V3_SFILES:%.S=%.o)
+
+$(MOD)_OPT_V4_CFILES = $(wildcard $(DIR)$(MOD).v4opt.c)
+$(MOD)_OPT_V4_SFILES = $(wildcard $(DIR)$(MOD).v4opt.S)
+$(MOD)_OPT_V4_OFILES = $($(MOD)_OPT_V4_CFILES:%.c=%.o) $($(MOD)_OPT_V4_SFILES:%.S=%.o)
+
+REF_CFILES += $($(MOD)_REF_CFILES)
+REF_SFILES += $($(MOD)_REF_SFILES)
+REF_OFILES += $($(MOD)_REF_OFILES)
+
+REF_OPT_V3_CFILES += $($(MOD)_OPT_V3_CFILES)
+REF_OPT_V3_SFILES += $($(MOD)_OPT_V3_SFILES)
+REF_OPT_V3_OFILES += $($(MOD)_OPT_V3_OFILES)
+
+REF_OPT_V4_CFILES += $($(MOD)_OPT_V4_CFILES)
+REF_OPT_V4_SFILES += $($(MOD)_OPT_V4_SFILES)
+REF_OPT_V4_OFILES += $($(MOD)_OPT_V4_OFILES)
+

@@ -64,8 +64,43 @@ interruptible, and raise the reschedule interrupt.
 
 If the priomask is zero, then no thread has been designated the lowest priority
 running thread.  Make the lowest priority running thread interruptible.
- 
-  
+
+
+Testing
+~~~~~~~
+
+Samples
+```````
+
+n_pri_levels -- number of priority levels available
+   Boundaries/interesting values:
+BLASTK_ready_best_prio -- bit mask of priorities with ready tasks
+   Boundaries/interesting values:
+BLASTK_ready_validmask -- ?
+BLASTK_wait_mask -- bit mask of hardware threads that are waiting
+   Boundaries/interesting values:
+BLASTK_priomask -- bit mask of hardware threads which are the lowest priority
+   Boundaries/interesting values:
+imask[nthreads] -- per-thread imask
+   Boundaries:
+BLASTK_resched_int -- shows whether or not a resched was fired
+   Boundaries:
+
+
+States
+``````
+
+Matrix
+``````
+
+
+Harness
+```````
+
+Unit test overrides BLASTK_* defines to provide input and check output.
+Assertions should be turned on, and the call() convention used.
+
+
 BLASTK_check_sanity_unlock
 --------------------------
 

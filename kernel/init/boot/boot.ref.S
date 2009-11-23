@@ -5,6 +5,7 @@
 
 #include <asm_std.h>
 #include <asm_offsets.h>
+#include <max.h>
 
 FUNC_START start .text.init.boot .p2align 2
 	r0 = #0
@@ -52,7 +53,7 @@ FUNC_START start .text.init.boot .p2align 2
 	r1 = add(r1,#1)
 	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
 	if (!p0) jump 1b
-
+2:
 	/* Turn on translation, ISDB, etc */
 	r0 = #0x7f
 	syscfg = r0

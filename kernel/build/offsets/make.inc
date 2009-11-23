@@ -7,3 +7,5 @@ $(BUILD_DIR)/offsets: $(DIR)offsets.ref.c include/context.h include/c_std.h
 
 DEST_HFILES += include/asm_offsets.h
 
+CLEAN_EXTRAS += $(BUILD_DIR)/offsets
+

@@ -9,6 +9,8 @@
 #define MAX_HTHREADS 3
 #endif
 
+#define MAX_TLB_ENTRIES 64
+
 #define MAX_THREADS 16
 
 #define KERNEL_STACK_SIZE (8*16)

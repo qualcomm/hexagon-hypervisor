@@ -15,6 +15,7 @@ REF_SFILES :=
 REF_OFILES := 
 SRC_HFILES := 
 DEST_HFILES := 
+CLEAN_EXTRAS := 
 HELLO := 
 
 BUILD_DIR := .
@@ -41,7 +42,7 @@ $(REF_OFILES): $(DEST_HFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(REF_OFILES) $(DEST_HFILES)
+	rm -f $(REF_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS)
 
 dummy:
 	@echo $(REF_CFILES)

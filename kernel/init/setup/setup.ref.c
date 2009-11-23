@@ -7,9 +7,9 @@
 #include <runlist.h>
 #include <readylist.h>
 
-void init_setup()
+void BLASTK_init_setup()
 {
-	runlist_init();
-	readylist_init();
+	BLASTK_runlist_init();
+	BLASTK_readylist_init();
 }
 

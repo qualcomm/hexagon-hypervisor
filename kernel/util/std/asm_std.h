@@ -12,11 +12,23 @@
 	.section \section,"ax",@progbits
 	\align \amt
 	.global \name
-	.type \name,function
+	.type \name,@function
 \name:
 .endm
 
 .macro FUNC_END name
+	.size \name,.-\name
+.endm
+
+.macro DATA_START name, section, align, amt
+	.section \section,"aw",@progbits
+	\align \amt
+	.global \name
+	.type \name,@object
+\name:
+.endm
+
+.macro DATA_END name
 	.size \name,.-\name
 .endm
 

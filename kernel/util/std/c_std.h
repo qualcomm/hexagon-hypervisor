@@ -22,6 +22,8 @@ typedef signed long long int s64_t;
 
 #define IS_WORSE_THAN >
 
+#define IN_SECTION(secname) __attribute__((section(secname)))
+
 /*  Debug/assertion wrapper support  */
 
 #ifdef DEBUG

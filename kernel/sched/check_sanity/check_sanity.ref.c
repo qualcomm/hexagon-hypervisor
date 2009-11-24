@@ -35,7 +35,7 @@ u64_t BLASTK_check_sanity(const u64_t retval)
 u64_t BLASTK_check_sanity_unlock(const u64_t retval)
 {
 	BLASTK_check_sanity(retval);
-	BKL_unlock();
+	BKL_UNLOCK();
 	return(retval);
 }
 

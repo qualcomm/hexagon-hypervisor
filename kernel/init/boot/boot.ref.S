@@ -70,6 +70,7 @@ FUNC_END blast_init
 DATA_START BLASTK___refs .data.init.boot .p2align 2
 	.word BLASTK_futex_wait
 	.word BLASTK_futex_resume
+	.word BLASTK_event_vectors
 	/* TODO: fill in all refs */
 DATA_END BLASTK___refs
 

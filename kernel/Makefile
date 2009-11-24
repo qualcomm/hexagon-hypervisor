@@ -6,9 +6,10 @@ ARCHV = 3
 endif
 
 CC = qdsp6-gcc 
+AR = qdsp6-ar
 SIM := qdsp6-sim
 
-CFLAGS := -Iinclude -O2 -mv$(ARCHV) -DARCHV=$(ARCHV)
+CFLAGS := -Iinclude -G0 -O2 -mv$(ARCHV) -DARCHV=$(ARCHV)
 
 REF_CFILES := 
 REF_SFILES := 
@@ -35,6 +36,11 @@ $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
 $(REF_OFILES): $(DEST_HFILES)
 
+build/ref/libblastkernel.a: $(REF_OFILES)
+	mkdir -p $(dir $@)
+	$(AR) cru $@ $(REF_OFILES)
+
+
 %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -42,7 +48,7 @@ $(REF_OFILES): $(DEST_HFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(REF_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS)
+	rm -rf $(REF_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref
 
 dummy:
 	@echo $(REF_CFILES)
@@ -54,6 +60,6 @@ dummy:
 
 includes: $(DEST_HFILES)
 
-ref: $(REF_OFILES)
+ref: build/ref/libblastkernel.a
 
 

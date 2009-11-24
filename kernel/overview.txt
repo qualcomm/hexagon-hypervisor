@@ -1,0 +1,25 @@
+
+BOOT PROCESS
+
+BLAST defines the start symbol, and boots up the processor.
+
+It then sets up the "boot" thread context to continue execution.
+
+The "boot" thread should live in the same address space as the kernel, runs in
+supervisor mode, etc.  It will set up additional kernel configurations,
+including:
+	* Allocating additional memory for threads / VMs
+	* Modifying the interrupt configuration
+	* Additional hardware setup
+
+Then, the boot thread can spawn new threads to continue execution.
+
+New threads can change their memory map using the right syscall.
+
+
+Thread spawning follows the "fork/exec" strategy: first create a new thread,
+inheriting most of the settings of the parent, then that thread can configure
+itself to be different.
+
+
+

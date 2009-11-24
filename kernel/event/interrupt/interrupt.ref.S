@@ -111,6 +111,7 @@ BLASTK_interrupt_restore:
 	r31:30 = memd(r0+#CONTEXT_r3130)
 	r1:0 = memd(r0+#CONTEXT_r0100)
 	rte
+	.global BLASTK_interrupt_restore
 FUNC_END BLASTK_handle_int
 
 FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2

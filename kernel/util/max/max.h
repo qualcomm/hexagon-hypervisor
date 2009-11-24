@@ -19,6 +19,8 @@
 
 #define MAX_ASIDS 32
 
+#define MAX_INTERRUPTS 32
+
 #define RESCHED_INT 3
 
 #if __QDSP6_ARCH__ <= 3
@@ -27,5 +29,5 @@
 #define RESCHED_INT_INTMASK (0x00000001 << RESCHED_INT)
 #endif
 
-#define SSR_DEFAULT 0x1c60000
+#define BOOT_THREAD_SSR 0x1c60000
 

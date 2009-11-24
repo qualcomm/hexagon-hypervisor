@@ -7,7 +7,7 @@
 #include <asm_std.h>
 #include <max.h>
 
-FUNC_START BLASTK_fastint_call .text.event.fastint .p2align 5
+FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 	// r0 = intno
 	// r1 = me
 	// r2 = hthread

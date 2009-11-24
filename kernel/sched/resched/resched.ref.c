@@ -10,6 +10,7 @@
 #include <readylist.h>
 #include <dosched.h>
 #include <lowprio.h>
+#include <resched.h>
 
 void BLASTK_reshcedule_from_wait(u32_t hwtnum)
 {

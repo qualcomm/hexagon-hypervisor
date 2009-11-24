@@ -13,8 +13,8 @@ FUNC_START start .text.init.boot .p2align 2
 	ickill
 	dckill
 	l2kill
-	r15.h = #hi(BLASTK_mmap_table_ptr)
-	r15.l = #lo(BLASTK_mmap_table_ptr)
+	r15.h = #hi(BLASTK_bootmap_ptr)
+	r15.l = #lo(BLASTK_bootmap_ptr)
 	r0 = #6
 	syscfg = r0
 

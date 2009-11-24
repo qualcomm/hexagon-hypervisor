@@ -107,3 +107,11 @@ u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *m
 	}
 }
 
+void BLASTK_futex_init()
+{
+	int i;
+	for (i = 0; i < FUTEX_HASHSIZE; i++) {
+		BLASTK_futexhash[i] = NULL;
+	}
+}
+

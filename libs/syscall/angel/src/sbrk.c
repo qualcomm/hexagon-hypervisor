@@ -20,10 +20,11 @@ extern size_t heapLimit __attribute__((section(".data")));
 
 static blast_mutex_t mylock = 0;
 
+static unsigned long long int *heap_base = NULL;
+static unsigned long long int *heap_start = NULL;
+
 void *sys_sbrk(ptrdiff_t more)
 {
-	static unsigned long long int *heap_base = NULL;
-	static unsigned long long int *heap_start = NULL;
 	unsigned long long int *old_base, *new_base;
 	blast_mutex_lock(&mylock);
 	if (heap_base == NULL) {
@@ -46,6 +47,8 @@ void *sys_sbrk(ptrdiff_t more)
 		heap_base = new_base;
 	}
 	blast_mutex_unlock(&mylock);
+	((unsigned int *)(old_base))[0] = more;
+	((unsigned int *)(old_base))[1] = more;
 	return old_base;
 }
 

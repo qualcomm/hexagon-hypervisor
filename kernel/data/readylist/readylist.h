@@ -11,8 +11,8 @@
 #include <q6protos.h>
 #include <max.h>
 
-extern BLASTK_thread_context *BLASTK_ready[MAX_PRIOS];
-extern u32_t BLASTK_ready_valids;
+extern BLASTK_thread_context *BLASTK_ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
+extern u32_t BLASTK_ready_valids IN_SECTION(".data.sched.ready");
 
 static inline int BLASTK_ready_best_prio()
 {

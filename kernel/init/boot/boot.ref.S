@@ -17,6 +17,10 @@ FUNC_START start .text.init.boot .p2align 2
 	r15.l = #lo(BLASTK_bootmap_ptr)
 	r0 = #6
 	syscfg = r0
+	/* Setup EVB */
+	r0.h = #hi(BLASTK_event_vectors)
+	r0.l = #lo(BLASTK_event_vectors)
+	evb = r0
 
 	/* Clear TLB */
 	r3:2 = #0

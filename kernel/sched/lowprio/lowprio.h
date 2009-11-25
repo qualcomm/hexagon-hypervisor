@@ -10,8 +10,8 @@
 #include <q6protos.h>
 #include <hw.h>
 
-extern u32_t BLASTK_priomask;
-extern u32_t BLASTK_wait_mask;
+extern u32_t BLASTK_priomask IN_SECTION(".data.sched.lowprio");
+extern u32_t BLASTK_wait_mask IN_SECTION(".data.sched.lowprio");
 
 /* Notify a low priority thread that it is the new lowest priority if necessary */
 /* BLASTK_priomask should be non-zero */

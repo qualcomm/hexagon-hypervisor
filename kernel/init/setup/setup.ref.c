@@ -27,6 +27,7 @@ void BLASTK_thread_boot()
 	BLASTK_thread_context_clear(boot);
 	boot->ssrelr = (((u64_t)(BOOT_THREAD_SSR)) << 32) | ((u32_t)(qdsp6_pre_main));
 	boot->continuation = BLASTK_interrupt_restore;
+	boot->trapmask = 0xffffffff;
 	BLASTK_runlist_push(boot);
 	BLASTK_switch(NULL,boot);
 }

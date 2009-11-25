@@ -5,8 +5,8 @@
 
 #include <runlist.h>
 
-BLASTK_thread_context *BLASTK_runlist[MAX_PRIOS];
-u32_t BLASTK_runlist_valids;
+BLASTK_thread_context *BLASTK_runlist[MAX_PRIOS] IN_SECTION(".data.sched.runlist");
+u32_t BLASTK_runlist_valids IN_SECTION(".data.sched.runlist");
 
 void BLASTK_runlist_init(void) 
 {

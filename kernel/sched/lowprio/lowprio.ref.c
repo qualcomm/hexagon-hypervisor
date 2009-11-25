@@ -5,6 +5,6 @@
 
 #include <lowprio.h>
 
-u32_t BLASTK_priomask;
-u32_t BLASTK_wait_mask;
+u32_t BLASTK_priomask IN_SECTION(".data.sched.lowprio");
+u32_t BLASTK_wait_mask IN_SECTION(".data.sched.lowprio");
 

@@ -8,7 +8,7 @@
 
 #include <c_std.h>
 
-extern u64_t *BLASTK_memmap_ptr;
+extern u64_t *BLASTK_bootmap_ptr IN_SECTION(".data.bootmap");
 
 #endif
 

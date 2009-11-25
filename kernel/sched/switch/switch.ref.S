@@ -45,6 +45,7 @@ FUNC_START BLASTK_switch .text.sched.switch .p2align 5
 	if (r1 == #0) jump:nt .Lto_sleep
 	memd(r1+#CONTEXT_oncpu_start) = r27:26
 	r31 = memw(r1+#CONTEXT_continuation)
+	sgp = r1
 	jump BLASTK_check_sanity_unlock
 
 .Lto_sleep:

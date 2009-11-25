@@ -18,8 +18,8 @@ typedef struct {
 	u32_t word3;
 } __attribute__((aligned(16))) BLASTK_trace_entry_t;
 
-extern u32_t BLASTK_trace_index;
-extern BLASTK_trace_entry_t BLASTK_trace_buf[];
+extern u32_t BLASTK_trace_index IN_SECTION(".data.trace");
+extern BLASTK_trace_entry_t BLASTK_trace_buf[] IN_SECTION(".data.trace");
 
 static inline void BLASTK_trace(s16_t type, u32_t arg1, u32_t arg2, u32_t arg3, u32_t hwtnum)
 {

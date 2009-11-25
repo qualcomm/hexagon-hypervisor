@@ -38,6 +38,7 @@ s32_t BLASTK_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t asi
 			| ((u64_t)pc);
 	tmp->r2928 = ((u64_t)sp) << 32;
 	tmp->r0100 = arg1;
+	tmp->trapmask = trapmask & me->trapmask;
         BLASTK_ready_append(tmp);
         if (me) {
 		return BLASTK_check_sanity_unlock((u32_t)tmp); // otherwise we're starting up the boot thread, don't wake everyone

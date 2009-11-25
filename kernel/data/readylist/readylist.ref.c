@@ -5,8 +5,8 @@
 
 #include <readylist.h>
 
-BLASTK_thread_context *BLASTK_ready[MAX_PRIOS];
-u32_t BLASTK_ready_valids;
+BLASTK_thread_context *BLASTK_ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
+u32_t BLASTK_ready_valids IN_SECTION(".data.sched.ready");
 
 void BLASTK_readylist_init(void) 
 {

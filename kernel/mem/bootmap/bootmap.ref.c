@@ -44,7 +44,7 @@
 #error insert V4 tlb format here
 #endif
 
-u64_t BLASTK_bootmap[] = {
+u64_t BLASTK_bootmap[] IN_SECTION(".data.bootmap") = {
 #include "bootmap.def"
 	0ULL,
 };

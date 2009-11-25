@@ -10,8 +10,8 @@
 #include <max.h>
 #include <q6protos.h>
 
-extern BLASTK_thread_context *BLASTK_runlist[MAX_PRIOS];
-extern u32_t BLASTK_runlist_valids;
+extern BLASTK_thread_context *BLASTK_runlist[MAX_PRIOS] IN_SECTION(".data.sched.runlist");
+extern u32_t BLASTK_runlist_valids IN_SECTION(".data.sched.runlist");
 
 static inline void BLASTK_runlist_push(BLASTK_thread_context *newthread)
 {

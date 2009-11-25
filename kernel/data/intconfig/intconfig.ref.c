@@ -10,9 +10,9 @@
 #include <q6protos.h>
 #include <hw.h>
 
-void *BLASTK_fastint_funcptrs[MAX_INTERRUPTS];
-void *BLASTK_inthandlers[MAX_INTERRUPTS];
-u32_t BLASTK_fastint_mask;
+void *BLASTK_fastint_funcptrs[MAX_INTERRUPTS] IN_SECTION(".data.event.interrupt");
+void *BLASTK_inthandlers[MAX_INTERRUPTS] IN_SECTION(".data.event.interrupt");
+u32_t BLASTK_fastint_mask IN_SECTION(".data.event.interrupt");
 
 void BLASTK_fastint();
 

@@ -67,6 +67,21 @@ FUNC_START blast_init .text.init.boot .p2align 2
 	jumpr r31
 FUNC_END blast_init
 
+FUNC_START BLASTK_handle_reset .text.init.boot .p2align 2
+	r29.h = #hi(BLASTK_stacks)
+	r29.l = #lo(BLASTK_stacks)
+#if __QDSP6_ARCH__ <= 3
+	r28 = ssr
+	r28 = extractu(r28,#3,#19)
+#else
+	r28 = TNUM
+#endif
+	r3 = #KERNEL_STACK_SIZE
+	r29 += mpyi(r3,r28)
+	r1:0 = xor(r1:0,r1:0)
+	jump BLASTK_switch
+FUNC_END BLASTK_handle_reset
+
 DATA_START BLASTK___refs .data.init.boot .p2align 2
 	.word BLASTK_futex_wait
 	.word BLASTK_futex_resume

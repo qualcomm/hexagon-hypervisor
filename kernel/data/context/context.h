@@ -24,7 +24,7 @@ typedef struct _blast_thread_context
 	// #16
 	struct {
 		void *event_handler;
-		u32_t padw0;
+		u32_t tid;
 	};
 	// 24
 	/* status, etc */

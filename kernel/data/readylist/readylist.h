@@ -51,5 +51,7 @@ static inline BLASTK_thread_context *BLASTK_ready_getbest()
 	return ret;
 }
 
+void BLASTK_readylist_init(void);
+
 #endif
 

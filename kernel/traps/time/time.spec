@@ -1,0 +1,11 @@
+
+MODULE: time
+
+FUNCTION: BLASTK_cputime_get
+
+UNIMPLEMENTED
+
+FUNCTOIN: BLASTK_pcycles_get
+
+UNIMPLEMENTED
+

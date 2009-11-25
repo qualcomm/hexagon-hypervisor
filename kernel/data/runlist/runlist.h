@@ -43,5 +43,7 @@ static inline void BLASTK_runlist_remove(BLASTK_thread_context *thread)
 	}
 }
 
+void BLASTK_runlist_init(void);
+
 #endif
 

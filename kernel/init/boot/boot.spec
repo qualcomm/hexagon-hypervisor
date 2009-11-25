@@ -43,6 +43,21 @@ We need to include a reference to BLASTK_symbols to ensure that
 is also pulled in.
 
 
+FUNCTION: BLASTK_handle_reset()
+
+This routine boots a new processor, or after a reset
+
+INPUTS:
+
+OUTPUTS:
+
+FUNCTIONALITY:
+
+XXX: We assume for now that this is only secondary threads booting.
+
+We set up kernel stack pointer and go to wait mode.
+
+
 STRUCT: void *BLASTK_symbols[]
 
 This data structure contains references to all functions

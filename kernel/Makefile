@@ -9,7 +9,7 @@ CC = qdsp6-gcc
 AR = qdsp6-ar
 SIM := qdsp6-sim
 
-CFLAGS := -Iinclude -G0 -O2 -mv$(ARCHV) -DARCHV=$(ARCHV)
+CFLAGS := -Iinclude -G0 -O2 -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall
 
 REF_CFILES := 
 REF_SFILES := 

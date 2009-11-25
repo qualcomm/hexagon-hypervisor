@@ -125,7 +125,7 @@ FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
 	}
 	{
 		r0 = r7
-		jump BLASTK_trap_cputime // 6
+		jump BLASTK_cputime_get // 6
 	}
 	{
 		r0 = r7
@@ -144,16 +144,20 @@ FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
 		jump BLASTK_prio_get // 10
 	}
 	{
-		r2 = r7
-		jump BLASTK_change_asid_mappings // 11
+		//r2 = r7
+		//jump BLASTK_change_asid_mappings // 11
+		r0 = r7
+		jump BLASTK_thread_id
 	}
 	{
 		r0 = r7
 		jump BLASTK_sched_yield // 12
 	}
 	{
-		r1 = r7
-		jump BLASTK_mask_prios_above // 13
+		//r1 = r7
+		//jump BLASTK_mask_prios_above // 13
+		r0 = r7
+		jump BLASTK_thread_id
 	}
 	{
 		r0 = r7
@@ -165,19 +169,21 @@ FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
 	}
 	{
 		r0 = r7
-		jump BLASTK_get_pcycles // 16
+		jump BLASTK_pcycles_get // 16
+	}
+	{
+		//r1 = r7
+		//jump BLASTK_set_prefetch // 17
+		r0 = r7
+		jump BLASTK_thread_id
 	}
 	{
 		r1 = r7
-		jump BLASTK_set_prefetch // 17
-	}
-	{
-		r1 = r7
-		jump BLASTK_set_tid // 18
+		jump BLASTK_tid_set // 18
 	}
 	{
 		r0 = r7
-		jump BLASTK_get_tid // 19
+		jump BLASTK_tid_get // 19
 	}
 	{
 		r0 = r7

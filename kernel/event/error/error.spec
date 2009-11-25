@@ -5,6 +5,8 @@ MODULE: error
 
 FUNCTION: BLASTK_handle_error
 
+UNIMPLEMENTED!!!!
+
 DESCRIPTION:
 
 BLASTK_handle_error takes an error and applies the appropriate handling method.

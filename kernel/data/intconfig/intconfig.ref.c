@@ -7,6 +7,8 @@
 #include <intconfig.h>
 #include <resched.h>
 #include <max.h>
+#include <q6protos.h>
+#include <hw.h>
 
 void *BLASTK_fastint_funcptrs[MAX_INTERRUPTS];
 void *BLASTK_inthandlers[MAX_INTERRUPTS];

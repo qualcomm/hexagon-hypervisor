@@ -59,20 +59,35 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	crswap(r0,sgp)
 	memd(r21+#CONTEXT_r0100) = r1:0
 
+	/* All registers saved off, set up stack */
+
 #if __QDSP6_ARCH__ <= 3
 	r29.h = #hi(BLASTK_stacks)
 	r29.l = #lo(BLASTK_stacks)
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)
-	r29 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r29)
+	r2 = #KERNEL_STACK_SIZE
+	r29 += mpyi(r28,r2)
 #else
 	r28 = TNUM
 	r29 = #KERNEL_STACK_SIZE
 	r29 = add(##BLASTK_stacks,mpyi(r28,r29))
 #endif
 
-	call BLASTK_fastint		// or something?
+	/* Stack set up, execute interrupt handler */
+	r2 = r28 	// TNUM from above...
+	r0 = ssr
+	r0 = zxtb(r0)
+	r1 = r21	// thread context
+	r4.h = #hi(BLASTK_inthandlers)
+	r4.l = #lo(BLASTK_inthandlers)
+	r4 = addasl(r4,r0,#2)
+	r4 = memw(r4)
+
+	/* Registers set up, call specified handler */
+
+	callr r4
+
 BLASTK_interrupt_restore:
 	/* Restore all state and return */
 	r0 = sgp
@@ -115,8 +130,32 @@ BLASTK_interrupt_restore:
 FUNC_END BLASTK_handle_int
 
 FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2
-	// XXX: do stuff here
-	// XXX: set up kernel stack
-	call BLASTK_fastint	// or something?
+#if __QDSP6_ARCH__ <= 3
+	r29.h = #hi(BLASTK_stacks)
+	r29.l = #lo(BLASTK_stacks)
+	r28 = ssr
+	r28 = extractu(r28,#3,#19)
+	r2 = #KERNEL_STACK_SIZE
+	r29 += mpyi(r28,r2)
+#else
+	r28 = TNUM
+	r29 = #KERNEL_STACK_SIZE
+	r29 = add(##BLASTK_stacks,mpyi(r28,r29))
+#endif
+	
+
+	/* Stack set up, execute interrupt handler */
+	r2 = r28 	// TNUM from above...
+	r0 = ssr
+	r0 = zxtb(r0)
+	r1 = r21	// thread context
+	r4.h = #hi(BLASTK_inthandlers)
+	r4.l = #lo(BLASTK_inthandlers)
+	r4 = addasl(r4,r0,#2)
+	r4 = memw(r4)
+
+	/* Registers set up, call specified handler */
+	callr r4
+
 FUNC_END BLASTK_interrupted_waitmode
 

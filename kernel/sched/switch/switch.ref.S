@@ -49,6 +49,22 @@ FUNC_START BLASTK_switch .text.sched.switch .p2align 5
 	jump BLASTK_check_sanity_unlock
 
 .Lto_sleep:
+#if (__QDSP6_ARCH__) <= 3
+	r5 = ssr
+	r5 = extractu(r5,#3,#19)
+#else
+	r5 = TNUM
+#endif
+	r3.h = #hi(BLASTK_wait_mask)
+	r3.l = #lo(BLASTK_wait_mask)
+	r4.h = #hi(BLASTK_priomask)
+	r4.l = #lo(BLASTK_priomask)
+	r9 = memw(r3)
+	r8 = memw(r4)
+	r9 = setbit(r9,r5)
+	r8 = setbit(r8,r5)
+	memw(r3) = r9
+	memw(r4) = r8
 	k0unlock
 	// set SGP to NULL
 	sgp = r1

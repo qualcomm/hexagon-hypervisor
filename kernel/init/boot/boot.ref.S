@@ -22,6 +22,13 @@ FUNC_START start .text.init.boot .p2align 2
 	r0.l = #lo(BLASTK_event_vectors)
 	evb = r0
 
+	/* Set up rising edge triggered */
+	r0 = #-1
+	iel = r0
+	iahl = r0
+	cswi(r0)
+	ciad(r0)
+
 	/* Clear TLB */
 	r3:2 = #0
 	r1 = #0
@@ -65,6 +72,10 @@ FUNC_START start .text.init.boot .p2align 2
 	r29.h = #hi(BLASTK_stacks)
 	r29.l = #lo(BLASTK_stacks)
 
+	// Wake up other threads
+	r0 = #-1
+	start(r0)
+
 	jump BLASTK_thread_boot
 
 FUNC_START blast_init .text.init.boot .p2align 2
@@ -83,6 +94,7 @@ FUNC_START BLASTK_handle_reset .text.init.boot .p2align 2
 	r3 = #KERNEL_STACK_SIZE
 	r29 += mpyi(r3,r28)
 	r1:0 = xor(r1:0,r1:0)
+	k0lock
 	jump BLASTK_switch
 FUNC_END BLASTK_handle_reset
 

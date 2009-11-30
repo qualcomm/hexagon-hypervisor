@@ -226,8 +226,8 @@ FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
 		jump BLASTK_thread_id // 29
 	}
 	{
-		r0 = r7
-		jump BLASTK_thread_id // 30
+		r4 = r7
+		jump BLASTK_trap_config // 30
 	}
 	{
 		r0 = r7

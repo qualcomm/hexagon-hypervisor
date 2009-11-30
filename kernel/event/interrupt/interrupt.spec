@@ -32,6 +32,10 @@ Interrupts can be handled by calling the reschedule function, or calling the
 function to handle fast interrupts.  The fast interrupt handler may be called
 before saving the registers saved by the ABI to improve performance.
 
+What function to call is determined by the table BLASTK_inthandlers.  The format
+of each inthandler should be:
+	BLASTK_handler(u32_t intno, BLAST_thread_context *me, u32_t hwtnum)
+
 Real interrupted threads (as opposed to, for example, the idle thread) that may 
 reschedule should have int_context_restore as the end of their continuation
 function.
@@ -50,4 +54,23 @@ OUTPUT:
 FUNCTIONALITY:
 
 The int_context_restore routine restores registers from the thread context and returns.
+
+
+
+FUNCTION: BLASTK_interrupted_waitmode()
+
+DESCRIPTION:
+
+This routine is called when we detect that we were interrupted while in wait.  
+This is a common case, and we can avoid context save by branching to this 
+routine early.
+
+INPUT:
+
+OUTPUT:
+
+FUNCTIONALITY:
+
+We set up the stack pointer and call the correct function.
+
 

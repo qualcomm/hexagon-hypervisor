@@ -1,36 +1,9 @@
 
-UNIT: resched
-
-FUNCTION: void BLASTK_reschedule_from_wait(u32_t hthread)
+FUNCTION: void resched(u32_t unused, BLASTK_thread_context *me, u32_t hthread)
 
 DESCRIPTION:
 
-BLASTK_reschedule_from_wait handles a rescheduling interrupt from an idle thread.
-
-INPUT:
-
-Argument 0: the hardware thread number
-
-OUTPUT:
-
-FUNCTIONALITY:
-
-First, this function acknowledges the reschedule interrupt.
-
-Next, we acquire the Big Kernel Lock. 
-
-We clear the bit corresponding to our hthread out of the waitmask.
-
-We then call BLASTK_dosched.
-
-
-
-FUNCTION: void reschedule_from_lowprio(u32_t hthread)
-
-DESCRIPTION:
-
-BLASTK_reschedule_from_lowprio handles a rescheduling interrupt from a low priority
-running thread.
+BLASTK_reschedule handles a rescheduling interrupt 
 
 INPUT:
 
@@ -46,7 +19,9 @@ First, this function acknowledges the reschedule interrupt.
 
 Next, we acquire the Big Kernel Lock. 
 
-We remove the currently running thread, and append it to the ready queue.
+If the current thread is NULL, WAIT mode was interrupted, so we clear the wait
+mask bit.  Otherwise, we remove the currently running thread, and append it to
+the ready queue.
 
 We then call BLASTK_dosched.
 

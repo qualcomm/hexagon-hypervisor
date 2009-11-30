@@ -3,8 +3,7 @@ ASM_REF_CODE(fastint requires special register changes difficult in C)
 
 UNIT: fastint
 
-FUNCTION: BLASTK_fastint_call(u32_t intno, BLASTK_thread_context *me, u32_t hthread, 
-			void *fastint_contexts, void **fastint_functions, u32_t ciad_mask)
+FUNCTION: BLASTK_fastint_call(u32_t intno, BLASTK_thread_context *me, u32_t hthread)
 
 DESCRIPTION:
 
@@ -15,10 +14,6 @@ INPUT:
 Argument 0: Interrupt number
 Argument 1: Context for the current thread
 Argument 2: Current hardware thread number
-Argument 3: Pointer to the fastint contexts (passed for performance)
-Argument 4: Pointer to the table of fastint function addresses (passed for performance)
-Argument 5: Mask of current interrupt to use with the CIAD instruction (passed for performance)
-Register 6: Value to use as GP (passed for performance)
 
 OUTPUT:
 

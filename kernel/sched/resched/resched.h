@@ -9,8 +9,7 @@
 #include <c_std.h>
 #include <context.h>
 
-void BLASTK_reschedule_from_wait(u32_t hwtnum);
-void BLASTK_reschedule_from_lowprio(u32_t unused, BLASTK_thread_context *me, u32_t hwtnum);
+void BLASTK_resched(u32_t unused, BLASTK_thread_context *me, u32_t hwtnum);
 
 #endif
 

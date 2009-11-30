@@ -8,6 +8,8 @@
 
 #include <c_std.h>
 
+#define BLASTK_CONTEXT_ALIGN 32
+
 typedef struct _blast_thread_context
 {
 	/* Kernel Variables */
@@ -78,6 +80,6 @@ typedef struct _blast_thread_context
 	u64_t sr_preds;
 	u64_t cs1cs0;	// V4 regs
 	// 256
-} __attribute__((aligned(32))) BLASTK_thread_context;
+} __attribute__((aligned(BLASTK_CONTEXT_ALIGN))) BLASTK_thread_context;
 
 #endif

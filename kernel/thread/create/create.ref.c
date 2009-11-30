@@ -17,12 +17,14 @@
 #include <thread.h>
 #include <check_sanity.h>
 
-s32_t BLASTK_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t asid, u32_t trapmask, BLASTK_thread_context *me)
+void BLASTK_interrupt_restore();
+
+s32_t BLASTK_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapmask, BLASTK_thread_context *me)
 {       
 	BLASTK_thread_context *tmp;
 	u32_t myssr = (me->ssrelr >> 32);
 	if (prio > MAX_PRIOS) return -1;        // bad prio
-	if (asid > MAX_ASIDS) return -1;        // bad asid
+	//if (asid > MAX_ASIDS) return -1;        // bad asid
 	if ((sp & 7) != 0) return -1;           // bad stack pointer alignment
 	BKL_LOCK(&BLASTK_bkl);
 	if (BLASTK_free_threads == NULL) {
@@ -34,11 +36,12 @@ s32_t BLASTK_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t asi
 	tmp->valid = 1;
 	tmp->prio = prio;
 	if (me) tmp->ugpgp = me->ugpgp;
-	tmp->ssrelr = (((u64_t)(myssr | (asid << 8))) << 32)
+	tmp->ssrelr = (((u64_t)(myssr)) << 32)
 			| ((u64_t)pc);
 	tmp->r2928 = ((u64_t)sp) << 32;
 	tmp->r0100 = arg1;
 	tmp->trapmask = trapmask & me->trapmask;
+	tmp->continuation = BLASTK_interrupt_restore;
         BLASTK_ready_append(tmp);
         if (me) {
 		return BLASTK_check_sanity_unlock((u32_t)tmp); // otherwise we're starting up the boot thread, don't wake everyone

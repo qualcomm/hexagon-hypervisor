@@ -11,12 +11,26 @@ FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 	// r0 = intno
 	// r1 = me
 	// r2 = hthread
+	allocframe(#8)
+	memd(r29+#0) = r25:24
+	r3.h = #hi(BLASTK_fastint_contexts)
+	r3.l = #lo(BLASTK_fastint_contexts)
+	r4.h = #hi(BLASTK_fastint_funcptrs)
+	r4.l = #lo(BLASTK_fastint_funcptrs)
+	r5 = #0
+	r5 = setbit(r5,r0)
+#if __QDSP6_ARCH__ <= 3
+	r5 = brev(r5)
+#endif
+	r6.h = #hi(BLASTK_fastint_gp)
+	r6.l = #lo(BLASTK_fastint_gp)
+	r6 = memw(r6)
+
 	// r3 = fastint_contexts
 	// r4 = fastint_functions
 	// r5 = mask for ciad
 	// r6 = gp
-	allocframe(#8)
-	memd(r29+#0) = r25:24
+
 	r9 = #CONTEXT_SIZE
 	r3 += mpyi(r2,r9)
 	r11.h = #0x01c0

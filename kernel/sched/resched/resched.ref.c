@@ -12,20 +12,17 @@
 #include <lowprio.h>
 #include <resched.h>
 
-void BLASTK_reshcedule_from_wait(u32_t hwtnum)
+void BLASTK_resched(u32_t unused, BLASTK_thread_context *me, u32_t hwtnum)
 {
 	ciad(RESCHED_INT_INTMASK);
 	BKL_LOCK(&BLASTK_bkl);
-	BLASTK_wait_mask ^= 1<<hwtnum;
-	BLASTK_dosched(NULL,hwtnum);
-}
-
-void BLASTK_reschedule_from_lowprio(u32_t unused, BLASTK_thread_context *me, u32_t hwtnum)
-{
-	ciad(RESCHED_INT_INTMASK);
-	BKL_LOCK(&BLASTK_bkl);
-	BLASTK_runlist_remove(me);
-	BLASTK_ready_append(me);
+	if (me != NULL) {
+		BLASTK_runlist_remove(me);
+		BLASTK_ready_append(me);
+	} else {
+		/* Interrupted WAIT mode */
+		BLASTK_wait_mask ^= 1<<hwtnum;
+	}
 	BLASTK_dosched(me, hwtnum);
 }
 

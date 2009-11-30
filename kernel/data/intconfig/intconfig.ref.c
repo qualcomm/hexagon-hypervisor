@@ -13,6 +13,7 @@
 void *BLASTK_fastint_funcptrs[MAX_INTERRUPTS] IN_SECTION(".data.event.interrupt");
 void *BLASTK_inthandlers[MAX_INTERRUPTS] IN_SECTION(".data.event.interrupt");
 u32_t BLASTK_fastint_mask IN_SECTION(".data.event.interrupt");
+u32_t BLASTK_fastint_gp IN_SECTION(".data.event.interrupt");
 
 void BLASTK_fastint();
 
@@ -22,6 +23,7 @@ void BLASTK_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), BL
 	BLASTK_inthandlers[whatint] = BLASTK_fastint;
 	BLASTK_fastint_mask |= 1<<(31-whatint);
 	ciad(Q6_R_brev_R(1<<whatint));
+	BLASTK_fastint_gp = (u32_t)(me->ugpgp);
 }
 
 void BLASTK_intconfig_init()
@@ -31,6 +33,7 @@ void BLASTK_intconfig_init()
 		BLASTK_inthandlers[i] = NULL;
 		BLASTK_fastint_funcptrs[i] = NULL;
 	}
-	BLASTK_inthandlers[RESCHED_INT] = BLASTK_reschedule_from_lowprio;
+	BLASTK_fastint_mask = 0;
+	BLASTK_inthandlers[RESCHED_INT] = BLASTK_resched;
 }
 

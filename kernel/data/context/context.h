@@ -64,6 +64,7 @@ typedef struct _blast_thread_context
 	u64_t ugpgp;
 	u64_t r0100;	/* used for return value */
 	/* Context required for interrupts... everything else */
+	/* Note: Fast Interrupt contexts don't need these (can't be interrupted) */
 	// 160
 	u64_t r1514;	// OK FOR DCZEROA
 	u64_t r1312;

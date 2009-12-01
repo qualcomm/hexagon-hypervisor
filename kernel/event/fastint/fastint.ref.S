@@ -11,12 +11,18 @@ FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 	// r0 = intno
 	// r1 = me
 	// r2 = hthread
-	allocframe(#8)
-	memd(r29+#0) = r25:24
 	r3.h = #hi(BLASTK_fastint_contexts)
 	r3.l = #lo(BLASTK_fastint_contexts)
 	r4.h = #hi(BLASTK_fastint_funcptrs)
 	r4.l = #lo(BLASTK_fastint_funcptrs)
+	r9 = #CONTEXT_SIZE
+	r3 += mpyi(r2,r9)
+
+	/* Per-HThread stack may get corrputed by trap in int handler */
+	/* So save off important registers in fastint context that won't change */
+	memd(r3+#CONTEXT_oncpu_start) = r31:30
+	memd(r3+#CONTEXT_totalcycles) = r25:24
+
 	r5 = #0
 	r5 = setbit(r5,r0)
 #if __QDSP6_ARCH__ <= 3
@@ -30,26 +36,24 @@ FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 	// r4 = fastint_functions
 	// r5 = mask for ciad
 	// r6 = gp
+	// XXX: fixme: context stacks?
 
-	r9 = #CONTEXT_SIZE
-	r3 += mpyi(r2,r9)
 	r11.h = #0x01c0
 	r11.l = #0x0
-	r25:24 = combine(r29,r3)
+	r25:24 = combine(r5,r3)
 	crswap(r24,sgp)
 	ssr = r11
 	gp = r6
-	r30 = r5
 	callr r4
 BLASTK_fastint_return:
-	ciad(r30)
+	ciad(r25)
 	r0 = IPEND
 2:
 	p0 = cmp.eq(r0,#0)
 	if (!p0) jump 1f
-	r31:30 = memd(r29+#8)
 	crswap(r24,sgp)
-	r25:24 = memd(r29+#0)
+	r31:30 = memd(r24+#CONTEXT_oncpu_start)
+	r25:24 = memd(r24+#CONTEXT_totalcycles)
 	jumpr r31
 
 1:
@@ -71,7 +75,7 @@ BLASTK_fastint_return:
 	imask = r13
 	r0 = #0
 	jump 2b
-FUNC_END BLASTK_fastint_call
+FUNC_END BLASTK_fastint
 
 FUNC_START BLASTK_interrupted_fastint_check .text.event.fastint .p2align 2
 	// OK, we checked to see if there was a pending 

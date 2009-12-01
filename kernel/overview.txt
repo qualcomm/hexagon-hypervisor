@@ -23,3 +23,46 @@ itself to be different.
 
 
 
+KERNEL DATA STRUCTURES
+
+Each software thread has a "thread context" that has storage for user and 
+guest registers, and additional kernel information about the thread.
+
+Rather than a stack per user thread, which helps define the return process, we
+have a per-hardware-thread kernel stack.  The return process is defined by a
+"continuation" which defines the method for returning to the thread from the
+kernel.  If a thread is switched in, we always "Check Sanity" before calling
+the continuation; thus the continuation should not need to check sanity itself.
+The continuation is typically additionally the return address for the function
+that is called.  This allows a natural flow for traps that do not cause a 
+context switch.
+
+
+INTERRUPTS
+
+Interrupts fall into one of the following categories:
+
+* Reschedule Interrupt
+* Fast Interrupts
+* VM-style Interrupts (TBD)
+
+The Reschedule interrupt is used within BLAST to cause the lowest priority
+thread to reschedule.
+
+Fast interrupts are routines the kernel calls directly.  They have limited 
+functionality.  Supported traps are limited to non-blocking causes; futex 
+resume being the only recommended trap.
+
+Former versions of BLAST supported additional kernel services for waiting 
+for interrupts in a fully-featured thread.  With this version of BLAST we
+recommend a simple fast interrupt handler that sends a signal or semaphore
+to the fully-featured thread. 
+
+If a fast interrupt handler causes a trap, TLB miss, etc, the kernel needs a
+valid thread context to save data to.  There is a per-hardware-thread Fast
+Interrupt Context for this purpose.  Additionally, the per-hardware-thread
+stacks used by the kernel will be used in a trap or extended TLB miss, so fast
+interrupts must have unique stack areas and the kernel stack can not be assumed
+to be valid following a fast interrupt.
+
+

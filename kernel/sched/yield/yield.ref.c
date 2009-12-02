@@ -15,7 +15,7 @@
  * TBD: detect nothing in readylist @ current prio and return
  */
 void BLASTK_sched_yield(BLASTK_thread_context *me)
-{       
+{
         BKL_LOCK(&BLASTK_bkl);
         BLASTK_runlist_remove(me);
         BLASTK_ready_append(me);

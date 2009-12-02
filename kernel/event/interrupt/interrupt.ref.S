@@ -156,6 +156,9 @@ FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2
 
 	/* Registers set up, call specified handler */
 	callr r4
+	r0 = #0
+	r1 = #0
+	jump BLASTK_switch
 
 FUNC_END BLASTK_interrupted_waitmode
 

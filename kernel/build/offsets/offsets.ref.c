@@ -41,6 +41,7 @@ PRINT_OFFSET(oncpu_start);
 PRINT_OFFSET(futex_ptr);
 PRINT_OFFSET(trapmask);
 	printf("#define CONTEXT_SIZE %d\n",sizeof(BLASTK_thread_context));
+	printf("#define FASTINT_CONTEXT_SIZE %d\n",sizeof(BLASTK_fastint_context));
 	return 0;
 }
 

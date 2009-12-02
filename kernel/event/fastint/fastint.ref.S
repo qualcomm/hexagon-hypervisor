@@ -13,9 +13,7 @@ FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 	// r2 = hthread
 	r3.h = #hi(BLASTK_fastint_contexts)
 	r3.l = #lo(BLASTK_fastint_contexts)
-	r4.h = #hi(BLASTK_fastint_funcptrs)
-	r4.l = #lo(BLASTK_fastint_funcptrs)
-	r9 = #CONTEXT_SIZE
+	r9 = #FASTINT_CONTEXT_SIZE
 	r3 += mpyi(r2,r9)
 
 	/* Per-HThread stack may get corrputed by trap in int handler */
@@ -32,11 +30,11 @@ FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 	r6.l = #lo(BLASTK_fastint_gp)
 	r6 = memw(r6)
 
-	// r3 = fastint_contexts
 	// r4 = fastint_functions
 	// r5 = mask for ciad
 	// r6 = gp
-	// XXX: fixme: context stacks?
+
+	r29 = add(r3,#FASTINT_CONTEXT_SIZE)
 
 	r11.h = #0x01c0
 	r11.l = #0x0
@@ -44,7 +42,13 @@ FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 	crswap(r24,sgp)
 	ssr = r11
 	gp = r6
+
+	r4.h = #hi(BLASTK_fastint_funcptrs)
+	r4.l = #lo(BLASTK_fastint_funcptrs)
+	r4 = addasl(r4,r0,#2)
+	r4 = memw(r4)
 	callr r4
+
 BLASTK_fastint_return:
 	ciad(r25)
 	r0 = IPEND

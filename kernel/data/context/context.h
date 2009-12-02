@@ -83,4 +83,24 @@ typedef struct _blast_thread_context
 	// 256
 } __attribute__((aligned(BLASTK_CONTEXT_ALIGN))) BLASTK_thread_context;
 
+typedef struct {
+	BLASTK_thread_context context;
+	unsigned long long int stack120;
+	unsigned long long int stack112;
+	unsigned long long int stack104;
+	unsigned long long int stack096;
+	unsigned long long int stack088;
+	unsigned long long int stack080;
+	unsigned long long int stack072;
+	unsigned long long int stack064;
+	unsigned long long int stack056;
+	unsigned long long int stack048;
+	unsigned long long int stack040;
+	unsigned long long int stack032;
+	unsigned long long int stack024;
+	unsigned long long int stack016;
+	unsigned long long int stack008;
+	unsigned long long int stack000;
+} BLASTK_fastint_context;
+
 #endif

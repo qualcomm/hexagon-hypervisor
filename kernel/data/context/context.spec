@@ -34,3 +34,8 @@ context save can be done to memory that has been cleared, but also that the
 clear instructions will not clobber values that should be maintained.
 
 
+
+A fastint context additionally has extra padding on the end for use for the
+fast interrupt stack.
+
+

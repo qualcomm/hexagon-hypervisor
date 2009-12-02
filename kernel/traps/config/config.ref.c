@@ -4,7 +4,7 @@
  */
 
 #include <config.h>
-#include <offsets.h>
+#include <asm_offsets.h>
 #include <thread.h>
 
 typedef void (*configptr_t)(u32_t, void *, u32_t, u32_t, BLASTK_thread_context *);

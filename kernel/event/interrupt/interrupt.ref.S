@@ -148,7 +148,7 @@ FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2
 	r2 = r28 	// TNUM from above...
 	r0 = ssr
 	r0 = zxtb(r0)
-	r1 = r21	// thread context
+	r1 = #0		// thread context == NULL
 	r4.h = #hi(BLASTK_inthandlers)
 	r4.l = #lo(BLASTK_inthandlers)
 	r4 = addasl(r4,r0,#2)

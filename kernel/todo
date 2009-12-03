@@ -1,4 +1,6 @@
 
+Save callee save regs at trap time or switch time?
+
 V2 support
 Optimized code
 Profiling
@@ -6,4 +8,38 @@ Trace
 Memory
 PMU
 Ready_validmask
+Make return values correct
+
+
+Priority Inheritance:
+
+	futex_wait(void *, u32_t expected, threadid owner_tid)
+
+owner_context = tid_to_context(tid)
+If (owner_context) {
+	if (in_ready_queue(owner_context)) {
+		/* Switch to it immediately */
+		ready_remove(owner_context);
+		owner_context->prio = min(owner_context->prio,me->prio)
+		runlist_push(owner_context);
+		switch(me,owner_context);
+	} else {
+		/* In runlist or blocked */
+		owner_context->new_prio = min(owner_context->prio,me->prio);
+	}
+
+
+	futex_resume
+
+Sets me->prio back to me->baseprio if different (always? Sometimes?)
+
+TBD:
+	* How do we make "in_ready_queue(owner_context)" fast?
+	* How can we change prio and have thread still take itself out of
+	  runlist efficiently?
+	* Change runlist?
+
+Caveats:
+	* Futex_resume may not be right place to always change back prio
+
 

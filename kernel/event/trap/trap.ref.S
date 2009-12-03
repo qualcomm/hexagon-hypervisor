@@ -58,22 +58,31 @@ FUNC_START BLASTK_handle_trap0 .text.event.trap0 .p2align 2
 	r11.h = #hi(BLASTK_traptab)
 	r11.l = #lo(BLASTK_traptab)
 	r10 = addasl(r11,r10,#3)
+
+	// set up continuation in case we block
+	r31.h = #hi(blast_trap_nogood)
+	r31.l = #lo(blast_trap_nogood)
+	memw(r7+#CONTEXT_continuation) = r31
 	callr r10
 
 blast_trap_nogood:
 	r7 = sgp
-	{
-		r13:12 = memd(r7+#CONTEXT_ugpgp)
-		r31:30 = memd(r7+#CONTEXT_r3130)
-	}
-	{
-		r29:28 = memd(r7+#CONTEXT_r2928)
-		r9:8 = memd(r7+#CONTEXT_ssrelr)
-		ugp = r13
-	}
+
+	r13:12 = memd(r7+#CONTEXT_ugpgp)
+	ugp = r13
 	gp = r12
+	r9:8 = memd(r7+#CONTEXT_ssrelr)
 	ssr = r9
 	elr = r8
+	r31:30 = memd(r7+#CONTEXT_r3130)
+	r29:28 = memd(r7+#CONTEXT_r2928)
+	r27:26 = memd(r7+#CONTEXT_r2726)
+	r25:24 = memd(r7+#CONTEXT_r2524)
+	r23:22 = memd(r7+#CONTEXT_r2322)
+	r21:20 = memd(r7+#CONTEXT_r2120)
+	r19:18 = memd(r7+#CONTEXT_r1918)
+	r17:16 = memd(r7+#CONTEXT_r1716)
+
 9:
 	rte
 

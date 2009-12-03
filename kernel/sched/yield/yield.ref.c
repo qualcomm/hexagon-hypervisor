@@ -17,6 +17,10 @@
 void BLASTK_sched_yield(BLASTK_thread_context *me)
 {
         BKL_LOCK(&BLASTK_bkl);
+	if ((BLASTK_readylist_valids & (1<<me->prio)) == 0) {
+		BKL_UNLOCK(&BLASTK_bkl);
+		return;
+	}
         BLASTK_runlist_remove(me);
         BLASTK_ready_append(me);
         BLASTK_dosched(me,me->hthread);

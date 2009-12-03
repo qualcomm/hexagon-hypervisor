@@ -35,8 +35,10 @@ If ``to`` is NULL, we go to wait mode:
 	1. Set SGP to NULL
 	2. Jump to BLASTK_wait_forever
 
-Otherwise, we set SGP to the new thread context, save the current pcycles as
-the thread start time, load the continuation for the new thread into the link
-register, and jump to BLASTK_check_sanity_unlock.  BLASTK_check_sanity_unlock
-will return to the continuation.
+Otherwise, we set SGP to the new thread context, set the current hthread 
+in the new thread context, save the current pcycles as the thread start time,
+load the continuation for the new thread into the link register, load the
+saved r1:0 (which contain a return value from the blocking function), and jump
+to BLASTK_check_sanity_unlock.  BLASTK_check_sanity_unlock will return to the
+continuation.
 

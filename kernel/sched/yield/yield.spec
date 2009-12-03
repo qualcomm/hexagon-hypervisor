@@ -17,10 +17,12 @@ None
 
 FUNCTIONALITY:
 
-If the readylist at the current priority is empty, the BLASTK_sched_yield function may
-return immediately.
+First, we acquire the Big Kernel Lock.
 
-Otherwise, we acquire the Big Kernel Lock.
+If the readylist at the current priority is empty, the BLASTK_sched_yield function may
+return immediately after releasing the BKL.  (EJP: can we do this outside the BKL?
+Another thread might be inserting itself into the ready list.  Can we spec the function
+so that it does a best effort?)
 
 Next, the BLASTK_sched_yield function removes the current thread from the runlist, and
 appends it on the end of the ready list.  

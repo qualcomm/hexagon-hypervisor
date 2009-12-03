@@ -14,8 +14,6 @@ BLASTK_thread_context BLASTK_idle_context;
 #endif
 BLASTK_thread_context BLASTK_boot_context;
 
-BLASTK_fastint_context BLASTK_fastint_contexts[MAX_HTHREADS];
-
 void BLASTK_thread_context_clear(BLASTK_thread_context *thread)
 {
 	u32_t i;
@@ -33,8 +31,5 @@ void BLASTK_thread_init()
 	BLASTK_thread_context_clear(&BLASTK_idle_context);
 #endif
 	BLASTK_free_threads = NULL;
-	for (i = 0; i < MAX_HTHREADS; i++) {
-		BLASTK_thread_context_clear(&BLASTK_fastint_contexts[i].context);
-	}
 }
 

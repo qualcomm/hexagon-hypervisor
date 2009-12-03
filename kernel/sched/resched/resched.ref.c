@@ -21,7 +21,7 @@ void BLASTK_resched(u32_t unused, BLASTK_thread_context *me, u32_t hwtnum)
 		BLASTK_ready_append(me);
 	} else {
 		/* Interrupted WAIT mode */
-		BLASTK_wait_mask ^= 1<<hwtnum;
+		BLASTK_wait_mask = Q6_R_clrbit_RR(BLASTK_wait_mask,hwtnum);
 	}
 	BLASTK_dosched(me, hwtnum);
 }

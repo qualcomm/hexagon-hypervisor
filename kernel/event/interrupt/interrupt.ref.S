@@ -86,7 +86,7 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 
 	/* Registers set up, call specified handler */
 
-	callr r4
+	call .Lint_jump_stub // will jump to r4
 
 BLASTK_interrupt_restore:
 	/* Restore all state and return */
@@ -159,6 +159,10 @@ FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2
 	r0 = #0
 	r1 = #0
 	jump BLASTK_switch
+
+.Lint_jump_stub:
+	memw(r1+#CONTEXT_continuation) = r31
+	jumpr r4
 
 FUNC_END BLASTK_interrupted_waitmode
 

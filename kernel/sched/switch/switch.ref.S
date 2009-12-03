@@ -31,6 +31,7 @@ FUNC_START BLASTK_switch .text.sched.switch .p2align 5
 #endif
 	r0 = #3
 	r3:2 = r27:26
+	r10 = r5
 	//call BLASTK_trace
 	r1:0 = r25:24
 
@@ -45,7 +46,9 @@ FUNC_START BLASTK_switch .text.sched.switch .p2align 5
 	if (r1 == #0) jump:nt .Lto_sleep
 	memd(r1+#CONTEXT_oncpu_start) = r27:26
 	r31 = memw(r1+#CONTEXT_continuation)
+	memb(r1+#CONTEXT_hthread) = r10
 	sgp = r1
+	r1:0 = memd(r1+#CONTEXT_r0100)
 	jump BLASTK_check_sanity_unlock
 
 .Lto_sleep:

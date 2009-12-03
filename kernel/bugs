@@ -1,0 +1,24 @@
+
+Continuation not being set on traps/interrupts
+
+Fix: add to spec
+
+Testing: To all things that can block or reschedule, we should check to make
+sure continuation was set to return address?
+
+
+hwtnum was not being set when a thread was scheduled
+
+Fix: add to thread_switch (is that correct place?  What about fastints?)
+
+Testing: Add input assertion for all functions taking hwtnum that it is correct,
+	and at all functions containing me that me->hthread == hwtnum 
+
+
+
+Other specing / assertions:
+	* For every data element in a struct, spec where it should be updated
+	* Add collection of assertions that we can check on function entry/exit
+	* Add structure verifier that can make sure structures are sane
+
+

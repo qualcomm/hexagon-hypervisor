@@ -17,7 +17,7 @@
 void BLASTK_sched_yield(BLASTK_thread_context *me)
 {
         BKL_LOCK(&BLASTK_bkl);
-	if ((BLASTK_readylist_valids & (1<<me->prio)) == 0) {
+	if ((BLASTK_ready_valids & (1<<me->prio)) == 0) {
 		BKL_UNLOCK(&BLASTK_bkl);
 		return;
 	}

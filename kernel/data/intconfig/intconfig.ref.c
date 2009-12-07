@@ -42,7 +42,7 @@ void BLASTK_intconfig_init()
 	BLASTK_fastint_mask = 0;
 	BLASTK_inthandlers[RESCHED_INT] = BLASTK_resched;
 	for (i = 0; i < MAX_HTHREADS; i++) {
-		tmp = &BLASTK_fastint_context[i].context;
+		tmp = &BLASTK_fastint_contexts[i].context;
 		BLASTK_thread_context_clear(tmp);
 		tmp->hthread = i;
 		tmp->trapmask = FASTINT_TRAPMASK;

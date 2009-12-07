@@ -25,7 +25,6 @@ void BLASTK_thread_context_clear(BLASTK_thread_context *thread)
 
 void BLASTK_thread_init()
 {
-	int i;
 	BLASTK_thread_context_clear(&BLASTK_boot_context);
 #if __QDSP6_ARCH__ == 2
 	BLASTK_thread_context_clear(&BLASTK_idle_context);

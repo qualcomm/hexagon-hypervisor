@@ -13,13 +13,13 @@ FUNC_START start .text.init.boot .p2align 2
 	ickill
 	dckill
 	l2kill
-	r15.h = #hi(BLASTK_bootmap_ptr)
-	r15.l = #lo(BLASTK_bootmap_ptr)
+	r15.h = #hi(H2K_bootmap_ptr)
+	r15.l = #lo(H2K_bootmap_ptr)
 	r0 = #6
 	syscfg = r0
 	/* Setup EVB */
-	r0.h = #hi(BLASTK_event_vectors)
-	r0.l = #lo(BLASTK_event_vectors)
+	r0.h = #hi(H2K_event_vectors)
+	r0.l = #lo(H2K_event_vectors)
 	evb = r0
 
 	/* Set up rising edge triggered */
@@ -69,22 +69,22 @@ FUNC_START start .text.init.boot .p2align 2
 	r0 = #0x7f
 	syscfg = r0
 
-	r29.h = #hi(BLASTK_stacks)
-	r29.l = #lo(BLASTK_stacks)
+	r29.h = #hi(H2K_stacks)
+	r29.l = #lo(H2K_stacks)
 
 	// Wake up other threads
 	r0 = #-1
 	start(r0)
 
-	jump BLASTK_thread_boot
+	jump H2K_thread_boot
 
-FUNC_START blast_init .text.init.boot .p2align 2
+FUNC_START h2_init .text.init.boot .p2align 2
 	jumpr r31
-FUNC_END blast_init
+FUNC_END h2_init
 
-FUNC_START BLASTK_handle_reset .text.init.boot .p2align 2
-	r29.h = #hi(BLASTK_stacks)
-	r29.l = #lo(BLASTK_stacks)
+FUNC_START H2K_handle_reset .text.init.boot .p2align 2
+	r29.h = #hi(H2K_stacks)
+	r29.l = #lo(H2K_stacks)
 #if __QDSP6_ARCH__ <= 3
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)
@@ -95,13 +95,13 @@ FUNC_START BLASTK_handle_reset .text.init.boot .p2align 2
 	r29 += mpyi(r3,r28)
 	r1:0 = xor(r1:0,r1:0)
 	k0lock
-	jump BLASTK_switch
-FUNC_END BLASTK_handle_reset
+	jump H2K_switch
+FUNC_END H2K_handle_reset
 
-DATA_START BLASTK___refs .data.init.boot .p2align 2
-	.word BLASTK_futex_wait
-	.word BLASTK_futex_resume
-	.word BLASTK_event_vectors
+DATA_START H2K___refs .data.init.boot .p2align 2
+	.word H2K_futex_wait
+	.word H2K_futex_resume
+	.word H2K_event_vectors
 	/* TODO: fill in all refs */
-DATA_END BLASTK___refs
+DATA_END H2K___refs
 

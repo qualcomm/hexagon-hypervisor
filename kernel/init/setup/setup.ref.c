@@ -13,25 +13,25 @@
 #include <intconfig.h>
 
 void qdsp6_pre_main();
-void BLASTK_interrupt_restore();
+void H2K_interrupt_restore();
 
-void BLASTK_init_setup()
+void H2K_init_setup()
 {
-	BLASTK_runlist_init();
-	BLASTK_readylist_init();
-	BLASTK_futex_init();
-	BLASTK_intconfig_init();
-	BLASTK_thread_init();
+	H2K_runlist_init();
+	H2K_readylist_init();
+	H2K_futex_init();
+	H2K_intconfig_init();
+	H2K_thread_init();
 }
 
-void BLASTK_thread_boot()
+void H2K_thread_boot()
 {
-	BLASTK_thread_context *boot = &BLASTK_boot_context;
-	BLASTK_init_setup();
+	H2K_thread_context *boot = &H2K_boot_context;
+	H2K_init_setup();
 	boot->ssrelr = (((u64_t)(BOOT_THREAD_SSR)) << 32) | ((u32_t)(qdsp6_pre_main));
-	boot->continuation = BLASTK_interrupt_restore;
+	boot->continuation = H2K_interrupt_restore;
 	boot->trapmask = 0xffffffff;
-	BLASTK_runlist_push(boot);
-	BLASTK_switch(NULL,boot);
+	H2K_runlist_push(boot);
+	H2K_switch(NULL,boot);
 }
 

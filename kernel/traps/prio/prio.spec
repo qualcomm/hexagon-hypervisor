@@ -3,7 +3,7 @@ MODULE: prio
 
 Priority Management Trap Handlers
 
-FUNCTION: u32_t BLASTK_prio_get(BLASTK_thread_context *me)
+FUNCTION: u32_t H2K_prio_get(H2K_thread_context *me)
 
 INTPUTS:
 
@@ -15,7 +15,7 @@ Returns the priority
 
 
 
-FUNCTION: u32_t BLASTK_prio_set(BLASTK_thread_context *dest, u32_t prio, BLASTK_thread_context *me)
+FUNCTION: u32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
 
 XXX: UNIMPLEMENTED 
 

@@ -3,7 +3,7 @@ ASM_REF_CODE(Trap context save/restore not possible in C)
 
 UNIT: interrupt
 
-FUNCTION: BLASTK_handle_trap0()
+FUNCTION: H2K_handle_trap0()
 
 DESCRIPTION:
 
@@ -19,7 +19,9 @@ OUTPUT:
 
 FUNCTIONALITY:
 
-The BLAST Trap API specifies that only the callee-save registers be saved by the
+XXX: TBD: for VM, we must not clobber regs...
+
+The H2 Trap API specifies that only the callee-save registers be saved by the
 kernel during a trap0.  This allows the kernel to immediately use scratch registers
 for saving context and determining the correct behavior for the trap.
 
@@ -35,15 +37,16 @@ an appropriate semihosting provider.
 We then check to ensure that the thread can use the requested trap.  This is
 used to reduce capabilities of less-priviledged threads, and is also used to
 assert that fast interrupt handlers cannot block.  If a user-mode thread cannot
-execute the trap, we call BLASTK_fatal_thread().  If a fast interrupt cannot
-execute the trap, we call BLASTK_fatal_kernel().
+execute the trap, we call H2K_fatal_thread().  If a fast interrupt cannot
+execute the trap, we call H2K_fatal_kernel().
 
-We then jump to the handler for the requested trap.  
+We then call a stub that saves the return value into the continuation field, 
+and jump to the traptab entry for the requested trap.  
 
 The trap request can return, or can call the trap continuation.
 
 
-FUNCTION: BLASTK_traptab()
+FUNCTION: H2K_traptab()
 
 DESCRIPTION:
 

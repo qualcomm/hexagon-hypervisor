@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef BLASTK_PRIO_H
-#define BLASTK_PRIO_H 1
+#ifndef H2K_PRIO_H
+#define H2K_PRIO_H 1
 
 #include <c_std.h>
 #include <context.h>
 
-u32_t BLASTK_prio_set(BLASTK_thread_context *dest, u32_t prio, BLASTK_thread_context *me);
-u32_t BLASTK_prio_get(BLASTK_thread_context *me);
+u32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me);
+u32_t H2K_prio_get(H2K_thread_context *me);
 
 #endif
 

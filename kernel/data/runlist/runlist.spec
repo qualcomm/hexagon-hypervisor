@@ -25,11 +25,11 @@ be preferable to have an array of the currently running thread on each hardware
 thread, and find the minimum by inspecting each value.
 
 
-FUNCTION: void BLASTK_runlist_init()
+FUNCTION: void H2K_runlist_init()
 
 DESCRIPTION:
 
-Initializes the BLASTK_runlist structures.
+Initializes the H2K_runlist structures.
 
 INPUTS:
 
@@ -37,11 +37,11 @@ OUTPUTS:
 
 FUNCTIONALITY:
 
-Set all elements of BLASTK_runlist to NULL, and set BLASTK_runlist_valids to zero.
+Set all elements of H2K_runlist to NULL, and set H2K_runlist_valids to zero.
 
 
 
-FUNCTION: static inline void BLASTK_runlist_push(BLASTK_thread_context *newthread)
+FUNCTION: static inline void H2K_runlist_push(H2K_thread_context *newthread)
 
 DESCRIPTION:
 
@@ -61,7 +61,7 @@ The bit in runlist_valids corresponding to the priority is set.
 
 
 
-FUNCTION: static inline u32_t BLASTK_runlist_worst_prio()
+FUNCTION: static inline u32_t H2K_runlist_worst_prio()
 
 DESCRIPTION:
 
@@ -75,13 +75,13 @@ Returns the priority of the worst priority running thread.
 
 FUNCTIONALITY:
 
-We count leading zeros of BLASTK_runlist_valids.  This gives us the number of 
+We count leading zeros of H2K_runlist_valids.  This gives us the number of 
 lowest priorities that have no threads.  We subtract this value from the priority
 corresponding to the most significant bit.
 
 
 
-FUNCTION: static inline void BLASTK_runlist_remove(BLASTK_thread_context *thread)
+FUNCTION: static inline void H2K_runlist_remove(H2K_thread_context *thread)
 
 DESCRIPTION:
 
@@ -99,6 +99,6 @@ FUNCTIONALITY:
 We get the priority from the thread structure.  We then look at the runlist linked
 list at the corresponding priority.  When we find the thread, we remove it from the
 linked list.  If the runlist has emptied because of the removal of the thread, we
-clear the bit from BLASTK_runlist_valids.
+clear the bit from H2K_runlist_valids.
 
 

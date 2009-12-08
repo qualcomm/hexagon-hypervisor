@@ -1,11 +1,11 @@
 
 MODULE: thread_id
 
-FUNCTION: u32_t BLASTK_thread_id(thread_context *me)
+FUNCTION: u32_t H2K_thread_id(thread_context *me)
 
 DESCRIPTION:
 
-The BLASTK_thread_id function returns a unique id for the requesting thread.
+The H2K_thread_id function returns a unique id for the requesting thread.
 
 INPUT:
 

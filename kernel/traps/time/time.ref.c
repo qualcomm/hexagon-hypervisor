@@ -5,12 +5,12 @@
 
 #include <time.h>
 
-u64_t BLASTK_cputime_get(BLASTK_thread_context *me)
+u64_t H2K_cputime_get(H2K_thread_context *me)
 {
 	return 0;
 }
 
-u64_t BLASTK_pcycles_get(BLASTK_thread_context *me)
+u64_t H2K_pcycles_get(H2K_thread_context *me)
 {
 	return 0;
 }

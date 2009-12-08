@@ -12,27 +12,27 @@
  *
  */
 
-typedef struct _BLASTK_ringnode {
-	struct _BLASTK_ringnode *next;
-	struct _BLASTK_ringnode *prev;
-} __attribute__((aligned(8))) BLASTK_ringnode_t;
+typedef struct _H2K_ringnode {
+	struct _H2K_ringnode *next;
+	struct _H2K_ringnode *prev;
+} __attribute__((aligned(8))) H2K_ringnode_t;
 
-void BLASTK_ring_remove_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node);
-void BLASTK_ring_insert_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node);
-void BLASTK_ring_append_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node);
-void BLASTK_ring_remove_append_real(BLASTK_ringnode_t **fromring, BLASTK_ringnode_t **toring, BLASTK_ringnode_t *node);
+void H2K_ring_remove_real(H2K_ringnode_t **ring, H2K_ringnode_t *node);
+void H2K_ring_insert_real(H2K_ringnode_t **ring, H2K_ringnode_t *node);
+void H2K_ring_append_real(H2K_ringnode_t **ring, H2K_ringnode_t *node);
+void H2K_ring_remove_append_real(H2K_ringnode_t **fromring, H2K_ringnode_t **toring, H2K_ringnode_t *node);
 
-static inline void BLASTK_ring_remove(void *ring, void *node) {
-	BLASTK_ring_remove_real((BLASTK_ringnode_t **)ring,(BLASTK_ringnode_t *)node);
+static inline void H2K_ring_remove(void *ring, void *node) {
+	H2K_ring_remove_real((H2K_ringnode_t **)ring,(H2K_ringnode_t *)node);
 }
-static inline void BLASTK_ring_insert(void *ring, void *node) {
-	BLASTK_ring_insert_real((BLASTK_ringnode_t **)ring,(BLASTK_ringnode_t *)node);
+static inline void H2K_ring_insert(void *ring, void *node) {
+	H2K_ring_insert_real((H2K_ringnode_t **)ring,(H2K_ringnode_t *)node);
 }
-static inline void BLASTK_ring_append(void *ring, void *node) {
-	BLASTK_ring_append_real((BLASTK_ringnode_t **)ring,(BLASTK_ringnode_t *)node);
+static inline void H2K_ring_append(void *ring, void *node) {
+	H2K_ring_append_real((H2K_ringnode_t **)ring,(H2K_ringnode_t *)node);
 }
-static inline void BLASTK_ring_remove_append(void *fromring, void *toring, void *node) {
-	BLASTK_ring_remove_append_real((BLASTK_ringnode_t **)fromring,(BLASTK_ringnode_t **)toring,(BLASTK_ringnode_t *)node);
+static inline void H2K_ring_remove_append(void *fromring, void *toring, void *node) {
+	H2K_ring_remove_append_real((H2K_ringnode_t **)fromring,(H2K_ringnode_t **)toring,(H2K_ringnode_t *)node);
 }
 
 #endif

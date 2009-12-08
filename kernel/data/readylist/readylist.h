@@ -11,47 +11,47 @@
 #include <q6protos.h>
 #include <max.h>
 
-extern BLASTK_thread_context *BLASTK_ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
-extern u32_t BLASTK_ready_valids IN_SECTION(".data.sched.ready");
+extern H2K_thread_context *H2K_ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
+extern u32_t H2K_ready_valids IN_SECTION(".data.sched.ready");
 
-static inline int BLASTK_ready_best_prio()
+static inline int H2K_ready_best_prio()
 {
-	return Q6_R_ct0_R(BLASTK_ready_valids);
+	return Q6_R_ct0_R(H2K_ready_valids);
 }
 
-static inline void BLASTK_ready_append(BLASTK_thread_context *thread)
+static inline void H2K_ready_append(H2K_thread_context *thread)
 {
 	u32_t prio = thread->prio;
-	BLASTK_ring_append(&BLASTK_ready[prio],thread);
-	BLASTK_ready_valids |= 1<<prio;
+	H2K_ring_append(&H2K_ready[prio],thread);
+	H2K_ready_valids |= 1<<prio;
 }
 
-static inline void BLASTK_ready_insert(BLASTK_thread_context *thread)
+static inline void H2K_ready_insert(H2K_thread_context *thread)
 {
 	u32_t prio = thread->prio;
-	BLASTK_ring_insert(&BLASTK_ready[prio],thread);
-	BLASTK_ready_valids |= 1<<prio;
+	H2K_ring_insert(&H2K_ready[prio],thread);
+	H2K_ready_valids |= 1<<prio;
 }
 
-static inline void BLASTK_ready_remove(BLASTK_thread_context *thread)
+static inline void H2K_ready_remove(H2K_thread_context *thread)
 {
 	u32_t prio = thread->prio;
-	BLASTK_ring_remove(&BLASTK_ready[prio],thread);
-	if (BLASTK_ready[prio] == NULL) BLASTK_ready_valids = Q6_R_clrbit_RR(BLASTK_ready_valids,prio);
+	H2K_ring_remove(&H2K_ready[prio],thread);
+	if (H2K_ready[prio] == NULL) H2K_ready_valids = Q6_R_clrbit_RR(H2K_ready_valids,prio);
 }
 
-static inline BLASTK_thread_context *BLASTK_ready_getbest()
+static inline H2K_thread_context *H2K_ready_getbest()
 {
-	BLASTK_thread_context *ret;
+	H2K_thread_context *ret;
 	u32_t prio;
-	if ((BLASTK_ready_valids) == 0) return NULL;
-	prio = BLASTK_ready_best_prio();
-	ret = BLASTK_ready[prio];
-	BLASTK_ready_remove(ret);
+	if ((H2K_ready_valids) == 0) return NULL;
+	prio = H2K_ready_best_prio();
+	ret = H2K_ready[prio];
+	H2K_ready_remove(ret);
 	return ret;
 }
 
-void BLASTK_readylist_init(void);
+void H2K_readylist_init(void);
 
 #endif
 

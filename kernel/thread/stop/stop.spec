@@ -1,9 +1,9 @@
 
 MODULE: thread_stop
 
-FUNCTION: void BLASTK_thread_stop(thread_context *me)
+FUNCTION: void H2K_thread_stop(thread_context *me)
 
-The BLASTK_thread_stop function terminates the thread.
+The H2K_thread_stop function terminates the thread.
 
 INPUT:
 
@@ -20,8 +20,8 @@ First, we acquire the BKL.
 Next, we remove the current thread from the runlist.  We then clear the thread
 context.  This has the effect of setting the valid field to DEAD.
 
-We then insert the thread into the BLASTK_free_threads list.
+We then insert the thread into the H2K_free_threads list.
 
-Finally, we call BLASTK_dosched() to pick a new thread.  The current thread
+Finally, we call H2K_dosched() to pick a new thread.  The current thread
 should be specified as NULL, rather than as the now-dead thread context pointer.
 

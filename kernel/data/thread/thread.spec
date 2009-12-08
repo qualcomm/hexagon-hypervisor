@@ -5,10 +5,10 @@ This module contains the data structures for threads.
 
 DETAILS:
 
-BLASTK_free_threads is a linked list of all threads ready for use.
+H2K_free_threads is a linked list of all threads ready for use.
 
 
-FUNCTION: void BLASTK_thread_context_clear(BLASTK_thread_context *thread)
+FUNCTION: void H2K_thread_context_clear(H2K_thread_context *thread)
 
 DESCRIPTION:
 

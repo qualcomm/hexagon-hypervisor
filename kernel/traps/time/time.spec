@@ -1,11 +1,11 @@
 
 MODULE: time
 
-FUNCTION: BLASTK_cputime_get
+FUNCTION: H2K_cputime_get
 
 UNIMPLEMENTED
 
-FUNCTOIN: BLASTK_pcycles_get
+FUNCTOIN: H2K_pcycles_get
 
 UNIMPLEMENTED
 

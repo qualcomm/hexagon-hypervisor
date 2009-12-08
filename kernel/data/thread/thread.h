@@ -8,14 +8,14 @@
 
 #include <context.h>
 
-extern BLASTK_thread_context *BLASTK_free_threads IN_SECTION(".data.thread.freeptr");
+extern H2K_thread_context *H2K_free_threads IN_SECTION(".data.thread.freeptr");
 #if __QDSP6_ARCH__ == 2
-extern BLASTK_thread_context BLASTK_idle_context IN_SECTION(".data.thread.idle");
+extern H2K_thread_context H2K_idle_context IN_SECTION(".data.thread.idle");
 #endif
-extern BLASTK_thread_context BLASTK_boot_context IN_SECTION(".data.thread.boot");
+extern H2K_thread_context H2K_boot_context IN_SECTION(".data.thread.boot");
 
-void BLASTK_thread_init();
-void BLASTK_thread_context_clear(BLASTK_thread_context *thread);
+void H2K_thread_init();
+void H2K_thread_context_clear(H2K_thread_context *thread);
 
 #endif
 

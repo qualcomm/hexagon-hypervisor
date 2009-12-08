@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef BLASTK_STOP_H
-#define BLASTK_STOP_H 1
+#ifndef H2K_STOP_H
+#define H2K_STOP_H 1
 
 #include <context.h>
 
-void BLASTK_thread_stop(BLASTK_thread_context *me);
+void H2K_thread_stop(H2K_thread_context *me);
 
 #endif
 

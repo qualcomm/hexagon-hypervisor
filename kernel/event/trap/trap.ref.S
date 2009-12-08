@@ -14,7 +14,7 @@
  * The next several cache lines of the context should be DCZERO'd.
  */
 
-FUNC_START BLASTK_handle_trap0 .text.event.trap0 .p2align 2
+FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
 	r7 = sgp
 	// dcfetch(r7+#0)
 	// dcfetch(r7+#32)
@@ -22,7 +22,7 @@ FUNC_START BLASTK_handle_trap0 .text.event.trap0 .p2align 2
 	r9 = ssr
 	// Detect ANGEL cal
 	p0 = bitsclr(r9,#0x1f)
-	if (p0) jump BLASTK_trap_angel
+	if (p0) jump H2K_trap_angel
 	// Save trap state
 	memd(r7+#CONTEXT_r3130) = r31:30
 	memd(r7+#CONTEXT_r2928) = r29:28
@@ -44,28 +44,25 @@ FUNC_START BLASTK_handle_trap0 .text.event.trap0 .p2align 2
 	if (!p0) jump 1f				// no, kill thread or kernel
 
 #if __QDSP6_ARCH__ <= 3
-	r29.h = #hi(BLASTK_stacks)
-	r29.l = #lo(BLASTK_stacks)
+	r29.h = #hi(H2K_stacks)
+	r29.l = #lo(H2K_stacks)
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)
 	r29 += mpyi(r28,#KERNEL_STACK_SIZE)
 #else
 	r28 = TNUM
 	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##BLASTK_stacks,mpyi(r28,r29))
+	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #endif
 
-	r11.h = #hi(BLASTK_traptab)
-	r11.l = #lo(BLASTK_traptab)
+	r11.h = #hi(H2K_traptab)
+	r11.l = #lo(H2K_traptab)
 	r10 = addasl(r11,r10,#3)
 
 	// set up continuation in case we block
-	r31.h = #hi(blast_trap_nogood)
-	r31.l = #lo(blast_trap_nogood)
-	memw(r7+#CONTEXT_continuation) = r31
-	callr r10
+	call .Ljump_to_trap
 
-blast_trap_nogood:
+H2K_trap_nogood:
 	r7 = sgp
 
 	r13:12 = memd(r7+#CONTEXT_ugpgp)
@@ -87,7 +84,7 @@ blast_trap_nogood:
 	rte
 
 1:
-	// call BLASTK_fatal_thread or BLASTK_fatal_kernel
+	// call H2K_fatal_thread or H2K_fatal_kernel
 	r0 = #-1
 	r1 = r7
 	r3 = pcyclehi
@@ -96,151 +93,156 @@ blast_trap_nogood:
 	r4 = extractu(r0,#3,#19)
 	p0 = tstbit(r4,#18)			// interrupts enabled?
 	if (!p0) jump 1f
-	jump BLASTK_fatal_thread		// no, regular thread
+	jump H2K_fatal_thread		// no, regular thread
 1:
-	jump BLASTK_fatal_kernel		// yes, fast interrupt
+	jump H2K_fatal_kernel		// yes, fast interrupt
 
-FUNC_END BLASTK_handle_trap0
+	// jump to r10 after saving continuation
+.Ljump_to_trap:
+	memw(r7+#CONTEXT_continuation) = r31
+	jumpr r10
 
-FUNC_START BLASTK_trap_angel .text.event.trap0 .p2align 2
+FUNC_END H2K_handle_trap0
+
+FUNC_START H2K_trap_angel .text.event.trap0 .p2align 2
 	jump 9b
-	.size BLASK_trap_angel, .-BLASTK_trap_angel
-FUNC_END BLASTK_trap_angel
+	.size BLASK_trap_angel, .-H2K_trap_angel
+FUNC_END H2K_trap_angel
 
-FUNC_START BLASTK_traptab .text.event.trap0 .p2align 8
+FUNC_START H2K_traptab .text.event.trap0 .p2align 8
 	{
-		jump BLASTK_trap_angel // 0
+		jump H2K_trap_angel // 0
 		nop
 	}
 	{
 		r2 = r7
-		jump BLASTK_thread_id // 1
+		jump H2K_thread_id // 1
 	}
 	{
 		r2 = r7
-		jump BLASTK_futex_wait // 2
+		jump H2K_futex_wait // 2
 	}
 	{
 		r2 = r7
-		jump BLASTK_futex_resume // 3
+		jump H2K_futex_resume // 3
 	}
 	{
 		r5 = r7
-		jump BLASTK_thread_create // 4
+		jump H2K_thread_create // 4
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_stop // 5
+		jump H2K_thread_stop // 5
 	}
 	{
 		r0 = r7
-		jump BLASTK_cputime_get // 6
+		jump H2K_cputime_get // 6
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 7 // jumpr r31?
+		jump H2K_thread_id // 7 // jumpr r31?
 	}
 	{
 		r2 = r7
-		jump BLASTK_register_fastint // 8
+		jump H2K_register_fastint // 8
 	}
 	{
 		r2 = r7
-		jump BLASTK_prio_set // 9
+		jump H2K_prio_set // 9
 	}
 	{
 		r1 = r7
-		jump BLASTK_prio_get // 10
+		jump H2K_prio_get // 10
 	}
 	{
 		//r2 = r7
-		//jump BLASTK_change_asid_mappings // 11
+		//jump H2K_change_asid_mappings // 11
 		r0 = r7
-		jump BLASTK_thread_id
+		jump H2K_thread_id
 	}
 	{
 		r0 = r7
-		jump BLASTK_sched_yield // 12
-	}
-	{
-		//r1 = r7
-		//jump BLASTK_mask_prios_above // 13
-		r0 = r7
-		jump BLASTK_thread_id
-	}
-	{
-		r0 = r7
-		jump BLASTK_thread_id // 14
-	}
-	{
-		r0 = r7
-		jump BLASTK_thread_id // 15
-	}
-	{
-		r0 = r7
-		jump BLASTK_pcycles_get // 16
+		jump H2K_sched_yield // 12
 	}
 	{
 		//r1 = r7
-		//jump BLASTK_set_prefetch // 17
+		//jump H2K_mask_prios_above // 13
 		r0 = r7
-		jump BLASTK_thread_id
+		jump H2K_thread_id
+	}
+	{
+		r0 = r7
+		jump H2K_thread_id // 14
+	}
+	{
+		r0 = r7
+		jump H2K_thread_id // 15
+	}
+	{
+		r0 = r7
+		jump H2K_pcycles_get // 16
+	}
+	{
+		//r1 = r7
+		//jump H2K_set_prefetch // 17
+		r0 = r7
+		jump H2K_thread_id
 	}
 	{
 		r1 = r7
-		jump BLASTK_tid_set // 18
+		jump H2K_tid_set // 18
 	}
 	{
 		r0 = r7
-		jump BLASTK_tid_get // 19
+		jump H2K_tid_get // 19
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 20
+		jump H2K_thread_id // 20
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 21
+		jump H2K_thread_id // 21
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 22
+		jump H2K_thread_id // 22
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 23
+		jump H2K_thread_id // 23
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 24
+		jump H2K_thread_id // 24
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 25
+		jump H2K_thread_id // 25
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 26
+		jump H2K_thread_id // 26
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 27
+		jump H2K_thread_id // 27
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 28
+		jump H2K_thread_id // 28
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 29
+		jump H2K_thread_id // 29
 	}
 	{
 		r4 = r7
-		jump BLASTK_trap_config // 30
+		jump H2K_trap_config // 30
 	}
 	{
 		r0 = r7
-		jump BLASTK_thread_id // 31
+		jump H2K_thread_id // 31
 	}
-FUNC_END BLASTK_traptab
+FUNC_END H2K_traptab
 

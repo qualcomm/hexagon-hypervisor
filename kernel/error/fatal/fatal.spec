@@ -1,11 +1,11 @@
 
 UNIT: fatal
 
-FUNCTION: void BLASTK_fatal_kernel(s16_t error_id, thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
+FUNCTION: void H2K_fatal_kernel(s16_t error_id, thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 DESCRIPTION: 
 
-BLASTK_fatal_kernel handles a fatal kernel error.  The kernel will attempt to
+H2K_fatal_kernel handles a fatal kernel error.  The kernel will attempt to
 halt execution completely.
 
 INPUT:
@@ -25,11 +25,11 @@ Next, we shutdown all threads by trapping to the angel handler to exit simulatio
 TBD: how on target?
 
 
-FUNCTION: void BLASTK_fatal_thread(s16_t error_id, BLASTK_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
+FUNCTION: void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 DESCRIPTION:
 
-BLASTK_fatal_thread handles a fatal thread error.  A fatal thread error is an error
+H2K_fatal_thread handles a fatal thread error.  A fatal thread error is an error
 from a thread that the thread cannot handle.  For example, if the thread event vectors
 have a page fault, the thread is incapable of recovering from an error.  
 
@@ -44,6 +44,6 @@ Argument 2: The hardware thread number
 
 FUNCTIONALITY:
 
-We log the error, and then sibcall to BLASTK_thread_stop.
+We log the error, and then sibcall to H2K_thread_stop.
 
 

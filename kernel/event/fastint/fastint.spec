@@ -3,7 +3,7 @@ ASM_REF_CODE(fastint requires special register changes difficult in C)
 
 UNIT: fastint
 
-FUNCTION: BLASTK_fastint(u32_t intno, BLASTK_thread_context *me, u32_t hthread)
+FUNCTION: H2K_fastint(u32_t intno, H2K_thread_context *me, u32_t hthread)
 
 DESCRIPTION:
 
@@ -19,7 +19,7 @@ OUTPUT:
 
 FUNCTIONALITY:
 
-The BLASTK_fastint routine sets up the environment for a fast interrupt handler, and
+The H2K_fastint routine sets up the environment for a fast interrupt handler, and
 then calls the fast interrupt handler.
 
 When the fast interrupt handler returns, we clear the IAD bit for the fast interrupt.
@@ -45,7 +45,7 @@ TBD: should fast interrupts be able to jump to resched also?  Handy for the
 commonish case that a fastint causes a reschedule event...
 
 
-FUNCTION: BLASTK_interrupted_fastint_check()
+FUNCTION: H2K_interrupted_fastint_check()
 
 DESCRIPTION:
 

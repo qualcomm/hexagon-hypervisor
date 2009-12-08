@@ -26,15 +26,15 @@ static void doangel(u32_t what, u32_t arg, u32_t r2)
 		: : "r"(what),"r"(arg),"r"(r2) :"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15","r16","r17","r18","r19","r20","r21","r22","r23","r24","r28");
 }
 
-void BLASTK_fatal_kernel(s16_t error_id, BLASTK_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
+void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	BLASTK_trace(error_id, (u32_t)me, info0, info1, hthread);
+	H2K_trace(error_id, (u32_t)me, info0, info1, hthread);
 	doangel(SYS_EXCEPTION,1,1);
 }
 
-void BLASTK_fatal_thread(s16_t error_id, BLASTK_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
+void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	BLASTK_trace(error_id, (u32_t)me, info0, info1, hthread);
-	return BLASTK_thread_stop(me);
+	H2K_trace(error_id, (u32_t)me, info0, info1, hthread);
+	return H2K_thread_stop(me);
 }
 

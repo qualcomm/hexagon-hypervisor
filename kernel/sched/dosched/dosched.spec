@@ -2,11 +2,11 @@
 
 UNIT: dosched
 
-FUNCTION: void BLASTK_dosched(thread_context *me, u32_t hthread)
+FUNCTION: void H2K_dosched(thread_context *me, u32_t hthread)
 
 DESCRIPTION:
 
-BLASTK_dosched schedules the highest priority ready thread for execution, or goes to
+H2K_dosched schedules the highest priority ready thread for execution, or goes to
 sleep if there is no ready thread.
 
 INPUT:

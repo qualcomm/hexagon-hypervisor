@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef BLASTK_SWITCH_H
-#define BLASTK_SWITCH_H 1
+#ifndef H2K_SWITCH_H
+#define H2K_SWITCH_H 1
 
 #include <context.h>
 
-void BLASTK_switch(BLASTK_thread_context *from, BLASTK_thread_context *to);
+void H2K_switch(H2K_thread_context *from, H2K_thread_context *to);
 
 #endif
 

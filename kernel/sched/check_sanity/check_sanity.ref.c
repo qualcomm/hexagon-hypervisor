@@ -10,31 +10,31 @@
 #include <readylist.h>
 #include <lowprio.h>
 
-u64_t BLASTK_check_sanity(const u64_t retval)
+u64_t H2K_check_sanity(const u64_t retval)
 {
-	if (BLASTK_priomask == 0) {
-		BLASTK_lowprio_notify();
+	if (H2K_priomask == 0) {
+		H2K_lowprio_notify();
 	}
-	if (BLASTK_runlist_worst_prio() IS_WORSE_THAN BLASTK_ready_best_prio()) {
+	if (H2K_runlist_worst_prio() IS_WORSE_THAN H2K_ready_best_prio()) {
 		resched_int();
 	}
-	else if (BLASTK_wait_mask && (BLASTK_ready_valids /* & BLASTK_ready_validmask */)) {
+	else if (H2K_wait_mask && (H2K_ready_valids /* & H2K_ready_validmask */)) {
 		resched_int();
 	}
 #if 0
 	/* EJP: ready valid mask not enabled... yet! */
-	if ((BLASTK_runlist_valids & (~BLASTK_ready_validmask)) != 0) {
-		BLASTK_lowprio_notify();
-		BLASTK_resched_int();
+	if ((H2K_runlist_valids & (~H2K_ready_validmask)) != 0) {
+		H2K_lowprio_notify();
+		H2K_resched_int();
 	}
 #endif
 
 	return(retval);
 }
 
-u64_t BLASTK_check_sanity_unlock(const u64_t retval)
+u64_t H2K_check_sanity_unlock(const u64_t retval)
 {
-	BLASTK_check_sanity(retval);
+	H2K_check_sanity(retval);
 	BKL_UNLOCK();
 	return(retval);
 }

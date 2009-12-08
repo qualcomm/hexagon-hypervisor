@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef BLASTK_C_STD_H
-#define BLASTK_C_STD_H 1
+#ifndef H2K_C_STD_H
+#define H2K_C_STD_H 1
 
 #ifndef NULL
 #define NULL ((void *)0)

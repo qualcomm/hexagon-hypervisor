@@ -1,11 +1,11 @@
 
 MODULE: tlbmiss
 
-FUNCTION: BLASTK_handle_tlbmissx
+FUNCTION: H2K_handle_tlbmissx
 
 UNIMPLEMENTED
 
-FUNCTION: BLASTK_handle_tlbmissrw
+FUNCTION: H2K_handle_tlbmissrw
 
 UNIMPLEMENTED
 

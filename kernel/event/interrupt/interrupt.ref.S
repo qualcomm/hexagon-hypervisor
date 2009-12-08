@@ -7,10 +7,10 @@
 #include <asm_std.h>
 #include <max.h>
 
-FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
+FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	/* If SGP is null, we've interrupted waitmode. */
 	crswap(r0,sgp)
-	if (r0==#0) jump:t BLASTK_interrupted_waitmode
+	if (r0==#0) jump:t H2K_interrupted_waitmode
 
 	/* Save off all context */
 	/* Optimization Note:
@@ -62,8 +62,8 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	/* All registers saved off, set up stack */
 
 #if __QDSP6_ARCH__ <= 3
-	r29.h = #hi(BLASTK_stacks)
-	r29.l = #lo(BLASTK_stacks)
+	r29.h = #hi(H2K_stacks)
+	r29.l = #lo(H2K_stacks)
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)
 	r2 = #KERNEL_STACK_SIZE
@@ -71,7 +71,7 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 #else
 	r28 = TNUM
 	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##BLASTK_stacks,mpyi(r28,r29))
+	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #endif
 
 	/* Stack set up, execute interrupt handler */
@@ -79,8 +79,8 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 	r0 = ssr
 	r0 = zxtb(r0)
 	r1 = r21	// thread context
-	r4.h = #hi(BLASTK_inthandlers)
-	r4.l = #lo(BLASTK_inthandlers)
+	r4.h = #hi(H2K_inthandlers)
+	r4.l = #lo(H2K_inthandlers)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
 
@@ -88,7 +88,7 @@ FUNC_START BLASTK_handle_int .text.event.interrupt .p2align 2
 
 	call .Lint_jump_stub // will jump to r4
 
-BLASTK_interrupt_restore:
+H2K_interrupt_restore:
 	/* Restore all state and return */
 	r0 = sgp
 	r3:2 = memd(r0+#CONTEXT_ssrelr)
@@ -126,13 +126,13 @@ BLASTK_interrupt_restore:
 	r31:30 = memd(r0+#CONTEXT_r3130)
 	r1:0 = memd(r0+#CONTEXT_r0100)
 	rte
-	.global BLASTK_interrupt_restore
-FUNC_END BLASTK_handle_int
+	.global H2K_interrupt_restore
+FUNC_END H2K_handle_int
 
-FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2
+FUNC_START H2K_interrupted_waitmode .text.event.interrupt .p2align 2
 #if __QDSP6_ARCH__ <= 3
-	r29.h = #hi(BLASTK_stacks)
-	r29.l = #lo(BLASTK_stacks)
+	r29.h = #hi(H2K_stacks)
+	r29.l = #lo(H2K_stacks)
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)
 	r2 = #KERNEL_STACK_SIZE
@@ -140,7 +140,7 @@ FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2
 #else
 	r28 = TNUM
 	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##BLASTK_stacks,mpyi(r28,r29))
+	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #endif
 	
 
@@ -149,8 +149,8 @@ FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2
 	r0 = ssr
 	r0 = zxtb(r0)
 	r1 = #0		// thread context == NULL
-	r4.h = #hi(BLASTK_inthandlers)
-	r4.l = #lo(BLASTK_inthandlers)
+	r4.h = #hi(H2K_inthandlers)
+	r4.l = #lo(H2K_inthandlers)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
 
@@ -158,11 +158,11 @@ FUNC_START BLASTK_interrupted_waitmode .text.event.interrupt .p2align 2
 	callr r4
 	r0 = #0
 	r1 = #0
-	jump BLASTK_switch
+	jump H2K_switch
 
 .Lint_jump_stub:
 	memw(r1+#CONTEXT_continuation) = r31
 	jumpr r4
 
-FUNC_END BLASTK_interrupted_waitmode
+FUNC_END H2K_interrupted_waitmode
 

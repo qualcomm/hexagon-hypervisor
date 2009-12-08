@@ -10,13 +10,13 @@
 #include <dosched.h>
 #include <runlist.h>
 
-void BLASTK_thread_stop(BLASTK_thread_context *me)
+void H2K_thread_stop(H2K_thread_context *me)
 {       
-        BKL_LOCK(&BLASTK_bkl);
-        BLASTK_runlist_remove(me);
-        BLASTK_thread_context_clear(me);
-	me->next = BLASTK_free_threads;
-	BLASTK_free_threads = me;
-        return BLASTK_dosched(me,get_hwtnum());
+        BKL_LOCK(&H2K_bkl);
+        H2K_runlist_remove(me);
+        H2K_thread_context_clear(me);
+	me->next = H2K_free_threads;
+	H2K_free_threads = me;
+        return H2K_dosched(me,get_hwtnum());
 }
 

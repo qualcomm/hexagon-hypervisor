@@ -5,12 +5,12 @@
 
 #include <tid.h>
 
-void BLASTK_tid_set(u32_t tid, BLASTK_thread_context *me)
+void H2K_tid_set(u32_t tid, H2K_thread_context *me)
 {
 	me->tid = tid;
 }
 
-u32_t BLASTK_tid_get(BLASTK_thread_context *me)
+u32_t H2K_tid_get(H2K_thread_context *me)
 {
 	return me->tid;
 }

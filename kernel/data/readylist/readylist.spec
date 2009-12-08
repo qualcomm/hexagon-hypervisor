@@ -1,7 +1,7 @@
 
 MODULE: readylist
 
-DATA: BLASTK_ready, BLASTK_ready_valids
+DATA: H2K_ready, H2K_ready_valids
 
 The ready list contains the threads that are ready for execution.
 
@@ -21,11 +21,11 @@ We find the highest priority ready thread by using the CL0 instruction to find
 the highest priority that has a ready thread.  We then can remove the thread in
 the corresponding list.
 
-FUNCTION: void BLASTK_ready_init()
+FUNCTION: void H2K_ready_init()
 
 DESCRIPTION:
 
-Initializes the BLASTK_ready structures.
+Initializes the H2K_ready structures.
 
 INPUTS:
 
@@ -33,11 +33,11 @@ OUTPUTS:
 
 FUNCTIONALITY:
 
-Set all elements of BLASTK_ready to NULL, and set BLASTK_ready_valids to zero.
+Set all elements of H2K_ready to NULL, and set H2K_ready_valids to zero.
 
 
 
-FUNCTION: static inline u32_t BLASTK_ready_best_prio()
+FUNCTION: static inline u32_t H2K_ready_best_prio()
 
 DESCRIPTION:
 
@@ -49,10 +49,10 @@ OUTPUTS:
 
 FUNCTIONALITY:
 
-Count Trailing Zeros of BLASTK_ready_valids.
+Count Trailing Zeros of H2K_ready_valids.
 
 
-FUNCTION: static inline void BLASTK_ready_append(BLASTK_thread_context *thread)
+FUNCTION: static inline void H2K_ready_append(H2K_thread_context *thread)
 
 DESCRIPTION:
 
@@ -66,12 +66,12 @@ OUTPUTS:
 
 FUNCTIONALITY:
 
-We get the priority from the thread context.  Next, we call BLASTK_ring_append
-on the BLASTK_ready ring at the thread's priority.  Finally, we set the bit of
-BLASTK_ready_valids at the thread's priority.
+We get the priority from the thread context.  Next, we call H2K_ring_append
+on the H2K_ready ring at the thread's priority.  Finally, we set the bit of
+H2K_ready_valids at the thread's priority.
 
 
-FUNCTION: static inline void BLASTK_ready_insert(BLASTK_thread_context *thread)
+FUNCTION: static inline void H2K_ready_insert(H2K_thread_context *thread)
 
 DESCRIPTION:
 
@@ -85,12 +85,12 @@ OUTPUTS:
 
 FUNCTIONALITY:
 
-We get the priority from the thread context.  Next, we call BLASTK_ring_insert
-on the BLASTK_ready ring at the thread's priority.  Finally, we set the bit of
-BLASTK_ready_valids at the thread's priority.
+We get the priority from the thread context.  Next, we call H2K_ring_insert
+on the H2K_ready ring at the thread's priority.  Finally, we set the bit of
+H2K_ready_valids at the thread's priority.
 
 
-FUNCTION: static inline void BLASTK_ready_remove(BLASTK_thread_context *thread)
+FUNCTION: static inline void H2K_ready_remove(H2K_thread_context *thread)
 
 DESCRIPTION:
 
@@ -104,13 +104,13 @@ OUTPUTS:
 
 FUNCTIONALITY:
 
-We get the priority from the thread context.  Next, we call BLASTK_ring_remove
-on the BLASTK_ready ring at the thread's priority.  Finally, if there are no
-more elements in the ring, we clear the bit of BLASTK_ready_valids at the
+We get the priority from the thread context.  Next, we call H2K_ring_remove
+on the H2K_ready ring at the thread's priority.  Finally, if there are no
+more elements in the ring, we clear the bit of H2K_ready_valids at the
 thread's priority.
 
 
-FUNCTION: static inline BLASTK_thread_context *BLASTK_ready_getbest()
+FUNCTION: static inline H2K_thread_context *H2K_ready_getbest()
 
 DESCRIPTION:
 
@@ -127,9 +127,9 @@ FUNCTIONALITY:
 
 If there are no ready threads, we return NULL.
 
-We call BLASTK_ready_best_prio() to obtain the priority of the best priority ready thread.
+We call H2K_ready_best_prio() to obtain the priority of the best priority ready thread.
 
-We then get the thread pointed to by the BLASTK_ready pointer at the correct priority.
+We then get the thread pointed to by the H2K_ready pointer at the correct priority.
 
-This thread is removed from the ready list by calling BLASTK_ready_remove, and returned.
+This thread is removed from the ready list by calling H2K_ready_remove, and returned.
 

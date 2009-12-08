@@ -10,7 +10,7 @@
 #include <ring.h>
 #include <c_std.h>
 
-void BLASTK_ring_remove_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node)
+void H2K_ring_remove_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
 {
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
@@ -20,7 +20,7 @@ void BLASTK_ring_remove_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node)
 	}
 }
 
-void BLASTK_ring_insert_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node)
+void H2K_ring_insert_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
 {
 	if (*ring == NULL) {
 		node->prev = node->next = node;
@@ -33,7 +33,7 @@ void BLASTK_ring_insert_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node)
 	*ring = node;
 }
 
-void BLASTK_ring_append_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node)
+void H2K_ring_append_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
 {
 	if (*ring == NULL) {
 		node->prev = node->next = node;
@@ -46,7 +46,7 @@ void BLASTK_ring_append_real(BLASTK_ringnode_t **ring, BLASTK_ringnode_t *node)
 	}
 }
 
-void BLASTK_ring_remove_append_real(BLASTK_ringnode_t **fromring, BLASTK_ringnode_t **toring, BLASTK_ringnode_t *node)
+void H2K_ring_remove_append_real(H2K_ringnode_t **fromring, H2K_ringnode_t **toring, H2K_ringnode_t *node)
 {
 	node->prev->next = node->next;
 	node->next->prev = node->prev;

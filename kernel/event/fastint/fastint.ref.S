@@ -7,12 +7,12 @@
 #include <asm_std.h>
 #include <max.h>
 
-FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
+FUNC_START H2K_fastint .text.event.fastint .p2align 5
 	// r0 = intno
 	// r1 = me
 	// r2 = hthread
-	r3.h = #hi(BLASTK_fastint_contexts)
-	r3.l = #lo(BLASTK_fastint_contexts)
+	r3.h = #hi(H2K_fastint_contexts)
+	r3.l = #lo(H2K_fastint_contexts)
 	r9 = #FASTINT_CONTEXT_SIZE
 	r3 += mpyi(r2,r9)
 
@@ -26,8 +26,8 @@ FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 #if __QDSP6_ARCH__ <= 3
 	r5 = brev(r5)
 #endif
-	r6.h = #hi(BLASTK_fastint_gp)
-	r6.l = #lo(BLASTK_fastint_gp)
+	r6.h = #hi(H2K_fastint_gp)
+	r6.l = #lo(H2K_fastint_gp)
 	r6 = memw(r6)
 
 	// r4 = fastint_functions
@@ -43,13 +43,13 @@ FUNC_START BLASTK_fastint .text.event.fastint .p2align 5
 	ssr = r11
 	gp = r6
 
-	r4.h = #hi(BLASTK_fastint_funcptrs)
-	r4.l = #lo(BLASTK_fastint_funcptrs)
+	r4.h = #hi(H2K_fastint_funcptrs)
+	r4.l = #lo(H2K_fastint_funcptrs)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
 	callr r4
 
-BLASTK_fastint_return:
+H2K_fastint_return:
 	ciad(r25)
 	r0 = IPEND
 2:
@@ -61,11 +61,11 @@ BLASTK_fastint_return:
 	jumpr r31
 
 1:
-	r5.h = #hi(BLASTK_fastint_mask)
-	r5.l = #lo(BLASTK_fastint_mask)
+	r5.h = #hi(H2K_fastint_mask)
+	r5.l = #lo(H2K_fastint_mask)
 	r5 = memw(r5)
-	r4.h = #hi(BLASTK_fastint_funcptrs)
-	r4.l = #lo(BLASTK_fastint_funcptrs)
+	r4.h = #hi(H2K_fastint_funcptrs)
+	r4.l = #lo(H2K_fastint_funcptrs)
 	r11.h = #0x1c4
 	r11.l = #0x0
 	r5 = not(r5)
@@ -79,9 +79,9 @@ BLASTK_fastint_return:
 	imask = r13
 	r0 = #0
 	jump 2b
-FUNC_END BLASTK_fastint
+FUNC_END H2K_fastint
 
-FUNC_START BLASTK_interrupted_fastint_check .text.event.fastint .p2align 2
+FUNC_START H2K_interrupted_fastint_check .text.event.fastint .p2align 2
 	// OK, we checked to see if there was a pending 
 	// interrupt, and there sure was!
 	// sgp and r0 have been swapped
@@ -98,7 +98,7 @@ FUNC_START BLASTK_interrupted_fastint_check .text.event.fastint .p2align 2
 	// replace IMASK w/ correct IMASK in r13
 	// sgp in r24
 	// compute new r30 == CIAD mask
-	// Last call returned to BLASTK_fastint_return, so r31 OK as-is
+	// Last call returned to H2K_fastint_return, so r31 OK as-is
 	sgp = r0
 	r1 = ssr
 	imask = r13
@@ -120,5 +120,5 @@ FUNC_START BLASTK_interrupted_fastint_check .text.event.fastint .p2align 2
 	{
 		jumpr r4
 	}
-FUNC_END BLASTK_interrupted_fastint_check
+FUNC_END H2K_interrupted_fastint_check
 

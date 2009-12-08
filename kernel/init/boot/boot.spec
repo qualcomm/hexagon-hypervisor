@@ -3,7 +3,7 @@ ASM_REF_CODE(Bootup code is difficult to write in C)
 
 MODULE: boot
 
-FUNCTION: void blast_init()
+FUNCTION: void h2_init()
 
 This function starts the kernel, if it has not been started already.
 
@@ -39,13 +39,13 @@ We do other stuff
 
 Then we jump to symbol that should be in crt0
 
-We need to include a reference to BLASTK_symbols to ensure that 
+We need to include a reference to H2K_symbols to ensure that 
 is also pulled in.
 
 
-FUNCTION: BLASTK_handle_reset()
+FUNCTION: H2K_handle_reset()
 
-This routine boots a new processor, or after a reset
+This routine boots a new processor, or after a soft reset
 
 INPUTS:
 
@@ -58,10 +58,10 @@ XXX: We assume for now that this is only secondary threads booting.
 We set up kernel stack pointer and go to wait mode.
 
 
-STRUCT: void *BLASTK_symbols[]
+STRUCT: void *H2K_symbols[]
 
 This data structure contains references to all functions
-that are required in a BLAST kernel, to force the linker
+that are required in a H2 kernel, to force the linker
 to link them in.
 
 

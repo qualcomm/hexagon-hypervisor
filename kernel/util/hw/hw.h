@@ -82,17 +82,17 @@ static inline u32_t get_hwtnum()
 #endif
 
 #if (ARCHV >= 3)
-static inline void BLASTK_mutex_lock_k0()
+static inline void H2K_mutex_lock_k0()
 {
 	asm(" k0lock");
 }
 
-static inline void BLASTK_mutex_unlock_k0()
+static inline void H2K_mutex_unlock_k0()
 {
 	asm(" k0unlock");
 }
-#define BKL_LOCK(...) BLASTK_mutex_lock_k0()
-#define BKL_UNLOCK(...) BLASTK_mutex_unlock_k0()
+#define BKL_LOCK(...) H2K_mutex_lock_k0()
+#define BKL_UNLOCK(...) H2K_mutex_unlock_k0()
 #endif
 
 #endif

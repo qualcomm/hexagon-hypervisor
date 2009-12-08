@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef BLASTK_FUTEX_H
-#define BLASTK_FUTEX_H 1
+#ifndef H2K_FUTEX_H
+#define H2K_FUTEX_H 1
 
 #define FUTEX_HASHBITS 6
 #define FUTEX_HASHSIZE (1<<FUTEX_HASHBITS)
 
-s32_t BLASTK_futex_wait(u32_t *lock, u32_t val, BLASTK_thread_context *me);
-u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *me);
-void BLASTK_futex_init();
+s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me);
+u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me);
+void H2K_futex_init();
 
 #endif

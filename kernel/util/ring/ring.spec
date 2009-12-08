@@ -8,30 +8,30 @@ Rings are circular doubly-linked lists.
 Rings are designed to hold any kind of data, provided the first two words may
 be used as next and prev pointers, and are aligned on a doubleword boundary.
 
-This is defined as BLASTK_ringnode_t::
+This is defined as H2K_ringnode_t::
 
-	typedef struct _BLASTK_ringnode {
-		struct _BLASTK_ringnode *next;
-		struct _BLASTK_ringnode *prev;
-	} __attribute__((aligned(8))) BLASTK_ringnode_t;
+	typedef struct _H2K_ringnode {
+		struct _H2K_ringnode *next;
+		struct _H2K_ringnode *prev;
+	} __attribute__((aligned(8))) H2K_ringnode_t;
 
 
 The rings.h header file defines the ring functions as inline wrappers that 
-cast the input pointers to the correct BLASTK_ringnode_t type.  This spec
+cast the input pointers to the correct H2K_ringnode_t type.  This spec
 specifies the wrapped names.
 
-FUNCTION: void BLASTK_ring_remove(void *ring, void *node);
+FUNCTION: void H2K_ring_remove(void *ring, void *node);
 
 DESCRIPTION:
 
-The BLASTK_ring_remove function removes "node" from "ring".  
+The H2K_ring_remove function removes "node" from "ring".  
 
 By calling the function, you guarantee that "node" is a current member of
-"ring".  The BLASTK_ring_remove function does not check this.
+"ring".  The H2K_ring_remove function does not check this.
 
 INPUT:
 
-Argument 0: BLASTK_ringnode_t **ring, a pointer to the ring holding node
+Argument 0: H2K_ringnode_t **ring, a pointer to the ring holding node
 Argument 1: The node in the ring to remove.
 
 OUTPUT:
@@ -48,9 +48,9 @@ node.  If ``node->next`` equals ``node``, we point ``ring`` to ``NULL``,
 because the ring is now empty.  Otherwise, we point ``ring`` to ``node->next``.
 
 
-FUNCTION: BLASTK_ring_insert(void *ring, void *node)
+FUNCTION: H2K_ring_insert(void *ring, void *node)
 
-The BLASTK_ring_insert function adds ``node`` to ``ring``, as the node pointed to by
+The H2K_ring_insert function adds ``node`` to ``ring``, as the node pointed to by
 ``ring``.
 
 INPUT:
@@ -68,9 +68,9 @@ to ``node``.  Otherwise, we set ``node->next`` to ``*ring``, ``node->prev`` to
 We then set ``*ring`` to ``node``.
 
 
-FUNCTION: BLASTK_ring_insert(void *ring, void *node)
+FUNCTION: H2K_ring_insert(void *ring, void *node)
 
-The BLASTK_ring_insert function adds ``node`` to ``ring``, as the node previous to the
+The H2K_ring_insert function adds ``node`` to ``ring``, as the node previous to the
 node pointed to by ``ring``.
 
 INPUT:
@@ -89,9 +89,9 @@ to ``*ring``, ``node->prev`` to `*ring->prev``, and then set
 
 
 
-FUNCTION: BLASTK_ring_remove_append(void *fromring, void *toring, void *node)
+FUNCTION: H2K_ring_remove_append(void *fromring, void *toring, void *node)
 
-The BLASTK_ring_remove_append function removes ``node`` from ``fromring`` and adds it to
+The H2K_ring_remove_append function removes ``node`` from ``fromring`` and adds it to
 ``toring``, as the node previous to the node pointed to by ``toring``.
 
 INPUT:
@@ -103,7 +103,7 @@ Argument 2: The node to be added
 FUNCTIONALITY:
 
 This function removes ``node`` from ``fromring`` in the same manner
-as BLASTK_ring_remove, and then adds ``node`` to ``toring`` in the same 
-manner as BLASTK_ring_append.
+as H2K_ring_remove, and then adds ``node`` to ``toring`` in the same 
+manner as H2K_ring_append.
 
 

@@ -3,7 +3,7 @@ ASM_REF_CODE(Interrupt context save/restore not possible in C)
 
 UNIT: interrupt
 
-FUNCTION: BLASTK_handle_int()
+FUNCTION: H2K_handle_int()
 
 DESCRIPTION:
 
@@ -32,15 +32,19 @@ Interrupts can be handled by calling the reschedule function, or calling the
 function to handle fast interrupts.  The fast interrupt handler may be called
 before saving the registers saved by the ABI to improve performance.
 
-What function to call is determined by the table BLASTK_inthandlers.  The format
+What function to call is determined by the table H2K_inthandlers.  The format
 of each inthandler should be:
-	BLASTK_handler(u32_t intno, BLAST_thread_context *me, u32_t hwtnum)
+	H2K_handler(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 
 Real interrupted threads (as opposed to, for example, the idle thread) that may 
 reschedule should have int_context_restore as the end of their continuation
 function.
 
-FUNCTION: BLASTK_int_context_restore()
+We leave to execute the interrupt handler that calls a stub routine.  This stub
+routine saves the return address in the continuation field before jumping to
+the appropriate location.
+
+FUNCTION: H2K_int_context_restore()
 
 DESCRIPTION:
 
@@ -57,7 +61,7 @@ The int_context_restore routine restores registers from the thread context and r
 
 
 
-FUNCTION: BLASTK_interrupted_waitmode()
+FUNCTION: H2K_interrupted_waitmode()
 
 DESCRIPTION:
 

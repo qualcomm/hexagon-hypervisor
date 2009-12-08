@@ -8,13 +8,13 @@
 #include <thread.h>
 #include <max.h>
 
-BLASTK_thread_context *BLASTK_free_threads;
+H2K_thread_context *H2K_free_threads;
 #if __QDSP6_ARCH__ == 2
-BLASTK_thread_context BLASTK_idle_context;
+H2K_thread_context H2K_idle_context;
 #endif
-BLASTK_thread_context BLASTK_boot_context;
+H2K_thread_context H2K_boot_context;
 
-void BLASTK_thread_context_clear(BLASTK_thread_context *thread)
+void H2K_thread_context_clear(H2K_thread_context *thread)
 {
 	u32_t i;
 	u64_t *x = (u64_t *)thread;
@@ -23,12 +23,12 @@ void BLASTK_thread_context_clear(BLASTK_thread_context *thread)
 	}
 }
 
-void BLASTK_thread_init()
+void H2K_thread_init()
 {
-	BLASTK_thread_context_clear(&BLASTK_boot_context);
+	H2K_thread_context_clear(&H2K_boot_context);
 #if __QDSP6_ARCH__ == 2
-	BLASTK_thread_context_clear(&BLASTK_idle_context);
+	H2K_thread_context_clear(&H2K_idle_context);
 #endif
-	BLASTK_free_threads = NULL;
+	H2K_free_threads = NULL;
 }
 

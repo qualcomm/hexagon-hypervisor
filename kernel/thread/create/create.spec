@@ -1,11 +1,11 @@
 
 MODULE: thread_create
 
-FUNCTION: s32_t BLASTK_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t asid, u32_t trapmask, BLASTK_thread_context *me)
+FUNCTION: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t asid, u32_t trapmask, H2K_thread_context *me)
 
 DESCRIPTION:
 
-The BLASTK_thread_create function creates a new thread.  The calling thread
+The H2K_thread_create function creates a new thread.  The calling thread
 specifies attributes for the thread, and the new thread is created
 with those attributes.  New threads can have reduced features, by
 specifying the mask of allowed traps.
@@ -38,10 +38,10 @@ Any incorrect argument causes -1 to be returned.
 
 If the arguments are correct, we acquire the Big Kernel Lock.
 
-If BLASTK_free_threads is NULL, we free the BKL and -1 is returned (there are no
+If H2K_free_threads is NULL, we free the BKL and -1 is returned (there are no
 available threads to create).
 
-Otherwise, we pop a thread off the BLASTK_free_threads list to use as a new thread.
+Otherwise, we pop a thread off the H2K_free_threads list to use as a new thread.
 
 As a convienience, the new thread inherits GP and UGP from the calling thread.
 The thread is free to change these values if desired.
@@ -61,5 +61,5 @@ before returning.
 
 For security, we need to assure that no values are in registers incorrectly.
 We accomplish this by clearing the thread context during initialization and 
-at BLASTK_thread_stop time.  This allows for faster thread_create calls.
+at H2K_thread_stop time.  This allows for faster thread_create calls.
 

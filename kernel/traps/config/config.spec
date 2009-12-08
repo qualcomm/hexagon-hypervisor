@@ -3,7 +3,7 @@ MODULE: config
 
 This module contains the runtime kernel configuration routines.
 
-FUNCTION: void BLASTK_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, BLASTK_thread_context *me)
+FUNCTION: void H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 
 Trap handler for kernel configuration.
 
@@ -18,7 +18,7 @@ Argument 4: Pointer to the current thread context
 OUTPUTS:
 
 
-FUNCTION: void BLASTK_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unused2, BLASTK_thread_context *me)
+FUNCTION: void H2K_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unused2, H2K_thread_context *me)
 
 Adds additional memory for use as thread contexts.
 
@@ -41,14 +41,14 @@ in rounding.
 Next, size should be rounded down to the nearest multiple of CONTEXT_SIZE.
 
 Finally, the memory is chunked into size/CONTEXT_SIZE thread contexts.
-Each context is cleared, and then inserted into the BLASTK_free_threads list.
+Each context is cleared, and then inserted into the H2K_free_threads list.
 
 
 TBD: remove threads?
 TBD: keep list of thread areas for better threadids.
 
 
-FUNCTION: void BLASTK_trap_config_schedint(u32_t unused, void *unused2, u32_t what_int, u32_t unused3, BLASTK_thread_context *me)
+FUNCTION: void H2K_trap_config_schedint(u32_t unused, void *unused2, u32_t what_int, u32_t unused3, H2K_thread_context *me)
 
 Changes the reschedule interrupt to the specified interrupt.
 

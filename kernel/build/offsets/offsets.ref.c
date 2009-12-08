@@ -7,7 +7,7 @@
 #include <context.h>
 #include <stddef.h>
 
-#define PRINT_OFFSET(x) printf("#define CONTEXT_%s %d\n",#x,offsetof(BLASTK_thread_context,x))
+#define PRINT_OFFSET(x) printf("#define CONTEXT_%s %d\n",#x,offsetof(H2K_thread_context,x))
 
 int main(int argc, char **argv)
 {
@@ -40,8 +40,11 @@ PRINT_OFFSET(totalcycles);
 PRINT_OFFSET(oncpu_start);
 PRINT_OFFSET(futex_ptr);
 PRINT_OFFSET(trapmask);
-	printf("#define CONTEXT_SIZE %d\n",sizeof(BLASTK_thread_context));
-	printf("#define FASTINT_CONTEXT_SIZE %d\n",sizeof(BLASTK_fastint_context));
+PRINT_OFFSET(gevb);
+PRINT_OFFSET(gelr_gbadva);
+PRINT_OFFSET(gssr_gosp);
+	printf("#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
+	printf("#define FASTINT_CONTEXT_SIZE %d\n",sizeof(H2K_fastint_context));
 	return 0;
 }
 

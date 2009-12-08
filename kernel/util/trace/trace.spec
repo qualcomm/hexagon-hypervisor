@@ -17,19 +17,19 @@ For V3, the trace buffer structure is::
 		u32_t word1;
 		u32_t word2;
 		u32_t word3;
-	} __attribute__((aligned(16))) BLASTK_trace_entry_t;
+	} __attribute__((aligned(16))) H2K_trace_entry_t;
 
 The buffer is defined as:
 
-u32_t BLASTK_trace_index;
-BLASTK_trace_entry_t BLASTK_trace[MAX_TRACE_ENTRIES];
+u32_t H2K_trace_index;
+H2K_trace_entry_t H2K_trace[MAX_TRACE_ENTRIES];
 
 Fatal Kernel Errors have negative Trace IDs.  Informational kernel messages
 have positive Trace IDs.  MAX_TRACE_LEVEL may be used to filter out kernel
 messages.  Recommended MAX_TRACE_LEVEL values are zero for maximum performance,
 or 1000 for maximum tracing.
 
-FUNCTION: static inline void BLASTK_trace(s16_t type, u32_t arg1, u32_t arg2, u32_t arg3, u32_t hwtnum)
+FUNCTION: static inline void H2K_trace(s16_t type, u32_t arg1, u32_t arg2, u32_t arg3, u32_t hwtnum)
 
 DESCRIPTION:
 
@@ -37,7 +37,7 @@ If an event is less than DEBUG_LEVEL, log a kernel event.
 
 INPUT:
 
-INPUT_ASSERT(BLASTK_trace_index < MAX_TRACE_ENTRIES)
+INPUT_ASSERT(H2K_trace_index < MAX_TRACE_ENTRIES)
 
 Argument 0: Message ID.  See Message ID Format below.
 Argument 1: Additional information to log
@@ -54,7 +54,7 @@ FUNCTIONALITY:
 
 If type is greater than MAX_TRACE_LEVEL, do nothing.
 
-BLASTK_trace_index points to the next trace entry to write.  We read the value, 
+H2K_trace_index points to the next trace entry to write.  We read the value, 
 increment it, reset to zero if greater than MAX_TRACE_ENTRIES, and store the
 pointer back atomically.  We use the old value to compute the pointer to the
 trace entry to write.  

@@ -136,7 +136,7 @@ For V3 and earlier, we extract the TNUM field from SSR.  For V4, we use the HTNU
 
 
 
-FUNCTION: static inline void BLASTK_mutex_lock_k0()
+FUNCTION: static inline void H2K_mutex_lock_k0()
 
 AVAILABILITY(ARCH >= 3)
 
@@ -157,7 +157,7 @@ This merely executes the K0LOCK instruction.
 
 
 
-FUNCTION: static inline void BLASTK_mutex_unlock_k0()
+FUNCTION: static inline void H2K_mutex_unlock_k0()
 
 AVAILABILITY(ARCH >= 3)
 

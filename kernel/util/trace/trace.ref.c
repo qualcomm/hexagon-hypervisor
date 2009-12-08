@@ -5,6 +5,6 @@
 
 #include <trace.h>
 
-u32_t BLASTK_trace_index IN_SECTION(".data.trace") = 0;
-BLASTK_trace_entry_t BLASTK_trace_buf[MAX_TRACE_ENTRIES] IN_SECTION(".data.trace");
+u32_t H2K_trace_index IN_SECTION(".data.trace") = 0;
+H2K_trace_entry_t H2K_trace_buf[MAX_TRACE_ENTRIES] IN_SECTION(".data.trace");
 

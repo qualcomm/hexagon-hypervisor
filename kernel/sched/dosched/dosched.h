@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef BLASTK_DOSCHED_H
-#define BLASTK_DOSCHED_H 1
+#ifndef H2K_DOSCHED_H
+#define H2K_DOSCHED_H 1
 
 #include <context.h>
 
-void BLASTK_dosched(BLASTK_thread_context *me,u32_t hthread);
+void H2K_dosched(H2K_thread_context *me,u32_t hthread);
 
 #endif
 

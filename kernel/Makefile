@@ -36,7 +36,7 @@ $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
 $(REF_OFILES): $(DEST_HFILES)
 
-build/ref/libblastkernel.a: $(REF_OFILES)
+build/ref/libh2kernel.a: $(REF_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(REF_OFILES)
 
@@ -60,6 +60,6 @@ dummy:
 
 includes: $(DEST_HFILES)
 
-ref: build/ref/libblastkernel.a
+ref: build/ref/libh2kernel.a
 
 

@@ -6,7 +6,7 @@
 #include <c_std.h>
 #include <context.h>
 
-u32_t BLASTK_thread_id(BLASTK_thread_context *me)
+u32_t H2K_thread_id(H2K_thread_context *me)
 {       
         return (s32_t)me;
 }

@@ -1,9 +1,9 @@
 
-FUNCTION: void resched(u32_t unused, BLASTK_thread_context *me, u32_t hthread)
+FUNCTION: void resched(u32_t unused, H2K_thread_context *me, u32_t hthread)
 
 DESCRIPTION:
 
-BLASTK_reschedule handles a rescheduling interrupt 
+H2K_reschedule handles a rescheduling interrupt 
 
 INPUT:
 
@@ -23,6 +23,6 @@ If the current thread is NULL, WAIT mode was interrupted, so we clear the wait
 mask bit.  Otherwise, we remove the currently running thread, and append it to
 the ready queue.
 
-We then call BLASTK_dosched.
+We then call H2K_dosched.
 
 

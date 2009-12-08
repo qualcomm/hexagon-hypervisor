@@ -1,7 +1,7 @@
 
 BOOT PROCESS
 
-BLAST defines the start symbol, and boots up the processor.
+H2 defines the start symbol, and boots up the processor.
 
 It then sets up the "boot" thread context to continue execution.
 
@@ -46,15 +46,15 @@ Interrupts fall into one of the following categories:
 * Fast Interrupts
 * VM-style Interrupts (TBD)
 
-The Reschedule interrupt is used within BLAST to cause the lowest priority
+The Reschedule interrupt is used within H2 to cause the lowest priority
 thread to reschedule.
 
 Fast interrupts are routines the kernel calls directly.  They have limited 
 functionality.  Supported traps are limited to non-blocking causes; futex 
 resume being the only recommended trap.
 
-Former versions of BLAST supported additional kernel services for waiting 
-for interrupts in a fully-featured thread.  With this version of BLAST we
+Former versions of H2 supported additional kernel services for waiting 
+for interrupts in a fully-featured thread.  With this version of H2 we
 recommend a simple fast interrupt handler that sends a signal or semaphore
 to the fully-featured thread. 
 

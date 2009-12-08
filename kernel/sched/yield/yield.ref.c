@@ -10,19 +10,19 @@
 #include <hw.h>
 
 /*
- * BLASTK_sched_yield
+ * H2K_sched_yield
  * Run a different thread at the same prio, if available
  * TBD: detect nothing in readylist @ current prio and return
  */
-void BLASTK_sched_yield(BLASTK_thread_context *me)
+void H2K_sched_yield(H2K_thread_context *me)
 {
-        BKL_LOCK(&BLASTK_bkl);
-	if ((BLASTK_ready_valids & (1<<me->prio)) == 0) {
-		BKL_UNLOCK(&BLASTK_bkl);
+        BKL_LOCK(&H2K_bkl);
+	if ((H2K_ready_valids & (1<<me->prio)) == 0) {
+		BKL_UNLOCK(&H2K_bkl);
 		return;
 	}
-        BLASTK_runlist_remove(me);
-        BLASTK_ready_append(me);
-        BLASTK_dosched(me,me->hthread);
+        H2K_runlist_remove(me);
+        H2K_ready_append(me);
+        H2K_dosched(me,me->hthread);
 }
 

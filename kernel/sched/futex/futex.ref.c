@@ -12,7 +12,7 @@
 #include <ring.h>
 #include <check_sanity.h>
 
-BLASTK_thread_context *BLASTK_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE*4))) IN_SECTION(".data.sched.futex");
+H2K_thread_context *H2K_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE*4))) IN_SECTION(".data.sched.futex");
 #define HASHVAL(X) ((((unsigned int)(X)) >> 3) & (FUTEX_HASHSIZE-1))
 
 /*
@@ -21,7 +21,7 @@ BLASTK_thread_context *BLASTK_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(F
  * be uncached or a bad address space or whatnot.
  */
 
-s32_t BLASTK_futex_wait(u32_t *lock, u32_t val, BLASTK_thread_context *me)
+s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 {
 	u32_t hashval = HASHVAL(lock);
 	BKL_LOCK();
@@ -31,19 +31,19 @@ s32_t BLASTK_futex_wait(u32_t *lock, u32_t val, BLASTK_thread_context *me)
 		return -1;
 	}
 	me->futex_ptr = lock;
-	//BLASTK_ring_remove_append(&running,&futexqueue,me);
-	BLASTK_runlist_remove(me);
-	BLASTK_ring_append(&BLASTK_futexhash[hashval],me);
-	BLASTK_dosched(me,me->hthread);
+	//H2K_ring_remove_append(&running,&futexqueue,me);
+	H2K_runlist_remove(me);
+	H2K_ring_append(&H2K_futexhash[hashval],me);
+	H2K_dosched(me,me->hthread);
 	return 0;
 }
 
 /* futex_find
  * Find the next thread in haystack that has a matching lock ptr 
  */
-static BLASTK_thread_context *futex_find(BLASTK_thread_context *haystack, BLASTK_thread_context *start, u32_t *lock)
+static H2K_thread_context *futex_find(H2K_thread_context *haystack, H2K_thread_context *start, u32_t *lock)
 {
-	BLASTK_thread_context *tmp = start;
+	H2K_thread_context *tmp = start;
 	if (haystack == NULL) return haystack;
 	do {
 		if (tmp->futex_ptr == lock) return tmp;
@@ -56,18 +56,18 @@ static BLASTK_thread_context *futex_find(BLASTK_thread_context *haystack, BLASTK
  * If we are only going to wake one thread, pick the highest priority one 
  * Else, pick oldest ones from queue 
  */
-u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *me)
+u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 {
-	BLASTK_thread_context *tmp,*tmp2;
+	H2K_thread_context *tmp,*tmp2;
 	u32_t hashval = HASHVAL(lock);
 	u32_t n_woken = 0;
 	u32_t highest_prio = MAX_PRIOS, prio;
 	BKL_LOCK();
-	if (BLASTK_futexhash[hashval] == NULL) {
+	if (H2K_futexhash[hashval] == NULL) {
 		BKL_UNLOCK();
 		return 0;
 	}
-	tmp = BLASTK_futexhash[hashval];
+	tmp = H2K_futexhash[hashval];
 	if (n_to_wake == 1) {
 		tmp2 = NULL;
 		do {
@@ -79,39 +79,39 @@ u32_t BLASTK_futex_resume(u32_t *lock, u32_t n_to_wake, BLASTK_thread_context *m
 			if (highest_prio > prio) tmp2 = tmp;
 			highest_prio = Q6_R_min_RR(highest_prio,prio);
 			tmp = tmp->next;
-		} while (BLASTK_futexhash[hashval] != tmp);
+		} while (H2K_futexhash[hashval] != tmp);
 		if (tmp2) {
 			n_woken = 1;
 			prio = highest_prio;
-			BLASTK_ring_remove(&BLASTK_futexhash[hashval],tmp2);
-			BLASTK_ready_append(tmp2);
+			H2K_ring_remove(&H2K_futexhash[hashval],tmp2);
+			H2K_ready_append(tmp2);
 		}
 	} else {
-		tmp2 = BLASTK_futexhash[hashval];
+		tmp2 = H2K_futexhash[hashval];
 		do {
-			tmp = futex_find(BLASTK_futexhash[hashval],tmp2,lock);
+			tmp = futex_find(H2K_futexhash[hashval],tmp2,lock);
 			if (tmp == NULL) break;
 			tmp2 = tmp->next;
 			prio = tmp->prio;
 			highest_prio = Q6_R_min_RR(highest_prio,prio);
-			BLASTK_ring_remove(&BLASTK_futexhash[hashval],tmp);
-			BLASTK_ready_append(tmp);
+			H2K_ring_remove(&H2K_futexhash[hashval],tmp);
+			H2K_ready_append(tmp);
 			if (++n_woken >= n_to_wake) break;
 		} while (1);
 	}
 	if (n_woken) {
-		return BLASTK_check_sanity_unlock(n_woken); 
+		return H2K_check_sanity_unlock(n_woken); 
 	} else {
 		BKL_UNLOCK();
 		return n_woken;
 	}
 }
 
-void BLASTK_futex_init()
+void H2K_futex_init()
 {
 	int i;
 	for (i = 0; i < FUTEX_HASHSIZE; i++) {
-		BLASTK_futexhash[i] = NULL;
+		H2K_futexhash[i] = NULL;
 	}
 }
 

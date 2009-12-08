@@ -5,12 +5,12 @@
 
 #include <asm_std.h>
 
-FUNC_START BLASTK_handle_tlbmissx .text.tlbmiss .p2align 2
+FUNC_START H2K_handle_tlbmissx .text.tlbmiss .p2align 2
 1:
 	jump 1b
-FUNC_END BLASTK_handle_tlbmissx
+FUNC_END H2K_handle_tlbmissx
 
-FUNC_START BLASTK_handle_tlbmissrw .text.tlbmiss .p2align 2
+FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
 	jump 1b
-FUNC_END BLASTK_handle_tlbmissrw
+FUNC_END H2K_handle_tlbmissrw
 

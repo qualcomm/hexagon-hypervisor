@@ -3,10 +3,10 @@
 
 .. module:: check_sanity
 
-BLASTK_check_sanity
+H2K_check_sanity
 -------------------
 
-.. cfunction:: u64_t BLASTK_check_sanity(const u64_t returnval)
+.. cfunction:: u64_t H2K_check_sanity(const u64_t returnval)
 
 Description
 ~~~~~~~~~~~
@@ -74,16 +74,16 @@ Samples
 
 n_pri_levels -- number of priority levels available
    Boundaries/interesting values:
-BLASTK_ready_best_prio -- bit mask of priorities with ready tasks
+H2K_ready_best_prio -- bit mask of priorities with ready tasks
    Boundaries/interesting values:
-BLASTK_ready_validmask -- ?
-BLASTK_wait_mask -- bit mask of hardware threads that are waiting
+H2K_ready_validmask -- ?
+H2K_wait_mask -- bit mask of hardware threads that are waiting
    Boundaries/interesting values:
-BLASTK_priomask -- bit mask of hardware threads which are the lowest priority
+H2K_priomask -- bit mask of hardware threads which are the lowest priority
    Boundaries/interesting values:
 imask[nthreads] -- per-thread imask
    Boundaries:
-BLASTK_resched_int -- shows whether or not a resched was fired
+H2K_resched_int -- shows whether or not a resched was fired
    Boundaries:
 
 
@@ -97,14 +97,14 @@ Matrix
 Harness
 ```````
 
-Unit test overrides BLASTK_* defines to provide input and check output.
+Unit test overrides H2K_* defines to provide input and check output.
 Assertions should be turned on, and the call() convention used.
 
 
-BLASTK_check_sanity_unlock
+H2K_check_sanity_unlock
 --------------------------
 
-.. cfunction:: u64_t BLASTK_check_sanity_unlock(const u64_t returnval)
+.. cfunction:: u64_t H2K_check_sanity_unlock(const u64_t returnval)
    
 Description
 ~~~~~~~~~~~

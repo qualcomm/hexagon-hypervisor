@@ -3,19 +3,19 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef BLAST_CONTEXT_H
-#define BLAST_CONTEXT_H
+#ifndef H2K_CONTEXT_H
+#define H2K_CONTEXT_H
 
 #include <c_std.h>
 
-#define BLASTK_CONTEXT_ALIGN 32
+#define H2K_CONTEXT_ALIGN 32
 
-typedef struct _blast_thread_context
+typedef struct _h2_thread_context
 {
 	/* Kernel Variables */
 	/* Make ring compatible */
-	struct _blast_thread_context *next;
-	struct _blast_thread_context *prev;
+	struct _h2_thread_context *next;
+	struct _h2_thread_context *prev;
 	// #8
 	/* Other info */
 	u32_t trapmask;
@@ -25,7 +25,7 @@ typedef struct _blast_thread_context
 	u8_t valid;
 	// #16
 	struct {
-		void *event_handler;
+		void *gevb;
 		u32_t tid;
 	};
 	// 24
@@ -33,14 +33,20 @@ typedef struct _blast_thread_context
 	/* Context */
 	/* Context required for OS calls... callee save + ugp/gp/etc */
 	/* V3 callee-save is a lot bigger. :-| */
-	struct {
-		u32_t GBADVA;
-		u32_t GSSR;
+	union {
+		u64_t gelr_gbadva;
+		struct {
+			u32_t gbadva;
+			u32_t gelr;
+		};
 	};
 	// 32
-	struct {
-		u32_t GOSP;
-		u32_t GELR;
+	union {
+		u64_t gssr_gosp;
+		struct {
+			u32_t gosp;
+			u32_t gssr;
+		};
 	};
 	u64_t oncpu_start;
 	u64_t totalcycles;
@@ -81,10 +87,10 @@ typedef struct _blast_thread_context
 	u64_t sr_preds;
 	u64_t cs1cs0;	// V4 regs
 	// 256
-} __attribute__((aligned(BLASTK_CONTEXT_ALIGN))) BLASTK_thread_context;
+} __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
 
 typedef struct {
-	BLASTK_thread_context context;
+	H2K_thread_context context;
 	unsigned long long int stack120;
 	unsigned long long int stack112;
 	unsigned long long int stack104;
@@ -101,6 +107,6 @@ typedef struct {
 	unsigned long long int stack016;
 	unsigned long long int stack008;
 	unsigned long long int stack000;
-} BLASTK_fastint_context;
+} H2K_fastint_context;
 
 #endif

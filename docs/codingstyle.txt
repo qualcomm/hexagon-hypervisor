@@ -1,0 +1,62 @@
+
+C Coding Style
+~~~~~~~~~~~~~~
+
+We roughly follow the Linux Kernel Coding Style guidelines.  See that document
+for rationale.
+
+Wherever possible, indentation MUST be done using TAB characters.  The main 
+indentation amount should be one TAB character.
+
+Simple example:
+
+int foo(int arg)
+{
+	if (arg == 0) {
+		return 1;
+	} else {
+		return 0xdeadbeef;
+	}
+}
+
+The block following an if / for / while / etc MUST start on the same line.
+If no curly braces are used on an if / for / while / etc, that means the
+statement MUST begin on the same line as the if / for / while / etc.  Example:
+
+	if (test > 63) test = 63;	/* THIS IS OK */
+
+	if (test > 63)
+		test = 63;		/* INCORRECT */
+
+
+	if (test > 63) {		/* THIS IS OK */
+		test = 63;
+	}
+
+
+Macros are typically ALL_UPPER_CASE.  Variables are typically all_lower_case.
+Defined types should end with _t.
+
+
+ASM Coding Style
+~~~~~~~~~~~~~~~~
+
+Wherever possible, Indentation MUST be done using TAB caracters.  The main
+indentation amount should be one TAB character.
+
+Packets have both open and close curly braces on lines by themselves, indented
+once, with the grouped instructions one-per-line and with an additional
+indentation.  Solo instructions are aligned with the curly braces, one
+indentation.
+
+Comments may refer to reference implementation variable names
+
+We express packets in such a mannner:
+
+	{
+		r0 = add(r0,r1)		// add foo and baz
+		r3 = sub(r1,r2)		// Compute difference of baz and xyzzy
+	}
+	r5 = mpyi(r3,#32)
+
+

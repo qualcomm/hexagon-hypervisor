@@ -31,6 +31,7 @@
 #define BLAST_TRAP_SET_PREFETCH 17
 #define BLAST_TRAP_SET_TID 18
 #define BLAST_TRAP_GET_TID 19
+#define BLAST_TRAP_CONFIG 30
 
 #endif
 

@@ -1,13 +1,13 @@
 
-# Big kludge here, need to redo build system to have one blast library built
+# Big kludge here, need to redo build system to have one h2 library built
 
-all: libblast
+all: libh2
 
-libblast:
-	make -C blast
+libh2:
+	make -C h2
 	make -C syscall/angel
 	mkdir -p tmp
-	cp blast/libblast.a tmp/
+	cp h2/libh2.a tmp/
 	cp syscall/angel/libangel.a tmp/
-	cd tmp; qdsp6-ar x libblast.a; qdsp6-ar x libangel.a; qdsp6-ar cru ../libblast.a *.o
+	cd tmp; qdsp6-ar x libh2.a; qdsp6-ar x libangel.a; qdsp6-ar cru ../libh2.a *.o
 

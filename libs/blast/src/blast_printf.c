@@ -5,6 +5,7 @@
 
 #include <blast_printf.h>
 #include <blast_mutex.h>
+#include <blast_thread.h>
 #include <stdarg.h>
 #include <stdio.h>
 

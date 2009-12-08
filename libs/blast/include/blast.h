@@ -23,6 +23,7 @@
 #include "blast_allsignal.h"
 #include "blast_anysignal.h"
 #include "blast_rmutex.h"
+#include "blast_config.h"
 
 #endif
 

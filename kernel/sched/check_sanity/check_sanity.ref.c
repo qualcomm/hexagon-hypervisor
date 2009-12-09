@@ -17,8 +17,7 @@ u64_t H2K_check_sanity(const u64_t retval)
 	}
 	if (H2K_runlist_worst_prio() IS_WORSE_THAN H2K_ready_best_prio()) {
 		resched_int();
-	}
-	else if (H2K_wait_mask && (H2K_ready_valids /* & H2K_ready_validmask */)) {
+	} else if (H2K_wait_mask && (H2K_ready_valids /* & H2K_ready_validmask */)) {
 		resched_int();
 	}
 #if 0

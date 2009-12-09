@@ -67,6 +67,28 @@ static inline u32_t get_ssr()
 	return ret;
 }
 
+static inline void H2K_clear_ie()
+{
+	asm("r0 = ssr; r0 = clrbit(r0,#18); ssr=r0; isync;":::"r0");
+}
+
+static inline void H2K_set_ie()
+{
+	asm("r0 = ssr; r0 = setbit(r0,#18); ssr=r0; isync;":::"r0");
+}
+
+static inline u32_t H2K_get_ipend()
+{
+	u32_t ret;
+	asm("%0 = ipend;":"=r" (ret));
+	return(ret);
+}
+
+static inline void H2K_clear_ipend(u32_t hthread_mask)
+{
+	asm("cswi(%0);" : : "r" (hthread_mask));
+}
+
 #if (ARCHV <= 3)
 static inline u32_t get_hwtnum()
 {

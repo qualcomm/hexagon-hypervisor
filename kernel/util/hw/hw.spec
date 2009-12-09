@@ -175,8 +175,13 @@ This merely executes the K0UNLOCK instruction.
 
 
 
+FUNCTION:  static inline void H2K_clear_ie()
 
+FUNCTION:  static inline void H2K_set_ie()
 
+FUNCTION:  static inline u32_t H2K_get_ipend()
+
+FUNCTION:  static inline void H2K_clear_ipend(u32_t)
 
 
 

@@ -59,6 +59,33 @@ The destination thread is put in a predicate register, and then we use the
 SETIMASK instruction to modify the IMASK for the thread.
 
 
+get_imask
+---------
+
+.. cfunction:: static inline u32_t get_imask(u32_t thread)
+
+Description
+~~~~~~~~~~~
+
+Get the IMASK register for the specified thread
+
+Input
+~~~~~
+
+Argument 0: The thread to fetch the imask of
+
+Output
+~~~~~~
+
+Returns the imask of the desired hardware thread
+
+Functionality
+~~~~~~~~~~~~~
+
+The source thread is put in a predicate register, and then we use the
+GETIMASK instruction to retrieve the IMASK.
+
+
 resched_int
 -----------
 

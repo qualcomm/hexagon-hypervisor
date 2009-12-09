@@ -30,6 +30,13 @@ static inline void change_imask(u32_t thread, u32_t imask)
 	asm(" p0 = %0\n setimask(p0,%1)" : : "r"(thread),"r"(imask):"p0");
 }
 
+static inline u32_t get_imask(u32_t thread)
+{
+	u32_t imask;
+	asm(" p0 = %0\n getimask(p0,%1)" : "=r"(imask) : "r"(thread):"p0");
+	return imask;
+}
+
 #endif
 
 static inline void resched_int()

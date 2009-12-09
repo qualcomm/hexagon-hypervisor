@@ -10,12 +10,16 @@
 #include <readylist.h>
 #include <lowprio.h>
 
-#define info(...) printf(__VA_ARGS__);
-#define warn(...) printf(__VA_ARGS__);
-#define debug(...) printf(__VA_ARGS__);
+#define info(...) { printf("INFO:  "); printf(__VA_ARGS__);}
+#define warn(...) { printf("WARNING:  "); printf(__VA_ARGS__);}
+#define debug(...) { printf("DEBUG:  "); printf(__VA_ARGS__);}
+#define error(...) { printf("ERROR:  "); printf(__VA_ARGS__); FAIL("");}
 
-/*  Todo:  add a "fail" function mandatory for all tests; error can call it.  */
-#define error(...) printf(__VA_ARGS__);
+void FAIL(const char *str) 
+{
+	printf(str);
+	exit(1);
+}
 
 void print_test_defines(void) 
 {
@@ -114,12 +118,13 @@ int main()
 
 					if ((wait_hthread != 0) && (ready_prio != 0)) {
 						if (!resched_requested()) {
-							info("wait_hthread == %d, ready_prio == %d\n",wait_hthread, ready_prio);
+							debug("wait_hthread == %d, ready_prio == %d\n",wait_hthread, ready_prio);
 							error("Expected reschedule due to idle hardware thread with ready tasks\n");
 						}
 						resched_count++;
 						goto sched_fired_ok;
-					}
+					}  /*  tasks ready to go while thread is in wait  */
+
 					/*  Should NOT have seen a scheduler fire at this point  */
 					if (resched_requested()) {
 						error("Inappropriate reschedule requested()\n");
@@ -166,5 +171,6 @@ sched_fired_ok:
 	 */
 
 	printf("TEST PASSED\n");
+	exit(0);
 }
 

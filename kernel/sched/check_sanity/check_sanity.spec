@@ -66,41 +66,6 @@ If the priomask is zero, then no thread has been designated the lowest priority
 running thread.  Make the lowest priority running thread interruptible.
 
 
-Testing
-~~~~~~~
-
-Samples
-```````
-
-n_pri_levels -- number of priority levels available
-   Boundaries/interesting values:
-H2K_ready_best_prio -- bit mask of priorities with ready tasks
-   Boundaries/interesting values:
-H2K_ready_validmask -- ?
-H2K_wait_mask -- bit mask of hardware threads that are waiting
-   Boundaries/interesting values:
-H2K_priomask -- bit mask of hardware threads which are the lowest priority
-   Boundaries/interesting values:
-imask[nthreads] -- per-thread imask
-   Boundaries:
-H2K_resched_int -- shows whether or not a resched was fired
-   Boundaries:
-
-
-States
-``````
-
-Matrix
-``````
-
-
-Harness
-```````
-
-Unit test overrides H2K_* defines to provide input and check output.
-Assertions should be turned on, and the call() convention used.
-
-
 H2K_check_sanity_unlock
 --------------------------
 
@@ -145,4 +110,43 @@ Implement the functionality of check_sanity.
 Unlock the BKL.
    
 Return returnval.
+
+
+
+Testing
+-------
+
+Samples
+~~~~~~~
+
+MAX_PRIOS -- number of priority levels available
+MAX_HTHREADS -- number of hardware threads available
+
+H2K_priomask defined in lowprio.h (extern)
+H2K_wait_mask defined in lowprio.h (extern)
+H2K_ready_valids defined in readylist.h (extern)
+
+H2K_runlist_worst_prio() defined in runlist.h (static inline); uses runlist_valids
+H2K_ready_best_prio() defined in readylist.h (static inline); uses ready_valids
+
+H2K_lowprio_notify() defined in lowprio.h (static inline); changes imask 
+H2K_resched_int() defined in hw.h (static inline); sends the reschedule interrupt
+
+States
+~~~~~~
+
+
+Matrix
+~~~~~~
+
+
+Harness
+~~~~~~~
+
+BLAST libkernel will be built, and run with testcases as the main user thread.  It should not switch out.
+
+Assertions should be turned on, and the call() convention used to call the debug wrappers.
+
+The output routines in hw.h used by the functions under test should be corked off.
+
 

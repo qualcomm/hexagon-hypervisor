@@ -53,7 +53,7 @@ int main()
 
 	u32_t some_random_number;  /*  checked by assertions  */
 
-	u32_t resched_count=0;
+	u32_t resched_count=0;  /*  need to distinguish between sightings of the two different reasons for rescheds  */
 	u32_t lowprio_count=0;
 
 	/*  Call h2_init() to initialize everything  */
@@ -106,7 +106,7 @@ int main()
 
 					if (runlist_prio > ready_prio) {
 						if (!resched_requested()) {
-							error("Bad unit, no donut\n");
+							error("Expected reschedule due to better ready tasks\n");
 						}
 						resched_count++;
 						goto sched_fired_ok;
@@ -115,7 +115,7 @@ int main()
 					if ((wait_hthread != 0) && (ready_prio != 0)) {
 						if (!resched_requested()) {
 							info("wait_hthread == %d, ready_prio == %d\n",wait_hthread, ready_prio);
-							error("Bad unit, no donut\n");
+							error("Expected reschedule due to idle hardware thread with ready tasks\n");
 						}
 						resched_count++;
 						goto sched_fired_ok;

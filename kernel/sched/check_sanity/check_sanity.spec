@@ -41,10 +41,11 @@ Should return Argument 0.
 
 
 .. InputAssert::
-   assert(kernel_locked());
-   
+   assert(checker_kernel_locked());
+
    
 .. OutputAssert::
+   assert(checker_kernel_locked());
    assert(retval == arg0);
 
 
@@ -94,13 +95,12 @@ Should return Argument 0.
 
 
 .. InputAssert::
-   assert(kernel_locked());
+   assert(checker_kernel_locked());
 
 
 .. OutputAssert::
    assert(retval == arg0);
-   assert(kernel_unlocked());
-   
+
 
 Functionality
 ~~~~~~~~~~~~~

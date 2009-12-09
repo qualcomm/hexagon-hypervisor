@@ -1,9 +1,16 @@
 
-MODULE: thread_create
+:mod: `thread_create` -- create a new thread
+============================================
 
-FUNCTION: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t asid, u32_t trapmask, H2K_thread_context *me)
+.. module:: thread_create
 
-DESCRIPTION:
+H2K_thread_create
+-----------------
+
+.. cfunction:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t asid, u32_t trapmask, H2K_thread_context *me)
+
+Description
+~~~~~~~~~~~
 
 The H2K_thread_create function creates a new thread.  The calling thread
 specifies attributes for the thread, and the new thread is created
@@ -13,7 +20,8 @@ specifying the mask of allowed traps.
 The call to thread_create will return -1 on error, or an ID for the
 thread on success.
 
-INPUT:
+Input
+~~~~~
 Argument 0: The PC that the new thread should start at
 Argument 1: The SP that the new thread should start with
 Argument 2: A value for r0 for the new thread
@@ -22,12 +30,14 @@ Argument 4: The Address Space ID for the new thread
 Argument 5: The mask for what traps are allowed for the new thread
 Argument 6: Pointer to the current thread context
 
-OUTPUT:
+Output
+~~~~~~
 
 Returns -1 or the thread ID of the new thread
 
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 Arguments should be checked:
 * Priority should be less than MAX_PRIO

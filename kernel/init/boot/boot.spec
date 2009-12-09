@@ -1,33 +1,47 @@
 
 ASM_REF_CODE(Bootup code is difficult to write in C)
 
-MODULE: boot
+:mod: `boot` -- startup routines
+================================
 
-FUNCTION: void h2_init()
+.. module:: boot
+
+H2_init
+-------
+
+.. cfunction:: void h2_init()
 
 This function starts the kernel, if it has not been started already.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 This function merely returns. However, it must be called from main from the
 boot thread.  This forces the linker to include the object in the final
 executable.
 
 
+start
+-----
 
-FUNCTION: start()
+.. cfunction:: start()
 
 This routine boots the machine.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We assume that the machine is entirely off.
 
@@ -43,15 +57,21 @@ We need to include a reference to H2K_symbols to ensure that
 is also pulled in.
 
 
-FUNCTION: H2K_handle_reset()
+H2K_handle_reset
+----------------
+
+.. cfunction:: H2K_handle_reset()
 
 This routine boots a new processor, or after a soft reset
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 XXX: We assume for now that this is only secondary threads booting.
 

@@ -1,19 +1,28 @@
 
-MODULE: thread_stop
+:mod: `thread_stop` -- terminate thread
+=======================================
 
-FUNCTION: void H2K_thread_stop(thread_context *me)
+.. module:: thread_stop
+
+H2K_thread_stop
+---------------
+
+.. cfunction:: void H2K_thread_stop(thread_context *me)
 
 The H2K_thread_stop function terminates the thread.
 
-INPUT:
+Input
+~~~~~
 
 Argument 0: The pointer to the current thread context
 
-OUTPUT:
+Output
+~~~~~~
 
 None, does not return
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 First, we acquire the BKL.
 

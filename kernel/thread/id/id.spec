@@ -1,21 +1,31 @@
 
-MODULE: thread_id
+:mod: `thread_id` -- obtain unique ID
+======================================
 
-FUNCTION: u32_t H2K_thread_id(thread_context *me)
+.. module:: thread_id
 
-DESCRIPTION:
+H2K_thread_id
+-------------
+
+.. cfunction:: u32_t H2K_thread_id(thread_context *me)
+
+Description
+~~~~~~~~~~~
 
 The H2K_thread_id function returns a unique id for the requesting thread.
 
-INPUT:
+Input
+~~~~~
 
 Argument 0: Pointer to the current context
 
-OUTPUT:
+Output
+~~~~~~
 
 A unique ID for the running thread
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 Each thread should have a unique ID.
 

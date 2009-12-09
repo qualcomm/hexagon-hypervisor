@@ -1,18 +1,24 @@
 
-MODULE: setup
+:mod: `setup` -- set up initial kernel state
+============================================
 
+.. module:: setup
 
-FUNCTION: void init_setup()
+.. cfunction:: void init_setup()
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 Sets up the kernel at boot time.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
-BEHAVIOR:
+Functionality
+~~~~~~~~~~~~~
 
 The init_setup function initializes kernel state at boot time.
 

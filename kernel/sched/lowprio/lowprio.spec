@@ -1,19 +1,29 @@
 
-UNIT: lowprio
+:mod:`lowprio` -- managing the lowest priority thread
+======================================================
 
-FUNCTION: static inline void H2K_lowprio_notify()
+.. module:: lowprio
 
-DESCRIPTION:
+H2K_lowprio_notify
+-------------------
+
+.. cfunction:: static inline void H2K_lowprio_notify()
+
+Description
+~~~~~~~~~~~
 
 H2K_lowprio_notify identifies a new thread to be the lowest-priority thread
 for receiving interrupts, and takes action to make that thread be receptive to
 interrupts.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 First, we get the priority of the worst priority running thread.  We look at the 
 H2K_runlist entry at that priority, which points to the thread that was inserted
@@ -22,18 +32,25 @@ thread, and use that to set the H2K_priomask bit corresponding to the
 hardware thread and to call thread_prio_change_low().
 
 
-FUNCTION: static inline void H2K_lowprio_raise()
+H2K_lowprio_raise
+------------------
 
-DESCRIPTION:
+.. cfunction:: static inline void H2K_lowprio_raise()
+
+Description
+~~~~~~~~~~~
 
 H2K_lowprio_raise takes the thread currently marked as lowest priority, and 
 modifies the state to indicate it is no longer lowest priority.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 If H2K_wait_mask is nonzero, we return, as we should never mask interrupts on 
 a waiting thread.  Otherwise, count the trailing zeros of H2K_priomask, which

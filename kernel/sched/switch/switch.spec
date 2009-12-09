@@ -1,27 +1,38 @@
 
 ASM_REF_CODE(Switch involves special registers and sleep, and cannot be written in C.)
 
-UNIT: switch
+:mod:`switch` -- Switch to a new thread
+========================================
 
-FUNCTION: void H2K_switch(thread_context *from, thread_context *to)
+.. module:: switch
 
-DESCRIPTION:
+H2K_switch
+----------
+
+.. cfunction:: void H2K_switch(thread_context *from, thread_context *to)
+
+Description
+~~~~~~~~~~~
 
 H2K_switch switches to a new thread that has been chosen to be scheduled.
 If the new thread is NULL, we will go to wait mode.
 
-INPUT:
+Input
+~~~~~
 
-INPUT_ASSERT(kernel_locked)
+.. InputAssert::
+	ASSERT(kernel_locked())
 
 Argument 0: the context of the currently running thread (or NULL)
 Argument 1: the context of the new thread to run (or NULL)
 
-OUTPUT:
+Output
+~~~~~~
 
 
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 TBD: where do we accumulate thread/wait time?
 TBD: do we set up PMU stuff here?

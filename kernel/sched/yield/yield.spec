@@ -1,21 +1,31 @@
 
-MODULE: sched_yield
+:mod: sched_yield -- yield to next thread at same priority
+=================
 
-FUNCTION: void H2K_sched_yield(thread_context *me)
+.. module:: sched_yield
 
-DESCRIPTION:
+H2K_sched_yield
+---------------
+
+.. cfunction:: void H2K_sched_yield(thread_context *me)
+
+Description
+~~~~~~~~~~~
 
 The H2K_sched_yield function yields execution to all other threads at the same priority.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: Pointer to the current thread context
 
-OUTPUTS:
+Output
+~~~~~~
 
 None
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 First, we acquire the Big Kernel Lock.
 

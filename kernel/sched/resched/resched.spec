@@ -1,19 +1,30 @@
 
-FUNCTION: void resched(u32_t unused, H2K_thread_context *me, u32_t hthread)
+:mod: `resched` -- handle a reschedule interrupt
+================================================
 
-DESCRIPTION:
+.. module:: resched
 
-H2K_reschedule handles a rescheduling interrupt 
+H2K_resched
+-----------
+
+.. cfunction:: void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hthread)
+
+Description
+~~~~~~~~~~~
+
+H2K_resched handles a rescheduling interrupt 
 
 INPUT:
 
 Argument 0: unused
-Argument 1: A pointer to the currently running thread's context
+Argument 1: A pointer to the currently running thread's context (NULL if idle thread was interrupted)
 Argument 2: the hardware thread number
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 First, this function acknowledges the reschedule interrupt.
 

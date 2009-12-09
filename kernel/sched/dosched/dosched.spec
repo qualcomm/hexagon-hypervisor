@@ -1,25 +1,38 @@
+:mod:`dosched` -- schedule a new thread
+=====================================
 
+.. module:: dosched
 
-UNIT: dosched
+H2K_check_sanity
+-----------------
 
-FUNCTION: void H2K_dosched(thread_context *me, u32_t hthread)
+.. cfunction:: void H2K_dosched(thread_context *me, u32_t hthread)
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~~~
 
 H2K_dosched schedules the highest priority ready thread for execution, or goes to
 sleep if there is no ready thread.
 
-INPUT:
+Input
+~~~~
 
 INPUT_ASSERT(kernel_locked)
 
 Argument 0: the context of the currently running thread
 Argument 1: the hardware thread number
 
-OUTPUT:
+Output
+~~~~~~
+
+.. InputAssert::
+	assert(kernel_locked());
 
 
-FUNCTIONALITY:
+
+
+Functionality
+~~~~~~~~~~
 
 The BKL must be held before calling dosched.
 

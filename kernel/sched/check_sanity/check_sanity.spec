@@ -143,10 +143,10 @@ Matrix
 Harness
 ~~~~~~~
 
-BLAST libkernel will be built, and run with testcases as the main user thread.  It should not switch out.
+H2 lib kernel will be built, and run with testcases as the main user thread.  It should not switch out.
 
 Assertions should be turned on, and the call() convention used to call the debug wrappers.
 
-The output routines in hw.h used by the functions under test should be corked off.
+Output will be inspected by looking at ipend and possibly diverting some other defines (?)
 
 

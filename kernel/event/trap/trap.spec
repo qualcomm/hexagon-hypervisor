@@ -9,7 +9,7 @@ ASM_REF_CODE(Trap context save/restore not possible in C)
 H2K_handle_trap0
 ----------------
 
-.. cfunction: H2K_handle_trap0()
+.. cfunction:: H2K_handle_trap0()
 
 Description
 ~~~~~~~~~~~

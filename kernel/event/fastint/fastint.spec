@@ -4,7 +4,7 @@ ASM_REF_CODE(fastint requires special register changes difficult in C)
 :mod:`fastint` -- call a fast interrupt handler
 ==============================================
 
-.. module: fastint
+.. module:: fastint
 
 
 H2K_fastint

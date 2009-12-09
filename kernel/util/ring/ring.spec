@@ -26,7 +26,7 @@ specifies the wrapped names.
 
 H2K_ring_remove
 ---------------
-.. cfunction: void H2K_ring_remove(void *ring, void *node);
+.. cfunction:: void H2K_ring_remove(void *ring, void *node);
 
 Description
 ~~~~~~~~~~~
@@ -61,7 +61,7 @@ because the ring is now empty.  Otherwise, we point ``ring`` to ``node->next``.
 H2K_ring_insert
 ---------------
 
-.. cfunction: H2K_ring_insert(void *ring, void *node)
+.. cfunction:: H2K_ring_insert(void *ring, void *node)
 
 The H2K_ring_insert function adds ``node`` to ``ring``, as the node pointed to by
 ``ring``.

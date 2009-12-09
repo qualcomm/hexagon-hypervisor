@@ -1,14 +1,17 @@
 
 Save callee save regs at trap time or switch time?
 
-V2 support
-Optimized code
-Profiling
-Trace 
-Memory
-PMU
-Ready_validmask
+Unit Tests
+Full Tests
+Code Coverage
 Make return values correct
+Ready_validmask
+Memory
+Trace
+Profiling
+PMU
+Optimized code
+V2 support
 
 
 Priority Inheritance:
@@ -42,4 +45,6 @@ TBD:
 Caveats:
 	* Futex_resume may not be right place to always change back prio
 
+
+Hypervisor Interrupts
 

@@ -36,7 +36,7 @@ We invoke the CIAD instruction with the designated mask.
 change_imask
 ------------
 
-.. cfunction: static inline void change_imask(u32_t thread, u32_t imask)
+.. cfunction:: static inline void change_imask(u32_t thread, u32_t imask)
 
 Description
 ~~~~~~~~~~~
@@ -86,7 +86,7 @@ instruction is invoked with that register.
 highprio_imask
 --------------
 
-.. cfunction: static inline void highprio_imask(u32_t hthread)
+.. cfunction:: static inline void highprio_imask(u32_t hthread)
 
 Description
 ~~~~~~~~~~~
@@ -138,7 +138,7 @@ most of the interrupts, and then place that value in IMASK.
 get_ssr
 -------
 
-.. cfunction: static inline u32_t get_ssr()
+.. cfunction:: static inline u32_t get_ssr()
 
 Description
 ~~~~~~~~~~~
@@ -214,7 +214,7 @@ This merely executes the K0LOCK instruction.
 H2K_mutex_unlock_k0
 --------------------
 
-.. cfunction: static inline void H2K_mutex_unlock_k0()
+.. cfunction:: static inline void H2K_mutex_unlock_k0()
 
 AVAILABILITY(ARCH >= 3)
 

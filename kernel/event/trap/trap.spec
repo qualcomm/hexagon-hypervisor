@@ -1,11 +1,18 @@
 
 ASM_REF_CODE(Trap context save/restore not possible in C)
 
-UNIT: interrupt
+:mod: ``trap`` -- handle kernel request events
+================
 
-FUNCTION: H2K_handle_trap0()
+.. module:: trap
 
-DESCRIPTION:
+H2K_handle_trap0
+----------------
+
+.. cfunction: H2K_handle_trap0()
+
+Description
+~~~~~~~~~~~
 
 The trap0 instruction goes to the trap0 vector, which jumps to this routine.
 
@@ -13,11 +20,14 @@ The handle_trap0 function saves callee-save registers according to the ABI,
 including special registers.  It also determines the functionality requested
 by the trap, and calls the corresponding kernel routine.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 XXX: TBD: for VM, we must not clobber regs...
 
@@ -46,9 +56,10 @@ and jump to the traptab entry for the requested trap.
 The trap request can return, or can call the trap continuation.
 
 
-FUNCTION: H2K_traptab()
+.. cfunction:: H2K_traptab()
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 The traptab is a table of pairs of instructions.  One instruction of the pair
 is the jump instruction to the appropriate place for the trap of the appropriate

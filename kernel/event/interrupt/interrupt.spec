@@ -1,21 +1,31 @@
 
 ASM_REF_CODE(Interrupt context save/restore not possible in C)
 
-UNIT: interrupt
+:mod: `interrupt` -- Handle interrupt events
+===============
 
-FUNCTION: H2K_handle_int()
+.. module:: interrupt
 
-DESCRIPTION:
+H2K_handle_int
+--------------
+
+.. cfunction:: H2K_handle_int()
+
+Description
+~~~~~~~~~~~
 
 This handles the common set of interrupts.  The interrupt handler carefully
 saves any required context, and jumps to the appropriate handler for the 
 next step.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 Most interrupts redirect to handle_int.
 
@@ -44,36 +54,49 @@ We leave to execute the interrupt handler that calls a stub routine.  This stub
 routine saves the return address in the continuation field before jumping to
 the appropriate location.
 
-FUNCTION: H2K_int_context_restore()
+H2K_int_context_restore
+-----------------------
 
-DESCRIPTION:
+.. cfunction:: H2K_int_context_restore()
+
+Description
+~~~~~~~~~~~
 
 This routine returns to an interrupted thread.  It restores the registers from
 the thread context and returns to the thread in the appropriate place.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 The int_context_restore routine restores registers from the thread context and returns.
 
 
+H2K_interrupted_waitmode
+------------------------
 
-FUNCTION: H2K_interrupted_waitmode()
+.. cfunction:: H2K_interrupted_waitmode()
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 This routine is called when we detect that we were interrupted while in wait.  
 This is a common case, and we can avoid context save by branching to this 
 routine early.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We set up the stack pointer and call the correct function.
 

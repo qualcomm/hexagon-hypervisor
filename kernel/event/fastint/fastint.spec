@@ -1,23 +1,34 @@
 
 ASM_REF_CODE(fastint requires special register changes difficult in C)
 
-UNIT: fastint
+:mod:`fastint` -- call a fast interrupt handler
+==============================================
 
-FUNCTION: H2K_fastint(u32_t intno, H2K_thread_context *me, u32_t hthread)
+.. module: fastint
 
-DESCRIPTION:
+
+H2K_fastint
+-----------
+
+.. cfunction:: H2K_fastint(u32_t intno, H2K_thread_context *me, u32_t hthread)
+
+Description
+~~~~~~~~~~~
 
 This function calls a fast interrupt
 
-INPUT:
+Input
+~~~~~
 
 Argument 0: Interrupt number
 Argument 1: Context for the current thread
 Argument 2: Current hardware thread number
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 The H2K_fastint routine sets up the environment for a fast interrupt handler, and
 then calls the fast interrupt handler.
@@ -45,20 +56,27 @@ TBD: should fast interrupts be able to jump to resched also?  Handy for the
 commonish case that a fastint causes a reschedule event...
 
 
-FUNCTION: H2K_interrupted_fastint_check()
+H2K_interrupted_fastint_check
+-----------------------------
 
-DESCRIPTION:
+.. cfunction:: H2K_interrupted_fastint_check()
+
+Description
+~~~~~~~~~~~
 
 This routine gets called from handle_int when we detect that the check at the end of 
 the fastint handler was interrupted.  Call the correct fastint handler.
 
-INPUT:
+Input
+~~~~~
 
 Several registers are assumed to be in the correct state from fastint_call.
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 This function depends on knowing the state at the time of the interrupt. 
 

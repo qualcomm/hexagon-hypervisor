@@ -1,21 +1,25 @@
 
 ASM_REF_CODE(Vectors cannot be written in C)
 
-UNIT: vectors
+:mod: `vectors` -- Event Vector Table
 
-FUNCTION: H2K_event_vectors()
+..cfunction:: H2K_event_vectors()
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 The event vectors are the entry points into the kernel.  Every exception, or
 interrupt causes the program counter to change to an entry in the event
 vectors.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 The event vectors are primarily a series of jump instructions.  The machine will
 set the PC to the appropriate address for the particular event being serviced.

@@ -1,21 +1,28 @@
+:mod:`error` -- Handle an error exception
+======================================
 
+.. module:: error
 
+H2K_handle_error
+----------------
 
-MODULE: error
+.. cfunction:: H2K_handle_error()
 
-FUNCTION: H2K_handle_error
+Description
+~~~~~~~~~~~
 
-UNIMPLEMENTED!!!!
-
-DESCRIPTION:
+XXX: not completely specd/implemented
 
 H2K_handle_error takes an error and applies the appropriate handling method.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
-BEHAVIOR:
+Description
+~~~~~~~~~~~
 
 NOTE: For V2, we will not be able to safely do the Double Exception check.
 

@@ -75,11 +75,11 @@ ${EXEC}: ${OBJS} h2
 
 #  Todo:  need a watchdog to kill sims after some time; possibly use the "forked killer"
 test.log: ${EXEC}
-	${SIM} ${EXEC}
+	${SIM} ${EXEC} > $@
 
 clean:
 	rm -rf ${CLEANUP}
 
 #  Pretty much a binary yes/no if the test passed or failed.
 results.txt: test.log
-	grep "TEST PASSED" test.log
+	grep "TEST PASSED" test.log > $@

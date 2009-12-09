@@ -4,7 +4,7 @@
  */
 
 #ifndef H2K_CHECKER_KERNEL_LOCKED_H
-#define H2K_CHECKER_KERNEL_LOCKED_H
+#define H2K_CHECKER_KERNEL_LOCKED_H 1
 
 void checker_kernel_locked();
 

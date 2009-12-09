@@ -8,7 +8,7 @@
 
 #include "ring.h"
 
-void checker_ring(H2K_ringnode_t **x);
+void checker_ring(H2K_ringnode_t *x);
 
 #endif
 

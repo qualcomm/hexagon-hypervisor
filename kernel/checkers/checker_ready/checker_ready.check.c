@@ -12,6 +12,7 @@
 
 void checker_ready()
 {
+	u32_t i;
 	for (i = 0; i < MAX_PRIOS; i++) {
 		if (H2K_ready_valids & (1<<i)) {
 			if (NULL == H2K_ready[i]) FAIL("Valid bit clear but readylist null");

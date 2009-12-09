@@ -8,11 +8,11 @@
 #include <checker_help.h>
 #include <checker_ring.h>
 
-void checker_ring(H2K_ringnode_t **x)
+void checker_ring(H2K_ringnode_t *x)
 {
 	u32_t i = 0;
 	H2K_ringnode_t *start, *tmp;
-	start = tmp = *x;
+	start = tmp = x;
 	do {
 		if (++i == 1000) {
 			FAIL("Could not find ring start");

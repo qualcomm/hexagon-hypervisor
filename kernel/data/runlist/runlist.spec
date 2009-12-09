@@ -1,6 +1,8 @@
 
-MODULE: runlist
+:mod:`runlist` -- managing the currently-running threads
+=========================================================
 
+.. module:: runlist
 
 The ready list contains the threads that are currently running
 
@@ -25,76 +27,102 @@ be preferable to have an array of the currently running thread on each hardware
 thread, and find the minimum by inspecting each value.
 
 
-FUNCTION: void H2K_runlist_init()
 
-DESCRIPTION:
+H2K_runlist_init
+----------------
+
+..cfunction:: void H2K_runlist_init()
+
+Description
+~~~~~~~~~~~
 
 Initializes the H2K_runlist structures.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 Set all elements of H2K_runlist to NULL, and set H2K_runlist_valids to zero.
 
 
+H2K_runlist_push
+----------------
 
-FUNCTION: static inline void H2K_runlist_push(H2K_thread_context *newthread)
+.. cfunction:: static inline void H2K_runlist_push(H2K_thread_context *newthread)
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 Inserts a thread into the runlist.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: Thread to add to the runlist
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 The specified thread is added to the head of the runlist at the correct priority.
 
 The bit in runlist_valids corresponding to the priority is set.
 
 
+H2K_runlist_worst_prio
+----------------------
 
-FUNCTION: static inline u32_t H2K_runlist_worst_prio()
+.. cfunction:: static inline u32_t H2K_runlist_worst_prio()
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 Returns the priority corresponding to the running thread with the worst priority.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
 Returns the priority of the worst priority running thread.
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We count leading zeros of H2K_runlist_valids.  This gives us the number of 
 lowest priorities that have no threads.  We subtract this value from the priority
 corresponding to the most significant bit.
 
 
+H2K_runlist_remove
+------------------
 
-FUNCTION: static inline void H2K_runlist_remove(H2K_thread_context *thread)
+.. cfunction:: static inline void H2K_runlist_remove(H2K_thread_context *thread)
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 Removes ``thread`` from the runlist.  By calling this function, you guarantee
 that the thread is in the runlist.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: the thread to remove from the runlist
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We get the priority from the thread structure.  We then look at the runlist linked
 list at the corresponding priority.  When we find the thread, we remove it from the

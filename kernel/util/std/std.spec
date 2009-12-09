@@ -1,5 +1,5 @@
 
-:mod: `std` -- standard environment definitions
+:mod:`std` -- standard environment definitions
 ===========
 
 .. module:: std

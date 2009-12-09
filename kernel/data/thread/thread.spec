@@ -1,27 +1,37 @@
 
-MODULE: thread
+:mod:`thread` -- data structures for threads
+=============================================
+
+.. module:: thread
 
 This module contains the data structures for threads.
 
-DETAILS:
+H2K_free_threads
+----------------
 
 H2K_free_threads is a linked list of all threads ready for use.
 
 
-FUNCTION: void H2K_thread_context_clear(H2K_thread_context *thread)
+H2K_thread_context_clear
+------------------------
 
-DESCRIPTION:
+.. cfunction:: void H2K_thread_context_clear(H2K_thread_context *thread)
+
+Description
+~~~~~~~~~~~
 
 Zeros a thread context.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: pointer to a thread context
 
-OUPUTS:
+Output
+~~~~~~
 
-
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 Sets every bit in the thread context to zero.
 

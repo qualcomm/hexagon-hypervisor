@@ -1,5 +1,5 @@
 
-:mod: `trace` -- kernel logging facility
+:mod:`trace` -- kernel logging facility
 =========================================
 
 .. module:: trace

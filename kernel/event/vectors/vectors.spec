@@ -1,7 +1,7 @@
 
 ASM_REF_CODE(Vectors cannot be written in C)
 
-:mod: `vectors` -- Event Vector Table
+:mod:`vectors` -- Event Vector Table
 
 ..cfunction:: H2K_event_vectors()
 

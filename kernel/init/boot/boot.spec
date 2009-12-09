@@ -1,7 +1,7 @@
 
 ASM_REF_CODE(Bootup code is difficult to write in C)
 
-:mod: `boot` -- startup routines
+:mod:`boot` -- startup routines
 ================================
 
 .. module:: boot

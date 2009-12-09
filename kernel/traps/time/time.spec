@@ -1,11 +1,21 @@
 
-MODULE: time
+:mod:`time` -- cycle count tracking information
+================================================
 
-FUNCTION: H2K_cputime_get
+.. module:: time
+
+
+H2K_cputime_get
+---------------
+
+.. cfunction:: H2K_cputime_get
 
 UNIMPLEMENTED
 
-FUNCTOIN: H2K_pcycles_get
+H2K_pcycles_get
+---------------
+
+.. cfunction:: H2K_pcycles_get
 
 UNIMPLEMENTED
 

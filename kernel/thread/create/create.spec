@@ -1,5 +1,5 @@
 
-:mod: `thread_create` -- create a new thread
+:mod:`thread_create` -- create a new thread
 ============================================
 
 .. module:: thread_create

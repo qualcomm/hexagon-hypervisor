@@ -1,9 +1,12 @@
 
-MODULE: offsets
+:mod:`offsets` -- generate struct offsets for assembly
+
+.. module:: offsets
 
 This module is for use at *BUILD TIME*.
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 This module creates includes for assembly files that define the structure
 offsets for structures defined in C, ``asm_offsets.h``.  This helps the
@@ -11,7 +14,8 @@ assembly remain correct as structure definitions change.
 
 Additionally, we define the total size of the context structure.
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We use the ``offsetof()`` macro in C to generate the byte offsets to elements 
 of the data structure.  These offsets are printed out with the corresponding

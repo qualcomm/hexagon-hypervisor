@@ -1,7 +1,14 @@
 
-MODULE: readylist
+:mod:`readylist` -- managing unblocked, non-executing threads
+==============================================================
 
-DATA: H2K_ready, H2K_ready_valids
+.. module:: readylist
+
+H2K_ready and H2K_ready_valids
+------------------------------
+
+Description
+~~~~~~~~~~~
 
 The ready list contains the threads that are ready for execution.
 
@@ -21,88 +28,128 @@ We find the highest priority ready thread by using the CL0 instruction to find
 the highest priority that has a ready thread.  We then can remove the thread in
 the corresponding list.
 
-FUNCTION: void H2K_ready_init()
 
-DESCRIPTION:
+H2K_ready_init
+--------------
+
+.. cfunction:: void H2K_ready_init()
+
+Description
+~~~~~~~~~~~
 
 Initializes the H2K_ready structures.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 Set all elements of H2K_ready to NULL, and set H2K_ready_valids to zero.
 
 
+H2K_ready_best_prio
+-------------------
 
-FUNCTION: static inline u32_t H2K_ready_best_prio()
+.. cfunction:: static inline u32_t H2K_ready_best_prio()
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 Returns the priority corresponding to the ready thread with the best priority.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Returns the priority corresponding to the ready thread with the best priority.
+
+Functionality
+~~~~~~~~~~~~~
 
 Count Trailing Zeros of H2K_ready_valids.
 
 
-FUNCTION: static inline void H2K_ready_append(H2K_thread_context *thread)
 
-DESCRIPTION:
+H2K_ready_append
+----------------
+
+.. cfunction:: static inline void H2K_ready_append(H2K_thread_context *thread)
+
+Description
+~~~~~~~~~~~
 
 Appends the thread to the ready list.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: the thread to add
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We get the priority from the thread context.  Next, we call H2K_ring_append
 on the H2K_ready ring at the thread's priority.  Finally, we set the bit of
 H2K_ready_valids at the thread's priority.
 
 
-FUNCTION: static inline void H2K_ready_insert(H2K_thread_context *thread)
 
-DESCRIPTION:
+H2K_ready_insert
+----------------
+
+.. cfunction:: static inline void H2K_ready_insert(H2K_thread_context *thread)
+
+Description
+~~~~~~~~~~~
 
 Inserts the thread to the ready list.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: the thread to add
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We get the priority from the thread context.  Next, we call H2K_ring_insert
 on the H2K_ready ring at the thread's priority.  Finally, we set the bit of
 H2K_ready_valids at the thread's priority.
 
 
-FUNCTION: static inline void H2K_ready_remove(H2K_thread_context *thread)
 
-DESCRIPTION:
+H2K_ready_remove
+----------------
+
+.. cfunction:: static inline void H2K_ready_remove(H2K_thread_context *thread)
+
+Description
+~~~~~~~~~~~
 
 Removes the thread from the ready list.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: the thread to remove
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We get the priority from the thread context.  Next, we call H2K_ring_remove
 on the H2K_ready ring at the thread's priority.  Finally, if there are no
@@ -110,20 +157,27 @@ more elements in the ring, we clear the bit of H2K_ready_valids at the
 thread's priority.
 
 
-FUNCTION: static inline H2K_thread_context *H2K_ready_getbest()
+H2K_ready_getbest
+-----------------
 
-DESCRIPTION:
+.. cfunction:: static inline H2K_thread_context *H2K_ready_getbest()
+
+Description
+~~~~~~~~~~~
 
 Removes the best priority thread from the ready list.
 
-INPUTS:
+Input
+~~~~~
 
-OUTPUTS:
+Output
+~~~~~~
 
 Returns the best priority ready thread, which has been removed from the ready list.
 Returns NULL if no threads are ready.
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 If there are no ready threads, we return NULL.
 

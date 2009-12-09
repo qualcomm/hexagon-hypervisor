@@ -1,10 +1,16 @@
 
-MODULE: context
+:mod:`context` -- thread context definition
+============================================
+
+.. module:: context
 
 This module contains the definition of a thread context.
 
+H2K_thread_context
+------------------
 
-DETAILS:
+Description
+~~~~~~~~~~~
 
 A thread context contains several parts.
 

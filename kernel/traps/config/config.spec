@@ -1,13 +1,24 @@
 
-MODULE: config
+:mod:`config` -- runtime kernel configuration
+=============================================
+
+.. module:: config
 
 This module contains the runtime kernel configuration routines.
 
-FUNCTION: void H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+
+H2K_trap_config
+---------------
+
+.. cfunction: void H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+
+Description
+~~~~~~~~~~~
 
 Trap handler for kernel configuration.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: Configuration operation to do
 Argument 1: Operation-dependent pointer value
@@ -15,14 +26,25 @@ Argument 2: Operation-dependent value
 Argument 3: Operation-dependent value
 Argument 4: Pointer to the current thread context
 
-OUTPUTS:
+Output
+~~~~~~
+
+Functionality
+~~~~~~~~~~~~~
 
 
-FUNCTION: void H2K_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unused2, H2K_thread_context *me)
+H2K_trap_config_addthreads
+--------------------------
+
+.. cfunction: void H2K_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unused2, H2K_thread_context *me)
+
+Description
+~~~~~~~~~~~
 
 Adds additional memory for use as thread contexts.
 
-INPUTS:
+Input
+~~~~~
 
 Argument 0: Unused parameter
 Argument 1: Pointer for additional memory for use as thread contexts
@@ -30,9 +52,11 @@ Argument 2: Size of the data area in bytes
 Argument 3: Unused parameter
 Argument 4: Pointer to the current thread context
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 First, the pointer should be adjusted so that it is 32-byte aligned.
 This must be a rounding up.  Size must be decremented by any difference
@@ -47,12 +71,23 @@ Each context is cleared, and then inserted into the H2K_free_threads list.
 TBD: remove threads?
 TBD: keep list of thread areas for better threadids.
 
+H2K_trap_config_schedint
+------------------------
 
-FUNCTION: void H2K_trap_config_schedint(u32_t unused, void *unused2, u32_t what_int, u32_t unused3, H2K_thread_context *me)
+.. cfunction: void H2K_trap_config_schedint(u32_t unused, void *unused2, u32_t what_int, u32_t unused3, H2K_thread_context *me)
+
+XXX: unimplemented
+
+Description
+~~~~~~~~~~~
 
 Changes the reschedule interrupt to the specified interrupt.
 
-INPUTS:
+EJP: is this needed?  We would rather not have to look up the resched interrupt in memory,
+but it would not be the end of the world...
+
+Input
+~~~~~
 
 Argument 0: Unused parameter
 Argument 1: Unused parameter
@@ -60,9 +95,11 @@ Argument 2: Which interrupt should be used as the reschedule interrupt
 Argument 3: Unused parameter
 Argument 4: Pointer to the current thread context
 
-OUTPUTS:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 If any interrupt is already configured as schedint, change it to fastint
 

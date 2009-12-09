@@ -1,17 +1,27 @@
 
-MODULE: intconfig
+:mod:`intconfig` -- configuration for interrupt handling
+=========================================================
 
-Configure interrupts
+.. module:: intconfig
 
-FUNCTION: void H2K_intconfig_init()
+H2K_intconfig_init
+------------------
 
-Initializes the interrupt configuration data and fast interrupt contexts
+.. cfunction:: void H2K_intconfig_init()
 
-INTPUTS:
+Description
+~~~~~~~~~~~
 
-OUTPUTS:
+H2K_intconfig_init initializes the interrupt configuration data and fast interrupt contexts
 
-FUNCTIONALITY:
+Input
+~~~~~
+
+Output
+~~~~~~
+
+Functionality
+~~~~~~~~~~~~~
 
 All handler pointers are initialized to NULL.  The fastint mask is initialized 
 to zeros.  The handler for reschedule is initialized to H2K_resched.
@@ -22,16 +32,30 @@ and the trapmask to exclude any trap may not be called by the fast interrupt
 handler.
 
 
-FUNCTION: void H2K_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), H2K_thread_context *me)
+
+H2K_register_fastint
+--------------------
+
+.. cfunction:: void H2K_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), H2K_thread_context *me)
+
+Description
+~~~~~~~~~~~
 
 Modifies the interrupt configuration data to register a new fast interrupt handler.
 
-INPUTS;
+Input
+~~~~~
 
 Argument 0: which interrupt to register
 Argument 1: Address of the fast interrupt handler
 Argument 2: Context of the calling thread
 
+Output
+~~~~~~
 
+Functionality
+~~~~~~~~~~~~~
+
+The fastint_handler is placed in the array, and H2K_fastint is placed in the other array
 
 

@@ -1,5 +1,5 @@
 
-:mod: `max` -- compile-time definitions
+:mod:`max` -- compile-time definitions
 =========================================
 
 .. module:: max

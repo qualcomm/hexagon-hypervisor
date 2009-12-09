@@ -1,7 +1,7 @@
 
 ASM_REF_CODE(Interrupt context save/restore not possible in C)
 
-:mod: `interrupt` -- Handle interrupt events
+:mod:`interrupt` -- Handle interrupt events
 ===============
 
 .. module:: interrupt

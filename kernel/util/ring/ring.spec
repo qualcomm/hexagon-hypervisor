@@ -1,5 +1,5 @@
 
-:mod: `rings` -- circular doubly-linked lists
+:mod:`rings` -- circular doubly-linked lists
 =============================================
 
 .. module:: rings

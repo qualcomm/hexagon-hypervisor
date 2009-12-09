@@ -1,5 +1,5 @@
 
-:mod: `setup` -- set up initial kernel state
+:mod:`setup` -- set up initial kernel state
 ============================================
 
 .. module:: setup

@@ -1,9 +1,13 @@
 
-MODULE: bootmap
+:mod:`bootmap` -- Memory Map at Bootup
+=======================================
+
+.. module:: bootmap
 
 This module contains the memory map during the boot process.
 
-FILE: bootmap.def
+bootmap.def
+-----------
 
 This file contains definitions for the boot memory map.
 
@@ -33,4 +37,21 @@ Arguments:
 7. PPN.  Physical address, shifted right by 12 bits.
 
 
+H2K_bootmap
+-----------
+
+Description
+~~~~~~~~~~~
+
+This is an array that contains the translations specified in bootmap.def, 
+terminated by an invalid translation.  
+
+H2K_bootmap_ptr
+---------------
+
+Description
+~~~~~~~~~~~
+
+This points to the bootup memory map.  The boot process loads through this
+pointer to add potential configurability.
 

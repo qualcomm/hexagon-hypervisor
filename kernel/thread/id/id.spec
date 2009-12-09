@@ -1,5 +1,5 @@
 
-:mod: `thread_id` -- obtain unique ID
+:mod:`thread_id` -- obtain unique ID
 ======================================
 
 .. module:: thread_id

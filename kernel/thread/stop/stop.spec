@@ -1,5 +1,5 @@
 
-:mod: `thread_stop` -- terminate thread
+:mod:`thread_stop` -- terminate thread
 =======================================
 
 .. module:: thread_stop

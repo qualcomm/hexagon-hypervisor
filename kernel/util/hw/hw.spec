@@ -1,5 +1,5 @@
 
-:mod: `hw` -- hardware interface intrinsics
+:mod:`hw` -- hardware interface intrinsics
 ==========================================
 
 .. module:: hw

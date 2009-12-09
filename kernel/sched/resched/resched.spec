@@ -1,5 +1,5 @@
 
-:mod: `resched` -- handle a reschedule interrupt
+:mod:`resched` -- handle a reschedule interrupt
 ================================================
 
 .. module:: resched
@@ -14,7 +14,8 @@ Description
 
 H2K_resched handles a rescheduling interrupt 
 
-INPUT:
+Input
+~~~~~
 
 Argument 0: unused
 Argument 1: A pointer to the currently running thread's context (NULL if idle thread was interrupted)

@@ -11,6 +11,11 @@ SIM := qdsp6-sim
 
 CFLAGS := -Iinclude -G0 -O2 -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall
 
+ifdef DEBUG
+CFLAGS += -DDEBUG
+endif
+
+
 REF_CFILES := 
 REF_SFILES := 
 REF_OFILES := 

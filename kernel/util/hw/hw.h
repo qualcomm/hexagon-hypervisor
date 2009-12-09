@@ -33,7 +33,7 @@ static inline void change_imask(u32_t thread, u32_t imask)
 static inline u32_t get_imask(u32_t thread)
 {
 	u32_t imask;
-	asm(" p0 = %0\n getimask(p0,%1)" : "=r"(imask) : "r"(thread):"p0");
+	asm(" p0 = %1;\n %0 = getimask(p0)" : "=r"(imask) : "r"(thread):"p0");
 	return imask;
 }
 

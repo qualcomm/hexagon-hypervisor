@@ -1,78 +1,108 @@
 
-MODULE: hw
+:mod: `hw` -- hardware interface intrinsics
+==========================================
+
+.. module:: hw
 
 This unit contains intrinsics which implement interfaces
 to hardware.
 
 
-FUNCTION: static inline void ciad(u32_t mask)
+ciad
+----
 
-DESCRIPTION:
+.. cfunction:: static inline void ciad(u32_t mask)
+
+Description
+~~~~~~~~~~~
 
 Clears the Interrupt Auto Disable register using the specified mask.
 
-INPUT:
+Input
+~~~~~
 
 Argument 0: A mask of which interrupts to clear.  It is implementation-defined on which 
 	interrupts in the mask correspond to which hardawre interrupts.
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We invoke the CIAD instruction with the designated mask.
 
 
-FUNCTION: static inline void change_imask(u32_t thread, u32_t imask)
+change_imask
+------------
 
-DESCRIPTION:
+.. cfunction: static inline void change_imask(u32_t thread, u32_t imask)
+
+Description
+~~~~~~~~~~~
 
 Changes the IMASK register for the specified thread to ``imask``
 
-INPUT:
+Input
+~~~~~
 
 Argument 0: The thread to change
 Argument 1: The IMASK value to write
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 The destination thread is put in a predicate register, and then we use the
 SETIMASK instruction to modify the IMASK for the thread.
 
 
-FUNCTION: static inline void resched_int()
+resched_int
+-----------
 
-DESCRIPTION:
+.. cfunction:: static inline void resched_int()
+
+Description
+~~~~~~~~~~~
 
 This function raises the reschedule interrupt.
 
-INPUT:
+Input
+~~~~~
 
 
-OUTPUT:
+Output
+~~~~~~
 
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 The constant RESCHED_INT_INTMASK is placed into a register, and the SWI
 instruction is invoked with that register.
 
+highprio_imask
+--------------
 
-FUNCTION: static inline void highprio_imask(u32_t hthread)
+.. cfunction: static inline void highprio_imask(u32_t hthread)
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 Changes the IMASK of the current thread to be appropriate for a non-low-priority thread.
 
-INPUT:
+Input
+~~~~~
 
 Argument 0: The hardware thread 
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We form the appropriate IMASK value for the current hardware thread to mask off
 most of the interrupts, and then place that value in IMASK.
@@ -80,96 +110,127 @@ most of the interrupts, and then place that value in IMASK.
 
 
 
-FUNCTION: static inline void lowprio_imask(u32_t hthread)
+lowprio_imask
+------------
 
-DESCRIPTION:
+.. cfunction:: static inline void lowprio_imask(u32_t hthread)
+
+Description
+~~~~~~~~~~~
 
 Changes the IMASK of the current thread to be appropriate for a low-priority thread.
 
-INPUT:
+Input
+~~~~~
 
 Argument 0: The hardware thread 
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 We form the appropriate IMASK value for the current hardware thread to enable
 most of the interrupts, and then place that value in IMASK.
 
 
-FUNCTION: static inline u32_t get_ssr()
+get_ssr
+-------
 
-DESCRIPTION:
+.. cfunction: static inline u32_t get_ssr()
+
+Description
+~~~~~~~~~~~
 
 Returns the value of the SSR register.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
 Returns the value of the SSR register
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 The SSR value is transfered to a temporary value that is returned.
 
 
 
+get_hwtnum
+----------
 
-FUNCTION: static inline u32_t get_hwtnum()
+.. cfunction:: static inline u32_t get_hwtnum()
 
-DESCRIPTION:
-
-Returns the current hardware thread number.
-
-INPUT:
-
-OUTPUT:
+Description
+~~~~~~~~~~~
 
 Returns the current hardware thread number.
 
-FUNCTIONALITY:
+Input
+~~~~~
+
+Output
+~~~~~~
+
+Returns the current hardware thread number.
+
+Functionality
+~~~~~~~~~~~~~
 
 For V3 and earlier, we extract the TNUM field from SSR.  For V4, we use the HTNUM register.
 
 
 
+H2K_mutex_lock_k0
+-----------------
 
-FUNCTION: static inline void H2K_mutex_lock_k0()
+.. cfunction:: static inline void H2K_mutex_lock_k0()
 
 AVAILABILITY(ARCH >= 3)
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 Lock the K0 hardware lock.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 This merely executes the K0LOCK instruction.
 
 
 
 
+H2K_mutex_unlock_k0
+--------------------
 
-
-FUNCTION: static inline void H2K_mutex_unlock_k0()
+.. cfunction: static inline void H2K_mutex_unlock_k0()
 
 AVAILABILITY(ARCH >= 3)
 
-DESCRIPTION:
+Description
+~~~~~~~~~~~
 
 Unlock the K0 hardware lock.
 
-INPUT:
+Input
+~~~~~
 
-OUTPUT:
+Output
+~~~~~~
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 This merely executes the K0UNLOCK instruction.
 

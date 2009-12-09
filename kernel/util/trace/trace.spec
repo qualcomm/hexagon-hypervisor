@@ -1,7 +1,11 @@
 
-UNIT: trace
+:mod: `trace` -- kernel logging facility
+=========================================
 
-SUMMARY:
+.. module:: trace
+
+SUMMARY
+--------
 
 The kernel provides a logging facility for kernel information.
 
@@ -29,15 +33,22 @@ have positive Trace IDs.  MAX_TRACE_LEVEL may be used to filter out kernel
 messages.  Recommended MAX_TRACE_LEVEL values are zero for maximum performance,
 or 1000 for maximum tracing.
 
-FUNCTION: static inline void H2K_trace(s16_t type, u32_t arg1, u32_t arg2, u32_t arg3, u32_t hwtnum)
 
-DESCRIPTION:
+H2K_trace
+---------
+
+.. cfunction:: static inline void H2K_trace(s16_t type, u32_t arg1, u32_t arg2, u32_t arg3, u32_t hwtnum)
+
+Description
+~~~~~~~~~~~
 
 If an event is less than DEBUG_LEVEL, log a kernel event.
 
-INPUT:
+Input
+~~~~~
 
-INPUT_ASSERT(H2K_trace_index < MAX_TRACE_ENTRIES)
+.. InputAssert::
+	assert(H2K_trace_index < MAX_TRACE_ENTRIES)
 
 Argument 0: Message ID.  See Message ID Format below.
 Argument 1: Additional information to log
@@ -45,10 +56,12 @@ Argument 2: Additional information to log
 Argument 3: Additional information to log
 Argument 4: Hardware Thread Number.
 
-OUTPUT:
+Output
+~~~~~~
 
 
-FUNCTIONALITY:
+Functionality
+~~~~~~~~~~~~~
 
 (V3 Implementation)
 

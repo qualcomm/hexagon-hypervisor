@@ -1,5 +1,8 @@
 
-UNIT: std
+:mod: `std` -- standard environment definitions
+===========
+
+.. module:: std
 
 This unit defines our standard C environment, including data types.
 

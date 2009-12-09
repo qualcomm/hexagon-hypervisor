@@ -74,6 +74,13 @@ static inline u32_t get_ssr()
 	return ret;
 }
 
+static inline u32_t H2K_get_syscfg()
+{
+	u32_t ret;
+	asm(" %0 = syscfg // get syscfg" : "=r"(ret));
+	return ret;
+}
+
 static inline void H2K_clear_ie()
 {
 	asm("r0 = ssr; r0 = clrbit(r0,#18); ssr=r0; isync;":::"r0");

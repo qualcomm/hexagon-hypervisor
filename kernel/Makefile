@@ -16,13 +16,29 @@ CFLAGS += -DDEBUG
 endif
 
 
-REF_CFILES := 
-REF_SFILES := 
-REF_OFILES := 
 SRC_HFILES := 
 DEST_HFILES := 
 CLEAN_EXTRAS := 
-HELLO := 
+
+REF_CFILES := 
+REF_SFILES := 
+REF_OFILES := 
+
+CHECK_CFILES := 
+CHECK_SFILES := 
+CHECK_OFILES := 
+
+OPT_V2_CFILES := 
+OPT_V2_SFILES := 
+OPT_V2_OFILES := 
+
+OPT_V3_CFILES := 
+OPT_V3_SFILES := 
+OPT_V3_OFILES := 
+
+OPT_V4_CFILES := 
+OPT_V4_SFILES := 
+OPT_V4_OFILES := 
 
 BUILD_DIR := .
 
@@ -39,11 +55,18 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
-$(REF_OFILES): $(DEST_HFILES)
+ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES)
+
+$(ALL_OFILES): $(DEST_HFILES)
+
 
 build/ref/libh2kernel.a: $(REF_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(REF_OFILES)
+
+build/ref/libh2check.a: $(CHECK_OFILES)
+	mkdir -p $(dir $@)
+	$(AR) cru $@ $(CHECK_OFILES)
 
 
 %.o : %.c
@@ -53,7 +76,7 @@ build/ref/libh2kernel.a: $(REF_OFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(REF_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref
+	rm -rf $(ALL_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref
 
 dummy:
 	@echo $(REF_CFILES)
@@ -67,4 +90,5 @@ includes: $(DEST_HFILES)
 
 ref: build/ref/libh2kernel.a
 
+check: build/ref/libh2check.a
 

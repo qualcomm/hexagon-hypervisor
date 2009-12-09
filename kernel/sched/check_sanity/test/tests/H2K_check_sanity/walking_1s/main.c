@@ -79,7 +79,7 @@ int main()
 	/*  
 	 * For MAX_HTHREADS == 6 and MAX_PRIOS == 32, this means:
  	 *
-	 * 7 * 7 * 33 * 33 = 36864 combinations right here
+	 * 7 * 7 * 33 * 33 = 53361 combinations right here
 	 *
 	 * (I'm including zero's in there) 
          */

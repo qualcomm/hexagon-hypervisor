@@ -1,6 +1,5 @@
 
 
 
-
-debug:
-	echo ${CURDIR}
+all:
+	make -C tests all

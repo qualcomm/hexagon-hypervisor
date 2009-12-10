@@ -29,7 +29,7 @@ OBJDUMP=${ARCH}-objdump
 
 ################################################################################
 #  Rules for building the kernel if necessary; should be built way before any
-#  batch jobs are run else they will maul each other in the farm.
+#  batch jobs are run else they will maul each other in the animal farm.
 ################################################################################
 
 LIBH2_DIR=h2/libs
@@ -37,17 +37,23 @@ LIBH2=${LIBH2_DIR}/libh2.a
 
 LIBH2KERNEL_DIR=h2/kernel
 LIBH2KERNEL=${LIBH2KERNEL_DIR}/libh2kernel.a
+LIBH2CHECK=${LIBH2KERNEL_DIR}/libh2check.a
 
 #  Needs to have the tools already in path...
 #  "make ref" should be "make ref DEBUG=1", add when kernel_locked is in there
 ${LIBH2KERNEL}: h2
 	cd ${LIBH2KERNEL_DIR};\
-	make ref;\
+	make ref DEBUG=1;\
+	cp build/ref/libh2kernel.a .
+
+${LIBH2CHECK}: h2
+	cd ${LIBH2KERNEL_DIR};\
+	make ref DEBUG=1;\
 	cp build/ref/libh2kernel.a .
 
 ${LIBH2}: h2
 	cd ${LIBH2_DIR};\
-	make;\
+	make DEBUG=1;\
 	cp libh2.a ../kernel
 
 libs:  ${LIBH2} ${LIBH2KERNEL}
@@ -57,9 +63,9 @@ libs:  ${LIBH2} ${LIBH2KERNEL}
 ################################################################################
 
 #  Turn on call() support for assertion checking
-#CFLAGS += -DDEBUG
+CFLAGS += -DDEBUG
 CFLAGS += -I h2/kernel/include -moslib=h2 -mv3 -DARCHV=3
-LDFLAGS+=-moslib=h2 -lh2kernel -lh2 -L h2/kernel -mv3
+LDFLAGS+=-moslib=h2 -lh2kernel -lh2 -lh2check -L h2/kernel -mv3
 
 
 ################################################################################

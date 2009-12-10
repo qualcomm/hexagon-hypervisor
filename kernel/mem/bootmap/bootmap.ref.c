@@ -23,14 +23,33 @@
 #define UC_S 6
 #define L1WB_L2C 7
 
-#define NONE 0
+#if __QDSP6_ARCH__ <= 3
+
+#define U 0
 #define R 1
 #define W 2
 #define X 4
+#else
+
+#define U 1
+#define R 2
+#define W 4
+#define X 8
+#endif
+
+#define NONE 0
+
 #define RW (R|W)
 #define RX (R|X)
 #define WX (W|X)
 #define RWX (R|W|X)
+#define UR (U|R)
+#define UW (U|W)
+#define UX (U|X)
+#define URW (R|W)
+#define URX (R|X)
+#define UWX (W|X)
+#define URWX (R|W|X)
 
 #define MAIN 0
 #define AUX 1
@@ -41,7 +60,11 @@
         (((u64_t)((VPN) | ((ASID) << 20) | ((G) << 28) | (1<<29)) << 32) | \
         (u32_t)((PPN) | ((PGSIZE) << 20) | ((CFIELD) << 26) | ((PERM) << 29) | ((MAINAUX) << 24))),
 #else
-#error insert V4 tlb format here
+
+#define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \
+        (((u64_t)((VPN) | ((ASID) << 20) | ((G) << 30) | (1<<31)) << 32) | \
+        (u32_t)(((PPN)<<1) | (1<<(PGSIZE)) | ((CFIELD) << 24) | ((PERM) << 28))),
+
 #endif
 
 u64_t H2K_bootmap[] IN_SECTION(".data.bootmap") = {

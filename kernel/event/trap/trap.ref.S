@@ -50,7 +50,7 @@ FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
 	r28 = extractu(r28,#3,#19)
 	r29 += mpyi(r28,#KERNEL_STACK_SIZE)
 #else
-	r28 = TNUM
+	r28 = HTID
 	r29 = #KERNEL_STACK_SIZE
 	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #endif

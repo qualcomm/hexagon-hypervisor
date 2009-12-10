@@ -7,7 +7,7 @@ endif
 
 CC = qdsp6-gcc 
 AR = qdsp6-ar
-SIM := qdsp6-sim
+SIM := qdsp6-sim -mv$(ARCHV)
 
 CFLAGS := -Iinclude -G0 -O2 -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall
 

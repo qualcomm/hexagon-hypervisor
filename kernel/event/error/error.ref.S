@@ -52,7 +52,7 @@ FUNC_START H2K_handle_error .text.error .p2align 2
 	r2 = #KERNEL_STACK_SIZE
 	r29 += mpyi(r28,r2)
 #else
-	r28 = TNUM
+	r28 = HTID
 	r29 = #KERNEL_STACK_SIZE
 	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #endif

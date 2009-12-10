@@ -112,7 +112,7 @@ static inline u32_t get_hwtnum()
 static inline u32_t get_hwtnum()
 {
 	u32_t ret;
-	asm(" %0 = tnum // get tnum" :"=r"(ret));
+	asm(" %0 = HTID // get hardware thread number " :"=r"(ret));
 	return ret;
 }
 #endif

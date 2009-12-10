@@ -89,7 +89,7 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)
 #else
-	r28 = TNUM
+	r28 = HTID
 #endif
 	r3 = #KERNEL_STACK_SIZE
 	r29 += mpyi(r3,r28)

@@ -27,7 +27,7 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 	r5 = ssr
 	r5 = extractu(r5,#3,#19)
 #else
-	r5 = TNUM
+	r5 = HTID
 #endif
 	r0 = #3
 	r3:2 = r27:26
@@ -56,7 +56,7 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 	r5 = ssr
 	r5 = extractu(r5,#3,#19)
 #else
-	r5 = TNUM
+	r5 = HTID
 #endif
 	r3.h = #hi(H2K_wait_mask)
 	r3.l = #lo(H2K_wait_mask)

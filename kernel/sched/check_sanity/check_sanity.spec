@@ -75,7 +75,7 @@ H2K_check_sanity_unlock
 Description
 ~~~~~~~~~~~
    
-This function performs the same checks as check_sanity, and additionally
+This function performs the same checks as :cfunc:`H2K_check_sanity`, and additionally
 unlocks the kernel.  This facilitates its use as a sibling call, as
 check_sanity and unlock are common in the system call return process.
    

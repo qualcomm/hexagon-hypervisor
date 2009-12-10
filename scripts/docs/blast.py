@@ -29,7 +29,7 @@ class blast_function_info:
       for fname in self.functions.keys():
          returnstr = ""
          fdata = self.functions[fname]['fdata']
-         output += indent + "%s %s_debug(%s) {" % (fdata[1],fdata[0],",".join([item[1] + " " + item[0] for item in fdata[2]])) + "\n"
+         output += indent + "static %s %s_debug(%s) {" % (fdata[1],fdata[0],",".join([item[1] + " " + item[0] for item in fdata[2]])) + "\n"
          indent += "\t"
          count = 0;
          for arg in fdata[2]: #  create the argument copies
@@ -98,6 +98,7 @@ def create_debug_file(docname,doc_data):
    #print "Creating " + docname + "_debug.h"
    f = file(docname+"_debug.h","w")
    f.write("/*  This file is generated from the documentation!  Do not hand edit!  */\n")
+   f.write("#include <assert.h>\n");
    f.write(doc_data.dump_debug_functions())
    f.close()
 

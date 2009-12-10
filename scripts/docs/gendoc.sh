@@ -5,6 +5,8 @@
 
 # We want the local python (2.5.2) instead of the QCT /pkg one.
 
+echo Note:  If this script hangs, make sure you don\'t have recursive symbolic links in your directories, e.g. tests/
+
 export PATH=/usr/local/bin:/usr2/rkuo/local/all/python2.5:$PATH
 export PYTHONPATH=/usr2/rkuo/local/all/python2.5
 

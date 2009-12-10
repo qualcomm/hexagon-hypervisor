@@ -11,8 +11,8 @@ from sphinx.environment import NoUri
 from sphinx.util.compat import Directive, make_admonition
 
 class blast_function_info:
-   functions = dict()
    def __init__(self):
+      self.functions = dict()
       pass
 
    def set_fdata(self,fdata):
@@ -46,7 +46,8 @@ class blast_function_info:
          if 'oassert' in self.functions[fname]:
            for line in self.functions[fname]['oassert']:
             output += indent + line + "\n"
-         output += indent + "return(retval);\n"
+         if fdata[1] != "void": 
+            output += indent + "return(retval);\n"
          indent = indent[:-1]
          output += indent + "}\n\n"
       return output
@@ -82,12 +83,19 @@ def get_function_data(state_machine):
       if sibling.hasattr("desctype") and sibling['desctype'] == "cfunction":
          params=sibling.children[0]
          retval.append(grab_text(params[1]).strip())  #  function name
-         retval.append(grab_text(params[0]).strip())  #  return type
+         #  Todo:  prune "static inline" out of the return type...
+         ret_type = grab_text(params[0]).strip()
+         if ret_type[:7] == "static ":
+            ret_type = ret_type[7:]
+         if ret_type[:7] == "inline ":
+            ret_type = ret_type[7:]
+
+         retval.append(ret_type)  #  return type
          retval.append(get_arglist(retval[0],sibling.children[0].rawsource))
    return retval
 
 def create_debug_file(docname,doc_data):
-   print "Creating " + docname + "_debug.h"
+   #print "Creating " + docname + "_debug.h"
    f = file(docname+"_debug.h","w")
    f.write("/*  This file is generated from the documentation!  Do not hand edit!  */\n")
    f.write(doc_data.dump_debug_functions())
@@ -110,9 +118,7 @@ class InputAssertDirective(Directive):
         env.index_num += 1
         targetnode = nodes.target('', '', ids=[targetid])
 
-	#  Great docs.  Third input is the admonition title string.
-	#  figure out the way to link the current C function to the assertion, and then
-        #  put them all in a list which will be retrieved later.
+	#  Third input is the admonition title string.
 
         ad = make_admonition(inputassert_node, self.name, [_('Input Assertions')], self.options,
                              self.content, self.lineno, self.content_offset,
@@ -121,7 +127,7 @@ class InputAssertDirective(Directive):
         fdata = get_function_data(self.state_machine)
         if not hasattr(env, 'blast_functions'):
            env.blast_functions = dict()
-        if not env.docname in env.blast_functions:
+        if not env.docname in env.blast_functions.keys():
            env.blast_functions[env.docname] = blast_function_info()
 
         env.blast_functions[env.docname].set_fdata(fdata)
@@ -143,7 +149,7 @@ class OutputAssertDirective(Directive):
         env.index_num += 1
         targetnode = nodes.target('', '', ids=[targetid])
 
-	#  Great docs.  Third input is the admonition title string.
+	#  Third input is the admonition title string.
         ad = make_admonition(inputassert_node, self.name, [_('Output Assertions')], self.options,
                              self.content, self.lineno, self.content_offset,
                              self.block_text, self.state, self.state_machine)
@@ -167,7 +173,8 @@ def process_blast_nodes(app, doctree, fromdocname):
       del env.blast_functions[docname]
 
 def purge_blast_nodes(app, env, docname):
-   pass
+   if not hasattr(env,'blast_functions'):
+      return
 
 def visit_inputassert_node(self, node):
     self.visit_admonition(node)

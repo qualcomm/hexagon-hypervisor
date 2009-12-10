@@ -81,14 +81,14 @@ static inline u32_t H2K_get_syscfg()
 	return ret;
 }
 
-static inline void H2K_clear_ie()
+static inline void H2K_clear_gie()
 {
-	asm("r0 = ssr; r0 = clrbit(r0,#18); ssr=r0; isync;":::"r0");
+	asm("r0 = SYSCFG; r0 = clrbit(r0,#4); SYSCFG=r0; isync;":::"r0");
 }
 
-static inline void H2K_set_ie()
+static inline void H2K_set_gie()
 {
-	asm("r0 = ssr; r0 = setbit(r0,#18); ssr=r0; isync;":::"r0");
+	asm("r0 = SYSCFG; r0 = setbit(r0,#4); SYSCFG=r0; isync;":::"r0");
 }
 
 static inline u32_t H2K_get_ipend()

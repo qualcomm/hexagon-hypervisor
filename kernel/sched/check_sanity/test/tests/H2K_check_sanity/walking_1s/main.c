@@ -70,6 +70,7 @@ int main()
 	/*  disable the global IE bit and clear ipend  */
 	H2K_clear_gie();
 	H2K_clear_ipend(0xffffffff);
+	BKL_LOCK();  /*  Big kernel lock required  */
 
 	/*  Walking 1's test  
 	 * 
@@ -89,8 +90,6 @@ int main()
 	 * (I'm including zero's in there) 
          */
 
-	/*  Todo:  take the kernel lock  */
-
 	for (prio_hthread=0; prio_hthread < (1<<MAX_HTHREADS-1); prio_hthread = prio_hthread ? prio_hthread << 1 : 1) {
 		for (wait_hthread=1; wait_hthread < (1<<MAX_HTHREADS-1); wait_hthread = wait_hthread ? wait_hthread<<1 : 1) {
 			for (runlist_prio=1; runlist_prio < (1<<MAX_PRIOS-1); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
@@ -101,7 +100,7 @@ int main()
 					H2K_ready_valids = ready_prio;
 
 					/*  call the function  */
-					retval = H2K_check_sanity(some_random_number);
+					retval = call(H2K_check_sanity,some_random_number);
 
 					/*  check the results  */
 					/*  Was a resched necessary?  */

@@ -4,7 +4,7 @@
 .. module:: check_sanity
 
 H2K_check_sanity
--------------------
+----------------
 
 .. cfunction:: u64_t H2K_check_sanity(const u64_t returnval)
 
@@ -68,7 +68,7 @@ running thread.  Make the lowest priority running thread interruptible.
 
 
 H2K_check_sanity_unlock
---------------------------
+-----------------------
 
 .. cfunction:: u64_t H2K_check_sanity_unlock(const u64_t returnval)
    
@@ -99,6 +99,7 @@ Should return Argument 0.
 
 
 .. OutputAssert::
+   assert(!checker_kernel_locked());
    assert(retval == arg0);
 
 

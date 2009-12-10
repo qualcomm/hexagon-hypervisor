@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <blast.h>
+#include <h2.h>
 #include <stdlib.h>
 #include <stddef.h>
 
@@ -18,7 +18,7 @@ extern char end;
 extern void *heapBase __attribute__((section(".data")));
 extern size_t heapLimit __attribute__((section(".data")));
 
-static blast_mutex_t mylock = 0;
+static h2_mutex_t mylock = 0;
 
 static unsigned long long int *heap_base = NULL;
 static unsigned long long int *heap_start = NULL;
@@ -26,7 +26,7 @@ static unsigned long long int *heap_start = NULL;
 void *sys_sbrk(ptrdiff_t more)
 {
 	unsigned long long int *old_base, *new_base;
-	blast_mutex_lock(&mylock);
+	h2_mutex_lock(&mylock);
 	if (heap_base == NULL) {
 		if (((unsigned int)(heapBase)) >= ((unsigned int)(&end))) {
 			heap_start = heap_base = (void *)(ALIGN_UP((unsigned int)heapBase,CHUNK_SIZE));
@@ -41,12 +41,12 @@ void *sys_sbrk(ptrdiff_t more)
 			new_base = heap_start;
 		}
 		if (heapLimit && ((unsigned int)(new_base) >= ((unsigned int)(heap_start) + heapLimit))) {
-			blast_mutex_unlock(&mylock);
+			h2_mutex_unlock(&mylock);
 			return (void *)(-1);
 		}
 		heap_base = new_base;
 	}
-	blast_mutex_unlock(&mylock);
+	h2_mutex_unlock(&mylock);
 	((unsigned int *)(old_base))[0] = more;
 	((unsigned int *)(old_base))[1] = more;
 	return old_base;

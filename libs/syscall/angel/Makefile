@@ -1,5 +1,5 @@
 
-CC = qdsp6-gcc -mv3 -Iinclude -Wall -I../../blast/include
+CC = qdsp6-gcc -mv3 -Iinclude -Wall -I../../h2/include
 AR = qdsp6-ar
 
 CFLAGS = -g -O2 

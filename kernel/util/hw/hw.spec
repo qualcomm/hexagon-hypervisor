@@ -262,14 +262,53 @@ Functionality
 This merely executes the K0UNLOCK instruction.
 
 
+H2K_clear_gie
+-------------
 
-FUNCTION:  static inline void H2K_clear_gie()
+.. cfunction::  static inline void H2K_clear_gie()
 
-FUNCTION:  static inline void H2K_set_gie()
+Description
+~~~~~~~~~~~
 
-FUNCTION:  static inline u32_t H2K_get_ipend()
+This function clears the global interrupt enable bit in SYSCFG, turning all interrupts off.
 
-FUNCTION:  static inline void H2K_clear_ipend(u32_t)
+
+H2K_set_gie
+-----------
+
+.. cfunction::  static inline void H2K_set_gie()
+
+Description
+~~~~~~~~~~~
+
+This function sets the global interrupt enable bit in SYSCFG.
+
+
+H2K_get_ipend
+-------------
+
+.. cfunction::  static inline u32_t H2K_get_ipend()
+
+Description
+~~~~~~~~~~~
+
+This function retrieves the contents of the IPEND status register.
+
+
+H2K_clear_ipend
+---------------
+
+.. cfunction::  static inline void H2K_clear_ipend(u32_t mask)
+
+Input
+~~~~~
+
+Argument 0:  Mask of bits to clear out of IPEND
+
+Description
+~~~~~~~~~~~
+
+This function retrieves clears the contents of the IPEND status register.
 
 
 

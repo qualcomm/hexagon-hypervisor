@@ -12,4 +12,4 @@ libh2:
 	cd tmp; qdsp6-ar x libh2.a; qdsp6-ar x libangel.a; qdsp6-ar cru ../libh2.a *.o
 
 clean:
-	rm libh2.a tmp
+	rm -rf libh2.a tmp

@@ -6,7 +6,9 @@
 #ifndef H2K_CHECKER_READY_H
 #define H2K_CHECKER_READY_H 1
 
-void checker_ready();
+#include <c_std.h>
+
+s32_t checker_ready();
 
 #endif
 

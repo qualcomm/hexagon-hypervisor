@@ -6,9 +6,10 @@
 #ifndef H2K_CHECKER_RING_H
 #define H2K_CHECKER_RING_H 1
 
-#include "ring.h"
+#include <c_std.h>
+#include <ring.h>
 
-void checker_ring(H2K_ringnode_t *x);
+s32_t checker_ring(H2K_ringnode_t *x);
 
 #endif
 

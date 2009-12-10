@@ -8,7 +8,7 @@
 #include <checker_help.h>
 #include <checker_kernel_locked.h>
 
-void checker_kernel_locked()
+s32_t checker_kernel_locked()
 {
 #if __QDSP6_ARCH__ >= 3
 	u32_t syscfg = H2K_get_syscfg();
@@ -18,5 +18,6 @@ void checker_kernel_locked()
 #else
 #warning fixme: look at bkl
 #endif
+	return 1;
 }
 

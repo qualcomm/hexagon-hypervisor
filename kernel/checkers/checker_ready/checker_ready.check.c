@@ -10,7 +10,7 @@
 #include <checker_ready.h>
 #include <checker_ring.h>
 
-void checker_ready()
+s32_t checker_ready()
 {
 	u32_t i;
 	for (i = 0; i < MAX_PRIOS; i++) {
@@ -21,5 +21,6 @@ void checker_ready()
 			if (H2K_ready[i]) FAIL("valid bit clear but readylist non-null");
 		}
 	}
+	return 1;
 }
 

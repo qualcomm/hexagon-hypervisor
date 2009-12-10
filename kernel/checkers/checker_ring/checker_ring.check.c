@@ -8,7 +8,7 @@
 #include <checker_help.h>
 #include <checker_ring.h>
 
-void checker_ring(H2K_ringnode_t *x)
+s32_t checker_ring(H2K_ringnode_t *x)
 {
 	u32_t i = 0;
 	H2K_ringnode_t *start, *tmp;
@@ -28,5 +28,6 @@ void checker_ring(H2K_ringnode_t *x)
 		}
 		tmp = tmp->next;
 	} while (tmp != start);
+	return 1;
 }
 

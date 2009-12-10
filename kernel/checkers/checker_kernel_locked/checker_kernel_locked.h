@@ -6,7 +6,9 @@
 #ifndef H2K_CHECKER_KERNEL_LOCKED_H
 #define H2K_CHECKER_KERNEL_LOCKED_H 1
 
-void checker_kernel_locked();
+#include <c_std.h>
+
+s32_t checker_kernel_locked();
 
 #endif
 

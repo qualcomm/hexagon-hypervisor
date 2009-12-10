@@ -50,12 +50,13 @@ int lowprio_notify_requested(u32_t oldmask)
 
 int main() 
 {
-	u64_t prio_hthread;  /*  bitmap indexed by hardware thread -- shows lowest priority hthread  */
-	u64_t wait_hthread;  /*  bitmap indexed by hardware thread -- shows which thread is in wait mode  */
+	u32_t prio_hthread;  /*  bitmap indexed by hardware thread -- shows lowest priority hthread  */
+	u32_t wait_hthread;  /*  bitmap indexed by hardware thread -- shows which thread is in wait mode  */
 	u32_t runlist_prio;  /*  bitmap indexed by priority -- currently running priorities  */
 	u32_t ready_prio;    /*  bitmap indexed by priority -- which priorities have tasks ready to run  */
 
 	u32_t some_random_number;  /*  checked by assertions  */
+	u32_t retval;  /*  checked by assertions  */
 
 	u32_t resched_count=0;  /*  need to distinguish between sightings of the two different reasons for rescheds  */
 	u32_t lowprio_count=0;
@@ -66,8 +67,8 @@ int main()
 
 	info("%s starting\n",__FUNCTION__);
 
-	/*  disable the global IE bit and clear ipend*/
-	H2K_clear_ie();
+	/*  disable the global IE bit and clear ipend  */
+	H2K_clear_gie();
 	H2K_clear_ipend(0xffffffff);
 
 	/*  Walking 1's test  
@@ -88,6 +89,8 @@ int main()
 	 * (I'm including zero's in there) 
          */
 
+	/*  Todo:  take the kernel lock  */
+
 	for (prio_hthread=0; prio_hthread < (1<<MAX_HTHREADS-1); prio_hthread = prio_hthread ? prio_hthread << 1 : 1) {
 		for (wait_hthread=1; wait_hthread < (1<<MAX_HTHREADS-1); wait_hthread = wait_hthread ? wait_hthread<<1 : 1) {
 			for (runlist_prio=1; runlist_prio < (1<<MAX_PRIOS-1); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
@@ -98,7 +101,7 @@ int main()
 					H2K_ready_valids = ready_prio;
 
 					/*  call the function  */
-					H2K_check_sanity(some_random_number);
+					retval = H2K_check_sanity(some_random_number);
 
 					/*  check the results  */
 					/*  Was a resched necessary?  */
@@ -118,7 +121,7 @@ int main()
 
 					if ((wait_hthread != 0) && (ready_prio != 0)) {
 						if (!resched_requested()) {
-							debug("wait_hthread == %d, ready_prio == %d\n",wait_hthread, ready_prio);
+							debug("wait_hthread == 0x%x, ready_prio == 0x%x\n",wait_hthread, ready_prio);
 							error("Expected reschedule due to idle hardware thread with ready tasks\n");
 						}
 						resched_count++;

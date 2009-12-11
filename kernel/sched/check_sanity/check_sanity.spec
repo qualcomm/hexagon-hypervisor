@@ -120,21 +120,13 @@ Testing
 Samples
 ~~~~~~~
 
-
-input	MAX_PRIOS		number of priority levels available (default 32)
-
-input	MAX_HTHREADS		number of hardware threads available (default 6)
-
-input	H2K_runlist_valids	priorities with ready jobs
-
-input	H2K_ready_valids	priorities of currently running threads
-
-input	H2K_waitmask		indicates hardware threads which are in wait
-
-output	ipend			shows interrupts pending (see H2K_resched_int())
-
-i/o	H2K_priomask		indicates lowest priority mask (see H2K_lowprio_notify)
-
+* input	MAX_PRIOS		number of priority levels available (default 32)
+* input	MAX_HTHREADS		number of hardware threads available (default 6)
+* input	H2K_runlist_valids	priorities with ready jobs
+* input	H2K_ready_valids	priorities of currently running threads
+* input	H2K_waitmask		indicates hardware threads which are in wait
+* output	ipend			shows interrupts pending (see H2K_resched_int())
+* i/o	H2K_priomask		indicates lowest priority mask (see H2K_lowprio_notify)
 
 States
 ~~~~~~
@@ -146,17 +138,12 @@ Matrix
 Important cases
 ~~~~~~~~~~~~~~~
 
-H2K_waitmask == 0
-
-H2K_waitmask != 0
-
-H2K_runlist_valids > H2K_ready_valids
-
-H2K_runlist_valids <= H2K_ready_valids
-
-H2K_priomask == 0
-
-H2K_priomask != 0
+* H2K_waitmask == 0
+* H2K_waitmask != 0
+* H2K_runlist_valids > H2K_ready_valids
+* H2K_runlist_valids <= H2K_ready_valids
+* H2K_priomask == 0
+* H2K_priomask != 0
 
 
 Harness

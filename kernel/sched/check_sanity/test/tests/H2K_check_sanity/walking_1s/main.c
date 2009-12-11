@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <stdlib.h>
 #include <c_std.h>
 #include <check_sanity.h>
 #include <hw.h>
@@ -98,7 +99,7 @@ int main()
 					H2K_wait_mask = wait_hthread;
 					H2K_runlist_valids = runlist_prio;
 					H2K_ready_valids = ready_prio;
-
+					some_random_number = rand();
 					/*  call the function  */
 					retval = call(H2K_check_sanity,some_random_number);
 

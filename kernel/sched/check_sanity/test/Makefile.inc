@@ -12,9 +12,6 @@ unit:
 h2: unit
 	-ln -s unit/../../.. $@
 
-#SIMPATH=/pkg/qct/software/hexagon/releases/tools/1.2/qc/bin
-#TOOLPATH=/pkg/qct/software/hexagon/releases/tools/1.2/gnu/bin
-
 ################################################################################
 #  Tool stuff
 ################################################################################
@@ -30,6 +27,10 @@ OBJDUMP=${ARCH}-objdump
 ################################################################################
 #  Rules for building the kernel if necessary; should be built way before any
 #  batch jobs are run else they will maul each other in the animal farm.
+#
+#  Actually, I've broken the dependency between the libs and the executable so 
+#  they will never actually try to build the libs; if you need the libs, you 
+#  should 'make libs' before you run.
 ################################################################################
 
 LIBH2_DIR=h2/libs
@@ -40,23 +41,24 @@ LIBH2KERNEL=${LIBH2KERNEL_DIR}/libh2kernel.a
 LIBH2CHECK=${LIBH2KERNEL_DIR}/libh2check.a
 
 #  Needs to have the tools already in path...
-#  "make ref" should be "make ref DEBUG=1", add when kernel_locked is in there
-${LIBH2KERNEL}: h2
+#SIMPATH=/pkg/qct/software/hexagon/releases/tools/1.2/qc/bin
+#TOOLPATH=/pkg/qct/software/hexagon/releases/tools/1.2/gnu/bin
+
+${LIBH2KERNEL}:
 	cd ${LIBH2KERNEL_DIR};\
 	make ref DEBUG=1;\
 	cp build/ref/libh2kernel.a .
 
-${LIBH2CHECK}: h2
+${LIBH2CHECK}:
 	cd ${LIBH2KERNEL_DIR};\
-	make ref DEBUG=1;\
-	cp build/ref/libh2kernel.a .
+	make check DEBUG=1;\
+	cp build/ref/libh2check.a .
 
-${LIBH2}: h2
+${LIBH2}:
 	cd ${LIBH2_DIR};\
-	make DEBUG=1;\
-	cp libh2.a ../kernel
+	make DEBUG=1
 
-libs:  ${LIBH2} ${LIBH2KERNEL}
+libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
 
 ################################################################################
 #  Standard compilation flags
@@ -65,7 +67,7 @@ libs:  ${LIBH2} ${LIBH2KERNEL}
 #  Turn on call() support for assertion checking
 CFLAGS += -DDEBUG
 CFLAGS += -I h2/kernel/include -moslib=h2 -mv3 -DARCHV=3
-LDFLAGS+=-moslib=h2 -lh2kernel -lh2 -lh2check -L h2/kernel -mv3
+LDFLAGS+=-moslib=h2 -lh2kernel -lh2 -lh2check -L h2/kernel -L h2/libs -mv3
 
 
 ################################################################################
@@ -75,8 +77,7 @@ LDFLAGS+=-moslib=h2 -lh2kernel -lh2 -lh2check -L h2/kernel -mv3
 %.objdump: %.elf
 	${OBJDUMP} -D ${@:.objdump=.elf} > $@
 
-
-${EXEC}: ${OBJS} h2
+${EXEC}: ${OBJS}
 	${CC} -o $@ ${OBJS} ${LDFLAGS}
 
 #  Todo:  need a watchdog to kill sims after some time; possibly use the "forked killer"

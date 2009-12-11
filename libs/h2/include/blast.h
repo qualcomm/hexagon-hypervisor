@@ -6,7 +6,7 @@
 #ifndef SOS_H
 #define SOS_H 1
 
-#define RENAME_PREFIX sos
+#define RENAME_PREFIX blast
 #include "rename.h"
 
 #endif

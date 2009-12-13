@@ -63,3 +63,49 @@ It is essential that we make ourselves non-lowprio here if appropriate, however 
 essential that we find a lowprio hthread at this point.  check_sanity will find a lowprio
 hthread if priomask is zero.
 
+
+
+
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+* Input: me, which may or may not have a valid thread
+* Input: correct ready queue, which may or may not have ready threads
+* I/O: runlist, which is updated if there is a new thread to schedule
+* I/O: priomask, modified if new is NULL or the newly selected thread 
+  is lowest priority (XXX: or if newly selected thread is non-lowprio?)
+* I/O: waitmask, modified if new is NULL
+
+Important cases
+~~~~~~~~~~~~~~~
+
+* There are ready threads
+* There are NOT ready threads
+
+* me is NULL
+* me is a valid thread
+
+* We are the new lowest priority thread
+* We are no longer the lowest priority thread
+* We remain the lowest priority thread
+
+* Other waiting threads
+* No other waiting threads
+
+Cross of these options
+
+
+Harness
+~~~~~~~
+
+In all cases, H2K_switch should be called.  
+
+We define H2K_switch in the test harness.  This is a dummy function which sets
+a flag indicating that the function was called.  H2K_switch should not return,
+so we use setjmp/longjump to return to where dosched was called.
+
+

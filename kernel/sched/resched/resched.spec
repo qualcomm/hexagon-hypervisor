@@ -59,6 +59,8 @@ Important Cases
 * me != NULL, thread must be removed from runlist and added to readylist
 * All: must call H2K_dosched at end of routine
 
+Check to make sure continuation is set?
+
 Harness
 ~~~~~~~
 

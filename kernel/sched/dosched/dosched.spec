@@ -106,6 +106,6 @@ In all cases, H2K_switch should be called.
 
 We define H2K_switch in the test harness.  This is a dummy function which sets
 a flag indicating that the function was called.  H2K_switch should not return,
-so we use setjmp/longjump to return to where dosched was called.
+so we use setjmp/longjump to return to the function where dosched was called.
 
 

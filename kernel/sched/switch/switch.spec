@@ -53,3 +53,69 @@ saved r1:0 (which contain a return value from the blocking function), and jump
 to H2K_check_sanity_unlock.  H2K_check_sanity_unlock will return to the
 continuation.
 
+
+
+
+
+
+Testing
+-------
+
+Samples
+~~~~~~~
+
+* Input: from, which may be NULL
+* Input: to, which may be NULL
+
+* Flow: If to is non-NULL, we should arrive at H2K_check_sanity with the return address 
+    set to the continuation value in "to"
+* Ouptut: If to is NULL, we should unlock the kernel lock, 
+* Flow: if to is NULL, we should jump to H2K_wait_forever
+* I/O: H2K_wait_mask bit set for our hardware thread only if to is NULL
+* I/O: H2K_priomask bit set for our hardware thread only if to is NULL
+* Output: if to is NULL, we should additionally have the machine configured to be in WAIT mode:
+  * The kernel is unlocked
+  * SGP for our hardware thread is set to NULL
+  * IMASK for our hardware thread is set to receive interrupts
+  * SSR.IE should be set and SSR.EX should be cleared.
+* TBD: cycle accounting
+* TBD: tracing
+* TBD: tid setup
+
+
+Important Cases
+~~~~~~~~~~~~~~~
+
+* From non-NULL, to non-NULL
+* From non-NULL, to NULL
+* From NULL, to non-NULL
+* From NULL, to NULL
+
+Harness
+~~~~~~~
+
+Since the H2K_check routine has low requirements on the rest of the kernel, we 
+only will link the switch object file with the test harness.
+
+One problem with testing H2K_switch is that it will attempt to go into wait mode. 
+For tests that should go into wait mode, we replace the H2K_wait_forever function
+with a jump to the code that checks to make sure the variables have been set correctly.
+We do this in the following manner::
+
+	u32_t *code_snippet_address;
+	__asm__ __volatile__ (
+		" call 1f \n"
+		" r28.h = #hi(TH_wait_check) \n"
+		" r28.l = #lo(TH_wait_check) \n"
+		" jumpr r28 \n"
+		"1: \n"
+		" %0 = r31 \n"
+		: "=r"(code_snippet_address) : : "r28","r31");
+	memcpy(H2K_wait_forever,code_snippet_address,3*sizeof(u32_t));
+
+This will create a code snippet that jumps to our TH_wait_check routine.  We
+get the address of this code snippet, and overwrite the H2K_wait_forever code
+with our new snippet.  Our TH_wait_check routine can check to make sure the
+machine is correctly configured to be in WAIT mode.
+
+

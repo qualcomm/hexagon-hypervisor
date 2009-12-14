@@ -80,6 +80,8 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 	imask = r0
 
 	// set SSR to enable interrupts
+	// NOTE: should be the last thing before going to WAIT mode, we may get an interrupt
+	// before the actual wait instruction.
 	r2 = ssr
 	r3 = #4
 	r2 = insert(r3,#3,#16)
@@ -90,5 +92,6 @@ FUNC_END H2K_switch
 FUNC_START H2K_wait_forever .text.sched.switch .p2align 2
 	wait(r1)
 	jump H2K_wait_forever
+	nop				// used by Harness to overwrite with redirect
 FUNC_END H2K_wait_forever
 

@@ -43,3 +43,39 @@ As an optimization, we can instead remove the thread at the head of the
 readylist at the same priority, and insert it into the runlist.  We switch to
 the thread inserted into the runlist.
 
+
+
+
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+* Input: me, which may or may not have a valid thread
+* Input: correct ready queue, which may or may not have ready threads
+* I/O: runlist, which is updated if there is a new thread to schedule
+* I/O: waitmask, modified if new is NULL
+
+Important cases
+~~~~~~~~~~~~~~~
+
+* Runlist has no valid threads at current thread's priority
+* Runlist has valid threads at current thread's priority
+
+Harness
+~~~~~~~
+
+Link with H2 kernel library.
+
+If valid threads exist at the current priority, H2K_sched_yield should lock
+the kernel, remove the current thread from the runlist, append the current
+thread to the ring at the current thread priority, and call H2K_dosched.
+
+If no valid threads exist at the current priority, H2K_sched_yield may
+return immediately.  Since this optimization may be important for performance
+during spin code, we want to verify that it has been implemented.
+
+
+

@@ -69,3 +69,45 @@ argument for most functions.
 
 To go to the appropriate handler for a trap, jump to traptab + 8*trap_number.
 
+
+
+
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+Input: thread context in SGP
+
+Important cases
+~~~~~~~~~~~~~~~
+
+* Trap enabled
+* Trap disabled
+
+* Every cause code
+
+Harness
+~~~~~~~
+
+We will link only with the trap object file.
+
+The harness will have a helper function:
+
+.. cfunction:: void TH_do_trap(H2K_thread_context *src, H2K_thread_context *dest, u32_t trapnum)
+
+This function will load the appropriate registers from the src thread context, set
+SGP to the storage pointed to by `dest`, and call H2K_handle_trap0 with the
+correct SSR CAUSE code for the trap corresponding to num having happened.
+
+The test harness will define each possible trap handler as a check to make sure any `me` value 
+is set correctly, and then will call:
+
+.. cfunction::  void TH_check_trap(H2K_thread_context *src, H2K_thread_context *dest)
+
+This function will check to make sure that the appropriate registers from `src` and `dest`
+are equal, to check that the context was saved correctly.  It will also check to make 
+sure that the continuation is set correctly, and that the stack is set up correctly.
+

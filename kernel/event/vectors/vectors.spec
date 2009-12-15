@@ -34,3 +34,41 @@ For V2 implementations, six interrupts are reserved for changing the priority.
 These vector to special handlers, rather than using the common interrupt 
 handler path.
 
+
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+Input: Event number.
+Flow: go to event handler for event number
+
+Important cases
+~~~~~~~~~~~~~~~
+
+0. H2K_handle_reset
+1. H2K_handle_nmi
+2. H2K_handle_error
+3. Invalid input.
+4. H2K_handle_tlbmissx
+5. Invalid input.
+6. H2K_handle_tlbmissrw
+7. Invalid input.
+8. H2K_handle_trap0
+9. H2K_handle_trap1
+10-15. Invalid input.
+16-48. H2K_handle_int.
+
+Harness
+~~~~~~~
+
+We define H2K_handle_reset, H2K_handle_nmi, H2K_handle_error,
+H2K_handle_tlbmissx, H2K_handle_tlbmissrw, H2K_handle_trap0,
+H2K_handle_trap1, and H2K_handle_int.  These functions set 
+a flag when executed, and then return.  We link only with the 
+object file.  We then iterate over the valid event numbers,
+calling indirectly through a pointer.  After each call, we check
+to make sure the correct handler was called.
+

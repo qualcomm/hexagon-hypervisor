@@ -101,3 +101,49 @@ Functionality
 We set up the stack pointer and call the correct function.
 
 
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+Input: thread context in SGP, or NULL
+Input: H2K_inthandlers
+Output: All (?) registers should be saved in thread context if SGP is non-NULL
+Flow: go to event handler for event number
+
+Important cases
+~~~~~~~~~~~~~~~
+
+* SGP is NULL
+* SGP is non-NULL
+* Each L1 interrupt
+
+Harness
+~~~~~~~
+
+We will link only with the interrupt object file.  
+
+The harness will have a helper function:
+
+.. cfunction:: void TH_do_interrupt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
+
+This function will load the appropriate registers from the src thread context, set
+SGP to the storage pointed to by `dest`, and call H2K_handle_interrupt with the
+correct SSR CAUSE code for the interrupt corresponding to num having happened.
+
+For non-NULL SGP value tests, the approriate entry in H2K_inthandlers will point to a second helper function:
+
+.. cfunction::  void TH_check_interrupt(H2K_thread_context *src, H2K_thread_context *dest)
+
+This function will check to make sure that the appropriate registers from `src` and `dest`
+are equal, to check that the context was saved correctly.  It will also check to make 
+sure that the continuation is set correctly, the stack is set up correctly, and the argument
+registers are correct.
+
+For NULL SGP value tests, the correct entry H2K_inthandlers will point to a simpler check for 
+the stack and arguments.
+
+All incorrect entries in H2K_inthandlers should be set to code that calls FAIL.
+

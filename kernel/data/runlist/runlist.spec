@@ -85,6 +85,7 @@ Description
 ~~~~~~~~~~~
 
 Returns the priority corresponding to the running thread with the worst priority.
+Returns MAX_PRIOS or higher if no threads are in the runlist.
 
 Input
 ~~~~~
@@ -128,5 +129,47 @@ We get the priority from the thread structure.  We then look at the runlist link
 list at the corresponding priority.  When we find the thread, we remove it from the
 linked list.  If the runlist has emptied because of the removal of the thread, we
 clear the bit from H2K_runlist_valids.
+
+
+
+
+
+Testing
+-------
+
+Samples
+~~~~~~~
+
+* Input: H2K_runlist_valids
+* Input: H2K_runlist array
+* Thread to push/remove
+* Output: H2K_runlist_worst_prio: Priority of worst running thread
+* Output: H2K_ready_array / H2K_ready_valids for remove/push
+
+
+Important Cases
+~~~~~~~~~~~~~~~
+
+* H2K_runlist_worst_prio when the runlist is empty
+* H2K_runlist_worst_prio when the runlist has different threads in it
+
+* H2K_runlist_push a thread into a runlist with no other threads at the same
+  priority; H2K_runlist_valids bit should be set
+* H2K_runlist_push a thread into a runlist with other threads at the same
+  priority; H2K_runlist_valids bit should remain set
+
+* H2K_runlist_remove a thread from the runlist with only the specified thread at
+  the priority, H2K_runlist_valids bit should be cleared
+* H2K_runlist_remove a thread from the runlist with more than the specified thread at
+  the priority, H2K_runlist_valids bit should remain set
+
+* Check H2K_runlist_init clears out randomized values.
+
+Harness
+~~~~~~~
+
+The runlist module is reasonably self-contained, so the test harness will only
+use the header file and object file.  
+
 
 

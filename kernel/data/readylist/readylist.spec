@@ -60,6 +60,7 @@ Description
 ~~~~~~~~~~~
 
 Returns the priority corresponding to the ready thread with the best priority.
+Returns value of MAX_PRIOS or higher if no threads are ready.
 
 Input
 ~~~~~
@@ -186,4 +187,47 @@ We call H2K_ready_best_prio() to obtain the priority of the best priority ready 
 We then get the thread pointed to by the H2K_ready pointer at the correct priority.
 
 This thread is removed from the ready list by calling H2K_ready_remove, and returned.
+
+
+
+
+
+
+Testing
+-------
+
+Samples
+~~~~~~~
+
+* Input: H2K_ready_valids
+* Input: H2K_ready array
+* Thread to append/insert/remove
+* Output: H2K_ready_best_prio: Priority of best ready thread
+* Output: H2K_ready_getbest: Best ready thread, removed from readylist, or NULL
+* Output: H2K_ready_array / H2K_ready_valids for append/insert/remove/getbest
+
+
+Important Cases
+~~~~~~~~~~~~~~~
+
+* H2K_ready_getbest when ready list is empty
+* H2K_ready_getbest when ready list has one thread
+* H2K_ready_getbest when ready list has multiple threads at same priority level
+* H2K_ready_getbest when ready list has multiple threads at multiple priority levels
+* H2K_ready_best_prio when ready list has valid threads
+* H2K_ready_best_prio when ready list is empty
+* H2K_ready_append to empty list
+* H2K_ready_append to non-empty list, check for thread at end of list
+* H2K_ready_insert to empty list
+* H2K_ready_insert to non-empty list, check for thread at start of list
+* H2K_ready_remove to list with only the specified thread, check for H2K_ready_valids bit clear
+* H2K_ready_remove to list with more than just the specified thread, check for H2K_ready_valids bit remaining set
+* Check H2K_ready_init clears out randomized values
+
+Harness
+~~~~~~~
+
+The readylist module is reasonably self-contained, so the test harness will only
+use the header file and object file.  
+
 

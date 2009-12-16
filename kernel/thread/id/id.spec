@@ -41,3 +41,26 @@ makes it difficult to map id->pointer.  On the other hand, this is rarely
 used (currently, mainly for changing priority of another thread).
 
 
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+* Input: `me` 
+* Output: unique ID (Currently, should be equal to `me`)
+
+Important cases
+~~~~~~~~~~~~~~~
+
+* Various values of `me`
+
+Harness
+~~~~~~~
+
+We link directly with the thread object file.
+
+The test harness calls H2K_thread_id with `me`, and expects the return value
+to be equal to the thread context pointer.
+

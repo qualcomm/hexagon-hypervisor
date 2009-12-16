@@ -22,6 +22,10 @@ FUNC_START start .text.init.boot .p2align 2
 	r0.l = #lo(H2K_event_vectors)
 	evb = r0
 
+	r0.h = #hi(_SDA_BASE_)
+	r0.l = #lo(_SDA_BASE_)
+	gp = r0
+
 	/* Set up rising edge triggered */
 	r0 = #-1
 	iel = r0
@@ -83,6 +87,9 @@ FUNC_START h2_init .text.init.boot .p2align 2
 FUNC_END h2_init
 
 FUNC_START H2K_handle_reset .text.init.boot .p2align 2
+	r0.h = #hi(_SDA_BASE_)
+	r0.l = #lo(_SDA_BASE_)
+	gp = r0
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
 #if __QDSP6_ARCH__ <= 3

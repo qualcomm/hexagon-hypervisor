@@ -7,7 +7,7 @@
 H2K_thread_create
 -----------------
 
-.. cfunction:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t asid, u32_t trapmask, H2K_thread_context *me)
+.. cfunction:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t trapmask, H2K_thread_context *me)
 
 Description
 ~~~~~~~~~~~
@@ -26,9 +26,8 @@ Argument 0: The PC that the new thread should start at
 Argument 1: The SP that the new thread should start with
 Argument 2: A value for r0 for the new thread
 Argument 3: The priority for the new thread
-Argument 4: The Address Space ID for the new thread
-Argument 5: The mask for what traps are allowed for the new thread
-Argument 6: Pointer to the current thread context
+Argument 4: The mask for what traps are allowed for the new thread
+Argument 5: Pointer to the current thread context
 
 Output
 ~~~~~~
@@ -72,4 +71,53 @@ before returning.
 For security, we need to assure that no values are in registers incorrectly.
 We accomplish this by clearing the thread context during initialization and 
 at H2K_thread_stop time.  This allows for faster thread_create calls.
+
+
+
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+* Input: new thread PC
+* Input: new thread SP
+* Input: new thread argument
+* Input: new thread priority
+* Input: new thread trapmask
+* Input: Pointer to current thread context
+
+Important cases
+~~~~~~~~~~~~~~~
+
+* Free thread list is empty
+* Free thread list is non-empty
+
+* PC misaligned
+* Stack Pointer misaligned
+* Invalid thread priority
+
+* Ready threads at new thread priority
+* No ready threads at new thread priority
+
+Harness
+~~~~~~~
+
+We link directly with the create object file, and also the readylist object file.
+
+We define H2K_check_sanity_unlock() to set a flag indicating that the function was called.
+
+The test harness will call H2K_thread_create with various inputs and check to make sure
+that the appropriate action was taken:
+
+* Check appropriate input arguments, return -1 if obviously erroneous
+* If available, a thread should be dequeued from the free thread list.  Otherwise return -1.
+* Check that the appropriate fields in the new thread were set correctly:
+	* Priority and valid fields
+	* SSR and ELR values
+	* Argument and Stack Pointer values
+	* Trap Mask
+	* Continuation
+* Check to make sure the thread was inserted into the ready queue at the appropriate location.
 

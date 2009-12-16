@@ -52,7 +52,7 @@ static H2K_thread_context *futex_find(H2K_thread_context *haystack, H2K_thread_c
 	return NULL;
 }
 
-/* Futuex_resume 
+/* futex_resume 
  * If we are only going to wake one thread, pick the highest priority one 
  * Else, pick oldest ones from queue 
  */

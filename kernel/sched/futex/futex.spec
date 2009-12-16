@@ -36,7 +36,7 @@ Functionality
 
 First, the hash key is computed.  The hash key is based on the address used
 by the kernel.  This should either be based only on the lowest bits of the
-address, that are unchagned by virtual to physical translation, or should be
+address, that are unchanged by virtual to physical translation, or should be
 based on the physical address.  Otherwise, futexes shared between two processes
 with different address spaces may not function correctly.
 
@@ -120,5 +120,39 @@ waking up the highest priority threads.
 
 
 
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+* FUTEX_HASHSIZE - define (default 6)
+* lock - pointer to futex
+
+n_to_wake (H2K_futex_resume)
+
+H2K_futex_wait return value
+H2K_futex_resume return value
+
+Interesting Cases
+~~~~~~~~~~~~~~~~~
+
+Lower 12 bits of futex address all the same
+Lower 12 bits of futex address all different
+
+Wait on a valid lock
+Wait on an invalid lock
+
+Wake 1 thread
+Wake multiple threads
+
+
+Harness
+~~~~~~~
+
+Testcases will instantiate the full kernel and make use of multiple software threads.
+
+Future tests may test the hashing function more thoroughly
 
 

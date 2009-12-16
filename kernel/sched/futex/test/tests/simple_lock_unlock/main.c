@@ -150,12 +150,6 @@ int main()
 		error("Locked on a bad value\n");
 	}
 
-	/*  "two for flinching"  */
-	h2_futex_wake(&futex_pages[test_lock],1);
-
-	/*  "even more for flinching"  */
-	h2_futex_wake(&futex_pages[test_lock],2);
-
 	/*  start "dummy" threads ranging in priority from lowest to highest  */
 	for (next_tnum=0; next_tnum<MAX_DUMMY_THREADS; next_tnum++) {
 		info("Creating dummy thread %d\n",next_tnum);
@@ -167,6 +161,12 @@ int main()
 			info("Could not create thread\n");
 		}
 	}
+
+	/*  "two for flinching"  */
+	h2_futex_wake(&futex_pages[test_lock],1);
+
+	/*  "even more for flinching"  */
+	h2_futex_wake(&futex_pages[test_lock],2);
 
 	/*  High prio thread  */
 	debug("next_tnum = %d\n",next_tnum);

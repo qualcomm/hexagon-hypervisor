@@ -9,7 +9,7 @@
 u32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
 {
 	u32_t ret;
-	if (prio > MAX_PRIOS) prio = MAX_PRIOS;
+	if (prio > MAX_PRIO) prio = MAX_PRIO;
 	if (dest == me) {
 		H2K_runlist_remove(me);
 		ret = me->prio;

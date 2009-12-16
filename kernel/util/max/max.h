@@ -16,6 +16,7 @@
 #define KERNEL_STACK_SIZE (8*16)
 
 #define MAX_PRIOS 32
+#define MAX_PRIO ((MAX_PRIOS) - 1)
 
 #define MAX_ASIDS 32
 

@@ -22,10 +22,16 @@ void H2K_interrupt_restore();
 s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapmask, H2K_thread_context *me)
 {       
 	H2K_thread_context *tmp;
-	u32_t myssr = (me->ssrelr >> 32);
-	if (prio > MAX_PRIOS) return -1;        // bad prio
+	u32_t myssr;
+	if (me) {
+		myssr = (me->ssrelr >> 32);
+	} else {
+		myssr = BOOT_THREAD_SSR;
+	}
+	if (prio > MAX_PRIO) return -1;        // bad prio
 	//if (asid > MAX_ASIDS) return -1;        // bad asid
 	if ((sp & 7) != 0) return -1;           // bad stack pointer alignment
+	if ((pc & 3) != 0) return -1;           // bad pc alignment
 	BKL_LOCK(&H2K_bkl);
 	if (H2K_free_threads == NULL) {
 		BKL_UNLOCK(&H2K_bkl);

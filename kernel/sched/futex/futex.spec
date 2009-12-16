@@ -144,6 +144,7 @@ Lower 12 bits of futex address all different
 Wait on a valid lock
 Wait on an invalid lock
 
+Wake 0 threads (via n_to_wake == 0, or n_to_wake > 0 with no threads ready)
 Wake 1 thread
 Wake multiple threads
 

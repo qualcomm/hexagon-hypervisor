@@ -40,7 +40,6 @@ Functionality
 
 Arguments should be checked:
 * Priority should be less than MAX_PRIO
-* ASID should be less than MAX_ASID (TBD: redo mem stuff)
 * SP must be 8-byte aligned
 
 Any incorrect argument causes -1 to be returned.

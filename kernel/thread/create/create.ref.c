@@ -23,13 +23,8 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 {       
 	H2K_thread_context *tmp;
 	u32_t myssr;
-	if (me) {
-		myssr = (me->ssrelr >> 32);
-	} else {
-		myssr = BOOT_THREAD_SSR;
-	}
+	myssr = (me->ssrelr >> 32);
 	if (prio > MAX_PRIO) return -1;        // bad prio
-	//if (asid > MAX_ASIDS) return -1;        // bad asid
 	if ((sp & 7) != 0) return -1;           // bad stack pointer alignment
 	if ((pc & 3) != 0) return -1;           // bad pc alignment
 	BKL_LOCK(&H2K_bkl);
@@ -41,7 +36,7 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 	H2K_free_threads = H2K_free_threads->next;
 	tmp->valid = 1;
 	tmp->prio = prio;
-	if (me) tmp->ugpgp = me->ugpgp;
+	tmp->ugpgp = me->ugpgp;
 	tmp->ssrelr = (((u64_t)(myssr)) << 32)
 			| ((u64_t)pc);
 	tmp->r2928 = ((u64_t)sp) << 32;
@@ -49,11 +44,6 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 	tmp->trapmask = trapmask & me->trapmask;
 	tmp->continuation = H2K_interrupt_restore;
         H2K_ready_append(tmp);
-        if (me) {
-		return H2K_check_sanity_unlock((u32_t)tmp); // otherwise we're starting up the boot thread, don't wake everyone
-	} else {
-		BKL_UNLOCK(&H2K_bkl);
-		return (s32_t)tmp;
-	}
+	return H2K_check_sanity_unlock((u32_t)tmp);
 }
 

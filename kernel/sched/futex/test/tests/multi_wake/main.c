@@ -19,7 +19,7 @@
 /*  this test can be reseeded  */
 
 #ifndef TEST_SEED
-#define TEST_SEED 1
+#define TEST_SEED 2
 #endif
 
 #define PRODUCER_ITERATIONS (1<<14)
@@ -105,6 +105,7 @@ void consumer_thread(int age)
 {
 	info("Consumer started\n");
 
+	/*  remove this section if we get away from "oldest first"  */
 	if (age >= nr_to_wake) {
 		h2_futex_wait(&futex_pages[test_lock],0);
 		error("Inappropriate consumer thread woken up\n");
@@ -127,7 +128,7 @@ int main()
 {
 	unsigned int next_tnum;
 	unsigned int timeout=0;
-	unsigned int i;
+	unsigned int i,j;
 
 	srand(TEST_SEED);
 
@@ -232,18 +233,18 @@ int main()
 	}  //  todo:  create watchdog
 
 	/*  give a little settling time  */
-	for (timeout=0; timeout<(1<<12); timeout++) {
+	for (timeout=0; timeout<(1<<12)*nr_to_wake; timeout++) {
 		asm volatile ("nop");
 	}
 	if (!done) error("Test timed out\n");
 
 	/*  final check to see if threads_woken == nr_to_wake  */
-	counter = 0;
+	j = 0;
 	for (i=0; i<max_consumers; i++) {
 		info("threads_woken[%d] = %d\n",i,threads_woken[i]);
-		if (threads_woken[i]) counter++;
+		if (threads_woken[i]) j++;
 	}
-	if (counter != nr_to_wake) error("wrong # of threads woken; %d vs %d\n",counter,nr_to_wake);
+	if (j != nr_to_wake) error("wrong # of threads woken; %d vs %d\n",j,nr_to_wake);
 
 	info("TEST PASSED\n");
 	return(0);

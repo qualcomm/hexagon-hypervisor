@@ -80,7 +80,9 @@ void producer_thread(int x)
 	info("Producer started\n");
 
 	/*  "two for flinching"  */
-	h2_futex_wake(&futex_pages[test_lock],0);
+	if (h2_futex_wake(&futex_pages[test_lock],0) != 0) {
+		error("futex_wake succeeded with n_to_wake == 0\n");
+	}
 
 	for (counter=0; counter<PRODUCER_ITERATIONS; counter++) {
 		asm volatile("nop");
@@ -163,10 +165,14 @@ int main()
 	}
 
 	/*  "two for flinching"  */
-	h2_futex_wake(&futex_pages[test_lock],1);
+	if (h2_futex_wake(&futex_pages[test_lock],1) != 0) {
+		error("futex_wake returned n_woken with empty queues\n");
+	}
 
 	/*  "even more for flinching"  */
-	h2_futex_wake(&futex_pages[test_lock],2);
+	if (h2_futex_wake(&futex_pages[test_lock],2) != 0) {
+		error("futex_wake returned n_woken with empty queues\n");
+	}
 
 	/*  High prio thread  */
 	debug("next_tnum = %d\n",next_tnum);

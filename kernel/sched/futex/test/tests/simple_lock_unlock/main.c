@@ -14,6 +14,7 @@
  * - futex_wait fails on an invalid lock
  * - simple wait-and-resume works; waking 1 thread 
  *   will wake highest priority thread
+ * - no threads are woken
  */
 
 /*  this test can be reseeded  */
@@ -77,6 +78,10 @@ void dummy_thread(int x)
 void producer_thread(int x)
 {
 	info("Producer started\n");
+
+	/*  "two for flinching"  */
+	h2_futex_wake(&futex_pages[test_lock],0);
+
 	for (counter=0; counter<PRODUCER_ITERATIONS; counter++) {
 		asm volatile("nop");
 	}
@@ -144,6 +149,9 @@ int main()
 		 */
 		error("Locked on a bad value\n");
 	}
+
+	/*  "two for flinching"  */
+	h2_futex_wake(&futex_pages[test_lock],1);
 
 	/*  start "dummy" threads ranging in priority from lowest to highest  */
 	for (next_tnum=0; next_tnum<MAX_DUMMY_THREADS; next_tnum++) {

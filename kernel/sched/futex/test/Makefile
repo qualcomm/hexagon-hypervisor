@@ -1,5 +1,5 @@
 
-SUBDIRS=tests
+SUBDIRS+=tests
 
 include Makefile.inc
 

@@ -1,5 +1,6 @@
 
 Continuation not being set on traps/interrupts
+==============================================
 
 Fix: add to spec
 
@@ -8,6 +9,7 @@ sure continuation was set to return address?
 
 
 hwtnum was not being set when a thread was scheduled
+====================================================
 
 Fix: add to thread_switch (is that correct place?  What about fastints?)
 
@@ -15,10 +17,26 @@ Testing: Add input assertion for all functions taking hwtnum that it is correct,
 	and at all functions containing me that me->hthread == hwtnum 
 
 
+H2K_futex_wake does not handle n_to_wake == 0 properly
+======================================================
 
-Other specing / assertions:
+Fixes:
+
+	* Clarify spec
+	* Add a check for n_to_wake == 0 at the beginning of H2K_futex_wake
+
+Testing:
+
+Testcase checks for both conditions of no threads woken -- n_to_wake == 0 
+and literally no applicable threads ready to resume.
+
+
+Other specing / assertions
+==========================
+
 	* For every data element in a struct, spec where it should be updated
 	* Add collection of assertions that we can check on function entry/exit
 	* Add structure verifier that can make sure structures are sane
+
 
 

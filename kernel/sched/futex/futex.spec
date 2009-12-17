@@ -94,6 +94,7 @@ Functionality
 ~~~~~~~~~~~~~
 
 If the number of threads to wake is zero, there is nothing to be done.  We return 0.
+This can happen if n_to_wake == 0, or if there are no threads that can be made ready.
 
 We compute the hash key based on the specified "lock" value, the same way as we do for 
 H2K_futex_wait.  

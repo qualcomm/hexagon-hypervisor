@@ -62,6 +62,9 @@ u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 	u32_t hashval = HASHVAL(lock);
 	u32_t n_woken = 0;
 	u32_t highest_prio = MAX_PRIOS, prio;
+
+	if (n_to_wake == 0) return 0;
+
 	BKL_LOCK();
 	if (H2K_futexhash[hashval] == NULL) {
 		BKL_UNLOCK();

@@ -1,6 +1,5 @@
 
+SUBDIRS=tests
 
 include Makefile.inc
 
-all:
-	make -C tests all

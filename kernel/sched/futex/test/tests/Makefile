@@ -1,6 +1,4 @@
-#  Todo:  create the "SUBDIRS" macros
+SUBDIRS += multi_wake simple_lock_unlock
 
 include Makefile.inc
-
-
 

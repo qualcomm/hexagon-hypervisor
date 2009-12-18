@@ -67,6 +67,7 @@ unsigned threads_woken[MAX_TEST_THREADS];
 
 void FAIL(const char *str)
 {
+	h2_printf(str);
 	exit(1);
 }
 

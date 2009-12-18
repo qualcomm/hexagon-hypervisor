@@ -131,10 +131,6 @@ Samples
 States
 ~~~~~~
 
-
-Matrix
-~~~~~~
-
 Important cases
 ~~~~~~~~~~~~~~~
 
@@ -156,5 +152,10 @@ Assertions for checking return value and kernel locking should be
 turned on, and the call() convention used to call the debug wrappers.
 
 Output state will be inspected by looking at IPEND and H2K_priomask.
+
+The assertion for !checker_kernel_locked() should only be valid in a 
+controlled unit testcase where nothing else can grab the lock before
+we can check it.
+
 
 

@@ -12,6 +12,7 @@ u64_t H2K_check_sanity(const u64_t retval);
 u64_t H2K_check_sanity_unlock(const u64_t retval);
 
 #ifdef DEBUG
+#include <checker_kernel_locked.h>
 #include <check_sanity_debug.h>
 #endif
 

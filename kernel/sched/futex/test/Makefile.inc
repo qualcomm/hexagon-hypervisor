@@ -123,7 +123,7 @@ GMON_FILES=gmon gmon.t_0 gmon.t_1 gmon.t_2 gmon.t_3 gmon.t_4 gmon.t_5
 ${COVFILES}: ${EXEC} gmon
 	${COV} -i ${EXEC} -o cov.txt -c cov.csv gmon
 
-CLEANUP=${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} test.log results.txt
+CLEANUP=${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} test.log results.txt h2 unit
 
 clean:
 	rm -rf ${CLEANUP}

@@ -9,7 +9,7 @@
 #include <thread.h>
 #include <futex.h>
 #include <switch.h>
-#include <switch.h>
+#include <lowprio.h>
 #include <intconfig.h>
 
 void qdsp6_pre_main();
@@ -19,6 +19,7 @@ void H2K_init_setup()
 {
 	H2K_runlist_init();
 	H2K_readylist_init();
+	H2K_lowprio_init();
 	H2K_futex_init();
 	H2K_intconfig_init();
 	H2K_thread_init();

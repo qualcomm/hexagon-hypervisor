@@ -13,7 +13,7 @@ s32_t checker_kernel_locked()
 #if __QDSP6_ARCH__ >= 3
 	u32_t syscfg = H2K_get_syscfg();
 	if ((syscfg & (1<<12)) == 0) {
-		FAIL("Kernel not locked");
+		return 0;
 	}
 #else
 #warning fixme: look at bkl

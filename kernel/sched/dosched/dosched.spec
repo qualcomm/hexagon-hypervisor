@@ -43,7 +43,7 @@ First, we remove the best ready thread.  If no ready thread is available, we
 go to sleep:
 	0. If a running hthread is marked as lowest priority, it should be made non-lowprio
 	1. The bits corresponding to the current hthread should be set in the priomask and
-		the waitmask: this thread will be waiting and lowest priority
+		the waitmask: this thread will be waiting and lowest priority (or in switch?)
 	2. We switch from me to NULL.
 
 Otherwise, if the waitmask is zero, and the priority of the new thread is worse than all the
@@ -107,5 +107,9 @@ In all cases, H2K_switch should be called.
 We define H2K_switch in the test harness.  This is a dummy function which sets
 a flag indicating that the function was called.  H2K_switch should not return,
 so we use setjmp/longjump to return to the function where dosched was called.
+
+We link with the whole kernel lib.  However, H2K_switch will be already resolved, and
+so will not be linked in.  We will not be in the real kernel environment; H2K_dosched()
+will be called directly.
 
 

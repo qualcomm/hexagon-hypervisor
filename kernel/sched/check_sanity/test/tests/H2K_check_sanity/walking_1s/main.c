@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <h2.h>
 #include <stdlib.h>
 #include <c_std.h>
 #include <check_sanity.h>
@@ -11,14 +12,14 @@
 #include <readylist.h>
 #include <lowprio.h>
 
-#define info(...) { printf("INFO:  "); printf(__VA_ARGS__);}
-#define warn(...) { printf("WARNING:  "); printf(__VA_ARGS__);}
-#define debug(...) { printf("DEBUG:  "); printf(__VA_ARGS__);}
-#define error(...) { printf("ERROR:  "); printf(__VA_ARGS__); FAIL("");}
+#define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
+#define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}
+#define debug(...) { h2_printf("DEBUG:  "); h2_printf(__VA_ARGS__);}
+#define error(...) { h2_printf("ERROR:  "); h2_printf(__VA_ARGS__); FAIL("");}
 
 void FAIL(const char *str) 
 {
-	printf(str);
+	h2_printf(str);
 	exit(1);
 }
 
@@ -64,14 +65,13 @@ int main()
 
 	/*  Call h2_init() to initialize everything  */
 
-	h2_init();
+	h2_init(0x0);
 
 	info("%s starting\n",__FUNCTION__);
 
 	/*  disable the global IE bit and clear ipend  */
 	H2K_clear_gie();
 	H2K_clear_ipend(0xffffffff);
-	BKL_LOCK();  /*  Big kernel lock required  */
 
 	/*  Walking 1's test  
 	 * 
@@ -91,17 +91,24 @@ int main()
 	 * (I'm including zero's in there) 
          */
 
-	for (prio_hthread=0; prio_hthread < (1<<MAX_HTHREADS-1); prio_hthread = prio_hthread ? prio_hthread << 1 : 1) {
-		for (wait_hthread=1; wait_hthread < (1<<MAX_HTHREADS-1); wait_hthread = wait_hthread ? wait_hthread<<1 : 1) {
-			for (runlist_prio=1; runlist_prio < (1<<MAX_PRIOS-1); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
-				for (ready_prio=1; ready_prio < (1<<MAX_PRIOS-1); ready_prio = ready_prio ? ready_prio <<=1 : 1) {
+	for (prio_hthread=0; prio_hthread < (1<<(MAX_HTHREADS-1)); prio_hthread = prio_hthread ? prio_hthread << 1 : 1) {
+		for (wait_hthread=0; wait_hthread < (1<<(MAX_HTHREADS-1)); wait_hthread = wait_hthread ? wait_hthread<<1 : 1) {
+			for (runlist_prio=0; runlist_prio < (1<<(MAX_PRIOS-1)); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
+				for (ready_prio=0; ready_prio < (1<<(MAX_PRIOS-1)); ready_prio = ready_prio ? ready_prio <<=1 : 1) {
 					H2K_priomask = prio_hthread;
 					H2K_wait_mask = wait_hthread;
 					H2K_runlist_valids = runlist_prio;
 					H2K_ready_valids = ready_prio;
+					
+					BKL_LOCK();  /*  Big kernel lock required  */
+					//debug("prio_hthread = 0x%08x\n",prio_hthread);
+					//debug("wait_hthread = 0x%08x\n",wait_hthread);
+					//debug("runlist_prio = 0x%08x\n",runlist_prio);
+					//debug("ready_prio = 0x%08x\n",ready_prio);
+
 					some_random_number = rand();
 					/*  call the function  */
-					retval = call(H2K_check_sanity,some_random_number);
+					retval = call(H2K_check_sanity_unlock,some_random_number);
 
 					/*  check the results  */
 					/*  Was a resched necessary?  */
@@ -111,7 +118,7 @@ int main()
 					 * this has to be changed as well.
 					 */
 
-					if (runlist_prio > ready_prio) {
+					if (ready_prio && (runlist_prio > ready_prio)) {
 						if (!resched_requested()) {
 							error("Expected reschedule due to better ready tasks\n");
 						}
@@ -157,12 +164,6 @@ sched_fired_ok:
 
 	/* Todo:  Compare against a hand calculated number of notifications and resched ints fired.  */
 
-	/*
-	 * This isn't hand calculated, but it looks like:
-	 * resched_count = 28830
-	 * lowprio_count = 4805
-	 */
-
 	info("Totals:\n");
 	info("resched_count = %d\n",resched_count);
 	info("lowprio_count = %d\n",lowprio_count);
@@ -173,7 +174,7 @@ sched_fired_ok:
 	 * main thread from exiting and reporting passd before all tests have completed.  
 	 */
 
-	printf("TEST PASSED\n");
+	info("TEST PASSED\n");
 	exit(0);
 }
 

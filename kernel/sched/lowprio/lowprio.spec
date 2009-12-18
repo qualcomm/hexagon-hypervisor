@@ -59,6 +59,28 @@ We clear that bit from the H2K_priomask and call H2K_prio_change_high() for
 the hardware thread.  
 
 
+H2K_lowprio_raise
+------------------
+
+.. cfunction:: static inline void H2K_lowprio_init()
+
+Description
+~~~~~~~~~~~
+
+H2K_lowprio_init initializes the data structures used by the lowprio facility.
+
+Input
+~~~~~
+
+Output
+~~~~~~
+
+Functionality
+~~~~~~~~~~~~~
+
+Set H2K_wait_mask and H2K_priomask to zero.
+
+
 
 Testing
 -------
@@ -93,5 +115,6 @@ lowest priority thread in the runlist should be selected, the corresponding bit
 should be added to H2K_priomask, and the IMASK on the corresponding hardware
 thread should be receptive to most interrupts.
 
+Also, check that H2K_lowprio_init initializes H2K_wait_mask and H2K_priomask.
 
 

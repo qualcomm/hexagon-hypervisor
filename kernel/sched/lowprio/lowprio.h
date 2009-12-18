@@ -38,5 +38,7 @@ static inline void H2K_raise_lowprio()
 	change_imask(Q6_R_ct0_R(mask),-1);
 }
 
+void H2K_lowprio_init();
+
 #endif
 

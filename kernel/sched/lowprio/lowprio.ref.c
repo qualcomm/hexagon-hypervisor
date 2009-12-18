@@ -8,3 +8,8 @@
 u32_t H2K_priomask IN_SECTION(".data.sched.lowprio");
 u32_t H2K_wait_mask IN_SECTION(".data.sched.lowprio");
 
+void H2K_lowprio_init()
+{
+	H2K_priomask = H2K_wait_mask = 0;
+}
+

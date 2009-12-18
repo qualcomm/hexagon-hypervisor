@@ -8,7 +8,7 @@
 
 #include <context.h>
 
-void H2K_switch(H2K_thread_context *from, H2K_thread_context *to);
+__attribute__((noreturn)) void H2K_switch(H2K_thread_context *from, H2K_thread_context *to);
 
 #endif
 

@@ -48,17 +48,17 @@ LIBH2CHECK=${LIBH2KERNEL_DIR}/libh2check.a
 #TOOLPATH=/pkg/qct/software/hexagon/releases/tools/1.2/gnu/bin
 #COVPATH=/pkg/qct/software/hexagon/releases/tools/1.2/examples/utils/bin
 
-${LIBH2KERNEL}:
+${LIBH2KERNEL}: h2
 	cd ${LIBH2KERNEL_DIR};\
 	make ref DEBUG=1;\
 	cp build/ref/libh2kernel.a .
 
-${LIBH2CHECK}:
+${LIBH2CHECK}: h2
 	cd ${LIBH2KERNEL_DIR};\
 	make check DEBUG=1;\
 	cp build/ref/libh2check.a .
 
-${LIBH2}:
+${LIBH2}: h2
 	cd ${LIBH2_DIR};\
 	make DEBUG=1
 

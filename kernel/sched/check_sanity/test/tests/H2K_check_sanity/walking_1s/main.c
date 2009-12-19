@@ -62,12 +62,17 @@ int main()
 
 	u32_t resched_count=0;  /*  need to distinguish between sightings of the two different reasons for rescheds  */
 	u32_t lowprio_count=0;
+	int i;
 
 	/*  Call h2_init() to initialize everything  */
 
 	h2_init(0x0);
 
 	info("%s starting\n",__FUNCTION__);
+
+	for (i=0; i<1000; i++) {
+		asm volatile("nop;");
+	}  /*  h2_init may need some settling time for other threads.  */
 
 	/*  disable the global IE bit and clear ipend  */
 	H2K_clear_gie();
@@ -100,7 +105,6 @@ int main()
 					H2K_runlist_valids = runlist_prio;
 					H2K_ready_valids = ready_prio;
 					
-					BKL_LOCK();  /*  Big kernel lock required  */
 					//debug("prio_hthread = 0x%08x\n",prio_hthread);
 					//debug("wait_hthread = 0x%08x\n",wait_hthread);
 					//debug("runlist_prio = 0x%08x\n",runlist_prio);
@@ -108,6 +112,7 @@ int main()
 
 					some_random_number = rand();
 					/*  call the function  */
+					BKL_LOCK();  /*  Big kernel lock required  */
 					retval = call(H2K_check_sanity_unlock,some_random_number);
 
 					/*  check the results  */

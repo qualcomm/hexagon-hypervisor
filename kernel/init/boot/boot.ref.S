@@ -75,6 +75,9 @@ FUNC_START start .text.init.boot .p2align 2
 
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
+	// lock kernel
+
+	k0lock
 
 	// Wake up other threads
 	r0 = #-1

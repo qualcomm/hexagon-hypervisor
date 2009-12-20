@@ -53,3 +53,31 @@ Functionality
 
 We read the value ``me->tid``, and return the resulting value.
 
+
+
+Testing
+-------
+
+Samples
+~~~~~~~
+
+* Value in me->tid
+* Value in the TID register
+
+
+Important Cases
+~~~~~~~~~~~~~~~
+
+* Setting TID
+* Getting TID value
+
+
+Harness
+~~~~~~~
+
+Fairly standard.  Test various values of TID.  
+
+For setting TID, check that both the register and context are set correctly.
+
+For getting TID, check that the value in the struct is returned.
+

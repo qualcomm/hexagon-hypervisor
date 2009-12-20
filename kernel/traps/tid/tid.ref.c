@@ -4,10 +4,12 @@
  */
 
 #include <tid.h>
+#include <hw.h>
 
 void H2K_tid_set(u32_t tid, H2K_thread_context *me)
 {
 	me->tid = tid;
+	H2K_set_tid_reg(tid);
 }
 
 u32_t H2K_tid_get(H2K_thread_context *me)

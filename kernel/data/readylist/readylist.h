@@ -14,7 +14,7 @@
 extern H2K_thread_context *H2K_ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
 extern u32_t H2K_ready_valids IN_SECTION(".data.sched.ready");
 
-static inline int H2K_ready_best_prio()
+static inline u32_t H2K_ready_best_prio()
 {
 	return Q6_R_ct0_R(H2K_ready_valids);
 }

@@ -21,7 +21,7 @@ static inline void H2K_runlist_push(H2K_thread_context *newthread)
 	H2K_runlist_valids |= 1<<prio;
 }
 
-static inline int H2K_runlist_worst_prio()
+static inline u32_t H2K_runlist_worst_prio()
 {
 	return ((8*sizeof(H2K_runlist_valids))-1)-Q6_R_cl0_R(H2K_runlist_valids);
 }

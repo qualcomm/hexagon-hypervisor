@@ -98,6 +98,26 @@ static inline u32_t H2K_get_ipend()
 	return(ret);
 }
 
+static inline u32_t H2K_get_tid_reg()
+{
+	u32_t ret;
+#if (ARCHV <= 3)
+	asm("%0 = tid;":"=r" (ret));
+#else
+	asm("%0 = stid;":"=r" (ret));
+#endif
+	return(ret);
+}
+
+static inline void H2K_set_tid_reg(u8_t val)
+{
+#if (ARCHV <= 3)
+	asm volatile ("tid = %0 ;"::"r" (val));
+#else
+	asm volatile ("stid = %0 ;"::"r" (val));
+#endif
+}
+
 static inline void H2K_clear_ipend(u32_t hthread_mask)
 {
 	asm("cswi(%0);" : : "r" (hthread_mask));

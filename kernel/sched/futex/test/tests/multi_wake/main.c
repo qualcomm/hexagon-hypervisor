@@ -100,8 +100,6 @@ void producer_thread(int x)
 	h2_thread_stop();
 }
 
-/*  Launch 2 threads, one at "low prio" and one at "high prio"; 
-    the resume should wake the higher priority thread  */
 void consumer_thread(int age)
 {
 	info("Consumer started\n");

@@ -59,3 +59,21 @@ Functionality
 The fastint_handler is placed in the array, and H2K_fastint is placed in the other array
 
 
+
+
+Testing
+-------
+
+For H2K_intconfig_init, we check to make sure that the array has been
+initialized after the call.
+
+Samples
+~~~~~~~
+
+* Input: fastint_handler
+* Input: whatint
+* Output: H2K_fastint_funcptrs[whatint]
+* Output: H2K_inthandlers[whatint]
+* I/O: H2K_fastint_mask: bit whatint set
+* Output: IAD bit for interrupt whatint cleared
+

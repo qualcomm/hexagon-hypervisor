@@ -90,8 +90,12 @@ H2K_trap_nogood:
 	r3 = pcyclehi
 	r2 = pcyclelo
 	r4 = ssr
-	r4 = extractu(r0,#3,#19)
 	p0 = tstbit(r4,#18)			// interrupts enabled?
+#if __QDSP6_ARCH__ <= 3
+	r4 = extractu(r4,#3,#19)
+#else
+	r4 = htid
+#endif
 	if (!p0) jump 1f
 	jump H2K_fatal_thread		// no, regular thread
 1:

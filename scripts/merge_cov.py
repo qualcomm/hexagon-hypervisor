@@ -60,11 +60,14 @@ class function_data(object):
    def __init__(self,name):
       self.name = name
       self.label = None
-      self.text = []  #  disassembly lines, not including the function ... label
+      self.text = dict()  #  disassembly lines, not including the function ... label
       self.ccount = dict()  #
 
    def sprint(self,indent=""):
-      pass
+      pclist = self.text.keys()
+      pclist.sort()
+      for pc in pclist:
+         print "%s" % (self.text[pc])  
 
    def add_label(self,label):
       if not self.label:
@@ -72,13 +75,44 @@ class function_data(object):
       else:
          if self.label != label:
             print "Totally bogus!"
+            print "%s vs %s" % (self.label, label)
             sys.exit(1)
 
+   def check_sanity(self):
+      pass
+
    def add_data(self,fh):
+      mode = "compare"
+      if len(self.text) == 0:
+         mode = "new"
       for line in fh:
-         line = line.splitlines()[0]
+         #print line
+         line = line.splitlines()[0] 
+         if not line: 
+            return
+         m = covdata_patt.match(line)
+         if not m:
+            print "What the dilly, yo?!"
+            sys.exit(1)
+         ccount = m.group(1)
+         pc = long(m.group(2),16)
+         text = m.group(3)
+
+         #print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
+         if ccount:
+            if not self.ccount.has_key(pc):
+               self.ccount[pc] = ccount
+            else:
+               self.ccount[pc] += ccount
+         if mode == "new":
+            self.text[pc] = text
+         else:
+            if self.text[pc] != text:
+               print "What the dilly, yo?!!?!?!"
 
 fdata = dict()  #  dict of function_data keyed by function name
+function_patt = re.compile("(\w+)\s+\<(\w+)\>:")
+covdata_patt = re.compile("\**\s+(\w+\s+cycles)*\s+(\w+):\s+(.+)")
 
 #  Read in desired function list
 def read_functions(file):
@@ -89,11 +123,6 @@ def read_functions(file):
             fdata[line] = function_data(line)
 
    print "target functions " + str(fdata.keys())
-
-#  group(0) = PC, group(1) = function name
-function_patt = re.compile("(\w+)\s+\<(\w+)\>:")
-#  group(0) = cycle count (might be empty, group(1) = PC + disassembly
-covdata_patt = re.compile("\**\s+(\w\s+cycles)*\s+(\w+):\s+(.+)")
 
 def read_covfile(fn):
       fn = fn.splitlines()[0]
@@ -113,6 +142,7 @@ def read_covfile(fn):
             #  add label
             #  start parsing until empty line
             fdata[match.group(2)].add_label(line)
+            fdata[match.group(2)].add_data(fh)
 
 if __name__ == "__main__":
 
@@ -135,4 +165,7 @@ if __name__ == "__main__":
 
    for fn in sys.stdin:
       read_covfile(fn)
+
+   for func in fdata.keys():
+      print fdata[func].sprint()
 

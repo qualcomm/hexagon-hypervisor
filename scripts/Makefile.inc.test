@@ -90,6 +90,15 @@ clean all:
 #  The plan was to do this recursive gmon/coverage thing, but that doesn't
 #  work so well with multiple binaries
 
+#  I could get sneaky cat here and do a clever recursive thing, but that seems
+#  excessive.  Todo:  maybe this can go into the specfiles somehow?
+test.cov_fns:
+	find . -name "test.cov_fns" -exec cat {} \; >> $@
+
+#  Uh...  don't run this unless all the tests are run for now.
+cov.txt: test.cov_fns h2
+	find . -name "cov.txt" | python h2/scripts/merge_cov.py 
+
 else
 
 ################################################################################

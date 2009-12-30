@@ -13,6 +13,10 @@ import getopt
 import sys
 import re
 
+# group(1) is PC, group(2) is name
+function_patt = re.compile("(\w+)\s+\<(\w+)\>:")
+covdata_patt = re.compile("\**\s+(\w+\s+cycles)*\s+(\w+):\s+(.+)")
+
 """
 
 000017f0 <H2K_check_sanity_unlock>:
@@ -62,6 +66,7 @@ class function_data(object):
       self.label = None
       self.text = dict()  #  disassembly lines, not including the function ... label
       self.ccount = dict()  #
+      self.offset = None
 
    def sprint(self,indent=""):
       pclist = self.text.keys()
@@ -69,14 +74,10 @@ class function_data(object):
       for pc in pclist:
          print "%s" % (self.text[pc])  
 
-   def add_label(self,label):
-      if not self.label:
-         self.label = label
-      else:
-         if self.label != label:
-            print "Totally bogus!"
-            print "%s vs %s" % (self.label, label)
-            sys.exit(1)
+   def set_offset(self,name,offset):
+      if self.name != name:
+         print "error"
+      self.offset = offset
 
    def check_sanity(self):
       pass
@@ -95,10 +96,10 @@ class function_data(object):
             print "What the dilly, yo?!"
             sys.exit(1)
          ccount = m.group(1)
-         pc = long(m.group(2),16)
+         pc = long(m.group(2),16) - self.offset
          text = m.group(3)
 
-         #print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
+         print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
          if ccount:
             if not self.ccount.has_key(pc):
                self.ccount[pc] = ccount
@@ -106,13 +107,11 @@ class function_data(object):
                self.ccount[pc] += ccount
          if mode == "new":
             self.text[pc] = text
-         else:
-            if self.text[pc] != text:
-               print "What the dilly, yo?!!?!?!"
+#         else:
+            #if self.text[pc] != text:
+#               print "What the dilly, yo?!!?!?!"
 
 fdata = dict()  #  dict of function_data keyed by function name
-function_patt = re.compile("(\w+)\s+\<(\w+)\>:")
-covdata_patt = re.compile("\**\s+(\w+\s+cycles)*\s+(\w+):\s+(.+)")
 
 #  Read in desired function list
 def read_functions(file):
@@ -138,10 +137,11 @@ def read_covfile(fn):
          line = line.splitlines()[0]
          match = function_patt.match(line)
          if match and match.group(2) in fdata.keys():
+            pc = long(match.group(1),16)
             print "%8d Function found:  %s" % (counter,match.group(2))
             #  add label
             #  start parsing until empty line
-            fdata[match.group(2)].add_label(line)
+            fdata[match.group(2)].set_offset(match.group(2),pc)
             fdata[match.group(2)].add_data(fh)
 
 if __name__ == "__main__":

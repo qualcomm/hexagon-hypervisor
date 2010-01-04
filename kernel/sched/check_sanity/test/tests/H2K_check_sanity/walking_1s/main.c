@@ -98,7 +98,7 @@ int main()
 
 	for (prio_hthread=0; prio_hthread < (1<<(MAX_HTHREADS-1)); prio_hthread = prio_hthread ? prio_hthread << 1 : 1) {
 		for (wait_hthread=0; wait_hthread < (1<<(MAX_HTHREADS-1)); wait_hthread = wait_hthread ? wait_hthread<<1 : 1) {
-			for (runlist_prio=0; runlist_prio < (1<<(MAX_PRIOS-1)); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
+			for (runlist_prio=1; runlist_prio < (1<<(MAX_PRIOS-1)); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
 				for (ready_prio=0; ready_prio < (1<<(MAX_PRIOS-1)); ready_prio = ready_prio ? ready_prio <<=1 : 1) {
 					H2K_priomask = prio_hthread;
 					H2K_wait_mask = wait_hthread;
@@ -109,6 +109,9 @@ int main()
 					//debug("wait_hthread = 0x%08x\n",wait_hthread);
 					//debug("runlist_prio = 0x%08x\n",runlist_prio);
 					//debug("ready_prio = 0x%08x\n",ready_prio);
+
+					//debug("runlist_worst_prio %d\n",H2K_runlist_worst_prio());
+					//debug("ready_best_prio %d\n",H2K_ready_best_prio());
 
 					some_random_number = rand();
 					/*  call the function  */

@@ -64,8 +64,8 @@ libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
 
 #  Turn on call() support for assertion checking
 CFLAGS += -DDEBUG
-CFLAGS += -I h2/kernel/include -moslib=h2 -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
-LDFLAGS+=-moslib=h2 -lh2kernel -lh2 -lh2check -L h2/kernel -L h2/libs -mv3
+CFLAGS +=${OSLIB} -I h2/kernel/include -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
+LDFLAGS+=${OSLIB} -lh2kernel -lh2 -lh2check -L h2/kernel -L h2/libs -mv3
 
 
 ################################################################################
@@ -127,6 +127,7 @@ ${COVFILES}: ${EXEC} gmon
 	${COV} -i ${EXEC} -o cov.txt -c cov.csv gmon
 
 CLEANUP=${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} test.log results.txt h2 
+CLEANUP += stats.txt
 
 clean:
 	rm -rf ${CLEANUP}

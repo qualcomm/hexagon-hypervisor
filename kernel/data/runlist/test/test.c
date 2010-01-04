@@ -72,7 +72,7 @@ int main()
 	if (H2K_runlist_valids != 0) FAIL("ready_remove failed");
 	if (H2K_runlist_worst_prio_TB() <= MAX_PRIO) FAIL("Ready best prio");
 
-	puts("TEST PASSED");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

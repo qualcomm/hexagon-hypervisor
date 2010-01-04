@@ -34,7 +34,7 @@ int main()
 	for (i = 0; i < CONTEXT_SIZE; i++) {
 		if (x[i] != 0) FAIL("Nonzero element");
 	}
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

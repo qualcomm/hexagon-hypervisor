@@ -69,14 +69,23 @@ class function_data(object):
       self.offset = None
 
    def sprint(self,indent=""):
+      output = ""
+      output += self.name + "\n"
       pclist = self.text.keys()
       pclist.sort()
       for pc in pclist:
-         print "%s" % (self.text[pc])  
+         ccount = ""
+         zero = ""
+         if self.ccount.has_key(pc):
+            if self.ccount[pc] == 0:
+               zero = "**"
+            ccount = "%d cycles" % (self.ccount[pc])
+         output += "%2s%20s 0x%08x: %s\n" % (zero,ccount, pc,self.text[pc])  
+      return output
 
    def set_offset(self,name,offset):
       if self.name != name:
-         print "error"
+         print "mismatching function name"
       self.offset = offset
 
    def check_sanity(self):
@@ -87,29 +96,30 @@ class function_data(object):
       if len(self.text) == 0:
          mode = "new"
       for line in fh:
-         #print line
          line = line.splitlines()[0] 
          if not line: 
             return
          m = covdata_patt.match(line)
          if not m:
-            print "What the dilly, yo?!"
+            print "covdata_patt match failed"
             sys.exit(1)
-         ccount = m.group(1)
+         ccount = None
+         if m.group(1):
+            ccount = long(m.group(1).replace(" cycles",""),10)
          pc = long(m.group(2),16) - self.offset
          text = m.group(3)
 
-         print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
-         if ccount:
+         #print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
+         if ccount != None:
             if not self.ccount.has_key(pc):
                self.ccount[pc] = ccount
             else:
                self.ccount[pc] += ccount
          if mode == "new":
             self.text[pc] = text
-#         else:
-            #if self.text[pc] != text:
-#               print "What the dilly, yo?!!?!?!"
+         else:
+            if not self.text.has_key(pc):
+               print "additional pc doesn't match first"
 
 fdata = dict()  #  dict of function_data keyed by function name
 
@@ -121,7 +131,7 @@ def read_functions(file):
          if not line in fdata.keys():
             fdata[line] = function_data(line)
 
-   print "target functions " + str(fdata.keys())
+   #print "target functions " + str(fdata.keys())
 
 def read_covfile(fn):
       fn = fn.splitlines()[0]
@@ -130,7 +140,7 @@ def read_covfile(fn):
       fh = open(fn,"r")
       if not fh:
          return
-      print "Reading " + fn
+      #print "Reading " + fn
       counter = 1
       for line in fh:
          counter += 1
@@ -138,7 +148,7 @@ def read_covfile(fn):
          match = function_patt.match(line)
          if match and match.group(2) in fdata.keys():
             pc = long(match.group(1),16)
-            print "%8d Function found:  %s" % (counter,match.group(2))
+            #print "%8d Function found:  %s" % (counter,match.group(2))
             #  add label
             #  start parsing until empty line
             fdata[match.group(2)].set_offset(match.group(2),pc)

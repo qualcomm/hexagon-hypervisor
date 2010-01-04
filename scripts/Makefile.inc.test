@@ -97,7 +97,7 @@ test.cov_fns:
 
 #  Uh...  don't run this unless all the tests are run for now.
 cov.txt: test.cov_fns h2
-	find . -name "cov.txt" | python h2/scripts/merge_cov.py 
+	find . -name "cov.txt" | python h2/scripts/merge_cov.py > $@
 
 else
 

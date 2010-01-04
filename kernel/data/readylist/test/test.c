@@ -108,7 +108,7 @@ int main()
 	if (H2K_ready_getbest_TB() != &c) FAIL("ready_best_prio failed (c) ");
 	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (empty) ");
 
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

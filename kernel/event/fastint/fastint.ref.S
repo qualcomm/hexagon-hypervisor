@@ -69,6 +69,9 @@ H2K_fastint_return:
 	r11.h = #0x1c4
 	r11.l = #0x0
 	r5 = not(r5)
+#if __QDSP6_ARCH__ <= 3
+	r5 = brev(r5)
+#endif
 	r13 = imask
 	imask = r5
 	r14 = ssr

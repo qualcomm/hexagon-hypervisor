@@ -93,7 +93,7 @@ int main()
 			FAIL("Incorrect event return");
 		}
 	}
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

@@ -26,7 +26,7 @@ void H2K_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), H2K_t
 {
 	H2K_fastint_funcptrs[whatint] = fastint_handler;
 	H2K_inthandlers[whatint] = H2K_fastint;
-	H2K_fastint_mask |= 1<<(31-whatint);
+	H2K_fastint_mask |= 1<<whatint;
 	ciad(Q6_R_brev_R(1<<whatint));
 	H2K_fastint_gp = (u32_t)(me->ugpgp);
 }

@@ -15,6 +15,7 @@ H2K_thread_context *TH_src_context;
 H2K_thread_context *TH_dest_context;
 u32_t TH_intno;
 u32_t TH_pass;
+u32_t TH_fastint_check;
 
 jmp_buf env;
 
@@ -60,6 +61,13 @@ void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 {
 	if (from != NULL) FAIL("Unexpected FROM");
 	if (to != NULL) FAIL("Unexpected TO");
+	longjmp(env,1);
+}
+
+void TH_interrupted_fastint_check()
+{
+	if (TH_fastint_check == 0) FAIL("Jumped to fastint check");
+	TH_fastint_check = 0;
 	longjmp(env,1);
 }
 
@@ -135,10 +143,14 @@ void fill_srcdata(int i)
 int main() 
 {
 	int i;
+	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		fill_srcdata(i);
 		TH_try_interrupt(&a,i);
 		TH_try_interrupt(NULL,i);
+		TH_fastint_check = 1;
+		TH_try_interrupt((void *)(&H2K_fastint_contexts[0]),i);
+		if (TH_fastint_check != 0) FAIL("Didn't jump to fastint check");
 	}
 	TH_try_interrupt(&a,0);
 	puts("TEST PASSED\n");

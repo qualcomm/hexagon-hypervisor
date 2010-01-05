@@ -54,3 +54,15 @@ TH_do_interrupt:
 	r1:0 = memd(r0+#CONTEXT_r0100)
 	jump H2K_handle_int
 
+	.global H2K_interrupted_fastint_check
+H2K_interrupted_fastint_check:
+	r31:30 = memd(r0+#CONTEXT_r3130)
+	r29:28 = memd(r0+#CONTEXT_r2928)
+	r29 = add(r0,#FASTINT_CONTEXT_SIZE)
+	crswap(r0,sgp)
+	jump TH_interrupted_fastint_check
+
+	.global H2K_fastint
+H2K_fastint:
+	jumpr r31
+

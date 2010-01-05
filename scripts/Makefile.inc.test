@@ -62,11 +62,16 @@ libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
 #  Standard compilation flags
 ################################################################################
 
+ifdef STANDALONE
+else
+OSLIB=-moslib=h2
+LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L h2/kernel -L h2/libs
+endif
+LDFLAGS+= -mv3
 #  Turn on call() support for assertion checking
 CFLAGS += -DDEBUG
 CFLAGS +=${OSLIB} -I h2/kernel/include -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
 ASFLAGS +=${OSLIB} -I h2/kernel/include -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
-LDFLAGS+=${OSLIB} -lh2kernel -lh2 -lh2check -L h2/kernel -L h2/libs -mv3
 
 
 ################################################################################

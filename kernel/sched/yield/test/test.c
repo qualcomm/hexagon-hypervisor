@@ -53,7 +53,7 @@ int main()
 	TB_saw_dosched = 0;
 	H2K_sched_yield(TB_in);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

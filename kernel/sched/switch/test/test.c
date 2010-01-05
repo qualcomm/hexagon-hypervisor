@@ -4,6 +4,7 @@
  */
 
 #include <c_std.h>
+#include <hw.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -57,6 +58,7 @@ static void modify_goto_wait()
 void TH_do_switch()
 {
 	if (setjmp(env) == 0) {
+		BKL_LOCK();
 		H2K_switch(TH_from, TH_to);
 	} else {
 		/* longjump return */
@@ -102,7 +104,7 @@ int main()
 	if (TH_saw_wait != 0) FAIL("went to wait");
 	if (TH_saw_cont == 0) FAIL("did not go to continuation");
 
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

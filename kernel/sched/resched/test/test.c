@@ -71,7 +71,7 @@ int main()
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
 	if (H2K_ready[2] != &a) FAIL("Unexpected thread in readylist");
 	if (H2K_ready[2]->next != &c) FAIL("Unexpected thread in readylist");
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

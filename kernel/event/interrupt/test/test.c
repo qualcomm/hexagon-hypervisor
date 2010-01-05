@@ -141,7 +141,7 @@ int main()
 		TH_try_interrupt(NULL,i);
 	}
 	TH_try_interrupt(&a,0);
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

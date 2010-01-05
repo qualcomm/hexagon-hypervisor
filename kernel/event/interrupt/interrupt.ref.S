@@ -20,8 +20,21 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	 * Finally, we should reset r0 back to the original point 
 	 * so the context offset macros work. 
 	 */
+
 	memd(r0+#CONTEXT_r3130) = r31:30
 	memd(r0+#CONTEXT_r2928) = r29:28
+
+	/* Check to see whether we interrupted a fast interrupt check */
+	/* If so, vector off to H2K_interrupted_fastint_check */
+	r31.h = #hi(H2K_fastint_contexts)
+	r31.l = #lo(H2K_fastint_contexts)
+	r31 = sub(r0,r31)
+	r31 = asr(r31,#5)
+	r30 = p3:0
+	p0 = cmp.gtu(r31,#(((FASTINT_CONTEXT_SIZE*MAX_HTHREADS)/32)-1))
+	if (!p0) jump H2K_interrupted_fastint_check
+	r31 = usr
+
 	memd(r0+#CONTEXT_r2726) = r27:26
 	memd(r0+#CONTEXT_r2524) = r25:24
 	memd(r0+#CONTEXT_r2322) = r23:22
@@ -35,10 +48,9 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	memd(r0+#CONTEXT_r0706) = r7:6
 	memd(r0+#CONTEXT_r0504) = r5:4
 	memd(r0+#CONTEXT_r0302) = r3:2
+
 	r13 = ugp
 	r12 = gp
-	r11 = usr
-	r10 = p3:0
 	r9 = lc0
 	r8 = sa0
 	r7 = lc1
@@ -47,8 +59,9 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	r4 = m0
 	r3 = ssr
 	r2 = elr
+
 	memd(r0+#CONTEXT_ugpgp) = r13:12
-	memd(r0+#CONTEXT_sr_preds) = r11:10
+	memd(r0+#CONTEXT_sr_preds) = r31:30
 	memd(r0+#CONTEXT_lc0sa0) = r9:8
 	memd(r0+#CONTEXT_lc1sa1) = r7:6
 	memd(r0+#CONTEXT_m1m0) = r5:4
@@ -125,6 +138,7 @@ H2K_interrupt_restore:
 	r29:28 = memd(r0+#CONTEXT_r2928)
 	r31:30 = memd(r0+#CONTEXT_r3130)
 	r1:0 = memd(r0+#CONTEXT_r0100)
+
 	rte
 	.global H2K_interrupt_restore
 FUNC_END H2K_handle_int

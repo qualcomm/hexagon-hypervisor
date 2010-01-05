@@ -118,6 +118,7 @@ Important cases
 
 * SGP is NULL
 * SGP is non-NULL
+* SGP is fast interrupt handler
 * Each L1 interrupt
 
 Harness

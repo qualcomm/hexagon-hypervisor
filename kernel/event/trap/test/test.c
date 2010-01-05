@@ -144,7 +144,7 @@ int main()
 		}
 	}
 
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

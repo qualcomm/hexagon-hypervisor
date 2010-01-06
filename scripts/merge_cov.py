@@ -49,6 +49,9 @@ class function_data(object):
          print "mismatching function name"
       self.offset = offset
 
+   #  probably should check the CSV for function lengths to make sure they match.
+   #  even better, at least store all the parse bits and make sure THOSE match.
+
    def check_sanity(self):
       pass
 

@@ -227,7 +227,7 @@ int main()
 
 	info("Waiting for done\n");
 
-	while (!done && (timeout < (1<<24))) {
+	while (!done && (timeout < (1<<12))) {
 		timeout++;
 	}  //  todo:  create watchdog
 

@@ -70,7 +70,7 @@ endif
 LDFLAGS+= -mv3
 #  Turn on call() support for assertion checking
 CFLAGS += -DDEBUG
-CFLAGS +=${OSLIB} -I h2/kernel/include -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
+CFLAGS +=${OSLIB} -I h2/kernel/include -O -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
 ASFLAGS +=${OSLIB} -I h2/kernel/include -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
 
 
@@ -90,7 +90,7 @@ SUBDIR_MAKE=for SUBDIR in ${SUBDIRS}; do\
 
 SUBDIR_TARGETS=clean all
 
-clean all:
+${SUBDIR_TARGETS}:
 	${SUBDIR_MAKE}
 
 #  The plan was to do this recursive gmon/coverage thing, but that doesn't

@@ -322,7 +322,7 @@ int main()
 			TB_fiddle_prio[j](CHECK);
 		}
 	}
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

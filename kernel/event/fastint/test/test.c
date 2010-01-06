@@ -139,7 +139,7 @@ int main()
 			TH_do_fastint_intpending(NULL,i,j);
 		}
 	}
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

@@ -72,7 +72,7 @@ int main()
 		if (H2K_fastint_funcptrs[i] != TH_handler) FAIL("wrong handler func");
 		if (H2K_fastint_gp != 0xF0000000U) FAIL("fastint gp not set");
 	}
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

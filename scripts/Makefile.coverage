@@ -21,10 +21,9 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/thread/id/test\
  ./kernel/thread/stop/test\
  ./kernel/traps/tid/test\
+ ./kernel/event/fastint/test\
  ./kernel/util/ring/test
 
 
-#  This might foul up results as it's compiled at a different optimization level
-#./kernel/event/fastint/test\
 
 include ./scripts/Makefile.inc.test

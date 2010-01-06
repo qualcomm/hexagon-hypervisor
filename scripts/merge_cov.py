@@ -88,6 +88,13 @@ class function_data(object):
          else:
             if not self.text.has_key(pc):
                print "%s:  additional pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile)
+               return
+            #  extended check -- check that the parse bits at least match.
+            original_pp = (long(self.text[pc].split()[4],16) >> 14) & 3
+            new_pp = (long(text.split()[4],16) >> 14) & 3
+            if original_pp != new_pp:
+               print "%s:  parse bit mismatch pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile)
+               return
 
 fdata = dict()  #  dict of function_data keyed by function name
 
@@ -105,6 +112,20 @@ def read_covfile(fn):
       fn = fn.splitlines()[0]
       if not fn:
          return
+
+      #  first, find the test.cov_fns in the same 
+      #  directory and pull in the functions we should be reading.
+      local_fn_list = []
+      function_file = fn[:fn.rfind("/")]+"/test.cov_fns"
+      function_file = open(function_file,"r")
+      for line in function_file:
+         line = line.splitlines()[0]
+         if line:
+            local_fn_list.append(line)
+            if not line in fdata.keys():
+               fdata[line] = function_data(line)
+      function_file.close()
+
       fh = open(fn,"r")
       if not fh:
          return
@@ -114,7 +135,7 @@ def read_covfile(fn):
          counter += 1
          line = line.splitlines()[0]
          match = function_patt.match(line)
-         if match and match.group(2) in fdata.keys():
+         if match and match.group(2) in local_fn_list:  #  change this to the local function list
             pc = long(match.group(1),16)
             #print "%8d Function found:  %s" % (counter,match.group(2))
             #  add label
@@ -138,8 +159,8 @@ if __name__ == "__main__":
          sys.exit(0)
 
    #  test.cov_fns is going to be implicit
-   fh = open("test.cov_fns","r")
-   read_functions(fh)
+   #fh = open("test.cov_fns","r")
+   #read_functions(fh)
 
    for fn in sys.stdin:
       read_covfile(fn)

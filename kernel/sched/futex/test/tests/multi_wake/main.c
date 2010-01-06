@@ -51,7 +51,7 @@ u32_t			dummy_thread_lock;
 /*  lock under test  */
 u32_t			test_lock; 
 
-unsigned int done=0;     /*  signals done to main() */
+volatile unsigned int done=0;     /*  signals done to main() */
 unsigned int counter=0;  /*  global test counter  */
 unsigned int age_to_wake=0;
 unsigned int max_consumers=0;
@@ -227,7 +227,7 @@ int main()
 
 	info("Waiting for done\n");
 
-	while (!done && (timeout < (1<<12))) {
+	while (!done && (timeout < (1<<16))) {
 		timeout++;
 	}  //  todo:  create watchdog
 

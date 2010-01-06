@@ -21,6 +21,7 @@ u32_t TH_fastint_mask;
 extern char _SDA_BASE_;
 
 jmp_buf env;
+jmp_buf env2;
 
 void FAIL(const char *str)
 {
@@ -71,12 +72,20 @@ void TH_setup_fastinthandlers(u32_t interrupt)
 	H2K_fastint_mask = TH_fastint_mask;
 }
 
+TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread)
+{
+	H2K_fastint(interrupt,dest,0);
+	longjmp(env2,1);
+}
+
 void TH_do_fastint(H2K_thread_context *dest, u32_t interrupt)
 {
 	TH_intno = interrupt;
 	TH_secondary_int_expected = -1;
 	TH_setup_fastinthandlers(interrupt);
-	H2K_fastint(interrupt,dest,0);
+	if (setjmp(env2) == 0) {
+		TH_fastint_wrapper(interrupt,dest,0);
+	}
 }
 
 void TH_do_fastint_check(u32_t interrupt)

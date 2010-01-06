@@ -17,10 +17,12 @@ SRCS = h2/kernel/sched/dosched/dosched.ref.c \
 	h2/kernel/util/ring/ring.ref.c \
 	harness.c
 
+${SRCS}: h2
+
 EXEC=test.elf
 
 include Makefile.inc
 
 #  This will cause a warning.
-${EXEC}:  ${SRCS} h2
+${EXEC}:  ${SRCS} 
 	${CC} ${CFLAGS} -o $@ ${SRCS}

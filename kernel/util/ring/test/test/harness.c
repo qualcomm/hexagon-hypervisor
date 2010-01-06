@@ -87,7 +87,7 @@ int main()
 	test_ring_insert();
 	test_ring_append();
 	test_ring_remove_append();
-	puts("PASS");
+	puts("TEST PASSED\n");
 	fflush(stdout);
 	return 0;
 }

@@ -1,19 +1,25 @@
+STANDALONE=1
 
-default: runtests
+#  Wow.  make is totally buggy with this setup for some reason.
+#  Resorting to old school.
 
-SRCS = ../../ring.ref.c ../../../../checkers/checker_ring/checker_ring.check.c *.c
+SRCS = h2/kernel/checkers/checker_ring/checker_ring.check.c \
+	h2/kernel/checkers/checker_ready/checker_ready.check.c \
+	h2/kernel/checkers/checker_runlist/checker_runlist.check.c \
+	h2/kernel/data/runlist/runlist.ref.c \
+	h2/kernel/data/readylist/readylist.ref.c \
+	h2/kernel/sched/lowprio/lowprio.ref.c \
+	h2/kernel/util/ring/ring.ref.c \
+	harness.c ring_append.c ring_insert.c ring_remove_append.c ring_remove.c
 
-cov: test
-	qdsp6-sim --profile test
-	qdsp6-gmon-merge -o gmon.out gmon.t_*
-	qdsp6-cov -i test -o test.cov.out -c test.cov.csv gmon.out 
 
-test: $(SRCS)
-	qdsp6-gcc -mv3 -DARCHV=3 -I../../../../include -I. -o test $(SRCS)
+CFLAGS += -I.
+EXEC=test.elf
 
-runtests: test
-	qdsp6-sim test
+include Makefile.inc
+${SRCS}: h2
 
-clean:
-	rm -f test gmon.out gmon.t* *.cov.* stats.txt
+#  This will cause a warning.
+${EXEC}:  ${SRCS} 
+	${CC} ${CFLAGS} -o $@ ${SRCS}
 

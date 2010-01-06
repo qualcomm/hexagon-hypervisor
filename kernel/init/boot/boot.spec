@@ -85,3 +85,28 @@ that are required in a H2 kernel, to force the linker
 to link them in.
 
 
+
+
+Testing
+-------
+
+
+Samples
+~~~~~~~
+
+Machine state is set up correctly at boot.
+
+Important Cases
+~~~~~~~~~~~~~~~
+
+* Check that other threads have booted
+* Check that syscfg is configured correctly
+
+Harness
+~~~~~~~
+
+Simple normal H2 application will call h2_init, and then check that system
+registers have expected values.
+
+
+

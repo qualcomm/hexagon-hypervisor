@@ -12,6 +12,7 @@
 #include <hw.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <setjmp.h>
 
 void H2K_sched_yield(H2K_thread_context *me);
 
@@ -26,13 +27,23 @@ H2K_thread_context *TB_in;
 
 u32_t TB_saw_dosched = 0;
 
+jmp_buf env;
+
 void H2K_dosched(H2K_thread_context *in, int hthread)
 {
 	if (in != TB_in) FAIL("Unexpected thread passed to dosched");
 	TB_saw_dosched ++;
+	longjmp(env,1);
 }
 
 static H2K_thread_context a,b,c;
+
+void TH_sched_yield(H2K_thread_context *me)
+{
+	if (setjmp(env) == 0) {
+		H2K_sched_yield(me);
+	}
+}
 
 int main() 
 {
@@ -43,15 +54,15 @@ int main()
 	TB_in = &a;
 	H2K_runlist_push(&a);
 	H2K_runlist_push(&c);
-	H2K_sched_yield(TB_in);
+	TH_sched_yield(TB_in);
 	if (TB_saw_dosched != 0) FAIL("Did a resched");
 	H2K_ready_append(&b);
-	H2K_sched_yield(TB_in);
+	TH_sched_yield(TB_in);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
 	BKL_UNLOCK();
 	TB_in = &c;
 	TB_saw_dosched = 0;
-	H2K_sched_yield(TB_in);
+	TH_sched_yield(TB_in);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
 	puts("TEST PASSED\n");
 	return 0;

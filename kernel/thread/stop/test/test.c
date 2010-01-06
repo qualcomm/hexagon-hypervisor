@@ -14,8 +14,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <checker_kernel_locked.h>
+#include <setjmp.h>
 
 u32_t H2K_thread_id(H2K_thread_context *x);
+
+jmp_buf env;
 
 void FAIL(const char *str)
 {
@@ -36,6 +39,14 @@ void H2K_dosched(H2K_thread_context *me, u32_t hwtnum)
 	TH_saw_dosched = 1;
 	checker_kernel_locked();
 	BKL_UNLOCK();
+	longjmp(env,1);
+}
+
+void TH_thread_stop(H2K_thread_context *me)
+{
+	if (setjmp(env) == 0) {
+		H2K_thread_stop(me);
+	}
 }
 
 int main() 
@@ -55,7 +66,7 @@ int main()
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
-	H2K_thread_stop(TH_me);
+	TH_thread_stop(TH_me);
 
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
 	if (a.prev != 0) FAIL("thread not cleared");
@@ -67,7 +78,7 @@ int main()
 	TH_saw_dosched = 0;
 	TH_me = &b;
 	b.prev = &b;
-	H2K_thread_stop(TH_me);
+	TH_thread_stop(TH_me);
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
 	if (b.prev != 0) FAIL("thread not cleared");
 	if (H2K_free_threads != &b) FAIL("free thread list incorrect");

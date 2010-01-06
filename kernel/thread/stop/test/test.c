@@ -75,7 +75,7 @@ int main()
 	if (H2K_runlist[2] == &b) FAIL("Thread not removed from runlist");
 	if (H2K_runlist[2] != NULL) FAIL("Unexpected runlist");
 
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

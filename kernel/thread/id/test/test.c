@@ -25,7 +25,7 @@ int main()
 	if (H2K_thread_id(&b) != (u32_t)(&b)) FAIL("bad value");
 	if (H2K_thread_id(&c) != (u32_t)(&c)) FAIL("bad value");
 	if (H2K_thread_id((void *)(0xdeadbeef)) != (u32_t)(0xdeadbeef)) FAIL("bad value");
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

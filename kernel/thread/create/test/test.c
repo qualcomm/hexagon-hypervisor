@@ -93,7 +93,7 @@ int main()
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,0xffffffff,&a) 
 		!= 0xffffffff) FAIL("Created thread w/o storage");
 
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

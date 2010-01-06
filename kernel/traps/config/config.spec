@@ -32,6 +32,12 @@ Output
 Functionality
 ~~~~~~~~~~~~~
 
+The configtype parameter determines which configuration routine is called.
+If an invalid configtype parameter is given, we return imediately.
+
+We look up which configuration routine in H2K_configtab, and jump to the 
+appropriate routine.
+
 
 H2K_trap_config_addthreads
 --------------------------
@@ -67,43 +73,37 @@ Next, size should be rounded down to the nearest multiple of CONTEXT_SIZE.
 Finally, the memory is chunked into size/CONTEXT_SIZE thread contexts.
 Each context is cleared, and then inserted into the H2K_free_threads list.
 
-
 TBD: remove threads?
 TBD: keep list of thread areas for better threadids.
 
-H2K_trap_config_schedint
-------------------------
 
-.. cfunction: void H2K_trap_config_schedint(u32_t unused, void *unused2, u32_t what_int, u32_t unused3, H2K_thread_context *me)
 
-XXX: unimplemented
+Testing
+-------
 
-Description
-~~~~~~~~~~~
+Samples
+~~~~~~~
 
-Changes the reschedule interrupt to the specified interrupt.
+* Input: Storage size
+* Input: Alignment of pointer
+* Output: H2K_free_threads
 
-EJP: is this needed?  We would rather not have to look up the resched interrupt in memory,
-but it would not be the end of the world...
+Important Cases
+~~~~~~~~~~~~~~~
 
-Input
-~~~~~
+* Invalid config parameter
+* Aligned pointer
+* Misaligned pointer
+* Insufficient storage for any threads
+* Sufficient storage for one thread
+* Sufficient storage for many threads
 
-Argument 0: Unused parameter
-Argument 1: Unused parameter
-Argument 2: Which interrupt should be used as the reschedule interrupt
-Argument 3: Unused parameter
-Argument 4: Pointer to the current thread context
+Harness
+~~~~~~~
 
-Output
-~~~~~~
+Standalone environment, but linked with h2kernel.
 
-Functionality
-~~~~~~~~~~~~~
-
-If any interrupt is already configured as schedint, change it to fastint
-
-Then, change interrupt pointer at what_int to point to reschedule_from_lowprio.
-
+We try several calls to H2K_trap_config, and check that H2K_free_threads is
+updated to hold the appropriate values.
 
 

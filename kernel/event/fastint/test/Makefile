@@ -5,5 +5,7 @@ EXEC=test.elf
 
 include Makefile.inc
 OSLIB=
+CFLAGS += -O
+
 
 test.o: h2

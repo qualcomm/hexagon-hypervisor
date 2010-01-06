@@ -25,12 +25,15 @@ class function_data(object):
       self.text = dict()  #  disassembly lines, not including the function ... label
       self.ccount = dict() 
       self.offset = None
+      self.firstfile = None
 
    def sprint(self,indent=""):
       output = ""
       output += self.name + "\n"
       pclist = self.text.keys()
       pclist.sort()
+      if len(self.text) == 0:
+         output += "No data!\n"
       for pc in pclist:
          ccount = ""
          zero = ""
@@ -38,7 +41,7 @@ class function_data(object):
             if self.ccount[pc] == 0:
                zero = "**"
             ccount = "%d cycles" % (self.ccount[pc])
-         output += "%2s%20s 0x%08x: %s\n" % (zero,ccount, pc,self.text[pc])  
+         output += "%2s%20s %06x: %s\n" % (zero,ccount, pc,self.text[pc])  
       return output
 
    def set_offset(self,name,offset):
@@ -49,10 +52,11 @@ class function_data(object):
    def check_sanity(self):
       pass
 
-   def add_data(self,fh):
+   def add_data(self,fh,fn=""):
       mode = "compare"
       if len(self.text) == 0:
          mode = "new"
+         self.firstfile = fn
       for line in fh:
          line = line.splitlines()[0] 
          if not line: 
@@ -67,6 +71,9 @@ class function_data(object):
          pc = long(m.group(2),16) - self.offset
          text = m.group(3)
 
+         if text.find("nop") != -1:  #  silently dump all nop lines
+            continue
+
          #print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
          if ccount != None:
             if not self.ccount.has_key(pc):
@@ -77,7 +84,7 @@ class function_data(object):
             self.text[pc] = text
          else:
             if not self.text.has_key(pc):
-               print "additional pc doesn't match first"
+               print "%s:  additional pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile)
 
 fdata = dict()  #  dict of function_data keyed by function name
 
@@ -110,7 +117,7 @@ def read_covfile(fn):
             #  add label
             #  start parsing until empty line
             fdata[match.group(2)].set_offset(match.group(2),pc)
-            fdata[match.group(2)].add_data(fh)
+            fdata[match.group(2)].add_data(fh,fn)
 
 if __name__ == "__main__":
 

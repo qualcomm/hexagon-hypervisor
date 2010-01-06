@@ -1,8 +1,12 @@
+#  This behaves kind of like a SUBDIRS makefile.
+#  It is meant to be run from the top level ob directory.
+
+H2DIR=.
+
 SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/data/readylist/test\
  ./kernel/data/runlist/test\
  ./kernel/data/thread/test\
- ./kernel/event/fastint/test\
  ./kernel/event/interrupt/test\
  ./kernel/event/trap/test\
  ./kernel/event/vectors/test\
@@ -19,5 +23,8 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/traps/tid/test\
  ./kernel/util/ring/test
 
+
+#  This might foul up results as it's compiled at a different optimization level
+#./kernel/event/fastint/test\
 
 include ./scripts/Makefile.inc.test

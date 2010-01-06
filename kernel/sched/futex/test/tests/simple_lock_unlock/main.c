@@ -53,7 +53,7 @@ u32_t			dummy_thread_lock;
 u32_t			test_lock; 
 
 unsigned int counter=0;
-unsigned int done=0;
+volatile unsigned int done=0;
 
 #define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
 #define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}
@@ -206,7 +206,7 @@ int main()
 
 	info("Waiting for done\n");
 
-	while (!done && (timeout < (1<<24))) {
+	while (!done && (timeout < (1<<20))) {
 		timeout++;
 	}  //  todo:  create watchdog
 

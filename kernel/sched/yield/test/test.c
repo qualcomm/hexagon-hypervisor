@@ -36,7 +36,7 @@ void H2K_dosched(H2K_thread_context *in, int hthread)
 	longjmp(env,1);
 }
 
-static H2K_thread_context a,b,c;
+static H2K_thread_context a,b,c,d;
 
 void TH_sched_yield(H2K_thread_context *me)
 {
@@ -50,7 +50,7 @@ int main()
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();
-	a.prio = b.prio = c.prio = 2;
+	a.prio = b.prio = c.prio = d.prio = 2;
 	TB_in = &a;
 	H2K_runlist_push(&a);
 	H2K_runlist_push(&c);
@@ -64,6 +64,18 @@ int main()
 	TB_saw_dosched = 0;
 	TH_sched_yield(TB_in);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
+	BKL_UNLOCK();
+	H2K_readylist_init();
+	H2K_runlist_init();
+	H2K_lowprio_init();
+	H2K_runlist_push(&a);
+	H2K_runlist_push(&c);
+	H2K_runlist_push(&d);
+	H2K_ready_append(&b);
+	TB_in = &a;
+	TH_sched_yield(TB_in);
+	if (TB_saw_dosched == 0) FAIL("DId not do a resched");
+	BKL_UNLOCK();
 	puts("TEST PASSED\n");
 	return 0;
 }

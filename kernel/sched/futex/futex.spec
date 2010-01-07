@@ -108,9 +108,7 @@ Otherwise, we search through the threads at the bucket for matching threads.
 Matching threads, up to n_to_wake, are removed from the futex hash bucket and
 added to the ready queue.  
 
-If no threads were woken, we can simply unlock the BKL and return 0.  
-
-Otherwise, we check sanity, unlock, and return the number of woken threads.
+Finally, we check sanity, unlock, and return the number of woken threads.
 
 IMPLEMENTATION CHOICES TBD:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -102,12 +102,7 @@ u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 			if (++n_woken >= n_to_wake) break;
 		} while (1);
 	}
-	if (n_woken) {
-		return H2K_check_sanity_unlock(n_woken); 
-	} else {
-		BKL_UNLOCK();
-		return n_woken;
-	}
+	return H2K_check_sanity_unlock(n_woken); 
 }
 
 void H2K_futex_init()

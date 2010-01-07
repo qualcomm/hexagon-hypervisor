@@ -30,7 +30,7 @@ int main()
 	H2K_tid_set(0x55,&a);
 	if (a.tid != 0x55) FAIL("Wrong tid write");
 	if (H2K_get_tid_reg() != 0x55) FAIL("Wrong tid write (reg)");
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

@@ -27,7 +27,7 @@ int main()
 	if ((tmp & 0x00fe) == 0) FAIL("Didn't start up other threads");
 	asm ( " %0 = syscfg " : "=r"(tmp));
 	if ((tmp & 7) != 7) FAIL("Didn't start up syscfg correctly");
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

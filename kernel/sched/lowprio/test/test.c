@@ -56,7 +56,7 @@ int main()
 	H2K_priomask = 0;
 	notify();
 	if ((get_imask(1) & 1) != 0) FAIL("should have notified T1");
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

@@ -64,7 +64,7 @@ int main()
 	for (j = 0; j < sizeof(buf); j++) {
 		if (buf[j] != 0xef) FAIL("Should not write memory");
 	}
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

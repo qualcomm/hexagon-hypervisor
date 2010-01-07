@@ -22,7 +22,12 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/thread/stop/test\
  ./kernel/traps/tid/test\
  ./kernel/event/fastint/test\
- ./kernel/util/ring/test
+ ./kernel/util/ring/test\
+ ./kernel/init/boot/test\
+ ./kernel/init/setup/test\
+ ./kernel/sched/lowprio/test\
+ ./kernel/traps/config/test\
+ ./kernel/traps/tid/test
 
 
 

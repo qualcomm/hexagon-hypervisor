@@ -85,7 +85,7 @@ int main()
 	if (H2K_boot_context.trapmask != 0xffffffffU) FAIL("boot thread trapmask");
 	if (H2K_runlist_valids != 1) FAIL("Didn't push into runlist");
 	if (H2K_runlist[0] != &H2K_boot_context) FAIL("Didn't push into runlist");
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

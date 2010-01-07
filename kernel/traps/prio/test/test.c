@@ -27,7 +27,7 @@ int main()
 		if (H2K_prio_get(&a) != i) FAIL("prio_get");
 	}
 	if (H2K_prio_set(&a,4,&a) != -1) FAIL("prio_set");
-	puts("PASS");
+	puts("TEST PASSED");
 	return 0;
 }
 

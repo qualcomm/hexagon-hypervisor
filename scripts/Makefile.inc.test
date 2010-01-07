@@ -30,10 +30,10 @@ COV=${ARCH}-cov
 #  should 'make libs' before you run.
 ################################################################################
 
-LIBH2_DIR=h2/libs
+LIBH2_DIR=${H2DIR}/libs
 LIBH2=${LIBH2_DIR}/libh2.a
 
-LIBH2KERNEL_DIR=h2/kernel
+LIBH2KERNEL_DIR=${H2DIR}/kernel
 LIBH2KERNEL=${LIBH2KERNEL_DIR}/libh2kernel.a
 LIBH2CHECK=${LIBH2KERNEL_DIR}/libh2check.a
 
@@ -42,19 +42,19 @@ LIBH2CHECK=${LIBH2KERNEL_DIR}/libh2check.a
 #TOOLPATH=/pkg/qct/software/hexagon/releases/tools/1.2/gnu/bin
 #COVPATH=/pkg/qct/software/hexagon/releases/tools/1.2/examples/utils/bin
 
-${LIBH2KERNEL}: h2
+${LIBH2KERNEL}: 
 	cd ${LIBH2KERNEL_DIR};\
-	make ref DEBUG=1;\
+	make ref DEBUG=0;\
 	cp build/ref/libh2kernel.a .
 
-${LIBH2CHECK}: h2
+${LIBH2CHECK}: 
 	cd ${LIBH2KERNEL_DIR};\
-	make check DEBUG=1;\
+	make check DEBUG=0;\
 	cp build/ref/libh2check.a .
 
-${LIBH2}: h2
+${LIBH2}: 
 	cd ${LIBH2_DIR};\
-	make DEBUG=1
+	make DEBUG=0
 
 libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
 
@@ -65,14 +65,14 @@ libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
 ifdef STANDALONE
 else
 OSLIB=-moslib=h2
-LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L h2/kernel -L h2/libs
+LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/kernel -L ${H2DIR}/libs
 endif
 LDFLAGS+= -mv3
 #  Turn on call() support for assertion checking
-CFLAGS += -DDEBUG
+#CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.
-CFLAGS +=${OSLIB} -I h2/kernel/include -O1 -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
-ASFLAGS +=${OSLIB} -I h2/kernel/include -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
+CFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -O1 -mv3 -DARCHV=3 -Wall -I ${H2DIR}/libs/h2/include
+ASFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -mv3 -DARCHV=3 -Wall -I ${H2DIR}/libs/h2/include
 
 
 ################################################################################
@@ -103,8 +103,8 @@ test.cov_fns:
 	find . -name "test.cov_fns" -exec cat {} \; >> $@
 
 #  Uh...  don't run this unless all the tests are run for now.
-cov.txt: test.cov_fns h2
-	find . -name "cov.txt" | python h2/scripts/merge_cov.py > $@
+cov.txt: test.cov_fns 
+	find . -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
 
 else
 

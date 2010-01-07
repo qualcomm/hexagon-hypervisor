@@ -27,7 +27,9 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/init/setup/test\
  ./kernel/sched/lowprio/test\
  ./kernel/traps/config/test\
- ./kernel/traps/tid/test
+ ./kernel/traps/prio/test\
+ ./kernel/traps/tid/test\
+ ./kernel/traps/time/test
 
 
 

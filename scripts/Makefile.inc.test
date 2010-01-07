@@ -71,7 +71,7 @@ LDFLAGS+= -mv3
 #  Turn on call() support for assertion checking
 CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.
-CFLAGS +=${OSLIB} -I h2/kernel/include -O2 -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
+CFLAGS +=${OSLIB} -I h2/kernel/include -O1 -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
 ASFLAGS +=${OSLIB} -I h2/kernel/include -mv3 -DARCHV=3 -Wall -I h2/libs/h2/include
 
 

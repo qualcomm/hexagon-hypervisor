@@ -7,4 +7,3 @@ include Makefile.inc
 #  Empty out the OSLIB variable
 OSLIB=
 
-test.o: h2

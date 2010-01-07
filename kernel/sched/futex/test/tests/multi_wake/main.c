@@ -127,7 +127,7 @@ int main()
 {
 	unsigned int next_tnum;
 	unsigned int timeout=0;
-	unsigned int i,j;
+	unsigned int i,j,prio;
 
 	srand(TEST_SEED);
 
@@ -201,10 +201,11 @@ int main()
 
 	for (i=0; i<max_consumers; i++) {
 		threads_woken[i] = 0;
+		prio = rand() % 31;
 		if (h2_thread_create(consumer_thread,
 			&stack_space[next_tnum++][THREAD_STACK_SIZE],
 			(void *)i,
-			rand() % 31,
+			prio,
 			0xffffffff) <= 0) {
 			info("Could not create consumer thread\n");
 		}
@@ -213,7 +214,7 @@ int main()
 		 * queues into the futex ring in age order; probably more appropriate
 		 * to use a lock but whatever.
 		 */
-		info("delay.\n");
+		info("Produced consumer thread, prio %d.\n",prio);
 	}
 
 	/*  Producer thread  */

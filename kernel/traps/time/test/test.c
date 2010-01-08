@@ -108,7 +108,7 @@ int main()
 	h2_thread_create(thread0,&stack0[STACK_SIZE],0,2,0xffffffff);
 	h2_thread_create(thread1,&stack1[STACK_SIZE],0,2,0xffffffff);
 	h2_sem_down(&sem_done);
-	puts("PASS");
+	puts("TEST PASSED\n");
 	return 0;
 }
 

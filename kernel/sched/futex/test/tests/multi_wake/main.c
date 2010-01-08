@@ -201,7 +201,7 @@ int main()
 
 	for (i=0; i<max_consumers; i++) {
 		threads_woken[i] = 0;
-		prio = rand() % 31;
+		prio = rand() % 8;
 		if (h2_thread_create(consumer_thread,
 			&stack_space[next_tnum++][THREAD_STACK_SIZE],
 			(void *)i,

@@ -1,5 +1,5 @@
 
-CC = qdsp6-gcc -mv3 -Iinclude -Wall
+CC = qdsp6-gcc -mv$(ARCHV) -Iinclude -Wall
 AR = qdsp6-ar
 
 CFLAGS = -g -O2 

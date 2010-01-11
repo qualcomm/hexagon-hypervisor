@@ -1,5 +1,5 @@
 
-CC = qdsp6-gcc -mv3 -Iinclude -Wall -I../../h2/include
+CC = qdsp6-gcc -mv$(ARCHV) -Iinclude -Wall -I../../h2/include
 AR = qdsp6-ar
 
 CFLAGS = -g -O2 

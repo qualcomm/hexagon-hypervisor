@@ -1,6 +1,10 @@
 
 # Big kludge here, need to redo build system to have one h2 library built
 
+ifeq ($(ARCHV),)
+export ARCHV := 3
+endif
+
 all: libh2
 
 clean: 

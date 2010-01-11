@@ -8,7 +8,7 @@
 
 #include <context.h>
 
-void H2K_thread_stop(H2K_thread_context *me);
+void H2K_thread_stop(H2K_thread_context *me) __attribute((noreturn));
 
 #endif
 

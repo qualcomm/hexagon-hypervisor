@@ -11,12 +11,14 @@
 #include <switch.h>
 #include <lowprio.h>
 #include <intconfig.h>
+#include <fatal.h>
 
 void qdsp6_pre_main();
 void H2K_interrupt_restore();
 
 void H2K_init_setup()
 {
+	H2K_fatal_init();
 	H2K_runlist_init();
 	H2K_readylist_init();
 	H2K_lowprio_init();

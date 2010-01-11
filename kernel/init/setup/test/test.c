@@ -27,7 +27,8 @@ u32_t TH_init_seen;
 u32_t TH_switch_seen;
 
 enum {
-        runlist_init = 0,
+        fatal_init = 0,
+        runlist_init,
         readylist_init,
         lowprio_init,
         futex_init,
@@ -42,6 +43,7 @@ void H2K_interrupt_restore()
 
 #define HELPER_FUNC(X) void H2K_##X() { TH_init_seen |= 1<< X; }
 
+HELPER_FUNC(fatal_init)
 HELPER_FUNC(runlist_init)
 HELPER_FUNC(readylist_init)
 HELPER_FUNC(lowprio_init)

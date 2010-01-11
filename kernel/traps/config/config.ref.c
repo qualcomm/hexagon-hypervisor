@@ -6,13 +6,15 @@
 #include <config.h>
 #include <asm_offsets.h>
 #include <thread.h>
+#include <fatal.h>
 
 typedef void (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
-#define MAX_CONFIGS 1
+#define MAX_CONFIGS 2
 
 static const configptr_t H2K_configtab[MAX_CONFIGS] = {
 	H2K_trap_config_addthreads,
+	H2K_trap_config_setfatal
 };
 
 void H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
@@ -38,5 +40,10 @@ void H2K_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unuse
 		thread->next = H2K_free_threads;
 		H2K_free_threads = thread;
 	}
+}
+
+void H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me)
+{
+	H2K_fatal_kernel_handler = handler;
 }
 

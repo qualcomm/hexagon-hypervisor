@@ -77,6 +77,35 @@ TBD: remove threads?
 TBD: keep list of thread areas for better threadids.
 
 
+H2K_trap_config_setfatal
+------------------------
+
+.. cfunction: void H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me)
+
+
+Description
+~~~~~~~~~~~
+
+Configures the kernel fatal error handler function.
+
+
+Input
+~~~~~
+
+Argument 0: Unused paramater
+Argument 1: Function to be called in the event of a fatal error
+Argument 2: Unused parameter
+Argument 3: Unused parameter
+Argument 4: Pointer to the current thread context
+
+Output
+~~~~~~
+
+Functionality
+~~~~~~~~~~~~~
+
+Set H2K_fatal_kernel_handler to handler.
+
 
 Testing
 -------
@@ -87,6 +116,7 @@ Samples
 * Input: Storage size
 * Input: Alignment of pointer
 * Output: H2K_free_threads
+* For setfatal: handler function
 
 Important Cases
 ~~~~~~~~~~~~~~~
@@ -104,6 +134,6 @@ Harness
 Standalone environment, but linked with h2kernel.
 
 We try several calls to H2K_trap_config, and check that H2K_free_threads is
-updated to hold the appropriate values.
+updated to hold the appropriate values, or that fatal_kernel_handler is changed.
 
 

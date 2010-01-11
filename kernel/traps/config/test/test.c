@@ -9,6 +9,7 @@
 #include <thread.h>
 #include <string.h>
 #include <config.h>
+#include <fatal.h>
 
 void FAIL(const char *str)
 {
@@ -19,12 +20,23 @@ void FAIL(const char *str)
 
 char buf[sizeof(H2K_thread_context)*2] __attribute__((aligned(32)));
 
+static void __attribute__((noreturn)) foo(u32_t xyzzy)
+{
+	__builtin_trap();
+}
+
 int main()
 {
 	u32_t i,j,pos;
 	H2K_thread_init();
-	H2K_trap_config(1,buf,sizeof(buf),0,NULL);
+	H2K_fatal_kernel_handler = NULL;
+	H2K_trap_config(2,buf,sizeof(buf),0,NULL);
 	if (H2K_free_threads) FAIL("trap config failure");
+	if (H2K_fatal_kernel_handler != NULL) FAIL("trap config failure");
+
+	H2K_trap_config(1,foo,0,0,NULL);
+	if (H2K_fatal_kernel_handler != foo) FAIL("Kernel fatal handler error");
+
 	memset(buf,0xef,sizeof(buf));
 	H2K_trap_config(0,buf,sizeof(buf),0,NULL);
 	if (H2K_free_threads != (void *)(buf+sizeof(H2K_thread_context))) FAIL("free threads unexpected");

@@ -29,13 +29,13 @@ void (*H2K_fatal_kernel_handler)(u32_t) __attribute__((noreturn)) = H2K_fatal_si
 
 void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	H2K_trace(error_id, (u32_t)me, info0, info1, hthread);
+	H2K_trace(H2K_TRACE_FATAL_KERNEL,hthread,0,0);
 	H2K_fatal_kernel_handler(1);
 }
 
 void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	H2K_trace(error_id, (u32_t)me, info0, info1, hthread);
+	H2K_trace(H2K_TRACE_FATAL_THREAD,hthread,me->tid,0);
 	return H2K_thread_stop(me);
 }
 

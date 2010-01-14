@@ -90,6 +90,7 @@ class function_data(object):
                print "%s:  additional pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile)
                return
             #  extended check -- check that the parse bits at least match.
+            #  Todo:  make sure cycles are only reported for instructions at start of packet, or single instruction packets.
             original_pp = (long(self.text[pc].split()[4],16) >> 14) & 3
             new_pp = (long(text.split()[4],16) >> 14) & 3
             if original_pp != new_pp:

@@ -23,13 +23,17 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/traps/tid/test\
  ./kernel/event/fastint/test\
  ./kernel/util/ring/test\
+ ./kernel/util/trace/test\
  ./kernel/init/boot/test\
  ./kernel/init/setup/test\
  ./kernel/sched/lowprio/test\
  ./kernel/traps/config/test\
  ./kernel/traps/prio/test\
  ./kernel/traps/tid/test\
- ./kernel/traps/time/test
+ ./kernel/traps/time/test\
+ ./kernel/error/fatal/test
+
+# ./kernel/event/error/test
 
 
 

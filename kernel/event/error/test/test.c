@@ -13,6 +13,8 @@
 
 H2K_thread_context *me;
 
+void (*H2K_fatal_kernel_handler)(u32_t) IN_SECTION(".data.error.fatal");
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -38,6 +40,10 @@ void H2K_fatal_thread(u32_t r0, u32_t r1)
 void H2K_fatal_kernel(u32_t r0, u32_t r1)
 {
 	FAIL("Kernel fatal error");
+}
+
+void H2K_fatal_init()
+{
 }
 
 void TH_error_check(int pass, u32_t sp)

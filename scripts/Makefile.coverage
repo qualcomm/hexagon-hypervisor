@@ -31,9 +31,8 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/traps/prio/test\
  ./kernel/traps/tid/test\
  ./kernel/traps/time/test\
- ./kernel/error/fatal/test
-
-# ./kernel/event/error/test
+ ./kernel/error/fatal/test\
+ ./kernel/event/error/test
 
 
 

@@ -41,7 +41,7 @@ void H2K_dosched(H2K_thread_context *in, int hthread)
 	BKL_UNLOCK();
 	checker_runlist();
 	checker_ready();
-	longjmp(env);
+	longjmp(env,1);
 }
 
 static H2K_thread_context a,b,c;

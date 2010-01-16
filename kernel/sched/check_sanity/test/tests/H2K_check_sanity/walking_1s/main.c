@@ -57,6 +57,9 @@ int main()
 	u32_t runlist_prio;  /*  bitmap indexed by priority -- currently running priorities  */
 	u32_t ready_prio;    /*  bitmap indexed by priority -- which priorities have tasks ready to run  */
 
+	u32_t global_valid_prio;  /*  bitmap indexed by priority -- EJP calls this "ready_validmask"; determines
+				      which priorities are allowed to be either running or ready; 0 indicates neither.  */
+
 	u32_t some_random_number;  /*  checked by assertions  */
 	u32_t retval;  /*  checked by assertions  */
 
@@ -94,77 +97,104 @@ int main()
 	 * 7 * 7 * 33 * 33 = 53361 combinations right here
 	 *
 	 * (I'm including zero's in there) 
+         *
+         * for ready_validmask, I think I'm going to walk a zero.
          */
 
 	for (prio_hthread=0; prio_hthread < (1<<(MAX_HTHREADS-1)); prio_hthread = prio_hthread ? prio_hthread << 1 : 1) {
 		for (wait_hthread=0; wait_hthread < (1<<(MAX_HTHREADS-1)); wait_hthread = wait_hthread ? wait_hthread<<1 : 1) {
 			for (runlist_prio=1; runlist_prio < (1<<(MAX_PRIOS-1)); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
 				for (ready_prio=0; ready_prio < (1<<(MAX_PRIOS-1)); ready_prio = ready_prio ? ready_prio <<=1 : 1) {
-					H2K_priomask = prio_hthread;
-					H2K_wait_mask = wait_hthread;
-					H2K_runlist_valids = runlist_prio;
-					H2K_ready_valids = ready_prio;
+					for (global_valid_prio=0; global_valid_prio < (1<<(MAX_PRIOS-1)); global_valid_prio = global_valid_prio ? global_valid_prio <<=1 : 1) {
+						H2K_priomask = prio_hthread;
+						H2K_wait_mask = wait_hthread;
+						H2K_runlist_valids = runlist_prio;
+						H2K_ready_valids = ready_prio;
+						//H2K_ready_validmask = ~global_valid_prio;
 					
-					//debug("prio_hthread = 0x%08x\n",prio_hthread);
-					//debug("wait_hthread = 0x%08x\n",wait_hthread);
-					//debug("runlist_prio = 0x%08x\n",runlist_prio);
-					//debug("ready_prio = 0x%08x\n",ready_prio);
+						//debug("prio_hthread = 0x%08x\n",prio_hthread);
+						//debug("wait_hthread = 0x%08x\n",wait_hthread);
+						//debug("runlist_prio = 0x%08x\n",runlist_prio);
+						//debug("ready_prio = 0x%08x\n",ready_prio);
 
-					//debug("runlist_worst_prio %d\n",H2K_runlist_worst_prio());
-					//debug("ready_best_prio %d\n",H2K_ready_best_prio());
+						//debug("runlist_worst_prio %d\n",H2K_runlist_worst_prio());
+						//debug("ready_best_prio %d\n",H2K_ready_best_prio());
 
-					some_random_number = rand();
-					/*  call the function  */
-					BKL_LOCK();  /*  Big kernel lock required  */
-					retval = call(H2K_check_sanity_unlock,some_random_number);
+						some_random_number = rand();
+						/*  call the function  */
+						BKL_LOCK();  /*  Big kernel lock required  */
+						retval = call(H2K_check_sanity_unlock,some_random_number);
 
-					/*  check the results  */
-					/*  Was a resched necessary?  */
+						/*  check the results  */
+						/*  Was a resched necessary?  */
+	
+						/* 
+						 * If "IS_WORSE_THAN" changes then 
+						 * this has to be changed as well.
+						 */
+	
+						if ((ready_prio&global_valid_prio) && (runlist_prio > (ready_prio&global_valid_prio))) {
+							if (!resched_requested()) {
+								error("Expected reschedule due to better ready tasks\n");
+							}
+							resched_count++;
+							goto sched_fired_ok;
+						}  /*  best ready is better than worst running  */
+	
+						if ((wait_hthread != 0) && ((ready_prio*global_valid_prio)!= 0)) {
+							if (!resched_requested()) {
+								debug("wait_hthread == 0x%x, ready_prio == 0x%x\n",wait_hthread, ready_prio);
+								error("Expected reschedule due to idle hardware thread with ready tasks\n");
+							}
+							resched_count++;
+							goto sched_fired_ok;
+						}  /*  tasks ready to go while thread is in wait  */
+	
+						/*  
+						 * if runlist & ~global_valid_prio, then somebody needs
+						 * a boot to the head.
+						 */
 
-					/* 
-					 * If "IS_WORSE_THAN" changes then 
-					 * this has to be changed as well.
-					 */
-
-					if (ready_prio && (runlist_prio > ready_prio)) {
-						if (!resched_requested()) {
-							error("Expected reschedule due to better ready tasks\n");
+						if (runlist_prio && ~global_valid_prio) {
+							if (!resched_requested()) {
+								error("Expected reschedule due to ready_validmask\n");
+							}
+							resched_count++;
+							goto sched_fired_ok;
 						}
-						resched_count++;
-						goto sched_fired_ok;
-					}  /*  best ready is better than worst running  */
 
-					if ((wait_hthread != 0) && (ready_prio != 0)) {
-						if (!resched_requested()) {
-							debug("wait_hthread == 0x%x, ready_prio == 0x%x\n",wait_hthread, ready_prio);
-							error("Expected reschedule due to idle hardware thread with ready tasks\n");
+						/*  Should NOT have seen a scheduler fire at this point  */
+						if (resched_requested()) {
+							error("Inappropriate reschedule requested()\n");
 						}
-						resched_count++;
-						goto sched_fired_ok;
-					}  /*  tasks ready to go while thread is in wait  */
-
-					/*  Should NOT have seen a scheduler fire at this point  */
-					if (resched_requested()) {
-						error("Inappropriate reschedule requested()\n");
-					}
 sched_fired_ok:
-					/*  Was a lowprio_notify necessary?  */
-					
-					if (prio_hthread == 0) {
-						if (!lowprio_notify_requested(prio_hthread)) {
-							error("Lowprio notify not detected\n");
+						/*  Was a lowprio_notify necessary?  */
+						
+						if (prio_hthread == 0) {
+							if (!lowprio_notify_requested(prio_hthread)) {
+								error("Lowprio notify not detected\n");
+							}
+							lowprio_count++;
+							goto lowprio_ok;
+						} 
+
+						if (runlist_prio && ~global_valid_prio) {
+							if (!lowprio_notify_requested(prio_hthread)) {
+								error("Expected lowprio_notify due to ready_validmask\n");
+							}
+							lowprio_count++;
+							goto sched_fired_ok;
 						}
-						lowprio_count++;
-					} 
-					else {
+
 						if (lowprio_notify_requested(prio_hthread)) {
 							error("Inappropriate lowprio notify detected\n");
 						}
+
+lowprio_ok:
+						/*  cleanup  */
+						H2K_clear_ipend(RESCHED_INT_INTMASK);
+	
 					}
-
-					/*  cleanup  */
-					H2K_clear_ipend(RESCHED_INT_INTMASK);
-
 				}
 			}
 		}

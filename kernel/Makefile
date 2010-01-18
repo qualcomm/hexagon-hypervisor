@@ -59,8 +59,20 @@ ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(
 
 $(ALL_OFILES): $(DEST_HFILES)
 
+ifeq ($(ARCHV),3)
+OPT_OFILES := $(OPT_V3_OFILES)
+endif
+
+ifeq ($(ARCHV),4)
+OPT_OFILES := $(OPT_V4_OFILES)
+endif
 
 build/ref/libh2kernel.a: $(REF_OFILES)
+	mkdir -p $(dir $@)
+	$(AR) cru $@ $(REF_OFILES)
+
+build/opt_v$(ARCHV)/libh2kernel.a: $(OPT_V$(ARCHV)_OFILES)
+	@echo $(OPT_V$(ARCHV)_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(REF_OFILES)
 
@@ -76,7 +88,7 @@ build/ref/libh2check.a: $(CHECK_OFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(ALL_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref
+	rm -rf $(ALL_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref build/opt*
 
 dummy:
 	@echo $(REF_CFILES)
@@ -89,6 +101,8 @@ dummy:
 includes: $(DEST_HFILES)
 
 ref: build/ref/libh2kernel.a
+
+opt: build/opt_v$(ARCHV)/libh2kernel.a
 
 check: build/ref/libh2check.a
 

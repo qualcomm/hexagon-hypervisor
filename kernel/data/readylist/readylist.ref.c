@@ -16,6 +16,6 @@ void H2K_readylist_init(void)
 		H2K_ready[i] = NULL;
 	}
 	H2K_ready_valids = 0;
-	H2K_ready_validmask = 0;
+	H2K_ready_validmask = 0xffffffff;
 }
 

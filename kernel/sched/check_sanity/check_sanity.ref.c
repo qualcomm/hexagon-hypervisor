@@ -10,6 +10,15 @@
 #include <readylist.h>
 #include <lowprio.h>
 
+void H2K_check_sched_mask()
+{
+	/* EJP: ready valid mask not enabled... yet! */
+	if ((H2K_runlist_valids & (~H2K_ready_validmask)) != 0) {
+		H2K_lowprio_notify();
+		resched_int();
+	}
+}
+
 u64_t H2K_check_sanity(const u64_t retval)
 {
 	if (H2K_priomask == 0) {
@@ -17,17 +26,10 @@ u64_t H2K_check_sanity(const u64_t retval)
 	}
 	if (H2K_runlist_worst_prio() IS_WORSE_THAN H2K_ready_best_prio()) {
 		resched_int();
-	} else if (H2K_wait_mask && (H2K_ready_valids /* & H2K_ready_validmask */)) {
+	} else if (H2K_wait_mask && (H2K_ready_valids & H2K_ready_validmask)) {
 		resched_int();
 	}
-#if 0
-	/* EJP: ready valid mask not enabled... yet! */
-	if ((H2K_runlist_valids & (~H2K_ready_validmask)) != 0) {
-		H2K_lowprio_notify();
-		H2K_resched_int();
-	}
-#endif
-
+	H2K_check_sched_mask();
 	return(retval);
 }
 

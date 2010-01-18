@@ -8,6 +8,7 @@
 
 #include <c_std.h>
 
+void H2K_check_sched_mask();
 u64_t H2K_check_sanity(const u64_t retval);
 u64_t H2K_check_sanity_unlock(const u64_t retval);
 

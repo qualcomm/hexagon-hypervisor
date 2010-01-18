@@ -13,10 +13,11 @@
 
 extern H2K_thread_context *H2K_ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
 extern u32_t H2K_ready_valids IN_SECTION(".data.sched.ready");
+extern u32_t H2K_ready_validmask IN_SECTION(".data.sched.ready");
 
 static inline u32_t H2K_ready_best_prio()
 {
-	return Q6_R_ct0_R(H2K_ready_valids);
+	return Q6_R_ct0_R(H2K_ready_valids & H2K_ready_validmask);
 }
 
 static inline void H2K_ready_append(H2K_thread_context *thread)
@@ -44,7 +45,7 @@ static inline H2K_thread_context *H2K_ready_getbest()
 {
 	H2K_thread_context *ret;
 	u32_t prio;
-	if ((H2K_ready_valids) == 0) return NULL;
+	if ((H2K_ready_valids & H2K_ready_validmask) == 0) return NULL;
 	prio = H2K_ready_best_prio();
 	ret = H2K_ready[prio];
 	H2K_ready_remove(ret);

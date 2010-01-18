@@ -42,8 +42,8 @@ running threads.
 First, we remove the best ready thread.  If no ready thread is available, we 
 go to sleep:
 	0. If a running hthread is marked as lowest priority, it should be made non-lowprio
-	1. The bits corresponding to the current hthread should be set in the priomask and
-		the waitmask: this thread will be waiting and lowest priority (or in switch?)
+	1. Check to see if the ready valid mask requires further threads to be removed
+		from the schedule, and take action if so.
 	2. We switch from me to NULL.
 
 Otherwise, if the waitmask is zero, and the priority of the new thread is worse than all the

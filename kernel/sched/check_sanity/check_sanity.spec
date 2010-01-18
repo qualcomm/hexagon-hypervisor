@@ -66,6 +66,7 @@ interruptible, and raise the reschedule interrupt.
 If the priomask is zero, then no thread has been designated the lowest priority
 running thread.  Make the lowest priority running thread interruptible.
 
+Finally, we check the scheduler mask.
 
 H2K_check_sanity_unlock
 -----------------------
@@ -112,6 +113,36 @@ Unlock the BKL.
    
 Return returnval.
 
+H2K_check_sanity_unlock
+-----------------------
+
+.. cfunction:: u64_t H2K_check_sched_mask()
+   
+Description
+~~~~~~~~~~~
+
+This function checks whether threads at priorities that should
+be masked have been removed from the runlist.  If any masked threads
+are running, the lowest priority running thread is made interruptible
+and the reschedule interrupt is raised.
+
+Input
+~~~~~
+
+Output
+~~~~~~
+
+
+.. InputAssert::
+   assert(checker_kernel_locked());
+
+
+Functionality
+~~~~~~~~~~~~~
+   
+If H2K_runlist_valids have bits set that are cleared in H2K_ready_validmask,
+we make the low priority thread interruptible, and raise the reschedule
+interrupt.
 
 
 Testing

@@ -116,7 +116,7 @@ Return returnval.
 H2K_check_sanity_unlock
 -----------------------
 
-.. cfunction:: u64_t H2K_check_sched_mask()
+.. cfunction:: u64_t H2K_check_sched_mask(void)
    
 Description
 ~~~~~~~~~~~

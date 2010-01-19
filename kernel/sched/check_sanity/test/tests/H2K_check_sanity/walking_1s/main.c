@@ -81,6 +81,8 @@ int main()
 	H2K_clear_gie();
 	H2K_clear_ipend(0xffffffff);
 
+	print_test_defines();
+
 	/*  Walking 1's test  
 	 * 
 	 *  This testcase should never actually schedule out.
@@ -101,21 +103,31 @@ int main()
          * for ready_validmask, I think I'm going to walk a zero.
          */
 
-	for (prio_hthread=0; prio_hthread < (1<<(MAX_HTHREADS-1)); prio_hthread = prio_hthread ? prio_hthread << 1 : 1) {
-		for (wait_hthread=0; wait_hthread < (1<<(MAX_HTHREADS-1)); wait_hthread = wait_hthread ? wait_hthread<<1 : 1) {
-			for (runlist_prio=1; runlist_prio < (1<<(MAX_PRIOS-1)); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
-				for (ready_prio=0; ready_prio < (1<<(MAX_PRIOS-1)); ready_prio = ready_prio ? ready_prio <<=1 : 1) {
-					for (global_valid_prio=0; global_valid_prio < (1<<(MAX_PRIOS-1)); global_valid_prio = global_valid_prio ? global_valid_prio <<=1 : 1) {
+	/*  May need to fudge the H2K_runlist[prio]->hthread to a bogus value so we can properly detect H2K_lowprio_notify() actually fired  */
+
+	for (i=0; i<MAX_PRIOS; i++) {
+		H2K_runlist[i]->hthread=MAX_HTHREADS+1;
+	}
+
+	global_valid_prio = 0;
+
+	for (global_valid_prio=0; global_valid_prio < (1<<(MAX_PRIOS/4-1)); global_valid_prio = global_valid_prio ? global_valid_prio <<=1 : 1) {
+		for (prio_hthread=0; prio_hthread < (1<<(MAX_HTHREADS-1)); prio_hthread = prio_hthread ? prio_hthread << 1 : 1) {
+			for (wait_hthread=0; wait_hthread < (1<<(MAX_HTHREADS-1)); wait_hthread = wait_hthread ? wait_hthread<<1 : 1) {
+				for (runlist_prio=1; runlist_prio < (1<<(MAX_PRIOS-1)); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
+					for (ready_prio=0; ready_prio < (1<<(MAX_PRIOS-1)); ready_prio = ready_prio ? ready_prio <<=1 : 1) {
+
 						H2K_priomask = prio_hthread;
 						H2K_wait_mask = wait_hthread;
 						H2K_runlist_valids = runlist_prio;
 						H2K_ready_valids = ready_prio;
-						//H2K_ready_validmask = ~global_valid_prio;
+						H2K_ready_validmask = ~global_valid_prio;
 					
 						//debug("prio_hthread = 0x%08x\n",prio_hthread);
 						//debug("wait_hthread = 0x%08x\n",wait_hthread);
 						//debug("runlist_prio = 0x%08x\n",runlist_prio);
 						//debug("ready_prio = 0x%08x\n",ready_prio);
+						//debug("global_valid_prio = 0x%08x\n",~global_valid_prio);
 
 						//debug("runlist_worst_prio %d\n",H2K_runlist_worst_prio());
 						//debug("ready_best_prio %d\n",H2K_ready_best_prio());
@@ -132,8 +144,8 @@ int main()
 						 * If "IS_WORSE_THAN" changes then 
 						 * this has to be changed as well.
 						 */
-	
-						if ((ready_prio&global_valid_prio) && (runlist_prio > (ready_prio&global_valid_prio))) {
+						
+						if ((ready_prio& ~global_valid_prio) && (runlist_prio > (ready_prio & ~global_valid_prio))) {
 							if (!resched_requested()) {
 								error("Expected reschedule due to better ready tasks\n");
 							}
@@ -141,7 +153,7 @@ int main()
 							goto sched_fired_ok;
 						}  /*  best ready is better than worst running  */
 	
-						if ((wait_hthread != 0) && ((ready_prio*global_valid_prio)!= 0)) {
+						if ((wait_hthread != 0) && ((ready_prio&~global_valid_prio)!= 0)) {
 							if (!resched_requested()) {
 								debug("wait_hthread == 0x%x, ready_prio == 0x%x\n",wait_hthread, ready_prio);
 								error("Expected reschedule due to idle hardware thread with ready tasks\n");
@@ -151,11 +163,11 @@ int main()
 						}  /*  tasks ready to go while thread is in wait  */
 	
 						/*  
-						 * if runlist & ~global_valid_prio, then somebody needs
+						 * if runlist & ~H2K_ready_validmask, then somebody needs
 						 * a boot to the head.
 						 */
 
-						if (runlist_prio && ~global_valid_prio) {
+						if ((runlist_prio & global_valid_prio) != 0) {
 							if (!resched_requested()) {
 								error("Expected reschedule due to ready_validmask\n");
 							}
@@ -178,12 +190,18 @@ sched_fired_ok:
 							goto lowprio_ok;
 						} 
 
-						if (runlist_prio && ~global_valid_prio) {
+						if ((runlist_prio & global_valid_prio) != 0) {
 							if (!lowprio_notify_requested(prio_hthread)) {
+						debug("prio_hthread = 0x%08x\n",prio_hthread);
+						debug("wait_hthread = 0x%08x\n",wait_hthread);
+						debug("runlist_prio = 0x%08x\n",runlist_prio);
+						debug("ready_prio = 0x%08x\n",ready_prio);
+						debug("global_valid_prio = 0x%08x\n",~global_valid_prio);
+
 								error("Expected lowprio_notify due to ready_validmask\n");
 							}
 							lowprio_count++;
-							goto sched_fired_ok;
+							goto lowprio_ok;
 						}
 
 						if (lowprio_notify_requested(prio_hthread)) {

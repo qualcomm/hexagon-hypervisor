@@ -12,6 +12,9 @@ H2K_prio_get
 
 .. cfunction:: u32_t H2K_prio_get(H2K_thread_context *me)
 
+	:param me: Pointer to the current thread context
+	:returns: Returns the priority
+
 Description
 ~~~~~~~~~~~
 
@@ -20,12 +23,8 @@ Gets the priority for the current thread context.
 Input
 ~~~~~
 
-Argument 0: Pointer to the current thread context
-
 Output
 ~~~~~~
-
-Returns the priority
 
 Functionality
 ~~~~~~~~~~~~~
@@ -37,6 +36,10 @@ H2K_prio_set
 
 .. cfunction:: u32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
 
+	:param dest: Destination thread
+	:param prio: new priority
+	:param me: Pointer to the current thread context
+	:returns: -1
 
 Description
 ~~~~~~~~~~~
@@ -46,14 +49,8 @@ UNIMPLEMENTED.  Returns -1.
 Input
 ~~~~~
 
-Argument 0: Destination thread
-Argument 1: new priority
-Argument 2: Pointer to the current thread context
-
 Output
 ~~~~~~
-
-Returns -1.
 
 
 Testing

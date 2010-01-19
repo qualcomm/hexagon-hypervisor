@@ -11,6 +11,9 @@ H2K_switch
 
 .. cfunction:: void H2K_switch(thread_context *from, thread_context *to)
 
+	:param from: the context of the currently running thread (or NULL)
+	:param to: the context of the new thread to run (or NULL)
+
 Description
 ~~~~~~~~~~~
 
@@ -22,9 +25,6 @@ Input
 
 .. InputAssert::
 	ASSERT(kernel_locked())
-
-Argument 0: the context of the currently running thread (or NULL)
-Argument 1: the context of the new thread to run (or NULL)
 
 Output
 ~~~~~~

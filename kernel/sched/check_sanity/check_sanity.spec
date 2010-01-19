@@ -8,6 +8,9 @@ H2K_check_sanity
 
 .. cfunction:: u64_t H2K_check_sanity(const u64_t returnval)
 
+	:param returnval: value to be returned
+	:returns: the value that was passed in at `returnval`
+
 Description
 ~~~~~~~~~~~
 
@@ -72,7 +75,10 @@ H2K_check_sanity_unlock
 -----------------------
 
 .. cfunction:: u64_t H2K_check_sanity_unlock(const u64_t returnval)
-   
+
+	:param returnval: value to be returned
+	:returns: the value that was passed in at `returnval`
+
 Description
 ~~~~~~~~~~~
    
@@ -113,10 +119,10 @@ Unlock the BKL.
    
 Return returnval.
 
-H2K_check_sanity_unlock
+H2K_check_sched_mask
 -----------------------
 
-.. cfunction:: u64_t H2K_check_sched_mask(void)
+.. cfunction:: void H2K_check_sched_mask(void)
    
 Description
 ~~~~~~~~~~~
@@ -171,6 +177,7 @@ Important cases
 * H2K_runlist_valids <= H2K_ready_valids
 * H2K_priomask == 0
 * H2K_priomask != 0
+* H2K_ready_validmask w/ various bits set
 
 
 Harness

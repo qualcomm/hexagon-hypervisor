@@ -13,6 +13,10 @@ ciad
 
 .. cfunction:: static inline void ciad(u32_t mask)
 
+	:param mask: A mask of which interrupts to clear.  It is
+		implementation-defined on which interrupts in the mask correspond to which
+		hardawre interrupts.
+
 Description
 ~~~~~~~~~~~
 
@@ -20,9 +24,6 @@ Clears the Interrupt Auto Disable register using the specified mask.
 
 Input
 ~~~~~
-
-Argument 0: A mask of which interrupts to clear.  It is implementation-defined on which 
-	interrupts in the mask correspond to which hardawre interrupts.
 
 Output
 ~~~~~~
@@ -38,6 +39,9 @@ change_imask
 
 .. cfunction:: static inline void change_imask(u32_t thread, u32_t imask)
 
+	:param thread: The thread to change
+	:param imask: The IMASK value to write
+
 Description
 ~~~~~~~~~~~
 
@@ -45,9 +49,6 @@ Changes the IMASK register for the specified thread to ``imask``
 
 Input
 ~~~~~
-
-Argument 0: The thread to change
-Argument 1: The IMASK value to write
 
 Output
 ~~~~~~
@@ -64,6 +65,8 @@ get_imask
 
 .. cfunction:: static inline u32_t get_imask(u32_t thread)
 
+	:param thread: The thread to fetch the imask of
+
 Description
 ~~~~~~~~~~~
 
@@ -71,8 +74,6 @@ Get the IMASK register for the specified thread
 
 Input
 ~~~~~
-
-Argument 0: The thread to fetch the imask of
 
 Output
 ~~~~~~
@@ -115,6 +116,8 @@ highprio_imask
 
 .. cfunction:: static inline void highprio_imask(u32_t hthread)
 
+	:param hthread: The hardware thread 
+
 Description
 ~~~~~~~~~~~
 
@@ -122,8 +125,6 @@ Changes the IMASK of the current thread to be appropriate for a non-low-priority
 
 Input
 ~~~~~
-
-Argument 0: The hardware thread 
 
 Output
 ~~~~~~
@@ -142,6 +143,8 @@ lowprio_imask
 
 .. cfunction:: static inline void lowprio_imask(u32_t hthread)
 
+	:param hthread: The hardware thread 
+
 Description
 ~~~~~~~~~~~
 
@@ -149,8 +152,6 @@ Changes the IMASK of the current thread to be appropriate for a low-priority thr
 
 Input
 ~~~~~
-
-Argument 0: The hardware thread 
 
 Output
 ~~~~~~
@@ -300,10 +301,10 @@ H2K_clear_ipend
 
 .. cfunction::  static inline void H2K_clear_ipend(u32_t mask)
 
+	:param mask:  Mask of bits to clear out of IPEND
+
 Input
 ~~~~~
-
-Argument 0:  Mask of bits to clear out of IPEND
 
 Description
 ~~~~~~~~~~~

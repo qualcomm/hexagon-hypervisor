@@ -53,6 +53,11 @@ H2K_trace
 
 .. cfunction:: void H2K_trace(s8_t id, u8_t hwtnum, u8_t tid, u16_t pcyclelo)
 
+	:param id: Message ID.  See Message ID Format below.
+	:param hwtnum: Hardware thread number
+	:param tid: Software Thread ID for the current thread, interrupt number, or special value
+	:param pcyclelo: Cycle information
+
 Description
 ~~~~~~~~~~~
 
@@ -63,12 +68,6 @@ Input
 
 .. InputAssert::
 	assert(H2K_trace_index < MAX_TRACE_ENTRIES)
-
-Argument 0: Message ID.  See Message ID Format below.
-Argument 1: Additional information to log
-Argument 2: Additional information to log
-Argument 3: Additional information to log
-Argument 4: Hardware Thread Number.
 
 Output
 ~~~~~~

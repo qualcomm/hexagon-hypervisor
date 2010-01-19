@@ -9,6 +9,14 @@ H2K_thread_create
 
 .. cfunction:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t trapmask, H2K_thread_context *me)
 
+	:param pc: The PC that the new thread should start at
+	:param sp: The SP that the new thread should start with
+	:param arg: A value for r0 for the new thread
+	:param prio: The priority for the new thread
+	:param trapmask: The mask for what traps are allowed for the new thread
+	:param me: Pointer to the current thread context
+	:returns: the thread ID of the new thread, or -1 on failure.
+
 Description
 ~~~~~~~~~~~
 
@@ -22,17 +30,9 @@ thread on success.
 
 Input
 ~~~~~
-Argument 0: The PC that the new thread should start at
-Argument 1: The SP that the new thread should start with
-Argument 2: A value for r0 for the new thread
-Argument 3: The priority for the new thread
-Argument 4: The mask for what traps are allowed for the new thread
-Argument 5: Pointer to the current thread context
 
 Output
 ~~~~~~
-
-Returns -1 or the thread ID of the new thread
 
 
 Functionality

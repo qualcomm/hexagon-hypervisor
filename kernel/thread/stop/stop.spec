@@ -9,17 +9,15 @@ H2K_thread_stop
 
 .. cfunction:: void H2K_thread_stop(thread_context *me)
 
-The H2K_thread_stop function terminates the thread.
+	:param me: The pointer to the current thread context
+
+The H2K_thread_stop function terminates the thread.  Does not return.
 
 Input
 ~~~~~
 
-Argument 0: The pointer to the current thread context
-
 Output
 ~~~~~~
-
-None, does not return
 
 Functionality
 ~~~~~~~~~~~~~

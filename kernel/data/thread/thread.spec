@@ -17,6 +17,8 @@ H2K_thread_context_clear
 
 .. cfunction:: void H2K_thread_context_clear(H2K_thread_context *thread)
 
+	:param thread: pointer to a thread context
+
 Description
 ~~~~~~~~~~~
 
@@ -24,8 +26,6 @@ Zeros a thread context.
 
 Input
 ~~~~~
-
-Argument 0: pointer to a thread context
 
 Output
 ~~~~~~

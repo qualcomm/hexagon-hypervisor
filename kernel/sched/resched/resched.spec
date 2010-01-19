@@ -9,6 +9,10 @@ H2K_resched
 
 .. cfunction:: void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hthread)
 
+	:param unused: unused
+	:param me: A pointer to the currently running thread's context (NULL if idle thread was interrupted)
+	:param hthread: the hardware thread number
+
 Description
 ~~~~~~~~~~~
 
@@ -16,10 +20,6 @@ H2K_resched handles a rescheduling interrupt
 
 Input
 ~~~~~
-
-Argument 0: unused
-Argument 1: A pointer to the currently running thread's context (NULL if idle thread was interrupted)
-Argument 2: the hardware thread number
 
 Output
 ~~~~~~

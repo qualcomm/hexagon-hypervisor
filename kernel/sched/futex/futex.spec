@@ -9,6 +9,11 @@ H2K_futex_wait
 
 .. cfunction:: s32_t H2K_futex_wait(u32_t *ptr, u32_t expected, H2K_thread_context *me)
 
+	:param ptr: a user-specified pointer to a word in memory
+	:param expected: the expected value for *ptr
+	:param me: pointer to the current thread.
+	:returns: 0 if the thread blocked, -1 otherwise.
+
 Description
 ~~~~~~~~~
 
@@ -22,14 +27,8 @@ If the thread went to sleep, the kernel returns 0.
 Input
 ~~~~~
 
-Argument 0: "ptr", which is a user-specified pointer to a word in memory
-Argument 1: "expected", which is the expected value for *ptr
-Argument 2: "me", which is the pointer to the current thread.
-
 Output
 ~~~~~~
-
-Returns -1 or 0, depending on whether the thread blocked or not.
 
 Functionality
 ~~~~~~~~~~~~~
@@ -70,6 +69,11 @@ H2K_futex_resume
 
 .. cfunction:: u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 
+	:param lock: a user-specified value
+	:param n_to_wake: a user-specified maximum number of threads to wake
+	:param me: pointer to the current thread.
+	:returns: the number of threads woken
+
 Description
 ~~~~~~~~~~~
 
@@ -81,14 +85,8 @@ The kernel returns the number of woken threads.
 Input
 ~~~~~
 
-Argument 0: "ptr", which is a user-specified value
-Argument 1: "n_to_wake", which is a user-specified maximum number of threads to wake
-Argument 2: "me", which is the pointer to the current thread.
-
 Output
 ~~~~~~
-
-Returns the number of threads woken.
 
 Functionality
 ~~~~~~~~~~~~~

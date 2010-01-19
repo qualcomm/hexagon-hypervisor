@@ -12,6 +12,12 @@ H2K_trap_config
 
 .. cfunction: void H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 
+	:param configtype: Configuration operation to do
+	:param ptr: Operation-dependent pointer value
+	:param val2: Operation-dependent value
+	:param val3: Operation-dependent value
+	:param me: Pointer to the current thread context
+
 Description
 ~~~~~~~~~~~
 
@@ -19,12 +25,6 @@ Trap handler for kernel configuration.
 
 Input
 ~~~~~
-
-Argument 0: Configuration operation to do
-Argument 1: Operation-dependent pointer value
-Argument 2: Operation-dependent value
-Argument 3: Operation-dependent value
-Argument 4: Pointer to the current thread context
 
 Output
 ~~~~~~
@@ -44,6 +44,12 @@ H2K_trap_config_addthreads
 
 .. cfunction: void H2K_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unused2, H2K_thread_context *me)
 
+	:param unused: Unused parameter
+	:param ptr: Pointer for additional memory for use as thread contexts
+	:param size: Size of the data area in bytes
+	:param unused2: Unused parameter
+	:param me: Pointer to the current thread context
+
 Description
 ~~~~~~~~~~~
 
@@ -51,12 +57,6 @@ Adds additional memory for use as thread contexts.
 
 Input
 ~~~~~
-
-Argument 0: Unused parameter
-Argument 1: Pointer for additional memory for use as thread contexts
-Argument 2: Size of the data area in bytes
-Argument 3: Unused parameter
-Argument 4: Pointer to the current thread context
 
 Output
 ~~~~~~
@@ -83,6 +83,12 @@ H2K_trap_config_setfatal
 .. cfunction: void H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me)
 
 
+	:param unused: Unused paramater
+	:param handler: Function to be called in the event of a fatal error
+	:param unused2: Unused parameter
+	:param unused3: Unused parameter
+	:param me: Pointer to the current thread context
+
 Description
 ~~~~~~~~~~~
 
@@ -91,12 +97,6 @@ Configures the kernel fatal error handler function.
 
 Input
 ~~~~~
-
-Argument 0: Unused paramater
-Argument 1: Function to be called in the event of a fatal error
-Argument 2: Unused parameter
-Argument 3: Unused parameter
-Argument 4: Pointer to the current thread context
 
 Output
 ~~~~~~

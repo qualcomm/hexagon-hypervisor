@@ -56,19 +56,17 @@ H2K_ready_best_prio
 
 .. cfunction:: static inline u32_t H2K_ready_best_prio()
 
+	:returns: the priority corresponding to the ready thread with the best priority.
+		Returns a value of MAX_PRIOS or higher if no threads are ready.
+
 Description
 ~~~~~~~~~~~
-
-Returns the priority corresponding to the ready thread with the best priority.
-Returns value of MAX_PRIOS or higher if no threads are ready.
 
 Input
 ~~~~~
 
 Output
 ~~~~~~
-
-Returns the priority corresponding to the ready thread with the best priority.
 
 Functionality
 ~~~~~~~~~~~~~
@@ -82,6 +80,8 @@ H2K_ready_append
 
 .. cfunction:: static inline void H2K_ready_append(H2K_thread_context *thread)
 
+	:param thread: the thread to add
+
 Description
 ~~~~~~~~~~~
 
@@ -89,8 +89,6 @@ Appends the thread to the ready list.
 
 Input
 ~~~~~
-
-Argument 0: the thread to add
 
 Output
 ~~~~~~
@@ -109,6 +107,8 @@ H2K_ready_insert
 
 .. cfunction:: static inline void H2K_ready_insert(H2K_thread_context *thread)
 
+	:param thread: the thread to add
+
 Description
 ~~~~~~~~~~~
 
@@ -116,8 +116,6 @@ Inserts the thread to the ready list.
 
 Input
 ~~~~~
-
-Argument 0: the thread to add
 
 Output
 ~~~~~~
@@ -136,6 +134,8 @@ H2K_ready_remove
 
 .. cfunction:: static inline void H2K_ready_remove(H2K_thread_context *thread)
 
+	:param thread: the thread to remove
+
 Description
 ~~~~~~~~~~~
 
@@ -143,8 +143,6 @@ Removes the thread from the ready list.
 
 Input
 ~~~~~
-
-Argument 0: the thread to remove
 
 Output
 ~~~~~~
@@ -163,6 +161,9 @@ H2K_ready_getbest
 
 .. cfunction:: static inline H2K_thread_context *H2K_ready_getbest()
 
+	:returns: the best priority ready thread, which has been removed from
+		the ready list.  Or, if no threads are ready, returns NULL.
+
 Description
 ~~~~~~~~~~~
 
@@ -173,9 +174,6 @@ Input
 
 Output
 ~~~~~~
-
-Returns the best priority ready thread, which has been removed from the ready list.
-Returns NULL if no threads are ready.
 
 Functionality
 ~~~~~~~~~~~~~

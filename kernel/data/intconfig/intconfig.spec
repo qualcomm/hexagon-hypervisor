@@ -38,6 +38,10 @@ H2K_register_fastint
 
 .. cfunction:: void H2K_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), H2K_thread_context *me)
 
+	:param whatint: which interrupt to register
+	:param fastint_handler: Address of the fast interrupt handler
+	:param me: Context of the calling thread
+
 Description
 ~~~~~~~~~~~
 
@@ -45,10 +49,6 @@ Modifies the interrupt configuration data to register a new fast interrupt handl
 
 Input
 ~~~~~
-
-Argument 0: which interrupt to register
-Argument 1: Address of the fast interrupt handler
-Argument 2: Context of the calling thread
 
 Output
 ~~~~~~

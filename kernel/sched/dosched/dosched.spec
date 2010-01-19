@@ -8,6 +8,9 @@ H2K_check_sanity
 
 .. cfunction:: void H2K_dosched(thread_context *me, u32_t hthread)
 
+	:param me: the context of the currently running thread
+	:param hthread: the hardware thread number
+
 Description
 ~~~~~~~~~~~~~
 
@@ -18,9 +21,6 @@ Input
 ~~~~
 
 INPUT_ASSERT(kernel_locked)
-
-Argument 0: the context of the currently running thread
-Argument 1: the hardware thread number
 
 Output
 ~~~~~~

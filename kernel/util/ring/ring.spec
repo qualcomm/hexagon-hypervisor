@@ -28,6 +28,9 @@ H2K_ring_remove
 ---------------
 .. cfunction:: void H2K_ring_remove(void *ring, void *node);
 
+	:param ring: Actually H2K_ringnode_t **ring, a pointer to the ring holding node
+	:param node: The node in the ring to remove.
+
 Description
 ~~~~~~~~~~~
 
@@ -38,9 +41,6 @@ By calling the function, you guarantee that "node" is a current member of
 
 Input
 ~~~~~
-
-Argument 0: H2K_ringnode_t **ring, a pointer to the ring holding node
-Argument 1: The node in the ring to remove.
 
 Output
 ~~~~~~
@@ -63,14 +63,14 @@ H2K_ring_insert
 
 .. cfunction:: H2K_ring_insert(void *ring, void *node)
 
+	:param ring: A pointer to the ring to add the node to.
+	:param node: The node to be added
+
 The H2K_ring_insert function adds ``node`` to ``ring``, as the node pointed to by
 ``ring``.
 
 Input
 ~~~~~
-
-Argument 0: A pointer to the ring to add the node to.
-Argument 1: The node to be added
 
 Output
 ~~~~~~
@@ -92,14 +92,14 @@ H2K_ring_insert
 
 .. cfunction:: H2K_ring_insert(void *ring, void *node)
 
+	:param ring: A pointer to the ring to add the node to.
+	:param node: The node to be added
+
 The H2K_ring_insert function adds ``node`` to ``ring``, as the node previous to the
 node pointed to by ``ring``.
 
 Input
 ~~~~~
-
-Argument 0: A pointer to the ring to add the node to.
-Argument 1: The node to be added
 
 Output
 ~~~~~~
@@ -120,15 +120,15 @@ H2K_ring_remove_append
 
 .. cfunction:: H2K_ring_remove_append(void *fromring, void *toring, void *node)
 
+	:param fromring: A pointer to the ring to remove the node from.
+	:param toring: A pointer to the ring to add the node to.
+	:param node: The node to be moved
+
 The H2K_ring_remove_append function removes ``node`` from ``fromring`` and adds it to
 ``toring``, as the node previous to the node pointed to by ``toring``.
 
 Input
 ~~~~~
-
-Argument 0: A pointer to the ring to remove the node from.
-Argument 1: A pointer to the ring to add the node to.
-Argument 2: The node to be added
 
 Output
 ~~~~~~

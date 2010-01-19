@@ -10,6 +10,9 @@ H2K_cputime_get
 
 .. cfunction:: u64_t H2K_cputime_get(H2K_thread_context *me)
 
+	:param me: Pointer to the thread context of the currently-executing thread
+	:returns: Current total time the thread has been scheduled, in processor cycles.
+
 Description
 ~~~~~~~~~~~
 
@@ -18,12 +21,8 @@ Returns the total time the current thread has been scheduled.
 Input
 ~~~~~
 
-Pointer to the thread context of the currently-executing thread
-
 Output
 ~~~~~~
-
-Current total time the thread has been scheduled, in processor cycles.
 
 Functionality
 ~~~~~~~~~~~~~
@@ -38,6 +37,8 @@ H2K_pcycles_get
 .. cfunction:: u64_t H2K_pcycles_get(H2K_thread_context *me)
 
 
+	:param me: Pointer to the thread context of the currently-executing thread
+	:returns: The processor cycle count.
 
 
 Description
@@ -48,12 +49,8 @@ Returns the processor cycle count
 Input
 ~~~~~
 
-Pointer to the thread context of the currently-executing thread
-
 Output
 ~~~~~~
-
-The processor cycle count.
 
 Functionality
 ~~~~~~~~~~~~~

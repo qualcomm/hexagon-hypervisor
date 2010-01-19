@@ -55,6 +55,8 @@ H2K_runlist_push
 
 .. cfunction:: static inline void H2K_runlist_push(H2K_thread_context *newthread)
 
+	:param newthread: Thread to add to the runlist
+
 Description
 ~~~~~~~~~~~
 
@@ -62,8 +64,6 @@ Inserts a thread into the runlist.
 
 Input
 ~~~~~
-
-Argument 0: Thread to add to the runlist
 
 Output
 ~~~~~~
@@ -81,6 +81,9 @@ H2K_runlist_worst_prio
 
 .. cfunction:: static inline u32_t H2K_runlist_worst_prio()
 
+	:returns: the priority of the worst priority running thread.  Returns
+		MAX_PRIOS or higher if no threads are in the runlist.
+
 Description
 ~~~~~~~~~~~
 
@@ -92,8 +95,6 @@ Input
 
 Output
 ~~~~~~
-
-Returns the priority of the worst priority running thread.
 
 Functionality
 ~~~~~~~~~~~~~
@@ -108,6 +109,8 @@ H2K_runlist_remove
 
 .. cfunction:: static inline void H2K_runlist_remove(H2K_thread_context *thread)
 
+	:param thread: the thread to remove from the runlist
+
 Description
 ~~~~~~~~~~~
 
@@ -116,8 +119,6 @@ that the thread is in the runlist.
 
 Input
 ~~~~~
-
-Argument 0: the thread to remove from the runlist
 
 Output
 ~~~~~~

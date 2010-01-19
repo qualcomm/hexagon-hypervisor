@@ -9,6 +9,9 @@ H2K_thread_id
 
 .. cfunction:: u32_t H2K_thread_id(thread_context *me)
 
+	:param me: Pointer to the current context
+	:returns: A unique ID for the running thread
+
 Description
 ~~~~~~~~~~~
 
@@ -17,12 +20,8 @@ The H2K_thread_id function returns a unique id for the requesting thread.
 Input
 ~~~~~
 
-Argument 0: Pointer to the current context
-
 Output
 ~~~~~~
-
-A unique ID for the running thread
 
 Functionality
 ~~~~~~~~~~~~~

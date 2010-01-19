@@ -9,6 +9,8 @@ H2K_sched_yield
 
 .. cfunction:: void H2K_sched_yield(thread_context *me)
 
+	:param me: Pointer to the current thread context
+
 Description
 ~~~~~~~~~~~
 
@@ -16,8 +18,6 @@ The H2K_sched_yield function yields execution to all other threads at the same p
 
 Input
 ~~~~~
-
-Argument 0: Pointer to the current thread context
 
 Output
 ~~~~~~

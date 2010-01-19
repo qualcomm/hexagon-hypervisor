@@ -9,6 +9,12 @@ H2K_fatal_kernel
 
 .. cfunction:: void H2K_fatal_kernel(s16_t error_id, thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
+	:param error_id: Unique ID of the error that happened
+	:param me: Context of the currently-scheduled thread
+	:param info0: First word of information about the error
+	:param info1: Second word of information about the error
+	:param hthread: Hardware thread number
+
 Description
 ~~~~~~~~~~~
 
@@ -18,10 +24,6 @@ H2K_fatal_kernel_handler.
 
 Input
 ~~~~~
-
-Argument 0: The ID of the fatal kernel error
-Argument 1: The context of the currently running thread
-Argument 2: The hardware thread number
 
 Output
 ~~~~~~
@@ -38,6 +40,12 @@ H2K_fatal_thread
 
 .. cfunction:: void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
+	:param error_id: Unique ID of the error that happened
+	:param me: Context of the currently-scheduled thread
+	:param info0: First word of information about the error
+	:param info1: Second word of information about the error
+	:param hthread: Hardware thread number
+
 Description
 ~~~~~~~~~~~
 
@@ -50,10 +58,6 @@ will be logged.
 
 Input
 ~~~~~
-
-Argument 0: The ID of the fatal thread error
-Argument 1: The context of the currently running thread
-Argument 2: The hardware thread number
 
 Functionality
 ~~~~~~~~~~~~~

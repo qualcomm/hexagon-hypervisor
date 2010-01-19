@@ -12,6 +12,10 @@ H2K_fastint
 
 .. cfunction:: H2K_fastint(u32_t intno, H2K_thread_context *me, u32_t hthread)
 
+	:param intno: Interrupt number
+	:param me: Context for the current thread
+	:param hthread: Current hardware thread number
+
 Description
 ~~~~~~~~~~~
 
@@ -19,10 +23,6 @@ This function calls a fast interrupt
 
 Input
 ~~~~~
-
-Argument 0: Interrupt number
-Argument 1: Context for the current thread
-Argument 2: Current hardware thread number
 
 Output
 ~~~~~~

@@ -29,7 +29,7 @@ so that it does a best effort?)
 Next, the :cfunc:`H2K_sched_yield()` function removes the current thread from the runlist, and
 appends it on the end of the ready list.  
 
-We can then call dosched to pick a new thread to run.
+We can then call :cfunc:`H2K_dosched()` to pick a new thread to run.
 
 As an optimization, we can instead remove the thread at the head of the
 readylist at the same priority, and insert it into the runlist.  We switch to

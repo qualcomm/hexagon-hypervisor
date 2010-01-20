@@ -58,12 +58,12 @@ We then set the following parameters in the new thread context:
 * valid is set to VALID
 * The continuation is set to interrupt restore continuation
 
-We then add the new thread to the readylist, and call check_sanity_unlock
+We then add the new thread to the readylist, and call :cfunc:`H2K_check_sanity_unlock()`
 before returning.
 
 For security, we need to assure that no values are in registers incorrectly.
 We accomplish this by clearing the thread context during initialization and 
-at :cfunc:`H2K_thread_stop()` time.  This allows for faster thread_create calls.
+at :cfunc:`H2K_thread_stop()` time.  This allows for faster :cfunc:`H2K_thread_create()` calls.
 
 
 

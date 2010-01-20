@@ -2,7 +2,7 @@
 ASM_REF_CODE(Interrupt context save/restore not possible in C)
 
 :mod:`interrupt` -- Handle interrupt events
-===============
+===========================================
 
 .. module:: interrupt
 
@@ -17,12 +17,6 @@ Description
 This handles the common set of interrupts.  The interrupt handler carefully
 saves any required context, and jumps to the appropriate handler for the 
 next step.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -43,7 +37,8 @@ function to handle fast interrupts.  The fast interrupt handler may be called
 before saving the registers saved by the ABI to improve performance.
 
 What function to call is determined by the table H2K_inthandlers.  The format
-of each inthandler should be:
+of each inthandler should be::
+
 	H2K_handler(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 
 Real interrupted threads (as opposed to, for example, the idle thread) that may 
@@ -65,12 +60,6 @@ Description
 This routine returns to an interrupted thread.  It restores the registers from
 the thread context and returns to the thread in the appropriate place.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -89,12 +78,6 @@ This routine is called when we detect that we were interrupted while in wait.
 This is a common case, and we can avoid context save by branching to this 
 routine early.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -108,10 +91,10 @@ Testing
 Samples
 ~~~~~~~
 
-Input: thread context in SGP, or NULL
-Input: H2K_inthandlers
-Output: All (?) registers should be saved in thread context if SGP is non-NULL
-Flow: go to event handler for event number
+* Input: thread context in SGP, or NULL
+* Input: H2K_inthandlers
+* Output: All (?) registers should be saved in thread context if SGP is non-NULL
+* Flow: go to event handler for event number
 
 Important cases
 ~~~~~~~~~~~~~~~
@@ -131,7 +114,7 @@ The harness will have a helper function:
 .. cfunction:: void TH_do_interrupt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
 
 This function will load the appropriate registers from the src thread context, set
-SGP to the storage pointed to by `dest`, and call H2K_handle_interrupt with the
+SGP to the storage pointed to by `dest`, and call :cfunc:`H2K_handle_int()` with the
 correct SSR CAUSE code for the interrupt corresponding to num having happened.
 
 For non-NULL SGP value tests, the approriate entry in H2K_inthandlers will point to a second helper function:

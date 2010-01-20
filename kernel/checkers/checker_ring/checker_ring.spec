@@ -1,7 +1,7 @@
 
 MODULE: checker_kernel_locked
 
-FUNCTION: void checker_ring(H2K_ringnode_t **x)
+.. cfunction:: void checker_ring(H2K_ringnode_t **x)
 
 Argument 0: Pointer to the ring.
 

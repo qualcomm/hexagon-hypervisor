@@ -1,6 +1,6 @@
 
 :mod:`intconfig` -- configuration for interrupt handling
-=========================================================
+========================================================
 
 .. module:: intconfig
 
@@ -14,17 +14,11 @@ Description
 
 H2K_intconfig_init initializes the interrupt configuration data and fast interrupt contexts
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
 All handler pointers are initialized to NULL.  The fastint mask is initialized 
-to zeros.  The handler for reschedule is initialized to H2K_resched.
+to zeros.  The handler for reschedule is initialized to :cfunc:`H2K_resched()`.
 
 Next, we initialize all fastint contexts to zeros.  We then update the hthread
 fields to the correct hardware thread that will be using the fastint context, 
@@ -46,12 +40,6 @@ Description
 ~~~~~~~~~~~
 
 Modifies the interrupt configuration data to register a new fast interrupt handler.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~

@@ -2,7 +2,7 @@
 ASM_REF_CODE(Switch involves special registers and sleep, and cannot be written in C.)
 
 :mod:`switch` -- Switch to a new thread
-========================================
+=======================================
 
 .. module:: switch
 
@@ -17,18 +17,11 @@ H2K_switch
 Description
 ~~~~~~~~~~~
 
-H2K_switch switches to a new thread that has been chosen to be scheduled.
+:cfunc:`H2K_switch()` switches to a new thread that has been chosen to be scheduled.
 If the new thread is NULL, we will go to wait mode.
-
-Input
-~~~~~
 
 .. InputAssert::
 	ASSERT(kernel_locked())
-
-Output
-~~~~~~
-
 
 
 Functionality
@@ -44,13 +37,13 @@ cumulative CPU cycles for the thread.
 If ``to`` is NULL, we go to wait mode:
 	0. Unlock the big kernel lock
 	1. Set SGP to NULL
-	2. Jump to H2K_wait_forever
+	2. Jump to :cfunc:`H2K_wait_forever()`
 
 Otherwise, we set SGP to the new thread context, set the current hthread 
 in the new thread context, save the current pcycles as the thread start time,
 load the continuation for the new thread into the link register, load the
 saved r1:0 (which contain a return value from the blocking function), and jump
-to H2K_check_sanity_unlock.  H2K_check_sanity_unlock will return to the
+to :cfunc:`H2K_check_sanity_unlock()`.  :cfunc:`H2K_check_sanity_unlock()` will return to the
 continuation.
 
 
@@ -67,7 +60,7 @@ Samples
 * Input: from, which may be NULL
 * Input: to, which may be NULL
 
-* Flow: If to is non-NULL, we should arrive at H2K_check_sanity with the return address 
+* Flow: If to is non-NULL, we should arrive at :cfunc:`H2K_check_sanity_unlock()` with the return address 
     set to the continuation value in "to"
 * Ouptut: If to is NULL, we should unlock the kernel lock, 
 * Flow: if to is NULL, we should jump to H2K_wait_forever

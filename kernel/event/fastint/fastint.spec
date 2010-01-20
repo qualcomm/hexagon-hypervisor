@@ -2,7 +2,7 @@
 ASM_REF_CODE(fastint requires special register changes difficult in C)
 
 :mod:`fastint` -- call a fast interrupt handler
-==============================================
+===============================================
 
 .. module:: fastint
 
@@ -21,16 +21,10 @@ Description
 
 This function calls a fast interrupt
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
-The H2K_fastint routine sets up the environment for a fast interrupt handler, and
+The :cfunc:`H2K_fastint()` routine sets up the environment for a fast interrupt handler, and
 then calls the fast interrupt handler.
 
 When the fast interrupt handler returns, we clear the IAD bit for the fast interrupt.
@@ -67,14 +61,6 @@ Description
 This routine gets called from handle_int when we detect that the check at the end of 
 the fastint handler was interrupted.  Call the correct fastint handler.
 
-Input
-~~~~~
-
-Several registers are assumed to be in the correct state from fastint_call.
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -106,11 +92,11 @@ Testing
 Samples
 ~~~~~~~
 
-Input: thread context in SGP, or NULL
-Input: H2K_fastint_contexts
-Input: H2K_fastint_funcptrs
-Input: H2K_fastint_gp
-Flow: go to approrpiate fast interrupt handler
+* Input: thread context in SGP, or NULL
+* Input: H2K_fastint_contexts
+* Input: H2K_fastint_funcptrs
+* Input: H2K_fastint_gp
+* Flow: go to approrpiate fast interrupt handler
 
 Important cases
 ~~~~~~~~~~~~~~~

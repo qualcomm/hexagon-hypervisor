@@ -1,6 +1,6 @@
 
 :mod:`thread_create` -- create a new thread
-============================================
+===========================================
 
 .. module:: thread_create
 
@@ -20,19 +20,13 @@ H2K_thread_create
 Description
 ~~~~~~~~~~~
 
-The H2K_thread_create function creates a new thread.  The calling thread
+The :cfunc:`H2K_thread_create()` function creates a new thread.  The calling thread
 specifies attributes for the thread, and the new thread is created
 with those attributes.  New threads can have reduced features, by
 specifying the mask of allowed traps.
 
 The call to thread_create will return -1 on error, or an ID for the
 thread on success.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 
 Functionality
@@ -69,7 +63,7 @@ before returning.
 
 For security, we need to assure that no values are in registers incorrectly.
 We accomplish this by clearing the thread context during initialization and 
-at H2K_thread_stop time.  This allows for faster thread_create calls.
+at :cfunc:`H2K_thread_stop()` time.  This allows for faster thread_create calls.
 
 
 
@@ -105,9 +99,9 @@ Harness
 
 We link directly with the create object file, and also the readylist object file.
 
-We define H2K_check_sanity_unlock() to set a flag indicating that the function was called.
+We define :cfunc:`H2K_check_sanity_unlock()` to set a flag indicating that the function was called.
 
-The test harness will call H2K_thread_create with various inputs and check to make sure
+The test harness will call :cfunc:`H2K_thread_create()` with various inputs and check to make sure
 that the appropriate action was taken:
 
 * Check appropriate input arguments, return -1 if obviously erroneous

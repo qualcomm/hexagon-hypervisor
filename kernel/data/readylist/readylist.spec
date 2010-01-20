@@ -1,6 +1,6 @@
 
 :mod:`readylist` -- managing unblocked, non-executing threads
-==============================================================
+=============================================================
 
 .. module:: readylist
 
@@ -39,12 +39,6 @@ Description
 
 Initializes the H2K_ready structures.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -61,12 +55,6 @@ H2K_ready_best_prio
 
 Description
 ~~~~~~~~~~~
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -87,16 +75,10 @@ Description
 
 Appends the thread to the ready list.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
-We get the priority from the thread context.  Next, we call H2K_ring_append
+We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_append()`
 on the H2K_ready ring at the thread's priority.  Finally, we set the bit of
 H2K_ready_valids at the thread's priority.
 
@@ -114,16 +96,10 @@ Description
 
 Inserts the thread to the ready list.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
-We get the priority from the thread context.  Next, we call H2K_ring_insert
+We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_insert()`
 on the H2K_ready ring at the thread's priority.  Finally, we set the bit of
 H2K_ready_valids at the thread's priority.
 
@@ -141,16 +117,10 @@ Description
 
 Removes the thread from the ready list.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
-We get the priority from the thread context.  Next, we call H2K_ring_remove
+We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_remove()`
 on the H2K_ready ring at the thread's priority.  Finally, if there are no
 more elements in the ring, we clear the bit of H2K_ready_valids at the
 thread's priority.
@@ -169,22 +139,16 @@ Description
 
 Removes the best priority thread from the ready list.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
 If there are no ready threads, we return NULL.
 
-We call H2K_ready_best_prio() to obtain the priority of the best priority ready thread.
+We call :cfunc:`H2K_ready_best_prio()` to obtain the priority of the best priority ready thread.
 
 We then get the thread pointed to by the H2K_ready pointer at the correct priority.
 
-This thread is removed from the ready list by calling H2K_ready_remove, and returned.
+This thread is removed from the ready list by calling :cfunc:`H2K_ready_remove()`, and returned.
 
 
 

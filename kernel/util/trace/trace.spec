@@ -5,7 +5,7 @@
 .. module:: trace
 
 SUMMARY
---------
+-------
 
 The kernel provides a logging facility for kernel information.
 
@@ -63,14 +63,8 @@ Description
 
 If an event is less than MAX_TRACE_LEVEL, log a kernel event.
 
-Input
-~~~~~
-
 .. InputAssert::
 	assert(H2K_trace_index < MAX_TRACE_ENTRIES)
-
-Output
-~~~~~~
 
 
 Functionality

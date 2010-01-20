@@ -2,7 +2,7 @@
 ASM_REF_CODE(Trap context save/restore not possible in C)
 
 :mod:``trap`` -- handle kernel request events
-================
+=============================================
 
 .. module:: trap
 
@@ -19,12 +19,6 @@ The trap0 instruction goes to the trap0 vector, which jumps to this routine.
 The handle_trap0 function saves callee-save registers according to the ABI,
 including special registers.  It also determines the functionality requested
 by the trap, and calls the corresponding kernel routine.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -47,8 +41,8 @@ an appropriate semihosting provider.
 We then check to ensure that the thread can use the requested trap.  This is
 used to reduce capabilities of less-priviledged threads, and is also used to
 assert that fast interrupt handlers cannot block.  If a user-mode thread cannot
-execute the trap, we call H2K_fatal_thread().  If a fast interrupt cannot
-execute the trap, we call H2K_fatal_kernel().
+execute the trap, we call :cfunc:`H2K_fatal_thread()`.  If a fast interrupt cannot
+execute the trap, we call :cfunc:`H2K_fatal_kernel()`.
 
 We then call a stub that saves the return value into the continuation field, 
 and jump to the traptab entry for the requested trap.  
@@ -79,7 +73,7 @@ Testing
 Samples
 ~~~~~~~
 
-Input: thread context in SGP
+* Input: thread context in SGP
 
 Important cases
 ~~~~~~~~~~~~~~~
@@ -99,7 +93,7 @@ The harness will have a helper function:
 .. cfunction:: void TH_do_trap(H2K_thread_context *src, H2K_thread_context *dest, u32_t trapnum)
 
 This function will load the appropriate registers from the src thread context, set
-SGP to the storage pointed to by `dest`, and call H2K_handle_trap0 with the
+SGP to the storage pointed to by `dest`, and call :cfunc:`H2K_handle_trap0()` with the
 correct SSR CAUSE code for the trap corresponding to num having happened.
 
 The test harness will define each possible trap handler as a check to make sure any `me` value 

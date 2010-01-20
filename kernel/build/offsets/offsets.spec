@@ -1,5 +1,6 @@
 
 :mod:`offsets` -- generate struct offsets for assembly
+======================================================
 
 .. module:: offsets
 

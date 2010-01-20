@@ -1,5 +1,8 @@
 
-MODULE: tlbmiss
+:mod:`tlbmiss` -- TLB Miss Handling
+===================================
+
+.. module:: tlbmiss
 
 FUNCTION: H2K_handle_tlbmissx
 

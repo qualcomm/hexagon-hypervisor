@@ -2,8 +2,14 @@
 ASM_REF_CODE(Vectors cannot be written in C)
 
 :mod:`vectors` -- Event Vector Table
+====================================
 
-..cfunction:: H2K_event_vectors()
+.. module:: vectors
+
+H2K_event_vectors
+-----------------
+
+.. cfunction:: H2K_event_vectors()
 
 Description
 ~~~~~~~~~~~
@@ -11,12 +17,6 @@ Description
 The event vectors are the entry points into the kernel.  Every exception, or
 interrupt causes the program counter to change to an entry in the event
 vectors.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -42,8 +42,8 @@ Testing
 Samples
 ~~~~~~~
 
-Input: Event number.
-Flow: go to event handler for event number
+* Input: Event number.
+* Flow: go to event handler for event number
 
 Important cases
 ~~~~~~~~~~~~~~~
@@ -58,8 +58,14 @@ Important cases
 7. Invalid input.
 8. H2K_handle_trap0
 9. H2K_handle_trap1
-10-15. Invalid input.
-16-48. H2K_handle_int.
+10. Invalid input.
+11. Invalid input.
+12. Invalid input.
+13. Invalid input.
+14. Invalid input.
+15. Invalid input.
+
+16-48 should jump to :cfunc:`H2K_handle_int()`.
 
 Harness
 ~~~~~~~

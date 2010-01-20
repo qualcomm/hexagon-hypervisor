@@ -2,7 +2,7 @@
 ASM_REF_CODE(Bootup code is difficult to write in C)
 
 :mod:`boot` -- startup routines
-================================
+===============================
 
 .. module:: boot
 
@@ -12,12 +12,6 @@ H2_init
 .. cfunction:: void h2_init()
 
 This function starts the kernel, if it has not been started already.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -34,28 +28,14 @@ start
 
 This routine boots the machine.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
 We assume that the machine is entirely off.
 
-We initialize caches, etc.
+We initialize caches and the TLB, and set up the stack pointer.
 
-We initialize all kernel functionality.
-
-We do other stuff
-
-Then we jump to symbol that should be in crt0
-
-We need to include a reference to H2K_symbols to ensure that 
-is also pulled in.
-
+Finally, we call :cfunc:`H2K_thread_boot()`.
 
 H2K_handle_reset
 ----------------
@@ -64,21 +44,14 @@ H2K_handle_reset
 
 This routine boots a new processor, or after a soft reset
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
-XXX: We assume for now that this is only secondary threads booting.
+We set up kernel stack pointer, and then call :cfunc:`H2K_switch()` with both
+arguments set to NULL.
 
-We set up kernel stack pointer and go to wait mode.
 
-
-STRUCT: void *H2K_symbols[]
+.. :cvar: void *H2K___refs[]
 
 This data structure contains references to all functions
 that are required in a H2 kernel, to force the linker

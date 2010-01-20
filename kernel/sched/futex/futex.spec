@@ -1,34 +1,28 @@
 
 :mod:`futex` -- Generic Blocking / Unblocking Services
-========================================================
+======================================================
 
 .. module:: futex
 
 H2K_futex_wait
--------------
+--------------
 
 .. cfunction:: s32_t H2K_futex_wait(u32_t *ptr, u32_t expected, H2K_thread_context *me)
 
 	:param ptr: a user-specified pointer to a word in memory
-	:param expected: the expected value for *ptr
+	:param expected: the expected value for `*ptr`
 	:param me: pointer to the current thread.
 	:returns: 0 if the thread blocked, -1 otherwise.
 
 Description
-~~~~~~~~~
+~~~~~~~~~~~
 
-H2K_futex_wait asks the kernel to block, but only if the value pointed to by "ptr" is equal
+:cfunc:`H2K_futex_wait()` asks the kernel to block, but only if the value pointed to by "ptr" is equal
 to "expected".  
 
 If the value has changed, the kernel returns -1.
 
 If the thread went to sleep, the kernel returns 0.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -60,9 +54,10 @@ One mechanism for safely checking the pointer follows:
 If the value was unreadable or does not match the expected value, unlock the
 BKL and return -1.
 
-Otherwise, we remove the current thread from the list of running threads, Add
-it to the futex hash table using the hash key.  We then call for a new thread 
-to be scheduled.  The return value must be zero.
+Otherwise, we remove the current thread from the list of running threads, set
+the `r0100` field in the context to 0 (which will be the return value), and add
+it to the futex hash table using the hash key.  We then call
+:cfunc:`H2K_dosched()` for a new thread to be scheduled.  
 
 H2K_futex_resume
 ----------------
@@ -77,16 +72,10 @@ H2K_futex_resume
 Description
 ~~~~~~~~~~~
 
-H2K_futex_resume wakes threads waiting on the location specified by "lock".  A maximum of 
+:cfunc:`H2K_futex_resume()` wakes threads waiting on the location specified by "lock".  A maximum of 
 "n_to_wake" threads are awoken.  
 
 The kernel returns the number of woken threads.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -95,7 +84,7 @@ If the number of threads to wake is zero, there is nothing to be done.  We retur
 This can happen if n_to_wake == 0, or if there are no threads that can be made ready.
 
 We compute the hash key based on the specified "lock" value, the same way as we do for 
-H2K_futex_wait.  
+:cfunc:`H2K_futex_wait()`.  
 
 Next, we acquire the BKL.
 
@@ -106,7 +95,8 @@ Otherwise, we search through the threads at the bucket for matching threads.
 Matching threads, up to n_to_wake, are removed from the futex hash bucket and
 added to the ready queue.  
 
-Finally, we check sanity, unlock, and return the number of woken threads.
+Finally, we sibcall to :cfunc:`H2K_check_sanity_unlock()`, asking it to return
+the number of woken threads.
 
 IMPLEMENTATION CHOICES TBD:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,6 +105,21 @@ The futex hash bin can be kept in sorted order.  Sorting can be done on priority
 futex address.  This increases the cost of blocking, but decreases the cost of
 waking up the highest priority threads.
 
+
+H2K_futex_resume
+----------------
+
+.. cfunction:: void H2K_futex_init(void)
+
+Description
+~~~~~~~~~~~
+
+:cfunc:`H2K_futex_init()` initializes the futex data structures.
+
+Functionality
+~~~~~~~~~~~~~
+
+H2K_futexhash is set to NULL for each element in the array.
 
 
 Testing

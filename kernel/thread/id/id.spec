@@ -1,6 +1,6 @@
 
 :mod:`thread_id` -- obtain unique ID
-======================================
+====================================
 
 .. module:: thread_id
 
@@ -15,13 +15,7 @@ H2K_thread_id
 Description
 ~~~~~~~~~~~
 
-The H2K_thread_id function returns a unique id for the requesting thread.
-
-Input
-~~~~~
-
-Output
-~~~~~~
+The :cfunc:`H2K_thread_id()` function returns a unique id for the requesting thread.
 
 Functionality
 ~~~~~~~~~~~~~
@@ -60,6 +54,6 @@ Harness
 
 We link directly with the thread object file.
 
-The test harness calls H2K_thread_id with `me`, and expects the return value
+The test harness calls :cfunc:`H2K_thread_id()` with `me`, and expects the return value
 to be equal to the thread context pointer.
 

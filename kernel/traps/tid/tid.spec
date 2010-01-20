@@ -1,6 +1,6 @@
 
 :mod:`tid` -- managing the software thread id
-==============================================
+=============================================
 
 
 H2K_tid_set
@@ -15,12 +15,6 @@ Description
 ~~~~~~~~~~~
 
 Set the TID value
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -40,12 +34,6 @@ Description
 ~~~~~~~~~~~
 
 Get the TID value
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~

@@ -1,6 +1,6 @@
 
 :mod:`time` -- cycle count tracking information
-================================================
+===============================================
 
 .. module:: time
 
@@ -17,12 +17,6 @@ Description
 ~~~~~~~~~~~
 
 Returns the total time the current thread has been scheduled.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -45,12 +39,6 @@ Description
 ~~~~~~~~~~~
 
 Returns the processor cycle count
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -81,10 +69,10 @@ H2 is started in the normal method.
 
 We spawn two threads.
 
-The first thread checks that subsequent calls to H2K_pcycles_get have similar
+The first thread checks that subsequent calls to :cfunc:`H2K_pcycles_get()` have similar
 increasing values.
 
-We then check that subsequent calls to H2K_cputime_get have similar increasing
+We then check that subsequent calls to :cfunc:`H2K_cputime_get()` have similar increasing
 values.
 
 We check to make sure that after spinning for a large number of cycles, that 

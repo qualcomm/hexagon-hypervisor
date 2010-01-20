@@ -31,17 +31,6 @@ action.
 This function must return the input argument.  This facilitates use during 
 the system call return process.
    
-Input
-~~~~~
-
-Argument 0: The value that must be returned by the function.
-
-
-Output
-~~~~~~
-
-Should return Argument 0.
-
 
 .. InputAssert::
    assert(checker_kernel_locked());
@@ -82,23 +71,12 @@ H2K_check_sanity_unlock
 Description
 ~~~~~~~~~~~
    
-This function performs the same checks as :cfunc:`H2K_check_sanity`, and additionally
+This function performs the same checks as :cfunc:`H2K_check_sanity()`, and additionally
 unlocks the kernel.  This facilitates its use as a sibling call, as
 check_sanity and unlock are common in the system call return process.
    
 This function must return the input argument.  This facilitates use
 during the system call return process.
-
-   
-Input
-~~~~~
-Argument 0: The value that must be returned by the function.
-
-  
-Output
-~~~~~~
-
-Should return Argument 0.
 
 
 .. InputAssert::
@@ -113,14 +91,14 @@ Should return Argument 0.
 Functionality
 ~~~~~~~~~~~~~
    
-Implement the functionality of check_sanity.
+Implement the functionality of :cfunc:`H2K_check_sanity()`.
    
 Unlock the BKL.
    
 Return returnval.
 
 H2K_check_sched_mask
------------------------
+--------------------
 
 .. cfunction:: void H2K_check_sched_mask(void)
    
@@ -131,12 +109,6 @@ This function checks whether threads at priorities that should
 be masked have been removed from the runlist.  If any masked threads
 are running, the lowest priority running thread is made interruptible
 and the reschedule interrupt is raised.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 
 .. InputAssert::

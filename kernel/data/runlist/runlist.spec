@@ -1,6 +1,6 @@
 
 :mod:`runlist` -- managing the currently-running threads
-=========================================================
+========================================================
 
 .. module:: runlist
 
@@ -31,18 +31,12 @@ thread, and find the minimum by inspecting each value.
 H2K_runlist_init
 ----------------
 
-..cfunction:: void H2K_runlist_init()
+.. cfunction:: void H2K_runlist_init()
 
 Description
 ~~~~~~~~~~~
 
 Initializes the H2K_runlist structures.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -61,12 +55,6 @@ Description
 ~~~~~~~~~~~
 
 Inserts a thread into the runlist.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -90,12 +78,6 @@ Description
 Returns the priority corresponding to the running thread with the worst priority.
 Returns MAX_PRIOS or higher if no threads are in the runlist.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -116,12 +98,6 @@ Description
 
 Removes ``thread`` from the runlist.  By calling this function, you guarantee
 that the thread is in the runlist.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~

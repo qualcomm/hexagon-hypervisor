@@ -1,6 +1,6 @@
 
 :mod:`resched` -- handle a reschedule interrupt
-================================================
+===============================================
 
 .. module:: resched
 
@@ -16,13 +16,7 @@ H2K_resched
 Description
 ~~~~~~~~~~~
 
-H2K_resched handles a rescheduling interrupt 
-
-Input
-~~~~~
-
-Output
-~~~~~~
+:cfunc:`H2K_resched()` handles a rescheduling interrupt 
 
 Functionality
 ~~~~~~~~~~~~~
@@ -35,7 +29,7 @@ If the current thread is NULL, WAIT mode was interrupted, so we clear the wait
 mask bit.  Otherwise, we remove the currently running thread, and append it to
 the ready queue.
 
-We then call H2K_dosched.
+We then call :cfunc:`H2K_dosched()`.
 
 
 Testing

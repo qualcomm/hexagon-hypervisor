@@ -1,6 +1,6 @@
 
 :mod:sched_yield -- yield to next thread at same priority
-=================
+=========================================================
 
 .. module:: sched_yield
 
@@ -14,27 +14,19 @@ H2K_sched_yield
 Description
 ~~~~~~~~~~~
 
-The H2K_sched_yield function yields execution to all other threads at the same priority.
-
-Input
-~~~~~
-
-Output
-~~~~~~
-
-None
+The :cfunc:`H2K_sched_yield()` function yields execution to all other threads at the same priority.
 
 Functionality
 ~~~~~~~~~~~~~
 
 First, we acquire the Big Kernel Lock.
 
-If the readylist at the current priority is empty, the H2K_sched_yield function may
+If the readylist at the current priority is empty, the :cfunc:`H2K_sched_yield()` function may
 return immediately after releasing the BKL.  (EJP: can we do this outside the BKL?
 Another thread might be inserting itself into the ready list.  Can we spec the function
 so that it does a best effort?)
 
-Next, the H2K_sched_yield function removes the current thread from the runlist, and
+Next, the :cfunc:`H2K_sched_yield()` function removes the current thread from the runlist, and
 appends it on the end of the ready list.  
 
 We can then call dosched to pick a new thread to run.
@@ -69,11 +61,11 @@ Harness
 
 Link with H2 kernel library.
 
-If valid threads exist at the current priority, H2K_sched_yield should lock
+If valid threads exist at the current priority, :cfunc:`H2K_sched_yield()` should lock
 the kernel, remove the current thread from the runlist, append the current
-thread to the ring at the current thread priority, and call H2K_dosched.
+thread to the ring at the current thread priority, and call :cfunc:`H2K_dosched()`.
 
-If no valid threads exist at the current priority, H2K_sched_yield may
+If no valid threads exist at the current priority, :cfunc:`H2K_sched_yield()` may
 return immediately.  Since this optimization may be important for performance
 during spin code, we want to verify that it has been implemented.
 

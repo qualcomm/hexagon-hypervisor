@@ -22,12 +22,6 @@ Description
 
 Clears the Interrupt Auto Disable register using the specified mask.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -46,12 +40,6 @@ Description
 ~~~~~~~~~~~
 
 Changes the IMASK register for the specified thread to ``imask``
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -72,12 +60,6 @@ Description
 
 Get the IMASK register for the specified thread
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Returns the imask of the desired hardware thread
 
 Functionality
@@ -96,13 +78,6 @@ Description
 ~~~~~~~~~~~
 
 This function raises the reschedule interrupt.
-
-Input
-~~~~~
-
-
-Output
-~~~~~~
 
 
 Functionality
@@ -123,12 +98,6 @@ Description
 
 Changes the IMASK of the current thread to be appropriate for a non-low-priority thread.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -139,7 +108,7 @@ most of the interrupts, and then place that value in IMASK.
 
 
 lowprio_imask
-------------
+-------------
 
 .. cfunction:: static inline void lowprio_imask(u32_t hthread)
 
@@ -149,12 +118,6 @@ Description
 ~~~~~~~~~~~
 
 Changes the IMASK of the current thread to be appropriate for a low-priority thread.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -172,12 +135,6 @@ Description
 ~~~~~~~~~~~
 
 Returns the value of the SSR register.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Returns the value of the SSR register
 
@@ -197,12 +154,6 @@ Description
 ~~~~~~~~~~~
 
 Returns the current hardware thread number.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Returns the current hardware thread number.
 
@@ -225,12 +176,6 @@ Description
 
 Lock the K0 hardware lock.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -240,7 +185,7 @@ This merely executes the K0LOCK instruction.
 
 
 H2K_mutex_unlock_k0
---------------------
+-------------------
 
 .. cfunction:: static inline void H2K_mutex_unlock_k0()
 
@@ -250,12 +195,6 @@ Description
 ~~~~~~~~~~~
 
 Unlock the K0 hardware lock.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -302,9 +241,6 @@ H2K_clear_ipend
 .. cfunction::  static inline void H2K_clear_ipend(u32_t mask)
 
 	:param mask:  Mask of bits to clear out of IPEND
-
-Input
-~~~~~
 
 Description
 ~~~~~~~~~~~

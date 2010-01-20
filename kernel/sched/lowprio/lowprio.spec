@@ -1,26 +1,20 @@
 
 :mod:`lowprio` -- managing the lowest priority thread
-======================================================
+=====================================================
 
 .. module:: lowprio
 
 H2K_lowprio_notify
--------------------
+------------------
 
 .. cfunction:: static inline void H2K_lowprio_notify()
 
 Description
 ~~~~~~~~~~~
 
-H2K_lowprio_notify identifies a new thread to be the lowest-priority thread
+:cfunc:`H2K_lowprio_notify()` identifies a new thread to be the lowest-priority thread
 for receiving interrupts, and takes action to make that thread be receptive to
 interrupts.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -33,21 +27,15 @@ hardware thread and to call thread_prio_change_low().
 
 
 H2K_lowprio_raise
-------------------
+-----------------
 
 .. cfunction:: static inline void H2K_lowprio_raise()
 
 Description
 ~~~~~~~~~~~
 
-H2K_lowprio_raise takes the thread currently marked as lowest priority, and 
+:cfunc:`H2K_lowprio_raise()` takes the thread currently marked as lowest priority, and 
 modifies the state to indicate it is no longer lowest priority.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -55,25 +43,19 @@ Functionality
 If H2K_wait_mask is nonzero, we return, as we should never mask interrupts on 
 a waiting thread.  Otherwise, count the trailing zeros of H2K_priomask, which
 yields the hardware thread that should no longer be the low priority thread.  
-We clear that bit from the H2K_priomask and call H2K_prio_change_high() for
+We clear that bit from the H2K_priomask and call :cfunc:`H2K_prio_change_high()` for
 the hardware thread.  
 
 
 H2K_lowprio_raise
-------------------
+-----------------
 
 .. cfunction:: static inline void H2K_lowprio_init()
 
 Description
 ~~~~~~~~~~~
 
-H2K_lowprio_init initializes the data structures used by the lowprio facility.
-
-Input
-~~~~~
-
-Output
-~~~~~~
+:cfunc:`H2K_lowprio_init()` initializes the data structures used by the lowprio facility.
 
 Functionality
 ~~~~~~~~~~~~~

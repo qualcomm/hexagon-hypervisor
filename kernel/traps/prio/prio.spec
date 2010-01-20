@@ -1,6 +1,6 @@
 
 :mod:`prio` -- managing priorities
-===================================
+==================================
 
 .. module:: prio
 
@@ -19,12 +19,6 @@ Description
 ~~~~~~~~~~~
 
 Gets the priority for the current thread context.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -46,12 +40,6 @@ Description
 
 UNIMPLEMENTED.  Returns -1.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 
 Testing
 -------
@@ -72,9 +60,9 @@ Harness
 We only link with the library.
 
 After setting the priority field in a thread context, we check that
-H2K_prio_get returns the correct priority.
+:cfunc:`H2K_prio_get()` returns the correct priority.
 
-We also check that H2K_prio_set returns -1.
+We also check that :cfunc:`H2K_prio_set()` returns -1.
 
 
 

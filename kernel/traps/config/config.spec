@@ -23,12 +23,6 @@ Description
 
 Trap handler for kernel configuration.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
@@ -54,12 +48,6 @@ Description
 ~~~~~~~~~~~
 
 Adds additional memory for use as thread contexts.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -94,12 +82,6 @@ Description
 
 Configures the kernel fatal error handler function.
 
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~

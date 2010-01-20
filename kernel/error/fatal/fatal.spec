@@ -1,6 +1,6 @@
 
 :mod:`fatal` -- errors that can not be corrected
-=================================================
+================================================
 
 .. module:: fatal
 
@@ -18,15 +18,9 @@ H2K_fatal_kernel
 Description
 ~~~~~~~~~~~
 
-H2K_fatal_kernel handles a fatal kernel error.  The kernel will attempt to
+:cfunc:`H2K_fatal_kernel()` handles a fatal kernel error.  The kernel will attempt to
 halt execution completely, and calls the function specified by 
 H2K_fatal_kernel_handler.
-
-Input
-~~~~~
-
-Output
-~~~~~~
 
 Functionality
 ~~~~~~~~~~~~~
@@ -49,19 +43,16 @@ H2K_fatal_thread
 Description
 ~~~~~~~~~~~
 
-H2K_fatal_thread handles a fatal thread error.  A fatal thread error is an error
+:cfunc:`H2K_fatal_thread()` handles a fatal thread error.  A fatal thread error is an error
 from a thread that the thread cannot handle.  For example, if the thread event vector
 is NULL, the thread is incapable of recovering from an error.  
 
 When a fatal thread error occurs, the thread will be terminated and the error
 will be logged.
 
-Input
-~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
-We log the error, and then sibcall to H2K_thread_stop.
+We log the error, and then sibcall to :cfunc:`H2K_thread_stop()`.
 
 

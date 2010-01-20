@@ -1,6 +1,6 @@
 
 :mod:`thread` -- data structures for threads
-=============================================
+============================================
 
 .. module:: thread
 
@@ -24,14 +24,24 @@ Description
 
 Zeros a thread context.
 
-Input
-~~~~~
-
-Output
-~~~~~~
-
 Functionality
 ~~~~~~~~~~~~~
 
 Sets every bit in the thread context to zero.
+
+H2K_thread_init
+---------------
+
+.. cfunction:: void H2K_thread_init(void)
+
+Description
+~~~~~~~~~~~
+
+Initializes thread-related data structures.
+
+Functionality
+~~~~~~~~~~~~~
+
+Clears out the H2K_boot_context by calling :cfunc:`H2K_thread_context_clear()`.
+It also sets H2K_free_threads to NULL.
 

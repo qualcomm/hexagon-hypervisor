@@ -50,6 +50,9 @@ and jump to the traptab entry for the requested trap.
 The trap request can return, or can call the trap continuation.
 
 
+H2K_traptab
+-----------
+
 .. cfunction:: H2K_traptab()
 
 Description
@@ -63,7 +66,45 @@ argument for most functions.
 
 To go to the appropriate handler for a trap, jump to traptab + 8*trap_number.
 
+Functionality
+~~~~~~~~~~~~~
 
+Each pair of instructions corresponds to the appropriate trap id.
+Several traps handlers may point to :cfunc:`H2K_thread_id()`, which 
+is used wherever empty traptab spaces exist.  The table is as follows:
+
+	0. :cfunc:`H2K_trap_angel()`: dummy handler for ANGEL semihosting
+	1. :cfunc:`H2K_thread_id()`: Get the thread ID
+	2. :cfunc:`H2K_futex_wait()`: Wait on a futex
+	3. :cfunc:`H2K_futex_resume()`: Wake threads waiting on a futex
+	4. :cfunc:`H2K_thread_create()`: Create a new thread
+	5. :cfunc:`H2K_thread_stop()`: Stop and recycle the current thread
+	6. :cfunc:`H2K_cputime_get()`: Get CPU time
+	7. :cfunc:`H2K_thread_id()`: Get the thread ID
+	8. :cfunc:`H2K_register_fastint()`: Register a fast interrupt handler
+	9. :cfunc:`H2K_prio_set()`: Change priority
+	10. :cfunc:`H2K_prio_get()`: Get priority
+	11. :cfunc:`H2K_thread_id()`: Get the thread ID
+	12. :cfunc:`H2K_sched_yield()`: Yield to another thread at the same priority
+	13. :cfunc:`H2K_thread_id()`: Get the thread ID
+	14. :cfunc:`H2K_thread_id()`: Get the thread ID
+	15. :cfunc:`H2K_thread_id()`: Get the thread ID
+	16. :cfunc:`H2K_pcycles_get()`: Get processor cycle count
+	17. :cfunc:`H2K_thread_id()`: Get the thread ID
+	18. :cfunc:`H2K_tid_set()`: Set software thread ID
+	19. :cfunc:`H2K_tid_get()`: Get software thread ID
+	20. :cfunc:`H2K_thread_id()`: Get the thread ID
+	21. :cfunc:`H2K_thread_id()`: Get the thread ID
+	22. :cfunc:`H2K_thread_id()`: Get the thread ID
+	23. :cfunc:`H2K_thread_id()`: Get the thread ID
+	24. :cfunc:`H2K_thread_id()`: Get the thread ID
+	25. :cfunc:`H2K_thread_id()`: Get the thread ID
+	26. :cfunc:`H2K_thread_id()`: Get the thread ID
+	27. :cfunc:`H2K_thread_id()`: Get the thread ID
+	28. :cfunc:`H2K_thread_id()`: Get the thread ID
+	29. :cfunc:`H2K_thread_id()`: Get the thread ID
+	30. :cfunc:`H2K_trap_config()`: Adjust Kernel Configuration
+	31. :cfunc:`H2K_thread_id()`: Get the thread ID
 
 
 Testing

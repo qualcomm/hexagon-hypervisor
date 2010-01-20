@@ -119,7 +119,7 @@ FUNC_START H2K_traptab .text.event.trap0 .p2align 8
 		nop
 	}
 	{
-		r2 = r7
+		r0 = r7
 		jump H2K_thread_id // 1
 	}
 	{

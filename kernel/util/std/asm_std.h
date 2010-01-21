@@ -8,6 +8,8 @@
 
 #define NULL 0
 
+#define H2K_LANG_IS_ASM 1
+
 .macro FUNC_START name, section, align, amt
 	.section \section,"ax",@progbits
 	\align \amt

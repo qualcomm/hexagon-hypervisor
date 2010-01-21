@@ -32,5 +32,7 @@ typedef signed long long int s64_t;
 #define call(fname, ...) fname(__VA_ARGS__)
 #endif
 
+#define H2K_LANG_IS_C 1
+
 #endif
 

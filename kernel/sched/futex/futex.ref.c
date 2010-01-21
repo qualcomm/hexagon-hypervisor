@@ -11,9 +11,14 @@
 #include <readylist.h>
 #include <ring.h>
 #include <check_sanity.h>
+#include <q6protos.h>
 
+/* 
+ * EJP: hash table aligned to it's size, so we 
+ * should be able to use tableidx on the product 
+ */
 H2K_thread_context *H2K_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE*4))) IN_SECTION(".data.sched.futex");
-#define HASHVAL(X) ((((unsigned int)(X)) >> 3) & (FUTEX_HASHSIZE-1))
+#define HASHVAL(X) (Q6_R_extractu_RII((((unsigned int)(X)) * 2654435761UL),FUTEX_HASHBITS,32-FUTEX_HASHBITS))
 
 /*
  * UNSAFE: We assume that *lock is suitable for tinkering with.

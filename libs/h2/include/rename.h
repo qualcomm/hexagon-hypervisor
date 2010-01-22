@@ -87,9 +87,9 @@ REDEF_FUNCTION(int ,intwait,(unsigned long long int mask),(mask));
 #define H2_PREINIT_L2CACHE_SIZE_256K 3
 
 REDEF_FUNCTION(void ,init,(unsigned long long int *memmap),(memmap));
-REDEF_FUNCTION(void ,preinit_hthread_startup,(unsigned int mask),(mask));
-REDEF_FUNCTION(void ,preinit_l2cache_size,(int size),(size));
-REDEF_FUNCTION(void ,preinit_relocate_tcm,(void *addr),(addr));
+//REDEF_FUNCTION(void ,preinit_hthread_startup,(unsigned int mask),(mask));
+//REDEF_FUNCTION(void ,preinit_l2cache_size,(int size),(size));
+//REDEF_FUNCTION(void ,preinit_relocate_tcm,(void *addr),(addr));
 
 /*  "blast_mutex.h"  */
 

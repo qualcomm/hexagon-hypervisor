@@ -7,7 +7,7 @@
 H2K_fatal_kernel
 ----------------
 
-.. cfunction:: void H2K_fatal_kernel(s16_t error_id, thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
+.. cfunction:: void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 	:param error_id: Unique ID of the error that happened
 	:param me: Context of the currently-scheduled thread

@@ -37,8 +37,9 @@ s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 	}
 	me->futex_ptr = lock;
 	H2K_runlist_remove(me);
-	H2K_ring_append(&H2K_futexhash[hashval],me);
 	me->r0100 = 0;
+	me->status = H2K_STATUS_BLOCKED;
+	H2K_ring_append(&H2K_futexhash[hashval],me);
 	H2K_dosched(me,me->hthread);
 	return 0;
 }

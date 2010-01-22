@@ -7,7 +7,7 @@
 H2K_sched_yield
 ---------------
 
-.. cfunction:: void H2K_sched_yield(thread_context *me)
+.. cfunction:: void H2K_sched_yield(H2K_thread_context *me)
 
 	:param me: Pointer to the current thread context
 

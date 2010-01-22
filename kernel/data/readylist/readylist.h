@@ -23,6 +23,7 @@ static inline u32_t H2K_ready_best_prio()
 static inline void H2K_ready_append(H2K_thread_context *thread)
 {
 	u32_t prio = thread->prio;
+	thread->status = H2K_STATUS_READY;
 	H2K_ring_append(&H2K_ready[prio],thread);
 	H2K_ready_valids |= 1<<prio;
 }
@@ -30,6 +31,7 @@ static inline void H2K_ready_append(H2K_thread_context *thread)
 static inline void H2K_ready_insert(H2K_thread_context *thread)
 {
 	u32_t prio = thread->prio;
+	thread->status = H2K_STATUS_READY;
 	H2K_ring_insert(&H2K_ready[prio],thread);
 	H2K_ready_valids |= 1<<prio;
 }

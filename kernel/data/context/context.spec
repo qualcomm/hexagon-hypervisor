@@ -9,10 +9,8 @@ This module contains the definition of a thread context.
 H2K_thread_context
 ------------------
 
-Description
-~~~~~~~~~~~
-
-A thread context contains several parts.
+Overview
+~~~~~~~~
 
 Design of the thread context is important.  For performance, we need to
 organize the structure to minimize cache effects.  For total footprint, we need
@@ -39,9 +37,116 @@ that it is important to carefully place the data such that the bulk of the
 context save can be done to memory that has been cleared, but also that the
 clear instructions will not clobber values that should be maintained.
 
+Description
+~~~~~~~~~~~
+
+.. ctype:: H2K_thread_context
+
+	Thread Context Storage and Control Block
+
+	.. cmember:: H2K_thread_context *next
+
+		Pointer to the next thread context in a list or ring
+
+	.. cmember:: H2K_thread_context *prev
+
+		Pointer to the previous thread context in a ring
+
+	.. cmember:: u8_t prio
+
+		Current priority of the thread
+
+	.. cmember:: u8_t baseprio
+
+		Base priority of the thread, not including adjustments from priority 
+		inversion avoidance.
+
+	.. cmember:: u8_t schedprio
+
+		Priority the thread was scheduled at; this determines where in the 
+		H2K_ready structure the thread is located.
+
+	.. cmember:: u8_t hthread
+
+		If the thread is running, this is the hardware thread it is scheduled on.
+
+	.. cmember:: u8_t status
+
+		Current status of the thread (DEAD, RUNNING, READY, or BLOCKED).
+
+	.. cmember:: u8_t vmstatus
+
+		Current Virtual Machine status of the thread (OK, NEEDS_WORK).
+
+	.. cmember:: u8_t tid
+
+		Software Thread ID value
+
+	.. cmember:: void *gevb
+
+		Guest Event Vector Base, used as a base address for errors, VM exceptions, VM
+		interrupts, and other events.
+
+	.. cmember:: u32_t trapmask
+
+		Mask of which traps are valid for this thread to execute.
+
+	.. cmember:: u32_t gbadva
+
+		Guest Bad Virtual Address Register
+
+	.. cmember:: u32_t gelr
+
+		Guest Event Link Register
+
+	.. cmember:: u32_t gosp
+
+		Guest Other Stack Pointer register
+
+	.. cmember:: u32_t gssr
+
+		Guest System Status Register
+
+	.. cmember:: u64_t oncpu_start
+
+		Cycle count when the thread started execution.  Valid only when the thread
+		`status` is RUNNING.
+
+	.. cmember:: u64_t totalcycles
+
+		Total accumulated cycle count for this thread.
+
+	.. cmember:: u32_t futex_ptr
+
+		Address the thread is currently blocked on.
+
+	.. cmember:: void *continuation
+
+		Code location that will correctly return from the kernel to the thread
+
+	.. cmember:: u64_t ssrelr
+
+		System Status Register and Event Link Register for the thread
+
+	.. cmember:: u64_t **other_register_storage**
+
+		Other register storage for user general purpose and control registers
 
 
-A fastint context additionally has extra padding on the end for use for the
-fast interrupt stack.
+H2K_fastint_context
+-------------------
 
+A fastint context contains a normal thread context, and additionally has extra
+padding on the end for use for the fast interrupt stack.
+
+
+.. ctype:: H2K_fastint_context
+
+	.. cmember:: H2K_thread_context context
+
+		Normal thread context
+
+	.. cmember:: u64_t **stack_XXX**
+
+		Area to use as a Fast Interrupt stack
 

@@ -24,10 +24,31 @@ priority, and a bitmask that has a bit set for each non-empty linked list.
 We insert a thread into the ready list by adding the thread to the list at the
 priority corresponding to the thread, and setting the corresponding bit.
 
-We find the highest priority ready thread by using the CL0 instruction to find
+The H2K_ready_validmask provides an ability to prohibit certain priorities from
+being scheduled.  H2K_ready_valids is ANDed with H2K_ready_validmask to compute
+the actual valid ready thread bitmask.  
+
+We find the highest priority ready thread by using the CT0 instruction to find
 the highest priority that has a ready thread.  We then can remove the thread in
 the corresponding list.
 
+.. cvar:: H2K_thread_context *H2K_ready[MAX_PRIOS]
+
+	This array contains a pointer to a thread in a ring of ready threads at
+	each priority.  If the ring is empty, the pointer should be NULL.
+
+.. cvar:: u32_t H2K_ready_valids
+
+	This is a bitfield.  Bit 0 corresponds to priority 0, bit 1 to priority 1, 
+	and so on.  If the bit *n* is set, H2K_ready[*n*] must be valid.  If bit 
+	*n* is clear, H2K_ready[*n*] must be NULL.
+
+.. cvar:: u32_t H2K_ready_validmask
+
+	This is a bitfield that should be ANDed with H2K_ready_valids before 
+	determining a schedulable thread.  It is used to prohibit certain 
+	priorities from being scheduled.  This can be used to facilitate QoS
+	or certain other features.
 
 H2K_ready_init
 --------------

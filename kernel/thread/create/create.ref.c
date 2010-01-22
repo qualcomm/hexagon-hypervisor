@@ -34,7 +34,6 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 	}
 	tmp = H2K_free_threads;
 	H2K_free_threads = H2K_free_threads->next;
-	tmp->valid = 1;
 	tmp->prio = prio;
 	tmp->ugpgp = me->ugpgp;
 	tmp->ssrelr = (((u64_t)(myssr)) << 32)

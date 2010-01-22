@@ -1,11 +1,9 @@
 
-Save callee save regs at trap time or switch time?
+Pre-optimization:
+	* Globals separated w/ offsets?
+	* State field for DEAD/READY/RUNNING/BLOCKED/NEEDS_VMWORK?
+	* Use me->prev as scheduled priority?
 
-Unit Tests
-Full Tests
-Code Coverage
-Make return values correct
-Ready_validmask
 Memory
 Trace
 Profiling

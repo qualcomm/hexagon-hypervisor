@@ -7,7 +7,7 @@
 H2K_thread_id
 -------------
 
-.. cfunction:: u32_t H2K_thread_id(thread_context *me)
+.. cfunction:: u32_t H2K_thread_id(H2K_thread_context *me)
 
 	:param me: Pointer to the current context
 	:returns: A unique ID for the running thread

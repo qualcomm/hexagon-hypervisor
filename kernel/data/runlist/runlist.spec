@@ -4,6 +4,9 @@
 
 .. module:: runlist
 
+H2K_runlist and H2K_runlist_valids
+----------------------------------
+
 The ready list contains the threads that are currently running
 
 The requirements for the run list are:
@@ -18,13 +21,24 @@ priority, and a bitmask that has a bit set for each non-empty linked list.
 We insert a thread into the run list by adding the thread to the list at the
 priority corresponding to the thread, and setting the corresponding bit.
 
-We find the lowest priority running thread by using the CT0 instruction to find
+We find the lowest priority running thread by using the CL0 instruction to find
 the lowest priority that has a running thread.  We then can remove the thread in
 the corresponding list.
 
 TBD: This datastructure is scalable to any number of hardware threads.  It may
 be preferable to have an array of the currently running thread on each hardware
 thread, and find the minimum by inspecting each value.
+
+.. cvar:: H2K_thread_context *H2K_runlist[MAX_PRIOS]
+
+	This array contains a pointer to a thread in a ring of running threads at
+	each priority.  If the ring is empty, the pointer should be NULL.
+
+.. cvar:: u32_t H2K_runlist_valids
+
+	This is a bitfield.  Bit 0 corresponds to priority 0, bit 1 to priority 1, 
+	and so on.  If the bit *n* is set, H2K_runlist[*n*] must be valid.  If bit 
+	*n* is clear, H2K_runlist[*n*] must be NULL.
 
 
 

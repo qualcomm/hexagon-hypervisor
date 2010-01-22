@@ -55,7 +55,7 @@ int main()
 	a.prio = b.prio = c.prio = 0;
 	a.ugpgp = 0x12345;
 	b.ugpgp = c.ugpgp = 0x0;
-	b.valid = c.valid = 0;
+	b.status = c.status = H2K_STATUS_DEAD;
 	a.trapmask = 0x55ffffff;
 
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,0xffffffff,&a)
@@ -77,7 +77,7 @@ int main()
 	if (TH_saw_check_sanity == 0) FAIL("Did not call check_sanity");
 	if (H2K_ready[2] != &b) FAIL("Thread inserted incorrectly into ready list");
 	if (b.prio != 2) FAIL("thread priority set wrong");
-	if (b.valid == 0) FAIL("Valid field incorrect");
+	if (b.status == H2K_STATUS_DEAD) FAIL("status field incorrect");
 	if (b.r0100 != 0x00000000deadbeefULL) FAIL("Incorrect argument");
 	if (b.trapmask != 0x5533ffff) FAIL("Incorrect trap mask");
 	if (b.continuation != H2K_interrupt_restore) FAIL("Incorrect continuation");

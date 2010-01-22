@@ -6,7 +6,7 @@
 H2K_check_sanity
 ----------------
 
-.. cfunction:: void H2K_dosched(thread_context *me, u32_t hthread)
+.. cfunction:: void H2K_dosched(H2K_thread_context *me, u32_t hthread)
 
 	:param me: the context of the currently running thread
 	:param hthread: the hardware thread number

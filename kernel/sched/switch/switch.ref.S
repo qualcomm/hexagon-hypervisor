@@ -48,6 +48,12 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 	r31 = memw(r1+#CONTEXT_continuation)
 	memb(r1+#CONTEXT_hthread) = r10
 	sgp = r1
+	r1 = memub(r1+#CONTEXT_tid)
+#if (__QDSP6_ARCH__ <= 3)
+	tid = r1
+#else
+	stid = r1
+#endif
 	r1:0 = memd(r1+#CONTEXT_r0100)
 	jump H2K_check_sanity_unlock
 
@@ -78,6 +84,14 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 	r1.l = #LO(0)
 	r0 = and(r0,r1)
 	imask = r0
+
+	// set TID to special value (-1)
+	r1 = #-1
+#if (__QDSP6_ARCH__ <= 3)
+	tid = r1
+#else
+	stid = r1
+#endif
 
 	// set SSR to enable interrupts
 	// NOTE: should be the last thing before going to WAIT mode, we may get an interrupt

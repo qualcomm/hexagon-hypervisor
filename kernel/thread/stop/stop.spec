@@ -7,7 +7,7 @@
 H2K_thread_stop
 ---------------
 
-.. cfunction:: void H2K_thread_stop(thread_context *me)
+.. cfunction:: void H2K_thread_stop(H2K_thread_context *me)
 
 	:param me: The pointer to the current thread context
 

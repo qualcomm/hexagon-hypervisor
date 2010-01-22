@@ -25,7 +25,7 @@ reasons.  One example of this is whether or not the worst priority running
 thread is better or equal to the best priority ready thread.  For example, to
 support multiple wakeup, we place all woken threads into the ready data
 structure.  The newly ready threads may be higher priority than all running
-threads.  We use check_sanity to detect this situation and take corrective
+threads.  We use :cfunc:`H2K_check_sanity()` to detect this situation and take corrective
 action.
 
 This function must return the input argument.  This facilitates use during 
@@ -52,7 +52,7 @@ the thread waitmask is also non-zero (indicating there is a thread that is
 asleep), raise the reschedule interrupt.
 
 If the running thread mask has any bits set that are not set in the
-ready_validmask, then we need to make the lowest priority running thread
+:cdata:`H2K_ready_validmask`, then we need to make the lowest priority running thread
 interruptible, and raise the reschedule interrupt.
 
 If the priomask is zero, then no thread has been designated the lowest priority
@@ -118,7 +118,7 @@ and the reschedule interrupt is raised.
 Functionality
 ~~~~~~~~~~~~~
    
-If H2K_runlist_valids have bits set that are cleared in H2K_ready_validmask,
+If :cdata:`H2K_runlist_valids` have bits set that are cleared in :cdata:`H2K_ready_validmask`,
 we make the low priority thread interruptible, and raise the reschedule
 interrupt.
 

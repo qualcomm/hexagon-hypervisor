@@ -55,9 +55,10 @@ If the value was unreadable or does not match the expected value, unlock the
 BKL and return -1.
 
 Otherwise, we remove the current thread from the list of running threads, set
-the `r0100` field in the context to 0 (which will be the return value), and add
-it to the futex hash table using the hash key.  We then call
-:cfunc:`H2K_dosched()` for a new thread to be scheduled.  
+the `r0100` field in the context to 0 (which will be the return value), update
+the `status` field to `H2K_STATUS_BLOCKED`, and add it to the futex hash table
+using the hash key.  We then call :cfunc:`H2K_dosched()` for a new thread to be
+scheduled.  
 
 H2K_futex_resume
 ----------------
@@ -93,7 +94,8 @@ since there is no thread waiting on the lock.
 
 Otherwise, we search through the threads at the bucket for matching threads.
 Matching threads, up to n_to_wake, are removed from the futex hash bucket and
-added to the ready queue.  
+added to the ready queue.  Threads have their `status` field modified to be
+`H2K_STATUS_READY`.
 
 Finally, we sibcall to :cfunc:`H2K_check_sanity_unlock()`, asking it to return
 the number of woken threads.

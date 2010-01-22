@@ -10,6 +10,13 @@
 
 #define H2K_CONTEXT_ALIGN 32
 
+enum {
+	H2K_STATUS_DEAD = 0,
+	H2K_STATUS_RUNNING,
+	H2K_STATUS_READY,
+	H2K_STATUS_BLOCKED,
+};
+
 typedef struct _h2_thread_context
 {
 	/* Kernel Variables */
@@ -18,15 +25,19 @@ typedef struct _h2_thread_context
 	struct _h2_thread_context *prev;
 	// #8
 	/* Other info */
-	u32_t trapmask;
-	u8_t prio;
-	u8_t tmpprio;
+	u8_t prio;			// could be 5 bits
+	u8_t baseprio;			// needed?  5 bits
+	u8_t schedprio;			// could be unioned with prev?
 	u8_t hthread;
-	u8_t valid;
+	// #12
+	u8_t status;
+	u8_t vmstatus;
+	u8_t tid;			// could be u8.
+	u8_t u8pad;
 	// #16
 	struct {
 		void *gevb;
-		u32_t tid;
+		u32_t trapmask;
 	};
 	// 24
 	/* status, etc */
@@ -91,22 +102,22 @@ typedef struct _h2_thread_context
 
 typedef struct {
 	H2K_thread_context context;
-	unsigned long long int stack120;
-	unsigned long long int stack112;
-	unsigned long long int stack104;
-	unsigned long long int stack096;
-	unsigned long long int stack088;
-	unsigned long long int stack080;
-	unsigned long long int stack072;
-	unsigned long long int stack064;
-	unsigned long long int stack056;
-	unsigned long long int stack048;
-	unsigned long long int stack040;
-	unsigned long long int stack032;
-	unsigned long long int stack024;
-	unsigned long long int stack016;
-	unsigned long long int stack008;
-	unsigned long long int stack000;
+	u64_t stack120;
+	u64_t stack112;
+	u64_t stack104;
+	u64_t stack096;
+	u64_t stack088;
+	u64_t stack080;
+	u64_t stack072;
+	u64_t stack064;
+	u64_t stack056;
+	u64_t stack048;
+	u64_t stack040;
+	u64_t stack032;
+	u64_t stack024;
+	u64_t stack016;
+	u64_t stack008;
+	u64_t stack000;
 } H2K_fastint_context;
 
 #endif

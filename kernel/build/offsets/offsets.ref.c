@@ -12,8 +12,12 @@
 int main(int argc, char **argv)
 {
 PRINT_OFFSET(hthread);
+PRINT_OFFSET(status);
+PRINT_OFFSET(vmstatus);
 PRINT_OFFSET(tid);
 PRINT_OFFSET(prio);
+PRINT_OFFSET(baseprio);
+PRINT_OFFSET(schedprio);
 PRINT_OFFSET(continuation);
 PRINT_OFFSET(ssrelr);
 PRINT_OFFSET(ugpgp);

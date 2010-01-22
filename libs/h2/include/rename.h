@@ -121,7 +121,7 @@ REDEF_FUNCTION(h2_pipe_data_t , pipe_tryrecv,(h2_pipe_t *pipe, int *success),(pi
 #define H2_PREFETCH_D 2
 #define H2_PREFETCH_SW 4
 
-REDEF_FUNCION(void ,h2_set_prefetch,(unsigned int settings),(settings));
+REDEF_FUNCION(void ,set_prefetch,(unsigned int settings),(settings));
 
 /*  "blast_printf.h"  */
 

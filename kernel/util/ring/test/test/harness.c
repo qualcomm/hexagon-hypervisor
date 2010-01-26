@@ -4,6 +4,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <checker_ring.h>
 #include <ringtests.h>
@@ -20,6 +21,7 @@ void test_ring_remove_append();
 
 void FAIL(const char *str)
 {
+	puts("FAIL");
 	puts(str);
 	fflush(stdout);
 	fflush(stderr);

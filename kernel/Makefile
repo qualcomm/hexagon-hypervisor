@@ -74,7 +74,7 @@ build/ref/libh2kernel.a: $(REF_OFILES)
 build/opt_v$(ARCHV)/libh2kernel.a: $(OPT_V$(ARCHV)_OFILES)
 	@echo $(OPT_V$(ARCHV)_OFILES)
 	mkdir -p $(dir $@)
-	$(AR) cru $@ $(REF_OFILES)
+	$(AR) cru $@ $(OPT_V$(ARCHV)_OFILES)
 
 build/ref/libh2check.a: $(CHECK_OFILES)
 	mkdir -p $(dir $@)

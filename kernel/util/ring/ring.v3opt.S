@@ -14,8 +14,8 @@
 #define PREV 4
 
 	/* Notes about fastrings:
-	 * Only clobber r0-r7, p0-p3
-	 * fused addremove uses r8-r9 also
+	 * Only clobber r0-r5, p0-p3
+	 * fused addremove uses r6-r7 also
 	 * Assumes small/empty rings common
 	 * Assumes ring aligned
 	 */

@@ -1,8 +1,8 @@
 
-:mod:`rings` -- circular doubly-linked lists
-============================================
+:mod:`ring` -- circular doubly-linked lists
+===========================================
 
-.. module:: rings
+.. module:: ring
 
 SUMMARY
 -------
@@ -28,7 +28,7 @@ Optimization Note
 ~~~~~~~~~~~~~~~~~
 
 Optimized ring functions will only clobber r0-r5, with the exception of the
-fused :cfunc:`H2K_ring_add_remove()`, which will additionally clobber r6 and r7.
+fused :cfunc:`H2K_ring_remove_append()`, which will additionally clobber r6 and r7.
 
 H2K_ring_remove
 ---------------
@@ -79,15 +79,15 @@ We then set ``*ring`` to ``node``.
 
 
 
-H2K_ring_insert
+H2K_ring_append
 ---------------
 
-.. cfunction:: H2K_ring_insert(void *ring, void *node)
+.. cfunction:: H2K_ring_append(void *ring, void *node)
 
 	:param ring: A pointer to the ring to add the node to.
 	:param node: The node to be added
 
-The :cfunc:`H2K_ring_insert()` function adds ``node`` to ``ring``, as the node previous to the
+The :cfunc:`H2K_ring_append()` function adds ``node`` to ``ring``, as the node previous to the
 node pointed to by ``ring``.
 
 Functionality

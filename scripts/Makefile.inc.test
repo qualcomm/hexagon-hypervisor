@@ -11,6 +11,10 @@ h2:
 #  Tool stuff
 ################################################################################
 
+ifeq ($(ARCHV),)
+ARCHV = 3
+endif
+
 ARCH=qdsp6
 SIM=${ARCH}-sim
 CC=${ARCH}-gcc
@@ -44,17 +48,17 @@ LIBH2CHECK=${LIBH2KERNEL_DIR}/libh2check.a
 
 ${LIBH2KERNEL}: 
 	cd ${LIBH2KERNEL_DIR};\
-	make ref DEBUG=0;\
+	make ref DEBUG=0 ARCHV=${ARCHV};\
 	cp build/ref/libh2kernel.a .
 
 ${LIBH2CHECK}: 
 	cd ${LIBH2KERNEL_DIR};\
-	make check DEBUG=0;\
+	make check DEBUG=0 ARCHV=${ARCHV};\
 	cp build/ref/libh2check.a .
 
 ${LIBH2}: 
 	cd ${LIBH2_DIR};\
-	make DEBUG=0
+	make DEBUG=0 ARCHV=${ARCHV}
 
 libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
 
@@ -67,12 +71,12 @@ else
 OSLIB=-moslib=h2
 LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/kernel -L ${H2DIR}/libs
 endif
-LDFLAGS+= -mv3
+LDFLAGS+= -mv${ARCHV}
 #  Turn on call() support for assertion checking
 #CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.
-CFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -O1 -mv3 -DARCHV=3 -Wall -I ${H2DIR}/libs/h2/include
-ASFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -mv3 -DARCHV=3 -Wall -I ${H2DIR}/libs/h2/include
+CFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -O1 -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/libs/h2/include
+ASFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -mv3 -DARCHV=${ARCHV} -Wall -I ${H2DIR}/libs/h2/include
 
 
 ################################################################################

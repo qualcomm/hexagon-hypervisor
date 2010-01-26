@@ -24,6 +24,12 @@ The rings.h header file defines the ring functions as inline wrappers that
 cast the input pointers to the correct H2K_ringnode_t type.  This spec
 specifies the wrapped names.
 
+Optimization Note
+~~~~~~~~~~~~~~~~~
+
+Optimized ring functions will only clobber r0-r5, with the exception of the
+fused :cfunc:`H2K_ring_add_remove()`, which will additionally clobber r6 and r7.
+
 H2K_ring_remove
 ---------------
 .. cfunction:: void H2K_ring_remove(void *ring, void *node);

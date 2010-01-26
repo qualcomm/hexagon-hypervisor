@@ -4,8 +4,8 @@
 
 .. module:: runlist
 
-H2K_runlist and H2K_runlist_valids
-----------------------------------
+runlist and runlist_valids
+--------------------------
 
 The ready list contains the threads that are currently running
 
@@ -29,18 +29,6 @@ TBD: This datastructure is scalable to any number of hardware threads.  It may
 be preferable to have an array of the currently running thread on each hardware
 thread, and find the minimum by inspecting each value.
 
-.. cvar:: H2K_thread_context *H2K_runlist[MAX_PRIOS]
-
-	This array contains a pointer to a thread in a ring of running threads at
-	each priority.  If the ring is empty, the pointer should be NULL.
-
-.. cvar:: u32_t H2K_runlist_valids
-
-	This is a bitfield.  Bit 0 corresponds to priority 0, bit 1 to priority 1, 
-	and so on.  If the bit *n* is set, H2K_runlist[*n*] must be valid.  If bit 
-	*n* is clear, H2K_runlist[*n*] must be NULL.
-
-
 
 H2K_runlist_init
 ----------------
@@ -50,12 +38,12 @@ H2K_runlist_init
 Description
 ~~~~~~~~~~~
 
-Initializes the H2K_runlist structures.
+Initializes the :cdata:`H2K_kg.runlist` structures and :cdata:`H2K_kg.runlist_valids`.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Set all elements of H2K_runlist to NULL, and set H2K_runlist_valids to zero.
+Set all elements of :cdata:`H2K_kg.runlist` to NULL, and set `H2K_kg.runlist_valids` to zero.
 
 
 H2K_runlist_push
@@ -95,7 +83,7 @@ Returns MAX_PRIOS or higher if no threads are in the runlist.
 Functionality
 ~~~~~~~~~~~~~
 
-We count leading zeros of H2K_runlist_valids.  This gives us the number of 
+We count leading zeros of H2K_kg.runlist_valids.  This gives us the number of 
 lowest priorities that have no threads.  We subtract this value from the priority
 corresponding to the most significant bit.
 
@@ -119,7 +107,7 @@ Functionality
 We get the priority from the thread structure.  We then look at the runlist linked
 list at the corresponding priority.  When we find the thread, we remove it from the
 linked list.  If the runlist has emptied because of the removal of the thread, we
-clear the bit from H2K_runlist_valids.
+clear the bit from H2K_kg.runlist_valids.
 
 
 
@@ -131,8 +119,8 @@ Testing
 Samples
 ~~~~~~~
 
-* Input: H2K_runlist_valids
-* Input: H2K_runlist array
+* Input: H2K_kg.runlist_valids
+* Input: H2K_kg.runlist array
 * Thread to push/remove
 * Output: H2K_runlist_worst_prio: Priority of worst running thread
 * Output: H2K_ready_array / H2K_ready_valids for remove/push
@@ -145,14 +133,14 @@ Important Cases
 * H2K_runlist_worst_prio when the runlist has different threads in it
 
 * H2K_runlist_push a thread into a runlist with no other threads at the same
-  priority; H2K_runlist_valids bit should be set
+  priority; H2K_kg.runlist_valids bit should be set
 * H2K_runlist_push a thread into a runlist with other threads at the same
-  priority; H2K_runlist_valids bit should remain set
+  priority; H2K_kg.runlist_valids bit should remain set
 
 * H2K_runlist_remove a thread from the runlist with only the specified thread at
-  the priority, H2K_runlist_valids bit should be cleared
+  the priority, H2K_kg.runlist_valids bit should be cleared
 * H2K_runlist_remove a thread from the runlist with more than the specified thread at
-  the priority, H2K_runlist_valids bit should remain set
+  the priority, H2K_kg.runlist_valids bit should remain set
 
 * Check H2K_runlist_init clears out randomized values.
 

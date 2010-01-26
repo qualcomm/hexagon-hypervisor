@@ -10,6 +10,7 @@
 #include <max.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {

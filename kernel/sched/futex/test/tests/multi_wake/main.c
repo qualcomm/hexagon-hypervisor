@@ -51,6 +51,8 @@ u32_t			dummy_thread_lock;
 /*  lock under test  */
 u32_t			test_lock; 
 
+volatile unsigned int timeout=0;
+
 volatile unsigned int done=0;     /*  signals done to main() */
 unsigned int counter=0;  /*  global test counter  */
 unsigned int age_to_wake=0;
@@ -94,7 +96,7 @@ void producer_thread(int x)
 		asm volatile("nop");
 	}
 
-	info("counter = %d; Resuming consumer\n", counter);
+	info("counter = %d; Resuming consumer (nr_to_wake=%d)\n", counter,nr_to_wake);
 	h2_futex_wake(&futex_pages[test_lock],nr_to_wake);
 
 	h2_thread_stop();
@@ -102,7 +104,7 @@ void producer_thread(int x)
 
 void consumer_thread(int age)
 {
-	info("Consumer started\n");
+	info("%d: Consumer started. id=0x%x\n",age,h2_thread_myid());
 
 	/*  remove this section if we get away from "oldest first"  */
 	if (age >= nr_to_wake) {
@@ -111,13 +113,12 @@ void consumer_thread(int age)
 	}  /*  this consumer should never be woken  */
 
 	h2_futex_wait(&futex_pages[test_lock],0);
-
 	if (counter != PRODUCER_ITERATIONS) {
 		error("Wrong final counter value\n");
 	}
 
 	threads_woken[age] = 1;
-	info("Final counter value:  %d\n",counter);
+	info("%d: Final counter value:  %d\n",age,counter);
 	done = 1;
 
 	h2_thread_stop();
@@ -126,7 +127,6 @@ void consumer_thread(int age)
 int main() 
 {
 	unsigned int next_tnum;
-	unsigned int timeout=0;
 	unsigned int i,j,prio;
 
 	srand(TEST_SEED);
@@ -228,7 +228,7 @@ int main()
 
 	info("Waiting for done\n");
 
-	while (!done && (timeout < (1<<16))) {
+	while (!done && (timeout < (1<<30))) {
 		timeout++;
 	}  //  todo:  create watchdog
 

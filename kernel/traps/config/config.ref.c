@@ -7,6 +7,8 @@
 #include <asm_offsets.h>
 #include <thread.h>
 #include <fatal.h>
+#include <globals.h>
+#include <hw.h>
 
 typedef void (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
@@ -37,8 +39,10 @@ void H2K_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unuse
 	for (i = 0; i+CONTEXT_SIZE <= size; i += CONTEXT_SIZE) {
 		thread = (H2K_thread_context *)(ptrtmp+i);
 		H2K_thread_context_clear(thread);
-		thread->next = H2K_free_threads;
-		H2K_free_threads = thread;
+		BKL_LOCK();
+		thread->next = H2K_gp->free_threads;
+		H2K_gp->free_threads = thread;
+		BKL_UNLOCK();
 	}
 }
 

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <switch.h>
 #include <setjmp.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -71,6 +72,7 @@ void TH_check_waitmode_setup()
 
 int main()
 {
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	modify_goto_wait();
 	a.continuation = TH_cont_check;
 	b.continuation = TH_cont_check;

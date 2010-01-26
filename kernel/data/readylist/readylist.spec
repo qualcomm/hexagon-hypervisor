@@ -4,8 +4,8 @@
 
 .. module:: readylist
 
-H2K_ready and H2K_ready_valids
-------------------------------
+H2K_kg.ready and H2K_kg.ready_valids
+------------------------------------
 
 Description
 ~~~~~~~~~~~
@@ -24,31 +24,13 @@ priority, and a bitmask that has a bit set for each non-empty linked list.
 We insert a thread into the ready list by adding the thread to the list at the
 priority corresponding to the thread, and setting the corresponding bit.
 
-The H2K_ready_validmask provides an ability to prohibit certain priorities from
-being scheduled.  H2K_ready_valids is ANDed with H2K_ready_validmask to compute
+The H2K_kg.ready_validmask provides an ability to prohibit certain priorities from
+being scheduled.  H2K_kg.ready_valids is ANDed with H2K_kg.ready_validmask to compute
 the actual valid ready thread bitmask.  
 
 We find the highest priority ready thread by using the CT0 instruction to find
 the highest priority that has a ready thread.  We then can remove the thread in
 the corresponding list.
-
-.. cvar:: H2K_thread_context *H2K_ready[MAX_PRIOS]
-
-	This array contains a pointer to a thread in a ring of ready threads at
-	each priority.  If the ring is empty, the pointer should be NULL.
-
-.. cvar:: u32_t H2K_ready_valids
-
-	This is a bitfield.  Bit 0 corresponds to priority 0, bit 1 to priority 1, 
-	and so on.  If the bit *n* is set, H2K_ready[*n*] must be valid.  If bit 
-	*n* is clear, H2K_ready[*n*] must be NULL.
-
-.. cvar:: u32_t H2K_ready_validmask
-
-	This is a bitfield that should be ANDed with H2K_ready_valids before 
-	determining a schedulable thread.  It is used to prohibit certain 
-	priorities from being scheduled.  This can be used to facilitate QoS
-	or certain other features.
 
 H2K_ready_init
 --------------
@@ -58,12 +40,12 @@ H2K_ready_init
 Description
 ~~~~~~~~~~~
 
-Initializes the H2K_ready structures.
+Initializes the H2K_kg.ready structures.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Set all elements of H2K_ready to NULL, and set H2K_ready_valids to zero.
+Set all elements of H2K_kg.ready to NULL, and set H2K_kg.ready_valids to zero.
 
 
 H2K_ready_best_prio
@@ -80,7 +62,7 @@ Description
 Functionality
 ~~~~~~~~~~~~~
 
-Count Trailing Zeros of H2K_ready_valids.
+Count Trailing Zeros of H2K_kg.ready_valids.
 
 
 
@@ -100,8 +82,8 @@ Functionality
 ~~~~~~~~~~~~~
 
 We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_append()`
-on the H2K_ready ring at the thread's priority.  Finally, we set the bit of
-H2K_ready_valids at the thread's priority.
+on the H2K_kg.ready ring at the thread's priority.  Finally, we set the bit of
+H2K_kg.ready_valids at the thread's priority.
 
 
 
@@ -121,8 +103,8 @@ Functionality
 ~~~~~~~~~~~~~
 
 We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_insert()`
-on the H2K_ready ring at the thread's priority.  Finally, we set the bit of
-H2K_ready_valids at the thread's priority.
+on the H2K_kg.ready ring at the thread's priority.  Finally, we set the bit of
+H2K_kg.ready_valids at the thread's priority.
 
 
 
@@ -142,8 +124,8 @@ Functionality
 ~~~~~~~~~~~~~
 
 We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_remove()`
-on the H2K_ready ring at the thread's priority.  Finally, if there are no
-more elements in the ring, we clear the bit of H2K_ready_valids at the
+on the H2K_kg.ready ring at the thread's priority.  Finally, if there are no
+more elements in the ring, we clear the bit of H2K_kg.ready_valids at the
 thread's priority.
 
 
@@ -167,7 +149,7 @@ If there are no ready threads, we return NULL.
 
 We call :cfunc:`H2K_ready_best_prio()` to obtain the priority of the best priority ready thread.
 
-We then get the thread pointed to by the H2K_ready pointer at the correct priority.
+We then get the thread pointed to by the H2K_kg.ready pointer at the correct priority.
 
 This thread is removed from the ready list by calling :cfunc:`H2K_ready_remove()`, and returned.
 
@@ -182,12 +164,12 @@ Testing
 Samples
 ~~~~~~~
 
-* Input: H2K_ready_valids
-* Input: H2K_ready array
+* Input: H2K_kg.ready_valids
+* Input: H2K_kg.ready array
 * Thread to append/insert/remove
 * Output: H2K_ready_best_prio: Priority of best ready thread
 * Output: H2K_ready_getbest: Best ready thread, removed from readylist, or NULL
-* Output: H2K_ready_array / H2K_ready_valids for append/insert/remove/getbest
+* Output: H2K_ready_array / H2K_kg.ready_valids for append/insert/remove/getbest
 
 
 Important Cases
@@ -203,8 +185,8 @@ Important Cases
 * H2K_ready_append to non-empty list, check for thread at end of list
 * H2K_ready_insert to empty list
 * H2K_ready_insert to non-empty list, check for thread at start of list
-* H2K_ready_remove to list with only the specified thread, check for H2K_ready_valids bit clear
-* H2K_ready_remove to list with more than just the specified thread, check for H2K_ready_valids bit remaining set
+* H2K_ready_remove to list with only the specified thread, check for H2K_kg.ready_valids bit clear
+* H2K_ready_remove to list with more than just the specified thread, check for H2K_kg.ready_valids bit remaining set
 * Check H2K_ready_init clears out randomized values
 
 Harness

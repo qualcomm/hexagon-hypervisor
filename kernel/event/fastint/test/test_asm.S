@@ -105,8 +105,7 @@ TH_call_fastint_check:
 	r12 = insert(r0,#8,#0)
 	ssr = r12
 	r14 = memw(#ssrsave)
-	r4.h = #hi(H2K_fastint_funcptrs)
-	r4.l = #lo(H2K_fastint_funcptrs)
+	r4 = add(r16,#KG_fastint_funcptrs)
 	r0.h = #hi(H2K_fastint_contexts)
 	r0.l = #lo(H2K_fastint_contexts)
 	r29 = add(r0,#FASTINT_CONTEXT_SIZE)

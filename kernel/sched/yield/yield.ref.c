@@ -8,6 +8,7 @@
 #include <readylist.h>
 #include <dosched.h>
 #include <hw.h>
+#include <globals.h>
 
 /*
  * H2K_sched_yield
@@ -17,7 +18,7 @@
 void H2K_sched_yield(H2K_thread_context *me)
 {
         BKL_LOCK(&H2K_bkl);
-	if ((H2K_ready_valids & (1<<me->prio)) == 0) {
+	if ((H2K_gp->ready_valids & (1<<me->prio)) == 0) {
 		BKL_UNLOCK(&H2K_bkl);
 		return;
 	}

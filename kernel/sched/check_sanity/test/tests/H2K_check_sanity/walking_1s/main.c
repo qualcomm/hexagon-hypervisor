@@ -11,6 +11,7 @@
 #include <runlist.h>
 #include <readylist.h>
 #include <lowprio.h>
+#include <globals.h>
 
 #define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
 #define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}
@@ -46,7 +47,7 @@ int lowprio_notify_requested(u32_t oldmask)
 {
 
 	/*  Can also check if the old priority mask matches the new one  */
-	if (oldmask != H2K_priomask) return 1;
+	if (oldmask != H2K_gp->priomask) return 1;
 	return 0;
 }
 
@@ -71,6 +72,7 @@ int main()
 
 	h2_init(0x0);
 
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	info("%s starting\n",__FUNCTION__);
 
 	for (i=0; i<1000; i++) {
@@ -106,7 +108,7 @@ int main()
 	/*  May need to fudge the H2K_runlist[prio]->hthread to a bogus value so we can properly detect H2K_lowprio_notify() actually fired  */
 
 	for (i=0; i<MAX_PRIOS; i++) {
-		H2K_runlist[i]->hthread=MAX_HTHREADS+1;
+		H2K_gp->runlist[i]->hthread=MAX_HTHREADS+1;
 	}
 
 	global_valid_prio = 0;
@@ -117,11 +119,11 @@ int main()
 				for (runlist_prio=1; runlist_prio < (1<<(MAX_PRIOS-1)); runlist_prio = runlist_prio ? runlist_prio<<1 : 1) {
 					for (ready_prio=0; ready_prio < (1<<(MAX_PRIOS-1)); ready_prio = ready_prio ? ready_prio <<=1 : 1) {
 
-						H2K_priomask = prio_hthread;
-						H2K_wait_mask = wait_hthread;
-						H2K_runlist_valids = runlist_prio;
-						H2K_ready_valids = ready_prio;
-						H2K_ready_validmask = ~global_valid_prio;
+						H2K_gp->priomask = prio_hthread;
+						H2K_gp->wait_mask = wait_hthread;
+						H2K_gp->runlist_valids = runlist_prio;
+						H2K_gp->ready_valids = ready_prio;
+						H2K_gp->ready_validmask = ~global_valid_prio;
 					
 						//debug("prio_hthread = 0x%08x\n",prio_hthread);
 						//debug("wait_hthread = 0x%08x\n",wait_hthread);

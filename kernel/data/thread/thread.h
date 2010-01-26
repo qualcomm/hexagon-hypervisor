@@ -8,7 +8,7 @@
 
 #include <context.h>
 
-extern H2K_thread_context *H2K_free_threads IN_SECTION(".data.thread.freeptr");
+// extern H2K_thread_context *H2K_free_threads IN_SECTION(".data.thread.freeptr");
 #if __QDSP6_ARCH__ == 2
 extern H2K_thread_context H2K_idle_context IN_SECTION(".data.thread.idle");
 #endif

@@ -15,8 +15,8 @@ void H2K_thread_stop(H2K_thread_context *me)
         BKL_LOCK(&H2K_bkl);
         H2K_runlist_remove(me);
         H2K_thread_context_clear(me);
-	me->next = H2K_free_threads;
-	H2K_free_threads = me;
+	me->next = H2K_gp->free_threads;
+	H2K_gp->free_threads = me;
 	H2K_dosched(me,get_hwtnum());
 }
 

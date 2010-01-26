@@ -3,8 +3,8 @@
 
 .. module:: dosched
 
-H2K_check_sanity
-----------------
+H2K_dosched
+-----------
 
 .. cfunction:: void H2K_dosched(H2K_thread_context *me, u32_t hthread)
 

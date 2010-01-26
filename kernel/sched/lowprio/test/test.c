@@ -10,6 +10,7 @@
 #include <readylist.h>
 #include <hw.h>
 #include <stdio.h>
+#include <globals.h>
 
 void FAIL(const char *x)
 {
@@ -40,6 +41,7 @@ TB_func raise = H2K_raise_lowprio_TB;
 int main()
 {
 	int i;
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	for (i = 0; i < 1000; i++) {
 		h2_init();
 	}
@@ -49,11 +51,11 @@ int main()
 	H2K_runlist_push(&a);
 	raise();
 	if ((get_imask(1) & 1) != 0) FAIL("should not have raised if idle");
-	H2K_wait_mask = 0;
-	H2K_priomask = 0x2;
+	H2K_gp->wait_mask = 0;
+	H2K_gp->priomask = 0x2;
 	raise();
 	if ((get_imask(1) & 1) == 0) FAIL("should have raised T1");
-	H2K_priomask = 0;
+	H2K_gp->priomask = 0;
 	notify();
 	if ((get_imask(1) & 1) != 0) FAIL("should have notified T1");
 	puts("TEST PASSED\n");

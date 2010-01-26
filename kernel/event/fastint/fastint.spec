@@ -93,9 +93,9 @@ Samples
 ~~~~~~~
 
 * Input: thread context in SGP, or NULL
-* Input: H2K_fastint_contexts
-* Input: H2K_fastint_funcptrs
-* Input: H2K_fastint_gp
+* Input: H2K_kg.fastint_contexts
+* Input: H2K_kg.fastint_funcptrs
+* Input: H2K_kg.fastint_gp
 * Flow: go to approrpiate fast interrupt handler
 
 Important cases

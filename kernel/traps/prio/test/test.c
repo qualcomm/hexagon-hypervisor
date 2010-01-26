@@ -9,6 +9,7 @@
 #include <context.h>
 #include <prio.h>
 #include <max.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -22,6 +23,7 @@ H2K_thread_context a;
 int main()
 {
 	u32_t i;
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	for (i = 0; i < MAX_PRIOS; i++) {
 		a.prio = i;
 		if (H2K_prio_get(&a) != i) FAIL("prio_get");

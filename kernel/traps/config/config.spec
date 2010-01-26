@@ -59,7 +59,7 @@ in rounding.
 Next, size should be rounded down to the nearest multiple of CONTEXT_SIZE.
 
 Finally, the memory is chunked into size/CONTEXT_SIZE thread contexts.
-Each context is cleared, and then inserted into the H2K_free_threads list.
+Each context is cleared, and then inserted into the H2K_kg.free_threads list.
 
 TBD: remove threads?
 TBD: keep list of thread areas for better threadids.
@@ -97,7 +97,7 @@ Samples
 
 * Input: Storage size
 * Input: Alignment of pointer
-* Output: H2K_free_threads
+* Output: H2K_kg.free_threads
 * For setfatal: handler function
 
 Important Cases
@@ -115,7 +115,7 @@ Harness
 
 Standalone environment, but linked with h2kernel.
 
-We try several calls to H2K_trap_config, and check that H2K_free_threads is
+We try several calls to H2K_trap_config, and check that H2K_kg.free_threads is
 updated to hold the appropriate values, or that fatal_kernel_handler is changed.
 
 

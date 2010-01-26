@@ -21,7 +21,7 @@ First, we acquire the BKL.
 Next, we remove the current thread from the runlist.  We then clear the thread
 context.  This has the effect of setting the valid field to DEAD.
 
-We then insert the thread into the H2K_free_threads list.
+We then insert the thread into the H2K_kg.free_threads list.
 
 Finally, we call :cfunc:`H2K_dosched()` to pick a new thread.  The current thread
 should be specified as NULL, rather than as the now-dead thread context pointer.

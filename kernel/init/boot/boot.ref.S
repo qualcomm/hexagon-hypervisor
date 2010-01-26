@@ -26,6 +26,9 @@ FUNC_START start .text.init.boot .p2align 2
 	r0.l = #lo(_SDA_BASE_)
 	gp = r0
 
+	r16.h = #hi(H2K_kg)
+	r16.l = #lo(H2K_kg)
+
 	/* Set up rising edge triggered */
 	r0 = #-1
 	iel = r0
@@ -93,6 +96,10 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	r0.h = #hi(_SDA_BASE_)
 	r0.l = #lo(_SDA_BASE_)
 	gp = r0
+
+	r16.h = #hi(H2K_kg)
+	r16.l = #lo(H2K_kg)
+
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
 #if __QDSP6_ARCH__ <= 3
@@ -107,11 +114,4 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	k0lock
 	jump H2K_switch
 FUNC_END H2K_handle_reset
-
-DATA_START H2K___refs .data.init.boot .p2align 2
-	.word H2K_futex_wait
-	.word H2K_futex_resume
-	.word H2K_event_vectors
-	/* TODO: fill in all refs */
-DATA_END H2K___refs
 

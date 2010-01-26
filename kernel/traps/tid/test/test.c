@@ -10,6 +10,7 @@
 #include <asm_offsets.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -22,6 +23,7 @@ static H2K_thread_context a;
 
 int main() 
 {
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	a.tid = 3;
 	if (H2K_tid_get(&a) != 3) FAIL("Wrong tid read");
 	a.tid = 0xf3;

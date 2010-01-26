@@ -17,6 +17,7 @@
 #include <checker_runlist.h>
 #include <checker_ready.h>
 #include <setjmp.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -35,7 +36,7 @@ void H2K_dosched(H2K_thread_context *in, int hthread)
 {
 	if (in != TB_in) FAIL("Unexpected thread passed to dosched");
 	if (hthread != 0) FAIL("Unexpected hardware thread");
-	if (H2K_wait_mask != 0) FAIL("Set bit in wait_mask");
+	if (H2K_gp->wait_mask != 0) FAIL("Set bit in wait_mask");
 	TB_saw_dosched ++;
 	checker_kernel_locked();
 	BKL_UNLOCK();
@@ -55,6 +56,7 @@ void TH_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 
 int main() 
 {
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();
@@ -63,25 +65,25 @@ int main()
 	TH_resched(0,TB_in,0);
 	if (TB_saw_dosched == 0) FAIL("did not do a resched");
 	TB_saw_dosched = 0;
-	H2K_wait_mask = 1;
+	H2K_gp->wait_mask = 1;
 	TH_resched(0,TB_in,0);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
-	H2K_wait_mask = 0;
+	H2K_gp->wait_mask = 0;
 	TB_saw_dosched = 0;
 	TB_in = &a;
 	H2K_runlist_push(&a);
 	H2K_runlist_push(&c);
 	TH_resched(0,TB_in,0);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
-	if (H2K_runlist[2] != &c) FAIL("Unexpected thread in runlist");
-	if (H2K_ready[2] != &a) FAIL("Unexpected thread in readylist");
-	H2K_wait_mask = 0;
+	if (H2K_gp->runlist[2] != &c) FAIL("Unexpected thread in runlist");
+	if (H2K_gp->ready[2] != &a) FAIL("Unexpected thread in readylist");
+	H2K_gp->wait_mask = 0;
 	TB_saw_dosched = 0;
 	TB_in = &c;
 	TH_resched(0,TB_in,0);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
-	if (H2K_ready[2] != &a) FAIL("Unexpected thread in readylist");
-	if (H2K_ready[2]->next != &c) FAIL("Unexpected thread in readylist");
+	if (H2K_gp->ready[2] != &a) FAIL("Unexpected thread in readylist");
+	if (H2K_gp->ready[2]->next != &c) FAIL("Unexpected thread in readylist");
 	puts("TEST PASSED\n");
 	return 0;
 }

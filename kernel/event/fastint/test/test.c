@@ -11,6 +11,7 @@
 #include <intconfig.h>
 #include <setjmp.h>
 #include <max.h>
+#include <globals.h>
 
 H2K_thread_context *TH_me;
 u32_t TH_intno;
@@ -66,10 +67,10 @@ void TH_setup_fastinthandlers(u32_t interrupt)
 {
 	u32_t i;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		H2K_fastint_funcptrs[i] = TH_bad_interrupt;
+		H2K_gp->fastint_funcptrs[i] = TH_bad_interrupt;
 	}
-	H2K_fastint_funcptrs[interrupt] = TH_good_interrupt;
-	H2K_fastint_mask = TH_fastint_mask;
+	H2K_gp->fastint_funcptrs[interrupt] = TH_good_interrupt;
+	H2K_gp->fastint_mask = TH_fastint_mask;
 }
 
 TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread)
@@ -100,7 +101,7 @@ void TH_do_fastint_intpending(H2K_thread_context *dest, u32_t interrupt, u32_t i
 {
 	TH_intno = interrupt;
 	TH_setup_fastinthandlers(interrupt);
-	if (H2K_fastint_mask & (1<<int2)) {
+	if (H2K_gp->fastint_mask & (1<<int2)) {
 		TH_secondary_int_expected = int2;
 	} else {
 		TH_secondary_int_expected = -1;
@@ -123,7 +124,8 @@ void TH_saw_secondary_int(u32_t intno)
 int main() 
 {
 	int i,j;
-	H2K_fastint_gp = (u32_t)(&_SDA_BASE_);
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	H2K_gp->fastint_gp = (u32_t)(&_SDA_BASE_);
 	TH_fastint_mask = 0xffffffffU;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint(&a,i);

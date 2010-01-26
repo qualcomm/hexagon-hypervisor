@@ -56,6 +56,8 @@ FUNC_START H2K_handle_error .text.error .p2align 2
 	r29 = #KERNEL_STACK_SIZE
 	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #endif
+	r16.h = #hi(H2K_kg)
+	r16.l = #lo(H2K_kg)
 	r0 = #-3
 	r1 = r24
 	r3:2 = #0

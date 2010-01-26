@@ -51,6 +51,7 @@ void TH_thread_stop(H2K_thread_context *me)
 
 int main() 
 {
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_runlist_init();
 	H2K_readylist_init();
 	H2K_lowprio_init();
@@ -59,11 +60,11 @@ int main()
 	a.prio = 2;
 	b.prio = 2;
 	c.prio = 2;
-	if (H2K_free_threads != NULL) FAIL("free threads not clear");
+	if (H2K_gp->free_threads != NULL) FAIL("free threads not clear");
 	H2K_runlist_push(&a);
-	if (H2K_runlist[2] != &a) FAIL("Thread not in expected place in runlist");
+	if (H2K_gp->runlist[2] != &a) FAIL("Thread not in expected place in runlist");
 	H2K_runlist_push(&b);
-	if (H2K_runlist[2] != &b) FAIL("Thread not in expected place in runlist");
+	if (H2K_gp->runlist[2] != &b) FAIL("Thread not in expected place in runlist");
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
@@ -71,10 +72,10 @@ int main()
 
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
 	if (a.prev != 0) FAIL("thread not cleared");
-	if (H2K_free_threads != &a) FAIL("free thread list incorrect");
+	if (H2K_gp->free_threads != &a) FAIL("free thread list incorrect");
 	if (a.next != 0) FAIL("Free thread list incorrect");
-	if (H2K_runlist[2] == &a) FAIL("Thread not removed from runlist");
-	if (H2K_runlist[2]->next == &a) FAIL("Thread not removed from runlist");
+	if (H2K_gp->runlist[2] == &a) FAIL("Thread not removed from runlist");
+	if (H2K_gp->runlist[2]->next == &a) FAIL("Thread not removed from runlist");
 
 	TH_saw_dosched = 0;
 	TH_me = &b;
@@ -82,10 +83,10 @@ int main()
 	TH_thread_stop(TH_me);
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
 	if (b.prev != 0) FAIL("thread not cleared");
-	if (H2K_free_threads != &b) FAIL("free thread list incorrect");
+	if (H2K_gp->free_threads != &b) FAIL("free thread list incorrect");
 	if (b.next != &a) FAIL("Free thread list incorrect");
-	if (H2K_runlist[2] == &b) FAIL("Thread not removed from runlist");
-	if (H2K_runlist[2] != NULL) FAIL("Unexpected runlist");
+	if (H2K_gp->runlist[2] == &b) FAIL("Thread not removed from runlist");
+	if (H2K_gp->runlist[2] != NULL) FAIL("Unexpected runlist");
 
 	H2K_runlist_init();
 	H2K_lowprio_init();
@@ -94,13 +95,13 @@ int main()
 	a.prio = 2;
 	b.prio = 2;
 	c.prio = 2;
-	if (H2K_free_threads != NULL) FAIL("free threads not clear");
+	if (H2K_gp->free_threads != NULL) FAIL("free threads not clear");
 	H2K_runlist_push(&a);
-	if (H2K_runlist[2] != &a) FAIL("Thread not in expected place in runlist");
+	if (H2K_gp->runlist[2] != &a) FAIL("Thread not in expected place in runlist");
 	H2K_runlist_push(&b);
-	if (H2K_runlist[2] != &b) FAIL("Thread not in expected place in runlist");
+	if (H2K_gp->runlist[2] != &b) FAIL("Thread not in expected place in runlist");
 	H2K_runlist_push(&c);
-	if (H2K_runlist[2] != &c) FAIL("Thread not in expected place in runlist");
+	if (H2K_gp->runlist[2] != &c) FAIL("Thread not in expected place in runlist");
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
@@ -108,10 +109,10 @@ int main()
 
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
 	if (a.prev != 0) FAIL("thread not cleared");
-	if (H2K_free_threads != &a) FAIL("free thread list incorrect");
+	if (H2K_gp->free_threads != &a) FAIL("free thread list incorrect");
 	if (a.next != 0) FAIL("Free thread list incorrect");
-	if (H2K_runlist[2] == &a) FAIL("Thread not removed from runlist");
-	if (H2K_runlist[2]->next->next == &a) FAIL("Thread not removed from runlist");
+	if (H2K_gp->runlist[2] == &a) FAIL("Thread not removed from runlist");
+	if (H2K_gp->runlist[2]->next->next == &a) FAIL("Thread not removed from runlist");
 
 	puts("TEST PASSED\n");
 	return 0;

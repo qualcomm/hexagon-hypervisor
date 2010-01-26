@@ -28,13 +28,10 @@ For both V3 and V4, the trace format is a 32-bit word.  It has the structure::
 
 The buffer is defined as:
 
-u32_t H2K_trace_index;
-H2K_trace_entry_t H2K_trace[MAX_TRACE_ENTRIES];
-
 Fatal Kernel Errors have negative Trace IDs.  Informational kernel messages
 have positive Trace IDs.  MAX_TRACE_LEVEL may be used to filter out kernel
 messages.  Recommended MAX_TRACE_LEVEL values are zero for maximum performance,
-or 1000 for maximum tracing.
+or 15 for maximum tracing.
 
 The delta (in processor cycles) between the last trace event and the current
 trace event is logged in the "delta" field.  The value is kept in a signed 
@@ -64,16 +61,16 @@ Description
 If an event is less than MAX_TRACE_LEVEL, log a kernel event.
 
 .. InputAssert::
-	assert(H2K_trace_index < MAX_TRACE_ENTRIES)
+	assert(H2K_kg.trace_info.index < H2K_kg.trace_info.entries)
 
 
 Functionality
 ~~~~~~~~~~~~~
 
-If type is greater than MAX_TRACE_LEVEL, do nothing.
+If type is greater than max_trace_level, do nothing.
 
-H2K_trace_index points to the next trace entry to write.  We read the value, 
-increment it, reset to zero if greater than MAX_TRACE_ENTRIES, and store the
+H2K_kg.trace_info.index points to the next trace entry to write.  We read the value, 
+increment it, reset to zero if greater than trace_entries, and store the
 pointer back atomically.  We use the old value to compute the pointer to the
 trace entry to write.  
 

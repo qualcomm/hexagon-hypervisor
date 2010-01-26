@@ -30,3 +30,13 @@ H2K_stacks:
 	.space 128
 	.space 128
 
+	.global H2K_futex_wait
+H2K_futex_wait:
+	r0 = #2
+	jumpr r31
+
+	.global H2K_futex_resume
+H2K_futex_resume:
+	r0 = #3
+	jumpr r31
+

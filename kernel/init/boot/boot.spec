@@ -20,6 +20,8 @@ This function merely returns. However, it must be called from main from the
 boot thread.  This forces the linker to include the object in the final
 executable.
 
+This file references H2K_event_vectors, which references H2K_handle_trap0.
+Together these should pull in the remainder of required files.
 
 start
 -----
@@ -49,15 +51,6 @@ Functionality
 
 We set up kernel stack pointer, and then call :cfunc:`H2K_switch()` with both
 arguments set to NULL.
-
-
-.. :cvar: void *H2K___refs[]
-
-This data structure contains references to all functions
-that are required in a H2 kernel, to force the linker
-to link them in.
-
-
 
 
 Testing

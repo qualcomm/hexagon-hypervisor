@@ -4,24 +4,11 @@
 
 .. module:: lowprio
 
-H2K_wait_mask and H2K_priomask
-------------------------------
+H2K_kg.wait_mask and H2K_kg.priomask
+------------------------------------
 
 These words describe the hardware threads that are waiting for an interrupt,
 and the hardware thread or threads that are the lowest priority.
-
-.. cvar:: u32_t H2K_wait_mask
-
-	A mask for which threads are in wait mode.  Hardware thread 0 corresponds
-	to bit 0, hardware thread 1 to bit 1, and so on.
-
-.. cvar:: u32_t H2K_priomask
-
-	A mask for which thread or threads are marked as the lowest priority.  
-	These threads will be interruptible.  Like :cdata:`H2K_wait_mask`, 
-	Hardware thread *n* corresponds to bit *n* in the mask.  If a bit 
-	is set in :cdata:`H2K_wait_mask`, it should also be set in 
-	:cdata:`H2K_priomask`.
 
 H2K_lowprio_notify
 ------------------
@@ -39,9 +26,9 @@ Functionality
 ~~~~~~~~~~~~~
 
 First, we get the priority of the worst priority running thread.  We look at the 
-H2K_runlist entry at that priority, which points to the thread that was inserted
+H2K_kg.runlist entry at that priority, which points to the thread that was inserted
 at the worst priority most recently.  We then look at the hthread field of this 
-thread, and use that to set the :cdata:`H2K_priomask` bit corresponding to the 
+thread, and use that to set the :cdata:`H2K_kg.priomask` bit corresponding to the 
 hardware thread and to call thread_prio_change_low().
 
 
@@ -59,10 +46,10 @@ modifies the state to indicate it is no longer lowest priority.
 Functionality
 ~~~~~~~~~~~~~
 
-If :cdata:`H2K_wait_mask` is nonzero, we return, as we should never mask interrupts on 
-a waiting thread.  Otherwise, count the trailing zeros of :cdata:`H2K_priomask`, which
+If :cdata:`H2K_kg.wait_mask` is nonzero, we return, as we should never mask interrupts on 
+a waiting thread.  Otherwise, count the trailing zeros of :cdata:`H2K_kg.priomask`, which
 yields the hardware thread that should no longer be the low priority thread.  
-We clear that bit from the :cdata:`H2K_priomask` and call :cfunc:`H2K_prio_change_high()` for
+We clear that bit from the :cdata:`H2K_kg.priomask` and call :cfunc:`H2K_prio_change_high()` for
 the hardware thread.  
 
 
@@ -79,7 +66,7 @@ Description
 Functionality
 ~~~~~~~~~~~~~
 
-Set :cdata:`H2K_wait_mask` and :cdata:`H2K_priomask` to zero.
+Set :cdata:`H2K_kg.wait_mask` and :cdata:`H2K_kg.priomask` to zero.
 
 
 
@@ -91,14 +78,14 @@ Samples
 ~~~~~~~
 
 * Input: runlist
-* Input: :cdata:`H2K_wait_mask`
-* I/O: :cdata:`H2K_priomask`
+* Input: :cdata:`H2K_kg.wait_mask`
+* I/O: :cdata:`H2K_kg.priomask`
 * Output: IMASK values
 
 Important Cases
 ~~~~~~~~~~~~~~~
 
-* :cdata:`H2K_wait_mask` == 0: H2K_lowprio_raise should have no effect
+* :cdata:`H2K_kg.wait_mask` == 0: H2K_lowprio_raise should have no effect
 
 Harness
 ~~~~~~~
@@ -108,14 +95,14 @@ H2 lib kernel will be built.
 Various threads at various priorities should be added to runlist.
 The lowest priority thread in the runlist should be marked as lowprio.
 H2K_lowprio_raise will be called, and the formerly lowest priority
-hardware thread should have a modified IMASK and the :cdata:`H2K_priomask` bit
+hardware thread should have a modified IMASK and the :cdata:`H2K_kg.priomask` bit
 should be configured to be non-receptive to most interrutps.
 
-H2K_lowprio_notify should then be called.  If :cdata:`H2K_wait_mask` is nonzero, the
+H2K_lowprio_notify should then be called.  If :cdata:`H2K_kg.wait_mask` is nonzero, the
 lowest priority thread in the runlist should be selected, the corresponding bit
-should be added to :cdata:`H2K_priomask`, and the IMASK on the corresponding hardware
+should be added to :cdata:`H2K_kg.priomask`, and the IMASK on the corresponding hardware
 thread should be receptive to most interrupts.
 
-Also, check that H2K_lowprio_init initializes :cdata:`H2K_wait_mask` and :cdata:`H2K_priomask`.
+Also, check that H2K_lowprio_init initializes :cdata:`H2K_kg.wait_mask` and :cdata:`H2K_kg.priomask`.
 
 

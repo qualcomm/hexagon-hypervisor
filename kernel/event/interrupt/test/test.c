@@ -10,6 +10,7 @@
 #include <intconfig.h>
 #include <setjmp.h>
 #include <max.h>
+#include <globals.h>
 
 H2K_thread_context *TH_src_context;
 H2K_thread_context *TH_dest_context;
@@ -100,9 +101,9 @@ void TH_setup_inthandlers(u32_t interrupt)
 {
 	u32_t i;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		H2K_inthandlers[i] = TH_bad_interrupt;
+		H2K_gp->inthandlers[i] = TH_bad_interrupt;
 	}
-	H2K_inthandlers[interrupt] = TH_good_interrupt;
+	H2K_gp->inthandlers[interrupt] = TH_good_interrupt;
 }
 
 void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
@@ -143,6 +144,7 @@ void fill_srcdata(int i)
 int main() 
 {
 	int i;
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		fill_srcdata(i);

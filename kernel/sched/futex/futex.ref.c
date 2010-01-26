@@ -12,12 +12,13 @@
 #include <ring.h>
 #include <check_sanity.h>
 #include <q6protos.h>
+#include <globals.h>
 
 /* 
  * EJP: hash table aligned to it's size, so we 
  * should be able to use tableidx on the product 
  */
-H2K_thread_context *H2K_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE*4))) IN_SECTION(".data.sched.futex");
+// H2K_thread_context *H2K_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE*4))) IN_SECTION(".data.sched.futex");
 #define HASHVAL(X) (Q6_R_extractu_RII((((unsigned int)(X)) * 2654435761UL),FUTEX_HASHBITS,32-FUTEX_HASHBITS))
 
 /*
@@ -39,7 +40,7 @@ s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 	H2K_runlist_remove(me);
 	me->r0100 = 0;
 	me->status = H2K_STATUS_BLOCKED;
-	H2K_ring_append(&H2K_futexhash[hashval],me);
+	H2K_ring_append(&H2K_gp->futexhash[hashval],me);
 	H2K_dosched(me,me->hthread);
 	return 0;
 }
@@ -72,11 +73,11 @@ u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 	if (n_to_wake == 0) return 0;
 
 	BKL_LOCK();
-	if (H2K_futexhash[hashval] == NULL) {
+	if (H2K_gp->futexhash[hashval] == NULL) {
 		BKL_UNLOCK();
 		return 0;
 	}
-	tmp = H2K_futexhash[hashval];
+	tmp = H2K_gp->futexhash[hashval];
 	if (n_to_wake == 1) {
 		tmp2 = NULL;
 		do {
@@ -88,22 +89,22 @@ u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 			if (highest_prio > prio) tmp2 = tmp;
 			highest_prio = Q6_R_min_RR(highest_prio,prio);
 			tmp = tmp->next;
-		} while (H2K_futexhash[hashval] != tmp);
+		} while (H2K_gp->futexhash[hashval] != tmp);
 		if (tmp2) {
 			n_woken = 1;
 			prio = highest_prio;
-			H2K_ring_remove(&H2K_futexhash[hashval],tmp2);
+			H2K_ring_remove(&H2K_gp->futexhash[hashval],tmp2);
 			H2K_ready_append(tmp2);
 		}
 	} else {
-		tmp2 = H2K_futexhash[hashval];
+		tmp2 = H2K_gp->futexhash[hashval];
 		do {
-			tmp = futex_find(H2K_futexhash[hashval],tmp2,lock);
+			tmp = futex_find(H2K_gp->futexhash[hashval],tmp2,lock);
 			if (tmp == NULL) break;
 			tmp2 = tmp->next;
 			prio = tmp->prio;
 			highest_prio = Q6_R_min_RR(highest_prio,prio);
-			H2K_ring_remove(&H2K_futexhash[hashval],tmp);
+			H2K_ring_remove(&H2K_gp->futexhash[hashval],tmp);
 			H2K_ready_append(tmp);
 			if (++n_woken >= n_to_wake) break;
 		} while (1);
@@ -115,7 +116,7 @@ void H2K_futex_init()
 {
 	int i;
 	for (i = 0; i < FUTEX_HASHSIZE; i++) {
-		H2K_futexhash[i] = NULL;
+		H2K_gp->futexhash[i] = NULL;
 	}
 }
 

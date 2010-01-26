@@ -10,46 +10,47 @@
 #include <ring.h>
 #include <q6protos.h>
 #include <max.h>
+#include <globals.h>
 
-extern H2K_thread_context *H2K_ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
-extern u32_t H2K_ready_valids IN_SECTION(".data.sched.ready");
-extern u32_t H2K_ready_validmask IN_SECTION(".data.sched.ready");
+//extern H2K_thread_context *H2K_gp->ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
+//extern u32_t H2K_gp->ready_valids IN_SECTION(".data.sched.ready");
+//extern u32_t H2K_gp->ready_validmask IN_SECTION(".data.sched.ready");
 
 static inline u32_t H2K_ready_best_prio()
 {
-	return Q6_R_ct0_R(H2K_ready_valids & H2K_ready_validmask);
+	return Q6_R_ct0_R(H2K_gp->ready_valids & H2K_gp->ready_validmask);
 }
 
 static inline void H2K_ready_append(H2K_thread_context *thread)
 {
 	u32_t prio = thread->prio;
 	thread->status = H2K_STATUS_READY;
-	H2K_ring_append(&H2K_ready[prio],thread);
-	H2K_ready_valids |= 1<<prio;
+	H2K_ring_append(&H2K_gp->ready[prio],thread);
+	H2K_gp->ready_valids |= 1<<prio;
 }
 
 static inline void H2K_ready_insert(H2K_thread_context *thread)
 {
 	u32_t prio = thread->prio;
 	thread->status = H2K_STATUS_READY;
-	H2K_ring_insert(&H2K_ready[prio],thread);
-	H2K_ready_valids |= 1<<prio;
+	H2K_ring_insert(&H2K_gp->ready[prio],thread);
+	H2K_gp->ready_valids |= 1<<prio;
 }
 
 static inline void H2K_ready_remove(H2K_thread_context *thread)
 {
 	u32_t prio = thread->prio;
-	H2K_ring_remove(&H2K_ready[prio],thread);
-	if (H2K_ready[prio] == NULL) H2K_ready_valids = Q6_R_clrbit_RR(H2K_ready_valids,prio);
+	H2K_ring_remove(&H2K_gp->ready[prio],thread);
+	if (H2K_gp->ready[prio] == NULL) H2K_gp->ready_valids = Q6_R_clrbit_RR(H2K_gp->ready_valids,prio);
 }
 
 static inline H2K_thread_context *H2K_ready_getbest()
 {
 	H2K_thread_context *ret;
 	u32_t prio;
-	if ((H2K_ready_valids & H2K_ready_validmask) == 0) return NULL;
+	if ((H2K_gp->ready_valids & H2K_gp->ready_validmask) == 0) return NULL;
 	prio = H2K_ready_best_prio();
-	ret = H2K_ready[prio];
+	ret = H2K_gp->ready[prio];
 	H2K_ready_remove(ret);
 	return ret;
 }

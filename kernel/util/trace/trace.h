@@ -30,7 +30,7 @@ typedef struct {
 	s32_t max_trace_level;
 } H2K_trace_info_t;
 
-extern H2K_trace_info_t H2K_trace_info IN_SECTION(".data.trace");
+// extern H2K_trace_info_t H2K_trace_info IN_SECTION(".data.trace");
 
 void H2K_trace(s8_t type, u8_t hwtnum, u8_t tid, u32_t pcyclelo);
 void H2K_trace_init();

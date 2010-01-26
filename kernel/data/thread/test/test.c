@@ -9,6 +9,7 @@
 #include <asm_offsets.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -23,6 +24,7 @@ int main()
 {
 	int i;
 	char *x;
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	a.next = a.prev = &a;
 	a.tid = a.prio = 3;
 	a.gelr_gbadva = 0x1234;
@@ -34,6 +36,9 @@ int main()
 	for (i = 0; i < CONTEXT_SIZE; i++) {
 		if (x[i] != 0) FAIL("Nonzero element");
 	}
+	H2K_gp->free_threads = &a;
+	H2K_thread_init();
+	if (H2K_gp->free_threads != NULL) FAIL("H2K_thread_init");
 	puts("TEST PASSED\n");
 	return 0;
 }

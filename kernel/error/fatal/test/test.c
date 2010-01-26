@@ -15,6 +15,7 @@
 #include <setjmp.h>
 #include <fatal.h>
 #include <stop.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -49,7 +50,9 @@ void H2K_thread_stop(H2K_thread_context *me)
 
 int main() 
 {
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_fatal_init();
+	H2K_trace_init();
 	H2K_fatal_kernel_handler = TH_handler;
 	TH_expected_stop = TH_saw_stop = 0;
 	TH_expected_handler = TH_saw_handler = 0;

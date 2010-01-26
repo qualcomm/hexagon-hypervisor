@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <globals.h>
 
 void H2K_sched_yield(H2K_thread_context *me);
 
@@ -47,6 +48,7 @@ void TH_sched_yield(H2K_thread_context *me)
 
 int main() 
 {
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();

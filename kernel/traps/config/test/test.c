@@ -10,6 +10,7 @@
 #include <string.h>
 #include <config.h>
 #include <fatal.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -28,10 +29,11 @@ static void __attribute__((noreturn)) foo(u32_t xyzzy)
 int main()
 {
 	u32_t i,j,pos;
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_thread_init();
 	H2K_fatal_kernel_handler = NULL;
 	H2K_trap_config(2,buf,sizeof(buf),0,NULL);
-	if (H2K_free_threads) FAIL("trap config failure");
+	if (H2K_gp->free_threads) FAIL("trap config failure");
 	if (H2K_fatal_kernel_handler != NULL) FAIL("trap config failure");
 
 	H2K_trap_config(1,foo,0,0,NULL);
@@ -39,9 +41,9 @@ int main()
 
 	memset(buf,0xef,sizeof(buf));
 	H2K_trap_config(0,buf,sizeof(buf),0,NULL);
-	if (H2K_free_threads != (void *)(buf+sizeof(H2K_thread_context))) FAIL("free threads unexpected");
-	if (H2K_free_threads->next != (void *)buf) FAIL("Incorrect number of free threads");
-	if (H2K_free_threads->next->next != NULL) FAIL("End of list not found");
+	if (H2K_gp->free_threads != (void *)(buf+sizeof(H2K_thread_context))) FAIL("free threads unexpected");
+	if (H2K_gp->free_threads->next != (void *)buf) FAIL("Incorrect number of free threads");
+	if (H2K_gp->free_threads->next->next != NULL) FAIL("End of list not found");
 	for (i = 4; i < sizeof(H2K_thread_context); i++) {
 		if (buf[i] != 0) FAIL("Thread not initialized (A) ");
 		if (buf[i+sizeof(H2K_thread_context)] != 0) FAIL("Thread not initialized (B) ");
@@ -51,8 +53,8 @@ int main()
 		memset(buf,0xef,sizeof(buf));
 		H2K_trap_config(0,buf+i,sizeof(buf)-i,0,NULL);
 		pos = ((i + 31) & (-32));
-		if (H2K_free_threads != (void *)(buf+pos)) FAIL("Incorrect start for thread");
-		if (H2K_free_threads->next != NULL) FAIL("Incorrect size calculation");
+		if (H2K_gp->free_threads != (void *)(buf+pos)) FAIL("Incorrect start for thread");
+		if (H2K_gp->free_threads->next != NULL) FAIL("Incorrect size calculation");
 		for (j = pos+4; j < pos+sizeof(H2K_thread_context); j++) {
 			if (buf[j] != 0) FAIL("thread not initialized");
 		}
@@ -64,7 +66,7 @@ int main()
 		H2K_thread_init();
 		memset(buf,0xef,sizeof(buf));
 		H2K_trap_config(0,buf+i,sizeof(buf)-i,0,NULL);
-		if (H2K_free_threads != NULL) FAIL("Insufficient size allocated thread");
+		if (H2K_gp->free_threads != NULL) FAIL("Insufficient size allocated thread");
 		for (j = 0; j < sizeof(buf); j++) {
 			if (buf[j] != 0xef) FAIL("Should not write memory");
 		}
@@ -72,7 +74,7 @@ int main()
 	H2K_thread_init();
 	memset(buf,0xef,sizeof(buf));
 	H2K_trap_config(0,buf+1,sizeof(H2K_thread_context),0,NULL);
-	if (H2K_free_threads != NULL) FAIL("Insufficient size allocated thread");
+	if (H2K_gp->free_threads != NULL) FAIL("Insufficient size allocated thread");
 	for (j = 0; j < sizeof(buf); j++) {
 		if (buf[j] != 0xef) FAIL("Should not write memory");
 	}

@@ -7,8 +7,9 @@
 #include <context.h>
 #include <thread.h>
 #include <max.h>
+#include <globals.h>
 
-H2K_thread_context *H2K_free_threads;
+// H2K_thread_context *H2K_free_threads;
 #if __QDSP6_ARCH__ == 2
 H2K_thread_context H2K_idle_context;
 #endif
@@ -29,6 +30,6 @@ void H2K_thread_init()
 #if __QDSP6_ARCH__ == 2
 	H2K_thread_context_clear(&H2K_idle_context);
 #endif
-	H2K_free_threads = NULL;
+	H2K_gp->free_threads = NULL;
 }
 

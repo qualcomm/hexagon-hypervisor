@@ -18,6 +18,7 @@ void H2K_interrupt_restore();
 
 void H2K_init_setup()
 {
+	H2K_trace_init();
 	H2K_fatal_init();
 	H2K_runlist_init();
 	H2K_readylist_init();

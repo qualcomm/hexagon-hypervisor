@@ -64,16 +64,12 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 #else
 	r5 = HTID
 #endif
-	r3.h = #hi(H2K_wait_mask)
-	r3.l = #lo(H2K_wait_mask)
-	r4.h = #hi(H2K_priomask)
-	r4.l = #lo(H2K_priomask)
-	r9 = memw(r3)
-	r8 = memw(r4)
+	r9 = memw(r16+#KG_wait_mask)
+	r8 = memw(r16+#KG_priomask)
 	r9 = setbit(r9,r5)
 	r8 = setbit(r8,r5)
-	memw(r3) = r9
-	memw(r4) = r8
+	memw(r16+#KG_wait_mask) = r9
+	memw(r16+#KG_priomask) = r8
 	k0unlock
 	// set SGP to NULL
 	sgp = r1

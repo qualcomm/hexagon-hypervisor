@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <checker_runlist.h>
 #include <checker_ready.h>
+#include <globals.h>
 
 H2K_thread_context l,m,h;
 H2K_thread_context l2,m2,h2;
@@ -85,10 +86,10 @@ void TB_fiddle_prio_low_to_low(phase_t phase)
 {
 	if (phase == SETUP) {
 		/* Setup for call */
-		if (H2K_wait_mask == 0) {
-			H2K_priomask = H2K_wait_mask;
+		if (H2K_gp->wait_mask == 0) {
+			H2K_gp->priomask = H2K_gp->wait_mask;
 		} else {
-			H2K_priomask = 0x1;
+			H2K_gp->priomask = 0x1;
 		}
 		H2K_runlist_push(&h);
 		H2K_ready_append(&m);
@@ -96,8 +97,8 @@ void TB_fiddle_prio_low_to_low(phase_t phase)
 	} else {
 		/* Check expected values */
 		if (TB_to != &m) FAIL("Unexpected thread scheduled");
-		if (H2K_wait_mask == 0) {
-			if ((H2K_priomask & 1) == 0) FAIL("low_to_low did not switch to lowprio");
+		if (H2K_gp->wait_mask == 0) {
+			if ((H2K_gp->priomask & 1) == 0) FAIL("low_to_low did not switch to lowprio");
 		}
 	}
 }
@@ -106,10 +107,10 @@ void TB_fiddle_prio_low_to_high(phase_t phase)
 {
 	if (phase == SETUP) {
 		/* Setup for call */
-		if (H2K_wait_mask == 0) {
-			H2K_priomask = H2K_wait_mask;
+		if (H2K_gp->wait_mask == 0) {
+			H2K_gp->priomask = H2K_gp->wait_mask;
 		} else {
-			H2K_priomask = 0x1;
+			H2K_gp->priomask = 0x1;
 		}
 		H2K_runlist_push(&m);
 		H2K_ready_append(&h);
@@ -117,7 +118,7 @@ void TB_fiddle_prio_low_to_high(phase_t phase)
 	} else {
 		/* Check expected values */
 		if (TB_to != &h) FAIL("Unexpected thread scheduled");
-		if ((H2K_priomask & 1) == 1) FAIL("low_to_high did not switch from lowprio");
+		if ((H2K_gp->priomask & 1) == 1) FAIL("low_to_high did not switch from lowprio");
 	}
 }
 
@@ -125,10 +126,10 @@ void TB_fiddle_prio_high_to_low(phase_t phase)
 {
 	if (phase == SETUP) {
 		/* Setup for call */
-		if (H2K_wait_mask == 0) {
-			H2K_priomask = H2K_wait_mask;
+		if (H2K_gp->wait_mask == 0) {
+			H2K_gp->priomask = H2K_gp->wait_mask;
 		} else {
-			H2K_priomask = 0x2;
+			H2K_gp->priomask = 0x2;
 		}
 		H2K_runlist_push(&m);
 		H2K_ready_append(&l);
@@ -136,8 +137,8 @@ void TB_fiddle_prio_high_to_low(phase_t phase)
 	} else {
 		/* Check expected values */
 		if (TB_to != &l) FAIL("Unexpected thread scheduled");
-		if (H2K_wait_mask == 0) {
-			if ((H2K_priomask & 1) == 0) FAIL("high_to_low did not switch to lowprio");
+		if (H2K_gp->wait_mask == 0) {
+			if ((H2K_gp->priomask & 1) == 0) FAIL("high_to_low did not switch to lowprio");
 		}
 	}
 }
@@ -146,10 +147,10 @@ void TB_fiddle_prio_high_to_high(phase_t phase)
 {
 	if (phase == SETUP) {
 		/* Setup for call */
-		if (H2K_wait_mask == 0) {
-			H2K_priomask = H2K_wait_mask;
+		if (H2K_gp->wait_mask == 0) {
+			H2K_gp->priomask = H2K_gp->wait_mask;
 		} else {
-			H2K_priomask = 0x2;
+			H2K_gp->priomask = 0x2;
 		}
 		H2K_runlist_push(&l);
 		H2K_ready_append(&m);
@@ -157,7 +158,7 @@ void TB_fiddle_prio_high_to_high(phase_t phase)
 		TB_me = &h;
 	} else {
 		if (TB_to != &h) FAIL("Unexpected thread scheduled");
-		if ((H2K_priomask & 1) != 0) FAIL( " Unexpected switch to lowprio");
+		if ((H2K_gp->priomask & 1) != 0) FAIL( " Unexpected switch to lowprio");
 	}
 }
 
@@ -165,10 +166,10 @@ void TB_fiddle_prio_high_to_wait(phase_t phase)
 {
 	if (phase == SETUP) {
 		/* Setup for call */
-		if (H2K_wait_mask == 0) {
-			H2K_priomask = H2K_wait_mask;
+		if (H2K_gp->wait_mask == 0) {
+			H2K_gp->priomask = H2K_gp->wait_mask;
 		} else {
-			H2K_priomask = 0x2;
+			H2K_gp->priomask = 0x2;
 		}
 		TB_me = &h;
 	} else {
@@ -181,10 +182,10 @@ void TB_fiddle_prio_low_to_wait(phase_t phase)
 {
 	if (phase == SETUP) {
 		/* Setup for call */
-		if (H2K_wait_mask == 0) {
-			H2K_priomask = H2K_wait_mask;
+		if (H2K_gp->wait_mask == 0) {
+			H2K_gp->priomask = H2K_gp->wait_mask;
 		} else {
-			H2K_priomask = 0x1;
+			H2K_gp->priomask = 0x1;
 		}
 		TB_me = &l;
 	} else {
@@ -200,18 +201,18 @@ void TB_fiddle_prio_wait_to_high(phase_t phase)
 		TB_me = NULL;
 		H2K_runlist_push(&l);
 		H2K_ready_append(&h);
-		if (H2K_wait_mask == 0) {
-			H2K_priomask = 0;
+		if (H2K_gp->wait_mask == 0) {
+			H2K_gp->priomask = 0;
 			H2K_lowprio_notify();
 		} else {
-			H2K_priomask = H2K_wait_mask;
+			H2K_gp->priomask = H2K_gp->wait_mask;
 		}
 	} else {
 		/* Check expected values */
-		if (H2K_ready_valids != 0) FAIL("didn't find ready thread");
-		if ((H2K_runlist_valids & (1<<h.prio)) == 0) FAIL("Didn't insert h thread");
-		if (H2K_wait_mask == 0) {
-			if (H2K_priomask == 0x1) FAIL("set myself to lowprio?");
+		if (H2K_gp->ready_valids != 0) FAIL("didn't find ready thread");
+		if ((H2K_gp->runlist_valids & (1<<h.prio)) == 0) FAIL("Didn't insert h thread");
+		if (H2K_gp->wait_mask == 0) {
+			if (H2K_gp->priomask == 0x1) FAIL("set myself to lowprio?");
 		}
 	}
 }
@@ -224,18 +225,18 @@ void TB_fiddle_prio_wait_to_low(phase_t phase)
 		TB_me = NULL;
 		H2K_runlist_push(&h);
 		H2K_ready_append(&l);
-		if (H2K_wait_mask == 0) {
-			H2K_priomask = 0;
+		if (H2K_gp->wait_mask == 0) {
+			H2K_gp->priomask = 0;
 			H2K_lowprio_notify();
 		} else {
-			H2K_priomask = H2K_wait_mask;
+			H2K_gp->priomask = H2K_gp->wait_mask;
 		}
 	} else {
 		/* Check expected values */
-		if (H2K_ready_valids != 0) FAIL("didn't find ready thread");
-		if ((H2K_runlist_valids & (1<<l.prio)) == 0) FAIL("Didn't insert l thread");
-		if (H2K_wait_mask == 0) {
-			if (H2K_priomask != 0x1) FAIL("Didn't set myself to lowprio");
+		if (H2K_gp->ready_valids != 0) FAIL("didn't find ready thread");
+		if ((H2K_gp->runlist_valids & (1<<l.prio)) == 0) FAIL("Didn't insert l thread");
+		if (H2K_gp->wait_mask == 0) {
+			if (H2K_gp->priomask != 0x1) FAIL("Didn't set myself to lowprio");
 		}
 	}
 }
@@ -268,10 +269,10 @@ void TB_fiddle_wait_mask_zero(phase_t phase)
 {
 	if (phase == SETUP) {
 		/* Setup for call */
-		H2K_wait_mask = 0;
+		H2K_gp->wait_mask = 0;
 	} else {
 		/* Check expected values */
-		if (H2K_wait_mask != 0x0) FAIL("wait mask bit set");
+		if (H2K_gp->wait_mask != 0x0) FAIL("wait mask bit set");
 	}
 }
 
@@ -279,10 +280,10 @@ void TB_fiddle_wait_mask_nonzero(phase_t phase)
 {
 	if (phase == SETUP) {
 		/* Setup for call */
-		H2K_wait_mask = 0x4;	/* Mark another thread as asleep */
+		H2K_gp->wait_mask = 0x4;	/* Mark another thread as asleep */
 	} else {
 		/* Check expected values */
-		if (H2K_wait_mask != 0x4) FAIL("wait mask bit cleared");
+		if (H2K_gp->wait_mask != 0x4) FAIL("wait mask bit cleared");
 	}
 }
 
@@ -292,9 +293,12 @@ testsetup_t TB_fiddle_wait_mask[] = {
 	NULL
 };
 
+H2K_kg_t H2K_kg;
+
 int main()
 {
 	int i,j;
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 
 	l.prio = 20;
 	l.hthread = 1;

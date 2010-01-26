@@ -36,7 +36,7 @@ Interrupts can be handled by calling the reschedule function, or calling the
 function to handle fast interrupts.  The fast interrupt handler may be called
 before saving the registers saved by the ABI to improve performance.
 
-What function to call is determined by the table H2K_inthandlers.  The format
+What function to call is determined by the table H2K_kg.inthandlers.  The format
 of each inthandler should be::
 
 	H2K_handler(u32_t intno, H2K_thread_context *me, u32_t hwtnum)

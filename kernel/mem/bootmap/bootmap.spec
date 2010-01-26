@@ -21,17 +21,17 @@ Arguments:
 1. ASID: Address Space ID for this translation.
 2. Virtual Page Number.  Virtual address for the start of the page, shifted right by 12 bits.
 3. Permissions.  Should be one of:
-	0. No user permissions
-	"R". Read permissions only.
-	"W". Write permissions only.
-	"X". Execute permissions only.
-	"RW". Read and Write Permissions.
-	"RX". Read and Execute Permissions.
-	"WX". Write and Execute Permissions.
-	"RWX". Read, Write, and Execute Permissions.
+	* 0. No user permissions
+	* "R". Read permissions only.
+	* "W". Write permissions only.
+	* "X". Execute permissions only.
+	* "RW". Read and Write Permissions.
+	* "RX". Read and Execute Permissions.
+	* "WX". Write and Execute Permissions.
+	* "RWX". Read, Write, and Execute Permissions.
 4. Cacheability.  Should be one of:
-	"L1WB_L2UC": L1 WriteBack, Non-L2 Cacheable
-	...
+	* "L1WB_L2UC": L1 WriteBack, Non-L2 Cacheable
+	* ...
 5. PGSIZE.  Page Size.  SIZE_XX, where XX is a valid page size from "4K" to "16M".
 6. Partition.  Must be "MAIN" or "AUX"
 7. PPN.  Physical address, shifted right by 12 bits.

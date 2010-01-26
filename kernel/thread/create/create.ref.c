@@ -28,12 +28,12 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 	if ((sp & 7) != 0) return -1;           // bad stack pointer alignment
 	if ((pc & 3) != 0) return -1;           // bad pc alignment
 	BKL_LOCK(&H2K_bkl);
-	if (H2K_free_threads == NULL) {
+	if (H2K_gp->free_threads == NULL) {
 		BKL_UNLOCK(&H2K_bkl);
 		return -1;
 	}
-	tmp = H2K_free_threads;
-	H2K_free_threads = H2K_free_threads->next;
+	tmp = H2K_gp->free_threads;
+	H2K_gp->free_threads = H2K_gp->free_threads->next;
 	tmp->prio = prio;
 	tmp->ugpgp = me->ugpgp;
 	tmp->ssrelr = (((u64_t)(myssr)) << 32)

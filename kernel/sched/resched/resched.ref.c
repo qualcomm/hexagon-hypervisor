@@ -11,6 +11,7 @@
 #include <dosched.h>
 #include <lowprio.h>
 #include <resched.h>
+#include <globals.h>
 
 void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 {
@@ -21,7 +22,7 @@ void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 		H2K_ready_append(me);
 	} else {
 		/* Interrupted WAIT mode */
-		H2K_wait_mask = Q6_R_clrbit_RR(H2K_wait_mask,hwtnum);
+		H2K_gp->wait_mask = Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
 	}
 	H2K_dosched(me, hwtnum);
 }

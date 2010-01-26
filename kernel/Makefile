@@ -9,7 +9,7 @@ CC = qdsp6-gcc
 AR = qdsp6-ar
 SIM := qdsp6-sim -mv$(ARCHV)
 
-CFLAGS := -Iinclude -G0 -O2 -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall
+CFLAGS := -Iinclude -G0 -Os -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall
 
 ifdef DEBUG
 CFLAGS += -DDEBUG

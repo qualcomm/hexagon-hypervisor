@@ -26,9 +26,7 @@ FUNC_START H2K_fastint .text.event.fastint .p2align 5
 #if __QDSP6_ARCH__ <= 3
 	r5 = brev(r5)
 #endif
-	r6.h = #hi(H2K_fastint_gp)
-	r6.l = #lo(H2K_fastint_gp)
-	r6 = memw(r6)
+	r6 = memw(r16+#KG_fastint_gp)
 
 	// r4 = fastint_functions
 	// r5 = mask for ciad
@@ -43,8 +41,7 @@ FUNC_START H2K_fastint .text.event.fastint .p2align 5
 	ssr = r11
 	gp = r6
 
-	r4.h = #hi(H2K_fastint_funcptrs)
-	r4.l = #lo(H2K_fastint_funcptrs)
+	r4 = add(r16,#KG_fastint_funcptrs)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
 	callr r4
@@ -61,11 +58,10 @@ H2K_fastint_return:
 	jumpr r31
 
 1:
-	r5.h = #hi(H2K_fastint_mask)
-	r5.l = #lo(H2K_fastint_mask)
-	r5 = memw(r5)
-	r4.h = #hi(H2K_fastint_funcptrs)
-	r4.l = #lo(H2K_fastint_funcptrs)
+	r16.h = #hi(H2K_kg)
+	r16.l = #lo(H2K_kg)
+	r5 = memw(r16+#KG_fastint_mask)
+	r4 = add(r5,#KG_fastint_funcptrs)
 	r11.h = #0x1c4
 	r11.l = #0x0
 	r5 = not(r5)

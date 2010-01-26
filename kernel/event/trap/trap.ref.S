@@ -59,6 +59,9 @@ FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
 	r11.l = #lo(H2K_traptab)
 	r10 = addasl(r11,r10,#3)
 
+	r16.h = #hi(H2K_kg)
+	r16.l = #lo(H2K_kg)
+
 	// set up continuation in case we block
 	call .Ljump_to_trap
 

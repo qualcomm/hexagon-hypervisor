@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <checker_kernel_locked.h>
+#include <globals.h>
 
 u32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapmask, H2K_thread_context *me);
 void H2K_interrupt_restore();
@@ -38,6 +39,11 @@ u64_t H2K_check_sanity_unlock(u64_t x)
 	return x;
 }
 
+u64_t H2K_check_sched_mask(u64_t x)
+{
+	FAIL("Saw sched mask check");
+}
+
 void test_thread(unsigned int arg)
 {
 	while (1) /* spin */;
@@ -47,6 +53,7 @@ unsigned long long int stack;
 
 int main() 
 {
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_runlist_init();
 	H2K_readylist_init();
 	H2K_lowprio_init();
@@ -60,7 +67,7 @@ int main()
 
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,0xffffffff,&a)
 		!= 0xffffffff) FAIL("Created thread w/o storage");
-	H2K_free_threads = &b;
+	H2K_gp->free_threads = &b;
 	b.next = &c;
 	c.next = NULL;
 	if (H2K_thread_create(((u32_t)test_thread)+1,((u32_t)(&stack)),0xdeadbeef,2,0xffffffff,&a) 
@@ -75,7 +82,7 @@ int main()
 	if (H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,2,0xff33ffff,&a) 
 		!= (u32_t)(&b)) FAIL("Failed to create expected thread");
 	if (TH_saw_check_sanity == 0) FAIL("Did not call check_sanity");
-	if (H2K_ready[2] != &b) FAIL("Thread inserted incorrectly into ready list");
+	if (H2K_gp->ready[2] != &b) FAIL("Thread inserted incorrectly into ready list");
 	if (b.prio != 2) FAIL("thread priority set wrong");
 	if (b.status == H2K_STATUS_DEAD) FAIL("status field incorrect");
 	if (b.r0100 != 0x00000000deadbeefULL) FAIL("Incorrect argument");

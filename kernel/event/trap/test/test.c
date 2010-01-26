@@ -10,6 +10,7 @@
 #include <max.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -21,8 +22,8 @@ void FAIL(const char *str)
 H2K_thread_context a;
 
 s32_t H2K_thread_id() { return 1; }
-s32_t H2K_futex_wait() { return 2; }
-s32_t H2K_futex_resume() { return 3; }
+// s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) { return 2; } -- defined in asm
+// s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me) { return 3; } -- defined in asm
 s32_t H2K_thread_create() { return 4; }
 s32_t H2K_thread_stop() { return 5; }
 s32_t H2K_cputime_get() { return 6; }
@@ -44,6 +45,8 @@ s32_t testvals[] = {
 	 0, 1, 2, 3, 4, 5, 6, 1, 8, 9,10, 1,12, 1, 1, 1,
 	16, 1,18,19, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,30, 1
 };
+
+H2K_kg_t H2K_kg;
 
 int main() 
 {

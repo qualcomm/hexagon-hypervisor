@@ -13,6 +13,7 @@
 #include <intconfig.h>
 #include <thread.h>
 #include <setjmp.h>
+#include <globals.h>
 
 jmp_buf env;
 
@@ -34,6 +35,7 @@ enum {
         futex_init,
         intconfig_init,
         thread_init,
+        trace_init,
 	XX_LAST_HELPER
 };
 
@@ -50,6 +52,7 @@ HELPER_FUNC(lowprio_init)
 HELPER_FUNC(futex_init)
 HELPER_FUNC(intconfig_init)
 HELPER_FUNC(thread_init)
+HELPER_FUNC(trace_init)
 
 /* We need to use a longjmp at the end, because H2K_switch is defined as
  * noreturn */
@@ -61,8 +64,6 @@ void H2K_switch(void *from, void *to)
 	longjmp(env,1);
 }
 
-u32_t H2K_runlist_valids;
-H2K_thread_context *H2K_runlist[MAX_PRIOS];
 H2K_thread_context H2K_boot_context;
 
 void H2K_thread_boot();
@@ -70,10 +71,11 @@ void H2K_thread_boot();
 int main()
 {
 	u32_t i;
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	for (i = 0; i < MAX_PRIOS; i++) {
-		H2K_runlist[i] = 0;
+		H2K_gp->runlist[i] = 0;
 	}
-	H2K_runlist_valids = 0;
+	H2K_gp->runlist_valids = 0;
 	TH_init_seen = 0;
 	TH_switch_seen = 0;
 	if (setjmp(env) == 0) {
@@ -85,8 +87,8 @@ int main()
 	}
 	if (H2K_boot_context.continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");
 	if (H2K_boot_context.trapmask != 0xffffffffU) FAIL("boot thread trapmask");
-	if (H2K_runlist_valids != 1) FAIL("Didn't push into runlist");
-	if (H2K_runlist[0] != &H2K_boot_context) FAIL("Didn't push into runlist");
+	if (H2K_gp->runlist_valids != 1) FAIL("Didn't push into runlist");
+	if (H2K_gp->runlist[0] != &H2K_boot_context) FAIL("Didn't push into runlist");
 	puts("TEST PASSED\n");
 	return 0;
 }

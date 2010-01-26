@@ -92,8 +92,9 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	r0 = ssr
 	r0 = zxtb(r0)
 	r1 = r21	// thread context
-	r4.h = #hi(H2K_inthandlers)
-	r4.l = #lo(H2K_inthandlers)
+	r16.h = #hi(H2K_kg)
+	r16.l = #lo(H2K_kg)
+	r4 = add(r16,#KG_inthandlers)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
 
@@ -163,8 +164,9 @@ FUNC_START H2K_interrupted_waitmode .text.event.interrupt .p2align 2
 	r0 = ssr
 	r0 = zxtb(r0)
 	r1 = #0		// thread context == NULL
-	r4.h = #hi(H2K_inthandlers)
-	r4.l = #lo(H2K_inthandlers)
+	r16.h = #hi(H2K_kg)
+	r16.l = #lo(H2K_kg)
+	r4 = add(r16,#KG_inthandlers)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
 

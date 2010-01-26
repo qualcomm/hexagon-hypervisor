@@ -1,0 +1,39 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#ifndef H2K_GLOBALS_H
+#define H2K_GLOBALS_H 1
+
+#include <max.h>
+#include <c_std.h>
+#include <context.h>
+#include <trace.h>
+#include <futex.h>
+
+typedef struct {
+	u32_t runlist_valids;
+	u32_t ready_valids;
+	u32_t ready_validmask;
+	u32_t priomask;
+	u32_t wait_mask;
+	u32_t fastint_mask;
+	u32_t fastint_gp;
+	H2K_thread_context *free_threads;
+	H2K_trace_info_t trace_info;
+	H2K_thread_context *runlist[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
+	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
+	void *fastint_funcptrs[MAX_INTERRUPTS] __attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
+	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
+	void *inthandlers[MAX_INTERRUPTS]__attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
+} H2K_kg_t;
+
+extern H2K_kg_t H2K_kg IN_SECTION(".data.globals");
+
+register H2K_kg_t * const H2K_gp asm ("r16");
+
+void H2K_kg_init();
+
+#endif
+

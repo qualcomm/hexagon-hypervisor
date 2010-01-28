@@ -59,7 +59,7 @@ unsigned int counter=0;  /*  global test counter  */
 unsigned int age_to_wake=0;
 unsigned int max_consumers=0;
 unsigned int nr_to_wake=0;
-unsigned int max_prio_to_wake = 0;
+volatile unsigned int max_prio_to_wake = 0;
 
 /*  priority and done status, indexed by consumer thread counter  */
 volatile unsigned int thread_info[MAX_TEST_THREADS];

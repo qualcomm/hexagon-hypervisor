@@ -50,6 +50,7 @@ PRINT_CONTEXT_OFFSET(trapmask);
 PRINT_CONTEXT_OFFSET(gevb);
 PRINT_CONTEXT_OFFSET(gelr_gbadva);
 PRINT_CONTEXT_OFFSET(gssr_gosp);
+PRINT_CONTEXT_OFFSET(cs1cs0);
 	printf("#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
 	printf("#define FASTINT_CONTEXT_SIZE %d\n",sizeof(H2K_fastint_context));
 
@@ -65,7 +66,12 @@ PRINT_KG_OFFSET(ready);
 PRINT_KG_OFFSET(fastint_funcptrs);
 PRINT_KG_OFFSET(inthandlers);
 PRINT_KG_OFFSET(trace_info);
-
+PRINT_KG_OFFSET(stacks_traptab);
+PRINT_KG_OFFSET(stacks_addr);
+PRINT_KG_OFFSET(traptab_addr);
+PRINT_KG_OFFSET(ready_masks);
+PRINT_KG_OFFSET(lowprio_masks);
+PRINT_KG_OFFSET(fastint_gpmask);
 	return 0;
 }
 

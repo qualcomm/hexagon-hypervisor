@@ -20,9 +20,7 @@ static inline void H2K_lowprio_notify()
 {
 	u32_t prio;
 	u32_t hthread;
-	H2K_thread_context *tmp;
 	prio = H2K_runlist_worst_prio();
-	tmp = H2K_gp->runlist[prio];
 	hthread = H2K_gp->runlist[prio]->hthread;
 	H2K_gp->priomask |= 1<<hthread;
 	change_imask(hthread,0);

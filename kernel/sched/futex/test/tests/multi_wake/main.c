@@ -62,7 +62,7 @@ unsigned int nr_to_wake=0;
 unsigned int max_prio_to_wake = 0;
 
 /*  priority and done status, indexed by consumer thread counter  */
-unsigned int thread_info[MAX_TEST_THREADS];
+volatile unsigned int thread_info[MAX_TEST_THREADS];
 
 #define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
 #define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}

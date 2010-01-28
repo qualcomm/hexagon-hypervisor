@@ -99,7 +99,7 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	}
 	{
 		memd(r0+#CONTEXT_sr_preds) = r31:30
-		r2 = extractu(r28,#3,#19)		// hw tnum
+		r2 = extractu(r9,#3,#19)		// hw tnum
 	}
 	{
 		memd(r0+#CONTEXT_ssrelr) = r9:8
@@ -213,7 +213,6 @@ H2K_interrupt_restore:
 	}
 	{
 		r1:0 = memd(r0+#CONTEXT_r0100)
-		sgp = r0
 		rte
 	}
 	// restore: 16 cycles (ideal)

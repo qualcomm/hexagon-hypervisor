@@ -7,6 +7,7 @@
 #include <context.h>
 #include <stdlib.h>
 #include <h2.h>
+#include <max.h>
 
 /*
  * This test checks the following functionality:
@@ -58,9 +59,10 @@ unsigned int counter=0;  /*  global test counter  */
 unsigned int age_to_wake=0;
 unsigned int max_consumers=0;
 unsigned int nr_to_wake=0;
+unsigned int max_prio_to_wake = 0;
 
-/*  specifically for this test, indexed by consumer thread (age/prio) index  */
-unsigned threads_woken[MAX_TEST_THREADS];
+/*  priority and done status, indexed by consumer thread counter  */
+unsigned int thread_info[MAX_TEST_THREADS];
 
 #define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
 #define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}
@@ -102,23 +104,23 @@ void producer_thread(int x)
 	h2_thread_stop();
 }
 
-void consumer_thread(int age)
+void consumer_thread(unsigned int *tinfo)
 {
-	info("%d: Consumer started. id=0x%x\n",age,h2_thread_myid());
-
-	/*  remove this section if we get away from "oldest first"  */
-	if (age >= nr_to_wake) {
-		h2_futex_wait(&futex_pages[test_lock],0);
-		error("Inappropriate consumer thread woken up\n");
-	}  /*  this consumer should never be woken  */
+	int prio = *tinfo >> 16;
+	info("Consumer started. id=0x%x\n",h2_thread_myid());
 
 	h2_futex_wait(&futex_pages[test_lock],0);
+
+	*tinfo |= 0x1;
+
 	if (counter != PRODUCER_ITERATIONS) {
 		error("Wrong final counter value\n");
 	}
+	if (prio > max_prio_to_wake) {
+		error("Inappropriate priority %d woken\n",prio);
+	}
 
-	threads_woken[age] = 1;
-	info("%d: Final counter value:  %d\n",age,counter);
+	info("%x: %d Final counter value:  %d\n",prio,h2_thread_myid(),counter);
 	done = 1;
 
 	h2_thread_stop();
@@ -127,7 +129,7 @@ void consumer_thread(int age)
 int main() 
 {
 	unsigned int next_tnum;
-	unsigned int i,j,prio;
+	unsigned int i,j,k,prio;
 
 	srand(TEST_SEED);
 
@@ -200,11 +202,11 @@ int main()
 	/*  Spawn off multiple consumer threads waiting for test_lock */
 
 	for (i=0; i<max_consumers; i++) {
-		threads_woken[i] = 0;
 		prio = rand() % 8;
+		thread_info[i] = 0 | prio << 16;
 		if (h2_thread_create(consumer_thread,
 			&stack_space[next_tnum++][THREAD_STACK_SIZE],
-			(void *)i,
+			(void *)&thread_info[i],
 			prio,
 			0xffffffff) <= 0) {
 			info("Could not create consumer thread\n");
@@ -216,6 +218,25 @@ int main()
 		 */
 		info("Produced consumer thread, prio %d.\n",prio);
 	}
+
+	/*  Figure out the max priority that can be woken up  */
+	k = nr_to_wake;
+	for (j=0; j<MAX_PRIO; j++) {
+		for (i=0; i<max_consumers; i++) {
+			if ((thread_info[i] >> 16) == j) {
+				k--;
+			}
+			if (k == 0) {
+				max_prio_to_wake = j;
+				break;
+			}
+
+		}
+		if (k == 0) {
+			break;
+		}
+	}
+	info("Max priority to be woken should be %d\n",max_prio_to_wake);
 
 	/*  Producer thread  */
 	if (h2_thread_create(producer_thread,
@@ -241,8 +262,8 @@ int main()
 	/*  final check to see if threads_woken == nr_to_wake  */
 	j = 0;
 	for (i=0; i<max_consumers; i++) {
-		info("threads_woken[%d] = %d\n",i,threads_woken[i]);
-		if (threads_woken[i]) j++;
+		info("thread_info[%d] = %d\n",i,thread_info[i]);
+		if (thread_info[i] & 1) j++;
 	}
 	if (j != nr_to_wake) error("wrong # of threads woken; %d vs %d\n",j,nr_to_wake);
 

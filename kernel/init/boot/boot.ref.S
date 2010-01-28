@@ -87,6 +87,7 @@ FUNC_START start .text.init.boot .p2align 2
 	start(r0)
 
 	jump H2K_thread_boot
+FUNC_END start
 
 FUNC_START h2_init .text.init.boot .p2align 2
 	jumpr r31

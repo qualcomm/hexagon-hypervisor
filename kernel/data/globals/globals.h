@@ -14,12 +14,35 @@
 
 typedef struct {
 	u32_t runlist_valids;
-	u32_t ready_valids;
-	u32_t ready_validmask;
-	u32_t priomask;
-	u32_t wait_mask;
-	u32_t fastint_mask;
-	u32_t fastint_gp;
+	u32_t pad;
+	union {
+		u64_t ready_masks;
+		struct {
+			u32_t ready_valids;
+			u32_t ready_validmask;
+		};
+	};
+	union {
+		u64_t lowprio_masks;
+		struct {
+			u32_t priomask;
+			u32_t wait_mask;
+		};
+	};
+	union {
+		u64_t fastint_gpmask;
+		struct {
+			u32_t fastint_mask;
+			u32_t fastint_gp;
+		};
+	};
+	union {
+		u64_t stacks_traptab;
+		struct {
+			void *traptab_addr;
+			void *stacks_addr;
+		};
+	};
 	H2K_thread_context *free_threads;
 	H2K_trace_info_t trace_info;
 	H2K_thread_context *runlist[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));

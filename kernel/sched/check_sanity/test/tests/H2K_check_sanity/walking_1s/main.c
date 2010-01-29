@@ -121,29 +121,27 @@ int main()
 	global_valid_prio = 0;
 	for (i=0; i<7; i++) {
 		prio_hthread = 0;
+		if (i != 0) {
+			global_valid_prio = (1<<i)-2;
+			global_valid_prio = 1 << global_valid_prio;
+		}
 		for (j=0; j<7; j++) {
 			wait_hthread = 0;
+			if (j != 0) {
+				prio_hthread = prio_hthread ? 1 << (j-1) : 1;
+			}
 			for (k=0; k<7; k++) {
+				if (k != 0) {
+					wait_hthread = wait_hthread ? 1 << (k-1) : 1;
+				}
 				for (l=1; l<6; l++) {
 					ready_prio = 0;
+					runlist_prio = (1<<l)-1;
+					runlist_prio = 1 << runlist_prio;
 					for (m=0; m<7; m++) {
-						if (i != 0) {
-							global_valid_prio = (1<<i)-2;
-							global_valid_prio = 1 << global_valid_prio;
-						}
 	
-						if (j != 0) {
-							prio_hthread = prio_hthread ? 1 << (j-1) : 1;
-						}
-						if (k != 0) {
-							wait_hthread = wait_hthread ? 1 << (k-1) : 1;
-						}
-
-						runlist_prio = (1<<l)-1;
-						runlist_prio = 1 << runlist_prio;
-
-						if (i != 0) {
-							ready_prio = (1<<i)-1;
+						if (m != 0) {
+							ready_prio = (1<<m)-1;
 							ready_prio = 1 << ready_prio;
 						}
 

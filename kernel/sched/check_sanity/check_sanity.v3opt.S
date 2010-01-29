@@ -67,7 +67,7 @@ R2 - waitmask
 R3 - priomask
 R4 - ready_validmask, imask param
 R5 - ready_valids
-R6 - H2K_gp->runlist, hthread
+R6 - H2K_GP->runlist, hthread
 R7 - #RESCHED_INT_MASK
 R8 - ~ready_validmask
 R9 - runlist_worst_prio()
@@ -80,7 +80,7 @@ P2 - DO_BOTH?
 P3 - thread for setimask
 
 Best case:  8 cycles
-Worst case:  12 cycles + 1 cycle mispredict penalty
+Worst case:  13 cycles + 1 cycle mispredict penalty
 
 */
 
@@ -89,72 +89,75 @@ Worst case:  12 cycles + 1 cycle mispredict penalty
 	.type	H2K_check_sanity_unlock, @function
 H2K_check_sanity_unlock:
 	{
-		R5:4 = memd(H2K_GP + #KG_ready_masks);
-		R1 = memw(H2K_GP + #KG_runlist_valids);
-		R7.L = #HI(RESCHED_INT_MASK);
-		R6 = add(H2K_GP,#KG_runlist); 
+		r5:4 = memd(H2K_GP + #KG_ready_masks);
+		r1 = memw(H2K_GP + #KG_runlist_valids);
+		r7.l = #hi(RESCHED_INT_MASK);
+		r6 = add(H2K_GP,#KG_runlist); 
 	}
 	{		
-		R3:2 = memd(H2K_GP + #KG_lowprio_masks);  
-		R8 = not(R4);		//  ~H2K_ready_validmask
-		R10 = and(R5,R4);	//  H2K_ready_valids & H2K_ready_validmask
-		R9 = cl0(R1);		//  runlist_worst_prio()
+		r3:2 = memd(H2K_GP + #KG_lowprio_masks);  
+		r8 = not(r4);		//  ~H2K_ready_validmask
+		r10 = and(r5,r4);	//  H2K_ready_valids & H2K_ready_validmask
+		r9 = cl0(r1);		//  runlist_worst_prio()
 	}
 	{
-		P0 = cmp.eq(R3,#0);	//  priomask == 0 for lowprio_notify()
-		R9 = sub(#MAX_PRIO,R9);	//  runlist_worst_prio()
-		R11 = ct0(R10);		//  ready_best_prio()
-		P2 = bitsclr(R1,R8);	//  runlist_valids & ~ready_validmask; !P2 really means do them both.
+		p0 = cmp.eq(r3,#0);	//  priomask == 0 for lowprio_notify()
+		r9 = sub(#MAX_PRIO,r9);	//  runlist_worst_prio()
+		r11 = ct0(r10);		//  ready_best_prio()
+		p2 = bitsclr(r1,r8);	//  runlist_valids & ~ready_validmask; !p2 really means do them both.
 	}
 	{
-		P0 = or(P0,!P2);	//  if the priomask or runlist check came up zero, skip lowprio_notify
-		R1 = addasl(R6,R9,#2);	//  pointer to thread's context; assume 32bit ptr; recycle R1
-		if (!P0.new) jump:t 1f;	//  skip lowprio_notify() stuff
-		P1 = cmp.gt(R9,R11);	//  IS_WORSE_THAN? first sched check
-	}  // 4 cycles
-	//  This is mostly lowprio_notify() preparation, with some sched stuff thrown in.
+		p0 = or(p0,!p2);	//  if the priomask or runlist check came up zero, skip lowprio_notify
+		if (!p0.new) jump:t 1f;	//  skip lowprio_notify() stuff
+		p1 = cmp.gt(r9,r11);	//  is_worse_than? first sched check
+		p3 = cmp.eq(r2,#0);     //  start second check (waitmask)
+	}  //  4 cycles
+	//  this is mostly lowprio_notify() preparation, with some sched stuff thrown in.
 	{
-		R1 = memw(R1);		//  load thread_context pointer
-		R4 = #0;		//  recycle R4
-		P0 = cmp.eq(R2,#0);	//  waitmask for sched, recycle P0
-		P1 = cmp.eq(R10,#0);	//  H2K_ready_valids & H2K_ready_validmask; recycle P1
+		r1 = addasl(r6,r9,#2);	//  pointer to thread's context; assume 32bit ptr; recycle r1
+		p0 = cmp.eq(r12,#0);	//  second sched check (ready valids), recycle p0
+		p3 = not(p3);		//  waitmask !=  0
+	} 
+	{
+		r1 = memw(r1);		//  load thread_context pointer
+		r4 = #0;		//  recycle r4
+		p0 = and(p3,!p0);	//  if waitmask != 0 && ready_valids != 0
 	}  
 	{
-		R6 = memub(R1+#CONTEXT_hthread);	//  fetch the hthread, recycle R6
-		P0 = and(P0,P1);   			//  second sched check
-		R7.L = #LO(RESCHED_INT_INTMASK);	//  prepare for sched
+		r6 = memub(r1+#CONTEXT_hthread);	//  fetch the hthread, recycle r6
+		r7.l = #lo(RESCHED_INT_INTMASK);	//  prepare for sched
+		p0 = or(p0,!p2);			//  don't forget the p2 check
 	}
 	{
-		P3 = R6;		//  setimask param
-		R3 = setbit(R3,R6);	//  set thread as lowest priority
-		P0 = or(P0,!P2);	//  don't forget the P2 check
+		p3 = r6;		//  setimask param
+		r3 = setbit(r3,r6);	//  set thread as lowest priority
 	}
 	{
-		setimask(P3,R4);	//  lowprio_notify()
+		setimask(p3,r4);	//  lowprio_notify()
 	} 
 
 	{
-		memw(H2K_GP+#KG_priomask) = R3; 	//  save new priomask
-		if (P0) jump 2f; 			//  do the final sched check
-		jump 3f;				//  GTFO
+		memw(H2K_GP+#KG_priomask) = r3; 	//  save new priomask
+		if (p0) jump 2f; 			//  do the final sched check
+		jump 3f;				//  gtfo
 	}
-1:	//  if we get here, P2 had to be zero.  Don't check it again.  P1 was pre-loaded with IS_WORSE_THAN
+1:	//  if we get here, p2 had to be zero.  don't check it again.  p1 was pre-loaded with is_worse_than
 	{	
-		if (P1) jump 2f;		//  use previous compare result to see if we need to resched
-		R7.L = #LO(RESCHED_INT_MASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
-		P0 = cmp.eq(R2,#0);		//  waitmask == 0, recycle P0
-		P1 = cmp.eq(R10,#0);		//  (ready_valids & ready_validmask) == 0, recycle P1
-	}  //  HELP:  possible to save a cycle here?  seems kind of lame
+		if (p1) jump 2f;		//  use previous compare result to see if we need to resched
+		r7.l = #lo(RESCHED_INT_MASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
+		p3 = not(p3);			//  waitmask != 0
+		p1 = cmp.eq(r10,#0);		//  (ready_valids & ready_validmask) == 0, recycle p1
+	}  //  help:  possible to save a cycle here?  seems kind of lame
 	{
-		P0 = and(P0,P1);		//  last check, recycle P0
-		if (!P0.new) jump:t 3f;		//  still failed, GTFO
-	}  //  ~16 bytes of space wasted because I did the second sched compare twice.
-	//  Caveat carpe jugulum:  resched_int requires R7 to be set up before we get here.
+		p0 = and(p3,!p1);		//  last check, recycle p0
+		if (!p0.new) jump:t 3f;		//  still failed, gtfo
+	}  //  ~16 bytes of space wasted because i did the second sched compare twice.
+	//  caveat carpe jugulum:  resched_int requires r7 to be set up before we get here.
 2:
-	swi(R7);
+	swi(r7);
 3:
 	k0unlock;
-	jumpr R31;
+	jumpr r31;
 	.size	H2K_check_sanity_unlock, .-H2K_check_sanity_unlock
 
 //  crappy cut and paste until we figure out what to do exactly.
@@ -164,70 +167,73 @@ H2K_check_sanity_unlock:
 	.type	H2K_check_sanity, @function
 H2K_check_sanity:
 	{
-		R5:4 = memd(H2K_GP + #KG_ready_masks);
-		R1 = memw(H2K_GP + #KG_runlist_valids);
-		R7.L = #HI(RESCHED_INT_MASK);
-		R6 = add(H2K_GP,#KG_runlist); 
+		r5:4 = memd(H2K_GP + #KG_ready_masks);
+		r1 = memw(H2K_GP + #KG_runlist_valids);
+		r7.l = #hi(RESCHED_INT_MASK);
+		r6 = add(H2K_GP,#KG_runlist); 
 	}
 	{		
-		R3:2 = memd(H2K_GP + #KG_lowprio_masks);  
-		R8 = not(R4);		//  ~H2K_ready_validmask
-		R10 = and(R5,R4);	//  H2K_ready_valids & H2K_ready_validmask
-		R9 = cl0(R1);		//  runlist_worst_prio()
+		r3:2 = memd(H2K_GP + #KG_lowprio_masks);  
+		r8 = not(r4);		//  ~H2K_ready_validmask
+		r10 = and(r5,r4);	//  H2K_ready_valids & H2K_ready_validmask
+		r9 = cl0(r1);		//  runlist_worst_prio()
 	}
 	{
-		P0 = cmp.eq(R3,#0);	//  priomask == 0 for lowprio_notify()
-		R9 = sub(#MAX_PRIO,R9);	//  runlist_worst_prio()
-		R11 = ct0(R10);		//  ready_best_prio()
-		P2 = bitsclr(R1,R8);	//  runlist_valids & ~ready_validmask; !P2 really means do them both.
+		p0 = cmp.eq(r3,#0);	//  priomask == 0 for lowprio_notify()
+		r9 = sub(#MAX_PRIO,r9);	//  runlist_worst_prio()
+		r11 = ct0(r10);		//  ready_best_prio()
+		p2 = bitsclr(r1,r8);	//  runlist_valids & ~ready_validmask; !p2 really means do them both.
 	}
 	{
-		P0 = or(P0,!P2);	//  if the priomask or runlist check came up zero, skip lowprio_notify
-		R1 = addasl(R6,R9,#2);	//  pointer to thread's context; assume 32bit ptr; recycle R1
-		if (!P0.new) jump:t 1f;	//  skip lowprio_notify() stuff
-		P1 = cmp.gt(R9,R11);	//  IS_WORSE_THAN? first sched check
-	}  // 4 cycles
-	//  This is mostly lowprio_notify() preparation, with some sched stuff thrown in.
+		p0 = or(p0,!p2);	//  if the priomask or runlist check came up zero, skip lowprio_notify
+		if (!p0.new) jump:t 1f;	//  skip lowprio_notify() stuff
+		p1 = cmp.gt(r9,r11);	//  is_worse_than? first sched check
+		p3 = cmp.eq(r2,#0);     //  start second check (waitmask)
+	}  //  4 cycles
+	//  this is mostly lowprio_notify() preparation, with some sched stuff thrown in.
 	{
-		R1 = memw(R1);		//  load thread_context pointer
-		R4 = #0;		//  recycle R4
-		P0 = cmp.eq(R2,#0);	//  waitmask for sched, recycle P0
-		P1 = cmp.eq(R10,#0);	//  H2K_ready_valids & H2K_ready_validmask; recycle P1
+		r1 = addasl(r6,r9,#2);	//  pointer to thread's context; assume 32bit ptr; recycle r1
+		p0 = cmp.eq(r12,#0);	//  second sched check (ready valids), recycle p0
+		p3 = not(p3);		//  waitmask !=  0
+	} 
+	{
+		r1 = memw(r1);		//  load thread_context pointer
+		r4 = #0;		//  recycle r4
+		p0 = and(p3,!p0);	//  if waitmask != 0 && ready_valids != 0
 	}  
 	{
-		R6 = memub(R1+#CONTEXT_hthread);	//  fetch the hthread, recycle R6
-		P0 = and(P0,P1);   			//  second sched check
-		R7.L = #LO(RESCHED_INT_INTMASK);	//  prepare for sched
+		r6 = memub(r1+#CONTEXT_hthread);	//  fetch the hthread, recycle r6
+		r7.l = #lo(RESCHED_INT_INTMASK);	//  prepare for sched
+		p0 = or(p0,!p2);			//  don't forget the p2 check
 	}
 	{
-		P3 = R6;		//  setimask param
-		R3 = setbit(R3,R6);	//  set thread as lowest priority
-		P0 = or(P0,!P2);	//  don't forget the P2 check
+		p3 = r6;		//  setimask param
+		r3 = setbit(r3,r6);	//  set thread as lowest priority
 	}
 	{
-		setimask(P3,R4);	//  lowprio_notify()
+		setimask(p3,r4);	//  lowprio_notify()
 	} 
 
 	{
-		memw(H2K_GP+#KG_priomask) = R3; 	//  save new priomask
-		if (P0) jump 2f; 			//  do the final sched check
-		jump 3f;				//  GTFO
+		memw(H2K_GP+#KG_priomask) = r3; 	//  save new priomask
+		if (p0) jump 2f; 			//  do the final sched check
+		jump 3f;				//  gtfo
 	}
-1:	//  if we get here, P2 had to be zero.  Don't check it again.  P1 was pre-loaded with IS_WORSE_THAN
+1:	//  if we get here, p2 had to be zero.  don't check it again.  p1 was pre-loaded with is_worse_than
 	{	
-		if (P1) jump 2f;		//  use previous compare result to see if we need to resched
-		R7.L = #LO(RESCHED_INT_MASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
-		P0 = cmp.eq(R2,#0);		//  waitmask == 0, recycle P0
-		P1 = cmp.eq(R10,#0);		//  (ready_valids & ready_validmask) == 0, recycle P1
-	}  //  HELP:  possible to save a cycle here?  seems kind of lame
+		if (p1) jump 2f;		//  use previous compare result to see if we need to resched
+		r7.l = #lo(RESCHED_INT_MASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
+		p3 = not(p3);			//  waitmask != 0
+		p1 = cmp.eq(r10,#0);		//  (ready_valids & ready_validmask) == 0, recycle p1
+	}  //  help:  possible to save a cycle here?  seems kind of lame
 	{
-		P0 = and(P0,P1);		//  last check, recycle P0
-		if (!P0.new) jump:t 3f;		//  still failed, GTFO
-	}  //  ~16 bytes of space wasted because I did the second sched compare twice.
-	//  Caveat carpe jugulum:  resched_int requires R7 to be set up before we get here.
+		p0 = and(p3,!p1);		//  last check, recycle p0
+		if (!p0.new) jump:t 3f;		//  still failed, gtfo
+	}  //  ~16 bytes of space wasted because i did the second sched compare twice.
+	//  caveat carpe jugulum:  resched_int requires r7 to be set up before we get here.
 2:
-	swi(R7);
+	swi(r7);
 3:
-	jumpr R31;
+	jumpr r31;
 	.size	H2K_check_sanity, .-H2K_check_sanity
 

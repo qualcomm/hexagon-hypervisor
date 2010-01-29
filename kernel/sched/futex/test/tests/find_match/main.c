@@ -1,0 +1,165 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include <c_std.h>
+#include <context.h>
+#include <stdlib.h>
+#include <h2.h>
+#include <max.h>
+
+/*
+ * This test checks the following functionality:
+ * 
+ * - futex_wait fails on an invalid lock
+ * - multiple wait-and-resume works; waking n threads
+ * - no threads are woken if nr = 0 or no threads ready
+ */
+
+#define NUM_DUMMY_THREADS 1024
+#define THREAD_STACK_SIZE 256
+#define NUM_GOOD_THREADS 4
+
+H2K_thread_context	context_space[NUM_DUMMY_THREADS+NUM_GOOD_THREADS];
+u64_t			stack_space[NUM_DUMMY_THREADS+NUM_GOOD_THREADS][THREAD_STACK_SIZE];
+
+/*  two pages  */
+u32_t			dummy_futex_ptrs[NUM_DUMMY_THREADS];
+
+/*  lock under test  */
+u32_t			test_lock; 
+
+volatile unsigned int timeout=0;
+
+volatile unsigned int done=0;     /*  signals done to main() */
+unsigned int counter=0;  /*  global test counter  */
+unsigned int age_to_wake=0;
+unsigned int max_consumers=0;
+unsigned int nr_to_wake=0;
+volatile unsigned int max_prio_to_wake = 0;
+
+/*  priority and done status, indexed by consumer thread counter  */
+volatile unsigned int thread_info[NUM_GOOD_THREADS];
+
+#define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
+#define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}
+#define debug(...) { h2_printf("DEBUG:  "); h2_printf(__VA_ARGS__);}
+#define error(...) { h2_printf("ERROR:  "); h2_printf(__VA_ARGS__); FAIL("");}
+
+void FAIL(const char *str)
+{
+	h2_printf(str);
+	exit(1);
+}
+
+void dummy_thread(int x)
+{
+	//info("dummy lock = %d\n",futex_pages[dummy_thread_lock]);
+	h2_futex_wait(&dummy_futex_ptrs[x],0);
+	FAIL("dummy thread woke");
+}
+
+#if 0
+/*  Producer thread just counts up and then wakes up the other thread(s)  */
+
+void producer_thread(int x)
+{
+	info("Producer started\n");
+
+	/*  "two for flinching"  */
+	if (h2_futex_wake(&futex_pages[test_lock],0) != 0) {
+		error("futex_wake succeeded with nr_to_wake == 0\n");
+	}
+
+	for (counter=0; counter<PRODUCER_ITERATIONS; counter++) {
+		asm volatile("nop");
+	}
+
+	info("counter = %d; Resuming consumer (nr_to_wake=%d)\n", counter,nr_to_wake);
+	h2_futex_wake(&futex_pages[test_lock],nr_to_wake);
+
+	h2_thread_stop();
+}
+#endif
+
+void test_thread(unsigned int goodid)
+{
+	info("Consumer started (%d). id=0x%x\n",goodid,h2_thread_myid());
+
+	thread_info[goodid] = 1;
+
+	while (1) {
+		h2_futex_wait(&test_lock,0);
+		info("Ping (%d)\n",goodid);
+		thread_info[goodid]++;
+	}
+}
+
+int main() 
+{
+	unsigned int next_tnum;
+	unsigned int i,j,k,prio;
+	unsigned int flag;
+
+	h2_init(0x0);
+
+	info("main() starting\n");
+
+	h2_config_add_thread_storage(context_space,sizeof(context_space));
+
+	for (i = 0; i < NUM_DUMMY_THREADS; i++) {
+		if (h2_thread_create(dummy_thread,
+			&stack_space[i][THREAD_STACK_SIZE],
+			i, 2, 0xffffffff) <= 0) {
+			FAIL("Couldn't create dummy");
+		}
+	}
+
+	for (i = 0; i < NUM_GOOD_THREADS; i++) {
+		if (h2_thread_create(test_thread,
+			&stack_space[i+NUM_DUMMY_THREADS][THREAD_STACK_SIZE],
+			i, 4+i, 0xffffffff) <= 0) {
+			FAIL("Couldn't create test thread");
+		}
+	}
+
+	while (1) {
+		flag = 0;
+		for (i = 0; i < NUM_GOOD_THREADS; i++) {
+			if (thread_info[i] == 0) flag = 1;
+		}
+		if (flag) continue;
+		else break;
+	}
+
+	h2_futex_wake(&test_lock,100);
+
+	for (i = 0; i < (1<<16); i++) {
+		asm volatile ("nop");
+	}
+
+	h2_futex_wake(&test_lock,NUM_GOOD_THREADS);
+
+	for (i = 0; i < (1<<16); i++) {
+		asm volatile ("nop");
+	}
+
+	h2_futex_wake(&test_lock,1);
+
+	for (i = 0; i < (1<<16); i++) {
+		asm volatile ("nop");
+	}
+
+	for (i = 0; i < NUM_GOOD_THREADS; i++) {
+		if (i == 0) {
+			if (thread_info[i] != 4) FAIL("counter 0 bad");
+		} else {
+			if (thread_info[i] != 3) FAIL("Non-0 counter bad");
+		}
+	}
+
+	info("TEST PASSED\n");
+	return(0);
+}
+

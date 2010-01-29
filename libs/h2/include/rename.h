@@ -12,7 +12,13 @@
 #error define RENAME_PREFIX before inclusion
 #endif
 
-#define REDEF_FUNCTION(RET,NAME,ARGS,CALLARGS) static inline RET RENAME_PREFIX##_##NAME ARGS { return h2_##NAME CALLARGS ; }
+#define RENAME_PASTE3_REAL(X,Y,Z) X##Y##Z
+#define RENAME_PASTE3(X,Y,Z) RENAME_PASTE3_REAL(X,Y,Z)
+#define RENAME_PASTE2_REAL(X,Y) X##Y
+#define RENAME_PASTE2(X,Y) RENAME_PASTE2_REAL(X,Y)
+
+#define REDEF_FUNCTION(RET,NAME,ARGS,CALLARGS) static inline RET RENAME_PASTE3(RENAME_PREFIX,_,NAME) ARGS { return RENAME_PASTE2(h2_,NAME) CALLARGS ; }
+#define RETYPEDEF(NAME) typedef RENAME_PASTE2(h2_,NAME) RENAME_PASTE3(RENAME_PREFIX,_,NAME);
 
 /*  "blast_alloc.h"  */
 
@@ -23,23 +29,25 @@ REDEF_FUNCTION(void ,free,(void *ptr),(ptr));
 
 /*  "blast_allsignal.h"  */
 
-typedef h2_allsignal_t blast_allsignal_t;
+RETYPEDEF(allsignal_t)
+
 REDEF_FUNCTION(void ,allsignal_init,(h2_allsignal_t *signal),(signal));
 REDEF_FUNCTION(void ,allsignal_wait,(h2_allsignal_t *signal, unsigned int mask),(signal,mask));
 REDEF_FUNCTION(void ,allsignal_signal,(h2_allsignal_t *signal, unsigned int mask),(signal,mask));
 
 /*  "blast_anysignal.h"  */
 
-typedef h2_anysignal_t blast_anysignal_t;
+RETYPEDEF(anysignal_t)
+
 REDEF_FUNCTION(void ,anysignal_init,(h2_anysignal_t *signal),(signal));
-REDEF_FUNCTION(void ,anysignal_wait,(h2_anysignal_t *signal, unsigned int mask),(signal,mask));
+REDEF_FUNCTION(unsigned int ,anysignal_wait,(h2_anysignal_t *signal, unsigned int mask),(signal,mask));
 REDEF_FUNCTION(unsigned int ,anysignal_set,(h2_anysignal_t *signal, unsigned int mask),(signal,mask));
 REDEF_FUNCTION(unsigned int ,anysignal_get,(h2_anysignal_t *signal),(signal));
 REDEF_FUNCTION(unsigned int ,anysignal_clear,(h2_anysignal_t *signal, unsigned int mask),(signal,mask));
 
 /*  "blast_barrier.h"  */
 
-typedef h2_barrier_t blast_barrier_t;
+RETYPEDEF(barrier_t)
 
 #define H2_BARRIER_SERIAL_THREAD 1
 #define H2_BARRIER_OTHER 0
@@ -49,7 +57,8 @@ REDEF_FUNCTION(int ,barrier_wait,(h2_barrier_t *barrier),(barrier));
 
 /*  "blast_cond.h"  */
 
-typedef h2_cond_t blast_cond_t;
+//typedef h2_cond_t blast_cond_t;
+RETYPEDEF(cond_t)
 
 REDEF_FUNCTION(void ,cond_signal,(h2_cond_t *cond),(cond));
 REDEF_FUNCTION(void ,cond_broadcast,(h2_cond_t *cond),(cond));
@@ -93,7 +102,8 @@ REDEF_FUNCTION(void ,init,(unsigned long long int *memmap),(memmap));
 
 /*  "blast_mutex.h"  */
 
-typedef h2_mutex_t blast_mutex_t;
+//typedef h2_mutex_t blast_mutex_t;
+RETYPEDEF(mutex_t)
 
 REDEF_FUNCTION(void ,mutex_lock,(h2_mutex_t *lock),(lock));		/* blocking */
 REDEF_FUNCTION(void ,mutex_unlock,(h2_mutex_t *lock),(lock));	/* unlock */
@@ -102,8 +112,8 @@ REDEF_FUNCTION(void ,mutex_init,(h2_mutex_t *lock),(lock)) 	/* initialize it... 
 
 /*  "blast_pipe.h"  */
 
-typedef h2_pipe_data_t blast_pipe_data_t;
-typedef h2_pipe_t blast_pipe_t;
+RETYPEDEF(pipe_data_t) //typedef h2_pipe_data_t blast_pipe_data_t;
+RETYPEDEF(pipe_t) // typedef h2_pipe_t blast_pipe_t;
 
 REDEF_FUNCTION(h2_pipe_t *,pipe_alloc,(unsigned int size_in_bytes),(size_in_bytes));
 REDEF_FUNCTION(h2_pipe_t *,pipe_create,(h2_pipe_t *pipe, h2_pipe_data_t *data, int data_elements),(pipe,data,data_elements));
@@ -121,21 +131,21 @@ REDEF_FUNCTION(h2_pipe_data_t , pipe_tryrecv,(h2_pipe_t *pipe, int *success),(pi
 #define H2_PREFETCH_D 2
 #define H2_PREFETCH_SW 4
 
-REDEF_FUNCION(void ,set_prefetch,(unsigned int settings),(settings));
+REDEF_FUNCTION(void ,set_prefetch,(unsigned int settings),(settings));
 
 /*  "blast_printf.h"  */
 
-#define blast_printf(...) h2printf(__VA_ARGS__)
+#define blast_printf(...) h2_printf(__VA_ARGS__)
 
 /*  "blast_prio.h"  */
 
-REDEF_FUNCTION(int ,get_prio,(void),(void));
+REDEF_FUNCTION(int ,get_prio,(void),());
 REDEF_FUNCTION(int ,set_prio,(unsigned int threadid, unsigned int newprio),(threadid,newprio));
 REDEF_FUNCTION(unsigned int ,mask_prios_above,(unsigned int worst_prio),(worst_prio));
 
 /*  "blast_rmutex.h"  */
 
-typedef h2_rmutex_t blast_rmutex_t;
+RETYPEDEF(rmutex_t) // typedef h2_rmutex_t blast_rmutex_t;
 
 REDEF_FUNCTION(void ,rmutex_lock,(h2_rmutex_t *lock),(lock));
 REDEF_FUNCTION(void ,rmutex_unlock,(h2_rmutex_t *lock),(lock));
@@ -143,7 +153,7 @@ REDEF_FUNCTION(int ,rmutex_trylock,(h2_rmutex_t *lock),(lock));
 REDEF_FUNCTION(void ,rmutex_init,(h2_rmutex_t *lock),(lock));
 
 /*  "blast_sem.h"  */
-typedef h2_sem_t blast_sem_t;
+RETYPEDEF(sem_t) // typedef h2_sem_t blast_sem_t;
 
 REDEF_FUNCTION(int ,sem_add,(h2_sem_t *sem, unsigned int amt),(sem,amt));
 REDEF_FUNCTION(int ,sem_up,(h2_sem_t *sem),(sem));
@@ -157,7 +167,7 @@ REDEF_FUNCTION(void ,sem_init_val,(h2_sem_t *sem,unsigned short val),(sem,val));
 REDEF_FUNCTION(int ,thread_create,(void *pc, void *stack, void *arg, unsigned int prio, unsigned int asid),(pc,stack,arg,prio,asid));
 REDEF_FUNCTION(void ,thread_stop,(void),());
 REDEF_FUNCTION(int ,thread_myid,(void),());
-REDEF_FUNCTION(int ,yield,(void),());
+REDEF_FUNCTION(void ,yield,(void),());
 
 /* "blast_trace.h"  */
 

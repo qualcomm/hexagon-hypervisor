@@ -8,6 +8,7 @@
 
 #define RENAME_PREFIX sos
 #include "rename.h"
+#undef RENAME_PREFIX
 
 #endif
 

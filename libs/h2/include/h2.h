@@ -24,6 +24,7 @@
 #include "h2_anysignal.h"
 #include "h2_rmutex.h"
 #include "h2_config.h"
+#include "h2_prio.h"
 
 #endif
 

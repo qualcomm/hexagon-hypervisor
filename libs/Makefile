@@ -20,3 +20,9 @@ libh2:
 	cp syscall/angel/libangel.a tmp/
 	cd tmp; qdsp6-ar x libh2.a; qdsp6-ar x libangel.a; qdsp6-ar cru ../libh2.a *.o
 
+install: libh2
+	mkdir -p ../install/lib
+	cp libh2.a ../install/lib
+	mkdir -p ../install/include
+	cp h2/include/*.h ../install/include
+

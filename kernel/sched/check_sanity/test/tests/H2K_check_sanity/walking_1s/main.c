@@ -51,6 +51,15 @@ int lowprio_notify_requested(u32_t oldmask)
 	return 0;
 }
 
+static inline int setbit(int nr) {
+	int retval;
+	asm volatile("R1 = #0; %0 = setbit(R1,%1);\n" 
+			: "=r" (retval)
+			: "r" (nr)
+			: "r1" );
+	return retval;
+}
+
 int main() 
 {
 	u32_t prio_hthread;	/*  bitmap indexed by hardware thread -- shows lowest priority hthread  */
@@ -120,31 +129,33 @@ int main()
 
 	global_valid_prio = 0;
 	for (i=0; i<7; i++) {
-		prio_hthread = 0;
 		if (i != 0) {
-			global_valid_prio = (1<<i)-2;
-			global_valid_prio = 1 << global_valid_prio;
+			global_valid_prio = (1<<(i-1))-1;
+			global_valid_prio = setbit(global_valid_prio);
 		}
+		//info("global_valid_prio = 0x%08x\n",global_valid_prio);
+		prio_hthread = 0;
 		for (j=0; j<7; j++) {
-			wait_hthread = 0;
 			if (j != 0) {
 				prio_hthread = prio_hthread ? 1 << (j-1) : 1;
 			}
+			wait_hthread = 0;
 			for (k=0; k<7; k++) {
 				if (k != 0) {
 					wait_hthread = wait_hthread ? 1 << (k-1) : 1;
 				}
-				for (l=1; l<6; l++) {
-					ready_prio = 0;
+				for (l=0; l<6; l++) {
 					runlist_prio = (1<<l)-1;
-					runlist_prio = 1 << runlist_prio;
+					runlist_prio = setbit(runlist_prio);
+					//info("runlist_prio = 0x%08x\n",runlist_prio);
+					ready_prio = 0;
 					for (m=0; m<7; m++) {
 	
 						if (m != 0) {
-							ready_prio = (1<<m)-1;
-							ready_prio = 1 << ready_prio;
+							ready_prio = (1<<(m-1))-1;
+							ready_prio = setbit(ready_prio);
 						}
-
+						//info("ready_prio = 0x%08x\n",ready_prio);
 						H2K_gp->priomask = prio_hthread;
 						H2K_gp->wait_mask = wait_hthread;
 						H2K_gp->runlist_valids = runlist_prio;

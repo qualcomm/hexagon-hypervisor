@@ -26,6 +26,7 @@ void H2K_init_setup()
 	H2K_futex_init();
 	H2K_intconfig_init();
 	H2K_thread_init();
+	H2K_kg_init();
 }
 
 void H2K_thread_boot()

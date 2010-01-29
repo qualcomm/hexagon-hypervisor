@@ -34,10 +34,17 @@ enum {
         lowprio_init,
         futex_init,
         intconfig_init,
+        kg_init,
         thread_init,
         trace_init,
 	XX_LAST_HELPER
 };
+
+void H2K_traptab()
+{
+}
+
+u64_t H2K_stacks;
 
 void H2K_interrupt_restore()
 {
@@ -53,6 +60,7 @@ HELPER_FUNC(futex_init)
 HELPER_FUNC(intconfig_init)
 HELPER_FUNC(thread_init)
 HELPER_FUNC(trace_init)
+HELPER_FUNC(kg_init)
 
 /* We need to use a longjmp at the end, because H2K_switch is defined as
  * noreturn */
@@ -64,7 +72,12 @@ void H2K_switch(void *from, void *to)
 	longjmp(env,1);
 }
 
+void H2K_trace(s8_t type, u8_t hwtnum, u8_t tid, u32_t pcyclelo)
+{
+}
+
 H2K_thread_context H2K_boot_context;
+H2K_kg_t H2K_kg;
 
 void H2K_thread_boot();
 
@@ -83,6 +96,7 @@ int main()
 	}
 	if (TH_switch_seen == 0) FAIL("Did not switch to boot thread");
 	for (i = 0; i < XX_LAST_HELPER; i++) {
+		//printf("%d\n",i);
 		if (((1<<i) & TH_init_seen) == 0) FAIL("Didn't call init func");
 	}
 	if (H2K_boot_context.continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");

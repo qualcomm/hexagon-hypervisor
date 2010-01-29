@@ -4,8 +4,7 @@
  */
 
 #include <asm_std.h>
-
-#define H2K_GP r16
+#include <max.h>
 
 	.text
 	.p2align 2

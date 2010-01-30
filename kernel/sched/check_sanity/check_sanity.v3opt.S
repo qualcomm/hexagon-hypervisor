@@ -41,11 +41,11 @@ H2K_check_sched_mask:
 	{	
 		R4 = setbit(R4,R1);		//  set priomask
 		P0 = R1;			//  set imask param
-		R3.H = #HI(RESCHED_INT_MASK);
+		R3.H = #HI(RESCHED_INT_INTMASK);
 	}
 	{
 		memw(H2K_GP+#KG_priomask) = R4; //  save priomask
-		R3.L = #LO(RESCHED_INT_MASK);
+		R3.L = #LO(RESCHED_INT_INTMASK);
 	}
 	{
 		setimask(P0,R2);
@@ -68,7 +68,7 @@ R3 - priomask
 R4 - ready_validmask, imask param
 R5 - ready_valids
 R6 - H2K_GP->runlist, hthread
-R7 - #RESCHED_INT_MASK
+R7 - #RESCHED_INT_INTMASK
 R8 - ~ready_validmask
 R9 - runlist_worst_prio()
 R10 - ready_valids & ready_validmask
@@ -91,7 +91,7 @@ H2K_check_sanity_unlock:
 	{
 		r5:4 = memd(H2K_GP + #KG_ready_masks);
 		r1 = memw(H2K_GP + #KG_runlist_valids);
-		r7.l = #hi(RESCHED_INT_MASK);
+		r7.l = #hi(RESCHED_INT_INTMASK);
 		r6 = add(H2K_GP,#KG_runlist); 
 	}
 	{		
@@ -144,7 +144,7 @@ H2K_check_sanity_unlock:
 1:	//  if we get here, p2 had to be zero.  don't check it again.  p1 was pre-loaded with is_worse_than
 	{	
 		if (p1) jump 2f;		//  use previous compare result to see if we need to resched
-		r7.l = #lo(RESCHED_INT_MASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
+		r7.l = #lo(RESCHED_INT_INTMASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
 		p3 = not(p3);			//  waitmask != 0
 		p1 = cmp.eq(r10,#0);		//  (ready_valids & ready_validmask) == 0, recycle p1
 	}  //  help:  possible to save a cycle here?  seems kind of lame
@@ -169,7 +169,7 @@ H2K_check_sanity:
 	{
 		r5:4 = memd(H2K_GP + #KG_ready_masks);
 		r1 = memw(H2K_GP + #KG_runlist_valids);
-		r7.l = #hi(RESCHED_INT_MASK);
+		r7.l = #hi(RESCHED_INT_INTMASK);
 		r6 = add(H2K_GP,#KG_runlist); 
 	}
 	{		
@@ -222,7 +222,7 @@ H2K_check_sanity:
 1:	//  if we get here, p2 had to be zero.  don't check it again.  p1 was pre-loaded with is_worse_than
 	{	
 		if (p1) jump 2f;		//  use previous compare result to see if we need to resched
-		r7.l = #lo(RESCHED_INT_MASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
+		r7.l = #lo(RESCHED_INT_INTMASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
 		p3 = not(p3);			//  waitmask != 0
 		p1 = cmp.eq(r10,#0);		//  (ready_valids & ready_validmask) == 0, recycle p1
 	}  //  help:  possible to save a cycle here?  seems kind of lame

@@ -63,16 +63,17 @@ H2K_check_sanity, v3 optimized
 Registers clobberifimicated irregardlessly:
 
 R1 - runlist_valids, thread_context pointer
-R2 - waitmask
-R3 - priomask
-R4 - ready_validmask, imask param
-R5 - ready_valids
+R2 - priomask
+R3 - waitmask
+R4 - ready_valids
+R5 - ready_validmask, imask param
 R6 - H2K_GP->runlist, hthread
 R7 - #RESCHED_INT_INTMASK
 R8 - ~ready_validmask
 R9 - runlist_worst_prio()
 R10 - ready_valids & ready_validmask
 R11 - ready_best_prio()
+R12 - waitmask || ready_valids
 
 P0 - DO_NOTIFY?, DO_SCHED?
 P1 - DO_SCHED?
@@ -91,17 +92,17 @@ H2K_check_sanity_unlock:
 	{
 		r5:4 = memd(H2K_GP + #KG_ready_masks);
 		r1 = memw(H2K_GP + #KG_runlist_valids);
-		r7.l = #hi(RESCHED_INT_INTMASK);
+		r7.h = #hi(RESCHED_INT_INTMASK);
 		r6 = add(H2K_GP,#KG_runlist); 
 	}
 	{		
 		r3:2 = memd(H2K_GP + #KG_lowprio_masks);  
-		r8 = not(r4);		//  ~H2K_ready_validmask
-		r10 = and(r5,r4);	//  H2K_ready_valids & H2K_ready_validmask
+		r8 = not(r5);		//  ~H2K_ready_validmask
+		r10 = and(r4,r5);	//  H2K_ready_valids & H2K_ready_validmask
 		r9 = cl0(r1);		//  runlist_worst_prio()
 	}
 	{
-		p0 = cmp.eq(r3,#0);	//  priomask == 0 for lowprio_notify()
+		p0 = cmp.eq(r2,#0);	//  priomask == 0 for lowprio_notify()
 		r9 = sub(#MAX_PRIO,r9);	//  runlist_worst_prio()
 		r11 = ct0(r10);		//  ready_best_prio()
 		p2 = bitsclr(r1,r8);	//  runlist_valids & ~ready_validmask; !p2 really means do them both.
@@ -110,34 +111,35 @@ H2K_check_sanity_unlock:
 		p0 = or(p0,!p2);	//  if the priomask or runlist check came up zero, skip lowprio_notify
 		if (!p0.new) jump:t 1f;	//  skip lowprio_notify() stuff
 		p1 = cmp.gt(r9,r11);	//  is_worse_than? first sched check
-		p3 = cmp.eq(r2,#0);     //  start second check (waitmask)
+		//R12 = or(R3,R10);	//  start second check !(waitmask || ready_valids)
+		P3 = cmp.eq(R3,#0);	//  waitmask check
 	}  //  4 cycles
 	//  this is mostly lowprio_notify() preparation, with some sched stuff thrown in.
 	{
 		r1 = addasl(r6,r9,#2);	//  pointer to thread's context; assume 32bit ptr; recycle r1
-		p0 = cmp.eq(r12,#0);	//  second sched check (ready valids), recycle p0
-		p3 = not(p3);		//  waitmask !=  0
+		p0 = cmp.eq(r10,#0);	//  second sched check, recycle p0
+		p3 = or(P1,!P3);	//  is_worse_than || !waitmask
 	} 
 	{
 		r1 = memw(r1);		//  load thread_context pointer
-		r4 = #0;		//  recycle r4
-		p0 = and(p3,!p0);	//  if waitmask != 0 && ready_valids != 0
+		p0 = and(p3,!p0);	//  previous blob && ready_valids)
 	}  
 	{
-		r6 = memub(r1+#CONTEXT_hthread);	//  fetch the hthread, recycle r6
-		r7.l = #lo(RESCHED_INT_INTMASK);	//  prepare for sched
-		p0 = or(p0,!p2);			//  don't forget the p2 check
+		r6 = memub(r1+#CONTEXT_hthread);//  fetch the hthread, recycle r6
+		r7.l = #lo(RESCHED_INT_INTMASK);//  prepare for sched
+		p0 = or(p0,!p2);		//  don't forget the p2 check
 	}
 	{
 		p3 = r6;		//  setimask param
-		r3 = setbit(r3,r6);	//  set thread as lowest priority
+		r2 = setbit(r2,r6);	//  set thread as lowest priority
+		r5 = #0;		//  recycle r5
 	}
 	{
-		setimask(p3,r4);	//  lowprio_notify()
+		setimask(p3,r5);	//  lowprio_notify()
 	} 
 
 	{
-		memw(H2K_GP+#KG_priomask) = r3; 	//  save new priomask
+		memw(H2K_GP+#KG_priomask) = r2; 	//  save new priomask
 		if (p0) jump 2f; 			//  do the final sched check
 		jump 3f;				//  gtfo
 	}
@@ -161,7 +163,6 @@ H2K_check_sanity_unlock:
 	.size	H2K_check_sanity_unlock, .-H2K_check_sanity_unlock
 
 //  crappy cut and paste until we figure out what to do exactly.
-
 	.p2align 2
 	.globl H2K_check_sanity
 	.type	H2K_check_sanity, @function
@@ -169,17 +170,17 @@ H2K_check_sanity:
 	{
 		r5:4 = memd(H2K_GP + #KG_ready_masks);
 		r1 = memw(H2K_GP + #KG_runlist_valids);
-		r7.l = #hi(RESCHED_INT_INTMASK);
+		r7.h = #hi(RESCHED_INT_INTMASK);
 		r6 = add(H2K_GP,#KG_runlist); 
 	}
 	{		
 		r3:2 = memd(H2K_GP + #KG_lowprio_masks);  
-		r8 = not(r4);		//  ~H2K_ready_validmask
-		r10 = and(r5,r4);	//  H2K_ready_valids & H2K_ready_validmask
+		r8 = not(r5);		//  ~H2K_ready_validmask
+		r10 = and(r4,r5);	//  H2K_ready_valids & H2K_ready_validmask
 		r9 = cl0(r1);		//  runlist_worst_prio()
 	}
 	{
-		p0 = cmp.eq(r3,#0);	//  priomask == 0 for lowprio_notify()
+		p0 = cmp.eq(r2,#0);	//  priomask == 0 for lowprio_notify()
 		r9 = sub(#MAX_PRIO,r9);	//  runlist_worst_prio()
 		r11 = ct0(r10);		//  ready_best_prio()
 		p2 = bitsclr(r1,r8);	//  runlist_valids & ~ready_validmask; !p2 really means do them both.
@@ -188,34 +189,35 @@ H2K_check_sanity:
 		p0 = or(p0,!p2);	//  if the priomask or runlist check came up zero, skip lowprio_notify
 		if (!p0.new) jump:t 1f;	//  skip lowprio_notify() stuff
 		p1 = cmp.gt(r9,r11);	//  is_worse_than? first sched check
-		p3 = cmp.eq(r2,#0);     //  start second check (waitmask)
+		//R12 = or(R3,R10);	//  start second check !(waitmask || ready_valids)
+		P3 = cmp.eq(R3,#0);	//  waitmask check
 	}  //  4 cycles
 	//  this is mostly lowprio_notify() preparation, with some sched stuff thrown in.
 	{
 		r1 = addasl(r6,r9,#2);	//  pointer to thread's context; assume 32bit ptr; recycle r1
-		p0 = cmp.eq(r12,#0);	//  second sched check (ready valids), recycle p0
-		p3 = not(p3);		//  waitmask !=  0
+		p0 = cmp.eq(r10,#0);	//  second sched check, recycle p0
+		p3 = or(P1,!P3);	//  is_worse_than || !waitmask
 	} 
 	{
 		r1 = memw(r1);		//  load thread_context pointer
-		r4 = #0;		//  recycle r4
-		p0 = and(p3,!p0);	//  if waitmask != 0 && ready_valids != 0
+		p0 = and(p3,!p0);	//  previous blob && ready_valids)
 	}  
 	{
-		r6 = memub(r1+#CONTEXT_hthread);	//  fetch the hthread, recycle r6
-		r7.l = #lo(RESCHED_INT_INTMASK);	//  prepare for sched
-		p0 = or(p0,!p2);			//  don't forget the p2 check
+		r6 = memub(r1+#CONTEXT_hthread);//  fetch the hthread, recycle r6
+		r7.l = #lo(RESCHED_INT_INTMASK);//  prepare for sched
+		p0 = or(p0,!p2);		//  don't forget the p2 check
 	}
 	{
 		p3 = r6;		//  setimask param
-		r3 = setbit(r3,r6);	//  set thread as lowest priority
+		r2 = setbit(r2,r6);	//  set thread as lowest priority
+		r5 = #0;		//  recycle r5
 	}
 	{
-		setimask(p3,r4);	//  lowprio_notify()
+		setimask(p3,r5);	//  lowprio_notify()
 	} 
 
 	{
-		memw(H2K_GP+#KG_priomask) = r3; 	//  save new priomask
+		memw(H2K_GP+#KG_priomask) = r2; 	//  save new priomask
 		if (p0) jump 2f; 			//  do the final sched check
 		jump 3f;				//  gtfo
 	}

@@ -186,6 +186,12 @@ int main()
 						
 						if ((ready_prio& ~global_valid_prio) && (runlist_prio > (ready_prio & ~global_valid_prio))) {
 							if (!resched_requested()) {
+								debug("prio_hthread = 0x%08x\n",prio_hthread);
+								debug("wait_hthread = 0x%08x\n",wait_hthread);
+								debug("runlist_prio = 0x%08x\n",runlist_prio);
+								debug("ready_prio = 0x%08x\n",ready_prio);
+								debug("global_valid_prio = 0x%08x\n",~global_valid_prio);
+
 								error("Expected reschedule due to better ready tasks\n");
 							}
 							resched_count++;

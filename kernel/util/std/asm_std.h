@@ -6,6 +6,10 @@
 #ifndef H2K_ASM_STD_H
 #define H2K_ASM_STD_H 1
 
+#include <asm_offsets.h>
+
+#define H2K_GP R16
+
 #define NULL 0
 
 #define H2K_LANG_IS_ASM 1

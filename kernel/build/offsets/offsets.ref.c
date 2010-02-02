@@ -74,8 +74,10 @@ PRINT_KG_OFFSET(ready_masks);
 PRINT_KG_OFFSET(lowprio_masks);
 PRINT_KG_OFFSET(fastint_gpmask);
 
-	printf("#define H2K_STATUS_READY      %d\n",H2K_STATUS_READY);
-	printf("#define H2K_STATUS_RUNNING    %d\n",H2K_STATUS_RUNNING);
+	printf("#define STATUS_DEAD       %d\n",H2K_STATUS_DEAD);
+	printf("#define STATUS_READY      %d\n",H2K_STATUS_READY);
+	printf("#define STATUS_RUNNING    %d\n",H2K_STATUS_RUNNING);
+	printf("#define STATUS_BLOCKED    %d\n",H2K_STATUS_BLOCKED);
 
 	return 0;
 }

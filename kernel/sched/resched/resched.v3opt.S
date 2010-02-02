@@ -82,7 +82,7 @@ FUNC_START H2K_resched  .text.h2.crit.resched  .p2align 3
     {
         memw(r5+#CONTEXT_next) = r3                     // H2K_gp->runlist[prio] or tmp->next = me->next
         if (r4!=#0) jump:nt .H2K_resched_ready_append   // if (H2K_gp->runlist[prio] !=NULL) then end runlist_remove()
-        r6 = #H2K_STATUS_READY
+        r6 = #STATUS_READY
     }
     {
         r3 = memw(r16+#KG_runlist_valids)               // H2K_gp->runlist_valids ^= 1<<prio
@@ -97,7 +97,7 @@ FUNC_START H2K_resched  .text.h2.crit.resched  .p2align 3
 
 .H2K_resched_ready_append:
     {
-        memb(r1+#CONTEXT_status) = r6                   // me->status = H2K_STATUS_READY
+        memb(r1+#CONTEXT_status) = r6                   // me->status = STATUS_READY
         r19:18 = combine(r2,r1)                         // save hwtnum : me in regs
         call H2K_ring_append_real                       // H2K_ring_append( &H2K_gp->ready[prio],me)
     }

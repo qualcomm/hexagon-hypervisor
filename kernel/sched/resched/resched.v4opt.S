@@ -85,7 +85,7 @@ FUNC_START H2K_resched  .text.h2.crit.resched  .p2align 3
     }
 .H2K_resched_ready_append:
     {
-        memb(r1+#CONTEXT_status) = #H2K_STATUS_READY    // me->status = H2K_STATUS_READY
+        memb(r1+#CONTEXT_status) = #STATUS_READY    // me->status = H2K_STATUS_READY
                                                         // func call: r1 = me
         r19:18 = combine(r2,r1)                         // save hwtnum : me in regs
         call H2K_ring_append_real                       // 

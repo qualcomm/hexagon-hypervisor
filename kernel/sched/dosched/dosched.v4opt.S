@@ -130,7 +130,7 @@ FUNC_START H2K_dosched  .text.h2.crit.dosched  .p2align  3
     /*--------------------------------------------------*/
     /* H2K_runlist_push(new)                            */
     /*--------------------------------------------------*/
-    {   memb(r17+#CONTEXT_status) = #H2K_STATUS_RUNNING // new->status=H2K_STATUS_RUNNING
+    {   memb(r17+#CONTEXT_status) = #STATUS_RUNNING     // new->status=H2K_STATUS_RUNNING
         memw(r17+#CONTEXT_next) = r7                    // new->next = H2K_gp->runlist[prio]
         r4 = setbit(r4,r5)                              // H2K_gp->runlist_valids | (1<<prio)
     }

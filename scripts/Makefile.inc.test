@@ -76,7 +76,7 @@ LDFLAGS+= -mv${ARCHV}
 #CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.
 CFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -O1 -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/libs/h2/include
-ASFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -mv3 -DARCHV=${ARCHV} -Wall -I ${H2DIR}/libs/h2/include
+ASFLAGS +=${OSLIB} -I ${H2DIR}/kernel/include -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/libs/h2/include
 
 
 ################################################################################

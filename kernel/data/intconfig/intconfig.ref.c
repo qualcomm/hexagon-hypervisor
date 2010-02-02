@@ -25,10 +25,15 @@ void H2K_fastint();
 
 void H2K_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), H2K_thread_context *me)
 {
+	u32_t ciad_intmask;
 	H2K_gp->fastint_funcptrs[whatint] = fastint_handler;
 	H2K_gp->inthandlers[whatint] = H2K_fastint;
 	H2K_gp->fastint_mask |= 1<<whatint;
-	ciad(Q6_R_brev_R(1<<whatint));
+	ciad_intmask = 1<<whatint;
+#if __QDSP6_ARCH__ <= 3
+	ciad_intmask = Q6_R_brev_R(ciad_intmask);
+#endif
+	ciad(ciad_intmask);
 	H2K_gp->fastint_gp = (u32_t)(me->ugpgp);
 }
 

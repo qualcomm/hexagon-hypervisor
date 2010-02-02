@@ -127,12 +127,10 @@ int main()
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_gp->fastint_gp = (u32_t)(&_SDA_BASE_);
 	TH_fastint_mask = 0xffffffffU;
-	puts("a");
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint(&a,i);
 		TH_do_fastint(NULL,i);
 	}
-	puts("b");
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint_check(i);
 		for (j = 0; j < MAX_INTERRUPTS; j++) {
@@ -140,20 +138,16 @@ int main()
 			TH_do_fastint_intpending(NULL,i,j);
 		}
 	}
-	puts("c");
 	TH_fastint_mask = 0xffcc5500;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint(&a,i);
 		TH_do_fastint(NULL,i);
 	}
-	puts("d");
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint_check(i);
-		puts(".");
 		for (j = 0; j < MAX_INTERRUPTS; j++) {
 			TH_do_fastint_intpending(&a,i,j);
 			TH_do_fastint_intpending(NULL,i,j);
-			printf("%d\n",j);
 		}
 	}
 	puts("TEST PASSED\n");

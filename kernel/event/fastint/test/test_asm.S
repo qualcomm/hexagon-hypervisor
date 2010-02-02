@@ -122,6 +122,7 @@ TH_call_fastint_check:
 // void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2);
 	.global TH_call_fastint_intpending
 TH_call_fastint_intpending:
+	allocframe(#8)
 	memw(#stacksave) = r29
 	r28 = ssr
 	memw(#ssrsave) = r28
@@ -142,7 +143,10 @@ TH_call_fastint_intpending:
 	swi(r4)
 // sibcall h2K_fastint(intno,me,hthread)
 	r2 = #0
-	jump H2K_fastint
+	call H2K_fastint
+	deallocframe
+	jumpr r31
+	
 
 	.global TH_fastint_call
 TH_fastint_call:
@@ -154,9 +158,9 @@ TH_fastint_call:
 	memd(r29+#32) = r25:24
 	memd(r29+#40) = r27:26
 	memd(r29+#48) = r31:30
-	memw(#stacksave) = r29
+	memw(#stacksave2) = r29
 	call H2K_fastint
-	r29 = memw(#stacksave)
+	r29 = memw(#stacksave2)
 	r17:16 = memd(r29+#0)
 	r19:18 = memd(r29+#8)
 	r21:20 = memd(r29+#16)
@@ -171,6 +175,7 @@ TH_fastint_call:
 	.p2align 2
 oldvecs:	.word 0
 stacksave:	.word 0
+stacksave2:	.word 0
 ssrsave:	.word 0
 	.p2align 3
 lrfpsave:	.word 0,0

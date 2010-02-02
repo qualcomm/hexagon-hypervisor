@@ -90,7 +90,7 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	/* Stack set up, execute interrupt handler */
 	r2 = r28 	// TNUM from above...
 	r0 = ssr
-	r0 = zxtb(r0)
+	r0 = and(r0,#0x1f)
 	r1 = r21	// thread context
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
@@ -162,7 +162,7 @@ FUNC_START H2K_interrupted_waitmode .text.event.interrupt .p2align 2
 	/* Stack set up, execute interrupt handler */
 	r2 = r28 	// TNUM from above...
 	r0 = ssr
-	r0 = zxtb(r0)
+	r0 = and(r0,#0x1f)
 	r1 = #0		// thread context == NULL
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)

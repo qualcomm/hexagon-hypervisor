@@ -102,7 +102,15 @@ includes: $(DEST_HFILES)
 
 ref: build/ref/libh2kernel.a
 
+ref_install: ref
+	mkdir -p ../install/lib
+	cp build/ref/libh2kernel.a ../install/lib
+
 opt: build/opt_v$(ARCHV)/libh2kernel.a
+
+opt_install: opt
+	mkdir -p ../install/lib
+	cp build/opt_v$(ARCHV)/libh2kernel.a ../install/lib
 
 check: build/ref/libh2check.a
 

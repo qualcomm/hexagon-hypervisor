@@ -70,7 +70,7 @@ TH_goto_event_handle_error:
 
 TH_call_saw_secondary_int:
 	r0 = ssr
-	r0 = zxtb(r0)
+	r0 = and(r0,#0x1f)
 	r1 = #0
 	r1 = setbit(r1,r0)
 #if __QDSP6_ARCH__ <= 3
@@ -143,6 +143,29 @@ TH_call_fastint_intpending:
 // sibcall h2K_fastint(intno,me,hthread)
 	r2 = #0
 	jump H2K_fastint
+
+	.global TH_fastint_call
+TH_fastint_call:
+	allocframe(#64)
+	memd(r29+#0) = r17:16
+	memd(r29+#8) = r19:18
+	memd(r29+#16) = r21:20
+	memd(r29+#24) = r23:22
+	memd(r29+#32) = r25:24
+	memd(r29+#40) = r27:26
+	memd(r29+#48) = r31:30
+	memw(#stacksave) = r29
+	call H2K_fastint
+	r29 = memw(#stacksave)
+	r17:16 = memd(r29+#0)
+	r19:18 = memd(r29+#8)
+	r21:20 = memd(r29+#16)
+	r23:22 = memd(r29+#24)
+	r25:24 = memd(r29+#32)
+	r27:26 = memd(r29+#40)
+	r31:30 = memd(r29+#48)
+	deallocframe
+	jumpr r31
 
 	.section .sdata,"aw",@progbits
 	.p2align 2

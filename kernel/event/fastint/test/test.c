@@ -34,7 +34,7 @@ void FAIL(const char *str)
 void TH_call_fastint_check(u32_t intno);
 void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2);
 
-void H2K_fastint(u32_t intno, H2K_thread_context *me, u32_t hthread);
+void TH_fastint_call(u32_t intno, H2K_thread_context *me, u32_t hthread);
 
 void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 {
@@ -75,7 +75,7 @@ void TH_setup_fastinthandlers(u32_t interrupt)
 
 TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread)
 {
-	H2K_fastint(interrupt,dest,0);
+	TH_fastint_call(interrupt,dest,0);
 	longjmp(env2,1);
 }
 
@@ -127,10 +127,12 @@ int main()
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_gp->fastint_gp = (u32_t)(&_SDA_BASE_);
 	TH_fastint_mask = 0xffffffffU;
+	puts("a");
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint(&a,i);
 		TH_do_fastint(NULL,i);
 	}
+	puts("b");
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint_check(i);
 		for (j = 0; j < MAX_INTERRUPTS; j++) {
@@ -138,16 +140,20 @@ int main()
 			TH_do_fastint_intpending(NULL,i,j);
 		}
 	}
+	puts("c");
 	TH_fastint_mask = 0xffcc5500;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint(&a,i);
 		TH_do_fastint(NULL,i);
 	}
+	puts("d");
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint_check(i);
+		puts(".");
 		for (j = 0; j < MAX_INTERRUPTS; j++) {
 			TH_do_fastint_intpending(&a,i,j);
 			TH_do_fastint_intpending(NULL,i,j);
+			printf("%d\n",j);
 		}
 	}
 	puts("TEST PASSED\n");

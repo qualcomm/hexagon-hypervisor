@@ -104,7 +104,7 @@ FUNC_START H2K_interrupted_fastint_check .text.event.fastint .p2align 2
 	{
 		r29:28 = memd(r0+#CONTEXT_r2928)
 		r31:30 = memd(r0+#CONTEXT_r3130)
-		r0 = zxtb(r1)
+		r0 = and(r1,#0x1f)
 	}
 	{
 		r4 = addasl(r4,r0,#2)

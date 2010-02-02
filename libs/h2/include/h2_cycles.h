@@ -8,7 +8,15 @@
 
 unsigned long long int h2_get_pcycles();
 
-static inline unsigned long long int h2_get_tcycles() { return h2_get_pcycles()/6; }
+#if __QDSP6_ARCH__ <= 3
+#define H2_CYCLES__PER_THREAD 6
+#elif __QDSP6_ARCH__ == 4
+#define H2_CYCLES__PER_THREAD 3
+#else
+#error define cycles per thread
+#endif
+
+static inline unsigned long long int h2_get_tcycles() { return h2_get_pcycles()/H2_CYCLES__PER_THREAD; }
 
 unsigned long long int h2_get_core_pcycles();
 

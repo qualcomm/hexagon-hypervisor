@@ -13,6 +13,7 @@
 
 int main(int argc, char **argv)
 {
+PRINT_CONTEXT_OFFSET(next);
 PRINT_CONTEXT_OFFSET(hthread);
 PRINT_CONTEXT_OFFSET(status);
 PRINT_CONTEXT_OFFSET(vmstatus);
@@ -72,6 +73,10 @@ PRINT_KG_OFFSET(traptab_addr);
 PRINT_KG_OFFSET(ready_masks);
 PRINT_KG_OFFSET(lowprio_masks);
 PRINT_KG_OFFSET(fastint_gpmask);
+
+	printf("#define H2K_STATUS_READY      %d\n",H2K_STATUS_READY);
+	printf("#define H2K_STATUS_RUNNING    %d\n",H2K_STATUS_RUNNING);
+
 	return 0;
 }
 

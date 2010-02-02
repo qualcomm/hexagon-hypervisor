@@ -3,8 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef RENAME_H
-#define RENAME_H 1
+/* Don't do #ifndef thing */
 
 #include <h2.h>
 
@@ -182,4 +181,3 @@ REDEF_FUNCTION(void ,yield,(void),());
 	} while (0);
 #endif
 
-#endif

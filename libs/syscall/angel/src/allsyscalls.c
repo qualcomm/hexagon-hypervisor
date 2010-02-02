@@ -54,7 +54,7 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 {
 	struct { fd_t fd; char *buf; count_t count; } x;
 	x.fd = fd; x.buf = buffer; x.count = count;
-	return ANGEL(SYS_READ,&fd,0);
+	return ANGEL(SYS_READ,&x,0);
 }
 
 unsigned char sys_readc() { int x = 0; return ANGEL(SYS_READC,&x,0); }

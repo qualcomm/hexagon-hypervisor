@@ -6,6 +6,8 @@
 #ifndef SOS_H
 #define SOS_H 1
 
+#include <h2.h>
+
 #define RENAME_PREFIX sos
 #include "rename.h"
 #undef RENAME_PREFIX

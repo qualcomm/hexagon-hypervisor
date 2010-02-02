@@ -43,4 +43,13 @@ MEMORY_MAP(	1,	0,	0x7d000,	RWX,		L1WB_L2UC,	SIZE_16M,	MAIN,	0x7d000)
 MEMORY_MAP(	1,	0,	0x7e000,	RWX,		L1WB_L2UC,	SIZE_16M,	MAIN,	0x7e000)
 MEMORY_MAP(	1,	0,	0x7f000,	RWX,		L1WB_L2UC,	SIZE_16M,	MAIN,	0x7f000)
 
+MEMORY_MAP(	1,	0,	0x20000,	RWX,		L1WB_L2UC,	SIZE_1M,	MAIN,	0x03000)	// for h264: circ buf
+MEMORY_MAP(	1,	0,	0x20100,	RWX,		L1WB_L2UC,	SIZE_1M,	MAIN,	0x03100)	// for h264: circ buf
+MEMORY_MAP(	1,	0,	0x20200,	RWX,		L1WB_L2UC,	SIZE_1M,	MAIN,	0x03000)	// for h264: circ buf
+
+MEMORY_MAP(     1,      0,      0xd8000,        RWX,            L1WB_L2UC,      SIZE_64K,       MAIN,	0xd8000)	// for h264: tcm
+MEMORY_MAP(     1,      0,      0xd8010,        RWX,            L1WB_L2UC,      SIZE_64K,       MAIN,	0xd8010)	// for h264: tcm
+
+
+MEMORY_MAP(     1,      0,      0xc0000,        RWX,            L1WB_L2UC,      SIZE_64K,       MAIN,	0xc0000)	// for h264: imem
 

@@ -11,7 +11,7 @@
 	.globl H2K_check_sched_mask
 	.type	H2K_check_sched_mask, @function
 
-//  10 cycles worst case + 1 mispredict penalty, 4 cycles best, 1 extra reg (R4) Clobberellad
+//  10 cycles worst case + 1 mispredict penalty, 4 cycles best, 1 extra reg (R4) clobbered
 //  vs 14 worst, 5 best
 H2K_check_sched_mask:
 	{
@@ -60,7 +60,7 @@ H2K_check_sched_mask:
 /*
 H2K_check_sanity, v3 optimized
 
-Registers clobberifimicated irregardlessly:
+Registers clobbered:
 
 R1 - runlist_valids, thread_context pointer
 R2 - priomask
@@ -219,20 +219,20 @@ H2K_check_sanity:
 	{
 		memw(H2K_GP+#KG_priomask) = r2; 	//  save new priomask
 		if (p0) jump 2f; 			//  do the final sched check
-		jump 3f;				//  gtfo
+		jump 3f;				//  exit
 	}
 1:	//  if we get here, p2 had to be zero.  don't check it again.  p1 was pre-loaded with is_worse_than
 	{	
 		if (p1) jump 2f;		//  use previous compare result to see if we need to resched
-		r7.l = #lo(RESCHED_INT_INTMASK);	//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
+		r7.l = #lo(RESCHED_INT_INTMASK);//  redo the sched prepare that we didn't get a chance to since we skipped lowprio_notify
 		p3 = not(p3);			//  waitmask != 0
 		p1 = cmp.eq(r10,#0);		//  (ready_valids & ready_validmask) == 0, recycle p1
 	}  //  help:  possible to save a cycle here?  seems kind of lame
 	{
 		p0 = and(p3,!p1);		//  last check, recycle p0
-		if (!p0.new) jump:t 3f;		//  still failed, gtfo
+		if (!p0.new) jump:t 3f;		//  still failed, exit
 	}  //  ~16 bytes of space wasted because i did the second sched compare twice.
-	//  caveat carpe jugulum:  resched_int requires r7 to be set up before we get here.
+	//  resched_int requires r7 to be set up before we get here.
 2:
 	swi(r7);
 3:

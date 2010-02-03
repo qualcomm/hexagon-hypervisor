@@ -1,0 +1,97 @@
+
+:mod: `stlb` -- Software Translation Lookaside Buffer
+=====================================================
+
+.. module:: stlb
+
+
+The STLB is a software-managed cache of translations for an address space.
+
+By default, for minimal footprint, there is no STLB.  However, memory for
+an STLB can be added by using the configuration trap.
+
+The STLB is arranged in the following way:
+
+* For each ASID, there is a small structure with information about the 
+STLB.  This information includes:
+  * Recommended Page Size
+  * Bits indicating which sets have valid entries for this ASID
+  * A mask indicating which ways may be replaced (to facilitate QoS)
+  * Storage Base address
+* Sets of translations.  The set of translations is based on a hash of
+  the virtual address
+* Several ways in each set.  Each way is looked up on a hardware TLB miss.
+  The replaced way is chosen randomly (or fifo?).  Recommended to be 4 or 8.
+
+Traps must have low, bounded latency.  Therefore, procedures such as
+invalidating the STLB for an entire ASID must be able to be performed in a
+small amount of time.  We do this by using dzeroa on the ASID valid bits.
+This allows caches containing many sets per ASID to be invalidated in a 
+small amount of time.  
+
+When adding a new entry to the translation cache, if the valid bit for the
+ASID is clear for this set, all ways must be cleaned of any translation
+matching the ASID before adding the translation.
+
+The number of sets times the number of ways may not be equal to the total 
+amount of storage in the STLB.  Different ASIDs may start at different 
+locations in the storage to make more effective use of the storage while
+reducing collisions corresponding to common virtual address.
+
+Each address space can specify the recommended page size.  This value is chosen 
+as a hint for which bits to use to hash into the STLB.  Guests using many 4K 
+pages will find best use of the STLB with lower order bits, however this will
+result in many duplicated pages for larger pages.
+
+
+H2K_mem_stlb_lookup
+-------------------
+
+.. cfunction:: u64_t H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *me)
+
+	:param va: virtual address to look up
+	:param asid: address space to look up
+	:param me: Pointer to the current thread context
+	:returns: the translation to fill into the TLB, or zero
+
+
+Description
+~~~~~~~~~~~
+
+This function looks for a translation in the STLB.  If one is not found, zero is returned.
+
+Behavior
+~~~~~~~~
+
+The recommended page size is used to collect bits to hash into the TLB.
+
+We load and compare STLB entries in the expected set.
+
+Optionally, we may select other sets corresponding to larger page sizes.
+
+If we find a matching translation, we return the translation.
+
+If no translation is found, we return zero. 
+
+
+
+H2K_mem_stlb_invalidate_asid
+----------------------------
+
+.. cfunction:: void H2K_mem_stlb_invalidate_asid(u32_t asid)
+
+	:param asid: address space to invalidate
+
+
+Description
+~~~~~~~~~~~
+
+This function marks all translations for an ASID as invalid.
+
+Behavior
+~~~~~~~~
+
+The valid bits are cleared using DCZEROA for large numbers of 
+sets, or stores for small numbers of sets.
+
+

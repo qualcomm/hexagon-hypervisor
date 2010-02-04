@@ -162,7 +162,7 @@ clean:
 #  Pretty much a binary yes/no if the test passed or failed.
 results.txt: test.log
 	grep "TEST PASSED" test.log > $@
-	grep "** FAIL **" test.log;\
+	grep "ERROR:" test.log;\
 	if [ $$? -eq 0 ]; then\
 		grep "** FAIL **" test.log > $@;\
 		exit 1;\

@@ -15,6 +15,13 @@ ifeq ($(ARCHV),)
 ARCHV = 3
 endif
 
+ifeq ($(MODEL),)
+MODEL = ref
+MODELSTR = ${MODEL}
+else
+MODELSTR = ${MODEL}_v${ARCHV}
+endif
+
 ARCH=qdsp6
 SIM=${ARCH}-sim
 CC=${ARCH}-gcc
@@ -48,9 +55,10 @@ LIBH2CHECK=${LIBH2KERNEL_DIR}/libh2check.a
 
 ${LIBH2KERNEL}: 
 	cd ${LIBH2KERNEL_DIR};\
-	make ref DEBUG=0 ARCHV=${ARCHV};\
-	cp build/ref/libh2kernel.a .
+	make ${MODEL} DEBUG=0 ARCHV=${ARCHV};\
+	cp build/${MODELSTR}/libh2kernel.a .
 
+#check is always in ref/
 ${LIBH2CHECK}: 
 	cd ${LIBH2KERNEL_DIR};\
 	make check DEBUG=0 ARCHV=${ARCHV};\
@@ -61,6 +69,10 @@ ${LIBH2}:
 	make DEBUG=0 ARCHV=${ARCHV}
 
 libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
+
+clean_libs:
+	cd libs; make clean;
+	cd kernel; make clean; rm lib*.a
 
 ################################################################################
 #  Standard compilation flags
@@ -146,6 +158,12 @@ clean:
 #  Pretty much a binary yes/no if the test passed or failed.
 results.txt: test.log
 	grep "TEST PASSED" test.log > $@
+	grep "** FAIL **" test.log;\
+	if [ $$? -eq 0 ]; then\
+		grep "** FAIL **" test.log > $@;\
+		exit 1;\
+	fi
+	
 
 all:  results.txt ${COVFILES}
 

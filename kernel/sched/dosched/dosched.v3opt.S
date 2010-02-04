@@ -82,7 +82,7 @@ FUNC_START H2K_dosched  .text.h2.crit.dosched  .p2align  3
         r0 = cl0(r4)                                    // cl0(H2K_gp->runlist_valids)
     }
     {
-        r6 = #H2K_STATUS_RUNNING                        //  H2K_STATUS_RUNNING
+        r6 = #STATUS_RUNNING                            //  H2K_STATUS_RUNNING
         p1 = tstbit(r2,r19)                             // P1 = (H2K_gp->priomask&(1<<hthread)!=0)
         if (!p0) jump .H2K_dosched_threadswaitingOrhighprio
                                                         // if !(H2K_gp->wait_mask==0) then jump

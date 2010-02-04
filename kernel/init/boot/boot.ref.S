@@ -72,8 +72,13 @@ FUNC_START start .text.init.boot .p2align 2
 	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
 	if (!p0) jump 1b
 2:
-	/* Turn on translation, ISDB, etc */
-	r0 = #0x7f
+	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
+	r0 = #0x77f
+#if __QDSP6_ARCH__ <= 3
+	r0.h = #0x0083	/* 256KB L2 */
+#else
+	r0.h = #0x008b	/* 256KB L2 + ITCM */
+#endif
 	syscfg = r0
 
 	r29.h = #hi(H2K_stacks)

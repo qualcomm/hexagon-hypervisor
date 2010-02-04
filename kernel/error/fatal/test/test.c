@@ -19,7 +19,7 @@
 
 void FAIL(const char *str)
 {
-	puts("FAIL");
+	puts("ERROR:  ");
 	puts(str);
 	exit(1);
 }
@@ -73,7 +73,7 @@ int main()
 	H2K_fatal_kernel(-1,&a,0,1,0);
 
 	H2K_fatal_kernel(-1,&a,0,1,0);
-	FAIL("Didn't terminate test");
+	FAIL("ERROR:  Didn't terminate test");
 	return 0;
 }
 

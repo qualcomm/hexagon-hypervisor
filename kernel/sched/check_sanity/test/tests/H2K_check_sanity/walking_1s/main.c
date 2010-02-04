@@ -135,12 +135,12 @@ int main()
 		}
 		//info("global_valid_prio = 0x%08x\n",global_valid_prio);
 		prio_hthread = 0;
-		for (j=0; j<7; j++) {
+		for (j=0; j<(MAX_HTHREADS+1); j++) {
 			if (j != 0) {
 				prio_hthread = prio_hthread ? 1 << (j-1) : 1;
 			}
 			wait_hthread = 0;
-			for (k=0; k<7; k++) {
+			for (k=0; k<(MAX_HTHREADS+1); k++) {
 				if (k != 0) {
 					wait_hthread = wait_hthread ? 1 << (k-1) : 1;
 				}

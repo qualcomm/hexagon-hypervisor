@@ -16,10 +16,14 @@ ARCHV = 3
 endif
 
 ifeq ($(MODEL),)
-MODEL = ref
-MODELSTR = ${MODEL}
+   MODEL = ref
+   MODELSTR = ${MODEL}
 else
-MODELSTR = ${MODEL}_v${ARCHV}
+   ifeq ($(MODEL),ref)
+      MODELSTR = ${MODEL}
+   else
+      MODELSTR = ${MODEL}_v${ARCHV}
+   endif
 endif
 
 ARCH=qdsp6

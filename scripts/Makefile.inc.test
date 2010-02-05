@@ -133,7 +133,7 @@ cov.txt: test.cov_fns
 #  if results.txt has ERROR, FAIL
 #  if results.txt doesn't have TEST PASSED, FAIL
 #  
-report.html: all
+report.html:
 	echo "<html><body><table>" > report.html;\
 	for SUBDIR in ${SUBDIRS}; do\
 	   echo "<tr><td> $$SUBDIR<td>" >> report.html;\

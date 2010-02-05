@@ -130,8 +130,6 @@ cov.txt: test.cov_fns
 #  every "subdir" needs to have a results.txt in it for this to run properly.
 #  if no results.txt, FAIL
 #  if results.txt is empty, FAIL
-#  if results.txt has ERROR, FAIL
-#  if results.txt doesn't have TEST PASSED, FAIL
 #  
 report.html:
 	echo "<html><body><table>" > report.html;\
@@ -184,7 +182,7 @@ results.txt: test.log
 	grep "TEST PASSED" test.log > $@
 	grep "ERROR:" test.log;\
 	if [ $$? -eq 0 ]; then\
-		grep "** FAIL **" test.log > $@;\
+		grep "ERROR:" test.log > $@;\
 		exit 1;\
 	fi
 	

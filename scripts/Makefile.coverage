@@ -10,9 +10,10 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/event/interrupt/test\
  ./kernel/event/trap/test\
  ./kernel/event/vectors/test\
- ./kernel/sched/check_sanity/test\
- ./kernel/sched/dosched/test\
- ./kernel/sched/futex/test\
+ ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/walking_1s\
+ ./kernel/sched/dosched/test/test\
+ ./kernel/sched/futex/test/tests/multi_wake\
+ ./kernel/sched/futex/test/tests/simple_lock_unlock\
  ./kernel/sched/lowprio/test\
  ./kernel/sched/resched/test\
  ./kernel/sched/switch/test\
@@ -22,7 +23,7 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/thread/stop/test\
  ./kernel/traps/tid/test\
  ./kernel/event/fastint/test\
- ./kernel/util/ring/test\
+ ./kernel/util/ring/test/test\
  ./kernel/util/trace/test\
  ./kernel/init/boot/test\
  ./kernel/init/setup/test\

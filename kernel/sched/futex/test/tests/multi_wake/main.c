@@ -216,7 +216,11 @@ int main()
 		 * queues into the futex ring in age order; probably more appropriate
 		 * to use a lock but whatever.
 		 */
-		info("Produced consumer thread, prio %d.\n",prio);
+		info("created consumer thread, prio %d.\n",prio);
+	}
+
+	for (i=0; i<max_consumers*2048; i++) {
+		asm volatile ("nop;");
 	}
 
 	/*  Figure out the max priority that can be woken up  */

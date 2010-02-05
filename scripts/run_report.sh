@@ -19,7 +19,7 @@ mkdir -p ~rkuo/public_html/h2/$TAG
 cp report.html ~rkuo/public_html/h2/$TAG/$TYPE.html
 
 make -f scripts/Makefile.coverage check
-if [ $? ne 0 ]; then
+if [ $? -ne 0 ]; then
    touch ~rkuo/public_html/h2/$TAG/$TYPE.html.failed
 fi
 

@@ -136,12 +136,28 @@ report.html:
 	for SUBDIR in ${SUBDIRS}; do\
 	   echo "<tr><td> $$SUBDIR<td>" >> report.html;\
 	   if [ ! -s $$SUBDIR/results.txt ]; then\
-	      echo FAIL:  missing results >> report.html;\
+	      echo FAIL:  no pass signature >> report.html;\
 	   else\
 	      cat $$SUBDIR/results.txt >> report.html;\
 	   fi;\
 	done;\
 	echo "</table></body></html>" >> report.html;
+
+
+check:
+	for SUBDIR in ${SUBDIRS}; do\
+	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	      exit 1;\
+	   fi;\
+	   grep "ERROR:" $$SUBDIR/results.txt;\
+	   if [ $$? -eq 0 ]; then\
+	      exit 1;\
+	   fi;\
+	   grep "TEST PASSED" $$SUBDIR/results.txt;\
+	   if [ $$? -ne 0 ]; then\
+	      exit 1;\
+	   fi;\
+	done
 
 
 else

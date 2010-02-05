@@ -126,6 +126,26 @@ test.cov_fns:
 cov.txt: test.cov_fns 
 	find . -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
 
+
+#  every "subdir" needs to have a results.txt in it for this to run properly.
+#  if no results.txt, FAIL
+#  if results.txt is empty, FAIL
+#  if results.txt has ERROR, FAIL
+#  if results.txt doesn't have TEST PASSED, FAIL
+#  
+report.html: all
+	echo "<html><body><table>" > report.html;\
+	for SUBDIR in ${SUBDIRS}; do\
+	   echo "<tr><td> $$SUBDIR<td>" >> report.html;\
+	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	      echo FAIL:  missing results >> report.html;\
+	   else\
+	      cat $$SUBDIR/results.txt >> report.html;\
+	   fi;\
+	done;\
+	echo "</table></body></html>" >> report.html;
+
+
 else
 
 ################################################################################

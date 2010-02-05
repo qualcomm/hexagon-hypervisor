@@ -74,6 +74,46 @@ If we find a matching translation, we return the translation.
 If no translation is found, we return zero. 
 
 
+H2K_mem_stlb_invalidate_va
+--------------------------
+
+.. cfunction:: void H2K_mem_stlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
+	:param va: virtual address to look up
+	:param asid: address space to look up
+	:param me: pointer to the current thread context
+
+Description
+~~~~~~~~~~~
+
+This function looks for a translation in the STLB.  If one is found, it is cleared.
+
+Behavior
+~~~~~~~~
+
+The same lookup behavior as :cfunc:`H2K_mem_stlb_lookup()` is used, but if a match is 
+found, we clear the translation instead of returning the value.
+
+H2K_mem_stlb_add
+----------------
+
+.. cfunction:: void H2K_mem_stlb_add(u32_t va, u32_t asid, u64_t entry, H2K_thread_context *me)
+	:param va: virtual address to look up
+	:param asid: address space to look up
+	:param entry: Entry to add into the STLB
+	:param me: pointer to the current thread context
+
+Description
+~~~~~~~~~~~
+
+This function inserts an entry into the STLB.
+
+Behavior
+~~~~~~~~
+
+The recommended page size and the VA are used to collect bits to hash into the TLB.
+If the valid bit is cleared for the set, we clear any translation in the set with 
+a matching ASID and set the valid bit.  We then select a random entry to replace
+with "entry".
 
 H2K_mem_stlb_invalidate_asid
 ----------------------------

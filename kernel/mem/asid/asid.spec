@@ -46,6 +46,8 @@ H2K_asid_table
 
 .. cdata:: H2K_asid_entry_t H2K_asid_table[MAX_ASIDS]
 
+EJP: inc/dec instead of lookup/add?
+
 
 H2K_asid_table_lookup
 ---------------------
@@ -81,10 +83,11 @@ H2K_asid_table_add
 Description
 ~~~~~~~~~~~
 
-This routine searches for an empty ASID and configures it for "ptb".
-The reference count is initialized to one.  
+This routine searches for an empty ASID and configures it for "ptb".  The
+reference count is initialized to one.  
 
-If no free ASID is available, this routine returns -1.  Otherwise, 
-this routine returns the ASID that was chosen.
+If no free ASID is available, this routine returns -1.  Otherwise, this routine
+returns the ASID that was chosen.  Any entries corresponding to the ASID should
+be cleared from all TLB caches.
 
 

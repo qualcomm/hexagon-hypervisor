@@ -46,9 +46,9 @@ First, we do the tlbmissrw-specific code:
 * Bad virtual address is BADVA
 
 Next, we do code that is common to both RW and X misses:
-* Look up handler functions
-* Call handler function
-* If handler function returns a valid value, place it in TLB
-* If handler function returns zero, we have a page fault.
-
+* Save off additional registers
+* Set up kernel stack and :cvar:`H2K_gp`
+* Call TLB Fill routine: :cfunc:`H2K_mem_tlb_fill()`
+* Restore registers
+* Return, unlocking TLB
 

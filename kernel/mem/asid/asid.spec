@@ -27,7 +27,10 @@ created, it increments the reference count on the interhited address space.
 When a thread changes to a new set of translations, the reference count for the
 old address space is decremented and the reference count for the new address
 space is incremented.  If a reference count drops to zero, the address space 
-is considered dead, and the ASID is available for reuse.
+is considered not currently used, and the ASID is available for reuse.  However,
+the address space is still considered valid until notifed otherwise by the guest.
+
+This allows guests to leave cached translations around for several address spaces.
 
 H2K_asid_table
 --------------
@@ -46,13 +49,12 @@ H2K_asid_table
 
 .. cdata:: H2K_asid_entry_t H2K_asid_table[MAX_ASIDS]
 
-EJP: inc/dec instead of lookup/add?
 
 
-H2K_asid_table_lookup
----------------------
+H2K_asid_table_inc
+------------------
 
-.. cfunction:: H2K_asid_entry_t *H2K_asid_table_lookup(u32_t ptb)
+.. cfunction:: s32_t H2K_asid_table_inc(u32_t ptb)
 
 	:param ptb: Address of the translation base
 
@@ -62,32 +64,31 @@ Description
 This routine searches for an ASID already configured to specify the
 address space pointed to by ptb.
 
-The routine returns the address of the entry in the ASID table, or 
-NULL if no entry is found.
+If an ASID was already configured to specify the address space, 
+the reference count is incremented.  Otherwise, we find a free 
+ASID and set the reference count to 1.
+
+If no free ASID is available, -1 is returned.  Otherwise, the ASID
+corresponding to the "ptb" is returned.
 
 Functionality
 ~~~~~~~~~~~~~
 
 We hash into the asid table, and if not found, we traverse the table looking
-for a matching entry.
+for a matching entry.  If an entry is found, we increment the reference count.
+Otherwise, we find the best free ASID and use that.
 
 
-H2K_asid_table_add
+H2K_asid_table_dec
 ------------------
 
-.. cfunction:: s32_t H2K_asid_table_add(u32_t ptb)
+.. cfunction:: void H2K_asid_table_dec(u32_t asid)
 
-	:param ptb: Address of the translation base
+	:param asid: Address space to decrement reference count for
 
 
 Description
 ~~~~~~~~~~~
 
-This routine searches for an empty ASID and configures it for "ptb".  The
-reference count is initialized to one.  
-
-If no free ASID is available, this routine returns -1.  Otherwise, this routine
-returns the ASID that was chosen.  Any entries corresponding to the ASID should
-be cleared from all TLB caches.
-
+This routine decrements the reference count for the ASID specified.
 

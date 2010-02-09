@@ -81,6 +81,12 @@ FUNC_START start .text.init.boot .p2align 2
 #endif
 	syscfg = r0
 
+#if __QDSP6_ARCH__ == 4
+	r0.h = #0xffff
+	r0.l = #0
+	ccr = r0
+#endif
+
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
 	// lock kernel
@@ -102,6 +108,12 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	r0.h = #hi(_SDA_BASE_)
 	r0.l = #lo(_SDA_BASE_)
 	gp = r0
+
+#if __QDSP6_ARCH__ == 4
+	r0.h = #0xffff
+	r0.l = #0
+	ccr = r0
+#endif
 
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)

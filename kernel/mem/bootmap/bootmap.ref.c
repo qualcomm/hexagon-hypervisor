@@ -22,6 +22,7 @@
 #define L1WT_L2C 5
 #define UC_S 6
 #define L1WB_L2C 7
+#define L1WB_L2CWB_STREAM 0xa
 
 #if __QDSP6_ARCH__ <= 3
 

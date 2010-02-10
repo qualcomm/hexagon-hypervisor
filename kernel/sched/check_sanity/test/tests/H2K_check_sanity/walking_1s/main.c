@@ -43,11 +43,11 @@ int resched_requested()
 
 /*  Checks if lowprio_notify was requested (get imasks?)  */
 
-int lowprio_notify_requested(u32_t oldmask)
+int lowprio_notify_requested(u32_t correctmask)
 {
 
 	/*  Can also check if the old priority mask matches the new one  */
-	if (oldmask != H2K_gp->priomask) return 1;
+	if (correctmask == H2K_gp->priomask) return 1;
 	return 0;
 }
 
@@ -73,6 +73,8 @@ int main()
 
 	u32_t some_random_number;  /*  checked by assertions  */
 	u32_t retval;  /*  checked by assertions  */
+
+	u32_t check_mask;  /* mask to check for with lowprio_notify  */
 
 	u32_t resched_count=0;  /*  need to distinguish between sightings of the two different reasons for rescheds  */
 	u32_t lowprio_count=0;
@@ -114,10 +116,10 @@ int main()
 	 * for ready_validmask, I think I'm going to walk a zero.
 	 */
 
-	/*  May need to fudge the H2K_runlist[prio]->hthread to a bogus value so we can properly detect H2K_lowprio_notify() actually fired  */
+	/*  Delicious fudge.  */
 
 	for (i=0; i<MAX_PRIOS; i++) {
-		H2K_gp->runlist[i]->hthread=MAX_HTHREADS+1;
+		H2K_gp->runlist[i]->hthread=(MAX_HTHREADS+1) + (i % (MAX_PRIO-MAX_HTHREADS));
 	}
 
 	//  If this were Python, I'd do this:
@@ -170,6 +172,8 @@ int main()
 
 						//debug("runlist_worst_prio %d\n",H2K_runlist_worst_prio());
 						//debug("ready_best_prio %d\n",H2K_ready_best_prio());
+
+						check_mask = prio_hthread | (1<<H2K_gp->runlist[H2K_runlist_worst_prio()]->hthread);
 
 						some_random_number = rand();
 						/*  call the function  */
@@ -234,7 +238,7 @@ sched_fired_ok:
 						/*  Was a lowprio_notify necessary?  */
 						
 						if (prio_hthread == 0) {
-							if (!lowprio_notify_requested(prio_hthread)) {
+							if (!lowprio_notify_requested(check_mask)) {
 								error("Lowprio notify not detected\n");
 							}
 							lowprio_count++;
@@ -242,7 +246,7 @@ sched_fired_ok:
 						} 
 
 						if ((runlist_prio & global_valid_prio) != 0) {
-							if (!lowprio_notify_requested(prio_hthread)) {
+							if (!lowprio_notify_requested(check_mask)) {
 								debug("prio_hthread = 0x%08x\n",prio_hthread);
 								debug("wait_hthread = 0x%08x\n",wait_hthread);
 								debug("runlist_prio = 0x%08x\n",runlist_prio);
@@ -256,7 +260,7 @@ sched_fired_ok:
 							goto lowprio_ok;
 						}
 
-						if (lowprio_notify_requested(prio_hthread)) {
+						if (lowprio_notify_requested(check_mask)) {
 							error("Inappropriate lowprio notify detected\n");
 						}
 

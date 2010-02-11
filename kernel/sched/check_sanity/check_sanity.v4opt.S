@@ -11,7 +11,7 @@
 	.globl H2K_check_sched_mask
 	.type	H2K_check_sched_mask, @function
 
-//  3 cycles best case, 8 worse + 2? mispredict
+//  3 cycles best case, 9 worse + 2? mispredict
 H2K_check_sched_mask:
 	{
 		R2 = memw(H2K_GP+#KG_runlist_valids);
@@ -29,11 +29,14 @@ H2K_check_sched_mask:
 		R5 = memw(H2K_GP+#KG_priomask);
 	}
 	{
-		R0 = memw(R2+R1<<#2);  
-		P0 = R1;
+		R0 = memw(R2+R1<<#2);  //  get pointer to thread_context
 		R4 = ##RESCHED_INT_INTMASK;
 	}  
 	{
+		R1 = memub(R0+#CONTEXT_hthread);
+	}
+	{
+		P0 = R1;
 		R5 = setbit(R5,R1);
 		memw(H2K_GP+#KG_priomask) = R5.new;
 	}
@@ -51,7 +54,7 @@ H2K_check_sched_mask:
 	.size	H2K_check_sched_mask, .-H2K_check_sched_mask
 
 /*
-H2K_check_sanity, v3 optimized
+H2K_check_sanity, v4 optimized
 
 R0 - do not touch.
 R1 - runlist_valids
@@ -70,7 +73,7 @@ P1 - DO_NOTIFY?
 P3 - thread for setimask
 
 Best case:  7 cycles
-Worst case:  11 cycles + 2 cycle mispredict penalty (1 cycle lost to assembler bug)
+Worst case:  12 cycles + 2 cycle mispredict penalty (1 cycle lost to assembler bug)
 
 */
 
@@ -99,11 +102,14 @@ H2K_check_sanity_unlock:
 	}  //  note:  retain R6 for subsequent compares in lowprio_notify
 	//  do lowprio_notify
 	{
-		R4 = memw(H2K_GP+R11<<#3);	//  load hthread; recycle R4
+		R4 = memw(R11+R7<<#2);	//  load hthread; recycle R4
 		R8 = ct0(R9);			//  ready_best_prio()
 		P0 = cmp.eq(R3,#0);		//  D - wait_mask
 		P1 = cmp.eq(R9,#0);		//  ready_validmasks
 	}
+	{
+		R4 = memub(R4 + #CONTEXT_hthread);
+	}  // argh!
 	{
 		R2 = setbit(R2,R4);			//  set new priomask
 		memw(H2K_GP+#KG_priomask) = R2.new;	//  set new priomask

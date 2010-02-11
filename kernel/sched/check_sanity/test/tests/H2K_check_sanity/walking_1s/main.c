@@ -119,7 +119,7 @@ int main()
 	/*  Delicious fudge.  */
 
 	for (i=0; i<MAX_PRIOS; i++) {
-		H2K_gp->runlist[i]->hthread=(MAX_HTHREADS+1) + (i % (MAX_PRIO-MAX_HTHREADS));
+		H2K_gp->runlist[i]->hthread=(MAX_HTHREADS) + (i % (MAX_PRIO-MAX_HTHREADS));
 	}
 
 	//  If this were Python, I'd do this:

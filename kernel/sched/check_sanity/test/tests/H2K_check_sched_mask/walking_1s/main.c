@@ -150,11 +150,11 @@ int main()
 				//  calculate prior to butchering
 				check_mask = prio_hthread | (1 << H2K_gp->runlist[H2K_runlist_worst_prio()]->hthread);
 
-				debug("check_mask = 0x%08x\n",check_mask);
-				debug("prio_hthread = 0x%08x\n",prio_hthread);
-				debug("runlist_prio = 0x%08x\n",runlist_prio);
-				debug("global_valid_prio = 0x%08x\n",~global_valid_prio);
-				debug("H2K_gp->priomask = 0x%08x\n",H2K_gp->priomask);
+				//debug("check_mask = 0x%08x\n",check_mask);
+				//debug("prio_hthread = 0x%08x\n",prio_hthread);
+				//debug("runlist_prio = 0x%08x\n",runlist_prio);
+				//debug("global_valid_prio = 0x%08x\n",~global_valid_prio);
+				//debug("H2K_gp->priomask = 0x%08x\n",H2K_gp->priomask);
 
 				H2K_check_sched_mask();
 

@@ -7,16 +7,15 @@
 #include <max.h>
 #include <context.h>
 #include <pagefault.h>
-
-static u32_t H2K_tlb_index = FIRST_REPLACEABLE_ENTRY;
+#include <globals.h>
 
 static inline void H2K_mem_tlb_insert(u64_t entry)
 {
-	u32_t index = H2K_tlb_index;
+	u32_t index = H2K_gp->tlb_index;
 	if ((index+1) > MAX_TLB_ENTRIES) {
-		H2K_tlb_index = FIRST_REPLACEABLE_ENTRY;
+		H2K_gp->tlb_index = FIRST_REPLACEABLE_ENTRY;
 	} else {
-		H2K_tlb_index = index+1;
+		H2K_gp->tlb_index = index+1;
 	}
 #if __QDSP6_ARCH__ <= 3
 	asm volatile (
@@ -38,8 +37,8 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		return;
 	}
 	if ((entry = H2K_mem_translate_linear(va,me)) != 0) {
-		H2K_mem_tlb_insert(entry);
 		H2K_mem_stlb_add(va,asid,entry,me);
+		H2K_mem_tlb_insert(entry);
 		return;
 	}
 	return H2K_mem_pagefault(me);

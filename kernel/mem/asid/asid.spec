@@ -43,13 +43,45 @@ H2K_asid_table
 
 		Base address for translation tables
 
-	.. cmember:: u32_t count
+	.. cmember:: u16_t count
 
 		Reference count for the address space
+
+	.. cmember:: u8_t maxhops
+
+		Maximum number of hops from collisions at this bin.  When we add
+		a new entry to the table, we set maxhops to the maximum of the old
+		value and the new number of hops that was required to insert the entry.
 
 .. cdata:: H2K_asid_entry_t H2K_asid_table[MAX_ASIDS]
 
 
+H2K_asid_table_search
+---------------------
+
+.. cfunction:: static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb)
+
+Description
+~~~~~~~~~~~
+
+Looks for an existing ASID entry configured for PTB.  Returns NULL if one is
+not found.
+
+
+
+H2K_asid_table_eviction
+-----------------------
+
+.. cfunction:: H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
+
+Description
+~~~~~~~~~~~
+
+Looks for an appropriate ASID to evict to create space for a new entry.
+
+Returns NULL if all ASIDs are busy.
+
+Updates maxhops in the bucket hashed to.
 
 H2K_asid_table_inc
 ------------------
@@ -76,7 +108,8 @@ Functionality
 
 We hash into the asid table, and if not found, we traverse the table looking
 for a matching entry.  If an entry is found, we increment the reference count.
-Otherwise, we find the best free ASID and use that.
+Otherwise, we find the best free ASID (either an invalid one, or one with a 
+reference count of zero) and use that.
 
 
 H2K_asid_table_dec
@@ -91,4 +124,33 @@ Description
 ~~~~~~~~~~~
 
 This routine decrements the reference count for the ASID specified.
+
+
+H2K_asid_table_invalidate
+-------------------------
+
+.. cfunction:: s32_t H2K_asid_table_invalidate(u32_t ptb)
+
+	:param ptb: Address of the translation base
+
+Description
+~~~~~~~~~~~
+
+This routine searches for an ASID that has been used for the specified 
+translations, and assures that no cached translations remain valid for 
+the specified PTB.
+
+This routine must be called before modifying memory at "ptb" to be a new
+set of pagetables.
+
+Returns -1 if the asid is still in use.
+
+Functionality
+~~~~~~~~~~~~~
+
+We search the ASID table for PTB.  If found, and the reference count is not
+zero, the call was erroneous, and we return -1.  Otherwise, we invalidate the
+TLB and STLB for the asid.  We then set the PTB field in the ASID table to
+zero.
+
 

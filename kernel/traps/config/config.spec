@@ -10,13 +10,14 @@ This module contains the runtime kernel configuration routines.
 H2K_trap_config
 ---------------
 
-.. cfunction:: void H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 
 	:param configtype: Configuration operation to do
 	:param ptr: Operation-dependent pointer value
 	:param val2: Operation-dependent value
 	:param val3: Operation-dependent value
 	:param me: Pointer to the current thread context
+	:returns: The return code for the configuration option.
 
 Description
 ~~~~~~~~~~~
@@ -36,13 +37,14 @@ appropriate routine.
 H2K_trap_config_addthreads
 --------------------------
 
-.. cfunction:: void H2K_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unused2, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_config_addthreads(u32_t unused, void *ptr, u32_t size, u32_t unused2, H2K_thread_context *me)
 
 	:param unused: Unused parameter
 	:param ptr: Pointer for additional memory for use as thread contexts
 	:param size: Size of the data area in bytes
 	:param unused2: Unused parameter
 	:param me: Pointer to the current thread context
+	:returns: the number of thread contexts added
 
 Description
 ~~~~~~~~~~~
@@ -68,7 +70,7 @@ TBD: keep list of thread areas for better threadids.
 H2K_trap_config_setfatal
 ------------------------
 
-.. cfunction:: void H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me)
 
 
 	:param unused: Unused paramater
@@ -76,6 +78,7 @@ H2K_trap_config_setfatal
 	:param unused2: Unused parameter
 	:param unused3: Unused parameter
 	:param me: Pointer to the current thread context
+	:returns: zero
 
 Description
 ~~~~~~~~~~~

@@ -61,15 +61,41 @@ typedef struct _h2_thread_context
 	};
 	u64_t oncpu_start;
 	u64_t totalcycles;
-	u64_t pad1;
+	struct {
+		u32_t ccr;
+		u32_t gptb;
+	};
 	// 64
 	struct {	// OK FOR DCZEROA
 		u32_t *futex_ptr;
 		void *continuation;
 	};
-	u64_t ssrelr;
+	union {
+		u64_t ssrelr;
+		struct {
+			u32_t elr;
+			union {
+				u32_t ssr;
+				struct {
+					u8_t ssr_cause;
+					u8_t ssr_asid;
+					u8_t ssr_um:1;
+					u8_t ssr_ex:1;
+					u8_t ssr_ie:1;
+					u8_t ssr_incompat:5;
+					u8_t ssr_highbyte;
+				};
+			};
+		};
+	};
 	u64_t r3130;
-	u64_t r2928;
+	union {
+		u64_t r2928;
+		struct {
+			u32_t r28;
+			u32_t r29;
+		};
+	};
 	// 96
 	u64_t r2726;	// OK FOR DCZEROA
 	u64_t r2524;

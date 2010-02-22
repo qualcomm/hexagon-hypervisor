@@ -43,6 +43,7 @@ typedef struct {
 			void *stacks_addr;
 		};
 	};
+	u32_t tlb_index;
 	H2K_thread_context *free_threads;
 	H2K_trace_info_t trace_info;
 	H2K_thread_context *runlist[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));

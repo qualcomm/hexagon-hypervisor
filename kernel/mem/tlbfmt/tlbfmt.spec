@@ -24,7 +24,7 @@ Hardware TLB entry format.
 H2K_mem_tlbfmt_from_table
 -------------------------
 
-.. cfunction:: H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_table(u32_t va, u32_t asid, u32_t pte)
+.. cfunction:: H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_table(u32_t va, u32_t asid, pte_t pte)
 
 Description
 ~~~~~~~~~~~

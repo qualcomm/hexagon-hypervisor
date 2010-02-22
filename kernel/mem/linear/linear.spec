@@ -16,8 +16,8 @@ The values must terminate with a value zero.
 H2K_mem_translate_linear
 ------------------------
 
-.. cfunction:: u64_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
-
+.. cfunction:: H2K_linear_fmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
+	:param badva: Virtual Address to translate
 	:param me: Context of the current thread
 
 Description

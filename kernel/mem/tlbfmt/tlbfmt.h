@@ -6,6 +6,10 @@
 #ifndef H2K_TLBFMT_H
 #define H2K_TLBFMT_H 1
 
+#include <c_std.h>
+#include <linear.h>
+#include <pagewalk.h>
+
 #if __QDSP6_ARCH <= 3
 typedef union {
 	u64_t raw;
@@ -27,12 +31,13 @@ typedef union {
 				u32_t asid:5;
 				u32_t guestonly:1
 				u32_t unused:2;
-				u32_t g:1;
-				u32_t v:1;
+				u32_t global:1;
+				u32_t valid:1;
 				u32_t unused2:2;
 			};
 		};
 } H2K_mem_tlbfmt_t;
+
 #else
 
 typedef union {
@@ -61,8 +66,8 @@ typedef union {
 
 #endif
 
-H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear();
-H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_table();
+H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear(H2K_linear_fmt_t linear, u32_t asid);
+H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_table(u32_t va, u32_t asid, pte_t pte);
 
 #endif
 

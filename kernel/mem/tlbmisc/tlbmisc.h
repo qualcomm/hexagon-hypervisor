@@ -7,8 +7,10 @@
 #define H2K_TLBMISC_H 1
 
 #include <c_std.h>
+#include <context.h>
+
 void H2K_mem_tlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me);
-void H2K_mem_stlb_invalidate_asid(u32_t asid, H2K_thread_context *me);
+void H2K_mem_tlb_invalidate_asid(u32_t asid);
 
 #endif
 

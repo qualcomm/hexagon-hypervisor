@@ -7,6 +7,7 @@
 #define H2K_LINEAR_H 1
 
 #include <c_std.h>
+#include <context.h>
 #include <tlbfmt.h>
 
 typedef union {

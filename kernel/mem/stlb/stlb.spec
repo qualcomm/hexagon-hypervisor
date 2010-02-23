@@ -47,7 +47,7 @@ result in many duplicated pages for larger pages.
 H2K_mem_stlb_lookup
 -------------------
 
-.. cfunction:: u64_t H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *me)
+.. cfunction:: H2K_mem_tlbfmt_t H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *me)
 
 	:param va: virtual address to look up
 	:param asid: address space to look up
@@ -76,7 +76,7 @@ If no translation is found, we return zero.
 H2K_mem_stlb_add
 ----------------
 
-.. cfunction:: void H2K_mem_stlb_add(u32_t va, u32_t asid, u64_t entry, H2K_thread_context *me)
+.. cfunction:: void H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
 	:param va: virtual address to look up
 	:param asid: address space to look up
 	:param entry: Entry to add into the STLB

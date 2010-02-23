@@ -8,22 +8,27 @@
 
 #include <c_std.h>
 #include <max.h>
+#include <tlbfmt.h>
+#include <context.h>
 
-#if ((MAX_SETS & 0xff) != 0)
-#error MAX_SETS should be power of two >256!
+#if (((STLB_MAX_SETS & 0xff) != 0) || ((STLB_MAX_SETS < 0xff)))
+#error STLB_MAX_SETS should be power of two >256!
 #endif
-#if (MAX_WAYS > 32)
+#if (STLB_MAX_WAYS > 32)
 #error increase waymask
 #endif
 
 typedef struct {
-	u64_t valids[MAX_SETS/64] __attribute__((aligned(32)));
+	u64_t valids[STLB_MAX_SETS/64] __attribute__((aligned(32)));
 	u32_t pagesize;
 	u32_t waymask;
-	u64_t *baseaddr;
+	H2K_mem_tlbfmt_t *baseaddr;
 } H2K_mem_stlb_asid_info_t;
 
-H2K_mem_stlb_asid_info_t **H2K_mem_stlb_asid_infos; /* MOVE TO GLOBALS */
+H2K_mem_tlbfmt_t H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *me);
+void H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_context *me);
+void H2K_mem_stlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me);
+void H2K_mem_stlb_invalidate_asid(u32_t asid);
 
 #endif
 

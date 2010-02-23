@@ -6,9 +6,14 @@
 #include <c_std.h>
 #include <asid.h>
 #include <stlb.h>
+#include <tlbmisc.h>
+#include <q6protos.h>
+#include <max.h>
 
 #define HASHVAL(X) (Q6_R_extractu_RII((((unsigned int)(X)) * 2654435761UL),ASID_BITS,32-ASID_BITS))
 #define NEXTIDX(X,Y) (((X)+(Y)) & ((1<<ASID_BITS)-1))
+
+static H2K_asid_entry_t H2K_mem_asid_table[MAX_ASIDS];
 
 static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb)
 {
@@ -20,11 +25,11 @@ static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb)
 	chain = idx|1;
 	/* Start search @ Hash */
 	/* Search circularly */
-	maxhops = TABLE_BASE[idx].maxhops;
+	maxhops = H2K_mem_asid_table[idx].maxhops;
 	do {
-		if (TABLE_BASE[idx].ptb == ptb) return TABLE_BASE+idx;
-		idx = NEXTIDX(idx,chain)
-	} while ((i++) < maxhops);
+		if (H2K_mem_asid_table[idx].ptb == ptb) return H2K_mem_asid_table+idx;
+		idx = NEXTIDX(idx,chain);
+	} while ((++i) <= maxhops);
 	/* Not found? Return NULL */
 	return NULL;
 }
@@ -38,30 +43,30 @@ static inline H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
 	/* Hash ptb */
 	idx = HASHVAL(ptb);
 	chain = idx|1;
-	start = TABLE_BASE+idx;
+	start = H2K_mem_asid_table+idx;
 	/* Start search @ Hash */
 	/* Search circularly for count==0 */
-	while (TABLE_BASE[idx].count != 0) {
+	while (H2K_mem_asid_table[idx].count != 0) {
 		i++;
 		idx = NEXTIDX(idx,chain);
 		/* Not found? Return NULL */
 		if (i >= MAX_ASIDS) return NULL;
 	}
 	start->maxhops = Q6_R_max_RR(start->maxhops,i);
-	return TABLE_BASE+idx;
+	return H2K_mem_asid_table+idx;
 }
 
 s32_t H2K_asid_table_inc(u32_t ptb)
 {
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
-	if (tmp = H2K_asid_table_search(ptb)) {
-		tmp.count++;
-		return tmp-TABLE_BASE;
-	} else if (tmp = H2K_asid_table_eviction(ptb)) {
-		tmp.ptb = ptb;
-		tmp.count = 1;
-		asid = tmp-TABLE_BASE;
+	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
+		tmp->count++;
+		return tmp-H2K_mem_asid_table;
+	} else if ((tmp = H2K_asid_table_eviction(ptb)) != NULL) {
+		tmp->ptb = ptb;
+		tmp->count = 1;
+		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
 		H2K_mem_stlb_invalidate_asid(asid);
 		return asid;
@@ -70,19 +75,21 @@ s32_t H2K_asid_table_inc(u32_t ptb)
 	}
 }
 
-s32_t H2K_asid_table_dec(u32_t asid)
+void H2K_asid_table_dec(u32_t asid)
 {
-	TABLE_BASE[asid].count--;
+	H2K_mem_asid_table[asid].count--;
 }
 
 s32_t H2K_asid_table_invalidate(u32_t ptb)
 {
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
-	if (tmp = H2K_asid_table_search(ptb)) {
-		asid = tmp-TABLE_BASE;
+	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
+		if (tmp->count != 0) return -1;
+		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
 		H2K_mem_stlb_invalidate_asid(asid);
+		return 0;
 	} else {
 		/* Nothing to do! */
 		return 0;

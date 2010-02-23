@@ -106,9 +106,7 @@ FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
 	/* call TLB miss C */
-#if 0
 	call H2K_mem_tlb_fill
-#endif
 	/* Restore r17:16 */
 	r17:16 = memd(r29+#0)
 	/* deallocframe */

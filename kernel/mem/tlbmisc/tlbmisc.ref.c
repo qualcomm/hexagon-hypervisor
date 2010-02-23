@@ -5,6 +5,7 @@
 
 #include <c_std.h>
 #include <tlbmisc.h>
+#include <max.h>
 
 #if __QDSP6_ARCH__ <= 3
 static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
@@ -15,7 +16,7 @@ static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
 	" tlbp\n"
 	" %0 = tlbidx\n"
 	: "=r"(ret)
-	: "r"((aisd<<20)|(va >> 12)));
+	: "r"((asid<<20)|(va >> 12)));
 	return ret;
 }
 
@@ -56,13 +57,13 @@ void H2K_mem_tlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
 	/* For V3 and earlier, also need to probe fake guest bit */
 }
 
-void H2K_mem_tlb_invalidate_asid(u32_t asid, H2K_thread_context *me)
+void H2K_mem_tlb_invalidate_asid(u32_t asid)
 {
 	u32_t i;
 	u64_t tmp,mask,check;
 	mask = ((u64_t)(MAX_TLB_ENTRIES-1)) << (32+20);
 	check = (((u64_t)(asid)) << (32+20)) & mask;
-	for (i = H2K_FIRST_REPLACEABLE_ENTRY; i < H2K_MAX_TLB_ENTRIES; i++) {
+	for (i = TLB_FIRST_REPLACEABLE_ENTRY; i < MAX_TLB_ENTRIES; i++) {
 		tmp = H2K_mem_tlb_read(i);
 		if ((tmp & mask) == (check)) {
 			H2K_mem_tlb_write(i,0);

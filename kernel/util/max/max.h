@@ -11,6 +11,8 @@
 
 #define MAX_TLB_ENTRIES 64
 
+#define TLB_FIRST_REPLACEABLE_ENTRY 8
+
 #define MAX_THREADS 16
 
 #define KERNEL_STACK_SIZE (8*16)
@@ -18,7 +20,8 @@
 #define MAX_PRIOS 32
 #define MAX_PRIO ((MAX_PRIOS) - 1)
 
-#define MAX_ASIDS 32
+#define ASID_BITS 5
+#define MAX_ASIDS (1<<(ASID_BITS))
 
 #define MAX_INTERRUPTS 32
 
@@ -26,10 +29,17 @@
 
 #define MAX_TRACE_LEVEL 0
 
+#define STLB_MAX_SETS 256
+#define STLB_MAX_WAYS 16
+
+#define PAGE_BITS 12 /* Minimum page size: 4K */
+
 #if __QDSP6_ARCH__ <= 3
 #define RESCHED_INT_INTMASK (0x80000000 >> RESCHED_INT)
+#define SSR_GUEST_BIT 13
 #else
 #define RESCHED_INT_INTMASK (0x00000001 << RESCHED_INT)
+#define SSR_GUEST_BIT 31
 #endif
 
 #define BOOT_THREAD_SSR 0x1c60000

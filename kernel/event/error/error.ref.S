@@ -7,7 +7,6 @@
 #include <asm_std.h>
 #include <max.h>
 
-#define SSR_GUEST_BIT 13
 #define ERROR_GEVB_OFFSET 0
 
 FUNC_START H2K_handle_error .text.error .p2align 2

@@ -8,12 +8,15 @@
 #include <context.h>
 #include <pagefault.h>
 #include <globals.h>
+#include <tlbfmt.h>
+#include <stlb.h>
+#include <linear.h>
 
 static inline void H2K_mem_tlb_insert(u64_t entry)
 {
 	u32_t index = H2K_gp->tlb_index;
 	if ((index+1) > MAX_TLB_ENTRIES) {
-		H2K_gp->tlb_index = FIRST_REPLACEABLE_ENTRY;
+		H2K_gp->tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
 	} else {
 		H2K_gp->tlb_index = index+1;
 	}
@@ -30,17 +33,17 @@ static inline void H2K_mem_tlb_insert(u64_t entry)
 
 void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 {
-	u64_t entry;
+	H2K_mem_tlbfmt_t entry;
 	u32_t asid = me->ssr_asid;
-	if ((entry = H2K_mem_stlb_lookup(va,asid,me)) != 0) {
-		H2K_mem_tlb_insert(entry);
+	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw != 0) {
+		H2K_mem_tlb_insert(entry.raw);
 		return;
 	}
-	if ((entry = H2K_mem_translate_linear(va,me)) != 0) {
+	if ((entry = H2K_mem_translate_linear(va,me)).raw != 0) {
 		H2K_mem_stlb_add(va,asid,entry,me);
-		H2K_mem_tlb_insert(entry);
+		H2K_mem_tlb_insert(entry.raw);
 		return;
 	}
-	return H2K_mem_pagefault(me);
+	return H2K_mem_pagefault(va,me);
 }
 

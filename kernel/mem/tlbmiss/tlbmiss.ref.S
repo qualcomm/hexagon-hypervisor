@@ -31,7 +31,7 @@
 /* Only need to save caller-save regs */
 FUNC_START H2K_handle_tlbmissx .text.tlbmiss .p2align 2
 1:
-	jump 1b
+	// jump 1b
 	crswap(r0,sgp)
 	memd(r0+#CONTEXT_r0302) = r3:2
 	memd(r0+#CONTEXT_r0504) = r5:4
@@ -40,9 +40,9 @@ FUNC_START H2K_handle_tlbmissx .text.tlbmiss .p2align 2
 	r2 = and(r5,#3)
 	r4 = elr
 	p0 = cmp.eq(r2,#1)
+	p1 = cmp.eq(r2,#2)
 	if (p0) r2 = add(r4,#16)
 	if (!p0) r2 = r4
-	p1 = cmp.eq(r3,#2)
 	if (!p1) jump .Ltlbmiss_common
 	r2 = badva
 	jump .Ltlbmiss_common
@@ -50,7 +50,7 @@ FUNC_START H2K_handle_tlbmissx .text.tlbmiss .p2align 2
 FUNC_END H2K_handle_tlbmissx
 
 FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
-	jump 1b
+	//jump 1b
 	crswap(r0,sgp)
 	memd(r0+#CONTEXT_r0302) = r3:2
 	memd(r0+#CONTEXT_r0504) = r5:4
@@ -83,6 +83,7 @@ FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
 	memd(r0+#CONTEXT_lc1sa1) = r9:8
 	memd(r0+#CONTEXT_m1m0) = r11:10
 	memd(r0+#CONTEXT_r2928) = r29:28
+	memd(r0+#CONTEXT_r3130) = r31:30
 
 	/* Set up stack */
 
@@ -91,8 +92,8 @@ FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
 	r29.l = #lo(H2K_stacks)
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)
-	r2 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r2)
+	r3 = #KERNEL_STACK_SIZE
+	r29 += mpyi(r28,r3)
 #else
 	r28 = HTID
 	r29 = #KERNEL_STACK_SIZE
@@ -106,6 +107,7 @@ FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
 	/* call TLB miss C */
+	r1:0 = combine(r0,r2)	// H2K_mem_tlb_fill(va,me)
 	call H2K_mem_tlb_fill
 	/* Restore r17:16 */
 	r17:16 = memd(r29+#0)
@@ -116,6 +118,7 @@ FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
 	r29:28 = memd(r0+#CONTEXT_r2928)
 
 	/* Restore control regs */
+	r31:30 = memd(r0+#CONTEXT_r2928)
 	r29:28 = memd(r0+#CONTEXT_r2928)
 	r11:10 = memd(r0+#CONTEXT_m1m0)
 	r9:8 = memd(r0+#CONTEXT_lc1sa1)

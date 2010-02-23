@@ -19,6 +19,8 @@ u32_t TH_pass;
 u32_t TH_expected_badva;
 u32_t TH_expected_elr;
 u32_t TH_saw_tlbfill;
+u32_t TH_saw_goodreturn;
+u32_t TH_fill_do_longjmp;
 
 jmp_buf env;
 
@@ -35,6 +37,8 @@ H2K_thread_context a,b;
 /* Helper function, will call H2K_handle_interrupt */
 void TH_do_tlbmissx(H2K_thread_context *src, H2K_thread_context *dest, u32_t cause, u32_t badva, u32_t elr);
 void TH_do_tlbmissrw(H2K_thread_context *src, H2K_thread_context *dest, u32_t cause, u32_t badva, u32_t elr);
+
+void TH_return_helper();
 
 #define CHECK_INTERRUPT_TEST(ELEMENT) \
 	if (src->ELEMENT != dest->ELEMENT) FAIL("Not equal: " #ELEMENT)
@@ -66,7 +70,9 @@ void H2K_mem_tlb_fill(u32_t badva, H2K_thread_context *me)
 	if (badva != TH_expected_badva) FAIL("Unexpected BADVA");
 	if (me->elr != TH_expected_elr) FAIL("Unexpected ELR");
 	TH_saw_tlbfill = 1;
-	longjmp(env,1);
+	if (TH_fill_do_longjmp) {
+		longjmp(env,1);
+	}
 }
 
 void TH_try_tlbmissx(H2K_thread_context *dest, u32_t cause, u32_t elr, u32_t badva)
@@ -76,10 +82,12 @@ void TH_try_tlbmissx(H2K_thread_context *dest, u32_t cause, u32_t elr, u32_t bad
 	TH_dest_context = dest;
 	TH_expected_elr = elr;
 	TH_saw_tlbfill = 0;
+	TH_saw_goodreturn = 0;
 	if (setjmp(env) == 0) {
 		TH_do_tlbmissx(src,dest,cause,badva,elr);
 	}
 	if (TH_saw_tlbfill == 0) FAIL("Didn't call TLB fill");
+	if ((TH_fill_do_longjmp == 0) && (TH_saw_goodreturn == 0)) FAIL("Didn't see good return");
 }
 
 void TH_try_tlbmissrw(H2K_thread_context *dest, u32_t cause, u32_t elr, u32_t badva)
@@ -89,10 +97,23 @@ void TH_try_tlbmissrw(H2K_thread_context *dest, u32_t cause, u32_t elr, u32_t ba
 	TH_dest_context = dest;
 	TH_expected_elr = elr;
 	TH_saw_tlbfill = 0;
+	TH_saw_goodreturn = 0;
 	if (setjmp(env) == 0) {
 		TH_do_tlbmissrw(src,dest,cause,badva,elr);
 	}
 	if (TH_saw_tlbfill == 0) FAIL("Didn't call TLB fill");
+	if ((TH_fill_do_longjmp == 0) && (TH_saw_goodreturn == 0)) FAIL("Didn't see good return");
+}
+
+void TH_goodreturn(u32_t regcheck)
+{
+	if (regcheck == 0x1) {
+		TH_saw_goodreturn = 1;
+	} else {
+		printf("regcheck=0x%x\n",regcheck);
+		FAIL("Reg check bad.");
+	}
+	longjmp(env,1);
 }
 
 void fill_srcdata(int i)
@@ -122,6 +143,10 @@ int main()
 	int i = 3;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	fill_srcdata(i);
+
+	/* First, test call side of TLB miss */
+	TH_fill_do_longjmp = 1;
+
 	/* TLB Miss-X: same page, next page, and icinva */
 
 	puts("a");
@@ -145,6 +170,31 @@ int main()
 	puts("e");
 	TH_expected_badva = 0xcafed00d;
 	TH_try_tlbmissrw(&a,1,0xbadf00d8,0xcafed00d);
+
+	/* Second, test return side of TLB Miss */
+	TH_fill_do_longjmp = 0;
+
+	/* TLB Miss-RW */
+	puts("f");
+	TH_expected_badva = 0xabcdefed;
+	TH_try_tlbmissrw(&a,0,(u32_t)(TH_return_helper),0xabcdefed);
+
+	puts("g");
+	TH_expected_badva = 0xdbabcdef;
+	TH_try_tlbmissrw(&a,1,(u32_t)(TH_return_helper),0xdbabcdef);
+
+	/* TLB Miss-X */
+	puts("h");
+	TH_expected_badva = (u32_t)(TH_return_helper);
+	TH_try_tlbmissx(&a,0,(u32_t)(TH_return_helper),0xdeadbee0);
+
+	puts("i");
+	TH_expected_badva = (u32_t)(TH_return_helper)+16;
+	TH_try_tlbmissx(&a,1,(u32_t)(TH_return_helper),0xdeadbee0);
+
+	puts("j");
+	TH_expected_badva = 0xdeadb000;
+	TH_try_tlbmissx(&a,2,(u32_t)(TH_return_helper),0xdeadb000);
 
 	puts("TEST PASSED\n");
 	return 0;

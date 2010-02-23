@@ -124,3 +124,8 @@ void H2K_mem_stlb_invalidate_asid(u32_t asid)
 	return;
 }
 
+void H2K_mem_stlb_init()
+{
+	H2K_mem_stlb_asid_infos = NULL;
+}
+

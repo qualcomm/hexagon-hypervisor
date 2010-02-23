@@ -118,7 +118,7 @@ FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
 	r29:28 = memd(r0+#CONTEXT_r2928)
 
 	/* Restore control regs */
-	r31:30 = memd(r0+#CONTEXT_r2928)
+	r31:30 = memd(r0+#CONTEXT_r3130)
 	r29:28 = memd(r0+#CONTEXT_r2928)
 	r11:10 = memd(r0+#CONTEXT_m1m0)
 	r9:8 = memd(r0+#CONTEXT_lc1sa1)

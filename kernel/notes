@@ -1,0 +1,57 @@
+
+TBD:
+	In V3, should we have "User" or "Guest" as the bit in SSR.ASID?
+	Permissions should match, and V4 has a "user" permission, rather
+	than a "guestonly" permission.  OTOH, we check if "guest", though
+	this can probably be "if (!user)"
+
+
+
+            ************* Interrupt Handling **************
+
+
+Interrupt:
+	* Fastint --> take fastint
+	* Resched --> take resched
+	* IPI --> check sanity
+
+Are those are the only two options from interrupt handler?
+
+Fastint --> take fastint (in "init" context) --> VMSWI for virtual-machine
+  destined interrupts?
+	+ removes L2 interrupt controller, non-fastint handlers from kernel
+	+ Deciding Phys Int -- Virt Int mapping outside kernel
+	- Potentially slower 
+	- Potentially don't want VMSWI trap in fastint context
+
+VMSWI --> VM event
+  Just a first stab:
+  * Set global event pending 
+  * Look up VM Event --> VM Handler Thread
+  * Set VM Handler Thread->status = NEEDS_VMWORK
+  * If VM Handler Thread->mode == RUNNING: IPI;
+  * If VM Handler Thread->Mode == READY: nothing
+  * If VM Handler Thread->mode == INTWAIT: ready / check sanity
+  * If VM Handler thread->mode == Futex: ???
+
+  When thread does vmwork code, if it can take the interrupt it will clear
+  the appropriate global interrupt pending bit and take the interrupt.
+
+TBD:
+
+* Keep track of where a thread is?  Requires another store every state switch,
+  but helps when trying to track it down (prio adjustment, event, etc)
+  * Sometimes (prio adjustment) moving out of ready list is important, sometimes
+    (interrupt) not so important.
+
+* Do POSIX signals work like interrupts?  SIGKILL?
+
+* Where/how to check permissions, global int map?
+
+
+Linux signals set signals in the dest, and then hunt to see if the thread is
+running, needs to be unblocked, whether blocking can be interrupted, etc.  When
+a thread is switched to, it checks the mask to see if it should handle signals
+before returning.
+
+

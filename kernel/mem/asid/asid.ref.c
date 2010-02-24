@@ -89,6 +89,7 @@ s32_t H2K_asid_table_invalidate(u32_t ptb)
 		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
 		H2K_mem_stlb_invalidate_asid(asid);
+		tmp->ptb = 0;
 		return 0;
 	} else {
 		/* Nothing to do! */

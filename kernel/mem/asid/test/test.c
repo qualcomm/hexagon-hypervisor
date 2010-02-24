@@ -21,6 +21,9 @@ void FAIL(const char *str)
 
 H2K_thread_context a;
 
+u32_t TH_saw_tlb_invalidate;
+u32_t TH_saw_stlb_invalidate;
+
 u64_t bases[MAX_ASIDS*4];
 
 extern H2K_asid_entry_t H2K_mem_asid_table[];
@@ -96,9 +99,60 @@ void check_max()
 	print_max_hops(MAX_ASIDS);
 }
 
+void H2K_mem_tlb_invalidate_asid(u32_t asid)
+{
+	TH_saw_tlb_invalidate = 1;
+}
+
+void H2K_mem_stlb_invalidate_asid(u32_t asid)
+{
+	TH_saw_stlb_invalidate = 1;
+}
+
+void check_invalid()
+{
+	H2K_asid_table_init();
+	H2K_asid_entry_t entry;
+	s32_t tmp;
+	if ((tmp = H2K_asid_table_inc((u32_t)(&bases[0]))) < 0) {
+		FAIL("Couldn't alloc max ASIDs");
+	}
+	bases[0] = tmp;
+	entry = H2K_mem_asid_table[bases[0]];
+	if (entry.ptb != ((u32_t)(&bases[0]))) FAIL("unexpected ptb value");
+
+	TH_saw_tlb_invalidate = TH_saw_stlb_invalidate = 0;
+	if ((tmp = H2K_asid_table_invalidate((u32_t)(&bases[0]))) >= 0) {
+		FAIL("Invalidate didn't fail while asid was live");
+	}
+	if (TH_saw_tlb_invalidate || TH_saw_stlb_invalidate) {
+		FAIL("Invalidate didn't fail while asid was live (tlb inv call)");
+	}
+
+	H2K_asid_table_dec(bases[0]);
+
+	TH_saw_tlb_invalidate = TH_saw_stlb_invalidate = 0;
+	if ((tmp = H2K_asid_table_invalidate((u32_t)(&bases[0]))) < 0) {
+		FAIL("Invalidate failed");
+	}
+	if (!(TH_saw_tlb_invalidate && TH_saw_stlb_invalidate)) {
+		FAIL("Invalidate didn't call tlb invalidates");
+	}
+
+	TH_saw_tlb_invalidate = TH_saw_stlb_invalidate = 0;
+	if ((tmp = H2K_asid_table_invalidate((u32_t)(&bases[1]))) < 0) {
+		FAIL("never-seen Invalidate failed");
+	}
+	if ((TH_saw_tlb_invalidate || TH_saw_stlb_invalidate)) {
+		FAIL("never-seen Invalidate called tlb invalidates");
+	}
+
+}
+
 int main()
 {
 	check_max();
+	check_invalid();
 	puts("TEST PASSED");
 	return 0;
 }

@@ -1,0 +1,4 @@
+H2K_asid_table_inc
+H2K_asid_table_dec
+H2K_asid_table_invalidate
+H2K_asid_table_init

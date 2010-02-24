@@ -13,7 +13,7 @@
 #define HASHVAL(X) (Q6_R_extractu_RII((((unsigned int)(X)) * 2654435761UL),ASID_BITS,32-ASID_BITS))
 #define NEXTIDX(X,Y) (((X)+(Y)) & ((1<<ASID_BITS)-1))
 
-static H2K_asid_entry_t H2K_mem_asid_table[MAX_ASIDS];
+H2K_asid_entry_t H2K_mem_asid_table[MAX_ASIDS];
 
 static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb)
 {
@@ -93,6 +93,14 @@ s32_t H2K_asid_table_invalidate(u32_t ptb)
 	} else {
 		/* Nothing to do! */
 		return 0;
+	}
+}
+
+void H2K_asid_table_init()
+{
+	int i;
+	for (i = 0; i < MAX_ASIDS; i++) {
+		H2K_mem_asid_table[i].raw = 0;
 	}
 }
 

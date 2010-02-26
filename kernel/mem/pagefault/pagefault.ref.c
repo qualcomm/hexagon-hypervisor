@@ -6,6 +6,8 @@
 #include <c_std.h>
 #include <context.h>
 #include <max.h>
+#include <fatal.h>
+#include <vmdefs.h>
 
 static inline void H2K_mem_pagefault_save_gregs(H2K_thread_context *me)
 {
@@ -32,8 +34,10 @@ static inline void H2K_mem_pagefault_restore_gregs(H2K_thread_context *me)
 void H2K_mem_pagefault(u32_t va, H2K_thread_context *me)
 {
 	u32_t tmp;
-	H2K_mem_pagefault_save_gregs(me);
+	// H2K_mem_pagefault_save_gregs(me);	// needed?  Or just clobber?
 	me->gelr = me->ssrelr;
+	if (me->gevb == 0) return H2K_fatal_thread(-3,me,0,0,me->hthread);
+	me->elr = ((u32_t)me->gevb) + ERROR_GEVB_OFFSET;
 	me->gbadva = va;
 	if ((me->ssr & (1<<SSR_GUEST_BIT)) == 0) {
 		tmp = me->r29;
@@ -41,9 +45,9 @@ void H2K_mem_pagefault(u32_t va, H2K_thread_context *me)
 		me->r29 = me->gosp;
 		me->gosp = tmp;
 		/* EJP: FIXME: VMIE needs to be handled outside of guest reg */
-		me->gssr = (me->gssr & 0x40000000) | 0x80000000 | 0x22; /* cause == read */
+		me->gssr = 0x80000000 | 0x22; /* cause == read */
 	} else {
-		me->gssr = (me->gssr & 0x40000000) | 0x22;
+		me->gssr = 0x22;
 	}
 	H2K_mem_pagefault_restore_gregs(me);
 }

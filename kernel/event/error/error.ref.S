@@ -6,8 +6,7 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 #include <max.h>
-
-#define ERROR_GEVB_OFFSET 0
+#include <vmdefs.h>
 
 FUNC_START H2K_handle_error .text.error .p2align 2
 	/* TBD: do double exception check as spec'd */

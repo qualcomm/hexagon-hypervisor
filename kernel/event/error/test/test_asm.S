@@ -13,6 +13,25 @@ FUNC_START TH_do_error .text .p2align 2
 	r6 = memw(r6)
 FUNC_END TH_do_error
 
+FUNC_START TH_guest_vectors .text .p2align 2
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_error_handler
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+	jump TH_bad_vector
+FUNC_END TH_guest_vectors
+
 FUNC_START TH_error_handler .text .p2align 2
 	r7.h = #hi(0xdeadbeef)
 	r7.l = #lo(0xdeadbeef)

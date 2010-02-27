@@ -46,6 +46,11 @@ void H2K_fatal_init()
 {
 }
 
+void TH_bad_vector()
+{
+	FAIL("Bad vector called");
+}
+
 void TH_error_check(int pass, u32_t sp)
 {
 	if (TH_expect_fatal != 0) FAIL("Expected fatal error");
@@ -56,6 +61,7 @@ void TH_error_check(int pass, u32_t sp)
 
 void TH_error_handler();
 void TH_do_error();
+void TH_guest_vectors();
 
 void H2K_handle_rsvd();
 void H2K_handle_nmi();
@@ -82,7 +88,7 @@ int main()
 	" r9 = ssr \n"
 	" r9 = setbit(r9,#13) \n"
 	" ssr = r9 \n" : : : "r9");
-	me->gevb = (TH_error_handler);
+	me->gevb = (TH_guest_vectors);
 	me->gssr_gosp = 0x0000000000000000ULL | ((u32_t)(&guest_stack[128]));
 	TH_expect_fatal = 0;
 	TH_saw_fatal = 0;
@@ -95,7 +101,7 @@ int main()
 	" r9 = ssr \n"
 	" r9 = clrbit(r9,#13) \n"
 	" ssr = r9 \n" : : : "r9");
-	me->gevb = (TH_error_handler);
+	me->gevb = (TH_guest_vectors);
 	me->gssr_gosp = 0x0000000000000000ULL | ((u32_t)(&guest_stack[128]));
 	TH_expect_fatal = 0;
 	TH_saw_fatal = 0;

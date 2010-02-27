@@ -22,6 +22,8 @@ void FAIL(const char *str)
 
 H2K_thread_context a;
 
+s32_t ret;
+
 jmp_buf env;
 
 s32_t H2K_thread_id() { return 1; }
@@ -39,8 +41,8 @@ s32_t H2K_tid_set() { return 18; }
 s32_t H2K_tid_get() { return 19; }
 s32_t H2K_trap_config() { return 30; }
 
-s32_t H2K_fatal_thread() { return -1; }
-s32_t H2K_fatal_kernel() { return -2; }
+s32_t H2K_fatal_thread() { ret = -1; longjmp(env,1); }
+s32_t H2K_fatal_kernel() { ret = -2; longjmp(env,1); }
 
 s32_t call_trap0(u32_t trapnum, H2K_thread_context *context);
 void TH_vectors();
@@ -85,14 +87,19 @@ void TH_guest_trap()
 	longjmp(env,1);
 }
 
+void H2K_traptab();
+char H2K_stacks;
+
 int main() 
 {
-	s32_t i,ret;
+	s32_t i;
+	H2K_kg.traptab_addr = H2K_traptab;
+	H2K_kg.stacks_addr = &H2K_stacks;
 	a.trapmask = 0xffffffff;
 	a.gevb = NULL;
 	for (i = 0; i < (sizeof(testvals)/sizeof(testvals[0])); i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if ((testvals[i] > 0) && (ret != testvals[i])) {
 			printf("event %d: expected %d, got %d\n",i,testvals[i],ret);
 			FAIL("Incorrect event return");
@@ -110,7 +117,7 @@ int main()
 	a.trapmask = 0xffff0000;
 	for (i = 1; i < 16; i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret >= 0) {
 			printf("event %d: expected fail, got %d\n",i,ret);
 			FAIL("Incorrect event return");
@@ -118,7 +125,7 @@ int main()
 	}
 	for (i = 16; i < 32; i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret < 0) {
 			printf("event %d: expected pass, got %d\n",i,ret);
 			FAIL("Incorrect event return");
@@ -128,7 +135,7 @@ int main()
 	a.trapmask = 0x0000ffff;
 	for (i = 1; i < 16; i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret < 0) {
 			printf("event %d: expected pass, got %d\n",i,ret);
 			FAIL("Incorrect event return");
@@ -136,7 +143,7 @@ int main()
 	}
 	for (i = 16; i < 32; i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret >= 0) {
 			printf("event %d: expected fail, got %d\n",i,ret);
 			FAIL("Incorrect event return");
@@ -153,7 +160,7 @@ int main()
 	a.trapmask = 0xffff0000;
 	for (i = 1; i < 16; i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret >= 0) {
 			printf("event %d: expected fail, got %d\n",i,ret);
 			FAIL("Incorrect event return");
@@ -161,7 +168,7 @@ int main()
 	}
 	for (i = 16; i < 32; i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret < 0) {
 			printf("event %d: expected pass, got %d\n",i,ret);
 			FAIL("Incorrect event return");
@@ -171,7 +178,7 @@ int main()
 	a.trapmask = 0x0000ffff;
 	for (i = 1; i < 16; i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret < 0) {
 			printf("event %d: expected pass, got %d\n",i,ret);
 			FAIL("Incorrect event return");
@@ -179,20 +186,20 @@ int main()
 	}
 	for (i = 16; i < 32; i++) {
 		if (testvals[i] < 0) continue;
-		ret = call_trap0(i,&a);
+		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret >= 0) {
 			printf("event %d: expected fail, got %d\n",i,ret);
 			FAIL("Incorrect event return");
 		}
 	}
 
-	ret = call_trap0(32,&a);
+	if (setjmp(env) == 0) ret = call_trap0(32,&a);
 	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
-	ret = call_trap0(100,&a);
+	if (setjmp(env) == 0) ret = call_trap0(100,&a);
 	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
-	ret = call_trap0(128,&a);
+	if (setjmp(env) == 0) ret = call_trap0(128,&a);
 	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
-	ret = call_trap0(200,&a);
+	if (setjmp(env) == 0) ret = call_trap0(200,&a);
 	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
 
 	puts("NULL gevb OK");

@@ -6,6 +6,7 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 #include <max.h>
+#include <vmdefs.h>
 
 /*
  * optimization note:
@@ -15,15 +16,10 @@
  */
 
 FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
-	r7 = sgp
-	// dcfetch(r7+#0)
-	// dcfetch(r7+#32)
-	r8 = elr
-	r9 = ssr
-	// Detect ANGEL cal
-	p0 = bitsclr(r9,#0x1f)
-	if (p0) jump H2K_trap_angel
+	crswap(r7,sgp)
 	// Save trap state
+	r13 = ugp
+	r12 = gp
 	memd(r7+#CONTEXT_r3130) = r31:30
 	memd(r7+#CONTEXT_r2928) = r29:28
 	memd(r7+#CONTEXT_r2726) = r27:26
@@ -32,16 +28,24 @@ FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
 	memd(r7+#CONTEXT_r2120) = r21:20
 	memd(r7+#CONTEXT_r1918) = r19:18
 	memd(r7+#CONTEXT_r1716) = r17:16
-	memd(r7+#CONTEXT_ssrelr) = r9:8
-	r13 = ugp
-	r12 = gp
-	memd(r7+#CONTEXT_ugpgp) = r13:12
+	r16 = elr
+	r17 = ssr
+	memd(r7+#CONTEXT_ssrelr) = r17:16
+	r18 = p3:0
+	r21 = ugp
+	r20 = gp
+	memd(r7+#CONTEXT_ugpgp) = r21:20
 
 	// Can we take this trap?
-	r10 = and(r9,#0x1f)
-	r11 = memw(r7+#CONTEXT_trapmask)
-	p0 = tstbit(r11,r10)
-	if (!p0) jump 1f				// no, kill thread or kernel
+	r23 = and(r17,#0xff)
+	p0 = cmp.gt(r23,#0x1f)
+	if (p0) jump 1f					// no, too big.
+	r22 = memw(r7+#CONTEXT_trapmask)
+	p0 = tstbit(r22,r23)
+	if (!p0) jump 1f				// no, disabled.
+
+	/* OK to clobber caller saves */
+	sgp = r7
 
 #if __QDSP6_ARCH__ <= 3
 	r29.h = #hi(H2K_stacks)
@@ -55,9 +59,9 @@ FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
 	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #endif
 
-	r11.h = #hi(H2K_traptab)
-	r11.l = #lo(H2K_traptab)
-	r10 = addasl(r11,r10,#3)
+	r22.h = #hi(H2K_traptab)
+	r22.l = #lo(H2K_traptab)
+	r22 = addasl(r22,r23,#3)
 
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
@@ -66,27 +70,30 @@ FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
 	call .Ljump_to_trap
 
 H2K_trap_nogood:
-	r7 = sgp
+	r16 = sgp
 
-	r13:12 = memd(r7+#CONTEXT_ugpgp)
-	ugp = r13
-	gp = r12
-	r9:8 = memd(r7+#CONTEXT_ssrelr)
-	ssr = r9
-	elr = r8
-	r31:30 = memd(r7+#CONTEXT_r3130)
-	r29:28 = memd(r7+#CONTEXT_r2928)
-	r27:26 = memd(r7+#CONTEXT_r2726)
-	r25:24 = memd(r7+#CONTEXT_r2524)
-	r23:22 = memd(r7+#CONTEXT_r2322)
-	r21:20 = memd(r7+#CONTEXT_r2120)
-	r19:18 = memd(r7+#CONTEXT_r1918)
-	r17:16 = memd(r7+#CONTEXT_r1716)
+	r19:18 = memd(r16+#CONTEXT_ugpgp)
+	ugp = r19
+	gp  = r18
+	r19:18 = memd(r16+#CONTEXT_ssrelr)
+	ssr = r19
+	elr = r18
+	r31:30 = memd(r16+#CONTEXT_r3130)
+	r29:28 = memd(r16+#CONTEXT_r2928)
+	r27:26 = memd(r16+#CONTEXT_r2726)
+	r25:24 = memd(r16+#CONTEXT_r2524)
+	r23:22 = memd(r16+#CONTEXT_r2322)
+	r21:20 = memd(r16+#CONTEXT_r2120)
+	r19:18 = memd(r16+#CONTEXT_r1918)
+	r17:16 = memd(r16+#CONTEXT_r1716)
 
 9:
 	rte
 
 1:
+	/* if gevb, do guest event */
+	r23 = memw(r7+#CONTEXT_gevb)
+	if (r23 != #0) jump:t .Lguest_trap
 	// call H2K_fatal_thread or H2K_fatal_kernel
 	r0 = #-1
 	r1 = r7
@@ -107,7 +114,31 @@ H2K_trap_nogood:
 	// jump to r10 after saving continuation
 .Ljump_to_trap:
 	memw(r7+#CONTEXT_continuation) = r31
-	jumpr r10
+	jumpr r22
+
+	/* EJP: all context carefully saved */
+	/* We have a disabled or other trap failure, return to guest */
+	/* GEVB is in r23 */
+	/* Preds are in R18 */
+	/* r17:16 == ssr:elr */
+.Lguest_trap:
+	r27:26 = combine(r16,r16)
+	memd(r7+#CONTEXT_gelr_gbadva) = r27:26
+	r25:24 = memd(r7+#CONTEXT_gssr_gosp)
+	p0 = tstbit(r17,#SSR_GUEST_BIT)
+	{
+		if (!p0) r24 = r29
+		if (!p0) r29 = r24
+	}
+	memw(r7+#CONTEXT_r2928+4) = r29
+	/* TBD: set up GSSR in r25 */
+	memd(r7+#CONTEXT_gssr_gosp) = r25:24
+	r16 = add(r23,#TRAP0_GEVB_OFFSET)
+	r17 = setbit(r17,#SSR_GUEST_BIT)
+	memd(r7+#CONTEXT_ssrelr) = r17:16
+	p3:0 = r18
+	crswap(r7,sgp)
+	jump H2K_trap_nogood
 
 FUNC_END H2K_handle_trap0
 

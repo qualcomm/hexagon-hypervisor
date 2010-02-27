@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <globals.h>
+#include <setjmp.h>
 
 void FAIL(const char *str)
 {
@@ -20,6 +21,8 @@ void FAIL(const char *str)
 }
 
 H2K_thread_context a;
+
+jmp_buf env;
 
 s32_t H2K_thread_id() { return 1; }
 // s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) { return 2; } -- defined in asm
@@ -40,6 +43,12 @@ s32_t H2K_fatal_thread() { return -1; }
 s32_t H2K_fatal_kernel() { return -2; }
 
 s32_t call_trap0(u32_t trapnum, H2K_thread_context *context);
+void TH_vectors();
+
+void guest_mode();
+void user_mode();
+
+u64_t guest_stack[128] __attribute__((aligned(128*8)));
 
 s32_t testvals[] = {
 	 0, 1, 2, 3, 4, 5, 6, 1, 8, 9,10, 1,12, 1, 1, 1,
@@ -48,10 +57,39 @@ s32_t testvals[] = {
 
 H2K_kg_t H2K_kg;
 
+void TH_bad_vec()
+{
+	FAIL("Bad vector");
+}
+
+static inline void setup_guest()
+{
+	a.gevb = TH_vectors;
+	a.gosp = (u32_t)(&guest_stack[127]);
+}
+
+u32_t TH_expected_guest_stack;
+u32_t TH_saw_guest_trap;
+
+void TH_guest_trap()
+{
+	/* Check if stack is in expected location */
+	u32_t is_guest_stack;
+	is_guest_stack = (((((u32_t)(&is_guest_stack)) ^ ((u32_t)(&guest_stack[120]))) & (-(sizeof(guest_stack)))) == 0);
+	if (is_guest_stack != TH_expected_guest_stack) {
+		printf("&is_guest_stack=0x%x, &guest_stack[120]=0x%x,mask=%x",&is_guest_stack,&guest_stack[120],-(sizeof(guest_stack)));
+		printf("is_guest_stack=%d expected=%d\n",is_guest_stack,TH_expected_guest_stack);
+		FAIL("Unexpected user/guest stack switch");
+	}
+	TH_saw_guest_trap = 1;
+	longjmp(env,1);
+}
+
 int main() 
 {
 	s32_t i,ret;
 	a.trapmask = 0xffffffff;
+	a.gevb = NULL;
 	for (i = 0; i < (sizeof(testvals)/sizeof(testvals[0])); i++) {
 		if (testvals[i] < 0) continue;
 		ret = call_trap0(i,&a);
@@ -61,6 +99,7 @@ int main()
 		}
 	}
 
+	/* Disable IE, so we think it's a fast interrupt */
 	asm volatile (
 	" r0 = #-1 \n"
 	" imask = r0 \n"
@@ -146,6 +185,168 @@ int main()
 			FAIL("Incorrect event return");
 		}
 	}
+
+	ret = call_trap0(32,&a);
+	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
+	ret = call_trap0(100,&a);
+	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
+	ret = call_trap0(128,&a);
+	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
+	ret = call_trap0(200,&a);
+	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
+
+	puts("NULL gevb OK");
+
+	guest_mode();
+	setup_guest();
+	TH_expected_guest_stack = 0;
+	TH_saw_guest_trap = 0;
+	a.trapmask = 0xffffffff;
+	for (i = 0; i < (sizeof(testvals)/sizeof(testvals[0])); i++) {
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		} 
+		if ((testvals[i] > 0) && (ret != testvals[i])) {
+			printf("event %d: expected %d, got %d\n",i,testvals[i],ret);
+			FAIL("Incorrect event return");
+		}
+	}
+	a.trapmask = 0xffff0000;
+	for (i = 1; i < 16; i++) {
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		} 
+		if (TH_saw_guest_trap == 0) FAIL("Didn't see expected guest trap");
+		TH_saw_guest_trap = 0;
+	}
+	TH_saw_guest_trap = 0;
+	for (i = 16; i < 32; i++) {
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		} 
+		if (TH_saw_guest_trap) {
+			FAIL("Unexpected guest trap");
+		}
+	}
+
+	a.trapmask = 0x0000ffff;
+	TH_saw_guest_trap = 0;
+	for (i = 1; i < 16; i++) {
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		} 
+		if (TH_saw_guest_trap) FAIL("Unexpected guest trap");
+	}
+	TH_saw_guest_trap = 0;
+	for (i = 16; i < 32; i++) {
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		}
+		if (TH_saw_guest_trap == 0) FAIL("Didn't see expected guest trap");
+		TH_saw_guest_trap = 0;
+	}
+	puts("Guest Mask Tests OK");
+
+	TH_saw_guest_trap = 0;
+	if (setjmp(env) == 0) ret = call_trap0(32,&a);
+	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
+
+	TH_saw_guest_trap = 0;
+	if (setjmp(env) == 0) ret = call_trap0(100,&a);
+	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
+
+	TH_saw_guest_trap = 0;
+	if (setjmp(env) == 0) ret = call_trap0(128,&a);
+	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
+
+	TH_saw_guest_trap = 0;
+	if (setjmp(env) == 0) ret = call_trap0(200,&a);
+	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
+
+	user_mode();
+	setup_guest();
+	TH_expected_guest_stack = 1;
+
+	a.trapmask = 0xffffffff;
+	for (i = 0; i < (sizeof(testvals)/sizeof(testvals[0])); i++) {
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		} 
+		if ((testvals[i] > 0) && (ret != testvals[i])) {
+			printf("event %d: expected %d, got %d\n",i,testvals[i],ret);
+			FAIL("Incorrect event return");
+		}
+	}
+
+	a.trapmask = 0xffff0001;
+	for (i = 1; i < 16; i++) {
+		user_mode(); setup_guest();
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		} 
+		if (TH_saw_guest_trap == 0) FAIL("Didn't see expected guest trap");
+		TH_saw_guest_trap = 0;
+	}
+	TH_saw_guest_trap = 0;
+	for (i = 16; i < 32; i++) {
+		user_mode(); setup_guest();
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		} 
+		if (TH_saw_guest_trap) {
+			FAIL("Unexpected guest trap");
+		}
+	}
+
+	a.trapmask = 0x0000ffff;
+	TH_saw_guest_trap = 0;
+	for (i = 1; i < 16; i++) {
+		user_mode(); setup_guest();
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		} 
+		if (TH_saw_guest_trap) FAIL("Unexpected guest trap");
+	}
+	TH_saw_guest_trap = 0;
+	for (i = 16; i < 32; i++) {
+		user_mode(); setup_guest();
+		if (testvals[i] < 0) continue;
+		if (setjmp(env) == 0) {
+			ret = call_trap0(i,&a);
+		}
+		if (TH_saw_guest_trap == 0) FAIL("Didn't see expected guest trap");
+		TH_saw_guest_trap = 0;
+	}
+	puts("Guest Mask Tests OK (user)");
+
+	user_mode(); setup_guest();
+	TH_saw_guest_trap = 0;
+	if (setjmp(env) == 0) ret = call_trap0(32,&a);
+	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
+
+	user_mode(); setup_guest();
+	TH_saw_guest_trap = 0;
+	if (setjmp(env) == 0) ret = call_trap0(100,&a);
+	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
+
+	user_mode(); setup_guest();
+	TH_saw_guest_trap = 0;
+	if (setjmp(env) == 0) ret = call_trap0(128,&a);
+	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
+
+	user_mode(); setup_guest();
+	TH_saw_guest_trap = 0;
+	if (setjmp(env) == 0) ret = call_trap0(200,&a);
+	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
 
 	puts("TEST PASSED\n");
 	return 0;

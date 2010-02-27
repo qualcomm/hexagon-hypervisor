@@ -11,6 +11,7 @@
 #include <globals.h>
 #include <linear.h>
 #include <tlbfmt.h>
+#include <asid.h>
 #include <ctype.h>
 
 void FAIL(const char *str)
@@ -65,7 +66,9 @@ void make_list(const char *fmt)
 		}
 		if (fmt[i] == '\0') break;
 	}
-	a.gptb = (u32_t)(lin);
+	a.ssr_asid = 0;
+	H2K_mem_asid_table[0].ptb = (u32_t)(lin);
+	H2K_mem_asid_table[0].count = 1;
 }
 
 void check_good(const char *good)
@@ -118,7 +121,7 @@ int main()
 	make_list("a!bc"); check_good("ac"); check_bad("bdef");
 	make_list("a!0!0bc"); check_good("abc"); check_bad("def");
 	make_list("af!0!00bc"); check_good("af"); check_bad("bcde");
-	make_list("af!0!00bc"); a.gptb += 8; check_good("f"); check_bad("abcde");
+	make_list("af!0!00bc"); H2K_mem_asid_table[0].ptb += 8; check_good("f"); check_bad("abcde");
 	puts("TEST PASSED");
 	return 0;
 }

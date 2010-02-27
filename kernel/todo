@@ -1,16 +1,15 @@
 
-Pre-optimization:
-	* Globals separated w/ offsets?
-	* State field for DEAD/READY/RUNNING/BLOCKED/NEEDS_VMWORK?
-	* Use me->prev as scheduled priority?
+
+Hypervisor Interrupts
 
 Memory
 Trace
 Profiling
 PMU
 Optimized code
-V2 support
+? V2 support
 
+re-optimize VM style trap0
 
 Priority Inheritance:
 
@@ -43,6 +42,4 @@ TBD:
 Caveats:
 	* Futex_resume may not be right place to always change back prio
 
-
-Hypervisor Interrupts
 

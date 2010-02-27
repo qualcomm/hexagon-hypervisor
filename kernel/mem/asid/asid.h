@@ -7,6 +7,7 @@
 #define H2K_ASID_H 1
 
 #include <c_std.h>
+#include <max.h>
 
 typedef union {
 	u64_t raw;
@@ -17,6 +18,8 @@ typedef union {
 		u8_t unused;
 	};
 } H2K_asid_entry_t;
+
+extern H2K_asid_entry_t H2K_mem_asid_table[];
 
 s32_t H2K_asid_table_inc(u32_t ptb);
 void  H2K_asid_table_dec(u32_t asid);

@@ -56,15 +56,9 @@ Description
 
 		Current priority of the thread
 
-	.. cmember:: u8_t baseprio
+	.. cmember:: u8_t tmpprio
 
-		Base priority of the thread, not including adjustments from priority 
-		inversion avoidance.
-
-	.. cmember:: u8_t schedprio
-
-		Priority the thread was scheduled at; this determines where in the 
-		H2K_ready structure the thread is located.
+		Temporary priority granted to the thread
 
 	.. cmember:: u8_t hthread
 

@@ -17,6 +17,10 @@ enum {
 	H2K_STATUS_BLOCKED,
 };
 
+#define H2K_VMSTATUS_IPEND	0x01
+#define H2K_VMSTATUS_KILL	0x02
+#define H2K_VMSTATUS_IE		0x80
+
 typedef struct _h2_thread_context
 {
 	/* Kernel Variables */
@@ -26,14 +30,19 @@ typedef struct _h2_thread_context
 	// #8
 	/* Other info */
 	u8_t prio;			// could be 5 bits
-	u8_t baseprio;			// needed?  5 bits
-	u8_t schedprio;			// could be unioned with prev?
 	u8_t hthread;
-	// #12
+	u8_t tid;
 	u8_t status;
-	u8_t vmstatus;
-	u8_t tid;			// could be u8.
-	u8_t u8pad;
+	// #12
+	union {				// must be updated with LL/SC?
+		u32_t atomic_status_word;
+		struct {
+			u8_t tmpprio;
+			u8_t vmstatus;
+			u8_t u8pad0;
+			u8_t u8pad1;
+		};
+	};
 	// #16
 	struct {
 		void *gevb;
@@ -59,11 +68,12 @@ typedef struct _h2_thread_context
 			u32_t gssr;
 		};
 	};
-	u64_t oncpu_start;
+	u64_t oncpu_start;	/* Could be unioned for use only while running... */
 	u64_t totalcycles;
 	struct {
-		u32_t ccr;
-		u32_t gptb;
+		u32_t ccr;	/* Could be moved to zeroed area */
+		// u32_t gptb;	/* can look it up from asid table... */
+		struct vmblock *vmblock;
 	};
 	// 64
 	struct {	// OK FOR DCZEROA

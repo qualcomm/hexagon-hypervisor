@@ -26,8 +26,6 @@ u32_t TH_saw_stlb_invalidate;
 
 u64_t bases[MAX_ASIDS*4];
 
-extern H2K_asid_entry_t H2K_mem_asid_table[];
-
 void print_max_hops(u32_t howfull)
 {
 	u32_t i;

@@ -20,7 +20,12 @@
 #define MAX_PRIOS 32
 #define MAX_PRIO ((MAX_PRIOS) - 1)
 
+#if __QDSP6_ARCH__ <= 3
 #define ASID_BITS 5
+#else
+#define ASID_BITS 7
+#endif
+
 #define MAX_ASIDS (1<<(ASID_BITS))
 
 #define MAX_INTERRUPTS 32

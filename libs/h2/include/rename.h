@@ -163,7 +163,7 @@ REDEF_FUNCTION(void ,sem_init_val,(h2_sem_t *sem,unsigned short val),(sem,val));
 
 /*  "blast_thread.h"  */
 
-REDEF_FUNCTION(int ,thread_create,(void *pc, void *stack, void *arg, unsigned int prio, unsigned int asid),(pc,stack,arg,prio,asid));
+//REDEF_FUNCTION(int ,thread_create,(void *pc, void *stack, void *arg, unsigned int prio, unsigned int asid),(pc,stack,arg,prio,asid));
 REDEF_FUNCTION(void ,thread_stop,(void),());
 REDEF_FUNCTION(int ,thread_myid,(void),());
 REDEF_FUNCTION(void ,yield,(void),());

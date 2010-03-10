@@ -25,4 +25,6 @@ install: libh2
 	cp libh2.a ../install/lib
 	mkdir -p ../install/include
 	cp h2/include/*.h ../install/include
+	cp qube/include/*.h ../install/include
+
 

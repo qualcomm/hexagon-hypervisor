@@ -41,7 +41,12 @@ static inline u32_t H2K_mem_stlb_quick_random_way()
 static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t tentry)
 {
 	u32_t asid_va = (va >> 12) | (asid << 20);
+#if 0
 	return Q6_p_tlbmatch_PR(tentry.raw,asid_va);
+#else
+	/* EJP: FIXME: this check sucks, assumes 4k page size */
+	return (((asid_va ^ (tentry.raw >> 32)) & 0x87ffffff) == 0x80000000);
+#endif
 }
 
 static inline u32_t H2K_mem_stlb_match_asid(u32_t asid, H2K_mem_tlbfmt_t entry)

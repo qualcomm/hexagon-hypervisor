@@ -36,6 +36,7 @@ void H2K_thread_boot()
 	boot->ssrelr = (((u64_t)(BOOT_THREAD_SSR)) << 32) | ((u32_t)(qdsp6_pre_main));
 	boot->continuation = H2K_interrupt_restore;
 	boot->trapmask = 0xffffffff;
+	boot->ccr = BOOT_THREAD_CCR;
 	H2K_runlist_push(boot);
 	H2K_switch(NULL,boot);
 }

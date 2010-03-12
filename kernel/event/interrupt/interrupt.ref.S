@@ -59,7 +59,11 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	r4 = m0
 	r3 = ssr
 	r2 = elr
+#if __QDSP6_ARCH__ >= 4
+	r11 = ccr
+#endif
 
+	memw(r0+#CONTEXT_ccr) = r11
 	memd(r0+#CONTEXT_ugpgp) = r13:12
 	memd(r0+#CONTEXT_sr_preds) = r31:30
 	memd(r0+#CONTEXT_lc0sa0) = r9:8
@@ -111,6 +115,7 @@ H2K_interrupt_restore:
 	r9:8 = memd(r0+#CONTEXT_lc0sa0)
 	r11:10 = memd(r0+#CONTEXT_sr_preds)
 	r13:12 = memd(r0+#CONTEXT_ugpgp)
+	r14 = memw(r0+#CONTEXT_ccr)
 	elr = r2
 	ssr = r3
 	m0 = r4
@@ -123,6 +128,9 @@ H2K_interrupt_restore:
 	usr = r11
 	gp = r12
 	ugp = r13
+#if __QDSP6_ARCH__ >= 4
+	ccr = r14
+#endif
 	r3:2 = memd(r0+#CONTEXT_r0302)
 	r5:4 = memd(r0+#CONTEXT_r0504)
 	r7:6 = memd(r0+#CONTEXT_r0706)

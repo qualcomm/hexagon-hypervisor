@@ -32,9 +32,13 @@ FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
 	r17 = ssr
 	memd(r7+#CONTEXT_ssrelr) = r17:16
 	r18 = p3:0
+#if __QDSP6_ARCH__ >= 4
+	r19 = ccr
+#endif
 	r21 = ugp
 	r20 = gp
 	memd(r7+#CONTEXT_ugpgp) = r21:20
+	memw(r7+#CONTEXT_ccr) = r19
 
 	// Can we take this trap?
 	r23 = and(r17,#0xff)
@@ -78,6 +82,10 @@ H2K_trap_nogood:
 	r19:18 = memd(r16+#CONTEXT_ssrelr)
 	ssr = r19
 	elr = r18
+	r17 = memw(r16+#CONTEXT_ccr)
+#if __QDSP6_ARCH__ >= 4
+	ccr = r17
+#endif
 	r31:30 = memd(r16+#CONTEXT_r3130)
 	r29:28 = memd(r16+#CONTEXT_r2928)
 	r27:26 = memd(r16+#CONTEXT_r2726)

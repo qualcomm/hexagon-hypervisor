@@ -5,6 +5,7 @@
 .. module:: pagewalk
 
 .. cfunction:: H2K_pte_t H2K_mem_translate_pagetable(u32_t badva, H2K_thread_context *me)
+
 	:param badva: Virtual Address to translate
 	:param me: Context of the current thread
 

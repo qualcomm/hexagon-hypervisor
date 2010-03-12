@@ -17,6 +17,7 @@ H2K_mem_translate_linear
 ------------------------
 
 .. cfunction:: H2K_linear_fmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
+
 	:param badva: Virtual Address to translate
 	:param me: Context of the current thread
 

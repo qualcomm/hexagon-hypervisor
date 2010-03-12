@@ -47,7 +47,7 @@ First, we do the tlbmissrw-specific code:
 
 Next, we do code that is common to both RW and X misses:
 * Save off additional registers
-* Set up kernel stack and :cvar:`H2K_gp`
+* Set up kernel stack and :cdata:`H2K_gp`
 * Call TLB Fill routine: :cfunc:`H2K_mem_tlb_fill()`
 * Restore registers
 * Return, unlocking TLB

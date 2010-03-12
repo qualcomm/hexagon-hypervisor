@@ -44,7 +44,37 @@ static inline void H2K_mem_tlb_write(u32_t index, u64_t entry)
 	: "r"(index),"r"(entry));
 }
 #else
-#error fixme for v4
+
+#warning doublecheck for v4
+
+static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
+{
+	u32_t ret;
+	asm (
+	" %0 = tlbp(%1);\n"
+	: "=r"(ret)
+	: "r"((asid<<20)|(va >> 12)));
+	return ret;
+}
+
+static inline u64_t H2K_mem_tlb_read(u32_t index)
+{
+	u64_t ret;
+	asm (
+	" %0 = tlbr(%1);\n"
+	: "=r"(ret)
+	: "r"(index));
+	return ret;
+}
+
+static inline void H2K_mem_tlb_write(u32_t index, u64_t entry)
+{
+	asm volatile (
+	" tlbw(%1,%0)\n"
+	:
+	: "r"(index),"r"(entry));
+}
+
 #endif
 
 void H2K_mem_tlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)

@@ -77,6 +77,7 @@ H2K_mem_stlb_add
 ----------------
 
 .. cfunction:: void H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
+
 	:param va: virtual address to look up
 	:param asid: address space to look up
 	:param entry: Entry to add into the STLB
@@ -100,6 +101,7 @@ H2K_mem_stlb_invalidate_va
 --------------------------
 
 .. cfunction:: void H2K_mem_stlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
+
 	:param va: virtual address to look up
 	:param asid: address space to look up
 	:param me: pointer to the current thread context

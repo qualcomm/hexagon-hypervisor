@@ -41,6 +41,7 @@ H2K_mem_tlb_invalidate_va
 -------------------------
 
 .. cfunction:: void H2K_mem_tlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
+
 	:param va: virtual address to look up
 	:param asid: address space to look up
 	:param me: pointer to the current thread context
@@ -62,6 +63,7 @@ H2K_mem_tlb_invalidte_asid
 --------------------------
 
 .. cfunction:: void H2K_mem_stlb_invalidate_asid(u32_t asid, H2K_thread_context *me)
+
 	:param asid: Address space to invalidate
 	:param me: pointer to the current thread context
 

@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#ifndef H2K_ATOMIC_H
+#define H2K_ATOMIC_H 1
+
+static inline u32_t H2K_atomic_setbit(u32_t *word, u32_t bit)
+{
+	u32_t t;
+	asm (	"// atomic set bit\n"
+		"1: %0 = memw_locked(%3)\n"
+		" { p1 = tstbit(%0,%2)\n"
+		"   %0 = setbit(%0,%2) }\n"
+		"   memw_locked(%3,p0) = %0\n"
+		" { if (!p0) jump 1b\n"
+		"   %0 = mux(p1,#0,#1) }\n"
+		: "=&r"(t),"+m"(*word)
+		: "r"(bit),"r"(word)
+		: "p0","p1");
+	return t;
+}
+
+static inline u32_t H2K_atomic_clrbit(u32_t *word, u32_t bit)
+{
+	u32_t t;
+	asm (	"// atomic set bit\n"
+		"1: %0 = memw_locked(%3)\n"
+		" { p1 = tstbit(%0,%2)\n"
+		"   %0 = clrbit(%0,%2) }\n"
+		"   memw_locked(%3,p0) = %0\n"
+		" { if (!p0) jump 1b\n"
+		"   %0 = mux(p1,#1,#0) }\n"
+		: "=&r"(t),"+m"(*word)
+		: "r"(bit),"r"(word)
+		: "p0","p1");
+	return t;
+}
+
+#endif
+

@@ -14,7 +14,7 @@
 
 typedef struct {
 	u32_t runlist_valids;
-	u32_t pad;
+	u32_t mask_for_ipi;
 	union {
 		u64_t ready_masks;
 		struct {

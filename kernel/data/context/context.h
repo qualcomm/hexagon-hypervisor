@@ -17,9 +17,12 @@ enum {
 	H2K_STATUS_BLOCKED,
 };
 
-#define H2K_VMSTATUS_IPEND	0x01
-#define H2K_VMSTATUS_KILL	0x02
-#define H2K_VMSTATUS_IE		0x80
+#define H2K_VMSTATUS_VMWORK_BIT  0
+#define H2K_VMSTATUS_KILL_BIT   1
+#define H2K_VMSTATUS_IE_BIT     7
+#define H2K_VMSTATUS_VMWORK	(0x01 << (H2K_VMSTATUS_VMWORK_BIT))
+#define H2K_VMSTATUS_KILL	(0x01 << (H2K_VMSTATUS_KILL_BIT))
+#define H2K_VMSTATUS_IE		(0x01 << (H2K_VMSTATUS_IE_BIT))
 
 typedef struct _h2_thread_context
 {
@@ -37,10 +40,10 @@ typedef struct _h2_thread_context
 	union {				// must be updated with LL/SC?
 		u32_t atomic_status_word;
 		struct {
-			u8_t tmpprio;
 			u8_t vmstatus;
+			u8_t tmpprio;
+			u8_t vmcpu;
 			u8_t u8pad0;
-			u8_t u8pad1;
 		};
 	};
 	// #16
@@ -73,7 +76,7 @@ typedef struct _h2_thread_context
 	struct {
 		u32_t ccr;	/* Could be moved to zeroed area */
 		// u32_t gptb;	/* can look it up from asid table... */
-		struct vmblock *vmblock;
+		struct H2K_vmblock_struct *vmblock;
 	};
 	// 64
 	struct {	// OK FOR DCZEROA

@@ -14,6 +14,11 @@ static inline void ciad(u32_t mask)
 	asm (" ciad(%0) // clear IAD " : : "r"(mask));
 }
 
+static inline void swi(u32_t mask)
+{
+	asm (" swi(%0) // clear IAD " : : "r"(mask));
+}
+
 #if (ARCHV <= 2)
 static inline void int_hthread(u32_t hthread)
 {
@@ -35,6 +40,11 @@ static inline u32_t get_imask(u32_t thread)
 	u32_t imask;
 	asm(" %0 = getimask(%1)" : "=r"(imask) : "r"(thread));
 	return imask;
+}
+
+static inline void iassignw(u32_t intno, u32_t threadmask)
+{
+	asm(" iassignw(%0)" : : "r"(Q6_R_combine_RlRl(intno,threadmask)));
 }
 
 #endif

@@ -17,6 +17,7 @@ void H2K_vm_do_work(H2K_thread_context *me)
 	}
 	if (me->vmstatus & H2K_VMSTATUS_IE) {
 		/* Try to get interrupt */
+		me->vmstatus &= ~H2K_VMSTATUS_VMWORK;
 		intno = H2K_vm_interrupt_get(me->vmblock, me->vmcpu);
 		if (intno < 0) {
 			/* No interrupt, nothing to do */
@@ -24,6 +25,10 @@ void H2K_vm_do_work(H2K_thread_context *me)
 		}
 		/* Interrupts enabled, interrupt pulled from controller.  Do interrupt! */
 		H2K_vm_event(0,intno,INTERRUPT_GEVB_OFFSET,me);
+	} else {
+		/* Someone asked me to do work, but interrupts are disabled
+		 * now, so I can't. */
+		/* Keep VMWORK bit set so I can do the work later */
 	}
 }
 

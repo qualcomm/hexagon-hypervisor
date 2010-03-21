@@ -29,5 +29,6 @@ void H2K_vm_ipi_send(H2K_thread_context *dest)
 		iassignw(VM_IPI_INT,~H2K_gp->mask_for_ipi);
 		swi(VM_IPI_INTMASK);
 	}
+	BKL_UNLOCK(&H2K_bkl);
 }
 

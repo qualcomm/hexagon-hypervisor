@@ -42,6 +42,15 @@ void *h2_realloc(void *ptr, int newsize)
 	return ret;
 }
 
+void *h2_memalign(size_t blocksize, size_t bytes)
+{
+	void *ret;
+	h2_mutex_lock(&memlock);
+	ret = memalign(blocksize,bytes);
+	h2_mutex_unlock(&memlock);
+	return ret;
+}
+
 void h2_free(void *ptr) 
 {
 	h2_mutex_lock(&memlock);

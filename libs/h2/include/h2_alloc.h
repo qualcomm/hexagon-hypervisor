@@ -15,6 +15,7 @@
 void *h2_malloc(unsigned int size);
 void *h2_calloc(unsigned int elsize, unsigned int num);
 void *h2_realloc(void *ptr, int newsize);
+void *h2_memalign(unsigned int blocksize, unsigned int bytes);
 void h2_free(void *ptr);
 
 #endif

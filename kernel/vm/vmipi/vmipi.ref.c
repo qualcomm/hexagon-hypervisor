@@ -17,7 +17,7 @@ void H2K_vm_ipi_do(u32_t ipi_intno, H2K_thread_context *me, u32_t hwtnum)
 	ciad(VM_IPI_INTMASK);
 	H2K_atomic_clrbit(&H2K_gp->mask_for_ipi,hwtnum);
 	iassignw(VM_IPI_INT,~H2K_gp->mask_for_ipi);
-	if (H2K_gp->mask_for_ipi) swi(VM_IPI_INTMASK);
+	if (H2K_gp->mask_for_ipi != 0) swi(VM_IPI_INTMASK);
 	if ((me != NULL) && (me->vmstatus & H2K_VMSTATUS_VMWORK)) H2K_vm_do_work(me);
 }
 

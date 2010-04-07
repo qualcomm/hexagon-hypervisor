@@ -15,10 +15,12 @@
 
 typedef unsigned int h2_mutex_t;
 
+#define h2_mutex_t_init 0 
+
 void h2_mutex_lock(h2_mutex_t *lock);		/* blocking */
 void h2_mutex_unlock(h2_mutex_t *lock);	/* unlock */
 int h2_mutex_trylock(h2_mutex_t *lock);	/* just try... 1 if successful, 0 if not */
-static inline void h2_mutex_init(h2_mutex_t *lock) { *lock = 0; }	/* initialize it... */
+static inline void h2_mutex_init(h2_mutex_t *lock) { *lock = h2_mutex_t_init; }	/* initialize it... */
 
 #endif
 

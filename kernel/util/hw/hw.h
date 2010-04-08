@@ -47,6 +47,13 @@ static inline void iassignw(u32_t intno, u32_t threadmask)
 	asm(" iassignw(%0)" : : "r"(Q6_R_combine_RlRl(intno,threadmask)));
 }
 
+static inline u32_t iassignr(u32_t intno)
+{
+	u32_t ret;
+	asm(" %0=iassignr(%1)" : "=r"(ret): "r"(intno<<16));
+	return ret;
+}
+
 #endif
 
 static inline void resched_int()

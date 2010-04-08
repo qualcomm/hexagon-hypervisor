@@ -75,8 +75,3 @@ FUNC_START H2K_handle_rsvd .text.error .p2align 2
 	jump 1b
 FUNC_END H2K_handle_rsvd
 
-FUNC_START H2K_handle_trap1 .text.error .p2align 2
-	crswap(r24,sgp)
-	jump 1b
-FUNC_END H2K_handle_trap1
-

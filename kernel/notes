@@ -1,4 +1,9 @@
 
+TODO:
+	When going to guest mode, need to save IE information.
+	When returning from guest mode, need to restore IE information.
+
+
 TBD:
 	In V3, should we have "User" or "Guest" as the bit in SSR.ASID?
 	Permissions should match, and V4 has a "user" permission, rather

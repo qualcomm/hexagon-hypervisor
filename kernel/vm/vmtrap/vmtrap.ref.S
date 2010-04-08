@@ -6,34 +6,15 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 #include <max.h>
+#include <vmdefs.h>
 
-FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
-	/* If SGP is null, we've interrupted waitmode. */
+FUNC_START H2K_handle_trap1 .text.event.trap1 .p2align 2
 	crswap(r0,sgp)
-	if (r0==#0) jump:t H2K_interrupted_waitmode
-
-	/* Save off all context */
-	/* Optimization Note:
-	 * First, we should (maybe) dcfetch r0 and r0+32 
-	 * Next, we should add 64 to r0 and dczeroa
-	 * Then continue to dczeroa the rest of the cache lines
-	 * Finally, we should reset r0 back to the original point 
-	 * so the context offset macros work. 
-	 */
-
 	memd(r0+#CONTEXT_r3130) = r31:30
 	memd(r0+#CONTEXT_r2928) = r29:28
-
-	/* Check to see whether we interrupted a fast interrupt check */
-	/* If so, vector off to H2K_interrupted_fastint_check */
-	r31.h = #hi(H2K_fastint_contexts)
-	r31.l = #lo(H2K_fastint_contexts)
-	r31 = sub(r0,r31)
-	r31 = asr(r31,#5)
 	r30 = p3:0
-	p0 = cmp.gtu(r31,#(((FASTINT_CONTEXT_SIZE*MAX_HTHREADS)/32)-1))
-	if (!p0) jump H2K_interrupted_fastint_check
 	r31 = usr
+	memd(r0+#CONTEXT_sr_preds) = r31:30
 
 	memd(r0+#CONTEXT_r2726) = r27:26
 	memd(r0+#CONTEXT_r2524) = r25:24
@@ -67,8 +48,8 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 
 	memw(r0+#CONTEXT_ccr) = r11
 	memd(r0+#CONTEXT_ugpgp) = r13:12
-	memd(r0+#CONTEXT_cs1cs0) = r17:16
 	memd(r0+#CONTEXT_sr_preds) = r31:30
+	memd(r0+#CONTEXT_cs1cs0) = r17:16
 	memd(r0+#CONTEXT_lc0sa0) = r9:8
 	memd(r0+#CONTEXT_lc1sa1) = r7:6
 	memd(r0+#CONTEXT_m1m0) = r5:4
@@ -78,8 +59,7 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	r21 = r0
 	crswap(r0,sgp)
 	memd(r21+#CONTEXT_r0100) = r1:0
-
-	/* All registers saved off, set up stack */
+	r0 = r21
 
 #if __QDSP6_ARCH__ <= 3
 	r29.h = #hi(H2K_stacks)
@@ -94,24 +74,43 @@ FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
 	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #endif
 
-	/* Stack set up, execute interrupt handler */
-	r2 = r28 	// TNUM from above...
-	r0 = ssr
-	r0 = and(r0,#0x1f)
-	r1 = r21	// thread context
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
-	r4 = add(r16,#KG_inthandlers)
-	r4 = addasl(r4,r0,#2)
-	r4 = memw(r4)
 
-	/* Registers set up, call specified handler */
+#if __QDSP6_ARCH__ >= 4
+	r3:2 = g1:0
+	memd(r0+#CONTEXT_gelr_gbadva) = r3:2
+	r3:2 = g3:2
+	memd(r0+#CONTEXT_gssr_gosp) = r3:2
+#endif
 
-	call .Lint_jump_stub // will jump to r4
+	/* If not in guest mode, permission error */
+	r3 = ssr
+	r4 = p3:0
+	p0 = tstbit(r3,#SSR_GUEST_BIT)
+	{
+		p3:0 = r4
+		if (!p0) jump .Lvmtrap_bad_noguest
+	}
+	r1.h = #hi(H2K_vmtraptab)
+	r1.l = #lo(H2K_vmtraptab)
+	r3 = and(r3,#0x1f)
+	r1 = addasl(r1,r3,#2)
 
-H2K_interrupt_restore:
+	/* EJP: FIXME: how to set continuation for things like yield? */
+	callr r1
+
+.Lreturn:
 	/* Restore all state and return */
 	r0 = sgp
+
+#if __QDSP6_ARCH__ >= 4
+	r5:4 = memd(r0+#CONTEXT_gelr_gbadva)
+	g1:0 = r5:4
+	r5:4 = memd(r0+#CONTEXT_gssr_gosp)
+	g3:2 = r5:4
+#endif
+
 	r3:2 = memd(r0+#CONTEXT_ssrelr)
 	r5:4 = memd(r0+#CONTEXT_m1m0)
 	r7:6 = memd(r0+#CONTEXT_lc1sa1)
@@ -155,44 +154,66 @@ H2K_interrupt_restore:
 	r1:0 = memd(r0+#CONTEXT_r0100)
 
 	rte
-	.global H2K_interrupt_restore
-FUNC_END H2K_handle_int
+FUNC_END H2K_handle_trap1
 
-FUNC_START H2K_interrupted_waitmode .text.event.interrupt .p2align 2
-#if __QDSP6_ARCH__ <= 3
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
-	r28 = ssr
-	r28 = extractu(r28,#3,#19)
-	r2 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r2)
-#else
-	r28 = HTID
-	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##H2K_stacks,mpyi(r28,r29))
-#endif
-	
+FUNC_START H2K_vmtraptab .text.event.trap1 .p2align 5
+	jump H2K_vmtrap_bad		// 0
+	jump H2K_vmtrap_return		// 1
+	jump H2K_vmtrap_setvec		// 2
+	jump H2K_vmtrap_setie		// 3
+	jump H2K_vmtrap_getie		// 4
+	jump H2K_vmtrap_swi		// 5
+	jump H2K_vmtrap_iack		// 6
+	jump H2K_vmtrap_setimask	// 7
+	jump H2K_vmtrap_getimask	// 8
+	jump H2K_vmtrap_iconf		// 9
+	jump H2K_vmtrap_clrmap		// a
+	jump H2K_vmtrap_register_ptb	// b
+	jump H2K_vmtrap_bad		// c
+	jump H2K_vmtrap_cachectl	// d
+	jump H2K_vmtrap_get_pcycles	// e
+	jump H2K_vmtrap_set_pcycles	// f
+	jump H2K_vmtrap_wait		// 10
+	jump H2K_vmtrap_yield		// 11
+	jump H2K_vmtrap_start		// 12
+	jump H2K_vmtrap_stop		// 13
+	jump H2K_vmtrap_vmpid		// 14
+	jump H2K_vmtrap_bad		// 15
+	jump H2K_vmtrap_bad		// 16
+	jump H2K_vmtrap_bad		// 17
+	jump H2K_vmtrap_bad		// 18
+	jump H2K_vmtrap_bad		// 19
+	jump H2K_vmtrap_bad		// 1a
+	jump H2K_vmtrap_bad		// 1b
+	jump H2K_vmtrap_bad		// 1c
+	jump H2K_vmtrap_bad		// 1d
+	jump H2K_vmtrap_bad		// 1e
+	jump H2K_vmtrap_bad		// 1f
+FUNC_END H2K_vmtraptab
 
-	/* Stack set up, execute interrupt handler */
-	r2 = r28 	// TNUM from above...
-	r0 = ssr
-	r0 = and(r0,#0x1f)
-	r1 = #0		// thread context == NULL
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
-	r4 = add(r16,#KG_inthandlers)
-	r4 = addasl(r4,r0,#2)
-	r4 = memw(r4)
+/* Invalid VM Trap because:
+ * * Was not called from guest mode, or 
+ * * Was not a valid trap number
+ * Stack/kgp set up
+ * Most Special regs not saved (LC/SA 0/1, M01, CS01, etc)
+ * 
+ * So...
+ *  Save extra special regs (not needed in opt)
+ *  Call H2K_vm_event
+ *  Restore extra special regs (not needed in opt)
+ */
+FUNC_START H2K_vmtrap_bad .text.event.trap1 .p2align 2
+	allocframe(#0)
+	r3 = r0			/* me */
+	r0 = #0			/* BADVA */
+	r1 = #0x1B		/* No Guest Permission */
+	r2 = #ERROR_GEVB_OFFSET	/* Vec Offset */
+	call H2K_vm_event
+	deallocframe
+	jumpr r31
+.Lvmtrap_bad_noguest:
+	call H2K_vmtrap_bad
+	jump .Lreturn
 
-	/* Registers set up, call specified handler */
-	callr r4
-	r0 = #0
-	r1 = #0
-	jump H2K_switch
-
-.Lint_jump_stub:
-	memw(r1+#CONTEXT_continuation) = r31
-	jumpr r4
-
-FUNC_END H2K_interrupted_waitmode
+FUNC_END H2K_vmtrap_bad
 

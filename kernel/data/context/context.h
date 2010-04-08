@@ -91,7 +91,13 @@ typedef struct _h2_thread_context
 				u32_t ssr;
 				struct {
 					u8_t ssr_cause;
+#if __QDSP6_ARCH__ <= 3
+					u8_t ssr_asid:5;
+					u8_t ssr_fake_guest:1;
+					u8_t ssr_asid_byte_unused:2;
+#else
 					u8_t ssr_asid;
+#endif
 					u8_t ssr_um:1;
 					u8_t ssr_ex:1;
 					u8_t ssr_ie:1;

@@ -50,6 +50,6 @@
 #define SSR_GUEST_BIT 31
 #endif
 
-#define BOOT_THREAD_SSR 0x01c60000
+#define BOOT_THREAD_SSR 0x01c62000
 #define BOOT_THREAD_CCR 0xffff0000
 

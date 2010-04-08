@@ -9,11 +9,13 @@
 #include <thread.h>
 #include <dosched.h>
 #include <runlist.h>
+#include <asid.h>
 
 void H2K_thread_stop(H2K_thread_context *me)
 {       
         BKL_LOCK(&H2K_bkl);
         H2K_runlist_remove(me);
+	H2K_asid_table_dec(me->ssr_asid);
         H2K_thread_context_clear(me);
 	me->next = H2K_gp->free_threads;
 	H2K_gp->free_threads = me;

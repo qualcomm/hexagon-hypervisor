@@ -4,6 +4,7 @@
  */
 
 #include <globals.h>
+#include <max.h>
 
 H2K_kg_t H2K_kg;
 
@@ -12,6 +13,7 @@ u64_t H2K_stacks;
 
 void H2K_kg_init()
 {
+	H2K_kg.tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
 	H2K_kg.traptab_addr = H2K_traptab;
 	H2K_kg.stacks_addr = &H2K_stacks;
 }

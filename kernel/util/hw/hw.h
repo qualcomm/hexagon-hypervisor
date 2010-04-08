@@ -100,12 +100,21 @@ static inline u32_t H2K_get_syscfg()
 
 static inline void H2K_clear_gie()
 {
-	asm("r0 = SYSCFG; r0 = clrbit(r0,#4); SYSCFG=r0; isync;":::"r0");
+	u32_t scratch;
+	asm volatile ("%0 = SYSCFG; %0 = clrbit(%0,#4); SYSCFG=%0; isync;":"=r"(scratch));
 }
 
 static inline void H2K_set_gie()
 {
-	asm("r0 = SYSCFG; r0 = setbit(r0,#4); SYSCFG=r0; isync;":::"r0");
+	u32_t scratch;
+	asm volatile ("%0 = SYSCFG; %0 = setbit(%0,#4); SYSCFG=%0; isync;":"=r"(scratch));
+}
+
+static inline u32_t H2K_get_modectl()
+{
+	u32_t ret;
+	asm(" %0 = modectl\n" :"=r"(ret));
+	return ret;
 }
 
 static inline u32_t H2K_get_ipend()

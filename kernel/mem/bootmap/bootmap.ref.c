@@ -5,6 +5,7 @@
 
 #include <c_std.h>
 #include <bootmap.h>
+#include <linear.h>
 
 #define SIZE_4K 0
 #define SIZE_16K 1
@@ -71,6 +72,19 @@
 u64_t H2K_bootmap[] IN_SECTION(".data.bootmap") = {
 #include "bootmap.def"
 	0ULL,
+};
+
+#undef MEMORY_MAP
+
+#define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \
+	{ .raw = \
+		(((u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \
+		(u32_t)(((PPN)) | ((CFIELD) << 24) | ((PERM) << 28))) \
+	 },
+
+H2K_linear_fmt_t H2K_linear_bootmap[] IN_SECTION(".data.bootmap") = {
+#include "bootmap.def"
+	{ .raw = 0 },
 };
 
 u64_t *H2K_bootmap_ptr = H2K_bootmap;

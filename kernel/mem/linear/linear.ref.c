@@ -56,6 +56,10 @@ H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
 	u32_t badvpn = badva >> PAGE_BITS; /* PAGEBITS or something */
 	H2K_mem_tlbfmt_t ret;
 	list = (H2K_linear_fmt_t *)(H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb);
+	if (list == NULL) {
+		ret.raw = 0;
+		return ret;
+	}
 	tmp = *list;
 	while (tmp.raw) {
 		if (tmp.chain) {

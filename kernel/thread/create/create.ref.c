@@ -16,6 +16,7 @@
 #include <readylist.h>
 #include <thread.h>
 #include <check_sanity.h>
+#include <asid.h>
 
 void H2K_interrupt_restore();
 
@@ -40,6 +41,7 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 			| ((u64_t)pc);
 	tmp->r2928 = ((u64_t)sp) << 32;
 	tmp->r0100 = arg1;
+	H2K_asid_table_inc(H2K_mem_asid_table[me->ssr_asid].ptb);
 	tmp->ccr = me->ccr;
 	tmp->trapmask = trapmask & me->trapmask;
 	tmp->continuation = H2K_interrupt_restore;

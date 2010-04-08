@@ -19,7 +19,7 @@ typedef union {
 	};
 } H2K_asid_entry_t;
 
-extern H2K_asid_entry_t H2K_mem_asid_table[];
+extern H2K_asid_entry_t H2K_mem_asid_table[] IN_SECTION(".data.mem.asid");
 
 s32_t H2K_asid_table_inc(u32_t ptb);
 void  H2K_asid_table_dec(u32_t asid);

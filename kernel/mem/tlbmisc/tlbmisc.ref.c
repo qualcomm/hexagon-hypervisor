@@ -84,7 +84,13 @@ void H2K_mem_tlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
 	if (((tmp >> 31) & 1) == 0) {
 		H2K_mem_tlb_write(tmp,0);
 	}
+#if __QDSP6_ARCH__ <= 3
 	/* For V3 and earlier, also need to probe fake guest bit */
+	tmp = H2K_mem_tlb_probe(va,asid|0x20);
+	if (((tmp >> 31) & 1) == 0) {
+		H2K_mem_tlb_write(tmp,0);
+	}
+#endif
 }
 
 void H2K_mem_tlb_invalidate_asid(u32_t asid)

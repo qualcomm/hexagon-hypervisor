@@ -73,7 +73,12 @@ void H2K_vmtrap_iconf(H2K_thread_context *me)
 
 void H2K_vmtrap_clrmap(H2K_thread_context *me)
 {
-
+	/* Invalidate HW/STLB entry */
+	u32_t va;
+	va = me->r0100;
+	H2K_mem_stlb_invalidate_va(va,me->ssr_asid,me);
+	H2K_mem_tlb_invalidate_va(va,me->ssr_asid,me);
+	me->r0100 = 0;
 }
 
 void H2K_vmtrap_register_ptb(H2K_thread_context *me)

@@ -72,7 +72,9 @@ void TH_check_waitmode_setup()
 
 int main()
 {
+	unsigned int scratch;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(" %0 = syscfg; %0 = clrbit(%0,#4); syscfg = %0 " : "=r"(scratch));
 	modify_goto_wait();
 	a.continuation = TH_cont_check;
 	b.continuation = TH_cont_check;

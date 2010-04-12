@@ -41,3 +41,30 @@ FUNC_START TH_error_handler .text .p2align 2
 	jump TH_error_check
 FUNC_END TH_do_error
 
+#if __QDSP6_ARCH__ <= 3
+#define SSR_BIT 13
+#else
+#define SSR_BIT 19
+#endif
+
+FUNC_START TH_guestmode .text .p2align 2
+	r0 = ssr
+	r0 = setbit(r0,#SSR_BIT)
+	ssr = r0
+	jumpr r31
+FUNC_END TH_guestmode
+
+FUNC_START TH_usermode .text .p2align 2
+	r0 = ssr
+	r0 = clrbit(r0,#SSR_BIT)
+	ssr = r0
+	jumpr r31
+FUNC_END TH_usermode
+
+FUNC_START TH_clr_ex .text .p2align 2
+	r0 = ssr
+	r0 = clrbit(r0,#17)
+	ssr = r0
+	jumpr r31
+FUNC_END TH_clr_ex
+

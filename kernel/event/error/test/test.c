@@ -26,6 +26,17 @@ u32_t TH_expect_fatal;
 u32_t TH_saw_fatal;
 u32_t TH_stack_switch;
 
+void TH_error_handler();
+void TH_do_error();
+void TH_guest_vectors();
+void TH_guestmode();
+void TH_usermode();
+void TH_clr_ex();
+
+void H2K_handle_rsvd();
+void H2K_handle_nmi();
+void H2K_handle_trap1();
+
 jmp_buf env;
 
 u64_t guest_stack[128];
@@ -34,6 +45,7 @@ void H2K_fatal_thread(u32_t r0, u32_t r1)
 {
 	if (TH_expect_fatal == 0) FAIL("Unexpected fatal error");
 	TH_saw_fatal = 1;
+	TH_clr_ex();
 	longjmp(env,1);
 }
 
@@ -59,14 +71,6 @@ void TH_error_check(int pass, u32_t sp)
 	longjmp(env,1);
 }
 
-void TH_error_handler();
-void TH_do_error();
-void TH_guest_vectors();
-
-void H2K_handle_rsvd();
-void H2K_handle_nmi();
-void H2K_handle_trap1();
-
 void TH_call_error()
 {
 	if (setjmp(env) == 0) {
@@ -78,16 +82,14 @@ int main()
 {
 	h2_init(NULL);
 	asm (" %0 = sgp\n" : "=r"(me));
+	TH_guestmode();
 	me->gevb = 0;
 	TH_expect_fatal = 1;
 	TH_saw_fatal = 0;
 	TH_call_error();
 	if (TH_saw_fatal == 0) FAIL("Didn't call fatal thread");
+	puts("a");
 
-	asm volatile (
-	" r9 = ssr \n"
-	" r9 = setbit(r9,#13) \n"
-	" ssr = r9 \n" : : : "r9");
 	me->gevb = (TH_guest_vectors);
 	me->gssr_gosp = 0x0000000000000000ULL | ((u32_t)(&guest_stack[128]));
 	TH_expect_fatal = 0;
@@ -96,11 +98,9 @@ int main()
 	TH_call_error();
 	if (TH_saw_fatal) FAIL("Called fatal");
 	if (TH_stack_switch) FAIL("Shouldn't have switched stacks with guest bit set");
+	puts("b");
 
-	asm volatile (
-	" r9 = ssr \n"
-	" r9 = clrbit(r9,#13) \n"
-	" ssr = r9 \n" : : : "r9");
+	TH_usermode();
 	me->gevb = (TH_guest_vectors);
 	me->gssr_gosp = 0x0000000000000000ULL | ((u32_t)(&guest_stack[128]));
 	TH_expect_fatal = 0;
@@ -109,21 +109,19 @@ int main()
 	TH_call_error();
 	if (TH_saw_fatal) FAIL("Called fatal");
 	if (TH_stack_switch == 0) FAIL("Should have switched stacks with guest bit clear");
+	puts("c");
 
 	TH_expect_fatal = 1;
 	TH_saw_fatal = 0;
 	if (setjmp(env) == 0) H2K_handle_rsvd();
 	if (TH_saw_fatal == 0) FAIL("RSVD didn't call fatal");
-
-	TH_expect_fatal = 1;
-	TH_saw_fatal = 0;
-	if (setjmp(env) == 0) H2K_handle_trap1();
-	if (TH_saw_fatal == 0) FAIL("TRAP1 didn't call fatal");
+	puts("d");
 
 	TH_expect_fatal = 1;
 	TH_saw_fatal = 0;
 	if (setjmp(env) == 0) H2K_handle_nmi();
 	if (TH_saw_fatal == 0) FAIL("NMI didn't call fatal");
+	puts("e");
 
 	puts("TEST PASSED\n");
 	return 0;

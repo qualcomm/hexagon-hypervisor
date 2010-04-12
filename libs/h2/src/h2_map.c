@@ -11,15 +11,15 @@
 //  up in the air.  Need to make sure that the memory for this 
 //  translation table is pinned.
 
-linear_translation_fmt_t translations[MAX_TRANSLATIONS+1];
+lin_map_fmt_t translations[MAX_TRANSLATIONS+1];
 
 //  Might belong in a header file elsewhere
 #define get_page_size(ord) (4096 * (1 << ((ord)*2)))
 
-static inline linear_translation_fmt_t map2linear(unsigned long vpn, int size , int prot, 
+static inline lin_map_fmt_t map2linear(unsigned long vpn, int size , int prot, 
 	int flags, unsigned long ppn)
 {
-	linear_translation_fmt_t ret;
+	lin_map_fmt_t ret;
 	
 	//  low word
 	ret.ppn = ppn;
@@ -34,7 +34,7 @@ static inline linear_translation_fmt_t map2linear(unsigned long vpn, int size , 
 	return ret;
 }
 
-int intersects(linear_translation_fmt_t *entry, unsigned long start_vpn, unsigned long page_size)
+int intersects(lin_map_fmt_t *entry, unsigned long start_vpn, unsigned long page_size)
 {
 	unsigned long head;
 	unsigned long tail;  	//  actually it's end page + 1

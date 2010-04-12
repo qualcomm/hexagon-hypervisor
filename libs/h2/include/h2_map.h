@@ -31,7 +31,7 @@ typedef union {
 	};
 } H2K_linear_fmt_t;
 
-typedef H2K_linear_fmt_t linear_translation_fmt_t;
+typedef H2K_linear_fmt_t lin_map_fmt_t;
 
 //  Think these should go into H2 internal header files somewhere
 #if __QDSP6_ARCH__ <= 3

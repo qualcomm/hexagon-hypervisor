@@ -12,6 +12,8 @@
 #include <stop.h>
 #include <yield.h>
 #include <asid.h>
+#include <stlb.h>
+#include <tlbmisc.h>
 
 void H2K_vmtrap_return(H2K_thread_context *me)
 {

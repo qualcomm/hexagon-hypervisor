@@ -4,8 +4,8 @@
 ################################################################################
 
 #  symbolic link to h2 project directory
-h2: 
-	-ln -s ${H2DIR} $@
+#h2: 
+#	-ln -s ${H2DIR} $@
 
 ################################################################################
 #  Tool stuff
@@ -68,7 +68,7 @@ ${LIBH2CHECK}:
 	make check DEBUG=0 ARCHV=${ARCHV};\
 	cp build/ref/libh2check.a .
 
-${LIBH2}: 
+${LIBH2}:  ${LIBH2KERNEL}
 	cd ${LIBH2_DIR};\
 	make DEBUG=0 ARCHV=${ARCHV}
 

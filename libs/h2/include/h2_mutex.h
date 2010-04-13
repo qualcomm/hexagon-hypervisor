@@ -15,7 +15,7 @@
 
 typedef unsigned int h2_mutex_t;
 
-#define h2_mutex_t_init 0 
+#define H2_MUTEX_T_INIT 0 
 
 void h2_mutex_lock(h2_mutex_t *lock);		/* blocking */
 void h2_mutex_unlock(h2_mutex_t *lock);	/* unlock */

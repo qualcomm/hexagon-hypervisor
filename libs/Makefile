@@ -42,6 +42,9 @@ libh2.a:   ${ALL_LIBS}
 #  Also, /pkg/gnu/bin/tar doesn't seem to work right.
 
 install: libh2.a
+	mkdir -p ../install/lib;
+	mkdir -p ../install/include;
+	cp $< ../install/lib;
 	OWD=`pwd`;\
 	for dir in $(dir ${ALL_LIBS}); do\
 		pushd $$dir/include;\

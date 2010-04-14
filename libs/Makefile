@@ -39,13 +39,13 @@ libh2.a:   ${ALL_LIBS}
 	qdsp6-ar cru ../libh2.a *.o
 
 #  tar is used instead of cp so we can recursively copy and also exclude CVS
-#  caveat:  exclude's not working for some reason; need to fix.
+#  Also, /pkg/gnu/bin/tar doesn't seem to work right.
 
 install: libh2.a
 	OWD=`pwd`;\
 	for dir in $(dir ${ALL_LIBS}); do\
 		pushd $$dir/include;\
-		tar cvf - --exclude '*CVS*' * | tar xvf - -C $$OWD/../install/include;\
+		/bin/tar cf - * | /bin/tar xvf - -C $$OWD/../install/include --exclude '*CVS*';\
 		popd;\
 	done;
 

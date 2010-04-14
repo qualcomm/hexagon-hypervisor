@@ -16,7 +16,7 @@
 	 * If already set, return immediately, otherwise block
 	 * return value is latest value of signals
 	 */
-h2_allsignal_wait:
+h2_anysignal_wait:
 	/* Check current value */
 	{
 		r4 = memw(r0+#SIGNALS)		// get SIGNALS

@@ -1,30 +1,53 @@
-
-# Big kludge here, need to redo build system to have one h2 library built
+# Smaller kludge here
 
 ifeq ($(ARCHV),)
 export ARCHV := 3
 endif
 
-all: libh2
+all: libh2.a
 
-clean: 
-	rm -Rf tmp *.a 
-	make -C h2 clean
-	make -C syscall/angel clean
+ALL_LIBS=h2/libh2.a qube/libqube.a posix/libposix.a syscall/angel/libangel.a blast/libblast.a
 
-libh2:
-	make -C h2
-	make -C syscall/angel
-	mkdir -p tmp
-	cp h2/libh2.a tmp/
-	cp syscall/angel/libangel.a tmp/
-	cd tmp; qdsp6-ar x libh2.a; qdsp6-ar x libangel.a; qdsp6-ar cru ../libh2.a *.o
+MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
+	
 
-install: libh2
-	mkdir -p ../install/lib
-	cp libh2.a ../install/lib
-	mkdir -p ../install/include
-	cp h2/include/*.h ../install/include
-	cp qube/include/*.h ../install/include
+blast/libblast.a:
+	${MAKE_LIB};
+
+qube/libqube.a:
+	${MAKE_LIB};
+
+posix/libposix.a:
+	${MAKE_LIB};
+
+syscall/angel/libangel.a:
+	${MAKE_LIB};
+
+h2/libh2.a:
+	${MAKE_LIB};
+
+clean:
+	for dir in $(dir ${ALL_LIBS}); do\
+		make -C $$dir clean;\
+	done;
+
+libh2.a:   ${ALL_LIBS}
+	cd tmp;\
+	for lib in $(notdir ${ALL_LIBS}); do\
+		qdsp6-ar x $$lib;\
+	done;\
+	qdsp6-ar cru ../libh2.a *.o
+
+#  tar is used instead of cp so we can recursively copy and also exclude CVS
+#  caveat:  exclude's not working for some reason; need to fix.
+
+install: libh2.a
+	OWD=`pwd`;\
+	for dir in $(dir ${ALL_LIBS}); do\
+		pushd $$dir/include;\
+		tar cvf - --exclude '*CVS*' * | tar xvf - -C $$OWD/../install/include;\
+		popd;\
+	done;
+
 
 

@@ -6,16 +6,16 @@
 #include "h2_trap_constants.h"
 
 	.text
-	.global h2_prio_get
-	.global h2_prio_set
+	.global h2_get_prio
+	.global h2_set_prio
 	.global h2_mask_prios_above
-h2_prio_get:
+h2_get_prio:
 	allocframe(#0)
 	trap0(#H2_TRAP_PRIO_GET)
 	deallocframe
 	jumpr r31
 
-h2_prio_set:
+h2_set_prio:
 	allocframe(#0)
 	trap0(#H2_TRAP_PRIO_SET)
 	deallocframe

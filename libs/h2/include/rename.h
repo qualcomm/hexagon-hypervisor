@@ -138,8 +138,9 @@ REDEF_FUNCTION(void ,set_prefetch,(unsigned int settings),(settings));
 
 /*  "blast_prio.h"  */
 
-REDEF_FUNCTION(int ,get_prio,(void),());
-REDEF_FUNCTION(int ,set_prio,(unsigned int threadid, unsigned int newprio),(threadid,newprio));
+// Check the names on these
+//REDEF_FUNCTION(int ,get_prio,(void),());
+//REDEF_FUNCTION(int ,set_prio,(unsigned int threadid, unsigned int newprio),(threadid,newprio));
 REDEF_FUNCTION(unsigned int ,mask_prios_above,(unsigned int worst_prio),(worst_prio));
 
 /*  "blast_rmutex.h"  */

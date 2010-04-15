@@ -11,22 +11,26 @@ ALL_LIBS=h2/libh2.a qube/libqube.a posix/libposix.a syscall/angel/libangel.a bla
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 	
 
-blast/libblast.a:
+tmp:
+	mkdir $@
+
+blast/libblast.a: tmp
 	${MAKE_LIB};
 
-qube/libqube.a:
+qube/libqube.a: tmp
 	${MAKE_LIB};
 
-posix/libposix.a:
+posix/libposix.a: tmp
 	${MAKE_LIB};
 
-syscall/angel/libangel.a:
+syscall/angel/libangel.a: tmp
 	${MAKE_LIB};
 
-h2/libh2.a:
+h2/libh2.a: tmp
 	${MAKE_LIB};
 
 clean:
+	rm -rf tmp
 	for dir in $(dir ${ALL_LIBS}); do\
 		make -C $$dir clean;\
 	done;

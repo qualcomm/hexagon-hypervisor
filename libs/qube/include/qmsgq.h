@@ -12,6 +12,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <qerror.h>
+#include <h2.h>
 
 /*****************************************************************************/
 /*                                                                           */

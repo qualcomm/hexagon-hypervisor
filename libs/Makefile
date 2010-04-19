@@ -6,7 +6,7 @@ endif
 
 all: libh2.a
 
-ALL_LIBS=h2/libh2.a qube/libqube.a posix/libposix.a syscall/angel/libangel.a blast/libblast.a
+ALL_LIBS=h2/libh2.a qube/libqube.a syscall/angel/libangel.a blast/libblast.a #posix/libposix.a 
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 	

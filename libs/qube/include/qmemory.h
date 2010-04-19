@@ -7,17 +7,13 @@
 #define _QMEMORY_H
 
 #include <qerror.h>
-#include <qpd.h>
+#include <types.h>
 #include <assert.h>
 #include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef unsigned int qmem_region_t; 
-typedef unsigned int qmem_pool_t;
-
 extern qmem_pool_t qmem_default_pool;
 
 /*****************************************************************/
@@ -209,6 +205,7 @@ static inline int qmem_region_get_attr(qmem_region_t region, qmem_region_attr_t 
 {
 	attr->physaddr = region;
 	attr->virtaddr = region;
+	return EOK;
 }
 
 /**

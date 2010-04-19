@@ -72,11 +72,6 @@ typedef enum {
         QMEM_MAPPING_PHYS_CONTIGUOUS,
 } qmem_mapping_t;
 
-typedef enum {
-        QMEM_MAPPING_VIRTUAL=0,
-        QMEM_MAPPING_PHYS_CONTIGUOUS,
-} qmem_mapping_t;
-
 /**
  * Cache mode type
  */

@@ -102,6 +102,33 @@ configval parameters, as appropriate for the architecture.
 
 
 
+H2K_trap_hwconfig_prefetch
+--------------------------
+
+
+.. cfunction:: u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)
+
+	:param unused: Unused parameter
+	:param unusedp: Unused parameter
+	:param whatcache: Which type of prefetch is being selected (I/D/SW)
+	:param configval: Configuration for the prefetch
+	:param me: Pointer to the current thread context
+	:returns: 0 on success, nonzero on failure
+
+
+Description
+~~~~~~~~~~~
+
+Configures prefetch characteristics.
+
+
+Functionality
+~~~~~~~~~~~~~
+
+We set the kernel prefetch configuration according to the whatcache and
+configval parameters, as appropriate for the architecture.
+
+
 
 
 

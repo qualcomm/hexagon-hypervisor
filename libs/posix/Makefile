@@ -9,7 +9,7 @@ export BLAST_LIB_INCLUDE=$(shell pwd)/include
 
 ASM_FILES = 
 #C_FILES = src/pthread.c src/pthread_internal.c src/signal.c src/semaphore.c src/mqueue.c src/mq_internal.c src/time.c
-C_FILES = src/pthread.c src/pthread_internal.c src/semaphore.c src/mqueue.c src/mq_internal.c src/signal.c
+C_FILES = src/pthread.c src/pthread_internal.c src/mqueue.c src/mq_internal.c src/signal.c
 
 O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 

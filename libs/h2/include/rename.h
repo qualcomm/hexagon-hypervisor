@@ -101,8 +101,8 @@ REDEF_FUNCTION(void ,init,(unsigned long long int *memmap),(memmap));
 
 /*  "blast_mutex.h"  */
 
-//typedef h2_mutex_t blast_mutex_t;
-RETYPEDEF(mutex_t)
+//RETYPEDEF(mutex_t)
+typedef h2_mutex_t blast_mutex_t;
 
 REDEF_FUNCTION(void ,mutex_lock,(h2_mutex_t *lock),(lock));		/* blocking */
 REDEF_FUNCTION(void ,mutex_unlock,(h2_mutex_t *lock),(lock));	/* unlock */
@@ -145,7 +145,9 @@ REDEF_FUNCTION(unsigned int ,mask_prios_above,(unsigned int worst_prio),(worst_p
 
 /*  "blast_rmutex.h"  */
 
-RETYPEDEF(rmutex_t) // typedef h2_rmutex_t blast_rmutex_t;
+//  Other macros seem to mess this up.
+//RETYPEDEF(rmutex_t) // typedef h2_rmutex_t blast_rmutex_t;
+typedef h2_rmutex_t blast_rmutex_t;
 
 REDEF_FUNCTION(void ,rmutex_lock,(h2_rmutex_t *lock),(lock));
 REDEF_FUNCTION(void ,rmutex_unlock,(h2_rmutex_t *lock),(lock));
@@ -153,7 +155,8 @@ REDEF_FUNCTION(int ,rmutex_trylock,(h2_rmutex_t *lock),(lock));
 REDEF_FUNCTION(void ,rmutex_init,(h2_rmutex_t *lock),(lock));
 
 /*  "blast_sem.h"  */
-RETYPEDEF(sem_t) // typedef h2_sem_t blast_sem_t;
+//RETYPEDEF(sem_t) // typedef h2_sem_t blast_sem_t;
+typedef h2_sem_t blast_sem_t;
 
 REDEF_FUNCTION(int ,sem_add,(h2_sem_t *sem, unsigned int amt),(sem,amt));
 REDEF_FUNCTION(int ,sem_up,(h2_sem_t *sem),(sem));

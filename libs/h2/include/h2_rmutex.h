@@ -6,11 +6,15 @@
 #ifndef H2_RMUTEX_H
 #define H2_RMUTEX_H 1
 
+#include <h2_mutex.h>
+
 typedef struct {
 	h2_mutex_t mutex;
 	unsigned int depth;
 	unsigned int owner_id;
 } h2_rmutex_t;
+
+#define H2_RMUTEX_T_INIT { H2_MUTEX_T_INIT, 0, 0 }
 
 void h2_rmutex_lock(h2_rmutex_t *lock);
 void h2_rmutex_unlock(h2_rmutex_t *lock);

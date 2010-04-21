@@ -13,9 +13,12 @@
 
 void h2_rmutex_init(h2_rmutex_t *lock)
 {
-	h2_mutex_init(&lock->mutex);
-	lock->depth = 0;
-	lock->owner_id = 0;
+	//h2_mutex_init(&lock->mutex);
+	//lock->depth = 0;
+	//lock->owner_id = 0;
+	//  This is a little contorted, but it allows us to use the same init define...
+	h2_rmutex_t temp = H2_RMUTEX_T_INIT;
+	*lock = temp;
 }
 
 void h2_rmutex_lock(h2_rmutex_t *lock)

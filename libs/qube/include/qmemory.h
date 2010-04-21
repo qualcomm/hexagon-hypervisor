@@ -7,9 +7,11 @@
 #define _QMEMORY_H
 
 #include <qerror.h>
-#include <types.h>
+#include <qtypes.h>
 #include <assert.h>
 #include <stdlib.h>
+
+#define qmem_region_attr_setvirtaddr(attr,addr) do { attr->virtaddr = addr; } while (0)
 
 #ifdef __cplusplus
 extern "C" {

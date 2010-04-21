@@ -8,6 +8,7 @@
 
 #include <qtypes.h>
 #include <qerror.h>
+#include <qinterrupt.h>
 #include <qmsgq.h>
 #include <qmutex.h>
 #include <qmemory.h>
@@ -16,7 +17,7 @@
 extern "C" {
 #endif
 
-static inline void qube_init() {}
+static inline void qube_init(void) {}
 
 #ifdef __cplusplus
 } /* closing brace for extern "C" */

@@ -17,7 +17,7 @@ extern "C" {
 #define QTHREAD_MIN_STACKSIZE  4096
 #define QTHREAD_MAX_STACKSIZE  1048576
 #define QTHREAD_MIN_PRIORITY   0
-//#define QTHREAD_MAX_PRIORITY   252
+#define QTHREAD_MAX_PRIORITY   252
 #define QTHREAD_STATUS_DELETED 0xbabe
 
 typedef uint32_t  bl_addr_t;

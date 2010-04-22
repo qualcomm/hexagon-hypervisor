@@ -24,10 +24,10 @@ static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me)
 static inline void H2K_mem_tlb_insert(u64_t entry, H2K_thread_context *me)
 {
 	u32_t index = H2K_gp->tlb_index;
-	if ((index+1) > MAX_TLB_ENTRIES) {
-		H2K_gp->tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
-	} else {
+	if ((index+1) < MAX_TLB_ENTRIES) {
 		H2K_gp->tlb_index = index+1;
+	} else {
+		H2K_gp->tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
 	}
 #if __QDSP6_ARCH__ <= 3
 	if (me->ssr_fake_guest) entry |= 0x0200000000000000ULL;

@@ -101,21 +101,52 @@ void test_all_firstpage()
 	}
 }
 
-void check_result(H2K_pte_t pte, u32_t addr)
+#define CHECK(A,OP,B) if (!((A) OP (B))) FAIL(#A #OP #B);
+#if __QDSP6_ARCH__ <= 3
+void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
+{
+	H2K_mem_tlbfmt_t tlb = H2K_mem_translate_pagetable(addr,t);
+	CHECK(tlb.ppn>>15,==,(expectval & 0x1f));
+	CHECK(tlb.size,==,tlb.size);
+	CHECK(tlb.vpn,==,addr>>12);
+	CHECK(tlb.asid,==,t->ssr_asid);
+	CHECK(tlb.ccc,==,(expectval >> 8) & 0x7);
+	CHECK(tlb.xwr,==,(expectval >> 12) & 0x7);
+	CHECK(tlb.global,==,0);
+}
+#else
+void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
+{
+	H2K_mem_tlbfmt_t tlb = H2K_mem_translate_pagetable(addr,t);
+	CHECK(tlb.ppd>>16,==,(expectval & 0xff));
+	CHECK(tlb.vpn,==,addr>>12);
+	CHECK(tlb.asid,==,t->ssr_asid);
+	CHECK(tlb.cccc,==,(expectval >> 8) & 0xf);
+	CHECK(tlb.xwru,==,(expectval >> 12) & 0xf);
+	CHECK(tlb.global,==,0);
+}
+#endif
+
+void check_result(H2K_pte_t pte, u32_t addr, H2K_thread_context *thread)
 {
 	u32_t l1_idx = addr >> 22;
 	u32_t l2_idx = (addr >> 12) & 0x03ff;
-	switch ((l1_idx>>1) & 0x7) {
+	u32_t size = (l1_idx >> 1) & 0x7;
+	switch (size) {
 		case 7:
+			size = 6;
+			/* FALLTHROUGH */
 		case 6:
 			if ((pte.raw & 0x3f) != 0) FAIL("16MB xlat fail: size");
 			if ((pte.raw & 0x40) == 0) FAIL("16MB xlat fail: size(2)");
-			if ((pte.raw >> 16) != (l1_idx & 0xfffc)) FAIL("16MB xlat fail: val");
+			l2_idx = l1_idx & 0xfffc;
+			if ((pte.raw >> 16) != (l2_idx)) FAIL("16MB xlat fail: val");
 			break;
 		case 5:
 			if ((pte.raw & 0x1f) != 0) FAIL("4MB xlat fail: size");
 			if ((pte.raw & 0x20) == 0) FAIL("16MB xlat fail: size(2)");
-			if ((pte.raw >> 16) != (l1_idx & 0xffff)) FAIL("4MB xlat fail: val");
+			l2_idx = l1_idx;
+			if ((pte.raw >> 16) != (l2_idx)) FAIL("4MB xlat fail: val");
 			break;
 		case 4:
 			if ((pte.raw & 0x0f) != 0) FAIL("1MB xlat fail: size");
@@ -144,9 +175,10 @@ void check_result(H2K_pte_t pte, u32_t addr)
 		case 0:
 			if ((pte.raw & 0x00) != 0) FAIL("4KB xlat fail: size");
 			if ((pte.raw & 0x01) == 0) FAIL("4KB xlat fail: size(2)");
-			if ((pte.raw >> 16) != ((l2_idx >> 0) & 0x03ff)) FAIL("4KB xlat fail: val");
+			if ((pte.raw >> 16) != ((l2_idx) & 0x03ff)) FAIL("4KB xlat fail: val");
 			break;
 	}
+	check_tlbfmt(addr,size,l2_idx,thread);
 }
 
 void test_all_pages()
@@ -157,7 +189,7 @@ void test_all_pages()
 	for (i = 0; i < 32*1024; i++) {
 		addr = i<<12;
 		result = H2K_mem_pagewalk(addr,&a);
-		check_result(result,addr);
+		check_result(result,addr,&a);
 	}
 }
 
@@ -165,6 +197,7 @@ int main()
 {
 	setup();
 	test_all_firstpage();
+	puts("So far, so good...");
 	test_all_pages();
 	puts("TEST PASSED");
 	return 0;

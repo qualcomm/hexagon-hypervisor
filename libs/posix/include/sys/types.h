@@ -9,8 +9,6 @@
 #include <stddef.h>
 #include <blast.h>
 
-#define PTHREAD_MUTEX_OPAQUE
-
 #ifdef __GNUC__
 #define restrict __restrict__
 #else
@@ -61,23 +59,6 @@ typedef struct pthread_attr_t
 
 #define PTHREAD_DEFAULT_NAME                "Anonymous"
 
-#ifdef PTHREAD_MUTEX_OPAQUE
-#define PTHREAD_MUTEX_INITIALIZER    ((pthread_mutex_t) 0xFFFFFFFF)
-
-#else
-#define PTHREAD_MUTEX_INITIALIZER    {(blast_mutex_t*)0, \
-                                      blast_rmutex_lock, \
-                                      blast_rmutex_unlock, \
-                                      blast_rmutex_trylock, \
-                                      {PTHREAD_MUTEX_ATTR_INITIALIZED, \
-                                       PTHREAD_MUTEX_RECURSIVE, \
-                                       PTHREAD_PROCESS_PRIVATE, \
-                                       PTHREAD_PRIO_INHERIT} \
-                                      }
-#endif
-                                      
-#define PTHREAD_COND_INITIALIZER     ((pthread_cond_t) 0xFFFFFFFF)
-
 /* mutex and cond_var shared */
 #define PTHREAD_PROCESS_PRIVATE      0
 #define PTHREAD_PROCESS_SHARED       1
@@ -87,61 +68,69 @@ typedef struct pthread_attr_t
 #define PTHREAD_MUTEX_NORMAL         1
 #define PTHREAD_MUTEX_RECURSIVE      2
 
-#define PTHREAD_MUTEX_DEFAULT        PTHREAD_MUTEX_RECURSIVE
-
 /* mutex protocol */
 #define PTHREAD_PRIO_NONE            0
 #define PTHREAD_PRIO_INHERIT         1
 #define PTHREAD_PRIO_PROTECT         2
 
-//mutex attr
-typedef struct pthread_mutexattr_t   pthread_mutexattr_t;
-struct pthread_mutexattr_t
+/*  
+ *  The POSIX specification ( http://www.opengroup.org/onlinepubs/009695399/basedefs/pthread.h.html )
+ *  states that static initialization with PTHREAD_?_INITIALIZER and 
+ *  calling pthread_?_init() should result in the same thing.
+ *
+ *  If the OS needs additional notification/initialization, that should probably
+ *  be handled elsewhere, preferably in a manner that doesn't screw up the basic 
+ *  implementation.  H2 doesn't currently need this anyways.
+ *
+ *  (Some implementations will detect if the ? has been "truly" initialized 
+ *  in pthread_?_(lock/wait) and take a "slow path" if not.) 
+ * 
+ *  (You'd think you would do it just by setting is_initialized to false in both
+ *  PTHREAD_?_INITIALIZER and the pthread_?_init() function, and force
+ *  pthread_?_(lock/wait) to ALWAYS finalize the initialization at first call.  
+ *  I mean, why would you have an is_initialized in the struct and not actually 
+ *  use it for that purpose?)
+ */
+
+typedef struct 
 {
-    int is_initialized;
+//    int is_initialized;  Not needed for H2.
     int type;
     int pshared;
     int protocol;
-};
+} pthread_mutexattr_t;
 
-#ifdef PTHREAD_MUTEX_OPAQUE
+/*  The default should be:  recursive, private, inherit  */
+#define PTHREAD_MUTEXATTR_T_INIT { PTHREAD_MUTEX_RECURSIVE, \
+	PTHREAD_PROCESS_PRIVATE, PTHREAD_PRIO_INHERIT }
 
-//  In BLAST the two data types were the same, but in H2 they're different.
+/*  
+ *  In BLAST the two data types were the same, but in H2 they're different.
+ *  This is a little clunky, but at least it should work and be readable.
+ *  Not using a union for now so I can totally statically init everything.
+ *  Might be excessive.  Like my comments.
+ */
 
 typedef struct {
-	union {
-		h2_rmutex_t rmutex;
-		h2_mutex_t  mutex;
-	};
-} h2_pthread_mutex_t;
+	pthread_mutexattr_t attributes;
+	h2_mutex_t  mutex;
+	h2_rmutex_t rmutex;
+} pthread_mutex_t;
 
-typedef unsigned int              pthread_mutex_t;  //  this is used as a pointer.
-typedef struct _pthread_mutex_t   _pthread_mutex_t;
-
-struct _pthread_mutex_t
-{
-    pthread_mutexattr_t attr;
-    h2_pthread_mutex_t	*mutex;		/* holding blast mutex or rmutex pointer */
-    void                (*lock)(void *);   /* the function pointer for lock */
-    void                (*unlock)(void *); /* the function pointer for unlock */
-    int                 (*trylock)(void *);/* the function pointer for trylock */
-};
-
-#else
-typedef struct pthread_mutex_t
-{
-    blast_mutex_t       *kmutex;                    /* holding kernel mutex (blast mutex or rmutex) pointer */
-    void                (*lock)(blast_mutex_t *);   /* the function pointer for lock */
-    void                (*unlock)(blast_mutex_t *); /* the function pointer for unlock */
-    int                 (*trylock)(blast_mutex_t *);/* the function pointer for trylock */
-    pthread_mutexattr_t attr;
-}pthread_mutex_t;
-#endif
+#define PTHREAD_MUTEX_INITIALIZER { PTHREAD_MUTEXATTR_T_INIT, \
+	H2_MUTEX_T_INIT, H2_RMUTEX_T_INIT }
 
 #define PTHREAD_SPINLOCK_UNLOCKED    0
 #define PTHREAD_SPINLOCK_LOCKED      1
 
+/*
+ *  What?  Are you sure you don't want to make this datatype an integer 
+ *  which is used as a pointer to a struct that contains an integer?  
+ */
+
 typedef unsigned int              pthread_spinlock_t;
+
+#define PTHREAD_SPINLOCK_T_INIT PTHREAD_SPINLOCK_UNLOCKED
 
 typedef struct pthread_condattr_t
 {
@@ -150,6 +139,8 @@ typedef struct pthread_condattr_t
 } pthread_condattr_t;
 
 typedef unsigned int             pthread_cond_t;
+
+#define PTHREAD_COND_INITIALIZER     ((pthread_cond_t) 0xFFFFFFFF)
 
 typedef struct _pthread_cond_t   _pthread_cond_t;
 struct _pthread_cond_t

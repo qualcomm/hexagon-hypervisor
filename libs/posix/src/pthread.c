@@ -9,14 +9,17 @@
 #include <pthread.h>
 #include "pthread_internal.h"
 
+/*  This file has too much crap in it -- split into multiple files!  */
+
 extern void * __attribute__((weak)) rex_create_fake_tcb(void* sp, size_t siz);
 
 #define BLAST_INIT_ID                       0xFEFEFEFE
 
-//  Not present in tools errno.h
+/*  Not present in tools errno.h  */
 #define EOK 0
 
-pthread_mutex_t pthread_mtx = PTHREAD_MUTEX_INITIALIZER;
+/*  I think this is a "big pthreads subsystem lock"  */
+pthread_mutex_t pthreads_lock = PTHREAD_MUTEX_INITIALIZER; 
 
 static void* _pthread_stub(pthread_i *ltcb)
 {
@@ -26,6 +29,7 @@ static void* _pthread_stub(pthread_i *ltcb)
 
 	/* set timetest id */
 	//  dunno what this timetest stuff is
+	//  Default answer for stuff I don't know about:  delete.
 	//blast_thread_set_tid(ltcb->attr.timetest_id);
     
 	/* set pthread tcb into blast tls */
@@ -36,12 +40,12 @@ static void* _pthread_stub(pthread_i *ltcb)
 	memcpy(&name0, ltcb->attr.name, 8);
 	memcpy(&name1, &(ltcb->attr.name[8]), 8);
 
-	// looks like a debugging thign
+	// looks like a debugging thing
 	//blast_thread_set_name(name0, name1);
 
-	if(!rex_create_fake_tcb(
-		(void*)ltcb->attr.stackaddr, 
-		ltcb->attr.stacksize))
+//	if(!rex_create_fake_tcb(
+//		(void*)ltcb->attr.stackaddr, 
+//		ltcb->attr.stacksize))
 //	assert(0);
 
 	exit_status = ltcb->start_routine(ltcb->args);
@@ -97,12 +101,12 @@ int pthread_create_internal(pthread_t * restrict thread, const pthread_attr_t * 
 
     }
     
-    (void) pthread_mutex_lock(&pthread_mtx);
+    (void) pthread_mutex_lock(&pthreads_lock);
 
     ltcb = (pthread_i*) malloc(sizeof(pthread_i));
     if (!ltcb)
     {
-        (void) pthread_mutex_unlock(&pthread_mtx);
+        (void) pthread_mutex_unlock(&pthreads_lock);
         errno = ENOMEM;
         return -1;
     }
@@ -151,7 +155,7 @@ int pthread_create_internal(pthread_t * restrict thread, const pthread_attr_t * 
         if (id == -1)
         {
             _deinit_ltcb(ltcb->pthread);
-            (void) pthread_mutex_unlock(&pthread_mtx);
+            (void) pthread_mutex_unlock(&pthreads_lock);
             return -1;
         }
     }
@@ -184,7 +188,7 @@ int pthread_create_internal(pthread_t * restrict thread, const pthread_attr_t * 
 
     ltcb->blastid = id;
 
-    (void) pthread_mutex_unlock(&pthread_mtx);
+    (void) pthread_mutex_unlock(&pthreads_lock);
 
     blast_sem_init_val(&ltcb->join_lock, 0);
     return 0;
@@ -474,402 +478,176 @@ int pthread_attr_getaffinity_np(pthread_attr_t *attr, size_t cpusetsize, cpu_set
 }
 
 /* Mutexes */
-#ifdef PTHREAD_MUTEX_OPAQUE
+
+/*  maybe assert.  maybe redfine to nothing for TURBO BOOST  */
+#define CHECK_PTR(ptr)		if (!ptr) return EINVAL
+#define CHECK_INIT(attr)	if ((attr)->type == PTHREAD_MUTEX_ERRORCHECK) return EINVAL
+
 int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *attr)
 {
-	//blast_mutex_t    *p_mutex_obj;
-	h2_pthread_mutex_t *p_mutex_obj;
-	_pthread_mutex_t *_p_mutex;
+	pthread_mutex_t temp = PTHREAD_MUTEX_INITIALIZER;
+	CHECK_PTR(mutex);
 
-	if (mutex == NULL)
-	{
-		return EINVAL;
-	}
+	if (attr) temp.attributes = *attr;
+	*mutex = temp;
 
-	_p_mutex = (_pthread_mutex_t*) malloc(sizeof(_pthread_mutex_t));
-	if (_p_mutex == NULL)
-	{
-		return ENOMEM;
-	}
-
-	if (attr == NULL)
-	{
-		pthread_mutexattr_init(&_p_mutex->attr);
-	}
-	else
-	{
-		_p_mutex->attr.is_initialized = attr->is_initialized;
-		_p_mutex->attr.type           = attr->type;
-		_p_mutex->attr.pshared        = attr->pshared;
-		_p_mutex->attr.protocol       = attr->protocol;
-	}
-
-	p_mutex_obj = (h2_pthread_mutex_t*) malloc(sizeof(h2_pthread_mutex_t));
-	if (p_mutex_obj == NULL)
-	{
-		return ENOMEM;
-	}
-	memset(p_mutex_obj, 0, sizeof(h2_pthread_mutex_t));
-
-	//  blast_mutex_t and blast_rmutex_t are not interchangeable
-	if (_p_mutex->attr.type == PTHREAD_MUTEX_RECURSIVE)
-	{
-		blast_rmutex_init(&p_mutex_obj->rmutex);
-//		_p_mutex->lock    = blast_rmutex_lock;
-//		_p_mutex->trylock = blast_rmutex_trylock;
-//		_p_mutex->unlock  = blast_rmutex_unlock;
-	}
-	else if (_p_mutex->attr.type == PTHREAD_MUTEX_NORMAL)
-	{
-		blast_mutex_init(&p_mutex_obj->mutex);
-//		_p_mutex->lock    = blast_mutex_lock;
-//		_p_mutex->trylock = blast_mutex_trylock;
-//		_p_mutex->unlock  = blast_mutex_unlock;
-	}
-	else
-	{
-		/* other types are not supported */
-		return EINVAL;
-	}
-	_p_mutex->mutex = p_mutex_obj; 
-
-	*mutex = (pthread_mutex_t) _p_mutex;  //  So they're using an int to hold a pointer to the _pthread_mutex type.
 	return 0;
 }
 
+/*  The option is to use function call pointers.  Maybe.  */
+
 int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-	pthread_mutex_t mtx_temp;
-	int             ret;
-	h2_pthread_mutex_t *p_mutex_obj = ((_pthread_mutex_t *) (*mutex))->mutex;
+	CHECK_PTR(mutex);
+	CHECK_INIT(&mutex->attributes);
 
-	if (__builtin_expect(mutex == NULL || *mutex==NULL, 0))
-	{
-		return EINVAL;
-	}
-
-	//If static initialization for mutex, need to call init
-	if (__builtin_expect(PTHREAD_MUTEX_INITIALIZER == *mutex, 0))
-	{
-		ret = pthread_mutex_init(&mtx_temp, NULL);
-		if (0 != ret)
-		{
-			return ret;
-		}
-	
-		if (0 == atomic_compare_and_set(
-			(atomic_word_t *)mutex,
-			(atomic_plain_word_t)PTHREAD_MUTEX_INITIALIZER,
-			(atomic_plain_word_t)mtx_temp))
-		{
-			/* oops, someone else set it already. Free my mutex. */
-			pthread_mutex_destroy(&mtx_temp);            
-		}
-	}
-
-	//((_pthread_mutex_t*)(*mutex))->lock(((_pthread_mutex_t*)(*mutex))->mutex);
-
-	switch(((_pthread_mutex_t*) *mutex)->attr.type) {
+	switch (mutex->attributes.type) {
 		case PTHREAD_MUTEX_RECURSIVE:
-			h2_rmutex_lock(&p_mutex_obj->rmutex);
+			h2_rmutex_lock(&mutex->rmutex);
 			break;
 		case PTHREAD_MUTEX_NORMAL:
-			h2_mutex_lock(&p_mutex_obj->mutex);
-	};
-
+			h2_mutex_lock(&mutex->mutex);
+			break;
+	}
 	return 0;
 }
 
 int pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
-	h2_pthread_mutex_t *p_mutex_obj = ((_pthread_mutex_t *) (*mutex))->mutex;
+	CHECK_PTR(mutex);
+	CHECK_INIT(&mutex->attributes);
 
-	if (__builtin_expect(mutex == NULL || *mutex==NULL, 0))
-		return EINVAL;
-
-	//((_pthread_mutex_t*)(*mutex))->unlock(((_pthread_mutex_t*)(*mutex))->mutex);
-
-	switch(((_pthread_mutex_t *)*mutex)->attr.type) {
+	switch (mutex->attributes.type) {
 		case PTHREAD_MUTEX_RECURSIVE:
-			h2_rmutex_unlock(&p_mutex_obj->rmutex);
+			h2_rmutex_unlock(&mutex->rmutex);
 			break;
 		case PTHREAD_MUTEX_NORMAL:
-			h2_mutex_unlock(&p_mutex_obj->mutex);
-	};
+			h2_mutex_unlock(&mutex->mutex);
+			break;
 
+	}
 	return 0;
 }
 
 int pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-	h2_pthread_mutex_t *p_mutex_obj = ((_pthread_mutex_t *) (*mutex))->mutex;
-	pthread_mutex_t mtx_temp;
-	int             ret=0;
+	CHECK_PTR(mutex);
+	CHECK_INIT(&mutex->attributes);
 
-	if (__builtin_expect(mutex == NULL || *mutex==NULL, 0))
-	{
-		return EINVAL;
-	}
-	
-	//If static initialization for mutex, need to call init
-	if (__builtin_expect(PTHREAD_MUTEX_INITIALIZER == *mutex, 0))
-	{
-		ret = pthread_mutex_init(&mtx_temp, NULL);
-		if (0 != ret)
-		{
-			return ret;
-		}
-	
-		if (0 == atomic_compare_and_set(
-			(atomic_word_t *)mutex,
-			(atomic_plain_word_t)PTHREAD_MUTEX_INITIALIZER,
-			(atomic_plain_word_t)mtx_temp))
-		{
-			/* oops, someone else set it already. Free my mutex. */
-			pthread_mutex_destroy(&mtx_temp);            
-		}
-	}
-
-	switch(((_pthread_mutex_t *) *mutex)->attr.type) {
+	switch (mutex->attributes.type) {
 		case PTHREAD_MUTEX_RECURSIVE:
-			ret = h2_rmutex_trylock(&p_mutex_obj->rmutex);
-			break;
+			return h2_rmutex_trylock(&mutex->rmutex);
 		case PTHREAD_MUTEX_NORMAL:
-			ret = h2_mutex_trylock(&p_mutex_obj->mutex);
-			break;
-	};
-
-	//if (0 == ((_pthread_mutex_t*)(*mutex))->trylock(((_pthread_mutex_t*)(*mutex))->mutex))
-	if (0 == ret)
-		return 0;
-	else
-		return EBUSY;
+			return h2_mutex_trylock(&mutex->mutex);
+	}
+	return 0;
 }
 
 int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
-	//blast_mutex_t    *p_bmutex_obj;
-	h2_pthread_mutex_t *p_bmutex_obj;
-	_pthread_mutex_t *_p_mutex;
+	/*
+	 *  Should "de-initialize" the mutex...  which we don't really need to
+	 *  do.  We should only check that we aren't destroying something that's
+	 *  locked.  That would be inappropriate.
+	 */
+	CHECK_PTR(mutex);
 
-	if (mutex == NULL)
-	{
-		return EINVAL;
-	}
+	/*  TODO:
+	 *  Should a recursive mutex not be destroyed if it's still locked by
+	 *  the owner?  (Since trylock should pass)  There an official way to 
+	 *  detect that?
+	 *  Also, zero means "success" */
 
-	_p_mutex = (_pthread_mutex_t*) *mutex;    
-	if (_p_mutex == NULL)
-	{
-		return EINVAL;
-	}
+	if (pthread_mutex_trylock(mutex)) return EBUSY;
 
-	p_bmutex_obj = (h2_pthread_mutex_t *) _p_mutex->mutex;
+	/*  Guess we'll just use this to mark it as destroyed  */
+	pthread_mutexattr_destroy(&mutex->attributes);
 
-	if (_p_mutex->mutex == 0)
-	{
-		return EINVAL;
-	}
-	else
-	{
-		/* Destroy the attributes of the mutex */
-		pthread_mutexattr_destroy(&_p_mutex->attr);
-
-		if (_p_mutex->attr.type == PTHREAD_MUTEX_RECURSIVE)
-		{
-			//blast_rmutex_destroy((blast_mutex_t *) _p_mutex->mutex);
-			//free((blast_mutex_t *) _p_mutex->mutex);
-		}
-		else
-		{
-			//blast_mutex_destroy((blast_mutex_t *) _p_mutex->mutex);
-			//free((blast_mutex_t *) _p_mutex->mutex);
-		}
-		free(p_bmutex_obj);
-	}
-	_p_mutex->lock    = 0;  //  uh, planning to reuse these or something?
-	_p_mutex->unlock  = 0;
-	_p_mutex->trylock = 0;
-	
-	free(_p_mutex);
-
-	*mutex = 0;  //  what?
 	return 0;
 }
-#else
-int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *attr)
+
+int pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
-    blast_mutex_t    *bmutex;
+	pthread_mutexattr_t temp = PTHREAD_MUTEXATTR_T_INIT;
+	CHECK_PTR(attr);
+	*attr = temp;
+    	return 0;
 
-    if (mutex == NULL)
-    {
-        return EINVAL;
-    }
-
-    if (attr == NULL)
-    {
-        pthread_mutexattr_init(&mutex->attr);
-    }
-    else
-    {
-        mutex->attr.is_initialized = attr->is_initialized;
-        mutex->attr.type           = attr->type;
-        mutex->attr.pshared        = attr->pshared;
-        mutex->attr.protocol       = attr->protocol;
-    }
-
-    bmutex = (blast_mutex_t *)malloc(sizeof(blast_mutex_t));
-    if (bmutex == NULL)
-    {
-        return ENOMEM;
-    }
-    memset(bmutex, 0, sizeof(blast_mutex_t));
-
-    if (mutex->attr.type == PTHREAD_MUTEX_RECURSIVE)
-    {
-        blast_rmutex_init(bmutex);
-        mutex->lock    = blast_rmutex_lock;
-        mutex->trylock = blast_rmutex_trylock;
-        mutex->unlock  = blast_rmutex_unlock;
-    }
-    else if (mutex->attr.type == PTHREAD_MUTEX_NORMAL)
-    {
-        blast_mutex_init(bmutex);
-        mutex->lock    = blast_mutex_lock;
-        mutex->trylock = blast_mutex_trylock;
-        mutex->unlock  = blast_mutex_unlock;
-    }
-    else
-    {
-        /* other types are not supported */
-        return EINVAL;
-    }
-    mutex->kmutex = bmutex;
-    return 0;
 }
 
-int pthread_mutex_lock(pthread_mutex_t *mutex)
+int pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 {
-    blast_mutex_t   *mtx_temp;
-
-    if (__builtin_expect(mutex == NULL, 0))
-    {
-        return EINVAL;
-    }
-
-    //If static initialization for mutex, need to call init
-    if (__builtin_expect(0 == mutex->kmutex, 0))
-    {
-        mtx_temp = (blast_mutex_t*)malloc(sizeof(blast_mutex_t));
-        if (0 == mtx_temp)
-        {
-            return ENOMEM;
-        }
-        memset(mtx_temp, 0, sizeof(blast_mutex_t));
-        blast_rmutex_init(mtx_temp);        
-        
-        if (0 == atomic_compare_and_set(
-                     (atomic_word_t *)&mutex->kmutex,
-                     (atomic_plain_word_t)NULL,
-                     (atomic_plain_word_t)mtx_temp))
-        {
-            /* oops, someone else set it already. Free my mutex. */
-            blast_rmutex_destroy(mtx_temp);
-            free(mtx_temp);
-        }
-    }
-
-    mutex->lock(mutex->kmutex);
-    return 0;
+	CHECK_PTR(attr);
+	/*  Slightly abusing this errorcheck thing as our invalid/uninitialized value  */
+	attr->type = PTHREAD_MUTEX_ERRORCHECK;  // macroize?
+	return 0;
 }
 
-int pthread_mutex_unlock(pthread_mutex_t *mutex)
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr, int *restrict type)
 {
-    if (__builtin_expect(mutex == NULL, 0))
-        return EINVAL;
 
-    mutex->unlock(mutex->kmutex);
-    return 0;
+	CHECK_PTR(attr);
+	CHECK_PTR(type);
+	CHECK_INIT(attr);
+
+	*type = attr->type;
+	return 0;
 }
 
-int pthread_mutex_trylock(pthread_mutex_t *mutex)
+int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 {
-    blast_mutex_t   *mtx_temp;
+	CHECK_PTR(attr);
 
-    if (__builtin_expect(mutex == NULL, 0))
-    {
-        return EINVAL;
-    }
+	/*  
+	 * Technically I guess we need a separate "initialized" member,
+	 * but I think this should suffice.  If your code really is 
+	 * setting the type of an uninitialized mutexattr, fix your code.
+	 */
 
-    //If static initialization for mutex, need to call init
-    if (__builtin_expect(0 == mutex->kmutex, 0))
-    {
-        mtx_temp = (blast_mutex_t*)malloc(sizeof(blast_mutex_t));
-        if (0 == mtx_temp)
-        {
-            return ENOMEM;
-        }
-        memset(mtx_temp, 0, sizeof(blast_mutex_t));
-        blast_rmutex_init(mtx_temp);        
-        
-        if (0 == atomic_compare_and_set(
-                     (atomic_word_t *)&mutex->kmutex,
-                     (atomic_plain_word_t)NULL,
-                     (atomic_plain_word_t)mtx_temp))
-        {
-            /* oops, someone else set it already. Free my mutex. */
-            blast_rmutex_destroy(mtx_temp);
-            free(mtx_temp);        
-        }
-        
-    }
-
-    if (0 == mutex->trylock(mutex->kmutex))
+	attr->type = type;  
         return 0;
-    else
-        return EBUSY;
 }
 
-int pthread_mutex_destroy(pthread_mutex_t *mutex)
+int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *restrict attr,
+                                  int *restrict protocol)
 {
-    blast_mutex_t    *p_bmutex_obj;
-    //_pthread_mutex_t *_p_mutex;
+	CHECK_PTR(attr);
+	CHECK_PTR(protocol);
+	CHECK_INIT(attr);
 
-    if (mutex == NULL)
-    {
-        return EINVAL;
-    }
-
-    p_bmutex_obj = (blast_mutex_t *) mutex->kmutex;
-
-    if (p_bmutex_obj == 0)
-    {
-        return EINVAL;
-    }
-    else
-    {
-        /* Destroy the attributes of the mutex */
-        pthread_mutexattr_destroy(&mutex->attr);
-
-        if (mutex->attr.type == PTHREAD_MUTEX_RECURSIVE)
-        {
-            blast_rmutex_destroy((blast_mutex_t *) mutex->kmutex);
-            free((blast_mutex_t *) mutex->kmutex);
-        }
-        else
-        {
-            blast_mutex_destroy((blast_mutex_t *) mutex->kmutex);
-            free((blast_mutex_t *) mutex->kmutex);
-        }
-    }
-    mutex->lock    = 0;
-    mutex->unlock  = 0;
-    mutex->trylock = 0;
-    mutex->kmutex  = 0;
-
-    //free(mutex); //leave it to user
-    return 0;
+	*protocol = attr->protocol;
+	return 0;
 }
-#endif /* PTHREAD_MUTEX_OPAQUE */
+
+int pthread_mutexattr_setprotocol(pthread_mutexattr_t *attr, int protocol)
+{
+	CHECK_PTR(attr);
+	CHECK_INIT(attr);
+
+	attr->protocol = protocol;
+	return 0;
+}
+
+int pthread_mutexattr_getpshared(const pthread_mutexattr_t *restrict attr,
+                                 int *restrict pshared)
+{
+	CHECK_PTR(attr);
+	CHECK_PTR(pshared);
+	CHECK_INIT(attr);
+
+	*pshared = attr->pshared;
+        return 0;
+}
+
+int pthread_mutexattr_setpshared(pthread_mutexattr_t * attr, int pshared)
+{
+	CHECK_PTR(attr);
+	CHECK_INIT(attr);
+
+	//  TODO:  check pshared value for legal values.
+        attr->pshared = pshared;
+	return 0;
+}
 
 int pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 {
@@ -942,94 +720,6 @@ int pthread_spin_unlock(pthread_spinlock_t *lock)
     {
         return EINVAL;
     }
-}
-
-int pthread_mutexattr_init(pthread_mutexattr_t *attr)
-{
-    if (attr)
-    {
-        attr->type           = PTHREAD_MUTEX_DEFAULT;
-        attr->pshared        = PTHREAD_PROCESS_PRIVATE;
-        attr->protocol       = PTHREAD_PRIO_INHERIT;
-        attr->is_initialized = PTHREAD_MUTEX_ATTR_INITIALIZED;
-        return 0;
-    }
-    return EINVAL;
-}
-int pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
-{
-    if (attr)
-    {
-        //only do if initialized
-        if (PTHREAD_MUTEX_ATTR_INITIALIZED == attr->is_initialized)
-        {
-            attr->is_initialized = PTHREAD_MUTEX_ATTR_UNINITIALIZED;
-            attr->type           = 0;
-            attr->pshared        = 0;
-            attr->protocol       = 0;
-        }
-        //always return success
-        return 0;
-    }
-    //attr ptr is invalid
-    return EINVAL;
-}
-int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr, int *restrict type)
-{
-    if (attr && type && (PTHREAD_MUTEX_ATTR_INITIALIZED == attr->is_initialized))
-    {
-        *type = attr->type;
-        return 0;
-    }
-    return EINVAL;
-}
-int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
-{
-    if (attr && (PTHREAD_MUTEX_ATTR_INITIALIZED == attr->is_initialized))
-    {
-        attr->type = type;
-        return 0;
-    }
-    return EINVAL;
-}
-int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *restrict attr,
-                                  int *restrict protocol)
-{
-    if (attr && protocol && (PTHREAD_MUTEX_ATTR_INITIALIZED == attr->is_initialized))
-    {
-        *protocol = attr->protocol;
-        return 0;
-    }
-    return EINVAL;
-}
-int pthread_mutexattr_setprotocol(pthread_mutexattr_t *attr, int protocol)
-{
-    if (attr && (PTHREAD_MUTEX_ATTR_INITIALIZED == attr->is_initialized))
-    {
-        attr->protocol = protocol;
-        return 0;
-    }
-    return EINVAL;
-}
-int pthread_mutexattr_getpshared(const pthread_mutexattr_t *restrict attr,
-                                 int *restrict pshared)
-{
-    if (attr && pshared && (PTHREAD_MUTEX_ATTR_INITIALIZED == attr->is_initialized))
-    {
-        *pshared = attr->pshared;
-        return 0;
-    }
-    return EINVAL;
-}
-int pthread_mutexattr_setpshared(pthread_mutexattr_t * attr, int pshared)
-{
-    if (attr && (PTHREAD_MUTEX_ATTR_INITIALIZED == attr->is_initialized) &&
-        ((int) PTHREAD_PROCESS_PRIVATE == pshared || (int) PTHREAD_PROCESS_SHARED == pshared))
-    {
-        attr->pshared = pshared;
-        return 0;
-    }
-    return EINVAL;
 }
 
 int pthread_getschedparam(pthread_t thread, int *restrict policy, struct sched_param *restrict param)
@@ -1241,94 +931,38 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
     }
     return EINVAL;
 }
-#ifdef PTHREAD_MUTEX_OPAQUE
+
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
-    _pthread_cond_t  *_p_cond;
-    _pthread_mutex_t *_p_mutex;
+	_pthread_cond_t  *_p_cond;
+	//_pthread_mutex_t *_p_mutex;
+	//blast_mutex_t    *mtx_temp;
 
-    if (cond == NULL || mutex == NULL)
-        return EINVAL;
+	CHECK_PTR(cond);
+	CHECK_PTR(mutex);
 
-    _p_cond  = (_pthread_cond_t*) *cond;
-    _p_mutex = (_pthread_mutex_t*) *mutex;
+	_p_cond  = (_pthread_cond_t*) *cond;
+	//_p_mutex = (_pthread_mutex_t*) *mutex;
 
-    if (_p_cond == NULL || _p_mutex == NULL)
-        return EINVAL;
+	CHECK_PTR(_p_cond); 
 
-    //If static initialization for cond, need to call init
-    if (PTHREAD_COND_INITIALIZER == *cond)
-    {
-        int ret = pthread_cond_init(cond, NULL);
-        if (0 != ret)
-            return ret;
-        _p_cond = (_pthread_cond_t*) *cond;
-    }
+	//If static initialization for cond, need to call init
+	if (PTHREAD_COND_INITIALIZER == *cond)
+	{
+		int ret = pthread_cond_init(cond, NULL);
+		if (0 != ret)
+			return ret;
+		_p_cond = (_pthread_cond_t*) *cond;
+	}
 
-    //If static initialization for mutex, need to call init
-    if (PTHREAD_MUTEX_INITIALIZER == *mutex)
-    {
-        int ret = pthread_mutex_init(mutex, NULL);
-        if (0 != ret)
-            return ret;
-        _p_mutex = (_pthread_mutex_t*) *mutex;
-    }
+	//  If static initialization for mutex, need to call init
+	//  No, static initialization should be just fine.
+	if (mutex->attributes.type == PTHREAD_MUTEX_ERRORCHECK) 
+		pthread_mutex_init(mutex,NULL);  //  does this need to be "atomic"?
 
-    blast_cond_wait(_p_cond->blast_cond, (blast_mutex_t *) _p_mutex->mutex);
-    return 0;
+	blast_cond_wait(_p_cond->blast_cond, (blast_mutex_t *) mutex->mutex);
+	return 0;
 }
-#else
-int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
-{
-    _pthread_cond_t  *_p_cond;
-    _pthread_mutex_t *_p_mutex;
-    blast_mutex_t    *mtx_temp;
-
-    if (cond == NULL || mutex == NULL)
-        return EINVAL;
-
-    _p_cond  = (_pthread_cond_t*) *cond;
-    _p_mutex = (_pthread_mutex_t*) *mutex;
-
-    if (_p_cond == NULL)
-        return EINVAL;
-
-    //If static initialization for cond, need to call init
-    if (PTHREAD_COND_INITIALIZER == *cond)
-    {
-        int ret = pthread_cond_init(cond, NULL);
-        if (0 != ret)
-            return ret;
-        _p_cond = (_pthread_cond_t*) *cond;
-    }
-
-    //If static initialization for mutex, need to call init
-    //If static initialization for mutex, need to call init
-    if (__builtin_expect(0 == mutex->kmutex, 0))
-    {
-        mtx_temp = (blast_mutex_t*)malloc(sizeof(blast_mutex_t));
-        if (0 == mtx_temp)
-        {
-            return ENOMEM;
-        }
-        memset(mtx_temp, 0, sizeof(blast_mutex_t));
-        blast_rmutex_init(mtx_temp);        
-        
-        if (0 == atomic_compare_and_set(
-                     (atomic_word_t *)&mutex->kmutex,
-                     (atomic_plain_word_t)NULL,
-                     (atomic_plain_word_t)mtx_temp))
-        {
-            /* oops, someone else set it already. Free my mutex. */
-            blast_rmutex_destroy(mtx_temp);
-            free(mtx_temp);        
-        }        
-    }
-
-    blast_cond_wait(_p_cond->blast_cond, (blast_mutex_t *) mutex->kmutex);
-    return 0;
-}
-#endif
 
 int pthread_barrierattr_init(pthread_barrierattr_t *attr)
 {

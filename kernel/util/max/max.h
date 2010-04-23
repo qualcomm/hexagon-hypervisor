@@ -9,7 +9,13 @@
 #define MAX_HTHREADS 3
 #endif
 
+#if __QDSP6_ARCH__ <= 3
+#define MAX_TLB_ENTRIES 63
+#define PHYSREAD_TEMP_MAP_IDX 63
+#define PHYSREAD_TEMP_MAP_VPN 0xfffff
+#else
 #define MAX_TLB_ENTRIES 64
+#endif
 
 #define TLB_FIRST_REPLACEABLE_ENTRY 8
 

@@ -96,13 +96,29 @@ typedef struct _h2_thread_context
 					u8_t ssr_fake_guest:1;
 					u8_t ssr_asid_byte_unused:2;
 #else
-					u8_t ssr_asid;
+					u8_t ssr_asid:7;
+					u8_t ssr_asid_byte_unused:1;
 #endif
 					u8_t ssr_um:1;
 					u8_t ssr_ex:1;
 					u8_t ssr_ie:1;
-					u8_t ssr_incompat:5;
-					u8_t ssr_highbyte;
+#if __QDSP6_ARCH__ <= 3
+					u8_t ssr_tnum:3;
+					u8_t ssr_hfi:1;
+					u8_t ssr_hfd:1;
+					u8_t ssr_sfd:1;
+					u8_t ssr_hi_rsvd:7;
+#else
+					u8_t ssr_guest:1;
+					u8_t ssr_badva_v0:1;
+					u8_t ssr_badva_v1:1;
+					u8_t ssr_badva_bvs:1;
+					u8_t ssr_badva_ce:1;
+					u8_t ssr_badva_pe:1;
+					u8_t ssr_hi_rsvd:5;
+					u8_t ssr_ss:1;
+					u8_t ssr_sdb:1;
+#endif
 				};
 			};
 		};

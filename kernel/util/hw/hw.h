@@ -87,15 +87,20 @@ static inline void lowprio_imask(u32_t hthread)
 static inline u32_t get_ssr()
 {
 	u32_t ret;
-	asm(" %0 = ssr // get SSR" : "=r"(ret));
+	asm volatile (" %0 = ssr // get SSR" : "=r"(ret));
 	return ret;
 }
 
 static inline u32_t H2K_get_syscfg()
 {
 	u32_t ret;
-	asm(" %0 = syscfg // get syscfg" : "=r"(ret));
+	asm volatile (" %0 = syscfg // get syscfg" : "=r"(ret));
 	return ret;
+}
+
+static inline void H2K_set_syscfg(u32_t val)
+{
+	asm volatile (" syscfg = %0 // get syscfg" : : "r"(val));
 }
 
 static inline void H2K_clear_gie()
@@ -110,17 +115,22 @@ static inline void H2K_set_gie()
 	asm volatile ("%0 = SYSCFG; %0 = setbit(%0,#4); SYSCFG=%0; isync;":"=r"(scratch));
 }
 
+static inline void H2K_isync()
+{
+	asm volatile (" isync ");
+}
+
 static inline u32_t H2K_get_modectl()
 {
 	u32_t ret;
-	asm(" %0 = modectl\n" :"=r"(ret));
+	asm volatile (" %0 = modectl\n" :"=r"(ret));
 	return ret;
 }
 
 static inline u32_t H2K_get_ipend()
 {
 	u32_t ret;
-	asm("%0 = ipend;":"=r" (ret));
+	asm volatile ("%0 = ipend;":"=r" (ret));
 	return(ret);
 }
 

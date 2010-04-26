@@ -60,3 +60,57 @@ a thread is switched to, it checks the mask to see if it should handle signals
 before returning.
 
 
+
+	******************* pi / better m/futexes *******************
+
+Word has ThreadID in upper bits.  Lower bits have state information.
+
+PIFutexWait -- like normal, uses upper bits of val as threadid
+
+PIFutexHandoff(u32_t *ptr, u32_t unlocked_val) -- Wakes best priority thread
+putting in that threadid, or writes unlocked_val if no other threads are
+waiting.
+
+
+Keep on boosting holder priority while waiting.  Unlock happens in correct 
+priority order.  New threads coming in will boost holder prio, then get 
+resumed in right order.
+
+TBD: following the blocked chain?
+
+
+Normal Futex Pass:
+
+States:
+	* Unlocked
+	* Locked, no waiters
+	* Locked + Waiters (maybe)
+	* Pass
+
+
+Alternative:
+	Field 0:
+		* Locked
+		* Unlocked
+		* Pass
+	Field 1:
+		* n_waiters
+
+
+If we come into a mutex and we see pass, we need to block.
+
+Pass state only valid if threads are waiting and we can wake up.
+Two ways to know this:
+	* Count of waiters (maybe?)
+	* Try and wake one thread, if zero returned, set to normal 
+		unlocked (and then wait just to be sure)
+
+
+
+
+	******************** Preemption Disable *****************
+
+Clear IE bit in SSR.  Blocking still allowed.  Raise priority; select
+someone else as lowprio.
+
+

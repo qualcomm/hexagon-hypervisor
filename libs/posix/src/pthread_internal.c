@@ -47,7 +47,7 @@ typedef struct {
 } pid2key_table_t;
 
 pid2key_table_t	pid2key_table[PTHREAD_MAX_THREADS];  
-h2_mutex_t	pid2key_lock=0;  
+h2_mutex_t	pid2key_lock=H2_MUTEX_T_INIT;  
 
 /*  lock whenever adding, freeing, or looking at someone else's tcb.
     There may be more situations, but let's see if we get away with this 
@@ -58,8 +58,10 @@ void *pid2key(int pid)
 	int i;
 	h2_mutex_lock(&pid2key_lock);
 	for (i=0; i<PTHREAD_MAX_THREADS; i++) {
-		if (pid2key_table[i].pid == pid)
+		if (pid2key_table[i].pid == pid) {
+			h2_mutex_unlock(&pid2key_lock);
 			return pid2key_table[i].key;
+		}  //  not sure if this is really safe; need review
 	}
 	h2_mutex_unlock(&pid2key_lock);
 	return (void *)-1;

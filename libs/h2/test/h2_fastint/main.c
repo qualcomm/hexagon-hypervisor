@@ -11,10 +11,14 @@
 char *context_space[256 * 64];
 
 h2_anysignal_t int_sig;
+h2_mutex_t mutex;
+h2_sem_t   sem;
 
 void int2sig(int intnum) 
 {
-	h2_anysignal_set(&int_sig,TEST_SIGMASK);
+	//h2_anysignal_set(&int_sig,TEST_SIGMASK);  // doesn't work
+	//h2_mutex_unlock(&mutex);  //  works
+	h2_sem_add(&sem,1);  //  works
 }
 
 int main()
@@ -24,15 +28,19 @@ int main()
 	h2_config_add_thread_storage(context_space,sizeof(context_space));
 	h2_printf("Starting\n");
 
-	
 	h2_anysignal_init(&int_sig);
+	h2_mutex_init(&mutex);
+	h2_mutex_lock(&mutex);
+	h2_sem_init(&sem);
+
 	h2_register_fastint(TEST_INT,int2sig);
 
 	while (1) {
-		h2_anysignal_wait(&int_sig, TEST_SIGMASK);
+		//h2_anysignal_wait(&int_sig, TEST_SIGMASK);
+		h2_sem_down(&sem);
+		//h2_mutex_lock(&mutex);
 		h2_printf("Got Interrupt!\n");
-		h2_anysignal_clear(&int_sig, TEST_SIGMASK);
-	
+		//h2_anysignal_clear(&int_sig, TEST_SIGMASK);
 	}
 
 }

@@ -9,6 +9,10 @@
 	.global h2_vmtrap_newptb
 	.global h2_vmtrap_clrmap
 
+h2_vmtrap_setvec:
+	trap1(#H2_VMTRAP_SETVEC)
+	jumpr r31
+
 h2_vmtrap_newptb:
 	trap1(#H2_VMTRAP_NEWPTB)
 	jumpr r31

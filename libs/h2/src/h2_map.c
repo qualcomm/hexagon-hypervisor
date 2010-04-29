@@ -120,7 +120,7 @@ void h2_unmap(void *va)
 		if (intersects(&translations[i],(unsigned long) va, 4096)) {
 			translations[i].low = (unsigned long) &translations[i+1]; 
 			translations[i].high = 0;
-			H2_vmtrap_clrmap(va);
+			h2_vmtrap_clrmap(va);
 		}
 	}
 }

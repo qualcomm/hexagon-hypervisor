@@ -73,12 +73,12 @@ h2_anysignal_set:
 		memw_locked(r0,p0) = r4		// save new signals
 	}
 	{
-		p1 = bitsclr(r4,r3)		// new value has matching signal?
-		p2 = bitsclr(r2,r3)		// old value has matching signal?
+		p1 = bitsset(r3,r4)		// new value has matching signal?
+		p2 = bitsclr(r3,r2)		// old value DOES NOT HAS matching signal?
 	}
 	{
 		if (!p0) jump 1b		// not atomic, try again
-		p3 = and(p1,!p2)		// Old value not matching, new matching
+		p3 = and(p1,p2)			// Old value not matching, new matching
 	}
 	{
 		if (!p3) jumpr r31		// Still not matching, no wakeup

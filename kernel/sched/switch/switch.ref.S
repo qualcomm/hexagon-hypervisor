@@ -48,11 +48,11 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 	r31 = memw(r1+#CONTEXT_continuation)
 	memb(r1+#CONTEXT_hthread) = r10
 	sgp = r1
-	r1 = memub(r1+#CONTEXT_tid)
+	r4 = memub(r1+#CONTEXT_tid)
 #if (__QDSP6_ARCH__ <= 3)
-	tid = r1
+	tid = r4
 #else
-	stid = r1
+	stid = r4
 #endif
 	r1:0 = memd(r1+#CONTEXT_r0100)
 	jump H2K_check_sanity_unlock

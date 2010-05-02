@@ -24,10 +24,11 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 {       
 	H2K_thread_context *tmp;
 	u32_t myssr;
-	myssr = (me->ssrelr >> 32);
+	myssr = me->ssr;
 	if (prio > MAX_PRIO) return -1;        // bad prio
 	if ((sp & 7) != 0) return -1;           // bad stack pointer alignment
 	if ((pc & 3) != 0) return -1;           // bad pc alignment
+	if (prio < me->base_prio) return -1;	// can't spawn higher-priority children
 	BKL_LOCK(&H2K_bkl);
 	if (H2K_gp->free_threads == NULL) {
 		BKL_UNLOCK(&H2K_bkl);
@@ -35,11 +36,11 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 	}
 	tmp = H2K_gp->free_threads;
 	H2K_gp->free_threads = H2K_gp->free_threads->next;
-	tmp->prio = prio;
+	tmp->base_prio = tmp->prio = prio;
 	tmp->ugpgp = me->ugpgp;
-	tmp->ssrelr = (((u64_t)(myssr)) << 32)
-			| ((u64_t)pc);
-	tmp->r2928 = ((u64_t)sp) << 32;
+	tmp->ssr = myssr;
+	tmp->elr = pc;
+	tmp->r29 = sp;
 	tmp->r0100 = arg1;
 	H2K_asid_table_inc(H2K_mem_asid_table[me->ssr_asid].ptb);
 	tmp->ccr = me->ccr;

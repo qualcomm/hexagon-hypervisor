@@ -24,7 +24,7 @@ h2_anysignal_wait:
 	}
 	{
 		p0 = bitsclr(r4,r1)		// Are all WAITING bits clear in SIGNALS?
-		if (!p0.new) r0 = r1		// No, return val is new signals
+		if (!p0.new) r0 = r4		// No, return val is new signals
 		if (!p0.new) jump:nt 9f		// no, return
 	}
 	/* All WAITING bits are clear, which means we need to block */
@@ -38,20 +38,25 @@ h2_anysignal_wait:
 	}
 1:
 	trap0(#H2_TRAP_FUTEX_WAIT)
-	r3:2 = memd(r24+#0)
+	r1:0 = memd(r24+#0)
 	{
 		p0 = bitsclr(r0,r1)		// are all WAITING bits clear in SIGNALS?
-		if (p0.new) r1:0 = combine(r25,r24)
+		if (p0.new) r1:0 = combine(r0,r24)
 		if (p0.new) jump:nt 1b		// got spurrious wakeup, go back to sleep
+		r2 = r24
 	}
 	{
 		// One of the signals has been set, newest signals in r0 (return val)
 		// restore ABI stuff and return
 		r25:24 = memd(r29)		// restore callee save regs
 		deallocframe			// restore stack frame
+		r3 = #0
 	}
 9:
-	jumpr r31				// return
+	{
+		jumpr r31				// return
+		memw(r2+#WAITING) = r3
+	}
 
 	.global h2_anysignal_set
 	/* 
@@ -73,16 +78,16 @@ h2_anysignal_set:
 		memw_locked(r0,p0) = r4		// save new signals
 	}
 	{
-		p1 = bitsset(r3,r4)		// new value has matching signal?
-		p2 = bitsclr(r3,r2)		// old value DOES NOT HAS matching signal?
+		p1 = bitsclr(r4,r3)		// new value has matching signal?
+		p2 = cmp.eq(r3,#0)		// are we waiting on anything?
 	}
 	{
 		if (!p0) jump 1b		// not atomic, try again
-		p3 = and(p1,p2)			// Old value not matching, new matching
+		p1 = or(p1,p2)			// If all bits still clear, or nothing waiting
 	}
 	{
-		if (!p3) jumpr r31		// Still not matching, no wakeup
-		if (!p3) r0 = r2		// set old signals as return val
+		if (p1) jumpr r31		// Still not matching, no wakeup
+		if (p1) r0 = r2			// set old signals as return val
 	}
 	{
 		allocframe(#8)

@@ -41,7 +41,7 @@ typedef struct _h2_thread_context
 		u32_t atomic_status_word;
 		struct {
 			u8_t vmstatus;
-			u8_t tmpprio;
+			u8_t base_prio;
 			u8_t vmcpu;
 			u8_t u8pad0;
 		};
@@ -75,6 +75,7 @@ typedef struct _h2_thread_context
 	u64_t totalcycles;
 	struct {
 		u32_t ccr;	/* Could be moved to zeroed area */
+				/* Upper 8 bits of CCR unused */
 		// u32_t gptb;	/* can look it up from asid table... */
 		struct H2K_vmblock_struct *vmblock;
 	};

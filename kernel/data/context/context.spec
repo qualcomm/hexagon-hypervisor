@@ -56,9 +56,9 @@ Description
 
 		Current priority of the thread
 
-	.. cmember:: u8_t tmpprio
+	.. cmember:: u8_t base_prio
 
-		Temporary priority granted to the thread
+		Priority of the thread to be restored after inherited priority is finished
 
 	.. cmember:: u8_t hthread
 

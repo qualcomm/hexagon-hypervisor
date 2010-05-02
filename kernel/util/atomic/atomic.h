@@ -38,5 +38,41 @@ static inline u32_t H2K_atomic_clrbit(u32_t *word, u32_t bit)
 	return t;
 }
 
+static inline u32_t H2K_atomic_swap(u32_t *word, u32_t val)
+{
+	u32_t t;
+	asm (	"// atomic set bit\n"
+		"1: %0 = memw_locked(%3)\n"
+		"   memw_locked(%3,p0) = %2\n"
+		"   if (!p0) jump 1b\n"
+		: "=&r"(t),"+m"(*word)
+		: "r"(val),"r"(word)
+		: "p0");
+	return t;
+}
+
+static inline u32_t H2K_atomic_insert(u32_t *word, u32_t val, u32_t width, u32_t offset)
+{
+	u32_t t;
+	union {
+		u64_t insert_info;
+		struct {
+			u32_t offset;
+			u32_t width;
+		};
+	} x;
+	x.width = width;
+	x.offset = offset;
+	asm (	"// atomic set bit\n"
+		"1: %0 = memw_locked(%3)\n"
+		"   %0 = insert(%2,%4)\n"
+		"   memw_locked(%3,p0) = %0\n"
+		"   if (!p0) jump 1b\n"
+		: "=&r"(t),"+m"(*word)
+		: "r"(val),"r"(word),"r"(x.insert_info)
+		: "p0");
+	return t;
+}
+
 #endif
 

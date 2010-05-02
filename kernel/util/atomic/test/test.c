@@ -15,6 +15,9 @@ void FAIL(const char *str)
 	exit(1);
 }
 
+#define MASKBITS(N) ((1<<(N))-1)
+#define INSERT(WORD,NEW,WIDTH,OFF) (((WORD) & (~((MASKBITS(WIDTH))<<(OFF)))) | (((NEW) & (MASKBITS(WIDTH))) << (OFF)))
+
 u32_t word;
 
 u32_t TH_atomic_setbit(u32_t *word, u32_t bit)
@@ -27,11 +30,23 @@ u32_t TH_atomic_clrbit(u32_t *word, u32_t bit)
 	return H2K_atomic_clrbit(word,bit);
 }
 
+u32_t TH_atomic_swap(u32_t *word, u32_t val)
+{
+	return H2K_atomic_swap(word,val);
+}
+
+u32_t TH_atomic_insert(u32_t *word, u32_t val, u32_t width, u32_t offset)
+{
+	return H2K_atomic_insert(word,val,width,offset);
+}
+
 int main()
 {
 	word = 0;
-	u32_t i;
+	u32_t i,j;
 	u32_t mask;
+	u32_t tmp;
+	u32_t last;
 
 	for (i = 0; i < 32; i++) {
 		mask = 0xFFFFFFFF>>(31-i);
@@ -52,7 +67,21 @@ int main()
 		if ((word & (1<<i)) != 0) FAIL("clrbit set bit");
 		if (word != mask) FAIL("Unexpected word value (d)");
 	}
-
+	last = word = 0;
+	for (i = 0; i < 32; i++) {
+		tmp = rand();
+		if (last != TH_atomic_swap(&word,tmp)) FAIL("Swap returned wrong val");
+		if (word != tmp) FAIL("Swap didn't set val");
+		last = tmp;
+	}
+	last = 0;
+	for (i = 0; i < 16; i++) {
+		for (j = 15; j > 0; j--) {
+			tmp = INSERT(word,0xcafe,i,j);
+			if (tmp != TH_atomic_insert(&word,0xcafe,i,j)) FAIL("Insert incorrect (ret)");
+			if (tmp != word) FAIL("Insert incorrect");
+		}
+	}
 	puts("TEST PASSED");
 	return 0;
 }

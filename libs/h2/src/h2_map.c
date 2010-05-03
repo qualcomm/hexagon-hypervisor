@@ -95,6 +95,7 @@ void *h2_map(void *va,size_t length,int prot,int flags,void *pa)
 		if (translations[i].high == 0) {
 			free=i;
 		}
+		//  TODO:  don't check if .high == 0?
 		if (intersects(&translations[i],aligned_vpn,page_size)) {
 			return NULL;
 		}
@@ -117,6 +118,7 @@ void h2_unmap(void *va)
 		if (translations[i].raw == 0) {
 			return;
 		}
+		//  TODO:  don't check if .high == 0?
 		if (intersects(&translations[i],(unsigned long) va, 4096)) {
 			translations[i].low = (unsigned long) &translations[i+1]; 
 			translations[i].high = 0;

@@ -7,6 +7,8 @@
 
 echo Note:  If this script hangs, make sure you don\'t have recursive symbolic links in your directories, e.g. tests/
 
+ls /usr2/rkuo/local/all/python2.5 > /dev/null
+
 export PATH=/usr/local/bin:/usr2/rkuo/local/all/python2.5:$PATH
 export PYTHONPATH=/usr2/rkuo/local/all/python2.5
 

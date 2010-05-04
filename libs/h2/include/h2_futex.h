@@ -15,6 +15,8 @@
 
 int h2_futex_wait(void *lock, int val);
 int h2_futex_wake(void *lock, int n_to_wake);
+int h2_futex_lock_pi(void *lock);
+int h2_futex_unlock_pi(void *lock);
 
 #endif
 

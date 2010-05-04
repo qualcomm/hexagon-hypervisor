@@ -238,12 +238,12 @@ FUNC_START H2K_traptab .text.event.trap0 .p2align 8
 		jump H2K_tid_get // 19
 	}
 	{
-		r0 = r7
-		jump H2K_thread_id // 20
+		r1 = r7
+		jump H2K_futex_lock_pi // 20
 	}
 	{
-		r0 = r7
-		jump H2K_thread_id // 21
+		r1 = r7
+		jump H2K_futex_unlock_pi // 21
 	}
 	{
 		r0 = r7

@@ -12,9 +12,7 @@ h2_config_add_thread_storage:
 		r1 = r0	// ptr
 		r2 = r1 // size
 		r0 = #0	// which one
-		allocframe(#0)
 	}
 	trap0(#H2_TRAP_CONFIG)
-	deallocframe
 	jumpr r31
 

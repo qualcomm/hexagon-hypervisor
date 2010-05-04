@@ -8,8 +8,6 @@
 	.text
 	.global h2_set_prefetch
 h2_set_prefetch:
-	allocframe(#0)
 	trap0(#H2_TRAP_SET_PREFETCH)
-	deallocframe
 	jumpr r31
 

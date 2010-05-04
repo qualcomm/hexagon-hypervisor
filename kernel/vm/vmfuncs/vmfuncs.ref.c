@@ -30,8 +30,8 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 
 void H2K_vmtrap_setvec(H2K_thread_context *me)
 {
-	me->gevb = (void *)((u32_t)(me->r0100));
-	me->r0100 = 0;
+	me->gevb = (void *)((u32_t)(me->r00));
+	me->r00 = 0;
 }
 void H2K_vmtrap_setie(H2K_thread_context *me)
 {
@@ -40,22 +40,23 @@ void H2K_vmtrap_setie(H2K_thread_context *me)
 	} else {
 		H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
 	}
+	/* Check to see if we should take an interrupt now */
 	me->r0100 = 0;
 }
 
 void H2K_vmtrap_getie(H2K_thread_context *me)
 {
-	me->r0100 = ((me->atomic_status_word & H2K_VMSTATUS_IE_BIT) != 0);
+	me->r00 = ((me->atomic_status_word & H2K_VMSTATUS_IE_BIT) != 0);
 }
 
 void H2K_vmtrap_swi(H2K_thread_context *me)
 {
-	H2K_vm_interrupt_post(me->vmblock,me->vmcpu,(u32_t)(me->r0100));
+	H2K_vm_interrupt_post(me->vmblock,me->vmcpu,(u32_t)(me->r00));
 }
 
 void H2K_vmtrap_iack(H2K_thread_context *me)
 {
-	H2K_vm_interrupt_enable(me->vmblock,(u32_t)(me->r0100));
+	H2K_vm_interrupt_enable(me->vmblock,(u32_t)(me->r00));
 }
 
 void H2K_vmtrap_setimask(H2K_thread_context *me)
@@ -77,10 +78,10 @@ void H2K_vmtrap_clrmap(H2K_thread_context *me)
 {
 	/* Invalidate HW/STLB entry */
 	u32_t va;
-	va = me->r0100;
+	va = me->r00;
 	H2K_mem_stlb_invalidate_va(va,me->ssr_asid,me);
 	H2K_mem_tlb_invalidate_va(va,me->ssr_asid,me);
-	me->r0100 = 0;
+	me->r00 = 0;
 }
 
 void H2K_vmtrap_register_ptb(H2K_thread_context *me)
@@ -88,50 +89,57 @@ void H2K_vmtrap_register_ptb(H2K_thread_context *me)
 	s32_t newasid;
 	u32_t newptb = me->r0100;
 	if ((newasid = H2K_asid_table_inc(newptb)) < 0) {
-		me->r0100 = -1;
+		me->r00 = -1;
 	} else {
 		H2K_asid_table_dec(me->ssr_asid);
 		me->ssr_asid = newasid;
+		me->r00 = 0;
 	}
 }
 
 void H2K_vmtrap_cachectl(H2K_thread_context *me)
 {
+	/* Do various cache control things */
 }
 
 void H2K_vmtrap_get_pcycles(H2K_thread_context *me)
 {
+	/* Return cputime? */
 }
 
 void H2K_vmtrap_set_pcycles(H2K_thread_context *me)
 {
+	/* Set accumulated pcycles to specified amount, and then set
+	 * oncpu_start to current pcycles */
 }
 
 void H2K_vmtrap_wait(H2K_thread_context *me)
 {
+	/* Wait for interrupt... or fall through if interrupts disabled and
+	 * something pending */
 }
 
 void H2K_vmtrap_yield(H2K_thread_context *me)
 {
 	H2K_sched_yield(me);
-	me->r0100 = 0;
+	me->r00 = 0;
 }
 
 void H2K_vmtrap_start(H2K_thread_context *me)
 {
 	/* Create, or just unblock? */
-	me->r0100 = 0;
+	me->r00 = 0;
 }
 
 void H2K_vmtrap_stop(H2K_thread_context *me)
 {
 	/* Destroy, or just make blocked? */
 	H2K_thread_stop(me);
-	me->r0100 = 0;
+	me->r00 = 0;
 }
 
 void H2K_vmtrap_vmpid(H2K_thread_context *me)
 {
-	me->r0100 = me->vmcpu;
+	me->r00 = me->vmcpu;
 }
 

@@ -65,9 +65,7 @@ h2_cond_signal_n:
 	{
 		if (p1) jumpr r31			// if nobody waiting, leave
 	}
-	allocframe(#0)
 	trap0(#H2_TRAP_FUTEX_WAKE)
-	deallocframe
 	jumpr r31
 
 	/* 

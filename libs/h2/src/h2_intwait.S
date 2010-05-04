@@ -12,6 +12,7 @@
 
 #include "h2_trap_constants.h"
 
+/* XXX FIXME: Deprecated */
 	.text
 	.global h2_intwait
 
@@ -19,8 +20,6 @@
 	 * Provide a mask.  Basically, we call trap and return.
 	 */
 h2_intwait:
-	allocframe(#0)
 	trap0(#H2_TRAP_INTWAIT)
-	deallocframe
 	jumpr r31
 

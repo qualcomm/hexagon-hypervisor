@@ -59,11 +59,8 @@ h2_sem_add:
 		if (p1) r1 = #1				// else wake 1
 		if (p0) r0 = r4
 	}
-	allocframe(#0)
 	trap0(#H2_TRAP_FUTEX_WAKE)
-	deallocframe
 	{
-		r0 = #0x1234
 		jumpr r31
 	}
 
@@ -132,12 +129,13 @@ h2_sem_down:
 	memw_locked(r0,p2) = r1			// set thread asleep
 	if (!p2) jump 1b			// not atomic, try again
 2:
-	allocframe(#8)				// OK, sleep.  r0=lock, r1=n_asleep:0
-	memd(r29+#0) = r1:0
+	{				// OK, sleep.  r0=lock, r1=n_asleep:0
+		memd(r29+#-8) = r1:0
+		r29 = add(r29,#-8)
+	}
 	trap0(#H2_TRAP_FUTEX_WAIT)
 	{
-		r1:0 = memd(r29+#0)
-		deallocframe
+		r1:0 = memd(r29++#8)
 		r5.h = #1
 	}
 	{

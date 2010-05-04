@@ -8,6 +8,7 @@
 	.text
 	.global h2_vmtrap_newptb
 	.global h2_vmtrap_clrmap
+	.global h2_vmtrap_setvec
 
 h2_vmtrap_setvec:
 	trap1(#H2_VMTRAP_SETVEC)

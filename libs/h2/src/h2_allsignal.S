@@ -59,9 +59,9 @@ h2_allsignal_wait:
 	{
 		if (p0) jumpr r31
 	}
-	allocframe(#8)
 	{
-		memd(r29) = r25:24
+		memd(r29+#-8) = r25:24
+		r29 = add(r29,#-8)
 		r25:24 = combine(r1,r0)
 		r1 = r2
 	}
@@ -76,10 +76,9 @@ h2_allsignal_wait:
 	}
 	{
 		r1:0 = combine(r25,r24)
-		r25:24 = memd(r29)
-		deallocframe
+		r25:24 = memd(r29++#8)
+		jumpr r31
 	}
-	jumpr r31
 
 	.global h2_allsignal_signal
 	/* 
@@ -109,16 +108,11 @@ h2_allsignal_signal:
 		if (!p0) jump 1b			// not atomic, try again
 		p0 = cmp.eq(r3,#0)			// all bits cleared?
 		if (p0.new) r1 = #1
-		r28 = add(r29,#-8)			// sp precalc 
 	}
 	{
 		if (!p0) jumpr r31			// nope, return
-		if (p0) memd(r28) = r31:30		// yes, allocframe
-		if (p0) r29 = r28
-		if (p0) r30 = r28
 	}
 	trap0(#H2_TRAP_FUTEX_WAKE)
-	deallocframe
 	jumpr r31
 2:
 	/* nobody is waiting on anything, so add to signals_in to be observed later */

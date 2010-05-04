@@ -12,8 +12,6 @@
 
 	.global h2_register_fastint
 h2_register_fastint:
-	allocframe(#0)
 	trap0(#H2_TRAP_REGISTER_FASTINT)
-	deallocframe
 	jumpr r31
 

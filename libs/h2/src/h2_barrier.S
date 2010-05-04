@@ -55,7 +55,7 @@
 	.p2align 4
 h2_barrier_wait:
 	{
-		allocframe(#8)
+		r29 = add(r29,#-8)
 		r5 = memw(r0+#4)		// get reset value
 	}
 1:
@@ -80,9 +80,7 @@ h2_barrier_wait:
 	}
 	trap0(#H2_TRAP_FUTEX_WAKE)
 	{
-		deallocframe
-	}
-	{
+		r29 = add(r29,#8)
 		r0 = #H2_BARRIER_SERIAL_THREAD
 		jumpr r31
 	}
@@ -108,10 +106,7 @@ h2_barrier_wait:
 		if (p0.new) jump:nt 1b		// spin again
 	}
 	{
-		deallocframe			// read fp:lr, adj sp
-		r25:24 = memd(r29+#0)		// read callee-save regs
-	}
-	{
+		r25:24 = memd(r29++#8)		// read callee-save regs
 		r0 = #H2_BARRIER_OTHER
 		jumpr r31
 	}

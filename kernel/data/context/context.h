@@ -141,7 +141,13 @@ typedef struct _h2_thread_context
 	u64_t r1918;	// OK FOR DCZEROA
 	u64_t r1716;
 	u64_t ugpgp;
-	u64_t r0100;	/* used for return value */
+	union {
+		u64_t r0100;	/* used for return value */
+		struct {
+			u32_t r00;
+			u32_t r01;
+		};
+	};
 	/* Context required for interrupts... everything else */
 	/* Note: Fast Interrupt contexts don't need these (can't be interrupted) */
 	// 160

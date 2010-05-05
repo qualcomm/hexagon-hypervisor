@@ -154,7 +154,7 @@ int pthread_create_internal(pthread_t * restrict thread, const pthread_attr_t * 
                                 );
         if (id == -1)
         {
-            _deinit_ltcb(ltcb->pthread);
+            _deinit_ltcb(ltcb->pthread);  //  this doesn't seem to make sense; if your thread_create fails, you won't have a ltcb to deallocate, so this just crashes you?
             (void) pthread_mutex_unlock(&pthreads_lock);
             return -1;
         }

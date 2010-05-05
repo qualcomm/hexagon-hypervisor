@@ -16,7 +16,7 @@ s32_t checker_ready()
 	u32_t i;
 	for (i = 0; i < MAX_PRIOS; i++) {
 		if (H2K_gp->ready_valids & (1<<i)) {
-			if (NULL == H2K_gp->ready[i]) FAIL("Valid bit clear but readylist null");
+			if (NULL == H2K_gp->ready[i]) FAIL("Valid bit set but readylist null");
 			checker_ring((H2K_ringnode_t *)H2K_gp->ready[i]);
 		} else {
 			if (H2K_gp->ready[i]) FAIL("valid bit clear but readylist non-null");

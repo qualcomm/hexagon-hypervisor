@@ -35,13 +35,13 @@ void H2K_vmtrap_setvec(H2K_thread_context *me)
 }
 void H2K_vmtrap_setie(H2K_thread_context *me)
 {
-	if (me->r0100 & 0x1) {
+	if (me->r00 & 0x1) {
 		H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
 	} else {
 		H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
 	}
 	/* Check to see if we should take an interrupt now */
-	me->r0100 = 0;
+	me->r00 = 0;
 }
 
 void H2K_vmtrap_getie(H2K_thread_context *me)
@@ -87,7 +87,7 @@ void H2K_vmtrap_clrmap(H2K_thread_context *me)
 void H2K_vmtrap_register_ptb(H2K_thread_context *me)
 {
 	s32_t newasid;
-	u32_t newptb = me->r0100;
+	u32_t newptb = me->r00;
 	if ((newasid = H2K_asid_table_inc(newptb)) < 0) {
 		me->r00 = -1;
 	} else {

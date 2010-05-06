@@ -46,11 +46,12 @@ void timer(int dummy)
 	info("Timer started\n");
 
 	for (i=0; i<SIGNAL_CNT; i++) {
+		info("Sending interrupt\n");
+		asm volatile("R0 = #1; swi(R0);":::"r0");	
 		for (j=0; j<1000; j++) {
 			asm volatile("nop;");
 		}
-		info("Sending interrupt\n");
-		asm volatile("R0 = #1; swi(R0);":::"r0");
+
 	}
 
 	h2_thread_stop();  //  weird things happen without this here.
@@ -88,8 +89,8 @@ int main()
 	h2_sem_down(&sem);
 
 	h2_register_fastint(TEST_INT,int2sig);
-	h2_thread_create(watcher,&stack_space[1],0,0,0xffffffff);  // stackgrowsup
 	h2_thread_create(timer,&stack_space[2],0,0,0xffffffff);
+	h2_thread_create(watcher,&stack_space[1],0,0,0xffffffff);  // stackgrowsup
 
 	for (i=0; i<WDOG_TIMEOUT; i++) {
 		for (j=0; j<1000; j++) {

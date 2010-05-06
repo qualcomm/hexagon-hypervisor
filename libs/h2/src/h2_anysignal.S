@@ -10,6 +10,7 @@
 	.text
 
 	.global h2_anysignal_wait
+	.p2align 5
 	/* 
 	 * h2_anysignal_wait(h2_signal_t *signal, unsigned int mask)
 	 * Wait for one of the signals specified in mask is set
@@ -21,6 +22,8 @@ h2_anysignal_wait:
 	{
 		r4 = memw(r0+#SIGNALS)		// get SIGNALS
 		memw(r0+#WAITING) = r1		// set WAITING
+		r2 = r0				// Prepare for abort-to-end clear of waiting bits
+		r3 = #0				// Prepare for abort-to-end clear of waiting bits
 	}
 	{
 		p0 = bitsclr(r4,r1)		// Are all WAITING bits clear in SIGNALS?

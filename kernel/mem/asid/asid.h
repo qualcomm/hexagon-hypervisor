@@ -15,7 +15,7 @@ typedef union {
 		u32_t ptb;
 		u16_t count;
 		u8_t maxhops;
-		u8_t unused;
+		u8_t transtype;
 	};
 } H2K_asid_entry_t;
 
@@ -25,6 +25,12 @@ s32_t H2K_asid_table_inc(u32_t ptb);
 void  H2K_asid_table_dec(u32_t asid);
 s32_t H2K_asid_table_invalidate(u32_t ptb);
 void  H2K_asid_table_init();
+
+enum {
+	H2K_ASID_TRANS_TYPE_LINEAR,
+	H2K_ASID_TRANS_TYPE_TABLE,
+	H2K_ASID_TRANS_TYPE_XXX_LAST
+};
 
 #endif
 

@@ -11,6 +11,8 @@
 #include <tlbfmt.h>
 #include <stlb.h>
 #include <linear.h>
+#include <pagewalk.h>
+#include <asid.h>
 
 #if __QDSP6_ARCH__ >= 4
 static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me) { return 0; }
@@ -45,12 +47,18 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 {
 	H2K_mem_tlbfmt_t entry;
 	u32_t asid = me->ssr_asid;
+	H2K_mem_tlbfmt_t (*trans_fn)(u32_t badva, H2K_thread_context *me);
 	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) return;
 		H2K_mem_tlb_insert(entry.raw,me);
 		return;
 	}
-	if ((entry = H2K_mem_translate_linear(va,me)).raw != 0) {
+	if (H2K_mem_asid_table[asid].transtype == H2K_ASID_TRANS_TYPE_LINEAR) {
+		trans_fn = H2K_mem_translate_linear;
+	} else {
+		trans_fn = H2K_mem_translate_pagetable;
+	}
+	if ((entry = trans_fn(va,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) return;
 		H2K_mem_stlb_add(va,asid,entry,me);
 		H2K_mem_tlb_insert(entry.raw,me);

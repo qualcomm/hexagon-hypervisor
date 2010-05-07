@@ -20,7 +20,7 @@ void FAIL(const char *str)
 #define TEST_THREADS	3
 
 #define SIGNAL_CNT	20
-#define WDOG_TIMEOUT	100
+#define WDOG_TIMEOUT	1000
 
 //  Should have a watchdog (main) thread, a timer thread, and a signal watcher thread
 
@@ -46,14 +46,13 @@ void timer(int dummy)
 	info("Timer started\n");
 
 	for (i=0; i<SIGNAL_CNT; i++) {
-		info("Sending interrupt\n");
-		asm volatile("R0 = #1; swi(R0);":::"r0");	
+		//info("Sending interrupt\n");
 		for (j=0; j<1000; j++) {
 			asm volatile("nop;");
 		}
-
+		asm volatile("R0 = #1; swi(R0);":::"r0");
+		//puts("tick");
 	}
-
 	h2_thread_stop();  //  weird things happen without this here.
 }
 
@@ -63,11 +62,11 @@ void watcher(int dummy)
 
 	while (1) {
 		h2_anysignal_wait(&int_sig, TEST_SIGMASK);
+		h2_anysignal_clear(&int_sig, TEST_SIGMASK);
 		//h2_sem_down(&sem);
 		//h2_mutex_lock(&mutex);
 		count++;
-		info("Got signal\n");
-		h2_anysignal_clear(&int_sig, TEST_SIGMASK);
+		//info("Got signal\n");
 	}
 }
 
@@ -89,8 +88,8 @@ int main()
 	h2_sem_down(&sem);
 
 	h2_register_fastint(TEST_INT,int2sig);
-	h2_thread_create(timer,&stack_space[2],0,0,0xffffffff);
 	h2_thread_create(watcher,&stack_space[1],0,0,0xffffffff);  // stackgrowsup
+	h2_thread_create(timer,&stack_space[2],0,0,0xffffffff);
 
 	for (i=0; i<WDOG_TIMEOUT; i++) {
 		for (j=0; j<1000; j++) {

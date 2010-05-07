@@ -6,7 +6,7 @@ endif
 
 all: libh2.a
 
-ALL_LIBS=h2/libh2.a qube/libqube.a syscall/angel/libangel.a blast/libblast.a #posix/libposix.a 
+ALL_LIBS=h2/libh2.a qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a 
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 	
@@ -30,7 +30,7 @@ h2/libh2.a: tmp
 	${MAKE_LIB};
 
 clean:
-	rm -rf tmp
+	rm -rf tmp libh2.a
 	for dir in $(dir ${ALL_LIBS}); do\
 		make -C $$dir clean;\
 	done;

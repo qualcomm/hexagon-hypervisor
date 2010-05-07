@@ -64,9 +64,10 @@ h2_pipe_t * h2_pipe_alloc(unsigned int size)
 	}
 	h2_sem_init_val(&ret->howfull, 0);
 	ret->size = datasize/sizeof(h2_pipe_data_t);
-	h2_sem_init_val(&ret->howempty, ret->size-1);
+	h2_sem_init_val(&ret->howempty, ret->size);
 	ret->sendidx = 0;
 	ret->recvidx = 0;
+	h2_mutex_init(&ret->sendmutex);
 	return ret;
 }
 
@@ -77,10 +78,11 @@ h2_pipe_t * h2_pipe_create(h2_pipe_t *pipe, h2_pipe_data_t *data, int data_eleme
 	if (data == NULL) return NULL;
 	pipe->size = data_elements;
 	h2_sem_init_val(&pipe->howfull,0);
-	h2_sem_init_val(&pipe->howempty,data_elements-1);
+	h2_sem_init_val(&pipe->howempty,data_elements);
 	pipe->sendidx = 0;
 	pipe->recvidx = 0;
 	pipe->data = data;
+	h2_mutex_init(&pipe->sendmutex);
 	return pipe;
 }
 
@@ -97,7 +99,7 @@ void h2_pipe_send(h2_pipe_t *pipe, h2_pipe_data_t data)
 	h2_sem_down(&pipe->howempty);
 	h2_mutex_lock(&pipe->sendmutex);
 	oldidx = pipe->sendidx;
-	pipe->sendidx = ((oldidx == size) ? 0 : oldidx+1);
+	pipe->sendidx = ((oldidx == (size-1)) ? 0 : oldidx+1);
 	pipe->data[oldidx] = data;
 	h2_mutex_unlock(&pipe->sendmutex);
 	h2_sem_up(&pipe->howfull);
@@ -113,7 +115,7 @@ int h2_pipe_trysend(h2_pipe_t *pipe, h2_pipe_data_t data)
 		return 0;
 	}
 	oldidx = pipe->sendidx;
-	pipe->sendidx = ((oldidx == size) ? 0 : oldidx+1);
+	pipe->sendidx = ((oldidx == (size-1)) ? 0 : oldidx+1);
 	pipe->data[oldidx] = data;
 	h2_mutex_unlock(&pipe->sendmutex);
 	h2_sem_up(&pipe->howfull);

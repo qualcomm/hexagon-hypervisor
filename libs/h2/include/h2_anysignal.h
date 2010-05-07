@@ -14,7 +14,9 @@ typedef union {
 	};
 } h2_anysignal_t;
 
-static inline void h2_anysignal_init(h2_anysignal_t *signal) { signal->raw = 0; };
+#define H2_ANYSIGNAL_T_INIT { 0 }
+
+static inline void h2_anysignal_init(h2_anysignal_t *signal) { h2_anysignal_t temp = H2_ANYSIGNAL_T_INIT; *signal = temp; };
 unsigned int h2_anysignal_wait(h2_anysignal_t *signal, unsigned int mask);
 unsigned int h2_anysignal_set(h2_anysignal_t *signal, unsigned int mask);
 static inline unsigned int h2_anysignal_get(h2_anysignal_t *signal) { return signal->signals; };

@@ -199,10 +199,10 @@ u32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	H2K_thread_context *ret;
 	H2K_thread_context **ring;
 	H2K_thread_context *pos;
-	ring = &H2K_gp->futexhash[hashval];
-	pos = *ring;
 	/* Lock */
 	BKL_LOCK();
+	ring = &H2K_gp->futexhash[hashval];
+	pos = *ring;
 	/* Get best thread */
 	ret = H2K_futex_hash_remove_one(lock,ring,&pos);
 	if (ret == NULL) {

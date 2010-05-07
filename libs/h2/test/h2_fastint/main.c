@@ -20,7 +20,7 @@ void FAIL(const char *str)
 #define TEST_THREADS	3
 
 #define SIGNAL_CNT	20
-#define WDOG_TIMEOUT	1000
+#define WDOG_TIMEOUT	300
 
 //  Should have a watchdog (main) thread, a timer thread, and a signal watcher thread
 
@@ -51,7 +51,7 @@ void timer(int dummy)
 			asm volatile("nop;");
 		}
 		asm volatile("R0 = #1; swi(R0);":::"r0");
-		//puts("tick");
+		puts("tick");
 	}
 	h2_thread_stop();  //  weird things happen without this here.
 }
@@ -66,7 +66,7 @@ void watcher(int dummy)
 		//h2_sem_down(&sem);
 		//h2_mutex_lock(&mutex);
 		count++;
-		//info("Got signal\n");
+		puts("Got signal");
 	}
 }
 

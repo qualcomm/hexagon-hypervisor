@@ -244,6 +244,7 @@ FUNC_START H2K_interrupted_waitmode .text.event.interrupt .falign
 	{
 		callr r4
 	}
+	k0lock
 	{
 		r1:0 = combine(#0,#0)
 		jump H2K_switch

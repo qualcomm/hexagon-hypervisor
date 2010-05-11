@@ -188,6 +188,7 @@ FUNC_START H2K_interrupted_waitmode .text.event.interrupt .p2align 2
 	callr r4
 	r0 = #0
 	r1 = #0
+	k0lock
 	jump H2K_switch
 
 .Lint_jump_stub:

@@ -71,8 +71,11 @@ ${H2DIR}/install:
 	cd ${H2DIR};\
 	make ${MODEL} ARCHV=${ARCHV}
 
-
+# (_8^(|)  d'oh!
+#  Need to tell people to stop using this one and use 'prepare'
 libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
+
+prepare: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
 
 clean_libs:
 	cd ${H2DIR};\
@@ -82,16 +85,18 @@ clean_libs:
 #  Standard compilation flags
 ################################################################################
 
+CFLAGS +=${OSLIB} -O1 -mv${ARCHV} -DARCHV=${ARCHV} -Wall 
 ifdef STANDALONE
+CFLAGS += -I ${H2DIR}/kernel/include
 else
 OSLIB=-moslib=h2
 LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
+CFLAGS += -I ${H2DIR}/install/include
 endif
 LDFLAGS+= -mv${ARCHV}
 #  Turn on call() support for assertion checking
 #CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.
-CFLAGS +=${OSLIB} -O1 -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 
 

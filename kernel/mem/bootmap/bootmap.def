@@ -38,6 +38,15 @@ MEMORY_MAP(	1,	0,	0x3d000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3d000)
 MEMORY_MAP(	1,	0,	0x3e000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3e000)
 MEMORY_MAP(	1,	0,	0x3f000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3f000)
 
+
+/*  Modem FW hardware  */
+MEMORY_MAP(     1,              0,      0xab000,        RWX,            UC,             SIZE_16M,       MAIN,   0xab000)	// ADSP_REG
+MEMORY_MAP(     1,              0,      0xb0000,        RW,             UC,             SIZE_16M,       MAIN,   0xb0000)        // HW_MODEM
+MEMORY_MAP(     1,              0,      0xb2000,        RW,             UC,             SIZE_16M,       MAIN,   0xb2000)        // HW_MODEM
+MEMORY_MAP(     1,              0,      0xb3000,        RW,             UC,             SIZE_16M,       MAIN,   0xb3000)        // HW_MODEM
+MEMORY_MAP(     1,              0,      0xb4000,        RW,             UC,             SIZE_16M,       MAIN,   0xb4000)        // HW_MODEM
+MEMORY_MAP(     1,              0,      0xb5000,        RW,             UC,             SIZE_16M,       MAIN,   0xb5000)        // HW_MODEM
+
 #if __QDSP6_ARCH__ >= 4
 MEMORY_MAP(	1,	0,	0x60000,	RWX,		L1WB_L2CWB_STREAM, SIZE_16M,	MAIN,	0x60000)
 MEMORY_MAP(	1,	0,	0x61000,	RWX,		L1WB_L2CWB_STREAM, SIZE_16M,	MAIN,	0x61000)
@@ -59,4 +68,6 @@ MEMORY_MAP(     1,      0,      0xd8010,        RWX,            L1WB_L2C,      S
 
 
 MEMORY_MAP(     1,      0,      0xc0000,        RWX,            L1WB_L2C,      SIZE_64K,       MAIN,	0xc0000)	// for h264: imem
+
+
 

@@ -28,7 +28,8 @@ s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapma
 	if (prio > MAX_PRIO) return -1;        // bad prio
 	if ((sp & 7) != 0) return -1;           // bad stack pointer alignment
 	if ((pc & 3) != 0) return -1;           // bad pc alignment
-	if (prio < me->base_prio) return -1;	// can't spawn higher-priority children
+//	Leave this check off for now
+//	if (prio < me->base_prio) return -1;	// can't spawn higher-priority children
 	BKL_LOCK(&H2K_bkl);
 	if (H2K_gp->free_threads == NULL) {
 		BKL_UNLOCK(&H2K_bkl);

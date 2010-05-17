@@ -3,7 +3,7 @@ LIBNAME=posix
 CC = qdsp6-gcc -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../blast/include
 AR = qdsp6-ar
 
-CFLAGS = -g -O2 -G0
+CFLAGS = -g -O1 -G0
 
 export BLAST_LIB_INCLUDE=$(shell pwd)/include
 

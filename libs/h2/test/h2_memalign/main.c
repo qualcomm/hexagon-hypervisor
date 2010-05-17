@@ -21,10 +21,14 @@ int main()
 	void *ptr;
 	h2_init(0x0);
 
-	ptr = h2_memalign(64,64);
+	ptr = h2_memalign(32,100);
 
 	info("ptr_value = 0x%08x\n",ptr);
-
-	info("Test passed\n");
+	if (ptr == NULL) {
+		error("Test failed\n");
+	}
+	else {
+		info("Test passed\n");
+	}
 	return(0);
 }

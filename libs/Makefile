@@ -46,15 +46,13 @@ libh2.a:   ${ALL_LIBS}
 #  Also, /pkg/gnu/bin/tar doesn't seem to work right.
 
 install: libh2.a
-	mkdir -p ../install/lib;
-	mkdir -p ../install/include;
-	cp $< ../install/lib;
-	OWD=`pwd`;\
+	mkdir -p $(INSTALLPATH)/lib;
+	mkdir -p $(INSTALLPATH)/include;
+	cp $< $(INSTALLPATH)/lib;
 	for dir in $(dir ${ALL_LIBS}); do\
 		pushd $$dir/include;\
-		/bin/tar cf - * | /bin/tar xvf - -C $$OWD/../install/include --exclude '*CVS*';\
+		/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
 		popd;\
 	done;
-
 
 

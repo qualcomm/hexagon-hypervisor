@@ -3,6 +3,10 @@ ifeq ($(ARCHV),)
 ARCHV=3
 endif
 
+ifeq ($(INSTALLPATH),)
+export INSTALLPATH := $(PWD)/install
+endif
+
 clean:
 	make -C kernel ARCHV=$(ARCHV) clean
 	make -C libs ARCHV=$(ARCHV) clean

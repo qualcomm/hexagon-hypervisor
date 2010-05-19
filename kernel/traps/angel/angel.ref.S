@@ -8,7 +8,7 @@
 #include <max.h>
 #include <vmdefs.h>
 
-#if 0
+#if 1
 FUNC_START H2K_trap_angel .text.event.trap0 .p2align 2
         jumpr r31
         .size BLASK_trap_angel, .-H2K_trap_angel

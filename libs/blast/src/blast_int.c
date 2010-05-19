@@ -13,28 +13,22 @@
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 
+#define SIRC_COUNT	6
+
 //  Modem FW uses this, so use this for incoming registrations/deregs
 //  SIRC0 starts at 768, SIRC1 starts at 800.
-
 #define HW_IRQ_SIRC(sirc,idx) ((24+sirc)*32 + idx)
 
-//  Uh, BLAST config indicates 24, but FW RTOS indicates 23 (see modem/fw/target/inc/hw_irq.h)
-//  Gonna go with BLAST config.
-
 #define SIRC0_L1_INT 24
-#define SIRC1_L1_INT 25
+#define SIRC_TO_L1_INT(SIRC)	(SIRC0_L1_INT + SIRC)
 
-//  SIRC0 base address = 0xab010000
-//  SIRC1 base address = 0xab010400
-//  l;asdkjfl;kasdfkl;asjdf simulation shows controller is actually 0xb4090000
-
-//  See:  config/sim/blast_config.c
 #define SIRC0_BASE		0xb4090000
-#define SIRC1_BASE		0xb4090400
-#define SIRC0_IRQ_TYPE		0xffffffff
-#define SIRC1_IRQ_TYPE		0xffffffff
-#define SIRC0_IRQ_POLARITY	0x00000000
-#define SIRC1_IRQ_POLARITY	0x00000000
+#define SIRC_BASE_OFFSET	0x400
+#define SIRC_TO_IO_BASE(SIRC)	(SIRC0_BASE + SIRC*SIRC_BASE_OFFSET)
+
+//  Can probably be discarded after init, unless we do some crazy runtime re-initialization
+unsigned long SIRC_IRQ_TYPE[SIRC_COUNT] =	{ 0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff,0xffffffff };
+unsigned long SIRC_IRQ_POLARITY[SIRC_COUNT] =	{ 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000 };
 
 #define L2_INT_ENABLE_OFFSET		0x00
 #define L2_INT_ENABLE_CLEAR_OFFSET	0x04
@@ -47,10 +41,9 @@
 #define L2_IRQ_PENDING_OFFSET		0x20
 
 #define SIRC0_HANDLER_BASE 32
-#define SIRC1_HANDLER_BASE 64
+#define SIRC_TO_HANDLER_BASE(SIRC)	(SIRC0_HANDLER_BASE + SIRC*32)
 
-//  So I'm guessing let's do 32 for L1, 32 for SIRC0 and 32 for SIRC1 for now.
-#define MAX_SYS_INTERRUPTS 96
+#define MAX_SYS_INTERRUPTS (MAX_INTERRUPTS + 32 * SIRC_COUNT)
 
 /*  
 
@@ -90,17 +83,42 @@ void blast_dummy(int intnum)
 
 void l2_controller_init(void) 
 {
-	io_write_32(SIRC0_BASE,L2_INT_ENABLE_OFFSET,0x0);
-	io_write_32(SIRC0_BASE,L2_INT_ENABLE_CLEAR_OFFSET,0xffffffff);
-	io_write_32(SIRC0_BASE,L2_INT_TYPE_OFFSET,SIRC0_IRQ_TYPE);
-	io_write_32(SIRC0_BASE,L2_INT_POLARITY_OFFSET,SIRC0_IRQ_POLARITY);
-	io_write_32(SIRC0_BASE,L2_INT_CLEAR_OFFSET,0xffffffff);
+	unsigned long i;
 
-	io_write_32(SIRC1_BASE,L2_INT_ENABLE_OFFSET,0x0);
-	io_write_32(SIRC1_BASE,L2_INT_ENABLE_CLEAR_OFFSET,0xffffffff);
-	io_write_32(SIRC1_BASE,L2_INT_TYPE_OFFSET,SIRC1_IRQ_TYPE);
-	io_write_32(SIRC1_BASE,L2_INT_POLARITY_OFFSET,SIRC1_IRQ_POLARITY);
-	io_write_32(SIRC1_BASE,L2_INT_CLEAR_OFFSET,0xffffffff);
+	for (i=0; i<SIRC_COUNT; i++) {
+		io_write_32(SIRC_TO_IO_BASE(i),L2_INT_ENABLE_OFFSET,0x0);
+		io_write_32(SIRC_TO_IO_BASE(i),L2_INT_ENABLE_CLEAR_OFFSET,0xffffffff);
+		io_write_32(SIRC_TO_IO_BASE(i),L2_INT_TYPE_OFFSET,SIRC_IRQ_TYPE[i]);
+		io_write_32(SIRC_TO_IO_BASE(i),L2_INT_POLARITY_OFFSET,SIRC_IRQ_POLARITY[i]);
+		io_write_32(SIRC_TO_IO_BASE(i),L2_INT_CLEAR_OFFSET,0xffffffff);
+	}
+}
+
+int map_fw_to_sirc(int intnum) 
+{
+	/*  Probably should do something more intelligent than this  */
+	if (intnum < MAX_INTERRUPTS) {
+		// This is fatal/assertion territory
+		return -1;
+	}
+	else if (intnum < HW_IRQ_SIRC(1,0)) {
+		return 0;
+	}
+	else if (intnum < HW_IRQ_SIRC(2,0)) {
+		return 1;
+	}
+	else if (intnum < HW_IRQ_SIRC(3,0)) {
+		return 2;
+	}
+	else if (intnum < HW_IRQ_SIRC(4,0)) {
+		return 3;
+	}
+	else if (intnum < HW_IRQ_SIRC(5,0)) {
+		return 4;
+	}
+	else {
+		return 5;
+	}
 }
 
 //  Query the L2 interrupt controller for the particular interrupt, 
@@ -109,64 +127,40 @@ void l2_controller_init(void)
 void blast_sirc_fastint(int intnum)
 {
 	volatile void *hw_reg=NULL; 
-	int handler_base=0;
 	unsigned long status;
+	unsigned int sirc = map_fw_to_sirc(intnum);
 
-	//  map L1 intnum to SIRC
-	switch (intnum) {
-		case(SIRC0_L1_INT):
-			hw_reg = (void *) SIRC0_BASE;
-			handler_base = SIRC0_HANDLER_BASE;
-			break;
-		case(SIRC1_L1_INT):
-			hw_reg = (void *) SIRC1_BASE;
-			handler_base = SIRC1_HANDLER_BASE;
-			break;
-		default:
-			h2_printf("bad interrupt, no donut\n");
-	}
 	//  So I guess I'm basically going to do everything here that interrupt_asm.S in BLAST did
 
 	status = io_read_32(hw_reg,L2_IRQ_STATUS_OFFSET);
 	//  might do it all in one shot instead of one interrupt at a time.
 	do {
 		intnum = Q6_R_ct0_R(status);					//  interrupt number in the L2 controller
-		io_write_32(hw_reg,L2_INT_ENABLE_CLEAR_OFFSET,1<<intnum);	//  disable int
+		io_write_32(SIRC_TO_IO_BASE(sirc),L2_INT_ENABLE_CLEAR_OFFSET,1<<intnum);	//  disable int
+		io_write_32(SIRC_TO_IO_BASE(sirc),L2_INT_CLEAR_OFFSET,1<<intnum);	//  clear int status
+		io_write_32(SIRC_TO_IO_BASE(sirc),L2_INT_ENABLE_SET_OFFSET,1<<intnum);	//  enable interrupt
 
-		io_write_32(hw_reg,L2_INT_CLEAR_OFFSET,1<<intnum);	//  clear int status
-		io_write_32(hw_reg,L2_INT_ENABLE_SET_OFFSET,1<<intnum);	//  enable interrupt
-
-		blast_int2signal(handler_base + intnum);  //  might could use return value
+		blast_int2signal(SIRC_TO_HANDLER_BASE(sirc) + intnum);  //  might could use return value
 
 		status = io_read_32(hw_reg,L2_IRQ_STATUS_OFFSET);	//  check status again
 	} while (status);
 
 }
 
-int map_fw_to_h2(int intnum)
-{
-	if (intnum < MAX_INTERRUPTS) {
-		return intnum;
-	}
-	else if (intnum < HW_IRQ_SIRC(1,0)) {
-		return (intnum - HW_IRQ_SIRC(0,0)) + SIRC0_HANDLER_BASE;
-	}
-	else {
-		return (intnum - HW_IRQ_SIRC(1,0)) + SIRC1_HANDLER_BASE;
-	}
-}
-
 int blast_register_interrupt(int int_num, 
 	h2_anysignal_t *int_signal, int signal_mask)
 {
-	//h2_printf("%s:  int num=%d\n",__FUNCTION__,int_num);
+	unsigned int sirc;
 
 	if (unlikely(int_num == RESCHED_INT)) {
 		return 1;
 	}  
 
-	int_num = map_fw_to_h2(int_num);
-	//h2_printf("%s:  h2 int_num %d\n",__FUNCTION__,int_num);
+	if (int_num >= MAX_INTERRUPTS) {
+		sirc = map_fw_to_sirc(int_num);
+		//  bring the intnum down from outer space and into our space
+		int_num = int_num - HW_IRQ_SIRC(sirc,0) + SIRC_TO_HANDLER_BASE(sirc);
+	}  //  L2 interrupt registration
 
 	if (int_num >= MAX_SYS_INTERRUPTS) { 
 		return 1;
@@ -185,17 +179,10 @@ int blast_register_interrupt(int int_num,
 		if (int_num < MAX_INTERRUPTS) {
 			h2_register_fastint(int_num,blast_int2signal);
 		}
-		else if (int_num < SIRC1_HANDLER_BASE) {
-			//h2_printf("%s: registered SIRC0 int_num=%d\n",__FUNCTION__,int_num-SIRC0_HANDLER_BASE);
-			h2_register_fastint(SIRC0_L1_INT,blast_sirc_fastint);
-			io_write_32(SIRC0_BASE,L2_INT_ENABLE_SET_OFFSET,1<<(int_num - SIRC0_HANDLER_BASE));
+		else {
+			h2_register_fastint(SIRC_TO_L1_INT(sirc),blast_sirc_fastint);
+			io_write_32(SIRC_TO_IO_BASE(sirc),L2_INT_ENABLE_SET_OFFSET,1<<(int_num - SIRC_TO_HANDLER_BASE(sirc)));
 		}  
-		else {  
-			//h2_printf("%s: registered SIRC1 int_num=%d\n",__FUNCTION__,int_num-SIRC1_HANDLER_BASE);
-			h2_register_fastint(SIRC1_L1_INT,blast_sirc_fastint);
-			io_write_32(SIRC1_BASE,L2_INT_ENABLE_SET_OFFSET,1<<(int_num - SIRC1_HANDLER_BASE));
-
-		}
 		return 0;
 	}
 	return 1;
@@ -203,11 +190,20 @@ int blast_register_interrupt(int int_num,
 
 unsigned int blast_deregister_interrupt(int int_num)
 {
+	unsigned long sirc;
 	h2_anysignal_set(int_sigsets[int_num].signal_ptr,1<<SIGNAL_INT_ABORT);
+	//  May need to make this atomic or use a lock or something
+	if (int_num < MAX_INTERRUPTS) {
+		h2_register_fastint(int_num,blast_dummy);
+		//  need a trap to mask the L1 interrupt
+	}
+	else {
+		sirc = map_fw_to_sirc(int_num);
+		int_num = int_num - HW_IRQ_SIRC(sirc,0) + SIRC_TO_HANDLER_BASE(sirc);
+		io_write_32(SIRC_TO_IO_BASE(sirc),L2_INT_ENABLE_CLEAR_OFFSET,0xffffffff);
+	}
 	//  wouldn't need to do this if code didn't check it in the first place
 	int_sigsets[int_num].signal_ptr = 0;  
-	//h2_printf("%s actually called\n",__FUNCTION__);
-	h2_register_fastint(int_num,blast_dummy);
 	return 0;
 }
 

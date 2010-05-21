@@ -8,7 +8,7 @@ CFLAGS = -g -O2 -G0
 export BLAST_LIB_INCLUDE=$(shell pwd)/include
 
 ASM_FILES = src/blast_lifo.S 
-C_FILES = src/blast_fd.c src/blast_int.c
+C_FILES = src/blast_fd.c src/blast_int.c src/blast_tls.c
 
 O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 

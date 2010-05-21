@@ -10,7 +10,7 @@
 
 #include <blast_fd.h>
 #define RENAME_PREFIX blast
-#include <rename.h>
+#include <h2_rename.h>
 #undef RENAME_PREFIX
 
 //  Signal used to indicate to anybody waiting for an interrupt that
@@ -43,12 +43,12 @@ static inline void blast_thread_exit(int status)
 	h2_thread_stop();
 }
 
-static inline void blast_rmutex_destroy(h2_mutex_t *lock)
+static inline void blast_rmutex_destroy(blast_rmutex_t *lock)
 {
 	return;
 }
 
-static inline void blast_mutex_destroy(h2_mutex_t *lock)
+static inline void blast_mutex_destroy(blast_mutex_t *lock)
 {
 	return;
 }
@@ -88,12 +88,12 @@ static inline void blast_thread_set_name(unsigned long long name0,
 	return;
 }
 
-static int blast_prio_get(unsigned int threadid)
+static inline int blast_prio_get(unsigned int threadid)
 {
 	return -1; 
 }
 
-static int blast_prio_set(unsigned int threadid,unsigned int newprio)
+static inline int blast_prio_set(unsigned int threadid,unsigned int newprio)
 {
 	return h2_set_prio(threadid,newprio);
 }
@@ -112,6 +112,8 @@ static inline void blast_exit(int status)
 {
 	exit(status);
 }
+
+void blast_deregister_fastint(int intno);
 
 //  Not really a part of the BLAST API, but it needs to happen somewhere.
 void l2_controller_init(void);

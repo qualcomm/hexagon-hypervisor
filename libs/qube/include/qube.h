@@ -12,6 +12,7 @@
 #include <qmsgq.h>
 #include <qmutex.h>
 #include <qmemory.h>
+#include <qthread.h>
 
 #ifdef __cplusplus
 extern "C" {

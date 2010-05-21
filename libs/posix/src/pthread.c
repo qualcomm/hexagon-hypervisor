@@ -15,9 +15,6 @@ extern void * __attribute__((weak)) rex_create_fake_tcb(void* sp, size_t siz);
 
 #define BLAST_INIT_ID                       0xFEFEFEFE
 
-/*  Not present in tools errno.h  */
-#define EOK 0
-
 /*  I think this is a "big pthreads subsystem lock"  */
 pthread_mutex_t pthreads_lock = PTHREAD_MUTEX_INITIALIZER; 
 
@@ -33,8 +30,7 @@ static void* _pthread_stub(pthread_i *ltcb)
 	//blast_thread_set_tid(ltcb->attr.timetest_id);
     
 	/* set pthread tcb into blast tls */
-	//blast_tls_setspecific(pthread_tcb_key, (const void *)ltcb);
-	_allocltcb((void *)ltcb,blast_thread_myid());
+	blast_tls_setspecific(pthread_tcb_key, (const void *)ltcb);
     
 	/* set thread name */
 	memcpy(&name0, ltcb->attr.name, 8);
@@ -172,8 +168,7 @@ int pthread_create_internal(pthread_t * restrict thread, const pthread_attr_t * 
         //blast_thread_set_tid(ltcb->attr.timetest_id);
         
         /* set pthread tcb into blast tls */
-        //blast_tls_setspecific(pthread_tcb_key, (const void *)ltcb);
-        _allocltcb((void *)ltcb,id);
+        blast_tls_setspecific(pthread_tcb_key, (const void *)ltcb);
 
         /* set thread name */
         memcpy(&name0, ltcb->attr.name, 8);
@@ -223,7 +218,7 @@ void pthread_exit(void *value_ptr)
 //    }
 
     ltcb->exitstatus = (int) value_ptr;
-    //blast_anysignal_destroy(&ltcb->sigs);
+    blast_anysignal_destroy(&ltcb->sigs);
 
     /* sem_post on join_lock. TBD: post sem for multiple threads */
     blast_sem_up(&ltcb->join_lock);
@@ -277,10 +272,9 @@ int pthread_cancel(pthread_t thread)
 
 pthread_t pthread_self(void)
 {
-    pthread_i *ltcb;
-	//
-	_getltcb_self(&ltcb);
-    //ltcb = (pthread_i*)blast_tls_getspecific(pthread_tcb_key);
+    pthread_i* ltcb;
+    ltcb = (pthread_i*)blast_tls_getspecific(pthread_tcb_key);
+
     return ltcb->pthread;
 }
 

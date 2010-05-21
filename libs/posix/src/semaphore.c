@@ -8,8 +8,6 @@
 #include <blast.h>
 #include <semaphore.h>
 
-#define ERROR_CHECK(c, r)    if (c) { errno = (r); return -1; }
-
 /*****************************************************************************
 * Initialize an unamed semaphore
 *****************************************************************************/
@@ -17,23 +15,42 @@ int sem_init(sem_t *__sem, int __pshared, unsigned int __sval)
 {
     blast_sem_t *p_sem_obj;
 
-    ERROR_CHECK(__sem == NULL, EINVAL);               // ensure validity of the pointer
-    ERROR_CHECK(__sval > SEM_VALUE_MAX, EINVAL);      // ensure sem value is greater than 0
-    ERROR_CHECK(__pshared != 0, ENOSYS);              // support only Thread shared sem
+    /* ensure validity of the pointer */
+    if (__sem == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+
+    /* ensure sem value is greater than 0 */
+    if (__sval > SEM_VALUE_MAX)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+
+    /* support only Thread shared sem */
+    if (__pshared != 0)
+    {
+        errno = ENOSYS; 
+        return -1;    
+    }
 
     // Allocate space on the heap for this sem object
     p_sem_obj = (blast_sem_t*) malloc(sizeof(blast_sem_t));
-    ERROR_CHECK((p_sem_obj == NULL), EINVAL);
+    if (p_sem_obj == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+    
     memset(p_sem_obj, 0, sizeof(blast_sem_t));
-
     blast_sem_init_val(p_sem_obj, __sval);
 
     // Update __sem with pointer address
     *__sem = (sem_t) p_sem_obj;
     return 0;
 }
-
-#define ERROR_CHECK1(c, r)    if (c) { errno = (r); goto exit; }
 
 /*****************************************************************************
 * Wait for a semaphore (blocking)
@@ -42,7 +59,20 @@ int sem_wait(sem_t *__sem)
 {
     blast_sem_t *p_sem_obj;
 
+    /* ensure validity of the pointer */
+    if (__sem == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+
     p_sem_obj = (blast_sem_t*) *__sem;
+    if (p_sem_obj == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+    
     //FIXME: will check the return value of this function when it is clarified by BLAST team.
     blast_sem_down(p_sem_obj);
     return 0;
@@ -55,7 +85,20 @@ int sem_trywait(sem_t *__sem)
 {
     blast_sem_t *p_sem_obj;
 
+    /* ensure validity of the pointer */
+    if (__sem == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+
     p_sem_obj = (blast_sem_t*) *__sem;
+    if (p_sem_obj == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+    
     return blast_sem_trydown(p_sem_obj);
 }
 
@@ -66,7 +109,20 @@ int sem_post(sem_t *__sem)
 {
     blast_sem_t *p_sem_obj;
 
+    /* ensure validity of the pointer */
+    if (__sem == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+
     p_sem_obj = (blast_sem_t*) *__sem;
+    if (p_sem_obj == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+    
     //FIXME: will check the return value of this function when it is clarified by BLAST team.
     blast_sem_up(p_sem_obj);
     return 0;
@@ -77,9 +133,24 @@ int sem_post(sem_t *__sem)
 *****************************************************************************/
 int sem_getvalue(sem_t *__sem, int *__sval)
 {
-    //UNSUPPORTED
-    errno = EINVAL;
-    return(-1);
+    blast_sem_t *p_sem_obj;
+    
+    /* ensure validity of the pointer */
+    if (__sem == NULL || __sval == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+
+    p_sem_obj = (blast_sem_t*) *__sem;
+    if (p_sem_obj == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
+    
+    *__sval = (int)blast_sem_get_val(p_sem_obj);
+    return 0;
 }
 
 /*****************************************************************************
@@ -89,13 +160,21 @@ int sem_destroy(sem_t *__sem)
 {
     blast_sem_t *p_sem_obj;
 
-    ERROR_CHECK(__sem == NULL, EINVAL);  // ensure validity of the pointer
+    /* ensure validity of the pointer */
+    if (__sem == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
 
     p_sem_obj = (blast_sem_t *) *__sem;
-    ERROR_CHECK(p_sem_obj == NULL, EINVAL);
+    if (p_sem_obj == NULL)
+    {
+        errno = EINVAL; 
+        return -1;    
+    }
 
-    //FIXME: call blast funciotn to delete sem. Not available now
-
+    blast_sem_destroy(p_sem_obj);
     free(p_sem_obj);
     *__sem = 0;
     return 0;

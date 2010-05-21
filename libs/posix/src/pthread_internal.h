@@ -6,7 +6,8 @@
 #ifndef _PTHREAD_INTERNAL_H_
 #define _PTHREAD_INTERNAL_H_
 
-//#include <blast_tls.h>
+#include <blast.h>
+#include <blast_tls.h>
 #include <blast_fd.h>
 #include <errno.h>
 #include <signal.h>
@@ -86,6 +87,5 @@ int  _getltcb(pthread_i **ltcb, pthread_t thr);
 void _deinit_ltcb(pthread_t thr);
 int *_geterrnoaddr(void);
 int  _getltcb_self(pthread_i **ltcb);
-int _allocltcb(pthread_i *ltcb, pthread_t pthreadid);
 
 #endif /* _PTHREAD_INTERNAL_H_ */

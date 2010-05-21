@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <common/time.h>
 
+int _posix_init(void);
+
 /* the range of the set supported by the kernel data type used to represent 
 CPU sets. Should get from BLAST header file */
 #define CONFIG_NR_CPUS 0x3F

@@ -453,6 +453,8 @@ int pselect(int nfds, fd_set *restrict readfds,
             fd = selected_mqs[index++] = bit+(i<<5); /* i<<5 == i*32 */;
             if (mqlist_msg_exists(fd, thread, priority))
             {
+                /* clear the bit in select_mask to avoid later mismatch between select_mask and mq status */
+                FD_CLR(fd, ltcb->select_mask); 
                 FD_SET(fd, &returnfds);
                 total_fds++;
             }            
@@ -532,15 +534,24 @@ int pselect(int nfds, fd_set *restrict readfds,
             {
                 blast_anysignal_clear(&ltcb->sigs, POSIX_MQ_NOTIF_MASK);
             
-                /* search for the first queue with message */
+                /* search for the all queues for message */
                 index = 0;
                 while((fd=selected_mqs[index++]) || index == MAX_MQ_PER_THREAD)
                 {
                     if (FD_ISSET(fd, ltcb->select_mask))
                     {
-                        total_fds++;
-                        FD_CLR(fd, ltcb->select_mask);
-                        FD_SET(fd, readfds);
+                        if (mqlist_msg_exists(fd, 0, 0))
+                        {
+                            /* now we really got a msg */
+                            total_fds++;
+                            FD_CLR(fd, ltcb->select_mask);
+                            FD_SET(fd, readfds);                            
+                        }
+                        else                        
+                        {
+                            /* we got an false signal and select_mask, ignore it */
+                            FD_CLR(fd, ltcb->select_mask);                            
+                        }
                     }
                 }
 

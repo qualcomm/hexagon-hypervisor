@@ -21,8 +21,10 @@
 
 #define SIRC0_L1_INT 24
 #define SIRC_TO_L1_INT(SIRC)	(SIRC0_L1_INT + SIRC)
+#define L1_TO_SIRC(intnum)	(intnum - SIRC0_L1_INT)
 
-#define SIRC0_BASE		0xb4090000
+// a;klasdfj;klasgjkl;jasdkl;fj they moved the SIRC AGAIN
+#define SIRC0_BASE		0xb4490000
 #define SIRC_BASE_OFFSET	0x400
 #define SIRC_TO_IO_BASE(SIRC)	(SIRC0_BASE + SIRC*SIRC_BASE_OFFSET)
 
@@ -126,9 +128,9 @@ int map_fw_to_sirc(int intnum)
 
 void blast_sirc_fastint(int intnum)
 {
-	volatile void *hw_reg=NULL; 
 	unsigned long status;
-	unsigned int sirc = map_fw_to_sirc(intnum);
+	unsigned int sirc = L1_TO_SIRC(intnum);
+	volatile void *hw_reg=SIRC_TO_IO_BASE(sirc);
 
 	//  So I guess I'm basically going to do everything here that interrupt_asm.S in BLAST did
 
@@ -181,6 +183,7 @@ int blast_register_interrupt(int int_num,
 		}
 		else {
 			h2_register_fastint(SIRC_TO_L1_INT(sirc),blast_sirc_fastint);
+			//h2_printf("%s enabling:  0x%08x + 0x%08x = 1 << %d\n",__FUNCTION__,SIRC_TO_IO_BASE(sirc), L2_INT_ENABLE_SET_OFFSET, int_num - SIRC_TO_HANDLER_BASE(sirc));
 			io_write_32(SIRC_TO_IO_BASE(sirc),L2_INT_ENABLE_SET_OFFSET,1<<(int_num - SIRC_TO_HANDLER_BASE(sirc)));
 		}  
 		return 0;

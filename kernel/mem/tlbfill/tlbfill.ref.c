@@ -13,6 +13,7 @@
 #include <linear.h>
 #include <pagewalk.h>
 #include <asid.h>
+#include <tlbfill.h>
 
 #if __QDSP6_ARCH__ >= 4
 static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me) { return 0; }

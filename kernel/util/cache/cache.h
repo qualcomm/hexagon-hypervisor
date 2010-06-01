@@ -6,10 +6,10 @@
 #ifndef H2K_CACHE_H
 #define H2K_CACHE_H 1
 
-void H2K_cache_l2_cleaninv();
-void H2K_cache_d_cleaninv();
-void H2K_cache_d_clean();
-void H2K_cache_i_inv();
+void H2K_cache_l2_cleaninv() IN_SECTION(".text.misc.cache");
+void H2K_cache_d_cleaninv() IN_SECTION(".text.misc.cache");
+void H2K_cache_d_clean() IN_SECTION(".text.misc.cache");
+void H2K_cache_i_inv() IN_SECTION(".text.misc.cache");
 
 #endif
 

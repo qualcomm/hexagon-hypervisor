@@ -11,9 +11,6 @@
 #include <q6protos.h>
 #include <globals.h>
 
-//extern H2K_thread_context *H2K_gp->runlist[MAX_PRIOS] IN_SECTION(".data.sched.runlist");
-//extern u32_t H2K_gp->runlist_valids IN_SECTION(".data.sched.runlist");
-
 static inline void H2K_runlist_push(H2K_thread_context *newthread)
 {
 	u32_t prio = newthread->prio;
@@ -45,7 +42,7 @@ static inline void H2K_runlist_remove(H2K_thread_context *thread)
 	}
 }
 
-void H2K_runlist_init(void);
+void H2K_runlist_init(void) IN_SECTION(".text.init.runlist");
 
 #endif
 

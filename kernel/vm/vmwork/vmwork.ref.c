@@ -5,6 +5,7 @@
 
 #include <c_std.h>
 #include <vmint.h>
+#include <vmwork.h>
 #include <vmevent.h>
 #include <stop.h>
 

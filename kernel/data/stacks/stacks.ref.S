@@ -6,7 +6,7 @@
 #include <asm_std.h>
 #include <max.h>
 
-DATA_START H2K_stack_area .data.stacks .p2align 5
+DATA_START H2K_stack_area .data.core.stacks .p2align 5
 	.space KERNEL_STACK_SIZE
 	.global H2K_stacks
 H2K_stacks:

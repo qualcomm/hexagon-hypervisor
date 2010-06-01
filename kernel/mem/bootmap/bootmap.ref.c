@@ -69,7 +69,7 @@
 
 #endif
 
-u64_t H2K_bootmap[] IN_SECTION(".data.bootmap") = {
+u64_t H2K_bootmap[] IN_SECTION(".data.init.bootmap") = {
 #include "bootmap.def"
 	0ULL,
 };
@@ -82,7 +82,7 @@ u64_t H2K_bootmap[] IN_SECTION(".data.bootmap") = {
 		(u32_t)(((PPN)) | ((CFIELD) << 24) | ((PERM) << 28))) \
 	 },
 
-H2K_linear_fmt_t H2K_linear_bootmap[] IN_SECTION(".data.bootmap") = {
+H2K_linear_fmt_t H2K_linear_bootmap[] IN_SECTION(".data.init.bootmap") = {
 #include "bootmap.def"
 	{ .raw = 0 },
 };

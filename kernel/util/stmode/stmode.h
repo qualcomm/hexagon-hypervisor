@@ -8,8 +8,8 @@
 
 #include <c_std.h>
 
-s32_t H2K_stmode_begin();
-void  H2K_stmode_end();
+s32_t H2K_stmode_begin() IN_SECTION(".text.misc.stmode");
+void  H2K_stmode_end() IN_SECTION(".text.misc.stmode");
 
 #endif
 

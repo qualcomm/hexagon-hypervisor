@@ -9,25 +9,25 @@
 #include <c_std.h>
 #include <context.h>
 
-void H2K_vmtrap_return(H2K_thread_context *me);
-void H2K_vmtrap_setvec(H2K_thread_context *me);
-void H2K_vmtrap_setie(H2K_thread_context *me);
-void H2K_vmtrap_getie(H2K_thread_context *me);
-void H2K_vmtrap_swi(H2K_thread_context *me);
-void H2K_vmtrap_iack(H2K_thread_context *me);
-void H2K_vmtrap_setimask(H2K_thread_context *me);
-void H2K_vmtrap_getimask(H2K_thread_context *me);
-void H2K_vmtrap_iconf(H2K_thread_context *me);
-void H2K_vmtrap_clrmap(H2K_thread_context *me);
-void H2K_vmtrap_register_ptb(H2K_thread_context *me);
-void H2K_vmtrap_cachectl(H2K_thread_context *me);
-void H2K_vmtrap_get_pcycles(H2K_thread_context *me);
-void H2K_vmtrap_set_pcycles(H2K_thread_context *me);
-void H2K_vmtrap_wait(H2K_thread_context *me);
-void H2K_vmtrap_yield(H2K_thread_context *me);
-void H2K_vmtrap_start(H2K_thread_context *me);
-void H2K_vmtrap_stop(H2K_thread_context *me);
-void H2K_vmtrap_vmpid(H2K_thread_context *me);
+void H2K_vmtrap_return(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_setvec(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_setie(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_getie(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_swi(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_iack(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_setimask(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_getimask(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_iconf(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_clrmap(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_register_ptb(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_cachectl(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_get_pcycles(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_set_pcycles(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_wait(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_yield(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_start(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_stop(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_vmpid(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 
 #endif
 

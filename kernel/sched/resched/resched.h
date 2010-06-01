@@ -9,7 +9,7 @@
 #include <c_std.h>
 #include <context.h>
 
-void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum);
+void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum) IN_SECTION(".text.core.resched");
 
 #endif
 

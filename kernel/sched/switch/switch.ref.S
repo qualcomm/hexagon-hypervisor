@@ -14,7 +14,7 @@
  * Otherwise, load continuation into LR and jump to check_sanity_unlock
  */
 
-FUNC_START H2K_switch .text.sched.switch .p2align 5
+FUNC_START H2K_switch .text.core.switch .p2align 5
 	r25:24 = combine(r1,r0)	// save args for call
 	// Get current pcycle count
 	r27 = PCYCLEHI
@@ -29,6 +29,7 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 #else
 	r5 = HTID
 #endif
+	r16 = PMUCFG
 	r0 = #3
 	r3:2 = r27:26
 	r10 = r5
@@ -47,6 +48,11 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 	memd(r1+#CONTEXT_oncpu_start) = r27:26
 	r31 = memw(r1+#CONTEXT_continuation)
 	memb(r1+#CONTEXT_hthread) = r10
+	r18 = memb(r1+#CONTEXT_pmu_on)
+	r11 = #1
+	r10 = r5
+	r16 = insert(r18,r11:10)
+	PMUCFG = r16
 	sgp = r1
 	r4 = memub(r1+#CONTEXT_tid)
 #if (__QDSP6_ARCH__ <= 3)
@@ -64,6 +70,8 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 #else
 	r5 = HTID
 #endif
+	r16 = clrbit(r16,r5)
+	PMUCFG = r16
 	r9 = memw(r16+#KG_wait_mask)
 	r8 = memw(r16+#KG_priomask)
 	r9 = setbit(r9,r5)
@@ -99,7 +107,7 @@ FUNC_START H2K_switch .text.sched.switch .p2align 5
 	jump H2K_wait_forever
 FUNC_END H2K_switch
 
-FUNC_START H2K_wait_forever .text.sched.switch .p2align 2
+FUNC_START H2K_wait_forever .text.core.switch .p2align 2
 	wait(r1)
 	jump H2K_wait_forever
 	nop				// used by Harness to overwrite with redirect

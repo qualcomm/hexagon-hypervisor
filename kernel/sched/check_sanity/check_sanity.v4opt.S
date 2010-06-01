@@ -6,13 +6,9 @@
 #include <asm_std.h>
 #include <max.h>
 
-	.text
-	.p2align 2
-	.globl H2K_check_sched_mask
-	.type	H2K_check_sched_mask, @function
+FUNC_START H2K_check_sched_mask .text.core.sanity .p2align 5
 
 //  3 cycles best case, 9 worse + 2? mispredict
-H2K_check_sched_mask:
 	{
 		R2 = memw(H2K_GP+#KG_runlist_valids);
 		R1 = memw(H2K_GP+#KG_ready_validmask);
@@ -51,7 +47,7 @@ H2K_check_sched_mask:
 	{
 		jumpr R31;
 	}
-	.size	H2K_check_sched_mask, .-H2K_check_sched_mask
+FUNC_END H2K_check_sched_mask
 
 /*
 H2K_check_sanity, v4 optimized
@@ -77,10 +73,7 @@ Worst case:  12 cycles + 2 cycle mispredict penalty (1 cycle lost to assembler b
 
 */
 
-	.p2align 2
-	.globl H2K_check_sanity_unlock
-	.type	H2K_check_sanity_unlock, @function
-H2K_check_sanity_unlock:
+FUNC_START H2K_check_sanity_unlock .text.core.sanity .p2align 5
 	{
 		R5:4 = memd(H2K_GP + #KG_ready_masks);  
 		R1 = memw(H2K_GP + #KG_runlist_valids); 
@@ -147,14 +140,11 @@ H2K_check_sanity_unlock:
 	}
 	k0unlock;
 	jumpr r31;
-	.size	H2K_check_sanity_unlock, .-H2K_check_sanity_unlock
+FUNC_END H2K_check_sanity_unlock 
 
 //  crappy cut and paste until we figure out what to do exactly.
 
-	.p2align 2
-	.globl H2K_check_sanity
-	.type	H2K_check_sanity, @function
-H2K_check_sanity:
+FUNC_START H2K_check_sanity .text.core.sanity .p2align 5
 	{
 		R5:4 = memd(H2K_GP + #KG_ready_masks);  
 		R1 = memw(H2K_GP + #KG_runlist_valids); 
@@ -216,5 +206,5 @@ H2K_check_sanity:
 		if (!P0.new) jump:t 1b;  //  this should be a single compare-jump instruction, not that it matters.
 	}
 	jumpr r31;
-	.size	H2K_check_sanity, .-H2K_check_sanity
+FUNC_END H2K_check_sanity
 

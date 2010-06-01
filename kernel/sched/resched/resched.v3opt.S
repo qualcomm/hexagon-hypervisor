@@ -18,7 +18,7 @@
 /* Register Usage: R0-R6, R17-R19                                       */
 /*----------------------------------------------------------------------*/
 
-FUNC_START H2K_resched  .text.h2.crit.resched  .p2align 3
+FUNC_START H2K_resched  .text.core.resched  .p2align 3
     {
         r0.h = #HI(RESCHED_INT_INTMASK)                 // RESCHED_INIT_INTMASK
     }

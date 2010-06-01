@@ -6,7 +6,7 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 
-FUNC_START H2K_event_vectors .text.event.vectors .p2align 12
+FUNC_START H2K_event_vectors .text.core.vectors .p2align 12
 	jump H2K_handle_reset
 	jump H2K_handle_nmi
 	jump H2K_handle_error

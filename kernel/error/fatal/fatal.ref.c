@@ -9,6 +9,7 @@
 #include <stop.h>
 #include <globals.h>
 
+IN_SECTION(".text.misc.fatal")
 static void __attribute__((noreturn)) H2K_fatal_sim_exit(u32_t why)
 {
 	__asm__ __volatile__ (

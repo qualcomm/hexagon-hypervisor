@@ -7,7 +7,7 @@
 #include <asm_std.h>
 #include <max.h>
 
-FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
+FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	/* If SGP is null, we've interrupted waitmode. */
 	crswap(r0,sgp)
 	if (r0==#0) jump:t H2K_interrupted_waitmode
@@ -158,7 +158,7 @@ H2K_interrupt_restore:
 	.global H2K_interrupt_restore
 FUNC_END H2K_handle_int
 
-FUNC_START H2K_interrupted_waitmode .text.event.interrupt .p2align 2
+FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 #if __QDSP6_ARCH__ <= 3
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)

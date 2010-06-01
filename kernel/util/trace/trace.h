@@ -32,8 +32,8 @@ typedef struct {
 
 // extern H2K_trace_info_t H2K_trace_info IN_SECTION(".data.trace");
 
-void H2K_trace(s8_t type, u8_t hwtnum, u8_t tid, u32_t pcyclelo);
-void H2K_trace_init();
+void H2K_trace(s8_t type, u8_t hwtnum, u8_t tid, u32_t pcyclelo) IN_SECTION(".text.misc.trace");
+void H2K_trace_init() IN_SECTION(".text.init.trace");
 
 #endif
 

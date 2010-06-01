@@ -29,7 +29,7 @@
  */
 
 /* Only need to save caller-save regs */
-FUNC_START H2K_handle_tlbmissx .text.tlbmiss .p2align 2
+FUNC_START H2K_handle_tlbmissx .text.mem.tlbmiss .p2align 2
 1:
 	// jump 1b
 	crswap(r0,sgp)
@@ -49,7 +49,7 @@ FUNC_START H2K_handle_tlbmissx .text.tlbmiss .p2align 2
 
 FUNC_END H2K_handle_tlbmissx
 
-FUNC_START H2K_handle_tlbmissrw .text.tlbmiss .p2align 2
+FUNC_START H2K_handle_tlbmissrw .text.mem.tlbmiss .p2align 2
 	//jump 1b
 	crswap(r0,sgp)
 	memd(r0+#CONTEXT_r0302) = r3:2

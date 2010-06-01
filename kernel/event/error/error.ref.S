@@ -8,7 +8,7 @@
 #include <max.h>
 #include <vmdefs.h>
 
-FUNC_START H2K_handle_error .text.error .p2align 2
+FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	/* TBD: do double exception check as spec'd */
 	/* 
 	 * XXX: this is rather V3 oriented, we should probably macro 
@@ -65,12 +65,12 @@ FUNC_START H2K_handle_error .text.error .p2align 2
 
 FUNC_END H2K_handle_error
 
-FUNC_START H2K_handle_nmi .text.error .p2align 2
+FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	crswap(r24,sgp)
 	jump 1b
 FUNC_END H2K_handle_nmi
 
-FUNC_START H2K_handle_rsvd .text.error .p2align 2
+FUNC_START H2K_handle_rsvd .text.vm.error .p2align 2
 	crswap(r24,sgp)
 	jump 1b
 FUNC_END H2K_handle_rsvd

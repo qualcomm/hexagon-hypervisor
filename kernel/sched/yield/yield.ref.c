@@ -9,6 +9,7 @@
 #include <dosched.h>
 #include <hw.h>
 #include <globals.h>
+#include <yield.h>
 
 /*
  * H2K_sched_yield

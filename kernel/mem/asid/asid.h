@@ -21,10 +21,10 @@ typedef union {
 
 extern H2K_asid_entry_t H2K_mem_asid_table[] IN_SECTION(".data.mem.asid");
 
-s32_t H2K_asid_table_inc(u32_t ptb);
-void  H2K_asid_table_dec(u32_t asid);
-s32_t H2K_asid_table_invalidate(u32_t ptb);
-void  H2K_asid_table_init();
+s32_t H2K_asid_table_inc(u32_t ptb) IN_SECTION(".text.mem.asid");
+void  H2K_asid_table_dec(u32_t asid) IN_SECTION(".text.mem.asid");
+s32_t H2K_asid_table_invalidate(u32_t ptb) IN_SECTION(".text.mem.asid");
+void  H2K_asid_table_init() IN_SECTION(".text.init.asid");
 
 enum {
 	H2K_ASID_TRANS_TYPE_LINEAR,

@@ -11,6 +11,7 @@
 #include <check_sanity.h>
 #include <switch.h>
 #include <globals.h>
+#include <dosched.h>
 
 void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 {
@@ -27,7 +28,6 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 		H2K_check_sched_mask();
 		H2K_switch(me,NULL);
 		/* EJP: should never get here! */
-		return;
 	}
 	if ((H2K_gp->wait_mask == 0) && (new->prio IS_WORSE_THAN H2K_runlist_worst_prio())) {
 		/* If no threads are waiting and this new priority is worse than everyone else... */
@@ -47,6 +47,5 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 	H2K_runlist_push(new);
 	H2K_switch(me,new);
 	/* EJP: should never get here! */
-	return;
 }
 

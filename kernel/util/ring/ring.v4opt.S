@@ -21,7 +21,7 @@
 	 */
 
 // H2K_ring_remove_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
-FUNC_START H2K_ring_remove_real  .text.h2.crit.ring  .p2align  3
+FUNC_START H2K_ring_remove_real  .text.core.ring  .p2align  3
 	{
 		r4 = memw(r0)
 		r3:2 = memd(r1) // prev:next
@@ -42,7 +42,7 @@ FUNC_END H2K_ring_remove_real
 // void H2K_ring_insert_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
 
 	.falign
-FUNC_START H2K_ring_insert_real .text.h2.crit.ring .falign
+FUNC_START H2K_ring_insert_real .text.core.ring .falign
 	{
 		r2 = memw(r0)
 		r5:4 = combine(r1,r1) // for case of empty 
@@ -66,7 +66,7 @@ FUNC_END H2K_ring_insert_real
 
 // void H2K_ring_append_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
 
-FUNC_START H2K_ring_append_real .text.h2.crit.ring .falign
+FUNC_START H2K_ring_append_real .text.core.ring .falign
 	{
 		r2 = memw(r0)
 		r5:4 = combine(r1,r1) // for case of empty 
@@ -88,7 +88,7 @@ FUNC_START H2K_ring_append_real .text.h2.crit.ring .falign
 	}
 FUNC_END H2K_ring_append_real
 
-FUNC_START H2K_ring_remove_append_real .text.h2.crit.ring .falign
+FUNC_START H2K_ring_remove_append_real .text.core.ring .falign
 	{	// 2 loads
 		r6 = memw(r1)		// get *toring
 		r5:4 = memd(r2)		// get *node

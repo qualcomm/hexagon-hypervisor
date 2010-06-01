@@ -10,7 +10,7 @@
 
 /* EJP: define check and match_asid */
 
-H2K_mem_stlb_asid_info_t **H2K_mem_stlb_asid_infos IN_SECTION(".data.stlb"); /* MOVE TO GLOBALS */
+H2K_mem_stlb_asid_info_t **H2K_mem_stlb_asid_infos IN_SECTION(".data.mem.stlb"); /* MOVE TO GLOBALS */
 
 #if __QDSP6_ARCH__ <= 3
 

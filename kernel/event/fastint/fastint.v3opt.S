@@ -7,7 +7,7 @@
 #include <asm_std.h>
 #include <max.h>
 
-FUNC_START H2K_fastint .text.event.fastint .p2align 5
+FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	// r0 = intno
 	// r1 = me
 	// r2 = hthread
@@ -87,7 +87,7 @@ H2K_fastint_return:
 	}
 FUNC_END H2K_fastint
 
-FUNC_START H2K_interrupted_fastint_check .text.event.fastint .p2align 2
+FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
 	// OK, we checked to see if there was a pending 
 	// interrupt, and there sure was!
 	// sgp and r0 have been swapped

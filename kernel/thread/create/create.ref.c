@@ -20,7 +20,7 @@
 
 void H2K_interrupt_restore();
 
-s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapmask, H2K_thread_context *me)
+IN_SECTION(".text.misc.create") s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t trapmask, H2K_thread_context *me)
 {       
 	H2K_thread_context *tmp;
 	u32_t myssr;

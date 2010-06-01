@@ -5,9 +5,6 @@
 
 #include <runlist.h>
 
-//H2K_thread_context *H2K_runlist[MAX_PRIOS] IN_SECTION(".data.sched.runlist");
-//u32_t H2K_runlist_valids IN_SECTION(".data.sched.runlist");
-
 void H2K_runlist_init(void) 
 {
 	u32_t i;

@@ -8,9 +8,7 @@
 #include <q6protos.h>
 #include <globals.h>
 
-H2K_trace_entry_t H2K_trace_buf_default[MAX_TRACE_ENTRIES] IN_SECTION(".data.trace");
-
-// H2K_trace_info_t H2K_trace_info IN_SECTION(".data.trace") __attribute__((aligned(32)));
+H2K_trace_entry_t H2K_trace_buf_default[MAX_TRACE_ENTRIES] IN_SECTION(".data.misc.trace");
 
 void H2K_trace(s8_t type, u8_t hwtnum, u8_t tid, u32_t pcyclelo)
 {

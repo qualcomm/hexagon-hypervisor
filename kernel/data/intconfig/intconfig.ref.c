@@ -12,11 +12,6 @@
 #include <hw.h>
 #include <globals.h>
 
-//void *H2K_fastint_funcptrs[MAX_INTERRUPTS] IN_SECTION(".data.event.interrupt");
-//void *H2K_inthandlers[MAX_INTERRUPTS] IN_SECTION(".data.event.interrupt");
-//u32_t H2K_fastint_mask IN_SECTION(".data.event.interrupt");
-//u32_t H2K_fastint_gp IN_SECTION(".data.event.interrupt");
-
 H2K_fastint_context H2K_fastint_contexts[MAX_HTHREADS];
 
 #define FASTINT_TRAPMASK 0x9 /* ANGEL | FUTEX_RESUME */

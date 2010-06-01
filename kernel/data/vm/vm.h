@@ -58,8 +58,8 @@ typedef struct H2K_vmblock_struct {
 	u32_t *pmap;
 } H2K_vmblock_t;
 
-u32_t H2K_vm_vmblock_size(u8_t num_cpus, u16_t num_ints);
-void  H2K_vm_vmblock_init(H2K_vmblock_t *vmblock, u8_t num_cpus, u16_t num_ints, u32_t *pmap);
+u32_t H2K_vm_vmblock_size(u8_t num_cpus, u16_t num_ints) IN_SECTION(".text.misc.vmblock");
+void  H2K_vm_vmblock_init(H2K_vmblock_t *vmblock, u8_t num_cpus, u16_t num_ints, u32_t *pmap) IN_SECTION(".text.init.vmblock");
 
 #endif
 

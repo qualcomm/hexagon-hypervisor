@@ -15,7 +15,7 @@
  * The next several cache lines of the context should be DCZERO'd.
  */
 
-FUNC_START H2K_handle_trap0 .text.event.trap0 .p2align 2
+FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	crswap(r7,sgp)
 	// Save trap state
 	r13 = ugp
@@ -150,7 +150,7 @@ H2K_trap_nogood:
 
 FUNC_END H2K_handle_trap0
 
-FUNC_START H2K_traptab .text.event.trap0 .p2align 8
+FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 	{
 		jump H2K_trap_angel // 0
 		nop

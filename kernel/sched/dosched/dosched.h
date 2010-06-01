@@ -8,7 +8,7 @@
 
 #include <context.h>
 
-__attribute__((noreturn)) void H2K_dosched(H2K_thread_context *me,u32_t hthread);
+__attribute__((noreturn)) void H2K_dosched(H2K_thread_context *me,u32_t hthread) IN_SECTION(".text.core.dosched");
 
 #endif
 

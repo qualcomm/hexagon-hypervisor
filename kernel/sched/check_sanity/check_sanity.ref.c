@@ -13,7 +13,6 @@
 
 void H2K_check_sched_mask()
 {
-	/* EJP: ready valid mask not enabled... yet! */
 	if ((H2K_gp->runlist_valids & (~H2K_gp->ready_validmask)) != 0) {
 		H2K_lowprio_notify();
 		resched_int();

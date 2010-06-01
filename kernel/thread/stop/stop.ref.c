@@ -10,6 +10,7 @@
 #include <dosched.h>
 #include <runlist.h>
 #include <asid.h>
+#include <stop.h>
 
 void H2K_thread_stop(H2K_thread_context *me)
 {       

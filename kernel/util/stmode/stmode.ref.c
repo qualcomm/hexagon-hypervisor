@@ -6,6 +6,7 @@
 #include <c_std.h>
 #include <max.h>
 #include <hw.h>
+#include <stmode.h>
 
 s32_t H2K_stmode_begin()
 {

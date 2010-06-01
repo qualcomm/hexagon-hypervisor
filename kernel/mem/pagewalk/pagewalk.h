@@ -19,8 +19,8 @@ typedef union {
 	};
 } H2K_pte_t;
 
-H2K_pte_t H2K_mem_pagewalk(u32_t badva, H2K_thread_context *me);
+H2K_pte_t H2K_mem_pagewalk(u32_t badva, H2K_thread_context *me) IN_SECTION(".text.mem.pagewalk");
 
-H2K_mem_tlbfmt_t H2K_mem_translate_pagetable(u32_t badva, H2K_thread_context *me);
+H2K_mem_tlbfmt_t H2K_mem_translate_pagetable(u32_t badva, H2K_thread_context *me) IN_SECTION(".text.mem.pagewalk");
 
 #endif

@@ -18,7 +18,7 @@
 /* Register Usage: R0-R7, R17-R22                                   */
 /*------------------------------------------------------------------*/
 
-FUNC_START H2K_dosched  .text.h2.crit.dosched  .p2align  3
+FUNC_START H2K_dosched  .text.core.dosched  .p2align  3
     /*--------------------------------------------------*/
     /* new = H2K_ready_getbest()                        */
     /*--------------------------------------------------*/

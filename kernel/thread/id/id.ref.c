@@ -6,8 +6,8 @@
 #include <c_std.h>
 #include <context.h>
 
-u32_t H2K_thread_id(H2K_thread_context *me)
+IN_SECTION(".text.core.id") u32_t H2K_thread_id(H2K_thread_context *me)
 {       
-        return (s32_t)me;
+        return (u32_t)me;
 }
 

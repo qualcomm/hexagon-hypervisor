@@ -12,6 +12,7 @@
 #include <stop.h>
 #include <yield.h>
 #include <asid.h>
+#include <time.h>
 #include <stlb.h>
 #include <tlbmisc.h>
 
@@ -104,13 +105,16 @@ void H2K_vmtrap_cachectl(H2K_thread_context *me)
 
 void H2K_vmtrap_get_pcycles(H2K_thread_context *me)
 {
-	/* Return cputime? */
+	/* Return current cpu time */
+	me->r0100 = H2K_cputime_get(me);
 }
 
 void H2K_vmtrap_set_pcycles(H2K_thread_context *me)
 {
 	/* Set accumulated pcycles to specified amount, and then set
 	 * oncpu_start to current pcycles */
+	me->totalcycles = me->r0100;
+	me->oncpu_start = H2K_pcycles_get(me);
 }
 
 void H2K_vmtrap_wait(H2K_thread_context *me)
@@ -134,8 +138,8 @@ void H2K_vmtrap_start(H2K_thread_context *me)
 void H2K_vmtrap_stop(H2K_thread_context *me)
 {
 	/* Destroy, or just make blocked? */
-	H2K_thread_stop(me);
 	me->r00 = 0;
+	H2K_thread_stop(me);
 }
 
 void H2K_vmtrap_vmpid(H2K_thread_context *me)

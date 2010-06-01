@@ -22,7 +22,7 @@
 #define IC_WAYS 8
 #endif
 
-FUNC_START H2K_cache_l2_cleaninv .text.sched.switch .p2align 4
+FUNC_START H2K_cache_l2_cleaninv .text.misc.cache .p2align 4
 	r0 = #0
 	r1 = #L2_SETS
 	loop1(1f,#L2_WAYS)
@@ -40,7 +40,7 @@ FUNC_START H2K_cache_l2_cleaninv .text.sched.switch .p2align 4
 	jumpr r31
 FUNC_END H2K_cache_l2_cleaninv
 
-FUNC_START H2K_cache_d_cleaninv .text.sched.switch .p2align 4
+FUNC_START H2K_cache_d_cleaninv .text.misc.cache .p2align 4
 	r0 = #0
 	loop1(1f,#DC_WAYS)
 1:
@@ -57,7 +57,7 @@ FUNC_START H2K_cache_d_cleaninv .text.sched.switch .p2align 4
 	jumpr r31
 FUNC_END H2K_cache_d_cleaninv
 
-FUNC_START H2K_cache_d_clean .text.sched.switch .p2align 4
+FUNC_START H2K_cache_d_clean .text.misc.cache .p2align 4
 	r0 = #0
 	loop1(1f,#DC_WAYS)
 1:
@@ -74,7 +74,7 @@ FUNC_START H2K_cache_d_clean .text.sched.switch .p2align 4
 	jumpr r31
 FUNC_END H2K_cache_d_clean
 
-FUNC_START H2K_cache_i_inv .text.sched.switch .p2align 4
+FUNC_START H2K_cache_i_inv .text.misc.cache .p2align 4
 	r0 = #0
 	loop1(1f,#IC_WAYS)
 1:

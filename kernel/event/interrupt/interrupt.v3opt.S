@@ -7,14 +7,14 @@
 #include <asm_std.h>
 #include <max.h>
 
-	.section .text.event.interrupt,"ax",@progbits
+	.section .text.core.interrupt,"ax",@progbits
 	.p2align 5
 .Lint_jump_stub:
 	{
 		memw(r1+#CONTEXT_continuation) = r31
 		jumpr r4
 	}
-FUNC_START H2K_handle_int .text.event.interrupt .p2align 2
+FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	/* If SGP is null, we've interrupted waitmode. */
 	crswap(r0,sgp)
 	{
@@ -219,7 +219,7 @@ H2K_interrupt_restore:
 	.global H2K_interrupt_restore
 FUNC_END H2K_handle_int
 
-FUNC_START H2K_interrupted_waitmode .text.event.interrupt .falign
+FUNC_START H2K_interrupted_waitmode .text.core.interrupt .falign
 	{
 		r29.h = #hi(H2K_stacks)
 		r0 = ssr

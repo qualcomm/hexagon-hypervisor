@@ -6,7 +6,7 @@
 #ifndef H2K_STACKS_H
 #define H2K_STACKS_H 1
 
-extern unsigned long long int H2K_stacks IN_SECTION(".data.stacks");
+extern unsigned long long int H2K_stacks IN_SECTION(".data.core.stacks");
 
 #endif
 

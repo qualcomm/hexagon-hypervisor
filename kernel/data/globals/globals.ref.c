@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <c_std.h>
 #include <globals.h>
 #include <max.h>
 

@@ -33,7 +33,7 @@ typedef union {
 	};
 } H2K_linear_fmt_t;
 
-H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me);
+H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me) IN_SECTION(".text.mem.linear");
 
 #endif
 

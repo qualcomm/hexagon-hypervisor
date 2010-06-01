@@ -12,10 +12,6 @@
 #include <max.h>
 #include <globals.h>
 
-//extern H2K_thread_context *H2K_gp->ready[MAX_PRIOS] IN_SECTION(".data.sched.ready");
-//extern u32_t H2K_gp->ready_valids IN_SECTION(".data.sched.ready");
-//extern u32_t H2K_gp->ready_validmask IN_SECTION(".data.sched.ready");
-
 static inline u32_t H2K_ready_best_prio()
 {
 	return Q6_R_ct0_R(H2K_gp->ready_valids & H2K_gp->ready_validmask);
@@ -55,7 +51,7 @@ static inline H2K_thread_context *H2K_ready_getbest()
 	return ret;
 }
 
-void H2K_readylist_init(void);
+void H2K_readylist_init(void) IN_SECTION(".text.init.readylist");
 
 #endif
 

@@ -14,7 +14,7 @@ typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
 #define MAX_CONFIGS 2
 
-static const configptr_t H2K_configtab[MAX_CONFIGS] = {
+static const configptr_t H2K_configtab[MAX_CONFIGS] IN_SECTION(".data.config.config") = {
 	H2K_trap_config_addthreads,
 	H2K_trap_config_setfatal
 };

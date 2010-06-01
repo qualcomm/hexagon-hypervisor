@@ -9,6 +9,7 @@
 #include <fatal.h>
 #include <vmdefs.h>
 #include <vmevent.h>
+#include <pagefault.h>
 
 void H2K_mem_pagefault(u32_t va, H2K_thread_context *me)
 {

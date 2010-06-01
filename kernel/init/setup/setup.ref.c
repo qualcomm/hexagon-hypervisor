@@ -18,7 +18,7 @@
 void qdsp6_pre_main();
 void H2K_interrupt_restore();
 
-void H2K_init_setup()
+IN_SECTION(".text.init.setup") void H2K_init_setup()
 {
 	H2K_trace_init();
 	H2K_fatal_init();
@@ -32,12 +32,13 @@ void H2K_init_setup()
 	H2K_asid_table_init();
 }
 
-void H2K_thread_boot()
+IN_SECTION(".text.init.boot") void H2K_thread_boot()
 {
 	s32_t asid;
 	H2K_thread_context *boot = &H2K_boot_context;
 	H2K_init_setup();
-	boot->ssrelr = (((u64_t)(BOOT_THREAD_SSR)) << 32) | ((u32_t)(qdsp6_pre_main));
+	boot->ssr = (BOOT_THREAD_SSR);
+	boot->elr = ((u32_t)(qdsp6_pre_main));
 	boot->continuation = H2K_interrupt_restore;
 	boot->trapmask = 0xffffffff;
 	boot->ccr = BOOT_THREAD_CCR;

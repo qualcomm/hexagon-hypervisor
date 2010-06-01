@@ -8,7 +8,7 @@
 #include <max.h>
 #include <vmdefs.h>
 
-FUNC_START H2K_handle_trap1 .text.event.trap1 .p2align 2
+FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 	crswap(r0,sgp)
 	memd(r0+#CONTEXT_r3130) = r31:30
 	memd(r0+#CONTEXT_r2928) = r29:28
@@ -156,7 +156,7 @@ FUNC_START H2K_handle_trap1 .text.event.trap1 .p2align 2
 	rte
 FUNC_END H2K_handle_trap1
 
-FUNC_START H2K_vmtraptab .text.event.trap1 .p2align 5
+FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
 	jump H2K_vmtrap_bad		// 0
 	jump H2K_vmtrap_return		// 1
 	jump H2K_vmtrap_setvec		// 2
@@ -202,7 +202,7 @@ FUNC_END H2K_vmtraptab
  *  Call H2K_vm_event
  *  Restore extra special regs (not needed in opt)
  */
-FUNC_START H2K_vmtrap_bad .text.event.trap1 .p2align 2
+FUNC_START H2K_vmtrap_bad .text.vm.trap .p2align 2
 	allocframe(#0)
 	r3 = r0			/* me */
 	r0 = #0			/* BADVA */

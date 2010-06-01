@@ -6,7 +6,7 @@
 #ifndef H2K_TLBFILL_H
 #define H2K_TLBFILL_H 1
 
-void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me);
+void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me) IN_SECTION(".text.mem.tlb");
 
 #endif
 

@@ -43,7 +43,7 @@ typedef struct _h2_thread_context
 			u8_t vmstatus;
 			u8_t base_prio;
 			u8_t vmcpu;
-			u8_t u8pad0;
+			u8_t pmu_on;
 		};
 	};
 	// #16

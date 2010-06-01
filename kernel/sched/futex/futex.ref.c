@@ -19,12 +19,11 @@
  * EJP: hash table aligned to it's size, so we 
  * should be able to use tableidx on the product 
  */
-// H2K_thread_context *H2K_futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE*4))) IN_SECTION(".data.sched.futex");
 #define HASHVAL(X) (Q6_R_extractu_RII((((unsigned int)(X)) * 2654435761UL),FUTEX_HASHBITS,32-FUTEX_HASHBITS))
 
 /* Data Structure Interface Functions */
 
-void H2K_futex_hash_add(u32_t *lock, H2K_thread_context *me)
+IN_SECTION(".text.core.futex") static void H2K_futex_hash_add(u32_t *lock, H2K_thread_context *me)
 {
 	u32_t hashval = HASHVAL(lock);
 	H2K_thread_context *tmp;
@@ -76,6 +75,7 @@ s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 
 /* FIXME: Need to return next state (for multi wake) as well as removed thread (for pi) */
 
+IN_SECTION(".text.core.futex")
 static H2K_thread_context *H2K_futex_hash_remove_one(u32_t *lock, H2K_thread_context **ring, H2K_thread_context **pos)
 {
 	H2K_thread_context *tmp;

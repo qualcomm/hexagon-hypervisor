@@ -9,8 +9,8 @@
 #include <c_std.h>
 #include <context.h>
 
-void H2K_tid_set(u32_t tid, H2K_thread_context *me);
-u32_t H2K_tid_get(H2K_thread_context *me);
+void H2K_tid_set(u32_t tid, H2K_thread_context *me) IN_SECTION(".text.misc.tid");
+u32_t H2K_tid_get(H2K_thread_context *me) IN_SECTION(".text.misc.tid");
 
 #endif
 

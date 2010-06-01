@@ -13,7 +13,8 @@
 #include <q6protos.h>
 #include <globals.h>
 
-s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
+IN_SECTION(".text.vm.int")
+static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
 {
 	u32_t wordidx = intno >> 5;
 	u32_t bitidx   = intno & 0x1f;
@@ -32,7 +33,8 @@ s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno
 	}
 }
 
-void H2K_vm_interrupt_deliver(H2K_vmblock_t *vmblock, u8_t first_cpu, u32_t intno)
+IN_SECTION(".text.vm.int")
+static void H2K_vm_interrupt_deliver(H2K_vmblock_t *vmblock, u8_t first_cpu, u32_t intno)
 {
 	u32_t i;
 	/* Look for first CPU to interrupt */
@@ -152,6 +154,30 @@ s32_t H2K_vm_interrupt_get(H2K_vmblock_t *vmblock, u8_t cpu)
 			if (H2K_atomic_clrbit(&vmblock->enable[j],bitidx) == 0) goto retry;
 			/* Atomic Clear in Pending, if already cleared goto retry (?) */
 			if (H2K_atomic_clrbit(&vmblock->pending[j],bitidx) == 0) goto retry;
+			/* Return interrupt # */
+			return i+bitidx;
+		}
+	}
+	/* No interrupt found! */
+	return -1;
+}
+
+s32_t H2K_vm_interrupt_peek(H2K_vmblock_t *vmblock, u8_t cpu)
+{
+	int i,j;
+	u32_t local_en;
+	u32_t global_en;
+	u32_t pending;
+	u32_t tmp;
+	bitmask_t *mycpu_masks = vmblock->percpu_mask[cpu];
+	u32_t bitidx;
+	for (i = j = 0; i < vmblock->num_ints; i += 32, j += 1) {
+		pending = vmblock->pending[j];
+		global_en = vmblock->enable[j];
+		local_en = mycpu_masks[j];
+		if ((tmp = pending & global_en & local_en) != 0) {
+			/* CT0(tmp) to get interrupt # */
+			bitidx = Q6_R_ct0_R(tmp);
 			/* Return interrupt # */
 			return i+bitidx;
 		}

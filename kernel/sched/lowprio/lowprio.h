@@ -11,9 +11,6 @@
 #include <hw.h>
 #include <globals.h>
 
-//extern u32_t H2K_gp->priomask IN_SECTION(".data.sched.lowprio");
-//extern u32_t H2K_gp->wait_mask IN_SECTION(".data.sched.lowprio");
-
 /* Notify a low priority thread that it is the new lowest priority if necessary */
 /* H2K_gp->priomask should be non-zero */
 static inline void H2K_lowprio_notify()
@@ -37,7 +34,7 @@ static inline void H2K_raise_lowprio()
 	change_imask(Q6_R_ct0_R(mask),-1);
 }
 
-void H2K_lowprio_init();
+void H2K_lowprio_init() IN_SECTION(".text.init.lowprio");
 
 #endif
 

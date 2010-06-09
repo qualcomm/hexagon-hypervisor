@@ -178,8 +178,8 @@ FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
 	jump H2K_vmtrap_start		// 12
 	jump H2K_vmtrap_stop		// 13
 	jump H2K_vmtrap_vmpid		// 14
-	jump H2K_vmtrap_bad		// 15
-	jump H2K_vmtrap_bad		// 16
+	jump H2K_vmtrap_setregs		// 15
+	jump H2K_vmtrap_getregs		// 16
 	jump H2K_vmtrap_bad		// 17
 	jump H2K_vmtrap_bad		// 18
 	jump H2K_vmtrap_bad		// 19

@@ -8,7 +8,11 @@
 
 static void h2_default_error_handler()
 {
+	unsigned int regs[4];
 	puts("Fatal error");
+	h2_vmtrap_getregs(regs);
+	printf("g0: 0x%08x g1: 0x%08x g2: 0x%08x g3: 0x%08x\n",
+		regs[0],regs[1],regs[2],regs[3]);
 	h2_thread_stop();
 }
 

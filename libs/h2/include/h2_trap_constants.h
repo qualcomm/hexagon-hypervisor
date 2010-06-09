@@ -54,6 +54,8 @@
 #define H2_VMTRAP_START 18
 #define H2_VMTRAP_STOP 19
 #define H2_VMTRAP_VMPID 20
+#define H2_VMTRAP_SETREGS 21
+#define H2_VMTRAP_GETREGS 22
 
 #endif
 

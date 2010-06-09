@@ -140,6 +140,7 @@ H2K_trap_nogood:
 	}
 	memw(r7+#CONTEXT_r2928+4) = r29
 	/* TBD: set up GSSR in r25 */
+	r25 = zxtb(r17)
 	memd(r7+#CONTEXT_gssr_gosp) = r25:24
 	r16 = add(r23,#TRAP0_GEVB_OFFSET)
 	r17 = setbit(r17,#SSR_GUEST_BIT)

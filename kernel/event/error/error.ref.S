@@ -27,12 +27,13 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	memd(r24+#CONTEXT_gelr_gbadva) = r15:14
 	r15 = ssr
 	p0 = tstbit(r15,#SSR_GUEST_BIT)
-	r15:14 = memd(r24+#CONTEXT_gssr_gosp)
+	r14 = memw(r24+#CONTEXT_gssr_gosp)
 	{
 		if (!p0) r14 = r29
 		if (!p0) r29 = r14
 	}
 	/* TBD: set up GSSR in r15 */
+	r15 = zxtb(r15)
 	memd(r24+#CONTEXT_gssr_gosp) = r15:14
 	p3:0 = r13
 	r15:14 = memd(r24+#CONTEXT_r1514)

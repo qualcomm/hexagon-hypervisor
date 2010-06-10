@@ -34,6 +34,7 @@ void H2K_vmtrap_setvec(H2K_thread_context *me)
 	me->gevb = (void *)((u32_t)(me->r00));
 	me->r00 = 0;
 }
+
 void H2K_vmtrap_setie(H2K_thread_context *me)
 {
 	if (me->r00 & 0x1) {
@@ -50,6 +51,7 @@ void H2K_vmtrap_getie(H2K_thread_context *me)
 	me->r00 = ((me->atomic_status_word & H2K_VMSTATUS_IE_BIT) != 0);
 }
 
+#if 0
 void H2K_vmtrap_swi(H2K_thread_context *me)
 {
 	H2K_vm_interrupt_post(me->vmblock,me->vmcpu,(u32_t)(me->r00));
@@ -74,6 +76,7 @@ void H2K_vmtrap_iconf(H2K_thread_context *me)
 {
 	/* Change interface? */
 }
+#endif
 
 void H2K_vmtrap_clrmap(H2K_thread_context *me)
 {
@@ -132,7 +135,7 @@ void H2K_vmtrap_yield(H2K_thread_context *me)
 void H2K_vmtrap_start(H2K_thread_context *me)
 {
 	/* Create, or just unblock? */
-	me->r00 = 0;
+	me->r00 = 1;
 }
 
 void H2K_vmtrap_stop(H2K_thread_context *me)

@@ -348,17 +348,29 @@ int main()
 	/* Further get testing */
 	TH_vmblock.pending[0] = 0xffffffff;
 	TH_vmblock.enable[0] = 0xffffffff;
+	TH_vmblock.percpu_mask[0][0] = 0xffffffff;
 	if (H2K_vm_interrupt_peek(&TH_vmblock,0) != 0) {
 		FAIL("Didn't get first valid interrupt/peek");
 	}
 	if (H2K_vm_interrupt_get(&TH_vmblock,0) != 0) {
 		FAIL("Didn't get first valid interrupt/get");
 	}
-	if (TH_vmblock_pending[0] != 0xfffffffe) {
+	if (TH_vmblock.pending[0] != 0xfffffffe) {
 		FAIL("Didn't clear pending bit");
 	}
-	if (TH_vmblock_enable[0] != 0xfffffffe) {
+	if (TH_vmblock.enable[0] != 0xfffffffe) {
 		FAIL("Didn't clear enable bit");
+	}
+	if (H2K_vm_interrupt_peek(&TH_vmblock,0) != 1) {
+		FAIL("Didn't get first valid interrupt/peek");
+	}
+	TH_vmblock.pending[0] = 0;
+	TH_vmblock.num_ints = 32;
+	if (H2K_vm_interrupt_peek(&TH_vmblock,0) != -1) {
+		FAIL("Found interrupt, but shouldn't have");
+	}
+	if (H2K_vm_interrupt_get(&TH_vmblock,0) != -1) {
+		FAIL("Found interrupt, but shouldn't have");
 	}
 	/* OK!  We're done here! */
 	puts("TEST PASSED");

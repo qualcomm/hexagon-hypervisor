@@ -162,11 +162,11 @@ FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
 	jump H2K_vmtrap_setvec		// 2
 	jump H2K_vmtrap_setie		// 3
 	jump H2K_vmtrap_getie		// 4
-	jump H2K_vmtrap_swi		// 5
-	jump H2K_vmtrap_iack		// 6
-	jump H2K_vmtrap_setimask	// 7
-	jump H2K_vmtrap_getimask	// 8
-	jump H2K_vmtrap_iconf		// 9
+	jump H2K_vmtrap_intop		// 5
+	jump H2K_vmtrap_bad		// 6
+	jump H2K_vmtrap_bad		// 7
+	jump H2K_vmtrap_bad		// 8
+	jump H2K_vmtrap_bad		// 9
 	jump H2K_vmtrap_clrmap		// a
 	jump H2K_vmtrap_register_ptb	// b
 	jump H2K_vmtrap_bad		// c

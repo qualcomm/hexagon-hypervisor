@@ -348,8 +348,17 @@ int main()
 	/* Further get testing */
 	TH_vmblock.pending[0] = 0xffffffff;
 	TH_vmblock.enable[0] = 0xffffffff;
+	if (H2K_vm_interrupt_peek(&TH_vmblock,0) != 0) {
+		FAIL("Didn't get first valid interrupt/peek");
+	}
 	if (H2K_vm_interrupt_get(&TH_vmblock,0) != 0) {
-		FAIL("Didn't get first valid interrupt");
+		FAIL("Didn't get first valid interrupt/get");
+	}
+	if (TH_vmblock_pending[0] != 0xfffffffe) {
+		FAIL("Didn't clear pending bit");
+	}
+	if (TH_vmblock_enable[0] != 0xfffffffe) {
+		FAIL("Didn't clear enable bit");
 	}
 	/* OK!  We're done here! */
 	puts("TEST PASSED");

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <context.h>
 #include <c_std.h>
+#include <context.h>
 
 #include <vm.h>
 #include <vmint.h>
@@ -64,6 +64,16 @@ void  H2K_vm_interrupt_post(H2K_vmblock_t *vmblock, u8_t first_cpu, u32_t intno)
 	/* Is it globally enabled? If not, finished. */
 	if ((vmblock->enable[wordidx] & bitmask) == 0) return;
 	H2K_vm_interrupt_deliver(vmblock,first_cpu,intno);
+}
+
+void  H2K_vm_interrupt_clear(H2K_vmblock_t *vmblock, u32_t intno)
+{
+	u32_t wordidx = intno >> 5;
+	u32_t bitidx   = intno & 0x1f;
+	u32_t *wptr;
+	/* clear bit atomically */
+	wptr = &vmblock->pending[wordidx];
+	H2K_atomic_clrbit(wptr,bitidx);
 }
 
 void  H2K_vm_interrupt_enable(H2K_vmblock_t *vmblock, u32_t intno)
@@ -184,5 +194,75 @@ s32_t H2K_vm_interrupt_peek(H2K_vmblock_t *vmblock, u8_t cpu)
 	}
 	/* No interrupt found! */
 	return -1;
+}
+
+u32_t H2K_vm_interrupt_status(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
+{
+	u32_t wordidx = intno >> 5;
+	u32_t bitidx   = intno & 0x1f;
+	u32_t ret = 0;
+	ret = (vmblock->pending[wordidx] >> bitidx) & 1;
+	ret |= (((vmblock->enable[wordidx] >> (bitidx)) & 1) << 1);
+	ret |= (((vmblock->percpu_mask[cpu][wordidx] >> (bitidx)) & 1) << 2);
+	return ret;
+}
+
+void H2K_vmtrap_intop(H2K_thread_context *me)
+{
+	H2K_vmblock_t *vmblock = me->vmblock;
+	u32_t r1 = me->r01;
+	u32_t r2 = me->r02;
+	u32_t bad_int = 0;
+	u8_t mycpu = me->vmcpu;
+	if (r1 >= vmblock->num_ints) {
+		bad_int = 1;
+		me->r00 = -1;
+	} else {
+		me->r01 = 0;
+	}
+	switch (me->r00) {
+		case 0: /* NOP */
+			me->r00 = 0; return;
+		case 1: /* GLOBEN */
+			if (bad_int) return;
+			H2K_vm_interrupt_enable(vmblock,r1);
+			return;
+		case 2: /* GLOBDIS */
+			if (bad_int) return;
+			H2K_vm_interrupt_disable(vmblock,r1);
+			return;
+		case 3: /* LOCEN */
+			if (bad_int) return;
+			H2K_vm_interrupt_localunmask(vmblock,mycpu,r1);
+			return;
+		case 4: /* LOCDIS */
+			if (bad_int) return;
+			H2K_vm_interrupt_localmask(vmblock,mycpu,r1);
+			return;
+		case 5: /* AFFINITY */
+			if (bad_int) return;
+			H2K_vm_interrupt_localmask(vmblock,r2,r1);
+			return;
+		case 6: /* GET */
+			me->r00 = H2K_vm_interrupt_get(vmblock,mycpu);
+			return;
+		case 7: /* PEEK */
+			me->r00 = H2K_vm_interrupt_peek(vmblock,mycpu);
+			return;
+		case 8: /* STATUS */
+			if (bad_int) return;
+			me->r00 = H2K_vm_interrupt_status(vmblock,mycpu,r1);
+			return;
+		case 9: /* POST */
+			if (bad_int) return;
+			H2K_vm_interrupt_post(vmblock,mycpu,r1);
+			return;
+		case 10: /* CLEAR */
+			if (bad_int) return;
+			H2K_vm_interrupt_clear(vmblock,r1);
+			return;
+		default:
+			me->r00 = -1;
+	}
 }
 

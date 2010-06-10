@@ -158,7 +158,13 @@ typedef struct _h2_thread_context
 	// 192
 	u64_t r0706;	// OK FOR DCZEROA
 	u64_t r0504;
-	u64_t r0302;
+	union {
+		u64_t r0302;
+		struct {
+			u32_t r02;
+			u32_t r03;
+		};
+	};
 	u64_t lc0sa0;
 	// 224
 	u64_t lc1sa1;	// OK FOR DCZEROA

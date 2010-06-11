@@ -89,17 +89,22 @@ CFLAGS +=${OSLIB} -O1 -mv${ARCHV} -DARCHV=${ARCHV} -Wall
 ifdef STANDALONE
 CFLAGS += -I ${H2DIR}/kernel/include
 LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
+ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/kernel/include
 else
 OSLIB=-moslib=h2
 LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
 CFLAGS += -I ${H2DIR}/install/include
+ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 endif
 LDFLAGS+= -mv${ARCHV}
 #  Turn on call() support for assertion checking
 #CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.
-ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 
+ifdef INC_KERNEL
+CFLAGS += -I${H2DIR}/kernel/include
+ASFLAGS += -I${H2DIR}/kernel/include
+endif
 
 ################################################################################
 #  Convenience shortcuts

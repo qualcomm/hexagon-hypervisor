@@ -87,6 +87,7 @@ void TH_setup_intmask()
 void TH_clear_data()
 {
 	u32_t i,j;
+	TH_vmblock.num_ints = MAX_INTERRUPTS;
 	for (j = 0; j < MAX_INTERRUPTS; j+=32) {
 		TH_pending_storage[j/32] = 0;
 		TH_enable_storage[j/32] = 0;
@@ -184,10 +185,10 @@ void TH_check_delivery(u32_t cpu, u32_t intno)
 				TH_check_ipi();
 				saw_post = 1;
 			} else if (!saw_post) {
-				printf("Enable=%x,mask=%x,intno=%d,th=%d/%d\n",
+				printf("Enable=%x,mask=%x,intno=%d,th=%d/%d,cpu=%d\n",
 					TH_vmblock.enable[intno/32],
 					TH_vmblock.percpu_mask[k][intno/32],
-					intno,k,TH_vmblock.num_cpus);
+					intno,k,TH_vmblock.num_cpus,cpu);
 				for (k = 0; k < TH_vmblock.num_cpus; k++) {
 					printf("TH %d: %d\n",k,TH_threads[k].vmstatus & H2K_VMSTATUS_VMWORK);
 				}
@@ -236,6 +237,13 @@ void TH_check_localunmask_wakeup(u32_t cpu, u32_t intno)
 	if (TH_threads[cpu].vmstatus == 0) FAIL("Didn't interrupt unmasking thread");
 }
 
+void TH_test_clear(u32_t intno)
+{
+	TH_vmblock.pending[intno/32] |= (1<<(intno%32));
+	H2K_vm_interrupt_clear(&TH_vmblock,intno);
+	if ((TH_vmblock.pending[intno/32] >> (intno % 32)) & 1) FAIL("Didn't clear interrupt");
+}
+
 void TH_test_posting()
 {
 	u32_t i,j;
@@ -259,6 +267,10 @@ void TH_test_posting()
 				TH_check_localunmask_wakeup(i,j);
 			}
 		}
+	}
+	/* Test that a posted interrupt can be cleared */
+	for (j = 0; j < TH_vmblock.num_ints; j++) {
+		TH_test_clear(j);
 	}
 }
 
@@ -297,6 +309,37 @@ void TH_test_interrupt_get(u32_t cpu,u32_t intno)
 	TH_vmblock.pending[intno/32] = 0;
 }
 
+void TH_test_status()
+{
+	int i;
+	u32_t tmp;
+	TH_vmblock.num_ints = MAX_INTERRUPTS;
+	for (i = 0; i < TH_vmblock.num_ints/32; i++) {
+		TH_vmblock.enable[i] = 0;
+		TH_vmblock.percpu_mask[0][i] = 0;
+		TH_vmblock.percpu_mask[1][i] = 0;
+		TH_vmblock.pending[i] = 0;
+	}
+	for (i = 0; i < TH_vmblock.num_ints; i++) {
+		if (i & 4) TH_vmblock.enable[i/32] |= (1<<(i%32));
+		if (i & 2) TH_vmblock.percpu_mask[0][i/32] |= (1<<(i%32));
+		else       TH_vmblock.percpu_mask[1][i/32] |= (1<<(i%32));
+		if (i & 1) TH_vmblock.pending[i/32] |= (1<<(i%32));
+	}
+	for (i = 0; i < TH_vmblock.num_ints; i++) {
+		tmp = H2K_vm_interrupt_status(&TH_vmblock,0,i);
+		if (tmp != (i & 0x7)) {
+			printf("ret: %x i: %x expect: %x\n",tmp,i,((i & 7)));
+			FAIL("Bad bits/0");
+		}
+		tmp = H2K_vm_interrupt_status(&TH_vmblock,1,i);
+		if (tmp != ((i & 0x7) ^ 2)) {
+			printf("ret: %x i: %x expect: %x\n",tmp,i,((i & 7) ^ 2));
+			FAIL("Bad bits/1");
+		}
+	}
+}
+
 int main()
 {
 	int i,j;
@@ -308,6 +351,11 @@ int main()
 		TH_thread_ptrs[i] = &TH_threads[i];
 		TH_vmblock.percpu_mask[i] = TH_localmask_storage[i];
 	}
+	TH_vmblock.num_ints = MAX_INTERRUPTS;
+
+	/* Check status */
+	TH_test_status();
+
 	/* int_v2p not set up */
 	/* pmap not set up */
 	/* Set set/clear mask functions basic functionality */

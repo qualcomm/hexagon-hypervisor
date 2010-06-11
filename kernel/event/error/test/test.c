@@ -5,10 +5,11 @@
 
 #include <c_std.h>
 #include <context.h>
+#include <max.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
-#include <max.h>
 #include <h2.h>
 
 H2K_thread_context *me;

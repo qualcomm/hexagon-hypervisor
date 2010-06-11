@@ -147,6 +147,7 @@ int main()
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
+		puts(".");
 		fill_srcdata(i);
 		TH_try_interrupt(&a,i);
 		TH_try_interrupt(NULL,i);

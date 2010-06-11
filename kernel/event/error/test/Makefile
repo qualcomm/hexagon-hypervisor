@@ -4,3 +4,5 @@ EXEC=test.elf
 
 include Makefile.inc
 
+CC += -I../../../include
+

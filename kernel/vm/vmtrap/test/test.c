@@ -30,11 +30,7 @@ s32_t H2K_vmtrap_return() { return 1; }
 s32_t H2K_vmtrap_setvec() { return 2; }
 s32_t H2K_vmtrap_setie() { return 3; }
 s32_t H2K_vmtrap_getie() { return 4; }
-s32_t H2K_vmtrap_swi() { return 5; }
-s32_t H2K_vmtrap_iack() { return 6; }
-s32_t H2K_vmtrap_setimask() { return 7; }
-s32_t H2K_vmtrap_getimask() { return 8; }
-s32_t H2K_vmtrap_iconf() { return 9; }
+s32_t H2K_vmtrap_intop() { return 5; }
 s32_t H2K_vmtrap_clrmap() { return 0xa; }
 s32_t H2K_vmtrap_register_ptb() { return 0xb; }
 s32_t H2K_vmtrap_cachectl() { return 0xd; }
@@ -45,6 +41,8 @@ s32_t H2K_vmtrap_yield() { return 0x11; }
 s32_t H2K_vmtrap_start() { return 0x12; }
 s32_t H2K_vmtrap_stop() { return 0x13; }
 s32_t H2K_vmtrap_vmpid() { return 0x14; }
+s32_t H2K_vmtrap_setregs() { return 0x15; }
+s32_t H2K_vmtrap_getregs() { return 0x16; }
 
 s32_t call_trap1(u32_t trapnum, H2K_thread_context *context);
 void TH_vectors();
@@ -55,8 +53,8 @@ void user_mode();
 u64_t guest_stack[128] __attribute__((aligned(128*8)));
 
 s32_t testvals[] = {
-	-1, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,-1,13,14,15,
-	16,17,18,19,20,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+	-1, 1, 2, 3, 4, 5,-1,-1,-1,-1,10,11,-1,13,14,15,
+	16,17,18,19,20,21,22,-1,-1,-1,-1,-1,-1,-1,-1,-1
 };
 
 H2K_kg_t H2K_kg;

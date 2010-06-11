@@ -1,3 +1,4 @@
+INC_KERNEL=1
 
 OBJS+=main.o
 EXEC=test.elf

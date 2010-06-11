@@ -1,3 +1,4 @@
+STANDALONE=1
 
 #  Wow.  make is totally buggy with this setup for some reason.
 #  Resorting to old school.

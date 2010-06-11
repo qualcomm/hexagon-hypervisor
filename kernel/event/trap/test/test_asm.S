@@ -77,3 +77,13 @@ H2K_futex_resume:
 	r0 = #3
 	jumpr r31
 
+	.global H2K_futex_lock_pi
+H2K_futex_lock_pi:
+	r0 = #20
+	jumpr r31
+
+	.global H2K_futex_unlock_pi
+H2K_futex_unlock_pi:
+	r0 = #21
+	jumpr r31
+

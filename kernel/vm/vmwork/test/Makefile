@@ -1,3 +1,4 @@
+STANDALONE=1
 
 OBJS+=test.o
 EXEC=test.elf

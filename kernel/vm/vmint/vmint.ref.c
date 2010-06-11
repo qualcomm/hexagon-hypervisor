@@ -202,8 +202,8 @@ u32_t H2K_vm_interrupt_status(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
 	u32_t bitidx   = intno & 0x1f;
 	u32_t ret = 0;
 	ret = (vmblock->pending[wordidx] >> bitidx) & 1;
-	ret |= (((vmblock->enable[wordidx] >> (bitidx)) & 1) << 1);
-	ret |= (((vmblock->percpu_mask[cpu][wordidx] >> (bitidx)) & 1) << 2);
+	ret |= (((vmblock->percpu_mask[cpu][wordidx] >> (bitidx)) & 1) << 1);
+	ret |= (((vmblock->enable[wordidx] >> (bitidx)) & 1) << 2);
 	return ret;
 }
 

@@ -32,6 +32,10 @@ H2K_thread_context a,b;
 
 void H2K_handle_int();
 
+/* Helper function, make SGP safe */
+void TH_save_sgp();
+void TH_restore_sgp();
+
 /* Helper function, will call H2K_handle_interrupt */
 void TH_do_interrupt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num);
 
@@ -62,6 +66,7 @@ void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 {
 	if (from != NULL) FAIL("Unexpected FROM");
 	if (to != NULL) FAIL("Unexpected TO");
+	asm volatile (" k0unlock ");
 	longjmp(env,1);
 }
 
@@ -117,6 +122,7 @@ void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 	if (setjmp(env) == 0) {
 		TH_do_interrupt(src,dest,interrupt);
 	}
+	TH_restore_sgp();
 }
 
 void fill_srcdata(int i)
@@ -144,10 +150,10 @@ void fill_srcdata(int i)
 int main() 
 {
 	int i;
+	TH_save_sgp();
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		puts(".");
 		fill_srcdata(i);
 		TH_try_interrupt(&a,i);
 		TH_try_interrupt(NULL,i);

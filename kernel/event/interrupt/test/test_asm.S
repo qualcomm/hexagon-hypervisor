@@ -66,3 +66,24 @@ H2K_interrupted_fastint_check:
 H2K_fastint:
 	jumpr r31
 
+	.global TH_save_sgp
+TH_save_sgp:
+	r0.h = #hi(TH_sgp_word)
+	r0.l = #lo(TH_sgp_word)
+	r1 = sgp
+	memw(r0) = r1
+	jumpr r31
+
+	.global TH_restore_sgp
+TH_restore_sgp:
+	r0.h = #hi(TH_sgp_word)
+	r0.l = #lo(TH_sgp_word)
+	r0 = memw(r0)
+	sgp = r0
+	jumpr r31
+
+	.data
+	.p2align 2
+TH_sgp_word:
+	.word 0
+

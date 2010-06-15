@@ -33,7 +33,7 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 	if (!p0) jump 9f
 	memw(r6+#12) = r8
 	dccleaninva(r6)
-	r8 = memub(r6)
+	r8 = memub(r6+#15)
 	dccleaninva(r6)
 	loop0(1f,#66)
 	.falign

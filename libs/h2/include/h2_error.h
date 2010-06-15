@@ -7,7 +7,7 @@
 #define H2_ERROR_H 1
 
 void h2_handle_errors(void);
-void h2_set_handler(int eventnum, void (*fn)(void));
+void h2_set_handler(int eventnum, void (*fn)(int));
 
 #endif
 

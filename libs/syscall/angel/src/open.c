@@ -51,6 +51,22 @@ static const int modemap[] = {	/* convert open mode */
 	O_RDWR | O_CREAT | O_EXCL,
 };
 
+static inline void clean_str(const char *x)
+{
+	do {
+		asm volatile ("dccleaninva(%0)" : :"r"(x):"memory");
+	} while (*x++);
+}
+
+static inline void clean(void *vx,int words)
+{
+	int *x = vx;
+	int i;
+	for (i = 0; i < words; i++) {
+		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
+	};
+}
+
 fd_t sys_open(const char *name, t_mode_t mode)
 {
 	int i;
@@ -71,6 +87,7 @@ fd_t sys_open(const char *name, t_mode_t mode)
 			break;
 		}
 	}
+	clean_str(x.name); clean(&x,3);
 	return ANGEL(SYS_OPEN,&x,0);
 }
 _STD_END

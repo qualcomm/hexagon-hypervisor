@@ -8,8 +8,6 @@
 #include <max.h>
 
 FUNC_START start .text.init.boot .p2align 2
-	.global H2K_start
-H2K_start:
 	r0 = #0
 	syscfg = r0
 	ickill
@@ -76,12 +74,10 @@ H2K_start:
 2:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
 	r0 = #0x77f
-#if 0
 #if __QDSP6_ARCH__ <= 3
 	r0.h = #0x0083	/* 256KB L2 */
 #else
 	r0.h = #0x008b	/* 256KB L2 + ITCM */
-#endif
 #endif
 	syscfg = r0
 

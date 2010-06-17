@@ -29,6 +29,15 @@ static void* _pthread_stub(pthread_i *ltcb)
 	//  Default answer for stuff I don't know about:  delete.
 	//blast_thread_set_tid(ltcb->attr.timetest_id);
     
+	//  This TLS/UGP setting stuff used to happen in blast_thread_create via some trampoline, which was
+	//  basically this stub.  So hopefully the only people using it are the same ones using this
+	//  pthread API in the first place.
+
+	struct BLAST_ugp_ptr *pUgp;
+	pUgp = (struct BLAST_ugp_ptr *)malloc (sizeof (struct BLAST_ugp_ptr));
+	memset (pUgp, 0, sizeof (struct BLAST_ugp_ptr));
+	asm volatile("ugp = %0\n" : : "r" (pUgp));
+
 	/* set pthread tcb into blast tls */
 	blast_tls_setspecific(pthread_tcb_key, (const void *)ltcb);
     

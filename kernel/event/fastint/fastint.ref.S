@@ -61,7 +61,7 @@ H2K_fastint_return:
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
 	r5 = memw(r16+#KG_fastint_mask)
-	r4 = add(r5,#KG_fastint_funcptrs)
+	r4 = add(r16,#KG_fastint_funcptrs)
 	r11.h = #0x1c4
 	r11.l = #0x0
 	r5 = not(r5)

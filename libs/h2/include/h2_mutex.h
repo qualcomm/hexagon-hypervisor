@@ -19,7 +19,7 @@ typedef unsigned int h2_mutex_t;
 
 void h2_mutex_lock(h2_mutex_t *lock);		/* blocking */
 void h2_mutex_unlock(h2_mutex_t *lock);	/* unlock */
-int h2_mutex_trylock(h2_mutex_t *lock);	/* just try... 1 if successful, 0 if not */
+int h2_mutex_trylock(h2_mutex_t *lock);	/* just try... 0 if successful, nonzero if not */
 static inline void h2_mutex_init(h2_mutex_t *lock) { *lock = H2_MUTEX_T_INIT; }	/* initialize it... */
 
 #endif

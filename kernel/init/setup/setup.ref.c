@@ -18,6 +18,8 @@
 void qdsp6_pre_main();
 void H2K_interrupt_restore();
 
+u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
+
 IN_SECTION(".text.init.setup") void H2K_init_setup()
 {
 	H2K_trace_init();
@@ -45,6 +47,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot()
 	asid = H2K_asid_table_inc((u32_t)(H2K_linear_bootmap));
 	boot->ssr_asid = asid;
 	H2K_runlist_push(boot);
+	H2K_init_complete = 0;
 	H2K_switch(NULL,boot);
 }
 

@@ -47,7 +47,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot()
 	asid = H2K_asid_table_inc((u32_t)(H2K_linear_bootmap));
 	boot->ssr_asid = asid;
 	H2K_runlist_push(boot);
-	H2K_init_complete = 0;
+	H2K_init_complete = 1;
 	H2K_switch(NULL,boot);
 }
 

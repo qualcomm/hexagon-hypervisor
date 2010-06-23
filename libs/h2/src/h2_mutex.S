@@ -113,15 +113,15 @@ h2_mutex_trylock:
 	r2 = memw_locked(r24)
 	{
 		p0 = cmp.eq(r2,#0)
-		if (!p0.new) jump:nt 2f
+		if (!p0.new) jump:nt 1f
 		if (!p0.new) r0 = #-1
 	}
 	memw_locked(r24,p1) = r0
 	{
-		if (!p1) jump 1b
+		if (!p1) jump 2b
 		if (p1) r0 = #0
 	}
-2:
+1:
 	{
 		deallocframe
 		r25:24 = memd(r29)

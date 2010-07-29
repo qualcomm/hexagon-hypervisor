@@ -38,7 +38,7 @@ errno_t sys_errno() { int x = 0; clean(&x,1); return ANGEL(SYS_ERRNO,&x,0); }
 
 void sys_exit(okay_t status) { ANGEL(SYS_EXIT,&status,status); }
 
-errno_t sys_flen(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FLEN,&fd,0); printf("sys_flen: fd=%d ret=%d\n",fd,ret); return ret; }
+errno_t sys_flen(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FLEN,&fd,0); DEBUG_PRINTF("sys_flen: fd=%d ret=%d\n",fd,ret); return ret; }
 
 int sys_fstat(fd_t fd, void *buffer)
 {
@@ -52,7 +52,7 @@ int sys_fstat(fd_t fd, void *buffer)
 	return ANGEL(SYS_FSTAT,&x,0);
 }
 
-errno_t sys_ftell(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FTELL,&fd,0); printf("sys_ftell: fd=%d ret=%d\n",fd,ret); return ret; }
+errno_t sys_ftell(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FTELL,&fd,0); DEBUG_PRINTF("sys_ftell: fd=%d ret=%d\n",fd,ret); return ret; }
 
 errno_t sys_get_cmdline(char *buffer, count_t count)
 {
@@ -82,7 +82,7 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 	x.fd = fd; x.buf = buffer; x.count = count;
 	clean(x.buf,x.count/4+3); clean(&x,3);
 	ret = ANGEL(SYS_READ,&x,0);
-	printf("ANGEL read: wanted %d, returned %d\n",count,ret);
+	DEBUG_PRINTF("ANGEL read: wanted %d, returned %d\n",count,ret);
 	return ret;
 }
 
@@ -116,7 +116,8 @@ errno_t sys_seek(fd_t fd, count_t offset)
 	struct { fd_t fd; count_t c; } x; x.fd = fd; x.c = offset;
 	clean(&x,2);
 	ret = ANGEL(SYS_SEEK,&x,0);
-	printf("sys_seek: fd: %d off: %d ret: %d\n",fd,offset,ret);
+	DEBUG_PRINTF("sys_seek: fd: %d off: %d ret: %d\n",fd,offset,ret);
+	return ret;
 }
 
 int sys_statvfs(char *rootdir, void *buffer)

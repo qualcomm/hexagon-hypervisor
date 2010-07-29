@@ -88,5 +88,9 @@ count_t sys_write(fd_t, const char *, count_t);
 void sys_writec(unsigned char);
 void sys_write0(const char *);
 
+#ifndef DEBUG_PRINTF
+#define DEBUG_PRINTF(...) /* nothing */
+#endif
+
 #endif
 

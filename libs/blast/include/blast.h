@@ -9,6 +9,7 @@
 #include <h2.h>
 
 #include <blast_fd.h>
+#include <blast_tls.h>
 #define RENAME_PREFIX blast
 #include <h2_rename.h>
 #undef RENAME_PREFIX

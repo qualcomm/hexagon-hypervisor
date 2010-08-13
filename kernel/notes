@@ -114,3 +114,75 @@ Clear IE bit in SSR.  Blocking still allowed.  Raise priority; select
 someone else as lowprio.
 
 
+
+
+
+
+
+
+	******************** Multilevel Translations ************
+
+Guest maps Virtual -> Intermediate
+
+But... we'll probably need to support KVM/XEN/VMWARE.
+
+So, we will have
+
+Virtual -> Intermediate -> Intermediate -> Physical
+     (Linux)        (VMWare)           (h2)
+
+
+And, just because it's awesome, it would be nice to have:
+
+Virtual -> Intermediate -> Intermediate -> Intermediate -> Physical
+
+
+Virtual is obviously what registers hold.
+
+Physical is obviously what the actual machine holds.
+
+TLB needs to translate Virtual -> Physical.
+
+Thus, my recommendation is that STLB also holds Virtual -> Physical
+
+However, every time you walk a page table, say at the Linux level, every lookup
+is really a virtual address from some other level.
+
+So let's just make it a real virtual address.
+
+Each address space maps a set of Input addresses to a set of Output addresses.
+We can have an "Output ASID".  If this ASID is something special (-1 or 0 or
+something), the output address is a physical address and we are done.
+
+If the "Output ASID" is not the special value, we just need to continue looking
+up the translation, but now we just recurse into the same algorithm with a new ASID. 
+
+The STLB (or indeed, TLB) can be used at any time while walking any structure
+to convert any non-physical address to a physical one.
+
+Using the real TLB might be very interesting, the TLB walk code could just
+switch to the target ASID and use virtual loads/stores... if there's a TLB miss
+then the nested TLB miss handler would switch to the target ASID and get *that*
+fault fixed up, etc.  Would require lots of thinking about the right way to
+nest, but it isn't too inelegant.
+
+
+	**************** Multilevel Permissions / DSM ************
+
+At some level, someone is going to figure out the DSM.  
+
+It's probably easiest to do this at the highest level possible... and that
+should probably be how we research this; get KVM working on each node and
+then have all the KVM hosts to implement the protocol for their guests.
+
+OTOH, it might be simpler if we could do it at the lowest level.
+
+Doing the DSM dance fundimentally means removing permissions that the guest
+environments think they have.  This might be write permissions (in the case of
+shared pages), or it might be read permissions (if the page is not shared
+to the current coherence domain).  That means that whatever translations might
+cache the permissions, we need to invalidate the cache.  And as we look up 
+V->P, we need the last level to include the DSM permissions in addition to 
+whatever other policy we might have.
+
+

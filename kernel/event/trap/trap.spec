@@ -104,7 +104,7 @@ is used wherever empty traptab spaces exist.  The table is as follows:
 	28. :cfunc:`H2K_thread_id()`: Get the thread ID
 	29. :cfunc:`H2K_thread_id()`: Get the thread ID
 	30. :cfunc:`H2K_trap_config()`: Adjust Kernel Configuration
-	31. :cfunc:`H2K_thread_id()`: Get the thread ID
+	31. :cfunc:`H2K_trap_hwconfig()`: Adjust Hardware Configuration
 
 
 Testing

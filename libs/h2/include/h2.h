@@ -24,6 +24,7 @@
 #include "h2_anysignal.h"
 #include "h2_rmutex.h"
 #include "h2_config.h"
+#include "h2_hwconfig.h"
 #include "h2_prio.h"
 #include "h2_vmtraps.h"
 #include "h2_error.h"

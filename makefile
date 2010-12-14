@@ -7,7 +7,7 @@ COM_LDFLAGS=
 
 #If you are running outside hexframe.. sensible defaults
 ifeq (,${BUILD_DIR})
-ARCHV=3
+ARCHV=4
 CC=qdsp6-gcc
 RUN=qdsp6-sim
 SIMF=--timing

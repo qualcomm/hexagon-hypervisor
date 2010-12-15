@@ -39,6 +39,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_
 	H2K_gp->free_threads = H2K_gp->free_threads->next;
 	tmp->base_prio = tmp->prio = prio;
 	tmp->ugpgp = me->ugpgp;
+	tmp->sr = me->sr;
 	tmp->ssr = myssr;
 	tmp->elr = pc;
 	tmp->r29 = sp;

@@ -169,7 +169,13 @@ typedef struct _h2_thread_context
 	// 224
 	u64_t lc1sa1;	// OK FOR DCZEROA
 	u64_t m1m0;
-	u64_t sr_preds;
+	union {
+		u64_t sr_preds;
+		struct {
+			u32_t preds;
+			u32_t sr;
+		};
+	};
 	u64_t cs1cs0;	// V4 regs
 	// 256
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;

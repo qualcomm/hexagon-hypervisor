@@ -44,6 +44,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot()
 	boot->continuation = H2K_interrupt_restore;
 	boot->trapmask = 0xffffffff;
 	boot->ccr = BOOT_THREAD_CCR;
+	boot->sr = BOOT_THREAD_USR;
 	asid = H2K_asid_table_inc((u32_t)(H2K_linear_bootmap));
 	boot->ssr_asid = asid;
 	H2K_runlist_push(boot);

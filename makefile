@@ -21,16 +21,19 @@ export INSTALLPATH := $(PWD)/install
 endif
 
 clean:
-	make -C kernel ARCHV=$(ARCHV) clean
-	make -C libs ARCHV=$(ARCHV) clean
+	make -C kernel ARCHV=$(ARCHV) clean && \
+	make -C libs ARCHV=$(ARCHV) clean && \
+	make -f scripts/Makefile.coverage clean && \
+	make -f scripts/Makefile.coverage clean_top && \
+	make -f scripts/docs/Makefile.sphinx clean && \
 	rm -Rf size test.exe stats.txt install kernel/stats.txt
 
 opt: clean
-	make -C kernel ARCHV=$(ARCHV) opt_install
+	make -C kernel ARCHV=$(ARCHV) opt_install && \
 	make -C libs ARCHV=$(ARCHV) install
 
 ref: clean
-	make -C kernel ARCHV=$(ARCHV) ref_install
+	make -C kernel ARCHV=$(ARCHV) ref_install && \
 	make -C libs ARCHV=$(ARCHV) install
 
 sim: ref
@@ -41,6 +44,15 @@ size:
 	qdsp6-objdump -h $(INSTALLPATH)/lib/*.a | $(SIZE_TOOL) text > size && \
 	cat size;
 
+cov:
+	make -f scripts/Makefile.coverage libs && \
+	make -f scripts/Makefile.coverage all && \
+	make -f scripts/Makefile.coverage cov.txt && \
+	make -f scripts/Makefile.coverage report.html
+
+doc:
+	make -f scripts/docs/Makefile.sphinx prepare && \
+	make -f scripts/docs/Makefile.sphinx doctest html
 
 compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a

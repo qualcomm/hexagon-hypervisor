@@ -12,7 +12,7 @@
 ################################################################################
 
 ifeq ($(ARCHV),)
-ARCHV = 3
+ARCHV = 4
 endif
 
 ifeq ($(MODEL),)
@@ -81,6 +81,10 @@ clean_libs:
 	cd ${H2DIR};\
 	rm -rf install; make clean
 
+clean_top:
+	rm -Rf test.cov_fns cov.txt report.html
+
+
 ################################################################################
 #  Standard compilation flags
 ################################################################################
@@ -117,7 +121,7 @@ ifdef SUBDIRS
 ################################################################################
 
 SUBDIR_MAKE=for SUBDIR in ${SUBDIRS}; do\
-	$(MAKE) -C $$SUBDIR $(MAKECMDGOALS);\
+	$(MAKE) -C $$SUBDIR $(MAKECMDGOALS) TEST=$$SUBDIR;\
 	done
 
 SUBDIR_TARGETS=clean all
@@ -131,7 +135,7 @@ ${SUBDIR_TARGETS}:
 #  I could get sneaky cat here and do a clever recursive thing, but that seems
 #  excessive.  Todo:  maybe this can go into the specfiles somehow?
 test.cov_fns:
-	find . -name "test.cov_fns" -exec cat {} \; >> $@
+	find ./kernel -name "test.cov_fns" -exec cat {} \; >> $@
 
 #  Uh...  don't run this unless all the tests are run for now.
 cov.txt: test.cov_fns 
@@ -143,7 +147,7 @@ cov.txt: test.cov_fns
 #  if results.txt is empty, FAIL
 #  
 report.html:
-	echo "<html><body><table>" > report.html;\
+	@echo "<html><body><table>" > report.html;\
 	for SUBDIR in ${SUBDIRS}; do\
 	   echo "<tr><td> $$SUBDIR<td>" >> report.html;\
 	   if [ ! -s $$SUBDIR/results.txt ]; then\
@@ -156,7 +160,7 @@ report.html:
 
 
 check:
-	for SUBDIR in ${SUBDIRS}; do\
+	@for SUBDIR in ${SUBDIRS}; do\
 	   if [ ! -s $$SUBDIR/results.txt ]; then\
 	      exit 1;\
 	   fi;\
@@ -173,32 +177,48 @@ check:
 
 else
 
+DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
+
 ################################################################################
 #  These are for actual terminal directories
 ################################################################################
 
 %.objdump: %.elf
-	${OBJDUMP} -D ${@:.objdump=.elf} > $@
+	${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"; exit 1; fi
+
+%.o: %.c
+	${CC} ${CFLAGS} -c -o $@ $<; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"; exit 1; fi
+
+%.o: %.S
+	${CC} ${ASFLAGS} -c -o $@ $<; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"; exit 1; fi
 
 ${EXEC}: ${OBJS}
-	${CC} -o $@ ${OBJS} ${LDFLAGS}
+	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"; exit 1; fi
 
 #  Todo:  need a watchdog to kill sims after some time; possibly use the "forked killer"
 test.log: ${EXEC}
-	${SIM} ${EXEC} --profile | tee $@
+	${SIM} ${EXEC} --profile | tee $@;
 
 # Coverage stuff -- single testcase
 
 gmon: test.log
 	${GMON_MERGE} -o gmon gmon.t_*
 
-COVFILES=cov.txt cov.csv
+COVFILES=cov.txt
 GMON_FILES=gmon gmon.t_0 gmon.t_1 gmon.t_2 gmon.t_3 gmon.t_4 gmon.t_5
 
-${COVFILES}: ${EXEC} gmon
-	${COV} -i ${EXEC} -o cov.txt -c cov.csv gmon
+#${COVFILES}: ${EXEC} gmon
+#	${COV} -i ${EXEC} -o cov.txt -c cov.csv gmon
 
-CLEANUP=${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} test.log results.txt h2 
+${COVFILES}: ${DUMP} gmon 
+	${COV} -F -d ${DUMP} -o cov.txt gmon; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
+
+CLEANUP=${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} test.log results.txt h2 
 CLEANUP += stats.txt
 
 clean:
@@ -206,8 +226,8 @@ clean:
 
 #  Pretty much a binary yes/no if the test passed or failed.
 results.txt: test.log
-	grep "TEST PASSED" test.log > $@
-	grep "ERROR:" test.log;\
+	@grep "TEST PASSED" test.log > $@
+	@grep "ERROR:" test.log;\
 	if [ $$? -eq 0 ]; then\
 		grep "ERROR:" test.log > $@;\
 		exit 1;\

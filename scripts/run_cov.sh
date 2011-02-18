@@ -6,6 +6,6 @@
 make -f scripts/Makefile.coverage libs $*
 
 make -f scripts/Makefile.coverage all $*
-touch test.cov_fns
+#touch test.cov_fns
 make -f scripts/Makefile.coverage cov.txt $*
 make -f scripts/Makefile.coverage report.html $*

@@ -85,13 +85,14 @@ void check_good(const char *good)
 		check.ppn = check.vpn = (badva >> 12);
 #else
 		check.valid = 1;
-		check.xwru = 0xe;
+		check.xwru = 0xf;
 		check.ppd = badva >> 11 | 1;
 		check.vpn = (badva >> 12);
 #endif
 		tmp = H2K_mem_translate_linear(badva,&a);
 		if (tmp.raw != check.raw) {
 			printf("%s(%c)\n",good,good[i]);
+			printf("%llx vs %llx\n",tmp.raw,check.raw);
 			FAIL("good string failed");
 		}
 	}

@@ -10,6 +10,10 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
+   :glob:
+
+   kernel/**   
+
 
 Indices and tables
 ==================

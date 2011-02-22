@@ -146,12 +146,17 @@ cov.txt: test.cov_fns
 #  if no results.txt, FAIL
 #  if results.txt is empty, FAIL
 #  
+#	      grep -A 1 FAIL $$SUBDIR/test.log >> report.html; \
+#	      echo FAIL:  no pass signature >> report.html;\
+
 report.html:
 	@echo "<html><body><table>" > report.html;\
 	for SUBDIR in ${SUBDIRS}; do\
 	   echo "<tr><td> $$SUBDIR<td>" >> report.html;\
 	   if [ ! -s $$SUBDIR/results.txt ]; then\
-	      echo FAIL:  no pass signature >> report.html;\
+	      echo '<font style="background-color: red;">' >> report.html; \
+	      grep -A 1 FAIL $$SUBDIR/test.log >> report.html; \
+	      echo '</font>' >> report.html; \
 	   else\
 	      cat $$SUBDIR/results.txt >> report.html;\
 	   fi;\

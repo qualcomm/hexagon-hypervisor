@@ -1,7 +1,7 @@
 
 ASM_REF_CODE(Trap context save/restore not possible in C)
 
-:mod:``trap`` -- handle kernel request events
+:mod:`trap` -- handle kernel request events
 =============================================
 
 .. module:: trap

@@ -45,7 +45,7 @@ size:
 	cat size;
 
 cov:
-	make -f scripts/Makefile.coverage libs && \
+	make -f scripts/Makefile.coverage prepare && \
 	make -f scripts/Makefile.coverage all && \
 	make -f scripts/Makefile.coverage cov.txt && \
 	make -f scripts/Makefile.coverage report.html

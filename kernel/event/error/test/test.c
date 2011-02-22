@@ -82,7 +82,11 @@ void TH_call_error()
 int main()
 {
 	h2_init(NULL);
+#if __QDSP6_ARCH__ <= 3
 	asm (" %0 = sgp\n" : "=r"(me));
+#else
+	asm (" %0 = sgp0\n" : "=r"(me));
+#endif
 	TH_guestmode();
 	me->gevb = 0;
 	TH_expect_fatal = 1;

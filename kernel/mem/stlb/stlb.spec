@@ -1,5 +1,5 @@
 
-:mod: `stlb` -- Software Translation Lookaside Buffer
+:mod:`stlb` -- Software Translation Lookaside Buffer
 =====================================================
 
 .. module:: stlb
@@ -12,8 +12,8 @@ an STLB can be added by using the configuration trap.
 
 The STLB is arranged in the following way:
 
-* For each ASID, there is a small structure with information about the 
-STLB.  This information includes:
+* For each ASID, there is a small structure with information about the
+  STLB.  This information includes:
   * Recommended Page Size
   * Bits indicating which sets have valid entries for this ASID
   * A mask indicating which ways may be replaced (to facilitate QoS)

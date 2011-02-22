@@ -1,5 +1,5 @@
 
-:mod: `asid` -- Address Space IDentification Management
+:mod:`asid` -- Address Space IDentification Management
 =======================================================
 
 .. module:: asid

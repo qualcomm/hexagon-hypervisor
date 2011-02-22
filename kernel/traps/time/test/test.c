@@ -44,7 +44,11 @@ void thread0(int thread)
 	int i;
 	char buf[32];
 	H2K_thread_context *me;
+#if __QDSP6_ARCH__ <= 3
 	asm ( " %0 = sgp " : "=r"(me));
+#else
+	asm ( " %0 = sgp0 " : "=r"(me));
+#endif
 	u64_t startpcycles;
 	u64_t endpcycles;
 	u64_t startcputime;

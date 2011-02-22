@@ -20,13 +20,14 @@ static void h2_default_error_handler(int evt)
 	printf("g0: 0x%08x g1: 0x%08x g2: 0x%08x g3: 0x%08x\n",
 		regs[0],regs[1],regs[2],regs[3]);
 	ptr = (void *)h2_thread_myid();
-	printf("ThreadID: %08x\n",ptr);
+	printf("ThreadID: %08x\n",(unsigned int)ptr);
 	for (i = 0; i < 64; i+=4) {
 		printf("%d: 0x%08x 0x%08x 0x%08x 0x%08x\n",i*4,ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);
 	}
 	asm ( " %0 = r30 " : "=r"(ptr));
 	for (i = 0; i < 64; i+=4) {
-		printf("%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",ptr+i,ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);
+	    printf("%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",(unsigned int)ptr+i,
+		   ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);
 	}
 	h2_thread_stop();
 }

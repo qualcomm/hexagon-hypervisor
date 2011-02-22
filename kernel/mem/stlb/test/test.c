@@ -26,7 +26,7 @@ int main()
 	H2K_mem_tlbfmt_t entry;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_mem_stlb_init();
-#if __QDSP6__ARCH__ <= 3
+#if __QDSP6_ARCH__ <= 3
 	entry.ppn = 0;
 	entry.ccc = 0;
 	entry.xwr = 0x7;
@@ -37,7 +37,7 @@ int main()
 #else
 	entry.ppd = 1;
 	entry.cccc = 0;
-	entry.xwru = 0xf
+	entry.xwru = 0xf;
 	entry.valid = 1;
 	entry.asid = 0;
 	entry.vpn = 0;

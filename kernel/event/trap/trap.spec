@@ -93,8 +93,8 @@ is used wherever empty traptab spaces exist.  The table is as follows:
 	17. :cfunc:`H2K_thread_id()`: Get the thread ID
 	18. :cfunc:`H2K_tid_set()`: Set software thread ID
 	19. :cfunc:`H2K_tid_get()`: Get software thread ID
-	20. :cfunc:`H2K_thread_id()`: Get the thread ID
-	21. :cfunc:`H2K_thread_id()`: Get the thread ID
+	20. :cfunc:`H2K_futex_lock_pi()`: Priority Inheritance Futexy-Mutex Lock
+	21. :cfunc:`H2K_futex_unlock_pi()`: Priority Inheritance Futexy-Mutex Unlock
 	22. :cfunc:`H2K_thread_id()`: Get the thread ID
 	23. :cfunc:`H2K_thread_id()`: Get the thread ID
 	24. :cfunc:`H2K_thread_id()`: Get the thread ID

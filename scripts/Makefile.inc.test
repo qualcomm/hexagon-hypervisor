@@ -123,8 +123,9 @@ ifdef SUBDIRS
 ################################################################################
 
 SUBDIR_MAKE=for SUBDIR in ${SUBDIRS}; do\
-	$(MAKE) -C $$SUBDIR $(MAKECMDGOALS) TEST=$$SUBDIR;\
-	done
+	$(MAKE) -C $$SUBDIR $(MAKECMDGOALS) TEST=$$SUBDIR; TSTAT=$$?; \
+        if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi; \
+	done; exit $$STAT
 
 SUBDIR_TARGETS=clean all
 

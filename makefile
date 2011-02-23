@@ -45,10 +45,13 @@ size:
 	cat size;
 
 cov:
-	make -f scripts/Makefile.coverage prepare && \
-	make -f scripts/Makefile.coverage all && \
-	make -f scripts/Makefile.coverage cov.txt && \
+	make -f scripts/Makefile.coverage prepare; \
+	make -f scripts/Makefile.coverage all; \
+	make -f scripts/Makefile.coverage cov.txt; \
 	make -f scripts/Makefile.coverage report.html
+
+cov-check:
+	make -f scripts/Makefile.coverage check
 
 doc:
 	make -f scripts/docs/Makefile.sphinx prepare && \

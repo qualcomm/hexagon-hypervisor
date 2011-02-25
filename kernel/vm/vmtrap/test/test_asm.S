@@ -43,7 +43,7 @@ user_mode:
 TH_vectors:
 	jump TH_bad_vec
 	jump TH_bad_vec
-	jump TH_error
+	jump TH_guest_trap
 	jump TH_bad_vec
 	jump TH_bad_vec
 	jump TH_bad_vec

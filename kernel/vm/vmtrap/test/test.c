@@ -68,18 +68,27 @@ static inline void setup_guest()
 {
 	a.gevb = TH_vectors;
 	a.gosp = (u32_t)(&guest_stack[127]);
+//Write guest regs if in v4
+#if __QDSP6_ARCH__ >= 4
+	u32_t g2;
+	u64_t g32;
+	g2 = (u32_t)(&guest_stack[127]);
+	g32 = 0;
+	g32 |= g2;
+	asm ( " g3:2 = %0\n" : : "r"(g32) );
+#endif
 }
 
 u32_t TH_expected_guest_stack;
 u32_t TH_saw_guest_error;
 
-void TH_error()
+void TH_guest_trap()
 {
 	/* Check if stack is in expected location */
 	u32_t is_guest_stack;
 	is_guest_stack = (((((u32_t)(&is_guest_stack)) ^ ((u32_t)(&guest_stack[120]))) & (-(sizeof(guest_stack)))) == 0);
 	if (is_guest_stack != TH_expected_guest_stack) {
-		printf("&is_guest_stack=0x%x, &guest_stack[120]=0x%x,mask=%x",&is_guest_stack,&guest_stack[120],-(sizeof(guest_stack)));
+		printf("&is_guest_stack=0x%x, &guest_stack[120]=0x%x,mask=%x\n",&is_guest_stack,&guest_stack[120],-(sizeof(guest_stack)));
 		printf("is_guest_stack=%d expected=%d\n",is_guest_stack,TH_expected_guest_stack);
 		FAIL("Unexpected user/guest stack switch");
 	}
@@ -101,12 +110,13 @@ int main()
 		user_mode();
 		TH_expected_guest_stack = 1;
 		TH_saw_guest_error = 0;
-		if (setjmp(env) == 0) ret = call_trap1(i,&a);
+		if (setjmp(env) == 0) {
+		    ret = call_trap1(i,&a);
+		}
 		if (TH_saw_guest_error == 0) {
 			FAIL("Called vmtrap from user mode");
 		}
 	}
-
 	setup_guest();
 	guest_mode();
 	TH_expected_guest_stack = 0;

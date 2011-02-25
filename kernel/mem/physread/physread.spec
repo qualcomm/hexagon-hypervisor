@@ -26,7 +26,13 @@ Functionality
 For V4, we use the memw_phys instruction.  For V3, we set up a temporary mapping
 in monitor memory space (upper 16MB) and read from there.
 
+Testing
+-------
 
+Tested cases
+~~~~~~~~~~~~
+
+* Perform read
 
 H2K_mem_physread_dword
 ----------------------
@@ -48,3 +54,10 @@ For V4, we use two memw_phys instructions.  For V3, we set up a temporary mappin
 in monitor memory space (upper 16MB) and read from there.
 
 
+Testing
+-------
+
+Tested cases
+~~~~~~~~~~~~
+
+* Perform read

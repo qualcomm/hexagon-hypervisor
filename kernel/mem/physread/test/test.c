@@ -21,7 +21,7 @@ void FAIL(const char *str)
 u32_t deadbeef = 0xdeadbeef;
 u32_t cafebabe = 0xcafebabe;
 u32_t *farptr = (u32_t *)(0x10000000);
-u64_t *farptr2 = (u32_t *)(0x10000008);
+u64_t *farptr2 = (u64_t *)(0x10000008);
 u64_t deadbeefcafebabe = 0xdeadbeefcafebabeULL;
 
 u32_t TH_mem_physread_word(u64_t pa)

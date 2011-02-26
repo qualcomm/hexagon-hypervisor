@@ -10,7 +10,8 @@
 	.global TH_do_tlbmissx
 TH_do_tlbmissx:
 	/* Insert BADVA,ELR */
-	badva = r3
+	badva0 = r3
+	badva1 = r3
 	elr = r4
 	/* Insert interrupt num into cause field */
 	r4 = ssr
@@ -61,7 +62,8 @@ TH_do_tlbmissx:
 	.global TH_do_tlbmissrw
 TH_do_tlbmissrw:
 	/* Insert BADVA,ELR */
-	badva = r3
+	badva0 = r3
+	badva1 = r3
 	elr = r4
 	/* Insert interrupt num into cause field */
 	r4 = ssr
@@ -142,7 +144,7 @@ TH_return_helper:
 	r29 = memw(#TH_stack_save)
 	jump TH_goodreturn
 
-	.section .sdata,"aw",@progbits
+	.section .sdata,"aw"
 	.p2align 3
 TH_helper_tmp:
 	.word 0

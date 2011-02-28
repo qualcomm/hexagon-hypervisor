@@ -42,7 +42,6 @@ void delay()
 void thread0(int thread)
 {
 	int i;
-	char buf[32];
 	H2K_thread_context *me;
 #if __QDSP6_ARCH__ <= 3
 	asm ( " %0 = sgp " : "=r"(me));

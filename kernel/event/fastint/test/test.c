@@ -77,7 +77,7 @@ void TH_setup_fastinthandlers(u32_t interrupt)
 	H2K_gp->fastint_mask = TH_fastint_mask;
 }
 
-TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread)
+void TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread)
 {
 	TH_fastint_call(interrupt,dest,0);
 	longjmp(env2,1);

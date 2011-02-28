@@ -1,2 +1,6 @@
 *.pyc
 *.[oa]
+stats.txt
+install/
+kernel/include/
+kernel/offsets

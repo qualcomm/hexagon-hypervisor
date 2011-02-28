@@ -188,9 +188,9 @@ int main()
 	debug("next_tnum = %d\n",next_tnum);
 	if (h2_thread_create(consumer_thread,
 		&stack_space[next_tnum++][THREAD_STACK_SIZE],
+		(void *)31,
 		31,
-		31,
-		0xffffffff) <= 0) {
+	        0xffffffff) <= 0) {
 		info("Could not create 2nd consumer thread\n");
 	}
 

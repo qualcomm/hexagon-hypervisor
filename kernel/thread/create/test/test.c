@@ -42,6 +42,7 @@ u64_t H2K_check_sanity_unlock(u64_t x)
 u64_t H2K_check_sched_mask(u64_t x)
 {
 	FAIL("Saw sched mask check");
+	return x;
 }
 
 void test_thread(unsigned int arg)

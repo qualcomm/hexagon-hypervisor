@@ -9,7 +9,7 @@
 #include <max.h>
 #include <stmode.h>
 #include <hw.h>
-#include <crt0if.h>
+#include <q6standalone.h>
 
 void FAIL(const char *str)
 {
@@ -57,7 +57,7 @@ int main()
 	H2K_stmode_end();
 	if ((H2K_get_syscfg() & 0x10) == 0) FAIL("stmode_end didn't ensable gie");
 
-	thread_create(&test1,stack1+STACK_SIZE,1,1);
+	thread_create(&test1,stack1+STACK_SIZE,1,(void *)1);
 	while (handshake == 0) /* SPIN */;
 	for (tmp = 0; tmp < 100; tmp++) { asm volatile ("nop"); }
 
@@ -69,7 +69,7 @@ int main()
 
 	handshake = 0;
 
-	thread_create(&test2,stack2+STACK_SIZE,2,2);
+	thread_create(&test2,stack2+STACK_SIZE,2,(void *)2);
 	while (handshake == 0) /* SPIN */;
 	for (tmp = 0; tmp < 100; tmp++) { asm volatile ("nop"); }
 

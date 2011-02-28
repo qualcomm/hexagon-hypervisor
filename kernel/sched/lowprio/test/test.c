@@ -10,6 +10,7 @@
 #include <readylist.h>
 #include <hw.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <globals.h>
 
 void FAIL(const char *x)

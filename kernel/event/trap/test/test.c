@@ -82,7 +82,7 @@ void TH_guest_trap()
 	u32_t is_guest_stack;
 	is_guest_stack = (((((u32_t)(&is_guest_stack)) ^ ((u32_t)(&guest_stack[120]))) & (-(sizeof(guest_stack)))) == 0);
 	if (is_guest_stack != TH_expected_guest_stack) {
-		printf("&is_guest_stack=0x%x, &guest_stack[120]=0x%x,mask=%x",&is_guest_stack,&guest_stack[120],-(sizeof(guest_stack)));
+	    printf("&is_guest_stack=0x%x, &guest_stack[120]=0x%x,mask=%x",(unsigned int)&is_guest_stack,(unsigned int)&guest_stack[120],-(sizeof(guest_stack)));
 		printf("is_guest_stack=%d expected=%d\n",is_guest_stack,TH_expected_guest_stack);
 		FAIL("Unexpected user/guest stack switch");
 	}

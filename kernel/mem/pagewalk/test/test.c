@@ -144,7 +144,7 @@ void check_result(H2K_pte_t pte, u32_t addr, H2K_thread_context *thread)
 			break;
 		case 5:
 			if ((pte.raw & 0x1f) != 0) FAIL("4MB xlat fail: size");
-			if ((pte.raw & 0x20) == 0) FAIL("16MB xlat fail: size(2)");
+			if ((pte.raw & 0x20) == 0) FAIL("4MB xlat fail: size(2)");
 			l2_idx = l1_idx;
 			if ((pte.raw >> 16) != (l2_idx)) FAIL("4MB xlat fail: val");
 			break;
@@ -187,7 +187,7 @@ void test_all_pages()
 	u32_t addr;
 	H2K_pte_t result;
 	for (i = 0; i < 32*1024; i++) {
-		addr = i<<12;
+	        addr = i<<12;
 		result = H2K_mem_pagewalk(addr,&a);
 		check_result(result,addr,&a);
 	}

@@ -98,8 +98,7 @@ void test_thread(unsigned int goodid)
 
 int main() 
 {
-	unsigned int next_tnum;
-	unsigned int i,j,k,prio;
+	unsigned int i;
 	unsigned int flag;
 
 	h2_init(0x0);
@@ -111,7 +110,7 @@ int main()
 	for (i = 0; i < NUM_DUMMY_THREADS; i++) {
 		if (h2_thread_create(dummy_thread,
 			&stack_space[i][THREAD_STACK_SIZE],
-			i, 2, 0xffffffff) <= 0) {
+			(void *)i, 2, 0xffffffff) <= 0) {
 			FAIL("Couldn't create dummy");
 		}
 	}
@@ -119,7 +118,7 @@ int main()
 	for (i = 0; i < NUM_GOOD_THREADS; i++) {
 		if (h2_thread_create(test_thread,
 			&stack_space[i+NUM_DUMMY_THREADS][THREAD_STACK_SIZE],
-			i, 4+i, 0xffffffff) <= 0) {
+			(void *)i, 4+i, 0xffffffff) <= 0) {
 			FAIL("Couldn't create test thread");
 		}
 	}

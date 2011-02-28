@@ -63,8 +63,8 @@ static inline H2K_pte_t H2K_mem_translate_l2(u32_t va, u32_t l2addr, u32_t table
 	shiftbuf <<= (2*tablesize)+2+2;	/* shift in required bits + 2 (word aligned) */
 	shiftbuf >>= 32;		/* Move to bottom of register */
 	pte.raw = H2K_mem_physread_word(shiftbuf & (-4));
-	pte.raw &= (-2 << (pagesize*2));
-	pte.raw |= 1<<(pagesize*2);
+//	pte.raw &= (-2 << (pagesize*2));
+//	pte.raw |= 1<<(pagesize*2);
 	return pte;
 }
 

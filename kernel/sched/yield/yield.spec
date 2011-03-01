@@ -1,6 +1,6 @@
 
-:mod:sched_yield -- yield to next thread at same priority
-=========================================================
+:mod:`sched_yield` -- yield to next thread at same priority
+===========================================================
 
 .. module:: sched_yield
 

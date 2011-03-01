@@ -171,7 +171,7 @@ TH_fastint_call:
 	deallocframe
 	jumpr r31
 
-	.section .sdata,"aw",@progbits
+	.section .sdata,"aw"
 	.p2align 2
 oldvecs:	.word 0
 stacksave:	.word 0

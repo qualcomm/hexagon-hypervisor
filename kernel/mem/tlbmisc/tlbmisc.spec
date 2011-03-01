@@ -59,25 +59,3 @@ The TLB is probed using the TLBP instruction.  If a matching entry is found,
 and it is not a kernel entry, we set the TLB entry to all zeros.
 
 
-H2K_mem_tlb_invalidte_asid
---------------------------
-
-.. cfunction:: void H2K_mem_stlb_invalidate_asid(u32_t asid, H2K_thread_context *me)
-
-	:param asid: Address space to invalidate
-	:param me: pointer to the current thread context
-
-Description
-~~~~~~~~~~~
-
-This function looks for all translations in the hardware TLB which match the specified ASID.
-Every entry which matches the specified ASID is cleared if it is not reserved for the kernel.
-
-Behavior
-~~~~~~~~
-
-We loop through each replaceable in the TLB, reading the entry, checking to see
-if the ASID value matches, and if so, clearing the entry.
-
-
-

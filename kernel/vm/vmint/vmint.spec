@@ -3,6 +3,9 @@
 
 .. module:: vmint
 
+H2K_vm_interrupt_post
+---------------------
+
 .. cfunction:: void H2K_vm_interrupt_post(H2K_vmblock_t *vmblock, u8_t first_cpu, u32_t intno)
 
 	:param vmblock: Pointer to the VM Memory Block
@@ -25,6 +28,9 @@ enabled.  When we find one, we note that the CPU needs VM work, and we try
 to deliver an IPI to the CPU, if currently scheduled and interruptible.
 
 
+H2K_vm_interrupt_enable
+-----------------------
+
 .. cfunction:: void H2K_vm_interrupt_enable(H2K_vmblock_t *vmblock, u32_t intno)
 
 	:param vmblock: Pointer to the VM Memory Block
@@ -41,6 +47,10 @@ Functionality
 Atomically set the global enable mask for intno.  
 If the interrupt is pending, try to deliver.
 
+
+H2K_vm_interrupt_disable
+------------------------
+
 .. cfunction:: void H2K_vm_interrupt_disable(H2K_vmblock_t *vmblock, u32_t intno)
 
 	:param vmblock: Pointer to the VM Memory Block
@@ -55,6 +65,10 @@ Functionality
 ~~~~~~~~~~~~~
 
 Atomically clear the enable bit for interrupt intno.  
+
+
+H2K_vm_interrupt_localunmask
+----------------------------
 
 .. cfunction:: void H2K_vm_interrupt_localunmask(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
 
@@ -72,6 +86,10 @@ Functionality
 
 Atomically set the local enable bit for interrupt intno.  
 
+
+H2K_vm_interrupt_localmask
+--------------------------
+
 .. cfunction:: void H2K_vm_interrupt_localmask(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
 
 	:param vmblock: Pointer to the VM Memory Block
@@ -87,6 +105,9 @@ Functionality
 ~~~~~~~~~~~~~
 
 Atomically clear the local enable bit for interrupt intno.  
+
+H2K_vm_interrupt_setaffinity
+----------------------------
 
 .. cfunction:: void H2K_vm_interrupt_setaffinity(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
 
@@ -106,6 +127,8 @@ Atomically clear the local enable bit for interrupt intno for all CPUs, except
 CPU `cpu`, which is enabled.  
 
 
+H2K_vm_interrupt_get
+--------------------
 
 .. cfunction:: s32_t H2K_vm_interrupt_get(H2K_vmblock_t *vmblock, u8_t cpu)
 

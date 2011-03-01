@@ -3,6 +3,10 @@
 
 .. module:: vmtrap
 
+
+H2K_handle_trap1
+----------------
+
 .. cfunction:: void H2K_handle_trap1()
 
 
@@ -25,15 +29,14 @@ To facilitate C reference code for the actual trap calls, we will save off all
 necessary registers.  These will be restored on the retrun.  Optimized
 implementations may be able to save fewer registers.
 
+
 Testing
 -------
 
-Tested cases
-~~~~~~~~~~~~
-
 * Call all traps from:
-** User mode
-** Guest mode
+
+  * User mode
+  * Guest mode
 
 Harness
 ~~~~~~~

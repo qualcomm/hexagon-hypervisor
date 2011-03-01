@@ -76,9 +76,9 @@ int sigwait(const sigset_t *restrict set, int *restrict sig)
     pthread_i     *ltcb;
     int           lowest_sig_no = 0;
     unsigned int  recv_mask, blast_sigmask;
-    unsigned int  blast_signo;
-    int           posix_signo;
-    timer_i       * timer;
+//    unsigned int  blast_signo;
+//    int           posix_signo;
+//    timer_i       * timer;
 //    qtimer_type_t type;
 
     int           ret = _getltcb_self(&ltcb);

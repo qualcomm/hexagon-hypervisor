@@ -3,7 +3,7 @@
 
 # -*- coding: utf-8 -*-
 #
-# Open BLAST documentation build configuration file, created by
+# H2 documentation build configuration file, created by
 # sphinx-quickstart on Mon Nov  9 15:29:31 2009.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -27,7 +27,7 @@ sys.path.append(os.path.abspath('scripts/docs'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo','blast']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo','h2']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['scripts/docs/_templates']
@@ -42,7 +42,7 @@ source_suffix = '.spec'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Open BLAST'
+project = u'H2'
 copyright = u'2009, Erich Plondke'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -162,7 +162,7 @@ html_theme = 'sphinxdoc'
 #html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'OpenBLASTdoc'
+htmlhelp_basename = 'H2doc'
 
 # -- Options for LaTeX output --------------------------------------------------
 
@@ -175,7 +175,7 @@ htmlhelp_basename = 'OpenBLASTdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'OpenBLAST.tex', u'Open BLAST Documentation',
+  ('index', 'H2.tex', u'H2 Documentation',
    u'Erich Plondke', 'manual'),
 ]
 

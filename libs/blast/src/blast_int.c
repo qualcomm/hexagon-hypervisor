@@ -152,7 +152,7 @@ void blast_sirc_fastint(int intnum)
 int blast_register_interrupt(int int_num, 
 	h2_anysignal_t *int_signal, int signal_mask)
 {
-	unsigned int sirc;
+        unsigned int sirc = NULL;
 
 	if (unlikely(int_num == RESCHED_INT)) {
 		return 1;

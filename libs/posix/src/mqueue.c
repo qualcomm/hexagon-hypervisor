@@ -192,13 +192,13 @@ ssize_t mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len,
     size_t             msg_size_rcvd;
     int                priority;
     pthread_i          *ltcb;
-    sigevent           evp;
-    struct itimerspec  ivalue;
+//    sigevent           evp;
+//    struct itimerspec  ivalue;
     mq                 *mq_node;
     struct sched_param param;
     int                policy;
-    unsigned int       sig_recv;
-    timer_t            timerid;
+    unsigned int       sig_recv = NULL;
+//    timer_t            timerid;
     
     if (!IS_MQ_DESC_VALID(mqdes))
     {

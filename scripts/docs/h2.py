@@ -10,7 +10,7 @@ from docutils import nodes
 from sphinx.environment import NoUri
 from sphinx.util.compat import Directive, make_admonition
 
-class blast_function_info:
+class h2_function_info:
    def __init__(self):
       self.functions = dict()
       pass
@@ -126,13 +126,13 @@ class InputAssertDirective(Directive):
                              self.block_text, self.state, self.state_machine)
 
         fdata = get_function_data(self.state_machine)
-        if not hasattr(env, 'blast_functions'):
-           env.blast_functions = dict()
-        if not env.docname in env.blast_functions.keys():
-           env.blast_functions[env.docname] = blast_function_info()
+        if not hasattr(env, 'h2_functions'):
+           env.h2_functions = dict()
+        if not env.docname in env.h2_functions.keys():
+           env.h2_functions[env.docname] = h2_function_info()
 
-        env.blast_functions[env.docname].set_fdata(fdata)
-        env.blast_functions[env.docname].set_function_property(fdata,'iassert',self.content)
+        env.h2_functions[env.docname].set_fdata(fdata)
+        env.h2_functions[env.docname].set_function_property(fdata,'iassert',self.content)
            
         return [targetnode] + ad
 
@@ -156,25 +156,25 @@ class OutputAssertDirective(Directive):
                              self.block_text, self.state, self.state_machine)
 
         fdata = get_function_data(self.state_machine)
-        if not hasattr(env, 'blast_functions'):
-           env.blast_functions = dict()
-        if not env.docname in env.blast_functions:
-           env.blast_functions[env.docname] = blast_function_info()
+        if not hasattr(env, 'h2_functions'):
+           env.h2_functions = dict()
+        if not env.docname in env.h2_functions:
+           env.h2_functions[env.docname] = h2_function_info()
 
-        env.blast_functions[env.docname].set_fdata(fdata)
-        env.blast_functions[env.docname].set_function_property(fdata,'oassert',self.content)
+        env.h2_functions[env.docname].set_fdata(fdata)
+        env.h2_functions[env.docname].set_function_property(fdata,'oassert',self.content)
 
         return [targetnode] + ad
 
-def process_blast_nodes(app, doctree, fromdocname):
+def process_h2_nodes(app, doctree, fromdocname):
    env=app.builder.env
 
-   for docname in env.blast_functions.keys():
-      create_debug_file(docname,env.blast_functions[docname])
-      del env.blast_functions[docname]
+   for docname in env.h2_functions.keys():
+      create_debug_file(docname,env.h2_functions[docname])
+      del env.h2_functions[docname]
 
-def purge_blast_nodes(app, env, docname):
-   if not hasattr(env,'blast_functions'):
+def purge_h2_nodes(app, env, docname):
+   if not hasattr(env,'h2_functions'):
       return
 
 def visit_inputassert_node(self, node):
@@ -184,7 +184,7 @@ def depart_inputassert_node(self, node):
     self.depart_admonition(node)
 
 def setup(app):
-    app.add_config_value('use_blast_ext', True, False)
+    app.add_config_value('use_h2_ext', True, False)
 
     app.add_node(inputassert_node,
                  html=(visit_inputassert_node, depart_inputassert_node),
@@ -193,6 +193,6 @@ def setup(app):
 
     app.add_directive('inputassert', InputAssertDirective)
     app.add_directive('outputassert', OutputAssertDirective)
-    app.connect('doctree-resolved', process_blast_nodes)
-    app.connect('env-purge-doc', purge_blast_nodes)
+    app.connect('doctree-resolved', process_h2_nodes)
+    app.connect('env-purge-doc', purge_h2_nodes)
 

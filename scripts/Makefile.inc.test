@@ -193,19 +193,19 @@ DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 
 %.objdump: %.elf
 	${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
 
 %.o: %.c
 	${CC} ${CFLAGS} -c -o $@ $<; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
 %.o: %.S
 	${CC} ${ASFLAGS} -c -o $@ $<; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
 ${EXEC}: ${OBJS}
 	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
 #  Todo:  need a watchdog to kill sims after some time; possibly use the "forked killer"
 test.log: ${EXEC}

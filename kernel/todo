@@ -1,36 +1,138 @@
 
 
-Hypervisor Interrupts
-
-Trace
-Profiling
-PMU
-Optimized code
-? V2 support
-
-re-optimize VM style trap0
-
-Priority Inheritance:
-
-	futex_wait(void *, u32_t expected, threadid owner_tid)
-
-owner_context = tid_to_context(tid)
-If (owner_context) {
-	if (in_ready_queue(owner_context)) {
-		/* Switch to it immediately */
-		ready_remove(owner_context);
-		owner_context->prio = min(owner_context->prio,me->prio)
-		runlist_push(owner_context);
-		switch(me,owner_context);
-	} else {
-		/* In runlist or blocked */
-		owner_context->new_prio = min(owner_context->prio,me->prio);
-	}
+*** Several modules have tests but no test plan.
 
 
-	futex_resume
 
-Sets me->prio back to me->baseprio if different (always? Sometimes?)
+*** Check that test directories have coverage functions defined appropriately
+*** Check that code coverage is good (near 100%)
+
+
+
+*** Modules without tests:
+
+no ./build/offsets/test
+no ./checkers/test
+no ./data/context/test
+no ./data/globals/test
+no ./data/stacks/test
+no ./mem/bootmap/test
+no ./mem/tlbfill/test
+no ./mem/tlbfmt/test
+no ./mem/tlbmisc/test
+no ./traps/angel/test
+no ./traps/pmu/test
+no ./util/cache/test
+no ./util/hw/test
+no ./util/max/test
+no ./util/std/test
+no ./util/vmdefs/test
+
+Some of these are OK (offsets generation?)
+
+Some definately need tests (tlbfill?)
+
+
+Should we add this to a version-controlled document, or should we make these
+bugzillas?
+
+General:
+
+* Security Document
+        + Document model for security
+        + Clearly document security ramifications of various traps
+        + Give recommended example for boot up
+
+* Overview Document
+        + Overview of the modules in H2, how they work
+
+Inside the Monitor:
+
+* Scheduler
+        + Support 256 priorities[0]
+                - Expand ready list structure
+                - Probably the runlist structure needs to change, at 256
+                  priorities it's too sparse.
+
+* VM Initialization
+        + Configure max # of CPUs/VM
+        + Add storage for VMs
+        + Allocate/start VM
+        + Shutdown VM (when last thread stops?)
+
+* VM Interrupts
+        + Lots of testing
+        + Other Interrupt Controller models
+                - single CPU simplification
+                - affine interrupts only simplification (for no-scheduler guest)
+
+* Optimization
+* Trace
+* Profiling?
+
+* Think through Power Collapse
+        + Don't do it a sucky way
+
+"H2OS" guest:
+
+* Testing / documentation on the "lib" side needs to be good, like on the
+	monitor side.
+
+* Bring in BLAST/Qube features
+        + Goal: demonstrate fully-functioning Multimedia Framework
+        + Sometimes, just use bad code for now (POSIX?), we'll fix it later
+        + Other times, maybe need to rework implementation (memory mgt?)
+        + Other other times, maybe rework API (power collapse?)
+
+
+
+
+
+
+Next steps: (after the above)
+
+Inside the Monitor:
+
+* Futexes
+        + Check that futex vaddr is in TLB before reading/writing
+                - Fail if it isn't?  Maybe that's not OK for PIMutex...
+        + Convert vaddr to paddr for comparisons so that futexes work in shared mem
+
+* Thread ID
+        + Thread IDs need to be checked wherever they might be used as a
+                syscall parameter
+                - PIMutex
+        + Map thread ID to Thread Context Pointer
+                - Maybe two parts to thread ID, one to select between a few
+                  thread storage areas, and then a second as the offset in # of
+                  threads to the thread in the storage area
+                - Need to be able to show it's actually a thread
+        + Alternatively, can we show that threadID isn't needed?
+
+* Some kind of shared timer service (Deferable?)
+        + One per-CPU timeout?
+
+"H2OS" guest:
+
+* Move towards a real POSIX:
+        * Filesystem of some kind
+        * Fork/exec / Dynamic linking
+        * Pthreads
+        * Wait
+        * Message queues
+        * etc etc etc
+        * Lift from BSD code as appropriate
+
+
+
+
+[0] Does anyone really need 256 priorities?  I doubt it.  But they're probably
+        using it now, and we don't want any lame reason why they can't switch.
+
+
+
+
+
 
 TBD:
 	* How do we make "in_ready_queue(owner_context)" fast?

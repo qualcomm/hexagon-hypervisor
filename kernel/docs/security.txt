@@ -1,0 +1,149 @@
+
+H2 Security Overview
+
+H2 fundamentals
+
+* Kernel Entry Points
+
+The kernel can be entered through one of the following means:
+
+* An interrupt
+* A trap
+* An exception
+* A reset
+
+All of these events cause the machine to be placed into monitor mode, and execution 
+to begin in some known Event Vector address.  A cause code is placed in SSR.
+
+When this happens, all the registers that are modifiable by the guest or user
+should be considered dangerous.  Any register value used as a parameter by the
+monitor must be checked for validity before use.
+
+Additionally, any memory that is modifiable by the guest or user should be
+considered dangerous; any read or write of such memory should be verified to be
+legitimate to do on the guest/user's behalf.
+
+
+* Kernel memory
+
+The H2 Kernel should relocate itself to the top of memory, above 0xFF00_0000.  The
+translations for kernel text and data should be locked into the TLB, and should
+have as few permissions enabled as possible.  Write permission must be especially
+prevented.  Read and Execute should also be prevented.
+
+
+
+H2 Hypervisor Services
+
+The Hexagon Hypervisor is a full-featured hypervisor.  This section discusses
+security features of the hypervisor functionality provided by the H2 kernel.
+
+* Traps to Guest
+
+The trap0 instruction is used to trap into the guest, either from user mode or
+from guest mode.  The hypervisor manages the switch to the appropriate guest
+vector and change in registers, but should not modify any register value from
+the view of the guest.  No parameters are required to be used from the monitor.
+
+* Guest Traps to Hypervisor
+
+The guest is allowed to use the trap1 instruction to make "virtual instruction"
+requests to the Hypervisor.  Some of these traps use register values as
+parameters, and such values must be treated sensitively.
+
+* User Traps to Hypervisor
+
+User mode is not allowed to use the trap1 instruction.  It is converted into
+an event to Guest mode.
+
+
+* TLB Miss Handling
+
+When a TLB miss occurs, the monitor looks at the translations provided by the
+guest.  If an acceptable translation is found, the translation is added into
+the TLB (and optionally cached in software), and execution returns to the guest
+or user.  If an acceptable translation is not found, the Hypervisor will 
+convert the TLB miss into a Page Fault in the guest.
+
+The Page Walk through guest memory must be handled carefully.  Any memory read
+made on the behalf of the guest must be a legitimate address for the guest to
+use.  Additionally, the translation provided must only map memory that is
+acceptable for the guest to use.  This includes only using physical memory in
+the ranges that are acceptable for the guest, as well as only using virtual
+ranges acceptable from the guest: mapping memory above 0xFF000000 is not
+allowed.
+
+The guest is free to arrange its address space however it sees fit, so long as
+the virtual address space owned by the Monitor is untouched, and the guest only
+maps physical memory it has permission to use.
+
+* Error handling
+
+Errors are typically converted into guest errors.  Some errors may be
+unrecoverable, and appropriate behavior is taken by the monitor, but 
+unrecoverable errors can only reset or enter a debug state; the guest
+environments are invalid.  Examples of unrecoverable errors are some
+kinds of bus errors and Non-Maskable Interrupts.
+
+
+
+H2 RTOS Services
+
+In addition to traditional hypervisor services, H2 has services to implement
+many features of a Real-Time Operating System.
+
+* RTOS Traps
+
+Both User and Guest modes may be able to make RTOS traps into the H2 kernel.  
+The trap0 instruction is used to accomplish this.
+
+Not all traps that the kernel supports are appropriate for general code.  
+Some traps are used for kernel configuration during bootup, or may be 
+unsuitable for certain guest environments.
+
+Each trap in H2 can be disabled.  Once a thread has a trap disabled, it 
+can never be re-enabled, nor can the thread create a thread that has the
+trap enabled.  Traps can be considered capabilities that are permanently
+revocable.
+
+Thus, security on traps is in part at the discretion of the system designer.
+For certain traps, such as configuring the hardware and kernel, it may be
+desired to disable the functionality early in the boot process, for the 
+initial thread, before any threads have been spawned.  It is then provable
+that no thread could use those facilities later on.  Alternatively, if
+some of those traps are needed (for example, for dynamic reconfiguration
+of TCM/L2$), they should be constrained to a small set of privileged tasks
+that communicate very carefully with requesters.
+
+If a trap is disabled, it is handled as a normal trap to guest, as above.  If
+all traps are disabled, all trap0 instructions end up as a trap to guest.  Pure
+virtual machine environments may wish to be configured in this way.
+
+Traps such as futex blocking/unblocking should check to make sure the memory
+address is appropriate for the requestor to access.  Priority changing traps
+may need to be split up into two traps: one for enhancing priority (which
+should be restricted), and another for lowering priority (which may be
+allowable).  This can be used to prevent guest environments from raising
+their priority above a certain amount, and possibly reducing the
+Quality-of-Service of other environments inappropriately.
+
+* Interrupts
+
+Fast interrupt handlers can be configured. However, these run in monitor mode,
+and should be considered as code with monitor priviledge.  They are also
+constrained in the features they can have, and require very short execution
+times to keep interrupt latency short.  However, fast interrupt handlers which
+increment a semaphore or set a flag may be appropriate monitor-level handlers
+to provide efficient guest-level interrupt implementations.
+
+Alternatively, RTOS environments can use Virtual Machine-style interrupts.
+
+FIXME: Popup thread interrupts?  Will it be any lower overhead than a fast
+interrupt bumping a flag?
+
+* Other Events
+
+Other (non-RTOS-trap) events are handled in the Virtual Machine method.
+
+
+

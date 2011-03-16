@@ -17,23 +17,23 @@ tmp:
 	mkdir $@
 
 blast/libblast.a: tmp
-	${MAKE_LIB};
+	+${MAKE_LIB};
 
 qube/libqube.a: tmp
-	${MAKE_LIB};
+	+${MAKE_LIB};
 
 posix/libposix.a: tmp
-	${MAKE_LIB};
+	+${MAKE_LIB};
 
 syscall/angel/libangel.a: tmp
-	${MAKE_LIB};
+	+${MAKE_LIB};
 
 h2/libh2.a: tmp
-	${MAKE_LIB};
+	+${MAKE_LIB};
 
 clean:
 	rm -rf tmp libh2.a
-	for dir in $(dir ${ALL_LIBS}); do\
+	+for dir in $(dir ${ALL_LIBS}); do\
 		make -C $$dir clean;\
 	done;
 

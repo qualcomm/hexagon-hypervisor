@@ -34,9 +34,9 @@ opt: clean
 	make -f scripts/Makefile.coverage prepare;
 
 ref: clean
-	make -C kernel ARCHV=$(ARCHV) ref_install && \
-	make -C libs ARCHV=$(ARCHV) install && \
-	make -f scripts/Makefile.coverage prepare;
+	make -j 3 -C kernel ARCHV=$(ARCHV) ref_install && \
+	make -j 3 -C libs ARCHV=$(ARCHV) install && \
+	make -j 3 -f scripts/Makefile.coverage prepare;
 
 sim: ref
 	$(CC) -mv$(ARCHV) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \

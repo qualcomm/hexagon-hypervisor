@@ -63,7 +63,7 @@ ${LIBH2KERNEL}: ${H2DIR}/install
 
 #check is always in ref/
 ${LIBH2CHECK}: ${H2DIR}/install
-	cd ${H2DIR}/kernel;\
+	+cd ${H2DIR}/kernel;\
 	make check DEBUG=0 ARCHV=${ARCHV};\
 	cp build/ref/libh2check.a ../install/lib
 
@@ -71,7 +71,7 @@ ${LIBH2}:  ${H2DIR}/install
 
 ${H2DIR}/install:
 	cd ${H2DIR};\
-	make ${MODEL} ARCHV=${ARCHV}
+	+make ${MODEL} ARCHV=${ARCHV}
 
 # (_8^(|)  d'oh!
 #  Need to tell people to stop using this one and use 'prepare'
@@ -122,7 +122,7 @@ ifdef SUBDIRS
 #  Recursive subdirectory traversal
 ################################################################################
 
-SUBDIR_MAKE=for SUBDIR in ${SUBDIRS}; do\
+SUBDIR_MAKE=+for SUBDIR in ${SUBDIRS}; do\
 	$(MAKE) -C $$SUBDIR $(MAKECMDGOALS) TEST=$$SUBDIR; TSTAT=$$?; \
         if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi; \
 	done; exit $$STAT

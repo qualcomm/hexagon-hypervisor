@@ -17,6 +17,12 @@ ifeq ($(ARCHV),)
 ARCHV = 4
 endif
 
+ifeq (5,$(ARCHV))
+FIXEXEC = /prj/dsp/qdsp6/arch/scripts/qdsp6-fix-version 4 
+else
+FIXEXEC = echo
+endif
+
 ifeq ($(MODEL),)
    MODEL = ref
    MODELSTR = ${MODEL}
@@ -209,6 +215,7 @@ ${EXEC}: ${OBJS}
 
 #  Todo:  need a watchdog to kill sims after some time; possibly use the "forked killer"
 test.log: ${EXEC}
+	${FIXEXEC} ${EXEC} && \
 	${SIM} ${EXEC} --profile | tee $@;
 
 # Coverage stuff -- single testcase

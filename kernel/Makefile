@@ -5,9 +5,17 @@ ifeq ($(ARCHV),)
 ARCHV = 3
 endif
 
+ifeq (5,${ARCHV})
+FIXEXEC=/prj/dsp/qdsp6/arch/scripts/qdsp6-fix-version 4 
+else
+FIXEXEC=echo
+endif
+
+
 CC = qdsp6-gcc 
 AR = qdsp6-ar
-SIM := qdsp6-sim -mv$(ARCHV)
+#SIM := qdsp6-sim -mv$(ARCHV)
+SIM := qdsp6-sim
 
 CFLAGS := -Iinclude -G0 -Os -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -g
 #TEMP http://aus-bugzilla/show_bug.cgi?id=4677

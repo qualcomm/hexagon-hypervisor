@@ -5,7 +5,7 @@
 
 #if __QDSP6_ARCH__ <= 3
 #define MAX_HTHREADS 6
-#elif __QDSP6_ARCH__ == 4
+#elif __QDSP6_ARCH__ >= 4
 #define MAX_HTHREADS 3
 #endif
 

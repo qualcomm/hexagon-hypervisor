@@ -81,9 +81,9 @@ H2K_fastint_return:
 	isync
 	nop
 	ssr = r14
+	imask = r13
 	{
 		jump 2b
-		imask = r13
 	}
 FUNC_END H2K_fastint
 
@@ -111,6 +111,8 @@ FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
 		r29:28 = memd(r0+#CONTEXT_r2928)
 		r31:30 = memd(r0+#CONTEXT_r3130)
 		r0 = zxtb(r1)
+	}
+	{
 		imask = r13
 	}
 	{

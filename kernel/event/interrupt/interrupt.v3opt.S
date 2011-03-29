@@ -152,6 +152,8 @@ H2K_interrupt_restore:
 	{
 		r31:30 = memd(r0+#CONTEXT_r3130)
 		dcfetch(r0+#CONTEXT_r0706)
+	}
+	{
 		elr = r2
 	}
 	{

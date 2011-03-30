@@ -98,11 +98,11 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 
 		/* OK to clobber caller saves */
 	{
-		sgp = r7  // AXOK
-		r29 = r28
+		sgp = r7  // ??? AXOK?
 	}
 	{
-		memw(r7+#CONTEXT_continuation) = r21
+		r29 = r26  // ??? not tested?
+		memw(r7+#CONTEXT_continuation) = r21  // ??? not tested?
 		r31 = r21
 		jumpr r17
 	}
@@ -159,11 +159,13 @@ H2K_trap_nogood:
 		p0 = tstbit(r16,#SSR_GUEST_BIT)
 	}
 	{
-		memd(r7+#CONTEXT_gssr_gosp) = r23:22
 		if (!p0) r22 = r29
 		if (!p0) r29 = r22
 		/* TBD: set up GSSR in r23 */
 		r23 = zxtb(r16)
+	}
+	{
+		memd(r7+#CONTEXT_gssr_gosp) = r23:22  // ?? not tested?
 	}
 	{
 		memw(r7+#CONTEXT_r2928+4) = r29

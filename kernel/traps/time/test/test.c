@@ -10,6 +10,7 @@
 #include <context.h>
 #include <max.h>
 #include <h2.h>
+#include <globals.h>
 
 #define SPINS (1024*1024)
 #define STACK_SIZE 128
@@ -42,6 +43,7 @@ void delay()
 void thread0(int thread)
 {
 	int i;
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_thread_context *me;
 #if __QDSP6_ARCH__ <= 3
 	asm ( " %0 = sgp " : "=r"(me));

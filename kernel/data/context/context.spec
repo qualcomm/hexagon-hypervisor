@@ -101,11 +101,6 @@ Description
 
 		Guest System Status Register
 
-	.. cmember:: u64_t oncpu_start
-
-		Cycle count when the thread started execution.  Valid only when the thread
-		`status` is RUNNING.
-
 	.. cmember:: u64_t totalcycles
 
 		Total accumulated cycle count for this thread.

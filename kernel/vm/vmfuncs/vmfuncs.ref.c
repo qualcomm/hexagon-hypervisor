@@ -15,6 +15,8 @@
 #include <time.h>
 #include <stlb.h>
 #include <tlbmisc.h>
+#include <globals.h>
+#include <hw.h>
 
 void H2K_vmtrap_return(H2K_thread_context *me)
 {
@@ -117,7 +119,7 @@ void H2K_vmtrap_set_pcycles(H2K_thread_context *me)
 	/* Set accumulated pcycles to specified amount, and then set
 	 * oncpu_start to current pcycles */
 	me->totalcycles = me->r0100;
-	me->oncpu_start = H2K_pcycles_get(me);
+	H2K_gp->oncpu_start[get_hwtnum()] = H2K_pcycles_get(me);
 }
 
 void H2K_vmtrap_wait(H2K_thread_context *me)

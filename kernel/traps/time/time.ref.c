@@ -4,9 +4,12 @@
  */
 
 #include <time.h>
+#include <globals.h>
+#include <hw.h>
 
 u64_t H2K_pcycles_get(H2K_thread_context *me)
 {
+	/* EJP: FIXME: Move into hw.h, use pair xfer for v4 and later */
 	u64_t ret;
 	asm (
 	"1: %H0 = pcyclehi \n"
@@ -20,6 +23,6 @@ u64_t H2K_pcycles_get(H2K_thread_context *me)
 u64_t H2K_cputime_get(H2K_thread_context *me)
 {
 	u64_t now = H2K_pcycles_get(me);
-	return me->totalcycles + (now - me->oncpu_start);
+	return me->totalcycles + (now - H2K_gp->oncpu_start[get_hwtnum()]);
 }
 

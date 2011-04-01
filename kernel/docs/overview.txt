@@ -44,7 +44,7 @@ Interrupts fall into one of the following categories:
 
 * Reschedule Interrupt
 * Fast Interrupts
-* VM-style Interrupts (TBD)
+* VM-style Interrupts
 
 The Reschedule interrupt is used within H2 to cause the lowest priority
 thread to reschedule.
@@ -64,5 +64,12 @@ Interrupt Context for this purpose.  Additionally, the per-hardware-thread
 stacks used by the kernel will be used in a trap or extended TLB miss, so fast
 interrupts must have unique stack areas and the kernel stack can not be assumed
 to be valid following a fast interrupt.
+
+
+We will consider other types of interrupts, including popup thread (CPU)
+interrupts.
+
+
+
 
 

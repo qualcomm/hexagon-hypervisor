@@ -62,7 +62,6 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 		memd(r7+#CONTEXT_r2120) = r21:20
 		r22 = gp
 		r24 = memw(r7+#CONTEXT_trapmask)
-		r21.h = #hi(H2K_trap_nogood)  // set up continuation in case we block
 	}
 	{
 		memd(r7+#CONTEXT_r1716) = r17:16
@@ -92,21 +91,16 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	{
 		memd(r7+#CONTEXT_r2928) = r29:28
 		r17 += asl(r27,#3)
-		if (p0) jump 1f  // no, too big or disabled.
-		r21.l = #lo(H2K_trap_nogood)  // set up continuation in case we block
+		if (p0) jump .Lreturn_to_guest  // no, too big or disabled.
 	}
 
 		/* OK to clobber caller saves */
 	{
-		sgp = r7  // ??? AXOK?
-	}
-	{
 		r29 = r26  // ??? not tested?
-		memw(r7+#CONTEXT_continuation) = r21  // ??? not tested?
-		r31 = r21
-		jumpr r17
+		r16.h = #hi(H2K_kg)  // ??? not tested?
+		call .Ljump_to_trap
 	}
-
+	.falign
 H2K_trap_nogood:
 	{
 		r16 = sgp
@@ -140,10 +134,20 @@ H2K_trap_nogood:
 		r17:16 = memd(r16+#CONTEXT_r1716)
 	}
 	{
-		rte  // AXOK?
+		rte  // ??? AXOK?
 	}
+
 	.falign
-1:
+.Ljump_to_trap:
+	{
+		r16.l = #lo(H2K_kg)
+		memw(r7+#CONTEXT_continuation) = r31  // set up continuation in case we block  ??? not tested?
+		crswap(r7,sgp)  // ??? sgp = r7 is AXOK?
+		jumpr r17
+	}
+
+	.falign
+.Lreturn_to_guest:
 	/* EJP: all context carefully saved */
 	/* We have a disabled or other trap failure, return to guest */
 	/* GEVB is in r19 */
@@ -165,18 +169,40 @@ H2K_trap_nogood:
 		r23 = zxtb(r16)
 	}
 	{
-		memd(r7+#CONTEXT_gssr_gosp) = r23:22  // ?? not tested?
+		memd(r7+#CONTEXT_gssr_gosp) = r23:22  // ??? not tested?
 	}
 	{
 		memw(r7+#CONTEXT_r2928+4) = r29
 		r20 = add(r19,#TRAP0_GEVB_OFFSET)
 		r21 = setbit(r16,#SSR_GUEST_BIT)
-		p3:0 = r25
+		r31:30 = memd(r7+#CONTEXT_r3130)
 	}
 	{
 		memd(r7+#CONTEXT_ssrelr) = r21:20
+		r29:28 = memd(r7+#CONTEXT_r2928)
+		p3:0 = r25
+	}
+	{
+		ssr = r21  // AXOK (if changing bits other than IE, EX, UM)
+	}
+	{
+		elr = r20  // AXOK
+	}
+	{
+		r27:26 = memd(r7+#CONTEXT_r2726)
+		r25:24 = memd(r7+#CONTEXT_r2524)
+	}
+	{
+		r23:22 = memd(r7+#CONTEXT_r2322)
+		r21:20 = memd(r7+#CONTEXT_r2120)
+	}
+	{
+		r19:18 = memd(r7+#CONTEXT_r1918)
+		r17:16 = memd(r7+#CONTEXT_r1716)
 		crswap(r7,sgp)
-		jump H2K_trap_nogood
+	}
+	{
+		rte  // ??? AXOK?
 	}
 
 		// call H2K_fatal_thread or H2K_fatal_kernel

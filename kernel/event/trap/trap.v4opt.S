@@ -67,7 +67,7 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 		r19 = memw(r7+#CONTEXT_gevb)  // keep gevb in r19
 		r18 = memw(r7+#CONTEXT_trapmask)
 		r24 = ##H2K_traptab
-		r16 = p3:0  // keep p3:0 in r16
+		r27 = p3:0  // keep p3:0 in r27
 	}
 	{
 		memd(r7+#CONTEXT_r3130) = r31:30
@@ -80,55 +80,14 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 		memw(r7+#CONTEXT_ccr) = r23
 		p1 = cmp.eq(r19,#0)
 		if (!p0) jump .Lreturn_to_guest  // no, too big or disabled.
-		r31.h = #hi(H2K_trap_nogood)  // set up continuation in case we block
+		r24 += asl(r17,#3)
 	}
 		/* OK to clobber caller saves */
 	{
-		r24 += asl(r17,#3)
+		r16.h = #hi(H2K_kg)  // ??? not tested?
 		r29 = add(##H2K_stacks,mpyi(r26,r25))  // ??? not tested?
-		r31.l = #lo(H2K_trap_nogood)  // set up continuation in case we block
+		call .Ljump_to_trap
 	}
-	{
-		memw(r7+#CONTEXT_continuation) = r31  // ??? not tested?
-		crswap(r7,sgp0)  // ??? sgp0 = r7 is AXOK?
-		jumpr r24
-	}
-
-	nop  // prevent .falign from crashing the assembler
-	.falign
-.Lreturn_to_guest:
-	/* EJP: all context carefully saved */
-	/* We have a disabled or other trap failure, return to guest */
-	/* GEVB is in r19 */
-	/* Preds are in r16 */
-	/* r21:20 == elr:elr */
-	/* r22 == ssr */
-	/* p1 == (gevb == 0) */
-	{
-		if (p1) jump .Lfatal
-		// if gevb, do guest event
-		if (!p1) memd(r7+#CONTEXT_gelr_gbadva) = r21:20  // elr:elr
-		r25:24 = memd(r7+#CONTEXT_gssr_gosp)
-		p0 = tstbit(r22,#SSR_GUEST_BIT)
-	}
-	{
-		if (!p0) r24 = r29
-		if (!p0) r29 = r24
-		/* TBD: set up GSSR in r25 */
-		r25 = zxtb(r24)
-		r20 = add(r19,#TRAP0_GEVB_OFFSET)
-	}
-	{
-		memd(r7+#CONTEXT_gssr_gosp) = r25:24  // ??? not tested?
-		r21 = setbit(r22,#SSR_GUEST_BIT)
-		p3:0 = r16
-	}
-	{
-		memw(r7+#CONTEXT_r2928+4) = r29
-		memd(r7+#CONTEXT_ssrelr) = r21:20
-		crswap(r7,sgp0)
-	}
-
 	.falign
 H2K_trap_nogood:
 	{
@@ -171,6 +130,72 @@ H2K_trap_nogood:
 	{
 		rte  // ??? AXOK?
 	}
+
+	.falign
+.Ljump_to_trap:
+	{
+		r16.l = #lo(H2K_kg)
+		memw(r7+#CONTEXT_continuation) = r31  // set up continuation in case we block  ??? not tested?
+		crswap(r7,sgp0)  // ??? sgp0 = r7 is AXOK?
+		jumpr r24
+	}
+
+	.falign
+.Lreturn_to_guest:
+	/* EJP: all context carefully saved */
+	/* We have a disabled or other trap failure, return to guest */
+	/* GEVB is in r19 */
+	/* Preds are in r27 */
+	/* r21:20 == elr:elr */
+	/* r22 == ssr */
+	/* p1 == (gevb == 0) */
+	{
+		if (p1) jump .Lfatal
+		// if gevb, do guest event
+		if (!p1) memd(r7+#CONTEXT_gelr_gbadva) = r21:20  // elr:elr
+		r25:24 = memd(r7+#CONTEXT_gssr_gosp)
+		p0 = tstbit(r22,#SSR_GUEST_BIT)
+	}
+	{
+		if (!p0) r24 = r29
+		if (!p0) r29 = r24
+		/* TBD: set up GSSR in r25 */
+		r25 = zxtb(r24)
+		r20 = add(r19,#TRAP0_GEVB_OFFSET)
+	}
+	{
+		memd(r7+#CONTEXT_gssr_gosp) = r25:24  // ??? not tested?
+		r21 = setbit(r22,#SSR_GUEST_BIT)
+		p3:0 = r27
+		r27:26 = memd(r7+#CONTEXT_r2726)
+	}
+	{
+		memw(r7+#CONTEXT_r2928+4) = r29
+		memd(r7+#CONTEXT_ssrelr) = r21:20
+	}
+	{
+		elr = r20  // AXOK
+	}
+	{
+		ssr = r21  // AXOK (if changing bits other than IE, EX, UM)
+	}
+	{
+		r31:30 = memd(r7+#CONTEXT_r3130)
+		r25:24 = memd(r7+#CONTEXT_r2524)
+	}
+	{
+		r23:22 = memd(r7+#CONTEXT_r2322)
+		r21:20 = memd(r7+#CONTEXT_r2120)
+	}
+	{
+		r19:18 = memd(r7+#CONTEXT_r1918)
+		r17:16 = memd(r7+#CONTEXT_r1716)
+		crswap(r7,sgp0)
+	}
+	{
+		rte  // ??? AXOK?
+	}
+
 		// call H2K_fatal_thread or H2K_fatal_kernel
 	.falign
 .Lfatal:

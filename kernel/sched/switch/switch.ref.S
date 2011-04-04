@@ -35,9 +35,12 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r10 = r5
 	//call H2K_trace
 	r1:0 = r25:24
+	r28 = #KG_oncpu_start
+	r28 = addasl(r28,r5,#3)
+	r28 = add(r16,r28)
 
 	if (r0 == #0) jump:nt .Lfrom_sleep
-	r5:4 = memd(r0+#CONTEXT_oncpu_start)
+	r5:4 = memd(r28)
 	r7:6 = sub(r27:26,r5:4)
 	r5:4 = memd(r0+#CONTEXT_totalcycles)
 	r5:4 = add(r7:6,r5:4)
@@ -45,7 +48,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 .Lfrom_sleep:
 	if (r1 == #0) jump:nt .Lto_sleep
-	memd(r1+#CONTEXT_oncpu_start) = r27:26
+	memd(r28) = r27:26
 	r31 = memw(r1+#CONTEXT_continuation)
 	memb(r1+#CONTEXT_hthread) = r10
 	r14 = memb(r1+#CONTEXT_pmu_on)

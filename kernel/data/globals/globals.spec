@@ -55,6 +55,11 @@
 
 		Linked list of available thread contexts
 
+	.. cmember:: u64_t oncpu_start[MAX_HTHREADS]
+
+		Cycle count when the currently-running thread started
+		execution, for each hardware thread.
+
 	.. cmember:: H2K_trace_info_t trace_info
 
 		Information about the kernel trace infrastructure

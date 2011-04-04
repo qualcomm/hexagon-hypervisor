@@ -32,24 +32,24 @@ typedef struct _h2_thread_context
 	struct _h2_thread_context *prev;
 	// #8
 	/* Other info */
-	u8_t prio;			// could be 5 bits
-	u8_t hthread;
+	u8_t prio;
+	u8_t hthread;			// could be < 8 bits
 	u8_t tid;
-	u8_t status;
+	u8_t status;			// could be < 8 bits, combined with vmstatus?
 	// #12
 	union {				// must be updated with LL/SC?
 		u32_t atomic_status_word;
 		struct {
 			u8_t vmstatus;
-			u8_t base_prio;
-			u8_t vmcpu;
-			u8_t pmu_on;
+			u8_t base_prio;	// Does it need to be atomic?
+			u8_t vmcpu;	// needs to be more than 8 bits?  Does it need to be atomic?
+			u8_t pmu_on;	// Does it need to be atomic?  could be < 8 bits
 		};
 	};
 	// #16
 	struct {
-		void *gevb;
-		u32_t trapmask;
+		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.
+		u32_t trapmask;		// could we reduce this?  Need to reduce # of traps...
 	};
 	// 24
 	/* status, etc */
@@ -71,7 +71,7 @@ typedef struct _h2_thread_context
 			u32_t gssr;
 		};
 	};
-	u64_t oncpu_start;	/* Could be unioned for use only while running... */
+	u64_t reserved_u64;
 	u64_t totalcycles;
 	struct {
 		u32_t ccr;	/* Could be moved to zeroed area */
@@ -81,7 +81,7 @@ typedef struct _h2_thread_context
 	};
 	// 64
 	struct {	// OK FOR DCZEROA
-		u32_t *futex_ptr;
+		u32_t *futex_ptr;		// Probably not needed if interrupted; only on trap; could be unioned below?
 		void *continuation;
 	};
 	union {
@@ -149,6 +149,7 @@ typedef struct _h2_thread_context
 		};
 	};
 	/* Context required for interrupts... everything else */
+	/* Note: SR really needed for any context switch.  */
 	/* Note: Fast Interrupt contexts don't need these (can't be interrupted) */
 	// 160
 	u64_t r1514;	// OK FOR DCZEROA

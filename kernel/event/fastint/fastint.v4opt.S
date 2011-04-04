@@ -119,12 +119,11 @@ FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
 	}
 	{
 		imask = r13
-		r1 = sub(#31,r5)
 		r4 = addasl(r4,r5,#2)
 	}
 	{
 		r4 = memw(r4)
-		r30 = lsl(#1,r1)
+		r30 = lsl(#1,r5)  // ??? not tested?
 	}
 	{
 		ssr = r14  // AXOK (if changing bits other than IE, EX, UM)

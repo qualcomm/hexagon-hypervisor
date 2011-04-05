@@ -9,7 +9,7 @@
 
 FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	/* Optimization Note:
-	 * First, we should (maybe) dcfetch r0 and r0+32 
+	 * First, we should (maybe) dcfetch r0+32 
 	 * Next, we should add 64 to r0 and dczeroa
 	 * Then continue to dczeroa the rest of the cache lines
 	 * Finally, we should reset r0 back to the original point 
@@ -130,51 +130,99 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 
 	.falign
 H2K_interrupt_restore:
+	/* Optimization Note:
+	 * First, we should dcfetch several lines ahead of
+	 * where we load in order to prevent cache misses
+	 * in the case of L1 miss/L2 hits.
+	 */
 	/* Restore all state and return */
-	r0 = sgp0
-	r3:2 = memd(r0+#CONTEXT_ssrelr)
-	r5:4 = memd(r0+#CONTEXT_m1m0)
-	r7:6 = memd(r0+#CONTEXT_lc1sa1)
-	r9:8 = memd(r0+#CONTEXT_lc0sa0)
-	r11:10 = memd(r0+#CONTEXT_sr_preds)
-	r13:12 = memd(r0+#CONTEXT_ugpgp)
-	r17:16 = memd(r0+#CONTEXT_cs1cs0)
-	r14 = memw(r0+#CONTEXT_ccr)
-	elr = r2
-	ssr = r3
-	m0 = r4
-	m1 = r5
-	sa1 = r6
-	lc1 = r7
-	sa0 = r8
-	lc0 = r9
-	p3:0 = r10
-	usr = r11
-	gp = r13
-	ugp = r12
-#if __QDSP6_ARCH__ >= 4
-	ccr = r14
-	cs1 = r17
-	cs0 = r16
-#endif
-	r3:2 = memd(r0+#CONTEXT_r0302)
-	r5:4 = memd(r0+#CONTEXT_r0504)
-	r7:6 = memd(r0+#CONTEXT_r0706)
-	r9:8 = memd(r0+#CONTEXT_r0908)
-	r11:10 = memd(r0+#CONTEXT_r1110)
-	r13:12 = memd(r0+#CONTEXT_r1312)
-	r15:14 = memd(r0+#CONTEXT_r1514)
-	r17:16 = memd(r0+#CONTEXT_r1716)
-	r19:18 = memd(r0+#CONTEXT_r1918)
-	r21:20 = memd(r0+#CONTEXT_r2120)
-	r23:22 = memd(r0+#CONTEXT_r2322)
-	r25:24 = memd(r0+#CONTEXT_r2524)
-	r27:26 = memd(r0+#CONTEXT_r2726)
-	r29:28 = memd(r0+#CONTEXT_r2928)
-	r31:30 = memd(r0+#CONTEXT_r3130)
-	r1:0 = memd(r0+#CONTEXT_r0100)
-
-	rte
+	{
+		r0 = sgp0
+	}
+	{
+		dcfetch(r0+#224)
+	}
+	{
+		dcfetch(r0+#192)
+	}
+	{
+		dcfetch(r0+#64)
+	}
+	{
+		dcfetch(r0+#32)
+	}
+	{
+		dcfetch(r0+#128)
+	}
+	{
+		dcfetch(r0+#160)
+		r9:8 = memd(r0+#CONTEXT_cs1cs0)  //224
+	}
+	{
+		dcfetch(r0+#96)
+		r11:10 = memd(r0+#CONTEXT_sr_preds)
+		c13:12 = r9:8  // cs1:cs0
+	}
+	{
+		r13:12 = memd(r0+#CONTEXT_m1m0)
+		r15:14 = memd(r0+#CONTEXT_lc1sa1)
+		usr = r11
+	}
+	{
+		r21:20 = memd(r0+#CONTEXT_lc0sa0)  // 192
+		r3:2 = memd(r0+#CONTEXT_r0302)
+		p3:0 = r10
+	}
+	{
+		r5:4 = memd(r0+#CONTEXT_r0504)
+		r7:6 = memd(r0+#CONTEXT_r0706)
+		c7:6 = r13:12  // m1:m0
+	}
+	{
+		r29:28 = memd(r0+#CONTEXT_r2928)  // 64
+		r31:30 = memd(r0+#CONTEXT_r3130)
+		c3:2 = r15:14  // lc1:sa1
+	}
+	{
+		r23:22 = memd(r0+#CONTEXT_ssrelr)
+		r25 = memw(r0+#CONTEXT_ccr)  // 32
+		c1:0 = r21:20  // lc0:sa0
+	}
+	{
+		r27:26 = memd(r0+#CONTEXT_ugpgp)  // 128
+		r17:16 = memd(r0+#CONTEXT_r1716)
+		r25:24 = combine(r25,r23)
+	}
+	{
+		elr = r22  // AXOK
+	}
+	{
+		s7:6 = r25:24  // ccr:ssr  AXOK
+	}
+	{
+		r19:18 = memd(r0+#CONTEXT_r1918)
+		r9:8 = memd(r0+#CONTEXT_r0908)  // 160
+		c11:10 = r27:26  // gp:ugp
+	}
+	{
+		r11:10 = memd(r0+#CONTEXT_r1110)
+		r13:12 = memd(r0+#CONTEXT_r1312)
+	}
+	{
+		r15:14 = memd(r0+#CONTEXT_r1514)
+		r21:20 = memd(r0+#CONTEXT_r2120)  // 96
+	}
+	{
+		r23:22 = memd(r0+#CONTEXT_r2322)
+		r25:24 = memd(r0+#CONTEXT_r2524)
+	}
+	{
+		r27:26 = memd(r0+#CONTEXT_r2726)
+		r1:0 = memd(r0+#CONTEXT_r0100)
+	}
+	{
+		rte  // ??? AXOK?
+	}
 	.global H2K_interrupt_restore
 
 .Lint_jump_stub:

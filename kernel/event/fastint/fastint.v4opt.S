@@ -26,20 +26,15 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 		/* Per-HThread stack may get corrputed by trap in int handler */
 		/* So save off important registers in fastint context that won't change */
 		memd(r3+#CONTEXT_reserved_u64) = r31:30
-		r29 = add(r3,#FASTINT_CONTEXT_SIZE)
-		r4 = addasl(r4,r0,#2)
+		r4 = memw(r4+r0<<#2)
+		r25 = lsl(#1,r0)
 		gp = r6
 	}
 	{
 		memd(r3+#CONTEXT_totalcycles) = r25:24
-		r4 = memw(r4)
-		r5 = lsl(#1,r0)
-		r24 = r3
-	}
-	{
-		r25 = r5
+		r29 = add(r3,#FASTINT_CONTEXT_SIZE)
 		callr r4
-		crswap(r24,sgp0)
+		crswap(r3,sgp0)
 	}
 H2K_fastint_return:
 	{
@@ -118,12 +113,12 @@ FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
 		r5 = and(r1,#0xff)
 	}
 	{
-		imask = r13
-		r4 = addasl(r4,r5,#2)
+		imask = r13  // AXOK
 	}
 	{
-		r4 = memw(r4)
+		r4 = memw(r4+r5<<#2)
 		r30 = lsl(#1,r5)  // ??? not tested?
+		r24 = sgp0
 	}
 	{
 		ssr = r14  // AXOK (if changing bits other than IE, EX, UM)

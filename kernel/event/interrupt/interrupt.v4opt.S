@@ -108,7 +108,6 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 		memd(r0+#CONTEXT_cs1cs0) = r15:14
 		memd(r0+#CONTEXT_r2928) = r29:28
 		r11:10 = c11:10  // gp:ugp
-		r3 = addasl(r13,r4,#2)
 	}
 	{
 		memd(r0+#CONTEXT_ugpgp) = r11:10
@@ -124,7 +123,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	{
 		memd(r5+#CONTEXT_r0100) = r1:0
 		r0 = r4
-		r3 = memw(r3)
+		r3 = memw(r13+r4<<#2)
 		call .Lint_jump_stub
 	}
 
@@ -236,36 +235,31 @@ H2K_interrupt_restore:
 FUNC_END H2K_handle_int
 
 FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
-#if __QDSP6_ARCH__ <= 3
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
-	r28 = ssr
-	r28 = extractu(r28,#3,#19)
-	r2 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r2)
-#else
-	r28 = HTID
-	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##H2K_stacks,mpyi(r28,r29))
-#endif
-	
-
-	/* Stack set up, execute interrupt handler */
-	r2 = r28 	// TNUM from above...
-	r0 = ssr
-	r0 = and(r0,#0x1f)
-	r1 = #0		// thread context == NULL
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
-	r4 = add(r16,#KG_inthandlers)
-	r4 = addasl(r4,r0,#2)
-	r4 = memw(r4)
-
+	{
+		r0 = ssr
+		r3 = #KERNEL_STACK_SIZE
+		r16 = ##H2K_kg
+	}
+	{
+		r0 = and(r0,#0x1f)  // extract interrupt number
+		r1 = #0  // thread context == NULL
+		r2 = htid
+		r4 = add(r16,#KG_inthandlers)
+	}
+	{
+		r4 = memw(r4+r0<<#2)  // compute interrupt handler
+	}
 	/* Registers set up, call specified handler */
-	callr r4
-	r0 = #0
-	r1 = #0
-	k0lock
-	jump H2K_switch
+	{
+		r29 = add(##H2K_stacks,mpyi(r2,r3))
+		callr r4
+	}
+	{
+		k0lock
+	}
+	{
+		r1:0 = #0
+		jump H2K_switch
+	}
 
 FUNC_END H2K_interrupted_waitmode

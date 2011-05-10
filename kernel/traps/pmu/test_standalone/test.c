@@ -49,7 +49,6 @@ void TH_check_dead()
 
 int main()
 {
-	u32_t ret;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	//H2K_thread_init();
 	//H2K_readylist_init();

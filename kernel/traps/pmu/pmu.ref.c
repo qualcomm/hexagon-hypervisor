@@ -27,9 +27,10 @@ u32_t H2K_trap_pmuconfig(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2
 	return H2K_pmuconfigtab[configtype](0,ptr,val2,val3,me);
 }
 
-u32_t H2K_trap_pmuconfig_threadset(u32_t unused, H2K_thread_context *dest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
+u32_t H2K_trap_pmuconfig_threadset(u32_t unused, void *vdest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
 {
 	u32_t val;
+	H2K_thread_context *dest = vdest;
 	turnon = (turnon != 0);
 	if (dest->status == H2K_STATUS_DEAD) return -1;
 	BKL_LOCK();

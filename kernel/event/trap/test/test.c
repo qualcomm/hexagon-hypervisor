@@ -13,6 +13,13 @@
 #include <globals.h>
 #include <setjmp.h>
 
+/*
+ * Strategy:
+ * Each trap handler returns a unique number.
+ * Make sure that the trap table goes to the right place.
+ * Disable traps, and make sure they go into guest mode correctly.
+ */
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -100,6 +107,10 @@ int main()
 	H2K_kg.stacks_addr = &H2K_stacks;
 	a.trapmask = 0xffffffff;
 	a.gevb = NULL;
+
+	/* SECTION 1: tests with NULL GEVB */
+
+	/* Try all traps */
 	for (i = 0; i < (sizeof(testvals)/sizeof(testvals[0])); i++) {
 		if (testvals[i] < 0) continue;
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
@@ -117,6 +128,7 @@ int main()
 	" r0 = clrbit(r0,#18) \n"
 	" ssr = r0 \n" : : : "r0" );
 
+	/* Try disabled / enabled traps */
 	a.trapmask = 0xffff0000;
 	for (i = 1; i < 16; i++) {
 		if (testvals[i] < 0) continue;
@@ -135,6 +147,7 @@ int main()
 		}
 	}
 
+	/* Try disabled / enabled traps */
 	a.trapmask = 0x0000ffff;
 	for (i = 1; i < 16; i++) {
 		if (testvals[i] < 0) continue;
@@ -153,6 +166,7 @@ int main()
 		}
 	}
 
+	/* Re-enable interrupts, but use IMASK to prevent them */
 	asm volatile (
 	" r0 = #-1 \n"
 	" imask = r0 \n"
@@ -160,6 +174,7 @@ int main()
 	" r0 = setbit(r0,#18) \n"
 	" ssr = r0 \n" : : : "r0" );
 
+	/* Try disabled / enabled traps */
 	a.trapmask = 0xffff0000;
 	for (i = 1; i < 16; i++) {
 		if (testvals[i] < 0) continue;
@@ -196,6 +211,7 @@ int main()
 		}
 	}
 
+	/* Check values beyond 0-31 */
 	if (setjmp(env) == 0) ret = call_trap0(32,&a);
 	if (ret >= 0) FAIL("Trap didn't fail with >31 value");
 	if (setjmp(env) == 0) ret = call_trap0(100,&a);
@@ -207,6 +223,7 @@ int main()
 
 	puts("NULL gevb OK");
 
+	/* SECTION 2: Now set GEVB, do traps from guest mode  */
 	guest_mode();
 	setup_guest();
 	TH_expected_guest_stack = 0;
@@ -262,6 +279,7 @@ int main()
 	}
 	puts("Guest Mask Tests OK");
 
+	/* traps > 31 should always go to guest */
 	TH_saw_guest_trap = 0;
 	if (setjmp(env) == 0) ret = call_trap0(32,&a);
 	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
@@ -277,6 +295,8 @@ int main()
 	TH_saw_guest_trap = 0;
 	if (setjmp(env) == 0) ret = call_trap0(200,&a);
 	if (TH_saw_guest_trap == 0) FAIL("guest Trap didn't fail with >31 value");
+
+	/* SECTION 3: now go to user mode */
 
 	user_mode();
 	setup_guest();

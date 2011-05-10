@@ -21,6 +21,12 @@
 /*  This test covers check_sched_mask, which is inlined into H2K_check_sanity as well as 
     called independently elsewhere (and has an optimized version)  */
 
+/* Strategy:
+ * Make the machine uninterruptible by clearing the GIE bit. 
+ * Then, try different inputs to H2K_check_sched_mask and see whether or not
+ * reschedule interrupt was raised.
+ */
+
 void FAIL(const char *str) 
 {
 	h2_printf(str);

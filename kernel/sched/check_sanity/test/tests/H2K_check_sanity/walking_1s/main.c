@@ -13,6 +13,14 @@
 #include <lowprio.h>
 #include <globals.h>
 
+/* This test was written by Richard Kuo */
+
+/* Strategy: Call check_sanity with many values, check results */
+/* We clear the GIE bit to make the entire machine uninterruptible.  */
+/* We can check to see if a reschedule interrupt was raised by looking
+ * at the appropriate bit in IPEND.  
+ */
+
 #define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
 #define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}
 #define debug(...) { h2_printf("DEBUG:  "); h2_printf(__VA_ARGS__);}

@@ -12,6 +12,13 @@
 #include <stdlib.h>
 #include <globals.h>
 
+/*
+ * Strategy:
+ * Implement each required event handler that returns a unique ID
+ * Jump to each offset from the vector base
+ * Compare return value to reference
+ */
+
 void FAIL(const char *str)
 {
 	puts("FAIL");

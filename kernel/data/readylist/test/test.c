@@ -12,6 +12,12 @@
 #include <stdlib.h>
 #include <globals.h>
 
+/*
+ * Strategy: 
+ * Place the ready list in several states, manipulate it using the appropriate
+ * functions, and check that the values are expected 
+ */
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -20,6 +26,8 @@ void FAIL(const char *str)
 }
 
 static H2K_thread_context a,b,c;
+
+/* These functions create a real version of the inlines in readylist.h */
 
 u32_t H2K_ready_best_prio_TB()
 {

@@ -6,6 +6,16 @@
 #include <asm_std.h>
 #include <asm_offsets.h>
 
+/*
+ * TH_do_interrupt sets up and calls the interrupt.
+ * r0 is the source data to fill into the reg file
+ * r1 is the dst location to put into SGP
+ * r2 is the interrupt number 
+ * 
+ * We don't set all registers.  Some registers like gp and SSR
+ * might cause some bad things to happen.  The more registers we
+ * can check, however, the better.
+ */
 	.text
 	.global TH_do_interrupt
 TH_do_interrupt:
@@ -54,6 +64,10 @@ TH_do_interrupt:
 	r1:0 = memd(r0+#CONTEXT_r0100)
 	jump H2K_handle_int
 
+/* This is our implementation of the H2_interrupted_fastint_check
+ * that may be called.  We set things up and call back to the C
+ * function TH_interrupted_fastint_check 
+ */
 	.global H2K_interrupted_fastint_check
 H2K_interrupted_fastint_check:
 	r31:30 = memd(r0+#CONTEXT_r3130)
@@ -62,10 +76,17 @@ H2K_interrupted_fastint_check:
 	crswap(r0,sgp)
 	jump TH_interrupted_fastint_check
 
+/*
+ * H2K_fastint returns immediately 
+ */
 	.global H2K_fastint
 H2K_fastint:
 	jumpr r31
 
+/*
+ * TH_save_sgp takes the SGP value and saves it into a global memory location 
+ * for later restoration 
+ */
 	.global TH_save_sgp
 TH_save_sgp:
 	r0.h = #hi(TH_sgp_word)
@@ -74,6 +95,10 @@ TH_save_sgp:
 	memw(r0) = r1
 	jumpr r31
 
+/*
+ * TH_restore_sgp takes the SGP value from the global 
+ * memory location and restores it 
+ */
 	.global TH_restore_sgp
 TH_restore_sgp:
 	r0.h = #hi(TH_sgp_word)

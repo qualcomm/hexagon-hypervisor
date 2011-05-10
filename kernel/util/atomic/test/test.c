@@ -48,6 +48,7 @@ int main()
 	u32_t tmp;
 	u32_t last;
 
+	/* For each bit in a word, check to make sure that setbit and clearbit work for OK case */
 	for (i = 0; i < 32; i++) {
 		mask = 0xFFFFFFFF>>(31-i);
 		if (TH_atomic_setbit(&word,i) == 0) FAIL("First setbit failed");
@@ -57,7 +58,7 @@ int main()
 		if ((word & (1<<i)) == 0) FAIL("Setbit cleared bit");
 		if (word != mask) FAIL("Unexpected word value (b)");
 	}
-
+	/* For each bit in a word, check to make sure that setbit and clrbit work for the fail case */
 	for (i = 0; i < 32; i++) {
 		mask = 0xFFFFFFFF<<(i+1);
 		if (TH_atomic_clrbit(&word,i) == 0) FAIL("First clrbit failed");
@@ -67,6 +68,7 @@ int main()
 		if ((word & (1<<i)) != 0) FAIL("clrbit set bit");
 		if (word != mask) FAIL("Unexpected word value (d)");
 	}
+	/* Make sure that swap swaps values */
 	last = word = 0;
 	for (i = 0; i < 32; i++) {
 		tmp = rand();
@@ -75,6 +77,7 @@ int main()
 		last = tmp;
 	}
 	last = 0;
+	/* Make sure that insert works */
 	for (i = 0; i < 16; i++) {
 		for (j = 15; j > 0; j--) {
 			tmp = INSERT(word,0xcafe,i,j);

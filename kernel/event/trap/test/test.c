@@ -48,6 +48,7 @@ s32_t H2K_tid_set() { return 18; }
 s32_t H2K_tid_get() { return 19; }
 //s32_t H2K_futex_lock_pi() { return 20; } -- defined in asm
 //s32_t H2K_futex_unlock_pi() { return 21; } -- defined in asm
+s32_t H2K_trap_pmuconfig() { return 29; }
 s32_t H2K_trap_config() { return 30; }
 s32_t H2K_trap_hwconfig() { return 31; }
 

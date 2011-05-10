@@ -28,6 +28,7 @@
 #include "h2_prio.h"
 #include "h2_vmtraps.h"
 #include "h2_error.h"
+#include "h2_pmu.h"
 
 #endif
 

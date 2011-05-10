@@ -187,5 +187,32 @@ static inline void H2K_mutex_unlock_k0()
 #define BKL_UNLOCK(...) H2K_mutex_unlock_k0()
 #endif
 
+#if (ARCHV >= 3)
+
+#define MAKE_SETGET(REG) \
+static inline u32_t H2K_get_##REG() \
+{ u32_t ret; asm volatile (" %0 = " #REG : "=r"(ret)); return ret; } \
+static inline void H2K_set_##REG(u32_t val) \
+{ asm volatile ( #REG " = %0" : : "r"(val)); }
+
+#else
+
+#define MAKE_SETGET(REG) \
+static inline u32_t H2K_get_##REG() \
+{ return 0; } \
+static inline void H2K_set_##REG(u32_t val) \
+{ }
+
+#endif
+
+MAKE_SETGET(pmucfg)
+MAKE_SETGET(pmuevtcfg)
+MAKE_SETGET(pmucnt0)
+MAKE_SETGET(pmucnt1)
+MAKE_SETGET(pmucnt2)
+MAKE_SETGET(pmucnt3)
+
+#undef MAKE_SETGET
+
 #endif
 

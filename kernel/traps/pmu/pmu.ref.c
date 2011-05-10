@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include <pmu.h>
+#include <asm_offsets.h>
+#include <thread.h>
+#include <globals.h>
+#include <atomic.h>
+#include <hw.h>
+#include <q6protos.h>
+
+typedef u32_t (*pmuconfigptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
+
+#define MAX_PMUCONFIGS 3
+
+static const pmuconfigptr_t H2K_pmuconfigtab[MAX_PMUCONFIGS] IN_SECTION(".data.config.pmuconfig") = {
+	H2K_trap_pmuconfig_threadset,
+	H2K_trap_pmuconfig_setreg,
+	H2K_trap_pmuconfig_getreg
+};
+
+u32_t H2K_trap_pmuconfig(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+{
+	if (configtype >= MAX_PMUCONFIGS) return -1;
+	return H2K_pmuconfigtab[configtype](0,ptr,val2,val3,me);
+}
+
+u32_t H2K_trap_pmuconfig_threadset(u32_t unused, H2K_thread_context *dest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
+{
+	u32_t val;
+	turnon = (turnon != 0);
+	if (dest->status == H2K_STATUS_DEAD) return -1;
+	BKL_LOCK();
+	H2K_atomic_insert(&dest->atomic_status_word,turnon,8,24);
+	if (dest->status == H2K_STATUS_RUNNING) {
+		val = H2K_get_pmucfg();
+		if (turnon) {
+			val = Q6_R_setbit_RR(val,dest->hthread);
+		} else {
+			val = Q6_R_clrbit_RR(val,dest->hthread);
+		}
+		H2K_set_pmucfg(val);
+	}
+	BKL_UNLOCK();
+	return 0;
+}
+
+u32_t H2K_trap_pmuconfig_setreg(u32_t unused, void *unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
+{
+	switch (whichreg) {
+		case 0xFFFFFFFF: H2K_set_pmuevtcfg(newval); return 0;
+		case 0x0: H2K_set_pmucnt0(newval); return 0;
+		case 0x1: H2K_set_pmucnt1(newval); return 0;
+		case 0x2: H2K_set_pmucnt2(newval); return 0;
+		case 0x3: H2K_set_pmucnt3(newval); return 0;
+		default: return -1;
+	}
+	return -1;
+}
+
+u32_t H2K_trap_pmuconfig_getreg(u32_t unused, void *unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
+{
+	switch (whichreg) {
+		case 0xFFFFFFFF: return H2K_get_pmuevtcfg();
+		case 0x0: return H2K_get_pmucnt0();
+		case 0x1: return H2K_get_pmucnt1();
+		case 0x2: return H2K_get_pmucnt2();
+		case 0x3: return H2K_get_pmucnt3();
+		default: return -1;
+	}
+	return -1;
+}
+

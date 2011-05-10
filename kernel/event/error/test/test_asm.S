@@ -53,7 +53,7 @@ FUNC_END TH_do_error
 #define SSR_BIT 19
 #endif
 
-/* Go in and out of "Guest" vs "user" mode
+/* Go in and out of "Guest" vs "user" mode */
 
 FUNC_START TH_guestmode .text .p2align 2
 	r0 = ssr

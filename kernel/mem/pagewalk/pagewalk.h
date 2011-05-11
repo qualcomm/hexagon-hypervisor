@@ -13,9 +13,13 @@
 typedef union {
 	u32_t raw;
 	struct {
-		u32_t ppd:24;
-		u32_t cccc:4;
-		u32_t xwru:4;
+		u32_t s:3;
+		u32_t rsvd:1;
+		u32_t t:1;
+		u32_t u:1;
+		u32_t ccc:3;
+		u32_t xwr:3;
+		u32_t ppn:20;
 	};
 } H2K_pte_t;
 

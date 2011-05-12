@@ -128,8 +128,11 @@ void TH_saw_secondary_int(u32_t intno)
 int main() 
 {
 	int i,j;
+	/* Set up KGP */
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	/* Set up fast interrupt gp */
 	H2K_gp->fastint_gp = (u32_t)(&_SDA_BASE_);
+	/* Try fast interrupts */
 	TH_fastint_mask = 0xffffffffU;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint(&a,i);
@@ -142,6 +145,7 @@ int main()
 			TH_do_fastint_intpending(NULL,i,j);
 		}
 	}
+	/* Try fast interrupts when some are disabled */
 	TH_fastint_mask = 0xffcc5500;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		TH_do_fastint(&a,i);

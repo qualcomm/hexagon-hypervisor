@@ -7,5 +7,6 @@
 #define H2_FASTINT_H 1
 
 void h2_register_fastint(int intno, void (*fn)(int));
+void h2_deregister_fastint(int intno);
 
 #endif

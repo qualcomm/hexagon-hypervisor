@@ -29,43 +29,56 @@ u32_t l2pt_64KB[64] __attribute__((aligned(256)));
 u32_t l2pt_16KB[256] __attribute__((aligned(1024)));
 u32_t l2pt_4KB[1024] __attribute__((aligned(4096)));
 
-#define L1_16MB  0x00000040
-#define L1_4MB   0x00000020
-#define L1_4KB   0x00000010
-#define L1_16KB  0x00000008
-#define L1_64KB  0x00000004
-#define L1_256KB 0x00000002
-#define L1_1MB   0x00000001
+#define L1_16MB  0x00000006
+#define L1_4MB   0x00000005
+#define L1_4KB   0x00000000
+#define L1_16KB  0x00000001
+#define L1_64KB  0x00000002
+#define L1_256KB 0x00000003
+#define L1_1MB   0x00000004
 
-#define L2_4KB   0x00000001
-#define L2_16KB  0x00000002
-#define L2_64KB  0x00000004
-#define L2_256KB 0x00000008
-#define L2_1MB   0x00000010
+#define L2_4KB   0x00000000
+#define L2_16KB  0x00000001
+#define L2_64KB  0x00000002
+#define L2_256KB 0x00000003
+#define L2_1MB   0x00000004
 
+static inline unsigned int pte_bits(unsigned int i)
+{
+	u32_t ret;
+	ret = ((i & 0x0ff)<<4);	/* XWR / CC / UT bits */
+	ret |= ((i & 0xff0) << 20);
+	return ret;
+}
+
+/* 
+ * Set Up Page Tables
+ * Make all sizes of L2 tables
+ * Make L1 page table with various sizes
+ */
 void setup()
 {
 	u32_t pgsize;
 	u32_t i;
-	u32_t l1_4KB_entry   = (L1_4KB   | (((u32_t)l2pt_4KB)  >>3));
-	u32_t l1_16KB_entry  = (L1_16KB  | (((u32_t)l2pt_16KB) >>3));
-	u32_t l1_64KB_entry  = (L1_64KB  | (((u32_t)l2pt_64KB) >>3));
-	u32_t l1_256KB_entry = (L1_256KB | (((u32_t)l2pt_256KB)>>3));
-	u32_t l1_1MB_entry   = (L1_1MB   | (((u32_t)l2pt_1MB)  >>3));
+	u32_t l1_4KB_entry   = (L1_4KB   | (((u32_t)l2pt_4KB)  ));
+	u32_t l1_16KB_entry  = (L1_16KB  | (((u32_t)l2pt_16KB) ));
+	u32_t l1_64KB_entry  = (L1_64KB  | (((u32_t)l2pt_64KB) ));
+	u32_t l1_256KB_entry = (L1_256KB | (((u32_t)l2pt_256KB)));
+	u32_t l1_1MB_entry   = (L1_1MB   | (((u32_t)l2pt_1MB)  ));
 	for (i = 0; i < 4;    i++) {
-		l2pt_1MB[i]   = L2_1MB   | i<<16;
+		l2pt_1MB[i]   = L2_1MB   | pte_bits(i);
 	}
 	for (i = 0; i < 16;   i++) {
-		l2pt_256KB[i] = L2_256KB | i<<16;
+		l2pt_256KB[i] = L2_256KB | pte_bits(i);
 	}
 	for (i = 0; i < 64;   i++) {
-		l2pt_64KB[i]  = L2_64KB  | i<<16;
+		l2pt_64KB[i]  = L2_64KB  | pte_bits(i);
 	}
 	for (i = 0; i < 256;  i++) {
-		l2pt_16KB[i]  = L2_16KB  | i<<16;
+		l2pt_16KB[i]  = L2_16KB  | pte_bits(i);
 	}
 	for (i = 0; i < 1024; i++) {
-		l2pt_4KB[i]   = L2_4KB   | i<<16;
+		l2pt_4KB[i]   = L2_4KB   | pte_bits(i);
 	}
 	for (i = 0; i < 1024; i++) {
 		pgsize = (i>>1)&7;
@@ -75,12 +88,12 @@ void setup()
 			case 2: l1pt[i+0] = l1_64KB_entry;   break;
 			case 3: l1pt[i+0] = l1_256KB_entry;  break;
 			case 4: l1pt[i+0] = l1_1MB_entry;    break;
-			case 5: l1pt[i+0] = L1_4MB  | i<<16; break;
+			case 5: l1pt[i+0] = L1_4MB  | pte_bits(i); break;
 			case 6:
-				l1pt[i+0] = L1_16MB | i<<16;
-				l1pt[i+1] = L1_16MB | i<<16;
-				l1pt[i+2] = L1_16MB | i<<16;
-				l1pt[i+3] = L1_16MB | i<<16;
+				l1pt[i+0] = L1_16MB | pte_bits(i);
+				l1pt[i+1] = L1_16MB | pte_bits(i);
+				l1pt[i+2] = L1_16MB | pte_bits(i);
+				l1pt[i+3] = L1_16MB | pte_bits(i);
 				i += 3;
 				break;
 			default: break;
@@ -97,7 +110,10 @@ void test_all_firstpage()
 	H2K_pte_t result;
 	for (i = 0; i < 4096; i++) {
 		result = H2K_mem_pagewalk(i,&a);
-		if (result.raw != l2pt_4KB[0]) FAIL("firstpage addr: wrong translation");
+		if (result.raw != l2pt_4KB[0]) {
+			printf("i: %d result.raw: 0x%08x l2pt_4KB[0]: 0x%08x\n",i,result.raw,l2pt_4KB[0]);
+			FAIL("firstpage addr: wrong translation");
+		}
 	}
 }
 
@@ -106,23 +122,31 @@ void test_all_firstpage()
 void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
 {
 	H2K_mem_tlbfmt_t tlb = H2K_mem_translate_pagetable(addr,t);
-	CHECK(tlb.ppn>>15,==,(expectval & 0x1f));
+	CHECK(tlb.ppn>>12,==,((expectval >> 4)& 0xff));
 	CHECK(tlb.size,==,tlb.size);
 	CHECK(tlb.vpn,==,addr>>12);
+	if (tlb.asid != t->ssr_asid) {
+		printf("tlbasid: %x ssrasid: %x\n",tlb.asid,t->ssr_asid);
+	}
 	CHECK(tlb.asid,==,t->ssr_asid);
-	CHECK(tlb.ccc,==,(expectval >> 8) & 0x7);
-	CHECK(tlb.xwr,==,(expectval >> 12) & 0x7);
+	CHECK(tlb.ccc,==,(expectval >> 2) & 0x7);
+	CHECK(tlb.xwr,==,(expectval >> 5) & 0x7);
 	CHECK(tlb.global,==,0);
 }
 #else
 void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
 {
 	H2K_mem_tlbfmt_t tlb = H2K_mem_translate_pagetable(addr,t);
-	CHECK(tlb.ppd>>16,==,(expectval & 0xff));
+#if 0
+	printf("tlb: 0x%016llx tlb.ppd>>1: 0x%016llx expectval: 0x%08x\n",
+		(u64_t)tlb.raw,(u64_t)tlb.ppd>>1,expectval);
+#endif
+	CHECK(tlb.ppd>>13,==,((expectval >> 4)& 0xff));
 	CHECK(tlb.vpn,==,addr>>12);
 	CHECK(tlb.asid,==,t->ssr_asid);
-	CHECK(tlb.cccc,==,(expectval >> 8) & 0xf);
-	CHECK(tlb.xwru,==,(expectval >> 12) & 0xf);
+	CHECK(tlb.cccc,==,(expectval >> 2) & 0x7);
+	CHECK(tlb.xwru>>1,==,(expectval >> 5) & 0x7);
+	CHECK(tlb.xwru&1,==,(expectval >>1) & 1);
 	CHECK(tlb.global,==,0);
 }
 #endif
@@ -137,45 +161,38 @@ void check_result(H2K_pte_t pte, u32_t addr, H2K_thread_context *thread)
 			size = 6;
 			/* FALLTHROUGH */
 		case 6:
-			if ((pte.raw & 0x3f) != 0) FAIL("16MB xlat fail: size");
-			if ((pte.raw & 0x40) == 0) FAIL("16MB xlat fail: size(2)");
-			l2_idx = l1_idx & 0xfffc;
-			if ((pte.raw >> 16) != (l2_idx)) FAIL("16MB xlat fail: val");
+			if ((pte.s) != 6) FAIL("16MB xlat fail: size");
+			l2_idx = l1_idx & -4;
+			if ((pte.raw) != (pte_bits(l2_idx) | 6)) FAIL("val fail/16M");
 			break;
 		case 5:
-			if ((pte.raw & 0x1f) != 0) FAIL("4MB xlat fail: size");
-			if ((pte.raw & 0x20) == 0) FAIL("4MB xlat fail: size(2)");
+			if ((pte.s) != 5) FAIL("4MB xlat fail: size");
 			l2_idx = l1_idx;
-			if ((pte.raw >> 16) != (l2_idx)) FAIL("4MB xlat fail: val");
+			if ((pte.raw) != (pte_bits(l2_idx) | 5)) FAIL("val fail/4M");
 			break;
 		case 4:
-			if ((pte.raw & 0x0f) != 0) FAIL("1MB xlat fail: size");
-			if ((pte.raw & 0x10) == 0) FAIL("1MB xlat fail: size(2)");
+			if ((pte.s) != 4) FAIL("1MB xlat fail: size");
 			l2_idx >>= 2*4;
-			if ((pte.raw >> 16) != ((l2_idx) & 0x0003)) FAIL("1MB xlat fail: val");
+			if ((pte.raw) != (pte_bits(l2_idx) | 4)) FAIL("val fail/1M");
 			break;
 		case 3:
-			if ((pte.raw & 0x07) != 0) FAIL("256KB xlat fail: size");
-			if ((pte.raw & 0x08) == 0) FAIL("256KB xlat fail: size(2)");
+			if ((pte.s) != 3) FAIL("256K xlat fail: size");
 			l2_idx >>= 2*3;
-			if ((pte.raw >> 16) != ((l2_idx) & 0x000f)) FAIL("256KB xlat fail: val");
+			if ((pte.raw) != (pte_bits(l2_idx) | 3)) FAIL("val fail/256K");
 			break;
 		case 2:
-			if ((pte.raw & 0x03) != 0) FAIL("64KB xlat fail: size");
-			if ((pte.raw & 0x04) == 0) FAIL("64KB xlat fail: size(2)");
+			if ((pte.s) != 2) FAIL("64K xlat fail: size");
 			l2_idx >>= 2*2;
-			if ((pte.raw >> 16) != ((l2_idx) & 0x003f)) FAIL("64KB xlat fail: val");
+			if ((pte.raw) != (pte_bits(l2_idx) | 2)) FAIL("val fail/64K");
 			break;
 		case 1:
-			if ((pte.raw & 0x01) != 0) FAIL("16KB xlat fail: size");
-			if ((pte.raw & 0x02) == 0) FAIL("16KB xlat fail: size(2)");
+			if ((pte.s) != 1) FAIL("16K xlat fail: size");
 			l2_idx >>= 2*1;
-			if ((pte.raw >> 16) != ((l2_idx) & 0x00ff)) FAIL("16KB xlat fail: val");
+			if ((pte.raw) != (pte_bits(l2_idx) | 1)) FAIL("val fail/16K");
 			break;
 		case 0:
-			if ((pte.raw & 0x00) != 0) FAIL("4KB xlat fail: size");
-			if ((pte.raw & 0x01) == 0) FAIL("4KB xlat fail: size(2)");
-			if ((pte.raw >> 16) != ((l2_idx) & 0x03ff)) FAIL("4KB xlat fail: val");
+			if ((pte.s) != 0) FAIL("4K xlat fail: size");
+			if ((pte.raw) != (pte_bits(l2_idx) | 0)) FAIL("val fail/4K");
 			break;
 	}
 	check_tlbfmt(addr,size,l2_idx,thread);

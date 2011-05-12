@@ -1,0 +1,4 @@
+H2K_trap_pmuconfig
+H2K_trap_pmuconfig_threadset
+H2K_trap_pmuconfig_setreg
+H2K_trap_pmuconfig_getreg

@@ -43,7 +43,7 @@ static inline void H2K_mem_tlb_write(u32_t index, u64_t entry)
 	" tlblo = %L1\n"
 	" tlbw\n"
 	:
-	: "r"(index),"r"(entry));
+	: "r"(index),"r"(entry) : "memory");
 }
 #else
 
@@ -72,7 +72,7 @@ static inline void H2K_mem_tlb_write(u32_t index, u64_t entry)
 	asm volatile (
 	" tlbw(%1,%0)\n"
 	:
-	: "r"(index),"r"(entry));
+	: "r"(index),"r"(entry) : "memory");
 }
 
 #endif

@@ -6,6 +6,7 @@
 #include <vmdefs.h>
 #include <max.h>
 
+/* Set up the environment and jump to the trap0 handler.  ELR will point to code that returns. */
 	.text
 	.global call_trap0
 call_trap0:
@@ -25,6 +26,7 @@ call_trap0:
 1:
 	jumpr r31
 
+/* Go in and out of guest/user mode */
 	.global guest_mode
 guest_mode:
 	r10 = ssr
@@ -39,6 +41,7 @@ user_mode:
 	ssr = r10
 	jumpr r31
 
+/* Guest vector table */
 	.global TH_vectors
 TH_vectors:
 	jump TH_bad_vec
@@ -59,6 +62,7 @@ TH_vectors:
 	jump TH_bad_vec
 	
 
+/* Stack area  */
 	.data
 	.global H2K_stacks
 	.p2align 5
@@ -71,6 +75,7 @@ H2K_stacks:
 	.space 128
 	.space 128
 
+// Definitions for certain kernel implementations
 	.global H2K_futex_wait
 H2K_futex_wait:
 	r0 = #2

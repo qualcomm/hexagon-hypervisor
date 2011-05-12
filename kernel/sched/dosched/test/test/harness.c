@@ -26,10 +26,6 @@ void FAIL(const char *msg)
 	exit(1);
 }
 
-/*
- * Define H2K_switch so that we don't actually switch
- */
-
 static u32_t TB_saw_switch = 0;
 
 static jmp_buf env;
@@ -37,6 +33,9 @@ static jmp_buf env;
 H2K_thread_context *TB_me;
 H2K_thread_context *TB_to;
 
+/*
+ * Define H2K_switch so that we don't actually switch
+ */
 void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 {
 	TB_saw_switch++;
@@ -66,6 +65,7 @@ void TB_setup_common()
 	/* lock kernel */
 }
 
+/* Check ready and run lists for sanity */
 void TB_check_common()
 {
 	if (TB_saw_switch == 0) FAIL("No switch?");
@@ -73,6 +73,7 @@ void TB_check_common()
 	checker_runlist();
 }
 
+/* Do call to dosched, longjmp can bring us back */
 void TB_do_call()
 {
 	if (setjmp(env) == 0) {
@@ -81,6 +82,11 @@ void TB_do_call()
 		/* longjump return */
 	}
 }
+
+/* 
+ * OK, each test below has two phases.  The first phase sets up the test, and
+ * the second phase checks that the behavior was expected 
+ */
 
 void TB_fiddle_prio_low_to_low(phase_t phase)
 {
@@ -252,6 +258,7 @@ void TB_fiddle_prio_wait_to_wait(phase_t phase)
 	}
 }
 
+/* Array of tests to do */
 testsetup_t TB_fiddle_prio[] = {
 	TB_fiddle_prio_low_to_low,
 	TB_fiddle_prio_low_to_high,
@@ -265,6 +272,7 @@ testsetup_t TB_fiddle_prio[] = {
 	NULL
 };
 
+/* Set up or check wait mask */
 void TB_fiddle_wait_mask_zero(phase_t phase)
 {
 	if (phase == SETUP) {
@@ -287,6 +295,7 @@ void TB_fiddle_wait_mask_nonzero(phase_t phase)
 	}
 }
 
+/* Array of tests to do */
 testsetup_t TB_fiddle_wait_mask[] = {
 	TB_fiddle_wait_mask_zero,
 	TB_fiddle_wait_mask_nonzero,
@@ -300,6 +309,7 @@ int main()
 	int i,j;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 
+	/* Set up some threads */
 	l.prio = 20;
 	l.hthread = 1;
 	m.prio = 10;
@@ -314,15 +324,25 @@ int main()
 	h2.prio =  2;
 	h2.hthread = 1;
 
+	/* For each wait mask type... */
 	for (i = 0; TB_fiddle_wait_mask[i] != NULL; i++) {
+		/* For each change type... */
 		for (j = 0; TB_fiddle_prio[j] != NULL; j++) {
+			/* Reset the TB */
 			TB_reset();
+			/* setup the wait mask */
 			TB_fiddle_wait_mask[i](SETUP);
+			/* setup scheduler state */
 			TB_fiddle_prio[j](SETUP);
+			/* Setup other stuff */
 			TB_setup_common();
+			/* Call the scheduler */
 			TB_do_call();
+			/* Check normal things */
 			TB_check_common();
+			/* Check the wait mask behavior */
 			TB_fiddle_wait_mask[i](CHECK);
+			/* Check the scheduler behavior */
 			TB_fiddle_prio[j](CHECK);
 		}
 	}

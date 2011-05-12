@@ -6,9 +6,9 @@
 #include <angel.h>
 #include <string.h>
 
-static inline void clean(void *vx,int words)
+static inline void clean(const void *vx,int words)
 {
-	int *x = vx;
+	const int *x = vx;
 	int i;
 	for (i = 0; i < words; i++) {
 		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");

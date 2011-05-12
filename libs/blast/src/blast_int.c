@@ -130,7 +130,7 @@ void blast_sirc_fastint(int intnum)
 {
 	unsigned long status;
 	unsigned int sirc = L1_TO_SIRC(intnum);
-	volatile void *hw_reg=SIRC_TO_IO_BASE(sirc);
+	unsigned long hw_reg=SIRC_TO_IO_BASE(sirc);
 
 	//  So I guess I'm basically going to do everything here that interrupt_asm.S in BLAST did
 
@@ -171,7 +171,7 @@ int blast_register_interrupt(int int_num,
 	//  L2 controller is just int_num > MAX_INTERRUPTS; int_sigsets should be fine
 	//  Is this atomic thing really necessary?  Let's change this later.
 	if (atomic_compare_and_set(
-		(unsigned int *) &int_sigsets[int_num].signal_ptr,
+		(void *) &int_sigsets[int_num].signal_ptr,
 		(unsigned int) 0,
 		(unsigned int) int_signal)) 
 	{

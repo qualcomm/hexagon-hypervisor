@@ -12,6 +12,17 @@
 #include <max.h>
 #include <globals.h>
 
+/*
+ * Strategy:
+ * Fill a thread context with known values: "src".
+ * Have a different, empty thread context: "dst".
+ * Set up a call to the interrupt handler in various situations
+ * -- fill registers with values from "src"
+ * -- set SGP to "dst"
+ * Check to make sure we got to the right place
+ * Check to make sure the values are where they are supposed to be.
+ */
+
 H2K_thread_context *TH_src_context;
 H2K_thread_context *TH_dest_context;
 u32_t TH_intno;
@@ -42,6 +53,8 @@ void TH_do_interrupt(H2K_thread_context *src, H2K_thread_context *dest, u32_t nu
 #define CHECK_INTERRUPT_TEST(ELEMENT) \
 	if (src->ELEMENT != dest->ELEMENT) FAIL("Not equal: " #ELEMENT)
 
+/* Check to make sure we have the expected values in our thread context */
+/* XXX: FIXME: check all the values we can */
 void TH_check_interrupt(H2K_thread_context *src, H2K_thread_context *dest)
 {
 	CHECK_INTERRUPT_TEST(r0100);
@@ -62,6 +75,11 @@ void TH_check_interrupt(H2K_thread_context *src, H2K_thread_context *dest)
 	CHECK_INTERRUPT_TEST(r3130);
 }
 
+/* 
+ * Our implementation of H2K_switch for testing.  It should always
+ * be from NULL and to NULL
+ */
+
 void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 {
 	if (from != NULL) FAIL("Unexpected FROM");
@@ -70,6 +88,9 @@ void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 	longjmp(env,1);
 }
 
+/* If TH_fastint_check was set, we clear it and longjmp back.
+   Otherwise, we fail, as we didn't expect to have a fastint_check
+   actually be called. */
 void TH_interrupted_fastint_check()
 {
 	if (TH_fastint_check == 0) FAIL("Jumped to fastint check");
@@ -77,6 +98,7 @@ void TH_interrupted_fastint_check()
 	longjmp(env,1);
 }
 
+/* Check to make sure that the interrupt was called correctly */
 void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 {
 	if (intno != TH_intno) FAIL("Unexpected interrupt");
@@ -97,10 +119,16 @@ void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 	}
 }
 
+/* Fail */
 void TH_bad_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 {
 	FAIL("Wrong interrupt called");
 }
+
+/*
+ * TH_setup_inthandlers sets up all the inthandler routines as TH_bad_interrupt
+ * except for the interrupt we actually wish to be taken 
+ */
 
 void TH_setup_inthandlers(u32_t interrupt)
 {
@@ -110,6 +138,12 @@ void TH_setup_inthandlers(u32_t interrupt)
 	}
 	H2K_gp->inthandlers[interrupt] = TH_good_interrupt;
 }
+
+/*
+ * The TH_try_interrupt sets up the expected src and dst context,
+ * and if setjmp is not returning non-local, calls TH_do_interrupt.
+ * When it's done, we make sure SGP is reset to correct value.
+ */
 
 void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 {
@@ -125,6 +159,12 @@ void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 	TH_restore_sgp();
 }
 
+/*
+ * fill_srcdata fills up the srcdata structure 
+ * with known values.
+ */
+
+/* XXX: FIXME: check all the values we can, instead of just GPRs */
 void fill_srcdata(int i)
 {
 	u64_t id = ((u64_t)i);
@@ -150,13 +190,18 @@ void fill_srcdata(int i)
 int main() 
 {
 	int i;
+	/* Setup SGP correctly */
 	TH_save_sgp();
+	/* Set up KGP correctly for direct calls */
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
+		/* For each interrupt, try to do the interrupt */
 		fill_srcdata(i);
 		TH_try_interrupt(&a,i);
 		TH_try_interrupt(NULL,i);
+		/* Test the case where we were checking for 
+		 * another interrupt before return */
 		TH_fastint_check = 1;
 		TH_try_interrupt((void *)(&H2K_fastint_contexts[0]),i);
 		if (TH_fastint_check != 0) FAIL("Didn't jump to fastint check");

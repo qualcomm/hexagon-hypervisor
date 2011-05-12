@@ -74,6 +74,25 @@ int main()
 		if (H2K_gp->fastint_funcptrs[i] != TH_handler) FAIL("wrong handler func");
 		if (H2K_gp->fastint_gp != 0xF0000000U) FAIL("fastint gp not set");
 	}
+	/* Lets try deregistering */
+	for (i = 0; i < MAX_INTERRUPTS; i++) {
+		if (i == RESCHED_INT) continue;
+		oldmask = H2K_gp->fastint_mask;
+		if (!((1<<i) & oldmask)) FAIL("fastint bit already cleared");
+		H2K_register_fastint(i,NULL,&a);
+		if (((1<<i) ^ oldmask) != H2K_gp->fastint_mask) FAIL("fastint mask bit not cleared");
+		if (H2K_gp->inthandlers[i]) FAIL("fastint handler not cleared");
+		if (H2K_gp->fastint_funcptrs[i]) FAIL("handler func not cleared");
+	}
+	/* Lets deregister an already deregistered fastint */
+	oldmask = H2K_gp->fastint_mask;
+	printf("oldmask: %x\n", oldmask);
+	if ((1 & oldmask) != 0) FAIL("fastint bit set, should be cleared");
+	H2K_register_fastint(0,NULL,&a);
+	printf("newmask: %x\n", H2K_gp->fastint_mask);
+	if ((1 & oldmask) != H2K_gp->fastint_mask) FAIL("fastint mask bit did not stay cleared");
+	if (H2K_gp->inthandlers[0]) FAIL("fastint handler did not stay cleared");
+	if (H2K_gp->fastint_funcptrs[0]) FAIL("handler func did not stay cleared");
 	puts("TEST PASSED\n");
 	return 0;
 }

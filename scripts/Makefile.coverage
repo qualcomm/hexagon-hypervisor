@@ -51,7 +51,9 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/vm/vmint/test\
  ./kernel/vm/vmipi/test\
  ./kernel/vm/vmtrap/test\
- ./kernel/vm/vmwork/test
+ ./kernel/vm/vmwork/test \
+ ./kernel/traps/pmu/test_h2 \
+ ./kernel/traps/pmu/test_standalone 
 
 
 

@@ -77,6 +77,7 @@ REDEF_FUNCTION(unsigned long long int ,get_core_pcycles,(void),());
 /*  "blast_fastint.h"  */
 
 REDEF_FUNCTION(void ,register_fastint,(int intno, void (*fn)(int)),(intno,fn));
+REDEF_FUNCTION(void ,deregister_fastint,(int intno),(intno));
 
 /*  "blast_futex.h"  */
 

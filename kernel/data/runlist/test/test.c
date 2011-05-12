@@ -21,6 +21,8 @@ void FAIL(const char *str)
 
 static H2K_thread_context a,b,c;
 
+/* Create real versions of inlined functions */
+
 u32_t H2K_runlist_worst_prio_TB()
 {
 	return H2K_runlist_worst_prio();

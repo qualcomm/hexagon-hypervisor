@@ -24,7 +24,7 @@ void H2K_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), H2K_t
 	if (fastint_handler == NULL) { /* deregister */
 		H2K_gp->inthandlers[whatint] = NULL;
 		H2K_gp->fastint_funcptrs[whatint] = NULL;
-		H2K_gp->fastint_mask ^= 1<<whatint;
+		H2K_gp->fastint_mask &= ~(1<<whatint);
 	}
 	else {
 		H2K_gp->fastint_funcptrs[whatint] = fastint_handler;

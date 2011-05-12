@@ -33,7 +33,7 @@ int main()
 	H2K_thread_init();
 	H2K_fatal_kernel_handler = NULL;
 	/* Bad config value */
-	ret = H2K_trap_config(2,buf,sizeof(buf),0,NULL);
+	ret = H2K_trap_config(4,buf,sizeof(buf),0,NULL);
 	if (ret != 0) FAIL("Bad return value");
 	if (H2K_gp->free_threads) FAIL("trap config failure");
 	if (H2K_fatal_kernel_handler != NULL) FAIL("trap config failure");

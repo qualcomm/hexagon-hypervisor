@@ -169,6 +169,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_futex_resume // 3
 	}
 	{
+		r4 = #0x0 	// force vmblock NULL
 		r5 = r7
 		jump H2K_thread_create // 4
 	}
@@ -275,8 +276,8 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_id // 28
 	}
 	{
-		r0 = r7
-		jump H2K_thread_id // 29
+		r5 = r7
+		jump H2K_vmboot // 29
 	}
 	{
 		r4 = r7

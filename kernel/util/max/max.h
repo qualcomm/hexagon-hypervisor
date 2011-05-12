@@ -61,3 +61,6 @@
 #define BOOT_THREAD_SSR (0x01c60000 | (1<<SSR_GUEST_BIT))
 #define BOOT_THREAD_CCR 0xffff0000
 
+#define MAX_VM_ID 255
+#define MAX_VM_CPUS 255
+#define MAX_VM_INTS 65535

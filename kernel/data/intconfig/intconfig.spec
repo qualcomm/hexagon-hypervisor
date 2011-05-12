@@ -39,13 +39,14 @@ H2K_register_fastint
 Description
 ~~~~~~~~~~~
 
-Modifies the interrupt configuration data to register a new fast interrupt handler.
+Modifies the interrupt configuration data to register or deregister a fast interrupt handler.
 
 Functionality
 ~~~~~~~~~~~~~
 
-The fastint_handler is placed in the array, and H2K_fastint is placed in the other array
+When a valid function pointer is passed, the fastint_handler is placed in the funcptrs array, and H2K_fastint is placed in the inthadlers array.
 
+When a NULL function pointer is passed, we deregister the associated interrupt.  We set the entries in the fastint_funcptr and inthandlers arrays to NULL.  We Also toggle the fastint_mask for the assiciated interrupt.
 
 
 
@@ -54,6 +55,9 @@ Testing
 
 For H2K_intconfig_init, we check to make sure that the array has been
 initialized after the call.
+
+For H2K_register_fastint, we call with a valid function pointer check and make sure the fastint is registered correctly.
+We then call with a NULL function pointer and ensure the fastint is deregistered correctly.
 
 Samples
 ~~~~~~~

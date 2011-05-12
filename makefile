@@ -20,20 +20,23 @@ ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(PWD)/install
 endif
 
+all: gtags ref doc
+
 clean:
 	make -C kernel ARCHV=$(ARCHV) clean && \
 	make -C libs ARCHV=$(ARCHV) clean && \
 	make -f scripts/Makefile.coverage clean && \
 	make -f scripts/Makefile.coverage clean_top && \
 	make -f scripts/docs/Makefile.sphinx clean && \
-	rm -Rf size test.exe stats.txt install kernel/stats.txt
+	rm -Rf size test.exe stats.txt install kernel/stats.txt && \
+	rm -Rf GPATH GRTAGS GSYMS GTAGS HTML
 
 opt: clean
 	make -C kernel ARCHV=$(ARCHV) opt_install && \
 	make -C libs ARCHV=$(ARCHV) install && \
 	make -f scripts/Makefile.coverage prepare;
 
-ref: clean
+ref:
 	make -j 3 -C kernel ARCHV=$(ARCHV) ref_install && \
 	make -j 3 -C libs ARCHV=$(ARCHV) install && \
 	make -j 3 -f scripts/Makefile.coverage prepare;
@@ -62,3 +65,6 @@ doc:
 compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
+gtags:
+	find kernel libs tst -type f -print | gtags -w -v -f -
+	htags -afhnosTxv --show-position

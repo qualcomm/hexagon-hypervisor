@@ -12,11 +12,19 @@
 #include <vmwork.h>
 #include <hw.h>
 
-void H2K_vm_ipi_do(u32_t ipi_intno, H2K_thread_context *me, u32_t hwtnum)
+/* called as handler for dedicated IPI interrupt */
+
+/* - re-enable the IPI interrupt */
+/* - mask IPI interrupt for this cpu (note inverted sense of mask_for_ipi wrt iassignw */
+/* - update interrupt masks of cpus */
+/* - re-raise IPI if enabled for any (other) cpus */
+/* - check for vm work to do (pending virtual interrupt) */
+
+void H2K_vm_ipi_do(u32_t ipi_intno, H2K_thread_context *me, u32_t cpu)
 {
 	ciad(VM_IPI_INTMASK);
-	H2K_atomic_clrbit(&H2K_gp->mask_for_ipi,hwtnum);
-	iassignw(VM_IPI_INT,~H2K_gp->mask_for_ipi);
+	H2K_atomic_clrbit(&H2K_gp->mask_for_ipi, cpu);
+	iassignw(VM_IPI_INT, ~H2K_gp->mask_for_ipi);
 	if (H2K_gp->mask_for_ipi != 0) swi(VM_IPI_INTMASK);
 	if ((me != NULL) && (me->vmstatus & H2K_VMSTATUS_VMWORK)) H2K_vm_do_work(me);
 }

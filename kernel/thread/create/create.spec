@@ -7,23 +7,30 @@
 H2K_thread_create
 -----------------
 
-.. cfunction:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t trapmask, H2K_thread_context *me)
+.. cfunction:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me)
 
 	:param pc: The PC that the new thread should start at
 	:param sp: The SP that the new thread should start with
 	:param arg: A value for r0 for the new thread
 	:param prio: The priority for the new thread
-	:param trapmask: The mask for what traps are allowed for the new thread
+	:param vmblock: Pointer to VM if this thread is a virtual CPU
 	:param me: Pointer to the current thread context
 	:returns: the thread ID of the new thread, or -1 on failure.
 
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_thread_create()` function creates a new thread.  The calling thread
-specifies attributes for the thread, and the new thread is created
-with those attributes.  New threads can have reduced features, by
-specifying the mask of allowed traps.
+The :cfunc:`H2K_thread_create()` function creates a new thread.  The calling
+thread specifies attributes for the thread, and the new thread is created with
+those attributes.
+
+The vmblock pointer is forced to NULL when vectored through H2K_handle_trap0.
+In this case the new thread inherits the trap mask of the calling thread, and
+the requested priority may be at best equal to the base priority of the calling
+thread, else an error is returned.
+
+If vmblock is non-NULL, then the trap mask is taken from the VM block, as is
+the best allowed priority.
 
 The call to thread_create will return -1 on error, or an ID for the
 thread on success.
@@ -45,7 +52,7 @@ available threads to create).
 
 Otherwise, we pop a thread off the H2K_free_threads list to use as a new thread.
 
-As a convienience, the new thread inherits GP and UGP from the calling thread.
+As a convenience, the new thread inherits GP and UGP from the calling thread.
 The thread is free to change these values if desired.
 
 We then set the following parameters in the new thread context:
@@ -54,9 +61,20 @@ We then set the following parameters in the new thread context:
 * SSR is set to the Kernel Default SSR Value
 * ELR is set to the PC argument value
 * R0 is set to the arg argument value
-* priority is set to the prio argument value
+* priority is set to the prio argument value subject to limits of caller or vmblock
+* trap mask is set to vmblock->trapmask, or inherited from caller if vmblock == NULL
 * valid is set to VALID
 * The continuation is set to interrupt restore continuation
+
+If vmblock is non-NULL, these actions are added:
+
+* The current virtual CPU number from the vmblock is recorded as the vmcpu of
+  the new thread.  The CPU number is incremented in the vmblock; exceeding the
+  allowed maximum results in an error.
+
+* The vmstatus of the new thread is initialized
+* The vmblock pointer of the new thread is inherited from the caller.
+
 
 We then add the new thread to the readylist, and call :cfunc:`H2K_check_sanity_unlock()`
 before returning.

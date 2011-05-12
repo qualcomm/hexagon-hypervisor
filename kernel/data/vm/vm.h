@@ -36,14 +36,29 @@
 #include <c_std.h>
 #include <vmdefs.h>
 
-typedef u8_t physint_t;
+#define H2K_VMBLOCK_ALIGN 32
+#define H2K_VMBLOCK_V2P_INVALID 0xff
 
+typedef u8_t physint_t;
 typedef u32_t bitmask_t;
 
+typedef enum {
+	SET_STORAGE_IDENT_PMAP,
+	SET_PRIO_TRAPMASK,
+	SET_CPUS_INTS,
+	MAP_PHYS_INTR,
+	NUM_OPS
+} vmblock_init_op_t;
+
+/* FIXME: rename enable to mask since there is already another enable bit */
 typedef struct H2K_vmblock_struct {
+	u8_t max_cpus;
 	u8_t num_cpus;
-	u8_t pad;
+	u8_t bestprio; 										/* best allowed priority */
+	u8_t ident;                       /* block ID */
+
 	u16_t num_ints;
+	u32_t trapmask;  							/* allowed traps */
 	/* Pending Virtual Interrupts for this VM */
 	bitmask_t *pending;
 	/* Global enable */
@@ -57,9 +72,6 @@ typedef struct H2K_vmblock_struct {
 	/* physical memory map, page table style */
 	u32_t *pmap;
 } H2K_vmblock_t;
-
-u32_t H2K_vm_vmblock_size(u8_t num_cpus, u16_t num_ints) IN_SECTION(".text.misc.vmblock");
-void  H2K_vm_vmblock_init(H2K_vmblock_t *vmblock, u8_t num_cpus, u16_t num_ints, u32_t *pmap) IN_SECTION(".text.init.vmblock");
 
 #endif
 

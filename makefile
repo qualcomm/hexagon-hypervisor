@@ -20,7 +20,7 @@ ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(PWD)/install
 endif
 
-all: gtags ref doc
+all: ref doc gtags
 
 clean:
 	make -C kernel ARCHV=$(ARCHV) clean && \
@@ -28,8 +28,7 @@ clean:
 	make -f scripts/Makefile.coverage clean && \
 	make -f scripts/Makefile.coverage clean_top && \
 	make -f scripts/docs/Makefile.sphinx clean && \
-	rm -Rf size test.exe stats.txt install kernel/stats.txt && \
-	rm -Rf GPATH GRTAGS GSYMS GTAGS HTML
+	rm -Rf size test.exe stats.txt install kernel/stats.txt
 
 opt: clean
 	make -C kernel ARCHV=$(ARCHV) opt_install && \

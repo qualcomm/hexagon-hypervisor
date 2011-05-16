@@ -15,6 +15,11 @@ static u64_t H2K_check_sanity_debug(const u64_t returnval) {
 	return(retval);
 }
 
+static void H2K_check_sched_mask_debug() {
+	assert(checker_kernel_locked());
+	H2K_check_sched_mask();
+}
+
 static u64_t H2K_check_sanity_unlock_debug(const u64_t returnval) {
 	const u64_t arg0 = returnval;
 	u64_t retval;
@@ -23,10 +28,5 @@ static u64_t H2K_check_sanity_unlock_debug(const u64_t returnval) {
 	assert(!checker_kernel_locked());
 	assert(retval == arg0);
 	return(retval);
-}
-
-static void H2K_check_sched_mask_debug() {
-	assert(checker_kernel_locked());
-	H2K_check_sched_mask();
 }
 

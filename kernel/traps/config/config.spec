@@ -130,7 +130,8 @@ Description
 
 Performs the requested initialization operation on the VM block.  The valid operations are:
 
-* SET_STORAGE_IDENT_PMAP: Initialize storage for VM block (ptr); set VM ID (arg1); set page-map pointer (arg2)
+* SET_STORAGE_IDENT: Initialize storage for VM block (ptr); set VM ID (arg1).
+* SET_PMAP_TYPE: Set page-map pointer (arg1).  If arg1 is NULL, use ptb of current thread as page map.  Set page-map translation type (linear (0) or page tables (1)).
 * SET_PRIO_TRAPMASK: Set best allowed priority (arg1); set mask for allowed traps (arg2)
 * SET_CPUS_INTS: Set max number of virtual CPUs (arg1) and set number active to 0; set number of virtual interrupts (arg2) and clear enable/pending for each.
 * MAP_PHYS_INTR: Map virtual interrrupt number (arg1) to physical interrupt number (arg2)

@@ -30,12 +30,12 @@ static inline int blast_thread_create(void *pc, void *stack, void *arg,
 	 * H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t trapmask,
 	 *    H2K_thread_context *me)
 	 * The trap automatically fills in the *me pointer, so it's really just that
-	 * ASID thing that needs changing.  Just drop that on the floor and fill trapmask.
+	 * ASID thing that needs changing.  Just drop that on the floor.
 	 * drop the hw_bitmask on the floor
 	 * might as well fudge the priority too 
 	 */
 
-	return h2_thread_create(pc,stack,arg,prio/8,0xffffffff);
+	return h2_thread_create(pc,stack,arg,prio/8);
 }
 
 static inline void blast_thread_exit(int status)

@@ -17,6 +17,7 @@
 #include <thread.h>
 #include <check_sanity.h>
 #include <asid.h>
+#include <vm.h>
 
 void H2K_interrupt_restore();
 
@@ -25,24 +26,29 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_
 	H2K_thread_context *tmp;
 	u32_t bestprio;
 	u32_t trapmask;
+	u32_t ptb;
+	translation_type type;
+	s32_t asid;
 
-	u32_t myssr; 									/* FIXME: is this needed? */
-	myssr = me->ssr;
-
-	/* get priority and trapmask from VM block if valid */
+	/* get priority, trapmask, and ptb from VM block if valid */
 	if (vmblock) {
 		bestprio = vmblock->bestprio;
 		trapmask = vmblock->trapmask;
+		ptb = vmblock->pmap; 				/* initial page tables == pmap */
+		type = vmblock->pmap_type;
 	}
 	else {
 		bestprio = me->base_prio;
 		trapmask = me->trapmask;
+		ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
+		type = H2K_mem_asid_table[me->ssr_asid].transtype;
 	}
 
 	if (prio > MAX_PRIO) return -1;        // bad prio
+	if (prio < bestprio) return -1;	       // priority better than allowed
+
 	if ((sp & 7) != 0) return -1;          // bad stack pointer alignment
 	if ((pc & 3) != 0) return -1;          // bad pc alignment
-	if (prio < bestprio) return -1;	       // priority better than allowed
 
 	BKL_LOCK(&H2K_bkl);
 	if (H2K_gp->free_threads == NULL) {
@@ -54,21 +60,32 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_
 	tmp->base_prio = tmp->prio = prio;
 	tmp->ugpgp = me->ugpgp;
 	tmp->sr = me->sr;
-	tmp->ssr = myssr;
+	tmp->ssr = me->ssr;
 	tmp->elr = pc;
 	tmp->r29 = sp;
 	tmp->r0100 = arg1;
-	H2K_asid_table_inc(H2K_mem_asid_table[me->ssr_asid].ptb);
 	tmp->ccr = me->ccr;
 	tmp->trapmask = trapmask;
 	tmp->continuation = H2K_interrupt_restore;
 
+	asid = H2K_asid_table_inc(ptb, type);
+
 	if (vmblock) {
-		if (vmblock->num_cpus == vmblock->max_cpus) return -1; // no more vcpus
+		if (vmblock->num_cpus == vmblock->max_cpus) {  // no more vcpus
+			BKL_UNLOCK(&H2K_bkl);
+			return -1;
+		}
 		tmp->vmcpu = vmblock->num_cpus++;
 
 		tmp->vmstatus = 0;            // all clear
 		tmp->vmblock = vmblock;
+
+		/* only need to check asid if we have a vmblock, else it's inherited */
+		if (asid == -1) { 						// can't allocate
+			BKL_UNLOCK(&H2K_bkl);
+			return -1;
+		}
+		tmp->ssr_asid = asid;
 	}
 	H2K_ready_append(tmp);
 	return H2K_check_sanity_unlock((u32_t)tmp);

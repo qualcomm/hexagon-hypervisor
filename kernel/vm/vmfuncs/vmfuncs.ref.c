@@ -17,7 +17,10 @@
 #include <tlbmisc.h>
 #include <globals.h>
 #include <hw.h>
+#include <thread.h>
+#include <create.h>
 
+/* 1 */
 void H2K_vmtrap_return(H2K_thread_context *me)
 {
 	u32_t tmp;
@@ -31,12 +34,14 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 	me->elr = me->gelr;
 }
 
+/* 2 */
 void H2K_vmtrap_setvec(H2K_thread_context *me)
 {
 	me->gevb = (void *)((u32_t)(me->r00));
 	me->r00 = 0;
 }
 
+/* 3 */
 void H2K_vmtrap_setie(H2K_thread_context *me)
 {
 	if (me->r00 & 0x1) {
@@ -48,6 +53,7 @@ void H2K_vmtrap_setie(H2K_thread_context *me)
 	me->r00 = 0;
 }
 
+/* 4 */
 void H2K_vmtrap_getie(H2K_thread_context *me)
 {
 	me->r00 = ((me->atomic_status_word & H2K_VMSTATUS_IE_BIT) != 0);
@@ -80,6 +86,7 @@ void H2K_vmtrap_iconf(H2K_thread_context *me)
 }
 #endif
 
+/* 10 */
 void H2K_vmtrap_clrmap(H2K_thread_context *me)
 {
 	/* Invalidate HW/STLB entry */
@@ -90,11 +97,15 @@ void H2K_vmtrap_clrmap(H2K_thread_context *me)
 	me->r00 = 0;
 }
 
+/* 11 */
 void H2K_vmtrap_register_ptb(H2K_thread_context *me)
 {
 	s32_t newasid;
 	u32_t newptb = me->r00;
-	if ((newasid = H2K_asid_table_inc(newptb)) < 0) {
+	translation_type type = me->r01;
+
+	/* type is checked in H2K_asid_table_inc */
+	if ((newasid = H2K_asid_table_inc(newptb, type)) < 0) {
 		me->r00 = -1;
 	} else {
 		H2K_asid_table_dec(me->ssr_asid);
@@ -103,17 +114,20 @@ void H2K_vmtrap_register_ptb(H2K_thread_context *me)
 	}
 }
 
+/* 13 */
 void H2K_vmtrap_cachectl(H2K_thread_context *me)
 {
 	/* Do various cache control things */
 }
 
+/* 14 */
 void H2K_vmtrap_get_pcycles(H2K_thread_context *me)
 {
 	/* Return current cpu time */
 	me->r0100 = H2K_cputime_get(me);
 }
 
+/* 15 */
 void H2K_vmtrap_set_pcycles(H2K_thread_context *me)
 {
 	/* Set accumulated pcycles to specified amount, and then set
@@ -122,24 +136,38 @@ void H2K_vmtrap_set_pcycles(H2K_thread_context *me)
 	H2K_gp->oncpu_start[get_hwtnum()] = H2K_pcycles_get(me);
 }
 
+/* 16 */
 void H2K_vmtrap_wait(H2K_thread_context *me)
 {
 	/* Wait for interrupt... or fall through if interrupts disabled and
 	 * something pending */
 }
 
+/* 17 */
 void H2K_vmtrap_yield(H2K_thread_context *me)
 {
 	H2K_sched_yield(me);
 	me->r00 = 0;
 }
 
+/* 18 */
 void H2K_vmtrap_start(H2K_thread_context *me)
 {
 	/* Create, or just unblock? */
-	me->r00 = 1;
+
+	s32_t ret;
+	/* FIXME: need to pass arg1?  use vmblock bestprio instead of base_prio? */
+	                     /*      pc       sp  arg1 */
+	ret = H2K_thread_create(me->r00, me->r01, 0, me->base_prio, me->vmblock, me);
+	if (ret < 0) { //error
+		me->r00 = ret;
+	}
+	else {
+		me->r00 = ((H2K_thread_context *)ret)->vmcpu;
+	}
 }
 
+/* 19 */
 void H2K_vmtrap_stop(H2K_thread_context *me)
 {
 	/* Destroy, or just make blocked? */
@@ -147,17 +175,20 @@ void H2K_vmtrap_stop(H2K_thread_context *me)
 	H2K_thread_stop(me);
 }
 
+/* 20 */
 void H2K_vmtrap_vmpid(H2K_thread_context *me)
 {
 	me->r00 = me->vmcpu;
 }
 
+/* 21 */
 void H2K_vmtrap_setregs(H2K_thread_context *me)
 {
 	me->gelr_gbadva = me->r0100;
 	me->gssr_gosp   = me->r0302;
 }
 
+/* 22 */
 void H2K_vmtrap_getregs(H2K_thread_context *me)
 {
 	me->r0100 = me->gelr_gbadva;

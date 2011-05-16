@@ -66,7 +66,7 @@ REDEF_FUNCTION(void ,cond_init,(h2_cond_t *cond),(cond));
 
 /*  "blast_config.h"  */
 
-REDEF_FUNCTION(void ,config_add_thread_storage,(void *buf, unsigned int size),(buf,size));
+REDEF_FUNCTION(unsigned int ,config_add_thread_storage,(void *buf, unsigned int size),(buf,size));
 
 /*  "blast_cycles.h"  */
 

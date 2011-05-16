@@ -19,8 +19,9 @@ h2_config_add_thread_storage:
 	.global h2_config_vmblock_size
 h2_config_vmblock_size:
 	{
-	  r1 = r0 // num_cpus
-		r2 = r1 // num_ints
+		r1 = #0 // unused
+	  r2 = r0 // num_cpus
+		r3 = r1 // num_ints
 		r0 = #2 // H2K_trap_config_vmblock_size
 	}
 	trap0(#H2_TRAP_CONFIG)

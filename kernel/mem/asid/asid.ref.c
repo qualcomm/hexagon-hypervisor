@@ -56,7 +56,7 @@ static inline H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
 	return H2K_mem_asid_table+idx;
 }
 
-s32_t H2K_asid_table_inc(u32_t ptb)
+s32_t H2K_asid_table_inc(u32_t ptb, translation_type type)
 {
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
@@ -66,6 +66,7 @@ s32_t H2K_asid_table_inc(u32_t ptb)
 	} else if ((tmp = H2K_asid_table_eviction(ptb)) != NULL) {
 		tmp->ptb = ptb;
 		tmp->count = 1;
+		tmp->transtype = type;
 		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
 		H2K_mem_stlb_invalidate_asid(asid);

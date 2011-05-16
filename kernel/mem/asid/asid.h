@@ -19,18 +19,18 @@ typedef union {
 	};
 } H2K_asid_entry_t;
 
-extern H2K_asid_entry_t H2K_mem_asid_table[] IN_SECTION(".data.mem.asid");
-
-s32_t H2K_asid_table_inc(u32_t ptb) IN_SECTION(".text.mem.asid");
-void  H2K_asid_table_dec(u32_t asid) IN_SECTION(".text.mem.asid");
-s32_t H2K_asid_table_invalidate(u32_t ptb) IN_SECTION(".text.mem.asid");
-void  H2K_asid_table_init() IN_SECTION(".text.init.asid");
-
-enum {
+typedef enum {
 	H2K_ASID_TRANS_TYPE_LINEAR,
 	H2K_ASID_TRANS_TYPE_TABLE,
 	H2K_ASID_TRANS_TYPE_XXX_LAST
-};
+} translation_type;
+
+extern H2K_asid_entry_t H2K_mem_asid_table[] IN_SECTION(".data.mem.asid");
+
+s32_t H2K_asid_table_inc(u32_t ptb, translation_type type) IN_SECTION(".text.mem.asid");
+void  H2K_asid_table_dec(u32_t asid) IN_SECTION(".text.mem.asid");
+s32_t H2K_asid_table_invalidate(u32_t ptb) IN_SECTION(".text.mem.asid");
+void  H2K_asid_table_init() IN_SECTION(".text.init.asid");
 
 #endif
 

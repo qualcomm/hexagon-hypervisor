@@ -6,6 +6,8 @@
 #ifndef H2K_VM_H
 #define H2K_VM_H 1
 
+#include<asid.h>
+
 /* How does this work?  */
 
 /* Trigger interrupt: 
@@ -43,7 +45,8 @@ typedef u8_t physint_t;
 typedef u32_t bitmask_t;
 
 typedef enum {
-	SET_STORAGE_IDENT_PMAP,
+	SET_STORAGE_IDENT,
+	SET_PMAP_TYPE,
 	SET_PRIO_TRAPMASK,
 	SET_CPUS_INTS,
 	MAP_PHYS_INTR,
@@ -70,7 +73,8 @@ typedef struct H2K_vmblock_struct {
 	/* Mapping of CPUs to Thread Contexts */
 	struct _h2_thread_context **cpu_contexts;
 	/* physical memory map, page table style */
-	u32_t *pmap;
+	u32_t pmap;
+	translation_type pmap_type;
 } H2K_vmblock_t;
 
 #endif

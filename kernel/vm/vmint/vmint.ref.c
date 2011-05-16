@@ -207,6 +207,7 @@ u32_t H2K_vm_interrupt_status(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
 	return ret;
 }
 
+/* 5 */
 void H2K_vmtrap_intop(H2K_thread_context *me)
 {
 	H2K_vmblock_t *vmblock = me->vmblock;

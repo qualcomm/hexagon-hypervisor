@@ -60,6 +60,11 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type)
 {
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
+	
+	if (type >= H2K_ASID_TRANS_TYPE_XXX_LAST) { // bad type
+		return -1;
+	}
+
 	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
 		tmp->count++;
 		return tmp-H2K_mem_asid_table;

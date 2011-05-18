@@ -197,7 +197,8 @@ unsigned int blast_deregister_interrupt(int int_num)
 	h2_anysignal_set(int_sigsets[int_num].signal_ptr,1<<SIGNAL_INT_ABORT);
 	//  May need to make this atomic or use a lock or something
 	if (int_num < MAX_INTERRUPTS) {
-		h2_register_fastint(int_num,blast_dummy);
+		//h2_register_fastint(int_num,blast_dummy);
+		h2_deregister_fastint(int_num);
 		//  need a trap to mask the L1 interrupt
 	}
 	else {

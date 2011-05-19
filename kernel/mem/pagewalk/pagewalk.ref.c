@@ -19,7 +19,7 @@ static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_
 {
 	H2K_mem_tlbfmt_t ret;
 	ret.raw = 0;
-	if ((pte.raw & 7) == 7) return ret;
+	if ((pte.xwr) == 0) return ret;
 	ret.ppn = pte.ppn;
 	ret.ccc = pte.ccc;
 	ret.xwr = (pte.xwr);
@@ -37,6 +37,7 @@ static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_
 {
 	H2K_mem_tlbfmt_t ret;
 	ret.raw = 0;
+	if ((pte.xwr) == 0) return ret;
 	ret.ppd = ((pte.ppn<<1) | (1<<pte.s)) & (~((1<<pte.s)-1));
 	ret.cccc = pte.ccc;
 	ret.xwru = (pte.xwr<<1) | pte.u;
@@ -69,8 +70,8 @@ static inline H2K_pte_t H2K_mem_translate_l1(u32_t va, u32_t baseaddr)
 	pte.raw = H2K_mem_physread_word(((u64_t)baseaddr << 12) | ((va>>20) & 0xffc));
 	size = pte.s;
 	if (size <= 4) return H2K_mem_translate_l2(va,pte.raw & -16,5-size,size);
+	if (size == 7) pte.raw = 0;
 	return pte;
-
 }
 
 H2K_pte_t H2K_mem_pagewalk(u32_t badva, H2K_thread_context *me)

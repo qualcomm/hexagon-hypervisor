@@ -122,6 +122,10 @@ void test_all_firstpage()
 void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
 {
 	H2K_mem_tlbfmt_t tlb = H2K_mem_translate_pagetable(addr,t);
+	if (((expectval >> 5) & 7) == 0) {
+		CHECK(tlb.raw,==,0);
+		return;
+	}
 	CHECK(tlb.ppn>>12,==,((expectval >> 4)& 0xff));
 	CHECK(tlb.size,==,tlb.size);
 	CHECK(tlb.vpn,==,addr>>12);
@@ -137,6 +141,10 @@ void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t
 void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
 {
 	H2K_mem_tlbfmt_t tlb = H2K_mem_translate_pagetable(addr,t);
+	if (((expectval >> 5) & 7) == 0) {
+		CHECK(tlb.raw,==,0);
+		return;
+	}
 #if 0
 	printf("tlb: 0x%016llx tlb.ppd>>1: 0x%016llx expectval: 0x%08x\n",
 		(u64_t)tlb.raw,(u64_t)tlb.ppd>>1,expectval);

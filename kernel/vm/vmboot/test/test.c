@@ -3,3 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+int main() {
+
+	puts("TEST PASSED");
+	return(0);
+}

@@ -164,8 +164,8 @@ int main()
 	h2_sem_init_val(&sem_ret,0);
 	h2_sem_init_val(&sem_done,0);
 
-	t1id = h2_thread_create(thread1,&stack1[STACK_SIZE],0,2,0xffffffff);
-	t0id = h2_thread_create(thread0,&stack0[STACK_SIZE],0,2,0xffffffff);
+	t1id = h2_thread_create(thread1,&stack1[STACK_SIZE],0,2);
+	t0id = h2_thread_create(thread0,&stack0[STACK_SIZE],0,2);
 
 	h2_sem_down(&sem_done);
 	puts("TEST PASSED\n");

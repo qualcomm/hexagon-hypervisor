@@ -47,6 +47,7 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/traps/hwconfig/test\
  ./kernel/util/atomic/test\
  ./kernel/util/stmode/test\
+ ./kernel/vm/vmboot/test\
  ./kernel/vm/vmevent/test\
  ./kernel/vm/vmint/test\
  ./kernel/vm/vmipi/test\

@@ -97,7 +97,7 @@ clean_top:
 #  Standard compilation flags
 ################################################################################
 
-CFLAGS +=${OSLIB} -O1 -mv${ARCHV} -DARCHV=${ARCHV} -Wall 
+CFLAGS +=${OSLIB} -O1 -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g
 ifdef STANDALONE
 CFLAGS += -I ${H2DIR}/kernel/include
 LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib

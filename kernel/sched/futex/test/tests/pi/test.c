@@ -138,21 +138,21 @@ void pi_caller(int *futex_addr)
 
 void spawn_spinner(int tnum, int prio)
 {
-	thread_ids[tnum] = h2_thread_create(spinner_thread,&stack_space[tnum][THREAD_STACK_SIZE],(void *)tnum,prio,-1);
+	thread_ids[tnum] = h2_thread_create(spinner_thread,&stack_space[tnum][THREAD_STACK_SIZE],(void *)tnum,prio);
 	if (thread_ids[tnum] == -1) FAIL("Couldn't create spinner");
 	h2_sem_down(&startup_sem);
 }
 
 void spawn_blocker(int tnum, int prio, blocker_thread_struct *info)
 {
-	thread_ids[tnum] = h2_thread_create(blocker_thread,&stack_space[tnum][THREAD_STACK_SIZE],info,prio,-1);
+	thread_ids[tnum] = h2_thread_create(blocker_thread,&stack_space[tnum][THREAD_STACK_SIZE],info,prio);
 	if (thread_ids[tnum] == -1) FAIL("Couldn't create blocker");
 	h2_sem_down(&startup_sem);
 }
 
 void spawn_pi_caller(int tnum, int prio, int *futex_addr)
 {
-	thread_ids[tnum] = h2_thread_create(pi_caller,&stack_space[tnum][THREAD_STACK_SIZE],futex_addr,prio,-1);
+	thread_ids[tnum] = h2_thread_create(pi_caller,&stack_space[tnum][THREAD_STACK_SIZE],futex_addr,prio);
 	if (thread_ids[tnum] == -1) FAIL("Couldn't create pi_caller");
 	h2_sem_down(&startup_sem);
 }

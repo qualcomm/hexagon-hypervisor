@@ -101,7 +101,7 @@ void setup()
 	}
 	/* OK, set up ASID table... */
 	H2K_asid_table_init();
-	a.ssr_asid = H2K_asid_table_inc(((u32_t)l1pt)>>12);
+	a.ssr_asid = H2K_asid_table_inc(((u32_t)l1pt)>>12, H2K_ASID_TRANS_TYPE_LINEAR);
 }
 
 void test_all_firstpage()

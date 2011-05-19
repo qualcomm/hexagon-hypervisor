@@ -1,6 +1,37 @@
 
-* First level page table should always be allocated & mapped
-* First level page table: keep VA, xlate to PA
+* TCB contains per-thread information, and the kernel stack at the end.  Let's
+  allocate 1KB or so for them.  Stack grows down.
+* To get your TCB address, AND(SP,#-TCB_SIZE).  Since we always have a stack,
+  that's pretty handy.
+* TCB contains a pointer to the process block (call it mm?)
+* To switch threads:
+
+	switch(from,to):
+		allocframe(#CALLEE_SAVE_SIZE)
+		/* Save callee-save regs */
+		memw(from+#sp) = r29
+		r29 = (to+#sp)
+		r30 = add(r29,#CALLEE_SAVE_SIZE)
+		/* Restore callee-save regs */
+		deallocframe
+		return
+
+* mm block contains
+	* PTB VA
+	* PTB PA
+
+
+* First level page table should always be allocated 
+* First level page table: keep VA or PA?  Keep both, at least VA.  Need to be able to have
+  page table modifiable so we can map temporary mappings to be able to read/write pa.
+
+* Otherwise, should always keep a L2 PT allocated for map/unmap area.
+
+* Note that we don't have a global bit, kernel mappings are for the process only, when 
+  communicating across processes we need to be careful and make sure the kernel pages
+  we're using to communicate are mapped appropriately.
+* Hopefully we can have a large contiguous memory starting at KERNEL_START which can
+  be used across all processes
 
 * Second level+ page tables: Address is known by PA in page tables
 * To read a 2nd level PT entry, need to map, read, unmap

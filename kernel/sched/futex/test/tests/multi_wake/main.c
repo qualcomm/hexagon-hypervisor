@@ -183,8 +183,7 @@ int main()
 		if (h2_thread_create(dummy_thread,
 			&stack_space[next_tnum][THREAD_STACK_SIZE],
 			0,
-			next_tnum,
-			0xffffffff) <= 0) {
+			next_tnum) <= 0) {
 			info("Could not create thread\n");
 		}
 	}
@@ -207,8 +206,7 @@ int main()
 		if (h2_thread_create(consumer_thread,
 			&stack_space[next_tnum++][THREAD_STACK_SIZE],
 			(void *)&thread_info[i],
-			prio,
-			0xffffffff) <= 0) {
+			prio) <= 0) {
 			info("Could not create consumer thread\n");
 		}
 		/* 
@@ -246,8 +244,7 @@ int main()
 	if (h2_thread_create(producer_thread,
 		&stack_space[next_tnum++][THREAD_STACK_SIZE],
 		0,
-		rand() % 32,
-		0xffffffff) <= 0) {
+		rand() % 32) <= 0) {
 		info("Could not create producer thread\n");
 	}
 

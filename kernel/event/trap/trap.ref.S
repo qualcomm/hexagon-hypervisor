@@ -122,6 +122,7 @@ H2K_trap_nogood:
 	// jump to r10 after saving continuation
 .Ljump_to_trap:
 	memw(r7+#CONTEXT_continuation) = r31
+	r8 = #0 //for thread_create
 	jumpr r22
 
 	/* EJP: all context carefully saved */
@@ -169,8 +170,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_futex_resume // 3
 	}
 	{
-		r4 = #0x0 	// force vmblock NULL
-		r5 = r7
+    r5:4 = combine(r7,r8) // force vmblock NULL
 		jump H2K_thread_create // 4
 	}
 	{

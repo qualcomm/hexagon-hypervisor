@@ -48,6 +48,7 @@ s32_t H2K_tid_set() { return 18; }
 s32_t H2K_tid_get() { return 19; }
 //s32_t H2K_futex_lock_pi() { return 20; } -- defined in asm
 //s32_t H2K_futex_unlock_pi() { return 21; } -- defined in asm
+s32_t H2K_vmboot() { return 28; }
 s32_t H2K_trap_pmuconfig() { return 29; }
 s32_t H2K_trap_config() { return 30; }
 s32_t H2K_trap_hwconfig() { return 31; }
@@ -65,7 +66,7 @@ u64_t guest_stack[128] __attribute__((aligned(128*8)));
 
 s32_t testvals[] = {
 	 0, 1, 2, 3, 4, 5, 6, 1, 8, 9,10, 1,12, 1, 1, 1,
-	16, 1,18,19,20,21, 1, 1, 1, 1, 1, 1, 1,29,30,31
+	16, 1,18,19,20,21, 1, 1, 1, 1, 1, 1, 28,29,30,31
 };
 
 H2K_kg_t H2K_kg;
@@ -117,7 +118,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if ((testvals[i] > 0) && (ret != testvals[i])) {
 			printf("event %d: expected %d, got %d\n",i,testvals[i],ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 1");
 		}
 	}
 
@@ -136,7 +137,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret >= 0) {
 			printf("event %d: expected fail, got %d\n",i,ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 2");
 		}
 	}
 	for (i = 16; i < 32; i++) {
@@ -144,7 +145,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret < 0) {
 			printf("event %d: expected pass, got %d\n",i,ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 3");
 		}
 	}
 
@@ -155,7 +156,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret < 0) {
 			printf("event %d: expected pass, got %d\n",i,ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 4");
 		}
 	}
 	for (i = 16; i < 32; i++) {
@@ -163,7 +164,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret >= 0) {
 			printf("event %d: expected fail, got %d\n",i,ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 5");
 		}
 	}
 
@@ -182,7 +183,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret >= 0) {
 			printf("event %d: expected fail, got %d\n",i,ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 6");
 		}
 	}
 	for (i = 16; i < 32; i++) {
@@ -190,7 +191,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret < 0) {
 			printf("event %d: expected pass, got %d\n",i,ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 7");
 		}
 	}
 
@@ -200,7 +201,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret < 0) {
 			printf("event %d: expected pass, got %d\n",i,ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 8");
 		}
 	}
 	for (i = 16; i < 32; i++) {
@@ -208,7 +209,7 @@ int main()
 		if (setjmp(env) == 0) ret = call_trap0(i,&a);
 		if (ret >= 0) {
 			printf("event %d: expected fail, got %d\n",i,ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 9");
 		}
 	}
 
@@ -237,7 +238,7 @@ int main()
 		} 
 		if ((testvals[i] > 0) && (ret != testvals[i])) {
 			printf("event %d: expected %d, got %d\n",i,testvals[i],ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 10");
 		}
 	}
 	a.trapmask = 0xffff0000;
@@ -311,7 +312,7 @@ int main()
 		} 
 		if ((testvals[i] > 0) && (ret != testvals[i])) {
 			printf("event %d: expected %d, got %d\n",i,testvals[i],ret);
-			FAIL("Incorrect event return");
+			FAIL("Incorrect event return 11");
 		}
 	}
 

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <checker_kernel_locked.h>
 #include <globals.h>
+#include <vm.h>
 
 u32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me);
 void H2K_interrupt_restore();
@@ -65,7 +66,7 @@ int main()
 	b.ugpgp = c.ugpgp = 0x0;
 	b.status = c.status = H2K_STATUS_DEAD;
 	a.trapmask = 0x55ffffff;
-	a.vmblock = 0x1337beef;
+	a.vmblock = (H2K_vmblock_t *)0x1337beef;
 
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,0x0,&a)
 		!= 0xffffffff) FAIL("Created thread w/o storage");

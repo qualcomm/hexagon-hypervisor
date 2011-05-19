@@ -110,7 +110,7 @@ int main()
 	for (i = 0; i < NUM_DUMMY_THREADS; i++) {
 		if (h2_thread_create(dummy_thread,
 			&stack_space[i][THREAD_STACK_SIZE],
-			(void *)i, 2, 0xffffffff) <= 0) {
+			(void *)i, 2) <= 0) {
 			FAIL("Couldn't create dummy");
 		}
 	}
@@ -118,7 +118,7 @@ int main()
 	for (i = 0; i < NUM_GOOD_THREADS; i++) {
 		if (h2_thread_create(test_thread,
 			&stack_space[i+NUM_DUMMY_THREADS][THREAD_STACK_SIZE],
-			(void *)i, 4+i, 0xffffffff) <= 0) {
+			(void *)i, 4+i) <= 0) {
 			FAIL("Couldn't create test thread");
 		}
 	}

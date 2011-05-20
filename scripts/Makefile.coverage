@@ -10,8 +10,7 @@ SUBDIRS=./kernel/data/intconfig/test\
  ./kernel/event/interrupt/test\
  ./kernel/event/trap/test\
  ./kernel/event/vectors/test\
- ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/walking_1s\
- ./kernel/sched/check_sanity/test/tests/H2K_check_sched_mask/walking_1s\
+ ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios\
  ./kernel/sched/dosched/test/test\
  ./kernel/sched/futex/test/tests/multi_wake\
  ./kernel/sched/futex/test/tests/simple_lock_unlock\

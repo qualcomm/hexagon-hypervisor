@@ -45,6 +45,5 @@
 /* Return -1 for FAILURE, thread ID for SUCCESS */
 unsigned int blast_reg_error_handler (unsigned int *ip, unsigned int *sp,
                                       unsigned int *badva, unsigned int *cause);
-int blast_exit (int error);
 
 #endif /* BLAST_ERROR_H */

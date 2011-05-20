@@ -1,6 +1,6 @@
 
 
-CC = qdsp6-gcc -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -I../blast/include
+CC = qdsp6-gcc -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -I../blast/include -I../timer/include
 AR = qdsp6-ar
 
 CFLAGS = -g -O2 -G0

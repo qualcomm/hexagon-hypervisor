@@ -118,6 +118,10 @@ CFLAGS += -I${H2DIR}/kernel/include
 ASFLAGS += -I${H2DIR}/kernel/include
 endif
 
+ifdef DEBUG
+CFLAGS += -DDEBUG
+endif
+
 ################################################################################
 #  Convenience shortcuts
 ################################################################################

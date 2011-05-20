@@ -1,0 +1,85 @@
+
+* TCB contains per-thread information, and the kernel stack at the end.  Let's
+  allocate 1KB or so for them.  Stack grows down.
+* To get your TCB address, AND(SP,#-TCB_SIZE).  Since we always have a stack,
+  that's pretty handy.
+* TCB contains a pointer to the process block (call it mm?)
+* To switch threads:
+
+	switch(from,to):
+		allocframe(#CALLEE_SAVE_SIZE)
+		/* Save callee-save regs */
+		memw(from+#sp) = r29
+		r29 = (to+#sp)
+		r30 = add(r29,#CALLEE_SAVE_SIZE)
+		/* Restore callee-save regs */
+		deallocframe
+		return
+
+* mm block contains
+	* PTB VA
+	* PTB PA
+
+
+* First level page table should always be allocated 
+* First level page table: keep VA or PA?  Keep both, at least VA.  Need to be able to have
+  page table modifiable so we can map temporary mappings to be able to read/write pa.
+
+* Otherwise, should always keep a L2 PT allocated for map/unmap area.
+
+* Note that we don't have a global bit, kernel mappings are for the process only, when 
+  communicating across processes we need to be careful and make sure the kernel pages
+  we're using to communicate are mapped appropriately.
+* Hopefully we can have a large contiguous memory starting at KERNEL_START which can
+  be used across all processes
+
+* Second level+ page tables: Address is known by PA in page tables
+* To read a 2nd level PT entry, need to map, read, unmap
+* If kernel memory mirrors contains window into guest memory, map/unmap may be trivial
+
+
+Tools that we should have:
+* read/write_word_phys() /* Map, read/write, unmap */
+* read/write_word_virt() /* read/write */
+* va2ptep_pa(): Get address of page table entry
+* va2pte(): Get page table entry (read_word_phys(va2ptep_pa))
+* pte_offset(): Given a PTE and an offset, form the PA (TBD: pte vs. page dir)
+* va2pa(): Get physical address (va2pte + offset)
+
+* Note that va2ptep_pa could fail, so these need to return pass/fail + value for many of these
+
+
+Generically:
+
+For each size table, you have a log2 table size, which is the number of bits you translate.
+Start with the L1 table pointer, with a table size of X.
+
+For each table, you should have one of:
+	* An invalid entry
+	* A pointer to a next-level table and a number of translations there
+	* A page table entry that maps the full memory range for the appropriate space
+
+For example:
+	L1 table: 10 bits translated. PTE here means 4MB page (4K page + 10 bits)
+		Or, ptr to 4x1MB translations
+		Or, ptr to 16x256KB translations, ...
+		or, ptr to 1024x4KB translations
+	L2 table: 2 bits translated.  PTE here means 1MB page (4K page + 8 bits)
+		Or, ptr to 4x256KB translations, ...
+		Or, ptr to 256x4KB translations
+
+Maximum depth: L1/4MB+L2/1MB+L3/256KB+L4/64KB+L5/16KB+L6/4KB
+
+
+Simple:
+	L1 table always points to L2 table with 1024x4KB translations
+
+Guest Spec:
+	* Simple: make like 0.5 spec ... 32bit PA, size field invalid at L2 table
+	* Advanced: 32 bit PA (?), multilevel like above, 3 extra bits
+	* 64-bit: 36-bit PA, multilevel, many extra bits
+
+
+
+
+

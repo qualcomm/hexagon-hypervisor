@@ -11,6 +11,7 @@
 #include <config.h>
 #include <fatal.h>
 #include <globals.h>
+#include <vm.h>
 
 void FAIL(const char *str)
 {
@@ -20,6 +21,19 @@ void FAIL(const char *str)
 }
 
 char buf[sizeof(H2K_thread_context)*2] __attribute__((aligned(32)));
+
+#define UNIT sizeof(u32_t)
+#define ROUND(expr) ((((expr) + UNIT - 1) / UNIT) * UNIT)
+
+#define NUM_SIZE_TESTS 6
+int size_test[NUM_SIZE_TESTS][3] = {
+	{1, 1, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 24},
+	{1, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 52},
+	{1, 33, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 68},
+	{32, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 424},
+	{33, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 436},
+	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 752}
+};
 
 static void __attribute__((noreturn)) foo(u32_t xyzzy)
 {
@@ -90,6 +104,18 @@ int main()
 	for (j = 0; j < sizeof(buf); j++) {
 		if (buf[j] != 0xef) FAIL("Should not write memory");
 	}
+
+	for (i = 0; i < NUM_SIZE_TESTS; i++) {
+		ret = H2K_trap_config(2, NULL, size_test[i][0], size_test[i][1], 0, NULL);
+#ifdef DEBUG
+		printf("\n\n%d cpus, %d ints, expect %d:\n", size_test[i][0], size_test[i][1], size_test[i][2]);
+		printf("\nvmblock size %d, aligned size %d, total size %d\n",
+				 sizeof(H2K_vmblock_t), ROUND(sizeof(H2K_vmblock_t)), ret);
+#endif
+		if (ret != size_test[i][2])
+			FAIL("Wrong size");
+	}
+
 	puts("TEST PASSED\n");
 	return 0;
 }

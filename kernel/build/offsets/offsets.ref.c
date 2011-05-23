@@ -57,15 +57,14 @@ PRINT_CONTEXT_OFFSET(cs1cs0);
 	printf("#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
 	printf("#define FASTINT_CONTEXT_SIZE %d\n",sizeof(H2K_fastint_context));
 
-PRINT_KG_OFFSET(runlist_valids);
 PRINT_KG_OFFSET(ready_valids);
-PRINT_KG_OFFSET(ready_validmask);
 PRINT_KG_OFFSET(priomask);
 PRINT_KG_OFFSET(wait_mask);
 PRINT_KG_OFFSET(fastint_mask);
 PRINT_KG_OFFSET(oncpu_start);
 PRINT_KG_OFFSET(fastint_gp);
 PRINT_KG_OFFSET(runlist);
+PRINT_KG_OFFSET(runlist_prios);
 PRINT_KG_OFFSET(ready);
 PRINT_KG_OFFSET(futexhash);
 PRINT_KG_OFFSET(fastint_funcptrs);
@@ -74,7 +73,6 @@ PRINT_KG_OFFSET(trace_info);
 PRINT_KG_OFFSET(stacks_traptab);
 PRINT_KG_OFFSET(stacks_addr);
 PRINT_KG_OFFSET(traptab_addr);
-PRINT_KG_OFFSET(ready_masks);
 PRINT_KG_OFFSET(lowprio_masks);
 PRINT_KG_OFFSET(fastint_gpmask);
 

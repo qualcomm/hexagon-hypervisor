@@ -53,6 +53,10 @@ int main()
 	H2K_runlist_init();
 	H2K_lowprio_init();
 	a.prio = b.prio = c.prio = d.prio = 2;
+	a.hthread = 0;
+	b.hthread = 2;
+	c.hthread = 1;
+	d.hthread = 2;
 	TB_in = &a;
 	H2K_runlist_push(&a);
 	H2K_runlist_push(&c);

@@ -157,7 +157,9 @@ int main()
 	H2K_clear_gie();
 	for (i = 0; i < num_scenarios; i++) {
 		setup(&scenarios[i]);
+		BKL_LOCK();
 		call(H2K_check_sanity, rand());
+		BKL_UNLOCK();
 		check(&scenarios[i]);
 
 		setup(&scenarios[i]);

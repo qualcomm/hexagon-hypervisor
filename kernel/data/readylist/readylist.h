@@ -17,7 +17,7 @@
  */
 static inline u32_t H2K_ready_best_prio()
 {
-	return Q6_R_ct0_R(H2K_gp->ready_valids & H2K_gp->ready_validmask);
+	return Q6_R_ct0_R(H2K_gp->ready_valids);
 }
 
 /* Take the thread and place it in the ready structure, 
@@ -54,7 +54,7 @@ static inline H2K_thread_context *H2K_ready_getbest()
 {
 	H2K_thread_context *ret;
 	u32_t prio;
-	if ((H2K_gp->ready_valids & H2K_gp->ready_validmask) == 0) return NULL;
+	if (H2K_gp->ready_valids == 0) return NULL;
 	prio = H2K_ready_best_prio();
 	ret = H2K_gp->ready[prio];
 	H2K_ready_remove(ret);

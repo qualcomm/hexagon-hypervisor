@@ -25,11 +25,9 @@ interrupts.
 Functionality
 ~~~~~~~~~~~~~
 
-First, we get the priority of the worst priority running thread.  We look at the 
-H2K_kg.runlist entry at that priority, which points to the thread that was inserted
-at the worst priority most recently.  We then look at the hthread field of this 
-thread, and use that to set the :cdata:`H2K_kg.priomask` bit corresponding to the 
-hardware thread and to call thread_prio_change_low().
+We get the hardware thread number the worst priority running thread and use that to set
+the :cdata:`H2K_kg.priomask` bit corresponding to the hardware thread and to call
+change_imask().
 
 
 H2K_lowprio_raise

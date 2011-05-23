@@ -23,9 +23,6 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 		/* EJP: is this done in switch now?!?!? */
 		//H2K_priomask |= 1<<hthread;
 		//H2K_wait_mask |= 1<<hthread;
-		/* EJP: Partial sanity check: reraise resched for scheduler
- 		 * mask if further boot-offs needed */
-		H2K_check_sched_mask();
 		H2K_switch(me,NULL);
 		/* EJP: should never get here! */
 	}
@@ -44,6 +41,7 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 			highprio_imask(hthread);
 		}
 	}
+	new->hthread = hthread;
 	H2K_runlist_push(new);
 	H2K_switch(me,new);
 	/* EJP: should never get here! */

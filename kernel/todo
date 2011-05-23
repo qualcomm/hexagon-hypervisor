@@ -51,8 +51,6 @@ Inside the Monitor:
 * Scheduler
         + Support 256 priorities[0]
                 - Expand ready list structure
-                - Probably the runlist structure needs to change, at 256
-                  priorities it's too sparse.
 
 * VM Initialization
         + Configure max # of CPUs/VM

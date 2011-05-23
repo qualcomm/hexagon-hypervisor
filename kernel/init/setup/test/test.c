@@ -4,6 +4,7 @@
  */
 
 #include <c_std.h>
+#include <max.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <runlist.h>
@@ -84,11 +85,11 @@ void H2K_thread_boot();
 int main()
 {
 	u32_t i;
+	u32_t found_thread;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
-	for (i = 0; i < MAX_PRIOS; i++) {
+	for (i = 0; i < MAX_HTHREADS; i++) {
 		H2K_gp->runlist[i] = 0;
 	}
-	H2K_gp->runlist_valids = 0;
 	TH_init_seen = 0;
 	TH_switch_seen = 0;
 	if (setjmp(env) == 0) {
@@ -101,8 +102,14 @@ int main()
 	}
 	if (H2K_boot_context.continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");
 	if (H2K_boot_context.trapmask != 0xffffffffU) FAIL("boot thread trapmask");
-	if (H2K_gp->runlist_valids != 1) FAIL("Didn't push into runlist");
-	if (H2K_gp->runlist[0] != &H2K_boot_context) FAIL("Didn't push into runlist");
+	found_thread = 0;
+	for (i = 0; i < MAX_HTHREADS; i++) {
+		if (H2K_gp->runlist[i] == &H2K_boot_context) {
+			if (H2K_gp->runlist_prios[i] != 0) FAIL("Didn't push into runlist (0)");
+			found_thread = 1;
+		}
+	}
+	if (!found_thread) FAIL("Didn't push into runlist (1)");
 	puts("TEST PASSED\n");
 	return 0;
 }

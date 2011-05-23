@@ -216,7 +216,8 @@ void TB_fiddle_prio_wait_to_high(phase_t phase)
 	} else {
 		/* Check expected values */
 		if (H2K_gp->ready_valids != 0) FAIL("didn't find ready thread");
-		if ((H2K_gp->runlist_valids & (1<<h.prio)) == 0) FAIL("Didn't insert h thread");
+		if (H2K_gp->runlist[h.hthread] != &h) FAIL("Didn't insert h thread");
+		if (H2K_gp->runlist_prios[h.hthread] != h.prio) FAIL("Didn't insert h thread");
 		if (H2K_gp->wait_mask == 0) {
 			if (H2K_gp->priomask == 0x1) FAIL("set myself to lowprio?");
 		}
@@ -240,7 +241,8 @@ void TB_fiddle_prio_wait_to_low(phase_t phase)
 	} else {
 		/* Check expected values */
 		if (H2K_gp->ready_valids != 0) FAIL("didn't find ready thread");
-		if ((H2K_gp->runlist_valids & (1<<l.prio)) == 0) FAIL("Didn't insert l thread");
+		if (H2K_gp->runlist[l.hthread] != &l) FAIL("Didn't insert l thread");
+		if (H2K_gp->runlist_prios[l.hthread] != l.prio) FAIL("Didn't insert l thread");
 		if (H2K_gp->wait_mask == 0) {
 			if (H2K_gp->priomask != 0x1) FAIL("Didn't set myself to lowprio");
 		}
@@ -311,18 +313,18 @@ int main()
 
 	/* Set up some threads */
 	l.prio = 20;
-	l.hthread = 1;
+	l.hthread = 0;
 	m.prio = 10;
-	m.hthread = 1;
+	m.hthread = 0;
 	h.prio =  2;
-	h.hthread = 1;
+	h.hthread = 0;
 
 	l2.prio = 20;
-	l2.hthread = 1;
+	l2.hthread = 0;
 	m2.prio = 10;
-	m2.hthread = 1;
+	m2.hthread = 0;
 	h2.prio =  2;
-	h2.hthread = 1;
+	h2.hthread = 0;
 
 	/* For each wait mask type... */
 	for (i = 0; TB_fiddle_wait_mask[i] != NULL; i++) {

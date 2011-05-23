@@ -24,10 +24,6 @@ priority, and a bitmask that has a bit set for each non-empty linked list.
 We insert a thread into the ready list by adding the thread to the list at the
 priority corresponding to the thread, and setting the corresponding bit.
 
-The H2K_kg.ready_validmask provides an ability to prohibit certain priorities from
-being scheduled.  H2K_kg.ready_valids is ANDed with H2K_kg.ready_validmask to compute
-the actual valid ready thread bitmask.  
-
 We find the highest priority ready thread by using the CT0 instruction to find
 the highest priority that has a ready thread.  We then can remove the thread in
 the corresponding list.

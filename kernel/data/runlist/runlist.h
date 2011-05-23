@@ -13,33 +13,46 @@
 
 static inline void H2K_runlist_push(H2K_thread_context *newthread)
 {
+	u32_t hthread = newthread->hthread;
 	u32_t prio = newthread->prio;
-	newthread->next = H2K_gp->runlist[prio];
 	newthread->status = H2K_STATUS_RUNNING;
-	H2K_gp->runlist[prio] = newthread;
-	H2K_gp->runlist_valids |= 1<<prio;
+	H2K_gp->runlist[hthread] = newthread;
+	H2K_gp->runlist_prios[hthread] = prio;
 }
 
 static inline u32_t H2K_runlist_worst_prio()
 {
-	return ((8*sizeof(H2K_gp->runlist_valids))-1)-Q6_R_cl0_R(H2K_gp->runlist_valids);
+	s32_t worst_prio = -1;
+	s32_t hthread = -1;
+	s32_t i;
+	for (i = 0; i < MAX_HTHREADS; i++) {
+		if (H2K_gp->runlist_prios[i] IS_WORSE_THAN worst_prio) {
+			worst_prio = H2K_gp->runlist_prios[i];
+			hthread = i;
+		}
+	}
+	return hthread == -1 ? MAX_PRIOS : worst_prio;
+}
+
+static inline u32_t H2K_runlist_worst_prio_hthread()
+{
+	s32_t worst_prio = -1;
+	s32_t hthread = -1;
+	s32_t i;
+	for (i = 0; i < MAX_HTHREADS; i++) {
+		if (H2K_gp->runlist_prios[i] IS_WORSE_THAN worst_prio) {
+			worst_prio = H2K_gp->runlist_prios[i];
+			hthread = i;
+		}
+	}
+	return hthread;
 }
 
 static inline void H2K_runlist_remove(H2K_thread_context *thread)
 {
-	H2K_thread_context *tmp;
-	u32_t prio = thread->prio;
-	if (H2K_gp->runlist[prio] == thread) {
-		H2K_gp->runlist[prio] = thread->next;
-	} else {
-		for (tmp = H2K_gp->runlist[thread->prio]; tmp->next != thread; tmp = tmp->next) {
-			/* Look for thread in list */
-		}
-		tmp->next = thread->next;
-	}
-	if (H2K_gp->runlist[prio] == NULL) {
-		H2K_gp->runlist_valids ^= 1<<prio;
-	}
+	u32_t hthread = thread->hthread;
+	H2K_gp->runlist[hthread] = NULL;
+	H2K_gp->runlist_prios[hthread] = -1;
 }
 
 void H2K_runlist_init(void) IN_SECTION(".text.init.runlist");

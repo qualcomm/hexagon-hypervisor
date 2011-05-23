@@ -8,7 +8,6 @@
 
 #include <c_std.h>
 
-void H2K_check_sched_mask() IN_SECTION(".text.core.sanity");
 u64_t H2K_check_sanity(const u64_t retval) IN_SECTION(".text.core.sanity");
 u64_t H2K_check_sanity_unlock(const u64_t retval) IN_SECTION(".text.core.sanity");
 

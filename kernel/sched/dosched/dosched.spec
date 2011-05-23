@@ -37,8 +37,7 @@ First, we remove the best ready thread.  If no ready thread is available, we
 go to sleep:
 
 	0. If a running hthread is marked as lowest priority, it should be made non-lowprio
-	1. Check to see if the ready valid mask requires further threads to be removed from the schedule, by calling :cfunc:`H2K_check_sched_mask()`
-	2. We switch from me to NULL.
+	1. We switch from me to NULL.
 
 Otherwise, if the waitmask is zero, and the priority of the new thread is worse than all the
 other running threads, and the current hthread is not already marked as the lowprio thread,
@@ -59,9 +58,9 @@ It is essential that we make ourselves non-lowprio here if appropriate, however 
 essential that we find a lowprio hthread at this point.  :cfunc:`H2K_check_sanity()` will find a lowprio
 hthread if priomask is zero.
 
-Finally, we add the new thread to the runlist via :cfunc:`H2K_runlist_push()`,
-and then switch to the thread by jumping to :cfunc:`H2K_switch()`, which does
-not return.
+Finally, we set the new thread's hthread and add the new thread to the runlist
+via :cfunc:`H2K_runlist_push()`, and then switch to the thread by jumping to
+:cfunc:`H2K_switch()`, which does not return.
 
 Testing
 -------

@@ -8,8 +8,10 @@
 void H2K_runlist_init(void) 
 {
 	u32_t i;
-	for (i = 0; i < MAX_PRIOS; i++) {
-		H2K_gp->runlist[i] = NULL;
+	for (i = 0; i < sizeof(H2K_gp->runlist_prios)/sizeof(H2K_gp->runlist_prios[0]); i++) {
+		if (i < MAX_HTHREADS) {
+			H2K_gp->runlist[i] = NULL;
+		}
+		H2K_gp->runlist_prios[i] = -1;
 	}
-	H2K_gp->runlist_valids = 0;
 }

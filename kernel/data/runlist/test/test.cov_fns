@@ -1,4 +1,6 @@
+H2K_runlist_init
 H2K_runlist_worst_prio_TB
+H2K_runlist_worst_prio_hthread_TB
 H2K_runlist_push_TB
 H2K_runlist_remove_TB
 

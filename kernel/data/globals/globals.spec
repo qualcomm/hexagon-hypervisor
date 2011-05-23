@@ -10,24 +10,11 @@
 
 	Kernel Globals kept together for ease of referencing.
 
-	.. cmember:: u32_t runlist_valids
-
-		This is a bitfield.  Bit 0 corresponds to priority 0, bit 1 to priority 1, 
-		and so on.  If the bit *n* is set, H2K_runlist[*n*] must be valid.  If bit 
-		*n* is clear, H2K_runlist[*n*] must be NULL.
-
 	.. cmember:: u32_t ready_valids
 
 		This is a bitfield.  Bit 0 corresponds to priority 0, bit 1 to priority 1, 
 		and so on.  If the bit *n* is set, H2K_ready[*n*] must be valid.  If bit 
 		*n* is clear, H2K_ready[*n*] must be NULL.
-
-	.. cmember:: u32_t ready_validmask
-
-		This is a bitfield that should be ANDed with H2K_ready_valids before 
-		determining a schedulable thread.  It is used to prohibit certain 
-		priorities from being scheduled.  This can be used to facilitate QoS
-		or certain other features.
 
 	.. cmember:: u32_t priomask
 
@@ -64,10 +51,15 @@
 
 		Information about the kernel trace infrastructure
 
-	.. cmember:: H2K_thread_context *runlist[MAX_PRIOS]
+	.. cmember:: H2K_thread_context *runlist[MAX_HTHREADS]
 
-		This array contains a pointer to a thread in a ring of running threads at
-		each priority.  If the ring is empty, the pointer should be NULL.
+		This array contains pointers to the threads running on each hardware
+		thread.  If a hardware thread is in wait mode, its pointer should be NULL.
+
+	.. cmember:: s16_t runlist_prios[(MAX_HTHREADS+3)/4*4]
+
+		This array contains the priorities of threads running on each hardware
+		thread.  If a hardware thread is in wait mode, its value should be -1.
 
 	.. cmember:: H2K_thread_context *ready[MAX_PRIOS]
 

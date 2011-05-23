@@ -35,7 +35,7 @@ jmp_buf env;
 void H2K_dosched(H2K_thread_context *in, int hthread)
 {
 	if (in != TB_in) FAIL("Unexpected thread passed to dosched");
-	if (hthread != 0) FAIL("Unexpected hardware thread");
+	if (TB_in && hthread != TB_in->hthread) FAIL("Unexpected hardware thread");
 	if (H2K_gp->wait_mask != 0) FAIL("Set bit in wait_mask");
 	TB_saw_dosched ++;
 	checker_kernel_locked();
@@ -61,6 +61,9 @@ int main()
 	H2K_runlist_init();
 	H2K_lowprio_init();
 	a.prio = b.prio = c.prio = 2;
+	a.hthread = 0;
+	b.hthread = 1;
+	c.hthread = 2;
 	TB_in = NULL;
 	TH_resched(0,TB_in,0);
 	if (TB_saw_dosched == 0) FAIL("did not do a resched");
@@ -75,12 +78,12 @@ int main()
 	H2K_runlist_push(&c);
 	TH_resched(0,TB_in,0);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
-	if (H2K_gp->runlist[2] != &c) FAIL("Unexpected thread in runlist");
+	if (H2K_gp->runlist[c.hthread] != &c) FAIL("Unexpected thread in runlist");
 	if (H2K_gp->ready[2] != &a) FAIL("Unexpected thread in readylist");
 	H2K_gp->wait_mask = 0;
 	TB_saw_dosched = 0;
 	TB_in = &c;
-	TH_resched(0,TB_in,0);
+	TH_resched(0,TB_in,2);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
 	if (H2K_gp->ready[2] != &a) FAIL("Unexpected thread in readylist");
 	if (H2K_gp->ready[2]->next != &c) FAIL("Unexpected thread in readylist");

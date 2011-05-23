@@ -13,15 +13,8 @@
 #include <futex.h>
 
 typedef struct {
-	u32_t runlist_valids;
 	u32_t mask_for_ipi;
-	union {
-		u64_t ready_masks;
-		struct {
-			u32_t ready_valids;
-			u32_t ready_validmask;
-		};
-	};
+	u32_t ready_valids;
 	union {
 		u64_t lowprio_masks;
 		struct {
@@ -47,7 +40,8 @@ typedef struct {
 	H2K_thread_context *free_threads;
 	u64_t oncpu_start[MAX_HTHREADS];
 	H2K_trace_info_t trace_info;
-	H2K_thread_context *runlist[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
+	H2K_thread_context *runlist[MAX_HTHREADS];
+	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 	void *fastint_funcptrs[MAX_INTERRUPTS] __attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));

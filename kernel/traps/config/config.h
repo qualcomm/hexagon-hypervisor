@@ -10,6 +10,23 @@
 #include <context.h>
 #include <vm.h>
 
+typedef enum {
+	CONFIG_ADD_THREAD_STORAGE,
+	CONFIG_SETFATAL,
+	CONFIG_VMBLOCK_SIZE,
+	CONFIG_VMBLOCK_INIT,
+	CONFIG_MAX
+} config_type_t;
+
+typedef enum {
+	SET_STORAGE_IDENT,
+	SET_PMAP_TYPE,
+	SET_PRIO_TRAPMASK,
+	SET_CPUS_INTS,
+	MAP_PHYS_INTR,
+	NUM_OPS
+} vmblock_init_op_t;
+
 u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t val4, H2K_thread_context *me) IN_SECTION(".text.config.config");
 u32_t H2K_trap_config_add_thread_storage(u32_t unused, void *ptr, u32_t size, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.config");
 u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) IN_SECTION(".text.config.config");

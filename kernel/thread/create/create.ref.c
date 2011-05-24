@@ -71,21 +71,23 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_
 	asid = H2K_asid_table_inc(ptb, type);
 
 	if (vmblock) {
-		if (vmblock->num_cpus == vmblock->max_cpus) {  // no more vcpus
-			BKL_UNLOCK(&H2K_bkl);
-			return -1;
-		}
-		tmp->vmcpu = vmblock->num_cpus++;
-
-		tmp->vmstatus = 0;            // all clear
-		tmp->vmblock = vmblock;
-
 		/* only need to check asid if we have a vmblock, else it's inherited */
 		if (asid == -1) { 						// can't allocate
 			BKL_UNLOCK(&H2K_bkl);
 			return -1;
 		}
 		tmp->ssr_asid = asid;
+
+		if (vmblock->num_cpus == vmblock->max_cpus) {  // no more vcpus
+			H2K_asid_table_dec(asid); // was bogus
+			BKL_UNLOCK(&H2K_bkl);
+			return -1;
+		}
+		tmp->vmcpu = vmblock->num_cpus++;
+		tmp->vmstatus = 0;            // all clear
+		tmp->vmblock = vmblock;
+
+		vmblock->cpu_contexts[tmp->vmcpu] = tmp;
 	}
 	H2K_ready_append(tmp);
 	return H2K_check_sanity_unlock((u32_t)tmp);

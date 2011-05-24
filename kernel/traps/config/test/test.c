@@ -12,6 +12,7 @@
 #include <fatal.h>
 #include <globals.h>
 #include <vm.h>
+#include <asid.h>
 
 void FAIL(const char *str)
 {
@@ -35,6 +36,11 @@ int size_test[NUM_SIZE_TESTS][3] = {
 	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 752}
 };
 
+char vmbuf[1024] __attribute__((aligned(32)));
+H2K_vmblock_t *vmblock;
+H2K_thread_context a;
+s32_t asid;
+
 static void __attribute__((noreturn)) foo(u32_t xyzzy)
 {
 	__builtin_trap();
@@ -47,19 +53,19 @@ int main()
 	H2K_thread_init();
 	H2K_fatal_kernel_handler = NULL;
 	/* Bad config value */
-	ret = H2K_trap_config(4,buf,sizeof(buf),0,0,NULL);
+	ret = H2K_trap_config(CONFIG_MAX,buf,sizeof(buf),0,0,NULL);
 	if (ret != 0) FAIL("Bad return value");
 	if (H2K_gp->free_threads) FAIL("trap config failure");
 	if (H2K_fatal_kernel_handler != NULL) FAIL("trap config failure");
 
 	/* Configure fatal kernel handler */
-	ret = H2K_trap_config(1,foo,0,0,0,NULL);
+	ret = H2K_trap_config(CONFIG_SETFATAL,foo,0,0,0,NULL);
 	if (ret != 0) FAIL("Bad return value");
 	if (H2K_fatal_kernel_handler != foo) FAIL("Kernel fatal handler error");
 
 	/* Add two threads */
 	memset(buf,0xef,sizeof(buf));
-	ret = H2K_trap_config(0,buf,sizeof(buf),0,0,NULL);
+	ret = H2K_trap_config(CONFIG_ADD_THREAD_STORAGE,buf,sizeof(buf),0,0,NULL);
 	if (ret != 2) FAIL("Wrong # of threads returned");
 	if (H2K_gp->free_threads != (void *)(buf+sizeof(H2K_thread_context))) FAIL("free threads unexpected");
 	if (H2K_gp->free_threads->next != (void *)buf) FAIL("Incorrect number of free threads");
@@ -72,7 +78,7 @@ int main()
 		H2K_thread_init();
 		memset(buf,0xef,sizeof(buf));
 		/* Storage for 1 thread */
-		ret = H2K_trap_config(0,buf+i,sizeof(buf)-i,0,0,NULL);
+		ret = H2K_trap_config(CONFIG_ADD_THREAD_STORAGE,buf+i,sizeof(buf)-i,0,0,NULL);
 		if (ret != 1) FAIL("Wrong # of threads returned");
 		pos = ((i + 31) & (-32));
 		if (H2K_gp->free_threads != (void *)(buf+pos)) FAIL("Incorrect start for thread");
@@ -88,7 +94,7 @@ int main()
 		H2K_thread_init();
 		memset(buf,0xef,sizeof(buf));
 		/* Storage for 0 threads */
-		ret = H2K_trap_config(0,buf+i,sizeof(buf)-i,0,0,NULL);
+		ret = H2K_trap_config(CONFIG_ADD_THREAD_STORAGE,buf+i,sizeof(buf)-i,0,0,NULL);
 		if (ret != 0) FAIL("Wrong # of threads returned");
 		if (H2K_gp->free_threads != NULL) FAIL("Insufficient size allocated thread");
 		for (j = 0; j < sizeof(buf); j++) {
@@ -98,15 +104,16 @@ int main()
 	H2K_thread_init();
 	memset(buf,0xef,sizeof(buf));
 	/* Storage for threads, but bad alignment */
-	ret = H2K_trap_config(0,buf+1,sizeof(H2K_thread_context),0,0,NULL);
+	ret = H2K_trap_config(CONFIG_ADD_THREAD_STORAGE,buf+1,sizeof(H2K_thread_context),0,0,NULL);
 	if (ret != 0) FAIL("Wrong # of threads");
 	if (H2K_gp->free_threads != NULL) FAIL("Insufficient size allocated thread");
 	for (j = 0; j < sizeof(buf); j++) {
 		if (buf[j] != 0xef) FAIL("Should not write memory");
 	}
 
+	/*** vmblock_size ***/
 	for (i = 0; i < NUM_SIZE_TESTS; i++) {
-		ret = H2K_trap_config(2, NULL, size_test[i][0], size_test[i][1], 0, NULL);
+		ret = H2K_trap_config(CONFIG_VMBLOCK_SIZE, NULL, size_test[i][0], size_test[i][1], 0, NULL);
 #ifdef DEBUG
 		printf("\n\n%d cpus, %d ints, expect %d:\n", size_test[i][0], size_test[i][1], size_test[i][2]);
 		printf("\nvmblock size %d, aligned size %d, total size %d\n",
@@ -115,6 +122,125 @@ int main()
 		if (ret != size_test[i][2])
 			FAIL("Wrong size");
 	}
+
+	/*** vmblock_init ***/
+	/* SET_STORAGE_IDENT bad ID */
+#ifdef DEBUG
+	printf("\nSET_STORAGE_IDENT\n\n");
+#endif
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmbuf, SET_STORAGE_IDENT, MAX_VM_ID + 1, 0, NULL);
+	if (ret != 0) FAIL("Missed fail on bad ID");
+
+	/* SET_STORAGE_IDENT aligned pointer*/
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmbuf, SET_STORAGE_IDENT, 0, 0, NULL);
+#ifdef DEBUG
+	printf("\nvmbuf %08x, ret %08x\n", (u32_t)vmbuf, ret);
+#endif
+	if (ret == 0) FAIL("Unexpected error");
+	if ((char *)ret != vmbuf) FAIL("Unnecessary alignment");
+
+	/* SET_STORAGE_IDENT unaligned pointer */
+	vmblock = (H2K_vmblock_t *)H2K_trap_config(CONFIG_VMBLOCK_INIT, vmbuf + 1, SET_STORAGE_IDENT, 3, 0, NULL);
+#ifdef DEBUG
+	printf("\nvmbuf %08x, vmblock %08x\n", (u32_t)vmbuf, (u32_t)vmblock);
+#endif
+	if (vmblock == 0) FAIL("Unexpected error");
+	if ((u32_t)vmblock != ROUND((u32_t)vmblock)) FAIL("Not aligned");
+	if (vmblock->ident != 3) FAIL("Wrong ID");
+
+	/* SET_PMAP_TYPE bad type*/
+#ifdef DEBUG
+	printf("SET_PMAP_TYPE\n\n");
+#endif
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_PMAP_TYPE, 0, H2K_ASID_TRANS_TYPE_XXX_LAST, NULL);
+	if (ret != 0) FAIL("Missed bad translation type");
+
+	/* SET_PMAP_TYPE */
+	H2K_asid_table_init();
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR);
+	if (asid < 0) FAIL("H2K_asid_table_inc");
+	a.ssr_asid = asid;
+#ifdef DEBUG
+	printf("ASID %d  ptb %08x\n\n", a.ssr_asid, H2K_mem_asid_table[a.ssr_asid].ptb);
+#endif
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_PMAP_TYPE, 0, H2K_ASID_TRANS_TYPE_TABLE, &a);
+	if (ret == 0) FAIL("Unexpected error");
+	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
+#ifdef DEBUG
+	printf("pmap %08x  type %d\n", vmblock->pmap, vmblock->pmap_type);
+#endif
+	if (vmblock->pmap != 0xfeedf00f) FAIL("Wrong ptb");
+	if (vmblock->pmap_type != H2K_ASID_TRANS_TYPE_TABLE) FAIL("Wrong pmap type");
+
+#ifdef DEBUG
+	printf("SET_PRIO_TRAPMASK\n\n");
+#endif
+	/* SET_PRIO_TRAPMASK bad prio */
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_PRIO_TRAPMASK, MAX_PRIO + 1, 0, NULL);
+	if (ret != 0) FAIL("Missed bad prio");
+
+	/* SET_PRIO_TRAPMASK */
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_PRIO_TRAPMASK, 11, 0xfeeefaaa, NULL);
+	if (ret == 0) FAIL("Unexpected error");
+	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
+	if (vmblock->bestprio != 11) FAIL("Bad prio");
+	if (vmblock->trapmask != 0xfeeefaaa) FAIL("Bad trapmask");
+
+	/* SET_CPUS_INTS bad cpus */
+#ifdef DEBUG
+	printf("SET_CPUS_INTS\n\n");
+#endif
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_CPUS_INTS, MAX_VM_CPUS + 1, 0, NULL);
+	if (ret != 0) FAIL("Missed bad cpus");
+
+		/* SET_CPUS_INTS bad ints */
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_CPUS_INTS, 1, MAX_VM_INTS + 1, NULL);
+	if (ret != 0) FAIL("Missed bad ints");
+
+	/* SET_CPUS_INTS */
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_CPUS_INTS, 33, 65, NULL);
+	if (ret == 0) FAIL("Unexpected error");
+	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
+
+	if (vmblock->max_cpus != 33) FAIL("Bad max_cpus");
+	if (vmblock->num_cpus != 0) FAIL("Bad num_cpus");
+	if (vmblock->num_ints != 65) FAIL("Bad num_ints");
+
+#ifdef DEBUG
+	printf("pending %08x\n", (u32_t)vmblock->pending);
+#endif
+	if (vmblock->pending != (bitmask_t *)((char *)vmblock + 40)) FAIL("Bad pending base");
+	if (vmblock->enable !=  (bitmask_t *)((char *)vmblock + 52)) FAIL("Bad enable base");
+	if (vmblock->percpu_mask !=  (bitmask_t **)((char *)vmblock + 64)) FAIL ("Bad percpu_mask base");
+
+	for (i = 0; i < 33; i++) {
+#ifdef DEBUG
+		printf("i %d  ptr %08x  expect %08x\n", i, vmblock->percpu_mask[i], (u32_t)((char *)vmblock + 196 + i * 12));
+#endif
+		if (vmblock->percpu_mask[i] !=  (bitmask_t *)((char *)vmblock + 196 + i * 12)) FAIL("Bad percpu_mask pointer");
+	}
+
+	if (vmblock->int_v2p != (physint_t *)((char *)vmblock + 592)) FAIL("Bad int_v2p base");
+	if (vmblock->cpu_contexts != (H2K_thread_context **)((char *)vmblock + 660)) FAIL("Bad cpu_contexts base");
+	
+#ifdef DEBUG
+	printf("MAP_PHYS_INTR\n\n");
+#endif
+	/* MAP_PHYS_INTR bad vint*/
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, MAP_PHYS_INTR, vmblock->num_ints, 0, NULL);
+	if (ret != 0) FAIL("Missed vint # too big");
+
+	/* MAP_PHYS_INTR bad pint */
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, MAP_PHYS_INTR, 0, MAX_INTERRUPTS + 1, NULL);
+	if (ret != 0) FAIL("Missed pint # too big");
+
+	/* MAP_PHYS_INTR */
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, MAP_PHYS_INTR, 32, 13, NULL);
+	if (ret == 0) FAIL("Unexpected error");
+	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
+
+	if (vmblock->int_v2p[32] != 13) FAIL("Bad int_v2p");
+	
 
 	puts("TEST PASSED\n");
 	return 0;

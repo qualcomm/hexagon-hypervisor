@@ -7,6 +7,9 @@
 #define H2K_VM_H 1
 
 #include<asid.h>
+#include <c_std.h>
+#include <vmdefs.h>
+#include <context.h>
 
 /* How does this work?  */
 
@@ -35,23 +38,11 @@
  * Supporting multiple listeners?
  */
 
-#include <c_std.h>
-#include <vmdefs.h>
-
 #define H2K_VMBLOCK_ALIGN 32
 #define H2K_VMBLOCK_V2P_INVALID 0xff
 
 typedef u8_t physint_t;
 typedef u32_t bitmask_t;
-
-typedef enum {
-	SET_STORAGE_IDENT,
-	SET_PMAP_TYPE,
-	SET_PRIO_TRAPMASK,
-	SET_CPUS_INTS,
-	MAP_PHYS_INTR,
-	NUM_OPS
-} vmblock_init_op_t;
 
 /* FIXME: rename enable to mask since there is already another enable bit */
 typedef struct H2K_vmblock_struct {
@@ -71,7 +62,7 @@ typedef struct H2K_vmblock_struct {
 	/* Mapping back to the HW interrupt (if applicable) */
 	physint_t *int_v2p;
 	/* Mapping of CPUs to Thread Contexts */
-	struct _h2_thread_context **cpu_contexts;
+	H2K_thread_context **cpu_contexts;
 	/* physical memory map, page table style */
 	u32_t pmap;
 	translation_type pmap_type;

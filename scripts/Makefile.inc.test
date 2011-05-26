@@ -43,6 +43,7 @@ AR=${ARCH}-ar
 OBJDUMP=${ARCH}-objdump
 GMON_MERGE=${ARCH}-gmon-merge
 COV=${ARCH}-cov
+PYTHON=python
 
 ################################################################################
 #  Rules for building the kernel if necessary; should be built way before any
@@ -205,11 +206,17 @@ DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 	${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
 
-%.o: %.c
+ifdef PYTHON_GENERATOR_SCRIPT
+${PYTHON_GENERATED_FILES}: ${PYTHON_GENERATOR_SCRIPT}
+	${PYTHON} $<; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+endif
+
+%.o: %.c ${PYTHON_GENERATED_FILES}
 	${CC} ${CFLAGS} -c -o $@ $<; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
-%.o: %.S
+%.o: %.S ${PYTHON_GENERATED_FILES}
 	${CC} ${ASFLAGS} -c -o $@ $<; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
@@ -237,7 +244,7 @@ ${COVFILES}: ${DUMP} gmon
 	${COV} -F -d ${DUMP} -o cov.txt gmon; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
-CLEANUP=${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} test.log results.txt h2 
+CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} test.log results.txt h2
 CLEANUP += stats.txt
 
 clean:

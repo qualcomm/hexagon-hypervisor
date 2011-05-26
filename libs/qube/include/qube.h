@@ -13,6 +13,7 @@
 #include <qmutex.h>
 #include <qmemory.h>
 #include <qthread.h>
+#include <qtimer.h>
 
 #ifdef __cplusplus
 extern "C" {

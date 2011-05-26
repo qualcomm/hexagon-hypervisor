@@ -166,11 +166,14 @@ FUNC_START H2K_check_sanity .text.core.sanity .p2align 5
 	}  //  note:  retain R6 for subsequent compares in lowprio_notify
 	//  do lowprio_notify
 	{
-		R4 = memw(H2K_GP+R11<<#3);	//  load hthread; recycle R4
+		R4 = memw(R11+R7<<#2);		//  load hthread; recycle R4
 		R8 = ct0(R9);			//  ready_best_prio()
 		P0 = cmp.eq(R3,#0);		//  D - wait_mask
 		P1 = cmp.eq(R9,#0);		//  ready_validmasks
 	}
+	{
+		R4 = memub(R4 + #CONTEXT_hthread);
+	}  // argh!
 	{
 		R2 = setbit(R2,R4);			//  set new priomask
 		memw(H2K_GP+#KG_priomask) = R2.new;	//  set new priomask

@@ -8,7 +8,7 @@ SHELL=/bin/bash
 
 all: libh2.a
 
-ALL_LIBS=h2/libh2.a qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a 
+ALL_LIBS=h2/libh2.a qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a timer/libtimer.a
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 
@@ -28,8 +28,12 @@ posix/libposix.a: tmp
 syscall/angel/libangel.a: tmp
 	+${MAKE_LIB};
 
+timer/libtimer.a: tmp
+	+${MAKE_LIB};
+
 h2/libh2.a: tmp
 	+${MAKE_LIB};
+
 
 clean:
 	rm -rf tmp libh2.a

@@ -136,12 +136,12 @@ Performs the requested initialization operation on the VM block.  The valid oper
 * SET_CPUS_INTS: Set max number of virtual CPUs (arg1) and set number active to 0; set number of virtual interrupts (arg2) and clear enable/pending for each.
 * MAP_PHYS_INTR: Map virtual interrrupt number (arg1) to physical interrupt number (arg2)
 
-SET_STORAGE_IDENT_PMAP must be the first operation invoked.  Subesequent operations may occur in any order and should use the pointer value returned by SET_STORAGE_IDENT_PMAP.
+SET_STORAGE_IDENT must be the first operation invoked.  Subesequent operations may occur in any order and should use the pointer value returned by SET_STORAGE_IDENT.
 
 Functionality
 ~~~~~~~~~~~~~
 
-For SET_STORAGE_IDENT_PMAP, align pointer (config_vmblock_size allows space for alignment).
+For SET_STORAGE_IDENT, align pointer (config_vmblock_size allows space for alignment).
 
 For all operations, check for bad args where possible, initialize VM block with given values.
 

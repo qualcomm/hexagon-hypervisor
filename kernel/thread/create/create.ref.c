@@ -72,19 +72,21 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_
 
 	if (vmblock) {
 		/* only need to check asid if we have a vmblock, else it's inherited */
-		if (asid == -1) { 						// can't allocate
+		if (asid == -1) { 						// can't allocate asid
+			H2K_gp->free_threads = tmp; // return to free list
 			BKL_UNLOCK(&H2K_bkl);
 			return -1;
 		}
-		tmp->ssr_asid = asid;
-
 		if (vmblock->num_cpus == vmblock->max_cpus) {  // no more vcpus
 			H2K_asid_table_dec(asid); // was bogus
+			H2K_gp->free_threads = tmp; // return to free list
 			BKL_UNLOCK(&H2K_bkl);
 			return -1;
 		}
+
+		tmp->ssr_asid = asid;
 		tmp->vmcpu = vmblock->num_cpus++;
-		tmp->vmstatus = 0;            // all clear
+		tmp->vmstatus = 0xff;            // all clear
 		tmp->vmblock = vmblock;
 
 		vmblock->cpu_contexts[tmp->vmcpu] = tmp;

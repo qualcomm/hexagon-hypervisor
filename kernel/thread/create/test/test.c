@@ -119,16 +119,16 @@ int main()
 	/* so we can check if properly decremented */
 	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE);
 
-	ret = H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
+	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
 	/* asid count should have gone to 2 and then back to 1 */
 	if (H2K_mem_asid_table[asid].count != 1) FAIL("Bad asid count");
 	if (ret != -1) FAIL("Exceeded max_cpus");
 	vm.num_cpus = 1;
 
-	ret = H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,4,&vm,&a);
+	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,4,&vm,&a);
 	if (ret != -1) FAIL("Exceeded vm bestprio");
 
-	ret = H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
+	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
 	if (ret == -1) FAIL("Unexpected error");
 
 	if (c.trapmask != 0xfa1a1a1a) FAIL("Bad vm trapmask");

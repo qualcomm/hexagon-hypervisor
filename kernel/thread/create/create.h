@@ -11,4 +11,6 @@
 
 s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me) IN_SECTION(".text.misc.create");
 
+s32_t H2K_thread_create_no_squash(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me) IN_SECTION(".text.misc.create");
+
 #endif

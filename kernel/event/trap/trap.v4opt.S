@@ -334,7 +334,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_id // 27
 	}
 	{
-		r0 = sgp0
+		r5 = sgp0
 		jump H2K_vmboot // 28
 	}
 	{

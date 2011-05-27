@@ -17,8 +17,8 @@
 #include <globals.h>
 #include <vm.h>
 #include <asid.h>
+#include <create.h>
 
-u32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me);
 void H2K_interrupt_restore();
 
 void FAIL(const char *str)

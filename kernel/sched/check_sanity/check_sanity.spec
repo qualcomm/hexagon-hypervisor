@@ -101,7 +101,7 @@ Testing
 Samples
 ~~~~~~~
 
-* input	MAX_PRIOS		number of priority levels available (default 32)
+* input	MAX_PRIOS		number of priority levels available (default 256)
 * input	MAX_HTHREADS		number of hardware threads available (default 6)
 * input	H2K_kg.ready_valids	priorities with ready jobs
 * input	H2K_kg.runlist_prios	priorities of currently running threads

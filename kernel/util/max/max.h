@@ -21,9 +21,9 @@
 
 #define MAX_THREADS 16
 
-#define KERNEL_STACK_SIZE (8*16)
+#define KERNEL_STACK_SIZE (8*31)
 
-#define MAX_PRIOS 32
+#define MAX_PRIOS 256
 #define MAX_PRIO ((MAX_PRIOS) - 1)
 
 #if __QDSP6_ARCH__ <= 3

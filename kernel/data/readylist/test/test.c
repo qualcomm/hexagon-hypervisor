@@ -34,6 +34,26 @@ u32_t H2K_ready_best_prio_TB()
 	return H2K_ready_best_prio();
 }
 
+u32_t H2K_ready_any_valid_TB()
+{
+	return H2K_ready_any_valid();
+}
+
+u32_t H2K_ready_prio_valid_TB(u32_t prio)
+{
+	H2K_ready_prio_valid(prio);
+}
+
+void H2K_ready_set_prio_TB(u32_t prio)
+{
+	H2K_ready_set_prio(prio);
+}
+
+void H2K_ready_clear_prio_TB(u32_t prio)
+{
+	H2K_ready_clear_prio(prio);
+}
+
 void H2K_ready_append_TB(H2K_thread_context *thread)
 {
 	H2K_ready_append(thread);
@@ -57,10 +77,13 @@ H2K_thread_context *H2K_ready_getbest_TB()
 int main() 
 {
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
-	H2K_gp->ready_valids = 0xdeadbeef;
+	H2K_gp->ready_valids[0] = 0xfeca1feddeadbeefULL;
+	H2K_gp->ready_valids[1] = 0xfa7510b5ca5cadedULL;
+	H2K_gp->ready_valids[2] = 0x5a5a5a5a5a5a5a5aULL;
+	H2K_gp->ready_valids[3] = 0xf0f0f0f0f0f0f0f0ULL;
 	H2K_gp->ready[0] = &a;
 	H2K_readylist_init();
-	if (H2K_gp->ready_valids != 0) FAIL("readylist_init failed to set valids");
+	if (H2K_ready_any_valid_TB()) FAIL("readylist_init failed to set valids");
 	if (H2K_gp->ready[0] != 0) FAIL("readylist_init failed to clear array");
 	if (H2K_ready_best_prio_TB() <= MAX_PRIO) FAIL("cleared readylist best prio <= MAX_PRIO");
 
@@ -68,14 +91,14 @@ int main()
 	c.prio = 4;
 	H2K_ready_append_TB(&a);
 	if (H2K_gp->ready[2] != &a) FAIL("ready_append failed (0) ");
-	if ((H2K_gp->ready_valids & (1<<2)) == 0) FAIL("ready_append failed (1) ");
+	if (!H2K_ready_prio_valid_TB(2)) FAIL("ready_append failed (1) ");
 	if (H2K_gp->ready[2]->next != &a) FAIL("ready_append failed (2) ");
 	if (H2K_gp->ready[2]->prev != &a) FAIL("ready_append failed (3) ");
 	if (H2K_ready_best_prio_TB() != 2) FAIL("Ready best prio (4) ");
 
 	H2K_ready_append_TB(&b);
 	if (H2K_gp->ready[2] != &a) FAIL("ready_append failed (5)");
-	if ((H2K_gp->ready_valids & (1<<2)) == 0) FAIL("ready_append failed (6)");
+	if (!H2K_ready_prio_valid_TB(2)) FAIL("ready_append failed (6)");
 	if (H2K_gp->ready[2]->next != &b) FAIL("ready_append failed (7)");
 	if (H2K_gp->ready[2]->prev != &b) FAIL("ready_append failed (8)");
 	if (H2K_gp->ready[2]->next->next != &a) FAIL("ready_append failed (9)");
@@ -84,14 +107,14 @@ int main()
 	H2K_readylist_init();
 	H2K_ready_insert_TB(&a);
 	if (H2K_gp->ready[2] != &a) FAIL("ready_insert failed");
-	if ((H2K_gp->ready_valids & (1<<2)) == 0) FAIL("ready_insert failed");
+	if (!H2K_ready_prio_valid_TB(2)) FAIL("ready_insert failed");
 	if (H2K_gp->ready[2]->next != &a) FAIL("ready_insert failed");
 	if (H2K_gp->ready[2]->prev != &a) FAIL("ready_insert failed");
 	if (H2K_ready_best_prio_TB() != 2) FAIL("Ready best prio");
 
 	H2K_ready_insert_TB(&b);
 	if (H2K_gp->ready[2] != &b) FAIL("ready_insert failed");
-	if ((H2K_gp->ready_valids & (1<<2)) == 0) FAIL("ready_insert failed");
+	if (!H2K_ready_prio_valid_TB(2)) FAIL("ready_insert failed");
 	if (H2K_gp->ready[2]->next != &a) FAIL("ready_insert failed");
 	if (H2K_gp->ready[2]->prev != &a) FAIL("ready_insert failed");
 	if (H2K_gp->ready[2]->next->next != &b) FAIL("ready_insert failed");
@@ -99,15 +122,14 @@ int main()
 
 	H2K_ready_remove_TB(&a);
 	if (H2K_gp->ready[2] != &b) FAIL("ready_remove failed");
-	if ((H2K_gp->ready_valids & (1<<2)) == 0) FAIL("ready_remove failed");
+	if (!H2K_ready_prio_valid_TB(2)) FAIL("ready_remove failed");
 	if (H2K_gp->ready[2]->next != &b) FAIL("ready_remove failed");
 	if (H2K_gp->ready[2]->prev != &b) FAIL("ready_remove failed");
 	if (H2K_ready_best_prio_TB() != 2) FAIL("Ready best prio");
 
 	H2K_ready_remove_TB(&b);
 	if (H2K_gp->ready[2] != NULL) FAIL("ready_remove failed");
-	if (H2K_gp->ready_valids != 0) FAIL("ready_remove failed");
-	if (H2K_ready_best_prio_TB() <= MAX_PRIO) FAIL("Ready best prio");
+	if (H2K_ready_any_valid_TB()) FAIL("ready_remove failed");
 
 	H2K_ready_insert_TB(&a);
 	H2K_ready_insert_TB(&b);
@@ -121,4 +143,3 @@ int main()
 	puts("TEST PASSED\n");
 	return 0;
 }
-

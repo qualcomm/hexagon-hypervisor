@@ -6,7 +6,7 @@ import random
 
 NUM_SCENARIOS = 10000
 NUM_THREADS_IN_SCENARIOS = 12  # must match the C code
-MAX_PRIOS = 32
+MAX_PRIOS = 256  # must match max.h
 
 # This script generates scenarios for H2K_check_sanity.  The scenarios are in
 # the form of an initializer for a C array of structs.  The initializer is

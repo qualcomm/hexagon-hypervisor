@@ -14,7 +14,7 @@
 
 typedef struct {
 	u32_t mask_for_ipi;
-	u32_t ready_valids;
+	u64_t ready_valids[MAX_PRIOS/64] __attribute__((aligned(MAX_PRIOS/8)));
 	union {
 		u64_t lowprio_masks;
 		struct {

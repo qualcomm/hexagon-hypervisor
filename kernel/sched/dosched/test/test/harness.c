@@ -215,7 +215,7 @@ void TB_fiddle_prio_wait_to_high(phase_t phase)
 		}
 	} else {
 		/* Check expected values */
-		if (H2K_gp->ready_valids != 0) FAIL("didn't find ready thread");
+		if (H2K_ready_any_valid()) FAIL("didn't find ready thread");
 		if (H2K_gp->runlist[h.hthread] != &h) FAIL("Didn't insert h thread");
 		if (H2K_gp->runlist_prios[h.hthread] != h.prio) FAIL("Didn't insert h thread");
 		if (H2K_gp->wait_mask == 0) {
@@ -240,7 +240,7 @@ void TB_fiddle_prio_wait_to_low(phase_t phase)
 		}
 	} else {
 		/* Check expected values */
-		if (H2K_gp->ready_valids != 0) FAIL("didn't find ready thread");
+		if (H2K_ready_any_valid()) FAIL("didn't find ready thread");
 		if (H2K_gp->runlist[l.hthread] != &l) FAIL("Didn't insert l thread");
 		if (H2K_gp->runlist_prios[l.hthread] != l.prio) FAIL("Didn't insert l thread");
 		if (H2K_gp->wait_mask == 0) {
@@ -312,14 +312,14 @@ int main()
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 
 	/* Set up some threads */
-	l.prio = 20;
+	l.prio = MAX_PRIOS - 12;
 	l.hthread = 0;
 	m.prio = 10;
 	m.hthread = 0;
 	h.prio =  2;
 	h.hthread = 0;
 
-	l2.prio = 20;
+	l2.prio = MAX_PRIOS - 12;
 	l2.hthread = 0;
 	m2.prio = 10;
 	m2.hthread = 0;

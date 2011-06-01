@@ -62,6 +62,81 @@ Count Trailing Zeros of H2K_kg.ready_valids.
 
 
 
+H2K_ready_any_valid
+-------------------
+
+.. cfunction:: static inline u32_t H2K_ready_any_valid()
+
+	:returns: whether any threads are ready.
+
+Description
+~~~~~~~~~~~
+
+Functionality
+~~~~~~~~~~~~~
+
+Tests whether :cfunc:`H2K_ready_best_prio()` returns MAX_PRIOS or higher.
+
+
+
+H2K_ready_prio_valid
+----------------
+
+.. cfunction:: static inline u32_t H2K_ready_prio_valid(u32_t prio)
+
+	:param prio: the priority to check
+	:returns: whether a thread at the given priority is ready.
+
+Description
+~~~~~~~~~~~
+
+Checks whether a thread at a given priority is ready.
+
+Functionality
+~~~~~~~~~~~~~
+
+Check the bit in ready_valids corresponding to the priority.
+
+
+
+H2K_ready_set_prio
+----------------
+
+.. cfunction:: static inline void H2K_ready_set_prio(u32_t prio)
+
+	:param prio: the priority to set
+
+Description
+~~~~~~~~~~~
+
+Sets a given priority as valid.
+
+Functionality
+~~~~~~~~~~~~~
+
+Set the bit in ready_valids corresponding to the priority.
+
+
+
+H2K_ready_clear_prio
+----------------
+
+.. cfunction:: static inline void H2K_ready_clear_prio(u32_t prio)
+
+	:param prio: the priority to clear
+
+Description
+~~~~~~~~~~~
+
+Sets a given priority as invalid.
+
+Functionality
+~~~~~~~~~~~~~
+
+Clear the bit in ready_valids corresponding to the priority.
+
+
+
 H2K_ready_append
 ----------------
 
@@ -78,8 +153,8 @@ Functionality
 ~~~~~~~~~~~~~
 
 We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_append()`
-on the H2K_kg.ready ring at the thread's priority.  Finally, we set the bit of
-H2K_kg.ready_valids at the thread's priority.
+on the H2K_kg.ready ring at the thread's priority.  Finally, we call
+:cfunc:`H2K_ready_set_prio()` with the thread's priority.
 
 
 
@@ -99,8 +174,8 @@ Functionality
 ~~~~~~~~~~~~~
 
 We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_insert()`
-on the H2K_kg.ready ring at the thread's priority.  Finally, we set the bit of
-H2K_kg.ready_valids at the thread's priority.
+on the H2K_kg.ready ring at the thread's priority.  Finally, we call
+:cfunc:`H2K_ready_set_prio()` with the thread's priority.
 
 
 
@@ -121,7 +196,7 @@ Functionality
 
 We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_remove()`
 on the H2K_kg.ready ring at the thread's priority.  Finally, if there are no
-more elements in the ring, we clear the bit of H2K_kg.ready_valids at the
+more elements in the ring, we call :cfunc:`H2K_ready_clear_prio()` with the
 thread's priority.
 
 
@@ -141,7 +216,7 @@ Removes the best priority thread from the ready list.
 Functionality
 ~~~~~~~~~~~~~
 
-If there are no ready threads, we return NULL.
+If there are no ready threads (!:cfunc:`H2K_ready_any_valid()`), we return NULL.
 
 We call :cfunc:`H2K_ready_best_prio()` to obtain the priority of the best priority ready thread.
 

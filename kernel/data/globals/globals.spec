@@ -10,7 +10,7 @@
 
 	Kernel Globals kept together for ease of referencing.
 
-	.. cmember:: u32_t ready_valids
+	.. cmember:: u64_t ready_valids[MAX_PRIOS/64]
 
 		This is a bitfield.  Bit 0 corresponds to priority 0, bit 1 to priority 1, 
 		and so on.  If the bit *n* is set, H2K_ready[*n*] must be valid.  If bit 
@@ -56,7 +56,7 @@
 		This array contains pointers to the threads running on each hardware
 		thread.  If a hardware thread is in wait mode, its pointer should be NULL.
 
-	.. cmember:: s16_t runlist_prios[(MAX_HTHREADS+3)/4*4]
+	.. cmember:: s16_t runlist_prios[(MAX_HTHREADS+7)/8*8]
 
 		This array contains the priorities of threads running on each hardware
 		thread.  If a hardware thread is in wait mode, its value should be -1.

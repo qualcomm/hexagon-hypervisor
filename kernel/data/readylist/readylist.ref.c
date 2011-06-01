@@ -11,6 +11,7 @@ void H2K_readylist_init(void)
 	for (i = 0; i < MAX_PRIOS; i++) {
 		H2K_gp->ready[i] = NULL;
 	}
-	H2K_gp->ready_valids = 0;
+	for (i = 0; i < MAX_PRIOS/64; i++) {
+		H2K_gp->ready_valids[i] = 0;
+	}
 }
-

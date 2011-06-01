@@ -14,12 +14,11 @@
 /*
  * H2K_sched_yield
  * Run a different thread at the same prio, if available
- * TBD: detect nothing in readylist @ current prio and return
  */
 void H2K_sched_yield(H2K_thread_context *me)
 {
         BKL_LOCK(&H2K_bkl);
-	if ((H2K_gp->ready_valids & (1<<me->prio)) == 0) {
+	if (!H2K_ready_prio_valid(me->prio)) {
 		BKL_UNLOCK(&H2K_bkl);
 		return;
 	}

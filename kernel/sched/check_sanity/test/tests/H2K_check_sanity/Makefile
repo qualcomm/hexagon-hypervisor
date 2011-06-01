@@ -1,6 +1,6 @@
 
 
-SUBDIRS += walking_1s whitebox
+SUBDIRS += scenarios
 
 include Makefile.inc
 

@@ -60,7 +60,7 @@ int main()
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();
-	a.prio = b.prio = c.prio = 2;
+	a.prio = b.prio = c.prio = MAX_PRIOS - 30;
 	a.hthread = 0;
 	b.hthread = 1;
 	c.hthread = 2;
@@ -79,15 +79,14 @@ int main()
 	TH_resched(0,TB_in,0);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
 	if (H2K_gp->runlist[c.hthread] != &c) FAIL("Unexpected thread in runlist");
-	if (H2K_gp->ready[2] != &a) FAIL("Unexpected thread in readylist");
+	if (H2K_gp->ready[MAX_PRIOS - 30] != &a) FAIL("Unexpected thread in readylist");
 	H2K_gp->wait_mask = 0;
 	TB_saw_dosched = 0;
 	TB_in = &c;
 	TH_resched(0,TB_in,2);
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
-	if (H2K_gp->ready[2] != &a) FAIL("Unexpected thread in readylist");
-	if (H2K_gp->ready[2]->next != &c) FAIL("Unexpected thread in readylist");
+	if (H2K_gp->ready[MAX_PRIOS - 30] != &a) FAIL("Unexpected thread in readylist");
+	if (H2K_gp->ready[MAX_PRIOS - 30]->next != &c) FAIL("Unexpected thread in readylist");
 	puts("TEST PASSED\n");
 	return 0;
 }
-

@@ -15,5 +15,5 @@
 	.p2align 3
 	.global h2_vmboot
 h2_vmboot:
-	trap0(#H2_VMBOOT)
+	trap0(#H2_TRAP_VMBOOT)
 	jumpr r31

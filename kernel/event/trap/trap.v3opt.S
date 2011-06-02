@@ -367,7 +367,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_trap_pmuconfig // 29
 	}
 	{
-		r4 = sgp
+		r5 = sgp
 		jump H2K_trap_config // 30
 	}
 	{

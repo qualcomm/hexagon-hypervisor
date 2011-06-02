@@ -40,16 +40,11 @@ Other specing / assertions
 
 
 
-H2K_runlist_valids valid states and H2K_runlist_worst_prio()
-============================================================
+runlist valid states
+====================
 
-H2K_runlist_valids == 0 is apparently not a valid state; should probably
+An empty runlist is apparently not a valid state; should probably
 document this in the spec and maybe make an assertion.
-
-The spec says H2K_runlist_worst_prio(), which is calculated off of this,
-states that it should return MAX_PRIO if nothing is ready to run, but
-it currently returns -1.
-
 
 
 

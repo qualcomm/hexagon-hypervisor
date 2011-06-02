@@ -30,12 +30,12 @@ h2_config_vmblock_size:
 	.global h2_config_vmblock_init
 h2_config_vmblock_init:
 	{
-    r1 = r0 // ptr
-		r2 = r1 // op
+		r4 = r3 // arg2
 		r3 = r2 // arg1
+		r2 = r1 // op
 	}
 	{
-		r4 = r3 // arg2
+    r1 = r0 // ptr
 		r0 = #3 // H2K_trap_config_vmblock_init
   }
 	trap0(#H2_TRAP_CONFIG)

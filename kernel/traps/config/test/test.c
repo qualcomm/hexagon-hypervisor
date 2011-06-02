@@ -157,20 +157,20 @@ int main()
 
 	/* SET_PMAP_TYPE */
 	H2K_asid_table_init();
-	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR);
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_TABLE);
 	if (asid < 0) FAIL("H2K_asid_table_inc");
 	a.ssr_asid = asid;
 #ifdef DEBUG
 	printf("ASID %d  ptb %08x\n\n", a.ssr_asid, H2K_mem_asid_table[a.ssr_asid].ptb);
 #endif
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_PMAP_TYPE, 0, H2K_ASID_TRANS_TYPE_TABLE, &a);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_PMAP_TYPE, 0, 0, &a);
 	if (ret == 0) FAIL("Unexpected error");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
 #ifdef DEBUG
 	printf("pmap %08x  type %d\n", vmblock->pmap, vmblock->pmap_type);
 #endif
 	if (vmblock->pmap != 0xfeedf00f) FAIL("Wrong ptb");
-	if (vmblock->pmap_type != H2K_ASID_TRANS_TYPE_TABLE) FAIL("Wrong pmap type");
+	if (vmblock->pmap_type != H2K_mem_asid_table[a.ssr_asid].transtype) FAIL("Wrong pmap type");
 
 #ifdef DEBUG
 	printf("SET_PRIO_TRAPMASK\n\n");

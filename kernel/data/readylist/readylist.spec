@@ -80,7 +80,7 @@ Tests whether :cfunc:`H2K_ready_best_prio()` returns MAX_PRIOS or higher.
 
 
 H2K_ready_prio_valid
-----------------
+--------------------
 
 .. cfunction:: static inline u32_t H2K_ready_prio_valid(u32_t prio)
 
@@ -100,7 +100,7 @@ Check the bit in ready_valids corresponding to the priority.
 
 
 H2K_ready_set_prio
-----------------
+------------------
 
 .. cfunction:: static inline void H2K_ready_set_prio(u32_t prio)
 
@@ -119,7 +119,7 @@ Set the bit in ready_valids corresponding to the priority.
 
 
 H2K_ready_clear_prio
-----------------
+--------------------
 
 .. cfunction:: static inline void H2K_ready_clear_prio(u32_t prio)
 

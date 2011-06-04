@@ -41,7 +41,7 @@ u32_t H2K_ready_any_valid_TB()
 
 u32_t H2K_ready_prio_valid_TB(u32_t prio)
 {
-	H2K_ready_prio_valid(prio);
+	return H2K_ready_prio_valid(prio);
 }
 
 void H2K_ready_set_prio_TB(u32_t prio)

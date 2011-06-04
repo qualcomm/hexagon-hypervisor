@@ -168,7 +168,7 @@ FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
 	jump H2K_vmtrap_bad		// 8
 	jump H2K_vmtrap_bad		// 9
 	jump H2K_vmtrap_clrmap		// a
-	jump H2K_vmtrap_register_ptb	// b
+	jump H2K_vmtrap_newmap	// b
 	jump H2K_vmtrap_bad		// c
 	jump H2K_vmtrap_cachectl	// d
 	jump H2K_vmtrap_get_pcycles	// e

@@ -98,7 +98,7 @@ void H2K_vmtrap_clrmap(H2K_thread_context *me)
 }
 
 /* 11 */
-void H2K_vmtrap_register_ptb(H2K_thread_context *me)
+void H2K_vmtrap_newmap(H2K_thread_context *me)
 {
 	s32_t newasid;
 	u32_t newptb = me->r00;
@@ -171,7 +171,6 @@ void H2K_vmtrap_start(H2K_thread_context *me)
 void H2K_vmtrap_stop(H2K_thread_context *me)
 {
 	/* Destroy, or just make blocked? */
-	me->r00 = 0;
 	H2K_thread_stop(me);
 }
 

@@ -221,49 +221,49 @@ void H2K_vmtrap_intop(H2K_thread_context *me)
 	} else {
 		me->r01 = 0;
 	}
-	switch (me->r00) {
-		case 0: /* NOP */
-			me->r00 = 0; return;
-		case 1: /* GLOBEN */
-			if (bad_int) return;
-			H2K_vm_interrupt_enable(vmblock,r1);
-			return;
-		case 2: /* GLOBDIS */
-			if (bad_int) return;
-			H2K_vm_interrupt_disable(vmblock,r1);
-			return;
-		case 3: /* LOCEN */
-			if (bad_int) return;
-			H2K_vm_interrupt_localunmask(vmblock,mycpu,r1);
-			return;
-		case 4: /* LOCDIS */
-			if (bad_int) return;
-			H2K_vm_interrupt_localmask(vmblock,mycpu,r1);
-			return;
-		case 5: /* AFFINITY */
-			if (bad_int) return;
-			H2K_vm_interrupt_localmask(vmblock,r2,r1);
-			return;
-		case 6: /* GET */
-			me->r00 = H2K_vm_interrupt_get(vmblock,mycpu);
-			return;
-		case 7: /* PEEK */
-			me->r00 = H2K_vm_interrupt_peek(vmblock,mycpu);
-			return;
-		case 8: /* STATUS */
-			if (bad_int) return;
-			me->r00 = H2K_vm_interrupt_status(vmblock,mycpu,r1);
-			return;
-		case 9: /* POST */
-			if (bad_int) return;
-			H2K_vm_interrupt_post(vmblock,mycpu,r1);
-			return;
-		case 10: /* CLEAR */
-			if (bad_int) return;
-			H2K_vm_interrupt_clear(vmblock,r1);
-			return;
-		default:
-			me->r00 = -1;
+	switch ((intop_type)me->r00) {
+	case H2K_INTOP_NOP:
+		me->r00 = 0; return;
+	case H2K_INTOP_GLOBEN:
+		if (bad_int) return;
+		H2K_vm_interrupt_enable(vmblock,r1);
+		return;
+	case H2K_INTOP_GLOBDIS:
+		if (bad_int) return;
+		H2K_vm_interrupt_disable(vmblock,r1);
+		return;
+	case H2K_INTOP_LOCEN:
+		if (bad_int) return;
+		H2K_vm_interrupt_localunmask(vmblock,mycpu,r1);
+		return;
+	case H2K_INTOP_LOCDIS:
+		if (bad_int) return;
+		H2K_vm_interrupt_localmask(vmblock,mycpu,r1);
+		return;
+	case H2K_INTOP_AFFINITY:
+		if (bad_int) return;
+		H2K_vm_interrupt_localmask(vmblock,r2,r1);
+		return;
+	case H2K_INTOP_GET:
+		me->r00 = H2K_vm_interrupt_get(vmblock,mycpu);
+		return;
+	case H2K_INTOP_PEEK:
+		me->r00 = H2K_vm_interrupt_peek(vmblock,mycpu);
+		return;
+	case H2K_INTOP_STATUS:
+		if (bad_int) return;
+		me->r00 = H2K_vm_interrupt_status(vmblock,mycpu,r1);
+		return;
+	case H2K_INTOP_POST:
+		if (bad_int) return;
+		H2K_vm_interrupt_post(vmblock,mycpu,r1);
+		return;
+	case H2K_INTOP_CLEAR:
+		if (bad_int) return;
+		H2K_vm_interrupt_clear(vmblock,r1);
+		return;
+	default:
+		me->r00 = -1;
 	}
 }
 

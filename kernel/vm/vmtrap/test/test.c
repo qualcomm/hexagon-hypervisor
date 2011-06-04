@@ -32,7 +32,7 @@ s32_t H2K_vmtrap_setie() { return 3; }
 s32_t H2K_vmtrap_getie() { return 4; }
 s32_t H2K_vmtrap_intop() { return 5; }
 s32_t H2K_vmtrap_clrmap() { return 0xa; }
-s32_t H2K_vmtrap_register_ptb() { return 0xb; }
+s32_t H2K_vmtrap_newmap() { return 0xb; }
 s32_t H2K_vmtrap_cachectl() { return 0xd; }
 s32_t H2K_vmtrap_get_pcycles() { return 0xe; }
 s32_t H2K_vmtrap_set_pcycles() { return 0xf; }

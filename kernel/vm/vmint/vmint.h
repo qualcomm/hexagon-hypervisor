@@ -10,6 +10,20 @@
 #include <vm.h>
 #include <context.h>
 
+typedef enum {
+	H2K_INTOP_NOP,
+	H2K_INTOP_GLOBEN,
+	H2K_INTOP_GLOBDIS,
+	H2K_INTOP_LOCEN,
+	H2K_INTOP_LOCDIS,
+	H2K_INTOP_AFFINITY,
+	H2K_INTOP_GET,
+	H2K_INTOP_PEEK,
+	H2K_INTOP_STATUS,
+	H2K_INTOP_POST,
+	H2K_INTOP_CLEAR
+} intop_type;
+
 void  H2K_vm_interrupt_post(H2K_vmblock_t *vmblock, u8_t first_cpu, u32_t intno) IN_SECTION(".text.vm.int");
 void  H2K_vm_interrupt_clear(H2K_vmblock_t *vmblock, u32_t intno) IN_SECTION(".text.vm.int");
 void  H2K_vm_interrupt_enable(H2K_vmblock_t *vmblock, u32_t intno) IN_SECTION(".text.vm.int");

@@ -170,5 +170,20 @@ void blast_deregister_fastint(int intno);
 //  Not really a part of the BLAST API, but it needs to happen somewhere.
 void l2_controller_init(void);
 
+// Thread configs are ignored now, but the need to be defined for sources:
+#define BLAST_THREAD_CFG_BITMASK_HT0      0x00000001
+#define BLAST_THREAD_CFG_BITMASK_HT1      0x00000002
+#define BLAST_THREAD_CFG_BITMASK_HT2      0x00000004
+#define BLAST_THREAD_CFG_BITMASK_HT3      0x00000008
+#define BLAST_THREAD_CFG_BITMASK_HT4      0x00000010
+#define BLAST_THREAD_CFG_BITMASK_HT5      0x00000020
+#define BLAST_THREAD_CFG_BITMASK_ALL      0x000000ff
+
+#define BLAST_THREAD_CFG_USE_RAM          0x00000000
+#define BLAST_THREAD_CFG_USE_TCM          0x00000100
+
+#define blast_thread_wait_for_idle  blast_power_wait_for_idle
+#define blast_thread_wait_for_active blast_power_wait_for_active
+
 #endif
 

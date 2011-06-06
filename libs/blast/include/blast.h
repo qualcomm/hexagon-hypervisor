@@ -13,6 +13,7 @@
 #define RENAME_PREFIX blast
 #include <h2_rename.h>
 #undef RENAME_PREFIX
+#include <stddef.h>
 
 //  Signal used to indicate to anybody waiting for an interrupt that
 //  it was deregistered.
@@ -49,13 +50,63 @@ static inline void blast_rmutex_destroy(blast_rmutex_t *lock)
 	return;
 }
 
+// because blast_mutex_t is used for both mutex and rmutex
+// blast_mutex_t is typdeffed to h2_rmutex_t
+static inline void blast_mutex_lock(blast_mutex_t *lock)
+{
+	h2_mutex_lock((h2_mutex_t *) (lock + offsetof(h2_rmutex_t, mutex)));
+}
+
+static inline void blast_mutex_unlock(blast_mutex_t *lock)
+{
+	h2_mutex_unlock((h2_mutex_t *) (lock + offsetof(h2_rmutex_t, mutex)));
+}
+
+static inline int blast_mutex_trylock(blast_mutex_t *lock)
+{
+	return h2_mutex_trylock((h2_mutex_t *) (lock + offsetof(h2_rmutex_t, mutex)));
+}
+
+static inline void blast_mutex_init(blast_mutex_t *lock)
+{
+	h2_mutex_init((h2_mutex_t *) (lock + offsetof(h2_rmutex_t, mutex)));
+}
 static inline void blast_mutex_destroy(blast_mutex_t *lock)
 {
 	return;
 }
 
-static inline void blast_thread_join(int threadid, int *status)
+// fake up blast_pimutex as h2_rmutex
+static inline void blast_pimutex_init(blast_mutex_t *lock)
 {
+	h2_rmutex_init(lock);
+}
+
+static inline void blast_pimutex_destroy(blast_mutex_t *lock)
+{
+	return;
+}
+
+static inline void blast_pimutex_lock(blast_mutex_t *lock)
+{
+	h2_rmutex_lock(lock);
+}
+
+static inline void blast_pimutex_unlock(blast_mutex_t *lock)
+{
+	h2_rmutex_unlock(lock);
+}
+
+static inline int blast_pimutex_trylock(blast_mutex_t *lock)
+{
+	return h2_rmutex_trylock(lock);
+}
+
+static inline int blast_thread_join(int threadid, int *status)
+{
+	//FIXME: this is probably bogus
+	// return invalid thread status (5)
+	return 5;
 }
 
 static inline unsigned short blast_sem_get_val(h2_sem_t *sem)

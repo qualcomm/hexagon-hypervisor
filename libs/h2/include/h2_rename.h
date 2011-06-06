@@ -61,7 +61,10 @@ RETYPEDEF(cond_t)
 
 REDEF_FUNCTION(void ,cond_signal,(h2_cond_t *cond),(cond));
 REDEF_FUNCTION(void ,cond_broadcast,(h2_cond_t *cond),(cond));
-REDEF_FUNCTION(void ,cond_wait,(h2_cond_t *cond,h2_mutex_t *mutex),(cond,mutex));
+
+// move to blast.h; need wrapper because blast_mutex == h2_rmutex
+/* REDEF_FUNCTION(void ,cond_wait,(h2_cond_t *cond,h2_mutex_t *mutex),(cond,mutex)); */
+
 REDEF_FUNCTION(void ,cond_init,(h2_cond_t *cond),(cond));
 
 /*  "blast_config.h"  */
@@ -103,12 +106,14 @@ REDEF_FUNCTION(void ,init,(unsigned long long int *memmap),(memmap));
 /*  "blast_mutex.h"  */
 
 //RETYPEDEF(mutex_t)
-typedef h2_mutex_t blast_mutex_t;
+/* typedef h2_mutex_t blast_mutex_t; */
+typedef h2_rmutex_t blast_mutex_t;
 
-REDEF_FUNCTION(void ,mutex_lock,(h2_mutex_t *lock),(lock));		/* blocking */
-REDEF_FUNCTION(void ,mutex_unlock,(h2_mutex_t *lock),(lock));	/* unlock */
-REDEF_FUNCTION(int ,mutex_trylock,(h2_mutex_t *lock),(lock));	/* just try... 1 if successful, 0 if not */
-REDEF_FUNCTION(void ,mutex_init,(h2_mutex_t *lock),(lock)) 	/* initialize it... */
+// move to blast.h; need wrapper because blast_mutex == h2_rmutex
+/* REDEF_FUNCTION(void ,mutex_lock,(h2_mutex_t *lock),(lock));		/\* blocking *\/ */
+/* REDEF_FUNCTION(void ,mutex_unlock,(h2_mutex_t *lock),(lock));	/\* unlock *\/ */
+/* REDEF_FUNCTION(int ,mutex_trylock,(h2_mutex_t *lock),(lock));	/\* just try... 1 if successful, 0 if not *\/ */
+/* REDEF_FUNCTION(void ,mutex_init,(h2_mutex_t *lock),(lock)) 	/\* initialize it... *\/ */
 
 /*  "blast_pipe.h"  */
 

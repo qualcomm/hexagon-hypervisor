@@ -14,6 +14,7 @@
 #include <qmemory.h>
 #include <qthread.h>
 #include <qtimer.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,6 +5,11 @@
 
 #ifndef H2_H
 #define H2_H 1
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "h2_alloc.h"
 #include "h2_futex.h"
 #include "h2_intwait.h"
@@ -29,6 +34,10 @@
 #include "h2_vmtraps.h"
 #include "h2_error.h"
 #include "h2_pmu.h"
+
+#ifdef __cplusplus
+} /* closing brace for extern "C" */
+#endif
 
 #endif
 

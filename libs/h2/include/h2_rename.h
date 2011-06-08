@@ -77,6 +77,12 @@ REDEF_FUNCTION(unsigned long long int ,get_pcycles,(void),());
 REDEF_FUNCTION(unsigned long long int ,get_tcycles,(void),());
 REDEF_FUNCTION(unsigned long long int ,get_core_pcycles,(void),());
 
+REDEF_FUNCTION(void, profile_enable,(int enable),(enable));
+REDEF_FUNCTION(void, profile_reset_idle_pcycles,(void),());
+REDEF_FUNCTION(void, profile_reset_thread_pcycles,(int thread_id),(thread_id));
+REDEF_FUNCTION(void, profile_get_idle_pcycles,(unsigned long long *pcycles),(pcycles));
+REDEF_FUNCTION(void, profile_get_thread_pcycles,(int thread_id, unsigned long long *pcycles),(thread_id, pcycles));
+
 /*  "blast_fastint.h"  */
 
 REDEF_FUNCTION(void ,register_fastint,(int intno, void (*fn)(int)),(intno,fn));
@@ -173,6 +179,8 @@ REDEF_FUNCTION(void ,sem_init_val,(h2_sem_t *sem,unsigned short val),(sem,val));
 REDEF_FUNCTION(void ,thread_stop,(void),());
 REDEF_FUNCTION(int ,thread_myid,(void),());
 REDEF_FUNCTION(void ,yield,(void),());
+REDEF_FUNCTION(void ,thread_set_tid,(unsigned int tid),(tid));
+REDEF_FUNCTION(int ,thread_get_tid,(void),());
 
 /* "blast_trace.h"  */
 

@@ -11,10 +11,16 @@ h2_config_add_thread_storage:
 	{
 		r1 = r0	// ptr
 		r2 = r1 // size
-		r0 = #0	// H2K_trap_config_addthreads
+		r0 = #H2_CONFIG_ADD_THREAD_STORAGE
 	}
 	trap0(#H2_TRAP_CONFIG)
 	jumpr r31
+
+	.global h2_config_setfatal
+h2_config_setfatal:
+	{
+	  r1 = r0 //ptr
+		r0 = #H2_CONFIG_SETFATAL
 
 	.global h2_config_vmblock_size
 h2_config_vmblock_size:
@@ -22,7 +28,7 @@ h2_config_vmblock_size:
 		r1 = #0 // unused
 	  r2 = r0 // num_cpus
 		r3 = r1 // num_ints
-		r0 = #2 // H2K_trap_config_vmblock_size
+		r0 = #H2_CONFIG_VMBLOCK_SIZE
 	}
 	trap0(#H2_TRAP_CONFIG)
 	jumpr r31
@@ -36,7 +42,7 @@ h2_config_vmblock_init:
 	}
 	{
     r1 = r0 // ptr
-		r0 = #3 // H2K_trap_config_vmblock_init
+		r0 = #H2_CONFIG_VMBLOCK_INIT
   }
 	trap0(#H2_TRAP_CONFIG)
 	jumpr r31

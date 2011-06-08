@@ -20,6 +20,7 @@ extern "C" {
 #define QTHREAD_MAX_PRIORITY   252
 #define QTHREAD_STATUS_DELETED 0xbabe
 
+typedef uint32_t  blast_addr_t;
 typedef uint32_t  bl_addr_t;
 typedef uint32_t  qobject_t;
 

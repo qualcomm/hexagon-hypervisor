@@ -18,5 +18,7 @@ void h2_thread_stop(void);
 int h2_thread_myid(void);
 void h2_yield(void);
 
+void h2_thread_set_tid(unsigned int);
+unsigned int h2_thread_get_tid (void);
 #endif
 

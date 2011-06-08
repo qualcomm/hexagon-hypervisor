@@ -157,7 +157,7 @@ void H2K_vmtrap_start(H2K_thread_context *me)
 
 	s32_t ret;
 	/* FIXME: need to pass arg1?  use vmblock bestprio instead of base_prio? */
-	                     /*      pc       sp  arg1 */
+	                               /*      pc       sp  arg1 */
 	ret = H2K_thread_create_no_squash(me->r00, me->r01, 0, me->base_prio, me->vmblock, me);
 	if (ret < 0) { //error
 		me->r00 = ret;

@@ -4,7 +4,7 @@
  */
 
 /*
- * h2_register_fastint.S
+ * h2_fastint.S
  * This file contains the implementation for registering a fast interrupt
  */
 
@@ -12,6 +12,12 @@
 
 	.global h2_register_fastint
 h2_register_fastint:
+	trap0(#H2_TRAP_REGISTER_FASTINT)
+	jumpr r31
+
+	.global h2_deregister_fastint
+h2_deregister_fastint:
+	r1 = #0 // null means deregister
 	trap0(#H2_TRAP_REGISTER_FASTINT)
 	jumpr r31
 

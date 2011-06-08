@@ -7,6 +7,7 @@
 #define BLAST_POWER_H
 
 #include <blast_error.h>
+#include <assert.h>
 
 #define BLAST_POWER_SHUTDOWN       0
 #define BLAST_TCXO_SHUTDOWN        1
@@ -18,59 +19,71 @@
 
 static inline int blast_power_control (int power, int tcxo_control)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline int blast_power_shutdown_prepare (void)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline int blast_power_shutdown_fail_exit (void)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline int blast_power_shutdown (void)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline int blast_power_shutdown_exit (void)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline int blast_power_tcxo_prepare (void)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline int blast_power_tcxo_fail_exit (void)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline int blast_power_tcxo_enter (void)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline int blast_power_tcxo_exit (void)
 {
-  return EOK;
+	assert(0);
+	return EOK;
 }
 
 static inline void blast_power_wait_for_idle (void)
 {
+	assert(0);
 }
 
 static inline void blast_power_wait_for_active (void)
 {
+	assert(0);
 }
 
 static inline void blast_system_ipend_clear (unsigned int ipend)
 {
+	assert(0);
 }
 
 #endif

@@ -10,10 +10,12 @@
 
 #include <blast_fd.h>
 #include <blast_tls.h>
+#include <blast_power.h>
 #define RENAME_PREFIX blast
 #include <h2_rename.h>
 #undef RENAME_PREFIX
 #include <stddef.h>
+#include <assert.h>
 
 //  Signal used to indicate to anybody waiting for an interrupt that
 //  it was deregistered.
@@ -119,6 +121,13 @@ static inline void blast_sem_destroy(h2_sem_t *sem)
 	return;
 }
 
+// because blast_mutex_t is used for both mutex and rmutex
+// blast_mutex_t is typdeffed to h2_rmutex_t
+static inline void blast_cond_wait(h2_cond_t *cond, h2_rmutex_t *mutex)
+{
+	h2_cond_wait(cond, (h2_mutex_t *) (mutex + offsetof(h2_rmutex_t, mutex)));
+}
+
 static inline void blast_cond_destroy(h2_cond_t *cond) 
 {
 	return;
@@ -164,6 +173,14 @@ static inline void blast_exit(int status)
 {
 	exit(status);
 }
+
+//probably definetly wrong!
+static inline int blast_get_my_anysignal()
+{
+	assert(0);
+	return 1;
+}
+	
 
 void blast_deregister_fastint(int intno);
 

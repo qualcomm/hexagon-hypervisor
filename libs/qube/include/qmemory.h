@@ -107,7 +107,6 @@ static inline int qmem_region_create(qmem_region_t *region, size_t sz, qmem_pool
  * @return        EOK if deletion is successful;
  * @return        EINVALID if region is not a valid handle; 
  */
-//static inline int qmem_region_delete(qmem_region_t region) { return EOK; } 
 static inline int qmem_region_delete(qmem_region_t region) { free((void *)region); return EOK; }
 
 /**
@@ -223,6 +222,17 @@ static inline void qmem_region_attr_settype(qmem_region_attr_t *attr, qmem_regio
 }
 
 /**
+ * Get memory size
+ *
+ * @param attr  Attributes object
+ * @param size  Memory size
+ * @return      void
+ */
+static inline void qmem_region_attr_getsize(qmem_region_attr_t *attr, size_t *size){
+    *size = 0;
+}
+
+/**
  * Get memory type
  *
  * @param attr  Attributes object
@@ -314,6 +324,50 @@ static inline void qmem_region_attr_setcachemode(qmem_region_attr_t *attr, qmem_
 static inline void qmem_region_attr_getcachemode(qmem_region_attr_t *attr, qmem_cache_mode_t *mode){
     (*mode) = attr->cache_mode;
 }
+/**
+ * Query physical address in static mappings: if given physical address is found in
+ * existing static mappings, and memory attributes match, virtual address of  
+ * this mapping is returned back to the user, -1 otherwise 
+ *
+ * @param paddr             Physical address
+ * @param vaddr       [OUT] Virutal address corresponding to paddr
+ * @param page_size         Size of memory to map
+ * @param cache_atrribs     Cacheability
+ * @param perm              Page permissions
+ * @return                  int error code 
+ *                          EOK  : found corresponding mapping, return virtual address (0) 
+ *                          EMEM : mapping does not exist in static table of mappings, return -1 as virutual address (1)
+ *                          EVAL : page attribute(s) do not match, return -1 as virtual address (2)
+ */
+static inline int blast_mem_map_static_query(unsigned int *vaddr, unsigned int paddr, size_t page_size, 
+					     qmem_cache_mode_t cache_attribs, qmem_perm_t perm) {
+    return EINVALID;
+}
+                           
+
+/**
+ * Query list of all existing regions (including image) based on virt or phys address;  
+ * to query for vaddr based on paddr, set vaddr = INVALID_ADDR, paddr = address;
+ * to query for paddr based on vaddr, set vaddr = address, paddr = INVALID_ADDR;
+ * setting both vaddr = INVALID_ADDR, paddr = INVALID_ADDR or vaddr = address, paddr = address are cases of invalid input;
+ * valid region_handle can be further used as input to qmem_region_get_attr() to retrieve desired attributes;
+ * 
+ * @param region_handle	  [OUT] handle to a region containing specified address
+ * @param vaddr                 virtual address
+ * @param paddr                 physical address
+ * @return                      int error code
+ *                              EOK  : found corresponding region, region_handle contains valid handle
+ *                              EMEM : region with specified address could not be found, region_handle = INVALID_ADDR
+ *                              -1 : invalid input parameters, region_handle = INVALID_ADDR
+ */
+int blast_mem_region_query(qmem_region_t *region_handle, blast_addr_t vaddr, blast_addr_t paddr);
+
+int blast_create_mapping(unsigned int vaddr, unsigned int paddr, size_t size,
+                         qmem_cache_mode_t cache_attribs, qmem_perm_t perm);
+
+int blast_remove_mapping(unsigned int vaddr, unsigned int paddr, size_t size);
+
+unsigned int blast_lookup_physaddr (unsigned int vaddr);
 
 #ifdef __cplusplus
 } /* closing brace for extern "C" */

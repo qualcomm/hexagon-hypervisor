@@ -1,6 +1,16 @@
 //MEMORY MAP	GLOBAL	ASID	VPN		PERMISSIONS	CACHEABILITY	PGSIZE		PART	PPN
-// Don't map page at address 0 - we lose NULL dereference checking.
+// Don't map page at address 0 - we lose NULL dereference checking...
+// except that by default all our builds build stuff to 0... so it breaks normal stuff.
 MEMORY_MAP(	1,	0,	0x00000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
+
+/* LPASS main text/data */
+MEMORY_MAP(	1,	0,	0x46000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x46000)
+MEMORY_MAP(	1,	0,	0x47000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x47000)
+MEMORY_MAP(	1,	0,	0x48000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x47000)
+MEMORY_MAP(	1,	0,	0x49000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x47000)
+MEMORY_MAP(	1,	0,	0x4a000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x47000)
+MEMORY_MAP(	1,	0,	0x4b000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x47000)
+
 MEMORY_MAP(	1,	0,	0x01000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x01000)
 MEMORY_MAP(	1,	0,	0x02000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x02000)
 MEMORY_MAP(	1,	0,	0x03000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x03000)
@@ -32,10 +42,9 @@ MEMORY_MAP(	1,	0,	0x1c000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x1c000)
 MEMORY_MAP(	1,	0,	0x1d000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x1d000)
 MEMORY_MAP(	1,	0,	0x1e000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x1e000)
 MEMORY_MAP(	1,	0,	0x1f000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x1f000)
-MEMORY_MAP(	1,	0,	0x3c000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3c000)
-MEMORY_MAP(	1,	0,	0x3d000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3d000)
 MEMORY_MAP(	1,	0,	0x3e000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3e000)
 MEMORY_MAP(	1,	0,	0x3f000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3f000)
+#if 0
 /*  Modem FW hardware  */
 MEMORY_MAP(     1,              0,      0xab000,        RWX,            UC,             SIZE_16M,       MAIN,   0xab000)	// ADSP_REG
 MEMORY_MAP(     1,              0,      0xb0000,        RW,             UC,             SIZE_16M,       MAIN,   0xb0000)        // HW_MODEM
@@ -44,23 +53,17 @@ MEMORY_MAP(     1,              0,      0xb3000,        RW,             UC,     
 MEMORY_MAP(     1,              0,      0xb4000,        RW,             UC,             SIZE_16M,       MAIN,   0xb4000)        // HW_MODEM
 MEMORY_MAP(     1,              0,      0xb5000,        RW,             UC,             SIZE_16M,       MAIN,   0xb5000)        // HW_MODEM
 
-MEMORY_MAP(	1,	0,	0x7c000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x7c000)
-MEMORY_MAP(	1,	0,	0x7d000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x7d000)
 MEMORY_MAP(	1,	0,	0x7e000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x7e000)
 MEMORY_MAP(	1,	0,	0x7f000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x7f000)
+#else
+/* Audio HW */
 
-#if 0
-MEMORY_MAP(	1,	0,	0x20000,	RWX,		L1WB_L2C,	SIZE_1M,	MAIN,	0x03000)	// for h264: circ buf
-MEMORY_MAP(	1,	0,	0x20100,	RWX,		L1WB_L2C,	SIZE_1M,	MAIN,	0x03100)	// for h264: circ buf
-MEMORY_MAP(	1,	0,	0x20200,	RWX,		L1WB_L2C,	SIZE_1M,	MAIN,	0x03000)	// for h264: circ buf
+MEMORY_MAP(	1,	0,	0x28000,	RWX,		UC,		SIZE_16M,	MAIN,	0x28000)
 
-MEMORY_MAP(     1,      0,      0xd8000,        RWX,            L1WB_L2C,      SIZE_64K,       MAIN,	0xd8000)	// for h264: tcm
-MEMORY_MAP(     1,      0,      0xd8010,        RWX,            L1WB_L2C,      SIZE_64K,       MAIN,	0xd8010)	// for h264: tcm
-
-
-MEMORY_MAP(     1,      0,      0xc0000,        RWX,            L1WB_L2C,      SIZE_64K,       MAIN,	0xc0000)	// for h264: imem
 #endif
 
+
+#if 0
 MEMORY_MAP(	1,	0,	0x80000,	RWX,		L1WB_L2CWB_AUX,	SIZE_16M,	MAIN,	0x00000)
 MEMORY_MAP(	1,	0,	0x81000,	RWX,		L1WB_L2CWB_AUX,	SIZE_16M,	MAIN,	0x01000)
 MEMORY_MAP(	1,	0,	0x82000,	RWX,		L1WB_L2CWB_AUX,	SIZE_16M,	MAIN,	0x02000)
@@ -78,4 +81,7 @@ MEMORY_MAP(	1,	0,	0x8c000,	RWX,		L1WB_L2CWB_AUX,	SIZE_16M,	MAIN,	0x0c000)
 MEMORY_MAP(	1,	0,	0x8d000,	RWX,		L1WB_L2CWB_AUX,	SIZE_16M,	MAIN,	0x0d000)
 MEMORY_MAP(	1,	0,	0x8e000,	RWX,		L1WB_L2CWB_AUX,	SIZE_16M,	MAIN,	0x0e000)
 MEMORY_MAP(	1,	0,	0x8f000,	RWX,		L1WB_L2CWB_AUX,	SIZE_16M,	MAIN,	0x0f000)
+#endif
+
+
 

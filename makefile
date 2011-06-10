@@ -22,15 +22,21 @@ endif
 
 all: ref doc gtags
 
-clean:
+distclean: clean docclean
+
+clean: covclean
 	make -C kernel ARCHV=$(ARCHV) clean && \
 	make -C libs ARCHV=$(ARCHV) clean && \
-	make -f scripts/Makefile.coverage clean && \
-	make -f scripts/Makefile.coverage clean_top && \
-	make -f scripts/docs/Makefile.sphinx clean && \
 	rm -Rf size test.exe stats.txt install kernel/stats.txt
 
-opt: clean
+docclean:
+	make -f scripts/docs/Makefile.sphinx clean
+
+covclean:
+	make -f scripts/Makefile.coverage clean && \
+	make -f scripts/Makefile.coverage clean_top
+
+opt:
 	make -C kernel ARCHV=$(ARCHV) opt_install && \
 	make -C libs ARCHV=$(ARCHV) install && \
 	make -f scripts/Makefile.coverage prepare;
@@ -65,5 +71,5 @@ compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
 gtags:
-	find kernel libs tst guest -type f -print | gtags -w -v -f -
+	find kernel libs tst guest ucos -type f -print | gtags -w -v -f -
 	htags -afhnosTxv --show-position

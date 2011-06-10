@@ -341,7 +341,8 @@ static inline void qmem_region_attr_getcachemode(qmem_region_attr_t *attr, qmem_
  */
 static inline int blast_mem_map_static_query(unsigned int *vaddr, unsigned int paddr, size_t page_size, 
 					     qmem_cache_mode_t cache_attribs, qmem_perm_t perm) {
-    return EINVALID;
+    vaddr = (unsigned int *)(paddr);
+    return EOK;
 }
                            
 

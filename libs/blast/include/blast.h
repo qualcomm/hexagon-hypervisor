@@ -38,7 +38,7 @@ static inline int blast_thread_create(void *pc, void *stack, void *arg,
 	 * might as well fudge the priority too 
 	 */
 
-	return h2_thread_create(pc,stack,arg,prio/8);
+	return h2_thread_create(pc,stack,arg,prio);
 }
 
 static inline void blast_thread_exit(int status)

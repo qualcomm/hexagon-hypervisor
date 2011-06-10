@@ -79,9 +79,9 @@ FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 
 #if __QDSP6_ARCH__ >= 4
 	r3:2 = g1:0
-	memd(r0+#CONTEXT_gelr_gbadva) = r3:2
+	memd(r0+#CONTEXT_gssr_gelr) = r3:2
 	r3:2 = g3:2
-	memd(r0+#CONTEXT_gssr_gosp) = r3:2
+	memd(r0+#CONTEXT_gbadva_gosp) = r3:2
 #endif
 
 	/* If not in guest mode, permission error */
@@ -105,9 +105,9 @@ FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 	r0 = sgp
 
 #if __QDSP6_ARCH__ >= 4
-	r5:4 = memd(r0+#CONTEXT_gelr_gbadva)
+	r5:4 = memd(r0+#CONTEXT_gssr_gelr)
 	g1:0 = r5:4
-	r5:4 = memd(r0+#CONTEXT_gssr_gosp)
+	r5:4 = memd(r0+#CONTEXT_gbadva_gosp)
 	g3:2 = r5:4
 #endif
 

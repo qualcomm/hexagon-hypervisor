@@ -183,14 +183,14 @@ void H2K_vmtrap_vmpid(H2K_thread_context *me)
 /* 21 */
 void H2K_vmtrap_setregs(H2K_thread_context *me)
 {
-	me->gelr_gbadva = me->r0100;
-	me->gssr_gosp   = me->r0302;
+	me->gssr_gelr = me->r0100;
+	me->gbadva_gosp = me->r0302;
 }
 
 /* 22 */
 void H2K_vmtrap_getregs(H2K_thread_context *me)
 {
-	me->r0100 = me->gelr_gbadva;
-	me->r0302 = me->gssr_gosp;
+	me->r0100 = me->gssr_gelr;
+	me->r0302 = me->gbadva_gosp;
 }
 

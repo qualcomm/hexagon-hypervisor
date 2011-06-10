@@ -42,6 +42,8 @@
 #include <qube.h>
 #include <qtimer.h>
 #include "qTimerDefines.h"
+#include "qTimerLibs.h"
+#include "qTimerServer.h"
 
 /*****************************************************************************/
 /*                                                                           */
@@ -692,11 +694,9 @@ int qtimer_delete(qtimer_t timer)
 int qtimer_sleep ( qtimer_duration_t duration )
 {
     /* Parameters to send to message queue server */
-    long long unsigned int data[4]; /* Cache line. Aligned for fast send */
-    unsigned int *data_ptr = (unsigned int *)data;
+    //    long long unsigned int data[4]; /* Cache line. Aligned for fast send */
     blast_anysignal_t cb_signal;
     //qtimer_callback_t cb;
-    int rc, result;
     qtimer_cmd_t cmd;
     qtimer_cmd_create_t create;
 
@@ -809,6 +809,7 @@ int qtimer_group_disable (unsigned int group)
     blast_rmutex_lock (&blast_timer_lock);
     qtimer_lib_group_disable (group);
     blast_rmutex_unlock (&blast_timer_lock);
+    return 0;
 #endif /* 0 */
 }
 

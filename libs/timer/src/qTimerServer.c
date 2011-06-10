@@ -103,9 +103,6 @@ static int qtimer_lib_get_attr ( qtimer_client_ptr client, qtimer_attr_t *attr )
     /* absolute time tick elapsed */
     qtimetick_type now;
 
-    /* Store result */
-    int result;
-
     /* Duration value in timeticks */
     qtimetick_word_t duration;
 
@@ -433,7 +430,6 @@ static int qtimer_lib_timer_cancel ( qtimer_client_ptr client )
  */
 void qTimerServer ( void *arg)
 {
-    int rc;
     bool respond;
     /* Pointer to the client */
     qtimer_t *client;

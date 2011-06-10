@@ -26,7 +26,7 @@ struct blast_sclk_client {
    qtimer_t qtimer;
 };
 
-struct blast_sclk_client blast_sclk_client[MAX_BLAST_SCLK_CLIENTS] = {0};
+struct blast_sclk_client blast_sclk_client[MAX_BLAST_SCLK_CLIENTS] = {{0}};
 
 /* Mutex to protect the blast_sclk_client */
 blast_mutex_t blast_system_lock;
@@ -86,7 +86,7 @@ int blast_system_sclk_alarm (int id, unsigned int ref_count, unsigned int match_
    qtimer_attr_setduration (&attr, QTIMER_TIMETICK_TO_US(duration));
    rc = sclk_timer_create (&blast_sclk_client[id].qtimer, &attr, blast_sclk_client[id].signal, blast_sclk_client[id].signal_mask);
    if (rc != EOK) {
-      printf ("Qtimer create failed, rc =  \n", rc);
+      printf ("Qtimer create failed, rc =  0x%x\n", rc);
    }
 
    blast_mutex_unlock (&blast_system_lock);
@@ -108,7 +108,7 @@ int blast_system_sclk_timer (int id, unsigned int duration)
    qtimer_attr_setduration (&attr, duration);
    rc = sclk_timer_create (&blast_sclk_client[id].qtimer, &attr, blast_sclk_client[id].signal, blast_sclk_client[id].signal_mask);
    if (rc != EOK) {
-      printf ("Qtimer create failed, rc =  \n", rc);
+      printf ("Qtimer create failed, rc =  0x%x\n", rc);
    }
 
    blast_mutex_unlock (&blast_system_lock);

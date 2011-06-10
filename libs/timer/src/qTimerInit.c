@@ -5,6 +5,7 @@
 
 #include <qube.h>
 #include "qTimerDefines.h"
+#include "qTimerLibs.h"
 #include "qtimer.h"
 
 #define BLAST_TIMER_IST_BUF_COUNT     10
@@ -30,9 +31,7 @@ static blast_sem_t qtimer_IST_started;
 
 void qtimer_IST (void *arg)
 {
-   qch_t ch;
-   qmsgq_t msgq;
-   int rc, ret;
+   int ret;
    unsigned int int_num;
    qtimer_cmd_t isr_cmd;
 

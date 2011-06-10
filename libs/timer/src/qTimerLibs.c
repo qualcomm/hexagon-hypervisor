@@ -545,7 +545,7 @@ void qtimer_lib_isr ( void )
 {
     /* Timer TCXO time-stamp values */
     qtimetick_type now, first;
-    qtimetick_word_t cur_count, diff_count, new_count, count_lapse, match_value;
+    qtimetick_word_t cur_count, diff_count, count_lapse, match_value;
    
     /* Pointer to a timer.  Used for walking list of timers */
     qtimer_client_ptr timer;

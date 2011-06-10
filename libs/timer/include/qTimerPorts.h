@@ -7,7 +7,7 @@
 #define _QTIMER_PORTS_H_
 
 //#define QDSP6_RGPT_BASE	            0xAB000000ul
-extern unsigned int QDSP6_QTIMER_BASE;
+
 //#define QDSP6_UGPT_BASE	            0xAB004000ul
 //extern unsigned int QDSP6_UGPT_BASE;
 #define ADSP_RGPT_MATCH_VAL         ((QDSP6_QTIMER_BASE) + 0x0)

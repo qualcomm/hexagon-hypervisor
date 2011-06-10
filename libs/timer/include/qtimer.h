@@ -48,13 +48,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-static unsigned int QDSP6_QTIMER_BASE = 0x28880000;
-static unsigned int BLAST_timer_intno = 2;
-static unsigned int BLAST_timerIST_priority = 254;
-static unsigned int BLAST_timerIST_bitmask = 0xff;
-static unsigned int BLAST_timer_priority = 253;
-static unsigned int BLAST_timer_bitmask  = 0xff;
+#define QDSP6_QTIMER_BASE 0x28880000
 
 /*****************************************************************************/
 /*                                                                           */

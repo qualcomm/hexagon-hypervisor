@@ -244,4 +244,7 @@ int qtimer_lib_group_disable (unsigned int group);
  */
 void qtimer_lib_process_group_expiry (unsigned int group);
 
+void blast_timer_IST_init (void);
+int qtimer_lib_stop_active_timer ( qtimer_client_ptr timer );
+
 #endif /* _QTIMER_LIBS_H */

@@ -5,6 +5,7 @@
 
 #include <qube.h>
 #include "qTimerDefines.h"
+#include "qTimerLibs.h"
 #include "qtimer.h"
 
 #define BLAST_TIMER_IST_BUF_COUNT     10
@@ -15,11 +16,11 @@
 
 #define MAX_QTIMER_MSGS               100
 
-extern unsigned int BLAST_timer_priority;
-extern unsigned int BLAST_timer_bitmask;
-extern unsigned int BLAST_timerIST_priority;
-extern unsigned int BLAST_timerIST_bitmask;
-extern unsigned int BLAST_timer_intno;
+unsigned int BLAST_timer_intno = 2;
+unsigned int BLAST_timerIST_priority = 254;
+unsigned int BLAST_timerIST_bitmask = 0xff;
+unsigned int BLAST_timer_priority = 253;
+unsigned int BLAST_timer_bitmask = 0xff;
 
 blast_pipe_t *qtimer_serv_pipe;
 int qtimer_init_done = 0;
@@ -30,9 +31,7 @@ static blast_sem_t qtimer_IST_started;
 
 void qtimer_IST (void *arg)
 {
-   qch_t ch;
-   qmsgq_t msgq;
-   int rc, ret;
+   int ret;
    unsigned int int_num;
    qtimer_cmd_t isr_cmd;
 

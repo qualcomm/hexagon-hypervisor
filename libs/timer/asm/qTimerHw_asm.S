@@ -10,6 +10,7 @@
 .equ CLEAR_OFFSET, 12
 
 .equ QDSP6_QTIMER_BASE, 0x28880000
+//.equ QDSP6_QTIMER_BASE, 0x0
 .equ QTIMER_TEST_COUNT, 0xFFFFFFF0
 
 	//void hw_timer_init (qtimetick_word_t match)
@@ -20,7 +21,8 @@ hw_timer_init:
 		r2.l = #lo(QDSP6_QTIMER_BASE)
 	{
 		//r2 = memw (#QDSP6_QTIMER_BASE)
-		r2 = memw(r2)
+		//r2 = memw(r2)
+		//r2 = #0 
 		r1 = #0
 		r3.h = #hi(QTIMER_TEST_COUNT)
 	}
@@ -34,17 +36,17 @@ hw_timer_init:
 	/* Reset the timer count */
 	memw (r2 + #CLEAR_OFFSET) = r1
 #else /* QTIMER_ROLLOVER_TEST */
-	memw (r2 + #COUNT_OFFSET) = r3
+	//memw (r2 + #COUNT_OFFSET) = r3
 1:
-	r1 = memw (r2 + #COUNT_OFFSET)
-	{
-		p0 = cmp.eq (r1, r3)
-		if (!p0.new) jump:nt 1b
-	}
+	//r1 = memw (r2 + #COUNT_OFFSET)
+	//{
+	//	p0 = cmp.eq (r1, r3)
+	//	if (!p0.new) jump:nt 1b
+	//}
 #endif /* QTIMER_ROLLOVER_TEST */
 	/* Reset the Match Value to Maximum */
 	{
-		memw (r2 + #MATCH_OFFSET) = r0
+		memw (r2 + #MATCH_OFFSET) = r3
 		r1 = #1
 	}
 	/* Enable Timer Hardware but clear CLR_ON_MATCH_EN */
@@ -60,7 +62,7 @@ hw_timer_curr_timetick:
 	r2.h = #hi(QDSP6_QTIMER_BASE)
 	r2.l = #lo(QDSP6_QTIMER_BASE)
 	//r2 = memw (#QDSP6_QTIMER_BASE)
-	r2 = memw(r2)
+	//r2 = memw(r2)
 	r0 = memw (r2 + #COUNT_OFFSET)
 1:
 	r1 = memw (r2 + #COUNT_OFFSET)
@@ -78,7 +80,7 @@ hw_timer_curr_timetick:
 hw_timer_match_val:
 	r2.h = #hi(QDSP6_QTIMER_BASE)
 	r2.l = #lo(QDSP6_QTIMER_BASE)
-	r2 = memw(r2)
+	//r2 = memw(r2)
 	{
 		r0 = memw (r2 + #MATCH_OFFSET)
 		jumpr r31
@@ -93,7 +95,7 @@ hw_timer_prg_next_interrupt:
 	r2.h = #hi(QDSP6_QTIMER_BASE)
 	r2.l = #lo(QDSP6_QTIMER_BASE)
 	//r2 = memw (#QDSP6_QTIMER_BASE)
-	r2 = memw(r2)
+	//r2 = memw(r2)
 	r3 = memw (r2 + #COUNT_OFFSET)
 	r4 = sub (r3, r1)
 	{

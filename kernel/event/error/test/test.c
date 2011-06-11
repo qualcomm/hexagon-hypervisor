@@ -129,7 +129,8 @@ int main()
 	 * We should not switch stacks
 	 */
 	me->gevb = (TH_guest_vectors);
-	me->gssr_gosp = 0x0000000000000000ULL | ((u32_t)(&guest_stack[128]));
+	me->gssr = 0;
+	me->gosp = (u32_t)(&guest_stack[128]);
 	TH_expect_fatal = 0;
 	TH_saw_fatal = 0;
 	TH_stack_switch = 0;
@@ -142,7 +143,8 @@ int main()
 	/* We should switch stacks, but not call fatal thread */
 	TH_usermode();
 	me->gevb = (TH_guest_vectors);
-	me->gssr_gosp = 0x0000000000000000ULL | ((u32_t)(&guest_stack[128]));
+	me->gssr = 0;
+	me->gosp = (u32_t)(&guest_stack[128]);
 	TH_expect_fatal = 0;
 	TH_saw_fatal = 0;
 	TH_stack_switch = 0;

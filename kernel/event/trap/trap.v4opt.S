@@ -149,11 +149,15 @@ H2K_trap_nogood:
 	/* r21:20 == elr:elr */
 	/* r22 == ssr */
 	/* p1 == (gevb == 0) */
-	{
+//	{
 		if (p1) jump .Lfatal
 		// if gevb, do guest event
-		if (!p1) memd(r7+#CONTEXT_gelr_gbadva) = r21:20  // elr:elr
-		r25:24 = memd(r7+#CONTEXT_gssr_gosp)
+		if (!p1) memw(r7+#CONTEXT_gssr_gelr) = r21  // elr:elr
+		if (!p1) memw(r7+#CONTEXT_gbadva_gosp+4) = r20  // elr:elr
+//	}
+	{
+		r25 = memw(r7+#CONTEXT_gssr_gelr+4) 	// gssr
+		r24 = memw(r7+#CONTEXT_gbadva_gosp) 	// gosp
 		p0 = tstbit(r22,#SSR_GUEST_BIT)
 	}
 	{
@@ -163,8 +167,12 @@ H2K_trap_nogood:
 		r25 = zxtb(r24)
 		r20 = add(r19,#TRAP0_GEVB_OFFSET)
 	}
+//	{
+	  // ??? not tested?
+		memw(r7+#CONTEXT_gssr_gelr+4) = r25  	// gssr
+		memw(r7+#CONTEXT_gbadva_gosp) = r24 	// gosp
+//	}
 	{
-		memd(r7+#CONTEXT_gssr_gosp) = r25:24  // ??? not tested?
 		r21 = setbit(r22,#SSR_GUEST_BIT)
 		p3:0 = r27
 		r27:26 = memd(r7+#CONTEXT_r2726)

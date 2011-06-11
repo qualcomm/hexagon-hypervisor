@@ -57,18 +57,18 @@ typedef struct _h2_thread_context
 	/* Context required for OS calls... callee save + ugp/gp/etc */
 	/* V3 callee-save is a lot bigger. :-| */
 	union {
-		u64_t gelr_gbadva;
+		u64_t gssr_gelr;    // was gelr_gbadva
 		struct {
-			u32_t gbadva;
 			u32_t gelr;
+			u32_t gssr;
 		};
 	};
 	// 32
 	union {
-		u64_t gssr_gosp;
+		u64_t gbadva_gosp;  // was gssr_gosp
 		struct {
 			u32_t gosp;
-			u32_t gssr;
+			u32_t gbadva;
 		};
 	};
 	u64_t reserved_u64;

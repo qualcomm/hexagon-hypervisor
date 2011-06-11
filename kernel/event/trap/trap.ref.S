@@ -130,9 +130,13 @@ H2K_trap_nogood:
 	/* Preds are in R18 */
 	/* r17:16 == ssr:elr */
 .Lguest_trap:
-	r27:26 = combine(r16,r16)
-	memd(r7+#CONTEXT_gelr_gbadva) = r27:26
-	r25:24 = memd(r7+#CONTEXT_gssr_gosp)
+	//r27:26 = combine(r16,r16)
+	memw(r7+#CONTEXT_gssr_gelr) = r16   		// gelr
+	memw(r7+#CONTEXT_gbadva_gosp+4) = r16 	// gbadva
+
+	r25 = memw(r7+#CONTEXT_gssr_gelr+4)			// gssr
+	r24 = memw(r7+#CONTEXT_gbadva_gosp) 		// gosp
+
 	p0 = tstbit(r17,#SSR_GUEST_BIT)
 	{
 		if (!p0) r24 = r29
@@ -141,7 +145,10 @@ H2K_trap_nogood:
 	memw(r7+#CONTEXT_r2928+4) = r29
 	/* TBD: set up GSSR in r25 */
 	r25 = zxtb(r17)
-	memd(r7+#CONTEXT_gssr_gosp) = r25:24
+
+	memw(r7+#CONTEXT_gssr_gelr+4) = r25 	// gssr
+	memw(r7+#CONTEXT_gbadva_gosp) = r24 	// gosp
+
 	r16 = add(r23,#TRAP0_GEVB_OFFSET)
 	r17 = setbit(r17,#SSR_GUEST_BIT)
 	memd(r7+#CONTEXT_ssrelr) = r17:16

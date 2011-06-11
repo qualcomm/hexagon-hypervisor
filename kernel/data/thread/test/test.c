@@ -27,7 +27,7 @@ int main()
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	a.next = a.prev = &a;
 	a.tid = a.prio = 3;
-	a.gelr_gbadva = 0x1234;
+	a.gssr_gelr = 0x1234;
 	a.r3130 = 0x4321;
 	a.r0908 = 0x3333;
 	a.cs1cs0 = 0x3456;

@@ -40,6 +40,8 @@ void h2_rmutex_lock(h2_rmutex_t *lock)
 	}
 }
 
+/* FIXME: check owner before decrementing depth?  return error? */
+
 void h2_rmutex_unlock(h2_rmutex_t *lock)
 {
 	/* Decrement Depth */
@@ -54,7 +56,7 @@ void h2_rmutex_unlock(h2_rmutex_t *lock)
 int h2_rmutex_trylock(h2_rmutex_t *lock)
 {
 	unsigned int my_id = h2_thread_myid();
-	if (h2_mutex_trylock(&lock->mutex) != 0) {
+	if (h2_mutex_trylock(&lock->mutex) == 0) {
 		/* Trylock succeded, set depth and owner */ 
 		lock->depth = 1;
 		lock->owner_id = my_id;

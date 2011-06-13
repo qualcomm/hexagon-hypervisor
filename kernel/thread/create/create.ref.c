@@ -45,6 +45,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	}
 
 	if (prio > MAX_PRIO) return -1;        // bad prio
+#warning this is broken but required for audio
 	//if (prio < bestprio) return -1;	       // priority better than allowed
 
 	if ((sp & 7) != 0) return -1;          // bad stack pointer alignment

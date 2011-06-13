@@ -15,6 +15,7 @@
 	.global h2_cond_signal
 	.global h2_cond_broadcast
 	.global h2_cond_wait
+	.global h2_cond_wait_rmutex
 
 /*
  * About the implementation of the condition variables:
@@ -125,5 +126,64 @@ h2_cond_wait:
 	{
 		deallocframe
 		jump h2_mutex_lock
+	}
+
+	/* 
+	 * Condition Wait for rmutex
+	 * - Read the condition variable
+	 * - Unlock the mutex (once)
+	 * - Bump n_waiting in the condition variable, check that count matches old read
+	 * - Block
+	 * - When unblocked, decrement n_waiting
+	 * - Acquire lock (once)
+	 * - return
+	 * 
+	 * Note: in Linux, we have a call to requeue the threads waiting on the 
+	 * condition var to wait on the mutex.  As it is now, most of these threads
+	 * will wake up and go right back to sleep waiting on the mutex.  Oh well.
+	 */
+h2_cond_wait_rmutex:
+	{
+		allocframe(#16)
+		r3:2 = combine(#1,#0)
+	}
+	{
+		memd(r29+#0) = r25:24
+		r24 = memw(r0)
+		r25 = combine(r3.l,r2.l)		// 0x00010000 for addition
+	}
+	{
+		memd(r29+#8) = r27:26
+		r27:26 = combine(r1,r0)
+		r0 = r1
+		call h2_rmutex_unlock
+	}
+1:
+	r0 = memw_locked(r26)
+	{
+		p1 = vcmph.eq(r25:24,r1:0)		// we care about lowest halfword
+		if (!p1.new) jump:nt 8f			// while unlocking, count changed
+		r1 = vadduh(r0,r25):sat			// bump threads waiting
+	}
+	memw_locked(r26,p0) = r1			// write new value
+	{
+		if (!p0) jump 1b			// not atomic, try again
+		r0 = r26				// futexptr for trap
+	}
+	trap0(#H2_TRAP_FUTEX_WAIT)
+1:							// Now, decrement n_waiting
+	r0 = memw_locked(r26)
+	r1 = vsubuh(r0,r25):sat				// bump threads waiting
+	memw_locked(r26,p0) = r1			// write new value
+	if (!p0) jump 1b				// not atomic, try again
+8:							// lock and return
+	{
+		r25:24 = memd(r29+#0)
+		r27:26 = memd(r29+#8)
+		r0 = r27
+	}
+	{
+		deallocframe
+		jump h2_rmutex_lock
 	}
 

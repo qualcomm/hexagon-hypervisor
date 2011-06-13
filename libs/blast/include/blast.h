@@ -125,7 +125,7 @@ static inline void blast_sem_destroy(h2_sem_t *sem)
 // blast_mutex_t is typdeffed to h2_rmutex_t
 static inline void blast_cond_wait(h2_cond_t *cond, h2_rmutex_t *mutex)
 {
-	h2_cond_wait(cond, (h2_mutex_t *) (mutex + offsetof(h2_rmutex_t, mutex)));
+	h2_cond_wait_rmutex(cond, mutex);
 }
 
 static inline void blast_cond_destroy(h2_cond_t *cond) 

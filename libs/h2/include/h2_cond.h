@@ -7,6 +7,7 @@
 #define H2_COND_H 1
 
 #include <h2_mutex.h>
+#include <h2_rmutex.h>
 
 typedef union {
 	unsigned int raw;
@@ -19,6 +20,7 @@ typedef union {
 void h2_cond_signal(h2_cond_t *cond);
 void h2_cond_broadcast(h2_cond_t *cond);
 void h2_cond_wait(h2_cond_t *cond, h2_mutex_t *mutex);
+void h2_cond_wait_rmutex(h2_cond_t *cond, h2_rmutex_t *mutex);
 static inline void h2_cond_init(h2_cond_t *cond) { cond->raw = 0; };
 
 #endif

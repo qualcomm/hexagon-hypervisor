@@ -44,9 +44,10 @@ MEMORY_MAP(	1,	0,	0x1e000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x1e000)
 MEMORY_MAP(	1,	0,	0x1f000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x1f000)
 MEMORY_MAP(	1,	0,	0x3e000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3e000)
 MEMORY_MAP(	1,	0,	0x3f000,	RWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x3f000)
-#if 0
 /*  Modem FW hardware  */
+// Need 0xab000 for timer cosim
 MEMORY_MAP(     1,              0,      0xab000,        RWX,            UC,             SIZE_16M,       MAIN,   0xab000)	// ADSP_REG
+#if 0
 MEMORY_MAP(     1,              0,      0xb0000,        RW,             UC,             SIZE_16M,       MAIN,   0xb0000)        // HW_MODEM
 MEMORY_MAP(     1,              0,      0xb2000,        RW,             UC,             SIZE_16M,       MAIN,   0xb2000)        // HW_MODEM
 MEMORY_MAP(     1,              0,      0xb3000,        RW,             UC,             SIZE_16M,       MAIN,   0xb3000)        // HW_MODEM

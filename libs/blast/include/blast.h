@@ -8,12 +8,14 @@
 
 #include <h2.h>
 
-#include <blast_fd.h>
-#include <blast_tls.h>
-#include <blast_power.h>
 #define RENAME_PREFIX blast
 #include <h2_rename.h>
 #undef RENAME_PREFIX
+
+#include <blast_fd.h>
+#include <blast_tls.h>
+#include <blast_power.h>
+
 #include <stddef.h>
 #include <assert.h>
 
@@ -25,27 +27,9 @@
 
 #define EOK 0
 
-static inline int blast_thread_create(void *pc, void *stack, void *arg, 
-	unsigned int prio, unsigned int asid, unsigned int hw_bitmask)
-{
-	/*
-	 * H2's thread create prototype is:
-	 * H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, u32_t trapmask,
-	 *    H2K_thread_context *me)
-	 * The trap automatically fills in the *me pointer, so it's really just that
-	 * ASID thing that needs changing.  Just drop that on the floor.
-	 * drop the hw_bitmask on the floor
-	 * might as well fudge the priority too 
-	 */
-
-	return h2_thread_create(pc,stack,arg,prio);
-}
-
-static inline void blast_thread_exit(int status)
-{
-	//  old blast was calling TLS free routines and calling blast_thread_stop_asm(status)
-	h2_thread_stop();
-}
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 
 static inline void blast_rmutex_destroy(blast_rmutex_t *lock)
 {
@@ -138,15 +122,19 @@ static inline void blast_barrier_destroy(h2_barrier_t *barrier)
 	return;
 }
 
-static inline void blast_anysignal_destroy(blast_anysignal_t *signal)
-{
-	return;
-}
-
 static inline void blast_thread_set_name(unsigned long long name0, 
 	unsigned long long name1)
 {
 	return;
+}
+
+int blast_thread_create(void *pc, void *stack, void *arg, 
+												unsigned int prio, unsigned int asid, unsigned int hw_bitmask);
+
+static inline void blast_thread_exit(int status)
+{
+	//  old blast was calling TLS free routines and calling blast_thread_stop_asm(status)
+	h2_thread_stop();
 }
 
 static inline int blast_prio_get(unsigned int threadid)
@@ -174,15 +162,17 @@ static inline void blast_exit(int status)
 	exit(status);
 }
 
-//probably definetly wrong!
-static inline int blast_get_my_anysignal()
-{
-	assert(0);
-	return 1;
-}
-	
+/* from blast_utcp.h */
+#define blast_get_my_utcb(pUgp)        __asm__ __volatile__ ( " %0 = ugp " :"=r"(pUgp) ) ; 
 
-void blast_deregister_fastint(int intno);
+static inline void blast_anysignal_destroy(blast_anysignal_t *signal)
+{
+	return;
+}
+
+unsigned int blast_get_my_anysignal();
+
+//void blast_deregister_fastint(int intno);
 
 //  Not really a part of the BLAST API, but it needs to happen somewhere.
 void l2_controller_init(void);
@@ -201,6 +191,10 @@ void l2_controller_init(void);
 
 #define blast_thread_wait_for_idle  blast_power_wait_for_idle
 #define blast_thread_wait_for_active blast_power_wait_for_active
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif
 

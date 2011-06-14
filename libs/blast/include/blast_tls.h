@@ -5,7 +5,7 @@
 
 #ifndef BLAST_TLS
 #define BLAST_TLS
-#include "blast_utcb.h"
+#include <blast_utcb.h>
 
 /* Maximum no. of BLAST TLSs */
 #define MAX_BLAST_TLS 64 

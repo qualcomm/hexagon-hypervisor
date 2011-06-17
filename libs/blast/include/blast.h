@@ -40,22 +40,22 @@ static inline void blast_rmutex_destroy(blast_rmutex_t *lock)
 // blast_mutex_t is typdeffed to h2_rmutex_t
 static inline void blast_mutex_lock(blast_mutex_t *lock)
 {
-	h2_mutex_lock((h2_mutex_t *) (lock + offsetof(h2_rmutex_t, mutex)));
+	h2_mutex_lock(&lock->mutex);
 }
 
 static inline void blast_mutex_unlock(blast_mutex_t *lock)
 {
-	h2_mutex_unlock((h2_mutex_t *) (lock + offsetof(h2_rmutex_t, mutex)));
+	h2_mutex_unlock(&lock->mutex);
 }
 
 static inline int blast_mutex_trylock(blast_mutex_t *lock)
 {
-	return h2_mutex_trylock((h2_mutex_t *) (lock + offsetof(h2_rmutex_t, mutex)));
+	return h2_mutex_trylock(&lock->mutex);
 }
 
 static inline void blast_mutex_init(blast_mutex_t *lock)
 {
-	h2_mutex_init((h2_mutex_t *) (lock + offsetof(h2_rmutex_t, mutex)));
+	h2_mutex_init(&lock->mutex);
 }
 static inline void blast_mutex_destroy(blast_mutex_t *lock)
 {

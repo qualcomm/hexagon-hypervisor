@@ -20,6 +20,11 @@ struct BLAST_tls_reserve {
 struct BLAST_ugp_ptr {
    /* Define BLAST_UTCB here */
    BLAST_utcb_t utcb;
+   struct BLAST_ugp_ptr *next;
+   h2_mutex_t join_lock;
+   h2_cond_t join_cond;
+   int join_refcount; 
+   enum { BLAST_JOIN_STATE_RUNNING, BLAST_JOIN_STATE_DONE } join_state;
    void *tls[MAX_BLAST_TLS];
 };
 

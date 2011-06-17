@@ -43,8 +43,9 @@ typedef struct {
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
-	void *fastint_funcptrs[MAX_INTERRUPTS] __attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
+	/* EJP: tbd: rearrange to reduce data size and/or increase locality? */
+	void *fastint_funcptrs[MAX_INTERRUPTS] __attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 	void *inthandlers[MAX_INTERRUPTS]__attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 } H2K_kg_t;
 

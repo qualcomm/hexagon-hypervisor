@@ -88,12 +88,7 @@ static inline int blast_pimutex_trylock(blast_mutex_t *lock)
 	return h2_rmutex_trylock(lock);
 }
 
-static inline int blast_thread_join(int threadid, int *status)
-{
-	//FIXME: this is probably bogus
-	// return invalid thread status (5)
-	return 5;
-}
+int blast_thread_join(int threadid, int *status);
 
 static inline unsigned short blast_sem_get_val(h2_sem_t *sem)
 {
@@ -131,11 +126,7 @@ static inline void blast_thread_set_name(unsigned long long name0,
 int blast_thread_create(void *pc, void *stack, void *arg, 
 												unsigned int prio, unsigned int asid, unsigned int hw_bitmask);
 
-static inline void blast_thread_exit(int status)
-{
-	//  old blast was calling TLS free routines and calling blast_thread_stop_asm(status)
-	h2_thread_stop();
-}
+void blast_thread_exit(int status);
 
 static inline int blast_prio_get(unsigned int threadid)
 {

@@ -27,7 +27,7 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-void TH_handler(u32_t x)
+int TH_handler(u32_t x)
 {
 }
 
@@ -42,7 +42,6 @@ int main()
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->fastint_funcptrs[i] = BAD;
 		H2K_gp->inthandlers[i] = BAD;
-		H2K_gp->fastint_mask = 0xDEADBEEFU;
 	}
 	for (i = 0; i < MAX_HTHREADS; i++) {
 		H2K_fastint_contexts[i].context.r0100 = 0xdeadbeefcafebabeULL;
@@ -63,13 +62,9 @@ int main()
 		if (H2K_fastint_contexts[i].context.hthread != i) FAIL("Uninitialized fastint context");
 		if (H2K_fastint_contexts[i].context.trapmask != TEST_FASTINT_TRAPMASK) FAIL("bad trapmask");
 	}
-	if (H2K_gp->fastint_mask) FAIL("uninitialized fastint mask");
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		if (i == RESCHED_INT) continue;
-		oldmask = H2K_gp->fastint_mask;
-		if ((1<<i) & oldmask) FAIL("fastint bit already set");
 		H2K_register_fastint(i,TH_handler,&a);
-		if (((1<<i) | oldmask) != H2K_gp->fastint_mask) FAIL("fastint mask bit not set");
 		if (H2K_gp->inthandlers[i] != H2K_fastint) FAIL("fastint handler not set");
 		if (H2K_gp->fastint_funcptrs[i] != TH_handler) FAIL("wrong handler func");
 		if (H2K_gp->fastint_gp != 0xF0000000U) FAIL("fastint gp not set");
@@ -77,20 +72,12 @@ int main()
 	/* Lets try deregistering */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		if (i == RESCHED_INT) continue;
-		oldmask = H2K_gp->fastint_mask;
-		if (!((1<<i) & oldmask)) FAIL("fastint bit already cleared");
 		H2K_register_fastint(i,NULL,&a);
-		if (((1<<i) ^ oldmask) != H2K_gp->fastint_mask) FAIL("fastint mask bit not cleared");
 		if (H2K_gp->inthandlers[i]) FAIL("fastint handler not cleared");
 		if (H2K_gp->fastint_funcptrs[i]) FAIL("handler func not cleared");
 	}
 	/* Lets deregister an already deregistered fastint */
-	oldmask = H2K_gp->fastint_mask;
-	printf("oldmask: %x\n", oldmask);
-	if ((1 & oldmask) != 0) FAIL("fastint bit set, should be cleared");
 	H2K_register_fastint(0,NULL,&a);
-	printf("newmask: %x\n", H2K_gp->fastint_mask);
-	if ((1 & oldmask) != H2K_gp->fastint_mask) FAIL("fastint mask bit did not stay cleared");
 	if (H2K_gp->inthandlers[0]) FAIL("fastint handler did not stay cleared");
 	if (H2K_gp->fastint_funcptrs[0]) FAIL("handler func did not stay cleared");
 	puts("TEST PASSED\n");

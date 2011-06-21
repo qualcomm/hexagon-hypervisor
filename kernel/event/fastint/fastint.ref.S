@@ -48,38 +48,24 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 
 H2K_fastint_return:
 	ciad(r25)
-	r0 = IPEND
+	//r0 = IPEND
 2:
-	p0 = cmp.eq(r0,#0)
-	if (!p0) jump 1f
+	//p0 = cmp.eq(r0,#0)
+	//if (!p0) jump 1f
 	crswap(r24,sgp)
 	r31:30 = memd(r24+#CONTEXT_reserved_u64)
 	r25:24 = memd(r24+#CONTEXT_totalcycles)
 	jumpr r31
 
-1:
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
-	r5 = memw(r16+#KG_fastint_mask)
-	r4 = add(r16,#KG_fastint_funcptrs)
-	r11.h = #0x1c4
-	r11.l = #0x0
-	r5 = not(r5)
-#if __QDSP6_ARCH__ <= 3
-	r5 = brev(r5)
-#endif
-	r13 = imask
-	imask = r5
-	r14 = ssr
-	ssr = r11
-	isync
-	nop
-	ssr = r14
-	imask = r13
-	r0 = #0
-	jump 2b
+//1:
+//	r16.h = #hi(H2K_kg)
+//	r16.l = #lo(H2K_kg)
+//	r4 = add(r16,#KG_fastint_funcptrs)
+//	r0 = #0
+//	jump 2b
 FUNC_END H2K_fastint
 
+#if 0
 FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
 	// OK, we checked to see if there was a pending 
 	// interrupt, and there sure was!
@@ -120,4 +106,4 @@ FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
 		jumpr r4
 	}
 FUNC_END H2K_interrupted_fastint_check
-
+#endif

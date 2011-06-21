@@ -18,18 +18,16 @@ H2K_fastint_context H2K_fastint_contexts[MAX_HTHREADS];
 
 void H2K_fastint();
 
-void H2K_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), H2K_thread_context *me)
+void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
 {
 	u32_t ciad_intmask;
 	if (fastint_handler == NULL) { /* deregister */
 		H2K_gp->inthandlers[whatint] = NULL;
 		H2K_gp->fastint_funcptrs[whatint] = NULL;
-		H2K_gp->fastint_mask &= ~(1<<whatint);
 	}
 	else {
 		H2K_gp->fastint_funcptrs[whatint] = fastint_handler;
 		H2K_gp->inthandlers[whatint] = H2K_fastint;
-		H2K_gp->fastint_mask |= 1<<whatint;
 		ciad_intmask = 1<<whatint;
 #if __QDSP6_ARCH__ <= 3
 		ciad_intmask = Q6_R_brev_R(ciad_intmask);
@@ -47,7 +45,6 @@ void H2K_intconfig_init()
 		H2K_gp->inthandlers[i] = NULL;
 		H2K_gp->fastint_funcptrs[i] = NULL;
 	}
-	H2K_gp->fastint_mask = 0;
 	H2K_gp->inthandlers[RESCHED_INT] = H2K_resched;
 	for (i = 0; i < MAX_HTHREADS; i++) {
 		tmp = &H2K_fastint_contexts[i].context;

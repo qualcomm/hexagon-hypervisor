@@ -38,11 +38,12 @@ h2_anysignal_t	int_sig;
 h2_mutex_t	mutex;
 h2_sem_t	sem;
 
-void int2sig(int intnum) 
+int int2sig(int intnum) 
 {
 	h2_anysignal_set(&int_sig,TEST_SIGMASK);  
 	//h2_mutex_unlock(&mutex);
 	//h2_sem_add(&sem,1);
+	return 1;
 }
 
 void timer(int dummy)

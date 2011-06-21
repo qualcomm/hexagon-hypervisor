@@ -30,7 +30,7 @@ handler.
 H2K_register_fastint
 --------------------
 
-.. cfunction:: void H2K_register_fastint(u32_t whatint, void (*fastint_handler)(u32_t x), H2K_thread_context *me)
+.. cfunction:: void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
 
 	:param whatint: which interrupt to register
 	:param fastint_handler: Address of the fast interrupt handler
@@ -44,9 +44,11 @@ Modifies the interrupt configuration data to register or deregister a fast inter
 Functionality
 ~~~~~~~~~~~~~
 
-When a valid function pointer is passed, the fastint_handler is placed in the funcptrs array, and H2K_fastint is placed in the inthadlers array.
+When a valid function pointer is passed, the fastint_handler is placed in the
+funcptrs array, and H2K_fastint is placed in the inthadlers array.
 
-When a NULL function pointer is passed, we deregister the associated interrupt.  We set the entries in the fastint_funcptr and inthandlers arrays to NULL.  We Also toggle the fastint_mask for the assiciated interrupt.
+When a NULL function pointer is passed, we deregister the associated interrupt.
+We set the entries in the fastint_funcptr and inthandlers arrays to NULL.  
 
 
 
@@ -66,6 +68,5 @@ Samples
 * Input: whatint
 * Output: H2K_fastint_funcptrs[whatint]
 * Output: H2K_inthandlers[whatint]
-* I/O: H2K_fastint_mask: bit whatint set
 * Output: IAD bit for interrupt whatint cleared
 

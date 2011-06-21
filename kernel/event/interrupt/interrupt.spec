@@ -29,8 +29,9 @@ If the idle thread was interrupted, we detect the case as early as possible and
 skip the remainder of the context save.  If we have interrupted the idle
 thread, we do not care about saving the values of the registers.
 
-If the fast interrupt handler "interrupt check" was interrupted, we vector off
-to the approrpate code to handle it.  See fast interrupts for more information.
+If the preemption point was interrupted, we detect the case as early as possible
+and skip the remainder of the context save.  If we have interrupted at the 
+preemption point, we do not care about saving the values of the registers.
 
 Interrupts can be handled by calling the reschedule function, or calling the
 function to handle fast interrupts.  The fast interrupt handler may be called

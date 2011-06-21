@@ -40,16 +40,16 @@ H2K_fastint_return:
 	{
 		ciad(r25)
 	}
-	{
-		r0 = ipend
-		r16 = ##H2K_kg
-		r11.h = #0x1c4
-	}
-	{
+//	{
+//		r0 = ipend
+//		r16 = ##H2K_kg
+//		r11.h = #0x1c4
+//	}
+//	{
 		crswap(r24,sgp0)
-		p0 = cmp.eq(r0,#0)
-		if (!p0.new) jump:nt 1f
-	}
+//		p0 = cmp.eq(r0,#0)
+//		if (!p0.new) jump:nt 1f
+//	}
 	.falign
 2:
 	{
@@ -60,31 +60,32 @@ H2K_fastint_return:
 		jumpr r31
 	}
 	.falign
-1:
-	{
-		crswap(r24,sgp0)
-	}
-	{
-		r5 = memw(r16+#KG_fastint_mask)
-		r4 = add(r16,#KG_fastint_funcptrs)
-		r13 = imask
-		r11.l = #0x0
-	}
-	{
-		r14 = ssr
-		r5 = not(r5)
-	}
-	imask = r5
-	ssr = r11
-	isync
-	nop
-	ssr = r14
-	imask = r13
-	{
-		jump 2b
-	}
+//1:
+//	{
+//		crswap(r24,sgp0)
+//	}
+//	{
+//		r5 = memw(r16+#KG_fastint_mask)
+//		r4 = add(r16,#KG_fastint_funcptrs)
+//		r13 = imask
+//		r11.l = #0x0
+//	}
+//	{
+//		r14 = ssr
+//		r5 = not(r5)
+//	}
+//	imask = r5
+//	ssr = r11
+//	isync
+//	nop
+//	ssr = r14
+//	imask = r13
+//	{
+//		jump 2b
+//	}
 FUNC_END H2K_fastint
 
+#if 0
 FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
 	// OK, we checked to see if there was a pending 
 	// interrupt, and there sure was!
@@ -128,3 +129,4 @@ FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
 		jumpr r4
 	}
 FUNC_END H2K_interrupted_fastint_check
+#endif

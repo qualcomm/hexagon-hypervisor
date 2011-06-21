@@ -83,6 +83,7 @@ TH_call_saw_secondary_int:
 	ssr = r28
 	jump TH_saw_secondary_int
 
+#if 0
 // void TH_call_fastint_check(u32_t intno);
 	.global TH_call_fastint_check
 TH_call_fastint_check:
@@ -118,6 +119,7 @@ TH_call_fastint_check:
 	r31:30 = memd(#lrfpsave)
 	deallocframe
 	jumpr r31
+#endif
 
 // void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2);
 	.global TH_call_fastint_intpending

@@ -48,7 +48,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	}
 	{
 		memd(r0+#CONTEXT_r2928-96) = r29:28
-		if (!p0) jump H2K_interrupted_fastint_check
+		//if (!p0) jump H2K_interrupted_fastint_check
 		r31 = usr
 		r0 = add(r0,#32)
 	}

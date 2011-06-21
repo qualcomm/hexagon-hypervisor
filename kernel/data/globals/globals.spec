@@ -29,11 +29,6 @@
 		A mask for which threads are in wait mode.  Hardware thread 0
 		corresponds to bit 0, hardware thread 1 to bit 1, and so on.
 
-	.. cmember:: u32_t fastint_mask
-
-		Mask indicating which interrupts have been configured as fast
-		interrupts.
-
 	.. cmember:: u32_t fastint_gp
 
 		Global value for the GP value to use during fast interurpts.

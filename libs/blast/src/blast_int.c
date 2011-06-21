@@ -67,17 +67,19 @@ typedef struct {
 blast_interrupt_table_entry_t int_sigsets[MAX_SYS_INTERRUPTS];
 
 //  Fast interrupt handler
-void blast_int2signal(int intnum)
+int blast_int2signal(int intnum)
 {
 	//  maybe need to check if it's been registered first...
 	//  safe to call sigset from within fastint context
 	h2_anysignal_set(int_sigsets[intnum].signal_ptr, 
 		int_sigsets[intnum].signal_mask);
 	//  Interrupt automatically ack'd by H2 when we leave
+	return 1;
 }
 
-void blast_dummy(int intnum)
+int blast_dummy(int intnum)
 {
+	return 0;
 }
 
 #define io_read_32(base,offset)		(*(volatile unsigned long *) ((unsigned long) base + (unsigned long) offset))
@@ -126,7 +128,7 @@ int map_fw_to_sirc(int intnum)
 //  Query the L2 interrupt controller for the particular interrupt, 
 //  then call the corresponding blast_int2signal handler.
 
-void blast_sirc_fastint(int intnum)
+int blast_sirc_fastint(int intnum)
 {
 	unsigned long status;
 	unsigned int sirc = L1_TO_SIRC(intnum);
@@ -146,7 +148,7 @@ void blast_sirc_fastint(int intnum)
 
 		status = io_read_32(hw_reg,L2_IRQ_STATUS_OFFSET);	//  check status again
 	} while (status);
-
+	return 1;
 }
 
 int blast_register_interrupt(int int_num, 

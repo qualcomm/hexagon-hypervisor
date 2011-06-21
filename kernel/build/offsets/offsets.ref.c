@@ -60,7 +60,6 @@ PRINT_CONTEXT_OFFSET(cs1cs0);
 PRINT_KG_OFFSET(ready_valids);
 PRINT_KG_OFFSET(priomask);
 PRINT_KG_OFFSET(wait_mask);
-PRINT_KG_OFFSET(fastint_mask);
 PRINT_KG_OFFSET(oncpu_start);
 PRINT_KG_OFFSET(fastint_gp);
 PRINT_KG_OFFSET(runlist);
@@ -74,7 +73,6 @@ PRINT_KG_OFFSET(stacks_traptab);
 PRINT_KG_OFFSET(stacks_addr);
 PRINT_KG_OFFSET(traptab_addr);
 PRINT_KG_OFFSET(lowprio_masks);
-PRINT_KG_OFFSET(fastint_gpmask);
 
 	printf("#define STATUS_DEAD       %d\n",H2K_STATUS_DEAD);
 	printf("#define STATUS_READY      %d\n",H2K_STATUS_READY);

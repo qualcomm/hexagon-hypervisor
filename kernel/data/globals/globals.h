@@ -23,10 +23,10 @@ typedef struct {
 		};
 	};
 	union {
-		u64_t fastint_gpmask;
+		u64_t fastint_gpunused;
 		struct {
-			u32_t fastint_mask;
 			u32_t fastint_gp;
+			u32_t unused;
 		};
 	};
 	union {

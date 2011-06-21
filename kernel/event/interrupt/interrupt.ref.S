@@ -24,8 +24,10 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	memd(r0+#CONTEXT_r3130) = r31:30
 	memd(r0+#CONTEXT_r2928) = r29:28
 
+#if 0
 	/* Check to see whether we interrupted a fast interrupt check */
 	/* If so, vector off to H2K_interrupted_fastint_check */
+	/* EJP: TBD: Replace with general preemption point check */
 	r31.h = #hi(H2K_fastint_contexts)
 	r31.l = #lo(H2K_fastint_contexts)
 	r31 = sub(r0,r31)
@@ -33,6 +35,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	r30 = p3:0
 	p0 = cmp.gtu(r31,#(((FASTINT_CONTEXT_SIZE*MAX_HTHREADS)/32)-1))
 	if (!p0) jump H2K_interrupted_fastint_check
+#endif
 	r31 = usr
 
 	memd(r0+#CONTEXT_r2726) = r27:26
@@ -104,6 +107,8 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	r4 = add(r16,#KG_inthandlers)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
+	p0 = cmp.eq(r4,#0)
+	if (p0) jump H2K_interrupt_restore
 
 	/* Registers set up, call specified handler */
 

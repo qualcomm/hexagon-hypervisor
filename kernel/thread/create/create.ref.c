@@ -87,7 +87,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 
 		tmp->ssr_asid = asid;
 		tmp->vmcpu = vmblock->num_cpus++;
-		tmp->vmstatus = 0xff;            // all clear
+		tmp->vmstatus = 0x0;            // all clear
 		tmp->vmblock = vmblock;
 
 		vmblock->cpu_contexts[tmp->vmcpu] = tmp;

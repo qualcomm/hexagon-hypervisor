@@ -9,6 +9,9 @@
 #include <c_std.h>
 #include <context.h>
 
+u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+
 void H2K_vmtrap_return(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_setvec(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_setie(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");

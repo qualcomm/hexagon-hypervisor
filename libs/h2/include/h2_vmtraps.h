@@ -6,12 +6,16 @@
 #ifndef H2_VMTRAPS_H
 #define H2_VMTRAPS_H 1
 
+/* FIXME: need separate header with enums used in kernel and libs */
+#ifndef H2K_ASID_H
 typedef enum {
 	H2K_ASID_TRANS_TYPE_LINEAR,
 	H2K_ASID_TRANS_TYPE_TABLE,
 	H2K_ASID_TRANS_TYPE_XXX_LAST
 } translation_type;
+#endif
 
+#ifndef H2K_VMINT_H
 typedef enum {
 	H2K_INTOP_NOP,
 	H2K_INTOP_GLOBEN,
@@ -25,6 +29,7 @@ typedef enum {
 	H2K_INTOP_POST,
 	H2K_INTOP_CLEAR
 } intop_type;
+#endif
 
 void h2_vmtrap_return();
 int h2_vmtrap_setvec(void *ptr);

@@ -17,7 +17,9 @@ AR = qdsp6-ar
 #SIM := qdsp6-sim -mv$(ARCHV)
 SIM := qdsp6-sim
 
-CFLAGS := -Iinclude -G0 -Os -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -g
+OPTIMIZE := -Os
+
+CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -g
 #TEMP http://aus-bugzilla/show_bug.cgi?id=4677
 #TEMP http://aus-bugzilla/show_bug.cgi?id=4699
 #CFLAGS += -mG0lib -Dqdsp6_pre_main=hexagon_pre_main

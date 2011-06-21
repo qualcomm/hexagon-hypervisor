@@ -4,7 +4,9 @@ INCLUDES = -I../h2/include -I../blast/include -I../qube/include -Iinclude
 CC = qdsp6-gcc -mv$(ARCHV) $(INCLUDES) -Wall
 AR = qdsp6-ar
 
-CFLAGS = -g -O2 -G0
+OPTIMIZE := -O2
+
+CFLAGS = -g $(OPTIMIZE) -G0
 
 ifeq (v4, $(Q6VERSION))
 CFLAGS += -Wa,--gdwarf2

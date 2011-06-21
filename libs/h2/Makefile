@@ -2,7 +2,9 @@
 CC = qdsp6-gcc -mv$(ARCHV) -Iinclude -Wall
 AR = qdsp6-ar
 
-CFLAGS = -g -O2 -G0
+OPTIMIZE := -O2
+
+CFLAGS = -g $(OPTIMIZE) -G0
 
 export H2_LIB_INCLUDE=$(shell pwd)/include
 

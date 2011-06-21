@@ -20,11 +20,23 @@
 #include <thread.h>
 #include <create.h>
 
+u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) {
+	u32_t prev = !(H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT));
+	
+	if (!prev  // interrupts were disabled, try to take now
+			&& (me->vmstatus & H2K_VMSTATUS_VMWORK)) H2K_vm_do_work(me);
+	return prev;
+}
+
+u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) {
+	return H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
+}
+
 /* 1 */
 void H2K_vmtrap_return(H2K_thread_context *me)
 {
 	u32_t tmp;
-	if (((me->gssr >> 31) & 1) != 0) {
+	if (me->gssr & H2K_GSSR_UM) {
 		/* Swap stack pointers */
 		tmp = me->r29;
 		me->r29 = me->gosp;
@@ -32,6 +44,11 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 		me->ssr &= (~(1<<SSR_GUEST_BIT));
 	}
 	me->elr = me->gelr;
+
+	/* if guest had interrupts enabled, enable in guest status */
+	if (me->gssr & H2K_GSSR_IE) {
+		H2K_enable_guest_interrupts(me);
+	}
 }
 
 /* 2 */
@@ -44,13 +61,13 @@ void H2K_vmtrap_setvec(H2K_thread_context *me)
 /* 3 */
 void H2K_vmtrap_setie(H2K_thread_context *me)
 {
+	u32_t prev;
 	if (me->r00 & 0x1) {
-		H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
+		prev = H2K_enable_guest_interrupts(me);
 	} else {
-		H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
+		prev = H2K_disable_guest_interrupts(me);
 	}
-	/* Check to see if we should take an interrupt now */
-	me->r00 = 0;
+	me->r00 = prev;
 }
 
 /* 4 */

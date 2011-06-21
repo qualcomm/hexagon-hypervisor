@@ -42,10 +42,19 @@ void H2K_vm_event(u32_t gbadva, u32_t cause, u32_t vec_offset, H2K_thread_contex
 		me->ssr |= (1<<SSR_GUEST_BIT);
 		me->r29 = me->gosp;
 		me->gosp = tmp;
-		me->gssr = 0x80000000 | cause;
+		me->gssr = H2K_GSSR_UM | cause;
 	} else {
 		me->gssr = cause;
 	}
+	/* save IE status and disable */
+	if (me->vmstatus & H2K_VMSTATUS_IE) {
+		me->gssr |= H2K_GSSR_IE;
+	}
+	else {
+		me->gssr &= ~H2K_GSSR_IE;
+	}
+
+	H2K_disable_guest_interrupts(me);
 	H2K_mem_event_restore_gregs(me);
 }
 

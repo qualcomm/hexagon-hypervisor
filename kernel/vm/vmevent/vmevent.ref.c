@@ -8,6 +8,7 @@
 #include <vmdefs.h>
 #include <max.h>
 #include <vmevent.h>
+#include <vmfuncs.h>
 
 static inline void H2K_mem_pagefault_save_gregs(H2K_thread_context *me)
 {

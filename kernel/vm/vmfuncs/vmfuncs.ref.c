@@ -19,6 +19,7 @@
 #include <hw.h>
 #include <thread.h>
 #include <create.h>
+#include <vmwork.h>
 
 u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) {
 	u32_t prev = !(H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT));

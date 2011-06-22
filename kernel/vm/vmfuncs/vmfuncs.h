@@ -16,7 +16,6 @@ void H2K_vmtrap_return(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_setvec(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_setie(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_getie(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
-void H2K_vmtrap_intop(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_clrmap(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_newmap(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_cachectl(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");

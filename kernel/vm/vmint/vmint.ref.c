@@ -211,6 +211,7 @@ u32_t H2K_vm_interrupt_status(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
 void H2K_vmtrap_intop(H2K_thread_context *me)
 {
 	H2K_vmblock_t *vmblock = me->vmblock;
+	intop_type op = (intop_type)me->r00;
 	u32_t r1 = me->r01;
 	u32_t r2 = me->r02;
 	u32_t bad_int = 0;
@@ -219,11 +220,11 @@ void H2K_vmtrap_intop(H2K_thread_context *me)
 		bad_int = 1;
 		me->r00 = -1;
 	} else {
-		me->r01 = 0;
+		me->r00 = 0;
 	}
-	switch ((intop_type)me->r00) {
+	switch (op) {
 	case H2K_INTOP_NOP:
-		me->r00 = 0; return;
+		return;
 	case H2K_INTOP_GLOBEN:
 		if (bad_int) return;
 		H2K_vm_interrupt_enable(vmblock,r1);

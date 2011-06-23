@@ -34,6 +34,10 @@ If the saved SSR has the guest bit set, the R29 and GOSP values are swapped in t
 
 Uses cause and the SSR guest bit to form the GSSR value.
 
+Save IE state in GSSR
+
+Disable guest interrupts.
+
 Sets the SSR guest bit.
 
 

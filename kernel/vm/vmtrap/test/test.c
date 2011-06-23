@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <globals.h>
 #include <setjmp.h>
+#include <atomic.h>
 
 void FAIL(const char *str)
 {
@@ -25,6 +26,11 @@ H2K_thread_context a;
 s32_t ret;
 
 jmp_buf env;
+
+/* need this to prevent pulling in vmfuncs */
+u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) {
+	return H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
+}
 
 s32_t H2K_vmtrap_return() { return 1; }
 s32_t H2K_vmtrap_setvec() { return 2; }
@@ -96,14 +102,14 @@ void TH_guest_trap()
 	longjmp(env,1);
 }
 
-void H2K_traptab();
-char H2K_stacks;
+//void H2K_traptab();
+//char H2K_stacks;
 
 int main() 
 {
 	s32_t i;
-	H2K_kg.traptab_addr = H2K_traptab;
-	H2K_kg.stacks_addr = &H2K_stacks;
+	//	H2K_kg.traptab_addr = H2K_traptab;
+	//	H2K_kg.stacks_addr = &H2K_stacks;
 
 	for (i = 0; i < 32; i++) {
 		setup_guest();

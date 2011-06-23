@@ -13,7 +13,7 @@
 #define RESET_GEVB_OFFSET (0*4)
 #define CHECK_GEVB_OFFSET (1*4)
 #define ERROR_GEVB_OFFSET (2*4)
-#define TRAP0_GEVB_OFFSET (8*4)
-#define INTERRUPT_GEVB_OFFSET (15*4)
+#define TRAP0_GEVB_OFFSET (5*4)
+#define INTERRUPT_GEVB_OFFSET (7*4)
 
 #endif

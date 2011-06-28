@@ -41,7 +41,7 @@
 #define H2K_VMBLOCK_ALIGN 32
 #define H2K_VMBLOCK_V2P_INVALID 0xff
 
-typedef u8_t physint_t;
+typedef u16_t physint_t;
 typedef u32_t bitmask_t;
 
 /* FIXME: rename enable to mask since there is already another enable bit */

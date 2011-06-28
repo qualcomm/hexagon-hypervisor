@@ -29,11 +29,11 @@ char buf[sizeof(H2K_thread_context)*2] __attribute__((aligned(32)));
 #define NUM_SIZE_TESTS 6
 int size_test[NUM_SIZE_TESTS][3] = {
 	{1, 1, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 24},
-	{1, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 52},
-	{1, 33, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 68},
-	{32, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 424},
-	{33, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 436},
-	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 752}
+	{1, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 84},
+	{1, 33, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 100},
+	{32, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 456},
+	{33, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 468},
+	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 816}
 };
 
 char vmbuf[1024] __attribute__((aligned(32)));
@@ -221,7 +221,7 @@ int main()
 	}
 
 	if (vmblock->int_v2p != (physint_t *)((char *)vmblock + 592)) FAIL("Bad int_v2p base");
-	if (vmblock->cpu_contexts != (H2K_thread_context **)((char *)vmblock + 660)) FAIL("Bad cpu_contexts base");
+	if (vmblock->cpu_contexts != (H2K_thread_context **)((char *)vmblock + 724)) FAIL("Bad cpu_contexts base");
 	
 #ifdef DEBUG
 	printf("MAP_PHYS_INTR\n\n");

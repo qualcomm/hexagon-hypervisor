@@ -37,6 +37,21 @@ statement MUST begin on the same line as the if / for / while / etc.  Example:
 Macros are typically ALL_UPPER_CASE.  Variables are typically all_lower_case.
 Defined types should end with _t.
 
+Opening curly braces following a function are allowed as the only character 
+on a following line, or on the same line.  Short functions on the same line
+is not only allowable, but recommended.
+
+int foo(int arg)
+{
+					/* THIS IS OK */
+
+
+int foo(int arg) {
+					/* THIS IS OK ALSO */
+
+static inline foo(int arg) { return arg; }
+					/* THAT WAS OK ALSO */
+
 
 ASM Coding Style
 ~~~~~~~~~~~~~~~~

@@ -85,7 +85,7 @@ u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t
 #define MASK_SPACE(cpus, ints) ROUND(MASK_WORDS(cpus, ints) * BYTES_PER_WORD)
 
 // int_v2p
-#define PHYSINT_WORDS(ints) ((ints * sizeof(physint_t) + PHYS_PER_WORD - 1) / PHYS_PER_WORD)
+#define PHYSINT_WORDS(ints) ((ints + PHYS_PER_WORD - 1) / PHYS_PER_WORD)
 #define PHYSINT_SPACE(ints) ROUND(PHYSINT_WORDS(ints) * BYTES_PER_WORD)
 
 // cpu_contexts

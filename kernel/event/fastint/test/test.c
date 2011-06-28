@@ -219,7 +219,9 @@ int main()
 	int i,j;
 	/* Set up KGP */
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+#ifdef H2K_L2_CONTROL
 	H2K_gp->l2_ack_base = ackbuf;
+#endif
 	/* Set up fast interrupt gp */
 	H2K_gp->fastint_gp = (u32_t)(&_SDA_BASE_);
 	/* Try fast interrupts */

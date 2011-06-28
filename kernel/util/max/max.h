@@ -34,7 +34,13 @@
 
 #define MAX_ASIDS (1<<(ASID_BITS))
 
+#if __QDSP6_ARCH__ <= 3
 #define MAX_INTERRUPTS 32
+#else
+#define H2K_L2_CONTROL 1
+#define MAX_L2_INTERRUPTS 480
+#define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
+#endif
 
 #define RESCHED_INT 3
 #define VM_IPI_INT 0

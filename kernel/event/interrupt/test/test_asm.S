@@ -21,8 +21,21 @@
 TH_do_interrupt:
 	/* Insert interrupt num into cause field */
 	r4 = ssr
-	r4 = insert(r2,#8,#0)
+	r5 = #0xc0
+	r4 = insert(r5,#8,#0)
+	r4 = insert(r2,#5,#0)
 	ssr = r4
+#if __QDSP6_ARCH__ >= 4
+	p0 = cmp.gtu(r2,#31)
+	if (!p0) jump 1f
+	r5 = #31
+	r4 = insert(r5,#5,#0)
+	ssr = r4
+	r4 = add(r2,#-32)
+	r4 = and(r4,##0x3ff)
+	VID = r4
+1:
+#endif
 
 	/* Put dest into r1 */
 	sgp = r1

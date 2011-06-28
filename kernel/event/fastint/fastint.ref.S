@@ -18,6 +18,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 
 	/* Per-HThread stack may get corrputed by trap in int handler */
 	/* So save off important registers in fastint context that won't change */
+	/* EJP: FIXME: revisit when we add preemption point... */
 	memd(r3+#CONTEXT_reserved_u64) = r31:30
 	memd(r3+#CONTEXT_totalcycles) = r25:24
 
@@ -37,6 +38,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	r11.h = #0x01c0
 	r11.l = #0x0
 	r25:24 = combine(r5,r3)
+	r26 = r0		// save intno in r26 for L2 Control
 	crswap(r24,sgp)
 	ssr = r11
 	gp = r6
@@ -47,12 +49,33 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	callr r4
 
 H2K_fastint_return:
+	/* L2 Control: if returning TRUE, whack L2 Interrupt Controller */
+#if H2K_L2_CONTROL
+	/* EJP: this should be v4... */
+	p0 = cmp.gtu(r26,#31)
+	p1 = cmp.eq(r0,#0)
+	r26 = add(r26,#-32)
+	if (!p0) jump 1f		// skip if l1 interrupt
+	if (p1) jump 4f
+	r4 = memw(r16+#KG_l2_ack_base)
+	r4 = tableidxw(r26,#5,#5)
+	r5 = and(r26,#0x1f)
+	r5 = lsl(#1,r5)
+	memw(r4) = r5
+4:
+	jump 2f
+1:
 	ciad(r25)
+2:
+#else
+	ciad(r25)
+#endif
 	//r0 = IPEND
 2:
 	//p0 = cmp.eq(r0,#0)
 	//if (!p0) jump 1f
 	crswap(r24,sgp)
+	/* EJP: FIXME: revisit when we add preemption point... */
 	r31:30 = memd(r24+#CONTEXT_reserved_u64)
 	r25:24 = memd(r24+#CONTEXT_totalcycles)
 	jumpr r31

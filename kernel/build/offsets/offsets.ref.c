@@ -73,6 +73,11 @@ PRINT_KG_OFFSET(stacks_traptab);
 PRINT_KG_OFFSET(stacks_addr);
 PRINT_KG_OFFSET(traptab_addr);
 PRINT_KG_OFFSET(lowprio_masks);
+#ifdef H2K_L2_CONTROL
+PRINT_KG_OFFSET(l2_int_base);
+PRINT_KG_OFFSET(l2_ack_base);
+PRINT_KG_OFFSET(l2_intinfo);
+#endif
 
 	printf("#define STATUS_DEAD       %d\n",H2K_STATUS_DEAD);
 	printf("#define STATUS_READY      %d\n",H2K_STATUS_READY);

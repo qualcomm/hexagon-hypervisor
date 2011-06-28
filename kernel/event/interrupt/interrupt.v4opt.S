@@ -86,43 +86,49 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 		memd(r0+#CONTEXT_r0706) = r7:6  // 192
 		memd(r0+#CONTEXT_r0504) = r5:4
 		r21:20 = c7:6  // m1:m0
+		r7 = r0
 	}
 	{
-		memd(r0+#CONTEXT_r0302) = r3:2
-		memd(r0+#CONTEXT_lc0sa0) = r25:24
+		memd(r7+#CONTEXT_r0302) = r3:2
+		memd(r7+#CONTEXT_lc0sa0) = r25:24
 		r19:18 = s7:6  // ccr:ssr
 	}
 	{
-		memw(r0+#CONTEXT_ccr) = r19
-		memd(r0+#CONTEXT_lc1sa1) = r23:22
+		memw(r7+#CONTEXT_ccr) = r19
+		memd(r7+#CONTEXT_lc1sa1) = r23:22
 		r19 = elr
 		r4 = and(r18,#0x1f)  // extract interrupt number
 	}
 	{
-		memd(r0+#CONTEXT_m1m0) = r21:20
-		memd(r0+#CONTEXT_sr_preds) = r27:26
+		memd(r7+#CONTEXT_m1m0) = r21:20
+		memd(r7+#CONTEXT_sr_preds) = r27:26
 		r15:14 = c13:12  // cs1:cs0
 		r19:18 = combine(r18,r19)  // swap ssr and elr
 	}
 	{
-		memd(r0+#CONTEXT_cs1cs0) = r15:14
-		memd(r0+#CONTEXT_r2928) = r29:28
+		memd(r7+#CONTEXT_cs1cs0) = r15:14
+		memd(r7+#CONTEXT_r2928) = r29:28
 		r11:10 = c11:10  // gp:ugp
 	}
 	{
-		memd(r0+#CONTEXT_ugpgp) = r11:10
-		memd(r0+#CONTEXT_r3130) = r31:30
+		memd(r7+#CONTEXT_ugpgp) = r11:10
+		memd(r7+#CONTEXT_r3130) = r31:30
 		r2 = htid
-		r5 = r0	// thread context
+		p0 = cmp.eq(r4,#31)
 	}
 	{
-		memd(r0+#CONTEXT_ssrelr) = r19:18
+		memd(r7+#CONTEXT_ssrelr) = r19:18
 		r29 = add(##H2K_stacks,mpyi(r2,r12))
-		crswap(r0,sgp0)
+		r6 = VID
 	}
 	{
-		memd(r5+#CONTEXT_r0100) = r1:0
-		r0 = r4
+		crswap(r0,sgp0)
+		if (p0) r4 = add(r6,#32)
+		r5 = mux(p0,##0x80000000,#0)
+	}
+	{
+		memd(r7+#CONTEXT_r0100) = r1:0
+		r1:0 = combine(r7,r4)
 		r3 = memw(r13+r4<<#2)
 		call .Lint_jump_stub
 	}
@@ -227,8 +233,10 @@ H2K_interrupt_restore:
 .Lint_jump_stub:
 	/* Registers set up, call specified handler */
 	{
-		r1 = r5
-		memw(r5+#CONTEXT_continuation) = r31
+		ciad(r5)
+	}
+	{
+		memw(r7+#CONTEXT_continuation) = r31
 		jumpr r3
 	}
 
@@ -243,17 +251,25 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	{
 		r0 = and(r0,#0x1f)  // extract interrupt number
 		r1 = #0  // thread context == NULL
-		r2 = htid
 		r4 = add(r16,#KG_inthandlers)
+		r5 = VID
 	}
 	{
-		r4 = memw(r4+r0<<#2)  // compute interrupt handler
+		p0 = cmp.eq(r0,#31)
+		r2 = htid
+		if (p0.new) r0 = add(r5,#32)
 	}
 	/* Registers set up, call specified handler */
 	{
+		r3 = memw(r4+r0<<#2)  // compute interrupt handler
 		r29 = add(##H2K_stacks,mpyi(r2,r3))
-		callr r4
 	}
+	{
+		p0 = cmp.eq(r3,#0)
+		if (!p0.new) jumpr:t r3
+		r31 = ##1f
+	}
+1:
 	{
 		k0lock
 	}

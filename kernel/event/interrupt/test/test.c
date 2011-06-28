@@ -122,6 +122,7 @@ void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 /* Fail */
 void TH_bad_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 {
+	printf("intno=%d\n",intno);
 	FAIL("Wrong interrupt called");
 }
 
@@ -194,9 +195,14 @@ int main()
 	TH_save_sgp();
 	/* Set up KGP correctly for direct calls */
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	printf("MAX_INTERRUPTS=%d\n",MAX_INTERRUPTS);
 	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		/* For each interrupt, try to do the interrupt */
+#if __QDSP6_ARCH__ >= 4
+		if (i == 31) continue;
+#endif
+		printf("i=%d\n",i);
 		fill_srcdata(i);
 		TH_try_interrupt(&a,i);
 		TH_try_interrupt(NULL,i);

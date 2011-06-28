@@ -36,6 +36,15 @@ typedef struct {
 			void *stacks_addr;
 		};
 	};
+#ifdef H2K_L2_CONTROL
+	union {
+		u64_t l2_intinfo;
+		struct {
+			u32_t *l2_int_base;
+			u32_t *l2_ack_base;
+		};
+	};
+#endif
 	u32_t tlb_index;
 	H2K_thread_context *free_threads;
 	u64_t oncpu_start[MAX_HTHREADS];
@@ -45,6 +54,15 @@ typedef struct {
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
 	/* EJP: tbd: rearrange to reduce data size and/or increase locality? */
+#if 0
+	union {
+		u64_t inthandler_funcptr;
+		struct {
+			void *inthandler;
+			void *int_funcptr;
+		};
+	} inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
+#endif
 	void *fastint_funcptrs[MAX_INTERRUPTS] __attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 	void *inthandlers[MAX_INTERRUPTS]__attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 } H2K_kg_t;

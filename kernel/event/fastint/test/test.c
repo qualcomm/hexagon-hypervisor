@@ -30,6 +30,8 @@ void FAIL(const char *str)
 	exit(1);
 }
 
+unsigned int ackbuf[MAX_INTERRUPTS/32] __attribute__((aligned(MAX_INTERRUPTS/8)));
+
 //void TH_call_fastint_check(u32_t intno);
 void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2);
 
@@ -97,20 +99,83 @@ void TH_setup_fastinthandlers(u32_t interrupt)
 	H2K_gp->fastint_funcptrs[interrupt] = TH_good_interrupt;
 }
 
+void TH_setup_fastinthandlers_ack(u32_t interrupt)
+{
+	u32_t i;
+	for (i = 0; i < MAX_INTERRUPTS; i++) {
+		H2K_gp->fastint_funcptrs[i] = TH_bad_interrupt;
+	}
+	H2K_gp->fastint_funcptrs[interrupt] = TH_good_interrupt_ackl2;
+}
+
 void TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread)
 {
 	TH_fastint_call(interrupt,dest,0);
 	longjmp(env2,1);
 }
 
+void TH_clear_acks()
+{
+	int i;
+	for (i = 0; i < MAX_INTERRUPTS/32; i++) {
+		ackbuf[i] = 0;
+	}
+}
+
+void TH_check_l2ack(int interrupt)
+{
+#ifdef H2K_L2_CONTROL
+	int i;
+	if (interrupt < 32) return;
+	interrupt -= 32;
+	if (((ackbuf[interrupt/32] >> (interrupt & 0x1f)) & 1) == 0) {
+		printf("%d: ackbuf[%d] = 0x%08x\n",interrupt,interrupt/32,ackbuf[interrupt/32]);
+		FAIL("L2 interrupt not acked");
+	}
+	ackbuf[interrupt/32] ^= 1<<(interrupt & 0x1f);
+	for (i = 0; i < MAX_INTERRUPTS/32; i++) {
+		if (ackbuf[i] != 0) FAIL("Extra L2 Interrupt ACK!");
+	}
+#endif
+}
+
+void TH_check_nol2ack(int interrupt)
+{
+#ifdef H2K_L2_CONTROL
+	int i;
+	if (interrupt < 32) return;
+	interrupt -= 32;
+	if (((ackbuf[interrupt/32] >> (interrupt & 0x1f)) & 1) != 0) {
+		FAIL("L2 interrupt acked");
+	}
+	//ackbuf[interrupt/32] ^= 1<<(interrupt & 0x1f);
+	for (i = 0; i < MAX_INTERRUPTS/32; i++) {
+		if (ackbuf[i] != 0) FAIL("Extra L2 Interrupt ACK!");
+	}
+#endif
+}
+
 void TH_do_fastint(H2K_thread_context *dest, u32_t interrupt)
 {
 	TH_intno = interrupt;
 	TH_secondary_int_expected = -1;
+
+	//printf("%d: nack\n",interrupt);
 	TH_setup_fastinthandlers(interrupt);
+	TH_clear_acks();
 	if (setjmp(env2) == 0) {
 		TH_fastint_wrapper(interrupt,dest,0);
 	}
+	TH_check_nol2ack(interrupt);
+
+	//printf("%d: ack\n",interrupt);
+	TH_setup_fastinthandlers_ack(interrupt);
+	TH_clear_acks();
+	if (setjmp(env2) == 0) {
+		TH_fastint_wrapper(interrupt,dest,0);
+	}
+	TH_check_l2ack(interrupt);
+
 }
 
 #if 0
@@ -154,6 +219,7 @@ int main()
 	int i,j;
 	/* Set up KGP */
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	H2K_gp->l2_ack_base = ackbuf;
 	/* Set up fast interrupt gp */
 	H2K_gp->fastint_gp = (u32_t)(&_SDA_BASE_);
 	/* Try fast interrupts */

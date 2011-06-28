@@ -104,6 +104,7 @@ Important cases
 * SGP is non-NULL
 * SGP is fast interrupt handler
 * Each L1 interrupt
+* For V4, each L2 interrupt
 
 Harness
 ~~~~~~~

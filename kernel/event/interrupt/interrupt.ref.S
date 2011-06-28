@@ -104,15 +104,25 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	r1 = r21	// thread context
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
+
+#if __QDSP6_ARCH__ >= 4
+	p0 = cmp.eq(r0,#31)
+	r4 = VID
+	if (p0) r0 = add(r4,#32)
+	r4 = #MAX_INTERRUPTS-1
+	r0 = minu(r4,r0)
+	r5 = ##0x80000000
+	ciad(r5)
+#endif
+
 	r4 = add(r16,#KG_inthandlers)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
 	p0 = cmp.eq(r4,#0)
-	if (p0) jump H2K_interrupt_restore
 
 	/* Registers set up, call specified handler */
 
-	call .Lint_jump_stub // will jump to r4
+	if (!p0) call .Lint_jump_stub // will jump to r4
 
 H2K_interrupt_restore:
 	/* Restore all state and return */
@@ -182,15 +192,24 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	r2 = r28 	// TNUM from above...
 	r0 = ssr
 	r0 = and(r0,#0x1f)
+#if __QDSP6_ARCH__ >= 4
+	p0 = cmp.eq(r0,#31)
+	r4 = VID
+	if (p0) r0 = add(r4,#32)
+	r4 = #MAX_INTERRUPTS-1
+	r0 = minu(r4,r0)
+	r5 = ##0x80000000
+	ciad(r5)
+#endif
 	r1 = #0		// thread context == NULL
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
 	r4 = add(r16,#KG_inthandlers)
 	r4 = addasl(r4,r0,#2)
 	r4 = memw(r4)
-
+	p0 = cmp.eq(r4,#0)
 	/* Registers set up, call specified handler */
-	callr r4
+	if (!p0) callr r4
 	r0 = #0
 	r1 = #0
 	k0lock

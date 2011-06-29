@@ -22,6 +22,7 @@ u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
 
 IN_SECTION(".text.init.setup") void H2K_init_setup()
 {
+	H2K_kg_init();		/* Kernel Globals first! */
 	H2K_trace_init();
 	H2K_fatal_init();
 	H2K_runlist_init();
@@ -30,7 +31,6 @@ IN_SECTION(".text.init.setup") void H2K_init_setup()
 	H2K_futex_init();
 	H2K_intconfig_init();
 	H2K_thread_init();
-	H2K_kg_init();
 	H2K_asid_table_init();
 }
 

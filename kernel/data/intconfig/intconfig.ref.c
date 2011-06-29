@@ -19,23 +19,77 @@ H2K_fastint_context H2K_fastint_contexts[MAX_HTHREADS];
 
 void H2K_fastint();
 
-void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
+#ifdef H2K_L2_CONTROL
+static void H2K_fastint_enable_l2(u32_t whatint)
+{
+	volatile unsigned int *l2_enable = (void *)H2K_gp->l2_ack_base;
+	whatint -= 32;
+	l2_enable[(whatint)/32] = (1 << (whatint & 0x1f));
+}
+
+static void H2K_fastint_disable_l2(u32_t whatint)
+{
+	volatile unsigned int *l2_disable = (void *)(((unsigned int)H2K_gp->l2_int_base) + 0x180);
+	whatint -= 32;
+	l2_disable[(whatint)/32] = (1 << (whatint & 0x1f));
+}
+
+#else
+static inline void H2K_fastint_enable_l2(int whatint) {}
+static inline void H2K_fastint_disable_l2(int whatint) {}
+#endif
+
+static void H2K_fastint_disable(u32_t whatint)
+{
+	u32_t siad_intmask;
+	siad_intmask = 1<<whatint;
+	if (whatint < 32) {
+#if __QDSP6_ARCH__ >= 4
+		siad(siad_intmask);
+#endif
+		return;
+	} else H2K_fastint_disable_l2(whatint);
+}
+
+static void H2K_fastint_enable(u32_t whatint)
 {
 	u32_t ciad_intmask;
+	if (whatint < 32) {
+		ciad_intmask = 1<<whatint;
+#if __QDSP6_ARCH__ <= 3
+		ciad_intmask = Q6_R_brev_R(ciad_intmask);
+#endif
+		ciad(ciad_intmask);
+	} else H2K_fastint_enable_l2(whatint);
+}
+
+void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
+{
 	if (fastint_handler == NULL) { /* deregister */
+		H2K_fastint_disable(whatint);
 		H2K_gp->inthandlers[whatint] = NULL;
 		H2K_gp->fastint_funcptrs[whatint] = NULL;
 	}
 	else {
 		H2K_gp->fastint_funcptrs[whatint] = fastint_handler;
 		H2K_gp->inthandlers[whatint] = H2K_fastint;
-		ciad_intmask = 1<<whatint;
-#if __QDSP6_ARCH__ <= 3
-		ciad_intmask = Q6_R_brev_R(ciad_intmask);
-#endif
-		ciad(ciad_intmask);
+		H2K_fastint_enable(whatint);
+
 		H2K_gp->fastint_gp = (u32_t)(me->ugpgp);
 	}
+}
+
+static void H2K_intconfig_l2_init()
+{
+	int i;
+	volatile unsigned int *intbase = H2K_gp->l2_int_base;
+	for (i = 0; i < ((MAX_INTERRUPTS-32)/32); i++) {
+		intbase[(0x100/4) + i] = 0x0; 		/* DISABLED */
+		intbase[(0x280/4) + i] = 0xffffffff;	/* EDGE TRIGGERED */
+		intbase[(0x300/4) + i] = 0x0;		/* Rising Edge / Level High */
+		intbase[(0x400/4) + i] = 0xffffffff;	/* Interrupt Clear */
+	}
+	ciad(0x80000000);				/* Enable L2 Interrupts */
 }
 
 void H2K_intconfig_init()
@@ -54,5 +108,8 @@ void H2K_intconfig_init()
 		tmp->hthread = i;
 		tmp->trapmask = FASTINT_TRAPMASK;
 	}
+#ifdef H2K_L2_CONTROL
+	H2K_intconfig_l2_init();
+#endif
 }
 

@@ -85,8 +85,8 @@ REDEF_FUNCTION(void, profile_get_thread_pcycles,(int thread_id, unsigned long lo
 
 /*  "blast_fastint.h"  */
 
-REDEF_FUNCTION(void ,register_fastint,(int intno, int (*fn)(int)),(intno,fn));
-REDEF_FUNCTION(void ,deregister_fastint,(int intno),(intno));
+// REDEF_FUNCTION(void ,register_fastint,(int intno, int (*fn)(int)),(intno,fn));
+// REDEF_FUNCTION(void ,deregister_fastint,(int intno),(intno));
 
 /*  "blast_futex.h"  */
 

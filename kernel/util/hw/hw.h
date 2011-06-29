@@ -14,6 +14,13 @@ static inline void ciad(u32_t mask)
 	asm (" ciad(%0) // clear IAD " : : "r"(mask));
 }
 
+#if (ARCHV >= 4)
+static inline void siad(u32_t mask)
+{
+	asm (" siad(%0) // Set IAD " : : "r"(mask));
+}
+#endif
+
 static inline void swi(u32_t mask)
 {
 	asm (" swi(%0) // clear IAD " : : "r"(mask));

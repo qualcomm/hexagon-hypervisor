@@ -261,7 +261,7 @@ int qinterrupt_register(int int_num)
 	struct qthread_emu_struct *tmp;
 
 	//blast_mutex_lock(&thmutex);
-  //printf( "qinterrupt_register %d by %x\n", int_num, blast_thread_myid());
+	//blast_printf( "qinterrupt_register %d by %x\n", int_num, blast_thread_myid());
 	//blast_mutex_unlock(&thmutex);
 
 	tmp = get_myutcb ();

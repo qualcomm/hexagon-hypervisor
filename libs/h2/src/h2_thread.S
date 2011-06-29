@@ -24,9 +24,32 @@ h2_thread_stop:
 	trap0(#H2_TRAP_THREAD_STOP)
 	jumpr r31
 
+/* call trap if ugp == 0, else return ugp[0] */
 	.global h2_thread_myid
 h2_thread_myid:
+	allocframe(#8)
+	{
+		memw(r29+#0) = r25
+		r25 = ugp
+	}
+	{
+		p1 = cmp.eq(r25,#0)
+		if (p1.new) jump:nt 1f
+	}
+	/* return value at ugp[0] */
+	r0 = memw(r25)
+	{
+		deallocframe
+		r25 = memw(r29)
+	}
+	jumpr r31
+
+1:
 	trap0(#H2_TRAP_THREAD_ID)
+	{
+		deallocframe
+		r25 = memw(r29)
+	}
 	jumpr r31
 
 	.global h2_yield

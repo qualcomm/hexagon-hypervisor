@@ -54,23 +54,26 @@ static void add_thread(struct BLAST_ugp_ptr *ptr)
 /* mostly from blast_thread.c */
 int blast_thread_initial_setup (struct BLAST_ugp_ptr *pUgp)
 {
-   /* Set UGP Value */
-
-	__asm__ __volatile__ (
-												"ugp = %0\n"
-												:
-												:"r"(pUgp)
-												);
-
    /* Set thread_id */
-	/* also cause ugp to be saved in context */
    pUgp->utcb.thread_id = h2_thread_myid();
-   add_thread(pUgp);
 
-   /* Initialize the anysignal */
-   blast_anysignal_init (&pUgp->utcb.anysignal);
+   /* Set UGP Value.  Need to do this after the call to h2_thread_myid above so
+      that ugp == 0 will cause the thread_id trap to be called */
+  __asm__ __volatile__ (
+			"ugp = %0\n"
+			:
+			:"r"(pUgp)
+			);
 
-   return 0;
+  /* bogus trap to save ugp in context */
+  h2_thread_get_id();
+
+  add_thread(pUgp);
+
+  /* Initialize the anysignal */
+  blast_anysignal_init (&pUgp->utcb.anysignal);
+  
+  return 0;
 }
 
 /* from blast_thread.c */

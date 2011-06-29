@@ -79,6 +79,7 @@ void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_th
 	}
 }
 
+#ifdef H2K_L2_CONTROL
 static void H2K_intconfig_l2_init()
 {
 	int i;
@@ -91,6 +92,9 @@ static void H2K_intconfig_l2_init()
 	}
 	ciad(0x80000000);				/* Enable L2 Interrupts */
 }
+#else
+static inline void H2K_intconfig_l2_init() {}
+#endif
 
 void H2K_intconfig_init()
 {
@@ -108,8 +112,6 @@ void H2K_intconfig_init()
 		tmp->hthread = i;
 		tmp->trapmask = FASTINT_TRAPMASK;
 	}
-#ifdef H2K_L2_CONTROL
 	H2K_intconfig_l2_init();
-#endif
 }
 

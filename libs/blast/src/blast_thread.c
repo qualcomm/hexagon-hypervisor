@@ -65,9 +65,6 @@ int blast_thread_initial_setup (struct BLAST_ugp_ptr *pUgp)
 			:"r"(pUgp)
 			);
 
-  /* bogus trap to save ugp in context */
-  h2_thread_get_id();
-
   add_thread(pUgp);
 
   /* Initialize the anysignal */

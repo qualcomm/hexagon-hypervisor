@@ -65,7 +65,8 @@ extern qmem_pool_t qmem_default_pool;
  * @param pool  [OUT] memory pool object
  * @return            EOK:       Successful attach
 */
-static inline int qmem_pool_attach(const char *name, qmem_pool_t *pool) { *pool = 0xb0e0e0f0; return EOK; }
+
+int qmem_pool_attach(const char *name, qmem_pool_t *pool);
 
 /**
  * Create a memory region with specific attributes               
@@ -93,12 +94,8 @@ static inline int qmem_pool_attach(const char *name, qmem_pool_t *pool) { *pool 
  * @return              EINVALID if group is not a valid handle 
  *
  */
-static inline int qmem_region_create(qmem_region_t *region, size_t sz, qmem_pool_t pool,
-                       const qmem_region_attr_t *attr)
-{
-	if ((*region = (unsigned int)memalign(4096,sz)) != 0) return EOK;
-	return EMEM;
-}
+int qmem_region_create(qmem_region_t *region, size_t sz, qmem_pool_t pool,
+                       const qmem_region_attr_t *attr);
 
 /**
  * Remove a memory region

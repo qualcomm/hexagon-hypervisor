@@ -71,3 +71,10 @@ qmem_blast_cleaninv_dcache:
 	}:endloop0
 	jumpr r31
 
+	.data
+	.global qmem_default_pool
+	.p2align 3
+qmem_default_pool:
+	.word 0
+	.word 0
+

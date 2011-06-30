@@ -10,7 +10,7 @@ CFLAGS = -g $(OPTIMIZE) -G0
 export QUBE_LIB_INCLUDE=$(shell pwd)/include
 
 ASM_FILES = src/qmemory.S
-C_FILES = src/qmsgq.c src/qthread.c src/qmsgq_callback.c
+C_FILES = src/qmsgq.c src/qthread.c src/qmsgq_callback.c src/qmemory_c.c
 
 #src/qthread.c
 

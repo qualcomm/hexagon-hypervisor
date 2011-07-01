@@ -145,7 +145,13 @@ typedef struct _h2_thread_context
 	// 128
 	u64_t r1918;	// OK FOR DCZEROA
 	u64_t r1716;
-	u64_t ugpgp;
+	union {
+		u64_t ugpgp;
+		struct {
+			u32_t gp;
+			u32_t ugp;
+		};
+	};
 	union {
 		u64_t r0100;	/* used for return value */
 		struct {

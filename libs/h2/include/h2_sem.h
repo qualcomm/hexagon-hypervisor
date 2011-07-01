@@ -6,11 +6,12 @@
 #ifndef H2_SEM_H
 #define H2_SEM_H 1
 
+/* can't make the whole union volatile, c++ operator= unhappy */
 typedef union {
-	unsigned int raw;
+	unsigned int volatile raw;
 	struct {
-		unsigned short val;
-		unsigned short n_waiting;
+		unsigned short volatile val;
+		unsigned short volatile n_waiting;
 	};
 } h2_sem_t;
 

@@ -90,12 +90,12 @@ static inline int blast_pimutex_trylock(blast_mutex_t *lock)
 
 int blast_thread_join(int threadid, int *status);
 
-static inline unsigned short blast_sem_get_val(h2_sem_t *sem)
+static inline unsigned short blast_sem_get_val(volatile h2_sem_t *sem)
 {
 	return sem->val;  
 }
 
-static inline void blast_sem_destroy(h2_sem_t *sem)
+static inline void blast_sem_destroy(volatile h2_sem_t *sem)
 {
 	return;
 }

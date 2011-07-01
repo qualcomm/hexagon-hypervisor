@@ -44,6 +44,13 @@ void h2_rmutex_lock(h2_rmutex_t *lock)
 
 void h2_rmutex_unlock(h2_rmutex_t *lock)
 {
+#ifdef PARANOID
+	unsigned int my_id = h2_thread_myid();
+	if (lock->owner_id != my_id) {
+	  printf("PANIC: h2_rmutex_unlock by %08x != owner %08x\n", my_id, lock->owner_id);
+	  exit(1);
+	}
+#endif
 	/* Decrement Depth */
 	lock->depth--;
 	/* If lock no longer held, unlock mutex */

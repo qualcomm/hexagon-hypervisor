@@ -7,10 +7,10 @@
 #define H2_ANYSIGNAL_H 1
 
 typedef union {
-	unsigned long long int raw;
+	unsigned long long int volatile raw;
 	struct {
-		unsigned int signals;
-		unsigned int waiting;
+		unsigned int volatile signals;
+		unsigned int volatile waiting;
 	};
 } h2_anysignal_t;
 

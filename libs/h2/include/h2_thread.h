@@ -15,7 +15,7 @@
 /* trap0 handler forces vmblock to NULL, so no need to declare it here */
 int h2_thread_create(void *pc, void *stack, void *arg, unsigned int prio);
 void h2_thread_stop(void);
-int h2_thread_myid(void);
+unsigned int h2_thread_myid(void);
 void h2_yield(void);
 
 void h2_thread_set_tid(unsigned int);

@@ -32,10 +32,10 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	r31.l = #lo(H2K_fastint_contexts)
 	r31 = sub(r0,r31)
 	r31 = asr(r31,#5)
+	r30 = p3:0
 	p0 = cmp.gtu(r31,#(((FASTINT_CONTEXT_SIZE*MAX_HTHREADS)/32)-1))
 	if (!p0) jump H2K_interrupted_fastint_check
 #endif
-	r30 = p3:0
 	r31 = usr
 
 	memd(r0+#CONTEXT_r2726) = r27:26

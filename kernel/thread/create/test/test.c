@@ -72,8 +72,8 @@ int main()
 	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR);
 
 	a.prio = b.prio = c.prio = d.prio = 0;
-	a.ugpgp = 0x12345;
-	b.ugpgp = c.ugpgp = d.ugpgp = 0x0;
+	a.gp = 0x12345;
+	b.gp = c.gp = d.gp = 0x0;
 	b.status = c.status = d.status = H2K_STATUS_DEAD;
 	a.trapmask = 0x55ffffff;
 	a.vmblock = (H2K_vmblock_t *)0x1337beef;
@@ -105,7 +105,7 @@ int main()
 	if (b.continuation != H2K_interrupt_restore) FAIL("Incorrect continuation");
 	if ((b.ssrelr & 0x00000000FFFFFFFF) != ((u32_t)test_thread)) FAIL("Incorrect return address");
 	if ((b.ssrelr >> 32) != (a.ssrelr >> 32)) FAIL("Incorrect inheritance of SSR");
-	if (b.ugpgp != a.ugpgp) FAIL("Incorrect inheritance of UGP/GP");
+	if (b.gp != a.gp) FAIL("Incorrect inheritance of GP");
 	if (b.vmblock != 0) FAIL("vmblock is non-NULL");
 
 	vm.max_cpus = 2;

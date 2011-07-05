@@ -42,8 +42,8 @@ TH_do_tlbmissx:
 	sa0 = r8
 	usr = r11
 	p3:0 = r10
-	//ugp = r13
-	//gp = r12
+	//gp = r13
+	//ugp = r12
 	r3:2 = memd(r0+#CONTEXT_r0302)
 	r5:4 = memd(r0+#CONTEXT_r0504)
 	r7:6 = memd(r0+#CONTEXT_r0706)
@@ -98,8 +98,8 @@ TH_do_tlbmissrw:
 	sa0 = r8
 	usr = r11
 	p3:0 = r10
-	//ugp = r13
-	//gp = r12
+	//gp = r13
+	//ugp = r12
 	r3:2 = memd(r0+#CONTEXT_r0302)
 	r5:4 = memd(r0+#CONTEXT_r0504)
 	r7:6 = memd(r0+#CONTEXT_r0706)

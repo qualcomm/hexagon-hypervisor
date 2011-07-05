@@ -111,7 +111,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 		r11:10 = c11:10  // gp:ugp
 	}
 	{
-		memd(r7+#CONTEXT_ugpgp) = r11:10
+		memd(r7+#CONTEXT_gpugp) = r11:10
 		memd(r7+#CONTEXT_r3130) = r31:30
 		r2 = htid
 		p0 = cmp.eq(r4,#31)
@@ -194,7 +194,7 @@ H2K_interrupt_restore:
 		c1:0 = r21:20  // lc0:sa0
 	}
 	{
-		r27:26 = memd(r0+#CONTEXT_ugpgp)  // 128
+		r27:26 = memd(r0+#CONTEXT_gpugp)  // 128
 		r17:16 = memd(r0+#CONTEXT_r1716)
 		r25:24 = combine(r25,r23)
 	}

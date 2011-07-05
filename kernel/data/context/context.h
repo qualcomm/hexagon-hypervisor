@@ -146,10 +146,10 @@ typedef struct _h2_thread_context
 	u64_t r1918;	// OK FOR DCZEROA
 	u64_t r1716;
 	union {
-		u64_t ugpgp;
+		u64_t gpugp;
 		struct {
-			u32_t gp;
 			u32_t ugp;
+			u32_t gp;
 		};
 	};
 	union {

@@ -56,11 +56,11 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	}
 	{
 		memd(r7+#CONTEXT_r2322) = r23:22
-		r23 = ugp
+		r23 = gp
 	}
 	{
 		memd(r7+#CONTEXT_r2120) = r21:20
-		r22 = gp
+		r22 = ugp
 		r24 = memw(r7+#CONTEXT_trapmask)
 	}
 	{
@@ -83,7 +83,7 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 		r31 = r30  // r31:30 = elr:elr
 	}
 	{
-		memd(r7+#CONTEXT_ugpgp) = r23:22
+		memd(r7+#CONTEXT_gpugp) = r23:22
 		r26 += mpyi(r18,#KERNEL_STACK_SIZE)
 		p0 = or(p0,p1)
 		p1 = cmp.eq(r19,#0)
@@ -106,16 +106,16 @@ H2K_trap_nogood:
 		r16 = sgp
 	}
 	{
-		r19:18 = memd(r16+#CONTEXT_ugpgp)
+		r19:18 = memd(r16+#CONTEXT_gpugp)
 		r31:30 = memd(r16+#CONTEXT_r3130)
 	}
 	{
-		ugp = r19
+		gp = r19
 		r29:28 = memd(r16+#CONTEXT_r2928)
 		r27:26 = memd(r16+#CONTEXT_r2726)
 	}
 	{
-		gp  = r18
+		ugp  = r18
 		r25:24 = memd(r16+#CONTEXT_r2524)
 		r19:18 = memd(r16+#CONTEXT_ssrelr)
 	}

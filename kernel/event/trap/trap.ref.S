@@ -35,9 +35,9 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 #if __QDSP6_ARCH__ >= 4
 	r19 = ccr
 #endif
-	r21 = ugp
-	r20 = gp
-	memd(r7+#CONTEXT_ugpgp) = r21:20
+	r21 = gp
+	r20 = ugp
+	memd(r7+#CONTEXT_gpugp) = r21:20
 	memw(r7+#CONTEXT_ccr) = r19
 
 	// Can we take this trap?
@@ -76,9 +76,9 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 H2K_trap_nogood:
 	r16 = sgp
 
-	r19:18 = memd(r16+#CONTEXT_ugpgp)
-	ugp = r19
-	gp  = r18
+	r19:18 = memd(r16+#CONTEXT_gpugp)
+	gp = r19
+	ugp  = r18
 	r19:18 = memd(r16+#CONTEXT_ssrelr)
 	ssr = r19
 	elr = r18

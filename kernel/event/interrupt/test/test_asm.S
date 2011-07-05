@@ -46,7 +46,7 @@ TH_do_interrupt:
 	r7:6 = memd(r0+#CONTEXT_lc1sa1)
 	r9:8 = memd(r0+#CONTEXT_lc0sa0)
 	r11:10 = memd(r0+#CONTEXT_sr_preds)
-	r13:12 = memd(r0+#CONTEXT_ugpgp)
+	r13:12 = memd(r0+#CONTEXT_gpugp)
 	//ssr = r3
 	//elr = r2
 	m1 = r5
@@ -57,8 +57,8 @@ TH_do_interrupt:
 	sa0 = r8
 	usr = r11
 	p3:0 = r10
-	//ugp = r13
-	//gp = r12
+	//gp = r13
+	//ugp = r12
 	r3:2 = memd(r0+#CONTEXT_r0302)
 	r5:4 = memd(r0+#CONTEXT_r0504)
 	r7:6 = memd(r0+#CONTEXT_r0706)

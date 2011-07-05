@@ -45,7 +45,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot()
 	boot->trapmask = 0xffffffff;
 	boot->ccr = BOOT_THREAD_CCR;
 	boot->sr = BOOT_THREAD_USR;
-	boot->ugpgp = BOOT_THREAD_UGPGP;
+	boot->gpugp = BOOT_THREAD_GPUGP;
 	asid = H2K_asid_table_inc((u32_t)H2K_linear_bootmap, H2K_ASID_TRANS_TYPE_LINEAR);
 	boot->ssr_asid = asid;
 	H2K_runlist_push(boot);

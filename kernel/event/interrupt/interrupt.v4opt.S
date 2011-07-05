@@ -262,7 +262,11 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	/* Registers set up, call specified handler */
 	{
 		r3 = memw(r4+r0<<#2)  // compute interrupt handler
+		r5 = mux(p0,##0x80000000,#0)
+	}
+	{
 		r29 = add(##H2K_stacks,mpyi(r2,r3))
+		ciad(r5)
 	}
 	{
 		p0 = cmp.eq(r3,#0)

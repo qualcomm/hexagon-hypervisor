@@ -30,8 +30,8 @@ FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 	memd(r0+#CONTEXT_r0504) = r5:4
 	memd(r0+#CONTEXT_r0302) = r3:2
 
-	r13 = ugp
-	r12 = gp
+	r13 = gp
+	r12 = ugp
 	r9 = lc0
 	r8 = sa0
 	r7 = lc1
@@ -47,7 +47,7 @@ FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 #endif
 
 	memw(r0+#CONTEXT_ccr) = r11
-	memd(r0+#CONTEXT_ugpgp) = r13:12
+	memd(r0+#CONTEXT_gpugp) = r13:12
 	memd(r0+#CONTEXT_sr_preds) = r31:30
 	memd(r0+#CONTEXT_cs1cs0) = r17:16
 	memd(r0+#CONTEXT_lc0sa0) = r9:8
@@ -116,7 +116,7 @@ FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 	r7:6 = memd(r0+#CONTEXT_lc1sa1)
 	r9:8 = memd(r0+#CONTEXT_lc0sa0)
 	r11:10 = memd(r0+#CONTEXT_sr_preds)
-	r13:12 = memd(r0+#CONTEXT_ugpgp)
+	r13:12 = memd(r0+#CONTEXT_gpugp)
 	r17:16 = memd(r0+#CONTEXT_cs1cs0)
 	r14 = memw(r0+#CONTEXT_ccr)
 	elr = r2
@@ -129,8 +129,8 @@ FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 	lc0 = r9
 	p3:0 = r10
 	usr = r11
-	gp = r12
-	ugp = r13
+	ugp = r12
+	gp = r13
 #if __QDSP6_ARCH__ >= 4
 	ccr = r14
 	cs1 = r17

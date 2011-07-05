@@ -59,7 +59,7 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	}
 	{
 		memd(r7+#CONTEXT_ssrelr) = r21:20
-		memd(r7+#CONTEXT_ugpgp) = r27:26
+		memd(r7+#CONTEXT_gpugp) = r27:26
 		r26 = htid
 		r21 = r20  // r21:20 = elr:elr
 	}
@@ -100,16 +100,15 @@ H2K_trap_nogood:
 		ccr = r19  // AXOK
 	}
 	{
-		r19:18 = memd(r16+#CONTEXT_ugpgp)
+		r19:18 = memd(r16+#CONTEXT_gpugp)
 		r31:30 = memd(r16+#CONTEXT_r3130)
 	}
 	{
-		gp = r19
+		c11:10 = r19:18 // gp:ugp
 		r29:28 = memd(r16+#CONTEXT_r2928)
 		r27:26 = memd(r16+#CONTEXT_r2726)
 	}
 	{
-		ugp  = r18
 		r25:24 = memd(r16+#CONTEXT_r2524)
 		r19:18 = memd(r16+#CONTEXT_ssrelr)
 	}

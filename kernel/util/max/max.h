@@ -68,7 +68,7 @@
 #define BOOT_THREAD_CCR 0xffff0000
 
 /* ensure UGP is 0 for default thread ID behavior in h2 libs */
-#define BOOT_THREAD_UGPGP 0
+#define BOOT_THREAD_GPUGP 0
 
 #define MAX_VM_ID 255
 #define MAX_VM_CPUS 255

@@ -55,11 +55,11 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	{
 		dczeroa(r0)				// 128
 		r0 = add(r0,#-128)
-		r29 = ugp
+		r29 = gp
 	}
 	{
 		memd(r0+#CONTEXT_r1514) = r15:14
-		r28 = gp
+		r28 = ugp
 	}
 	{
 		memd(r0+#CONTEXT_r1312) = r13:12
@@ -105,7 +105,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 		memd(r0+#CONTEXT_ssrelr) = r9:8
 	}
 	{
-		memd(r0+#CONTEXT_ugpgp) = r29:28
+		memd(r0+#CONTEXT_gpugp) = r29:28
 	}
 	{
 		memd(r0+#CONTEXT_r1716) = r17:16
@@ -195,7 +195,7 @@ H2K_interrupt_restore:
 		usr = r21
 	}
 	{
-		r27:26 = memd(r0+#CONTEXT_ugpgp)
+		r27:26 = memd(r0+#CONTEXT_gpugp)
 		r17:16 = memd(r0+#CONTEXT_r1716)
 		sa0 = r22
 	}
@@ -206,12 +206,12 @@ H2K_interrupt_restore:
 	{
 		r21:20 = memd(r0+#CONTEXT_r2120)
 		r23:22 = memd(r0+#CONTEXT_r2322)
-		gp = r26
+		ugp = r26
 	}
 	{
 		r25:24 = memd(r0+#CONTEXT_r2524)
 		r27:26 = memd(r0+#CONTEXT_r2726)
-		ugp = r27
+		gp = r27
 	}
 	{
 		r1:0 = memd(r0+#CONTEXT_r0100)

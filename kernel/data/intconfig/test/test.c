@@ -39,7 +39,7 @@ int main()
 	int i;
 	u32_t oldmask;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
-	a.ugpgp = 0x12345678F0000000ULL;
+	a.gpugp = 0xF000000012345678ULL;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->fastint_funcptrs[i] = BAD;
 		H2K_gp->inthandlers[i] = BAD;

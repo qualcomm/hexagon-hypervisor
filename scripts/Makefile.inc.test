@@ -226,10 +226,10 @@ ${EXEC}: ${OBJS}
 	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
-#  Todo:  need a watchdog to kill sims after some time; possibly use the "forked killer"
+# each test has a max of 60 seconds!
 test.log: ${EXEC}
 	${FIXEXEC} ${EXEC} && \
-	${SIM} ${EXEC} --profile | tee $@;
+	ulimit -t 60 && ${SIM} ${EXEC} --profile | tee $@;
 
 # Coverage stuff -- single testcase
 

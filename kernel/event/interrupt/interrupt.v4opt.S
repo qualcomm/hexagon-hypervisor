@@ -17,10 +17,10 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	 */
 	{
 		crswap(r0,sgp0)
+		if (!cmp.gtu(r0.new,#1)) jump:t H2K_interrupted_waitmode_or_preempt
 	}
 	/* If SGP is null, we've interrupted waitmode. */
 	{
-		if (r0==#0) jump:t H2K_interrupted_waitmode
 		dcfetch(r0+#32)
 		r0 = add(r0,#96)
 	}
@@ -141,6 +141,7 @@ H2K_interrupt_restore:
 	 * in the case of L1 miss/L2 hits.
 	 */
 	/* Restore all state and return */
+	call H2K_preempt
 	{
 		r0 = sgp0
 	}
@@ -242,6 +243,7 @@ H2K_interrupt_restore:
 
 FUNC_END H2K_handle_int
 
+#if 0
 FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	{
 		r0 = ssr
@@ -281,5 +283,109 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 		r1:0 = #0
 		jump H2K_switch
 	}
-
 FUNC_END H2K_interrupted_waitmode
+
+FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
+	{
+		r0 = ssr
+		r3 = #KERNEL_STACK_SIZE
+		r4 = add(r16,#KG_inthandlers)
+	}
+	{
+		r0 = and(r0,#0x1f)  // extract interrupt number
+		r1 = sgp  // thread context == NULL	XXXXX
+		r4 = add(r16,#KG_inthandlers)
+		r5 = VID
+	}
+	{
+		p0 = cmp.eq(r0,#31)
+		r2 = htid
+		if (p0.new) r0 = add(r5,#32)
+	}
+	/* Registers set up, call specified handler */
+	{
+		r3 = memw(r4+r0<<#2)  // compute interrupt handler
+		r5 = mux(p0,##0x80000000,#0)
+	}
+	{
+		r29 = add(##H2K_stacks,mpyi(r2,r3))
+		ciad(r5)
+	}
+	{
+		p0 = cmp.eq(r3,#0)
+		if (!p0.new) jumpr:t r3
+		r31 = ##1f
+	}
+1:
+	{
+		r0 = sgp
+		if (cmp.eq(r0.new,#0)) jump:nt 2f
+	}
+	{
+		r31 = memw(r0+#CONTEXT_continuation)
+		r1:0 = memd(r0+#CONTEXT_r0100)
+	}
+	jumpr r31
+2:
+	{
+		k0lock
+	}
+	{
+		r1:0 = #0
+		jump H2K_switch
+	}
+FUNC_END H2K_interrupted_preempt
+#endif
+
+FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
+	{
+		r2 = ssr
+		r3 = #KERNEL_STACK_SIZE
+		r16 = ##H2K_kg		// unnecessary if just preempt, but we're sharing code
+		r17 = r0		// save what was in SGP at interrupt time (0 or 1)
+					// allowed by duplex
+	}
+	{
+		r2 = and(r2,#0x1f)  		// extract interrupt number
+		r4 = add(r16,#KG_inthandlers)	// inthandler pointer
+		r5 = VID			// vector ID if L2 interrupt
+	}
+	{
+		p0 = cmp.eq(r2,#31)		// L2 interrupt?
+		if (p0.new) r0 = add(r5,#32)	// Yes, use VID + offset
+		if (!p0.new) r0 = r2		// No, just use L1 value
+		r1 = sgp			// scheduled task or garbage
+	}
+	/* Registers set up, call specified handler */
+	{
+		r3 = memw(r4+r0<<#2)  		// compute interrupt handler
+		r5 = mux(p0,##0x80000000,#0)	// Value to CIAD if L2 interrupt
+		r2 = htid
+	}
+	{
+		r29 = add(##H2K_stacks,mpyi(r2,r3))
+		p0 = cmp.eq(r3,#0)		// Is handler NULL?
+		ciad(r5)			// Re-enable L2 controller interrupt if L2 int
+	}
+	{
+		r1 = mpyi(r1,r17)		// 0 or 1 times SGP == 0 or SGP
+		if (!p0) callr r3		// If non-null, call int handler
+		r18 = r1			// save SGP ptr
+	}
+	{
+		p0 = cmp.eq(r17,#0)		// If input was 0 (idle), go back to sleep
+		if (p0.new) jump:nt 1f		
+		if (!p0.new) r31 = memw(r18+#CONTEXT_continuation)	// Get continuation
+		if (!p0.new) r1:0 = memd(r18+#CONTEXT_r0100)		// Get return val
+	}
+	jumpr r31
+1:						// We were idle, go back to sleep
+	{
+		k0lock
+	}
+	{
+		r1:0 = #0
+		jump H2K_switch
+	}
+FUNC_END H2K_interrupted_waitmode_or_preempt
+

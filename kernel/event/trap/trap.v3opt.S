@@ -102,36 +102,38 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	}
 	.falign
 H2K_trap_nogood:
+	r17 = sgp
 	{
-		r16 = sgp
+		memd(r17+#CONTEXT_r0100) = r1:0
+		call H2K_preempt
 	}
 	{
-		r19:18 = memd(r16+#CONTEXT_gpugp)
-		r31:30 = memd(r16+#CONTEXT_r3130)
+		r19:18 = memd(r17+#CONTEXT_gpugp)
+		r31:30 = memd(r17+#CONTEXT_r3130)
 	}
 	{
 		gp = r19
-		r29:28 = memd(r16+#CONTEXT_r2928)
-		r27:26 = memd(r16+#CONTEXT_r2726)
+		r29:28 = memd(r17+#CONTEXT_r2928)
+		r27:26 = memd(r17+#CONTEXT_r2726)
 	}
 	{
 		ugp  = r18
-		r25:24 = memd(r16+#CONTEXT_r2524)
-		r19:18 = memd(r16+#CONTEXT_ssrelr)
+		r25:24 = memd(r17+#CONTEXT_r2524)
+		r19:18 = memd(r17+#CONTEXT_ssrelr)
 	}
 	{
 		ssr = r19  // AXOK
 	}
 	{
-		r23:22 = memd(r16+#CONTEXT_r2322)
-		r21:20 = memd(r16+#CONTEXT_r2120)
+		r23:22 = memd(r17+#CONTEXT_r2322)
+		r21:20 = memd(r17+#CONTEXT_r2120)
 	}
 	{
 		elr = r18  // AXOK
 	}
 	{
-		r19:18 = memd(r16+#CONTEXT_r1918)
-		r17:16 = memd(r16+#CONTEXT_r1716)
+		r19:18 = memd(r17+#CONTEXT_r1918)
+		r17:16 = memd(r17+#CONTEXT_r1716)
 	}
 	{
 		rte  // ??? AXOK?

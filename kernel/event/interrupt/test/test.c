@@ -28,20 +28,28 @@ H2K_thread_context *TH_dest_context;
 u32_t TH_intno;
 u32_t TH_pass;
 u32_t TH_fastint_check;
+u32_t TH_saw_continuation;
+u32_t TH_saw_preempt_call;
 
 jmp_buf env;
 
 void FAIL(const char *str)
 {
-	puts("FAIL");
 	puts(str);
+	puts("FAIL");
 	exit(1);
 }
 
 H2K_thread_context srcdata;
 H2K_thread_context a,b;
 
+void H2K_preempt()
+{
+	TH_saw_preempt_call = 1;
+}
+
 void H2K_handle_int();
+void H2K_interrupt_restore();
 
 /* Helper function, make SGP safe */
 void TH_save_sgp();
@@ -49,6 +57,7 @@ void TH_restore_sgp();
 
 /* Helper function, will call H2K_handle_interrupt */
 void TH_do_interrupt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num);
+void TH_do_preempt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num);
 
 #define CHECK_INTERRUPT_TEST(ELEMENT) \
 	if (src->ELEMENT != dest->ELEMENT) FAIL("Not equal: " #ELEMENT)
@@ -154,10 +163,40 @@ void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 	TH_intno = interrupt;
 	TH_setup_inthandlers(interrupt);
 	TH_pass = 0;
+	TH_saw_continuation = 0;
 	if (setjmp(env) == 0) {
 		TH_do_interrupt(src,dest,interrupt);
 	}
 	TH_restore_sgp();
+	if (TH_saw_continuation != 0) FAIL("Called continuation");
+}
+
+void TH_try_preempt_interrupt(H2K_thread_context *dest, u32_t interrupt)
+{
+	H2K_thread_context *src = dest;
+	TH_src_context = dest;
+	TH_dest_context = dest;		/* we shouldn't be saving or restoring here */
+	TH_intno = interrupt;
+	TH_setup_inthandlers(interrupt);
+	TH_pass = 0;
+	TH_saw_continuation = 0;
+	if (setjmp(env) == 0) {
+		TH_do_preempt(dest,src,interrupt);
+	}
+	TH_restore_sgp();
+	if (TH_saw_continuation == 0) FAIL("Didn't call continuation");
+}
+
+void TH_continuation(u64_t r0100)
+{
+	if (r0100 != srcdata.r0100) FAIL("srcdata doesn't match parameter");
+	TH_saw_continuation = 1;
+	longjmp(env,1);
+}
+
+void TH_continuation_fail(u64_t r0100)
+{
+	FAIL("Wrong Continuation!");
 }
 
 /*
@@ -186,6 +225,7 @@ void fill_srcdata(int i)
 	srcdata.r2726 = 0x0027babe0025beefULL | id;
 	srcdata.r2928 = 0x0029babe0028beefULL | id;
 	srcdata.r3130 = 0x0031babe0030beefULL | id;
+	srcdata.continuation = TH_continuation_fail;
 }
 
 int main() 
@@ -204,15 +244,21 @@ int main()
 #endif
 		printf("i=%d\n",i);
 		fill_srcdata(i);
+		a.continuation = TH_continuation_fail;
 		TH_try_interrupt(&a,i);
 		TH_try_interrupt(NULL,i);
+		a.continuation = TH_continuation;
+		TH_try_preempt_interrupt(&a,i);
 		/* Test the case where we were checking for 
 		 * another interrupt before return */
 		//TH_fastint_check = 1;
 		//TH_try_interrupt((void *)(&H2K_fastint_contexts[0]),i);
 		//if (TH_fastint_check != 0) FAIL("Didn't jump to fastint check");
 	}
+	a.continuation = TH_continuation_fail;
 	TH_try_interrupt(&a,0);
+	a.continuation = TH_continuation;
+	TH_try_preempt_interrupt(&a,0);
 	puts("TEST PASSED\n");
 	return 0;
 }

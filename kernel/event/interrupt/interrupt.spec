@@ -85,6 +85,45 @@ Functionality
 We set up the stack pointer and call the correct function.
 
 
+H2K_interrupted_preempt
+-----------------------
+
+.. cfunction:: H2K_interrupted_preempt()
+
+Description
+~~~~~~~~~~~
+
+This routine is called when we detect that we were interrupted at the kernel 
+preemption point.  This is a common case, and we can avoid context save by
+branching to this routine early.
+
+Functionality
+~~~~~~~~~~~~~
+
+We set up the stack pointer and call the correct function.
+
+
+H2K_interrupted_waitmode_or_preempt
+-----------------------------------
+
+
+:cfunc:`H2K_interrupted_preempt()` and :cfunc:`H2K_interrupted_waitmode()` have very 
+similar behavior.  It may be beneficial to combine these routines into a single one
+for lower code size.
+
+Description
+~~~~~~~~~~~
+
+This routine is called when we detect that we were interrupted while in wait,
+or have interrupted at the preemption point.  This is a common case, and we can
+avoid context save by branching to this routine early.
+
+Functionality
+~~~~~~~~~~~~~
+
+We set up the stack pointer and call the correct function.
+
+
 Testing
 -------
 
@@ -92,17 +131,17 @@ Testing
 Samples
 ~~~~~~~
 
-* Input: thread context in SGP, or NULL
+* Input: thread context in SGP, or NULL, or 0x00000001
 * Input: H2K_inthandlers
-* Output: All (?) registers should be saved in thread context if SGP is non-NULL
+* Output: All (?) registers should be saved in thread context if SGP is a valid pointer
 * Flow: go to event handler for event number
 
 Important cases
 ~~~~~~~~~~~~~~~
 
-* SGP is NULL
-* SGP is non-NULL
-* SGP is fast interrupt handler
+* SGP is NULL (wait mode)
+* SGP is 0x01 and r0 is a valid context (preemption point)
+* SGP is a valid context
 * Each L1 interrupt
 * For V4, each L2 interrupt
 
@@ -120,6 +159,15 @@ SGP to the storage pointed to by `dest`, and call :cfunc:`H2K_handle_int()` with
 correct SSR CAUSE code for the interrupt corresponding to num having happened.
 
 For non-NULL SGP value tests, the approriate entry in H2K_inthandlers will point to a second helper function:
+
+.. cfunction::  void TH_do_preempt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
+
+This function will set R16 to point to the kernel globals, R0 to the storage
+pointed to by `dest`, set SGP to 0x1, and call :cfunc:`H2K_handle_int()` with
+the correct SSR CAUSE code for the interrupt corresponding to num having
+happened.
+
+This simulates the scenario where the interrupt happened from the preemption point.
 
 .. cfunction::  void TH_check_interrupt(H2K_thread_context *src, H2K_thread_context *dest)
 

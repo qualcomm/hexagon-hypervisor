@@ -77,6 +77,44 @@ TH_do_interrupt:
 	r1:0 = memd(r0+#CONTEXT_r0100)
 	jump H2K_handle_int
 
+/*
+ * TH_do_preempt sets up and calls the interrupt, as if from the preemption point.
+ * r0 is the source data, which is ignored
+ * r1 is the dst location to put into r0
+ * r2 is the interrupt number 
+ * 
+ * We don't set all registers.  Some registers like gp and SSR
+ * might cause some bad things to happen.  The more registers we
+ * can check, however, the better.
+ */
+	.text
+	.global TH_do_preempt
+TH_do_preempt:
+	/* Insert interrupt num into cause field */
+	r4 = ssr
+	r5 = #0xc0
+	r4 = insert(r5,#8,#0)
+	r4 = insert(r2,#5,#0)
+	ssr = r4
+#if __QDSP6_ARCH__ >= 4
+	p0 = cmp.gtu(r2,#31)
+	if (!p0) jump 1f
+	r5 = #31
+	r4 = insert(r5,#5,#0)
+	ssr = r4
+	r4 = add(r2,#-32)
+	r4 = and(r4,##0x3ff)
+	VID = r4
+1:
+#endif
+
+	r0 = #1
+	sgp = r0
+	r0 = r1
+	r16.h = #hi(H2K_kg)
+	r16.l = #lo(H2K_kg)
+	jump H2K_handle_int
+
 /* This is our implementation of the H2_interrupted_fastint_check
  * that may be called.  We set things up and call back to the C
  * function TH_interrupted_fastint_check 

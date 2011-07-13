@@ -20,6 +20,10 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	{
 		dcfetch(r0)
 		if (r0==#0) jump:t H2K_interrupted_waitmode
+		r0 = and(r0,#-2)
+	}
+	{
+		if (r0==#0) jump:nt H2K_interrupted_preempt
 		r0 = add(r0,#160)
 	}
 	{
@@ -144,6 +148,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	// 30 cycles ideal (including stub)
 H2K_interrupt_restore:
 	/* Restore all state and return */
+	call H2K_preempt
 	r0 = sgp
 	{
 		r3:2 = memd(r0+#CONTEXT_ssrelr)
@@ -252,4 +257,35 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .falign
 		jump H2K_switch
 	}
 FUNC_END H2K_interrupted_waitmode
+
+FUNC_START H2K_interrupted_preempt .text.core.interrupt .falign
+	{
+		r29.h = #hi(H2K_stacks)
+		r0 = ssr
+		r3 = #KERNEL_STACK_SIZE
+		r4 = add(r16,#KG_inthandlers)
+	}
+	{
+		r29.l = #lo(H2K_stacks)
+		r2 = extractu(r0,#3,#19)
+		r0 = and(r0,#MAX_INTERRUPTS-1)
+	}
+	{
+		r18 = sgp
+		r4 = addasl(r4,r0,#2)
+	}
+	{
+		r29 += mpyi(r2,r3)
+		r4 = memw(r4)
+		r1 = r18
+	}
+	{
+		callr r4				// call interrupt handler
+	}
+	{
+		r31 = memw(r18+#CONTEXT_continuation)
+		r1:0 = memd(r18+#CONTEXT_r0100)
+	}
+	jumpr r31					// call continuation if returning
+FUNC_END H2K_interrupted_preempt
 

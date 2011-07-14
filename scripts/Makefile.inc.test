@@ -73,14 +73,14 @@ ${LIBH2KERNEL}: ${H2DIR}/install
 #check is always in ref/
 ${LIBH2CHECK}: ${H2DIR}/install
 	+cd ${H2DIR}/kernel;\
-	make check DEBUG=0 ARCHV=${ARCHV};\
+	$(MAKE) check DEBUG=0 ARCHV=${ARCHV};\
 	cp build/ref/libh2check.a ../install/lib
 
 ${LIBH2}:  ${H2DIR}/install
 
 ${H2DIR}/install:
 	cd ${H2DIR};\
-	+make ${MODEL} ARCHV=${ARCHV}
+	+$(MAKE) ${MODEL} ARCHV=${ARCHV}
 
 # (_8^(|)  d'oh!
 #  Need to tell people to stop using this one and use 'prepare'
@@ -90,7 +90,7 @@ prepare: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
 
 clean_libs:
 	cd ${H2DIR};\
-	rm -rf install; make clean
+	rm -rf install; $(MAKE) clean
 
 clean_top:
 	rm -Rf test.cov_fns cov.txt report.html
@@ -137,15 +137,15 @@ ifdef SUBDIRS
 #  Recursive subdirectory traversal
 ################################################################################
 
-SUBDIR_MAKE=+for SUBDIR in ${SUBDIRS}; do\
-	$(MAKE) -C $$SUBDIR $(MAKECMDGOALS) TEST=$$SUBDIR; TSTAT=$$?; \
-        if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi; \
-	done; exit $$STAT
+#SUBDIR_MAKE=+for SUBDIR in ${SUBDIRS}; do\
+#	$(MAKE) -C $$SUBDIR $(MAKECMDGOALS) TEST=$$SUBDIR; TSTAT=$$?; \
+#        if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi; \
+#	done; exit $$STAT
 
-SUBDIR_TARGETS=clean all
+#SUBDIR_TARGETS=clean all
 
-${SUBDIR_TARGETS}:
-	${SUBDIR_MAKE}
+#${SUBDIR_TARGETS}:
+#	${SUBDIR_MAKE}
 
 #  The plan was to do this recursive gmon/coverage thing, but that doesn't
 #  work so well with multiple binaries

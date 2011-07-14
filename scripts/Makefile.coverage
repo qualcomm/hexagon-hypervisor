@@ -3,59 +3,7 @@
 
 H2DIR=.
 
-SUBDIRS=./kernel/data/intconfig/test\
- ./kernel/data/readylist/test\
- ./kernel/data/runlist/test\
- ./kernel/data/thread/test\
- ./kernel/event/interrupt/test\
- ./kernel/event/trap/test\
- ./kernel/event/vectors/test\
- ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios\
- ./kernel/sched/dosched/test/test\
- ./kernel/sched/futex/test/tests/multi_wake\
- ./kernel/sched/futex/test/tests/simple_lock_unlock\
- ./kernel/sched/futex/test/tests/find_match\
- ./kernel/sched/futex/test/tests/pi\
- ./kernel/sched/lowprio/test\
- ./kernel/sched/resched/test\
- ./kernel/sched/switch/test\
- ./kernel/sched/yield/test\
- ./kernel/thread/create/test\
- ./kernel/thread/id/test\
- ./kernel/thread/stop/test\
- ./kernel/traps/tid/test\
- ./kernel/event/fastint/test\
- ./kernel/util/ring/test/test\
- ./kernel/util/trace/test\
- ./kernel/init/boot/test\
- ./kernel/init/setup/test\
- ./kernel/sched/lowprio/test\
- ./kernel/traps/config/test\
- ./kernel/traps/prio/test\
- ./kernel/traps/tid/test\
- ./kernel/traps/time/test\
- ./kernel/error/fatal/test\
- ./kernel/event/error/test\
- ./kernel/mem/asid/test\
- ./kernel/mem/linear/test\
- ./kernel/mem/pagefault/test\
- ./kernel/mem/pagewalk/test\
- ./kernel/mem/physread/test\
- ./kernel/mem/stlb/test\
- ./kernel/mem/tlbmiss/test\
- ./kernel/traps/hwconfig/test\
- ./kernel/util/atomic/test\
- ./kernel/util/stmode/test\
- ./kernel/vm/vmboot/test\
- ./kernel/vm/vmevent/test\
- ./kernel/vm/vmint/test\
- ./kernel/vm/vmipi/test\
- ./kernel/vm/vmtrap/test\
- ./kernel/vm/vmwork/test \
- ./kernel/traps/pmu/test_h2 \
- ./kernel/traps/pmu/test_standalone 
-
-
+SUBDIRS=$(shell cat ./scripts/testlist)
 
 
 include ./scripts/Makefile.inc.test

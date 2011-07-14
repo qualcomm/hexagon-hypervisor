@@ -7,7 +7,11 @@ COM_LDFLAGS=
 
 #If you are running outside hexframe.. sensible defaults
 ifeq (,${BUILD_DIR})
+ifneq (,${Q6VERSION})
+ARCHV=$(subst v,,$(Q6VERSION))
+else
 ARCHV=4
+endif
 CC=qdsp6-gcc
 RUN=qdsp6-sim
 SIMF=--timing
@@ -39,12 +43,12 @@ covclean:
 opt:
 	make -C kernel ARCHV=$(ARCHV) opt_install && \
 	make -C libs ARCHV=$(ARCHV) install && \
-	make -f scripts/Makefile.coverage prepare;
+	make -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 ref:
 	make -j 3 -C kernel ARCHV=$(ARCHV) ref_install && \
 	make -j 3 -C libs ARCHV=$(ARCHV) install && \
-	make -j 3 -f scripts/Makefile.coverage prepare;
+	make -j 3 -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 sim: ref
 	$(CC) -mv$(ARCHV) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
@@ -55,10 +59,10 @@ size:
 	cat size;
 
 cov:
-	make -f scripts/Makefile.coverage prepare; \
-	make -f scripts/Makefile.coverage all; \
-	make -f scripts/Makefile.coverage cov.txt; \
-	make -f scripts/Makefile.coverage report.html
+	make -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
+	make -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; \
+	make -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt; \
+	make -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
 cov-check:
 	make -f scripts/Makefile.coverage check

@@ -19,8 +19,10 @@ endif
 
 ifeq (5,$(ARCHV))
 FIXEXEC = /prj/dsp/qdsp6/arch/scripts/qdsp6-fix-version 4 
+UNFIXEXEC = /prj/dsp/qdsp6/arch/scripts/qdsp6-fix-version 5
 else
 FIXEXEC = echo
+UNFIXEXEC = echo
 endif
 
 ifeq ($(MODEL),)
@@ -205,7 +207,7 @@ DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 ################################################################################
 
 %.objdump: %.elf
-	${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
+	${UNFIXEXEC} ${EXEC} && ${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
 
 ifdef PYTHON_GENERATOR_SCRIPT

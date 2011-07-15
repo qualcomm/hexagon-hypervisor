@@ -20,18 +20,9 @@
 #include <thread.h>
 #include <create.h>
 #include <vmwork.h>
-
-u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) {
-	u32_t prev = !(H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT));
-	
-	if (!prev  // interrupts were disabled, try to take now
-			&& (me->vmstatus & H2K_VMSTATUS_VMWORK)) H2K_vm_do_work(me);
-	return prev;
-}
-
-u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) {
-	return H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
-}
+#include <runlist.h>
+#include <fatal.h>
+#include <vmint.h>
 
 /* 1 */
 void H2K_vmtrap_return(H2K_thread_context *me)
@@ -157,8 +148,32 @@ void H2K_vmtrap_set_pcycles(H2K_thread_context *me)
 /* 16 */
 void H2K_vmtrap_wait(H2K_thread_context *me)
 {
+	s32_t intno;
 	/* Wait for interrupt... or fall through if interrupts disabled and
 	 * something pending */
+
+	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
+		if (me->vmstatus & H2K_VMSTATUS_IE) { // pending, try to take
+			intno = H2K_vm_do_work(me);
+			if (intno < 0) { // error: no interrupt, but there should be one, panic
+				H2K_fatal_kernel(0xbadd, me, 0, 0, me->hthread);
+			}
+			me->r00 = intno;
+		}
+		else { // pending but disabled
+			intno = H2K_vm_interrupt_peek(me->vmblock, me->vmcpu);
+			if (intno < 0) { // error: no interrupt, but there should be one, panic
+				H2K_fatal_kernel(0xbaad, me, 0, 0, me->hthread);
+			}
+			me->r00 = intno;
+		}
+	}
+	else { // nothing pending, wait
+		BKL_LOCK();
+		H2K_runlist_remove(me);
+		me->status = H2K_STATUS_VMWAIT;
+		H2K_dosched(me,me->hthread);
+	}
 }
 
 /* 17 */

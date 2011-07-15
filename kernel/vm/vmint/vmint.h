@@ -41,4 +41,7 @@ u32_t H2K_vm_interrupt_status(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno) IN_
 /* Trap multi-call */
 void H2K_vmtrap_intop(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 
+u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
+u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
+
 #endif

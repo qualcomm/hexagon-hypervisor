@@ -108,7 +108,7 @@ futex address.  This increases the cost of blocking, but decreases the cost of
 waking up the highest priority threads.
 
 
-H2K_futex_resume
+H2K_futex_init
 ----------------
 
 .. cfunction:: void H2K_futex_init(void)

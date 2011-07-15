@@ -7,7 +7,11 @@ COM_LDFLAGS=
 
 #If you are running outside hexframe.. sensible defaults
 ifeq (,${BUILD_DIR})
+ifneq (,${Q6VERSION})
+ARCHV=$(subst v,,$(Q6VERSION))
+else
 ARCHV=4
+endif
 CC=qdsp6-gcc
 RUN=qdsp6-sim
 SIMF=--timing
@@ -25,26 +29,26 @@ all: ref doc gtags
 distclean: clean docclean
 
 clean: covclean
-	make -C kernel ARCHV=$(ARCHV) clean && \
-	make -C libs ARCHV=$(ARCHV) clean && \
+	$(MAKE) -C kernel ARCHV=$(ARCHV) clean && \
+	$(MAKE) -C libs ARCHV=$(ARCHV) clean && \
 	rm -Rf size test.exe stats.txt install kernel/stats.txt
 
 docclean:
-	make -f scripts/docs/Makefile.sphinx clean
+	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
 covclean:
-	make -f scripts/Makefile.coverage clean && \
-	make -f scripts/Makefile.coverage clean_top
+	$(MAKE) -f scripts/Makefile.coverage clean && \
+	$(MAKE) -f scripts/Makefile.coverage clean_top
 
 opt:
-	make -C kernel ARCHV=$(ARCHV) opt_install && \
-	make -C libs ARCHV=$(ARCHV) install && \
-	make -f scripts/Makefile.coverage prepare;
+	$(MAKE) -C kernel ARCHV=$(ARCHV) opt_install && \
+	$(MAKE) -C libs ARCHV=$(ARCHV) install && \
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 ref:
-	make -j 3 -C kernel ARCHV=$(ARCHV) ref_install && \
-	make -j 3 -C libs ARCHV=$(ARCHV) install && \
-	make -j 3 -f scripts/Makefile.coverage prepare;
+	$(MAKE) -j 3 -C kernel ARCHV=$(ARCHV) ref_install && \
+	$(MAKE) -j 3 -C libs ARCHV=$(ARCHV) install && \
+	$(MAKE) -j 3 -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 sim: ref
 	$(CC) -mv$(ARCHV) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
@@ -55,17 +59,17 @@ size:
 	cat size;
 
 cov:
-	make -f scripts/Makefile.coverage prepare; \
-	make -f scripts/Makefile.coverage all; \
-	make -f scripts/Makefile.coverage cov.txt; \
-	make -f scripts/Makefile.coverage report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
+	$(MAKE) -j 8 -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; \
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt; \
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
 cov-check:
-	make -f scripts/Makefile.coverage check
+	$(MAKE) -f scripts/Makefile.coverage check
 
 doc:
-	make -f scripts/docs/Makefile.sphinx prepare && \
-	make -f scripts/docs/Makefile.sphinx doctest html
+	$(MAKE) -f scripts/docs/Makefile.sphinx prepare && \
+	$(MAKE) -f scripts/docs/Makefile.sphinx doctest html
 
 compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a

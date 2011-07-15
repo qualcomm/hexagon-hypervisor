@@ -13,6 +13,10 @@
 
 default-target: all
 
+ifneq (,$(Q6VERSION))
+ARCHV=$(subst v,,$(Q6VERSION))
+endif
+
 ifeq ($(ARCHV),)
 ARCHV = 4
 endif

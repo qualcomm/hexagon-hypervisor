@@ -21,14 +21,6 @@ ifeq ($(ARCHV),)
 ARCHV = 4
 endif
 
-ifeq (5,$(ARCHV))
-FIXEXEC = /prj/dsp/qdsp6/arch/scripts/qdsp6-fix-version 4 
-UNFIXEXEC = /prj/dsp/qdsp6/arch/scripts/qdsp6-fix-version 5
-else
-FIXEXEC = echo
-UNFIXEXEC = echo
-endif
-
 ifeq ($(MODEL),)
    MODEL = ref
    MODELSTR = ${MODEL}
@@ -211,7 +203,7 @@ DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 ################################################################################
 
 %.objdump: %.elf
-	${UNFIXEXEC} ${EXEC} && ${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
+	${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
 
 ifdef PYTHON_GENERATOR_SCRIPT
@@ -234,7 +226,6 @@ ${EXEC}: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-	${FIXEXEC} ${EXEC} && \
 	ulimit -t 60 && ${SIM} ${EXEC} --profile | tee $@;
 
 # Coverage stuff -- single testcase

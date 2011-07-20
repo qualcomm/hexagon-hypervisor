@@ -9,14 +9,14 @@
 
 FUNC_START H2K_preempt .text.core.interrupt .falign
 	{
-		r1:0 = combine(#4,#1)	// IE=1 EX=0 UM=0
+		r1:0 = combine(#0,#1)	// EX=0 UM=0
 		r2 = ssr
 	}
 	{
 		crswap(r0,sgp)
 		if (cmp.eq(r0.new,#0)) jump:nt .Lpreempt_done
 		r3 = r2
-		r2 = insert(r1,#3,#16)
+		r2 = insert(r1,#2,#16)
 	}
 	ssr = r2
 	isync

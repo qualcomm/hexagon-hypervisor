@@ -13,9 +13,9 @@ FUNC_START H2K_preempt .text.core.interrupt .p2align 2
 	p0 = cmp.eq(r0,#0)	// task was NULL, better to just note that
 	if (p0) jump .Lpreempt_done
 	r2 = ssr
-	r1 = #4			// IE=1 EX=0 UM=0
+	r1 = #0			// EX=0 UM=0.. don't change IE
 	r3 = r2
-	r2 = insert(r1,#3,#16)
+	r2 = insert(r1,#2,#16)
 	ssr = r2
 	isync
 	nop

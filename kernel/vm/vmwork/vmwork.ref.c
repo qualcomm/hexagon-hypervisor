@@ -24,8 +24,7 @@ s32_t H2K_vm_do_work(H2K_thread_context *me)
 		if (intno < 0) {
 			/* No interrupt, nothing to do */
 			H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
-		}
-		else {
+		} else {
 			/* Interrupts enabled, interrupt pulled from controller.  Do interrupt! */
 			H2K_vm_event(0,intno,INTERRUPT_GEVB_OFFSET,me);
 		}
@@ -35,5 +34,6 @@ s32_t H2K_vm_do_work(H2K_thread_context *me)
 		 * now, so I can't. */
 		/* Keep VMWORK bit set so I can do the work later */
 	}
+	return -1;
 }
 

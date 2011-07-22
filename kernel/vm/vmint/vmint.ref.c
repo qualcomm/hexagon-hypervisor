@@ -14,6 +14,8 @@
 #include <globals.h>
 #include <hw.h>
 #include <readylist.h>
+#include <check_sanity.h>
+#include <vmwork.h>
 
 IN_SECTION(".text.vm.int")
 static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)

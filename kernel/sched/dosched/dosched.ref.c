@@ -43,7 +43,7 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 	}
 	new->hthread = hthread;
 	H2K_runlist_push(new);
-	if (new->vmstatus & H2K_VMSTATUS_VMWORK) H2K_vm_do_work(new);
+	//if (new->vmstatus & H2K_VMSTATUS_VMWORK) H2K_vm_do_work(new);
 	H2K_switch(me,new);
 	/* EJP: should never get here! */
 }

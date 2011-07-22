@@ -40,13 +40,17 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 .Lfrom_sleep:
 	{
+		r15 = PMUCFG
 		p0 = cmp.eq(r1,#0)
 		if (p0.new) jump:nt .Lto_sleep
 		if (!p0.new) r14 = memub(r1+#CONTEXT_pmu_on)
-		if (!p0.new) r31 = memw(r1+#CONTEXT_continuation)
-		r15 = PMUCFG
+		if (!p0.new) r13 = memub(r1+#CONTEXT_vmstatus)
 	}
-	SGP0 = r1
+	{
+		SGP0 = r1
+		r17 = r1
+		p3 = tstbit(r13,#0)
+	}
 	{
 		memd(r6+r7<<#3) = r27:26
 		r4 = memub(r1+#CONTEXT_tid)
@@ -58,10 +62,15 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		PMUCFG = r15
+		r0 = r1
 	}
 	{
-		memb(r1+#CONTEXT_hthread) = r7
-		r1:0 = memd(r1+#CONTEXT_r0100)
+		memb(r17+#CONTEXT_hthread) = r7
+		if (p3) call H2K_vm_do_work
+	}
+	{
+		r31 = memw(r17+#CONTEXT_continuation)
+		r1:0 = memd(r17+#CONTEXT_r0100)
 		jump H2K_check_sanity_unlock
 	}
 .Lto_sleep:

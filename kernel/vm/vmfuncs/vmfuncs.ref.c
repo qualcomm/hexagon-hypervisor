@@ -23,6 +23,7 @@
 #include <runlist.h>
 #include <fatal.h>
 #include <vmint.h>
+#include <dosched.h>
 
 /* 1 */
 void H2K_vmtrap_return(H2K_thread_context *me)
@@ -159,16 +160,14 @@ void H2K_vmtrap_wait(H2K_thread_context *me)
 				H2K_fatal_kernel(0xbadd, me, 0, 0, me->hthread);
 			}
 			me->r00 = intno;
-		}
-		else { // pending but disabled
+		} else { // pending but disabled
 			intno = H2K_vm_interrupt_peek(me->vmblock, me->vmcpu);
 			if (intno < 0) { // error: no interrupt, but there should be one, panic
 				H2K_fatal_kernel(0xbaad, me, 0, 0, me->hthread);
 			}
 			me->r00 = intno;
 		}
-	}
-	else { // nothing pending, wait
+	} else { // nothing pending, wait
 		BKL_LOCK();
 		H2K_runlist_remove(me);
 		me->status = H2K_STATUS_VMWAIT;
@@ -194,8 +193,7 @@ void H2K_vmtrap_start(H2K_thread_context *me)
 	ret = H2K_thread_create_no_squash(me->r00, me->r01, 0, me->base_prio, me->vmblock, me);
 	if (ret < 0) { //error
 		me->r00 = ret;
-	}
-	else {
+	} else {
 		me->r00 = ((H2K_thread_context *)ret)->vmcpu;
 	}
 }

@@ -49,7 +49,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 .Lfrom_sleep:
 	if (r1 == #0) jump:nt .Lto_sleep
 	memd(r28) = r27:26
-	r31 = memw(r1+#CONTEXT_continuation)
 	memb(r1+#CONTEXT_hthread) = r10
 	r14 = memb(r1+#CONTEXT_pmu_on)
 	r11 = #1
@@ -63,7 +62,15 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #else
 	stid = r4
 #endif
-	r1:0 = memd(r1+#CONTEXT_r0100)
+	r17 = r1
+	r1 = memub(r17+#CONTEXT_vmstatus)
+	p0 = tstbit(r1,#0)
+	if (!p0) jump 1f
+	r0 = r17
+	call H2K_vm_do_work
+1:
+	r1:0 = memd(r17+#CONTEXT_r0100)
+	r31 = memw(r17+#CONTEXT_continuation)
 	jump H2K_check_sanity_unlock
 
 .Lto_sleep:

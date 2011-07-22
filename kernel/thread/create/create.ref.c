@@ -68,6 +68,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->ccr = me->ccr;
 	tmp->trapmask = trapmask;
 	tmp->continuation = H2K_interrupt_restore;
+	tmp->vmstatus = 0x0;            // all clear
 
 	asid = H2K_asid_table_inc(ptb, type);
 
@@ -87,7 +88,6 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 
 		tmp->ssr_asid = asid;
 		tmp->vmcpu = vmblock->num_cpus++;
-		tmp->vmstatus = 0x0;            // all clear
 		tmp->vmblock = vmblock;
 
 		vmblock->cpu_contexts[tmp->vmcpu] = tmp;

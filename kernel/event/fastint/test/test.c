@@ -216,7 +216,7 @@ void TH_saw_secondary_int(u32_t intno)
 
 int main() 
 {
-	int i,j;
+	int i;
 	/* Set up KGP */
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 #ifdef H2K_L2_CONTROL

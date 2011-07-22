@@ -30,15 +30,21 @@ void FAIL(const char *str)
 
 int TH_handler(u32_t x)
 {
+	return 0;
 }
 
 void H2K_fastint();
 
+u32_t  TH_l2int_cfg[1024] __attribute__((aligned(4096))) ;
+
 int main() 
 {
 	int i;
-	u32_t oldmask;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+#if ARCHV >= 4
+	H2K_gp->l2_int_base = TH_l2int_cfg;
+	H2K_gp->l2_ack_base = TH_l2int_cfg + 0x80;
+#endif
 	a.gpugp = 0xF000000012345678ULL;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->fastint_funcptrs[i] = BAD;

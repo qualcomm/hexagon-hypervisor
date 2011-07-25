@@ -33,6 +33,34 @@ statement MUST begin on the same line as the if / for / while / etc.  Example:
 		test = 63;
 	}
 
+Elses must be preceeded by a curly brace:
+
+
+
+	if (test > 63) {
+		test = 63;
+	}
+	else {
+		test = test + 1;		/* WRONG */
+	}
+
+	if (test > 63) test = 63;
+	else test = test + 1;			/* WRONG */
+
+	if (test > 63) {
+		test = 63;
+	}
+	else test = test + 1;			/* WRONG */
+
+	if (test > 63) {
+		test = 63;
+	} else test = test + 1;			/* OK */
+
+	if (test > 63) {
+		test = 63;
+	} else {
+		test = test + 1;		/* OK, preferred */
+	}
 
 Macros are typically ALL_UPPER_CASE.  Variables are typically all_lower_case.
 Defined types should end with _t.

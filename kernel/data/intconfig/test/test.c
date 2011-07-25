@@ -60,12 +60,10 @@ int main()
 		if (i == RESCHED_INT) {
 			if (H2K_gp->inthandlers[i] != H2K_resched)
 				FAIL("wrong resched handler");
-		}
-		else if (i == VM_IPI_INT) {
+		} else if (i == VM_IPI_INT) {
 			if (H2K_gp->inthandlers[i] != H2K_vm_ipi_do)
 				FAIL("wrong ipi handler");
-		}
-		else if (H2K_gp->inthandlers[i] != NULL) FAIL("uninitialized handler");
+		} else if (H2K_gp->inthandlers[i] != NULL) FAIL("uninitialized handler");
 
 		if (H2K_gp->fastint_funcptrs[i] != NULL) FAIL("uninitialized fastint ptr");
 	}

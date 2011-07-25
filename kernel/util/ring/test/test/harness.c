@@ -44,8 +44,11 @@ void checkring(H2K_ringnode_t *head, const char *str)
 	int i = 0;
 	H2K_ringnode_t *tmp = head;
 	if (*str == '\0') {
-		if (head == NULL) return;
-		else FAIL("Empty string, non-empty ringnode");
+		if (head == NULL) {
+			return;
+		} else {
+			FAIL("Empty string, non-empty ringnode");
+		}
 	}
 	checker_ring(head);
 	do {

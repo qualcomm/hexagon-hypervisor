@@ -47,8 +47,7 @@ int intersects(lin_map_fmt_t *entry, unsigned long start_vpn, unsigned long page
 	if (entry->vpn > start_vpn) {
 		head = entry->vpn;
 		tail = start_vpn+(page_size>>12);
-	} 
-	else {
+	} else {
 		head = start_vpn;
 		tail = entry->vpn+(get_page_size(entry->size)>>12);
 	} 
@@ -103,8 +102,7 @@ void *h2_map(void *va,size_t length,int prot,int flags,void *pa)
 
 	if (free == -1) {
 		return NULL;
-	}
-	else {
+	} else {
 		translations[free] = map2linear(aligned_vpn,size_ord,prot,flags,(unsigned long) pa >> 12);
 	}
 	return aligned_va;

@@ -50,8 +50,7 @@ void H2K_vm_event(u32_t gbadva, u32_t cause, u32_t vec_offset, H2K_thread_contex
 	/* save IE status and disable */
 	if (me->vmstatus & H2K_VMSTATUS_IE) {
 		me->gssr |= H2K_GSSR_IE;
-	}
-	else {
+	} else {
 		me->gssr &= ~H2K_GSSR_IE;
 	}
 

@@ -51,8 +51,11 @@ void H2K_ring_remove_append_real(H2K_ringnode_t **fromring, H2K_ringnode_t **tor
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
 	if (*fromring == node) {
-		if (node == node->next) *fromring = NULL;
-		else *fromring = node->next;
+		if (node == node->next) {
+			*fromring = NULL;
+		} else {
+			*fromring = node->next;
+		}
 	}
 	if (*toring == NULL) {
 		node->prev = node->next = node;

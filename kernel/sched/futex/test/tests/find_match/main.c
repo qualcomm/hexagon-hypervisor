@@ -128,8 +128,9 @@ int main()
 		for (i = 0; i < NUM_GOOD_THREADS; i++) {
 			if (thread_info[i] == 0) flag = 1;
 		}
-		if (flag) continue;
-		else break;
+		if (flag) {
+			continue;
+		} else break;
 	}
 
 	h2_futex_wake(&test_lock,100);

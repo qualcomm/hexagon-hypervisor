@@ -92,8 +92,9 @@ static H2K_thread_context *H2K_futex_hash_remove_one(u32_t *lock, H2K_thread_con
 			return cur;
 		} else {
 			cur = cur->next;
-			if (cur == *ring) return NULL;
-			else continue;
+			if (cur == *ring) {
+				return NULL;
+			} else continue;
 		}
 	};
 	/* Unreachable */

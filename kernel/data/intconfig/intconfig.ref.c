@@ -69,8 +69,7 @@ void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_th
 		H2K_fastint_disable(whatint);
 		H2K_gp->inthandlers[whatint] = NULL;
 		H2K_gp->fastint_funcptrs[whatint] = NULL;
-	}
-	else {
+	} else {
 		H2K_gp->fastint_funcptrs[whatint] = fastint_handler;
 		H2K_gp->inthandlers[whatint] = H2K_fastint;
 		H2K_fastint_enable(whatint);

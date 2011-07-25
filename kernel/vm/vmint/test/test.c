@@ -322,8 +322,7 @@ void TH_test_status()
 	}
 	for (i = 0; i < TH_vmblock.num_ints; i++) {
 		if (i & 4) TH_vmblock.enable[i/32] |= (1<<(i%32));
-		if (i & 2) TH_vmblock.percpu_mask[0][i/32] |= (1<<(i%32));
-		else       TH_vmblock.percpu_mask[1][i/32] |= (1<<(i%32));
+		TH_vmblock.percpu_mask[(i & 2) == 0][i/32] |= (1<<(i%32));
 		if (i & 1) TH_vmblock.pending[i/32] |= (1<<(i%32));
 	}
 	for (i = 0; i < TH_vmblock.num_ints; i++) {

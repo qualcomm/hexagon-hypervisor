@@ -45,8 +45,9 @@ void delay()
 
 static inline int myabs(int x)
 {
-	if (x < 0) return -x; 
-	else return x;
+	if (x < 0) {
+		return -x; 
+	} else return x;
 }
 
 void thread0(int thread)

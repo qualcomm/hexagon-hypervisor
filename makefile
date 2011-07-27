@@ -28,7 +28,7 @@ all: ref doc gtags
 
 distclean: clean docclean
 
-clean: covclean
+clean: covclean ucosclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean && \
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean && \
 	rm -Rf size test.exe stats.txt install kernel/stats.txt
@@ -36,9 +36,12 @@ clean: covclean
 docclean:
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
-covclean:
+testclean covclean:
 	$(MAKE) -f scripts/Makefile.coverage clean && \
 	$(MAKE) -f scripts/Makefile.coverage clean_top
+
+ucosclean:
+	$(MAKE) -C ucos clean
 
 opt:
 	$(MAKE) -C kernel ARCHV=$(ARCHV) opt_install && \
@@ -58,13 +61,19 @@ size:
 	qdsp6-objdump -h $(INSTALLPATH)/lib/*.a | $(SIZE_TOOL) text > size && \
 	cat size;
 
+test: 
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
+	$(MAKE) -j 8 -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst; \
+	cd ucos; $(MAKE) sim && cd .. && \
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
+
 cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
 	$(MAKE) -j 8 -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt; \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
-cov-check:
+test-check cov-check:
 	$(MAKE) -f scripts/Makefile.coverage check
 
 doc:

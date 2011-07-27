@@ -8,6 +8,9 @@ SUBDIRS=$(shell cat ./scripts/testlist)
 all:
 	@$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
 
+tst:
+	@$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=tst
+
 clean:
 	@$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=clean
 
@@ -15,7 +18,7 @@ $(SUBDIRS)::
 	cd $@; $(MAKE) $(TARG) TEST=$@; TSTAT=$$?; \
 	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
 
-.PHONY: $(SUBDIRS)
+.PHONY: $(SUBDIRS) tst
 
 
 include ./scripts/Makefile.inc.test

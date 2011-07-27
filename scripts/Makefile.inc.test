@@ -226,25 +226,25 @@ ${EXEC}: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-	ulimit -t 60 && ${SIM} ${EXEC} --profile | tee $@;
+	ulimit -t 60 && ${SIM} --profile ${EXEC} | tee $@;
 
 # Coverage stuff -- single testcase
 
-gmon: test.log
-	${GMON_MERGE} -o gmon gmon.t_*
+gmon.out: test.log
+	${GMON_MERGE} -o gmon.out gmon.t_*
 
 COVFILES=cov.txt
-GMON_FILES=gmon gmon.t_0 gmon.t_1 gmon.t_2 gmon.t_3 gmon.t_4 gmon.t_5
+GMON_FILES=gmon.out gmon.t_0 gmon.t_1 gmon.t_2 gmon.t_3 gmon.t_4 gmon.t_5
 
 #${COVFILES}: ${EXEC} gmon
 #	${COV} -i ${EXEC} -o cov.txt -c cov.csv gmon
 
-${COVFILES}: ${DUMP} gmon 
-	${COV} -F -d ${DUMP} -o cov.txt gmon; \
+${COVFILES}: ${DUMP} gmon.out
+	${COV} -F -d ${DUMP} -o cov.txt gmon.out; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
 CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} test.log results.txt h2
-CLEANUP += stats.txt
+CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt
 
 clean:
 	rm -rf ${CLEANUP}
@@ -260,6 +260,7 @@ results.txt: test.log
 	
 
 all:  results.txt ${COVFILES}
+tst: results.txt
 
 
 endif

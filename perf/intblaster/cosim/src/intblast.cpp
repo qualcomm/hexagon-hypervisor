@@ -12,8 +12,12 @@
 #include <stdio.h>
 #include "intblast.h"
 
-#define SKIPTICKS 1000
-#define ONTICKS 1000*100
+#define SKIPTICKS (1000*10)
+#if 1
+#define ONTICKS 1000*10
+#else
+#define ONTICKS 100
+#endif
 
 void BlasterReset(Blaster *t)
 {

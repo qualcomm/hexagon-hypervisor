@@ -8,7 +8,9 @@ RM      = rm -f
 SIZE_TOOL = /prj/dsp/qdsp6/arch/scripts/section_size.py
 ULIMIT = ulimit -t 1300
 
-CLDFLAGS   := -moslib=h2 -lqdsp -lh2kernel -lh2
+
+CLDFLAGS   := -moslib=h2 
+LDLIBS   := -lqdsp -lh2kernel -lh2
 COSIM =--cosim_file cosimcfg
 
 #If you are running outside hexframe.. sensible defaults
@@ -58,7 +60,7 @@ OBJ = $(SRC:.c=.o)
 # Rules for producing the executable.
 #----------------------------------------------
 $(EXEC) : $(OBJ)
-	$(LD) -o $(EXEC) $(OBJ) $(LDFLAGS)
+	$(LD) $(LDFLAGS) -o $(EXEC) $(OBJ) $(LDLIBS)
 
 sim : $(EXEC)
 	$(ULIMIT) && time $(RUN) $(COSIM) $(SIMF) -- $(EXEC)

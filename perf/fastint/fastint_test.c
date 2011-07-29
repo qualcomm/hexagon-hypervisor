@@ -47,7 +47,7 @@ void background_thread(void *vid)
 {
 	int id = (int)vid;
 	volatile unsigned int *counter = background_counts+id;
-	printf("backgroud thread %d started", id);
+	//printf("backgroud thread %d started\n", id);
 	h2_sem_down(&startsem);
 	while (1) {
 		(*counter)++;
@@ -62,6 +62,7 @@ int main()
 {
 	int i;
 	unsigned int copied_counts[MAX_THREADS];
+	h2_init(NULL);
 	h2_config_add_thread_storage(thread_storage,sizeof(thread_storage));
 	h2_register_fastint(4,tick_interrupt);
 	h2_register_fastint(5,done_interrupt);

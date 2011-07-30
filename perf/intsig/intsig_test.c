@@ -31,6 +31,8 @@ volatile unsigned int background_counts[MAX_THREADS];
 h2_sem_t startsem;
 h2_sem_t donesem;
 
+h2_anysignal_t intsig;
+
 FASTINT_RETURN_TYPE tick_interrupt(int intno)
 {
 	h2_anysignal_set(&intsig,1);
@@ -39,7 +41,7 @@ FASTINT_RETURN_TYPE tick_interrupt(int intno)
 
 FASTINT_RETURN_TYPE done_interrupt(int intno)
 {
-	blast_sem_up(&donesem);
+	h2_sem_up(&donesem);
 	FASTINT_RETURN(1);
 }
 
@@ -71,22 +73,23 @@ int main()
 {
 	int i;
 	unsigned int copied_counts[MAX_THREADS];
+	h2_init(NULL);
 	h2_config_add_thread_storage(thread_storage,sizeof(thread_storage));
-	register_fastint(4,tick_interrupt);
-	register_fastint(5,done_interrupt);
-	blast_sem_init(&donesem,0);
-	blast_sem_init(&startsem,0);
+	h2_register_fastint(4,tick_interrupt);
+	h2_register_fastint(5,done_interrupt);
+	h2_sem_init_val(&donesem,0);
+	h2_sem_init_val(&startsem,0);
 	for (i = 0; i < MAX_THREADS; i++) background_counts[i] = 0;
 	for (i = 0; i < MAX_THREADS; i++) {
-		h2_thread_create(background_thread,&stacks[i][STACKSIZE],void *arg,32+i);
+		h2_thread_create((void *)background_thread,&stacks[i][STACKSIZE],(void *)i,32+i);
 	}
-	h2_thread_create(interrupt_thread,&stacks[i][STACKSIZE],void *arg,2);
-	blast_sem_add(&startsem,MAX_THREADS);
-	blast_sem_down(&donesem);
+	h2_thread_create((void *)interrupt_thread,&stacks[i][STACKSIZE],(void *)i,2);
+	h2_sem_add(&startsem,MAX_THREADS);
+	h2_sem_down(&donesem);
 	for (i = 0; i < MAX_THREADS; i++) {
 		copied_counts[i] = background_counts[i];
 	}
-	printf("Fast Interrupts: %d\n",fastint_count);
+	printf("Interrupt thread count: %d\n",intthread_count);
 	for (i = 0; i < MAX_THREADS; i++) {
 		printf("T%d iters: %d\n",i,copied_counts[i]);
 	}

@@ -70,11 +70,13 @@ test:
 cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
 	$(MAKE) -j 8 -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; \
+	cd ucos; $(MAKE) sim && cd .. && \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt; \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
 test-check cov-check:
-	$(MAKE) -f scripts/Makefile.coverage check
+	$(MAKE) -f scripts/Makefile.coverage check && \
+	cd ucos; $(MAKE) check && cd ..
 
 doc:
 	$(MAKE) -f scripts/docs/Makefile.sphinx prepare && \

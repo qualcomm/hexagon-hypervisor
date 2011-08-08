@@ -1,4 +1,4 @@
-
+SHELL=/bin/bash
 SIZE_TOOL = /prj/dsp/qdsp6/arch/scripts/section_size.py
 LD = qdsp6-gcc
 

@@ -16,6 +16,7 @@
 #include <readylist.h>
 #include <check_sanity.h>
 #include <vmwork.h>
+#include <vmevent.h>
 
 IN_SECTION(".text.vm.int")
 static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno)
@@ -31,11 +32,15 @@ static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_
 			/* Deliver IPI */
 			H2K_vm_ipi_send(thread);
 		}
+		
+		BKL_LOCK();
 		if (thread->status == H2K_STATUS_VMWAIT) { // wake up
 			thread->r00 = intno; // return value from vmwait
-			BKL_LOCK();
 			H2K_ready_append(thread);
 			H2K_check_sanity_unlock(0);
+		}
+		else {
+			BKL_UNLOCK();
 		}
 		return 1;
 	} else {
@@ -281,11 +286,30 @@ void H2K_vmtrap_intop(H2K_thread_context *me)
 u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) {
 	u32_t prev = !(H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT));
 	
-	if (!prev  // interrupts were disabled, try to take now
-			&& (me->vmstatus & H2K_VMSTATUS_VMWORK)) H2K_vm_do_work(me);
+	if (!prev) {  // interrupts were disabled, try to take now
+			H2K_vm_check_interrupts(me);
+	}
 	return prev;
 }
 
 u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) {
 	return H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
+}
+
+/* return pending unmasked interrupt and take it if enabled; -1 if none */
+s32_t H2K_vm_check_interrupts(H2K_thread_context *me) {
+
+	s32_t intno;
+	
+	if (me->vmstatus & H2K_VMSTATUS_IE) {
+		/* Try to get interrupt */
+		intno = H2K_vm_interrupt_get(me->vmblock, me->vmcpu);
+		if (intno != -1) {
+			/* Interrupts enabled, interrupt pulled from controller.  Do interrupt! */
+			H2K_vm_event(0,intno,INTERRUPT_GEVB_OFFSET,me);
+		}
+	} else { // interrupts disabled
+		intno = H2K_vm_interrupt_peek(me->vmblock, me->vmcpu);
+	}
+	return intno;
 }

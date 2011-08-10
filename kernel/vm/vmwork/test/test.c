@@ -25,10 +25,12 @@ jmp_buf env;
 H2K_thread_context a;
 
 u32_t TH_saw_interrupt_get;
+u32_t TH_saw_interrupt_peek;
 u32_t TH_saw_thread_stop;
 u32_t TH_saw_vm_event;
 
 s32_t TH_interrupt_get_retval;
+s32_t TH_interrupt_peek_retval;
 
 void H2K_vm_event(u32_t badva, u32_t b, u32_t c, H2K_thread_context *d)
 {
@@ -50,6 +52,30 @@ s32_t H2K_vm_interrupt_get(void *x, u32_t cpu)
 	return TH_interrupt_get_retval;
 }
 
+s32_t H2K_vm_interrupt_peek(void *x, u32_t cpu) {
+
+	TH_saw_interrupt_peek = 1;
+	return TH_interrupt_peek_retval;
+}
+
+/* return pending unmasked interrupt and take it if enabled; -1 if none */
+s32_t H2K_vm_check_interrupts(H2K_thread_context *me) {
+
+	s32_t intno;
+	
+	if (me->vmstatus & H2K_VMSTATUS_IE) {
+		/* Try to get interrupt */
+		intno = H2K_vm_interrupt_get(me->vmblock, me->vmcpu);
+		if (intno != -1) {
+			/* Interrupts enabled, interrupt pulled from controller.  Do interrupt! */
+			H2K_vm_event(0,intno,INTERRUPT_GEVB_OFFSET,me);
+		}
+	} else { // interrupts disabled
+		intno = H2K_vm_interrupt_peek(me->vmblock, me->vmcpu);
+	}
+	return intno;
+}
+
 void TH_call_vm_do_work(H2K_thread_context *x)
 {
 	if (setjmp(env) == 0) {
@@ -63,17 +89,17 @@ int main()
 
 	a.vmstatus = H2K_VMSTATUS_KILL;
 	TH_call_vm_do_work(&a);
-	if (!TH_saw_thread_stop) FAIL("Didn't kill thread");
+	if (!TH_saw_thread_stop) FAIL("Didn't kill thread 1");
 	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = 0;
 
 	a.vmstatus = H2K_VMSTATUS_IE | H2K_VMSTATUS_KILL;
 	TH_call_vm_do_work(&a);
-	if (!TH_saw_thread_stop) FAIL("Didn't kill thread");
+	if (!TH_saw_thread_stop) FAIL("Didn't kill thread 2");
 	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = 0;
 
 	a.vmstatus = H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_KILL;
 	TH_call_vm_do_work(&a);
-	if (!TH_saw_thread_stop) FAIL("Didn't kill thread");
+	if (!TH_saw_thread_stop) FAIL("Didn't kill thread 3");
 	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = 0;
 
 	a.vmstatus = H2K_VMSTATUS_VMWORK;
@@ -81,6 +107,7 @@ int main()
 	TH_call_vm_do_work(&a);
 	if (TH_saw_thread_stop) FAIL("Killed thread?");
 	if (TH_saw_interrupt_get) FAIL("Saw interrupt get while !IE");
+	if (!TH_saw_interrupt_peek) FAIL("Didn't see interrupt peek while !IE");
 	if (TH_saw_vm_event) FAIL("Did a VM event");
 	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = 0;
 

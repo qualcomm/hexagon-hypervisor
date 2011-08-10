@@ -19,11 +19,11 @@
 #include <hw.h>
 #include <thread.h>
 #include <create.h>
-#include <vmwork.h>
 #include <runlist.h>
 #include <fatal.h>
 #include <vmint.h>
 #include <dosched.h>
+#include <vmwork.h>
 
 /* 1 */
 void H2K_vmtrap_return(H2K_thread_context *me)
@@ -149,29 +149,34 @@ void H2K_vmtrap_set_pcycles(H2K_thread_context *me)
 /* 16 */
 void H2K_vmtrap_wait(H2K_thread_context *me)
 {
-	s32_t intno;
-	/* Wait for interrupt... or fall through if interrupts disabled and
-	 * something pending */
+/* Wait for interrupt... or fall through if interrupts disabled and
+ * something pending */
 
-	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
-		if (me->vmstatus & H2K_VMSTATUS_IE) { // pending, try to take
-			intno = H2K_vm_do_work(me);
-			if (intno < 0) { // error: no interrupt, but there should be one, panic
-				H2K_fatal_kernel(0xbadd, me, 0, 0, me->hthread);
-			}
-			me->r00 = intno;
-		} else { // pending but disabled
-			intno = H2K_vm_interrupt_peek(me->vmblock, me->vmcpu);
-			if (intno < 0) { // error: no interrupt, but there should be one, panic
-				H2K_fatal_kernel(0xbaad, me, 0, 0, me->hthread);
-			}
-			me->r00 = intno;
-		}
-	} else { // nothing pending, wait
-		BKL_LOCK();
-		H2K_runlist_remove(me);
-		me->status = H2K_STATUS_VMWAIT;
+	s32_t intno;
+
+	/* go into wait so that we'll get woken properly if an interrupt is
+	 delivered right after we try to get one and fail */
+
+	BKL_LOCK();
+	me->status = H2K_STATUS_VMWAIT;
+	H2K_runlist_remove(me);
+	BKL_UNLOCK();
+
+	intno = H2K_vm_do_work(me);
+
+	BKL_LOCK();
+	if (intno == -1) {
+		/* nothing pending; wait  */
 		H2K_dosched(me,me->hthread);
+
+	} else {
+		/* Interrupt pending; either it was taken or interrupts are disabled.  In
+			 either case vmwait returns the interrupt number.  Go back on the run
+			 list and return */
+		H2K_runlist_push(me);
+		BKL_UNLOCK();
+
+		me->r00 = intno;
 	}
 }
 

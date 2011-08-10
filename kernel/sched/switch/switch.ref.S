@@ -63,12 +63,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	stid = r4
 #endif
 	r17 = r1
-	r1 = memub(r17+#CONTEXT_vmstatus)
-	p0 = tstbit(r1,#0)
-	if (!p0) jump 1f
 	r0 = r17
 	call H2K_vm_do_work
-1:
 	r1:0 = memd(r17+#CONTEXT_r0100)
 	r31 = memw(r17+#CONTEXT_continuation)
 	jump H2K_check_sanity_unlock

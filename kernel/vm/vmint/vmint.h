@@ -43,5 +43,6 @@ void H2K_vmtrap_intop(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 
 u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
+s32_t H2K_vm_check_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 
 #endif

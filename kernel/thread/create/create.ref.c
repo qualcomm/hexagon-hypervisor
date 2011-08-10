@@ -86,6 +86,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 		}
 
 		tmp->ssr_asid = asid;
+		/* FIXME: Do we allow a particular vcpu to stop and then start again? */
 		tmp->vmcpu = vmblock->num_cpus++;
 		tmp->vmblock = vmblock;
 

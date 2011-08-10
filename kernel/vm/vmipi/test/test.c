@@ -78,8 +78,11 @@ int main()
 	if (iassignr(VM_IPI_INT) != ((1<<MAX_HTHREADS)-2)) FAIL("a: Unexpected IMASK bits");
 	/* If more mask bits are set, new interrupt should be pending */
 	if ((H2K_get_ipend() & VM_IPI_INTMASK) == 0) FAIL("a: Didn't repend int");
-	/* check for do work If me != NULL  */
-	if (TH_saw_do_work != 0) FAIL("a: Saw call to do_work w/o VMWORK set");
+
+	/* do_work now called unconditionally */
+	///* check for do work If me != NULL  */
+	//if (TH_saw_do_work != 0) FAIL("a: Saw call to do_work w/o VMWORK set");
+
 	TH_saw_do_work = 0;
 
 	H2K_clear_ipend(VM_IPI_INTMASK);

@@ -53,6 +53,10 @@ H2K_asid_table
 		a new entry to the table, we set maxhops to the maximum of the old
 		value and the new number of hops that was required to insert the entry.
 
+        .. cmember:: translation_type transtype
+
+	        Type of translation for this address space
+
 .. cvar:: H2K_asid_entry_t H2K_asid_table[MAX_ASIDS]
 
 

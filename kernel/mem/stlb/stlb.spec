@@ -25,7 +25,7 @@ The STLB is arranged in the following way:
 
 Traps must have low, bounded latency.  Therefore, procedures such as
 invalidating the STLB for an entire ASID must be able to be performed in a
-small amount of time.  We do this by using dzeroa on the ASID valid bits.
+small amount of time.  We do this by using dczeroa on the ASID valid bits.
 This allows caches containing many sets per ASID to be invalidated in a 
 small amount of time.  
 
@@ -43,6 +43,39 @@ as a hint for which bits to use to hash into the STLB.  Guests using many 4K
 pages will find best use of the STLB with lower order bits, however this will
 result in many duplicated pages for larger pages.
 
+H2K_mem_stlb_asid_info_t
+------------------------
+
+.. ctype:: H2K_mem_stlb_asid_t
+
+	stlb information for asid
+
+	.. cmember:: u64_t valids[STLB_MAX_SETS/64] 
+
+		Array of valid bits for this stlb
+
+	.. cmember:: u32_t pagesize 
+
+		Pagesize in this stlb
+
+	.. cmember:: u32_t waymask
+
+	        Which ways may be replaced for QoS (FIXME)
+
+	.. cmember:: H2K_mem_tlbfmt_t *baseaddr
+
+	        Pointer to available memory
+
+
+H2K_mem_stlb_init
+-----------------
+
+.. cfunction:: void H2K_mem_stlb_init()
+
+Description
+~~~~~~~~~~~
+
+This function initilizes the stlb information.
 
 H2K_mem_stlb_lookup
 -------------------

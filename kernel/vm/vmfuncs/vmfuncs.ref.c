@@ -154,29 +154,20 @@ void H2K_vmtrap_wait(H2K_thread_context *me)
 
 	s32_t intno;
 
-	/* go into wait so that we'll get woken properly if an interrupt is
-	 delivered right after we try to get one and fail */
-
 	BKL_LOCK();
-	me->status = H2K_STATUS_VMWAIT;
-	H2K_runlist_remove(me);
-	BKL_UNLOCK();
-
 	intno = H2K_vm_do_work(me);
 
-	BKL_LOCK();
 	if (intno == -1) {
 		/* nothing pending; wait  */
+		me->status = H2K_STATUS_VMWAIT;
+		H2K_runlist_remove(me);
 		H2K_dosched(me,me->hthread);
-
 	} else {
 		/* Interrupt pending; either it was taken or interrupts are disabled.  In
-			 either case vmwait returns the interrupt number.  Go back on the run
-			 list and return */
-		H2K_runlist_push(me);
-		BKL_UNLOCK();
+			 either case vmwait returns the interrupt number. */
 
 		me->r00 = intno;
+		BKL_UNLOCK();
 	}
 }
 

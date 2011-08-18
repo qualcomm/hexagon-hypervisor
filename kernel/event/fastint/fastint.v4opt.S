@@ -38,8 +38,8 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	}
 H2K_fastint_return:
 	{
-		p0 = cmp.gtu(r25,#31)
-		if (p0.new) jump:nt 1f
+		p1 = cmp.gtu(r25,#31)
+		if (!p1.new) jump:nt 1f
 		p0 = cmp.eq(r0,#0)
 		if (p0.new) jump:nt 2f
 		r25 = add(r25,#-32)
@@ -52,7 +52,7 @@ H2K_fastint_return:
 	{
 		r2 = lsl(#1,r3)
 		memw(r4+r5<<#2) = r2.new
-		//jump 2f
+		jump 2f
 	}
 1:
 	r3 = and(r25,#0x1f)

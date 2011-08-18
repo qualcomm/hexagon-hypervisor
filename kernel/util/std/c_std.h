@@ -20,6 +20,9 @@ typedef signed short s16_t;
 typedef signed int s32_t;
 typedef signed long long int s64_t;
 
+#define likely(x)	(__builtin_expect(!!(x), 1))
+#define unlikely(x)	(__builtin_expect(!!(x), 0))
+
 #define IS_WORSE_THAN >
 
 #define IN_SECTION(secname) __attribute__((section(secname)))

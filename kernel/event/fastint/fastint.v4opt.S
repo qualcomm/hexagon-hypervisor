@@ -52,6 +52,7 @@ H2K_fastint_return:
 	{
 		r2 = lsl(#1,r3)
 		memw(r4+r5<<#2) = r2.new
+		jump 2f
 	}
 1:
 	r3 = and(r25,#0x1f)

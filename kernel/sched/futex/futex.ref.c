@@ -150,10 +150,17 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_thread_context *dest)
 		dest->prio = prio;
 		H2K_ready_insert(dest);
 	} else if (dest->status == H2K_STATUS_RUNNING) {
+		/* 
+		 * EJP: FIXME: 
+		 * Now that runlist structure has changed, this adjustment should be easier? 
+		 */
 		H2K_runlist_remove(dest);
 		dest->prio = prio;
 		H2K_runlist_push(dest);
 		/* Maybe need to update lowprio? */
+	} else if (dest->status == H2K_STATUS_INTBLOCKED) {
+		/* Waiting on interrupt, but we want it to have high priority when it starts up */
+		dest->prio = prio;
 	} else {
 		/* Dead?  Should we notify someone about that? */
 	}

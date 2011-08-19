@@ -17,7 +17,7 @@
 	.global h2_intwait
 
 	/* h2_intwait
-	 * Provide a mask.  Basically, we call trap and return.
+	 * Provide an interrupt.  Basically, we call trap and return.
 	 */
 h2_intwait:
 	trap0(#H2_TRAP_INTWAIT)

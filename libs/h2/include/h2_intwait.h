@@ -9,11 +9,11 @@
 /*
  * H2 intwait.h
  *
- * Ask the kernel to wait for an interrupt, out of the interrupts
- * in mask.  The return value is the interrupt taken. 
+ * Ask the kernel to wait for an interrupt
+ * Returns 0 on success, nonzero on failure.
  */
 
-int h2_intwait(unsigned long long int mask);
+int h2_intwait(unsigned int interrupt);
 
 #endif
 

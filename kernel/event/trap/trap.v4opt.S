@@ -269,20 +269,16 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_prio_get // 10
 	}
 	{
-		//r2 = sgp0
-		//jump H2K_change_asid_mappings // 11
-		r0 = sgp0
-		jump H2K_thread_id
+		r1 = sgp0
+		jump H2K_popup_wait	// 11
 	}
 	{
 		r0 = sgp0
 		jump H2K_sched_yield // 12
 	}
 	{
-		//r1 = sgp0
-		//jump H2K_mask_prios_above // 13
 		r0 = sgp0
-		jump H2K_thread_id
+		jump H2K_thread_id	// 13
 	}
 	{
 		r0 = sgp0

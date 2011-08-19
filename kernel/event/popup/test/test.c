@@ -185,7 +185,7 @@ int main()
 {
 	int i;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
-	/* FIXME: set up interrupt handler base */
+
 	H2K_gp->l2_int_base = fakeint;
 	H2K_gp->l2_ack_base = fakeint+(0x200/sizeof(u32_t));
 	H2K_readylist_init();
@@ -196,6 +196,15 @@ int main()
 	/* First, test wait */
 	a.hthread = 0;
 	b.hthread = 0;
+
+	/* Check bad cases */
+	if ((TH_call_popup_wait(-1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
+	if ((TH_call_popup_wait(MAX_INTERRUPTS,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
+	if ((TH_call_popup_wait(MAX_INTERRUPTS+1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
+#if ARCHV >= 4
+	if ((TH_call_popup_wait(31,&a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
+#endif
+
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 #if ARCHV >= 4
 		if (i == 31) continue;

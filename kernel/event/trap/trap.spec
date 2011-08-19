@@ -84,7 +84,7 @@ is used wherever empty traptab spaces exist.  The table is as follows:
 	8. :cfunc:`H2K_register_fastint()`: Register a fast interrupt handler
 	9. :cfunc:`H2K_prio_set()`: Change priority
 	10. :cfunc:`H2K_prio_get()`: Get priority
-	11. :cfunc:`H2K_thread_id()`: Get the thread ID
+	11. :cfunc:`H2K_popup_wait()`: Block, waiting on an interrupt
 	12. :cfunc:`H2K_sched_yield()`: Yield to another thread at the same priority
 	13. :cfunc:`H2K_thread_id()`: Get the thread ID
 	14. :cfunc:`H2K_thread_id()`: Get the thread ID

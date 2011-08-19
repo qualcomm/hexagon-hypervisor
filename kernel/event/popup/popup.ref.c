@@ -46,7 +46,7 @@ void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 {
 	int hthread = me->hthread;
-	if (intnum > MAX_INTERRUPTS) return -1;
+	if (intnum >= MAX_INTERRUPTS) return -1;
 #if ARCHV >= 4
 	/* Can't change L2 interrupt vector */
 	if (intnum == 31) return -1;

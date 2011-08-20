@@ -1,0 +1,22 @@
+
+H2 infrastructure:
+
+H0) Get H2 moved to near top of memory
+H1) Change Thread IDs to not be pointers, consider security ramifications of things
+** H2) Popup threads for interrupts / efficient, secure Wait for single Interrupt
+H3) Futex safe pointer access
+H4) PI Futex considerations
+H5) Futex optimizations
+H6) Timeouts for blocking (see V0 below)
+
+VMM tasks:
+
+V0) Timer abstraction
+V1) Power Collapse
+V2) Secure Debug
+
+H2OS: 
+O0) H2OS bootup
+O1) H2OS page management
+O2) Memory management
+

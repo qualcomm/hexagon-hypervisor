@@ -33,7 +33,7 @@ static inline void H2K_mem_tlb_insert(u64_t entry, H2K_thread_context *me)
 		H2K_gp->tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
 	}
 #if __QDSP6_ARCH__ <= 3
-	if (me->ssr_fake_guest) entry |= 0x0200000000000000ULL;
+	if (me->ssr_guest) entry |= 0x0200000000000000ULL;
 	asm volatile (
 	" tlbhi = %H0\n"
 	" tlblo = %L0\n"

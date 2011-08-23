@@ -7,6 +7,7 @@
 #define H2K_TLBFMT_H 1
 
 #include <c_std.h>
+#include <q6protos.h>
 
 #if __QDSP6_ARCH__ <= 3
 typedef union {
@@ -37,6 +38,21 @@ typedef union {
 	};
 } H2K_mem_tlbfmt_t;
 
+static inline u32_t H2K_mem_tlbfmt_get_perms(H2K_mem_tlbfmt_t entry)
+{
+	return (entry.xwr << 1) | (entry.guestonly == 0);
+}
+
+static inline u32_t H2K_mem_tlbfmt_get_size(H2K_mem_tlbfmt_t entry)
+{
+	return entry.size;
+}
+
+static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
+{
+	return entry.ppn<<12;
+}
+
 #else
 
 typedef union {
@@ -62,6 +78,25 @@ typedef union {
 		};
 	};
 } H2K_mem_tlbfmt_t;
+
+static inline u32_t H2K_mem_tlbfmt_get_perms(H2K_mem_tlbfmt_t entry)
+{
+	return entry.xwru;
+}
+
+static inline u32_t H2K_mem_tlbfmt_get_size(H2K_mem_tlbfmt_t entry)
+{
+	return Q6_R_ct0_R(entry.low);
+}
+
+static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
+{
+	pa_t ret;
+	ret = entry.ppd;
+	ret &= ret - 1;	/* Clear least significant set bit */
+	ret <<= 11;
+	return ret;
+}
 
 #endif
 

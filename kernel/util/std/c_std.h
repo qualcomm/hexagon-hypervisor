@@ -20,6 +20,8 @@ typedef signed short s16_t;
 typedef signed int s32_t;
 typedef signed long long int s64_t;
 
+typedef u32_t pa_t;
+
 #define likely(x)	(__builtin_expect(!!(x), 1))
 #define unlikely(x)	(__builtin_expect(!!(x), 0))
 

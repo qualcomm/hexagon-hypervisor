@@ -6,14 +6,14 @@
 #include <c_std.h>
 #include <hw.h>
 #include <checker_help.h>
-#include <checker_kernel_locked.h>
+#include <checker_tlb_locked.h>
 
-s32_t checker_kernel_locked()
+s32_t checker_tlb_locked()
 {
 #if __QDSP6_ARCH__ >= 3
 	u32_t syscfg = H2K_get_syscfg();
-	if ((syscfg & (1<<12)) == 0) {
-		FAIL("checker_kernel_locked: Kernel not locked.");
+	if ((syscfg & (1<<11)) == 0) {
+		FAIL("checker_kernel_locked: TLB not locked.");
 	}
 #else
 #warning fixme: look at bkl
@@ -21,12 +21,12 @@ s32_t checker_kernel_locked()
 	return 1;
 }
 
-s32_t checker_kernel_unlocked()
+s32_t checker_tlb_unlocked()
 {
 #if __QDSP6_ARCH__ >= 3
 	u32_t syscfg = H2K_get_syscfg();
-	if ((syscfg & (1<<12)) != 0) {
-		FAIL("checker_kernel_unlocked: Kernel is Locked.");
+	if ((syscfg & (1<<11)) != 0) {
+		FAIL("checker_kernel_unlocked: TLB is Locked.");
 	}
 #else
 #warning fixme: look at bkl

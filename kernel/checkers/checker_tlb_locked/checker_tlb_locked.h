@@ -8,8 +8,8 @@
 
 #include <c_std.h>
 
-s32_t checker_kernel_locked();
-s32_t checker_kernel_unlocked();
+s32_t checker_tlb_locked();
+s32_t checker_tlb_unlocked();
 
 #endif
 

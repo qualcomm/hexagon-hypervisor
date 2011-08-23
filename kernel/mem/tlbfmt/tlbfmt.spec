@@ -159,3 +159,52 @@ This function converts a page table entry, VA, and ASID to the native Hardware
 TLB entry format.
 
 
+H2K_mem_tlbfmt_get_size
+-----------------------
+
+.. cfunction:: u32_t H2K_mem_tlbfmt_get_size(H2K_mem_tlbfmt_t entry)
+
+Description
+~~~~~~~~~~~
+
+Returns the page size of the entry:
+
+	0. 4KB Translation
+	1. 16KB Translation
+	2. 64KB Translation
+	3. 256KB Translation
+	4. 1MB Translation
+	5. 4MB Translation
+	6. 16MB Translation
+
+
+
+
+H2K_mem_tlbfmt_get_perms
+------------------------
+
+.. cfunction:: u32_t H2K_mem_tlbfmt_get_perms(H2K_mem_tlbfmt_t entry)
+
+Description
+~~~~~~~~~~~
+
+Returns the OR of the permissions of the entry:
+
+	1. User permission
+	2. Read permission
+	4. Write permission
+	8. Execute permission
+
+
+H2K_mem_tlbfmt_get_basepa
+-------------------------
+
+.. cfunction:: pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
+
+Description
+~~~~~~~~~~~
+
+Returns the base physical address of the translation.  Note that the base physical 
+address may not be aligned to the size; the caller must mask off the appropriate bits.
+
+

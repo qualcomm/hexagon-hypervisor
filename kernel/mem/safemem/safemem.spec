@@ -4,7 +4,7 @@
 .. module:: safemem
 
 H2K_safemem_check_and_lock
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 .. cfunction:: u32_t H2K_safemem_check_and_lock(u32_t *user_va, u32_t perms, pa_t *pa_out,
 		H2K_thread_context *me)
@@ -18,10 +18,10 @@ H2K_safemem_check_and_lock
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_safemem_writelock()` prepares the monitor for safe access of a
+:cfunc:`H2K_safemem_check_and_lock()` prepares the monitor for safe access of a
 user-specified address.  If memory at the specified address can be safely
 accessed, the TLB is locked and the physical address and a success indication
-is returned.  Otherwise, if the memory can not be read safely, an indication of
+is returned.  Otherwise, if the memory can not be accessed safely, an indication of
 failure is returned and the TLB is not locked.
 
 Functionality
@@ -46,7 +46,7 @@ TLB lock; it is the responsibility of the caller to call
 
 
 H2K_safemem_unlock
-~~~~~~~~~~~~~~~~~~
+------------------
 
 .. cfunction:: void H2K_safemem_unlock()
 
@@ -63,6 +63,25 @@ Functionality
 
 Unlock the TLB Lock
 
+
+
+Testing
+-------
+
+Important Cases
+~~~~~~~~~~~~~~~
+
+* Misaligned Addresses
+* Addresses not in TLB
+* Addresses in TLB with insufficient permissions
+* Addresses in TLB with sufficient permissions
+
+Harness
+~~~~~~~
+
+Standalone testing of safemem.  Set up several translations in the TLB ahead of
+time, with different permissions.  Check that different addresses resolve correctly
+for different permission demands.
 
 
 

@@ -36,7 +36,7 @@ static inline void H2K_intcontrol_disable(u32_t intno)
 
 static inline void H2K_intcontrol_enable(u32_t intno)
 {
-	ciad(1<<(intno & 31));
+	ciad(0x80000000UL>>(intno & 31));
 }
 
 static inline void H2K_intcontrol_disable(u32_t intno)

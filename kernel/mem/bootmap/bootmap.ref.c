@@ -48,10 +48,10 @@
 #define UR (U|R)
 #define UW (U|W)
 #define UX (U|X)
-#define URW (R|W)
-#define URX (R|X)
-#define UWX (W|X)
-#define URWX (R|W|X)
+#define URW (U|R|W)
+#define URX (U|R|X)
+#define UWX (U|W|X)
+#define URWX (U|R|W|X)
 
 #define MAIN 0
 #define AUX 1

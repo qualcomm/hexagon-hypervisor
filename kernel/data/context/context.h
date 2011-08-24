@@ -88,8 +88,9 @@ typedef struct _h2_thread_context
 	};
 	// 64
 	struct {	// OK FOR DCZEROA
-		u32_t *futex_ptr;		// Probably not needed if interrupted; only on trap; could be unioned below?
-		void *continuation;
+		u32_t futex_ptr;		// Probably not needed if interrupted; only on trap; could be unioned below?
+		// needs to be pa_t, but is word aligned.  For 36 bits pa, can be 34 bits... 
+		void *continuation;		// probably can be 30 bits.  34 bits for futex_ptr plus 30 bits for continuation fits.
 	};
 	union {
 		u64_t ssrelr;

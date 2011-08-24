@@ -63,12 +63,12 @@ scheduled.
 H2K_futex_resume
 ----------------
 
-.. cfunction:: u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
+.. cfunction:: s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 
 	:param lock: a user-specified value
 	:param n_to_wake: a user-specified maximum number of threads to wake
 	:param me: pointer to the current thread.
-	:returns: the number of threads woken
+	:returns: the number of threads woken, negative value on failure
 
 Description
 ~~~~~~~~~~~
@@ -162,7 +162,7 @@ holding thread.  We set the least significant bit of the lock.
 H2K_futex_unlock_pi
 -------------------
 
-.. cfunction:: u32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
+.. cfunction:: s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 
 	:param lock: A user-specified pointer to a word in memory containing the mutex
 	:param me: pointer to the current thread

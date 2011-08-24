@@ -55,7 +55,6 @@ static H2K_mem_tlbfmt_t make_entry(u32_t va, u32_t pa, u32_t size, u32_t perms)
 	ret.valid = 1;
 	return ret;
 }
-
 #endif
 
 int main()

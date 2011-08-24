@@ -14,6 +14,7 @@
 #include <q6protos.h>
 #include <globals.h>
 #include <atomic.h>
+#include <safemem.h>
 
 /* 
  * EJP: hash table aligned to it's size, so we 
@@ -23,9 +24,9 @@
 
 /* Data Structure Interface Functions */
 
-IN_SECTION(".text.core.futex") static void H2K_futex_hash_add(u32_t *lock, H2K_thread_context *me)
+IN_SECTION(".text.core.futex") static void H2K_futex_hash_add(pa_t pa, H2K_thread_context *me)
 {
-	u32_t hashval = HASHVAL(lock);
+	u32_t hashval = HASHVAL(pa);
 	H2K_thread_context *tmp;
 	if (H2K_gp->futexhash[hashval] == NULL) {
 		/* empty */
@@ -57,17 +58,25 @@ IN_SECTION(".text.core.futex") static void H2K_futex_hash_add(u32_t *lock, H2K_t
 
 s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 {
+	u32_t readval;
+	pa_t pa;
 	BKL_LOCK();
-	if (*lock != val) {
+	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_R,&pa,me)) {
+		BKL_UNLOCK();
+		return -1;
+	}
+	readval = *lock;
+	H2K_safemem_unlock();
+	if (readval != val) {
 		/* Changed while we were trying to enqueue */
 		BKL_UNLOCK();
 		return -1;
 	}
-	me->futex_ptr = lock;
+	me->futex_ptr = pa;
 	H2K_runlist_remove(me);
 	me->r0100 = 0;
 	me->status = H2K_STATUS_BLOCKED;
-	H2K_futex_hash_add(lock,me);
+	H2K_futex_hash_add(pa,me);
 	H2K_dosched(me,me->hthread);
 	/* Unreachable */
 	return 0;
@@ -76,7 +85,7 @@ s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 /* FIXME: Need to return next state (for multi wake) as well as removed thread (for pi) */
 
 IN_SECTION(".text.core.futex")
-static H2K_thread_context *H2K_futex_hash_remove_one(u32_t *lock, H2K_thread_context **ring, H2K_thread_context **pos)
+static H2K_thread_context *H2K_futex_hash_remove_one(pa_t lock, H2K_thread_context **ring, H2K_thread_context **pos)
 {
 	H2K_thread_context *tmp;
 	H2K_thread_context *cur;
@@ -104,17 +113,24 @@ static H2K_thread_context *H2K_futex_hash_remove_one(u32_t *lock, H2K_thread_con
 /* futex_resume 
  * Pick the first N matching elements out of the queue.
  */
-u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
+s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 {
-	u32_t hashval = HASHVAL(lock);
+	u32_t hashval;
 	u32_t n_woken = 0;
 	H2K_thread_context **ring;
 	H2K_thread_context *pos;
 	H2K_thread_context *tmp;
+	pa_t pa;
 
 	if (n_to_wake == 0) return 0;
 
+	/* Need to do the read, but only because we need the PA */
+	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_R,&pa,me)) return -1;
+	H2K_safemem_unlock();
+	hashval = HASHVAL(pa);
+
 	BKL_LOCK();
+
 	ring = &H2K_gp->futexhash[hashval];
 	tmp = pos = *ring;
 	if (tmp == NULL) {
@@ -122,7 +138,7 @@ u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 		return 0;
 	}
 	do {
-		if ((tmp = H2K_futex_hash_remove_one(lock,ring,&pos)) != NULL) {
+		if ((tmp = H2K_futex_hash_remove_one(pa,ring,&pos)) != NULL) {
 			n_woken++;
 		} else {
 			break;
@@ -176,7 +192,12 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 			u32_t tid:27;
 		};
 	} x;
+	pa_t pa;
 	BKL_LOCK();
+	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_RW,&pa,me)) {
+		BKL_UNLOCK();
+		return -1;
+	}
 	H2K_atomic_setbit(lock,0);
 	x.val = *lock;
 	if (x.val == 0x1) {
@@ -184,35 +205,43 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 		/* Mark me as owner, no waiters */
 		x.dest = me;
 		*lock = x.val;
+		H2K_safemem_unlock();
 		BKL_UNLOCK();
 		return 0;
 	} else {
 		x.low5bits = 0;
+		H2K_safemem_unlock();
 	}
 	H2K_futex_pi_raise(me->prio,x.dest);
-	me->futex_ptr = lock;
+	me->futex_ptr = pa;
 	H2K_runlist_remove(me);
 	me->r0100 = 0;
 	me->status = H2K_STATUS_BLOCKED;
-	H2K_futex_hash_add(lock,me);
+	H2K_futex_hash_add(pa,me);
 	/* Optimization: set continuation to some kind of check thing */
 	H2K_dosched(me,me->hthread);
 	/* Unreachable */
 	return 0;
 }
 
-u32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
+s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 {
-	u32_t hashval = HASHVAL(lock);
+	u32_t hashval;
 	H2K_thread_context *ret;
 	H2K_thread_context **ring;
 	H2K_thread_context *pos;
+	pa_t pa;
 	/* Lock */
 	BKL_LOCK();
+	/* Get best thread */
+	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_RW,&pa,me)) {
+		BKL_UNLOCK();
+		return -1;
+	}
+	hashval = HASHVAL(pa);
 	ring = &H2K_gp->futexhash[hashval];
 	pos = *ring;
-	/* Get best thread */
-	ret = H2K_futex_hash_remove_one(lock,ring,&pos);
+	ret = H2K_futex_hash_remove_one(pa,ring,&pos);
 	if (ret == NULL) {
 		/* TBD: Do this more carefully */
 		/* TBD: check return value? */
@@ -220,13 +249,14 @@ u32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	} else {
 		H2K_atomic_swap(lock,(u32_t)ret+1);
 	}
+	H2K_safemem_unlock();
 	/* Restore my priority */
 	if (me->prio != me->base_prio) {
 		H2K_runlist_remove(me);
 		me->prio = me->base_prio;
 		H2K_runlist_push(me);
 	}
-	return H2K_check_sanity_unlock(1);
+	return H2K_check_sanity_unlock(0);
 }
 
 void H2K_futex_init()

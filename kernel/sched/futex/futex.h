@@ -10,9 +10,9 @@
 #define FUTEX_HASHSIZE (1<<FUTEX_HASHBITS)
 
 s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) IN_SECTION(".text.core.futex");
-u32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me) IN_SECTION(".text.core.futex");
+s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me) IN_SECTION(".text.core.futex");
 s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me) IN_SECTION(".text.core.futex");
-u32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me) IN_SECTION(".text.core.futex");
+s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me) IN_SECTION(".text.core.futex");
 void H2K_futex_init() IN_SECTION(".text.init.futex");
 
 #endif

@@ -31,7 +31,10 @@ void FAIL(const char *str)
 void test_ptr_all(void *ptr)
 {
 	if (h2_futex_wait(ptr,0) >= 0) FAIL("Wait returned success");
-	if (h2_futex_wake(ptr,1) >= 0) FAIL("Wake returned success");
+	if (h2_futex_wake(ptr,1) >= 0) {
+		printf("ptr=%p\n",ptr);
+		FAIL("Wake returned success");
+	}
 	if (h2_futex_lock_pi(ptr) >= 0) FAIL("Lock returned success");
 	if (h2_futex_unlock_pi(ptr) >= 0) FAIL("Unlock returned success");
 }
@@ -85,7 +88,7 @@ void touser()
 	" r0 = ssr \n"
 	" r0 = setbit(r0,#16) \n"
 	" r0 = setbit(r0,#17) \n"
-#if ARCHV >= 3
+#if ARCHV >= 4
 	" r0 = clrbit(r0,#19) \n"
 #else
 	" r0 = clrbit(r0,#13) \n"
@@ -130,6 +133,12 @@ int main()
 	for (i = 0; i < 16; i++) {
 		trans = make_entry(0x90000000 + (i << 24),0x0,6,i,asid);
 		H2K_mem_tlb_write(32+i,trans.raw);
+#if ARCHV <= 3
+		if (i & 1) {
+			trans = make_entry(0x90000000 + (i << 24),0x0,6,i & -2,asid);
+			H2K_mem_tlb_write(48+i,trans.raw);
+		}
+#endif
 	}
 
 	/* Check insufficient permissions: no R+W */
@@ -146,6 +155,7 @@ int main()
 	a = (void *)(PERMS(12)); test_ptr_all(a);
 	a = (void *)(PERMS(13)); test_ptr_all(a);
 
+	puts("Switching to user...\n");
 	touser();
 
 	/* Check insufficient permissions: no R+W+U */

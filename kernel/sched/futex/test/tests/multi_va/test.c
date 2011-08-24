@@ -116,6 +116,12 @@ int main()
 	for (i = 0; i < 16; i++) {
 		trans = make_entry(0x90000000 + (i << 24),0x0,6,i,asid);
 		H2K_mem_tlb_write(32+i,trans.raw);
+#if ARCHV <= 3
+		if (i & 1) {
+			trans = make_entry(0x90000000 + (i << 24),0x0,6,i & -2,asid);
+			H2K_mem_tlb_write(48+i,trans.raw);
+		}
+#endif
 	}
 
 	h2_config_add_thread_storage(context_space,sizeof(context_space)); 

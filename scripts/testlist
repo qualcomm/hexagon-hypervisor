@@ -16,11 +16,14 @@
 ./kernel/mem/pagefault/test
 ./kernel/mem/pagewalk/test
 ./kernel/mem/physread/test
+./kernel/mem/safemem/test
 ./kernel/mem/stlb/test
 ./kernel/mem/tlbmiss/test
 ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios
 ./kernel/sched/dosched/test/test
+./kernel/sched/futex/test/tests/badaccess
 ./kernel/sched/futex/test/tests/find_match
+./kernel/sched/futex/test/tests/multi_va
 ./kernel/sched/futex/test/tests/multi_wake
 ./kernel/sched/futex/test/tests/pi
 ./kernel/sched/futex/test/tests/simple_lock_unlock

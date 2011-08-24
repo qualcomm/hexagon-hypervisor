@@ -1,4 +1,40 @@
 
+
+
+	********************* Futexes Timing Out ****************
+
+If we get an interrupt and the thread is blocked on a futex, we should:
+	* Set its r0100 return value to a FAILURE
+	* Take the interrupt (timer, external, whatever) 
+
+	This should greatly simplify the monitor side; if the thread is 
+	somehow BLOCKED in some way we just tweak the r0100, remove it from
+	its data structure, and run it.
+
+	* The OS should see the position as if it were just after the futex 
+		blocking trap, with r0100 having the failure code
+	* The Guest can do whatever it likes, but probably just handles
+		the interrupt.
+	* In userspace (or whatever called the futex) if we get failure
+		from a futex wait, we can check the time to see if 
+		it was due to a timeout; sequence should be:
+		+ Ask for alarm
+		+ Futex wait
+		+ If success, cancel the alarm
+		+ If failure, Check to see if it's past wakeup time
+			(e.g., alarm signal might set a variable)
+		+ Alternatively, alarm could longjmp or something 
+			from signal handler?
+	* It's only slightly more tricky to write the user space code
+		when futexes can wakeup spuriously, but that allows us
+		to push the complexity for these things down towards
+		user space, which is good.
+
+
+
+
+
+
 TODO:
 	When going to guest mode, need to save IE information.
 	When returning from guest mode, need to restore IE information.

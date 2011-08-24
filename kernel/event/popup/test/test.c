@@ -186,8 +186,10 @@ int main()
 	int i;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 
+#if ARCHV >= 4
 	H2K_gp->l2_int_base = fakeint;
 	H2K_gp->l2_ack_base = fakeint+(0x200/sizeof(u32_t));
+#endif
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();

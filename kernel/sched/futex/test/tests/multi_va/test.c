@@ -101,7 +101,6 @@ void worker_thread(void *param)
 int main() 
 {
 	int i;
-	void *a;
 	u32_t asid;
 	H2K_mem_tlbfmt_t trans;
 	h2_init(0);

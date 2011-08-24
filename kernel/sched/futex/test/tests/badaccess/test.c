@@ -85,9 +85,14 @@ void touser()
 	" r0 = ssr \n"
 	" r0 = setbit(r0,#16) \n"
 	" r0 = setbit(r0,#17) \n"
+#if ARCHV >= 3
 	" r0 = clrbit(r0,#19) \n"
+#else
+	" r0 = clrbit(r0,#13) \n"
+#endif
 	" ssr = r0 \n"
-	" r0 = ##1f \n"
+	" r0.h = #hi(1f) \n"
+	" r0.l = #lo(1f) \n"
 	" elr = r0 \n"
 	" rte \n"
 	"1: nop \n"

@@ -78,9 +78,9 @@ TH_intvec:
 
 	.global TH_prepare
 TH_prepare:
-	/* Prepare SSR: supervisor/non-IE */
+	/* Prepare SSR: EX+IE */
 	r0 = ssr
-	r1 = #0
+	r1 = #6
 	r0 = insert(r1,#3,#16)
 	ssr = r0
 
@@ -104,6 +104,9 @@ TH_imask:
 	.global TH_pend_int
 TH_pend_int:
 	r1 = #1
+#if ARCHV <= 3
+	r1 = brev(r1)
+#endif
 	swi(r1)
 	jumpr r31
 

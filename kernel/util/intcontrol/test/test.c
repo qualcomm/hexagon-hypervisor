@@ -40,7 +40,10 @@ static inline u32_t read_iad()
 
 int main() 
 {
-	int i,l2i;
+	int i;
+#if ARCHV >= 4
+	int l2i;
+#endif
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 #if ARCHV >= 4
 	H2K_gp->l2_int_base = fake_intctrl;

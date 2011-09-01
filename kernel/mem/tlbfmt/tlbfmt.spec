@@ -64,7 +64,7 @@ H2K_mem_tlbfmt_t
 			              Guest permissions vs user permissions.
 				      1 bits
 
-			    .. cmember:: u32_t unused1
+			    .. cmember:: u32_t unused
 
 			              Unused
 				      2 bits;
@@ -74,6 +74,11 @@ H2K_mem_tlbfmt_t
 			              Global page, ignore ASID if this is true.
 				      1 bits;
 			      
+			    .. cmember:: u32_t valid
+
+			              Valid bit for page.
+				      1 bit;
+
 			    .. cmember:: u32_t unused2
 
 			              Unused
@@ -119,7 +124,7 @@ H2K_mem_tlbfmt_t
 			              Address Space Identifier
 				      7 bits;
 	
-			    .. cmember:: u32_t unused1
+			    .. cmember:: u32_t unused
 
 			              Unused
 				      3 bits;

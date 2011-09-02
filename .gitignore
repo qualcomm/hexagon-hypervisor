@@ -4,3 +4,5 @@ stats.txt
 install/
 kernel/include/
 kernel/offsets
+kernel/sched/check_sanity/check_sanity_debug.h
+kernel/util/intcontrol/intcontrol_debug.h

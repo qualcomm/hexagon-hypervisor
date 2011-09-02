@@ -190,18 +190,18 @@ Important Cases
 Harness
 ~~~~~~~
 
-..cfunction void TH_mem_stlb_init() 
+.. cfunction:: void TH_mem_stlb_init() 
 
 This function initializes the extern H2K_mem_stlb_asid_info_t *H2K_mem_stlb_asid_infos
 pointer to a local array H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS].
 Each of these structures had its baseaddr pointer set throuought an array of H2K_mem_tlbfmt_t
 entires in TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS].  The entries are randomized.
 
-..cfunction void TH_compare_tlbfmt(H2K_mem_tlbfmt_t original, H2K_mem_tlbfmt_t test)
+.. cfunction:: void TH_compare_tlbfmt(H2K_mem_tlbfmt_t original, H2K_mem_tlbfmt_t test)
 
 This tests for equality between entries and FAILS if they differ.
 
-..cfunction void TH_tlbfmt_iszero(H2K_mem_tlbfmt_t test)
+.. cfunction:: void TH_tlbfmt_iszero(H2K_mem_tlbfmt_t test)
 
 This tests checks for an empty tlbfmt entry.
 

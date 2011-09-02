@@ -101,7 +101,8 @@ build/ref/libh2check.a: $(CHECK_OFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(ALL_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref build/opt*
+	rm -rf $(ALL_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref build/opt* \
+	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h
 
 dummy:
 	@echo $(REF_CFILES)

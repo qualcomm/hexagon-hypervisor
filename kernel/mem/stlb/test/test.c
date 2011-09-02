@@ -40,9 +40,9 @@ void TH_mem_stlb_init()
 		TH_mem_stlb_asid_infos[i].waymask = rand() % (1ULL<<32);
 		TH_mem_stlb_asid_infos[i].pagesize = rand() % (1ULL<<32);
 		for(j=0; j<STLB_MAX_SETS/64; j++) {
-			TH_mem_stlb_asid_infos[i].valids[j] = rand() % (1ULL<<64);
+			TH_mem_stlb_asid_infos[i].valids[j] = rand() % 0xffffffffffffffffULL;
 		}
-		for(j=0; j<STLB_MAX_WAYS; j++) {
+ 		for(j=0; j<STLB_MAX_WAYS; j++) {
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].asid = rand() % MAX_ASIDS+1;
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].vpn = rand() % (1U<<20);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].global = rand() % (1U<<1);
@@ -57,6 +57,7 @@ void TH_mem_stlb_init()
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].unused = rand() % (1U<<2);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].unused2 = rand() % (1U<<2);
 #else
+			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].ppd = rand() % (1U<<24);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].cccc = rand() % (1U<<4);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].xwru = rand() % (1U<<4);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].unused = rand() % (1U<<3);
@@ -66,18 +67,26 @@ void TH_mem_stlb_init()
 	H2K_mem_stlb_asid_infos = TH_mem_stlb_asid_infos;
 }
 
-void TH_compare_tlbfmt(H2K_mem_tlbfmt_t original, H2K_mem_tlbfmt_t new)
+void TH_compare_tlbfmt(H2K_mem_tlbfmt_t original, H2K_mem_tlbfmt_t test)
 {
-	if (original.raw != new.raw) {
-		printf("test.raw vs original.raw:\n0x%llx\n0x%llx\nn",original.raw, new.raw);
-//		FAIL("mismatched tlbfmt found\n"); 
+	if (original.raw != test.raw) {
+		printf("original.raw vs test.raw:\n0x%llx vs 0x%llx\n",original.raw, test.raw);
+		FAIL("mismatched tlbfmt found\n"); 
+	}
+}
+
+void TH_tlbfmt_iszero(H2K_mem_tlbfmt_t test)
+{
+	if (test.raw !=0) {
+		FAIL("Entry found when no entry should exist.\n"); 
 	}
 }
 
 int main()
 {
 	int i,j;
-	int count,total =0;
+	/* Debug stuff */
+	/* int count,total; */
 	H2K_mem_tlbfmt_t entry, test;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_asid_table_init();
@@ -114,86 +123,69 @@ int main()
 	/* Use Test Harness storage */
 	TH_mem_stlb_init();
 
-	H2K_mem_stlb_add(0,0,entry,&a);
-	test = H2K_mem_stlb_lookup(0,0,&a); // start of the page:
-	TH_compare_tlbfmt(entry, test);
-	test = H2K_mem_stlb_lookup(0xFFF,0,&a); // end of the same page:
-	TH_compare_tlbfmt(entry, test);
-
-	H2K_mem_stlb_invalidate_va(0,0,&a);
+	/* Invalidate already invalidated asid */
 	H2K_mem_stlb_invalidate_asid(0);
+	H2K_mem_stlb_invalidate_asid(0);
+	test = H2K_mem_stlb_lookup(0,0,&a);
+	TH_tlbfmt_iszero(test);
 
-	H2K_mem_stlb_add(0,0,entry,&a);
-	test = H2K_mem_stlb_lookup(0,0,&a); // start of the page:
-	TH_compare_tlbfmt(entry, test);
-	test = H2K_mem_stlb_lookup(0xFFF,0,&a); // end of the same page:
-	TH_compare_tlbfmt(entry, test);
+	/* Invalidate already invalidated va */
+	H2K_mem_stlb_invalidate_va(0,0,&a);
+	test = H2K_mem_stlb_lookup(0,0,&a);
+	TH_tlbfmt_iszero(test);
 
-//	for(i=0; i<MAX_ASIDS; i++) {
+	for(i=0; i<MAX_ASIDS; i++) {
+		entry.asid=i;
+		for(j=0; j<(1ULL<<20); j+=0x10000) {
+			entry.vpn=j>>PAGE_BITS;
+			H2K_mem_stlb_add(j,i,entry,&a);
+			test = H2K_mem_stlb_lookup(j,i,&a);
+			TH_compare_tlbfmt(entry, test);
+			test = H2K_mem_stlb_lookup(j+rand() % 0xfff,i,&a);
+			TH_compare_tlbfmt(entry, test);
+			//Invalidate entry.
+			H2K_mem_stlb_invalidate_va(j,i,&a);
+			test = H2K_mem_stlb_lookup(j,i,&a);
+			TH_tlbfmt_iszero(test);
+		}
 
-	entry.asid=9;
-	H2K_mem_stlb_add(0,9,entry,&a);
-	H2K_mem_stlb_add(0xfff,9,entry,&a);
-	test = H2K_mem_stlb_lookup(0,9,&a);
-	TH_compare_tlbfmt(entry, test);
-	test = H2K_mem_stlb_lookup(0xfff,9,&a);
-	TH_compare_tlbfmt(entry, test);
+		if (0 == i % 2) {
+			H2K_mem_stlb_add(0,i,entry,&a);
+			H2K_mem_stlb_invalidate_asid(i);
+			test = H2K_mem_stlb_lookup(0,i,&a);
+			TH_tlbfmt_iszero(test);
+		}
 
-	entry.vpn=0xf;
-	H2K_mem_stlb_add(0xffff,9,entry,&a);
-	H2K_mem_stlb_add(0xffff,9,entry,&a);
-	test = H2K_mem_stlb_lookup(0xffff,9,&a);
-	TH_compare_tlbfmt(entry, test);
+		for(j=0xfff; j<(1ULL<<20); j+=0x10000) {
+			entry.vpn=j>>PAGE_BITS;
+			H2K_mem_stlb_add(j,i,entry,&a);
+			test = H2K_mem_stlb_lookup(j,i,&a);
+			TH_compare_tlbfmt(entry, test);
+			test = H2K_mem_stlb_lookup(j-rand() % 0xfff,i,&a);
+			TH_compare_tlbfmt(entry, test);
+			H2K_mem_stlb_invalidate_va(j,i,&a);
+			test = H2K_mem_stlb_lookup(j,i,&a);
+			TH_tlbfmt_iszero(test);
+		}
 
-	entry.vpn=0x1f;
-	H2K_mem_stlb_add(0x1ffff,9,entry,&a);
-	test = H2K_mem_stlb_lookup(0x1ffff,9,&a);
-	TH_compare_tlbfmt(entry, test);
+	}
 
-	entry.vpn=0x4f;
-	H2K_mem_stlb_add(0x4ffff,9,entry,&a);
-	test = H2K_mem_stlb_lookup(0x4ffff,9,&a);
-	TH_compare_tlbfmt(entry, test);
-
-	entry.vpn=0x8f;
-	H2K_mem_stlb_add(0x8ffff,9,entry,&a);
-	test = H2K_mem_stlb_lookup(0x8ffff,9,&a);
-	TH_compare_tlbfmt(entry, test);
-
-	entry.asid=10;
-	entry.vpn=0xaf;
-	H2K_mem_stlb_add(0xaffff,10,entry,&a);
-	test = H2K_mem_stlb_lookup(0xaffff,10,&a);
-	TH_compare_tlbfmt(entry, test);
-
-	entry.asid=11;
-	entry.vpn=0xff;
-	H2K_mem_stlb_add(0xfffff,11,entry,&a);
-	test = H2K_mem_stlb_lookup(0xfffff,11,&a);
-	TH_compare_tlbfmt(entry, test);
-
-	entry.asid=12;
-	entry.vpn=0xf0000;
-	H2K_mem_stlb_add(0xf0000fff,12,entry,&a);
-	test = H2K_mem_stlb_lookup(0xf0000fff,12,&a);
-	TH_compare_tlbfmt(entry, test);
-
-	entry.vpn=0xfffff;
-	H2K_mem_stlb_add(0xffffffff,12,entry,&a);
-	H2K_mem_stlb_add(0xfffffabe,12,entry,&a);
-	test = H2K_mem_stlb_lookup(0xfffffabe,12,&a);
-	TH_compare_tlbfmt(entry, test);
+	/* DEBUG STUFF */
 
 	/* //Printouts for the TH stlb table */
+	/* count = 0; */
+	/* total = 0; */
 	/* for(i=0; i<2*STLB_MAX_SETS; i++) { */
 	/* 	for(j=0; j<STLB_MAX_WAYS; j++) { */
 	/* 		//Show the raw data */
-        /*                 //printf("%lld ", TH_mem_stlb[i][j].raw); */
-	/* 		if (TH_mem_stlb[i][j].raw != 0) { count++; } */
+	/* 		if (TH_mem_stlb[i][j].raw != 0) {  */
+	/* 			printf("%lld\n", TH_mem_stlb[i][j].raw); */
+	/* 			count++; */
+	/* 		} */
 	/* 	} */
 	/* 	if (count != 0) { */
 	/* 		//Show anything that has something in it */
-        /*                 //printf(" set %d: %d\n",i ,count); */
+        /*                 printf("\n set %d: %d\n",i ,count); */
 	/* 	} */
 	/* 	total += count; */
 	/* 	count = 0; */
@@ -203,23 +195,18 @@ int main()
 
 	/* //Prints valid arrays for each ASID */
 	/* for(i=0; i<MAX_ASIDS; i++) { */
-	/* 	if(H2K_mem_stlb_asid_infos[i].valids[0] || H2K_mem_stlb_asid_infos[i].valids[1] || H2K_mem_stlb_asid_infos[i].valids[2] || H2K_mem_stlb_asid_infos[i].valids[3] ) { */
-	/* 		printf("ASID %d: valids %llx %llx %llx %llx\n",i, H2K_mem_stlb_asid_infos[i].valids[0], H2K_mem_stlb_asid_infos[i].valids[1], H2K_mem_stlb_asid_infos[i].valids[2], H2K_mem_stlb_asid_infos[i].valids[3] ); */
+	/* 	if(H2K_mem_stlb_asid_infos[i].valids[0] || */
+	/* 	   H2K_mem_stlb_asid_infos[i].valids[1] || */
+	/* 	   H2K_mem_stlb_asid_infos[i].valids[2] || */
+	/* 	   H2K_mem_stlb_asid_infos[i].valids[3] ) { */
+	/* 		printf("ASID %d: valids %llx %llx %llx %llx\n",i, */
+	/* 		       H2K_mem_stlb_asid_infos[i].valids[0], */
+	/* 		       H2K_mem_stlb_asid_infos[i].valids[1], */
+	/* 		       H2K_mem_stlb_asid_infos[i].valids[2], */
+	/* 		       H2K_mem_stlb_asid_infos[i].valids[3]); */
 	/* 	} */
 	/* } */
 
-	H2K_mem_stlb_invalidate_va(0,9,&a);
-	H2K_mem_stlb_invalidate_va(0xffff,9,&a);
-	H2K_mem_stlb_invalidate_va(0xfffff,9,&a);
-	H2K_mem_stlb_invalidate_asid(9);
-
-	
-	// entry not found, but there is storage...
-	test = H2K_mem_stlb_lookup(0xffff,9,&a);
-	// figure out check...
-	printf("test.raw is 0x%llx\n", test.raw);
-
-	//Init asid table
 	puts("TEST PASSED");
 	return 0;
 }

@@ -6,15 +6,20 @@
 #ifndef H2_LIBKERNEL_H
 #define H2_LIBKERNEL_H 1
 
-#define H2_PREINIT_L2CACHE_SIZE_0K 0
-#define H2_PREINIT_L2CACHE_SIZE_64K 1
-#define H2_PREINIT_L2CACHE_SIZE_128K 2
-#define H2_PREINIT_L2CACHE_SIZE_256K 3
+/** @addtogroup h2 
+@{ */
 
-void h2_preinit_hthread_startup(unsigned int mask);
-void h2_preinit_l2cache_size(int size);
-void h2_preinit_relocate_tcm(void *addr);
-void h2_init(unsigned long long int *memmap);
+/**
+If the kernel should be linked in, this function causes the linker to pull in the 
+H2 kernel library.  It does nothing else.
+@returns None
+@dependencies None
+*/
+void h2_init();
+
+#define h2_init(...) h2_init()
+
+/** @} */
 
 #endif
 

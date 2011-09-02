@@ -6,14 +6,22 @@
 #ifndef H2_INTWAIT_H
 #define H2_INTWAIT_H 1
 
-/*
- * H2 intwait.h
- *
- * Ask the kernel to wait for an interrupt
- * Returns 0 on success, nonzero on failure.
- */
+/** @file h2_intwait.h
+ @brief Wait for an interrupt event
+*/
+/** @addtogroup h2 
+@{ */
+
+/**
+Wait for an interrupt.  Blocks until the interrupt arrives.
+@param[in] intwait	Interrupt to wait for
+@returns Interrupt number on success, negative value on failure
+@dependencies None
+*/
 
 int h2_intwait(unsigned int interrupt);
+
+/** @} */
 
 #endif
 

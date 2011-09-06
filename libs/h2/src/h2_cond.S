@@ -58,7 +58,7 @@ h2_cond_signal_n:
 		r3 = vaddh(r5,r2)		// add to counter
 		r4 = asrh(r2)			// upper half (n_waiting)
 	}
-	memw_locked(r0,p0) = r2			// set bumped counter
+	memw_locked(r0,p0) = r3			// set bumped counter
 	{
 		if (!p0) jump 1b		// not atomic
 		p1 = cmp.eq(r4,#0)		// nobody waiting?

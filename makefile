@@ -61,6 +61,9 @@ size:
 	qdsp6-objdump -h $(INSTALLPATH)/lib/*.a | $(SIZE_TOOL) text > size && \
 	cat size;
 
+t:
+	/prj/dsp/qdsp6/arch/scripts/test_h2.pl
+
 test: 
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
 	$(MAKE) -j 8 -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst; \

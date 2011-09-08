@@ -24,18 +24,6 @@ static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t en
 	}
 }
 
-static inline u32_t H2K_mem_stlb_match_asid(u32_t asid, H2K_mem_tlbfmt_t entry)
-{
-	return (asid == entry.asid);
-}
-
-static inline u32_t H2K_mem_stlb_quick_random_way()
-{
-	u32_t tmp;
-	asm (" %0 = pcyclelo\n" :"=r"(tmp));
-	return tmp & (STLB_MAX_WAYS-1);
-}
-
 #else
 
 static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t tentry)
@@ -44,6 +32,8 @@ static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t te
 	return Q6_p_tlbmatch_PR(tentry.raw,asid_va);
 }
 
+#endif
+
 static inline u32_t H2K_mem_stlb_match_asid(u32_t asid, H2K_mem_tlbfmt_t entry)
 {
 	return (asid == entry.asid);
@@ -55,8 +45,6 @@ static inline u32_t H2K_mem_stlb_quick_random_way()
 	asm (" %0 = pcyclelo\n" :"=r"(tmp));
 	return tmp & (STLB_MAX_WAYS-1);
 }
-
-#endif
 
 static inline s32_t H2K_mem_stlb_find(u32_t va, u32_t asid, H2K_mem_stlb_asid_info_t *myinfo)
 {

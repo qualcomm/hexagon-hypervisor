@@ -5,29 +5,17 @@ ifeq ($(ARCHV),)
 ARCHV = 3
 endif
 
-ifeq (5,${ARCHV})
-FIXEXEC=/prj/dsp/qdsp6/arch/scripts/qdsp6-fix-version 4 
-else
-FIXEXEC=echo
-endif
-
-
 CC = qdsp6-gcc 
 AR = qdsp6-ar
-#SIM := qdsp6-sim -mv$(ARCHV)
 SIM := qdsp6-sim
 
 OPTIMIZE := -Os
 
 CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -g
-#TEMP http://aus-bugzilla/show_bug.cgi?id=4677
-#TEMP http://aus-bugzilla/show_bug.cgi?id=4699
-#CFLAGS += -mG0lib -Dqdsp6_pre_main=hexagon_pre_main
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
 endif
-
 
 SRC_HFILES := 
 DEST_HFILES := 
@@ -53,6 +41,10 @@ OPT_V4_CFILES :=
 OPT_V4_SFILES := 
 OPT_V4_OFILES := 
 
+OPT_V5_CFILES := 
+OPT_V5_SFILES := 
+OPT_V5_OFILES := 
+
 BUILD_DIR := .
 
 MKINCLUDES := $(shell find . -name make.inc)
@@ -68,7 +60,7 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
-ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES)
+ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES)
 
 $(ALL_OFILES): $(DEST_HFILES)
 
@@ -78,6 +70,10 @@ endif
 
 ifeq ($(ARCHV),4)
 OPT_OFILES := $(OPT_V4_OFILES)
+endif
+
+ifeq ($(ARCHV),5)
+OPT_OFILES := $(OPT_V5_OFILES)
 endif
 
 build/ref/libh2kernel.a: $(REF_OFILES)

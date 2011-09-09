@@ -6,15 +6,27 @@ endif
 
 SHELL=/bin/bash
 
-all: libh2.a
+ifeq (,$(IMPL))
+IMPL=ref
+endif
 
-ALL_LIBS=h2/libh2.a qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a timer/libtimer.a
+ifeq (ref,$(IMPL))
+H2_LIB=h2/build/ref/libh2.a
+else
+IMPL=opt
+H2_LIB=h2/build/opt_v$(ARCHV)/libh2.a
+endif
+
+ALL_LIBS= $(H2_LIB) qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a timer/libtimer.a
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 
 
 tmp:
 	mkdir $@
+
+$(H2_LIB): tmp
+	+${MAKE} -C h2 $(IMPL);
 
 blast/libblast.a: tmp
 	+${MAKE_LIB};
@@ -31,9 +43,6 @@ syscall/angel/libangel.a: tmp
 timer/libtimer.a: tmp
 	+${MAKE_LIB};
 
-h2/libh2.a: tmp
-	+${MAKE_LIB};
-
 
 clean:
 	rm -rf tmp libh2.a
@@ -41,7 +50,7 @@ clean:
 		make -C $$dir clean;\
 	done;
 
-libh2.a:   ${ALL_LIBS}
+libh2.a: ${ALL_LIBS}
 	cd tmp;\
 	for lib in $(notdir ${ALL_LIBS}); do\
 		qdsp6-ar x $$lib;\
@@ -60,5 +69,3 @@ install: libh2.a
 		/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
 		popd;\
 	done;
-
-

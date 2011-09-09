@@ -45,12 +45,12 @@ ucosclean:
 
 opt:
 	$(MAKE) -C kernel ARCHV=$(ARCHV) opt_install && \
-	$(MAKE) -C libs ARCHV=$(ARCHV) install && \
+	$(MAKE) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 ref:
 	$(MAKE) -j 3 -C kernel ARCHV=$(ARCHV) ref_install && \
-	$(MAKE) -j 3 -C libs ARCHV=$(ARCHV) install && \
+	$(MAKE) -j 3 -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) -j 3 -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 sim: ref

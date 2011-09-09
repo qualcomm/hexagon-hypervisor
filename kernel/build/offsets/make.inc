@@ -2,7 +2,6 @@
 
 
 include/asm_offsets.h: $(BUILD_DIR)/offsets
-	$(FIXEXEC) $< && \
 	$(SIM) $< > $@
 
 $(BUILD_DIR)/offsets: $(DIR)offsets.ref.c include/context.h include/c_std.h include/globals.h include/max.h include/trace.h include/trace_constants.h include/futex.h

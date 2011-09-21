@@ -63,6 +63,7 @@ MKINCLUDES := $(shell find . -name make.inc)
 MAKE_INC_DEFAULT := build/make/make.inc.default
 
 define DO_INCLUDE
+LIB := h2
 DIR := $(dir $(MODPATH))
 MOD := $(strip $(shell basename $(dir $(MODPATH))))
 include $(MODPATH)
@@ -87,13 +88,15 @@ OPT_OFILES := $(OPT_V5_OFILES)
 endif
 
 build/ref/libh2.a: $(REF_OFILES)
-	mkdir -p $(dir $@)
-	$(AR) cru $@ $(REF_OFILES)
+	mkdir -p $(dir $@); \
+	$(AR) cru $@ $(REF_OFILES);
+#	cp -R include build/ref;
 
 build/opt_v$(ARCHV)/libh2.a: $(OPT_V$(ARCHV)_OFILES)
-	@echo $(OPT_V$(ARCHV)_OFILES)
-	mkdir -p $(dir $@)
-	$(AR) cru $@ $(OPT_V$(ARCHV)_OFILES)
+	echo $(OPT_V$(ARCHV)_OFILES); \
+	mkdir -p $(dir $@); \
+	$(AR) cru $@ $(OPT_V$(ARCHV)_OFILES);
+#	cp -R include build/opt_v$(ARCHV)
 
 
 %.o : %.c

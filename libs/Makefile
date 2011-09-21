@@ -10,14 +10,17 @@ ifeq (,$(IMPL))
 IMPL=ref
 endif
 
+H2_DIR=h2/
 ifeq (ref,$(IMPL))
-H2_LIB=h2/build/ref/libh2.a
+H2_LIB=$(H2_DIR)build/ref/libh2.a
 else
 IMPL=opt
-H2_LIB=h2/build/opt_v$(ARCHV)/libh2.a
+H2_LIB=$(H2_DIR)build/opt_v$(ARCHV)/libh2.a
 endif
 
-ALL_LIBS= $(H2_LIB) qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a timer/libtimer.a
+MOST_LIBS= qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a timer/libtimer.a
+ALL_LIBS= $(H2_LIB) $(MOST_LIBS)
+LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR))
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 
@@ -26,7 +29,7 @@ tmp:
 	mkdir $@
 
 $(H2_LIB): tmp
-	+${MAKE} -C h2 $(IMPL);
+	+${MAKE} -C $(H2_DIR) $(IMPL); cp $@ tmp/
 
 blast/libblast.a: tmp
 	+${MAKE_LIB};
@@ -46,7 +49,7 @@ timer/libtimer.a: tmp
 
 clean:
 	rm -rf tmp libh2.a
-	+for dir in $(dir ${ALL_LIBS}); do\
+	+for dir in ${LIB_DIRS}; do\
 		make -C $$dir clean;\
 	done;
 
@@ -64,7 +67,7 @@ install: libh2.a
 	mkdir -p $(INSTALLPATH)/lib;
 	mkdir -p $(INSTALLPATH)/include;
 	cp $< $(INSTALLPATH)/lib;
-	for dir in $(dir ${ALL_LIBS}); do\
+	for dir in $(dir ${LIB_DIRS}); do\
 		pushd $$dir/include;\
 		/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
 		popd;\

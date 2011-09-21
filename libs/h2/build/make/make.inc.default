@@ -1,27 +1,26 @@
-
 # ==== no modifies below ====
 
-$(MOD)_CHECK_CFILES := $(wildcard $(DIR)$(MOD).check.c)
-$(MOD)_CHECK_SFILES := $(wildcard $(DIR)$(MOD).check.S)
+$(MOD)_CHECK_CFILES := $(wildcard $(DIR)$(LIB)_$(MOD).check.c)
+$(MOD)_CHECK_SFILES := $(wildcard $(DIR)$(LIB)_$(MOD).check.S)
 $(MOD)_CHECK_OFILES := $($(MOD)_CHECK_CFILES:%.c=%.o) $($(MOD)_CHECK_SFILES:%.S=%.o)
 
-$(MOD)_REF_CFILES := $(wildcard $(DIR)$(MOD).ref.c)
-$(MOD)_REF_SFILES := $(wildcard $(DIR)$(MOD).ref.S)
+$(MOD)_REF_CFILES := $(wildcard $(DIR)$(LIB)_$(MOD).ref.c)
+$(MOD)_REF_SFILES := $(wildcard $(DIR)$(LIB)_$(MOD).ref.S)
 $(MOD)_REF_OFILES := $($(MOD)_REF_CFILES:%.c=%.o) $($(MOD)_REF_SFILES:%.S=%.o)
 
 $(MOD)_SRC_HFILES := $(wildcard $(DIR)*.h)
 $(MOD)_DEST_HFILES := $(addprefix include/,$(notdir $($(MOD)_SRC_HFILES)))
 
-$(MOD)_OPT_V3_CFILES := $(wildcard $(DIR)$(MOD).v3opt.c)
-$(MOD)_OPT_V3_SFILES := $(wildcard $(DIR)$(MOD).v3opt.S)
+$(MOD)_OPT_V3_CFILES := $(wildcard $(DIR)$(LIB)_$(MOD).v3opt.c)
+$(MOD)_OPT_V3_SFILES := $(wildcard $(DIR)$(LIB)_$(MOD).v3opt.S)
 $(MOD)_OPT_V3_OFILES := $($(MOD)_OPT_V3_CFILES:%.c=%.o) $($(MOD)_OPT_V3_SFILES:%.S=%.o)
 
-$(MOD)_OPT_V4_CFILES := $(wildcard $(DIR)$(MOD).v4opt.c)
-$(MOD)_OPT_V4_SFILES := $(wildcard $(DIR)$(MOD).v4opt.S)
+$(MOD)_OPT_V4_CFILES := $(wildcard $(DIR)$(LIB)_$(MOD).v4opt.c)
+$(MOD)_OPT_V4_SFILES := $(wildcard $(DIR)$(LIB)_$(MOD).v4opt.S)
 $(MOD)_OPT_V4_OFILES := $($(MOD)_OPT_V4_CFILES:%.c=%.o) $($(MOD)_OPT_V4_SFILES:%.S=%.o)
 
-$(MOD)_OPT_V5_CFILES := $(wildcard $(DIR)$(MOD).v5opt.c)
-$(MOD)_OPT_V5_SFILES := $(wildcard $(DIR)$(MOD).v5opt.S)
+$(MOD)_OPT_V5_CFILES := $(wildcard $(DIR)$(LIB)_$(MOD).v5opt.c)
+$(MOD)_OPT_V5_SFILES := $(wildcard $(DIR)$(LIB)_$(MOD).v5opt.S)
 $(MOD)_OPT_V5_OFILES := $($(MOD)_OPT_V5_CFILES:%.c=%.o) $($(MOD)_OPT_V5_SFILES:%.S=%.o)
 
 ifeq "$(strip $($(MOD)_OPT_V3_OFILES))" ""

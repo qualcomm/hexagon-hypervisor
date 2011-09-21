@@ -31,19 +31,19 @@ tmp:
 $(H2_LIB): tmp
 	+${MAKE} -C $(H2_DIR) $(IMPL); cp $@ tmp/
 
-blast/libblast.a: tmp
+blast/libblast.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
-qube/libqube.a: tmp
+qube/libqube.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
-posix/libposix.a: tmp
+posix/libposix.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
-syscall/angel/libangel.a: tmp
+syscall/angel/libangel.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
-timer/libtimer.a: tmp
+timer/libtimer.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
 

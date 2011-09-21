@@ -14,10 +14,12 @@ The STLB is arranged in the following way:
 
 * For each ASID, there is a small structure with information about the
   STLB.  This information includes:
+
  * Recommended Page Size
  * Bits indicating which sets have valid entries for this ASID
  * A mask indicating which ways may be replaced (to facilitate QoS)
  * Storage Base address
+
 * Sets of translations.  The set of translations is based on a hash of
   the virtual address
 * Several ways in each set.  Each way is looked up on a hardware TLB miss.
@@ -178,8 +180,11 @@ Important Cases
 ~~~~~~~~~~~~~~~
 
 * STLB not initalized
+
  * add/lookup/invalidate_va/invalidate_asid, should return.
+
 * STLB initalized
+
  * invalidate already invalid asid, should leave asid invalid.
  * invalidate already invalid va, should leave va invalid.
  * add followed by lookup, should return the same entry.
@@ -192,7 +197,7 @@ Harness
 
 .. cfunction:: void TH_mem_stlb_init() 
 
-This function initializes the extern H2K_mem_stlb_asid_info_t *H2K_mem_stlb_asid_infos
+This function initializes the extern H2K_mem_stlb_asid_info_t \*H2K_mem_stlb_asid_infos
 pointer to a local array H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS].
 Each of these structures had its baseaddr pointer set throuought an array of H2K_mem_tlbfmt_t
 entires in TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS].  The entries are randomized.

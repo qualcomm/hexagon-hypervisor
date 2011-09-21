@@ -195,10 +195,10 @@ Description
 
 Returns the OR of the permissions of the entry:
 
-	1. User permission
-	2. Read permission
-	4. Write permission
-	8. Execute permission
+        * User permission
+	* Read permission
+	* Write permission
+	* Execute permission
 
 
 H2K_mem_tlbfmt_get_basepa

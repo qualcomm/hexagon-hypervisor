@@ -1,0 +1,43 @@
+
+GUEST DEBUG ARCHITECTURE
+
+Add a bit to GSR value -- Single Step.
+
+VMRTE with SS bit set in G register will cause a Debug Single Step exception if
+no other exceptions happened and the packet committed.
+
+NOTE: Trap0 can also be added to use as a breakpoint.  Recommend reserving one
+	or more of the trap constants for use as breakpoint instruction.
+
+NOTE: Guest may be entered for other reasons, such as Trap, FP exception, or
+	other exception.
+
+TBD: Auto-clear SS bit?
+
+EXTERNAL DEBUGGER COMMUNICATION
+
+Virtual serial devices
+
+Each VCPU has an input buffer and an output buffer, each of at least 1 byte
+Each VCPU can read from input buf and write to output buf
+Each VCPU can enable an interrupt for input buf valid
+
+Special monitor trap can be enabled:
+
+IOMUX:
+	R0: OP_READ:
+		R1 = TID
+		R0 <= byte read from buffer
+
+	R0: OP_WRITE:
+		R1 = TID
+		R0 = byte to write to buffer
+		R0 <= Success
+
+NOTE: Communication link should not be considered secure; end-to-end security
+	should be established for sensitive debugging if required.  Secure
+	Internet protocols may be a source for such end-to-end security.
+
+NOTE: Performance of these communication links may be poor.  The guest may
+	wish to use other vehicles for higher-performance communication.
+

@@ -94,8 +94,8 @@ int main()
 	h2_sem_down(&sem);
 
 	h2_register_fastint(TEST_INT,int2sig);
-	h2_thread_create(timer,&stack_space[2],0,0,0xffffffff);
-	h2_thread_create(watcher,&stack_space[1],0,0,0xffffffff);  // stackgrowsup
+	h2_thread_create((void *)timer,&stack_space[2],0xffffffff,0);
+	h2_thread_create((void *)watcher,&stack_space[1],0xffffffff,0);  // stackgrowsup
 
 	for (i=0; i<WDOG_TIMEOUT; i++) {
 		for (j=0; j<1000; j++) {

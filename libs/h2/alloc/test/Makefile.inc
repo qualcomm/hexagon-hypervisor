@@ -1,2 +1,1 @@
-UPDIR := ../${UPDIR}
-include ${UPDIR}/Makefile.inc
+../../build/make/Makefile.inc.test.default

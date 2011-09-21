@@ -55,3 +55,6 @@
 ./kernel/vm/vmtrap/test
 ./kernel/vm/vmwork/test
 
+./libs/h2/alloc/test
+./libs/h2/fastint/test
+

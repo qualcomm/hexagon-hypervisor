@@ -90,14 +90,11 @@ endif
 build/ref/libh2.a: $(REF_OFILES)
 	mkdir -p $(dir $@); \
 	$(AR) cru $@ $(REF_OFILES);
-#	cp -R include build/ref;
 
 build/opt_v$(ARCHV)/libh2.a: $(OPT_V$(ARCHV)_OFILES)
 	echo $(OPT_V$(ARCHV)_OFILES); \
 	mkdir -p $(dir $@); \
 	$(AR) cru $@ $(OPT_V$(ARCHV)_OFILES);
-#	cp -R include build/opt_v$(ARCHV)
-
 
 %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<

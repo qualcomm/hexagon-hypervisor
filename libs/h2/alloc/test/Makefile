@@ -1,5 +1,5 @@
-
-OBJS+=main.o
+#Hey emacs this is a -*- Makefile -*-
+OBJS+=test.o
 EXEC=test.elf
 
 include Makefile.inc

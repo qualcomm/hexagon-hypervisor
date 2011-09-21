@@ -25,10 +25,10 @@ int main()
 
 	info("ptr_value = 0x%08x\n",ptr);
 	if (ptr == NULL) {
-		error("Test failed\n");
+		error("FAIL\n");
 	}
 	else {
-		info("Test passed\n");
+		info("TEST PASSED\n");
 	}
 	return(0);
 }

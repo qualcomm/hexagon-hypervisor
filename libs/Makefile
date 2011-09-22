@@ -10,6 +10,9 @@ ifeq (,$(IMPL))
 IMPL=ref
 endif
 
+SOS_DIR=sos/
+SOS_LIB=sos/build/ref/libsos.a
+
 H2_DIR=h2/
 ifeq (ref,$(IMPL))
 H2_LIB=$(H2_DIR)build/ref/libh2.a
@@ -19,8 +22,8 @@ H2_LIB=$(H2_DIR)build/opt_v$(ARCHV)/libh2.a
 endif
 
 MOST_LIBS= qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a timer/libtimer.a
-ALL_LIBS= $(H2_LIB) $(MOST_LIBS)
-LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR))
+ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(MOST_LIBS)
+LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(SOS_DIR))
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 
@@ -46,6 +49,8 @@ syscall/angel/libangel.a: tmp $(H2_LIB)
 timer/libtimer.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
+$(SOS_LIB): tmp $(H2_LIB)
+	+${MAKE} -C $(SOS_DIR) ref; cp $@ tmp/
 
 clean:
 	rm -rf tmp libh2.a

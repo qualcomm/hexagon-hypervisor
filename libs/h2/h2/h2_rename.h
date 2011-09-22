@@ -149,7 +149,6 @@ REDEF_FUNCTION(void ,set_prefetch,(unsigned int settings),(settings));
 // Check the names on these
 //REDEF_FUNCTION(int ,get_prio,(void),());
 //REDEF_FUNCTION(int ,set_prio,(unsigned int threadid, unsigned int newprio),(threadid,newprio));
-REDEF_FUNCTION(unsigned int ,mask_prios_above,(unsigned int worst_prio),(worst_prio));
 
 /*  "blast_rmutex.h"  */
 
@@ -181,17 +180,4 @@ REDEF_FUNCTION(int ,thread_myid,(void),());
 REDEF_FUNCTION(void ,yield,(void),());
 REDEF_FUNCTION(void ,thread_set_tid,(unsigned int tid),(tid));
 REDEF_FUNCTION(int ,thread_get_tid,(void),());
-
-/* "blast_trace.h"  */
-
-#ifndef BLAST_DEBUG
-#define BLAST_TRACE(str, ...) __VA_ARGS__
-#else
-#define BLAST_TRACE(str, ...) \
-	do { \
-		h2_printf("%s:%d: %s: >>> calling %s\n",__FILE__,__LINE__,str,#__VA_ARGS__); \
-		__VA_ARGS__; \
-		h2_printf("%s:%d: %s: <<< %s returned\n",__FILE__,__LINE__,str,#__VA_ARGS__); \
-	} while (0);
-#endif
 

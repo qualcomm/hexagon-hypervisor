@@ -17,7 +17,6 @@ extern "C" {
 #include "h2_pipe.h"
 #include "h2_printf.h"
 #include "h2_thread.h"
-#include "h2_trace.h"
 #include "h2_cycles.h"
 #include "h2_sem.h"
 #include "h2_cond.h"

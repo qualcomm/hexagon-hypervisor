@@ -77,11 +77,13 @@ REDEF_FUNCTION(unsigned long long int ,get_pcycles,(void),());
 REDEF_FUNCTION(unsigned long long int ,get_tcycles,(void),());
 REDEF_FUNCTION(unsigned long long int ,get_core_pcycles,(void),());
 
+#if 0
 REDEF_FUNCTION(void, profile_enable,(int enable),(enable));
 REDEF_FUNCTION(void, profile_reset_idle_pcycles,(void),());
 REDEF_FUNCTION(void, profile_reset_thread_pcycles,(int thread_id),(thread_id));
 REDEF_FUNCTION(void, profile_get_idle_pcycles,(unsigned long long *pcycles),(pcycles));
 REDEF_FUNCTION(void, profile_get_thread_pcycles,(int thread_id, unsigned long long *pcycles),(thread_id, pcycles));
+#endif
 
 /*  "blast_fastint.h"  */
 

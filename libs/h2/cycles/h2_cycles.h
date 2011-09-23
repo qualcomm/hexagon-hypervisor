@@ -43,6 +43,7 @@ Get total core pcycles
 */
 unsigned long long int h2_get_core_pcycles(void);
 
+#if 0
 static inline void h2_profile_enable(int enable) { return; }
 
 static inline void h2_profile_reset_idle_pcycles(void) { return; }
@@ -50,6 +51,7 @@ static inline void h2_profile_reset_thread_pcycles(int thread_id) { return; }
 
 static inline void h2_profile_get_idle_pcycles(unsigned long long *pcycles) { return; }
 static inline void h2_profile_get_thread_pcycles(int thread_id, unsigned long long  *pcycles) { *pcycles = h2_get_tcycles(); return; }
+#endif
 
 /** @} */
 

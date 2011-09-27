@@ -4,7 +4,7 @@
 * To get your TCB address, AND(SP,#-TCB_SIZE).  Since we always have a stack,
   that's pretty handy.
 * TCB contains a pointer to the process block (call it mm?)
-* To switch threads:
+* To switch threads (which we shouldn't need to do?):
 
 	switch(from,to):
 		allocframe(#CALLEE_SAVE_SIZE)
@@ -16,10 +16,45 @@
 		deallocframe
 		return
 
+
+* BOOTUP
+
+* normal entry point (start or _start or whatever)
+* First thread has static TCB (let's call it "init").  Probably will come in handy...
+* Set up static TCB, stack, etc
+* Set up temporary memory map and vmnewmap() (VA=PA + kernel or similar)
+* Set up event base 
+* Jump to kernel address
+* Remove VA=PA page and vmclrmap() 
+* Rest of Initialization
+
+Now:
+* Mount root fs
+* find init user binary & execute
+
+
+
+* Thread Life Cycle
+
+0) Create Thread 		(Parent)
+1)  Allocate TCB 		(Parent)
+2)  Set Up TCB 			(Parent)
+3)  Create H2 thread for TCB	(Parent)
+4) Execute			(Child)
+5) If possible, free TCB	(Child) (only if parent dead / non-joinable)
+6) Else, notify any waiters	(Child)
+7) Stop H2 Thread		(Child)
+8) Once Waited/Joined, free TCB	(Parent/Init/Reaper/etc)
+
+
+* Fork
+0) Mark all pages RO/COW
+1) Duplicate memory map for child
+2) Thread Life Cycle as above
+
 * mm block contains
 	* PTB VA
 	* PTB PA
-
 
 * First level page table should always be allocated 
 * First level page table: keep VA or PA?  Keep both, at least VA.  Need to be able to have
@@ -78,8 +113,6 @@ Guest Spec:
 	* Simple: make like 0.5 spec ... 32bit PA, size field invalid at L2 table
 	* Advanced: 32 bit PA (?), multilevel like above, 3 extra bits
 	* 64-bit: 36-bit PA, multilevel, many extra bits
-
-
 
 
 

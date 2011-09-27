@@ -178,6 +178,15 @@ unsigned int blast_get_my_anysignal();
 //  Not really a part of the BLAST API, but it needs to happen somewhere.
 void l2_controller_init(void);
 
+/* Until we have something in H2 side to do similar things... */
+static inline void blast_profile_enable(int enable) { return; }
+
+static inline void blast_profile_reset_idle_pcycles(void) { return; }
+static inline void blast_profile_reset_thread_pcycles(int thread_id) { return; }
+
+static inline void blast_profile_get_idle_pcycles(unsigned long long *pcycles) { return; }
+static inline void blast_profile_get_thread_pcycles(int thread_id, unsigned long long  *pcycles) { *pcycles = h2_get_tcycles(); return; }
+
 // Thread configs are ignored now, but the need to be defined for sources:
 #define BLAST_THREAD_CFG_BITMASK_HT0      0x00000001
 #define BLAST_THREAD_CFG_BITMASK_HT1      0x00000002

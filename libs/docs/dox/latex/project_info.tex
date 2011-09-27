@@ -1,0 +1,44 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright (c) 2011 QUALCOMM Incorporated. All rights reserved. 
+% Qualcomm Confidential and Proprietary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This LaTeX template file provides LaTeX with the project and document-specific document 
+% variables (Document Title, DCN, and Rev) that are used by LaTeX throughout this document 
+% in the header/footers, cover page, etc. These should be updated as indicated below. This 
+% file is pulled into the template_header.tex file during the LaTeX document build. Except 
+% where noted below, please do not change this file. To ensure that the PDF produced using 
+% this template file meets the Qualcomm document formatting standards, except where indicated 
+% below, please do not change this file. For information about the Living Docs Project, go to:
+% go/livingdocs 
+%
+% Author: Lori Boyters, Living Docs Technical Lead. 
+% LaTeX templates are maintained in Perforce by the Living Docs team. As updates are made, 
+% Doxygen/LaTeX users will be notified to update their templates. If you would like to be 
+% notified when updates occur, send email to livingdocs.support.
+% 
+% Updated 05/28/2010 Rev B Version 3
+% Updated 08/06/2010 Rev B Version 4 for Doxygen 1.5.9
+% Updated 09/22/2010 Rev C Version 1 for Doxygen 1.7.0
+% Updated 01/28/2011 Rev C Version 2 (see Release Notes for details)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Change the <Document Title>, and the DCN and Rev letter. The Document Title is used in 
+% the page headers. The DCN/Rev are used in the page footers and title page.
+% 
+%1. Replace <Document Title> with the name for this document, include API in the title.
+%2. Delete one of the document types (Ref Guide or Int Spec).
+%3. If the document title is long, use the acronym for the doc name.
+%4. Don't use a trademark/registered trademark in the header.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\doctitleheader}{\sffamily Document Title} %Doc title used in the headers.
+\newcommand{\doctitlebookmark}{\sffamily Document Title} %This is what goes in the bookmarks for the Title page.
+\newcommand{\dcn}{\sffamily 80-XXXXX-X A} %DCN used in the footers and on the title page.
+\newcommand{\bookmarktitlepage}{\pdfbookmark[0]{\doctitlebookmark}{titlepage}}
+\newcommand{\bookmarktableofcontents}{\pdfbookmark[0]{Contents}{tableofcontents}}
+\newcommand{\bookmarklistoftables}{\pdfbookmark[1]{List of Tables}{listoftables}}
+\newcommand{\bookmarklistoffigures}{\pdfbookmark[1]{List of Figures}{listoffigures}}
+\newcommand{\revhist}{Revision History}
+\newcommand{\bookmarkrevhist}{\pdfbookmark[0]{Revision History}{revhist}}

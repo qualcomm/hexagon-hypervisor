@@ -1,0 +1,29 @@
+/*-------------------------------------------------------------------------------
+Copyright (c) 2011 QUALCOMM Incorporated. All rights reserved. 
+Qualcomm Confidential and Proprietary
+-----------------------------------------------------------------------------*/
+
+/* Updated 09/22/10 Rev C
+   Updated 01/28/11 Rev C Version 2 (see Release Notes for details)
+*/
+
+/*=============================================================================
+                             Edit History
+
+when         who    what, where, why
+----------   ---    ------------------------------------------------------------
+MM/DD/YYYY   xx     Initial revision for the <Doc Title> (80-NNNNN-N).
+===============================================================================*/
+
+/*-----------------------------------------------------------------------------
+    API Document Grouping Structure
+-----------------------------------------------------------------------------*/
+/* Module groups are defined in this mainpage.dox file using the @defgroup and 
+@ingroup commands. These commands establish the heirarchial structure of the 
+API output. 
+See the QCT Doxygen Markup Standards (80-VP989-1) for more information. */
+
+
+/**
+@defgroup h2 H2 User Primitives
+*/

@@ -1,0 +1,59 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright (c) 2011 QUALCOMM Incorporated. All rights reserved. 
+% Qualcomm Confidential and Proprietary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This custom template file includes the information needed for the upper portion of the 
+% document cover page. This file also pulls in the template_restricted.tex file during 
+% the LaTeX document build and uses the project and document information for the cover 
+% title and the DCN and Rev defined in project_info.tex. Please do not change this file, 
+% except where noted below.
+%
+% LaTeX templates are maintained in Perforce by the Living Docs team. As updates are made, 
+% Doxygen/LaTeX users will be notified to update their templates. If you would like to be 
+% notified when updates occur, send email to livingdocs.support.
+%
+% Author: Lori Boyters
+% Updated:05/28/2010 Rev B Version 7
+% Updated 08/06/2010 Rev B Version 8 for Doxygen 1.5.9
+% Updated 09/22/2010 Rev C Version 1 for Doxygen 1.7.0
+% Updated 01/28/2011 Rev C Version 2 (see Release Notes for details)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{titlepage}
+\vspace{-0.3in}
+\includegraphics{images/QCT_Image}
+%\vspace*{.03in}
+\begin{flushright}
+\renewcommand*\familydefault{\bf\sfdefault}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% To change the document's title on the cover page, replace "Document Title" with
+% the title for this document, include the term "API" with the title, 
+% e.g., WonderPro\textrademark~Fancy Device API
+%
+% If a trademark, registered trademark, or copyright symbol is needed in the title, 
+% use the \textsuperscript{\texttrademark}, \textsuperscript{\textregistered}, or \textcopyright 
+% commands for these. Also, include the LaTeX command for a non-breaking space (~) following the 
+% symbol. Do not add a blank space after the ~.
+% EXAMPLE: "Hexagon\textsuperscript{\texttrademark}~Product API"
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+{\fontfamily{phv}\selectfont \slshape \huge Document Title %If API is in the title, include it here.
+\\ [1ex]\LARGE Reference Guide OR Interface Specification \\ [2ex]\large \dcn
+\\ [2ex]\today} \\
+
+\vspace*{0.03in}
+\color{blue}
+\rule{6.5in}{.02in}\\
+\vspace*{-0.03in}
+\end{flushright}
+\begin{center}
+\vspace{0.1in}
+\bf\large\sf Submit technical questions at: \\ [1ex]
+\vspace{-0.01in}
+\renewcommand*\familydefault{\rmdefault} %AD. Needed to restore default font.
+\color{blue}{\underline{\url{https://support.cdmatech.com}}} \\
+\end{center}
+\input{restricted_distribution.tex} 
+\end{titlepage}

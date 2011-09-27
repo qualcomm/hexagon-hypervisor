@@ -1,0 +1,222 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright (c) 2010-2011 QUALCOMM Incorporated. All rights reserved. 
+% Qualcomm Confidential and Proprietary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This is the primary LaTeX template file and is included in the Doxygen configuration 
+% file and must reside in the /dox folder. It (along with the doxygen.sty file, which 
+% Doxygen will generate during the Doxygen run) includes the LaTeX formatting commands 
+% and code necessary to format the PDF output document to meet the Qualcomm document 
+% formatting standards. Following the Doxygen run, the 'refman.tex' file and 'doxygen.sty' 
+% file are generated and placed into the /dox/latex folder, to be used during the LaTeX 
+% document build. To ensure that the PDF produced using this template file meet the 
+% Qualcomm document formatting standards, except where indicated below, please do not 
+% change this file. 
+%
+% Author: Lori Boyters, Living Docs Technical Lead. 
+% LaTeX templates are maintained in Perforce by the Living Docs team. As updates are 
+% made, Doxygen/LaTeX users will be notified to update their templates. If you would 
+% like to be notified when updates occur, send email to livingdocs.support. For
+% information about the Living Docs Project, go to go/livingdocs
+%
+% Updated 05/28/2010 Rev B Version 3
+% Updated 08/06/2010 Rev B Version 4 for Doxygen 1.5.9
+% Updated 09/22/2010 Rev C Version 1 for Doxygen 1.7.0 
+% Updated 01/28/2011 Rev C Version 2 (see Release Notes for details)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Comment Legend:
+%   DD=Doxygen Default setting.
+%   CH-Doxygen Default setting changed to meet Qualcomm document formatting guidelines.
+%   AD-New. Added to meet formatting guidelines.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[11pt,letterpaper]{book} %DD. This document class is used for all book documents.
+\setlength{\parindent}{0pt} %DD. Turn off paragraph indentation.
+\newcommand{\qcp}{\sffamily Qualcomm Confidential and Proprietary} %AD. Define doc vbl for footers.
+\usepackage[left=2.5cm,top=1.7cm,bottom=2.3cm,right=2.5cm]{geometry} %CH. Margin settings.
+\input{project_info.tex} %AD. Doc variables for header/footers. File included in doc build.
+\usepackage{fancyhdr} %AD. Used to customize the header/footers.
+\usepackage{fancyvrb} %AD. Used to create a block of verbatim text (nonproportional spacing).
+\usepackage{extramarks} %AD. Used with fancyhdr.
+\usepackage{makeidx} %DD. Used to generate an index.
+\usepackage{graphicx} %DD. Used to import graphics (e.g., qualcommlogo.png-logo on cover page)
+\usepackage{multicol} %AD. Used to customize table columns.
+\usepackage{multirow} %AD. Used to customize table rows.
+\usepackage{float} %DD. Used to handle float settings and conditions.
+\usepackage{listings} %DD. Used to format lists.
+\usepackage{color} %DD. Doxygen default colors. Makes ruled lines and hyplerlinks blue.
+\usepackage{textcomp} %DD. Used to format text.
+\usepackage{alltt} %DD. Typewriter font.
+\usepackage{times} %DD. Default font package (Times Roman)
+\usepackage{ifpdf} %DD. Used to process ifpdf conditions.
+\usepackage{array} %AD. 1/20/11 0- Used to further customize tables.
+\newcommand{\tn}{\tabularnewline} %CH. 1/20/11 - Abbreviates long command used in table customization.
+\usepackage{tabularx} %AD. Used to further customize tables.
+\usepackage{ragged2e} %DD. Used to create text justification.
+\usepackage{stdclsdv} %AD. Used with the tocloft pkg to customize the TOC format.
+\usepackage{tocloft} %AD. Used to customize TOC headers/footers, dot leaders.
+%\renewcommand*\familydefault{\rmdefault} %AD. Needed to restore default font.
+\usepackage{longtable} %AD. Added to be able to use tables that break across multiple pages.
+\usepackage{latexsym} %AD. 1/20/11 - Required use LaTeX math symbols.
+\usepackage{ccaption} %AD. Added to customize the figure titles.
+\usepackage{caption} % AD. 1/20/11 - Added to globally format captions.
+\usepackage{textcomp} %AD. Added to support symbol fonts (trademark, copyright, etc.).
+\usepackage{parskip} %AD. Added to ensure that a blank line is placed between paragraphs.
+%\usepackage{sectsty} %AD. Added to allow customized heading styles.
+%\chapterfont{\bfseries \sffamily} %AD. Used to make chapter headings bold and Sans Serif.
+%\allsectionsfont{\bfseries \sffamily} %AD. Used to make section headings bold and Sans Serif.
+
+%AD. 1/27/11 - This tocloft command makes TOC chapter headings sans serif (Adobe Helvetica)
+\renewcommand{\cftchapfont}{%
+  \usefont{OT1}{phv}{bx}{n}\selectfont
+}
+
+%DD. Begin options for pdf or ps:
+%AD. 1/27/11 - Setting linktoc to all makes both text and page number a link in TOC.
+\ifpdf
+\usepackage[pdftex,
+            bookmarks=true,
+            bookmarksnumbered=true,
+            pagebackref=true,
+            linktoc=all,
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=blue,
+            unicode
+            ]{hyperref}
+\else
+\usepackage[ps2pdf,
+            bookmarks=true,
+            pagebackref=true,
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=blue,
+            unicode
+           ]{hyperref}
+\usepackage{pspicture}
+\usepackage[utf8]{inputenc} %AD. Added to support Doxgyen 1.7.0
+\fi
+\urlstyle{same}
+%End options for pdf or ps.
+
+\usepackage{doxygen} %DD. Generates doxygen.sty, includes additional global doc formatting commands.
+\setcounter{tocdepth}{3} %CH. Changed from 2. Section levels to include in TOC (0-3, heading 1=0).
+\setcounter{secnumdepth}{3} %CH. Changed from 2. Section number levels to include in documment.
+\setcounter{secnumdepth}{3} %CH. Changed from 2. Section number levels to include in documment.
+%\makeindex %DD. Used to make the index at the end of the document. 
+\pagenumbering{arabic} %CH. Changed page number font from roman numerals (in front matter) to arabic.
+\hyphenpenalty=8000 %AD. Added to allow hyphenation of long names (e.g., #define names)
+\tolerance=100 %AD. Works with \hyphenpenalty.
+\raggedbottom %AD. Prevents LaTeX from trying to adjust vertical spacing on the page.
+\raggedright %AD. Turns off the default justification and creates a left-justified document.
+
+%\chapterfont{\bfseries\sf} %AD. LB 8/12/10 for Rev C. Changes all chapter fonts to Sans Serif from the default Roman.
+
+%\allsectionsfont{\bfseries\sf}
+%\renewcommand*{\allsectionsfont}   [1] {\partfont{#1}
+%                                      \chapterfont{#1}
+%                                      %\sectionfont{#1}
+%                                      %\subsectionfont{#1}
+%                                      %\subsubsectionfont{#1}
+%                                      %\paragraphfont{#1}
+%                                      %\subparagraphfont{#1}
+%                                      \minisecfont{#1}}
+%\allsectionsfont{\relax}
+
+%Window/Orphan settings: %AD. LB 8/12/10 for Rev C. Controls widow/orphans. These values currently work well.
+\widowpenalty=1000
+\setlength{\parskip}{10ex plus 4ex minus 4ex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Begin Document
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\bookmarktitlepage
+\hypersetup{pageanchor=false} %AD. Added to support Doxgyen 1.7.0
+
+\let\cleardoublepage\clearpage %AD. Suppress creation of blank page, create a new odd page.
+
+%AD. Begin redefine headers/footers using fancyhdr package
+\pagenumbering{roman}
+\fancypagestyle{plain}{%
+    \fancyhead{}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+\pagenumbering{arabic}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\sl\sffamily\footnotesize\textbf{\doctitleheader}}
+\fancyhead[R]{\sl\sffamily\footnotesize\textbf{\firstleftmark}}
+\fancyfoot[L]{\sffamily\footnotesize\textbf{\dcn}}
+\fancyfoot[R]{\sffamily\footnotesize\textbf{Qualcomm Confidential and Proprietary}}
+\fancyfoot[C]{\sffamily\footnotesize\thepage \\ \textbf{MAY CONTAIN U.S. AND INTERNATIONAL EXPORT CONTROLLED INFORMATION}}
+\renewcommand\footrulewidth{.2pt} %Adds a rule (line) to footer.
+%\thispagestyle{fancy}
+%AD end redefine headers/footers using fancyhdr package
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add the document title and DCN for the Cover page.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setlength\parindent{0pt}
+\setlength\parskip{7pt} %AD. Needed to force a blank line between paragraphs.
+\input{titlepage.tex} %AD. File to be included in the document build. Includes top portion of Cover page.
+                      %This file also inputs "restricted_distribution" file.
+
+\tocloftpagestyle{plain} %AD. 01/27/11 - Before generating the TOC, the pages style has to be
+                         %set to plain (blank) to remove the heading off the 1st page of the TOC.
+
+\bookmarktableofcontents %AD. Add bookmark for Table of Contents
+\tableofcontents %DD. Generates TOC on second run.
+\newpage
+\bookmarklistoffigures %AD. Add bookmark for list of figures on second run.
+\tocloftpagestyle{fancy} % AD. 1/27/11 - Change headers to include fancy headers.
+\listoffigures %AD. Generates a List of Figures on second run.
+\bookmarklistoftables %AD. Add bookmark for the list of tables.
+\listoftables %AD. Generates a List of Tables on second run.
+\setlength\parindent{0pt}
+\setlength\parskip{7pt} %AD. Needed to force a blank line in between paragraphs.
+
+\captionsetup{style=default,labelfont={sf,bf},textfont={sf,bf},labelsep=space} %AD. Global options 
+                                                          %for caption formats for figure and table titles.
+
+\newpage
+\pagestyle{plain} %AD. 01/27/11. Turns off the fancyhdr pkg and removes the
+                  %header from the Revision History page.
+\bookmarkrevhist %AD. Add bookmark for Revision History
+\input{revision_history.tex} %Pull in the Revision History chapter.
+
+\newpage
+%AD. 01/27/11. Restarts the fancyhdr pkg and turns the headers back on for the remainder 
+%of the document, except for the 1st page of each new chapter.
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\sl\sffamily\footnotesize\textbf{\doctitleheader}}
+\fancyhead[R]{\sl\sffamily\footnotesize\textbf{\firstleftmark}}
+\renewcommand\headrulewidth{.2pt} %Adds a rule (line) to header.
+\fancyfoot[L]{\sffamily\footnotesize\textbf{\dcn}}
+\fancyfoot[R]{\sffamily\footnotesize\textbf{Qualcomm Confidential and Proprietary}}
+\fancyfoot[C]{\sffamily\footnotesize\thepage \\ \textbf{MAY CONTAIN U.S. AND INTERNATIONAL EXPORT CONTROLLED INFORMATION}}
+\renewcommand\footrulewidth{.2pt} %Adds a rule (line) to footer.
+
+\input{introduction.tex} %Pull in the Introduction chapter.
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% If you don't want Doxygen to pull in one of the LaTeX templates below, comment it out. 
+% An optional chapter may be added using the "optional_chapter.tex" file. Use this file as a template to create one or more
+%optional customized chapters and rename accordingly. The additional customized chapters should appear at the end of the list. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%The following LaTeX custom templates files are pulled in:
+\input{overview.tex} %Pulls in the overview chapter.
+%\input{configuration.tex} %Pulls in the Configuration chapter.
+%\input{callflows.tex} %Pulls in the Call Flows chapter.
+%\input{porting_guide.tex} %Pulls in the Porting Guide chapter.
+%\input{optional_chapter.tex} %Pulls in the Optional Chapter chapter.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Doxygen will generate a 'refman.tex' file and place it into the /latex folder along 
+% with the other tex files autogenerated from the header files (e.g., structs, groups, 
+% etc.) that will be called by the 'refman.tex' file during the LaTeX document build.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

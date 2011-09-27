@@ -1,0 +1,47 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright (c) 2011 QUALCOMM Incorporated. All rights reserved. 
+% Qualcomm Confidential and Proprietary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This custom LaTeX template file includes introductory information required for 
+% Chapter 1 in the PDF document and must reside in the /dox/latex folder. This file is 
+% pulled into the primary LaTeX document build file, refman.tex, during the document 
+% build. To ensure that the PDF produced using this template file meets the Qualcomm 
+% document formatting standards, except where indicated below, please do not change 
+% this file. For information about the Living Docs Project, go to: go/livingdocs
+%
+% Author: Lori Boyters, Living Docs Technical Lead. 
+% LaTeX templates are maintained in Perforce by the Living Docs team. As updates are 
+% made, Doxygen/LaTeX users will be notified to update their templates. If you would 
+% like to be notified when updates occur, send email to livingdocs.support.
+% 
+% New file 09/22/2010 Rev C Version 1 for Doxygen 1.7.0
+% Updated  09/28/2010 Rev C Version 2 (interim)
+% Updated  01/28/2011 Rev C Version 2 (see Release Notes for details)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{\LARGE Revision History}
+
+\vspace{.2cm}
+
+\renewcommand{\thetable}{\thechapter-\arabic{table}} 
+\setlength\LTleft\parindent %Left aligns table.
+\setlength\LTright\fill     %Left aligns table.
+\begin{longtable}[htb]{|c|c|>{\raggedright}p{12.5cm}|}
+%   \caption{{Revision history}} \vspace{-0.05in} \\
+   \hline
+   \multicolumn{1}{|c|}{\textbf{Revision}} & \multicolumn{1}{c|}{\textbf{Date}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+   \hline
+\endfirsthead
+%   \caption[]{Revision history (cont.)} \vspace{-0.05in} \\
+   \hline
+   \multicolumn{1}{|c|}{\textbf{Revision}} & \multicolumn{1}{c|}{\textbf{Date}} & \multicolumn{1}{c|}{\textbf{Description}} \\
+   \hline
+\endhead
+\endfoot
+   \hline
+\endlastfoot
+A & <Mon Year> & Initial release. \tn
+%\hline (use only before additional rows; do not put \hline after last row)
+\end{longtable} 

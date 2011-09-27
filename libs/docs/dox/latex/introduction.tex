@@ -1,0 +1,138 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Copyright (c) 2011 QUALCOMM Incorporated. All rights reserved. 
+% Qualcomm Confidential and Proprietary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This custom LaTeX template file includes introductory information required for 
+% Chapter 1 in the PDF document and must reside in the /dox/latex folder. This file is 
+% pulled into the primary LaTeX document build file, refman.tex, during the document 
+% build. To ensure that the PDF produced using this template file meets the Qualcomm 
+% document formatting standards, except where indicated below, please do not change 
+% this file. For information about the Living Docs Project, go to: go/livingdocs
+%
+% Author: Lori Boyters, Living Docs Technical Lead. 
+% LaTeX templates are maintained in Perforce by the Living Docs team. As updates are 
+% made, Doxygen/LaTeX users will be notified to update their templates. If you would 
+% like to be notified when updates occur, send email to livingdocs.support.
+% 
+% Updated 05/28/2010 Rev B Version 8.
+% Updated 08/06/2010 Rev B Version 9 for Doxygen 1.5.9
+% Updated 09/22/2010 Rev C Version 1 for Doxygen 1.7.0
+% Updated 01/28/2011 Rev C Version 2 (see Release Notes for details)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Introduction} 
+\rm
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Purpose}
+
+This document describes the <Name of the API> (<Acronym of the API>) API. The <Name of the API> provides <include description here>.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Scope}
+
+This document is intended for software developers who will be using the <Acronym of the API> API.
+
+This document provides the public interfaces necessary to use the features provided by the <Acronym of the API>) API. A functional overview and information on leveraging the interface functionality are also provided.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conventions}
+
+Function declarations, function names, type declarations, and code samples appear in a different font. For example, \verb,#include,.
+
+Code variables appear in angle brackets. For example, \verb,<number>,.
+
+Commands and command variables appear in a different font. For example, \tt\textbf{copy a:*.* b:}\rm. 
+
+Parameter directions are indicated as follows:
+
+\begin{itemize} 
+\item \space {\tt[in]} indicates an input parameter.   
+\item \space {\tt[out]} indicates an output parameter.  
+\item \space {\tt[in,out]} indicates a parameter used for both input and output. 
+\end{itemize} 
+\newpage 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{References}
+
+Table \ref{tbl:refs} lists reference documents, which may include Qualcomm documents and non-Qualcomm standards and resources. Reference documents that are no longer applicable are deleted from this table; therefore, reference numbers might not be sequential.
+
+\renewcommand{\thetable}{\thechapter-\arabic{table}} 
+\setlength\LTleft\parindent %Left aligns table.
+\setlength\LTright\fill     %Left aligns table.
+\begin{longtable}[htb]{|p{.25in}|>{\raggedright}p{3.9in}|>{\raggedright}p{1.85in}|}
+   \caption{Reference documents and standards} \label{tbl:refs} \vspace{-0.05in} \\
+   \hline
+   \multicolumn{1}{|c|}{\textbf{Ref.}} & \multicolumn{2}{c|}{\textbf{Document}} \\
+   \hline
+\endfirsthead
+   \caption[]{Reference documents and standards (cont.)} \vspace{-0.05in} \\
+   \hline
+   \multicolumn{1}{|c|}{\textbf{Ref.}} & \multicolumn{2}{c|}{\textbf{Document}} \\
+   \hline
+\endhead
+\endfoot
+   \hline
+\endlastfoot
+\multicolumn{3}{|l|}{\textbf{Qualcomm}} \\
+\hline
+\label{Q1}Q1 & \textit{Application Note: Software Glossary for Customers} & CL93-V3077-1 \tn
+\hline
+\label{Q2}Q2 & \textit{Title} & 80-Xxxxx-x \tn
+\hline
+\multicolumn{3}{|l|}{\textbf{Standards}} \\
+\hline
+\label{S1}S1 & \textit{Title} & Standard Number (optional date) \tn
+\hline
+\label{S2}S2 & \textit{} &  \tn
+\hline
+\multicolumn{3}{|l|}{\textbf{Resources}} \\
+\hline
+\label{R1}R1 & \textit{Title} & ISBN No. \tn
+%\hline (use only before additional rows; do not put \hline after last row)
+\end{longtable} 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Technical Assistance}
+
+For assistance or clarification on information in this guide, submit a case to Qualcomm CDMA 
+Technologies at \color{blue}{\underline{\url{https://support.cdmatech.com}}}\color{black}. 
+
+If you do not have access to the CDMATech Support Services website, register for access or send 
+email to \color{blue}{\underline{\href{mailto:support.cdmatech@qualcomm.com}{support.cdmatech@qualcomm.com}}\color{black}.  
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Acronyms}
+
+For definitions of terms and abbreviations, see \hyperref[Q1]{[Q1]}. Table \ref{tbl:acronyms} lists terms that are specific to this document.
+
+\renewcommand{\thetable}{\thechapter-\arabic{table}} 
+\setlength\LTleft\parindent %Left aligns table.
+\setlength\LTright\fill     %Left aligns table.
+\begin{longtable}[Htb]{|>{\raggedright}p{2.5cm}|>{\raggedright}p{13.2cm}|}
+   \caption{Acronyms} \label{tbl:acronyms} \vspace{-0.05in} \\
+   \hline
+   \multicolumn{1}{|c|}{\textbf{Acronym}} & \multicolumn{1}{c|}{\textbf{Definition}} \\
+   \hline
+\endfirsthead
+   \caption[]{Acronyms (cont.)} \vspace{-0.05in} \\
+   \hline
+   \multicolumn{1}{|c|}{\textbf{Acronym}} & \multicolumn{1}{c|}{\textbf{Definition}} \\
+   \hline
+\endhead
+\endfoot
+   \hline
+\endlastfoot
+<AAA> & <description of AAA \tn
+\hline
+<BBB>& <description of BBB> \tn
+%\hline (use only before additional rows; do not put \hline after last row)
+\end{longtable}

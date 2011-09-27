@@ -20,6 +20,9 @@ typedef unsigned int h2_mutex_t;
 
 /**
 Initialize a mutex.  The mutex is not held once initialized.
+@param[in] lock		Address of the mutex
+@returns None
+@dependencies None
 */
 static inline void h2_mutex_init(h2_mutex_t *lock) { *lock = H2_MUTEX_T_INIT; }
 

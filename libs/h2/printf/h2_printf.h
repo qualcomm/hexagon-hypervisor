@@ -6,6 +6,10 @@
 #ifndef H2_PRINTF_H
 #define H2_PRINTF_H 1
 
+/** @file h2_printf.h
+ * @brief C library printf, but with a lock
+ */
+
 int h2_printf(const char *fmt, ...);
 
 #endif

@@ -1,32 +1,13 @@
 
 
-Rationale
----------
+==Rationale==
 
-Efficiency: Area vs. Energy
-===========================
+===Efficiency===
 
-A given processor is likely to run most energy efficient at the highest
-frequency it can safely run at the lowest voltage possible.  Lowering the
-frequency doesn't help improve energy efficiency, since a task will take longer
-at lower power.  But since P=V^{2}*f, lowering the voltage substantially
-improves energy efficiency.
-
-However, running at a lower voltage and thus running at a lower frequency
-greatly reduces the area efficiency of a processor.  Maximizing frequency
-by utilizing the highest voltage available yields the most performance 
-per square millimeter for a given processor.
-
-Thus energy efficiency and area efficiency for a system conflict with each
-other.  Running two processors at reduced voltage may be a more energy
-efficient way to get higher performance, but it is less area efficient
-than running a single core much faster.
-
-If higher energy efficiency is valuable, it may be possible to design
-architectures where (for example) a processor at maximum frequency is used 
-to meet a variety of processing demands for an inexpensive but less energy
-efficient part, and multiple processors are used in a more expensive part that
-can yield better battery life.
+For a high end device, the best energy efficiency and highest performance
+are probably provided with multiple instances of a processor.  However,
+for a low end, inexpensive device, multiple environments should share
+the same processor to reduce the area requriements.
 
 One thing preventing the utilization of this scheme is the software complexity.
 Currently, if two environments are to be merged into a single processor, the 
@@ -40,8 +21,7 @@ separation between the two virtual machines, which can communicate in the same
 way on a shared core as on multiple cores (for example, using the Shared Memory
 Driver).
 
-Dynamic Power Control
-======================
+===Dynamic Power Control===
 
 When sharing the same DSP hardware with multiple software environments happens,
 none of the environments can be authoritative for power collapse.  Instead,
@@ -60,8 +40,7 @@ be power collapsed to eliminate leakage.  When the processing demand increases,
 the other cores can be turned back on and virtual machines can be migrated 
 back to redistribute the load.
 
-Compatibility
-=============
+===Compatibility===
 
 While user mode is continually backward compatible on the Hexagon processor,
 the most privileged mode (monitor mode) is allowed to change with each version
@@ -78,14 +57,17 @@ versions of the core; conceivably an MSM8660 Audio image could run on MSM8960,
 for example, even though the Hexagon processors in those devices are
 dramatically different.
 
-Correctness
-===========
+===Correctness===
 
 Various software sequences, such as cleaning the caches or saving debug state
 before power collapse, vary between core versions and are difficult to ensure
 correctness for.  As the Hexagon cores continue to evolve, these difficult
 sequences will likely also continue to change.  Additionally, hardware issues
 may further complicate some of these sequences.
+
+Some hardware issues are found after silicon has been developed.  Managing
+these "chicken bits" and clock gating controls can be difficult and error
+prone.
 
 The Hypervisor can abstract these interfaces and make procedures like power
 collapse and warm boot more transparent to the guest operating systems and
@@ -95,10 +77,7 @@ the Hypervisor are working together to correctly enter and return from power
 collapse, voltage minimization, or other future tricky state transitions.
 
 
-
-
-Overhead Concerns
------------------
+==Overhead Concerns==
 
 One of the concerns with introducing a Hypervisor is whether it will introduce
 substantial overhead, especially for performance-sensitive environments.
@@ -124,25 +103,21 @@ is a performance overhead to using a Hypervisor.
 
 
 
-Security
---------
+==Security==
 
-Hypervisor Protection
-=====================
+===Hypervisor Protection===
 
 The Hypervisor is protected from user and guest environments.  Hypervisor register
 state is protected by the hardware, and hypervisor memory is excluded from 
 being accessable by any guest.
 
-Guest Protection
-================
+===Guest Protection===
 
 The Hypervisor can enforce protection between guests.  Guests can be configured
 to have completely independent memory maps, or memory maps that are shared only
 in specific areas (such as space for shared memory communication).
 
-Debug Protection
-================
+===Debug Protection===
 
 The Hypervisor will provide a mechanism to debug multiple Guest environments
 securely.  The Hypervisor can provide a mechanism for communication to each
@@ -150,8 +125,7 @@ Guest Virtual CPU, which the Guest can choose to communicate or not.  This
 will allow secure environments such as sensitive modem code, or DRM-sensitive
 Multimedia environments.
 
-System MMU Integration
-======================
+===System MMU Integration===
 
 Devices typically are designed to utilize a large, contiguous block of memory.
 Allocating such a block of memory for a device is very difficult for most
@@ -170,24 +144,15 @@ for the Hexagon processor:
 
 * A System MMU adds substantial area to the overall deliverable
 
-* System MMUs add latency to every memory transaction, resulting in performance
-	degradation and increased energy consumption
+* System MMUs add latency to every memory transaction, resulting in performance degradation and increased energy consumption
 
-* System MMUs are currently designed to operate at frequencies that are not 
-	sufficient for all Hexagon environments (such as Dime modem)
+* System MMUs are currently designed to operate at frequencies that are not sufficient for all Hexagon environments (such as Dime modem)
 
-* System MMUs are currently blocking when a page miss happens, stalling other
-	accesses from other threads
+* System MMUs are currently blocking when a page miss happens, stalling other accesses from other threads
 
-* System MMUs turn Hexagon caches into Virtual caches, presenting a wide variety
-	of programming problems, such as virtual aliasing, and hardware problems,
-	such as difficulty in debugging and an impossibility for bus-based cache 
-	coherency.
+* System MMUs turn Hexagon caches into Virtual caches, presenting a wide variety of programming problems, such as virtual aliasing, and hardware problems, such as difficulty in debugging and an impossibility for bus-based cache coherency.
 
-* Neither the System MMUs nor the Hexagon processor is designed to transmit
-	additional information about what environment corresponds to each
-	transaction, and a shared DSP would need more than one context to be
-	supported.
+* Neither the System MMUs nor the Hexagon processor is designed to transmit additional information about what environment corresponds to each transaction, and a shared DSP would need more than one context to be supported.
 
 Fundimentially, a System MMU is duplicating functionality already available in
 the Hexagon processor: namely, the ability to translate addresses.  Instead, we

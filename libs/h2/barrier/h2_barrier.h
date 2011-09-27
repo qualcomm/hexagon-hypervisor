@@ -6,7 +6,7 @@
 #ifndef H2_BARRIER_H
 #define H2_BARRIER_H 1
 
-/* @file h2_barrier.h
+/** @file h2_barrier.h
  @brief Barrier waits for a certain number of threads to reach the same point before continuing
 */
 /** @addtogroup h2 

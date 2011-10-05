@@ -24,6 +24,10 @@ ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(PWD)/install
 endif
 
+OPT_JFLAG=-j 3
+REF_JFLAG=-j 3
+TEST_JFLAG=-j 8
+
 all: ref doc gtags
 
 distclean: clean docclean
@@ -44,14 +48,14 @@ ucosclean:
 	$(MAKE) -C ucos clean
 
 opt:
-	$(MAKE) -C kernel ARCHV=$(ARCHV) opt_install && \
-	$(MAKE) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
+	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
+	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
+	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 ref:
-	$(MAKE) -j 3 -C kernel ARCHV=$(ARCHV) ref_install && \
-	$(MAKE) -j 3 -C libs ARCHV=$(ARCHV) install IMPL=ref && \
-	$(MAKE) -j 3 -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
+	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
+	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
+	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 sim: ref
 	$(CC) -mv$(ARCHV) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
@@ -66,13 +70,13 @@ t:
 
 test: 
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
-	$(MAKE) -j 8 -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst; \
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst; \
 	cd ucos; $(MAKE) sim && cd .. && \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
 cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
-	$(MAKE) -j 8 -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; \
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; \
 	cd ucos; $(MAKE) sim && cd .. && \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt; \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
@@ -89,5 +93,5 @@ compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
 gtags:
-	find kernel libs tst guest ucos -type f -print | gtags -w -v -f -
+	find kernel libs tst guest ucos linux -type f -print | gtags -w -v -f -
 	htags -afhnosTxv --show-position

@@ -18,8 +18,6 @@
 FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	crswap(r7,sgp)
 	// Save trap state
-	r13 = ugp
-	r12 = gp
 	memd(r7+#CONTEXT_r3130) = r31:30
 	memd(r7+#CONTEXT_r2928) = r29:28
 	memd(r7+#CONTEXT_r2726) = r27:26
@@ -72,10 +70,14 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 
 	// set up continuation in case we block
 	call .Ljump_to_trap
+
 H2K_trap_nogood:
 	r17 = sgp
 	memd(r17+#CONTEXT_r0100) = r1:0		// Save return value in case of preemption
 	call H2K_preempt			// Try to take interrupt before returning
+
+H2K_guest_return:
+	r17 = sgp
 	r19:18 = memd(r17+#CONTEXT_gpugp)
 	gp = r19
 	ugp  = r18
@@ -129,32 +131,59 @@ H2K_trap_nogood:
 	/* GEVB is in r23 */
 	/* Preds are in R18 */
 	/* r17:16 == ssr:elr */
+
 .Lguest_trap:
-	//r27:26 = combine(r16,r16)
 	memw(r7+#CONTEXT_gssr_gelr) = r16   		// gelr
 	memw(r7+#CONTEXT_gbadva_gosp+4) = r16 	// gbadva
 
-	r25 = memw(r7+#CONTEXT_gssr_gelr+4)			// gssr
+#if __QDSP6_ARCH__ >= 4
+	g0 = r16
+  g3 = r16
+#endif
+
 	r24 = memw(r7+#CONTEXT_gbadva_gosp) 		// gosp
+	r26 = memw(r7+#CONTEXT_vmstatus)
 
 	p0 = tstbit(r17,#SSR_GUEST_BIT)
 	{
 		if (!p0) r24 = r29
 		if (!p0) r29 = r24
 	}
-	memw(r7+#CONTEXT_r2928+4) = r29
-	/* TBD: set up GSSR in r25 */
-	r25 = zxtb(r17)
 
+	r25 = zxtb(r17)															// cause
+	if (p0) jump 1f 														// !guest == user
+	r25 = setbit(r25, #H2K_GSSR_UM_BIT)
+
+1:
+	p0 = tstbit(r26, #H2K_VMSTATUS_IE_BIT)			// interrupts enabled?
+	if (!p0) jump 1f
+	r25 = setbit(r25, #H2K_GSSR_IE_BIT)
+
+1:
+	memw(r7+#CONTEXT_r2928+4) = r29
 	memw(r7+#CONTEXT_gssr_gelr+4) = r25 	// gssr
 	memw(r7+#CONTEXT_gbadva_gosp) = r24 	// gosp
 
-	r16 = add(r23,#TRAP0_GEVB_OFFSET)
-	r17 = setbit(r17,#SSR_GUEST_BIT)
+#if __QDSP6_ARCH__ >= 4
+	g1 = r25
+  g2 = r24
+#endif
+
+	r16 = add(r23, #TRAP0_GEVB_OFFSET)
+	r17 = setbit(r17, #SSR_GUEST_BIT)
 	memd(r7+#CONTEXT_ssrelr) = r17:16
+
+  // atomic clear vmstatus IE
+  r27 = add(r7, #CONTEXT_vmstatus)
+1:
+	r26 = memw_locked(r27)
+	r26 = clrbit(r26, #H2K_VMSTATUS_IE_BIT)
+	memw_locked(r27, p0) = r26
+	if (!p0) jump 1b
+
 	p3:0 = r18
 	crswap(r7,sgp)
-	jump H2K_trap_nogood
+	jump H2K_guest_return
 
 FUNC_END H2K_handle_trap0
 

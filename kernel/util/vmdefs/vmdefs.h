@@ -16,4 +16,11 @@
 #define TRAP0_GEVB_OFFSET (5*4)
 #define INTERRUPT_GEVB_OFFSET (7*4)
 
+/* FIXME:  also defined in context.h */
+#define H2K_GSSR_UM_BIT 31
+#define H2K_GSSR_IE_BIT 30
+#define H2K_GSSR_UM (0x1 << H2K_GSSR_UM_BIT)
+#define H2K_GSSR_IE (0x1 << H2K_GSSR_IE_BIT)
+#define H2K_VMSTATUS_IE_BIT     7
+
 #endif

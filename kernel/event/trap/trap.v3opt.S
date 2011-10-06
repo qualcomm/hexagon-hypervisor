@@ -166,16 +166,30 @@ H2K_trap_nogood:
 	{
 		r23 = memw(r7+#CONTEXT_gssr_gelr+4) 		// gssr
   	r22 = memw(r7+#CONTEXT_gbadva_gosp) 		// gosp
+  }
+  {
+	  r26 = memw(r7+#CONTEXT_vmstatus)
 		p0 = tstbit(r16,#SSR_GUEST_BIT)
 	}
 	{
 		if (!p0) r22 = r29
 		if (!p0) r29 = r22
-		/* TBD: set up GSSR in r23 */
-		r23 = zxtb(r16)
+		r23 = zxtb(r16)									  		// cause
+		if (p0) jump 1f												// !guest == user
 	}
+	r23 = setbit(r23, #H2K_GSSR_UM_BIT)
+
+1:
+	{
+		p0 = tstbit(r26,#H2K_VMSTATUS_IE_BIT)					// interrrupts enabled?
+  }
+	{
+		if (!p0) jump 1f
+  }
+	r23 = setbit(r23, #H2K_GSSR_IE_BIT)
+
+1:
 //	{
-	  // ??? not tested?
 		memw(r7+#CONTEXT_gssr_gelr+4) = r23 	// gssr
 		memw(r7+#CONTEXT_gbadva_gosp) = r22 	// gosp
 //	}
@@ -185,9 +199,19 @@ H2K_trap_nogood:
 		r21 = setbit(r16,#SSR_GUEST_BIT)
 		r31:30 = memd(r7+#CONTEXT_r3130)
 	}
+
+	  // atomic clear vmstatus IE
+  r27 = add(r7, #CONTEXT_vmstatus)
+1:
+	r26 = memw_locked(r27)
+	r26 = clrbit(r26, #H2K_VMSTATUS_IE_BIT)
+	memw_locked(r27, p0) = r26
+	if (!p0) jump 1b
+
 	{
 		memd(r7+#CONTEXT_ssrelr) = r21:20
-		r29:28 = memd(r7+#CONTEXT_r2928)
+//		r29:28 = memd(r7+#CONTEXT_r2928)  FIXME: r28 not modified, r29 already saved
+		r27:26 = memd(r7+#CONTEXT_r2726)
 		p3:0 = r25
 	}
 	{
@@ -197,7 +221,6 @@ H2K_trap_nogood:
 		elr = r20  // AXOK
 	}
 	{
-		r27:26 = memd(r7+#CONTEXT_r2726)
 		r25:24 = memd(r7+#CONTEXT_r2524)
 	}
 	{

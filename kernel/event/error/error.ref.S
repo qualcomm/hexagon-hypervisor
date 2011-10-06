@@ -15,29 +15,71 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	 * the guest regs stuff to use guest regs in V4 
 	 */
 	crswap(r24,sgp)
+	memd(r24+#CONTEXT_r1918) = r19:18
+	memd(r24+#CONTEXT_r1716) = r17:16
 	memd(r24+#CONTEXT_r1514) = r15:14
 	memd(r24+#CONTEXT_r1312) = r13:12
 	r12 = memw(r24+#CONTEXT_gevb)
 	if (r12 == #0) jump:t 1f
-	r15 = ELR
+
+	r17 = ssr
+	r16 = ELR
 	r14 = BADVA
 	r13 = p3:0
-	r12 = add(r12,#ERROR_GEVB_OFFSET)
-	elr = r12
-	memw(r24+#CONTEXT_gssr_gelr) = r15 			// gelr
+
+	memw(r24+#CONTEXT_gssr_gelr) = r16 			// gelr
 	memw(r24+#CONTEXT_gbadva_gosp+4) = r14 	// gbadva
-	r15 = ssr
-	p0 = tstbit(r15,#SSR_GUEST_BIT)
+
+#if __QDSP6_ARCH__ >= 4
+  g0 = r16
+  g3 = r14
+#endif
+
 	r14 = memw(r24+#CONTEXT_gbadva_gosp) 		// gosp
+	r18 = memw(r24+#CONTEXT_vmstatus)
+
+	p0 = tstbit(r17,#SSR_GUEST_BIT)
 	{
 		if (!p0) r14 = r29
 		if (!p0) r29 = r14
 	}
-	/* TBD: set up GSSR in r15 */
-	r15 = zxtb(r15)
+
+	r15 = zxtb(r17)												// cause
+	if (p0) jump 2f 											// !guest == user
+	r15 = setbit(r15, #H2K_GSSR_UM_BIT)
+
+2:
+	p0 = tstbit(r18,#H2K_VMSTATUS_IE_BIT)	// interrrupts enabled?
+	if (!p0) jump 2f
+	r15 = setbit(r15, #H2K_GSSR_IE_BIT)
+
+2:
 	memw(r24+#CONTEXT_gssr_gelr+4) = r15 		// gssr
 	memw(r24+#CONTEXT_gbadva_gosp) = r14 		// gosp
+
+#if __QDSP6_ARCH__ >= 4
+  g1 = r15
+  g2 = r14
+#endif
+
+	r16 = add(r12,#ERROR_GEVB_OFFSET)
+	r17 = setbit(r17,#SSR_GUEST_BIT)
+	memd(r24+#CONTEXT_ssrelr) = r17:16			// FIXME:  necessary?
+
+	// atomic clear vmstatus IE
+	r19 = add(r24, #CONTEXT_vmstatus)
+2:
+	r18 = memw_locked(r19)
+	r18 = clrbit(r18, #H2K_VMSTATUS_IE_BIT)
+	memw_locked(r19, p0) = r18
+	if (!p0) jump 2b
+
 	p3:0 = r13
+	elr = r16
+	ssr = r17
+
+	r19:18 = memd(r24+#CONTEXT_r1918)
+	r17:16 = memd(r24+#CONTEXT_r1716)
 	r15:14 = memd(r24+#CONTEXT_r1514)
 	r13:12 = memd(r24+#CONTEXT_r1312)
 	crswap(r24,sgp)

@@ -151,45 +151,76 @@ H2K_trap_nogood:
 	/* r22 == ssr */
 	/* p1 == (gevb == 0) */
 //	{
-		if (p1) jump .Lfatal
-		// if gevb, do guest event
-		if (!p1) memw(r7+#CONTEXT_gssr_gelr) = r21  // elr:elr
-		if (!p1) memw(r7+#CONTEXT_gbadva_gosp+4) = r20  // elr:elr
+	if (p1) jump .Lfatal
+	// if gevb, do guest event
+	if (!p1) memw(r7+#CONTEXT_gssr_gelr) = r21  // elr:elr
+	if (!p1) memw(r7+#CONTEXT_gbadva_gosp+4) = r20  // elr:elr
+
+	g0 = r20
+  g3 = r20		
+
 //	}
 	{
 		r25 = memw(r7+#CONTEXT_gssr_gelr+4) 	// gssr
 		r24 = memw(r7+#CONTEXT_gbadva_gosp) 	// gosp
+  }
+	{
+	  r26 = memw(r7+#CONTEXT_vmstatus)
 		p0 = tstbit(r22,#SSR_GUEST_BIT)
 	}
 	{
 		if (!p0) r24 = r29
 		if (!p0) r29 = r24
-		/* TBD: set up GSSR in r25 */
-		r25 = zxtb(r24)
-		r20 = add(r19,#TRAP0_GEVB_OFFSET)
+		r25 = zxtb(r24)											  // cause
+		if (p0) jump 1f 											// !guest == user
 	}
+	r25 = setbit(r25, #H2K_GSSR_UM_BIT)
+
+1:
+  {
+ 	  p0 = tstbit(r26, #H2K_VMSTATUS_IE_BIT)					// interrrupts enabled?
+  }
+  {
+		if (!p0) jump 1f
+  }
+	r25 = setbit(r25, #H2K_GSSR_IE_BIT)
+
+1:
 //	{
-	  // ??? not tested?
-		memw(r7+#CONTEXT_gssr_gelr+4) = r25  	// gssr
-		memw(r7+#CONTEXT_gbadva_gosp) = r24 	// gosp
+	memw(r7+#CONTEXT_gssr_gelr+4) = r25  	// gssr
+	memw(r7+#CONTEXT_gbadva_gosp) = r24 	// gosp
+
+	g1 = r25
+  g2 = r24
+
 //	}
 	{
-		r21 = setbit(r22,#SSR_GUEST_BIT)
-		p3:0 = r27
-		r27:26 = memd(r7+#CONTEXT_r2726)
-	}
-	{
 		memw(r7+#CONTEXT_r2928+4) = r29
-		memd(r7+#CONTEXT_ssrelr) = r21:20
-	}
+		r20 = add(r19,#TRAP0_GEVB_OFFSET)
+		r21 = setbit(r22,#SSR_GUEST_BIT)
+  }
+
+	  // atomic clear vmstatus IE
+	r19 = add(r7, #CONTEXT_vmstatus)
+1:
+	r18 = memw_locked(r19)
+	r18 = clrbit(r18, #H2K_VMSTATUS_IE_BIT)
+	memw_locked(r19, p0) = r18
+	if (!p0) jump 1b
+
 	{
-		elr = r20  // AXOK
+		memd(r7+#CONTEXT_ssrelr) = r21:20
+		r27:26 = memd(r7+#CONTEXT_r2726)
+		p3:0 = r27
 	}
 	{
 		ssr = r21  // AXOK (if changing bits other than IE, EX, UM)
 	}
 	{
-		r31:30 = memd(r7+#CONTEXT_r3130)
+	  elr = r20  // AXOK
+	}
+	{
+//		r31:30 = memd(r7+#CONTEXT_r3130)  FIXME: r31:30 not modified
 		r25:24 = memd(r7+#CONTEXT_r2524)
 	}
 	{

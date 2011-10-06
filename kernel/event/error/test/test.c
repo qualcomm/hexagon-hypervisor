@@ -124,7 +124,7 @@ int main()
 	puts("a");
 
 	/*
-	 * Register gest vector base
+	 * Register guest vector base
 	 * We should not see fatal thread
 	 * We should not switch stacks
 	 */

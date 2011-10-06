@@ -51,6 +51,9 @@
 #define STLB_MAX_WAYS 16
 
 #define PAGE_BITS 12 /* Minimum page size: 4K */
+#define PAGE_SIZE (0x1 << PAGE_BITS)
+
+#define SSR_IE_BIT 18
 
 #if __QDSP6_ARCH__ <= 3
 #define RESCHED_INT_INTMASK (0x80000000 >> RESCHED_INT)

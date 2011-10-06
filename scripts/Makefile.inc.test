@@ -181,14 +181,17 @@ report.html:
 check:
 	@for SUBDIR in ${SUBDIRS}; do\
 	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	      echo FAIL $$SUBDIR - Empty/No results.txt; \
 	      exit 1;\
 	   fi;\
 	   grep "ERROR:" $$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
+	      echo FAIL $$SUBDIR - ERROR detected in results.txt; \
 	      exit 1;\
 	   fi;\
 	   grep "TEST PASSED" $$SUBDIR/results.txt;\
 	   if [ $$? -ne 0 ]; then\
+	      echo FAIL $$SUBDIR - No PASS detected in results.txt; \
 	      exit 1;\
 	   fi;\
 	done
@@ -226,7 +229,11 @@ ${EXEC}: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-	ulimit -t 60 && ${SIM} --profile ${EXEC} | tee $@;
+	@ulimit -t 60 && ${SIM} --profile ${EXEC} | tee $@; \
+	CODE=$${PIPESTATUS[0]}; \
+	if [ "$$CODE" -eq 137 ]; then \
+	   echo -e "\nERROR: probably ulimit" >> $@; \
+	fi;
 
 # Coverage stuff -- single testcase
 
@@ -251,15 +258,15 @@ clean:
 
 #  Pretty much a binary yes/no if the test passed or failed.
 results.txt: test.log
-	@grep "TEST PASSED" test.log > $@
-	@grep "ERROR:" test.log;\
-	if [ $$? -eq 0 ]; then\
-		grep "ERROR:" test.log > $@;\
-		exit 1;\
-	fi
+	@grep "TEST PASSED" test.log > $@; \
+	grep "ERROR:" test.log; \
+	if [ $$? -eq 0 ]; then \
+		grep "ERROR:" test.log >> $@; \
+	fi; \
+	true;
 	
 
-all:  results.txt ${COVFILES}
+all: results.txt ${COVFILES}
 tst: results.txt
 
 

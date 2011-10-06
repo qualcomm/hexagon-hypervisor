@@ -25,7 +25,7 @@ static inline u32_t H2K_atomic_setbit(u32_t *word, u32_t bit)
 static inline u32_t H2K_atomic_clrbit(u32_t *word, u32_t bit)
 {
 	u32_t t;
-	asm (	"// atomic set bit\n"
+	asm (	"// atomic clear bit\n"
 		"1: %0 = memw_locked(%3)\n"
 		" { p1 = tstbit(%0,%2)\n"
 		"   %0 = clrbit(%0,%2) }\n"
@@ -41,7 +41,7 @@ static inline u32_t H2K_atomic_clrbit(u32_t *word, u32_t bit)
 static inline u32_t H2K_atomic_swap(u32_t *word, u32_t val)
 {
 	u32_t t;
-	asm (	"// atomic set bit\n"
+	asm (	"// atomic swap\n"
 		"1: %0 = memw_locked(%3)\n"
 		"   memw_locked(%3,p0) = %2\n"
 		"   if (!p0) jump 1b\n"
@@ -63,7 +63,7 @@ static inline u32_t H2K_atomic_insert(u32_t *word, u32_t val, u32_t width, u32_t
 	} x;
 	x.width = width;
 	x.offset = offset;
-	asm (	"// atomic set bit\n"
+	asm (	"// atomic insert\n"
 		"1: %0 = memw_locked(%3)\n"
 		"   %0 = insert(%2,%4)\n"
 		"   memw_locked(%3,p0) = %0\n"

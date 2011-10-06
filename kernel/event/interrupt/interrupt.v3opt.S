@@ -220,6 +220,8 @@ H2K_interrupt_restore:
 	}
 	{
 		r1:0 = memd(r0+#CONTEXT_r0100)
+  }
+  {
 		rte
 	}
 	// restore: 16 cycles (ideal)

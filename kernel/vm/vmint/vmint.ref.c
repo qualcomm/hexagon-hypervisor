@@ -28,11 +28,7 @@ static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_
 	if (vmblock->percpu_mask[cpu][wordidx] & bitmask) {
 		thread = vmblock->cpu_contexts[cpu];
 		H2K_atomic_setbit(&thread->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
-		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
-			/* Deliver IPI */
-			H2K_vm_ipi_send(thread);
-		}
-		
+
 		BKL_LOCK();
 		if (thread->status == H2K_STATUS_VMWAIT) { // wake up
 			thread->r00 = intno; // return value from vmwait
@@ -41,6 +37,10 @@ static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_
 		}
 		else {
 			BKL_UNLOCK();
+			if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
+				/* Deliver IPI */
+				H2K_vm_ipi_send(thread);
+			}
 		}
 		return 1;
 	} else {

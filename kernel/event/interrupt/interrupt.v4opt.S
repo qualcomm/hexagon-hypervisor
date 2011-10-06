@@ -247,7 +247,7 @@ FUNC_END H2K_handle_int
 FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	{
 		r0 = ssr
-		r3 = #KERNEL_STACK_SIZE
+		r29 = #KERNEL_STACK_SIZE
 		r16 = ##H2K_kg
 	}
 	{
@@ -267,7 +267,7 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 		r5 = mux(p0,##0x80000000,#0)
 	}
 	{
-		r29 = add(##H2K_stacks,mpyi(r2,r3))
+		r29 = add(##H2K_stacks,mpyi(r2,r29))
 		ciad(r5)
 	}
 	{
@@ -288,7 +288,7 @@ FUNC_END H2K_interrupted_waitmode
 FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	{
 		r0 = ssr
-		r3 = #KERNEL_STACK_SIZE
+		r29 = #KERNEL_STACK_SIZE
 		r4 = add(r16,#KG_inthandlers)
 	}
 	{
@@ -308,7 +308,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 		r5 = mux(p0,##0x80000000,#0)
 	}
 	{
-		r29 = add(##H2K_stacks,mpyi(r2,r3))
+		r29 = add(##H2K_stacks,mpyi(r2,r29))
 		ciad(r5)
 	}
 	{
@@ -340,7 +340,7 @@ FUNC_END H2K_interrupted_preempt
 FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	{
 		r2 = ssr
-		r3 = #KERNEL_STACK_SIZE
+		r29 = #KERNEL_STACK_SIZE
 		r16 = ##H2K_kg		// unnecessary if just preempt, but we're sharing code
 		r17 = r0		// save what was in SGP at interrupt time (0 or 1)
 					// allowed by duplex
@@ -363,7 +363,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		r2 = htid
 	}
 	{
-		r29 = add(##H2K_stacks,mpyi(r2,r3))
+		r29 = add(##H2K_stacks,mpyi(r2,r29))
 		p0 = cmp.eq(r3,#0)		// Is handler NULL?
 		ciad(r5)			// Re-enable L2 controller interrupt if L2 int
 	}

@@ -23,7 +23,7 @@ static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_
 	ret.ppn = pte.ppn;
 	ret.ccc = pte.ccc;
 	ret.xwr = (pte.xwr);
-	ret.guestonly = ~(!pte.u);
+	// ret.guestonly = ~(pte.u);  FIXME: incorrect
 	ret.asid = asid;
 	ret.size = pte.s;
 	ret.vpn = badva >> 12;
@@ -50,7 +50,7 @@ static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_
 #endif
 
 /* This is rather complex */
-/* For L1 page, look up PTB << 12 | ((va >> 22) << 2) */
+/* For L1 page, look up PTB | ((va >> 22) << 2) */
 /* For L2 page, we need bits (12+2*size) .. 22. */
 /* We insert these (10-2*size) bits into PA starting at bit 2 */ 
 static inline H2K_pte_t H2K_mem_translate_l2(u32_t va, u32_t l2addr, u32_t tablesize, u32_t pagesize)
@@ -67,7 +67,7 @@ static inline H2K_pte_t H2K_mem_translate_l1(u32_t va, u32_t baseaddr)
 {
 	H2K_pte_t pte;
 	u32_t size;
-	pte.raw = H2K_mem_physread_word(((u64_t)baseaddr << 12) | ((va>>20) & 0xffc));
+	pte.raw = H2K_mem_physread_word((u64_t)baseaddr | ((va>>20) & 0xffc));
 	size = pte.s;
 	if (size <= 4) return H2K_mem_translate_l2(va,pte.raw & -16,5-size,size);
 	if (size == 7) pte.raw = 0;

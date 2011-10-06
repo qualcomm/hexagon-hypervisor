@@ -92,14 +92,23 @@ void H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_c
 	myinfo->baseaddr[idx*STLB_MAX_WAYS+i] = entry;
 }
 
-void H2K_mem_stlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
+void H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me)
 {
 	H2K_mem_stlb_asid_info_t *myinfo;
 	int i;
+	u32_t start = va >> PAGE_BITS;
+	u32_t end = (va + count - 1) >> PAGE_BITS;
+	u32_t page;
+
 	if (H2K_mem_stlb_asid_infos == NULL) return;
+
 	myinfo = &H2K_mem_stlb_asid_infos[asid];
-	if ((i = H2K_mem_stlb_find(va,asid,myinfo)) >= 0) {
-		myinfo->baseaddr[i].raw = 0;
+
+	/* FIXME: Be smarter about page size */
+	for (page = start; page <= end; page++) {
+		if ((i = H2K_mem_stlb_find(page << PAGE_BITS, asid, myinfo)) >= 0) {
+			myinfo->baseaddr[i].raw = 0;
+		}
 	}
 }
 

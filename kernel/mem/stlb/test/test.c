@@ -109,11 +109,10 @@ int main()
 	entry.asid = 0;
 	entry.vpn = 0;
 #endif
-
         /* No storage */
 	H2K_asid_table_init();
 	H2K_mem_stlb_init();
-	H2K_mem_stlb_invalidate_va(0,0,&a);
+	H2K_mem_stlb_invalidate_va(0,1,0,&a);
 	H2K_mem_stlb_invalidate_asid(0);
 	H2K_mem_stlb_add(0,0,entry,&a);
 	if (H2K_mem_stlb_lookup(0,0,&a).raw != 0) {
@@ -130,7 +129,7 @@ int main()
 	TH_tlbfmt_iszero(test);
 
 	/* Invalidate already invalidated va */
-	H2K_mem_stlb_invalidate_va(0,0,&a);
+	H2K_mem_stlb_invalidate_va(0,1,0,&a);
 	test = H2K_mem_stlb_lookup(0,0,&a);
 	TH_tlbfmt_iszero(test);
 
@@ -144,7 +143,7 @@ int main()
 			test = H2K_mem_stlb_lookup(j+rand() % 0xfff,i,&a);
 			TH_compare_tlbfmt(entry, test);
 			//Invalidate entry.
-			H2K_mem_stlb_invalidate_va(j,i,&a);
+			H2K_mem_stlb_invalidate_va(j,1,i,&a);
 			test = H2K_mem_stlb_lookup(j,i,&a);
 			TH_tlbfmt_iszero(test);
 		}
@@ -163,7 +162,7 @@ int main()
 			TH_compare_tlbfmt(entry, test);
 			test = H2K_mem_stlb_lookup(j-rand() % 0xfff,i,&a);
 			TH_compare_tlbfmt(entry, test);
-			H2K_mem_stlb_invalidate_va(j,i,&a);
+			H2K_mem_stlb_invalidate_va(j,1,i,&a);
 			test = H2K_mem_stlb_lookup(j,i,&a);
 			TH_tlbfmt_iszero(test);
 		}

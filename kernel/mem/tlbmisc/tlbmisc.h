@@ -77,7 +77,7 @@ static inline void H2K_mem_tlb_write(u32_t index, u64_t entry)
 
 #endif
 
-void H2K_mem_tlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me) IN_SECTION(".text.mem.tlb");
+void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) IN_SECTION(".text.mem.tlb");
 void H2K_mem_tlb_invalidate_asid(u32_t asid) IN_SECTION(".text.mem.tlb");
 
 #endif

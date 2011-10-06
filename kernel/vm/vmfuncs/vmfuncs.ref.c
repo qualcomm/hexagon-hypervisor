@@ -66,7 +66,7 @@ void H2K_vmtrap_setie(H2K_thread_context *me)
 /* 4 */
 void H2K_vmtrap_getie(H2K_thread_context *me)
 {
-	me->r00 = ((me->atomic_status_word & H2K_VMSTATUS_IE_BIT) != 0);
+	me->r00 = ((me->atomic_status_word & H2K_VMSTATUS_IE) != 0);
 }
 
 #if 0
@@ -100,11 +100,21 @@ void H2K_vmtrap_iconf(H2K_thread_context *me)
 void H2K_vmtrap_clrmap(H2K_thread_context *me)
 {
 	/* Invalidate HW/STLB entry */
-	u32_t va;
+	u32_t va, count;
 	va = me->r00;
-	H2K_mem_stlb_invalidate_va(va,me->ssr_asid,me);
-	H2K_mem_tlb_invalidate_va(va,me->ssr_asid,me);
+	count = me->r01;
+
 	me->r00 = 0;
+
+	if (count == 0) { // FIXME: error?
+		// me->r00 = -1;
+		return;
+	}
+	/* FIXME: temporary hack */
+	/* H2K_mem_stlb_invalidate_va(va, count, me->ssr_asid, me); */
+	/* H2K_mem_tlb_invalidate_va(va, count, me->ssr_asid, me); */
+	H2K_mem_stlb_invalidate_asid(me->ssr_asid);
+	H2K_mem_tlb_invalidate_asid(me->ssr_asid);
 }
 
 /* 11 */
@@ -113,9 +123,10 @@ void H2K_vmtrap_newmap(H2K_thread_context *me)
 	s32_t newasid;
 	u32_t newptb = me->r00;
 	translation_type type = me->r01;
+	tlb_invalidate_flag flag = me->r02;
 
 	/* type is checked in H2K_asid_table_inc */
-	if ((newasid = H2K_asid_table_inc(newptb, type)) < 0) {
+	if ((newasid = H2K_asid_table_inc(newptb, type, flag)) < 0) {
 		me->r00 = -1;
 	} else {
 		H2K_asid_table_dec(me->ssr_asid);
@@ -128,6 +139,12 @@ void H2K_vmtrap_newmap(H2K_thread_context *me)
 void H2K_vmtrap_cachectl(H2K_thread_context *me)
 {
 	/* Do various cache control things */
+
+	/* FIXME: just ickill for now (for simulator) */
+	asm volatile
+		(
+		 " ickill \n"
+		 );
 }
 
 /* 14 */
@@ -187,7 +204,7 @@ void H2K_vmtrap_start(H2K_thread_context *me)
 	/* FIXME: need to pass arg1?  use vmblock bestprio instead of base_prio? */
 	                               /*      pc       sp  arg1 */
 	ret = H2K_thread_create_no_squash(me->r00, me->r01, 0, me->base_prio, me->vmblock, me);
-	if (ret < 0) { //error
+	if (ret == -1) { //error
 		me->r00 = ret;
 	} else {
 		me->r00 = ((H2K_thread_context *)ret)->vmcpu;

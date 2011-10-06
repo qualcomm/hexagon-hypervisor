@@ -24,21 +24,13 @@
 #define L1WB_L2C 7
 #define L1WB_L2CWB_AUX 0xa
 
-#if __QDSP6_ARCH__ <= 3
-
-#define U 0
-#define R 1
-#define W 2
-#define X 4
-#else
+#define MAIN 0
+#define AUX 1
 
 #define U 1
 #define R 2
 #define W 4
 #define X 8
-#endif
-
-#define NONE 0
 
 #define RW (R|W)
 #define RX (R|X)
@@ -52,14 +44,14 @@
 #define UWX (U|W|X)
 #define URWX (U|R|W|X)
 
-#define MAIN 0
-#define AUX 1
+#define NONE 0
 
 #if __QDSP6_ARCH__ <= 3
 
 #define MEMORY_MAP_BOOT(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \
         (((u64_t)((VPN) | ((ASID) << 20) | ((G) << 28) | (1<<29)) << 32) | \
-        (u32_t)((PPN) | ((PGSIZE) << 20) | ((CFIELD) << 26) | ((PERM) << 29) | ((MAINAUX) << 24))),
+				 (u32_t)((PPN) | ((PGSIZE) << 20) | ((CFIELD) << 26) | (((PERM) >> 1) << 29) | ((MAINAUX) << 24))),
+
 #else
 
 #define MEMORY_MAP_BOOT(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \

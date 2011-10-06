@@ -229,7 +229,7 @@ ${EXEC}: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-	@ulimit -t 60 && ${SIM} --profile ${EXEC} | tee $@; \
+	ulimit -t 60 && ${SIM} --profile ${EXEC} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: probably ulimit" >> $@; \

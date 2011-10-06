@@ -57,4 +57,7 @@
 
 ./libs/h2/alloc/test
 ./libs/h2/fastint/test
-
+./libs/h2/sem/test/simple
+./libs/h2/sem/test/trapfails
+./libs/h2/allsignal/test/simple
+./libs/h2/anysignal/test/simple

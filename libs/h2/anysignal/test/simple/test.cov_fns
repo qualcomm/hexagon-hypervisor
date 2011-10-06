@@ -1,0 +1,9 @@
+h2_anysignal_init
+h2_thread_stop
+h2_printf
+h2_init
+h2_anysignal_wait
+h2_thread_create
+h2_config_add_thread_storage
+h2_anysignal_set
+h2_anysignal_get

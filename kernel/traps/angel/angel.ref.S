@@ -8,13 +8,13 @@
 #include <max.h>
 #include <vmdefs.h>
 
-#if 0
+#ifdef NULL_ANGEL_TRAP
 FUNC_START H2K_trap_angel .text.event.trap0 .p2align 2
         jumpr r31
         .size BLASK_trap_angel, .-H2K_trap_angel
 FUNC_END H2K_trap_angel
-#else
 
+#else
 FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 	r6 = #0x20
 #if __QDSP6_ARCH__ <= 3

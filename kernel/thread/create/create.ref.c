@@ -34,13 +34,18 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	if (vmblock) {
 		bestprio = vmblock->bestprio;
 		trapmask = vmblock->trapmask;
-		ptb = vmblock->pmap; 				/* initial page tables == pmap */
-		type = vmblock->pmap_type;
+
+		if (vmblock->num_cpus == 0) { // starting first cpu
+			ptb = vmblock->pmap; 				/* initial page tables == pmap */
+			type = vmblock->pmap_type;
+		} else { // inherit
+			ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
+			type = H2K_mem_asid_table[me->ssr_asid].transtype;
+		}
 	} else {
 		bestprio = me->base_prio;
 		trapmask = me->trapmask;
 		ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
-		type = H2K_mem_asid_table[me->ssr_asid].transtype;
 	}
 
 	if (prio > MAX_PRIO) return -1;        // bad prio
@@ -68,8 +73,9 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->trapmask = trapmask;
 	tmp->continuation = H2K_interrupt_restore;
 	tmp->vmstatus = 0x0;            // all clear
+	tmp->gevb = me->gevb;
 
-	asid = H2K_asid_table_inc(ptb, type);
+	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE);
 
 	if (vmblock) {
 		/* only need to check asid if we have a vmblock, else it's inherited */
@@ -85,6 +91,8 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 			return -1;
 		}
 
+		tmp->ssr_guest = 1;  // start in guest mode
+		tmp->ssr_um = 1;
 		tmp->ssr_asid = asid;
 		/* FIXME: Do we allow a particular vcpu to stop and then start again? */
 		tmp->vmcpu = vmblock->num_cpus++;

@@ -28,7 +28,7 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-static H2K_thread_context a,b,c,d;
+static H2K_thread_context a,b,c,d,e;
 
 u32_t TH_saw_check_sanity = 0;
 H2K_thread_context *TH_me = NULL;
@@ -69,7 +69,7 @@ int main()
 	H2K_thread_init();
 	H2K_asid_table_init();
 
-	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR);
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE);
 
 	a.prio = b.prio = c.prio = d.prio = 0;
 	a.gp = 0x12345;
@@ -84,7 +84,9 @@ int main()
 	H2K_gp->free_threads = &b;
 	b.next = &c;
 	c.next = &d;
-	d.next = NULL;
+	d.next = &e;
+	e.next = NULL;
+
 	if (H2K_thread_create(((u32_t)test_thread)+1,((u32_t)(&stack)),0xdeadbeef,2,0x0,&a) 
 		!= 0xffffffff) FAIL("Created thread w/ misaligned pc");
 	if (H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack))+1,0xdeadbeef,2,0x0,&a) 
@@ -117,7 +119,7 @@ int main()
 	vm.pmap_type = H2K_ASID_TRANS_TYPE_TABLE;
 
 	/* so we can check if properly decremented */
-	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE);
+	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE);
 
 	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
 	/* asid count should have gone to 2 and then back to 1 */
@@ -134,15 +136,24 @@ int main()
 	if (ret == -1) FAIL("Unexpected error");
 
 	if (c.trapmask != 0xfa1a1a1a) FAIL("Bad vm trapmask");
-	if (c.ssr_asid != asid) FAIL("Bad vm asid");
+	/* asid should be that of the calling thread, because we're starting an additional vcpu */
+	if (c.ssr_asid != a.ssr_asid) FAIL("Bad vm asid 1");
 	if (vm.num_cpus != 2) FAIL("Bad vm num_cpus");
 	if (c.vmcpu != 1) FAIL("Bad vmcpu");
 	if (vmcontext[1] != &c) FAIL("Bad vm context");
 	if (c.vmblock != &vm) FAIL("Bad vmblock");
 
+	vm.num_cpus = 0;
+	/* should succeed */
+	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
+	if (ret == -1) FAIL("Unexpected error");
+
+	/* asid should come from vmblock->pmap when num_cpus == 0 */
+	if (d.ssr_asid != asid) FAIL("Bad vm asid 2");
+
 	TH_saw_check_sanity = 0;
 	if (H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,2,0x0,&a) 
-		!= (u32_t)(&d)) FAIL("Failed to create expected thread");
+		!= (u32_t)(&e)) FAIL("Failed to create expected thread");
 	if (TH_saw_check_sanity == 0) FAIL("Did not call check_sanity");
 
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,0x0,&a) 

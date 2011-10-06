@@ -157,7 +157,7 @@ int main()
 
 	/* SET_PMAP_TYPE */
 	H2K_asid_table_init();
-	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_TABLE);
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE);
 	if (asid < 0) FAIL("H2K_asid_table_inc");
 	a.ssr_asid = asid;
 #ifdef DEBUG

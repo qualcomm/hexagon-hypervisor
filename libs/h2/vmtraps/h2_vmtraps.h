@@ -13,6 +13,13 @@ typedef enum {
 	H2K_ASID_TRANS_TYPE_TABLE,
 	H2K_ASID_TRANS_TYPE_XXX_LAST
 } translation_type;
+
+typedef enum {
+	H2K_ASID_TLB_INVALIDATE_FALSE,
+	H2K_ASID_TLB_INVALIDATE_TRUE,
+	H2K_ASID_TLB_INVALIDATE_XXX_LAST
+} tlb_invalidate_flag;
+
 #endif
 
 #ifndef H2K_VMINT_H
@@ -37,7 +44,7 @@ int h2_vmtrap_setie(unsigned int val);
 int h2_vmtrap_getie();
 int h2_vmtrap_intop(intop_type op, unsigned int arg1, unsigned int arg2);
 int h2_vmtrap_clrmap(void *ptr);
-int h2_vmtrap_newmap(void *newbase, translation_type type);
+int h2_vmtrap_newmap(void *newbase, translation_type type, tlb_invalidate_flag flag);
 int h2_vmtrap_cachectl(unsigned int op, void *start, unsigned int count);
 unsigned long long int h2_vmtrap_get_pcycles();
 void h2_vmtrap_set_pcycles(unsigned long long int);

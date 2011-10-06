@@ -46,6 +46,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 		bestprio = me->base_prio;
 		trapmask = me->trapmask;
 		ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
+		type = H2K_mem_asid_table[me->ssr_asid].transtype;
 	}
 
 	if (prio > MAX_PRIO) return -1;        // bad prio

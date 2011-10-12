@@ -1,4 +1,4 @@
 
-SUBDIRS+=simple
+SUBDIRS+=simple trapfails
 
 include Makefile.inc

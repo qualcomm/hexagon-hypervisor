@@ -71,13 +71,13 @@ t:
 test: 
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst; \
-	cd ucos; $(MAKE) sim && cd .. && \
+	cd ucos; $(MAKE) sim; cd ..; \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
 cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; \
-	cd ucos; $(MAKE) sim && cd .. && \
+	cd ucos; $(MAKE) sim; cd ..; \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt; \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 

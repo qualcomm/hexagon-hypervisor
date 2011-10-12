@@ -60,4 +60,7 @@
 ./libs/h2/sem/test/simple
 ./libs/h2/sem/test/trapfails
 ./libs/h2/allsignal/test/simple
+./libs/h2/allsignal/test/trapfails
 ./libs/h2/anysignal/test/simple
+./libs/h2/anysignal/test/trapfails
+

@@ -50,8 +50,6 @@ struct timerif {
 
 volatile struct timerif *timerptr = (void *)0xAB000000;
 
-extern size_t heapLimit __attribute__((section(".data")));
-
 void FAIL(const char *str)
 {
 	puts("linux: FAIL");
@@ -150,8 +148,6 @@ int main(int argc, char *argv[]) {
 	unsigned long *ptr = 0x0;
 	FILE *file;
 	char fname[256] = "vmlinux.bin";
-
-	heapLimit = 0x100000;
 
 	puts("linux: start boot");
 

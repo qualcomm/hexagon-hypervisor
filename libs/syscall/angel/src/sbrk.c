@@ -16,7 +16,7 @@
 extern char end;
 
 extern void *heapBase __attribute__((section(".data")));
-extern size_t heapLimit __attribute__((section(".data")));
+extern void *heapLimit __attribute__((section(".data")));
 
 static h2_mutex_t mylock = 0;
 
@@ -40,7 +40,8 @@ void *sys_sbrk(ptrdiff_t more)
 		if ((unsigned int)(new_base) < (unsigned int)(heap_start)) {
 			new_base = heap_start;
 		}
-		if (heapLimit && ((unsigned int)(new_base) >= ((unsigned int)(heap_start) + heapLimit))) {
+		//		if (heapLimit && ((unsigned int)(new_base) >= ((unsigned int)(heap_start) + heapLimit))) {
+		if (heapLimit && ((unsigned int)(new_base) >= ((unsigned int)(heap_start) + (heapLimit - heapBase)))) {
 			h2_mutex_unlock(&mylock);
 			return (void *)(-1);
 		}

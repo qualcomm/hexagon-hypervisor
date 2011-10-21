@@ -42,6 +42,16 @@
 		Cycle count when the currently-running thread started
 		execution, for each hardware thread.
 
+	.. cmember:: u64_t oncpu_wait[MAX_HTHREADS]
+
+		Cycle count when the currently-waiting thread entered wait
+		mode, for each hardware thread.
+
+	.. cmember:: u64_t waitcycles[MAX_HTHREADS]
+
+		Total accumulated cycle count spent in wait mode, for each
+		hardware thread.
+
 	.. cmember:: H2K_trace_info_t trace_info
 
 		Information about the kernel trace infrastructure

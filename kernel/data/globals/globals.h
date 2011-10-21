@@ -48,6 +48,8 @@ typedef struct {
 	u32_t tlb_index;
 	H2K_thread_context *free_threads;
 	u64_t oncpu_start[MAX_HTHREADS];
+	u64_t oncpu_wait[MAX_HTHREADS];
+	u64_t waitcycles[MAX_HTHREADS];
 	H2K_trace_info_t trace_info;
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));

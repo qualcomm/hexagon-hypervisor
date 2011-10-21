@@ -100,9 +100,9 @@ is used wherever empty traptab spaces exist.  The table is as follows:
 	24. :cfunc:`H2K_thread_id()`: Get the thread ID
 	25. :cfunc:`H2K_thread_id()`: Get the thread ID
 	26. :cfunc:`H2K_thread_id()`: Get the thread ID
-	27. :cfunc:`H2K_thread_id()`: Get the thread ID
-	28. :cfunc:`H2K_thread_id()`: Get the thread ID
-	29. :cfunc:`H2K_vmboot()`: Start VM
+	27. :cfunc:`H2K_waitcycles_get()`: Get waitcycles for a hardware thread
+	28. :cfunc:`H2K_vmboot()`: Start VM
+	29. :cfunc:`H2K_trap_pmuconfig()`: Adjust PMU Configuration
 	30. :cfunc:`H2K_trap_config()`: Adjust Kernel Configuration
 	31. :cfunc:`H2K_trap_hwconfig()`: Adjust Hardware Configuration
 

@@ -39,7 +39,17 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r28 = addasl(r28,r5,#3)
 	r28 = add(r16,r28)
 
-	if (r0 == #0) jump:nt .Lfrom_sleep
+	r23 = #KG_oncpu_wait
+	r23 = addasl(r23,r5,#3)
+	r23 = add(r16,r23)
+
+	r22 = #KG_waitcycles
+	r22 = addasl(r22,r5,#3)
+	r22 = add(r16,r22)
+
+	p1 = cmp.eq(r0,#0)
+	if (p1) jump .Lfrom_sleep
+
 	r5:4 = memd(r28)
 	r7:6 = sub(r27:26,r5:4)
 	r5:4 = memd(r0+#CONTEXT_totalcycles)
@@ -49,6 +59,13 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 .Lfrom_sleep:
 	if (r1 == #0) jump:nt .Lto_sleep
 	memd(r28) = r27:26
+
+	r5:4 = memd(r23)
+	r7:6 = sub(r27:26,r5:4)
+	r5:4 = memd(r22)
+	r5:4 = add(r7:6,r5:4)
+	if (p1) memd(r22) = r5:4
+
 	memb(r1+#CONTEXT_hthread) = r10
 	r14 = memb(r1+#CONTEXT_pmu_on)
 	r11 = #1
@@ -70,6 +87,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	jump H2K_check_sanity_unlock
 
 .Lto_sleep:
+	memd(r23) = r27:26
 #if (__QDSP6_ARCH__) <= 3
 	r5 = ssr
 	r5 = extractu(r5,#3,#19)

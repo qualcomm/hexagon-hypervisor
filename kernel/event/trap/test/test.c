@@ -49,6 +49,7 @@ s32_t H2K_tid_set() { return 18; }
 s32_t H2K_tid_get() { return 19; }
 //s32_t H2K_futex_lock_pi() { return 20; } -- defined in asm
 //s32_t H2K_futex_unlock_pi() { return 21; } -- defined in asm
+s32_t H2K_waitcycles_get() { return 27; }
 s32_t H2K_vmboot() { return 28; }
 s32_t H2K_trap_pmuconfig() { return 29; }
 s32_t H2K_trap_config() { return 30; }
@@ -67,7 +68,7 @@ u64_t guest_stack[128] __attribute__((aligned(128*8)));
 
 s32_t testvals[] = {
 	 0, 1, 2, 3, 4, 5, 6, 1, 8, 9,10,11,12, 1, 1, 1,
-	16, 1,18,19,20,21, 1, 1, 1, 1, 1, 1, 28,29,30,31
+	16, 1,18,19,20,21, 1, 1, 1, 1, 1,27,28,29,30,31
 };
 
 H2K_kg_t H2K_kg;

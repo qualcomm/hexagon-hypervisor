@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#ifndef H2K_MAX_H
+#define H2K_MAX_H
+
 #if __QDSP6_ARCH__ <= 3
 #define MAX_HTHREADS 6
 #elif __QDSP6_ARCH__ >= 4
@@ -18,6 +21,12 @@
 #endif
 
 #define TLB_FIRST_REPLACEABLE_ENTRY 8
+
+#if __QDSP6_ARCH__ <= 3
+#define TLB_ENTRY_VALID_BIT 61
+#else
+#define TLB_ENTRY_VALID_BIT 63
+#endif
 
 #define MAX_THREADS 16
 
@@ -76,3 +85,5 @@
 #define MAX_VM_ID 255
 #define MAX_VM_CPUS 255
 #define MAX_VM_INTS 65535
+
+#endif

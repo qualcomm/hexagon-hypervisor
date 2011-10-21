@@ -6,6 +6,8 @@
 #ifndef H2K_BOOTMAP_MACROS_H
 #define H2K_BOOTMAP_MACROS_H
 
+#include <max.h>
+
 #define SIZE_4K 0
 #define SIZE_16K 1
 #define SIZE_64K 2
@@ -45,6 +47,10 @@
 #define URWX (U|R|W|X)
 
 #define NONE 0
+
+/* hi word needs to be non-0; 0 marks the end of the list */
+//#define TLB_INVALID_ENTRY ((u64_t) 0xffffffffffffffff & ~((u64_t) 1 << TLB_ENTRY_VALID_BIT)),
+#define TLB_INVALID_ENTRY ((u64_t) 0xffffffffffffffffULL & ~(1ULL << TLB_ENTRY_VALID_BIT)),
 
 #if __QDSP6_ARCH__ <= 3
 

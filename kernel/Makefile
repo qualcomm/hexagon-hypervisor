@@ -10,8 +10,11 @@ AR = qdsp6-ar
 SIM := qdsp6-sim
 
 OPTIMIZE := -Os
+H2K_LINK_ADDR = 0x0
 
 CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -g
+
+CFLAGS += -DH2K_LINK_ADDR=$(H2K_LINK_ADDR)
 
 ifdef NULL_ANGEL_TRAP
 CFLAGS += -DNULL_ANGEL_TRAP

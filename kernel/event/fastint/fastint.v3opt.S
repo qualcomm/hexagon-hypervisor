@@ -29,6 +29,8 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 		r11.l = #0x0
 		r4 = add(r16,#KG_fastint_funcptrs)
 	}
+	// FIXME: not optimized
+	r11 = setbit(r11, #SSR_GUEST_BIT)
 	{
 		/* Per-HThread stack may get corrputed by trap in int handler */
 		/* So save off important registers in fastint context that won't change */

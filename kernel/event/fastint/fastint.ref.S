@@ -37,6 +37,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 
 	r11.h = #0x01c0
 	r11.l = #0x0
+	r11 = setbit(r11, #SSR_GUEST_BIT)
 	r25:24 = combine(r5,r3)
 	r26 = r0		// save intno in r26 for L2 Control
 	crswap(r24,sgp)

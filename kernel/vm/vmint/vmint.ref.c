@@ -27,6 +27,9 @@ static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_
 	H2K_thread_context *thread;
 	if (vmblock->percpu_mask[cpu][wordidx] & bitmask) {
 		thread = vmblock->cpu_contexts[cpu];
+		if (thread == NULL) { // cpu stopped
+			return 0;
+		}
 		H2K_atomic_setbit(&thread->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
 
 		BKL_LOCK();

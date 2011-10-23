@@ -1,9 +1,21 @@
+/* Hey emacs, this is -*- C -*- */
+
 //MEMORY MAP	GLOBAL	ASID	VPN		PERMISSIONS	CACHEABILITY	PGSIZE		PART	PPN
 // Don't map page at address 0 - we lose NULL dereference checking...
 // except that by default all our builds build stuff to 0... so it breaks normal stuff.
 
 // monitor space
-MEMORY_MAP(	1,	0,	0xff000,	NONE,		L1WB_L2C,	SIZE_4M,	MAIN,	0xff000)
+// MEMORY_MAP(	1,	0,	0xff000,	NONE,		L1WB_L2C,	SIZE_4M,	MAIN,	0xff000)
+
+// if h2 kernel + boot thread are linked separately (presumably at 0xff000000), add 4M pinned entry
+#if (H2K_LINK_ADDR != 0)
+MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 0) << 10),	NONE,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LINK_ADDR >> 22) + 0) << 10))
+
+// if h2 kernel is linked with the user code at 0, add a 16M pinned entry
+#else
+MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 24) + 0) << 12),	NONE,		L1WB_L2C,	SIZE_16M,	MAIN,	(((H2K_LINK_ADDR >> 24) + 0) << 12))
+#endif
+
 TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
@@ -12,11 +24,11 @@ TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
 
-#ifdef NO_MEMORY_MAP_GLOBAL_ZERO
-MEMORY_MAP(	0,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
-#else
-MEMORY_MAP(	1,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
-#endif
+// #ifdef NO_MEMORY_MAP_GLOBAL_ZERO
+// MEMORY_MAP(	0,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
+// #else
+// MEMORY_MAP(	1,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
+// #endif
 
 /* LPASS main text/data */
 MEMORY_MAP(	0,	0,	0x46000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x46000)
@@ -25,6 +37,11 @@ MEMORY_MAP(	0,	0,	0x48000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x48000)
 MEMORY_MAP(	0,	0,	0x49000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x49000)
 MEMORY_MAP(	0,	0,	0x4a000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x4a000)
 MEMORY_MAP(	0,	0,	0x4b000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x4b000)
+
+// don't want this if h2 is linked at 0 and we have a pinned entry for it
+#if (H2K_LINK_ADDR != 0)
+MEMORY_MAP(	0,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
+#endif
 
 MEMORY_MAP(	0,	0,	0x01000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x01000)
 MEMORY_MAP(	0,	0,	0x02000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x02000)

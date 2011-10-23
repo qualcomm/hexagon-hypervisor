@@ -43,6 +43,7 @@
 ./kernel/traps/prio/test
 ./kernel/traps/tid/test
 ./kernel/traps/time/test
+./kernel/traps/waitcycles/test
 ./kernel/util/atomic/test
 ./kernel/util/ring/test/test
 ./kernel/util/stmode/test

@@ -61,6 +61,8 @@ PRINT_KG_OFFSET(ready_valids);
 PRINT_KG_OFFSET(priomask);
 PRINT_KG_OFFSET(wait_mask);
 PRINT_KG_OFFSET(oncpu_start);
+PRINT_KG_OFFSET(oncpu_wait);
+PRINT_KG_OFFSET(waitcycles);
 PRINT_KG_OFFSET(fastint_gp);
 PRINT_KG_OFFSET(runlist);
 PRINT_KG_OFFSET(runlist_prios);

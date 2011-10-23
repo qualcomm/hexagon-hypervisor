@@ -21,12 +21,13 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r25:24 = combine(r1,r0)		// save args for call
 		r7 = HTID			// TNUM
 		r6 = add(r16,#KG_oncpu_start)
-		p0 = cmp.eq(r0,#0)
+		p1 = cmp.eq(r0,#0)
 	}
 	{
 		r27:26 = s31:30			// PCYCLE HI/LO
 		r5:4 = memd(r6+r7<<#3)		// oncpu start
-		if (p0) jump .Lfrom_sleep
+		r18 = add(r16,#KG_oncpu_wait)
+		if (p1) jump .Lfrom_sleep
 	}
 	{
 		r3:2 = sub(r27:26,r5:4)
@@ -50,11 +51,17 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		SGP0 = r1
 		r17 = r1
 		p3 = tstbit(r13,#0)
+		r19 = add(r16,#KG_waitcycles)
+	}
+	{
+		r21:20 = memd(r18+r7<<#3)          // oncpu wait
+		r23:22 = memd(r19+r7<<#3)          // waitcycles
 	}
 	{
 		memd(r6+r7<<#3) = r27:26
 		r4 = memub(r1+#CONTEXT_tid)
 		r11:10 = combine(#1,r7)
+		r21:20 = sub(r27:26,r21:20)        // pcycles - oncpu wait
 	}
 	{
 		r15 = insert(r14,r11:10)
@@ -63,8 +70,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	{
 		PMUCFG = r15
 		r0 = r1
+		r23:22 = add(r23:22,r21:20)        // waitcycles + pcycles - oncpu wait
 	}
 	{
+		if (p1) memd(r19+r7<<#3) = r23:22  // waitcycles
 		memb(r17+#CONTEXT_hthread) = r7
 		if (p3) call H2K_vm_do_work
 	}
@@ -74,6 +83,9 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		jump H2K_check_sanity_unlock
 	}
 .Lto_sleep:
+	{
+		memd(r18+r7<<#3) = r27:26       // oncpu wait
+	}
 	{
 		r15 = PMUCFG
 		r9 = memw(r16+#KG_wait_mask)

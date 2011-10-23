@@ -29,16 +29,19 @@ Functionality
 
 TBD: where do we accumulate thread/wait time?
 
-If ``from`` is not NULL, we accumulate the difference between the 
-thread execution pcycles and the current pcycles is added to the 
-cumulative CPU cycles for the thread.  
+If ``from`` is not NULL, the difference between the thread execution pcycles
+and the current pcycles is added to the cumulative CPU cycles for the thread.
+
+If ``from`` is NULL, the difference between the thread wait pcycles and
+the current pcycles is added to the cumulative wait cycles for the hardware thread.
 
 If ``to`` is NULL, we go to wait mode:
-	0. Unlock the big kernel lock
-	1. Set SGP to NULL
+	0. Unlock the big kernel lock.
+	1. Set SGP to NULL.
 	2. Load the STID register.
-	3. Clear the PMU bit for the current hardware thread
-	4. Jump to :cfunc:`H2K_wait_forever()`
+	3. Clear the PMU bit for the current hardware thread.
+	4. Save the current pcycles as the thread wait time.
+	5. Jump to :cfunc:`H2K_wait_forever()`.
 
 Otherwise, we set SGP to the new thread context, set the current hthread 
 in the new thread context, save the current pcycles as the thread start time,

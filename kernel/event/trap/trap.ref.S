@@ -299,8 +299,8 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_id // 26
 	}
 	{
-		r0 = r7
-		jump H2K_thread_id // 27
+		r1 = r7
+		jump H2K_waitcycles_get // 27
 	}
 	{
 		r5 = r7

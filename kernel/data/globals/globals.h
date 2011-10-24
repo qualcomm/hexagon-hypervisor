@@ -67,6 +67,7 @@ typedef struct {
 #endif
 	void *fastint_funcptrs[MAX_INTERRUPTS] __attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 	void *inthandlers[MAX_INTERRUPTS]__attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
+	void *fastint_gps[MAX_INTERRUPTS]__attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");

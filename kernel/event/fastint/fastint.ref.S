@@ -27,11 +27,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 #if __QDSP6_ARCH__ <= 3
 	r5 = brev(r5)
 #endif
-	//	r6 = memw(r16+#KG_fastint_gp)
-
-	r6 = add(r16,#KG_fastint_gps)
-	r6 = addasl(r6,r0,#2)
-	r6 = memw(r6)
+	r6 = memw(r16+#KG_fastint_gp)
 
 	// r4 = fastint_functions
 	// r5 = mask for ciad

@@ -15,12 +15,9 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	{
 		r11 = ##0x01c00000
 		r9 = #FASTINT_CONTEXT_SIZE
-//		r6 = memw(r16+#KG_fastint_gp)
+		r6 = memw(r16+#KG_fastint_gp)
 	}
 	// FIXME: not optimized
-	r6 = add(r16,#KG_fastint_gps)
-	r6 = addasl(r6,r0,#2)
-	r6 = memw(r6)
 	r11 = setbit(r11, #SSR_GUEST_BIT)
 	{
 		ssr = r11  // AXOK (if changing bits other than IE, EX, UM)

@@ -9,6 +9,8 @@
 #include <h2.h>
 #include <max.h>
 #include <stdio.h>
+#include <tlbfmt.h>
+#include <tlbmisc.h>
 
 /*
  * This test checks the following functionality:
@@ -159,8 +161,35 @@ void spawn_pi_caller(int tnum, int prio, int *futex_addr)
 
 int main() 
 {
+	u32_t asid;
+
 	h2_init(NULL);
 	h2_config_add_thread_storage(context_space,sizeof(context_space)); 
+
+	/* set URWX in monitor TLB entry permissions, to allow futex access */
+	/* not really necessary to find our asid since the TLB entry will be global
+		 anyway, but... */
+	asm volatile (
+	" %0 = ssr \n"
+	" %0 = extractu(%0,#7,#8)\n" 
+	: "=r"(asid));
+
+	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
+
+	if (tlb_index == 0x80000000) {
+		FAIL("Can't find monitor TLB entry");
+	}
+
+	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
+
+#if __QDSP6_ARCH__ <= 3
+	tlb_entry |= 0x7ULL << 29;
+#else
+	tlb_entry |= 0xfULL << 28;
+#endif
+
+	H2K_mem_tlb_write(tlb_index, tlb_entry);
+
 	futex1 = futex0 = h2_thread_myid();
 
 	h2_sem_init_val(&startup_sem,0);

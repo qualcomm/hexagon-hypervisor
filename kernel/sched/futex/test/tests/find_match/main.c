@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <h2.h>
 #include <max.h>
+#include <stdio.h>
+#include <tlbfmt.h>
+#include <tlbmisc.h>
 
 /*
  * This test checks the following functionality:
@@ -50,13 +53,16 @@ volatile unsigned int thread_info[NUM_GOOD_THREADS];
 void FAIL(const char *str)
 {
 	h2_printf(str);
+	while (1);
 	exit(1);
 }
 
 void dummy_thread(int x)
 {
 	//info("dummy lock = %d\n",futex_pages[dummy_thread_lock]);
-	h2_futex_wait(&dummy_futex_ptrs[x],0);
+	if (h2_futex_wait(&dummy_futex_ptrs[x],0) == -1) {
+		FAIL("h2_futex_wait");
+	}
 	FAIL("dummy thread woke");
 }
 
@@ -100,6 +106,7 @@ int main()
 {
 	unsigned int i;
 	unsigned int flag;
+	u32_t asid;
 
 	h2_init(0x0);
 
@@ -107,10 +114,34 @@ int main()
 
 	h2_config_add_thread_storage(context_space,sizeof(context_space));
 
+	/* set URWX in monitor TLB entry permissions, to allow futex access */
+	/* not really necessary to find our asid since the TLB entry will be global
+		 anyway, but... */
+	asm volatile (
+	" %0 = ssr \n"
+	" %0 = extractu(%0,#7,#8)\n" 
+	: "=r"(asid));
+
+	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
+
+	if (tlb_index == 0x80000000) {
+		FAIL("Can't find monitor TLB entry");
+	}
+
+	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
+
+#if __QDSP6_ARCH__ <= 3
+	tlb_entry |= 0x7ULL << 29;
+#else
+	tlb_entry |= 0xfULL << 28;
+#endif
+
+	H2K_mem_tlb_write(tlb_index, tlb_entry);
+
 	for (i = 0; i < NUM_DUMMY_THREADS; i++) {
 		if (h2_thread_create(dummy_thread,
 			&stack_space[i][THREAD_STACK_SIZE],
-			(void *)i, 2) <= 0) {
+			(void *)i, 2) == -1) {
 			FAIL("Couldn't create dummy");
 		}
 	}
@@ -118,7 +149,7 @@ int main()
 	for (i = 0; i < NUM_GOOD_THREADS; i++) {
 		if (h2_thread_create(test_thread,
 			&stack_space[i+NUM_DUMMY_THREADS][THREAD_STACK_SIZE],
-			(void *)i, 4+i) <= 0) {
+			(void *)i, 4+i) == -1) {
 			FAIL("Couldn't create test thread");
 		}
 	}

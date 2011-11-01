@@ -7,6 +7,8 @@
 #include <context.h>
 #include <stdlib.h>
 #include <h2.h>
+#include <tlbfmt.h>
+#include <tlbmisc.h>
 
 /*
  * This test checks the following functionality:
@@ -118,6 +120,8 @@ void consumer_thread(int prio)
 
 int main() 
 {
+	u32_t asid;
+
 	unsigned int next_tnum;
 	unsigned int timeout=0;
 
@@ -142,6 +146,30 @@ int main()
 
 	h2_config_add_thread_storage(context_space,sizeof(context_space)); 
 
+	/* set URWX in monitor TLB entry permissions, to allow futex access */
+	/* not really necessary to find our asid since the TLB entry will be global
+		 anyway, but... */
+	asm volatile (
+	" %0 = ssr \n"
+	" %0 = extractu(%0,#7,#8)\n" 
+	: "=r"(asid));
+
+	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
+
+	if (tlb_index == 0x80000000) {
+		FAIL("Can't find monitor TLB entry");
+	}
+
+	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
+
+#if __QDSP6_ARCH__ <= 3
+	tlb_entry |= 0x7ULL << 29;
+#else
+	tlb_entry |= 0xfULL << 28;
+#endif
+
+	H2K_mem_tlb_write(tlb_index, tlb_entry);
+
 	/*  Check that the futex should fail first  */
 
 	if (h2_futex_wait(&futex_pages[test_lock],1) != -1) {
@@ -158,7 +186,7 @@ int main()
 		if (h2_thread_create(dummy_thread,
 			&stack_space[next_tnum][THREAD_STACK_SIZE],
 			0,
-			next_tnum) <= 0) {
+			next_tnum) == -1) {
 			info("Could not create thread\n");
 		}
 	}
@@ -178,7 +206,7 @@ int main()
 	if (h2_thread_create(consumer_thread,
 		&stack_space[next_tnum++][THREAD_STACK_SIZE],
 		0,
-		rand() % 31) <= 0) {
+		rand() % 31) == -1) {
 		info("Could not create consumer thread\n");
 	}
 
@@ -187,7 +215,7 @@ int main()
 	if (h2_thread_create(consumer_thread,
 		&stack_space[next_tnum++][THREAD_STACK_SIZE],
 		(void *)31,
-		31) <= 0) {
+		31) == -1) {
 		info("Could not create 2nd consumer thread\n");
 	}
 
@@ -196,7 +224,7 @@ int main()
 	if (h2_thread_create(producer_thread,
 		&stack_space[next_tnum++][THREAD_STACK_SIZE],
 		0,
-		rand() % 32) <= 0) {
+		rand() % 32) == -1) {
 		info("Could not create producer thread\n");
 	}
 

@@ -128,7 +128,7 @@ int main()
 	h2_sem_init_val(&sema,0);
 	h2_sem_init_val(&semb,0);
 
-	if (h2_thread_create(worker_thread, &stack_space[THREAD_STACK_SIZE], 0, 4) <= 0) {
+	if (h2_thread_create(worker_thread, &stack_space[THREAD_STACK_SIZE], 0, 4) == -1) {
 		FAIL("Could not create thread\n");
 	}
 	h2_sem_down(&sema);

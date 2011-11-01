@@ -82,8 +82,26 @@ static H2K_mem_tlbfmt_t make_entry(u32_t va, u32_t pa, u32_t size, u32_t perms, 
 }
 #endif
 
-void touser()
+void touser(u32_t asid)
 {
+
+	/* set URWX in monitor TLB entry permissions */
+	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
+
+	if (tlb_index == 0x80000000) {
+		FAIL("Can't find monitor TLB entry");
+	}
+
+	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
+
+#if __QDSP6_ARCH__ <= 3
+	tlb_entry |= 0x7ULL << 29;
+#else
+	tlb_entry |= 0xfULL << 28;
+#endif
+
+	H2K_mem_tlb_write(tlb_index, tlb_entry);
+
 	asm volatile (
 	" r0 = ssr \n"
 	" r0 = setbit(r0,#16) \n"
@@ -156,7 +174,7 @@ int main()
 	a = (void *)(PERMS(13)); test_ptr_all(a);
 
 	puts("Switching to user...\n");
-	touser();
+	touser(asid);
 
 	/* Check insufficient permissions: no R+W+U */
 	a = (void *)(PERMS(0)); test_ptr_all(a);

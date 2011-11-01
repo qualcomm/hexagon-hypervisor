@@ -21,9 +21,9 @@ FUNC_START H2K_preempt .text.core.interrupt .p2align 2
 	nop
 	ssr = r3
 	// interrupt was not taken
-.Lpreempt_done:
 	r3:2 = memd(r0+#CONTEXT_r0100)
 	crswap(r0,sgp)		// swap task back in
 	r1:0 = r3:2
+.Lpreempt_done:
 	jumpr r31		// just return
 

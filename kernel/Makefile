@@ -10,7 +10,17 @@ AR = qdsp6-ar
 SIM := qdsp6-sim
 
 OPTIMIZE := -Os
-H2K_LINK_ADDR = 0x0
+
+ifeq ($(H2K_LINK_ADDR),)
+export H2K_LINK_ADDR = 0xff000000
+endif
+
+ifeq ($(H2K_HEAP_SIZE),)
+H2K_HEAP_SIZE = 0x100000
+endif
+
+
+NULL_ANGEL_TRAP = 1
 
 CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -g
 

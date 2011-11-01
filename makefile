@@ -28,6 +28,14 @@ OPT_JFLAG=-j 3
 REF_JFLAG=-j 3
 TEST_JFLAG=-j 8
 
+ifeq ($(H2K_LINK_ADDR),)
+export H2K_LINK_ADDR = 0xff000000
+endif
+
+ifeq ($(H2K_HEAP_SIZE),)
+H2K_HEAP_SIZE = 0x100000
+endif
+
 all: ref doc gtags
 
 distclean: clean docclean

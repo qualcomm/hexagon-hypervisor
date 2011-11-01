@@ -32,6 +32,14 @@ else
    endif
 endif
 
+ifeq ($(H2K_LINK_ADDR),)
+export H2K_LINK_ADDR = 0xff000000
+endif
+
+ifeq ($(H2K_HEAP_SIZE),)
+H2K_HEAP_SIZE = 0x100000
+endif
+
 ARCH=qdsp6
 SIM=${ARCH}-sim
 CC=${ARCH}-gcc
@@ -98,14 +106,14 @@ clean_top:
 
 OPTIMIZE := -O1
 
-CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g
+CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 ifdef STANDALONE
 CFLAGS += -I ${H2DIR}/kernel/include
-LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
+LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/kernel/include
 else
 OSLIB=-moslib=h2
-LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
+LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 CFLAGS += -I ${H2DIR}/install/include
 ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 endif

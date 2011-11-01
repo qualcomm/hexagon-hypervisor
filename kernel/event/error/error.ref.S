@@ -31,8 +31,8 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	memw(r24+#CONTEXT_gbadva_gosp+4) = r14 	// gbadva
 
 #if __QDSP6_ARCH__ >= 4
-  g0 = r16
-  g3 = r14
+	g0 = r16
+	g3 = r14
 #endif
 
 	r14 = memw(r24+#CONTEXT_gbadva_gosp) 		// gosp
@@ -58,8 +58,8 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	memw(r24+#CONTEXT_gbadva_gosp) = r14 		// gosp
 
 #if __QDSP6_ARCH__ >= 4
-  g1 = r15
-  g2 = r14
+	g1 = r15
+	g2 = r14
 #endif
 
 	r16 = add(r12,#ERROR_GEVB_OFFSET)

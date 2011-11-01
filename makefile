@@ -74,7 +74,7 @@ size:
 	cat size;
 
 t:
-	/prj/dsp/qdsp6/arch/scripts/test_h2.pl
+	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
 test: 
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \

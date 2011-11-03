@@ -163,9 +163,9 @@ H2K_trap_nogood:
 	{
 		r25 = memw(r7+#CONTEXT_gssr_gelr+4) 	// gssr
 		r24 = memw(r7+#CONTEXT_gbadva_gosp) 	// gosp
-  }
+	}
 	{
-	  r26 = memw(r7+#CONTEXT_vmstatus)
+		r26 = memw(r7+#CONTEXT_vmstatus)
 		p0 = tstbit(r22,#SSR_GUEST_BIT)
 	}
 	{
@@ -177,15 +177,18 @@ H2K_trap_nogood:
 	r25 = setbit(r25, #H2K_GSSR_UM_BIT)
 
 1:
-  {
- 	  p0 = tstbit(r26, #H2K_VMSTATUS_IE_BIT)					// interrrupts enabled?
-  }
-  {
-		if (!p0) jump 1f
-  }
+	{
+		p0 = tstbit(r26, #H2K_VMSTATUS_IE_BIT)					// interrrupts enabled?
+		if (!p0.new) jump:nt 1f
+	}
 	r25 = setbit(r25, #H2K_GSSR_IE_BIT)
 
 1:
+	{
+		p0 = tstbit(r22,#SSR_SS_BIT)
+		if (!p0.new) jump:nt 1f
+	}
+	r25 = setbit(r25,#H2K_GSSR_SS_BIT)
 //	{
 	memw(r7+#CONTEXT_gssr_gelr+4) = r25  	// gssr
 	memw(r7+#CONTEXT_gbadva_gosp) = r24 	// gosp
@@ -198,10 +201,13 @@ H2K_trap_nogood:
 		memw(r7+#CONTEXT_r2928+4) = r29
 		r20 = add(r19,#TRAP0_GEVB_OFFSET)
 		r21 = setbit(r22,#SSR_GUEST_BIT)
-  }
+	}
 
 	  // atomic clear vmstatus IE
-	r19 = add(r7, #CONTEXT_vmstatus)
+	{
+		r19 = add(r7, #CONTEXT_vmstatus)
+		r21 = clrbit(r22,#SSR_SS_BIT)
+	}
 1:
 	r18 = memw_locked(r19)
 	r18 = clrbit(r18, #H2K_VMSTATUS_IE_BIT)

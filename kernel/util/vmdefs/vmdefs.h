@@ -19,16 +19,8 @@
 /* FIXME:  also defined in context.h */
 #define H2K_GSSR_UM_BIT 31
 #define H2K_GSSR_IE_BIT 30
-#define H2K_GSSR_SS_BIT 29
 #define H2K_GSSR_UM (0x1 << H2K_GSSR_UM_BIT)
 #define H2K_GSSR_IE (0x1 << H2K_GSSR_IE_BIT)
-#define H2K_GSSR_SS (0x1 << H2K_GSSR_SS_BIT)
-
-#define H2K_VMSTATUS_VMWORK_BIT  0
-#define H2K_VMSTATUS_KILL_BIT   1
 #define H2K_VMSTATUS_IE_BIT     7
-#define H2K_VMSTATUS_VMWORK	(0x01 << (H2K_VMSTATUS_VMWORK_BIT))
-#define H2K_VMSTATUS_KILL	(0x01 << (H2K_VMSTATUS_KILL_BIT))
-#define H2K_VMSTATUS_IE		(0x01 << (H2K_VMSTATUS_IE_BIT))
 
 #endif

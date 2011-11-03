@@ -54,12 +54,6 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	r15 = setbit(r15, #H2K_GSSR_IE_BIT)
 
 2:
-#if __QDSP6_ARCH__ >= 4
-	p0 = tstbit(r17,#SSR_SS_BIT)
-	if (!p0) jump 2f
-	r15 = setbit(r15,#H2K_GSSR_SS_BIT)
-#endif
-
 	memw(r24+#CONTEXT_gssr_gelr+4) = r15 		// gssr
 	memw(r24+#CONTEXT_gbadva_gosp) = r14 		// gosp
 
@@ -70,9 +64,6 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 
 	r16 = add(r12,#ERROR_GEVB_OFFSET)
 	r17 = setbit(r17,#SSR_GUEST_BIT)
-#if __QDSP6_ARCH__ >= 4
-	r17 = clrbit(r17,#SSR_SS_BIT)
-#endif
 	memd(r24+#CONTEXT_ssrelr) = r17:16			// FIXME:  necessary?
 
 	// atomic clear vmstatus IE

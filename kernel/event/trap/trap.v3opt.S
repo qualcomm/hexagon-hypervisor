@@ -165,10 +165,10 @@ H2K_trap_nogood:
 //	}
 	{
 		r23 = memw(r7+#CONTEXT_gssr_gelr+4) 		// gssr
-		r22 = memw(r7+#CONTEXT_gbadva_gosp) 		// gosp
-	}
-	{
-		r26 = memw(r7+#CONTEXT_vmstatus)
+  	r22 = memw(r7+#CONTEXT_gbadva_gosp) 		// gosp
+  }
+  {
+	  r26 = memw(r7+#CONTEXT_vmstatus)
 		p0 = tstbit(r16,#SSR_GUEST_BIT)
 	}
 	{
@@ -182,19 +182,11 @@ H2K_trap_nogood:
 1:
 	{
 		p0 = tstbit(r26,#H2K_VMSTATUS_IE_BIT)					// interrrupts enabled?
-	}
+  }
 	{
 		if (!p0) jump 1f
-	}
+  }
 	r23 = setbit(r23, #H2K_GSSR_IE_BIT)
-1:
-	{
-		p0 = tstbit(r16,#SSR_SS_BIT)					// interrrupts enabled?
-	}
-	{
-		if (!p0) jump 1f
-	}
-	r23 = setbit(r23, #H2K_GSSR_SS_BIT)
 
 1:
 //	{
@@ -208,11 +200,8 @@ H2K_trap_nogood:
 		r31:30 = memd(r7+#CONTEXT_r3130)
 	}
 
-	// atomic clear vmstatus IE
-	{
-		r27 = add(r7, #CONTEXT_vmstatus)
-		r21 = clrbit(r21,#SSR_SS_BIT)
-	}
+	  // atomic clear vmstatus IE
+  r27 = add(r7, #CONTEXT_vmstatus)
 1:
 	r26 = memw_locked(r27)
 	r26 = clrbit(r26, #H2K_VMSTATUS_IE_BIT)

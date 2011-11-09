@@ -29,6 +29,16 @@ FUNC_START start .text.init.boot .p2align 2
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
 
+#if __QDSP6_ARCH__ == 3
+	r0.h = #0x0100
+	r0.l = #0x0000
+	s60 = r0
+#elif __QDSP6_ARCH__ == 4
+	r0 = ##0x00002004
+	s63 = r0
+#else
+#endif
+
 	/* Set up rising edge triggered */
 	r0 = #-1
 	iel = r0

@@ -67,7 +67,27 @@ int fastint(int intno) {
 	/* remap timer interrupt */
 	//	if (intno == HW_TIMER_INT) intno = LINUX_TIMER_INT;
 
-	H2K_vm_interrupt_post(vmb, 0, intno);
+	H2K_thread_context *fic;
+
+#if __QDSP6_ARCH__ >= 4
+		__asm__ __volatile__ 
+			(
+			 " %0 = sgp0\n"
+			 : "=r" (fic)
+			 );
+#else
+		__asm__ __volatile__ 
+			(
+			 " %0 = sgp\n"
+			 : "=r" (fic)
+			 );
+#endif
+
+		fic->vmblock = vmb;
+		fic->vmcpu = 0;
+		h2_vmtrap_intop(H2K_INTOP_POST, intno, 0);
+
+	//	H2K_vm_interrupt_post(vmb, 0, intno);
 	return 1; // re-enable
 }
 

@@ -86,4 +86,8 @@
 #define MAX_VM_CPUS 255
 #define MAX_VM_INTS 65535
 
+#define CACHEIDX_MAX 2048
+#define WAYS_MAX 16
+#define SETS_MAX (((32*1024)/32)/(WAYS_MAX))
+
 #endif

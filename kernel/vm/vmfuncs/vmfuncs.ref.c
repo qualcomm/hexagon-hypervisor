@@ -138,13 +138,59 @@ void H2K_vmtrap_newmap(H2K_thread_context *me)
 /* 13 */
 void H2K_vmtrap_cachectl(H2K_thread_context *me)
 {
-	/* Do various cache control things */
+	/* FIXME: doing this like minivm for now */
 
-	/* FIXME: just ickill for now (for simulator) */
-	asm volatile
-		(
-		 " ickill \n"
-		 );
+	cacheop_type op = (cacheop_type)me->r00;
+	u32_t va = me->r01;
+	u32_t count = me->r02;
+	u32_t i, j, idx;
+
+	me->r00 = 0;
+
+	if (op >= H2K_CACHECTL_BADOP) {
+		me->r00 = -1;
+		return;
+	}
+
+	switch(op) {
+	case H2K_CACHECTL_ICKILL:
+	case H2K_CACHECTL_ICINVA:
+		asm volatile
+			(
+			 " ickill \n"
+			 );
+		return;
+
+	case H2K_CACHECTL_DCKILL:
+	case H2K_CACHECTL_DCCLEANINVA:
+		for (i = 0; i < CACHEIDX_MAX; i++) {
+			asm volatile
+				(
+				 "dccleaninvidx(%0) \n"
+				 :
+				 : "r"(i)
+				 );
+		};
+		return;
+
+	case H2K_CACHECTL_IDSYNC:
+		for (i = 0; i < WAYS_MAX; i++) {
+			for (j = 0; j < (SETS_MAX * 32); j += 32) {
+				idx += i + j;
+				asm volatile
+					(
+					 "icinvidx(%0) \n"
+					 "dccleanidx(%0) \n"
+					 :
+					 : "r"(idx)
+					 );
+			}
+		}
+		return;
+
+	case H2K_CACHECTL_L2KILL:
+		return;
+	}
 }
 
 /* 14 */

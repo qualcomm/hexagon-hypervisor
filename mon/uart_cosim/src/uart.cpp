@@ -428,10 +428,10 @@ HEXAPI_TransactionStatus access_callback(void *handle, HEX_PA_t address, HEX_4u_
 	if (bat == HEX_DEBUG_READ) bat = HEX_DATA_READ;
 	if (bat == HEX_DEBUG_WRITE) bat = HEX_DATA_WRITE;
 	if (bat == HEX_DATA_READ) {
-		fprintf(stderr,"UART: read from 0x%016llx\n",address);
+		//		fprintf(stderr,"UART: read from 0x%016llx\n",address);
 		puart->read(address, numBytes, dataptr);
 	} else {
-		fprintf(stderr,"UART: write to 0x%016llx\n",address);
+		//		fprintf(stderr,"UART: write to 0x%016llx\n",address);
 		puart->write(address, numBytes, dataptr);
 	}
 	return TRANSACTION_SUCCESS;

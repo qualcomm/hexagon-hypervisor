@@ -43,7 +43,7 @@ ifeq (CYGWIN, $(findstring CYGWIN,$(SYSTEM)))
 	AR := ar
 	LIBSUFF := dll
 else
-	ARCH    := $(shell /bin/arch)
+	ARCH    := $(shell arch)
 
 	SRC := $(shell pwd)
 	SRC_TOP := $(SRC)/..

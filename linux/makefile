@@ -41,6 +41,14 @@ endif
 
 OPTIMIZE=-O2
 
+ifeq ($(H2K_LINK_ADDR),)
+H2K_LINK_ADDR = 0xff000000
+endif
+
+ifeq ($(H2K_HEAP_SIZE),)
+H2K_HEAP_SIZE = 0x100000
+endif
+
 CFLAGS = -Wall -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
 
 .PHONY: all clean sim
@@ -48,7 +56,7 @@ CFLAGS = -Wall -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/inclu
 all: loadlinux
 
 loadlinux: loadlinux.o
-	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.start=0xff000000 -Wl,--defsym=linux_stext=0x00000000 -Wl,--defsym=HEAP_SIZE=0x100000 -o $@ loadlinux.o
+	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=0x00000000 -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -o $@ loadlinux.o
 
 %.o: %.c
 	${CC} ${CFLAGS} -c -o $@ $<

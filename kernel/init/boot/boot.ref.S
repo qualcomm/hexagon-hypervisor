@@ -62,14 +62,45 @@ FUNC_START start .text.init.boot .p2align 2
 	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
 	if (!p0) jump 1b
 
+// 	r1 = #0
+// 	r15 = memw(r15)
+// 	/* Initialize TLB */
+// 1:
+// 	r14 = addasl(r15,r1,#3)
+// 	r3:2 = memd(r14)
+// 	p0 = cmp.eq(r3,#0)
+// 	if (p0) jump 2f
+// #if __QDSP6_ARCH__ <= 3
+// 	tlbidx = r1
+// 	tlblo = r2
+// 	tlbhi = r3
+// 	tlbw
+// #else
+// 	tlbw(r3:2,r1)
+// #endif
+// 	r1 = add(r1,#1)
+// 	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
+// 	if (!p0) jump 1b
+//
+// 2:
+
+	// Set up TLB entries for jump to virtual space
+	// Overwrite first 2 pinned entries
+	r10 = pc
 	r1 = #0
-	r15 = memw(r15)
-	/* Initialize TLB */
-1:
-	r14 = addasl(r15,r1,#3)
-	r3:2 = memd(r14)
-	p0 = cmp.eq(r3,#0)
-	if (p0) jump 2f
+	r2 = lsr(r10,#BOOT_TLB_PGBITS)
+#if __QDSP6_ARCH__ <= 3
+	r2 = asl(r2,#BOOT_TLB_SHIFT)
+#else
+	r2 = asl(r2,#(BOOT_TLB_SHIFT + 1))  // room for S bit
+#endif
+	r3.h = #hi(BOOT_TLBHI | (BOOT_TLB_PGNUM + (0 << BOOT_TLB_SHIFT)))
+	r3.l = #lo(BOOT_TLBHI | (BOOT_TLB_PGNUM + (0 << BOOT_TLB_SHIFT)))
+
+	r11.h = #hi(BOOT_TLBLO)
+	r11.l = #lo(BOOT_TLBLO)
+
+	r2 = or(r2,r11)
 #if __QDSP6_ARCH__ <= 3
 	tlbidx = r1
 	tlblo = r2
@@ -78,10 +109,105 @@ FUNC_START start .text.init.boot .p2align 2
 #else
 	tlbw(r3:2,r1)
 #endif
-	r1 = add(r1,#1)
-	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
-	if (!p0) jump 1b
-2:
+
+	r1 = #1
+	r2 = lsr(r10,#BOOT_TLB_PGBITS)
+	r2 = add(r2,#1)
+#if __QDSP6_ARCH__ <= 3
+	r2 = asl(r2,#BOOT_TLB_SHIFT)
+#else
+	r2 = asl(r2,#(BOOT_TLB_SHIFT + 1))  // room for S bit
+#endif
+	r3.h = #hi(BOOT_TLBHI | (BOOT_TLB_PGNUM + (1 << BOOT_TLB_SHIFT)))
+	r3.l = #lo(BOOT_TLBHI | (BOOT_TLB_PGNUM + (1 << BOOT_TLB_SHIFT)))
+
+	r11.h = #hi(BOOT_TLBLO)
+	r11.l = #lo(BOOT_TLBLO)
+
+	r2 = or(r2,r11)
+#if __QDSP6_ARCH__ <= 3
+	tlbidx = r1
+	tlblo = r2
+	tlbhi = r3
+	tlbw
+#else
+	tlbw(r3:2,r1)
+#endif
+
+	// Set up entry for L2 interrupt controller
+	r1 = #2
+	r2.h = #hi(0x28890000 >> 12)
+	r2.l = #lo(0x28890000 >> 12)
+	r3.h = #hi(BOOT_TLBHI)
+	r3.l = #lo(BOOT_TLBHI)
+	r3 = or(r3, r2)
+#if __QDSP6_ARCH__ <= 3
+	r2 = asl(r2,#1) // room for S bit
+	r11.h = #hi(4 << TLB_ENTRY_C_BITS)  // 4K page, uncached
+	r11.l = #lo(4 << TLB_ENTRY_C_BITS)
+#else
+	r11.h = #hi((1 << 0) | (4 << TLB_ENTRY_C_BITS))  // 4K page
+	r11.l = #lo((1 << 0) | (4 << TLB_ENTRY_C_BITS))
+#endif
+
+	r2 = or(r2,r11)
+#if __QDSP6_ARCH__ <= 3
+	tlbidx = r1
+	tlblo = r2
+	tlbhi = r3
+	tlbw
+#else
+	tlbw(r3:2,r1)
+#endif
+
+  // Set up temporary entries for current space
+	r1 = #3
+	r2 = lsr(r10,#BOOT_TLB_PGBITS)
+	r2 = asl(r2,#BOOT_TLB_SHIFT)
+	r3.h = #hi(BOOT_TLBHI)
+	r3.l = #lo(BOOT_TLBHI)
+	r3 = or(r3, r2)
+#if __QDSP6_ARCH__ > 3
+	r2 = asl(r2,#1)  // room for S bit
+#endif
+	r11.h = #hi(BOOT_TLBLO)
+	r11.l = #lo(BOOT_TLBLO)
+
+	r2 = or(r2,r11)
+#if __QDSP6_ARCH__ <= 3
+	tlbidx = r1
+	tlblo = r2
+	tlbhi = r3
+	tlbw
+#else
+	tlbw(r3:2,r1)
+#endif
+
+	r1 = #4
+	r2 = lsr(r10,#BOOT_TLB_PGBITS)
+	r2 = add(r1,#1)
+	r2 = asl(r2,#BOOT_TLB_SHIFT)
+	r3.h = #hi(BOOT_TLBHI)
+	r3.l = #lo(BOOT_TLBHI)
+	r3 = or(r3, r2)
+#if __QDSP6_ARCH__ > 3
+	r2 = asl(r2,#1)  // room for S bit
+#endif
+	r11.h = #hi(BOOT_TLBLO)
+	r11.l = #lo(BOOT_TLBLO)
+
+	r2 = or(r2,r11)
+#if __QDSP6_ARCH__ <= 3
+	tlbidx = r1
+	tlblo = r2
+	tlbhi = r3
+	tlbw
+#else
+	tlbw(r3:2,r1)
+#endif
+
+	isync
+
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
 	r0 = #0x77f
 #if __QDSP6_ARCH__ <= 3
@@ -90,12 +216,43 @@ FUNC_START start .text.init.boot .p2align 2
 	r0.h = #0x008b	/* 256KB L2 + ITCM */
 #endif
 	syscfg = r0
+	isync
 
 #if __QDSP6_ARCH__ == 4
 	r0.h = #0xffff
 	r0.l = #0
 	ccr = r0
 #endif
+
+	// make the jump to hyperspace
+	r1.h = #hi(1f)
+	r1.l = #lo(1f)
+	jumpr r1
+
+1:
+	// invalidate temporary TLB entries
+	r1 = #3
+  r3:2 = #0
+#if __QDSP6_ARCH__ <= 3
+	tlbidx = r1
+	tlblo = r2
+	tlbhi = r3
+	tlbw
+#else
+	tlbw(r3:2,r1)
+#endif
+	
+	r1 = #4
+  r3:2 = #0
+#if __QDSP6_ARCH__ <= 3
+	tlbidx = r1
+	tlblo = r2
+	tlbhi = r3
+	tlbw
+#else
+	tlbw(r3:2,r1)
+#endif
+	isync
 
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)

@@ -32,6 +32,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup()
 	H2K_intconfig_init();
 	H2K_thread_init();
 	H2K_asid_table_init();
+	H2K_mem_stlb_init();
 }
 
 IN_SECTION(".text.init.boot") void H2K_thread_boot()

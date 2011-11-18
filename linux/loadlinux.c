@@ -34,6 +34,12 @@ void *vmb;
 
 unsigned long long int vcpu_stacks[NUM_VCPU][VCPU_STACK_SIZE];
 
+#ifdef NO_PRINT
+#define PRINTF(format, args...)
+#else
+#define PRINTF(format, args...) printf (format , ##args)
+#endif
+
 #define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN)
 
 H2K_linear_fmt_t pmap[] = {
@@ -48,17 +54,16 @@ struct timerif {
 	unsigned int clear;
 };
 
-volatile struct timerif *timerptr = (void *)0xAB000000;
+// volatile struct timerif *timerptr = (void *)0xAB000000;
 
 void FAIL(const char *str)
 {
-	puts("linux: FAIL");
-	puts(str);
+	PRINTF("linux: FAIL %s\n", str);
 	exit(1);
 }
 
 void fatal () {
-	printf("H2 kernel: Oops\n");
+	PRINTF("H2 kernel: Oops\n");
 	exit (1);
 }
 
@@ -70,24 +75,23 @@ int fastint(int intno) {
 	H2K_thread_context *fic;
 
 #if __QDSP6_ARCH__ >= 4
-		__asm__ __volatile__ 
-			(
-			 " %0 = sgp0\n"
-			 : "=r" (fic)
-			 );
+	__asm__ __volatile__ 
+		(
+		 " %0 = sgp0\n"
+		 : "=r" (fic)
+		 );
 #else
-		__asm__ __volatile__ 
-			(
-			 " %0 = sgp\n"
-			 : "=r" (fic)
-			 );
+	__asm__ __volatile__ 
+		(
+		 " %0 = sgp\n"
+		 : "=r" (fic)
+		 );
 #endif
 
-		fic->vmblock = vmb;
-		fic->vmcpu = 0;
-		h2_vmtrap_intop(H2K_INTOP_POST, intno, 0);
+	fic->vmblock = vmb;
+	fic->vmcpu = 0;
+	h2_vmtrap_intop(H2K_INTOP_POST, intno, 0);
 
-	//	H2K_vm_interrupt_post(vmb, 0, intno);
 	return 1; // re-enable
 }
 
@@ -101,18 +105,18 @@ void *vm_setup() {
 	h2_init(0);
 	h2_config_setfatal(fatal);
 	h2_config_add_thread_storage(vcpu_contexts, sizeof(vcpu_contexts));
-	printf("linux: H2 started\n");
+	PRINTF("linux: H2 started\n");
 
 	vmb_size = h2_config_vmblock_size(NUM_VCPU, INTS_PER_VCPU);
-	printf("linux: vmb size %d\n", (int)vmb_size);
+	PRINTF("linux: vmb size %d\n", (int)vmb_size);
 
 	vmb =	h2_config_vmblock_init(vmblock_space, SET_STORAGE_IDENT, 0, 0);
 	if (vmb == NULL) FAIL("SET_STORAGE_IDENT");
-	printf("linux: vmb %08x\n", (unsigned int)vmb);
+	PRINTF("linux: vmb %08x\n", (unsigned int)vmb);
 
 	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, (unsigned int)pmap, H2K_ASID_TRANS_TYPE_LINEAR);
 	if (ret != vmb) {
-		printf("linux: ret %08x\n", (unsigned int)ret);
+		PRINTF("linux: ret %08x\n", (unsigned int)ret);
 		FAIL("SET_PMAP_TYPE");
 	}
 
@@ -164,15 +168,16 @@ int main(int argc, char *argv[]) {
 
 	void *vmb;
 
+	PRINTF("linux: start boot\n");
+
+	vmb = vm_setup();
+	PRINTF("linux: vm set up\n");
+
+#ifndef NO_LOAD
 	size_t count;
 	unsigned long *ptr = 0x0;
 	FILE *file;
 	char fname[256] = "vmlinux.bin";
-
-	puts("linux: start boot");
-
-	vmb = vm_setup();
-	puts("linux: vm set up");
 
 	if (argc > 1) {
 		sscanf(argv[1], "%s", fname);
@@ -181,33 +186,14 @@ int main(int argc, char *argv[]) {
 	file = fopen(fname, "r");
 	if (file == NULL) FAIL("fopen");
 
-	printf("linux: loading %s\n", fname);
+	PRINTF("linux: loading %s\n", fname);
 	do {
 		count = fread(ptr, sizeof(unsigned long), 0x40000, file);
 		ptr += count;
 		if (count < 0x40000 && ferror(file)) FAIL("ferror");
 	} while (!feof(file));
-	printf ("linux: loaded %s\n", fname);
-
-	/* go to guest mode */
-/* 	asm volatile  */
-/* 		( */
-/* 		 " r0 = ssr \n" */
-/* 		 " r0 = setbit(r0,#17) \n"  // ex */
-/* 		 " r0 = setbit(r0,#16) \n"  // user */
-/* #if ARCHV >= 4 */
-/* 		 " r0 = setbit(r0,#19) \n"  // guest */
-/* #else */
-/* 		 " r0 = setbit(r0,#13) \n"  // guest */
-/* #endif */
-/* 		 " ssr = r0 \n" */
-/* 		 " r0.h = #hi(1f) \n" */
-/* 		 " r0.l = #lo(1f) \n" */
-/* 		 " elr = r0 \n" */
-/* 		 " rte \n" */
-/* 		 "1: nop \n" */
-/* 		 : : : "r0" */
-/* 		 ); */
+	PRINTF ("linux: loaded %s\n", fname);
+#endif
 
 	if (h2_vmboot(linux_stext, &vcpu_stacks[0][VCPU_STACK_SIZE - 1],
 								0, VM_PRIO, vmb) == -1) FAIL("vmboot");

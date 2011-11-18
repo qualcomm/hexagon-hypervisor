@@ -139,3 +139,57 @@ padding on the end for use for the fast interrupt stack.
 
 		Area to use as a Fast Interrupt stack
 
+
+H2K_context_save
+----------------
+
+.. cfunction:: H2K_context_save()
+
+Description
+~~~~~~~~~~~
+
+This is a generic context save interface.  Nearly all of the context is saved.
+Additionally, the kernel stack and KGP are set up.
+
+Since it is callable, it assumes that r31 and r30 have already been saved, and
+r31 holds the return address.  Additionally, since the caller had to save r31
+and r30, it assumes that r0 and SGP are swapped.
+
+When we return, r31 holds the value of :cfunc:`H2K_context_restore_return()`.
+
+Functionality
+~~~~~~~~~~~~~
+
+Saving and Restoring state is done as efficiently as possible, but cache 
+optimization may be used to help worst case performance. 
+
+
+H2K_context_restore_return
+--------------------------
+
+
+.. cfunction:: H2K_context_restore_return()
+
+Description
+~~~~~~~~~~~
+
+This is a generic context restore interface.  All of the context is restored.
+
+Functionality
+~~~~~~~~~~~~~
+
+All of the context is restored from the context.
+
+The function ends with an RTE to go back to leave the monitor.
+
+
+Testing
+-------
+
+For each set of data in the thread context that needs to be saved and restored,
+save it with :cfunc:`H2K_context_save()`, check that it was placed in the right 
+place, and then restore it with :cfunc:`H2K_context_restore_return()` and make
+sure it was reloaded correctly.
+
+
+

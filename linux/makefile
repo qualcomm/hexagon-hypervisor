@@ -44,6 +44,12 @@ OPTIMIZE=-O2
 ifeq ($(H2K_LINK_ADDR),)
 H2K_LINK_ADDR = 0xff000000
 endif
+export H2K_LINK_ADDR
+
+ifeq ($(H2K_LOAD_ADDR),)
+H2K_LOAD_ADDR = 0xff000000
+endif
+export H2K_LOAD_ADDR
 
 ifeq ($(H2K_HEAP_SIZE),)
 H2K_HEAP_SIZE = 0x100000
@@ -59,8 +65,14 @@ CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/i
 
 all: loadlinux
 
-loadlinux: loadlinux.o
-	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -o $@ loadlinux.o
+vapa.x: vapa.x.in
+	cat $< | perl -p -i -e 's/0xxxxxxxxx/$$ENV{H2K_LOAD_ADDR}/' > $@
+
+# second link changes entry point to physical address
+loadlinux: loadlinux.o vapa.x
+	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--script=vapa.x -o $@ loadlinux.o
+
+	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--script=vapa.x -Wl,--entry=`qdsp6-nm loadlinux | egrep ' start$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o $@ loadlinux.o
 
 %.o: %.c
 	${CC} ${CFLAGS} -c -o $@ $<
@@ -69,7 +81,7 @@ loadlinux: loadlinux.o
 	${CC} ${CFLAGS} -c -o $@ $<
 
 clean:
-	rm -f loadlinux.o loadlinux
+	rm -f loadlinux.o loadlinux vapa.x
 
 
 sim test.log : loadlinux

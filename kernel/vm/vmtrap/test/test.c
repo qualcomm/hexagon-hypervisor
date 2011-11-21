@@ -4,6 +4,7 @@
  */
 
 #include <c_std.h>
+#include <vmdefs.h>
 #include <context.h>
 #include <readylist.h>
 #include <hw.h>

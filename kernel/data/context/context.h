@@ -19,18 +19,6 @@ enum {
 	H2K_STATUS_INTBLOCKED,
 };
 
-#define H2K_VMSTATUS_VMWORK_BIT  0
-#define H2K_VMSTATUS_KILL_BIT   1
-#define H2K_VMSTATUS_IE_BIT     7
-#define H2K_VMSTATUS_VMWORK	(0x01 << (H2K_VMSTATUS_VMWORK_BIT))
-#define H2K_VMSTATUS_KILL	(0x01 << (H2K_VMSTATUS_KILL_BIT))
-#define H2K_VMSTATUS_IE		(0x01 << (H2K_VMSTATUS_IE_BIT))
-
-#define H2K_GSSR_UM_BIT 31
-#define H2K_GSSR_IE_BIT 30
-#define H2K_GSSR_UM (0x1 << H2K_GSSR_UM_BIT)
-#define H2K_GSSR_IE (0x1 << H2K_GSSR_IE_BIT)
-
 typedef struct _h2_thread_context
 {
 	/* Kernel Variables */

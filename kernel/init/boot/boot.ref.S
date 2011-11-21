@@ -7,16 +7,17 @@
 #include <asm_offsets.h>
 #include <max.h>
 
-FUNC_START start .text.init.boot .p2align 2
-	r0 = #0
-	syscfg = r0
-	ickill
-	dckill
-	l2kill
-	r15.h = #hi(H2K_bootmap_ptr)
-	r15.l = #lo(H2K_bootmap_ptr)
-	r0 = #6
-	syscfg = r0
+FUNC_START start .text.init.boot .p2align 5
+	r0 = #0					// 0
+	syscfg = r0				// 1
+	ickill					// 2
+	dckill					// 3
+	l2kill					// 4
+	r15.h = #hi(H2K_bootmap_ptr)		// 5
+	r15.l = #lo(H2K_bootmap_ptr)		// 6
+	r0 = #6					// 7
+	syscfg = r0				// 0
+	isync					// 1 ... needs to be in same cache line as syscfg
 	/* Setup EVB */
 	r0.h = #hi(H2K_event_vectors)
 	r0.l = #lo(H2K_event_vectors)
@@ -205,8 +206,6 @@ FUNC_START start .text.init.boot .p2align 2
 #else
 	tlbw(r3:2,r1)
 #endif
-
-	isync
 
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
 	r0 = #0x77f

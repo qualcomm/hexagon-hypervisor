@@ -31,7 +31,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	}
 	/* TNUM: r9, SSR: r8, SGP: r7 */
 	{
-		r0 = and(r1,#MAX_INTERRUPTS-1)
+		r0 = and(r8,#MAX_INTERRUPTS-1)
 		/* ??? memw(rXX+#CONTEXT_continuation) = r31 */
 		r4 = add(r16,#KG_inthandlers)
 	}

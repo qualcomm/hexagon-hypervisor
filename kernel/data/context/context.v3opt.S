@@ -87,6 +87,7 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	{
 		memd(r7+#CONTEXT_lc0sa0) = r19:18
 		r28 = extractu(r13,#3,#19)
+		r11 = #KERNEL_STACK_SIZE
 	}
 	{
 		memd(r7+#CONTEXT_lc1sa1) = r17:16

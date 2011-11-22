@@ -19,8 +19,8 @@ void H2K_kg_init()
 	H2K_kg.stacks_addr = &H2K_stacks;
 #ifdef H2K_L2_CONTROL
 	/* EJP: FIXME: should read from cfg table, but it doesn't work in tools sim */
-	H2K_kg.l2_int_base = (void *)0x28890000;
-	H2K_kg.l2_ack_base = (void *)0x28890200;
+	H2K_kg.l2_int_base = (void *)(L2_INT_BASE);
+	H2K_kg.l2_ack_base = (void *)(L2_INT_BASE + 0x200);
 #endif
 }
 

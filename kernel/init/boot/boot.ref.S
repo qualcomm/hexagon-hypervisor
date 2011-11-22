@@ -89,6 +89,7 @@ FUNC_START start .text.init.boot .p2align 5
 	// Overwrite first 2 pinned entries
 	r10 = pc
 	r1 = #0
+
 	r2 = lsr(r10,#BOOT_TLB_PGBITS)
 #if __QDSP6_ARCH__ <= 3
 	r2 = asl(r2,#BOOT_TLB_SHIFT)
@@ -135,29 +136,18 @@ FUNC_START start .text.init.boot .p2align 5
 	tlbw(r3:2,r1)
 #endif
 
+#if __QDSP6_ARCH__ > 3
 	// Set up entry for L2 interrupt controller
 	r1 = #2
-	r2.h = #hi(0x28890000 >> 12)
-	r2.l = #lo(0x28890000 >> 12)
+	r2.h = #hi(L2_INT_BASE >> 12)
+	r2.l = #lo(L2_INT_BASE >> 12)
 	r3.h = #hi(BOOT_TLBHI)
 	r3.l = #lo(BOOT_TLBHI)
 	r3 = or(r3, r2)
-#if __QDSP6_ARCH__ <= 3
-	r2 = asl(r2,#1) // room for S bit
-	r11.h = #hi(4 << TLB_ENTRY_C_BITS)  // 4K page, uncached
-	r11.l = #lo(4 << TLB_ENTRY_C_BITS)
-#else
 	r11.h = #hi((1 << 0) | (4 << TLB_ENTRY_C_BITS))  // 4K page
 	r11.l = #lo((1 << 0) | (4 << TLB_ENTRY_C_BITS))
-#endif
 
 	r2 = or(r2,r11)
-#if __QDSP6_ARCH__ <= 3
-	tlbidx = r1
-	tlblo = r2
-	tlbhi = r3
-	tlbw
-#else
 	tlbw(r3:2,r1)
 #endif
 

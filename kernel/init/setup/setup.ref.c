@@ -14,6 +14,7 @@
 #include <fatal.h>
 #include <asid.h>
 #include <bootmap.h>
+#include <stlb.h>
 
 void qdsp6_pre_main();
 void H2K_interrupt_restore();

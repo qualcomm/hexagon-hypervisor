@@ -141,9 +141,10 @@ void H2K_vmtrap_cachectl(H2K_thread_context *me)
 	/* FIXME: doing this like minivm for now */
 
 	cacheop_type op = (cacheop_type)me->r00;
-	u32_t va = me->r01;
-	u32_t count = me->r02;
-	u32_t i, j, idx;
+	// u32_t va = me->r01;
+	// u32_t count = me->r02;
+	u32_t i, j;
+	u32_t idx = 0;
 
 	me->r00 = 0;
 
@@ -189,6 +190,7 @@ void H2K_vmtrap_cachectl(H2K_thread_context *me)
 		return;
 
 	case H2K_CACHECTL_L2KILL:
+	case H2K_CACHECTL_BADOP:  // shut up warning
 		return;
 	}
 }

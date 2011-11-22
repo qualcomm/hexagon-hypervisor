@@ -18,8 +18,8 @@ FUNC_START H2K_event_vectors .text.core.vectors .p2align 12
 	jump H2K_handle_trap0
 	jump H2K_handle_trap1
 	jump H2K_handle_rsvd /* 10 */
-        jump H2K_handle_rsvd /* 11 */
-        jump H2K_handle_rsvd /* 12 */
+        jump H2K_handle_error /* 11 */ /* FP TRAP */
+        jump H2K_handle_debug /* 12 */
         jump H2K_handle_rsvd /* 13 */
         jump H2K_handle_rsvd /* 14 */
         jump H2K_handle_rsvd /* 15 */

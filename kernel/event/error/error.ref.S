@@ -55,6 +55,7 @@ FUNC_END H2K_handle_error
 
 FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	crswap(r0,sgp)
+	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
 	r0 = #-3
 	r1 = r24
@@ -65,5 +66,16 @@ FUNC_END H2K_handle_nmi
 
 FUNC_START H2K_handle_rsvd .text.vm.error .p2align 2
 	jump H2K_handle_nmi
+FUNC_END H2K_handle_rsvd
+
+FUNC_START H2K_handle_debug .text.vm.error .p2align 2
+	crswap(r0,sgp)
+	memd(r0+#CONTEXT_r3130) = r31:30
+	call H2K_context_save
+	r0 = #0
+	r1 = and(r8,#0xff)
+	r2 = #DEBUG_GEVB_OFFSET
+	r3 = r7
+	jump H2K_vm_event
 FUNC_END H2K_handle_rsvd
 

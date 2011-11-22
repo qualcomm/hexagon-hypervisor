@@ -16,88 +16,30 @@
  */
 
 FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
+	crswap(r0,sgp)
 	{
-		crswap(r7,sgp)
+		memd(r0+#CONTEXT_r3130) = r31:30
+		call H2K_context_save
 	}
+	/* sgp=r7, ssr=r8, htid=r9 */
 	{
-		dcfetch(r7)  // dcfetch first line
-	}
-	{
-		dcfetch(r7+#32)  // dcfetch second line
-		r7 = add(r7,#64)  // compute dczeroa pointer
-	}
-	{
-		dczeroa(r7)  // dczero third line
-		r7 = add(r7,#32)  // increment dczeroa pointer
-	}
-	{
-		dczeroa(r7)  // dczero fourth line
-		r7 = add(r7,#32)  // increment dczeroa pointer
-	}
-	{
-		dczeroa(r7)  // dczero fifth line
-		r7 = add(r7,#-128)  // restore r7 to context pointer
-	}
-		// Save trap state
-	{
-		memd(r7+#CONTEXT_r3130) = r31:30
-		r31 = ssr
-	}
-	{
-		r30 = elr  // keep elr in r30 throughout function
-		memd(r7+#CONTEXT_r2726) = r27:26
-		r27 = and(r31,#0xff)  // extract cause code
-		r26.h = #hi(H2K_stacks)
-	}
-	{
-		memd(r7+#CONTEXT_r2524) = r25:24
-		r25 = p3:0
-		r26.l = #lo(H2K_stacks)
-	}
-	{
-		memd(r7+#CONTEXT_r2322) = r23:22
-		r23 = gp
-	}
-	{
-		memd(r7+#CONTEXT_r2120) = r21:20
-		r22 = ugp
+		r27 = and(r8,#0xff)  // extract cause code
 		r24 = memw(r7+#CONTEXT_trapmask)
+		r17.h = #hi(H2K_traptab)
 	}
 	{
-		memd(r7+#CONTEXT_r1716) = r17:16
-		// Can we take this trap?
 		p0 = cmp.gt(r27,#0x1f)  // trap too big?
 		p1 = tstbit(r24,r27)  // trap enabled?
-		r16 = r31  // put ssr in r16
-	}
-	{
-		memd(r7+#CONTEXT_r1918) = r19:18
-		r17.h = #hi(H2K_traptab)
-		p1 = not(p1)  // trap disabled?
-		r18 = extractu(r31,#3,#19)  // extract htid
-	}
-	{
-		memd(r7+#CONTEXT_ssrelr) = r31:30
-		r19 = memw(r7+#CONTEXT_gevb)  // keep gevb in r19 throughout function
 		r17.l = #lo(H2K_traptab)
-		r31 = r30  // r31:30 = elr:elr
 	}
 	{
-		memd(r7+#CONTEXT_gpugp) = r23:22
-		r26 += mpyi(r18,#KERNEL_STACK_SIZE)
-		p0 = or(p0,p1)
-		p1 = cmp.eq(r19,#0)
+		p0 = or(p0,!p1)
+		r10 = #0
+		if (p0.new) jump:t .Lreturn_to_guest  // no, too big or disabled.
 	}
-	{
-		memd(r7+#CONTEXT_r2928) = r29:28
-		r17 += asl(r27,#3)
-		if (p0) jump .Lreturn_to_guest  // no, too big or disabled.
-	}
-
 		/* OK to clobber caller saves */
 	{
-		r29 = r26  // ??? not tested?
-		r16.h = #hi(H2K_kg)  // ??? not tested?
+		r17 += asl(r27,#3)
 		call .Ljump_to_trap
 	}
 	.falign
@@ -107,166 +49,25 @@ H2K_trap_nogood:
 		memd(r17+#CONTEXT_r0100) = r1:0
 		call H2K_preempt
 	}
-	{
-		r19:18 = memd(r17+#CONTEXT_gpugp)
-		r31:30 = memd(r17+#CONTEXT_r3130)
-	}
-	{
-		gp = r19
-		r29:28 = memd(r17+#CONTEXT_r2928)
-		r27:26 = memd(r17+#CONTEXT_r2726)
-	}
-	{
-		ugp  = r18
-		r25:24 = memd(r17+#CONTEXT_r2524)
-		r19:18 = memd(r17+#CONTEXT_ssrelr)
-	}
-	{
-		ssr = r19  // AXOK
-	}
-	{
-		r23:22 = memd(r17+#CONTEXT_r2322)
-		r21:20 = memd(r17+#CONTEXT_r2120)
-	}
-	{
-		elr = r18  // AXOK
-	}
-	{
-		r19:18 = memd(r17+#CONTEXT_r1918)
-		r17:16 = memd(r17+#CONTEXT_r1716)
-	}
-	{
-		rte  // ??? AXOK?
-	}
+	jump H2K_context_restore_return
 
 	.falign
 .Ljump_to_trap:
 	{
 		r16.l = #lo(H2K_kg)
 		memw(r7+#CONTEXT_continuation) = r31  // set up continuation in case we block  ??? not tested?
-		crswap(r7,sgp)  // ??? sgp = r7 is AXOK?
 		jumpr r17
 	}
 
 	.falign
 .Lreturn_to_guest:
-	/* EJP: all context carefully saved */
-	/* We have a disabled or other trap failure, return to guest */
-	/* GEVB is in r19 */
-	/* Preds are in r25 */
-	/* r31:30 == elr:elr */
-	/* r16 == ssr */
-	/* p1 == (gevb == 0) */
-//	{
-		if (p1) jump .Lfatal
-		// if gevb, do guest event
-		if (!p1) memw(r7+#CONTEXT_gssr_gelr) = r31  // elr:elr
-		if (!p1) memw(r7+#CONTEXT_gbadva_gosp+4) = r30  // elr:elr
-//	}
 	{
-		r23 = memw(r7+#CONTEXT_gssr_gelr+4) 		// gssr
-  	r22 = memw(r7+#CONTEXT_gbadva_gosp) 		// gosp
-  }
-  {
-	  r26 = memw(r7+#CONTEXT_vmstatus)
-		p0 = tstbit(r16,#SSR_GUEST_BIT)
+		r1:0 = combine(r27,r10)
+		r2 = #TRAP0_GEVB_OFFSET
+		r3 = r7
+		call H2K_vm_event
 	}
-	{
-		if (!p0) r22 = r29
-		if (!p0) r29 = r22
-		r23 = zxtb(r16)									  		// cause
-		if (p0) jump 1f												// !guest == user
-	}
-	r23 = setbit(r23, #H2K_GSSR_UM_BIT)
-
-1:
-	{
-		p0 = tstbit(r26,#H2K_VMSTATUS_IE_BIT)					// interrrupts enabled?
-  }
-	{
-		if (!p0) jump 1f
-  }
-	r23 = setbit(r23, #H2K_GSSR_IE_BIT)
-
-1:
-//	{
-		memw(r7+#CONTEXT_gssr_gelr+4) = r23 	// gssr
-		memw(r7+#CONTEXT_gbadva_gosp) = r22 	// gosp
-//	}
-	{
-		memw(r7+#CONTEXT_r2928+4) = r29
-		r20 = add(r19,#TRAP0_GEVB_OFFSET)
-		r21 = setbit(r16,#SSR_GUEST_BIT)
-		r31:30 = memd(r7+#CONTEXT_r3130)
-	}
-
-	  // atomic clear vmstatus IE
-  r27 = add(r7, #CONTEXT_vmstatus)
-1:
-	r26 = memw_locked(r27)
-	r26 = clrbit(r26, #H2K_VMSTATUS_IE_BIT)
-	memw_locked(r27, p0) = r26
-	if (!p0) jump 1b
-
-	{
-		memd(r7+#CONTEXT_ssrelr) = r21:20
-//		r29:28 = memd(r7+#CONTEXT_r2928)  FIXME: r28 not modified, r29 already saved
-		r27:26 = memd(r7+#CONTEXT_r2726)
-		p3:0 = r25
-	}
-	{
-		ssr = r21  // AXOK (if changing bits other than IE, EX, UM)
-	}
-	{
-		elr = r20  // AXOK
-	}
-	{
-		r25:24 = memd(r7+#CONTEXT_r2524)
-	}
-	{
-		r23:22 = memd(r7+#CONTEXT_r2322)
-		r21:20 = memd(r7+#CONTEXT_r2120)
-	}
-	{
-		r19:18 = memd(r7+#CONTEXT_r1918)
-		r17:16 = memd(r7+#CONTEXT_r1716)
-		crswap(r7,sgp)
-	}
-	{
-		rte  // ??? AXOK?
-	}
-
-		// call H2K_fatal_thread or H2K_fatal_kernel
-	.falign
-.Lfatal:
-	{
-		r1 = r7
-		r4 = ssr
-	}
-	{
-		r0 = pcyclehi
-		p0 = tstbit(r4,#18)  // interrupts enabled?
-	}
-	{
-		r2 = pcyclelo
-		r4 = extractu(r4,#3,#19)
-	}
-	{
-		r3 = pcyclehi  // read pcyclehi again to see if it incremented
-	}
-	{
-		p1 = cmp.eq(r3,r0)  // did pcyclehi increment?
-		if (!p1.new) r2 = #0  // if so, then use 0 for pcyclelo
-		r0 = #-1
-		if (!p0) jump 1f
-	}
-	{
-		jump H2K_fatal_thread  // interrupts enabled, regular thread
-	}
-1:
-	{
-		jump H2K_fatal_kernel  // interrupts disabled, fast interrupt
-	}
+	jump H2K_context_restore_return
 
 FUNC_END H2K_handle_trap0
 

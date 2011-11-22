@@ -61,9 +61,9 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	r20 = cs0
 	memw(r7+#CONTEXT_ccr) = r11
 	memd(r7+#CONTEXT_cs1cs0) = r21:20
-	r10 = HTID
+	r28 = HTID
 	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##H2K_stacks,mpyi(r10,r29))
+	r29 = add(##H2K_stacks,mpyi(r28,r29))
 #else
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
@@ -73,7 +73,10 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 #endif
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
-	callr r31
+	{
+		r9:8 = combine(r28,r13)
+		callr r31
+	}
 FUNC_END H2K_context_save
 
 FUNC_START H2K_context_restore_return .text.core.context .p2align 2

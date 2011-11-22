@@ -17,13 +17,13 @@
  */
 void H2K_sched_yield(H2K_thread_context *me)
 {
-        BKL_LOCK(&H2K_bkl);
+	BKL_LOCK(&H2K_bkl);
 	if (!H2K_ready_prio_valid(me->prio)) {
 		BKL_UNLOCK(&H2K_bkl);
 		return;
 	}
-        H2K_runlist_remove(me);
-        H2K_ready_append(me);
-        H2K_dosched(me,me->hthread);
+	H2K_runlist_remove(me);
+	H2K_ready_append(me);
+	H2K_dosched(me,me->hthread);
 }
 

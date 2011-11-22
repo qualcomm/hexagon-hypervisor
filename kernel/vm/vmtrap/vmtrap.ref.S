@@ -11,149 +11,18 @@
 FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 	crswap(r0,sgp)
 	memd(r0+#CONTEXT_r3130) = r31:30
-	memd(r0+#CONTEXT_r2928) = r29:28
-	r30 = p3:0
-	r31 = usr
-	memd(r0+#CONTEXT_sr_preds) = r31:30
+	call H2K_context_save
+	/* R7 = me, r8 = ssr, r9 = htid */
+	p0 = tstbit(R8,#SSR_GUEST_BIT)
+	if (!p0) jump .Lvmtrap_bad_noguest
+	r10.h = #hi(H2K_vmtraptab)
+	r10.l = #lo(H2K_vmtraptab)
+	r11 = and(r8,#0x1f)
+	r10 = addasl(r10,r11,#2)
+	memw(r7+#CONTEXT_continuation) = r31
+	r0 = r7
+	jumpr r10				/* Will return to restore_return */
 
-	memd(r0+#CONTEXT_r2726) = r27:26
-	memd(r0+#CONTEXT_r2524) = r25:24
-	memd(r0+#CONTEXT_r2322) = r23:22
-	memd(r0+#CONTEXT_r2120) = r21:20
-	memd(r0+#CONTEXT_r1918) = r19:18
-	memd(r0+#CONTEXT_r1716) = r17:16
-	memd(r0+#CONTEXT_r1514) = r15:14
-	memd(r0+#CONTEXT_r1312) = r13:12
-	memd(r0+#CONTEXT_r1110) = r11:10
-	memd(r0+#CONTEXT_r0908) = r9:8
-	memd(r0+#CONTEXT_r0706) = r7:6
-	memd(r0+#CONTEXT_r0504) = r5:4
-	memd(r0+#CONTEXT_r0302) = r3:2
-
-	r13 = gp
-	r12 = ugp
-	r9 = lc0
-	r8 = sa0
-	r7 = lc1
-	r6 = sa1
-	r5 = m1
-	r4 = m0
-	r3 = ssr
-	r2 = elr
-#if __QDSP6_ARCH__ >= 4
-	r11 = ccr
-	r17 = cs1
-	r16 = cs0
-#endif
-
-	memw(r0+#CONTEXT_ccr) = r11
-	memd(r0+#CONTEXT_gpugp) = r13:12
-	memd(r0+#CONTEXT_sr_preds) = r31:30
-	memd(r0+#CONTEXT_cs1cs0) = r17:16
-	memd(r0+#CONTEXT_lc0sa0) = r9:8
-	memd(r0+#CONTEXT_lc1sa1) = r7:6
-	memd(r0+#CONTEXT_m1m0) = r5:4
-	memd(r0+#CONTEXT_ssrelr) = r3:2
-
-	/* Save off last registers */
-	r21 = r0
-	crswap(r0,sgp)
-	memd(r21+#CONTEXT_r0100) = r1:0
-	r0 = r21
-
-#if __QDSP6_ARCH__ <= 3
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
-	r28 = ssr
-	r28 = extractu(r28,#3,#19)
-	r2 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r2)
-#else
-	r28 = HTID
-	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##H2K_stacks,mpyi(r28,r29))
-#endif
-
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
-
-#if __QDSP6_ARCH__ >= 4
-	r3:2 = g1:0
-	memd(r0+#CONTEXT_gssr_gelr) = r3:2
-	r3:2 = g3:2
-	memd(r0+#CONTEXT_gbadva_gosp) = r3:2
-#endif
-
-	/* If not in guest mode, permission error */
-	r3 = ssr
-	r4 = p3:0
-	p0 = tstbit(r3,#SSR_GUEST_BIT)
-	{
-		p3:0 = r4
-		if (!p0) jump .Lvmtrap_bad_noguest
-	}
-	r1.h = #hi(H2K_vmtraptab)
-	r1.l = #lo(H2K_vmtraptab)
-	r3 = and(r3,#0x1f)
-	r1 = addasl(r1,r3,#2)
-
-	/* EJP: FIXME: how to set continuation for things like yield? */
-	callr r1
-
-.Lreturn:
-	/* Restore all state and return */
-	r0 = sgp
-
-#if __QDSP6_ARCH__ >= 4
-	r5:4 = memd(r0+#CONTEXT_gssr_gelr)
-	g1:0 = r5:4
-	r5:4 = memd(r0+#CONTEXT_gbadva_gosp)
-	g3:2 = r5:4
-#endif
-
-	r3:2 = memd(r0+#CONTEXT_ssrelr)
-	r5:4 = memd(r0+#CONTEXT_m1m0)
-	r7:6 = memd(r0+#CONTEXT_lc1sa1)
-	r9:8 = memd(r0+#CONTEXT_lc0sa0)
-	r11:10 = memd(r0+#CONTEXT_sr_preds)
-	r13:12 = memd(r0+#CONTEXT_gpugp)
-	r17:16 = memd(r0+#CONTEXT_cs1cs0)
-	r14 = memw(r0+#CONTEXT_ccr)
-	elr = r2
-	ssr = r3
-	m0 = r4
-	m1 = r5
-	sa1 = r6
-	lc1 = r7
-	sa0 = r8
-	lc0 = r9
-	p3:0 = r10
-	usr = r11
-	ugp = r12
-	gp = r13
-#if __QDSP6_ARCH__ >= 4
-	ccr = r14
-	cs1 = r17
-	cs0 = r16
-#endif
-	r3:2 = memd(r0+#CONTEXT_r0302)
-	r5:4 = memd(r0+#CONTEXT_r0504)
-	r7:6 = memd(r0+#CONTEXT_r0706)
-	r9:8 = memd(r0+#CONTEXT_r0908)
-	r11:10 = memd(r0+#CONTEXT_r1110)
-	r13:12 = memd(r0+#CONTEXT_r1312)
-	r15:14 = memd(r0+#CONTEXT_r1514)
-	r17:16 = memd(r0+#CONTEXT_r1716)
-	r19:18 = memd(r0+#CONTEXT_r1918)
-	r21:20 = memd(r0+#CONTEXT_r2120)
-	r23:22 = memd(r0+#CONTEXT_r2322)
-	r25:24 = memd(r0+#CONTEXT_r2524)
-	r27:26 = memd(r0+#CONTEXT_r2726)
-	r29:28 = memd(r0+#CONTEXT_r2928)
-	r31:30 = memd(r0+#CONTEXT_r3130)
-	r1:0 = memd(r0+#CONTEXT_r0100)
-
-	rte
 FUNC_END H2K_handle_trap1
 
 FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
@@ -203,17 +72,12 @@ FUNC_END H2K_vmtraptab
  *  Restore extra special regs (not needed in opt)
  */
 FUNC_START H2K_vmtrap_bad .text.vm.trap .p2align 2
-	allocframe(#0)
-	r3 = r0			/* me */
+.Lvmtrap_bad_noguest:
+	r3 = r7			/* me */
 	r0 = #0			/* BADVA */
 	r1 = #0x1B		/* No Guest Permission */
 	r2 = #ERROR_GEVB_OFFSET	/* Vec Offset */
-	call H2K_vm_event
-	deallocframe
-	jumpr r31
-.Lvmtrap_bad_noguest:
-	call H2K_vmtrap_bad
-	jump .Lreturn
+	jump H2K_vm_event
 
 FUNC_END H2K_vmtrap_bad
 

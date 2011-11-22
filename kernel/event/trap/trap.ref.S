@@ -16,57 +16,20 @@
  */
 
 FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
-	crswap(r7,sgp)
-	// Save trap state
-	memd(r7+#CONTEXT_r3130) = r31:30
-	memd(r7+#CONTEXT_r2928) = r29:28
-	memd(r7+#CONTEXT_r2726) = r27:26
-	memd(r7+#CONTEXT_r2524) = r25:24
-	memd(r7+#CONTEXT_r2322) = r23:22
-	memd(r7+#CONTEXT_r2120) = r21:20
-	memd(r7+#CONTEXT_r1918) = r19:18
-	memd(r7+#CONTEXT_r1716) = r17:16
-	r16 = elr
-	r17 = ssr
-	memd(r7+#CONTEXT_ssrelr) = r17:16
-	r18 = p3:0
-#if __QDSP6_ARCH__ >= 4
-	r19 = ccr
-#endif
-	r21 = gp
-	r20 = ugp
-	memd(r7+#CONTEXT_gpugp) = r21:20
-	memw(r7+#CONTEXT_ccr) = r19
-
-	// Can we take this trap?
-	r23 = and(r17,#0xff)
+	crswap(r0,sgp)
+	memd(r0+#CONTEXT_r3130) = r31:30
+	call H2K_context_save
+	/* R7 = sgp, r8 = ssr, r9 = htid */
+	r23 = and(r8,#0xff)
 	p0 = cmp.gt(r23,#0x1f)
 	if (p0) jump 1f					// no, too big.
 	r22 = memw(r7+#CONTEXT_trapmask)
 	p0 = tstbit(r22,r23)
 	if (!p0) jump 1f				// no, disabled.
 
-	/* OK to clobber caller saves */
-	sgp = r7
-
-#if __QDSP6_ARCH__ <= 3
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
-	r28 = ssr
-	r28 = extractu(r28,#3,#19)
-	r29 += mpyi(r28,#KERNEL_STACK_SIZE)
-#else
-	r28 = HTID
-	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##H2K_stacks,mpyi(r28,r29))
-#endif
-
 	r22.h = #hi(H2K_traptab)
 	r22.l = #lo(H2K_traptab)
 	r22 = addasl(r22,r23,#3)
-
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
 
 	// set up continuation in case we block
 	call .Ljump_to_trap
@@ -77,51 +40,18 @@ H2K_trap_nogood:
 	call H2K_preempt			// Try to take interrupt before returning
 
 H2K_guest_return:
-	r17 = sgp
-	r19:18 = memd(r17+#CONTEXT_gpugp)
-	gp = r19
-	ugp  = r18
-	r19:18 = memd(r17+#CONTEXT_ssrelr)
-	ssr = r19
-	elr = r18
-	r19 = memw(r17+#CONTEXT_ccr)
-#if __QDSP6_ARCH__ >= 4
-	ccr = r19
-#endif
-	r31:30 = memd(r17+#CONTEXT_r3130)
-	r29:28 = memd(r17+#CONTEXT_r2928)
-	r27:26 = memd(r17+#CONTEXT_r2726)
-	r25:24 = memd(r17+#CONTEXT_r2524)
-	r23:22 = memd(r17+#CONTEXT_r2322)
-	r21:20 = memd(r17+#CONTEXT_r2120)
-	r19:18 = memd(r17+#CONTEXT_r1918)
-	r17:16 = memd(r17+#CONTEXT_r1716)
-
-9:
-	rte
+	jump H2K_context_restore_return
 
 1:
-	/* if gevb, do guest event */
-	r23 = memw(r7+#CONTEXT_gevb)
-	if (r23 != #0) jump:t .Lguest_trap
-	// call H2K_fatal_thread or H2K_fatal_kernel
-	r0 = #-1
-	r1 = r7
-	r3 = pcyclehi
-	r2 = pcyclelo
-	r4 = ssr
-	p0 = tstbit(r4,#18)			// interrupts enabled?
-#if __QDSP6_ARCH__ <= 3
-	r4 = extractu(r4,#3,#19)
-#else
-	r4 = htid
-#endif
-	if (!p0) jump 1f
-	jump H2K_fatal_thread		// no, regular thread
-1:
-	jump H2K_fatal_kernel		// yes, fast interrupt
+	memw(r7+#CONTEXT_continuation) = r31
+	r0 = #0
+	r1 = r23
+	r2 = #TRAP0_GEVB_OFFSET
+	r3 = r7
+	call H2K_vm_event
+	call H2K_preempt
+	jump H2K_context_restore_return
 
-	// jump to r10 after saving continuation
 .Ljump_to_trap:
 	memw(r7+#CONTEXT_continuation) = r31
 	jumpr r22
@@ -131,60 +61,6 @@ H2K_guest_return:
 	/* GEVB is in r23 */
 	/* Preds are in R18 */
 	/* r17:16 == ssr:elr */
-
-.Lguest_trap:
-	memw(r7+#CONTEXT_gssr_gelr) = r16   		// gelr
-	memw(r7+#CONTEXT_gbadva_gosp+4) = r16 	// gbadva
-
-#if __QDSP6_ARCH__ >= 4
-	g0 = r16
-  g3 = r16
-#endif
-
-	r24 = memw(r7+#CONTEXT_gbadva_gosp) 		// gosp
-	r26 = memw(r7+#CONTEXT_vmstatus)
-
-	p0 = tstbit(r17,#SSR_GUEST_BIT)
-	{
-		if (!p0) r24 = r29
-		if (!p0) r29 = r24
-	}
-
-	r25 = zxtb(r17)															// cause
-	if (p0) jump 1f 														// !guest == user
-	r25 = setbit(r25, #H2K_GSSR_UM_BIT)
-
-1:
-	p0 = tstbit(r26, #H2K_VMSTATUS_IE_BIT)			// interrupts enabled?
-	if (!p0) jump 1f
-	r25 = setbit(r25, #H2K_GSSR_IE_BIT)
-
-1:
-	memw(r7+#CONTEXT_r2928+4) = r29
-	memw(r7+#CONTEXT_gssr_gelr+4) = r25 	// gssr
-	memw(r7+#CONTEXT_gbadva_gosp) = r24 	// gosp
-
-#if __QDSP6_ARCH__ >= 4
-	g1 = r25
-  g2 = r24
-#endif
-
-	r16 = add(r23, #TRAP0_GEVB_OFFSET)
-	r17 = setbit(r17, #SSR_GUEST_BIT)
-	memd(r7+#CONTEXT_ssrelr) = r17:16
-
-  // atomic clear vmstatus IE
-  r27 = add(r7, #CONTEXT_vmstatus)
-1:
-	r26 = memw_locked(r27)
-	r26 = clrbit(r26, #H2K_VMSTATUS_IE_BIT)
-	memw_locked(r27, p0) = r26
-	if (!p0) jump 1b
-
-	p3:0 = r18
-	crswap(r7,sgp)
-	jump H2K_guest_return
-
 FUNC_END H2K_handle_trap0
 
 FUNC_START H2K_traptab .text.core.trap0 .p2align 8

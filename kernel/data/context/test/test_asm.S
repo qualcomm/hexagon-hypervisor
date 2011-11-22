@@ -11,6 +11,17 @@
 	r0.l = #lo(VAL); \
 	REGNO = r0;
 
+#if __QDSP6_ARCH__ <= 3
+#define GET_HTID(REG) \
+	REG = ssr; \
+	REG = extractu(REG,#3,#19);
+
+#else
+#define GET_HTID(REG) \
+	REG = HTID;
+
+#endif
+
 #define TEST_ONE_PAIR(REGHI,REGLO,PAIRNAME,UNIQ) \
 	SET_REG(r0,UNIQ); \
 	allocframe(#8); \
@@ -34,6 +45,21 @@
 	p3 = cmp.eq(r29,#0); \
 	p0 = and(p0,p1); \
 	p0 = and(p0,!p3); \
+	if (p0) jump 1f; \
+	jump testFAIL; \
+1: \
+	/* Also test me/ssr/htid */ \
+	r2 = sgp; \
+	r3 = r7; \
+	p0 = cmp.eq(r2,r3); \
+	r2 = ssr; \
+	r3 = r8; \
+	p1 = cmp.eq(r2,r3); \
+	GET_HTID(r2); \
+	r3 = r9; \
+	p2 = cmp.eq(r2,r3); \
+	p0 = and(p0,p1); \
+	p0 = and(p0,p2); \
 	if (p0) jump 1f; \
 	jump testFAIL; \
 1: \

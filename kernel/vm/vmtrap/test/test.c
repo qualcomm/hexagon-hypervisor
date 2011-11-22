@@ -27,29 +27,32 @@ H2K_thread_context a;
 s32_t ret;
 
 jmp_buf env;
-
-/* need this to prevent pulling in vmfuncs */
-u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) {
+/* need this to prevent pulling in vmfuncs */ u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) {
 	return H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_IE_BIT);
 }
 
-s32_t H2K_vmtrap_return() { return 1; }
-s32_t H2K_vmtrap_setvec() { return 2; }
-s32_t H2K_vmtrap_setie() { return 3; }
-s32_t H2K_vmtrap_getie() { return 4; }
-s32_t H2K_vmtrap_intop() { return 5; }
-s32_t H2K_vmtrap_clrmap() { return 0xa; }
-s32_t H2K_vmtrap_newmap() { return 0xb; }
-s32_t H2K_vmtrap_cachectl() { return 0xd; }
-s32_t H2K_vmtrap_get_pcycles() { return 0xe; }
-s32_t H2K_vmtrap_set_pcycles() { return 0xf; }
-s32_t H2K_vmtrap_wait() { return 0x10; }
-s32_t H2K_vmtrap_yield() { return 0x11; }
-s32_t H2K_vmtrap_start() { return 0x12; }
-s32_t H2K_vmtrap_stop() { return 0x13; }
-s32_t H2K_vmtrap_vmpid() { return 0x14; }
-s32_t H2K_vmtrap_setregs() { return 0x15; }
-s32_t H2K_vmtrap_getregs() { return 0x16; }
+void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread) 
+{
+	FAIL("fatal_thread called.");
+}
+
+void H2K_vmtrap_return(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 1; }
+void H2K_vmtrap_setvec(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 2; }
+void H2K_vmtrap_setie(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 3; }
+void H2K_vmtrap_getie(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 4; }
+void H2K_vmtrap_intop(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 5; }
+void H2K_vmtrap_clrmap(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0xa; }
+void H2K_vmtrap_newmap(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0xb; }
+void H2K_vmtrap_cachectl(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0xd; }
+void H2K_vmtrap_get_pcycles(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0xe; }
+void H2K_vmtrap_set_pcycles(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0xf; }
+void H2K_vmtrap_wait(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x10; }
+void H2K_vmtrap_yield(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x11; }
+void H2K_vmtrap_start(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x12; }
+void H2K_vmtrap_stop(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x13; }
+void H2K_vmtrap_vmpid(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x14; }
+void H2K_vmtrap_setregs(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x15; }
+void H2K_vmtrap_getregs(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x16; }
 
 s32_t call_trap1(u32_t trapnum, H2K_thread_context *context);
 void TH_vectors();
@@ -121,6 +124,7 @@ int main()
 		    ret = call_trap1(i,&a);
 		}
 		if (TH_saw_guest_error == 0) {
+			printf("test %d: ret=0x%x\n",i,ret);
 			FAIL("Called vmtrap from user mode");
 		}
 	}

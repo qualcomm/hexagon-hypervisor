@@ -110,6 +110,9 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	{
 		r29 = add(##H2K_stacks,mpyi(r30,r29))
 		memd(r7+#CONTEXT_gssr_gelr) = r19:18
+	}
+	{
+		r9:8 = combine(r30,r27)
 		callr r31
 	}
 FUNC_END H2K_context_save
@@ -122,7 +125,7 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	r27 = sgp
 	{
 		dcfetch(r27+#32)
-		r29:28 = memd(r7+#CONTEXT_gssr_gelr)
+		r29:28 = memd(r27+#CONTEXT_gssr_gelr)
 	}
 	{
 		dcfetch(r27+#224)

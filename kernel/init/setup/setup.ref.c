@@ -15,6 +15,7 @@
 #include <asid.h>
 #include <bootmap.h>
 #include <stlb.h>
+#include <hw.h>
 
 void qdsp6_pre_main();
 void H2K_interrupt_restore();
@@ -50,6 +51,8 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot()
 	boot->gpugp = BOOT_THREAD_GPUGP;
 	asid = H2K_asid_table_inc((u32_t)H2K_linear_bootmap, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE);
 	boot->ssr_asid = asid;
+	BKL_UNLOCK();
+	BKL_LOCK();
 	H2K_runlist_push(boot);
 	H2K_init_complete = 1;
 	H2K_switch(NULL,boot);

@@ -15,6 +15,7 @@
 #include <globals.h>
 #include <atomic.h>
 #include <safemem.h>
+#include <lowprio.h>
 
 /* 
  * EJP: hash table aligned to it's size, so we 
@@ -173,7 +174,10 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_thread_context *dest)
 		H2K_runlist_remove(dest);
 		dest->prio = prio;
 		H2K_runlist_push(dest);
-		/* Maybe need to update lowprio? */
+		if (H2K_gp->priomask & (1<<dest->hthread)) {
+			H2K_raise_lowprio();
+		}
+		/* Need to update lowprio */
 	} else if (dest->status == H2K_STATUS_INTBLOCKED) {
 		/* Waiting on interrupt, but we want it to have high priority when it starts up */
 		dest->prio = prio;

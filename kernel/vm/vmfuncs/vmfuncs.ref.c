@@ -42,6 +42,13 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 	if (me->gssr & H2K_GSSR_IE) {
 		H2K_enable_guest_interrupts(me);
 	}
+
+#if ARCHV >= 4
+	/* If guest wants to single step, set in SSR */
+	if (me->gssr & H2K_GSSR_SS) {
+		me->ssr_ss = 1;
+	}
+#endif
 }
 
 /* 2 */

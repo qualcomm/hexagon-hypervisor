@@ -110,6 +110,9 @@ MEMORY_MAP(	0,	0,	0x7f000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x7f000)
 
 MEMORY_MAP(	0,	0,	0x28000,	URWX,		UC,		SIZE_16M,	MAIN,	0x28000)
 
+/* V5 / zebu local periphs */
+MEMORY_MAP(	0,	0,	0x30000,	URWX,		UC,		SIZE_16M,	MAIN,	0x28000)
+
 #endif
 
 

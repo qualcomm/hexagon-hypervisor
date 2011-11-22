@@ -21,6 +21,7 @@ call_trap1:
 	r11.l = #lo(1f)
 	elr = r11
 	/* other stuff here */
+	r0 = #0
 	jump H2K_handle_trap1
 1:
 	jumpr r31

@@ -42,6 +42,9 @@ FUNC_START start .text.init.boot .p2align 5
 
 	/* Set up rising edge triggered */
 	r0 = #-1
+	/* Set imask to -1, since we are not lowest priority at boot */
+ 	/* (other idle threads) */
+	imask = r0
 	iel = r0
 	iahl = r0
 	cswi(r0)

@@ -169,6 +169,15 @@ int main()
 
 	}
 
+	/* Reinitialize */
+	TH_mem_stlb_init();
+	H2K_mem_stlb_invalidate_va(0,1,0,&a);
+	H2K_mem_stlb_invalidate_va(0x1000,1,0,&a);
+	entry.raw = 0;
+	H2K_mem_stlb_add(0,0,entry,&a);
+	test = H2K_mem_stlb_lookup(0,0,&a);
+	TH_tlbfmt_iszero(test);
+
 	/* DEBUG STUFF */
 
 	/* //Printouts for the TH stlb table */

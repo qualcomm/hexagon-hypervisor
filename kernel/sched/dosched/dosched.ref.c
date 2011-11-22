@@ -20,9 +20,6 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 	if (new == NULL) {
 		/* GO TO SLEEP */
 		H2K_raise_lowprio();
-		/* EJP: is this done in switch now?!?!? */
-		//H2K_priomask |= 1<<hthread;
-		//H2K_wait_mask |= 1<<hthread;
 		H2K_switch(me,NULL);
 		/* EJP: should never get here! */
 	}

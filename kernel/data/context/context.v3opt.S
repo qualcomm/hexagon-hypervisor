@@ -99,6 +99,7 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	}
 	{
 		memd(r7+#CONTEXT_ssrelr) = r13:12
+		r9:8 = combine(r28,r13)
 		callr r31
 	}
 FUNC_END H2K_context_save

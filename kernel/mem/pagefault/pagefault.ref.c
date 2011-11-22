@@ -13,7 +13,6 @@
 
 void H2K_mem_pagefault(u32_t va, H2K_thread_context *me)
 {
-	if (me->gevb == 0) return H2K_fatal_thread(-3,me,0,0,me->hthread);
 	H2K_vm_event(va,0x22,ERROR_GEVB_OFFSET,me);
 }
 

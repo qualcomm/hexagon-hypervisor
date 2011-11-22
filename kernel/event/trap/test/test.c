@@ -82,6 +82,9 @@ static inline void setup_guest()
 {
 	a.gevb = TH_vectors;
 	a.gosp = (u32_t)(&guest_stack[127]);
+#if __QDSP6_ARCH__ >= 4
+	asm volatile (" g2 = %0 " : :"r"(a.gosp));
+#endif
 }
 
 u32_t TH_expected_guest_stack;
@@ -306,6 +309,7 @@ int main()
 	setup_guest();
 	TH_expected_guest_stack = 1;
 
+	puts("foo");
 	a.trapmask = 0xffffffff;
 	for (i = 0; i < (sizeof(testvals)/sizeof(testvals[0])); i++) {
 		if (testvals[i] < 0) continue;
@@ -317,6 +321,7 @@ int main()
 			FAIL("Incorrect event return 11");
 		}
 	}
+	puts("hello");
 
 	a.trapmask = 0xffff0001;
 	for (i = 1; i < 16; i++) {

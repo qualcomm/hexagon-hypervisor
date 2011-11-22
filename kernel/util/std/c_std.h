@@ -37,6 +37,18 @@ typedef u32_t pa_t;
 #define call(fname, ...) fname(__VA_ARGS__)
 #endif
 
+/* Hopefully this is defined by the compiler... */
+#ifndef offsetof
+#define offsetof(type,element) ((u32_t)(&(((type *)0)->element)))
+#endif
+
+/*
+ * If we have a pointer "listptr" to an H2K_ringnode_t called "some_list" in a thread context,
+ * thread = containerof(H2K_thread_context, some_list, listptr)
+ *
+ */
+#define containerof(type, element, ptr) ((type *)((u8_t *)(ptr) - offsetof(type,element)))
+
 #define H2K_LANG_IS_C 1
 
 #endif

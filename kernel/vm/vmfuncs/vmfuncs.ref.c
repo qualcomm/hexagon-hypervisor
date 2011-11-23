@@ -155,6 +155,17 @@ void H2K_vmtrap_cachectl(H2K_thread_context *me)
 
 	me->r00 = 0;
 
+	/* only ickill on simulator, for speed */
+	if (H2K_gp->on_simulator) {
+		if (op == H2K_CACHECTL_ICKILL || op == H2K_CACHECTL_ICINVA) {
+			asm volatile
+				(
+				 " ickill \n"
+				 );
+		}
+		return;
+	}
+
 	if (op >= H2K_CACHECTL_BADOP) {
 		me->r00 = -1;
 		return;

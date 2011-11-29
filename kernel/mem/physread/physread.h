@@ -15,6 +15,7 @@
 
 #if __QDSP6_ARCH__ <= 3
 
+/* WARNING: Assuming that TLB lock is already held here */
 static inline u32_t H2K_mem_physread_word(u64_t pa)
 {
 	H2K_mem_tlbfmt_t tlb;

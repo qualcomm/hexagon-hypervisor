@@ -73,7 +73,11 @@
 #define H2K_L2_CONTROL 1
 #define MAX_L2_INTERRUPTS 480
 #define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
+
+#ifndef L2_INT_BASE
 #define L2_INT_BASE 0x28890000
+#endif
+
 #endif
 
 #define RESCHED_INT 3

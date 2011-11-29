@@ -23,13 +23,12 @@ void H2K_kg_init()
 	/* EJP: FIXME: should read from cfg table, but it doesn't work in tools sim */
 	H2K_kg.l2_int_base = (void *)(L2_INT_BASE);
 	H2K_kg.l2_ack_base = (void *)(L2_INT_BASE + 0x200);
+#endif
 
 	if (*(int *)((unsigned long)_end + 8) == 0x1f1f1f1f) {
 		H2K_kg.on_simulator = 1;
 	} else {
 		H2K_kg.on_simulator = 0;
 	}
-
-#endif
 }
 

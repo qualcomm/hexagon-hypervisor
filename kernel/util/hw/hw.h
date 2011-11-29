@@ -201,6 +201,14 @@ static inline void H2K_mutex_unlock_tlb()
 	asm volatile (" tlbunlock" : : : "memory");
 }
 
+#if (ARCHV <= 3)
+#define H2K_TLB_ATOMIC_START H2K_mutex_lock_tlb()
+#define H2K_TLB_ATOMIC_END H2K_mutex_unlock_tlb()
+#else
+#define H2K_TLB_ATOMIC_START
+#define H2K_TLB_ATOMIC_END
+#endif
+
 #define BKL_LOCK(...) H2K_mutex_lock_k0()
 #define BKL_UNLOCK(...) H2K_mutex_unlock_k0()
 #endif

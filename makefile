@@ -48,7 +48,7 @@ clean: covclean ucosclean
 docclean:
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
-testclean covclean:
+testclean covclean: ucosclean
 	$(MAKE) -f scripts/Makefile.coverage clean && \
 	$(MAKE) -f scripts/Makefile.coverage clean_top
 
@@ -77,24 +77,30 @@ t:
 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
 test: 
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst; \
-	cd ucos; $(MAKE) sim; cd ..; \
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst
+	$(MAKE) -C ucos sim |& tee make.log
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
 cov:
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; \
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; \
-	cd ucos; $(MAKE) sim; cd ..; \
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt; \
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
+	$(MAKE) -C ucos sim |& tee make.log
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
-test-check cov-check:
-	$(MAKE) -f scripts/Makefile.coverage check && \
-	cd ucos; $(MAKE) check && cd ..
+.PHONY: check-fail test-check cov-check
+
+check-fail test-check cov-check:
+	$(MAKE) -f scripts/Makefile.coverage check-fail
+	$(MAKE) -C ucos check
+
+check:
+	$(MAKE) -f scripts/Makefile.coverage check
+	$(MAKE) -C ucos check
 
 doc:
-	$(MAKE) -f scripts/docs/Makefile.sphinx prepare && \
+	$(MAKE) -f scripts/docs/Makefile.sphinx prepare
 	$(MAKE) -f scripts/docs/Makefile.sphinx doctest html
 
 compat:

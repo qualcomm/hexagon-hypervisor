@@ -1,3 +1,4 @@
+# Dear emacs, this is a -*- Makefile -*-
 
 ################################################################################
 #  Test makefile doesn't share above the test dir
@@ -97,7 +98,7 @@ clean_libs:
 	rm -rf install; $(MAKE) clean
 
 clean_top:
-	rm -Rf test.cov_fns cov.txt report.html
+	rm -Rf test.cov_fns cov.txt report.html make.log
 
 
 ################################################################################
@@ -182,26 +183,56 @@ report.html:
 	   else\
 	      cat $$SUBDIR/results.txt >> report.html;\
 	   fi;\
+		 cat $$SUBDIR/make.log >> make.log;\
 	done;\
 	echo "</table></body></html>" >> report.html;
 
+.PHONY: check
 
-check:
+check-fail:
 	@for SUBDIR in ${SUBDIRS}; do\
+	   echo -n "$$SUBDIR: "; \
 	   if [ ! -s $$SUBDIR/results.txt ]; then\
-	      echo FAIL $$SUBDIR - Empty/No results.txt; \
+	      echo FAIL - Empty/No results.txt; \
+	      echo; \
 	      exit 1;\
 	   fi;\
 	   grep "ERROR:" $$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
-	      echo FAIL $$SUBDIR - ERROR detected in results.txt; \
+	      echo FAIL - ERROR detected in results.txt; \
+	      echo; \
 	      exit 1;\
 	   fi;\
 	   grep "TEST PASSED" $$SUBDIR/results.txt;\
 	   if [ $$? -ne 0 ]; then\
-	      echo FAIL $$SUBDIR - No PASS detected in results.txt; \
+	      echo FAIL - No PASS detected in results.txt; \
+	      echo; \
 	      exit 1;\
 	   fi;\
+	   echo; \
+	done
+
+check:
+	@for SUBDIR in ${SUBDIRS}; do\
+	   echo -n "$$SUBDIR: "; \
+	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	      echo FAIL - Empty/No results.txt; \
+	      echo; \
+	      continue;\
+	   fi;\
+	   grep "ERROR:" $$SUBDIR/results.txt;\
+	   if [ $$? -eq 0 ]; then\
+	      echo FAIL - ERROR detected in results.txt; \
+	      echo; \
+	      continue;\
+	   fi;\
+	   grep "TEST PASSED" $$SUBDIR/results.txt;\
+	   if [ $$? -ne 0 ]; then\
+	      echo FAIL - No PASS detected in results.txt; \
+	      echo; \
+	      continue;\
+	   fi;\
+	   echo; \
 	done
 
 
@@ -240,7 +271,7 @@ test.log: ${EXEC}
 	ulimit -t 60 && ${SIM} --profile ${EXEC} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -eq 137 ]; then \
-	   echo -e "\nERROR: probably ulimit" >> $@; \
+	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \
 	fi;
 
 # Coverage stuff -- single testcase
@@ -258,7 +289,7 @@ ${COVFILES}: ${DUMP} gmon.out
 	${COV} -F -d ${DUMP} -o cov.txt gmon.out; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
-CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} test.log results.txt h2
+CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
 CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt
 
 clean:
@@ -271,8 +302,10 @@ results.txt: test.log
 	if [ $$? -eq 0 ]; then \
 		grep "ERROR:" test.log >> $@; \
 	fi; \
+	if [ ! -s test.log ]; then \
+	  echo "FAIL" >> $@; \
+	fi; \
 	true;
-	
 
 all: results.txt ${COVFILES}
 tst: results.txt

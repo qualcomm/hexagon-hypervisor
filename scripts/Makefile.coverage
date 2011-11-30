@@ -1,3 +1,4 @@
+# Dear emacs, this is a -*- Makefile -*-
 #  This behaves kind of like a SUBDIRS makefile.
 #  It is meant to be run from the top level ob directory.
 
@@ -15,7 +16,11 @@ clean:
 	@$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=clean
 
 $(SUBDIRS)::
-	cd $@; $(MAKE) $(TARG) TEST=$@; TSTAT=$$?; \
+	cd $@;\
+	if [ "$(TARG)" != "clean" ]; then \
+	(echo; echo; echo "##########   $@   ##########") > make.log; \
+	fi; \
+	$(MAKE) $(TARG) TEST=$@ |& tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
 	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
 
 .PHONY: $(SUBDIRS) tst

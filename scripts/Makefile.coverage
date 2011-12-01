@@ -20,7 +20,7 @@ $(SUBDIRS)::
 	if [ "$(TARG)" != "clean" ]; then \
 	(echo; echo; echo "##########   $@   ##########") > make.log; \
 	fi; \
-	$(MAKE) $(TARG) TEST=$@ |& tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
+	$(MAKE) $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
 	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
 
 .PHONY: $(SUBDIRS) tst

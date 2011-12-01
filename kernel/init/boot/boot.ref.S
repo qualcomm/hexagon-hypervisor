@@ -89,7 +89,6 @@ FUNC_START start .text.init.boot .p2align 5
 // 2:
 
 	// Set up TLB entries for jump to virtual space
-	// Overwrite first 2 pinned entries
 	r10 = pc
 	r1 = #0
 
@@ -142,13 +141,13 @@ FUNC_START start .text.init.boot .p2align 5
 #if __QDSP6_ARCH__ > 3
 	// Set up entry for L2 interrupt controller
 	r1 = #2
-	r2.h = #hi(L2_INT_BASE >> 12)
-	r2.l = #lo(L2_INT_BASE >> 12)
+	r2.h = #hi((L2_INT_BASE >> 24) << 12)
+	r2.l = #lo((L2_INT_BASE >> 24) << 12)
 	r3.h = #hi(BOOT_TLBHI)
 	r3.l = #lo(BOOT_TLBHI)
 	r3 = or(r3, r2)
-	r11.h = #hi((1 << 0) | (4 << TLB_ENTRY_C_BITS))  // 4K page
-	r11.l = #lo((1 << 0) | (4 << TLB_ENTRY_C_BITS))
+	r11.h = #hi((1 << 6) | (4 << TLB_ENTRY_C_BITS))  // 16M page
+	r11.l = #lo((1 << 6) | (4 << TLB_ENTRY_C_BITS))
 
 	r2 = or(r2,r11)
 	tlbw(r3:2,r1)

@@ -80,7 +80,7 @@
 #else
 #define L2_INT_BASE 0x30300000
 #endif
-
+#endif
 #endif
 
 #define RESCHED_INT 3

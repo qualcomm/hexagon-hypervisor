@@ -157,6 +157,13 @@ FUNC_START start .text.init.boot .p2align 5
 	r1 = #3
 	r2 = lsr(r10,#BOOT_TLB_PGBITS)
 	r2 = asl(r2,#BOOT_TLB_SHIFT)
+
+	// skip this if virtual == physical for monitor space			
+	r12.h = #hi(BOOT_TLB_PGNUM)
+	r12.l = #lo(BOOT_TLB_PGNUM)
+	p0 = cmp.eq(r2, r12)
+	if (p0) jump 1f
+
 	r3.h = #hi(BOOT_TLBHI)
 	r3.l = #lo(BOOT_TLBHI)
 	r3 = or(r3, r2)
@@ -199,6 +206,7 @@ FUNC_START start .text.init.boot .p2align 5
 	tlbw(r3:2,r1)
 #endif
 
+1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
 	r0 = #0x77f
 #if __QDSP6_ARCH__ <= 3

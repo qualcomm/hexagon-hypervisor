@@ -19,11 +19,11 @@ TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
 
-// if h2 kernel is linked with the user code at 0, add a 16M pinned entry with URWX
+// if h2 kernel is linked with the user code at 0, add 2x 4M pinned entry with URWX
 #else
-MEMORY_MAP(	1,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
+MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 0) << 10),	URWX,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LINK_ADDR >> 22) + 0) << 10))
+MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 1) << 10),	URWX,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LINK_ADDR >> 22) + 1) << 10))
 
-TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
@@ -32,12 +32,6 @@ TLB_INVALID_ENTRY
 TLB_INVALID_ENTRY
 
 #endif
-
-// #ifdef NO_MEMORY_MAP_GLOBAL_ZERO
-// MEMORY_MAP(	0,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
-// #else
-// MEMORY_MAP(	1,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
-// #endif
 
 /* LPASS main text/data */
 MEMORY_MAP(	0,	0,	0x46000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x46000)
@@ -111,7 +105,7 @@ MEMORY_MAP(	0,	0,	0x7f000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x7f000)
 MEMORY_MAP(	0,	0,	0x28000,	URWX,		UC,		SIZE_16M,	MAIN,	0x28000)
 
 /* V5 / zebu local periphs */
-MEMORY_MAP(	0,	0,	0x30000,	URWX,		UC,		SIZE_16M,	MAIN,	0x28000)
+MEMORY_MAP(	0,	0,	0x30000,	URWX,		UC,		SIZE_16M,	MAIN,	0x30000)
 
 #endif
 

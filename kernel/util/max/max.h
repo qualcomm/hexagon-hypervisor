@@ -75,7 +75,10 @@
 #define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
 
 #ifndef L2_INT_BASE
+#if __QDSP6_ARCH__ <= 4
 #define L2_INT_BASE 0x28890000
+#else
+#define L2_INT_BASE 0x30300000
 #endif
 
 #endif

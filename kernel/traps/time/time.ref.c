@@ -22,9 +22,8 @@ u64_t H2K_pcycles_get(H2K_thread_context *me)
 
 u64_t H2K_cputime_get(H2K_thread_context *me)
 {
-	/* FIXME: just return pcycles now, since linux needs this */
 	u64_t now = H2K_pcycles_get(me);
-	//return me->totalcycles + (now - H2K_gp->oncpu_start[get_hwtnum()]);
-	return now;
+	return me->totalcycles + (now - H2K_gp->oncpu_start[get_hwtnum()]);
+	//return now;
 }
 

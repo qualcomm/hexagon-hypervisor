@@ -37,6 +37,9 @@ FUNC_START start .text.init.boot .p2align 5
 #elif __QDSP6_ARCH__ == 4
 	r0 = ##0x00002004
 	s63 = r0
+#elif __QDSP6_ARCH__ == 5
+	r0 = #0     /* (No chickenbits) */
+	s63 = r0
 #else
 #endif
 
@@ -208,7 +211,15 @@ FUNC_START start .text.init.boot .p2align 5
 
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
-	r0 = #0x77f
+#if __QDSP6_ARCH__ <= 4
+ 	r0 = #0x77f
+#else
+	r0 = ##0xA77F    /* DMT and non-QoS */
+ 	//r0 = ##0x877F    /* DMT and QoS */
+	//r0 = #0x277F    /* IMT and non-QoS */
+ 	//r0 = #0x77F    /* IMT and QoS */
+#endif
+	
 #if __QDSP6_ARCH__ <= 3
 	r0.h = #0x0083	/* 256KB L2 */
 #else
@@ -216,12 +227,6 @@ FUNC_START start .text.init.boot .p2align 5
 #endif
 	syscfg = r0
 	isync
-
-#if __QDSP6_ARCH__ == 4
-	r0.h = #0xffff
-	r0.l = #0
-	ccr = r0
-#endif
 
 	// make the jump to hyperspace
 	r1.h = #hi(1f)
@@ -274,12 +279,6 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	r0.h = #hi(_SDA_BASE_)
 	r0.l = #lo(_SDA_BASE_)
 	gp = r0
-
-#if __QDSP6_ARCH__ == 4
-	r0.h = #0xffff
-	r0.l = #0
-	ccr = r0
-#endif
 
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)

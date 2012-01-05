@@ -5,6 +5,7 @@
 
 #include <angel.h>
 #include <string.h>
+#include <stdlib.h>
 
 static inline void clean(const void *vx,int words)
 {
@@ -15,6 +16,15 @@ static inline void clean(const void *vx,int words)
 	};
 	asm volatile (" %0 = memb(%1) " : "=r"(i) : "r"(x));
 	asm volatile (" dccleaninva(%0) " : : "r"(x));
+}
+
+/* X must be 32-byte aligned and COUNT must be a multiple of 32. */
+static inline void invalidate(const char *x,count_t count)
+{
+	count_t i;
+	for (i = 0; i < count; i += 32) {
+		asm volatile ("dcinva(%0)" : :"r"(x+i):"memory");
+	};
 }
 
 static inline void clean_str(const char *x)
@@ -85,10 +95,15 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 {
 	count_t ret;
 	struct { fd_t fd; char *buf; count_t count; } x;
-	x.fd = fd; x.buf = buffer; x.count = count;
-	clean(buffer,count/4+3); clean(&x,3);
+	char *malloc_ret;
+	x.fd = fd; x.count = count;
+	malloc_ret = malloc(count+64);
+	x.buf = (char *)((((unsigned long)malloc_ret)+31)&-32);
+	clean(x.buf,count/4+3); clean(&x,3);
 	ret = ANGEL(SYS_READ,&x,0);
-	clean(buffer,count/4+3);
+	invalidate(x.buf,(count+31)&-32);
+	memcpy(buffer,x.buf,count);
+	free(malloc_ret);
 	DEBUG_PRINTF("ANGEL read: wanted %d, returned %d\n",count,ret);
 	return ret;
 }

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-/* rings.v3opt.S
+/* rings.v4opt.S
  * This contains fast implementations of most rings.c functions
- * for V3.
+ * for V4.
  */
 
 #include <asm_std.h>

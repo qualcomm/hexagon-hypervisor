@@ -99,26 +99,9 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 	count_t offset, start, middle, leftover;
 	x.fd = fd;
 	offset = ((unsigned long)buffer)&31;
-	start = 32-offset > count ? count : 32-offset;
+	start = (offset == 0) ? 0 : (32-offset > count) ? count : 32-offset;
 	middle = (count-start)&-32;
-	leftover = count-start-middle;
-	if (start) {
-		malloc_ret = malloc(96);
-		x.buf = (char *)((((unsigned long)malloc_ret)+31)&-32);
-		x.count = start;
-		clean(&x,3);
-		invalidate(x.buf,32);
-		ret = ANGEL(SYS_READ,&x,0);
-		invalidate(x.buf,32);
-		memcpy(buffer,x.buf,start);
-		if (leftover == 0) {
-			free(malloc_ret);
-		}
-		if (ret) {
-			DEBUG_PRINTF("ANGEL read: wanted %d, returned %d\n",count,ret);
-			return ret+middle+leftover;
-		}
-	}
+	leftover = count-middle;
 	if (middle) {
 		x.buf = buffer+start;
 		x.count = middle;
@@ -126,22 +109,23 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 		invalidate(x.buf,middle);
 		ret = ANGEL(SYS_READ,&x,0);
 		invalidate(x.buf,middle);
+		if (start) {
+			memmove(buffer,x.buf,middle-ret);
+		}
 		if (ret) {
 			DEBUG_PRINTF("ANGEL read: wanted %d, returned %d\n",count,ret);
 			return ret+leftover;
 		}
 	}
 	if (leftover) {
-		if (start == 0) {
-			malloc_ret = malloc(96);
-		}
+		malloc_ret = malloc(96);
 		x.buf = (char *)((((unsigned long)malloc_ret)+31)&-32);
 		x.count = leftover;
 		clean(&x,3);
-		invalidate(x.buf,32);
+		invalidate(x.buf,64);
 		ret = ANGEL(SYS_READ,&x,0);
-		invalidate(x.buf,32);
-		memcpy(buffer+start+middle,x.buf,leftover);
+		invalidate(x.buf,64);
+		memcpy(buffer+middle,x.buf,leftover-ret);
 		free(malloc_ret);
 	}
 	DEBUG_PRINTF("ANGEL read: wanted %d, returned %d\n",count,ret);

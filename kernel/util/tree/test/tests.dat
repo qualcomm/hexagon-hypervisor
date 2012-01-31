@@ -1,0 +1,5 @@
+TEST(single, 1, 0, 0, { 0 })
+TEST(two, 2, 0, 1, { 0,1 })
+TEST(two_same, 2, 0, 0, { 0,0 })
+TEST(three, 3, 0, 2, { 1, 0, 2})
+#include "generated_tests.dat"

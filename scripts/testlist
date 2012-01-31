@@ -49,6 +49,7 @@
 ./kernel/util/ring/test/test
 ./kernel/util/stmode/test
 ./kernel/util/trace/test
+./kernel/util/tree/test
 ./kernel/util/intcontrol/test
 ./kernel/vm/vmboot/test
 ./kernel/vm/vmevent/test

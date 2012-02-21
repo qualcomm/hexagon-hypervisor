@@ -209,19 +209,19 @@ int main()
 #ifdef DEBUG
 	printf("pending %08x\n", (u32_t)vmblock->pending);
 #endif
-	if (vmblock->pending != (bitmask_t *)((char *)vmblock + 40)) FAIL("Bad pending base");
-	if (vmblock->enable !=  (bitmask_t *)((char *)vmblock + 52)) FAIL("Bad enable base");
-	if (vmblock->percpu_mask !=  (bitmask_t **)((char *)vmblock + 64)) FAIL ("Bad percpu_mask base");
+	if (vmblock->pending != (bitmask_t *)((char *)vmblock + 48)) FAIL("Bad pending base");
+	if (vmblock->enable !=  (bitmask_t *)((char *)vmblock + 60)) FAIL("Bad enable base");
+	if (vmblock->percpu_mask !=  (bitmask_t **)((char *)vmblock + 72)) FAIL ("Bad percpu_mask base");
 
 	for (i = 0; i < 33; i++) {
 #ifdef DEBUG
 		printf("i %d  ptr %08x  expect %08x\n", i, vmblock->percpu_mask[i], (u32_t)((char *)vmblock + 196 + i * 12));
 #endif
-		if (vmblock->percpu_mask[i] !=  (bitmask_t *)((char *)vmblock + 196 + i * 12)) FAIL("Bad percpu_mask pointer");
+		if (vmblock->percpu_mask[i] !=  (bitmask_t *)((char *)vmblock + 204 + i * 12)) FAIL("Bad percpu_mask pointer");
 	}
 
-	if (vmblock->int_v2p != (physint_t *)((char *)vmblock + 592)) FAIL("Bad int_v2p base");
-	if (vmblock->cpu_contexts != (H2K_thread_context **)((char *)vmblock + 724)) FAIL("Bad cpu_contexts base");
+	if (vmblock->int_v2p != (physint_t *)((char *)vmblock + 600)) FAIL("Bad int_v2p base");
+	if (vmblock->cpu_contexts != (H2K_thread_context **)((char *)vmblock + 732)) FAIL("Bad cpu_contexts base");
 	
 #ifdef DEBUG
 	printf("MAP_PHYS_INTR\n\n");

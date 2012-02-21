@@ -243,6 +243,10 @@ void H2K_vmtrap_wait(H2K_thread_context *me)
 	if (intno == -1) {
 		/* nothing pending; wait  */
 		me->status = H2K_STATUS_VMWAIT;
+
+		/* FIXME: remove once vmwait uses semaphore */
+		me->vmblock->waiting_cpus |= 0x1 << ((me->vmcpu) % 32);
+
 		H2K_runlist_remove(me);
 		H2K_dosched(me,me->hthread);
 	} else {

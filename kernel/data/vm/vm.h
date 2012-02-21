@@ -66,6 +66,11 @@ typedef struct H2K_vmblock_struct {
 	/* physical memory map, page table style */
 	u32_t pmap;
 	translation_type pmap_type;
+
+	/* FIXME: remove once vmwait uses semaphore */
+	u32_t waiting_cpus;
+	u8_t interrupt_search_start;
+	u8_t pad;
 } H2K_vmblock_t;
 
 #endif

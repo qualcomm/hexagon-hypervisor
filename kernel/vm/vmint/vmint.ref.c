@@ -34,6 +34,9 @@ static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_
 
 		BKL_LOCK();
 		if (thread->status == H2K_STATUS_VMWAIT) { // wake up
+			/* FIXME: remove once vmwait uses semaphore */
+			vmblock->waiting_cpus &= ~(0x1 << (cpu % 32));
+
 			thread->r00 = intno; // return value from vmwait
 			H2K_ready_append(thread);
 			H2K_check_sanity_unlock(0);
@@ -54,17 +57,43 @@ static s32_t H2K_vm_interrupt_deliver_cpu(H2K_vmblock_t *vmblock, u8_t cpu, u32_
 IN_SECTION(".text.vm.int")
 static void H2K_vm_interrupt_deliver(H2K_vmblock_t *vmblock, u8_t first_cpu, u32_t intno)
 {
-	u32_t i;
+	u32_t i, start;
+	u8_t cpu;
+
+	/* FIXME: change once vmwait uses semaphore */
+
+	/* First try to interrupt a waiting cpu */
+	if (vmblock->waiting_cpus) {
+		for (i = 0; (i < 32) && (i < vmblock->num_cpus); i++) {
+			if ((vmblock->waiting_cpus >> i) & 0x1) { // found
+				cpu = i;
+				while (cpu < vmblock->num_cpus) {
+					if (vmblock->cpu_contexts[cpu]->status == H2K_STATUS_VMWAIT) {
+						if (H2K_vm_interrupt_deliver_cpu(vmblock, cpu, intno)) {
+							return;
+						}
+					}
+					cpu += 32;
+				}
+			}
+		}
+	}
+
 	/* Look for first CPU to interrupt */
-	i = first_cpu;
+	start = i = first_cpu;
 	do {
 		if (H2K_vm_interrupt_deliver_cpu(vmblock,i,intno)) {
-			return;
+			goto out;
 		} else {
 			if (++i >= vmblock->num_cpus) i = 0;
 		}
 	} while (i != first_cpu);
 	/* No CPU found to take interrupt, just return */
+
+ out:
+	if (++start >= vmblock->num_cpus) start = 0;
+	//H2K_atomic_set(&vmblock->interrupt_search_start, start)
+	vmblock->interrupt_search_start = start;
 }
 
 void  H2K_vm_interrupt_post(H2K_vmblock_t *vmblock, u8_t first_cpu, u32_t intno)

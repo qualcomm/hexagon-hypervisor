@@ -83,7 +83,7 @@
 #endif
 #endif
 
-#define RESCHED_INT 3
+#define RESCHED_INT 1
 #define VM_IPI_INT 0
 
 #define MAX_TRACE_LEVEL 0

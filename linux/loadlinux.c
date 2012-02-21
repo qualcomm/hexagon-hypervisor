@@ -28,6 +28,11 @@
 #define HW_TIMER_INT 2
 #define LINUX_TIMER_INT 2
 
+#define HW_UART_INT 5
+#define HW_QFEC_INT 12
+
+int interrupt_used[HW_INTS] = { [HW_TIMER_INT] = 1, [HW_UART_INT] = 1, [HW_QFEC_INT] = 1 };
+
 char vcpu_contexts[(NUM_VCPU) * CONTEXT_SIZE] __attribute__((aligned(32)));
 char vmblock_space[65536];
 void *vmb;
@@ -89,7 +94,7 @@ int fastint(int intno) {
 #endif
 
 	fic->vmblock = vmb;
-	fic->vmcpu = 0;
+	fic->vmcpu = ((struct H2K_vmblock_struct *)vmb)->interrupt_search_start;
 	h2_vmtrap_intop(H2K_INTOP_POST, intno, 0);
 
 	return 1; // re-enable
@@ -140,11 +145,12 @@ void *vm_setup() {
 		/* } */
 		/* } */
 
-		if (i != RESCHED_INT && i != VM_IPI_INT) {
+		if (i != RESCHED_INT && i != VM_IPI_INT && interrupt_used[i]) {
 			if (h2_config_vmblock_init(vmb, MAP_PHYS_INTR, i, i) != vmb) {
 				FAIL("MAP_PHYS_INTR");
 			}
 
+			PRINTF("register interrupt %d\n", i);
 			h2_register_fastint(i, fastint);
 		}
 	}

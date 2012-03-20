@@ -1,0 +1,7 @@
+H2K_vm_cpuint_disable
+H2K_vm_cpuint_enable
+H2K_vm_cpuint_post
+H2K_vm_cpuint_clear
+H2K_vm_cpuint_get
+H2K_vm_cpuint_peek
+H2K_vm_cpuint_status

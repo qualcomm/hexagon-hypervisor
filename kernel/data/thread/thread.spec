@@ -6,12 +6,6 @@
 
 This module contains the data structures for threads.
 
-H2K_free_threads
-----------------
-
-H2K_free_threads is a linked list of all threads ready for use.
-
-
 H2K_thread_context_clear
 ------------------------
 
@@ -43,5 +37,4 @@ Functionality
 ~~~~~~~~~~~~~
 
 Clears out the H2K_boot_context by calling :cfunc:`H2K_thread_context_clear()`.
-It also sets H2K_free_threads to NULL.
 

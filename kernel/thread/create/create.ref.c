@@ -18,6 +18,7 @@
 #include <check_sanity.h>
 #include <asid.h>
 #include <vm.h>
+#include <id.h>
 
 void H2K_interrupt_restore();
 
@@ -57,12 +58,12 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	if ((pc & 3) != 0) return -1;          // bad pc alignment
 
 	BKL_LOCK(&H2K_bkl);
-	if (H2K_gp->free_threads == NULL) {
+	if (vmblock->free_threads == NULL) {
 		BKL_UNLOCK(&H2K_bkl);
 		return -1;
 	}
-	tmp = H2K_gp->free_threads;
-	H2K_gp->free_threads = H2K_gp->free_threads->next;
+	tmp = vmblock->free_threads;
+	vmblock->free_threads = vmblock->free_threads->next;
 	tmp->base_prio = tmp->prio = prio;
 	tmp->gp = me->gp;
 	tmp->sr = me->sr;
@@ -81,31 +82,30 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	if (vmblock) {
 		/* only need to check asid if we have a vmblock, else it's inherited */
 		if (asid == -1) { 						// can't allocate asid
-			H2K_gp->free_threads = tmp; // return to free list
+			vmblock->free_threads = tmp; // return to free list
 			BKL_UNLOCK(&H2K_bkl);
 			return -1;
 		}
 		if (vmblock->num_cpus == vmblock->max_cpus) {  // no more vcpus
 			H2K_asid_table_dec(asid); // was bogus
-			H2K_gp->free_threads = tmp; // return to free list
+			vmblock->free_threads = tmp; // return to free list
 			BKL_UNLOCK(&H2K_bkl);
 			return -1;
 		}
 
 		tmp->ssr_guest = 1;  // start in guest mode
+#warning frustrating our tests...
 		tmp->ssr_um = 1;
 		tmp->ssr_asid = asid;
 		/* FIXME: Do we allow a particular vcpu to stop and then start again? */
-		tmp->vmcpu = vmblock->num_cpus++;
+		vmblock->num_cpus++;
 		tmp->vmblock = vmblock;
-
-		vmblock->cpu_contexts[tmp->vmcpu] = tmp;
 	}
 	H2K_ready_append(tmp);
-	return H2K_check_sanity_unlock((u32_t)tmp);
+	return H2K_check_sanity_unlock(H2K_id_from_context(tmp).raw);
 }
 
 IN_SECTION(".text.misc.create") s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me)
 {       
-	return H2K_thread_create_no_squash(pc, sp, arg1, prio, NULL, me);
+	return H2K_thread_create_no_squash(pc, sp, arg1, prio, me->vmblock, me);
 }

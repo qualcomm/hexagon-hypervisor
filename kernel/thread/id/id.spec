@@ -7,7 +7,7 @@
 H2K_thread_id
 -------------
 
-.. cfunction:: u32_t H2K_thread_id(H2K_thread_context *me)
+.. cfunction:: H2K_id_t H2K_thread_id(H2K_thread_context *me)
 
 	:param me: Pointer to the current context
 	:returns: A unique ID for the running thread
@@ -22,16 +22,25 @@ Functionality
 
 Each thread should have a unique ID.
 
-We currently use the pointer to the thread context as the Thread ID.
-
 This helps us change priority of other threads.
 
-Alternatively, if thread contexts must be contiguous in virtual memory, we
-could have an index.
 
-Alternatively, we could have a globally-incrementing counter.  However, it
-makes it difficult to map id->pointer.  On the other hand, this is rarely
-used (currently, mainly for changing priority of another thread).
+H2K_id_to_context
+-----------------
+
+.. cfunction:: inline H2K_thread_context *H2K_id_to_context(H2K_id_t id)
+
+	:param id: Thread Identifier
+	:returns: Pointer to the thread, NULL if ID is invalid
+
+H2K_id_from_context
+-------------------
+
+.. cfunction:: inline H2K_id_t H2K_id_from_context(H2K_thread_context *me)
+
+	:param me: Pointer to the current context
+	:returns: A unique ID for the running thread
+
 
 
 Testing
@@ -42,7 +51,7 @@ Samples
 ~~~~~~~
 
 * Input: `me` 
-* Output: unique ID (Currently, should be equal to `me`)
+* Output: unique ID
 
 Important cases
 ~~~~~~~~~~~~~~~
@@ -55,5 +64,5 @@ Harness
 We link directly with the thread object file.
 
 The test harness calls :cfunc:`H2K_thread_id()` with `me`, and expects the return value
-to be equal to the thread context pointer.
+to be equal to the thread unique ID field.
 

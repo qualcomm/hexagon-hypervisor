@@ -7,6 +7,8 @@
 #define H2K_CONTEXT_H
 
 #include <c_std.h>
+#include <tree.h>
+#include <idtype.h>
 
 #define H2K_CONTEXT_ALIGN 32
 
@@ -37,43 +39,43 @@ typedef struct _h2_thread_context
 		struct {
 			u8_t vmstatus;
 			u8_t base_prio;	// Does it need to be atomic?
-			u8_t vmcpu;	// needs to be more than 8 bits?  Does it need to be atomic?
-			u8_t pmu_on;	// Does it need to be atomic?  could be < 8 bits
+			u8_t unusedab;	// use for i/o byte?  Add read/write valid bits below?
+			u8_t pmu_on;	// Does it need to be atomic?  1 bit
 		};
 	};
 	// #16
-	struct {
-		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.
-		u32_t trapmask;		// could we reduce this?  Need to reduce # of traps...
+	union {
+		u64_t vmblock_id;
+		struct {
+			H2K_id_t id;
+			struct H2K_vmblock_struct *vmblock;	// could look up from GP + high bits of id
+		};
 	};
 	// 24
+	struct {
+		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.
+		u32_t trapmask;		// Alread in VMblock?  Maybe move it?  All threads in a VM have same trap mask?
+	};
 	/* status, etc */
 	/* Context */
 	/* Context required for OS calls... callee save + ugp/gp/etc */
-	/* V3 callee-save is a lot bigger. :-| */
-	union {
-		u64_t gssr_gelr;    // was gelr_gbadva
-		struct {
-			u32_t gelr;
-			u32_t gssr;
-		};
-	};
+	/* Need to add per-cpu interrupts in here */
 	// 32
 	union {
-		u64_t gbadva_gosp;  // was gssr_gosp
 		struct {
-			u32_t gosp;
-			u32_t gbadva;
+			u64_t rightleft;
+			u64_t timeout;
+		};
+		H2K_treenode_t tree;
+	} timer0;
+	union {
+		u64_t cpuint_enabled_pending;
+		struct {
+			u32_t cpuint_pending;
+			u32_t cpuint_enabled;
 		};
 	};
-	u64_t reserved_u64;
 	u64_t totalcycles;
-	struct {
-		u32_t ccr;	/* Could be moved to zeroed area */
-				/* Upper 8 bits of CCR unused */
-		// u32_t gptb;	/* can look it up from asid table... */
-		struct H2K_vmblock_struct *vmblock;
-	};
 	// 64
 	struct {	// OK FOR DCZEROA
 		u32_t futex_ptr;		// Probably not needed if interrupted; only on trap; could be unioned below?
@@ -181,6 +183,29 @@ typedef struct _h2_thread_context
 	};
 	u64_t cs1cs0;	// V4 regs
 	// 256
+	union {
+		u64_t gssr_gelr;	// OK to move to cleared area?
+		struct {
+			u32_t gelr;
+			u32_t gssr;
+		};
+	};
+	union {
+		u64_t gbadva_gosp;	// OK to move to cleared area?
+		struct {
+			u32_t gosp;
+			u32_t gbadva;
+		};
+	};
+	union {
+		u64_t ccr_rsvd;		// OK to move to cleared area?
+		struct {
+			u32_t ccr;
+			u32_t reserved_u32;
+		};
+	};
+	u64_t reserved_u64_3;
+	// 288
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
 
 typedef struct {

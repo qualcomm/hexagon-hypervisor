@@ -33,10 +33,6 @@
 
 		Global value for the GP value to use during fast interurpts.
 
-	.. cmember:: H2K_thread_context *free_threads
-
-		Linked list of available thread contexts
-
 	.. cmember:: u64_t oncpu_start[MAX_HTHREADS]
 
 		Cycle count when the currently-running thread started

@@ -9,27 +9,18 @@
 #include <max.h>
 #include <globals.h>
 
-// H2K_thread_context *H2K_free_threads;
-#if __QDSP6_ARCH__ == 2
-H2K_thread_context H2K_idle_context;
-#endif
-H2K_thread_context H2K_boot_context;
-
 void H2K_thread_context_clear(H2K_thread_context *thread)
 {
 	u32_t i;
 	u64_t *x = (u64_t *)thread;
+	u64_t vmblock_id = thread->vmblock_id;
 	for (i = 0; i < (sizeof(*thread)/sizeof(*x)); i++) {
 		x[i] = 0;
 	}
+	thread->vmblock_id = vmblock_id;
 }
 
 void H2K_thread_init()
 {
-	H2K_thread_context_clear(&H2K_boot_context);
-#if __QDSP6_ARCH__ == 2
-	H2K_thread_context_clear(&H2K_idle_context);
-#endif
-	H2K_gp->free_threads = NULL;
 }
 

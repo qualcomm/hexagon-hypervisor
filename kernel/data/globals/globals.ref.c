@@ -16,6 +16,12 @@ extern void _end();
 
 void H2K_kg_init()
 {
+	int i;
+	u64_t *x;
+	x = (u64_t *)&H2K_kg;
+	for (i = 0; i < sizeof(H2K_kg)/sizeof(*x); i++) {
+		x[i] = 0;
+	}
 	H2K_kg.tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
 	H2K_kg.traptab_addr = H2K_traptab;
 	H2K_kg.stacks_addr = &H2K_stacks;

@@ -17,6 +17,7 @@
 #include <tlbmisc.h>
 #include <globals.h>
 #include <hw.h>
+#include <id.h>
 #include <thread.h>
 #include <create.h>
 #include <runlist.h>
@@ -75,33 +76,6 @@ void H2K_vmtrap_getie(H2K_thread_context *me)
 {
 	me->r00 = ((me->atomic_status_word & H2K_VMSTATUS_IE) != 0);
 }
-
-#if 0
-void H2K_vmtrap_swi(H2K_thread_context *me)
-{
-	H2K_vm_interrupt_post(me->vmblock,me->vmcpu,(u32_t)(me->r00));
-}
-
-void H2K_vmtrap_iack(H2K_thread_context *me)
-{
-	H2K_vm_interrupt_enable(me->vmblock,(u32_t)(me->r00));
-}
-
-void H2K_vmtrap_setimask(H2K_thread_context *me)
-{
-	/* CHange interface */
-}
-
-void H2K_vmtrap_getimask(H2K_thread_context *me)
-{
-	/* Change interface */
-}
-
-void H2K_vmtrap_iconf(H2K_thread_context *me)
-{
-	/* Change interface? */
-}
-#endif
 
 /* 10 */
 void H2K_vmtrap_clrmap(H2K_thread_context *me)
@@ -269,11 +243,12 @@ void H2K_vmtrap_start(H2K_thread_context *me)
 	s32_t ret;
 	/* FIXME: need to pass arg1?  use vmblock bestprio instead of base_prio? */
 	                               /*      pc       sp  arg1 */
+	/* EJP: FIXME: does thread create return pointer or thread id? Probably id... */
 	ret = H2K_thread_create_no_squash(me->r00, me->r01, 0, me->base_prio, me->vmblock, me);
 	if (ret == -1) { //error
 		me->r00 = ret;
 	} else {
-		me->r00 = ((H2K_thread_context *)ret)->vmcpu;
+		me->r00 = ((H2K_thread_context *)ret)->id.raw;
 	}
 }
 
@@ -287,7 +262,7 @@ void H2K_vmtrap_stop(H2K_thread_context *me)
 /* 20 */
 void H2K_vmtrap_vmpid(H2K_thread_context *me)
 {
-	me->r00 = me->vmcpu;
+	me->r00 = H2K_id_from_context(me).raw;
 }
 
 /* 21 */

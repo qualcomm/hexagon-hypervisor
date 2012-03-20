@@ -123,12 +123,14 @@
 /* ensure UGP is 0 for default thread ID behavior in h2 libs */
 #define BOOT_THREAD_GPUGP 0
 
-#define MAX_VM_ID 255
-#define MAX_VM_CPUS 255
+#define MAX_VM_ID 63
+#define MAX_VM_CPUS 65535
 #define MAX_VM_INTS 65535
 
 #define CACHEIDX_MAX 2048
 #define WAYS_MAX 16
 #define SETS_MAX (((32*1024)/32)/(WAYS_MAX))
+
+#define MAX_BOOT_CONTEXTS 1
 
 #endif

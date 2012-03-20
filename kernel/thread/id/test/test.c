@@ -21,10 +21,12 @@ static H2K_thread_context a,b,c;
 
 int main() 
 {
-	if (H2K_thread_id(&a) != (u32_t)(&a)) FAIL("bad value");
-	if (H2K_thread_id(&b) != (u32_t)(&b)) FAIL("bad value");
-	if (H2K_thread_id(&c) != (u32_t)(&c)) FAIL("bad value");
-	if (H2K_thread_id((void *)(0xdeadbeef)) != (u32_t)(0xdeadbeef)) FAIL("bad value");
+	a.id.raw = 0xaaaaaaaa;
+	b.id.raw = 0xbbbbbbbb;
+	c.id.raw = 0xcccccccc;
+	if (H2K_thread_id(&a) != 0xaaaaaaaa) FAIL("bad value");
+	if (H2K_thread_id(&b) != 0xbbbbbbbb) FAIL("bad value");
+	if (H2K_thread_id(&c) != 0xcccccccc) FAIL("bad value");
 	puts("TEST PASSED\n");
 	return 0;
 }

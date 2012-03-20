@@ -13,6 +13,7 @@
 #include <globals.h>
 #include <pmu.h>
 #include <hw.h>
+#include <vm.h>
 
 void FAIL(const char *str)
 {
@@ -21,7 +22,29 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-H2K_thread_context a,b;
+H2K_thread_context a;
+H2K_thread_context *bptr;
+
+#define CPUS 2
+struct {
+	H2K_vmblock_t vm;
+	H2K_thread_context contexts[CPUS];
+	u32_t pend;
+	u32_t en;
+	u32_t masks[CPUS];
+	u32_t *maskptrs[CPUS];
+} TH_vm IN_SECTION(".data.init.boot");
+
+void TH_init_vm()
+{
+	memset(&TH_vm.contexts[0],0,sizeof(H2K_thread_context));
+	TH_vm.vm.contexts = &TH_vm.contexts[0];
+	TH_vm.vm.max_cpus = CPUS;
+	TH_vm.contexts[0].id.raw = 0;
+	TH_vm.contexts[0].id.vmidx = 2;
+	H2K_kg.vmblocks[2] = &TH_vm.vm;
+	bptr = &TH_vm.contexts[0];
+}
 
 void TH_set_dead()
 {
@@ -50,6 +73,7 @@ void TH_check_dead()
 int main()
 {
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	TH_init_vm();
 	//H2K_thread_init();
 	//H2K_readylist_init();
 	//H2K_runlist_init();
@@ -88,61 +112,65 @@ int main()
 	if (H2K_trap_pmuconfig(1,NULL,0xdead,0xbabe,&a) != -1) FAIL("Unexpected return");
 	if (H2K_trap_pmuconfig(2,NULL,0xdead,0xbabe,&a) != -1) FAIL("Unexpected return");
 
-	memset(&b,0,sizeof(b));
 	H2K_set_pmucfg(0);
 
-	if (H2K_trap_pmuconfig(0,&b,0,0xbabe,&a) != -1) FAIL("dead thread");
-	if (b.pmu_on != 0) FAIL("PMU turned on");
+	if (bptr->pmu_on != 0) FAIL("PMU started on");
+	printf("a\n");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,0,0xbabe,&a) != -1) FAIL("dead thread");
+	if (bptr->pmu_on != 0) FAIL("PMU turned on");
 	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg");
 
-	if (H2K_trap_pmuconfig(0,&b,4,0xbabe,&a) != -1) FAIL("dead thread");
-	if (b.pmu_on != 0) FAIL("Changed dead thread");
+	printf("b\n");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,4,0xbabe,&a) != -1) FAIL("dead thread");
+	if (bptr->pmu_on != 0) FAIL("Changed dead thread");
 	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg");
 
-	b.status = H2K_STATUS_BLOCKED;
+	bptr->status = H2K_STATUS_BLOCKED;
 
-	if (H2K_trap_pmuconfig(0,&b,0,0xbabe,&a) != 0) FAIL("unexpected return");
-	if (b.pmu_on != 0) FAIL("PMU turned on");
+	printf("c\n");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return");
+	if (bptr->pmu_on != 0) FAIL("PMU turned on");
 	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg");
 
-	if (H2K_trap_pmuconfig(0,&b,4,0xbabe,&a) != 0) FAIL("unexpected return");
-	if (b.pmu_on != 1) {
-		printf("b.pmu_on == 0x%08x\n",b.pmu_on);
+	printf("d\n");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,4,0xbabe,&a) != 0) FAIL("unexpected return");
+	if (bptr->pmu_on != 1) {
+		printf("bptr->pmu_on == 0x%08x\n",bptr->pmu_on);
 		FAIL(">Invalid value written");
 	}
 	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg");
 
-	if (H2K_trap_pmuconfig(0,&b,0,0xbabe,&a) != 0) FAIL("Unexpected return");
-	if (b.pmu_on != 0) FAIL("PMU didn't turn off");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,0,0xbabe,&a) != 0) FAIL("Unexpected return");
+	if (bptr->pmu_on != 0) FAIL("PMU didn't turn off");
 	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg");
 
-	b.status = H2K_STATUS_RUNNING;
+	bptr->status = H2K_STATUS_RUNNING;
 
-	if (H2K_trap_pmuconfig(0,&b,0,0xbabe,&a) != 0) FAIL("unexpected return");
-	if (b.pmu_on != 0) FAIL("PMU turned on");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return");
+	if (bptr->pmu_on != 0) FAIL("PMU turned on");
 	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg");
 
-	if (H2K_trap_pmuconfig(0,&b,4,0xbabe,&a) != 0) FAIL("unexpected return");
-	if (b.pmu_on != 1) FAIL("Invalid value written");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,4,0xbabe,&a) != 0) FAIL("unexpected return");
+	if (bptr->pmu_on != 1) FAIL("Invalid value written");
 	if (H2K_get_pmucfg() != 1) FAIL("didn't change pmucfg");
 
-	if (H2K_trap_pmuconfig(0,&b,0,0xbabe,&a) != 0) FAIL("unexpected return");
-	if (b.pmu_on != 0) FAIL("PMU didn't turn off");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return");
+	if (bptr->pmu_on != 0) FAIL("PMU didn't turn off");
 	if (H2K_get_pmucfg() != 0) FAIL("didn't change pmucfg");
 
-	b.status = H2K_STATUS_RUNNING;
-	b.hthread = 1;
+	bptr->status = H2K_STATUS_RUNNING;
+	bptr->hthread = 1;
 
-	if (H2K_trap_pmuconfig(0,&b,0,0xbabe,&a) != 0) FAIL("unexpected return");
-	if (b.pmu_on != 0) FAIL("PMU turned on");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return");
+	if (bptr->pmu_on != 0) FAIL("PMU turned on");
 	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg");
 
-	if (H2K_trap_pmuconfig(0,&b,4,0xbabe,&a) != 0) FAIL("unexpected return");
-	if (b.pmu_on != 1) FAIL("Invalid value written");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,4,0xbabe,&a) != 0) FAIL("unexpected return");
+	if (bptr->pmu_on != 1) FAIL("Invalid value written");
 	if (H2K_get_pmucfg() != 2) FAIL("didn't change pmucfg");
 
-	if (H2K_trap_pmuconfig(0,&b,0,0xbabe,&a) != 0) FAIL("unexpected return");
-	if (b.pmu_on != 0) FAIL("PMU didn't turn off");
+	if (H2K_trap_pmuconfig(0,(void *)bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return");
+	if (bptr->pmu_on != 0) FAIL("PMU didn't turn off");
 	if (H2K_get_pmucfg() != 0) FAIL("didn't change pmucfg");
 
 	puts("setthread passed");

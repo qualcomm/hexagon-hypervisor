@@ -110,7 +110,9 @@ h2_mutex_trylock:
 		call h2_thread_myid
 	}
 2:
-	r2 = memw_locked(r24)
+	{
+		r2 = memw_locked(r24)
+	}
 	{
 		p0 = cmp.eq(r2,#0)
 		if (!p0.new) jump:nt 1f

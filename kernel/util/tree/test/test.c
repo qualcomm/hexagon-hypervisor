@@ -35,7 +35,7 @@ test_t tests[] = {
 	{ NULL, 0, 0, 0, NULL}
 };
 
-void treetest(treenode *root, unsigned int min, unsigned int max)
+void treetest(H2K_treenode_t *root, unsigned int min, unsigned int max)
 {
 	if (root == NULL) return;
 	if ((root->key) < min) FAIL("Node too small");
@@ -67,7 +67,7 @@ void init_teardown(test_t *test)
 	testidxmax = test->size;
 }
 
-void teardown_check(treenode *root)
+void teardown_check(H2K_treenode_t *root)
 {
 	if (testidx >= testidxmax) FAIL("Too many calls to teardown");
 	if (root->key != testdata[testidx++]) FAIL("Unexpected teardown order");
@@ -93,10 +93,10 @@ int main()
 {
 	int idx,i;
 	test_t *test;
-	treenode *root = NULL;
-	treenode *tmp;
-	treenode *leftroot;
-	treenode *rightroot;
+	H2K_treenode_t *root = NULL;
+	H2K_treenode_t *tmp;
+	H2K_treenode_t *leftroot;
+	H2K_treenode_t *rightroot;
 	unsigned int keytmp;
 	for (idx = 0; tests[idx].name != NULL; idx++) {
 		printf("%s: %d elements [%d,%d]\n",tests[idx].name,tests[idx].size,tests[idx].min,tests[idx].max);

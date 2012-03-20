@@ -7,7 +7,7 @@
 #define H2K_TREE_H 1
 
 #include <c_std.h>
-typedef u64_t treekey;
+typedef u64_t H2K_treekey_t;
 
 typedef struct treenode_struct {
 	union {
@@ -18,18 +18,18 @@ typedef struct treenode_struct {
 		};
 		struct treenode_struct *leaf[2];
 	};
-	treekey key;
-} treenode;
+	H2K_treekey_t key;
+} H2K_treenode_t;
 
-void H2K_tree_add_key(treenode **root, treenode *node, treekey key);
-void H2K_tree_remove_key(treenode **root, treenode *node, treekey key);
-void H2K_tree_bisect(treenode **le_tree_p, treenode **gt_tree_p, treenode *root, treekey key);
-void H2K_tree_destructive_iterate(treenode *root, void (*func)(treenode *));
+void H2K_tree_add_key(H2K_treenode_t **root, H2K_treenode_t *node, H2K_treekey_t key);
+void H2K_tree_remove_key(H2K_treenode_t **root, H2K_treenode_t *node, H2K_treekey_t key);
+void H2K_tree_bisect(H2K_treenode_t **le_tree_p, H2K_treenode_t **gt_tree_p, H2K_treenode_t *root, H2K_treekey_t key);
+void H2K_tree_destructive_iterate(H2K_treenode_t *root, void (*func)(H2K_treenode_t *));
 
-static inline void H2K_tree_add(treenode **root, treenode *node) { return H2K_tree_add_key(root,node,node->key); }
-static inline void H2K_tree_remove(treenode **root, treenode *node) { return H2K_tree_remove_key(root,node,node->key); }
+static inline void H2K_tree_add(H2K_treenode_t **root, H2K_treenode_t *node) { return H2K_tree_add_key(root,node,node->key); }
+static inline void H2K_tree_remove(H2K_treenode_t **root, H2K_treenode_t *node) { return H2K_tree_remove_key(root,node,node->key); }
 
-static inline treenode *H2K_tree_min(treenode *root) { if ((root == NULL) || (root->left == NULL)) return root; return H2K_tree_min(root->left); }
-static inline treenode *H2K_tree_max(treenode *root) { if ((root == NULL) || (root->right == NULL)) return root; return H2K_tree_max(root->left); }
+static inline H2K_treenode_t *H2K_tree_min(H2K_treenode_t *root) { if ((root == NULL) || (root->left == NULL)) return root; return H2K_tree_min(root->left); }
+static inline H2K_treenode_t *H2K_tree_max(H2K_treenode_t *root) { if ((root == NULL) || (root->right == NULL)) return root; return H2K_tree_max(root->left); }
 
 #endif

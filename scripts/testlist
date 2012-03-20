@@ -48,11 +48,14 @@
 ./kernel/util/atomic/test
 ./kernel/util/ring/test/test
 ./kernel/util/stmode/test
+./kernel/util/spinlock/test
 ./kernel/util/trace/test
 ./kernel/util/tree/test
 ./kernel/util/intcontrol/test
 ./kernel/vm/vmboot/test
 ./kernel/vm/vmevent/test
+./kernel/vm/cpuint/test
+./kernel/vm/shint/test
 ./kernel/vm/vmint/test
 ./kernel/vm/vmipi/test
 ./kernel/vm/vmtrap/test

@@ -16,6 +16,7 @@
 #include <atomic.h>
 #include <safemem.h>
 #include <lowprio.h>
+#include <id.h>
 
 /* 
  * EJP: hash table aligned to it's size, so we 
@@ -148,9 +149,12 @@ s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 	return H2K_check_sanity_unlock(n_woken);
 }
 
-static inline void H2K_futex_pi_raise(u32_t prio, H2K_thread_context *dest)
+static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 {
 	u32_t hashval;
+	H2K_thread_context *dest;
+	dest = H2K_id_to_context(destid);
+	if (dest == NULL) return;
 	if (dest->prio <= prio) return;
 	if (dest->status == H2K_STATUS_BLOCKED) {
 		/* Need to move to correct priority.  
@@ -190,7 +194,7 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 {
 	union {
 		u32_t val;
-		H2K_thread_context *dest;
+		H2K_id_t dest;
 		struct {
 			u32_t low5bits:5;
 			u32_t tid:27;
@@ -207,7 +211,7 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 	if (x.val == 0x1) {
 		/* Lock was completely freed */
 		/* Mark me as owner, no waiters */
-		x.dest = me;
+		x.dest = H2K_id_from_context(me);
 		*lock = x.val;
 		H2K_safemem_unlock();
 		BKL_UNLOCK();
@@ -251,7 +255,7 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 		/* TBD: check return value? */
 		H2K_atomic_swap(lock,0);
 	} else {
-		H2K_atomic_swap(lock,(u32_t)ret+1);
+		H2K_atomic_swap(lock,H2K_id_from_context(ret).raw+1);
 	}
 	H2K_safemem_unlock();
 	/* Restore my priority */
@@ -261,6 +265,10 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 		H2K_runlist_push(me);
 	}
 	return H2K_check_sanity_unlock(0);
+}
+
+void H2K_futex_cancel(H2K_thread_context *dst)
+{
 }
 
 void H2K_futex_init()

@@ -5,28 +5,22 @@
 
 /* 
  * There are several functions to test:
- * H2K_vm_interrupt_post
- * H2K_vm_interrupt_disable
- * H2K_vm_interrupt_enable
- * H2K_vm_interrupt_localunmask
- * H2K_vm_interrupt_localmask
- * H2K_vm_interrupt_setaffinity
+ * 
+ * H2K_vm_int_deliver
+ * H2K_vm_interrupt_peek
  * H2K_vm_interrupt_get
+ * H2K_vm_trap_intop
+ * H2K_vmtrap_intop
+ * H2K_enable_guest_interrupts
+ * H2K_disable_guest_interrupts 
+ * H2K_vm_check_interrupts
+ * 
+ * These functions make use of cpuint/shint/... calls and ops structures
+ * 
  * 
  * Here is the plan:
- * + Iterate over various numbers of total interrupts
- * + Iterate over various numbers of CPUs
- * + Iterate over CPUs interrupt enable/disabled
- * + Set up vmblock correctly
- * + Enable/Disable value checks
- * + Localmask/Localunmask value checks
- * + Setaffinity mask value checks
- * + Enable/Disable, then Post, check values
- * + Localmask/Localunmask, then Post, check values
- * + Enable/Disable, then Get, check values
- * + Localmask/Localunmask, then Get, check values
- * + Enable / check for delivery
- * + Localunmask / check for delivery
+ * + Use cpuint / shint
+ * + Set up interrupt scenarios, make sure expected behavior happens
  * 
  */
 
@@ -38,7 +32,9 @@
 #include <stdlib.h>
 #include <vmint.h>
 #include <vm.h>
+#include <hw.h>
 #include <context.h>
+#include <string.h>
 
 void FAIL(const char *str)
 {
@@ -48,13 +44,39 @@ void FAIL(const char *str)
 }
 
 H2K_thread_context TH_threads[MAX_TEST_THREADS];
-H2K_thread_context *TH_thread_ptrs[MAX_TEST_THREADS];
 u32_t TH_pending_storage[MAX_TEST_INTERRUPTS/32];
 u32_t TH_enable_storage[MAX_TEST_INTERRUPTS/32];
 u32_t TH_localmask_storage[MAX_TEST_THREADS][MAX_TEST_INTERRUPTS/32];
 u32_t *TH_localmask_ptr_storage[MAX_TEST_THREADS];
 
 H2K_vmblock_t TH_vmblock;
+
+void TH_init_vmblock()
+{
+	int i,j;
+	memset(&TH_vmblock,0,sizeof(TH_vmblock));
+	TH_vmblock.contexts = &TH_threads[0];
+	TH_vmblock.max_cpus = MAX_TEST_THREADS;
+	//TH_vmblock.num_cpus = MAX_TEST_THREADS;
+	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
+	TH_vmblock.pending = &TH_pending_storage[0];
+	TH_vmblock.enable = &TH_enable_storage[0];
+	TH_vmblock.percpu_mask = &TH_localmask_ptr_storage[0];
+	for (i = 0; i < MAX_TEST_INTERRUPTS/32; i++) {
+		TH_pending_storage[i] = 0;
+		TH_enable_storage[i] = 0;
+	}
+	for (i = 0; i < MAX_TEST_THREADS; i++) {
+		memset(&TH_threads[i],0,sizeof(TH_threads[i]));
+		TH_threads[i].id.cpuidx = i;
+		TH_threads[i].status = H2K_STATUS_RUNNING;
+		TH_threads[i].vmblock = &TH_vmblock;
+		TH_localmask_ptr_storage[i] = &TH_localmask_storage[i][0];
+		for (j = 0; j < MAX_TEST_INTERRUPTS/32; j++) {
+			TH_localmask_storage[i][j] = 0;
+		}
+	}
+}
 
 u8_t primes[MAX_TEST_THREADS] = { 2, 3, 5, 7, 11, 13, 17, 19 };
 
@@ -66,6 +88,48 @@ u32_t TH_expected_ipi = 0;
 void H2K_vm_ipi_send(H2K_thread_context *thread)
 {
 	TH_saw_ipi_send = 1;
+}
+
+u32_t TH_expected_event = 0;
+u32_t TH_saw_event = 0;
+void H2K_vm_event(u32_t x, u32_t cause, u32_t offset, H2K_thread_context *me)
+{
+	if (TH_expected_event == 0) {
+		printf("arg: %x/%u cause: %x/%u offset=%x/%u\n",x,x,cause,cause,offset,offset);
+		FAIL("Unexpected event!");
+	}
+	TH_saw_event = 1;
+}
+
+u32_t TH_expected_sanity = 0;
+u32_t TH_saw_sanity = 0;
+
+u64_t H2K_check_sanity_unlock(u64_t ret)
+{
+	if (TH_expected_sanity == 0) FAIL("Didn't expect sanity");
+	TH_saw_sanity = 1;
+	BKL_UNLOCK();
+	return ret;
+}
+
+u32_t TH_expected_popup_cancel = 0;
+u32_t TH_saw_popup_cancel = 0;
+void H2K_popup_cancel(H2K_thread_context *me)
+{
+	if (TH_expected_popup_cancel == 0) {
+		FAIL("Unexpected popup_cancel!");
+	}
+	TH_saw_popup_cancel = 1;
+}
+
+u32_t TH_expected_futex_cancel = 0;
+u32_t TH_saw_futex_cancel = 0;
+void H2K_futex_cancel(H2K_thread_context *me)
+{
+	if (TH_expected_futex_cancel == 0) {
+		FAIL("Unexpected futex_cancel!");
+	}
+	TH_saw_futex_cancel = 1;
 }
 
 void TH_check_ipi()
@@ -97,330 +161,612 @@ void TH_clear_data()
 	}
 }
 
-void TH_test_affinity(u32_t j)
-{
-	u32_t i,k;
-	TH_vmblock.num_cpus = MAX_TEST_THREADS;
-	for (i = 0; i < MAX_TEST_THREADS; i++) {
-		/* Start out with all interrupts unmasked, just for fun */
-		H2K_vm_interrupt_localunmask(&TH_vmblock,i,j);
-	}
-	for (i = 0; i < MAX_TEST_THREADS; i++) {
-		H2K_vm_interrupt_setaffinity(&TH_vmblock,i,j);
-		for (k = 0; k < MAX_TEST_THREADS; k++) {
-			if (i == k) {
-				if ((TH_localmask_storage[k][j/32] & (1<<(j%32))) == 0) {
-					FAIL("Setaffinity did not enable for thread");
-				} 
-			} else {
-				if ((TH_localmask_storage[k][j/32] & (1<<(j%32))) != 0) {
-					FAIL("Setaffinity did not disable for thread");
-				} 
-			}
-		}
-	}
-}
-
-void TH_test_maskfuncs()
-{
-	u32_t i,j;
-	TH_clear_data();
-	for (j = 0; j < MAX_TEST_INTERRUPTS; j++) {
-		/* Test enable/disable */
-		if ((TH_enable_storage[j/32] & (1<<(j % 32))) != 0) {
-			FAIL("Interrupt not cleared correctly");
-		}
-		H2K_vm_interrupt_enable(&TH_vmblock,j);
-		if ((TH_enable_storage[j/32] & (1<<(j % 32))) == 0) {
-			FAIL("H2K_vm_interrupt_enable failed");
-		}
-		for (i = 0; i < MAX_TEST_THREADS; i++) {
-			if ((TH_localmask_storage[i][j/32] & (1<<(j%32))) != 0) {
-				FAIL("Localmask not cleared correctly");
-			}
-			H2K_vm_interrupt_localunmask(&TH_vmblock,i,j);
-			if ((TH_localmask_storage[i][j/32] & (1<<(j%32))) == 0) {
-				FAIL("localunmask did not set local enable");
-			}
-			H2K_vm_interrupt_localmask(&TH_vmblock,i,j);
-			if ((TH_localmask_storage[i][j/32] & (1<<(j%32))) != 0) {
-				FAIL("localmask did not clear local enable");
-			}
-		}
-		H2K_vm_interrupt_disable(&TH_vmblock,j);
-		for (i = 0; i < MAX_TEST_THREADS; i++) {
-			if ((TH_localmask_storage[i][j/32] & (1<<(j%32))) != 0) {
-				FAIL("Localmask not cleared correctly");
-			}
-			H2K_vm_interrupt_localunmask(&TH_vmblock,i,j);
-			if ((TH_localmask_storage[i][j/32] & (1<<(j%32))) == 0) {
-				FAIL("localunmask did not set local enable");
-			}
-			H2K_vm_interrupt_localmask(&TH_vmblock,i,j);
-			if ((TH_localmask_storage[i][j/32] & (1<<(j%32))) != 0) {
-				FAIL("localmask did not clear local enable");
-			}
-		}
-		if ((TH_enable_storage[j/32] & (1<<(j % 32))) != 0) {
-			FAIL("H2K_vm_interrupt_disable failed");
-		}
-		/* Test setaffinity */
-		TH_test_affinity(j);
-	}
-}
-
-void TH_check_delivery(u32_t cpu, u32_t intno)
-{
-	u32_t k;
-	u32_t saw_post = 0;
-	k = cpu;
-	do {
-		if (((TH_vmblock.enable[intno/32]) & 
-		     (TH_vmblock.percpu_mask[k][intno/32]) &
-		     (1<<(intno%32))) != 0) {
-			if (saw_post && 
-			    (TH_threads[k].vmstatus & H2K_VMSTATUS_VMWORK)) {
-				FAIL("Saw post and additional vmwork set");
-			} else if (TH_threads[k].vmstatus & H2K_VMSTATUS_VMWORK) {
-				TH_check_ipi();
-				saw_post = 1;
-			} else if (!saw_post) {
-				printf("Enable=%x,mask=%x,intno=%d,th=%d/%d,cpu=%d\n",
-					TH_vmblock.enable[intno/32],
-					TH_vmblock.percpu_mask[k][intno/32],
-					intno,k,TH_vmblock.num_cpus,cpu);
-				for (k = 0; k < TH_vmblock.num_cpus; k++) {
-					printf("TH %d: %d\n",k,TH_threads[k].vmstatus & H2K_VMSTATUS_VMWORK);
-				}
-				FAIL("DId not set first thread");
-			}
-		} else if (TH_threads[k].vmstatus & H2K_VMSTATUS_VMWORK) {
-			FAIL("Put work on wrong thread");
-		}
-		if (++k >= TH_vmblock.num_cpus) k = 0;
-	} while (k != cpu);
-}
-
-void TH_test_post(u32_t cpu, u32_t intno)
-{
-	u32_t k;
-	for (k = 0; k < MAX_TEST_THREADS; k++) {
-		TH_threads[k].vmstatus = TH_vmstatus_setting;
-	}
-	H2K_vm_interrupt_post(&TH_vmblock,cpu, intno);
-	if ((TH_vmblock.pending[intno/32] & (1<<(intno%32))) == 0) {
-		FAIL("Did not pend interrupt");
-	}
-	TH_check_delivery(cpu,intno);
-}
-
-void TH_check_enable_wakeup(u32_t intno)
-{
-	u32_t k;
-	for (k = 0; k < MAX_TEST_THREADS; k++) {
-		TH_threads[k].vmstatus = TH_vmstatus_setting;
-	}
-	TH_vmblock.pending[intno/32] = 0xffffffff;
-	H2K_vm_interrupt_enable(&TH_vmblock,intno);
-	TH_check_delivery(0,intno);
-}
-
-void TH_check_localunmask_wakeup(u32_t cpu, u32_t intno)
-{
-	u32_t k;
-	for (k = 0; k < MAX_TEST_THREADS; k++) {
-		TH_threads[k].vmstatus = TH_vmstatus_setting;
-	}
-	TH_vmblock.pending[intno/32] = 0xffffffff;
-	H2K_vm_interrupt_localunmask(&TH_vmblock,cpu,intno);
-	TH_check_delivery(cpu,intno);
-	if (TH_threads[cpu].vmstatus == 0) FAIL("Didn't interrupt unmasking thread");
-}
-
-void TH_test_clear(u32_t intno)
-{
-	TH_vmblock.pending[intno/32] |= (1<<(intno%32));
-	H2K_vm_interrupt_clear(&TH_vmblock,intno);
-	if ((TH_vmblock.pending[intno/32] >> (intno % 32)) & 1) FAIL("Didn't clear interrupt");
-}
-
-void TH_test_posting()
-{
-	u32_t i,j;
-	/* Test that a normally posted interrupt will cause a thread to have VM Work */
-	for (j = 0; j < TH_vmblock.num_ints; j++) {
-		for (i = 0; i < TH_vmblock.num_cpus; i++) {
-			H2K_vm_interrupt_disable(&TH_vmblock,j);
-			TH_test_post(i,j);
-			TH_vmblock.pending[j/32] = 0;
-			H2K_vm_interrupt_enable(&TH_vmblock,j);
-			TH_test_post(i,j);
-		}
-	}
-	/* Test that a disabled interrupt that is pending and gets enabled will cause VM Work */
-	for (j = 0; j < TH_vmblock.num_ints; j++) {
-		H2K_vm_interrupt_disable(&TH_vmblock,j);
-		TH_check_enable_wakeup(j);
-		for (i = 0; i < TH_vmblock.num_cpus; i++) {
-			if ((TH_vmblock.percpu_mask[i][j/32] & (1<<(j%32))) != 0) {
-				H2K_vm_interrupt_localmask(&TH_vmblock,i,j);
-				TH_check_localunmask_wakeup(i,j);
-			}
-		}
-	}
-	/* Test that a posted interrupt can be cleared */
-	for (j = 0; j < TH_vmblock.num_ints; j++) {
-		TH_test_clear(j);
-	}
-}
-
-void TH_test_interrupt_get(u32_t cpu,u32_t intno)
-{
-	/* Starts with globally disabled / not pending */
-	H2K_thread_context *me = &TH_threads[cpu];
-	me->vmstatus = 0;
-	/* Disabled globally / not pending */
-	if (H2K_vm_interrupt_get(&TH_vmblock,cpu) != -1) FAIL("Got disabled/np int");
-	/* Enabled globally / not pending */
-	H2K_vm_interrupt_enable(&TH_vmblock,intno);
-	if (H2K_vm_interrupt_get(&TH_vmblock,cpu) != -1) FAIL("Got np int");
-	/* Disabled globally / pending */
-	H2K_vm_interrupt_disable(&TH_vmblock,intno);
-	TH_vmblock.pending[intno/32] |= (1<<(intno%32));
-	if (H2K_vm_interrupt_get(&TH_vmblock,cpu) != -1) FAIL("Got disabled int");
-	/* Enabled globally / pending */
-	TH_vmblock.enable[intno/32] |= (1<<(intno%32));
-	if ((TH_vmblock.percpu_mask[cpu][intno/32] & (1<<(intno%32))) != 0) {
-		if (H2K_vm_interrupt_get(&TH_vmblock,cpu) != intno) {
-			FAIL("Didn't get expected interrupt");
-		}
-		if ((TH_vmblock.enable[intno/32] & (1<<(intno%32))) != 0) {
-			FAIL("Not auto-disabled");
-		}
-		if ((TH_vmblock.pending[intno/32] & (1<<(intno%32))) != 0) {
-			FAIL("Not cleared from pending");
-		}
-	} else {
-		if (H2K_vm_interrupt_get(&TH_vmblock,cpu) != -1) {
-			FAIL("Didn't get expected interrupt");
-		}
-	}
-	H2K_vm_interrupt_disable(&TH_vmblock,intno);
-	TH_vmblock.pending[intno/32] = 0;
-}
-
-void TH_test_status()
-{
-	int i;
-	u32_t tmp;
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
-	for (i = 0; i < TH_vmblock.num_ints/32; i++) {
-		TH_vmblock.enable[i] = 0;
-		TH_vmblock.percpu_mask[0][i] = 0;
-		TH_vmblock.percpu_mask[1][i] = 0;
-		TH_vmblock.pending[i] = 0;
-	}
-	for (i = 0; i < TH_vmblock.num_ints; i++) {
-		if (i & 4) TH_vmblock.enable[i/32] |= (1<<(i%32));
-		TH_vmblock.percpu_mask[(i & 2) == 0][i/32] |= (1<<(i%32));
-		if (i & 1) TH_vmblock.pending[i/32] |= (1<<(i%32));
-	}
-	for (i = 0; i < TH_vmblock.num_ints; i++) {
-		tmp = H2K_vm_interrupt_status(&TH_vmblock,0,i);
-		if (tmp != (i & 0x7)) {
-			printf("ret: %x i: %x expect: %x\n",tmp,i,((i & 7)));
-			FAIL("Bad bits/0");
-		}
-		tmp = H2K_vm_interrupt_status(&TH_vmblock,1,i);
-		if (tmp != ((i & 0x7) ^ 2)) {
-			printf("ret: %x i: %x expect: %x\n",tmp,i,((i & 7) ^ 2));
-			FAIL("Bad bits/1");
-		}
-	}
-}
-
 int main()
 {
-	int i,j;
-	TH_vmblock.pending = TH_pending_storage;
-	TH_vmblock.enable = TH_enable_storage;
-	TH_vmblock.percpu_mask = TH_localmask_ptr_storage;
-	TH_vmblock.cpu_contexts = TH_thread_ptrs;
-	for (i = 0; i < MAX_TEST_THREADS; i++) {
-		TH_thread_ptrs[i] = &TH_threads[i];
-		TH_vmblock.percpu_mask[i] = TH_localmask_storage[i];
-	}
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
-
-	/* Check status */
-	TH_test_status();
-
-	/* int_v2p not set up */
-	/* pmap not set up */
-	/* Set set/clear mask functions basic functionality */
-	TH_test_maskfuncs();
-
+	int i,j,k;
+	TH_init_vmblock();
 	/* Set up post/get test masks */
 	TH_setup_intmask();
+	TH_clear_data();
+	H2K_thread_context *t0 = &TH_threads[0];
 
-	/* Set up for interrupt disabled checks */
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
-	TH_vmstatus_setting = 0;
-	TH_expected_ipi = 0;
-	for (i = 1; i < MAX_TEST_THREADS; i++) {
-		TH_vmblock.num_cpus = i;
-		TH_test_posting();
+	puts("VM enable/disable/check");
+
+	puts("A");
+	if (H2K_disable_guest_interrupts(t0) != 0) FAIL("Bad disable return (!0)");
+	if (t0->vmstatus & H2K_VMSTATUS_IE) FAIL("Set IE bit");
+	t0->vmstatus |= H2K_VMSTATUS_IE;
+	if (H2K_disable_guest_interrupts(t0) != 1) FAIL("Bad disable return (!1)");
+	if (t0->vmstatus & H2K_VMSTATUS_IE) FAIL("Didn't clear IE bit");
+
+	puts("B");
+	t0->vmstatus |= H2K_VMSTATUS_IE;
+	if (H2K_enable_guest_interrupts(t0) != 1) FAIL("Bad enable return (!1)");
+	if ((t0->vmstatus & H2K_VMSTATUS_IE) == 0) FAIL("cleared IE bit");
+	t0->vmstatus = 0;
+	if (H2K_enable_guest_interrupts(t0) != 0) FAIL("Bad enable return (!0)");
+	if ((t0->vmstatus & H2K_VMSTATUS_IE) == 0) FAIL("Didn't set IE bit");
+
+	puts("C");
+	t0->vmstatus = 0;
+	if (H2K_vm_check_interrupts(t0) != -1) FAIL("check interrupts returned an int");
+
+	puts("D");
+	t0->cpuint_enabled = 1;
+	t0->cpuint_pending = 1;
+	if (H2K_vm_check_interrupts(t0) != 0) FAIL("check interrupts peek failed");
+
+	puts("E");
+	t0->cpuint_enabled = 2;
+	t0->cpuint_pending = 2;
+	if (H2K_vm_check_interrupts(t0) != 1) FAIL("check interrupts peek failed");
+
+	puts("F");
+	t0->cpuint_enabled = 0;
+	t0->cpuint_pending = 0;
+	TH_vmblock.pending[0] = 1;
+	TH_vmblock.enable[0] = 1;
+	TH_vmblock.percpu_mask[0][0] = 1;
+	if (H2K_vm_check_interrupts(t0) != 32) FAIL("check interrupts peek failed");
+
+	puts("G");
+	t0->cpuint_enabled = 0;
+	t0->cpuint_pending = 0;
+	TH_vmblock.pending[0] = 0;
+	TH_vmblock.enable[0] = 0;
+	if (H2K_vm_check_interrupts(t0) != -1) FAIL("check interrupts peek failed");
+
+	puts("H");
+	t0->vmstatus = H2K_VMSTATUS_IE;
+	if (H2K_vm_check_interrupts(t0) != -1) FAIL("check interrupts returned an intr");
+	if (TH_saw_event != 0) FAIL("Saw unexpected event");
+
+	puts("I");
+	TH_expected_event = 1;
+
+	t0->cpuint_enabled = 1;
+	t0->cpuint_pending = 1;
+	if (H2K_vm_check_interrupts(t0) != 0) FAIL("check interrupts get failed");
+	if (t0->cpuint_enabled || t0->cpuint_pending) FAIL("get didn't work right");
+	if (TH_saw_event != 1) FAIL("Didn't see event");
+	TH_saw_event = 0;
+
+	puts("J");
+	t0->cpuint_enabled = 2;
+	t0->cpuint_pending = 2;
+	if (H2K_vm_check_interrupts(t0) != 1) FAIL("check interrupts get failed");
+	if (t0->cpuint_enabled || t0->cpuint_pending) FAIL("get didn't work right");
+	if (TH_saw_event != 1) FAIL("Didn't see event");
+	TH_saw_event = 0;
+
+	puts("K");
+	t0->cpuint_enabled = 0;
+	t0->cpuint_pending = 0;
+	TH_vmblock.pending[0] = 1;
+	TH_vmblock.enable[0] = 1;
+	if (H2K_vm_check_interrupts(t0) != 32) FAIL("check interrupts get failed");
+	if (TH_saw_event != 1) FAIL("Didn't see event");
+	if (TH_vmblock.pending[0] || TH_vmblock.enable[0]) {
+		printf("pending: %x enable: %x\n",TH_vmblock.pending[0],TH_vmblock.enable[0]);
+		FAIL("get didn't work right");
 	}
+	TH_saw_event = 0;
 
-	/* Set up for interrupt enabled checks */
-	TH_vmstatus_setting = H2K_VMSTATUS_IE;
+	puts("L");
+	TH_expected_event = 0;
+	t0->cpuint_enabled = 0;
+	t0->cpuint_pending = 0;
+	TH_vmblock.pending[0] = 0;
+	TH_vmblock.enable[0] = 0;
+	if (H2K_vm_check_interrupts(t0) != -1) FAIL("check interrupts get failed");
+	if (TH_saw_event == 1) FAIL("Saw event");
+	TH_saw_event = 0;
+
+	puts("M");
+	t0->vmstatus |= H2K_VMSTATUS_IE;
+	TH_expected_event = 0;
+	t0->cpuint_enabled = 1;
+	t0->cpuint_pending = 1;
+	if (H2K_enable_guest_interrupts(t0) != 1) FAIL("Enable failed");
+	if (TH_saw_event == 1) FAIL("Saw event");
+	if ((t0->cpuint_enabled != 1) || (t0->cpuint_pending != 1)) FAIL("took int?");
+	TH_saw_event = 0;
+
+	puts("N");
+	t0->vmstatus = 0;
+	TH_expected_event = 1;
+	t0->cpuint_enabled = 1;
+	t0->cpuint_pending = 1;
+	if (H2K_enable_guest_interrupts(t0) != 0) FAIL("Enable failed");
+	if (TH_saw_event != 1) FAIL("Didn't see event");
+	if ((t0->cpuint_enabled != 0) || (t0->cpuint_pending != 0)) FAIL("took int?");
+	TH_saw_event = 0;
+
+	puts("VM int deliver");
+	/* DEAD, RUNNING, READY, BLOCKED, VMWAIT, INTBLOCKED */
+
+	puts("A");
+	t0->vmstatus = 0;
+	t0->status = H2K_STATUS_DEAD;
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_DEAD) FAIL("status");
+	if (t0->vmstatus != 0) FAIL("vmstatus");
+	
+
+	puts("B");
+	t0->vmstatus = 0;
+	t0->status = H2K_STATUS_VMWAIT;
+	TH_expected_sanity = 1;
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_READY) FAIL("status");
+	if (t0->vmstatus != 0) FAIL("vmstatus");
+	if (TH_saw_sanity != 1) FAIL("no sanity check");
+	TH_saw_sanity = 0;
+	TH_expected_sanity = 0;
+	
+
+	puts("C");
+	t0->vmstatus = 0;
+	t0->status = H2K_STATUS_RUNNING;
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_RUNNING) FAIL("status");
+	if (t0->vmstatus != 0) FAIL("vmstatus");
+	
+
+	puts("D");
+	t0->vmstatus = H2K_VMSTATUS_IE;
+	t0->status = H2K_STATUS_RUNNING;
 	TH_expected_ipi = 1;
-	for (i = 1; i < MAX_TEST_THREADS; i++) {
-		TH_vmblock.num_cpus = i;
-		TH_test_posting();
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_RUNNING) FAIL("status");
+	if (t0->vmstatus != H2K_VMSTATUS_IE) FAIL("vmstatus");
+	if (TH_saw_ipi_send != 1) FAIL("Didn't see IPI");
+	TH_expected_ipi = 0;
+	TH_saw_ipi_send = 0;
+	
+
+	puts("E");
+	t0->vmstatus = 0;
+	t0->status = H2K_STATUS_INTBLOCKED;
+	TH_expected_popup_cancel = 0;
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_INTBLOCKED) FAIL("status");
+	if (t0->vmstatus != 0) FAIL("vmstatus");
+	if (TH_saw_popup_cancel != 0) FAIL("saw popup cancel");
+	TH_expected_popup_cancel = 0;
+	TH_saw_popup_cancel = 0;
+	
+
+	puts("F");
+	t0->vmstatus = H2K_VMSTATUS_IE;
+	t0->status = H2K_STATUS_INTBLOCKED;
+	TH_expected_popup_cancel = 1;
+	TH_expected_sanity = 1;
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_READY) FAIL("status");
+	if (t0->vmstatus != H2K_VMSTATUS_IE) FAIL("vmstatus");
+	if (TH_saw_popup_cancel != 1) FAIL("Didn't see popup cancel");
+	TH_expected_popup_cancel = 0;
+	TH_saw_popup_cancel = 0;
+	if (TH_saw_sanity != 1) FAIL("no sanity check");
+	TH_saw_sanity = 0;
+	TH_expected_sanity = 0;
+	
+
+	puts("G");
+	t0->vmstatus = 0;
+	t0->status = H2K_STATUS_BLOCKED;
+	TH_expected_futex_cancel = 0;
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_BLOCKED) FAIL("status");
+	if (t0->vmstatus != 0) FAIL("vmstatus");
+	if (TH_saw_futex_cancel != 0) FAIL("saw popup cancel");
+	TH_expected_futex_cancel = 0;
+	TH_saw_futex_cancel = 0;
+	
+
+	puts("H");
+	t0->vmstatus = H2K_VMSTATUS_IE;
+	t0->status = H2K_STATUS_BLOCKED;
+	TH_expected_futex_cancel = 1;
+	TH_expected_sanity = 1;
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_READY) FAIL("status");
+	if (t0->vmstatus != H2K_VMSTATUS_IE) FAIL("vmstatus");
+	if (TH_saw_futex_cancel != 1) FAIL("Didn't see popup cancel");
+	TH_expected_futex_cancel = 0;
+	TH_saw_futex_cancel = 0;
+	if (TH_saw_sanity != 1) FAIL("no sanity check");
+	TH_saw_sanity = 0;
+	TH_expected_sanity = 0;
+	
+
+	puts("I");
+	t0->vmstatus = H2K_VMSTATUS_IE;
+	t0->status = H2K_STATUS_READY;
+	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (t0->status != H2K_STATUS_READY) FAIL("status");
+	if (t0->vmstatus != H2K_VMSTATUS_IE) FAIL("vmstatus");
+
+	puts("intop handler");
+
+	puts("A");
+	t0->r00 = H2K_INTOP_NOP;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("nop");
+
+	puts("B");
+	t0->cpuint_enabled = 0;
+	TH_vmblock.enable[0] = 0;
+	t0->r00 = H2K_INTOP_GLOBEN;
+	t0->r01 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("enable0 ret");
+	if (t0->cpuint_enabled != 1) FAIL("enable0 beh");
+
+	t0->r00 = H2K_INTOP_GLOBEN;
+	t0->r01 = 1;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("enable1 ret");
+	if (t0->cpuint_enabled != 3) {
+		printf("val: %x\n",t0->cpuint_enabled);
+		FAIL("enable1 beh");
 	}
 
-	/* Test interrupt get */
-	TH_vmblock.num_cpus = MAX_TEST_THREADS;
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
-	for (j = 0; j < MAX_TEST_INTERRUPTS; j+=32) {
-		TH_vmblock.pending[j/32] = 0;
-		TH_vmblock.enable[j/32] = 0;
+	t0->r00 = H2K_INTOP_GLOBEN;
+	t0->r01 = 32;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("enable32 ret");
+	if (TH_vmblock.enable[0] != 1) {
+		printf("val: %x\n",TH_vmblock.enable[0]);
+		FAIL("enable32 beh");
 	}
-	for (i = 0; i < MAX_TEST_THREADS; i++) {
-		for (j = 0; j < MAX_TEST_INTERRUPTS; j++) {
-			TH_test_interrupt_get(i,j);
+
+	t0->r00 = H2K_INTOP_GLOBEN;
+	t0->r01 = 33;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("enable33 ret");
+	if (TH_vmblock.enable[0] != 3) FAIL("enable33 beh");
+
+	t0->r00 = H2K_INTOP_GLOBEN;
+	t0->r01 = 1026;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("oob ret");
+
+	puts("C");
+	t0->cpuint_enabled = 3;
+	TH_vmblock.enable[0] = 3;
+	t0->r00 = H2K_INTOP_GLOBDIS;
+	t0->r01 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("disable0 ret");
+	if (t0->cpuint_enabled != 2) FAIL("disable0 beh");
+
+	t0->r00 = H2K_INTOP_GLOBDIS;
+	t0->r01 = 1;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("disable1 ret");
+	if (t0->cpuint_enabled != 0) {
+		printf("val: %x\n",t0->cpuint_enabled);
+		FAIL("disable1 beh");
+	}
+
+	t0->r00 = H2K_INTOP_GLOBDIS;
+	t0->r01 = 32;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("disable32 ret");
+	if (TH_vmblock.enable[0] != 2) {
+		printf("val: %x\n",TH_vmblock.enable[0]);
+		FAIL("disable32 beh");
+	}
+
+	t0->r00 = H2K_INTOP_GLOBDIS;
+	t0->r01 = 33;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("disable33 ret");
+	if (TH_vmblock.enable[0] != 0) FAIL("disable33 beh");
+
+	t0->r00 = H2K_INTOP_GLOBDIS;
+	t0->r01 = 1026;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("oob ret");
+
+	puts("D");
+	t0->cpuint_enabled = 0;
+	TH_vmblock.enable[0] = 0;
+	TH_vmblock.percpu_mask[0][0] = 0;
+	t0->r00 = H2K_INTOP_LOCEN;
+	t0->r01 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("enable0 ret");
+	if (t0->cpuint_enabled != 0) FAIL("enable0 beh");
+
+	t0->r00 = H2K_INTOP_LOCEN;
+	t0->r01 = 1;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("enable1 ret");
+	if (t0->cpuint_enabled != 0) {
+		printf("val: %x\n",t0->cpuint_enabled);
+		FAIL("enable1 beh");
+	}
+
+	t0->r00 = H2K_INTOP_LOCEN;
+	t0->r01 = 32;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("enable32 ret");
+	if (TH_vmblock.percpu_mask[0][0] != 1) {
+		printf("val: %x\n",TH_vmblock.enable[0]);
+		FAIL("enable32 beh");
+	}
+
+	t0->r00 = H2K_INTOP_LOCEN;
+	t0->r01 = 33;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("enable33 ret");
+	if (TH_vmblock.percpu_mask[0][0] != 3) FAIL("enable33 beh");
+
+	t0->r00 = H2K_INTOP_LOCEN;
+	t0->r01 = 1026;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("oob ret");
+
+	puts("E");
+	TH_vmblock.percpu_mask[0][0] = 3;
+	t0->r00 = H2K_INTOP_LOCDIS;
+	t0->r01 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("disable0 ret");
+	if (t0->cpuint_enabled != 0) FAIL("disable0 beh");
+
+	t0->r00 = H2K_INTOP_LOCDIS;
+	t0->r01 = 1;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("disable1 ret");
+	if (t0->cpuint_enabled != 0) {
+		printf("val: %x\n",t0->cpuint_enabled);
+		FAIL("disable1 beh");
+	}
+
+	t0->r00 = H2K_INTOP_LOCDIS;
+	t0->r01 = 32;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("disable32 ret");
+	if (TH_vmblock.percpu_mask[0][0] != 2) {
+		printf("val: %x\n",TH_vmblock.enable[0]);
+		FAIL("disable32 beh");
+	}
+
+	t0->r00 = H2K_INTOP_LOCDIS;
+	t0->r01 = 33;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("disable33 ret");
+	if (TH_vmblock.percpu_mask[0][0] != 0) FAIL("disable33 beh");
+
+	t0->r00 = H2K_INTOP_LOCDIS;
+	t0->r01 = 1026;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("oob ret");
+
+	puts("F");
+	t0->r00 = H2K_INTOP_AFFINITY;
+	t0->r01 = 0;
+	t0->r02 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("affinity ret on cpuint");
+
+	for (i = 0; i < TH_vmblock.max_cpus; i++) {
+		for (j = 32; j < TH_vmblock.num_ints; j++) {
+			int maskidx = (j-32)/32;
+			int bitidx = j%32;
+			t0->r00 = H2K_INTOP_AFFINITY;
+			t0->r01 = j;
+			t0->r02 = i;
+			H2K_vmtrap_intop(t0);
+			for (k = 0; k < TH_vmblock.max_cpus; k++) {
+				int bit = (TH_vmblock.percpu_mask[k][maskidx] >> bitidx) & 1;
+				if (bit && (i != k)) FAIL("Enabled on non-affine CPU");
+				if (!bit && (i == k)) FAIL("Disabled on affine CPU");
+			}
+		}
+		//printf("Done: %d\n",i);
+	}
+	t0->r00 = H2K_INTOP_AFFINITY;
+	t0->r01 = 1026;
+	t0->r02 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("affinity ret on oob int");
+
+	for (i = 0; i < TH_vmblock.max_cpus; i++) {
+		for (j = 32; j < TH_vmblock.num_ints; j++) {
+			int maskidx = (j-32)/32;
+			TH_vmblock.percpu_mask[i][maskidx] = 0;
 		}
 	}
-	/* Further get testing */
-	TH_vmblock.pending[0] = 0xffffffff;
-	TH_vmblock.enable[0] = 0xffffffff;
-	TH_vmblock.percpu_mask[0][0] = 0xffffffff;
-	if (H2K_vm_interrupt_peek(&TH_vmblock,0) != 0) {
-		FAIL("Didn't get first valid interrupt/peek");
+
+	puts("G");
+	/* GET/PEEK */
+	t0->cpuint_enabled = 0;
+	t0->cpuint_pending = 0;
+	t0->r00 = H2K_INTOP_PEEK;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("peek: fail ret");
+	t0->r00 = H2K_INTOP_GET;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("get: fail ret");
+
+	t0->cpuint_enabled = 1;
+	t0->cpuint_pending = 1;
+	t0->r00 = H2K_INTOP_PEEK;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("peek: 0 ret");
+	t0->r00 = H2K_INTOP_GET;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("get: 0 ret");
+	if ((t0->cpuint_enabled != 0) || (t0->cpuint_pending != 0)) FAIL("get: 0 beh");
+
+	t0->cpuint_enabled = 3;
+	t0->cpuint_pending = 3;
+	t0->r00 = H2K_INTOP_PEEK;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("peek: 0 ret");
+	t0->r00 = H2K_INTOP_GET;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("get: 0 ret");
+	t0->r00 = H2K_INTOP_PEEK;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 1) FAIL("peek: 1 ret");
+	t0->r00 = H2K_INTOP_GET;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 1) FAIL("get: 1 ret");
+	if ((t0->cpuint_enabled != 0) || (t0->cpuint_pending != 0)) FAIL("get: 0 beh");
+
+	TH_vmblock.pending[0] = 1;
+	TH_vmblock.percpu_mask[0][0] = 1;
+	TH_vmblock.enable[0] = 1;
+	t0->r00 = H2K_INTOP_PEEK;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 32) FAIL("peek: 32 ret");
+	t0->r00 = H2K_INTOP_GET;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 32) FAIL("get: 32 ret");
+	if ((TH_vmblock.pending[0] != 0) || (TH_vmblock.enable[0] != 0)) FAIL("get: 32 beh");
+	
+
+	TH_vmblock.pending[0] = 3;
+	TH_vmblock.percpu_mask[0][0] = 3;
+	TH_vmblock.enable[0] = 3;
+	t0->r00 = H2K_INTOP_PEEK;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 32) FAIL("peek: 32 ret");
+	t0->r00 = H2K_INTOP_GET;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 32) FAIL("get: 32 ret");
+	t0->r00 = H2K_INTOP_PEEK;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 33) FAIL("peek: 33 ret");
+	t0->r00 = H2K_INTOP_GET;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 33) FAIL("get: 33 ret");
+	if ((TH_vmblock.pending[0] != 0) || (TH_vmblock.enable[0] != 0)) FAIL("get: 32 beh");
+
+	/* STATUS */
+	puts("H");
+	t0->cpuint_pending = 0xAAAAAAAA;
+	t0->cpuint_enabled = 0xF0F0F0F0;
+	for (i = 0; i < 32; i++) {
+		t0->r00 = H2K_INTOP_STATUS;
+		t0->r01 = i;
+		H2K_vmtrap_intop(t0);
+		if (t0->r00 != (i & 5)) FAIL("bad cpuint status");
 	}
-	if (H2K_vm_interrupt_get(&TH_vmblock,0) != 0) {
-		FAIL("Didn't get first valid interrupt/get");
+
+	TH_vmblock.pending[0] = 0xAAAAAAAA;
+	TH_vmblock.percpu_mask[0][0] = 0xCCCCCCCC;
+	TH_vmblock.enable[0] = 0xF0F0F0F0;
+	for (i = 32; i < 64; i++) {
+		t0->r00 = H2K_INTOP_STATUS;
+		t0->r01 = i;
+		H2K_vmtrap_intop(t0);
+		if (t0->r00 != (i & 7)) FAIL("bad shint status");
 	}
-	if (TH_vmblock.pending[0] != 0xfffffffe) {
-		FAIL("Didn't clear pending bit");
-	}
-	if (TH_vmblock.enable[0] != 0xfffffffe) {
-		FAIL("Didn't clear enable bit");
-	}
-	if (H2K_vm_interrupt_peek(&TH_vmblock,0) != 1) {
-		FAIL("Didn't get first valid interrupt/peek");
-	}
+
+	t0->r00 = H2K_INTOP_STATUS;
+	t0->r01 = 1026;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("Bad oob status");
+
+	t0->cpuint_pending = 0;
+	t0->cpuint_enabled = 0;
 	TH_vmblock.pending[0] = 0;
-	TH_vmblock.num_ints = 32;
-	if (H2K_vm_interrupt_peek(&TH_vmblock,0) != -1) {
-		FAIL("Found interrupt, but shouldn't have");
-	}
-	if (H2K_vm_interrupt_get(&TH_vmblock,0) != -1) {
-		FAIL("Found interrupt, but shouldn't have");
-	}
-	/* OK!  We're done here! */
-	puts("TEST PASSED");
+	TH_vmblock.percpu_mask[0][0] = 0;
+	TH_vmblock.enable[0] = 0;
+
+	/* POST / CLEAR */
+	puts("I");
+
+	t0->r00 = H2K_INTOP_POST;
+	t0->r01 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad post status/0");
+	if (t0->cpuint_pending != 1) FAIL("Bad post beh/0");
+
+	t0->r00 = H2K_INTOP_POST;
+	t0->r01 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad post status/0/2");
+	if (t0->cpuint_pending != 1) FAIL("Bad post beh/0/2");
+
+	t0->r00 = H2K_INTOP_POST;
+	t0->r01 = 1;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad post status/1");
+	if (t0->cpuint_pending != 3) FAIL("Bad post beh/1");
+
+	t0->r00 = H2K_INTOP_POST;
+	t0->r01 = 32;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad post status/32");
+	if (TH_vmblock.pending[0] != 1) FAIL("Bad post beh/32");
+
+	t0->r00 = H2K_INTOP_POST;
+	t0->r01 = 32;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad post status/32/2");
+	if (TH_vmblock.pending[0] != 1) FAIL("Bad post beh/32/2");
+
+	t0->r00 = H2K_INTOP_POST;
+	t0->r01 = 33;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad post status/33");
+	if (TH_vmblock.pending[0] != 3) FAIL("Bad post beh/33");
+
+	t0->r00 = H2K_INTOP_CLEAR;
+	t0->r01 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad clear status/0");
+	if (t0->cpuint_pending != 2) FAIL("Bad clear beh/0");
+
+	t0->r00 = H2K_INTOP_CLEAR;
+	t0->r01 = 0;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad clear status/0/2");
+	if (t0->cpuint_pending != 2) FAIL("Bad clear beh/0/2");
+
+	t0->r00 = H2K_INTOP_CLEAR;
+	t0->r01 = 1;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad clear status/1");
+	if (t0->cpuint_pending != 0) FAIL("Bad clear beh/1");
+
+	t0->r00 = H2K_INTOP_CLEAR;
+	t0->r01 = 32;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad clear status/32");
+	if (TH_vmblock.pending[0] != 2) FAIL("Bad clear beh/32");
+
+	t0->r00 = H2K_INTOP_CLEAR;
+	t0->r01 = 32;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad clear status/32/2");
+	if (TH_vmblock.pending[0] != 2) FAIL("Bad clear beh/32/2");
+
+	t0->r00 = H2K_INTOP_CLEAR;
+	t0->r01 = 33;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != 0) FAIL("Bad clear status/33");
+	if (TH_vmblock.pending[0] != 0) FAIL("Bad clear beh/33");
+
+	puts("J");
+
+	t0->r00 = 99;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("OOB op");
+
+	t0->r00 = -1;
+	H2K_vmtrap_intop(t0);
+	if (t0->r00 != -1) FAIL("OOB op");
+
+	puts("PASS");
 	return 0;
 }
 

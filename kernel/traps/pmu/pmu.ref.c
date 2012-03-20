@@ -9,6 +9,7 @@
 #include <globals.h>
 #include <atomic.h>
 #include <hw.h>
+#include <id.h>
 #include <q6protos.h>
 
 typedef u32_t (*pmuconfigptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
@@ -30,7 +31,10 @@ u32_t H2K_trap_pmuconfig(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2
 u32_t H2K_trap_pmuconfig_threadset(u32_t unused, void *vdest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
 {
 	u32_t val;
-	H2K_thread_context *dest = vdest;
+	H2K_id_t id;
+	H2K_thread_context *dest;
+	id.raw = (u32_t)vdest;
+	if ((dest = H2K_id_to_context(id)) == NULL) return -1;
 	turnon = (turnon != 0);
 	if (dest->status == H2K_STATUS_DEAD) return -1;
 	BKL_LOCK();

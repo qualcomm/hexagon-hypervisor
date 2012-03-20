@@ -30,7 +30,7 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-unsigned int ackbuf[MAX_INTERRUPTS/32] __attribute__((aligned(MAX_INTERRUPTS/8)));
+unsigned int ackbuf[MAX_INTERRUPTS/32] __attribute__((aligned(2*MAX_INTERRUPTS/8)));
 
 //void TH_call_fastint_check(u32_t intno);
 void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2);
@@ -129,7 +129,7 @@ void TH_check_l2ack(int interrupt)
 	if (interrupt < 32) return;
 	interrupt -= 32;
 	if (((ackbuf[interrupt/32] >> (interrupt & 0x1f)) & 1) == 0) {
-		printf("%d: ackbuf[%d] = 0x%08x\n",interrupt,interrupt/32,ackbuf[interrupt/32]);
+		printf("%d: ackbuf[%d] = 0x%08x (@%x)\n",interrupt,interrupt/32,ackbuf[interrupt/32],&ackbuf[interrupt/32]);
 		FAIL("L2 interrupt not acked");
 	}
 	ackbuf[interrupt/32] ^= 1<<(interrupt & 0x1f);

@@ -44,7 +44,7 @@ Get the size required for a vm block
 @dependencies None
 */
 
-unsigned int h2_config_vmblock_size(char num_cpus, short num_ints);
+unsigned int h2_config_vmblock_size(unsigned int num_cpus, unsigned int num_ints);
 
 /**
 Initialize fields for a vm block

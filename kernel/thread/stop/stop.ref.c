@@ -19,16 +19,15 @@ void H2K_thread_stop(H2K_thread_context *me)
 
 	BKL_LOCK(&H2K_bkl);
 
-	if (vmblock) {  // is a vcpu
+	if (vmblock) {  // is a vcpu, EJP: will always be true soon
 		vmblock->num_cpus--;
-		vmblock->cpu_contexts[me->vmcpu] = NULL;
 	}
 
 	H2K_runlist_remove(me);
 	H2K_asid_table_dec(me->ssr_asid);
 	H2K_thread_context_clear(me);
-	me->next = H2K_gp->free_threads;
-	H2K_gp->free_threads = me;
+	me->next = vmblock->free_threads;
+	vmblock->free_threads = me;
 	H2K_dosched(me,get_hwtnum());
 }
 

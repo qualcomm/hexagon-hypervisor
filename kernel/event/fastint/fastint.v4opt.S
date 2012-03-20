@@ -27,13 +27,12 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	{
 		/* Per-HThread stack may get corrputed by trap in int handler */
 		/* So save off important registers in fastint context that won't change */
-		memd(r24+#CONTEXT_reserved_u64) = r31:30
+		memd(r24+#CONTEXT_totalcycles) = r31:30
 		r4 = memw(r4+r0<<#2)
 		r25 = r0
 		gp = r6
 	}
 	{
-		memd(r24+#CONTEXT_totalcycles) = r25:24
 		r29 = add(r24,#FASTINT_CONTEXT_SIZE)
 		callr r4
 		crswap(r24,sgp0)
@@ -77,8 +76,7 @@ H2K_fastint_return:
 	.falign
 2:
 	{
-		r31:30 = memd(r24+#CONTEXT_reserved_u64)
-		r25:24 = memd(r24+#CONTEXT_totalcycles)
+		r31:30 = memd(r24+#CONTEXT_totalcycles)
 	}
 	{
 		jumpr r31

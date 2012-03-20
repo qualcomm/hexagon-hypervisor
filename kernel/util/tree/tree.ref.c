@@ -5,7 +5,7 @@
 
 #include <tree.h>
 
-void H2K_tree_remove_key(treenode **root, treenode *node, treekey key)
+void H2K_tree_remove_key(H2K_treenode_t **root, H2K_treenode_t *node, H2K_treekey_t key)
 {
 	if (*root == NULL) return; /* ERROR? */
 	if (*root == node) {
@@ -19,7 +19,7 @@ void H2K_tree_remove_key(treenode **root, treenode *node, treekey key)
 	}
 }
 
-void H2K_tree_add_key(treenode **root, treenode *node, treekey key)
+void H2K_tree_add_key(H2K_treenode_t **root, H2K_treenode_t *node, H2K_treekey_t key)
 {
 	if (*root == NULL) {
 		*root = node;
@@ -32,9 +32,9 @@ void H2K_tree_add_key(treenode **root, treenode *node, treekey key)
 	}
 }
 
-void H2K_tree_bisect(treenode **le_tree_p, treenode **gt_tree_p, treenode *root, treekey key)
+void H2K_tree_bisect(H2K_treenode_t **le_tree_p, H2K_treenode_t **gt_tree_p, H2K_treenode_t *root, H2K_treekey_t key)
 {
-	treenode *tmp;
+	H2K_treenode_t *tmp;
 	if (root == NULL) return;
 	if (root->key <= key) {
 		*le_tree_p = root;
@@ -49,9 +49,9 @@ void H2K_tree_bisect(treenode **le_tree_p, treenode **gt_tree_p, treenode *root,
 	}
 }
 
-void H2K_tree_destructive_iterate(treenode *root, void (*func)(treenode *))
+void H2K_tree_destructive_iterate(H2K_treenode_t *root, void (*func)(H2K_treenode_t *))
 {
-	treenode *tmp;
+	H2K_treenode_t *tmp;
 	if (root == NULL) return;
 	if (root->left == NULL) {
 		tmp = root->right;

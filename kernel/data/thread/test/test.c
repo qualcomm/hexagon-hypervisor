@@ -23,6 +23,7 @@ static H2K_thread_context a;
 int main() 
 {
 	int i;
+	u64_t tmp;
 	char *x;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	a.next = a.prev = &a;
@@ -31,14 +32,17 @@ int main()
 	a.r3130 = 0x4321;
 	a.r0908 = 0x3333;
 	a.cs1cs0 = 0x3456;
+	a.vmblock = 0x1234;
+	a.id.raw = 0x5678;
 	H2K_thread_context_clear(&a);
+	if (a.vmblock == 0) FAIL("Cleared vmblock");
+	if (a.id.raw == 0) FAIL("Cleared id");
+	a.vmblock_id = 0;
 	x = (void *)(&a);
 	for (i = 0; i < CONTEXT_SIZE; i++) {
 		if (x[i] != 0) FAIL("Nonzero element");
 	}
-	H2K_gp->free_threads = &a;
 	H2K_thread_init();
-	if (H2K_gp->free_threads != NULL) FAIL("H2K_thread_init");
 	puts("TEST PASSED\n");
 	return 0;
 }

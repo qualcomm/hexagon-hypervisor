@@ -11,10 +11,12 @@
 #include <context.h>
 #include <trace.h>
 #include <futex.h>
+#include <vm.h>
+#include <timeinfo.h>
 
 typedef struct {
-	u32_t mask_for_ipi;
 	u64_t ready_valids[MAX_PRIOS/64] __attribute__((aligned(MAX_PRIOS/8)));
+	H2K_timeinfo_t time;
 	union {
 		u64_t lowprio_masks;
 		struct {
@@ -45,8 +47,8 @@ typedef struct {
 		};
 	};
 #endif
+	u32_t mask_for_ipi;
 	u32_t tlb_index;
-	H2K_thread_context *free_threads;
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];
 	u64_t waitcycles[MAX_HTHREADS];
@@ -67,6 +69,7 @@ typedef struct {
 #endif
 	void *fastint_funcptrs[MAX_INTERRUPTS] __attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 	void *inthandlers[MAX_INTERRUPTS]__attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
+	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
 	u32_t on_simulator;
 } H2K_kg_t;
 

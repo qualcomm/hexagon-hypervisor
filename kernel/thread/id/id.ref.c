@@ -4,10 +4,11 @@
  */
 
 #include <c_std.h>
+#include <id.h>
 #include <context.h>
 
-IN_SECTION(".text.core.id") u32_t H2K_thread_id(H2K_thread_context *me)
+IN_SECTION(".text.core.id") H2K_id_t H2K_thread_id(H2K_thread_context *me)
 {       
-        return (u32_t)me;
+        return H2K_id_from_context(me);
 }
 

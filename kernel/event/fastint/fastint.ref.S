@@ -19,8 +19,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	/* Per-HThread stack may get corrputed by trap in int handler */
 	/* So save off important registers in fastint context that won't change */
 	/* EJP: FIXME: revisit when we add preemption point... */
-	memd(r3+#CONTEXT_reserved_u64) = r31:30
-	memd(r3+#CONTEXT_totalcycles) = r25:24
+	memd(r3+#CONTEXT_totalcycles) = r31:30
 
 	r5 = #0
 	r5 = setbit(r5,r0)
@@ -77,8 +76,7 @@ H2K_fastint_return:
 	//if (!p0) jump 1f
 	crswap(r24,sgp)
 	/* EJP: FIXME: revisit when we add preemption point... */
-	r31:30 = memd(r24+#CONTEXT_reserved_u64)
-	r25:24 = memd(r24+#CONTEXT_totalcycles)
+	r31:30 = memd(r24+#CONTEXT_totalcycles)
 	jumpr r31
 
 //1:

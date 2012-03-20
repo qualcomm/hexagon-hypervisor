@@ -33,6 +33,7 @@ s32_t ret;
 
 jmp_buf env;
 
+s32_t H2K_trap_angel() { return 0; }
 s32_t H2K_thread_id() { return 1; }
 // s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) { return 2; } -- defined in asm
 // s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me) { return 3; } -- defined in asm
@@ -57,6 +58,11 @@ s32_t H2K_trap_hwconfig() { return 31; }
 
 s32_t H2K_fatal_thread() { ret = -1; longjmp(env,1); }
 s32_t H2K_fatal_kernel() { ret = -2; longjmp(env,1); }
+
+void H2K_disable_guest_interrupts(H2K_thread_context *me) 
+{
+	/* Do something?? */
+}
 
 s32_t call_trap0(u32_t trapnum, H2K_thread_context *context);
 void TH_vectors();

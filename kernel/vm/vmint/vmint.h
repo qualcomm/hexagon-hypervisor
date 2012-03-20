@@ -21,28 +21,30 @@ typedef enum {
 	H2K_INTOP_PEEK,
 	H2K_INTOP_STATUS,
 	H2K_INTOP_POST,
-	H2K_INTOP_CLEAR
+	H2K_INTOP_CLEAR,
+	H2K_INTOP_FIRST_INVALID_OP
 } intop_type;
 
-void  H2K_vm_interrupt_post(H2K_vmblock_t *vmblock, u8_t first_cpu, u32_t intno) IN_SECTION(".text.vm.int");
-void  H2K_vm_interrupt_clear(H2K_vmblock_t *vmblock, u32_t intno) IN_SECTION(".text.vm.int");
-void  H2K_vm_interrupt_enable(H2K_vmblock_t *vmblock, u32_t intno) IN_SECTION(".text.vm.int");
-void  H2K_vm_interrupt_disable(H2K_vmblock_t *vmblock, u32_t intno) IN_SECTION(".text.vm.int");
-void  H2K_vm_interrupt_localmask(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno) IN_SECTION(".text.vm.int");
-void  H2K_vm_interrupt_localunmask(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno) IN_SECTION(".text.vm.int");
-void  H2K_vm_interrupt_setaffinity(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno) IN_SECTION(".text.vm.int");
-s32_t H2K_vm_interrupt_get(H2K_vmblock_t *vmblock, u8_t cpu) IN_SECTION(".text.vm.int");
-s32_t H2K_vm_interrupt_peek(H2K_vmblock_t *vmblock, u8_t cpu) IN_SECTION(".text.vm.int");
-
-/* EOI?  Mainly an enable... */
-
-u32_t H2K_vm_interrupt_status(H2K_vmblock_t *vmblock, u8_t cpu, u32_t intno) IN_SECTION(".text.vm.int");
-
-/* Trap multi-call */
-void H2K_vmtrap_intop(H2K_thread_context *me) IN_SECTION(".text.vm.int");
+typedef struct {
+	s32_t (*nop)();
+	s32_t (*post)(H2K_vmblock_t *vmblock, H2K_thread_context *dst, u32_t intno);
+	s32_t (*clear)(H2K_vmblock_t *vmblock, H2K_thread_context *dst, u32_t intno);
+	s32_t (*enable)(H2K_vmblock_t *vmblock, H2K_thread_context *dst, u32_t intno);
+	s32_t (*disable)(H2K_vmblock_t *vmblock, H2K_thread_context *dst, u32_t intno);
+	s32_t (*localmask)(H2K_vmblock_t *vmblock, H2K_thread_context *dst, u32_t intno);
+	s32_t (*localunmask)(H2K_vmblock_t *vmblock, H2K_thread_context *dst, u32_t intno);
+	s32_t (*setaffinity)(H2K_vmblock_t *vmblock, u32_t cpuidx, u32_t intno);
+	s32_t (*get)(H2K_vmblock_t *vmblock, H2K_thread_context *dst);
+	s32_t (*peek)(H2K_vmblock_t *vmblock, H2K_thread_context *dst);
+	u32_t (*status)(H2K_vmblock_t *vmblock, H2K_thread_context *dst, u32_t intno);
+} H2K_vm_int_ops_t;
 
 u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 s32_t H2K_vm_check_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
+void H2K_vm_int_deliver(H2K_vmblock_t *block, H2K_thread_context *dst, u32_t intno) IN_SECTION(".text.vm.int");
+
+/* Trap multi-call */
+void H2K_vmtrap_intop(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 
 #endif

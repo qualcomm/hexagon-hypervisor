@@ -33,26 +33,7 @@ u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t
 
 u32_t H2K_trap_config_add_thread_storage(u32_t unused, void *ptr, u32_t size, u32_t unused2, u32_t unused3, H2K_thread_context *me)
 {
-	u32_t ptrtmp = (u32_t)ptr;
-	H2K_thread_context *thread;
-	u32_t delta;
-	u32_t i;
-	u32_t created_threads = 0;
-	if (ptrtmp & (H2K_CONTEXT_ALIGN-1)) {
-		delta = ((ptrtmp + (H2K_CONTEXT_ALIGN-1)) & (-H2K_CONTEXT_ALIGN)) - ptrtmp;
-		ptrtmp += delta;
-		size -= delta;
-	}
-	for (i = 0; i+CONTEXT_SIZE <= size; i += CONTEXT_SIZE) {
-		thread = (H2K_thread_context *)(ptrtmp+i);
-		H2K_thread_context_clear(thread);
-		BKL_LOCK();
-		thread->next = H2K_gp->free_threads;
-		H2K_gp->free_threads = thread;
-		BKL_UNLOCK();
-		created_threads++;
-	}
-	return created_threads;
+	return 0;
 }
 
 u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)
@@ -89,27 +70,13 @@ u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t
 #define PHYSINT_SPACE(ints) ROUND(PHYSINT_WORDS(ints) * BYTES_PER_WORD)
 
 // cpu_contexts
-#define CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(struct _h2_thread_context *))
+#define CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_thread_context))
 
 /* return vm storage size required for vm with given parameters */
 
 u32_t H2K_trap_config_vmblock_size(u32_t unused, void *unused2, u32_t max_cpus, u32_t num_ints, u32_t unused3, H2K_thread_context *me)
 {
-
-#ifdef DEBUG
-	printf("\nVMBLOCK_SPACE\t%d\nPENDING_SPACE(num_ints)\t%d\nENABLE_SPACE(num_ints)\t%d\nMASKPTR_SPACE(max_cpus)\t%d\nMASK_SPACE(max_cpus, num_ints)\t%d\nPHYSINT_SPACE(num_ints)\t%d\nCONTEXT_SPACE(max_cpus)\t%d\nalignment\t%d\n",
-				 VMBLOCK_SPACE,
-				 PENDING_SPACE(num_ints),
-				 ENABLE_SPACE(num_ints),
-				 MASKPTR_SPACE(max_cpus),
-				 MASK_SPACE(max_cpus, num_ints),
-				 PHYSINT_SPACE(num_ints),
-				 CONTEXT_SPACE(max_cpus),
-				 (H2K_VMBLOCK_ALIGN - 1));
-#endif
-
-	return
- 		VMBLOCK_SPACE + 
+	return VMBLOCK_SPACE + 
 		PENDING_SPACE(num_ints) +
 		ENABLE_SPACE(num_ints) +
 		MASKPTR_SPACE(max_cpus) +
@@ -124,19 +91,20 @@ u32_t H2K_trap_config_vmblock_size(u32_t unused, void *unused2, u32_t max_cpus, 
 
 u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
 {
-
 	H2K_vmblock_t *vmblock;
 	bitmask_t *pends;
 	bitmask_t *enables;
 	bitmask_t **masks;
 	bitmask_t *mask;
 	physint_t *physints;
-	struct _h2_thread_context **contexts;
-
-	u32_t i, j;
+	struct _h2_thread_context *contexts;
+	u32_t *p;
+	u32_t i;
 
 	u32_t ptrtmp = (u32_t)ptr;
-	vmblock = (H2K_vmblock_t *)ptrtmp; /* for all but SET_STORAGE_IDENT, assume already aligned */
+	/* Align Pointer */
+	ptrtmp = ((ptrtmp + (H2K_VMBLOCK_ALIGN-1)) & (-H2K_VMBLOCK_ALIGN));
+	vmblock = (H2K_vmblock_t *)ptrtmp;
 
 	switch (op) {
 	case SET_STORAGE_IDENT:
@@ -148,14 +116,24 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		}
 		ptrtmp = ROUND(ptrtmp);
 		vmblock = (H2K_vmblock_t *)ptrtmp;
-
-		vmblock->ident = (u8_t)arg1;
+		for (i = 1; i < H2K_ID_MAX_VMS; i++) {
+			BKL_LOCK();
+			if (H2K_gp->vmblocks[i] == NULL) {
+				H2K_gp->vmblocks[i] = vmblock;
+				vmblock->vmidx = i;
+				BKL_UNLOCK();
+				break;
+			} else {
+				BKL_UNLOCK();
+				continue;
+			}
+		}
 		return (u32_t)vmblock;
 
 	case SET_PMAP_TYPE:
 		if (arg2 >= H2K_ASID_TRANS_TYPE_XXX_LAST) return 0; // bad type
-
-		if (!arg1) { 								/* use ptb from current thread as pmap by default */
+		if (!arg1) {
+			/* use ptb from current thread as pmap by default */
 			vmblock->pmap = H2K_mem_asid_table[me->ssr_asid].ptb;
 			vmblock->pmap_type = H2K_mem_asid_table[me->ssr_asid].transtype;
 		} else {
@@ -172,51 +150,47 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		return (u32_t)vmblock;
 
 	case SET_CPUS_INTS:
-		if (arg1 > MAX_VM_CPUS || arg2 > MAX_VM_INTS) return 0; /* bad args */
+		/* EJP: FIXME: 0 interrupts should be valid ?? ... and handled better? */
+		if ((arg1 > MAX_VM_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
+
+		vmblock->max_cpus = arg1;
+		vmblock->num_cpus = 0;
+		vmblock->num_ints = arg2;
 
 		ptrtmp += VMBLOCK_SPACE;
 
-		vmblock->max_cpus = (u8_t)arg1;
-		vmblock->num_cpus = 0;
-		vmblock->num_ints = (u16_t)arg2;
-
-		/* allocate pending, enable blocks and clear  */
-		vmblock->pending = pends = (bitmask_t *)ptrtmp;
-		ptrtmp += PENDING_SPACE(vmblock->num_ints);
-		vmblock->enable = enables = (bitmask_t *)ptrtmp;
-		ptrtmp += ENABLE_SPACE(vmblock->num_ints);
-
-		for (i = 0; i < ENABLE_WORDS(vmblock->num_ints); i++) {
-			pends[i] = 0;
-			enables[i] = 0;
+		/* allocate cpu contexts and set invalid */
+		vmblock->contexts = contexts = (H2K_thread_context *)ptrtmp;
+		for (i = 0; i < vmblock->max_cpus; i++) {
+			H2K_thread_context_clear(&contexts[i]);
+			contexts[i].id.vmidx = vmblock->vmidx;
+			contexts[i].id.cpuidx = i;
+			contexts[i].next = vmblock->free_threads;
+			vmblock->free_threads = &contexts[i];
 		}
-
+		ptrtmp += vmblock->max_cpus * sizeof(H2K_thread_context);
 		/* allocate per-cpu mask blocks and clear */
 		vmblock->percpu_mask = masks = (bitmask_t **)ptrtmp;
 		ptrtmp += MASKPTR_SPACE(vmblock->max_cpus);
 		mask = (bitmask_t *)ptrtmp;
 		ptrtmp += MASK_SPACE(vmblock->max_cpus, vmblock->num_ints);
-
-		for (i = 0; i < vmblock->max_cpus; i++, mask += MASK_WORDS_PERCPU(vmblock->num_ints)) {
-			masks[i] = mask;
-			for (j = 0; j < MASK_WORDS_PERCPU(vmblock->num_ints); j++) {
-				mask[j] = 0;
-			}
-		}
-
+		/* allocate pending, enable blocks and clear  */
+		vmblock->pending = pends = (bitmask_t *)ptrtmp;
+		ptrtmp += PENDING_SPACE(vmblock->num_ints);
+		vmblock->enable = enables = (bitmask_t *)ptrtmp;
+		ptrtmp += ENABLE_SPACE(vmblock->num_ints);
 		/* allocate hw ints and set invalid */
 		vmblock->int_v2p = physints = (physint_t *)ptrtmp;
 		ptrtmp += PHYSINT_SPACE(vmblock->num_ints);
-
-		for (i = 0; i < vmblock->num_ints; i++) {
-			physints[i] = H2K_VMBLOCK_V2P_INVALID;
+		p = (u32_t *)ptrtmp;
+		while (p != mask) {
+			*p = 0;
+			p--;
+		}
+		for (i = 0; i < vmblock->max_cpus; i++, mask += MASK_WORDS_PERCPU(vmblock->num_ints)) {
+			masks[i] = mask;
 		}
 
-		/* allocate cpu contexts and set invalid */
-		vmblock->cpu_contexts = contexts = (struct _h2_thread_context **)ptrtmp;
-		for (i = 0; i < vmblock->max_cpus; i++) {
-			contexts[i] = 0;
-		}
 		return (u32_t)vmblock;
 
 	case MAP_PHYS_INTR:

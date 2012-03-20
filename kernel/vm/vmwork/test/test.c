@@ -65,13 +65,13 @@ s32_t H2K_vm_check_interrupts(H2K_thread_context *me) {
 	
 	if (me->vmstatus & H2K_VMSTATUS_IE) {
 		/* Try to get interrupt */
-		intno = H2K_vm_interrupt_get(me->vmblock, me->vmcpu);
+		intno = H2K_vm_interrupt_get(me->vmblock, me->id.cpuidx);
 		if (intno != -1) {
 			/* Interrupts enabled, interrupt pulled from controller.  Do interrupt! */
 			H2K_vm_event(0,intno,INTERRUPT_GEVB_OFFSET,me);
 		}
 	} else { // interrupts disabled
-		intno = H2K_vm_interrupt_peek(me->vmblock, me->vmcpu);
+		intno = H2K_vm_interrupt_peek(me->vmblock, me->id.cpuidx);
 	}
 	return intno;
 }

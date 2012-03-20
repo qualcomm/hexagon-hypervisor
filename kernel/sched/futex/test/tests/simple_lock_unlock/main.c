@@ -6,6 +6,7 @@
 #include <c_std.h>
 #include <context.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <h2.h>
 #include <tlbfmt.h>
 #include <tlbmisc.h>
@@ -41,8 +42,7 @@
 #endif
 
 #define LOCK_SLOTS (LOCK_PAGES*(PAGE_SIZE/BYTES_PER_LONG))
-
-H2K_thread_context	context_space[MAX_TEST_THREADS];
+#define NUM_TOTAL_THREADS (MAX_TEST_THREADS+1)
 u64_t			stack_space[MAX_TEST_THREADS][THREAD_STACK_SIZE];
 
 /*  two pages  */
@@ -118,57 +118,12 @@ void consumer_thread(int prio)
 	h2_thread_stop();
 }
 
-int main() 
+void vmmain(void *unused)
 {
-	u32_t asid;
-
 	unsigned int next_tnum;
 	unsigned int timeout=0;
 
-	srand(TEST_SEED);
-
-	h2_init(0x0);
-
-	info("main() starting\n");
-
-	/*  pick a random lock to use for the dummies  */
-	dummy_thread_lock = rand() % (LOCK_SLOTS);
-	futex_pages[dummy_thread_lock] = 0;
-
-	do {
-		test_lock = rand() % (LOCK_SLOTS);
-	} while (test_lock == dummy_thread_lock);
-
-	futex_pages[test_lock] = 0;
-
-	info("test_lock = %d\n",test_lock);
-	info("dummy_thread_lock = %d\n",dummy_thread_lock);
-
-	h2_config_add_thread_storage(context_space,sizeof(context_space)); 
-
-	/* set URWX in monitor TLB entry permissions, to allow futex access */
-	/* not really necessary to find our asid since the TLB entry will be global
-		 anyway, but... */
-	asm volatile (
-	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n" 
-	: "=r"(asid));
-
-	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
-
-	if (tlb_index == 0x80000000) {
-		FAIL("Can't find monitor TLB entry");
-	}
-
-	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-
-#if __QDSP6_ARCH__ <= 3
-	tlb_entry |= 0x7ULL << 29;
-#else
-	tlb_entry |= 0xfULL << 28;
-#endif
-
-	H2K_mem_tlb_write(tlb_index, tlb_entry);
+	printf("VM Main\n");
 
 	/*  Check that the futex should fail first  */
 
@@ -241,6 +196,71 @@ int main()
 	if (!done) error("Test timed out\n");
 
 	info("TEST PASSED\n");
-	return(0);
+	exit(0);
 }
 
+#define MAX_SIZE (1024*1024)
+unsigned long long int main_thread_stack[THREAD_STACK_SIZE];
+unsigned char storage[MAX_SIZE] __attribute__((aligned(32)));
+void spawn_vm(void *pc)
+{
+	unsigned int size;
+	void *vmb;
+	size = h2_config_vmblock_size(NUM_TOTAL_THREADS,1);
+	printf("vmblock size: %d\n",size);
+	if (size > MAX_SIZE) FAIL("Too much context needed\n");
+	vmb = h2_config_vmblock_init(storage,SET_STORAGE_IDENT,0,0);
+	printf("vmb: %p\n",vmb);
+	vmb = h2_config_vmblock_init(vmb,SET_PMAP_TYPE,0,0);
+	h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
+	h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	printf("initted\n");
+	h2_vmboot(pc,&main_thread_stack[THREAD_STACK_SIZE-1],0,0,vmb);
+	printf("vm booted\n");
+}
+
+int main() 
+{
+	u32_t asid;
+
+	h2_init(0x0);
+
+	info("main() starting\n");
+
+	srand(TEST_SEED);
+
+	/*  pick a random lock to use for the dummies  */
+	dummy_thread_lock = rand() % (LOCK_SLOTS);
+	futex_pages[dummy_thread_lock] = 0;
+
+	do {
+		test_lock = rand() % (LOCK_SLOTS);
+	} while (test_lock == dummy_thread_lock);
+
+	futex_pages[test_lock] = 0;
+
+	info("test_lock = %d\n",test_lock);
+	info("dummy_thread_lock = %d\n",dummy_thread_lock);
+
+	/* set URWX in monitor TLB entry permissions, to allow futex access */
+	/* not really necessary to find our asid since the TLB entry will be global
+		 anyway, but... */
+	asm volatile (
+	" %0 = ssr \n"
+	" %0 = extractu(%0,#7,#8)\n" 
+	: "=r"(asid));
+	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
+	if (tlb_index == 0x80000000) {
+		FAIL("Can't find monitor TLB entry");
+	}
+	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
+#if __QDSP6_ARCH__ <= 3
+	tlb_entry |= 0x7ULL << 29;
+#else
+	tlb_entry |= 0xfULL << 28;
+#endif
+	H2K_mem_tlb_write(tlb_index, tlb_entry);
+	spawn_vm(vmmain);
+	h2_thread_stop();
+	return 0;
+}

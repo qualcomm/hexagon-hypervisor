@@ -142,6 +142,26 @@ Two ways to know this:
 		unlocked (and then wait just to be sure)
 
 
+	******************** Thread ID *****************
+
+Thread ID to context pointer:
+
+Thread ID has three fields:
+	31:N - VM index
+	N:8 - VCPU index
+	7:0 - reserved for user
+
+VM Index 0 is boot context, only one VCPU, so 0x000000XX is boot thread
+
+Each VM has a thread context array and max # of threads, created at vm boot time
+
+Thread ID --> Pointer: 
+	vm = KGP->vms[VM_IDX]; if (vm == NULL) FAIL;
+	if (VCPU_IDX) > vm->n_vcpus) FAIL;
+	return vm->vcpu[VCPU_IDX];
+
+Keep thread ID in thread context; could replace VM block pointer, since that's
+determinable based on thread ID msbits.
 
 
 	******************** Preemption Disable *****************

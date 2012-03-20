@@ -21,7 +21,7 @@
 #define NUM_VCPU 6
 #define HW_INTS 32
 #define INTS_PER_VCPU 32
-#define CONTEXT_SIZE 256
+#define CONTEXT_SIZE 288
 #define VCPU_STACK_SIZE 1024
 #define VM_PRIO 3
 

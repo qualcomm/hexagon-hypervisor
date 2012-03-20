@@ -65,3 +65,7 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 	H2K_dosched(me,hthread);
 }
 
+void H2K_popup_cancel(H2K_thread_context *dst)
+{
+}
+

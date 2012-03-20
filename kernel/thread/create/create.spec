@@ -68,10 +68,6 @@ We then set the following parameters in the new thread context:
 
 If vmblock is non-NULL, these actions are added:
 
-* The current virtual CPU number from the vmblock is recorded as the vmcpu of
-  the new thread.  The CPU number is incremented in the vmblock; exceeding the
-  allowed maximum results in an error.
-
 * The vmstatus of the new thread is initialized
 * The vmblock pointer of the new thread is inherited from the caller.
 

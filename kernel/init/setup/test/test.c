@@ -36,7 +36,6 @@ enum {
         futex_init,
         intconfig_init,
         kg_init,
-        thread_init,
         trace_init,
 	XX_LAST_HELPER
 };
@@ -59,16 +58,21 @@ HELPER_FUNC(readylist_init)
 HELPER_FUNC(lowprio_init)
 HELPER_FUNC(futex_init)
 HELPER_FUNC(intconfig_init)
-HELPER_FUNC(thread_init)
 HELPER_FUNC(trace_init)
 HELPER_FUNC(kg_init)
+
+extern H2K_vmblock_t H2K_boot_vm;
+
+H2K_thread_context *boot;
 
 /* We need to use a longjmp at the end, because H2K_switch is defined as
  * noreturn */
 void H2K_switch(void *from, void *to)
 {
 	if (from != NULL) FAIL("Unexpected switch call");
-	if (to != &H2K_boot_context) FAIL("switch to non-boot thread");
+	printf("from=%p to=%p contexts=%p\n",from,to,H2K_boot_vm.contexts);
+	if (to != H2K_boot_vm.contexts) FAIL("switch to non-boot thread");
+	boot = to;
 	TH_switch_seen = 1;
 	longjmp(env,1);
 }
@@ -77,7 +81,6 @@ void H2K_trace(s8_t type, u8_t hwtnum, u8_t tid, u32_t pcyclelo)
 {
 }
 
-H2K_thread_context H2K_boot_context;
 H2K_kg_t H2K_kg;
 
 void H2K_thread_boot();
@@ -100,11 +103,11 @@ int main()
 		//printf("%d\n",i);
 		if (((1<<i) & TH_init_seen) == 0) FAIL("Didn't call init func");
 	}
-	if (H2K_boot_context.continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");
-	if (H2K_boot_context.trapmask != 0xffffffffU) FAIL("boot thread trapmask");
+	if (boot->continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");
+	if (boot->trapmask != 0xffffffffU) FAIL("boot thread trapmask");
 	found_thread = 0;
 	for (i = 0; i < MAX_HTHREADS; i++) {
-		if (H2K_gp->runlist[i] == &H2K_boot_context) {
+		if (H2K_gp->runlist[i] == boot) {
 			if (H2K_gp->runlist_prios[i] != 0) FAIL("Didn't push into runlist (0)");
 			found_thread = 1;
 		}

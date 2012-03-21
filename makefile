@@ -58,11 +58,13 @@ ucosclean:
 opt:
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
+	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 ref:
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
+	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 
 sim: ref

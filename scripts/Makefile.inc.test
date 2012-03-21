@@ -87,11 +87,14 @@ ${H2DIR}/install:
 	cd ${H2DIR};\
 	+$(MAKE) ${MODEL} ARCHV=${ARCHV}
 
+${BOOTER}: ${H2DIR}/install
+
+
 # (_8^(|)  d'oh!
 #  Need to tell people to stop using this one and use 'prepare'
-libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
+libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL} ${BOOTER}
 
-prepare: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
+prepare: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL} ${BOOTER}
 
 clean_libs:
 	cd ${H2DIR};\
@@ -107,14 +110,24 @@ clean_top:
 
 OPTIMIZE := -O1
 
+ifdef BOOT
+BOOTER=${H2DIR}/install/bin/booter
+CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g
+else
 CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+endif
+
 ifdef STANDALONE
 CFLAGS += -I ${H2DIR}/kernel/include
 LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/kernel/include
 else
 OSLIB=-moslib=h2
+ifdef BOOT
+LDFLAGS +=${OSLIB} -L ${H2DIR}/install/lib
+else
 LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+endif
 CFLAGS += -I ${H2DIR}/install/include
 ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 endif
@@ -243,7 +256,6 @@ DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 ################################################################################
 #  These are for actual terminal directories
 ################################################################################
-
 %.objdump: %.elf
 	${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
@@ -268,7 +280,7 @@ ${EXEC}: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-	ulimit -t 60 && ${SIM} --profile ${EXEC} | tee $@; \
+	ulimit -t 60 && ${SIM} --profile -- ${BOOTER} ${EXEC} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \

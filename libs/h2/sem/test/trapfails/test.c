@@ -10,7 +10,7 @@
 #include <context.h>
 #include <max.h>
 #include <h2.h>
-#include <globals.h>
+//#include <globals.h>
 #include <futex.h>
 #include <stdarg.h>
 
@@ -123,7 +123,7 @@ h2_sem_t sem;
 
 int main()
 {
-	h2_init(NULL);
+//	h2_init(NULL);
 
 	h2_sem_init_val(&sem,1);
 	TH_word = (void *)(&sem);

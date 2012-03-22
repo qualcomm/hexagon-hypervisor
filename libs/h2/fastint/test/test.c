@@ -81,7 +81,7 @@ int main()
 {
 	int i,j;
 
-	h2_init(0);
+//	h2_init(0);
 	h2_config_add_thread_storage(context_space,sizeof(context_space));
 	info("Starting\n");
 

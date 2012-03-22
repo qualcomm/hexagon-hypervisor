@@ -10,7 +10,7 @@
 #include <context.h>
 #include <max.h>
 #include <h2.h>
-#include <globals.h>
+//#include <globals.h>
 
 #define STACK_SIZE 128
 
@@ -49,7 +49,7 @@ int main()
 {
 	unsigned int sig;
 
-	h2_init(NULL);
+//	h2_init(NULL);
 	h2_config_add_thread_storage(contexts,sizeof(contexts));
 
 	h2_anysignal_init(&any_done);

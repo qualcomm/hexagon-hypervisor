@@ -40,10 +40,13 @@ all: ref doc gtags
 
 distclean: clean docclean
 
-clean: covclean ucosclean
+clean: covclean ucosclean booterclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean && \
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean && \
 	rm -Rf size test.exe stats.txt install kernel/stats.txt
+
+booterclean:
+	$(MAKE) -C booter clean
 
 docclean:
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean

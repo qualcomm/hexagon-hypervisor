@@ -10,7 +10,7 @@
 #include <context.h>
 #include <max.h>
 #include <h2.h>
-#include <globals.h>
+//#include <globals.h>
 #include <futex.h>
 #include <stdarg.h>
 
@@ -124,7 +124,7 @@ h2_anysignal_t anysig;
 
 int main()
 {
-	h2_init(NULL);
+//	h2_init(NULL);
 
 	h2_anysignal_init(&anysig);
 	TH_anysig = &anysig;

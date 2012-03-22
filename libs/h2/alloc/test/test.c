@@ -19,7 +19,7 @@ void FAIL(const char *str)
 int main() 
 {
 	void *ptr;
-	h2_init(0x0);
+//	h2_init(0x0);
 
 	ptr = h2_memalign(32,100);
 

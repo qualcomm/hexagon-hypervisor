@@ -766,7 +766,7 @@ int main()
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != -1) FAIL("OOB op");
 
-	puts("PASS");
+	puts("TEST PASSED");
 	return 0;
 }
 

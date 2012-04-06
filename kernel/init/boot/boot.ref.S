@@ -265,7 +265,7 @@ FUNC_START start .text.init.boot .p2align 5
 	k0lock
 
 	// Wake up other threads
-	r0 = #-1
+	r0 = #(1<<MAX_HTHREADS)-1
 	start(r0)
 
 	jump H2K_thread_boot

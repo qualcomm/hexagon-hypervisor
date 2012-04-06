@@ -201,6 +201,30 @@ int main(int argc, char *argv[]) {
 	PRINTF ("linux: loaded %s\n", fname);
 #endif
 
+	/* FIXME: set up I$ prefetch and DMT for linux */
+	unsigned long val;
+#if __QDSP6_ARCH__ >= 4
+	__asm__ __volatile__ 
+		(
+		 /* " %0 = usr\n" */
+		 /* " %0 = setbit(%0, #16)\n"  // I$ prefetch */  // Linux needs to set this
+		 /* " usr = %0\n" */
+		 " %0 = syscfg\n"
+		 " %0 = setbit(%0, #15)\n"  // DMT
+		 " %0 = clrbit(%0, #13)\n"  // BQ
+		 " syscfg = %0\n"
+		 : "=&r" (val)
+		 );
+#else
+	__asm__ __volatile__ 
+		(
+		 " %0 = ssr\n"
+		 " %0 = setbit(%0, #22)\n"  // I$ prefetch
+		 " ssr = %0\n"
+		 : "=&r" (val)
+		 );
+#endif
+
 	if (h2_vmboot(linux_stext, &vcpu_stacks[0][VCPU_STACK_SIZE - 1],
 								0, VM_PRIO, vmb) == -1) FAIL("vmboot");
 

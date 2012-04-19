@@ -89,6 +89,10 @@ void H2K_futex_init()
 {
 }
 
+void H2K_futex_cancel(H2K_thread_context *dst)
+{
+}
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -124,7 +128,7 @@ h2_allsignal_t allsig;
 
 int main()
 {
-//	h2_init(NULL);
+	h2_init(NULL);
 
 	h2_allsignal_init(&allsig);
 	TH_allsig = &allsig;

@@ -65,7 +65,7 @@ void timer(int dummy)
 
 void watcher(int dummy)
 {
-	info("Watcher sterted\n");
+	info("Watcher started\n");
 
 	while (1) {
 		h2_anysignal_wait(&int_sig, TEST_SIGMASK);
@@ -82,6 +82,7 @@ int main()
 	int i,j;
 
 //	h2_init(0);
+	h2_handle_errors();
 	h2_config_add_thread_storage(context_space,sizeof(context_space));
 	info("Starting\n");
 
@@ -107,6 +108,7 @@ int main()
 	info("Checking results\n");
 
 	if (count != SIGNAL_CNT) {
+		printf("count is %d\n", count);
 		error("Wrong signal count\n");
 	}
 	else {

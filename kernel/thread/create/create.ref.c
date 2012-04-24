@@ -31,21 +31,13 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	translation_type type;
 	s32_t asid;
 
-	/* get priority, trapmask, and ptb from VM block if valid */
-	if (vmblock) {
-		bestprio = vmblock->bestprio;
-		trapmask = vmblock->trapmask;
+	bestprio = vmblock->bestprio;
+	trapmask = vmblock->trapmask;
 
-		if (vmblock->num_cpus == 0) { // starting first cpu
-			ptb = vmblock->pmap; 				/* initial page tables == pmap */
-			type = vmblock->pmap_type;
-		} else { // inherit
-			ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
-			type = H2K_mem_asid_table[me->ssr_asid].transtype;
-		}
-	} else {
-		bestprio = me->base_prio;
-		trapmask = me->trapmask;
+	if (vmblock->num_cpus == 0) { // starting first cpu
+		ptb = vmblock->pmap; 				/* initial page tables == pmap */
+		type = vmblock->pmap_type;
+	} else { // inherit
 		ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
 		type = H2K_mem_asid_table[me->ssr_asid].transtype;
 	}
@@ -79,28 +71,26 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 
 	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE);
 
-	if (vmblock) {
-		/* only need to check asid if we have a vmblock, else it's inherited */
-		if (asid == -1) { 						// can't allocate asid
-			vmblock->free_threads = tmp; // return to free list
-			BKL_UNLOCK(&H2K_bkl);
-			return -1;
-		}
-		if (vmblock->num_cpus == vmblock->max_cpus) {  // no more vcpus
-			H2K_asid_table_dec(asid); // was bogus
-			vmblock->free_threads = tmp; // return to free list
-			BKL_UNLOCK(&H2K_bkl);
-			return -1;
-		}
-
-		tmp->ssr_guest = 1;  // start in guest mode
-#warning frustrating our tests...
-		tmp->ssr_um = 1;
-		tmp->ssr_asid = asid;
-		/* FIXME: Do we allow a particular vcpu to stop and then start again? */
-		vmblock->num_cpus++;
-		tmp->vmblock = vmblock;
+	if (asid == -1) { 						// can't allocate asid
+		vmblock->free_threads = tmp; // return to free list
+		BKL_UNLOCK(&H2K_bkl);
+		return -1;
 	}
+	if (vmblock->num_cpus == vmblock->max_cpus) {  // no more vcpus
+		H2K_asid_table_dec(asid); // was bogus
+		vmblock->free_threads = tmp; // return to free list
+		BKL_UNLOCK(&H2K_bkl);
+		return -1;
+	}
+
+	tmp->ssr_guest = 1;  // start in guest mode
+#warning frustrating our tests...
+	tmp->ssr_um = 1;
+	tmp->ssr_asid = asid;
+	/* FIXME: Do we allow a particular vcpu to stop and then start again? */
+	vmblock->num_cpus++;
+	tmp->vmblock = vmblock;
+
 	H2K_ready_append(tmp);
 	return H2K_check_sanity_unlock(H2K_id_from_context(tmp).raw);
 }

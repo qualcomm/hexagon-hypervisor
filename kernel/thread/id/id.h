@@ -12,7 +12,7 @@
 
 static inline H2K_thread_context *H2K_id_cpuidx_to_context(struct H2K_vmblock_struct *vmblock, u32_t cpuidx)
 {
-	if (cpuidx > vmblock->max_cpus) return NULL;
+	if (cpuidx > vmblock->max_cpus - 1) return NULL;
 	return &vmblock->contexts[cpuidx];
 }
 

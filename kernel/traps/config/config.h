@@ -10,6 +10,47 @@
 #include <context.h>
 #include <vm.h>
 
+#define UNIT sizeof(u32_t)
+#define ROUND(expr) ((((expr) + UNIT - 1) / UNIT) * UNIT)
+
+#define BITS_PER_WORD 32
+#define BYTES_PER_WORD (sizeof(u32_t) / sizeof(u8_t))
+#define PHYS_PER_WORD (sizeof(u32_t) / sizeof(physint_t))
+
+#define VMBLOCK_SPACE ROUND(sizeof(H2K_vmblock_t))
+
+// pending
+#define PENDING_WORDS(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
+#define PENDING_SPACE(ints) ROUND(PENDING_WORDS(ints) * BYTES_PER_WORD)
+
+// enable
+#define ENABLE_WORDS(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
+#define ENABLE_SPACE(ints) ROUND(ENABLE_WORDS(ints) * BYTES_PER_WORD)
+
+// percpu_mask
+#define MASKPTR_SPACE(cpus) ROUND((cpus * sizeof(bitmask_t *)))
+#define MASK_WORDS_PERCPU(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
+#define MASK_WORDS(cpus, ints) (cpus * MASK_WORDS_PERCPU(ints))
+#define MASK_SPACE(cpus, ints) ROUND(MASK_WORDS(cpus, ints) * BYTES_PER_WORD)
+
+// int_v2p
+#define PHYSINT_WORDS(ints) ((ints + PHYS_PER_WORD - 1) / PHYS_PER_WORD)
+#define PHYSINT_SPACE(ints) ROUND(PHYSINT_WORDS(ints) * BYTES_PER_WORD)
+
+// cpu_contexts
+#define CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_thread_context))
+
+#define VMBLOCK_SIZE(cpus, ints) \
+	(VMBLOCK_SPACE +															\
+	 PENDING_SPACE(ints) +										\
+	 ENABLE_SPACE(ints) +											\
+	 MASKPTR_SPACE(cpus) +										\
+	 MASK_SPACE(cpus, ints) +							\
+	 PHYSINT_SPACE(ints) +										\
+	 CONTEXT_SPACE(cpus) +										\
+	 (H2K_VMBLOCK_ALIGN - 1))
+   // space to align if needed
+
 typedef enum {
 	CONFIG_ADD_THREAD_STORAGE,
 	CONFIG_SETFATAL,

@@ -20,40 +20,28 @@
 #include <hw.h>
 #include <vm.h>
 #include <id.h>
+#include <config.h>
 
 void qdsp6_pre_main();
 void H2K_interrupt_restore();
 
 u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
 
-struct {
-	H2K_vmblock_t bootvm;
-	H2K_thread_context bootcontexts[MAX_BOOT_CONTEXTS];
-	u32_t pend;
-	u32_t en;
-	u32_t masks[MAX_BOOT_CONTEXTS];
-	u32_t *maskptrs[MAX_BOOT_CONTEXTS];
-} H2K_boot_vm IN_SECTION(".data.init.boot");
+static char vmblock_space[VMBLOCK_SIZE(MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT)] IN_SECTION(".data.init.boot");
 
-/* EJP: Use existing vmconfig routines? */
+static unsigned long long int boot_stacks[MAX_BOOT_CONTEXTS][BOOT_STACK_SIZE];
+
+H2K_vmblock_t *bootvm;
 
 void H2K_init_setup_bootvm()
 {
-	int i;
-	H2K_boot_vm.bootvm.pending = &H2K_boot_vm.pend;
-	H2K_boot_vm.bootvm.enable = &H2K_boot_vm.en;
-	H2K_boot_vm.bootvm.percpu_mask = (u32_t **)&H2K_boot_vm.maskptrs;
-	H2K_boot_vm.bootvm.contexts = &H2K_boot_vm.bootcontexts[0];
-	H2K_boot_vm.bootvm.max_cpus = 1;
-	for (i = 0; i < MAX_BOOT_CONTEXTS; i++) {
-		H2K_boot_vm.maskptrs[i] = &H2K_boot_vm.masks[i];
-		H2K_thread_context_clear(&H2K_boot_vm.bootcontexts[i]);
-		H2K_boot_vm.bootcontexts[i].id.raw = 0;
-		H2K_boot_vm.bootcontexts[i].id.vmidx = 1;
-		H2K_boot_vm.bootcontexts[i].id.cpuidx = i;
-		H2K_boot_vm.bootcontexts[i].vmblock = &H2K_boot_vm.bootvm;
-	}
-	H2K_gp->vmblocks[1] = &H2K_boot_vm.bootvm;
+	BKL_UNLOCK();  // because config locks
+	bootvm = (H2K_vmblock_t *)H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock_space, SET_STORAGE_IDENT, 0, 0, NULL);
+	H2K_gp->vmblocks[1] = bootvm;
+
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PMAP_TYPE, (u32_t)H2K_linear_bootmap, H2K_ASID_TRANS_TYPE_LINEAR, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_CPUS_INTS, MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT, NULL);
 }
 
 IN_SECTION(".text.init.setup") void H2K_init_setup()
@@ -75,8 +63,15 @@ IN_SECTION(".text.init.setup") void H2K_init_setup()
 IN_SECTION(".text.init.boot") void H2K_thread_boot()
 {
 	s32_t asid;
-	H2K_thread_context *boot = &H2K_boot_vm.bootcontexts[0];
+
 	H2K_init_setup();
+
+	/* allocate first thread */
+	H2K_thread_context *boot = bootvm->free_threads;
+	bootvm->free_threads = boot->next;
+	bootvm->num_cpus = 1;
+
+	boot->r29 = (u32_t)&boot_stacks[0][BOOT_STACK_SIZE - 1];
 	boot->ssr = (BOOT_THREAD_SSR);
 	boot->elr = ((u32_t)(qdsp6_pre_main));
 	boot->continuation = H2K_interrupt_restore;
@@ -86,7 +81,6 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot()
 	boot->gpugp = BOOT_THREAD_GPUGP;
 	asid = H2K_asid_table_inc((u32_t)H2K_linear_bootmap, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE);
 	boot->ssr_asid = asid;
-	BKL_UNLOCK();
 	BKL_LOCK();
 	H2K_runlist_push(boot);
 	H2K_init_complete = 1;

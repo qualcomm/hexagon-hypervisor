@@ -58,6 +58,7 @@
 
 #define MAX_PRIOS 256
 #define MAX_PRIO ((MAX_PRIOS) - 1)
+#define BEST_PRIO 0
 
 #if __QDSP6_ARCH__ <= 3
 #define ASID_BITS 5
@@ -132,5 +133,7 @@
 #define SETS_MAX (((32*1024)/32)/(WAYS_MAX))
 
 #define MAX_BOOT_CONTEXTS 1
+#define INTS_PER_BOOT_CONTEXT 32
+#define BOOT_STACK_SIZE 128
 
 #endif

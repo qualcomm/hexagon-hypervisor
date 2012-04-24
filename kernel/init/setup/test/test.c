@@ -61,7 +61,7 @@ HELPER_FUNC(intconfig_init)
 HELPER_FUNC(trace_init)
 HELPER_FUNC(kg_init)
 
-extern H2K_vmblock_t H2K_boot_vm;
+extern H2K_vmblock_t *bootvm;
 
 H2K_thread_context *boot;
 
@@ -70,8 +70,8 @@ H2K_thread_context *boot;
 void H2K_switch(void *from, void *to)
 {
 	if (from != NULL) FAIL("Unexpected switch call");
-	printf("from=%p to=%p contexts=%p\n",from,to,H2K_boot_vm.contexts);
-	if (to != H2K_boot_vm.contexts) FAIL("switch to non-boot thread");
+	printf("from=%p to=%p context=%p\n",from,to,&bootvm->contexts[MAX_BOOT_CONTEXTS - 1]);
+	if (to != &bootvm->contexts[MAX_BOOT_CONTEXTS - 1]) FAIL("switch to non-boot thread");
 	boot = to;
 	TH_switch_seen = 1;
 	longjmp(env,1);

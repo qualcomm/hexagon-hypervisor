@@ -6,7 +6,7 @@
 #include <config.h>
 #include <asm_offsets.h>
 #include <thread.h>
-#include <fatal.h>
+#include <fatal_handler.h>
 #include <globals.h>
 #include <hw.h>
 #include <vm.h>
@@ -42,48 +42,11 @@ u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t
 	return 0;
 }
 
-#define UNIT sizeof(u32_t)
-#define ROUND(expr) ((((expr) + UNIT - 1) / UNIT) * UNIT)
-
-#define BITS_PER_WORD 32
-#define BYTES_PER_WORD (sizeof(u32_t) / sizeof(u8_t))
-#define PHYS_PER_WORD (sizeof(u32_t) / sizeof(physint_t))
-
-#define VMBLOCK_SPACE ROUND(sizeof(H2K_vmblock_t))
-
-// pending
-#define PENDING_WORDS(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
-#define PENDING_SPACE(ints) ROUND(PENDING_WORDS(ints) * BYTES_PER_WORD)
-
-// enable
-#define ENABLE_WORDS(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
-#define ENABLE_SPACE(ints) ROUND(ENABLE_WORDS(ints) * BYTES_PER_WORD)
-
-// percpu_mask
-#define MASKPTR_SPACE(cpus) ROUND((cpus * sizeof(bitmask_t *)))
-#define MASK_WORDS_PERCPU(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
-#define MASK_WORDS(cpus, ints) (cpus * MASK_WORDS_PERCPU(ints))
-#define MASK_SPACE(cpus, ints) ROUND(MASK_WORDS(cpus, ints) * BYTES_PER_WORD)
-
-// int_v2p
-#define PHYSINT_WORDS(ints) ((ints + PHYS_PER_WORD - 1) / PHYS_PER_WORD)
-#define PHYSINT_SPACE(ints) ROUND(PHYSINT_WORDS(ints) * BYTES_PER_WORD)
-
-// cpu_contexts
-#define CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_thread_context))
-
 /* return vm storage size required for vm with given parameters */
 
 u32_t H2K_trap_config_vmblock_size(u32_t unused, void *unused2, u32_t max_cpus, u32_t num_ints, u32_t unused3, H2K_thread_context *me)
 {
-	return VMBLOCK_SPACE + 
-		PENDING_SPACE(num_ints) +
-		ENABLE_SPACE(num_ints) +
-		MASKPTR_SPACE(max_cpus) +
-		MASK_SPACE(max_cpus, num_ints) +
-		PHYSINT_SPACE(num_ints) +
-		CONTEXT_SPACE(max_cpus) +
-		(H2K_VMBLOCK_ALIGN - 1);  // space to align if needed
+	return VMBLOCK_SIZE(max_cpus, num_ints);
 }
 
 /* initialize vm description */
@@ -128,6 +91,8 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 				continue;
 			}
 		}
+
+		vmblock->lock = 0;
 		return (u32_t)vmblock;
 
 	case SET_PMAP_TYPE:
@@ -166,6 +131,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 			contexts[i].id.vmidx = vmblock->vmidx;
 			contexts[i].id.cpuidx = i;
 			contexts[i].next = vmblock->free_threads;
+			contexts[i].vmblock = vmblock;
 			vmblock->free_threads = &contexts[i];
 		}
 		ptrtmp += vmblock->max_cpus * sizeof(H2K_thread_context);

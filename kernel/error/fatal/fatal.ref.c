@@ -27,7 +27,7 @@ static void __attribute__((noreturn)) H2K_fatal_sim_exit(u32_t why)
 	__builtin_trap();
 }
 
-void (*H2K_fatal_kernel_handler)(u32_t) __attribute__((noreturn)) = H2K_fatal_sim_exit;
+/* void (*H2K_fatal_kernel_handler)(u32_t) __attribute__((noreturn)) = H2K_fatal_sim_exit; */
 
 void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {

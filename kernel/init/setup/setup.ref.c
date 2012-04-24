@@ -71,15 +71,19 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot()
 	bootvm->free_threads = boot->next;
 	bootvm->num_cpus = 1;
 
-	boot->r29 = (u32_t)&boot_stacks[0][BOOT_STACK_SIZE - 1];
+	boot->base_prio = boot->prio = 0;
+	boot->gpugp = BOOT_THREAD_GPUGP;
+	boot->sr = BOOT_THREAD_USR;
 	boot->ssr = (BOOT_THREAD_SSR);
 	boot->elr = ((u32_t)(qdsp6_pre_main));
-	boot->continuation = H2K_interrupt_restore;
-	boot->trapmask = 0xffffffff;
+	boot->r29 = (u32_t)&boot_stacks[0][BOOT_STACK_SIZE - 1];
+	boot->r0100 = 0;
 	boot->ccr = BOOT_THREAD_CCR;
-	boot->sr = BOOT_THREAD_USR;
-	boot->gpugp = BOOT_THREAD_GPUGP;
-	asid = H2K_asid_table_inc((u32_t)H2K_linear_bootmap, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE);
+	boot->trapmask = bootvm->trapmask;
+	boot->continuation = H2K_interrupt_restore;
+	boot->vmstatus = 0x0;
+	/* FIXME: gevb */
+	asid = H2K_asid_table_inc((u32_t)bootvm->pmap, bootvm->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE);
 	boot->ssr_asid = asid;
 	BKL_LOCK();
 	H2K_runlist_push(boot);

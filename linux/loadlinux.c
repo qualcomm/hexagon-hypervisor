@@ -110,8 +110,8 @@ void *vm_setup() {
 	vmb_size = h2_config_vmblock_size(NUM_VCPU, INTS_PER_VCPU);
 	PRINTF("linux: vmb size %d\n", (int)vmb_size);
 
-	vmb =	h2_config_vmblock_init(vmblock_space, SET_STORAGE_IDENT, 0, 0);
-	if (vmb == NULL) FAIL("SET_STORAGE_IDENT");
+	vmb =	h2_config_vmblock_init(vmblock_space, SET_STORAGE, 0, 0);
+	if (vmb == NULL) FAIL("SET_STORAGE");
 	PRINTF("linux: vmb %08x\n", (unsigned int)vmb);
 
 	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, (unsigned int)pmap, H2K_ASID_TRANS_TYPE_LINEAR);

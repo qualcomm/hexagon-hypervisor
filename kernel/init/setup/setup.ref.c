@@ -36,7 +36,7 @@ H2K_vmblock_t *bootvm;
 void H2K_init_setup_bootvm()
 {
 	BKL_UNLOCK();  // because config locks
-	bootvm = (H2K_vmblock_t *)H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock_space, SET_STORAGE_IDENT, 0, 0, NULL);
+	bootvm = (H2K_vmblock_t *)H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock_space, SET_STORAGE, 0, 0, NULL);
 	H2K_gp->vmblocks[1] = bootvm;
 
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PMAP_TYPE, (u32_t)H2K_linear_bootmap, H2K_ASID_TRANS_TYPE_LINEAR, NULL);

@@ -33,11 +33,13 @@ char buf[sizeof(H2K_thread_context)*2] __attribute__((aligned(32)));
 #define DPRINTF(...) /* NOTHING */
 #endif
 
-#define NUM_SIZE_TESTS 6
+#define NUM_SIZE_TESTS 8
 /* CPUS, INTS, SIZE */
 int size_test[NUM_SIZE_TESTS][3] = {
 								/* pnd,en,maskptr,mask,phys,ctx*/
-	{1, 1, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*1+4*1*1+4+288*1},
+	{0, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 0},
+	{1, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 288*1},
+	{33, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 288*33},
 	{1, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*1+4*1*1+64+288*1},
 	{1, 33, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*2+4*1+4*2*1+68+288*1},
 	{32, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*32+4*1*32+64+288*32},
@@ -45,7 +47,7 @@ int size_test[NUM_SIZE_TESTS][3] = {
 	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*3+4*33+4*3*33+132+288*33}
 };
 
-char vmbuf[1024] __attribute__((aligned(32)));
+char vmbuf[65536] __attribute__((aligned(32)));
 H2K_vmblock_t *vmblock;
 H2K_thread_context a;
 s32_t asid;
@@ -135,23 +137,17 @@ int main()
 	}
 
 	/*** vmblock_init ***/
-	/* SET_STORAGE_IDENT bad ID */
-	DPRINTF("\nSET_STORAGE_IDENT\n\n");
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmbuf, SET_STORAGE_IDENT, MAX_VM_ID + 1, 0, NULL);
-	if (ret != 0) FAIL("Missed fail on bad ID");
-
-	/* SET_STORAGE_IDENT aligned pointer*/
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmbuf, SET_STORAGE_IDENT, 0, 0, NULL);
+	/* SET_STORAGE aligned pointer*/
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmbuf, SET_STORAGE, 0, 0, NULL);
 	DPRINTF("\nvmbuf %08x, ret %08x\n", (u32_t)vmbuf, ret);
-	if (ret == 0) FAIL("Unexpected error");
+	if (ret == 0) FAIL("Unexpected error 1");
 	if ((char *)ret != vmbuf) FAIL("Unnecessary alignment");
 
-	/* SET_STORAGE_IDENT unaligned pointer */
-	vmblock = (H2K_vmblock_t *)H2K_trap_config(CONFIG_VMBLOCK_INIT, vmbuf + 1, SET_STORAGE_IDENT, 3, 0, NULL);
+	/* SET_STORAGE unaligned pointer */
+	vmblock = (H2K_vmblock_t *)H2K_trap_config(CONFIG_VMBLOCK_INIT, vmbuf + 1, SET_STORAGE, 3, 0, NULL);
 	DPRINTF("\nvmbuf %08x, vmblock %08x\n", (u32_t)vmbuf, (u32_t)vmblock);
-	if (vmblock == 0) FAIL("Unexpected error");
+	if (vmblock == 0) FAIL("Unexpected error 2");
 	if ((u32_t)vmblock != ROUND((u32_t)vmblock)) FAIL("Not aligned");
-	//if (vmblock->ident != 3) FAIL("Wrong ID");
 
 	/* SET_PMAP_TYPE bad type*/
 	DPRINTF("SET_PMAP_TYPE\n\n");
@@ -165,7 +161,7 @@ int main()
 	a.ssr_asid = asid;
 	DPRINTF("ASID %d  ptb %08x\n\n", a.ssr_asid, H2K_mem_asid_table[a.ssr_asid].ptb);
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_PMAP_TYPE, 0, 0, &a);
-	if (ret == 0) FAIL("Unexpected error");
+	if (ret == 0) FAIL("Unexpected error 3");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
 	DPRINTF("pmap %08x  type %d\n", vmblock->pmap, vmblock->pmap_type);
 	if (vmblock->pmap != 0xfeedf00f) FAIL("Wrong ptb");
@@ -178,7 +174,7 @@ int main()
 
 	/* SET_PRIO_TRAPMASK */
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_PRIO_TRAPMASK, 11, 0xfeeefaaa, NULL);
-	if (ret == 0) FAIL("Unexpected error");
+	if (ret == 0) FAIL("Unexpected error 4");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
 	if (vmblock->bestprio != 11) FAIL("Bad prio");
 	if (vmblock->trapmask != 0xfeeefaaa) FAIL("Bad trapmask");
@@ -194,7 +190,7 @@ int main()
 
 	/* SET_CPUS_INTS */
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_CPUS_INTS, 33, 65, NULL);
-	if (ret == 0) FAIL("Unexpected error");
+	if (ret == 0) FAIL("Unexpected error 5");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
 
 	if (vmblock->max_cpus != 33) FAIL("Bad max_cpus");
@@ -227,10 +223,25 @@ int main()
 
 	/* MAP_PHYS_INTR */
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, MAP_PHYS_INTR, 32, 13, NULL);
-	if (ret == 0) FAIL("Unexpected error");
+	if (ret == 0) FAIL("Unexpected error 7");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
 
 	if (vmblock->int_v2p[32] != 13) FAIL("Bad int_v2p");
+
+	/* 0 interrupts */
+	DPRINTF("0 interrupts\n\n");
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_CPUS_INTS, 33, 0, NULL);
+	if (ret == 0) FAIL("Unexpected error 6");
+	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
+
+	if (vmblock->max_cpus != 33) FAIL("Bad max_cpus 0");
+	if (vmblock->num_cpus != 0) FAIL("Bad num_cpus 0");
+	if (vmblock->num_ints != 0) FAIL("Bad num_ints 0");
+	if (vmblock->percpu_mask != NULL) FAIL("percpu_mask non-NULL");
+	if (vmblock->pending != NULL) FAIL("pending non-NULL");
+	if (vmblock->enable != NULL) FAIL("enable non-NULL");
+	if (vmblock->int_v2p != NULL) FAIL("int_v2p non-NULL");
+
 	
 
 	puts("TEST PASSED\n");

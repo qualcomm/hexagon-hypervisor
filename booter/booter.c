@@ -79,7 +79,7 @@ void spawn_vm(void *pc)
 		printf("Size too small.");
 		exit(1);
 	}
-	vmb = h2_config_vmblock_init(storage,SET_STORAGE_IDENT,0,0);
+	vmb = h2_config_vmblock_init(storage,SET_STORAGE,0,0);
 	vmb = h2_config_vmblock_init(vmb,SET_PMAP_TYPE,0,0);
 	h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
 	h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);

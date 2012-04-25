@@ -16,7 +16,7 @@
 Operations that can be done during vmblock initialization
 */
 typedef enum {
-	SET_STORAGE_IDENT, 	/**< Set the storage */
+	SET_STORAGE, 	/**< Set the storage */
 	SET_PMAP_TYPE,		/**< Set the physical mapping type */
 	SET_PRIO_TRAPMASK,	/**< Set the best priority and trap mask */
 	SET_CPUS_INTS,		/**< Set the number of CPUs and Interrupts */
@@ -52,7 +52,7 @@ Initialize fields for a vm block
 @param[in] op		Desired operation on the VM block
 @param[in] arg1		First argument, usage varies on operation type
 @param[in] arg2		Second argument, usage varies on operation type
-@returns A pointer to the vm block, or NULL on failure?
+@returns A pointer to the vm block, or NULL on failure
 @dependencies None
 */
 

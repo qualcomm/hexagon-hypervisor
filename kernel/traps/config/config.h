@@ -28,7 +28,7 @@
 #define ENABLE_SPACE(ints) ROUND(ENABLE_WORDS(ints) * BYTES_PER_WORD)
 
 // percpu_mask
-#define MASKPTR_SPACE(cpus) ROUND((cpus * sizeof(bitmask_t *)))
+#define MASKPTR_SPACE(cpus, ints) (ints > 0 ? ROUND((cpus * sizeof(bitmask_t *))) : 0)
 #define MASK_WORDS_PERCPU(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
 #define MASK_WORDS(cpus, ints) (cpus * MASK_WORDS_PERCPU(ints))
 #define MASK_SPACE(cpus, ints) ROUND(MASK_WORDS(cpus, ints) * BYTES_PER_WORD)
@@ -44,7 +44,7 @@
 	(VMBLOCK_SPACE +															\
 	 PENDING_SPACE(ints) +										\
 	 ENABLE_SPACE(ints) +											\
-	 MASKPTR_SPACE(cpus) +										\
+	 MASKPTR_SPACE(cpus, ints) +										\
 	 MASK_SPACE(cpus, ints) +							\
 	 PHYSINT_SPACE(ints) +										\
 	 CONTEXT_SPACE(cpus) +										\
@@ -60,7 +60,7 @@ typedef enum {
 } config_type_t;
 
 typedef enum {
-	SET_STORAGE_IDENT,
+	SET_STORAGE,
 	SET_PMAP_TYPE,
 	SET_PRIO_TRAPMASK,
 	SET_CPUS_INTS,

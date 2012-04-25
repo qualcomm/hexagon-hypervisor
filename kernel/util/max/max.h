@@ -124,7 +124,6 @@
 /* ensure UGP is 0 for default thread ID behavior in h2 libs */
 #define BOOT_THREAD_GPUGP 0
 
-#define MAX_VM_ID 63
 #define MAX_VM_CPUS 65535
 #define MAX_VM_INTS 65535
 

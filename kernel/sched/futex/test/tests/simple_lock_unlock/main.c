@@ -209,7 +209,7 @@ void spawn_vm(void *pc)
 	size = h2_config_vmblock_size(NUM_TOTAL_THREADS,1);
 	printf("vmblock size: %d\n",size);
 	if (size > MAX_SIZE) FAIL("Too much context needed\n");
-	vmb = h2_config_vmblock_init(storage,SET_STORAGE_IDENT,0,0);
+	vmb = h2_config_vmblock_init(storage,SET_STORAGE,0,0);
 	printf("vmb: %p\n",vmb);
 	vmb = h2_config_vmblock_init(vmb,SET_PMAP_TYPE,0,0);
 	h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);

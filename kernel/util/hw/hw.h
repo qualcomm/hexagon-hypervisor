@@ -161,6 +161,22 @@ static inline void H2K_set_tid_reg(u8_t val)
 #endif
 }
 
+static inline u64_t H2K_get_pcycle_reg()
+{
+u64_t ret;
+#if (ARCHV <= 3)
+	asm volatile (
+		"1: %H0 = pcyclehi \n"
+		" %L0 = pcyclelo \n"
+		" r15 = pcyclehi \n"
+		" p0 = cmp.eq(r15,%H0) \n"
+		" if (!p0) jump 1b \n" : "=r"(ret) : : "r15","p0");
+#else
+	asm volatile ( " %0 = s31:30 // READ PCYCLES \n" : "=r"(ret));
+#endif
+	return ret;
+}
+
 static inline void H2K_clear_ipend(u32_t hthread_mask)
 {
 	asm("cswi(%0);" : : "r" (hthread_mask));

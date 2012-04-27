@@ -236,7 +236,7 @@ FUNC_START start .text.init.boot .p2align 5
 1:
 	// invalidate temporary TLB entries
 	r1 = #3
-  r3:2 = #0
+	r3:2 = #0
 #if __QDSP6_ARCH__ <= 3
 	tlbidx = r1
 	tlblo = r2

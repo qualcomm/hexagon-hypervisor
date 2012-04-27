@@ -10,16 +10,22 @@
 #include <spinlock.h>
 #include <tree.h>
 
+typedef u64_t nsec_t;
+typedef u64_t ticks_t;
+
 typedef struct {
-	u64_t next_ticks;		/* next hw interrupt "ticks" */
-	u64_t last_ticks;		/* Tick of last HW interrupt */
+	ticks_t next_ticks;		/* next hw interrupt "ticks" */
+	ticks_t last_ticks;		/* Tick of last HW interrupt */
 	u64_t last_pcycles;		/* pcycle time last updated */
 	H2K_spinlock_t lock;		/* spinlock for time updating/reading */
 	H2K_treenode_t *timeouts;	/* all timeouts */
+	volatile u32_t *devptr;
 } __attribute__((aligned(32))) H2K_timeinfo_t;
 
-#define H2K_TIME_FOREVER 0xFFFFFFFFFFFFFFFFULL
+#define H2K_TIME_FOREVER (~0ULL)
 #define H2K_TIME_BIGBANG 0ULL
+
+#define H2K_TIME_GUESTINT 12
 
 #endif
 

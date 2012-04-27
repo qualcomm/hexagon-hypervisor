@@ -67,7 +67,7 @@ typedef struct _h2_thread_context
 			u64_t timeout;
 		};
 		H2K_treenode_t tree;
-	} timer0;
+	};
 	union {
 		u64_t cpuint_enabled_pending;
 		struct {

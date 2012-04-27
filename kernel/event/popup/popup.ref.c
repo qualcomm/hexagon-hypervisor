@@ -24,6 +24,7 @@ void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 	H2K_gp->fastint_funcptrs[intnum] = NULL;
 	H2K_gp->inthandlers[intnum] = NULL;
 	if (unlikely(woken == NULL)) {
+		/* Auto-disabled, now we should re-post interrupt, I think */
 		BKL_UNLOCK(&H2K_bkl);
 		return;
 	}
@@ -65,7 +66,13 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 	H2K_dosched(me,hthread);
 }
 
-void H2K_popup_cancel(H2K_thread_context *dst)
+/* NOTE: must be called with bkl held */
+void H2K_popup_cancel(H2K_thread_context *dest)
 {
+	u32_t intnum = dest->r00;
+	H2K_gp->fastint_funcptrs[intnum] = NULL;
+	H2K_gp->inthandlers[intnum] = NULL;
+	dest->r00 = -1;
+	/* intcontrol_disable intnum? */
 }
 

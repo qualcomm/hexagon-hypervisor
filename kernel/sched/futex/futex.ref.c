@@ -267,8 +267,13 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	return H2K_check_sanity_unlock(0);
 }
 
-void H2K_futex_cancel(H2K_thread_context *dst)
+/* note: futex_cancel must be called with bkl held */
+void H2K_futex_cancel(H2K_thread_context *dest)
 {
+	u32_t hashval;
+	hashval = HASHVAL(dest->futex_ptr);
+	H2K_ring_remove(H2K_gp->futexhash[hashval],dest);
+	dest->r00 = -1;
 }
 
 void H2K_futex_init()

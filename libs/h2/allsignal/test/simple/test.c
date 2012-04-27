@@ -52,14 +52,17 @@ void thread1(int thread)
 int main()
 {
 //	h2_init(NULL);
-	h2_config_add_thread_storage(contexts,sizeof(contexts));
+	//h2_config_add_thread_storage(contexts,sizeof(contexts));
+	printf("Hello, World!\n");
 
 	h2_allsignal_init(&all_done);
 	h2_allsignal_init(&all_threads);
 
+	printf("creating threads...\n");
 	t1id = h2_thread_create(thread1,&stack1[STACK_SIZE],0,2);
 	t0id = h2_thread_create(thread0,&stack0[STACK_SIZE],0,2);
 
+	printf("Waiting for threads...\n");
 	h2_allsignal_wait(&all_threads, 0x3);
 	if(all_threads.waiting != 0) { FAIL("allsignal didn't block while waiting"); }
 

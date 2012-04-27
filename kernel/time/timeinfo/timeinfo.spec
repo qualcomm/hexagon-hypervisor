@@ -36,3 +36,7 @@ Description
 
 		Hardware counter information for the next interrupt
 
+	.. cmember:: volatile u32_t *devptr
+
+		Pointer to the hardware timer device
+

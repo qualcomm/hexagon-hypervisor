@@ -67,10 +67,11 @@ void init_teardown(test_t *test)
 	testidxmax = test->size;
 }
 
-void teardown_check(H2K_treenode_t *root)
+void teardown_check(H2K_treenode_t *root, void *ptr)
 {
 	if (testidx >= testidxmax) FAIL("Too many calls to teardown");
 	if (root->key != testdata[testidx++]) FAIL("Unexpected teardown order");
+	if (ptr != NULL) FAIL("Unexpected opaque ptr");
 	free(root);
 }
 
@@ -128,8 +129,8 @@ int main()
 		treetest(leftroot,test->min,keytmp);
 		treetest(rightroot,keytmp,test->max);
 		init_teardown(test);
-		H2K_tree_destructive_iterate(leftroot,teardown_check);
-		H2K_tree_destructive_iterate(rightroot,teardown_check);
+		H2K_tree_destructive_iterate(leftroot,NULL,teardown_check);
+		H2K_tree_destructive_iterate(rightroot,NULL,teardown_check);
 		teardown_finalize();
 	}
 	puts("TEST PASSED");

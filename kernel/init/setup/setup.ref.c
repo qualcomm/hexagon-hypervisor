@@ -21,6 +21,7 @@
 #include <vm.h>
 #include <id.h>
 #include <config.h>
+#include <timer.h>
 
 void qdsp6_pre_main();
 void H2K_interrupt_restore();
@@ -57,6 +58,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup()
 	H2K_thread_init();
 	H2K_asid_table_init();
 	H2K_mem_stlb_init();
+	H2K_timer_init();
 	H2K_init_setup_bootvm();
 }
 

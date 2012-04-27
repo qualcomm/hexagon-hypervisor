@@ -24,7 +24,7 @@ typedef struct treenode_struct {
 void H2K_tree_add_key(H2K_treenode_t **root, H2K_treenode_t *node, H2K_treekey_t key);
 void H2K_tree_remove_key(H2K_treenode_t **root, H2K_treenode_t *node, H2K_treekey_t key);
 void H2K_tree_bisect(H2K_treenode_t **le_tree_p, H2K_treenode_t **gt_tree_p, H2K_treenode_t *root, H2K_treekey_t key);
-void H2K_tree_destructive_iterate(H2K_treenode_t *root, void (*func)(H2K_treenode_t *));
+void H2K_tree_destructive_iterate(H2K_treenode_t *root, void *opaque, void (*func)(H2K_treenode_t *, void *));
 
 static inline void H2K_tree_add(H2K_treenode_t **root, H2K_treenode_t *node) { return H2K_tree_add_key(root,node,node->key); }
 static inline void H2K_tree_remove(H2K_treenode_t **root, H2K_treenode_t *node) { return H2K_tree_remove_key(root,node,node->key); }

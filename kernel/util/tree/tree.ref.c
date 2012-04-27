@@ -38,31 +38,31 @@ void H2K_tree_bisect(H2K_treenode_t **le_tree_p, H2K_treenode_t **gt_tree_p, H2K
 	if (root == NULL) return;
 	if (root->key <= key) {
 		*le_tree_p = root;
-		tmp = root->right;
+		*gt_tree_p = tmp = root->right;
 		root->right = NULL;
 		return H2K_tree_bisect(&root->right,gt_tree_p,tmp,key);
 	} else {
 		*gt_tree_p = root;
-		tmp = root->left;
+		*le_tree_p = tmp = root->left;
 		root->left = NULL;
 		return H2K_tree_bisect(le_tree_p,&root->left,tmp,key);
 	}
 }
 
-void H2K_tree_destructive_iterate(H2K_treenode_t *root, void (*func)(H2K_treenode_t *))
+void H2K_tree_destructive_iterate(H2K_treenode_t *root, void *opaque, void (*func)(H2K_treenode_t *, void *))
 {
 	H2K_treenode_t *tmp;
 	if (root == NULL) return;
 	if (root->left == NULL) {
 		tmp = root->right;
-		func(root);
-		return H2K_tree_destructive_iterate(tmp,func);
+		func(root,opaque);
+		return H2K_tree_destructive_iterate(tmp,opaque,func);
 	} else {
 		/* Rotate right and iterate */
 		tmp = root->left;
 		root->left = tmp->right;
 		tmp->right = root;
-		return H2K_tree_destructive_iterate(tmp,func);
+		return H2K_tree_destructive_iterate(tmp,opaque,func);
 	}
 }
 

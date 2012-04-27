@@ -7,7 +7,30 @@
 #include <asm_offsets.h>
 #include <max.h>
 
-FUNC_START start .text.init.boot .p2align 5
+#if __QDDSP6_ARCH__ <= 3
+#define DO_TLBW(HI,LO,IDX) \
+	tlbidx = R##IDX ; \
+	tlblo = R##LO ; \
+	tlbhi = R##HI ; \
+	tlbw ;
+#else
+#define DO_TLBW(HI,LO,IDX) \
+	tlbw(R##HI##:##LO,R##IDX)
+#endif
+
+#if __QDSP6_ARCH__ <= 3
+#define SETCONST(DST,VAL) \
+	DST.H = #hi(VAL); \
+	DST.L = #lo(VAL); 
+#else
+#define SETCONST(DST,VAL) \
+	DST = ##VAL ;
+#endif
+
+#define MAKE_TLBHI(DST,CONSTVA) \
+	SETCONST(DST,BOOT_TLBHI | (CONSTVA >> ADDRBITS))
+
+FUNC_START start .text.init.boot .p2align 8
 	r0 = #0					// 0
 	syscfg = r0				// 1
 	ickill					// 2
@@ -19,16 +42,13 @@ FUNC_START start .text.init.boot .p2align 5
 	syscfg = r0				// 0
 	isync					// 1 ... needs to be in same cache line as syscfg
 	/* Setup EVB */
-	r0.h = #hi(H2K_event_vectors)
-	r0.l = #lo(H2K_event_vectors)
+	SETCONST(r0,H2K_event_vectors)
 	evb = r0
 
-	r0.h = #hi(_SDA_BASE_)
-	r0.l = #lo(_SDA_BASE_)
+	SETCONST(r0,_SDA_BASE_)	// boot thread should do this...
 	gp = r0
 
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
+	SETCONST(r16,H2K_kg)
 
 #if __QDSP6_ARCH__ == 3
 	r0.h = #0x0100
@@ -57,43 +77,17 @@ FUNC_START start .text.init.boot .p2align 5
 	r3:2 = #0
 	r1 = #0
 1:
-#if __QDSP6_ARCH__ <= 3
-	tlbidx = r1
-	tlblo = r2
-	tlbhi = r3
-	tlbw
-#else
-	tlbw(r3:2,r1)
-#endif
+	DO_TLBW(3,2,1)
+
 	r1 = add(r1,#1)
 	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
 	if (!p0) jump 1b
 
-// 	r1 = #0
-// 	r15 = memw(r15)
-// 	/* Initialize TLB */
-// 1:
-// 	r14 = addasl(r15,r1,#3)
-// 	r3:2 = memd(r14)
-// 	p0 = cmp.eq(r3,#0)
-// 	if (p0) jump 2f
-// #if __QDSP6_ARCH__ <= 3
-// 	tlbidx = r1
-// 	tlblo = r2
-// 	tlbhi = r3
-// 	tlbw
-// #else
-// 	tlbw(r3:2,r1)
-// #endif
-// 	r1 = add(r1,#1)
-// 	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
-// 	if (!p0) jump 1b
-//
-// 2:
-
 	// Set up TLB entries for jump to virtual space
 	r10 = pc
-	r1 = #0
+
+	MAKE_TLBHI(r3,H2K_LINK_ADDR)
+	MAKE_TLBLO(r2,r11)
 
 	r2 = lsr(r10,#BOOT_TLB_PGBITS)
 #if __QDSP6_ARCH__ <= 3
@@ -103,19 +97,12 @@ FUNC_START start .text.init.boot .p2align 5
 #endif
 	r3.h = #hi(BOOT_TLBHI | (BOOT_TLB_PGNUM + (0 << BOOT_TLB_SHIFT)))
 	r3.l = #lo(BOOT_TLBHI | (BOOT_TLB_PGNUM + (0 << BOOT_TLB_SHIFT)))
-
 	r11.h = #hi(BOOT_TLBLO)
 	r11.l = #lo(BOOT_TLBLO)
-
 	r2 = or(r2,r11)
-#if __QDSP6_ARCH__ <= 3
-	tlbidx = r1
-	tlblo = r2
-	tlbhi = r3
-	tlbw
-#else
-	tlbw(r3:2,r1)
-#endif
+
+	r1 = #0
+	DO_TLBW(3,2,1)
 
 	r1 = #1
 	r2 = lsr(r10,#BOOT_TLB_PGBITS)
@@ -132,14 +119,7 @@ FUNC_START start .text.init.boot .p2align 5
 	r11.l = #lo(BOOT_TLBLO)
 
 	r2 = or(r2,r11)
-#if __QDSP6_ARCH__ <= 3
-	tlbidx = r1
-	tlblo = r2
-	tlbhi = r3
-	tlbw
-#else
-	tlbw(r3:2,r1)
-#endif
+	DO_TLBW(3,2,1)
 
 #if __QDSP6_ARCH__ > 3
 	// Set up entry for L2 interrupt controller
@@ -177,14 +157,7 @@ FUNC_START start .text.init.boot .p2align 5
 	r11.l = #lo(BOOT_TLBLO)
 
 	r2 = or(r2,r11)
-#if __QDSP6_ARCH__ <= 3
-	tlbidx = r1
-	tlblo = r2
-	tlbhi = r3
-	tlbw
-#else
-	tlbw(r3:2,r1)
-#endif
+	DO_TLBW(3,2,1)
 
 	r1 = #4
 	r2 = lsr(r10,#BOOT_TLB_PGBITS)
@@ -200,14 +173,7 @@ FUNC_START start .text.init.boot .p2align 5
 	r11.l = #lo(BOOT_TLBLO)
 
 	r2 = or(r2,r11)
-#if __QDSP6_ARCH__ <= 3
-	tlbidx = r1
-	tlblo = r2
-	tlbhi = r3
-	tlbw
-#else
-	tlbw(r3:2,r1)
-#endif
+	DO_TLBW(3,2,1)
 
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
@@ -219,7 +185,7 @@ FUNC_START start .text.init.boot .p2align 5
 	//r0 = #0x277F    /* IMT and non-QoS */
  	//r0 = #0x77F    /* IMT and QoS */
 #endif
-	
+
 #if __QDSP6_ARCH__ <= 3
 	r0.h = #0x0083	/* 256KB L2 */
 #else
@@ -237,25 +203,11 @@ FUNC_START start .text.init.boot .p2align 5
 	// invalidate temporary TLB entries
 	r1 = #3
 	r3:2 = #0
-#if __QDSP6_ARCH__ <= 3
-	tlbidx = r1
-	tlblo = r2
-	tlbhi = r3
-	tlbw
-#else
-	tlbw(r3:2,r1)
-#endif
-	
+	DO_TLBW(3,2,1)
+
 	r1 = #4
-  r3:2 = #0
-#if __QDSP6_ARCH__ <= 3
-	tlbidx = r1
-	tlblo = r2
-	tlbhi = r3
-	tlbw
-#else
-	tlbw(r3:2,r1)
-#endif
+	r3:2 = #0
+	DO_TLBW(3,2,1)
 	isync
 
 	r29.h = #hi(H2K_stacks)

@@ -6,12 +6,13 @@
 #include <asm_std.h>
 #include <asm_offsets.h>
 #include <max.h>
+#include <boot.h>
 
-#if __QDDSP6_ARCH__ <= 3
+#if __QDSP6_ARCH__ <= 3
 #define DO_TLBW(HI,LO,IDX) \
-	tlbidx = R##IDX ; \
-	tlblo = R##LO ; \
-	tlbhi = R##HI ; \
+	tlbidx = r##IDX ; \
+	tlblo = r##LO ; \
+	tlbhi = r##HI ; \
 	tlbw ;
 #else
 #define DO_TLBW(HI,LO,IDX) \
@@ -20,17 +21,23 @@
 
 #if __QDSP6_ARCH__ <= 3
 #define SETCONST(DST,VAL) \
-	DST.H = #hi(VAL); \
-	DST.L = #lo(VAL); 
+	DST.H = # hi(VAL); \
+	DST.L = # lo(VAL); 
 #else
 #define SETCONST(DST,VAL) \
-	DST = ##VAL ;
+	DST = # ## # (VAL) ;
 #endif
 
 #define MAKE_TLBHI(DST,CONSTVA) \
-	SETCONST(DST,BOOT_TLBHI | (CONSTVA >> ADDRBITS))
+	SETCONST(DST,BOOT_TLBHI | (((CONSTVA) >> BOOT_TLB_PGBITS)<<BOOT_TLB_SHIFT))
 
-FUNC_START start .text.init.boot .p2align 8
+#define MAKE_TLBLO(DST,SRCVAL,TMP) \
+	SETCONST(DST,BOOT_TLBLO) ; \
+	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS); \
+	DST |= asl(TMP, #  BOOT_TLB_SHIFT+SBIT_SIZE); 
+
+FUNC_START start .text.init.boot .p2align 12
+	/* NOTE: 4096 bytes should contain all the way to jump to hyperspace... */
 	r0 = #0					// 0
 	syscfg = r0				// 1
 	ickill					// 2
@@ -87,94 +94,36 @@ FUNC_START start .text.init.boot .p2align 8
 	r10 = pc
 
 	MAKE_TLBHI(r3,H2K_LINK_ADDR)
-	MAKE_TLBLO(r2,r11)
-
-	r2 = lsr(r10,#BOOT_TLB_PGBITS)
-#if __QDSP6_ARCH__ <= 3
-	r2 = asl(r2,#BOOT_TLB_SHIFT)
-#else
-	r2 = asl(r2,#(BOOT_TLB_SHIFT + 1))  // room for S bit
-#endif
-	r3.h = #hi(BOOT_TLBHI | (BOOT_TLB_PGNUM + (0 << BOOT_TLB_SHIFT)))
-	r3.l = #lo(BOOT_TLBHI | (BOOT_TLB_PGNUM + (0 << BOOT_TLB_SHIFT)))
-	r11.h = #hi(BOOT_TLBLO)
-	r11.l = #lo(BOOT_TLBLO)
-	r2 = or(r2,r11)
-
+	MAKE_TLBLO(r2,r10,r11)
 	r1 = #0
 	DO_TLBW(3,2,1)
 
 	r1 = #1
-	r2 = lsr(r10,#BOOT_TLB_PGBITS)
-	r2 = add(r2,#1)
-#if __QDSP6_ARCH__ <= 3
-	r2 = asl(r2,#BOOT_TLB_SHIFT)
-#else
-	r2 = asl(r2,#(BOOT_TLB_SHIFT + 1))  // room for S bit
-#endif
-	r3.h = #hi(BOOT_TLBHI | (BOOT_TLB_PGNUM + (1 << BOOT_TLB_SHIFT)))
-	r3.l = #lo(BOOT_TLBHI | (BOOT_TLB_PGNUM + (1 << BOOT_TLB_SHIFT)))
-
-	r11.h = #hi(BOOT_TLBLO)
-	r11.l = #lo(BOOT_TLBLO)
-
-	r2 = or(r2,r11)
+	r10 += asl(r1,#BOOT_TLB_PGBITS)
+	MAKE_TLBHI(r3,H2K_LINK_ADDR+(1<<BOOT_TLB_PGBITS))
+	MAKE_TLBLO(r2,r10,r11)
 	DO_TLBW(3,2,1)
 
 #if __QDSP6_ARCH__ > 3
 	// Set up entry for L2 interrupt controller
+	SETCONST(r10,Q6_SS_BASE_PA)
+	MAKE_TLBHI(r3,Q6_SS_BASE_VA)
+	MAKE_TLBLO(r2,r10,r11)
 	r1 = #2
-	r2.h = #hi((L2_INT_BASE >> 24) << 12)
-	r2.l = #lo((L2_INT_BASE >> 24) << 12)
-	r3.h = #hi(BOOT_TLBHI)
-	r3.l = #lo(BOOT_TLBHI)
-	r3 = or(r3, r2)
-	r11.h = #hi((1 << 6) | (4 << TLB_ENTRY_C_BITS))  // 16M page
-	r11.l = #lo((1 << 6) | (4 << TLB_ENTRY_C_BITS))
-
-	r2 = or(r2,r11)
-	tlbw(r3:2,r1)
+	DO_TLBW(3,2,1)
 #endif
 
-  // Set up temporary entries for current space
-	r1 = #3
-	r2 = lsr(r10,#BOOT_TLB_PGBITS)
-	r2 = asl(r2,#BOOT_TLB_SHIFT)
-
-	// skip this if virtual == physical for monitor space			
-	r12.h = #hi(BOOT_TLB_PGNUM)
-	r12.l = #lo(BOOT_TLB_PGNUM)
-	p0 = cmp.eq(r2, r12)
+	r10 = pc
+	SETCONST(r11,H2K_LINK_ADDR)
+	r12 = and(r11,r10)
+	p0 = cmp.eq(r12,r11)
 	if (p0) jump 1f
 
-	r3.h = #hi(BOOT_TLBHI)
-	r3.l = #lo(BOOT_TLBHI)
-	r3 = or(r3, r2)
-#if __QDSP6_ARCH__ > 3
-	r2 = asl(r2,#1)  // room for S bit
-#endif
-	r11.h = #hi(BOOT_TLBLO)
-	r11.l = #lo(BOOT_TLBLO)
-
-	r2 = or(r2,r11)
+	MAKE_TLBHI(r3,0)
+	r3 |= lsr(r10,#BOOT_TLB_ADDRBITS)
+	MAKE_TLBLO(r2,r10,r11)
+	r1 = #3
 	DO_TLBW(3,2,1)
-
-	r1 = #4
-	r2 = lsr(r10,#BOOT_TLB_PGBITS)
-	r2 = add(r1,#1)
-	r2 = asl(r2,#BOOT_TLB_SHIFT)
-	r3.h = #hi(BOOT_TLBHI)
-	r3.l = #lo(BOOT_TLBHI)
-	r3 = or(r3, r2)
-#if __QDSP6_ARCH__ > 3
-	r2 = asl(r2,#1)  // room for S bit
-#endif
-	r11.h = #hi(BOOT_TLBLO)
-	r11.l = #lo(BOOT_TLBLO)
-
-	r2 = or(r2,r11)
-	DO_TLBW(3,2,1)
-
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
 #if __QDSP6_ARCH__ <= 4
@@ -204,14 +153,9 @@ FUNC_START start .text.init.boot .p2align 8
 	r1 = #3
 	r3:2 = #0
 	DO_TLBW(3,2,1)
-
-	r1 = #4
-	r3:2 = #0
-	DO_TLBW(3,2,1)
 	isync
 
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
+	SETCONST(r29,H2K_stacks)
 	// lock kernel
 
 	k0lock
@@ -228,15 +172,12 @@ FUNC_START h2_init .text.init.boot .p2align 2
 FUNC_END h2_init
 
 FUNC_START H2K_handle_reset .text.init.boot .p2align 2
-	r0.h = #hi(_SDA_BASE_)
-	r0.l = #lo(_SDA_BASE_)
+	SETCONST(r0,_SDA_BASE_)
 	gp = r0
 
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
+	SETCONST(r16,H2K_kg)
 
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
+	SETCONST(r29,H2K_stacks)
 #if __QDSP6_ARCH__ <= 3
 	r28 = ssr
 	r28 = extractu(r28,#3,#19)

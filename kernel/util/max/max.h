@@ -49,6 +49,11 @@
 
 #define MAX_ASIDS (1<<(ASID_BITS))
 
+/* EJP: FIXME: PA should be learned from cfgtable in v4+ */
+#define Q6_SS_BASE_PA 0x28880000
+#define Q6_SS_BASE_VA 0xFFC00000
+#define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x0)
+
 #if __QDSP6_ARCH__ <= 3
 #define MAX_INTERRUPTS 32
 #else
@@ -57,11 +62,7 @@
 #define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
 
 #ifndef L2_INT_BASE
-#if __QDSP6_ARCH__ <= 4
-#define L2_INT_BASE 0x28890000
-#else
-#define L2_INT_BASE 0x30300000
-#endif
+#define L2_INT_BASE (Q6_SS_BASE_VA + 0x10000)
 #endif
 #endif
 

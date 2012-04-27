@@ -149,7 +149,7 @@ void H2K_timer_init()
 	/* Register fastint */
 	H2K_spinlock_init(&H2K_gp->time.lock);
 	H2K_gp->time.timeouts = NULL;
-	if (H2K_gp->time.devptr == NULL) H2K_gp->time.devptr = ((void *)0xab000000);
+	if (H2K_gp->time.devptr == NULL) H2K_gp->time.devptr = (void *)(TIMER_BASE_VA);
 	H2K_timer_hw_init();
 	H2K_timer_get_ticks();
 }

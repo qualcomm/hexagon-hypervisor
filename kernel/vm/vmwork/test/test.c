@@ -83,6 +83,8 @@ void TH_call_vm_do_work(H2K_thread_context *x)
 	}
 }
 
+H2K_kg_t H2K_kg;
+
 int main()
 {
 	__asm__ __volatile(" r16 = %0\n" : : "r"(&H2K_kg));

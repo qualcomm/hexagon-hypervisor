@@ -37,6 +37,7 @@ enum {
         intconfig_init,
         kg_init,
         trace_init,
+        timer_init,
 	XX_LAST_HELPER
 };
 
@@ -60,6 +61,7 @@ HELPER_FUNC(futex_init)
 HELPER_FUNC(intconfig_init)
 HELPER_FUNC(trace_init)
 HELPER_FUNC(kg_init)
+HELPER_FUNC(timer_init)
 
 extern H2K_vmblock_t *bootvm;
 

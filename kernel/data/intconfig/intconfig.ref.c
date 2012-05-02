@@ -12,6 +12,7 @@
 #include <hw.h>
 #include <globals.h>
 #include <vmipi.h>
+#include <timer.h>
 
 H2K_fastint_context H2K_fastint_contexts[MAX_HTHREADS];
 
@@ -105,6 +106,7 @@ void H2K_intconfig_init()
 	}
 	H2K_gp->inthandlers[RESCHED_INT] = H2K_resched;
 	H2K_gp->inthandlers[VM_IPI_INT] = H2K_vm_ipi_do;
+	H2K_gp->inthandlers[TIMER_INT] = H2K_timer_int;
 	for (i = 0; i < MAX_HTHREADS; i++) {
 		tmp = &H2K_fastint_contexts[i].context;
 		H2K_thread_context_clear(tmp);

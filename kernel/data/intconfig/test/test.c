@@ -14,6 +14,7 @@
 #include <resched.h>
 #include <globals.h>
 #include <vmipi.h>
+#include <timer.h>
 
 #define BAD ((void *)(0xdeadbeef))
 
@@ -62,6 +63,9 @@ int main()
 				FAIL("wrong resched handler");
 		} else if (i == VM_IPI_INT) {
 			if (H2K_gp->inthandlers[i] != H2K_vm_ipi_do)
+				FAIL("wrong ipi handler");
+		} else if (i == TIMER_INT) {
+			if (H2K_gp->inthandlers[i] != H2K_timer_int)
 				FAIL("wrong ipi handler");
 		} else if (H2K_gp->inthandlers[i] != NULL) FAIL("uninitialized handler");
 

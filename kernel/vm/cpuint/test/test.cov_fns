@@ -5,3 +5,6 @@ H2K_vm_cpuint_clear
 H2K_vm_cpuint_get
 H2K_vm_cpuint_peek
 H2K_vm_cpuint_status
+H2K_vm_cpuint_setaffinity
+H2K_vm_cpuint_localen
+H2K_vm_cpuint_localdis

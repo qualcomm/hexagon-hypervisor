@@ -14,6 +14,8 @@
 #include <vm.h>
 #include <asid.h>
 
+H2K_kg_t H2K_kg;
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -36,21 +38,27 @@ char buf[sizeof(H2K_thread_context)*2] __attribute__((aligned(32)));
 #define NUM_SIZE_TESTS 8
 /* CPUS, INTS, SIZE */
 int size_test[NUM_SIZE_TESTS][3] = {
-								/* pnd,en,maskptr,mask,phys,ctx*/
-	{0, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 0},
-	{1, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 288*1},
-	{33, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 288*33},
-	{1, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*1+4*1*1+64+288*1},
-	{1, 33, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*2+4*1+4*2*1+68+288*1},
-	{32, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*32+4*1*32+64+288*32},
-	{33, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*33+4*1*33+64+288*33},
-	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*3+4*33+4*3*33+132+288*33}
+								/* pnd,en,maskptr,mask,phys,ctx,info*/
+	{0, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 0+16},
+	{1, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 288*1+16},
+	{33, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 288*33+16},
+	{1, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*1+4*1*1+64+288*1+24},
+	{1, 33, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*2+4*1+4*2*1+68+288*1+24},
+	{32, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*32+4*1*32+64+288*32+24},
+	{33, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*33+4*1*33+64+288*33+24},
+	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*3+4*33+4*3*33+132+288*33+24}
 };
 
 char vmbuf[65536] __attribute__((aligned(32)));
 H2K_vmblock_t *vmblock;
 H2K_thread_context a;
 s32_t asid;
+
+int TH_expected_intinfo_ints = 0;
+void H2K_vm_int_intinfo_init(H2K_vmblock_t *vmblock, u32_t num_ints)
+{
+	if (num_ints != TH_expected_intinfo_ints) FAIL("intinfo ints");
+}
 
 static void __attribute__((noreturn)) foo(u32_t xyzzy)
 {
@@ -189,6 +197,7 @@ int main()
 	if (ret != 0) FAIL("Missed bad ints");
 
 	/* SET_CPUS_INTS */
+	TH_expected_intinfo_ints = 65;
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_CPUS_INTS, 33, 65, NULL);
 	if (ret == 0) FAIL("Unexpected error 5");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
@@ -230,6 +239,7 @@ int main()
 
 	/* 0 interrupts */
 	DPRINTF("0 interrupts\n\n");
+	TH_expected_intinfo_ints = 0;
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_CPUS_INTS, 33, 0, NULL);
 	if (ret == 0) FAIL("Unexpected error 6");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");

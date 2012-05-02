@@ -68,6 +68,7 @@
 
 #define RESCHED_INT 3
 #define VM_IPI_INT 0
+#define TIMER_INT 10
 
 #define MAX_TRACE_LEVEL 0
 

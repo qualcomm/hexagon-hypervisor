@@ -31,10 +31,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vmint.h>
+#include <shint.h>
+#include <cpuint.h>
+#include <badint.h>
 #include <vm.h>
 #include <hw.h>
 #include <context.h>
 #include <string.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -48,8 +52,11 @@ u32_t TH_pending_storage[MAX_TEST_INTERRUPTS/32];
 u32_t TH_enable_storage[MAX_TEST_INTERRUPTS/32];
 u32_t TH_localmask_storage[MAX_TEST_THREADS][MAX_TEST_INTERRUPTS/32];
 u32_t *TH_localmask_ptr_storage[MAX_TEST_THREADS];
+H2K_vm_int_opinfo_t TH_intinfo[3];
 
 H2K_vmblock_t TH_vmblock;
+
+H2K_kg_t H2K_kg;
 
 void TH_init_vmblock()
 {
@@ -62,6 +69,7 @@ void TH_init_vmblock()
 	TH_vmblock.pending = &TH_pending_storage[0];
 	TH_vmblock.enable = &TH_enable_storage[0];
 	TH_vmblock.percpu_mask = &TH_localmask_ptr_storage[0];
+	TH_vmblock.intinfo = TH_intinfo;
 	for (i = 0; i < MAX_TEST_INTERRUPTS/32; i++) {
 		TH_pending_storage[i] = 0;
 		TH_enable_storage[i] = 0;
@@ -69,6 +77,7 @@ void TH_init_vmblock()
 	for (i = 0; i < MAX_TEST_THREADS; i++) {
 		memset(&TH_threads[i],0,sizeof(TH_threads[i]));
 		TH_threads[i].id.cpuidx = i;
+		TH_threads[i].id.vmidx = 2;
 		TH_threads[i].status = H2K_STATUS_RUNNING;
 		TH_threads[i].vmblock = &TH_vmblock;
 		TH_localmask_ptr_storage[i] = &TH_localmask_storage[i][0];
@@ -76,6 +85,13 @@ void TH_init_vmblock()
 			TH_localmask_storage[i][j] = 0;
 		}
 	}
+	TH_intinfo[0].num_ints = 32;
+	TH_intinfo[0].handlers = &H2K_vm_cpuint_ops;
+	TH_intinfo[1].num_ints = MAX_TEST_INTERRUPTS;
+	TH_intinfo[1].handlers = &H2K_vm_shint_ops;
+	TH_intinfo[2].num_ints = ~0;
+	TH_intinfo[2].handlers = &H2K_vm_badint_ops;
+	H2K_kg.vmblocks[2] = &TH_vmblock;
 }
 
 u8_t primes[MAX_TEST_THREADS] = { 2, 3, 5, 7, 11, 13, 17, 19 };
@@ -85,7 +101,7 @@ u32_t TH_vmstatus_setting = 0;
 u32_t TH_saw_ipi_send = 0;
 u32_t TH_expected_ipi = 0;
 
-void H2K_vm_ipi_send(H2K_thread_context *thread)
+void H2K_vm_ipi_send_withlock(H2K_thread_context *thread)
 {
 	TH_saw_ipi_send = 1;
 }
@@ -169,6 +185,7 @@ int main()
 	TH_setup_intmask();
 	TH_clear_data();
 	H2K_thread_context *t0 = &TH_threads[0];
+	__asm__ __volatile(" r16 = %0\n" : : "r"(&H2K_kg));
 
 	puts("VM enable/disable/check");
 
@@ -683,72 +700,90 @@ int main()
 
 	/* POST / CLEAR */
 	puts("I");
+	puts("0");
 
 	t0->r00 = H2K_INTOP_POST;
 	t0->r01 = 0;
+	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/0");
 	if (t0->cpuint_pending != 1) FAIL("Bad post beh/0");
+	puts("1");
 
 	t0->r00 = H2K_INTOP_POST;
 	t0->r01 = 0;
+	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/0/2");
 	if (t0->cpuint_pending != 1) FAIL("Bad post beh/0/2");
+	puts("2");
 
 	t0->r00 = H2K_INTOP_POST;
 	t0->r01 = 1;
+	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/1");
 	if (t0->cpuint_pending != 3) FAIL("Bad post beh/1");
+	puts("3");
 
 	t0->r00 = H2K_INTOP_POST;
 	t0->r01 = 32;
+	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/32");
 	if (TH_vmblock.pending[0] != 1) FAIL("Bad post beh/32");
+	puts("4");
 
 	t0->r00 = H2K_INTOP_POST;
 	t0->r01 = 32;
+	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/32/2");
 	if (TH_vmblock.pending[0] != 1) FAIL("Bad post beh/32/2");
+	puts("5");
 
 	t0->r00 = H2K_INTOP_POST;
 	t0->r01 = 33;
+	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/33");
 	if (TH_vmblock.pending[0] != 3) FAIL("Bad post beh/33");
+	puts("6");
 
 	t0->r00 = H2K_INTOP_CLEAR;
 	t0->r01 = 0;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad clear status/0");
 	if (t0->cpuint_pending != 2) FAIL("Bad clear beh/0");
+	puts("7");
 
 	t0->r00 = H2K_INTOP_CLEAR;
 	t0->r01 = 0;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad clear status/0/2");
 	if (t0->cpuint_pending != 2) FAIL("Bad clear beh/0/2");
+	puts("8");
 
 	t0->r00 = H2K_INTOP_CLEAR;
 	t0->r01 = 1;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad clear status/1");
 	if (t0->cpuint_pending != 0) FAIL("Bad clear beh/1");
+	puts("9");
 
 	t0->r00 = H2K_INTOP_CLEAR;
 	t0->r01 = 32;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad clear status/32");
 	if (TH_vmblock.pending[0] != 2) FAIL("Bad clear beh/32");
+	puts("a");
 
 	t0->r00 = H2K_INTOP_CLEAR;
 	t0->r01 = 32;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad clear status/32/2");
 	if (TH_vmblock.pending[0] != 2) FAIL("Bad clear beh/32/2");
+	puts("b");
 
 	t0->r00 = H2K_INTOP_CLEAR;
 	t0->r01 = 33;

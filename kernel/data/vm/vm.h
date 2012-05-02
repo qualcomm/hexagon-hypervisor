@@ -66,6 +66,7 @@ typedef struct H2K_vmblock_struct {
 	bitmask_t **percpu_mask;
 	/* Mapping back to the HW interrupt (if applicable) */
 	physint_t *int_v2p;
+	struct H2K_vm_int_opinfo_struct *intinfo;  
 	/* physical memory map, page table style */
 	u32_t pmap;
 	translation_type pmap_type;

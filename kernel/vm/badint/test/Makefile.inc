@@ -4,5 +4,4 @@ H2DIR=${UPDIR}../../../..
 #  Everything else defined here
 include ${H2DIR}/scripts/Makefile.inc.test
 
-SIMF += --cosim_file timer.cfg
 

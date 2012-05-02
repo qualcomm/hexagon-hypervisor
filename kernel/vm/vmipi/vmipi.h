@@ -10,6 +10,7 @@
 
 void  H2K_vm_ipi_do(u32_t ipi_intno, H2K_thread_context *me, u32_t hwtnum) IN_SECTION(".text.vm.ipi");
 void  H2K_vm_ipi_send(H2K_thread_context *dest) IN_SECTION(".text.vm.ipi");
+void  H2K_vm_ipi_send_withlock(H2K_thread_context *dest) IN_SECTION(".text.vm.ipi");
 
 #endif
 

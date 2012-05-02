@@ -203,7 +203,7 @@ int main()
 
 	H2K_gp->time.devptr = NULL;
 	H2K_timer_init();
-	if (H2K_gp->time.devptr != ((void *)0xab000000)) FAIL("reset devptr");
+	if (H2K_gp->time.devptr != ((void *)TIMER_BASE_VA)) FAIL("reset devptr");
 	H2K_gp->time.devptr = mydev;
 
 	/* Test timer interrupt -- wrapping ticks when 32-bit timer wraps around */

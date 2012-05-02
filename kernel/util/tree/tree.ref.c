@@ -4,6 +4,7 @@
  */
 
 #include <tree.h>
+#include <globals.h>
 
 void H2K_tree_remove_key(H2K_treenode_t **root, H2K_treenode_t *node, H2K_treekey_t key)
 {

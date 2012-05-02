@@ -9,6 +9,7 @@
 #include <c_std.h>
 #include <context.h>
 #include <vm.h>
+#include <vmint.h>
 
 #define UNIT sizeof(u32_t)
 #define ROUND(expr) ((((expr) + UNIT - 1) / UNIT) * UNIT)
@@ -37,17 +38,21 @@
 #define PHYSINT_WORDS(ints) ((ints + PHYS_PER_WORD - 1) / PHYS_PER_WORD)
 #define PHYSINT_SPACE(ints) ROUND(PHYSINT_WORDS(ints) * BYTES_PER_WORD)
 
+/* Interrupt Handler Info */
+#define INTINFO_SPACE(ints) (((ints > 0) ? 3 : 2) * sizeof(H2K_vm_int_opinfo_t))
+
 // cpu_contexts
 #define CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_thread_context))
 
 #define VMBLOCK_SIZE(cpus, ints) \
-	(VMBLOCK_SPACE +															\
-	 PENDING_SPACE(ints) +										\
-	 ENABLE_SPACE(ints) +											\
-	 MASKPTR_SPACE(cpus, ints) +										\
-	 MASK_SPACE(cpus, ints) +							\
-	 PHYSINT_SPACE(ints) +										\
-	 CONTEXT_SPACE(cpus) +										\
+	(VMBLOCK_SPACE + \
+	 PENDING_SPACE(ints) + \
+	 ENABLE_SPACE(ints) + \
+	 MASKPTR_SPACE(cpus, ints) + \
+	 MASK_SPACE(cpus, ints) + \
+	 PHYSINT_SPACE(ints) + \
+	 CONTEXT_SPACE(cpus) + \
+	 INTINFO_SPACE(ints) + \
 	 (H2K_VMBLOCK_ALIGN - 1))
    // space to align if needed
 

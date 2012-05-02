@@ -280,8 +280,8 @@ ${EXEC}: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-#	ulimit -t 60 && ${SIM} --profile -- ${BOOTER} ${EXEC} | tee $@; 
-	ulimit -t 60 && ${SIM} -- ${BOOTER} ${EXEC} | tee $@; \
+#	ulimit -t 60 && ${SIM} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee $@; 
+	ulimit -t 60 && ${SIM} ${SIMF} -- ${BOOTER} ${EXEC} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \

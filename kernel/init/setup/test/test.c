@@ -38,6 +38,9 @@ enum {
         kg_init,
         trace_init,
         timer_init,
+        //thread_init,
+        //asid_table_init,
+        //mem_stlb_init,
 	XX_LAST_HELPER
 };
 
@@ -51,6 +54,17 @@ void H2K_interrupt_restore()
 {
 }
 
+H2K_thread_context a;
+
+u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t val4, H2K_thread_context *me)
+{
+	H2K_vmblock_t *block = ptr;
+	block->free_threads = &a;
+	block->contexts = &a;
+	block->trapmask = ~0;
+	return (u32_t)block;
+}
+
 #define HELPER_FUNC(X) void H2K_##X() { TH_init_seen |= 1<< X; }
 
 HELPER_FUNC(fatal_init)
@@ -62,6 +76,9 @@ HELPER_FUNC(intconfig_init)
 HELPER_FUNC(trace_init)
 HELPER_FUNC(kg_init)
 HELPER_FUNC(timer_init)
+//HELPER_FUNC(thread_init)
+//HELPER_FUNC(asid_table_init)
+//HELPER_FUNC(mem_stlb_init)
 
 extern H2K_vmblock_t *bootvm;
 
@@ -102,7 +119,7 @@ int main()
 	}
 	if (TH_switch_seen == 0) FAIL("Did not switch to boot thread");
 	for (i = 0; i < XX_LAST_HELPER; i++) {
-		//printf("%d\n",i);
+		printf("%d\n",i);
 		if (((1<<i) & TH_init_seen) == 0) FAIL("Didn't call init func");
 	}
 	if (boot->continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");

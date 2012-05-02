@@ -14,7 +14,7 @@
 #include <tlbfmt.h>
 #include <tlbmisc.h>
 
-#define SPINS (1024*10)
+#define SPINS (1024*32)
 #define STACK_SIZE 128
 
 void FAIL(const char *str)
@@ -33,18 +33,32 @@ extern void set_vectors();
 int main() 
 {
 	int i;
-	u64_t start,end;
+	u64_t start,end,end2;
+	float delta;
 	h2_init(NULL);
 	set_vectors();
+	h2_vmtrap_setie(1);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN,12,0);
 	start = h2_time_get_time();
 	for (i = 0; i < SPINS; i++) asm volatile ("nop");
 	end = h2_time_get_time();
 	if (start == end) FAIL("ticks not advancing");
+	printf("Yay, end=0x%016llx\n",end);
 	h2_time_set_timeout(end*2);
 	for (i = 0; i < SPINS*4; i++) {
 		if (saw_interrupt != 0) break;
 	}
-	if (saw_interrupt == 0) FAIL("Didn't see interrupt");
+	if (saw_interrupt == 0) {
+		printf("Time now 0x%016llx\n",h2_time_get_time());
+		FAIL("Didn't see interrupt");
+	}
+	end2 = h2_time_get_time();
+	printf("Time is now 0x%016llx, requested 0x%016llx.\n",end2,2*end);
+	printf("  Delta from request=0x%016llx / %lld nsecs\n",end2-2*end,end2-2*end);
+	delta = (end2 - 2*end);
+	delta *= .0192;
+	printf("  approx %f ticks\n",delta);
+	puts("TEST PASSED\n");
 	return 0;
 }
 

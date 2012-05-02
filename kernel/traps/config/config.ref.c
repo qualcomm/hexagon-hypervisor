@@ -127,9 +127,12 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 			contexts[i].vmblock = vmblock;
 			vmblock->free_threads = &contexts[i];
 		}
+		ptrtmp += vmblock->max_cpus * sizeof(H2K_thread_context);
+		vmblock->intinfo = (H2K_vm_int_opinfo_t *)ptrtmp; 
+		ptrtmp += INTINFO_SPACE(vmblock->num_ints);
+		H2K_vm_int_intinfo_init(vmblock,vmblock->num_ints);
 
 		if (vmblock->num_ints > 0) {
-			ptrtmp += vmblock->max_cpus * sizeof(H2K_thread_context);
 			/* allocate per-cpu mask blocks and clear */
 			vmblock->percpu_mask = masks = (bitmask_t **)ptrtmp;
 			ptrtmp += MASKPTR_SPACE(vmblock->max_cpus, vmblock->num_ints);

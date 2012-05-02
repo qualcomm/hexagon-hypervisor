@@ -21,6 +21,8 @@
 #include <futex.h>
 #include <shint.h>
 #include <cpuint.h>
+#include <badint.h>
+#include <id.h>
 
 /*
  * EJP: FIXME:
@@ -52,7 +54,7 @@ void H2K_vm_int_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *thread, u32_
 			return;
 		case H2K_STATUS_RUNNING:
 			if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
-				H2K_vm_ipi_send(thread);
+				H2K_vm_ipi_send_withlock(thread);
 			}
 			break;
 		case H2K_STATUS_INTBLOCKED:
@@ -76,86 +78,86 @@ void H2K_vm_int_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *thread, u32_
 
 static s32_t H2K_vm_interrupt_peek(H2K_vmblock_t *vmblock, H2K_thread_context *me)
 {
-	s32_t ret;
-	if ((ret = H2K_vm_cpuint_peek(vmblock,me)) < 0) {
-		ret = H2K_vm_shint_peek(vmblock,me);
-		if (ret >= 0) ret += 32;
-	};
-	return ret;
+	return vmblock->intinfo[0].handlers->peek(vmblock,me,0,vmblock->intinfo);
 }
 
 static s32_t H2K_vm_interrupt_get(H2K_vmblock_t *vmblock, H2K_thread_context *me)
 {
-	s32_t ret;
-	if ((ret = H2K_vm_cpuint_get(vmblock,me)) < 0) {
-		ret = H2K_vm_shint_get(vmblock,me);
-		if (ret >= 0) ret += 32;
-	};
-	return ret;
+	return vmblock->intinfo[0].handlers->get(vmblock,me,0,vmblock->intinfo);
 }
+
+/*
+ * Insert here:
+ * Table of xforms function pointers for preparing dst/vmblock/etc
+ * Then we have everything set up for call to first int handler fns (cpuint, for now)
+ * 
+ * (returns dst) 
+ * H2K_thread_context *fixup(H2K_thread_context *me, int *intptr);
+ * 
+ * Most funcs return me as dst
+ * get/peek sets *intptr to 0
+ * post sets *vmptr and *dstptr to dst thread
+ * affinity sets ???
+ * 
+ */
+
+static H2K_thread_context *H2K_vmint_fixup_getpeek(H2K_thread_context *me, u32_t *argptr)
+{
+	*argptr = 0;
+	return me;
+}
+
+static H2K_thread_context *H2K_vmint_fixup_post(H2K_thread_context *me, u32_t *argptr)
+{
+	H2K_id_t id;
+	H2K_thread_context *dst;
+	id.raw = me->r02;
+	dst = H2K_id_to_context(id);
+	return dst;
+}
+
+static H2K_thread_context *H2K_vmint_fixup_aff(H2K_thread_context *me, u32_t *argptr)
+{
+	return H2K_id_cpuidx_to_context(me->vmblock,me->r02);
+}
+
+static H2K_thread_context *H2K_vmint_fixup_default(H2K_thread_context *me, u32_t *argptr)
+{
+	return me;
+}
+
+typedef H2K_thread_context *(*H2K_vmint_fixup_fn_t)(H2K_thread_context *me, u32_t *argptr);
+
+H2K_vmint_fixup_fn_t H2K_intops_fixups[H2K_INTOP_FIRST_INVALID_OP] = {
+	H2K_vmint_fixup_default,	/* H2K_INTOP_NOP */
+	H2K_vmint_fixup_default,	/* H2K_INTOP_GLOBEN */
+	H2K_vmint_fixup_default,	/* H2K_INTOP_GLOBDIS */
+	H2K_vmint_fixup_default,	/* H2K_INTOP_LOCEN */
+	H2K_vmint_fixup_default,	/* H2K_INTOP_LOCDIS */
+	H2K_vmint_fixup_aff,		/* H2K_INTOP_AFFINITY */
+	H2K_vmint_fixup_getpeek,	/* H2K_INTOP_GET */
+	H2K_vmint_fixup_getpeek,	/* H2K_INTOP_PEEK */
+	H2K_vmint_fixup_default,	/* H2K_INTOP_STATUS */
+	H2K_vmint_fixup_post,		/* H2K_INTOP_POST */
+	H2K_vmint_fixup_default,	/* H2K_INTOP_CLEAR */
+};
+	
 
 /* 5 */
 void H2K_vmtrap_intop(H2K_thread_context *me)
 {
-	const H2K_vm_int_ops_t *ops;
-	H2K_vmblock_t *vmblock = me->vmblock;
-	intop_type op = (intop_type)me->r00;
-	u32_t r1 = me->r01;
-	u32_t r2 = me->r02;
-	u32_t bad_int = 0;
-	/* EJP: FIXME: doesn't work for peek/get */
-	ops = (r1>=32) ? &H2K_vm_shint_ops : &H2K_vm_cpuint_ops;
-	if (r1 >= 32) r1 -= 32;
-
-	if (r1 >= vmblock->num_ints) {
-		me->r00 = -1;
-		bad_int = 1;
-	}
-	switch (op) {
-	case H2K_INTOP_NOP:
-		me->r00 = 0;
-		return;
-	case H2K_INTOP_GLOBEN:
-		if (bad_int) return;
-		me->r00 = ops->enable(vmblock,me,r1);
-		return;
-	case H2K_INTOP_GLOBDIS:
-		if (bad_int) return;
-		me->r00 = ops->disable(vmblock,me,r1);
-		return;
-	case H2K_INTOP_LOCEN:
-		if (bad_int) return;
-		me->r00 = ops->localunmask(vmblock,me,r1);
-		return;
-	case H2K_INTOP_LOCDIS:
-		if (bad_int) return;
-		me->r00 = ops->localmask(vmblock,me,r1);
-		return;
-	case H2K_INTOP_AFFINITY:
-		if (bad_int) return;
-		me->r00 = ops->setaffinity(vmblock,r2,r1);
-		return;
-	case H2K_INTOP_GET:
-		me->r00 = H2K_vm_interrupt_get(vmblock,me);
-		return;
-	case H2K_INTOP_PEEK:
-		me->r00 = H2K_vm_interrupt_peek(vmblock,me);
-		return;
-	case H2K_INTOP_STATUS:
-		if (bad_int) return;
-		me->r00 = ops->status(vmblock,me,r1);
-		return;
-	case H2K_INTOP_POST:
-		if (bad_int) return;
-		me->r00 = ops->post(vmblock,me,r1);
-		return;
-	case H2K_INTOP_CLEAR:
-		if (bad_int) return;
-		me->r00 = ops->clear(vmblock,me,r1);
-		return;
-	default:
-		me->r00 = -1;
-	}
+	u32_t op = (intop_type)me->r00;
+	me->r00 = -1;	/* default is fail */
+	H2K_thread_context *dst;
+	u32_t arg = me->r01;
+	H2K_vmblock_t *vmblock;
+	if (op >= H2K_INTOP_FIRST_INVALID_OP) goto fail;
+	dst = H2K_intops_fixups[op](me,&arg);
+	if (dst == NULL) goto fail;
+	vmblock = dst->vmblock;
+	me->r00 = vmblock->intinfo[0].optab[op](vmblock,dst,arg,vmblock->intinfo);
+fail:
+	return;
 }
 
 u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) {
@@ -187,4 +189,20 @@ s32_t H2K_vm_check_interrupts(H2K_thread_context *me) {
 		intno = H2K_vm_interrupt_peek(me->vmblock, me);
 	}
 	return intno;
+}
+
+void H2K_vm_int_intinfo_init(H2K_vmblock_t *vmblock, u32_t num_ints)
+{
+	H2K_vm_int_opinfo_t *info = vmblock->intinfo;
+	/* CPU INTS */
+	info->num_ints = 32;
+	info->handlers = &H2K_vm_cpuint_ops;
+	info++;
+	if (num_ints > 0) {
+		info->num_ints = num_ints;
+		info->handlers = &H2K_vm_shint_ops;
+		info++;
+	}
+	info->num_ints = ~0;
+	info->handlers = &H2K_vm_badint_ops;
 }

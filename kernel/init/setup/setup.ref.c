@@ -30,8 +30,6 @@ u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
 
 static char vmblock_space[VMBLOCK_SIZE(MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT)] IN_SECTION(".data.init.boot");
 
-static unsigned long long int boot_stacks[MAX_BOOT_CONTEXTS][BOOT_STACK_SIZE];
-
 H2K_vmblock_t *bootvm;
 
 void H2K_init_setup_bootvm()
@@ -73,18 +71,16 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot()
 	bootvm->free_threads = boot->next;
 	bootvm->num_cpus = 1;
 
-	boot->base_prio = boot->prio = 0;
+	boot->base_prio = boot->prio = bootvm->bestprio;
 	boot->gpugp = BOOT_THREAD_GPUGP;
 	boot->sr = BOOT_THREAD_USR;
 	boot->ssr = (BOOT_THREAD_SSR);
 	boot->elr = ((u32_t)(qdsp6_pre_main));
-	boot->r29 = (u32_t)&boot_stacks[0][BOOT_STACK_SIZE - 1];
 	boot->r0100 = 0;
 	boot->ccr = BOOT_THREAD_CCR;
 	boot->trapmask = bootvm->trapmask;
 	boot->continuation = H2K_interrupt_restore;
 	boot->vmstatus = 0x0;
-	/* FIXME: gevb */
 	asid = H2K_asid_table_inc((u32_t)bootvm->pmap, bootvm->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE);
 	boot->ssr_asid = asid;
 	BKL_LOCK();

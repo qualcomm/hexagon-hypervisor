@@ -9,10 +9,12 @@
 #include <linear.h>
 
 /* FIXME: These shouldn't both use bootmap.def.  There should be distinct maps
-	 for h2 boot and for the boot thread, from which all other threads inherit by
-	 default.  Actually, there shouldn't be a boot "map" at all --- at start we
-	 should create the necessary pinned global TLB entry for the segment where h2
-	 lives. */
+ *	 for h2 boot and for the boot thread, from which all other threads inherit by
+ *	 default.  Actually, there shouldn't be a boot "map" at all --- at start we
+ *	 should create the necessary pinned global TLB entry for the segment where h2
+ *	 lives. */
+
+/* EJP: We are migrating this way.  Entries are pinned.  Unsure this is still necessary */
 
 #define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) MEMORY_MAP_BOOT(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN)
 

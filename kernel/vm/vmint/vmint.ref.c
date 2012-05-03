@@ -25,20 +25,7 @@
 #include <id.h>
 
 /*
- * EJP: FIXME:
- * 
- * We should reorg this so that the vmstruct has handler pointers and widths.
- * So the first one is (for example) always the cpuint and is 32 wide.
- * The next one might be shint with X interrupts wide
- * There should also exist a default handler with all nops/errors that is MAX-X wide.
- * We then just go through each handler until the end.
- * We may be able to further genericize the code for most of the enable/disable/etc
- * such that they are indices into the handler function pointer tables.  This should
- * reduce code size.
- * 
- * FIXME: For affinity / post, specify cpuid rather than index
  * FIXME: How to post interrupts securely to other VMs?
- * 
  */
 
 IN_SECTION(".text.vm.int")

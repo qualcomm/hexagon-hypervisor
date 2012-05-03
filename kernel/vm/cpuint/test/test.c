@@ -35,8 +35,6 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-/* XXX: FIXME: set up vmblock */
-
 H2K_vmblock_t TH_vmblock;
 H2K_thread_context a;
 

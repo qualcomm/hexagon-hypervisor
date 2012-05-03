@@ -55,8 +55,6 @@ Enables or disables performance monitoring for a software thread
 Functionality
 ~~~~~~~~~~~~~
 
-XXX: Fixme: check thread?
-
 Acquire the BKL.
 
 If the thread is dead or invalid, return nonzero.

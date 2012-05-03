@@ -63,7 +63,8 @@ void TH_do_preempt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
 	if (src->ELEMENT != dest->ELEMENT) FAIL("Not equal: " #ELEMENT)
 
 /* Check to make sure we have the expected values in our thread context */
-/* XXX: FIXME: check all the values we can */
+/* Context save/restore checked pretty well in context, I think */
+
 void TH_check_interrupt(H2K_thread_context *src, H2K_thread_context *dest)
 {
 	CHECK_INTERRUPT_TEST(r0100);
@@ -204,7 +205,6 @@ void TH_continuation_fail(u64_t r0100)
  * with known values.
  */
 
-/* XXX: FIXME: check all the values we can, instead of just GPRs */
 void fill_srcdata(int i)
 {
 	u64_t id = ((u64_t)i);

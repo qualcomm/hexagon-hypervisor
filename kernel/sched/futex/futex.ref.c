@@ -84,7 +84,11 @@ s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 	return 0;
 }
 
-/* FIXME: Need to return next state (for multi wake) as well as removed thread (for pi) */
+/* 
+ * This returns the next position in the ring (for multi wake) 
+ * as well as removed thread (for pi)
+ * Thus we avoid re-iterating over the first elements in the ring
+ */
 
 IN_SECTION(".text.core.futex")
 static H2K_thread_context *H2K_futex_hash_remove_one(pa_t lock, H2K_thread_context **ring, H2K_thread_context **pos)

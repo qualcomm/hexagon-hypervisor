@@ -3,8 +3,6 @@
 
 .. module:: vmevent
 
-EJP: Fixme: need to clear IE / copy into GSSR
-
 
 H2K_vm_event
 ------------

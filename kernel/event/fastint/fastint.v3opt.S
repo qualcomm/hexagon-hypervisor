@@ -49,17 +49,6 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	}
 H2K_fastint_return:
 	ciad(r25)
-//	{
-//		r0 = IPEND
-//		r16.h = #hi(H2K_kg)
-//		r11.h = #0x1c4
-//	}
-//	{
-//		r16.l = #lo(H2K_kg)
-//		p0 = cmp.eq(r0,#0)
-//		if (!p0.new) jump:nt 1f
-//		r14 = ssr
-//	}
 2:
 	crswap(r24,sgp)
 	{
@@ -67,67 +56,5 @@ H2K_fastint_return:
 	}
 	jumpr r31
 
-//1:
-//	{
-//		r5 = memw(r16+#KG_fastint_mask)
-//		r4 = add(r16,#KG_fastint_funcptrs)
-//		r13 = imask
-//		r11.l = #0x0
-//	}
-//	r5 = not(r5)
-//	r5 = brev(r5)
-//	imask = r5
-//	ssr = r11
-//	isync
-//	nop
-//	ssr = r14
-//	imask = r13
-//	{
-//		jump 2b
-//	}
 FUNC_END H2K_fastint
 
-#if 0
-FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
-	// OK, we checked to see if there was a pending 
-	// interrupt, and there sure was!
-	// sgp and r0 have been swapped
-	// so r0 has our fastint context ptr
-	// Note that much of the fastint context has been clobbered
-	// r24-27, p1-3, and most lower regs are unchanged.
-	// r28-31,r20-23 are saved, but clobbered
-	// What do we need to do?
-	// restore r29-31 
-	// set sgp back to r0
-	// fastint_funcptrs in r4
-	// Get SSR for new fast interrupt number --> r0
-	// Replace SSR w/ precomputed SSR in r14
-	// replace IMASK w/ correct IMASK in r13
-	// sgp in r24
-	// compute new r30 == CIAD mask
-	// Last call returned to H2K_fastint_return, so r31 OK as-is
-	sgp = r0
-	r1 = ssr
-	{
-		r29:28 = memd(r0+#CONTEXT_r2928)
-		r31:30 = memd(r0+#CONTEXT_r3130)
-		r0 = zxtb(r1)
-	}
-	{
-		imask = r13
-	}
-	{
-		r4 = addasl(r4,r0,#2)
-		r1 = sub(#31,r0)
-		r30 = #0
-	}
-	{
-		r4 = memw(r4)
-		r30 = setbit(r30,r1)
-	}
-	{
-		ssr = r14
-		jumpr r4
-	}
-FUNC_END H2K_interrupted_fastint_check
-#endif

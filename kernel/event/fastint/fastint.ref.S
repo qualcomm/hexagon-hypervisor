@@ -18,7 +18,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 
 	/* Per-HThread stack may get corrputed by trap in int handler */
 	/* So save off important registers in fastint context that won't change */
-	/* EJP: FIXME: revisit when we add preemption point... */
+	/* EJP: Possibly, can avoid save/restore of return since we know continuation */
 	memd(r3+#CONTEXT_totalcycles) = r31:30
 
 	r5 = #0
@@ -75,7 +75,7 @@ H2K_fastint_return:
 	//p0 = cmp.eq(r0,#0)
 	//if (!p0) jump 1f
 	crswap(r24,sgp)
-	/* EJP: FIXME: revisit when we add preemption point... */
+	/* EJP: Possibly can avoid restore if we know continuation */
 	r31:30 = memd(r24+#CONTEXT_totalcycles)
 	jumpr r31
 

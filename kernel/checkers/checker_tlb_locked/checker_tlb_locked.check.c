@@ -16,7 +16,7 @@ s32_t checker_tlb_locked()
 		FAIL("checker_kernel_locked: TLB not locked.");
 	}
 #else
-#warning fixme: look at bkl
+#error support less than v3
 #endif
 	return 1;
 }
@@ -29,7 +29,7 @@ s32_t checker_tlb_unlocked()
 		FAIL("checker_kernel_unlocked: TLB is Locked.");
 	}
 #else
-#warning fixme: look at bkl
+#error support less than v3
 #endif
 	return 1;
 }

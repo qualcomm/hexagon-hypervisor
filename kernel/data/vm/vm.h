@@ -45,7 +45,6 @@
 typedef u16_t physint_t;
 typedef u32_t bitmask_t;
 
-/* FIXME: rename enable to mask since there is already another enable bit */
 typedef struct H2K_vmblock_struct {
 	u32_t max_cpus;
 	u32_t num_cpus;

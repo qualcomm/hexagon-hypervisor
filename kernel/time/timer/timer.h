@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef H2K_TIMERDEV_H
-#define H2K_TIMERDEV_H 1
+#ifndef H2K_TIMER_H
+#define H2K_TIMER_H 1
 
 #include <context.h>
 #include <timeinfo.h>
@@ -15,11 +15,9 @@ void H2K_timer_init();
 enum {
 	H2K_TIMER_TRAP_GET_FREQ,
 	H2K_TIMER_TRAP_GET_RESOLUTION,
-	H2K_TIMER_TRAP_GET_ROUGHTIME,
 	H2K_TIMER_TRAP_GET_TIME,
 	H2K_TIMER_TRAP_GET_TIMEOUT,
 	H2K_TIMER_TRAP_SET_TIMEOUT,
-	H2K_TIMER_TRAP_SET_TIMEOUT_SOONER,
 	H2K_TIMER_TRAP_INVALID
 };
 

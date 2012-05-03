@@ -10,6 +10,7 @@
 #include <hw.h>
 #include <atomic.h>
 #include <cpuint.h>
+#include <intcontrol.h>
 
 /* EJP: FIXME: locking for timeinfo */
 /* EJP: FIXME: cancel timer carefully on thread death */
@@ -121,11 +122,12 @@ static void H2K_timer_dotimeout(H2K_treenode_t *treenode, void *me)
 	H2K_vm_cpuint_post(dest->vmblock,dest,H2K_TIME_GUESTINT,dest->vmblock->intinfo);
 }
 
-void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
+void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 {
 	u64_t ticks,nextticks;
 	H2K_treenode_t *timedout = NULL;
 	H2K_treenode_t *newtimeout = NULL;
+
 	/* Get time off the device, or assume it's the next time? */
 	ticks = H2K_timer_get_ticks();
 	ticks += TICK_GRANULARITY;
@@ -139,6 +141,8 @@ void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 	if (newtimeout) nextticks = newtimeout->key;
 	else nextticks = H2K_TIME_FOREVER;
 	H2K_timer_hw_set_timeout(nextticks);
+
+        H2K_intcontrol_enable(intnum);
 
 	/* Do Timeouts.  Make preemptible? cpu_offline? Better be fast, at least. */
 	H2K_tree_destructive_iterate(timedout,me,H2K_timer_dotimeout);
@@ -166,12 +170,6 @@ static u64_t H2K_timer_get_resolution(u32_t unused, u64_t unused2, H2K_thread_co
 	return TIMERHW_NSEC_PER_TICK;
 }
 
-static u64_t H2K_timer_get_roughtime(u32_t unused, u64_t unused2, H2K_thread_context *me)
-{
-	return H2K_gp->time.last_ticks * TIMERHW_NSEC_PER_TICK 
-		/* + pcycles since last tick? */;
-}
-
 static u64_t H2K_timer_get_time(u32_t unused, u64_t unused2, H2K_thread_context *me)
 {
 	return H2K_timer_get_ticks() * TIMERHW_NSEC_PER_TICK;
@@ -196,14 +194,8 @@ static u64_t H2K_timer_set_timeout_tick(u32_t unused, u64_t timeout_tick, H2K_th
 static u64_t H2K_timer_set_timeout(u32_t unused, u64_t timeout, H2K_thread_context *me)
 {
 	u64_t timeout_tick = TIMERHW_NS2TICKS(timeout);
+	/* Setting a timer for FOREVER is the same as BIGBANG... disable the timer */
 	if (timeout == H2K_TIME_FOREVER) timeout_tick = H2K_TIME_BIGBANG;
-	return H2K_timer_set_timeout_tick(0,timeout_tick,me);
-}
-
-static u64_t H2K_timer_set_timeout_sooner(u32_t unused, u64_t timeout, H2K_thread_context *me)
-{
-	u64_t timeout_tick = TIMERHW_NS2TICKS(timeout);
-	if (timeout_tick >= me->timeout) return TIMERHW_TICKS2NS(me->timeout);
 	return H2K_timer_set_timeout_tick(0,timeout_tick,me);
 }
 
@@ -212,16 +204,19 @@ typedef u64_t (*H2K_timer_handler_t)(u32_t unused, u64_t arg, H2K_thread_context
 static H2K_timer_handler_t H2K_timer_trap_handlers[] = {
 	H2K_timer_get_freq,
 	H2K_timer_get_resolution,
-	H2K_timer_get_roughtime,
 	H2K_timer_get_time,
 	H2K_timer_get_timeout,
 	H2K_timer_set_timeout,
-	H2K_timer_set_timeout_sooner,
 };
 
 u64_t H2K_timer_trap(u32_t traptype, u64_t arg, H2K_thread_context *me)
 {
 	if (traptype >= H2K_TIMER_TRAP_INVALID) return ~0ULL;
 	return H2K_timer_trap_handlers[traptype](traptype,arg,me);
+}
+
+void H2K_vmtrap_timer(H2K_thread_context *me)
+{
+	me->r0100 = H2K_timer_trap(me->r00,me->r0302,me);
 }
 

@@ -58,6 +58,23 @@ int main()
 	delta = (end2 - 2*end);
 	delta *= .0192;
 	printf("  approx %f ticks\n",delta);
+
+	h2_vmtrap_setie(1);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN,12,0);
+	saw_interrupt = 0;
+
+	end2 = h2_time_get_time();
+	end2 += end;
+	h2_time_set_timeout(end2);
+
+	for (i = 0; i < SPINS*4; i++) {
+		if (saw_interrupt != 0) break;
+	}
+	if (saw_interrupt == 0) {
+		printf("Time now 0x%016llx\n",h2_time_get_time());
+		FAIL("Didn't see interrupt");
+	}
+
 	puts("TEST PASSED\n");
 	return 0;
 }

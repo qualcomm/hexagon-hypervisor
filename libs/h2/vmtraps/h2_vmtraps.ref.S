@@ -23,6 +23,7 @@
 	.global h2_vmtrap_vmpid
 	.global h2_vmtrap_setregs
 	.global h2_vmtrap_getregs
+	.global h2_vmtrap_timerop
 
 h2_vmtrap_return:
 	trap1(#H2_VMTRAP_RETURN)
@@ -86,6 +87,10 @@ h2_vmtrap_vmpid:
 
 h2_vmtrap_setregs:
 	trap1(#H2_VMTRAP_SETREGS)
+	jumpr r31
+
+h2_vmtrap_timerop:
+	trap1(#H2_VMTRAP_TIMEROP)
 	jumpr r31
 
 h2_vmtrap_getregs:

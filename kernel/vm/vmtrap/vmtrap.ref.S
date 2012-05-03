@@ -37,7 +37,7 @@ FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
 	jump H2K_vmtrap_bad		// 8
 	jump H2K_vmtrap_bad		// 9
 	jump H2K_vmtrap_clrmap		// a
-	jump H2K_vmtrap_newmap	// b
+	jump H2K_vmtrap_newmap		// b
 	jump H2K_vmtrap_bad		// c
 	jump H2K_vmtrap_cachectl	// d
 	jump H2K_vmtrap_get_pcycles	// e
@@ -50,7 +50,7 @@ FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
 	jump H2K_vmtrap_setregs		// 15
 	jump H2K_vmtrap_getregs		// 16
 	jump H2K_vmtrap_bad		// 17
-	jump H2K_vmtrap_bad		// 18
+	jump H2K_vmtrap_timer		// 18
 	jump H2K_vmtrap_bad		// 19
 	jump H2K_vmtrap_bad		// 1a
 	jump H2K_vmtrap_bad		// 1b

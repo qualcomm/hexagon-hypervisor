@@ -38,6 +38,16 @@ typedef enum {
 } intop_type;
 #endif
 
+#ifndef H2K_TIMER_H
+typedef enum {
+	H2K_TIMER_TRAP_GET_FREQ,
+	H2K_TIMER_TRAP_GET_RESOLUTION,
+	H2K_TIMER_TRAP_GET_TIME,
+	H2K_TIMER_TRAP_GET_TIMEOUT,
+	H2K_TIMER_TRAP_SET_TIMEOUT,
+} timerop_type;
+#endif
+
 void h2_vmtrap_return();
 int h2_vmtrap_setvec(void *ptr);
 int h2_vmtrap_setie(unsigned int val);
@@ -55,6 +65,7 @@ void h2_vmtrap_stop();
 int h2_vmtrap_vmpid();
 void h2_vmtrap_setregs(unsigned int g0, unsigned int g1, unsigned int g2, unsigned int g3);
 void h2_vmtrap_getregs(unsigned int *regsptr);
+unsigned long long int h2_vmtrap_timerop(timerop_type op, unsigned long long int timeout);
 
 #endif
 

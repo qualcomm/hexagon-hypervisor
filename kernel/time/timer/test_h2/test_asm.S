@@ -38,7 +38,7 @@ TH_trap_event:
 	.global h2_time_get_time
 h2_time_get_time:
 	allocframe(#0)
-	r0 = #3
+	r0 = #2
 	trap0(#22)
 	deallocframe
 	jumpr r31
@@ -47,7 +47,7 @@ h2_time_get_time:
 h2_time_set_timeout:
 	allocframe(#0)
 	r3:2 = r1:0
-	r0 = #5
+	r0 = #4
 	trap0(#22)
 	deallocframe
 	jumpr r31

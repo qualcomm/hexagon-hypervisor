@@ -76,8 +76,6 @@ int main()
 	}
 
 	mydev[COUNT] = 1;
-	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_GET_ROUGHTIME,0,me)) != 0) FAIL("roughtime");
-
 	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_GET_TIME,0,me)) != resolution) {
 		printf("ret: 0x%016llx resolution=0x%016llx\n",ret,resolution);
 		FAIL("time/1");
@@ -107,31 +105,6 @@ int main()
 		!= (0x12340 * resolution)) FAIL("set timeout return");
 	if (a.timeout != 0x12340) FAIL("bad ticks calculation");
 	if (H2K_gp->time.timeouts == NULL) FAIL("not put to tree");
-
-	/* timer_sooner */
-
-	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_SET_TIMEOUT_SOONER,1ULL<<48,me))
-		!= (0x12340 * resolution)) FAIL("set timeout sooner return");
-	if (a.timeout != 0x12340) FAIL("timeout sooner wasn't right");
-
-	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_SET_TIMEOUT_SOONER,100*resolution,me))
-		!= (100 * resolution)) FAIL("set timeout sooner return");
-	if (a.timeout != 100) FAIL("timeout sooner wasn't right");
-
-	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_SET_TIMEOUT,resolution,me)) != 0) {
-		FAIL("Set timeout to past did not return BIGBANG");
-	}
-	if (H2K_gp->time.timeouts != NULL) FAIL("not removed from tree");
-
-	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_SET_TIMEOUT,0x12340ULL * resolution,me)) 
-		!= (0x12340 * resolution)) FAIL("set timeout return");
-	if (a.timeout != 0x12340) FAIL("bad ticks calculation");
-	if (H2K_gp->time.timeouts == NULL) FAIL("not put to tree");
-
-	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_SET_TIMEOUT_SOONER,resolution,me)) != 0) {
-		FAIL("Set timeout to past did not return BIGBANG");
-	}
-	if (H2K_gp->time.timeouts != NULL) FAIL("not removed from tree");
 
 	TH_reset();
 	mydev[COUNT] = 2;
@@ -187,7 +160,6 @@ int main()
 	if (H2K_gp->time.last_ticks != 0x12345) FAIL("Didn't update last_ticks");
 	if (mydev[MATCH] == 0x12345) FAIL("didn't set timer for next interrupt");
 
-	H2K_gp->time.lock = 0xcafebabe;
 	H2K_gp->time.timeouts = &a.tree;
 	mydev[MATCH] = 0x12345;
 	mydev[COUNT] = 0x0;
@@ -198,7 +170,6 @@ int main()
 	if (mydev[COUNT] != 0x0) FAIL("init/count");
 	if (mydev[ENABLE] != 0x1) FAIL("init/enable");
 	if (H2K_gp->time.timeouts != NULL) FAIL("init/timeouts");
-	if (H2K_gp->time.lock != 0) FAIL("init/spinlock");
 	if (H2K_gp->time.last_ticks != 0) FAIL("ticks");
 
 	H2K_gp->time.devptr = NULL;

@@ -8,9 +8,23 @@
 
 #include <context.h>
 #include <timeinfo.h>
+#include <tree.h>
+#include <hw.h>
 
 void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum);
 void H2K_timer_init();
+
+static inline void H2K_timer_cancel_withlock(H2K_thread_context *me)
+{
+	if (me->timeout) H2K_tree_remove(&H2K_gp->time.timeouts,&me->tree);
+}
+
+static inline void H2K_timer_cancel(H2K_thread_context *me)
+{
+	BKL_LOCK();
+	H2K_timer_cancel_withlock(me);
+	BKL_UNLOCK();
+}
 
 enum {
 	H2K_TIMER_TRAP_GET_FREQ,

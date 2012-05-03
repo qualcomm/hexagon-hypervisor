@@ -17,7 +17,6 @@ typedef struct {
 	ticks_t next_ticks;		/* next hw interrupt "ticks" */
 	ticks_t last_ticks;		/* Tick of last HW interrupt */
 	u64_t last_pcycles;		/* pcycle time last updated */
-	H2K_spinlock_t lock;		/* spinlock for time updating/reading */
 	H2K_treenode_t *timeouts;	/* all timeouts */
 	volatile u32_t *devptr;
 } __attribute__((aligned(32))) H2K_timeinfo_t;

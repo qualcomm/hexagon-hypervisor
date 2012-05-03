@@ -11,6 +11,7 @@
 #include <runlist.h>
 #include <asid.h>
 #include <stop.h>
+#include <timer.h>
 #include <vm.h>
 
 void H2K_thread_stop(H2K_thread_context *me)
@@ -22,7 +23,7 @@ void H2K_thread_stop(H2K_thread_context *me)
 	if (vmblock) {  // is a vcpu, EJP: will always be true soon
 		vmblock->num_cpus--;
 	}
-
+	H2K_timer_cancel_withlock(me);
 	H2K_runlist_remove(me);
 	H2K_asid_table_dec(me->ssr_asid);
 	H2K_thread_context_clear(me);

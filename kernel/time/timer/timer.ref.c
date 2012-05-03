@@ -34,7 +34,7 @@
 
 static inline void H2K_timer_hw_soft_raise()
 {
-	/* EJP: FIXME: Implement this */
+	H2K_intcontrol_raise(TIMER_INT);
 }
 
 static inline ticks_t H2K_timer_hw_read_count()
@@ -59,10 +59,13 @@ static inline ticks_t H2K_timer_hw_read_count()
 
 /* EJP: FIXME: what sets time? set nextticks & hw ?? */
 
+/* EJP: probably want to hold the lock while you do this */
 static inline ticks_t H2K_timer_hw_set_timeout(u64_t nextticks)
 {
-	u64_t nowticks = H2K_timer_hw_read_count();
-	u64_t max_future = nowticks + 0x0FFFFC000ULL;
+	u64_t nowticks;
+	u64_t max_future;
+	nowticks = H2K_timer_hw_read_count();
+	max_future = nowticks + 0x0FFFFC000ULL;
 	if (nextticks < nowticks) nextticks = nowticks;
 	if (nextticks > max_future) nextticks = max_future;
 	if ((nextticks - nowticks) > TICK_GRANULARITY) {
@@ -99,9 +102,11 @@ static inline void H2K_timer_update_time(ticks_t nowticks)
 
 static inline void H2K_timer_update_timeout(ticks_t nextticks)
 {
+	BKL_LOCK();
 	if (H2K_gp->time.next_ticks > nextticks) {
 		H2K_timer_hw_set_timeout(nextticks);
 	};
+	BKL_UNLOCK();
 }
 
 /* 
@@ -133,14 +138,14 @@ void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 	ticks += TICK_GRANULARITY;
 	/* Bisect tree according to time */
 
-	H2K_spinlock_lock(&H2K_gp->time.lock);
+	BKL_LOCK();
 	H2K_tree_bisect(&timedout,&H2K_gp->time.timeouts,H2K_gp->time.timeouts,ticks);
 	newtimeout = H2K_tree_min(H2K_gp->time.timeouts);
-	H2K_spinlock_unlock(&H2K_gp->time.lock);
 
 	if (newtimeout) nextticks = newtimeout->key;
 	else nextticks = H2K_TIME_FOREVER;
 	H2K_timer_hw_set_timeout(nextticks);
+	BKL_UNLOCK();
 
         H2K_intcontrol_enable(intnum);
 
@@ -151,7 +156,6 @@ void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 void H2K_timer_init()
 {
 	/* Register fastint */
-	H2K_spinlock_init(&H2K_gp->time.lock);
 	H2K_gp->time.timeouts = NULL;
 	if (H2K_gp->time.devptr == NULL) H2K_gp->time.devptr = (void *)(TIMER_BASE_VA);
 	H2K_timer_hw_init();
@@ -183,10 +187,12 @@ static u64_t H2K_timer_get_timeout(u32_t unused, u64_t unused2, H2K_thread_conte
 static u64_t H2K_timer_set_timeout_tick(u32_t unused, u64_t timeout_tick, H2K_thread_context *me)
 {
 	/* If already registered for a timer, remove from tree */
-	if (me->timeout) H2K_tree_remove(&H2K_gp->time.timeouts,&me->tree);
 	if (timeout_tick <= H2K_gp->time.last_ticks) timeout_tick = H2K_TIME_BIGBANG;
+	BKL_LOCK();
+	if (me->timeout) H2K_tree_remove(&H2K_gp->time.timeouts,&me->tree);
 	me->timeout = timeout_tick;
 	if (timeout_tick != H2K_TIME_BIGBANG) H2K_tree_add(&H2K_gp->time.timeouts,&me->tree);
+	BKL_UNLOCK();
 	H2K_timer_update_timeout(timeout_tick);
 	return TIMERHW_TICKS2NS(timeout_tick);
 }

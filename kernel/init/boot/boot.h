@@ -27,6 +27,7 @@
 #define SBIT_SIZE 0
 #else
 #define BOOT_TLBLO ((1 << BOOT_TLB_PGSIZE) | (7 << TLB_ENTRY_C_BITS) | (BOOT_TLB_PERM << 28))
+#define BOOT_TLBLO_DEV ((1 << BOOT_TLB_PGSIZE) | (4 << TLB_ENTRY_C_BITS) | (BOOT_TLB_PERM << 28))
 #define SBIT_SIZE 1
 #endif
 

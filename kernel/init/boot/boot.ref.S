@@ -7,6 +7,7 @@
 #include <asm_offsets.h>
 #include <max.h>
 #include <boot.h>
+#include <bootmap_macros.h>
 
 #if __QDSP6_ARCH__ <= 3
 #define DO_TLBW(HI,LO,IDX) \
@@ -33,6 +34,11 @@
 
 #define MAKE_TLBLO(DST,SRCVAL,TMP) \
 	SETCONST(DST,BOOT_TLBLO) ; \
+	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS); \
+	DST |= asl(TMP, #  BOOT_TLB_SHIFT+SBIT_SIZE); 
+
+#define MAKE_TLBLO_DEV(DST,SRCVAL,TMP) \
+	SETCONST(DST,BOOT_TLBLO_DEV) ; \
 	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS); \
 	DST |= asl(TMP, #  BOOT_TLB_SHIFT+SBIT_SIZE); 
 
@@ -108,7 +114,7 @@ FUNC_START start .text.init.boot .p2align 12
 	// Set up entry for L2 interrupt controller
 	SETCONST(r10,Q6_SS_BASE_PA)
 	MAKE_TLBHI(r3,Q6_SS_BASE_VA)
-	MAKE_TLBLO(r2,r10,r11)
+	MAKE_TLBLO_DEV(r2,r10,r11)
 	r1 = #2
 	DO_TLBW(3,2,1)
 #endif

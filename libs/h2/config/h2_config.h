@@ -24,16 +24,6 @@ typedef enum {
 	NUM_OPS			/**< Used to determine range of valid operations, not a valid op */
 } vmblock_init_op_t;
 
-/**
-Add storage for thread contexts.
-@param[in] buf		Address of block of memory for thread contexts
-@param[in] size		Number of bytes available at the address
-@returns The number of threads created in the memory, or negative value on failure.
-@dependencies None
-*/
-
-int h2_config_add_thread_storage(void *buf, unsigned int size);
-
 unsigned int h2_config_setfatal(void *handler);
 
 /**

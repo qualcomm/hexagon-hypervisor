@@ -11,7 +11,11 @@ void H2K_tree_remove_key(H2K_treenode_t **root, H2K_treenode_t *node, H2K_treeke
 	if (*root == NULL) return; /* ERROR? */
 	if (*root == node) {
 		*root = node->left;
-		return H2K_tree_add(root,node->right);
+		if (node->right == NULL) {
+			return;
+		} else {
+			return H2K_tree_add(root,node->right);
+		}
 	}
 	if (key <= (*root)->key) {
 		return H2K_tree_remove_key(&(*root)->left,node,key);

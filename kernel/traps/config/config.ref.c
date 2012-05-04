@@ -19,7 +19,6 @@
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, u32_t, H2K_thread_context *);
 
 static const configptr_t H2K_configtab[CONFIG_MAX] IN_SECTION(".data.config.config") = {
-	H2K_trap_config_add_thread_storage,
 	H2K_trap_config_setfatal,
 	H2K_trap_config_vmblock_size,
 	H2K_trap_config_vmblock_init,
@@ -29,11 +28,6 @@ u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t
 {
 	if (configtype >= CONFIG_MAX) return 0;
 	return H2K_configtab[configtype](0,ptr,val2,val3,val4,me);
-}
-
-u32_t H2K_trap_config_add_thread_storage(u32_t unused, void *ptr, u32_t size, u32_t unused2, u32_t unused3, H2K_thread_context *me)
-{
-	return 0;
 }
 
 u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)

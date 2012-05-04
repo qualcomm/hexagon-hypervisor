@@ -6,16 +6,6 @@
 #include "h2_trap_constants.h"
 
 	.text
-	.global h2_config_add_thread_storage
-h2_config_add_thread_storage:
-	{
-		r1 = r0	// ptr
-		r2 = r1 // size
-		r0 = #H2_CONFIG_ADD_THREAD_STORAGE
-	}
-	trap0(#H2_TRAP_CONFIG)
-	jumpr r31
-
 	.global h2_config_setfatal
 h2_config_setfatal:
 	{

@@ -50,7 +50,6 @@ int main()
 	unsigned int sig;
 
 //	h2_init(NULL);
-	h2_config_add_thread_storage(contexts,sizeof(contexts));
 
 	h2_anysignal_init(&any_done);
 	h2_anysignal_init(&any_threads);

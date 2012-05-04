@@ -62,7 +62,6 @@ void thread1(int thread)
 int main()
 {
 //	h2_init(NULL);
-	h2_config_add_thread_storage(contexts,sizeof(contexts));
 
 	h2_sem_init_val(&sem_done,0);
 	h2_sem_init_val(&sem_a,0);

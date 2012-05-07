@@ -129,7 +129,7 @@ void TH_check_l2ack(int interrupt)
 	if (interrupt < 32) return;
 	interrupt -= 32;
 	if (((ackbuf[interrupt/32] >> (interrupt & 0x1f)) & 1) == 0) {
-		printf("%d: ackbuf[%d] = 0x%08x (@%x)\n",interrupt,interrupt/32,ackbuf[interrupt/32],&ackbuf[interrupt/32]);
+		printf("%d: ackbuf[%d] = 0x%08x (@%p)\n",interrupt,interrupt/32,ackbuf[interrupt/32],&ackbuf[interrupt/32]);
 		FAIL("L2 interrupt not acked");
 	}
 	ackbuf[interrupt/32] ^= 1<<(interrupt & 0x1f);

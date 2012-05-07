@@ -23,7 +23,6 @@ static H2K_thread_context a;
 int main() 
 {
 	int i;
-	u64_t tmp;
 	char *x;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	a.next = a.prev = &a;
@@ -32,7 +31,7 @@ int main()
 	a.r3130 = 0x4321;
 	a.r0908 = 0x3333;
 	a.cs1cs0 = 0x3456;
-	a.vmblock = 0x1234;
+	a.vmblock = (void *)0x1234;
 	a.id.raw = 0x5678;
 	H2K_thread_context_clear(&a);
 	if (a.vmblock == 0) FAIL("Cleared vmblock");

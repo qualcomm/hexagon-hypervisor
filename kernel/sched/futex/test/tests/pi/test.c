@@ -7,6 +7,7 @@
 #include <context.h>
 #include <stdlib.h>
 #include <h2.h>
+#include <h2_vm.h>
 #include <max.h>
 #include <stdio.h>
 #include <tlbfmt.h>

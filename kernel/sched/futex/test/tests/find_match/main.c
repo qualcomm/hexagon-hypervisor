@@ -221,5 +221,6 @@ int main()
 	info("main() starting\n");
 	spawn_vm(vmmain);
 	h2_thread_stop();
+	return 0;
 }
 

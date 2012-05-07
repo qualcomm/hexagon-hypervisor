@@ -11,6 +11,7 @@
 #include <context.h>
 #include <max.h>
 #include <h2.h>
+#include <h2_vm.h>
 #include <tlbfmt.h>
 #include <tlbmisc.h>
 

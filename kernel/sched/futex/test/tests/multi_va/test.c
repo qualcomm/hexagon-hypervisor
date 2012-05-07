@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <h2.h>
+#include <h2_vm.h>
 #include <tlbfmt.h>
 #include <tlbmisc.h>
 
@@ -176,5 +177,6 @@ int main()
 	}
 	spawn_vm(vmmain);
 	h2_thread_stop();
+	return 0;
 }
 

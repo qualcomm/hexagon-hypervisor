@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <h2.h>
+#include <h2_vm.h>
 #include <tlbfmt.h>
 #include <tlbmisc.h>
 

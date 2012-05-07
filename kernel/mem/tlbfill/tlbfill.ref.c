@@ -24,8 +24,9 @@ static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me)
 }
 #endif
 
-static inline void H2K_mem_tlb_insert(u64_t entry, H2K_thread_context *me)
+static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
 {
+	u64_t rawentry;
 	u32_t index = H2K_gp->tlb_index;
 	if ((index+1) < MAX_TLB_ENTRIES) {
 		H2K_gp->tlb_index = index+1;
@@ -33,14 +34,17 @@ static inline void H2K_mem_tlb_insert(u64_t entry, H2K_thread_context *me)
 		H2K_gp->tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
 	}
 #if __QDSP6_ARCH__ <= 3
-	if (me->ssr_guest) entry |= 0x0200000000000000ULL;
+	/* set guest bit in the ASID if this was a guest miss */
+	if (me->ssr_guest) entry.guestonly = 1;
+	rawentry = entry.raw;
 	asm volatile (
 	" tlbhi = %H0\n"
 	" tlblo = %L0\n"
 	" tlbidx = %1\n" 
-	" tlbw\n" : :"r"(entry),"r"(index));
+	" tlbw\n" : :"r"(rawentry),"r"(index));
 #else
-	asm volatile (" tlbw(%0,%1)\n" : : "r"(entry),"r"(index));
+	rawentry = entry.raw;
+	asm volatile (" tlbw(%0,%1)\n" : : "r"(rawentry),"r"(index));
 #endif
 }
 
@@ -51,7 +55,7 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 	H2K_mem_tlbfmt_t (*trans_fn)(u32_t badva, H2K_thread_context *me);
 	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) return;
-		H2K_mem_tlb_insert(entry.raw,me);
+		H2K_mem_tlb_insert(entry,me);
 		return;
 	}
 	if (H2K_mem_asid_table[asid].transtype == H2K_ASID_TRANS_TYPE_LINEAR) {
@@ -62,7 +66,7 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 	if ((entry = trans_fn(va,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) return;
 		H2K_mem_stlb_add(va,asid,entry,me);
-		H2K_mem_tlb_insert(entry.raw,me);
+		H2K_mem_tlb_insert(entry,me);
 		return;
 	}
 	return H2K_mem_pagefault(va,me);

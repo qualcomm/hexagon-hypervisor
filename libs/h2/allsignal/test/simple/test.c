@@ -31,18 +31,32 @@ void FAIL(const char *str)
 
 void thread0(int thread)
 {
+	int i;
 	h2_printf("thread0 delay\n");
+	/* FIXEM make this for loop a sleep */
+	for(i=0; i<1000000; i++) { asm volatile ("nop"); }
 	h2_allsignal_signal(&all_threads, 0xfffffffc);
-	if((all_threads.waiting & 0x1) != 0x1) { FAIL("allsignal acknowledged the wrong signal!"); }
+	if((all_threads.waiting & 0x1) != 0x1) {
+		//DEBUG
+		//printf("t0 waiting is 0x%08x\n", all_threads.waiting );
+		FAIL("allsignal acknowledged the wrong signal!");
+	}
 	h2_allsignal_signal(&all_threads, 1);
 	h2_thread_stop();
 }
 
 void thread1(int thread)
 {
+	int i;
 	h2_printf("thread1 delay\n");
+	/* FIXEM make this for loop a sleep */
+	for(i=0; i<1000000; i++) { asm volatile ("nop"); }
 	h2_allsignal_signal(&all_threads, 0xfffffffc);
-	if((all_threads.waiting & 0x2) != 0x2) { FAIL("allsignal acknowledged the wrong signal!"); }
+	if((all_threads.waiting & 0x2) != 0x2) { 
+		//DEBUG
+		//printf("t1 waiting is 0x%08x\n", all_threads.waiting );
+		FAIL("allsignal acknowledged the wrong signal!");
+	}
 	h2_allsignal_signal(&all_threads, 0x2);
 	h2_allsignal_wait(&all_done, 0x80000000);
 	if(all_done.waiting != 0) { FAIL("allsignal didn't block while waiting"); }
@@ -52,7 +66,6 @@ void thread1(int thread)
 int main()
 {
 //	h2_init(NULL);
-	//h2_config_add_thread_storage(contexts,sizeof(contexts));
 	printf("Hello, World!\n");
 
 	h2_allsignal_init(&all_done);

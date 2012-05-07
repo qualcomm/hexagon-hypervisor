@@ -23,7 +23,7 @@ static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_
 	ret.ppn = pte.ppn;
 	ret.ccc = pte.ccc;
 	ret.xwr = (pte.xwr);
-	// ret.guestonly = ~(pte.u);  FIXME: incorrect
+	ret.guestonly = ~(pte.u);
 	ret.asid = asid;
 	ret.size = pte.s;
 	ret.vpn = badva >> 12;

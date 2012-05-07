@@ -7,7 +7,7 @@
 H2K_mem_tlb_insert
 ------------------
 
-.. cfunction:: static inline void H2K_mem_tlb_insert(u64_t entry)
+.. cfunction:: static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry)
 
 	:param entry: TLB entry
 
@@ -24,9 +24,10 @@ First, we obtain the index, increment to the next appropriate replacement
 value, and store the next replacement index.
 
 This function uses the architecture-specific code to insert an entry into the
-TLB.  For V3 and earlier, tthe TLBHI, TLBLO, and TLBIDX registers must be used
-to read, write, and probe TLB entries.  For V4 and later, registers can be 
-used directly.
+TLB.  For V3 and earlier, the TLBHI, TLBLO, and TLBIDX registers must be used
+to read, write, and probe TLB entries.  If the entry is being filled in
+response to a guest miss, we set the guest bit in the entry's ASID.  For V4 and
+later, registers can be used directly.
 
 
 H2K_mem_tlb_fill

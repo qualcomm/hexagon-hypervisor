@@ -60,7 +60,7 @@ static inline ticks_t H2K_timer_hw_read_count()
 /* EJP: FIXME: what sets time? set nextticks & hw ?? */
 
 /* EJP: probably want to hold the lock while you do this */
-static inline ticks_t H2K_timer_hw_set_timeout(u64_t nextticks)
+static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 {
 	u64_t nowticks;
 	u64_t max_future;
@@ -75,7 +75,6 @@ static inline ticks_t H2K_timer_hw_set_timeout(u64_t nextticks)
 		/* EXPIRE NOW */
 		H2K_timer_hw_soft_raise();
 	}
-	return nowticks;
 }
 
 static void H2K_timer_hw_init()
@@ -87,7 +86,67 @@ static void H2K_timer_hw_init()
 }
 
 #else /* <= V4 TIMERS */
-#fatal Insert code for V5 timers here
+
+#define HW_COUNT_LO (0x1000/4)
+#define HW_COUNT_HI (0x1004/4)
+#define HW_MATCH_LO (0x1020/4)
+#define HW_MATCH_HI (0x1024/4)
+#define HW_ENABLE   (0x102C/4)
+
+#define HW_CNTFRQ	(0x0000/4)
+#define HW_CNTSR	(0x0004/4)
+#define HW_CNTACR	(0x0040/4)
+
+#define TICK_GRANULARITY 4
+#define TIMERHW_TICK_REALFREQ	19200000
+#define TIMERHW_NSEC_PER_TICK 	52
+//#define TIMERHW_NSEC_PER_TICK 	53
+//#define TIMERHW_NSEC_PER_TICK 	56
+#define TIMERHW_NSEC_FREQ 	(TIMERHW_TICK_REALFREQ * TIMERHW_NSEC_PER_TICK)
+#define TIMERHW_NS2TICKS(X)	((X)/(TIMERHW_NSEC_PER_TICK))
+#define TIMERHW_TICKS2NS(X)	((X)*TIMERHW_NSEC_PER_TICK)
+
+static inline ticks_t H2K_timer_hw_read_count()
+{
+	u32_t tmphi;
+	union {
+		u64_t pair;
+		struct {
+			u32_t lo;
+			u32_t hi;
+		};
+	} ticktmp;
+	do {
+		tmphi = H2K_gp->time.devptr[HW_COUNT_HI];
+		ticktmp.lo = H2K_gp->time.devptr[HW_COUNT_LO];
+		ticktmp.hi = H2K_gp->time.devptr[HW_COUNT_HI];
+	} while (tmphi != ticktmp.hi);
+	return ticktmp.pair;
+}
+
+/*
+ * The new timer will raise the interrupt if it is in the past
+ */
+static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
+{
+	H2K_gp->time.next_ticks = nextticks;
+	H2K_gp->time.devptr[HW_MATCH_HI] = ~0;
+	H2K_gp->time.devptr[HW_MATCH_LO] = nextticks;
+	H2K_gp->time.devptr[HW_MATCH_HI] = nextticks >> 32;
+}
+
+static void H2K_timer_hw_init()
+{
+	H2K_gp->time.last_ticks = H2K_TIME_BIGBANG;
+	H2K_gp->time.last_pcycles = 0;
+	H2K_timer_hw_set_timeout(H2K_TIME_FOREVER);
+	H2K_gp->time.devptr[HW_CNTSR] = ~0;
+	H2K_gp->time.devptr[HW_CNTACR] = ~0;
+	H2K_gp->time.devptr[HW_CNTFRQ] = 19200000;
+	H2K_gp->time.devptr[HW_ENABLE] = 1;
+        H2K_intcontrol_enable(TIMER_INT);
+}
+
 #endif
 
 /* ***************** KERNEL INFRASTRUCTURE ********************* */

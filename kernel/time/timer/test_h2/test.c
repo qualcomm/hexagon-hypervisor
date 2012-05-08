@@ -30,6 +30,9 @@ extern u64_t h2_time_get_time();
 extern u64_t h2_time_set_timeout(u64_t timeout);
 extern void set_vectors();
 
+volatile unsigned int *timerbase = (void *)0xFFCA0000;
+volatile unsigned int *l2vicbase = (void *)0xFFC90000;
+
 int main() 
 {
 	int i;
@@ -50,6 +53,25 @@ int main()
 	}
 	if (saw_interrupt == 0) {
 		printf("Time now 0x%016llx\n",h2_time_get_time());
+		printf("*** TIMER DEBUG DUMP:\n");
+		for (i = 0; i < 32; i++) {
+			if ((i & 7) == 0) printf("\n%04x:",i*4);
+			printf("%08x ",timerbase[i]);
+		}
+		for (i = 0; i < 32; i++) {
+			if ((i & 7) == 0) printf("\n%04x:",(1024+i)*4);
+			printf("%08x ",timerbase[1024+i]);
+		}
+		printf("\n*** L2VIC DEBUG DUMP:\n");
+		for (i = 0; i < 4; i++) {
+			printf("Slice %d: TYPE: %08x POL: %08x EN: %08x STAT: %08x PEND: %08x\n",i,
+				l2vicbase[i+(0x280/4)],
+				l2vicbase[i+(0x300/4)],
+				l2vicbase[i+(0x100/4)],
+				l2vicbase[i+(0x380/4)],
+				l2vicbase[i+(0x500/4)]);
+		}
+		printf("\n");
 		FAIL("Didn't see interrupt");
 	}
 	end2 = h2_time_get_time();

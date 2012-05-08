@@ -52,7 +52,11 @@
 /* EJP: FIXME: PA should be learned from cfgtable in v4+ */
 #define Q6_SS_BASE_PA 0x28880000
 #define Q6_SS_BASE_VA 0xFFC80000
+#if ARCHV <= 4
 #define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x04000)
+#else
+#define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x20000)
+#endif
 
 #if __QDSP6_ARCH__ <= 3
 #define MAX_INTERRUPTS 32
@@ -68,7 +72,11 @@
 
 #define RESCHED_INT 3
 #define VM_IPI_INT 0
+#if ARCHV <= 4
 #define TIMER_INT 10
+#else
+#define TIMER_INT 35
+#endif
 
 #define MAX_TRACE_LEVEL 0
 

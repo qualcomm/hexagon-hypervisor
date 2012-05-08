@@ -86,9 +86,9 @@ static void H2K_intconfig_l2_init()
 	volatile unsigned int *intbase = H2K_gp->l2_int_base;
 	for (i = 0; i < ((MAX_INTERRUPTS-32)/32); i++) {
 		intbase[(0x100/4) + i] = 0x0; 		/* DISABLED */
-		intbase[(0x280/4) + i] = 0xff57f7fd;	/* EDGE/level TRIGGERED */
+		intbase[(0x280/4) + i] = 0xFFFFFFFF;	/* EDGE/level TRIGGERED */
 		intbase[(0x300/4) + i] = 0x0;		/* Rising Edge / Level High */
-		intbase[(0x400/4) + i] = 0xffffffff;	/* Interrupt Clear */
+		intbase[(0x400/4) + i] = 0xFFFFFFFF;	/* Interrupt Clear */
 	}
 	ciad(0x80000000);				/* Enable L2 Interrupts */
 }

@@ -113,6 +113,7 @@ OPTIMIZE := -O1
 ifdef BOOT
 BOOTER=${H2DIR}/install/bin/booter
 CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g
+LDFLAGS += -Wl,--section-start=.start=0x00010000
 else
 CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 endif

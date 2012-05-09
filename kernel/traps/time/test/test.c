@@ -96,8 +96,7 @@ void thread0(int thread)
 	if (delta > 1024 * MAX_HTHREADS) FAIL("Unexpected delta based on delay (C) ");
 	delta = (endcputime - startcputime);
 	if (delta < 0) delta = -delta;
-#warning Restore this check when H2K_cputime_get() hack for Linux removed
-	//	if (delta > 1024 * MAX_HTHREADS) FAIL("Unexpected delta based on delay (D) ");
+	if (delta > 1024 * MAX_HTHREADS) FAIL("Unexpected delta based on delay (D) ");
 
 	h2_sem_up(&sem_done);
 	h2_thread_stop();

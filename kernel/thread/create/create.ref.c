@@ -75,18 +75,12 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 		BKL_UNLOCK(&H2K_bkl);
 		return -1;
 	}
-	if (vmblock->num_cpus == vmblock->max_cpus) {  // no more vcpus
-		H2K_asid_table_dec(asid); // was bogus
-		vmblock->free_threads = tmp; // return to free list
-		BKL_UNLOCK(&H2K_bkl);
-		return -1;
-	}
 
 	tmp->ssr_guest = 1;  // start in guest mode
 	tmp->ssr_um = 1;
 	tmp->ssr_asid = asid;
 	/* FIXME: Do we allow a particular vcpu to stop and then start again? */
-	/* FIXME: needs to be atomic */
+	/* FIXME: needs to be atomic? */
 	vmblock->num_cpus++;
 	tmp->vmblock = vmblock;
 

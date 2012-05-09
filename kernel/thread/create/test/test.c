@@ -86,6 +86,7 @@ int main()
 	H2K_thread_context *c;
 	H2K_thread_context *d;
 	u32_t asid;
+	u32_t asid_pmap;
 	H2K_vmblock_t *vmblock = &TH_vm.vm;
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
 	H2K_runlist_init();
@@ -106,6 +107,10 @@ int main()
 	b->status = c->status = d->status = H2K_STATUS_DEAD;
 	vmblock->trapmask = a->trapmask = 0x55ffffff;
 	a->ssr_asid = asid;
+
+	vmblock->pmap = 0x55555;
+	vmblock->pmap_type = H2K_ASID_TRANS_TYPE_LINEAR;
+	asid_pmap = H2K_asid_table_inc(vmblock->pmap,vmblock->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE);
 
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,vmblock,a)
 		!= 0xffffffff) FAIL("Created thread w/o storage");
@@ -136,8 +141,14 @@ int main()
 	//if ((b->ssrelr >> 32) != (a->ssrelr >> 32)) FAIL("Incorrect inheritance of SSR"); /* Forces User mode I think */
 	if (b->gp != a->gp) FAIL("Incorrect inheritance of GP");
 	if (b->vmblock != vmblock) FAIL("vmblock is non-NULL");
+	if (b->ssr_asid != asid_pmap) FAIL("wrong asid/pmap");
 
-#warning enhance thread create tests here?
+	TH_saw_check_sanity = 0;
+	vmblock->pmap = 0x12345678;
+	vmblock->pmap_type = -1;
+	if (H2K_thread_create(((u32_t)test_thread), (u32_t)&stack,0xdeadbeef,2,vmblock,a) 
+		!= (c->id.raw)) FAIL("Failed to create expected thread");
+	if (c->ssr_asid != a->ssr_asid) FAIL("wrong asid");
 
 #if 0
 	vm.max_cpus = 2;

@@ -25,6 +25,16 @@ u64_t stack1[STACK_SIZE];
 
 u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(u64_t)] __attribute__((aligned(32)));
 
+#if ARCHV == 3
+#define PCYCLES_PER_TCYCLE 6
+#elif ARCHV == 4
+#define PCYCLES_PER_TCYCLE 3
+#elif ARCHV == 5
+#define PCYCLES_PER_TCYCLE 3
+#else
+#error define pcycles per tcycle
+#endif
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -78,12 +88,12 @@ void thread0(int thread)
 	delay();
 	endpcycles = H2K_pcycles_get(me);
 	endcputime = H2K_cputime_get(me);
-	delta = (endpcycles - startpcycles) - (SPINS * MAX_HTHREADS);
+	delta = (endpcycles - startpcycles) - (SPINS * PCYCLES_PER_TCYCLE);
 	if (delta < 0) delta = -delta;
-	if (delta > 64 * MAX_HTHREADS) FAIL("Unexpected delta based on delay (A) ");
-	delta = (endcputime - startcputime) - (SPINS * MAX_HTHREADS);
+	if (delta > 64 * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (A) ");
+	delta = (endcputime - startcputime) - (SPINS * PCYCLES_PER_TCYCLE);
 	if (delta < 0) delta = -delta;
-	if (delta > 64 * MAX_HTHREADS) FAIL("Unexpected delta based on delay (B) ");
+	if (delta > 64 * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (B) ");
 
 	startpcycles = H2K_pcycles_get(me);
 	startcputime = H2K_cputime_get(me);
@@ -91,12 +101,12 @@ void thread0(int thread)
 	h2_sem_down(&sem_ret);
 	endpcycles = H2K_pcycles_get(me);
 	endcputime = H2K_cputime_get(me);
-	delta = (endpcycles - startpcycles) - (SPINS * MAX_HTHREADS);
+	delta = (endpcycles - startpcycles) - (SPINS * PCYCLES_PER_TCYCLE);
 	if (delta < 0) delta = -delta;
-	if (delta > 1024 * MAX_HTHREADS) FAIL("Unexpected delta based on delay (C) ");
+	if (delta > 1024 * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (C) ");
 	delta = (endcputime - startcputime);
 	if (delta < 0) delta = -delta;
-	if (delta > 1024 * MAX_HTHREADS) FAIL("Unexpected delta based on delay (D) ");
+	if (delta > 1024 * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (D) ");
 
 	h2_sem_up(&sem_done);
 	h2_thread_stop();

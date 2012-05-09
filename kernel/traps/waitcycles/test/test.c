@@ -6,6 +6,8 @@
 #include <c_std.h>
 #include <context.h>
 #include <h2.h>
+#include <hw.h>
+#include <q6protos.h>
 #include <max.h>
 #include <stdio.h>
 
@@ -50,6 +52,23 @@ static u64_t get_waitcycles(unsigned int htid)
 	return waitcycles;
 }
 
+u32_t get_all_hthreads_mask()
+{
+	iassignw(0,-1);
+	return iassignr(0);
+}
+
+u32_t get_n_hthreads()
+{
+#if ARCHV >= 5
+	return Q6_R_popcount_P(get_all_hthreads_mask());
+#elif ARCHV == 4
+	return 3;
+#else
+	return 6;
+#endif
+}
+
 int main()
 {
 	u64_t start_time;
@@ -63,12 +82,12 @@ int main()
 	wait(420000);
 	total_time = get_pcycles() - start_time;
 
-	for (i = 0; i < MAX_HTHREADS; i++) {
+	for (i = 0; i < get_n_hthreads(); i++) {
 		waitcycles[i] = get_waitcycles(i);
 	}
 
 	info("time spinning:  %llu\n", total_time);
-	for (i = 0; i < MAX_HTHREADS; i++) {
+	for (i = 0; i < get_n_hthreads(); i++) {
 		info("time hardware thread %d spent waiting:  %llu\n", i, waitcycles[i]);
 		if (i && (total_time * 1.1 < waitcycles[i] || waitcycles[i] * 1.1 < total_time)) {
 			fail("The wait cycles for hardware thread %llu are more than 10%% off of the time thread 0 spent spinning.\n", i);

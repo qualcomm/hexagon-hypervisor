@@ -36,6 +36,14 @@ void H2K_vm_do_work(H2K_thread_context *me)
 
 #define TEST_THREAD 1
 
+u32_t get_all_hthreads_mask()
+{
+	iassignw(0,-1);
+	return iassignr(0);
+}
+
+#define ALL_HTHREADS_MASK get_all_hthreads_mask()
+
 int main()
 {
 	__asm__ __volatile(" r16 = %0\n" : : "r"(&H2K_kg));
@@ -75,7 +83,7 @@ int main()
 	/* Check that mask bit was cleared */
 	if (H2K_gp->mask_for_ipi != 0x1) FAIL("a: Unexpected mask value");
 	/* Check that interrupt masks were set appropriately */
-	if (iassignr(VM_IPI_INT) != ((1<<MAX_HTHREADS)-2)) FAIL("a: Unexpected IMASK bits");
+	if (iassignr(VM_IPI_INT) != (ALL_HTHREADS_MASK & -2)) FAIL("a: Unexpected IMASK bits");
 	/* If more mask bits are set, new interrupt should be pending */
 	if ((H2K_get_ipend() & VM_IPI_INTMASK) == 0) FAIL("a: Didn't repend int");
 
@@ -99,7 +107,7 @@ int main()
 	/* Check that mask bit was cleared */
 	if (H2K_gp->mask_for_ipi != 0x1) FAIL("1: Unexpected mask value");
 	/* Check that interrupt masks were set appropriately */
-	if (iassignr(VM_IPI_INT) != ((1<<MAX_HTHREADS)-2)) FAIL("1: Unexpected IMASK bits");
+	if (iassignr(VM_IPI_INT) != (ALL_HTHREADS_MASK & -2)) FAIL("1: Unexpected IMASK bits");
 	/* If more mask bits are set, new interrupt should be pending */
 	if ((H2K_get_ipend() & VM_IPI_INTMASK) == 0) FAIL("1: Didn't repend int");
 	/* check for do work If me != NULL  */
@@ -113,7 +121,7 @@ int main()
 	/* Check that mask bit was cleared */
 	if (H2K_gp->mask_for_ipi != 0x0) FAIL("2: Unexpected mask value");
 	/* Check that interrupt masks were set appropriately */
-	if (iassignr(VM_IPI_INT) != ((1<<MAX_HTHREADS)-1)) FAIL("2: Unexpected IMASK bits");
+	if (iassignr(VM_IPI_INT) != (ALL_HTHREADS_MASK)) FAIL("2: Unexpected IMASK bits");
 	/* If more mask bits are set, new interrupt should be pending */
 	if ((H2K_get_ipend() & VM_IPI_INTMASK) != 0) FAIL("2: Repended int");
 	/* check for do work If me != NULL  */

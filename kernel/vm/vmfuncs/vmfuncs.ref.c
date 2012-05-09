@@ -217,6 +217,11 @@ void H2K_vmtrap_wait(H2K_thread_context *me)
 	if (intno == -1) {
 		/* nothing pending; wait  */
 		me->status = H2K_STATUS_VMWAIT;
+
+		/* for first 64 cpus we track waiting: deliver shared ints to them first */
+		if (me->id.cpuidx < sizeof(long_bitmask_t) * 8) {
+			me->vmblock->waiting_cpus |= (0x1 << me->id.cpuidx);
+		}
 		H2K_runlist_remove(me);
 		H2K_dosched(me,me->hthread);
 	} else {

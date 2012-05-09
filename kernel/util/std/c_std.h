@@ -49,6 +49,8 @@ typedef u32_t pa_t;
  */
 #define containerof(type, element, ptr) ((type *)((u8_t *)(ptr) - offsetof(type,element)))
 
+#define bits(type) (sizeof(type) * 8)
+
 #define H2K_LANG_IS_C 1
 
 #endif

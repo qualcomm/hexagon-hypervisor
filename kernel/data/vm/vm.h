@@ -44,6 +44,7 @@
 
 typedef u16_t physint_t;
 typedef u32_t bitmask_t;
+typedef u64_t long_bitmask_t;
 
 typedef struct H2K_vmblock_struct {
 	u32_t max_cpus;
@@ -69,7 +70,11 @@ typedef struct H2K_vmblock_struct {
 	/* physical memory map, page table style */
 	u32_t pmap;
 	translation_type pmap_type;
+	long_bitmask_t waiting_cpus;
+	u8_t interrupt_search_start;
 } __attribute__((aligned(32))) H2K_vmblock_t;
+
+void H2K_vmblock_clear(H2K_vmblock_t *);
 
 #endif
 

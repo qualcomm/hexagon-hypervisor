@@ -71,6 +71,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 			BKL_LOCK();
 			if (H2K_gp->vmblocks[i] == NULL) {
 				H2K_gp->vmblocks[i] = vmblock;
+				H2K_vmblock_clear(vmblock);
 				vmblock->vmidx = i;
 				BKL_UNLOCK();
 				break;
@@ -80,7 +81,6 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 			}
 		}
 
-		vmblock->lock = 0;
 		return (u32_t)vmblock;
 
 	case SET_PMAP_TYPE:

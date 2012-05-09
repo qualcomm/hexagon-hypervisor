@@ -107,7 +107,7 @@ static inline u32_t H2K_get_syscfg()
 
 static inline void H2K_set_syscfg(u32_t val)
 {
-	asm volatile (" syscfg = %0 // get syscfg" : : "r"(val));
+	asm volatile (" syscfg = %0 // set syscfg" : : "r"(val));
 }
 
 static inline void H2K_clear_gie()

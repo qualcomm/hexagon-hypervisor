@@ -34,6 +34,9 @@ void H2K_vm_int_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *thread, u32_
 	BKL_LOCK();
 	switch (thread->status) {
 		case H2K_STATUS_VMWAIT:
+			if (thread->id.cpuidx < bits(long_bitmask_t)) {
+				vmblock->waiting_cpus &= ~(0x1 << thread->id.cpuidx);
+			}
 			thread->r00 = intno;
 		enqueue:
 			H2K_ready_append(thread);

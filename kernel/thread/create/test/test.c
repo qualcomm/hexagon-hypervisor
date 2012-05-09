@@ -137,6 +137,8 @@ int main()
 	if (b->gp != a->gp) FAIL("Incorrect inheritance of GP");
 	if (b->vmblock != vmblock) FAIL("vmblock is non-NULL");
 
+#warning enhance thread create tests here?
+
 #if 0
 	vm.max_cpus = 2;
 	vm.num_cpus = 2; // initially full

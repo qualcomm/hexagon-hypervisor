@@ -6,10 +6,14 @@
 #ifndef H2K_MAX_H
 #define H2K_MAX_H
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define MAX_HTHREADS 6
-#elif __QDSP6_ARCH__ >= 4
+#elif ARCHV == 4
 #define MAX_HTHREADS 3
+#elif ARCHV == 5
+#define MAX_HTHREADS 4
+#elif ARCHV == 6
+#error probably four threads here
 #endif
 
 #if __QDSP6_ARCH__ <= 3

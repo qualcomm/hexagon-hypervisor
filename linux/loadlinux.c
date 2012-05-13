@@ -6,7 +6,8 @@
 #include <context.h>
 #include <linear.h>
 #include <bootmap_macros.h>
-#include <vmint.h>
+#include <cpuint.h>
+#include <shint.h>
 #include <max.h>
 
 #include <h2.h>
@@ -18,17 +19,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NUM_VCPU 6
+#define NUM_VCPU 3
 #define HW_INTS 32
 #define INTS_PER_VCPU 32
+#define SHARED_INTS 32
 #define CONTEXT_SIZE 288
 #define VCPU_STACK_SIZE 1024
 #define VM_PRIO 3
 
-#define HW_TIMER_INT 2
+#define HW_TIMER_INT 10
 #define LINUX_TIMER_INT 2
 
-char vcpu_contexts[(NUM_VCPU) * CONTEXT_SIZE] __attribute__((aligned(32)));
 char vmblock_space[65536];
 void *vmb;
 
@@ -89,7 +90,8 @@ int fastint(int intno) {
 #endif
 
 	fic->vmblock = vmb;
-	fic->vmcpu = 0;
+	fic->id.vmidx = 2;
+	fic->id.cpuidx = 0;
 	h2_vmtrap_intop(H2K_INTOP_POST, intno, 0);
 
 	return 1; // re-enable
@@ -100,14 +102,13 @@ void *vm_setup() {
 	unsigned long vmb_size;
 	void *ret;
 
-	int i;
+	int i, j;
 
 	h2_init(0);
 	h2_config_setfatal(fatal);
-	h2_config_add_thread_storage(vcpu_contexts, sizeof(vcpu_contexts));
 	PRINTF("linux: H2 started\n");
 
-	vmb_size = h2_config_vmblock_size(NUM_VCPU, INTS_PER_VCPU);
+	vmb_size = h2_config_vmblock_size(NUM_VCPU, SHARED_INTS);
 	PRINTF("linux: vmb size %d\n", (int)vmb_size);
 
 	vmb =	h2_config_vmblock_init(vmblock_space, SET_STORAGE, 0, 0);
@@ -124,7 +125,7 @@ void *vm_setup() {
 		FAIL("SET_PRIO_TRAPMASK");
 	}
 
-	if (h2_config_vmblock_init(vmb, SET_CPUS_INTS, NUM_VCPU, INTS_PER_VCPU) != vmb) {
+	if (h2_config_vmblock_init(vmb, SET_CPUS_INTS, NUM_VCPU, SHARED_INTS) != vmb) {
 		FAIL("SET_CPUS_INTS");
 	}
 
@@ -140,18 +141,28 @@ void *vm_setup() {
 		/* } */
 		/* } */
 
-		if (i != RESCHED_INT && i != VM_IPI_INT) {
-			if (h2_config_vmblock_init(vmb, MAP_PHYS_INTR, i, i) != vmb) {
-				FAIL("MAP_PHYS_INTR");
-			}
+		if (i != RESCHED_INT && i != VM_IPI_INT && i != HW_TIMER_INT) {
+			/* if (h2_config_vmblock_init(vmb, MAP_PHYS_INTR, i, i) != vmb) { */
+			/* 	FAIL("MAP_PHYS_INTR"); */
+			/* } */
 
 			h2_register_fastint(i, fastint);
 		}
 	}
 
-	/* FIXME: Linux should do this */
+	/* FIXME: Linux should do the per-cpu and global enables */
+	/* can't call the trap here since it would use the boot vmblock */
 	for (i = 0; i < INTS_PER_VCPU; i++) {
-		H2K_vm_interrupt_enable(vmb, i);
+		for (j = 0; j < ((H2K_vmblock_t *)vmb)->max_cpus; j++) {
+			H2K_vm_cpuint_enable(vmb, &(((H2K_vmblock_t *)vmb)->contexts[j]), i, ((H2K_vmblock_t *)vmb)->intinfo);
+		}
+	}
+
+	for (i = 0; i < SHARED_INTS; i++) {
+		/* There shouldn't be any interrupt pending at this point, but you never
+			 know.  Better make the context pointer valid in case we attempt to
+			 deliver the interrupt */
+		H2K_vm_shint_enable(vmb, &(((H2K_vmblock_t *)vmb)->contexts[0]), i, ((H2K_vmblock_t *)vmb)->intinfo);
 	}
 
 	/* timerptr->clear = 1; */

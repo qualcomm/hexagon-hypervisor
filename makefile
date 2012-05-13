@@ -112,5 +112,5 @@ compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
 gtags:
-	find kernel libs tst guest ucos linux -type f -print | gtags -w -v -f -
+	find kernel libs tst guest ucos linux -type f -print | gtags -I -w -v -f -
 	htags -afhnosTxv --show-position

@@ -36,6 +36,7 @@ void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t
 	FAIL("fatal_thread called.");
 }
 
+void H2K_vmtrap_version(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0; }
 void H2K_vmtrap_return(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 1; }
 void H2K_vmtrap_setvec(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 2; }
 void H2K_vmtrap_setie(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 3; }
@@ -64,7 +65,7 @@ void user_mode();
 u64_t guest_stack[128] __attribute__((aligned(128*8)));
 
 s32_t testvals[] = {
-	-1, 1, 2, 3, 4, 5,-1,-1,-1,-1,10,11,-1,13,14,15,
+	 0, 1, 2, 3, 4, 5,-1,-1,-1,-1,10,11,-1,13,14,15,
 	16,17,18,19,20,21,22,-1,24,-1,-1,-1,-1,-1,-1,-1
 };
 

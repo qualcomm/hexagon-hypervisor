@@ -11,7 +11,7 @@
 #elif ARCHV == 4
 #define MAX_HTHREADS 3
 #elif ARCHV == 5
-#define MAX_HTHREADS 4
+#define MAX_HTHREADS 6
 #elif ARCHV == 6
 #error probably four threads here
 #endif

@@ -26,7 +26,7 @@ FUNC_START H2K_handle_trap1 .text.vm.trap .p2align 2
 FUNC_END H2K_handle_trap1
 
 FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
-	jump H2K_vmtrap_bad		// 0
+	jump H2K_vmtrap_version		// 0
 	jump H2K_vmtrap_return		// 1
 	jump H2K_vmtrap_setvec		// 2
 	jump H2K_vmtrap_setie		// 3

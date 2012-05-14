@@ -55,6 +55,8 @@ typedef struct {
 	H2K_trace_info_t trace_info;
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
+	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
+	u32_t on_simulator;
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
 	/* EJP: tbd: rearrange to reduce data size and/or increase locality? */
@@ -69,8 +71,6 @@ typedef struct {
 #endif
 	void *fastint_funcptrs[MAX_INTERRUPTS] __attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
 	void *inthandlers[MAX_INTERRUPTS]__attribute__((aligned(MAX_INTERRUPTS * sizeof(void *))));
-	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
-	u32_t on_simulator;
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");

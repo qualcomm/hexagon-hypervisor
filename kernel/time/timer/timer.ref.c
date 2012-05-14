@@ -83,6 +83,7 @@ static void H2K_timer_hw_init()
 	H2K_gp->time.last_pcycles = 0;
 	H2K_timer_hw_set_timeout(H2K_TIME_FOREVER);
 	H2K_gp->time.devptr[HW_ENABLE] = 1;
+        H2K_intcontrol_enable(TIMER_INT);
 }
 
 #else /* <= V4 TIMERS */

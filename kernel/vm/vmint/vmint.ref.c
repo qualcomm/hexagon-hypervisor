@@ -105,9 +105,8 @@ static H2K_thread_context *H2K_vmint_fixup_post(H2K_thread_context *me, u32_t *a
 	/* FIXME: temporary hack so we can just pass the cpu # from linux, which
 		 currently doesn't know its vcpu IDs. */
 	id = me->id;
-	if (me->r02) {
-		id.cpuidx = me->r02;
-	}
+	id.cpuidx = me->r02;
+
 	dst = H2K_id_to_context(id);
 	return dst;
 }

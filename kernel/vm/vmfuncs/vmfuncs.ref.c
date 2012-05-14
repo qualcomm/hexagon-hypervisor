@@ -191,7 +191,7 @@ void H2K_vmtrap_cachectl(H2K_thread_context *me)
 void H2K_vmtrap_get_pcycles(H2K_thread_context *me)
 {
 	/* Return current cpu time */
-	me->r0100 = H2K_get_pcycle_reg();
+	me->r0100 = H2K_cputime_get(me);
 }
 
 /* 15 -- REMOVE */
@@ -243,9 +243,6 @@ void H2K_vmtrap_yield(H2K_thread_context *me)
 /* 18 */
 void H2K_vmtrap_start(H2K_thread_context *me)
 {
-	/* Create, or just unblock? */
-
-	s32_t ret;
 	/* FIXME: need to pass arg1?  use vmblock bestprio instead of base_prio? */
 	                               /*      pc       sp  arg1 */
 	me->r00 = H2K_thread_create_no_squash(me->r00, me->r01, 0, me->base_prio, me->vmblock, me);

@@ -27,6 +27,7 @@ H2K_kg_t H2K_kg; /* Prevents bringing in lots of H2 */
 
 #if ARCHV <= 4
 u32_t mydev[4];
+u32_t intdev[0x1000];
 #define MATCH 0
 #define COUNT 1
 #define ENABLE 2
@@ -74,6 +75,9 @@ int main()
 
 	/* Test bad trap */
 	if ((ret = H2K_timer_trap(100,0,me)) != ~0ULL) FAIL("bad return on bad trap");
+
+	H2K_gp->l2_int_base = intdev;
+	H2K_gp->l2_ack_base = intdev;
 
 	H2K_gp->time.devptr = mydev;
 	H2K_gp->time.last_ticks = 0;

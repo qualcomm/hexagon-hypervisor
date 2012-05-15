@@ -16,6 +16,7 @@ import re
 # group(1) is PC, group(2) is name
 function_patt = re.compile("(\w+)\s+\<(\w+)\>:")
 covdata_patt = re.compile("\**\s+(\w+\s+cycles)*\s+(\w+):\s+(.+)")
+skip_patt = re.compile("--\sOut\sof\srange\s--.*")
 
 class function_data(object):
 
@@ -64,6 +65,8 @@ class function_data(object):
          line = line.splitlines()[0] 
          if not line: 
             return
+         if skip_patt.match(line):
+            continue
          m = covdata_patt.match(line)
          if not m:
             print "covdata_patt match failed"

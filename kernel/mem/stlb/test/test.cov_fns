@@ -1,5 +1,0 @@
-H2K_mem_stlb_lookup
-H2K_mem_stlb_add
-H2K_mem_stlb_invalidate_va
-H2K_mem_stlb_invalidate_asid
-H2K_mem_stlb_init

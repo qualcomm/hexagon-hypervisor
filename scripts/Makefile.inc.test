@@ -166,17 +166,16 @@ ifdef SUBDIRS
 #${SUBDIR_TARGETS}:
 #	${SUBDIR_MAKE}
 
-#  The plan was to do this recursive gmon/coverage thing, but that doesn't
-#  work so well with multiple binaries
-
-#  I could get sneaky cat here and do a clever recursive thing, but that seems
-#  excessive.  Todo:  maybe this can go into the specfiles somehow?
-test.cov_fns:
-	find ./kernel -name "test.cov_fns" -exec cat {} \; >> $@
+# Generate function list based on the contents of the kernel and lib  (!OPTIMIZE=-O0!)
+cov_fns:
+	echo "########################################################################"
+	echo "### make sure h2 is built with OPTIMIZE=O0 to catch inline functions ###"
+	echo "########################################################################"
+	${H2DIR}/scripts/gen_cov_fns.pl > ${H2DIR}/scripts/$@
 
 #  Uh...  don't run this unless all the tests are run for now.
-cov.txt: test.cov_fns 
-	find . -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
+cov.txt:
+	find ./kernel ./libs -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
 
 
 #  every "subdir" needs to have a results.txt in it for this to run properly.
@@ -279,6 +278,9 @@ ${EXEC}: ${OBJS}
 	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
+ignore_fns: ${EXEC}
+	${H2DIR}/scripts/gen_ignore_fns.pl ${EXEC} > $@
+
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
 	ulimit -t 60 && ${SIM} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee $@; \
@@ -295,12 +297,12 @@ gmon.out: test.log
 COVFILES=cov.txt
 GMON_FILES=gmon.out gmon.t_0 gmon.t_1 gmon.t_2 gmon.t_3 gmon.t_4 gmon.t_5
 
-${COVFILES}: ${DUMP} gmon.out
+${COVFILES}: ${DUMP} gmon.out ignore_fns
 	${COV} -F -d ${DUMP} -o cov.txt gmon.out; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
 CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
-CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt
+CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns
 
 clean:
 	rm -rf ${CLEANUP}

@@ -1,4 +1,0 @@
-TH_atomic_setbit
-TH_atomic_clrbit
-TH_atomic_swap
-TH_atomic_insert

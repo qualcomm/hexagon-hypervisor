@@ -1,9 +1,0 @@
-H2K_vm_interrupt_deliver_cpu
-H2K_vm_interrupt_deliver
-H2K_vm_interrupt_setaffinity
-H2K_vm_interrupt_localmask
-H2K_vm_interrupt_localunmask
-H2K_vm_interrupt_disable
-H2K_vm_interrupt_enable
-H2K_vm_interrupt_post
-H2K_vm_interrupt_get

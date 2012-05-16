@@ -100,6 +100,7 @@ class function_data(object):
                print "%s:  parse bit mismatch pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile)
                return
 
+fn_list = []
 fdata = dict()  #  dict of function_data keyed by function name
 
 #  Read in desired function list
@@ -108,38 +109,39 @@ def read_functions(file):
       line = line.splitlines()[0]
       if line:
          if not line in fdata.keys():
+            fn_list.append(line)
             fdata[line] = function_data(line)
-
-   #print "target functions " + str(fdata.keys())
+   file.close()
 
 def read_covfile(fn):
       fn = fn.splitlines()[0]
       if not fn:
          return
 
-      #  first, find the test.cov_fns in the same 
-      #  directory and pull in the functions we should be reading.
-      local_fn_list = []
-      function_file = fn[:fn.rfind("/")]+"/test.cov_fns"
-      function_file = open(function_file,"r")
-      for line in function_file:
-         line = line.splitlines()[0]
-         if line:
-            local_fn_list.append(line)
-            if not line in fdata.keys():
-               fdata[line] = function_data(line)
-      function_file.close()
-
       fh = open(fn,"r")
       if not fh:
          return
       #print "Reading " + fn
+
+      #  first, find the test.cov_fns in the same 
+      #  directory and pull in the functions we should be reading.
+      ignore_fn_list = []
+      ignore_file = fn[:fn.rfind("/")]+"/ignore_fns"
+      ignore_file = open(ignore_file,"r")
+      for line in ignore_file:
+         line = line.splitlines()[0]
+         if line:
+            ignore_fn_list.append(line)
+            # if not line in fdata.keys():
+            #    fdata[line] = function_data(line)
+      ignore_file.close()
+
       counter = 1
       for line in fh:
          counter += 1
          line = line.splitlines()[0]
          match = function_patt.match(line)
-         if match and match.group(2) in local_fn_list:  #  change this to the local function list
+         if match and match.group(2) in fn_list and match.group(2) not in ignore_fn_list:
             pc = long(match.group(1),16)
             #print "%8d Function found:  %s" % (counter,match.group(2))
             #  add label
@@ -162,9 +164,9 @@ if __name__ == "__main__":
          print __doc__
          sys.exit(0)
 
-   #  test.cov_fns is going to be implicit
-   #fh = open("test.cov_fns","r")
-   #read_functions(fh)
+   #  cov_fns is going to be explicit
+   fh = open("scripts/cov_fns","r")
+   read_functions(fh)
 
    for fn in sys.stdin:
       read_covfile(fn)

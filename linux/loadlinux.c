@@ -21,7 +21,7 @@
 #include <string.h>
 
 #define LINUX_NUM_VCPU 3
-#define UCOS_NUM_VCPU 3
+#define UCOS_NUM_VCPU 1
 #define HW_INTS 32
 #define INTS_PER_VCPU 32
 #define SHARED_INTS 32

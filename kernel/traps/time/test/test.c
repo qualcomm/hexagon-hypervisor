@@ -25,14 +25,20 @@ u64_t stack1[STACK_SIZE];
 
 u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(u64_t)] __attribute__((aligned(32)));
 
+/* OVERHEAD is the rough cycle count to save state, swap to another thread, and swap back */
+/* it needs to have enough headroom for -Os and -Os -fno-inline versions of h2.           */
+
 #if ARCHV == 3
 #define PCYCLES_PER_TCYCLE 6
+#define OVERHEAD 1024
 #elif ARCHV == 4
 #define PCYCLES_PER_TCYCLE 3
+#define OVERHEAD 1024
 #elif ARCHV == 5
 #define PCYCLES_PER_TCYCLE 3
+#define OVERHEAD 1536
 #else
-#error define pcycles per tcycle
+#error define pcycles per tcycle and overhead
 #endif
 
 void FAIL(const char *str)
@@ -105,12 +111,11 @@ void thread0(int thread)
 	endpcycles = H2K_pcycles_get(me);
 	endcputime = H2K_cputime_get(me);
 	delta = (endpcycles - startpcycles) - (SPINS * PCYCLES_PER_TCYCLE);
-	if (delta < 0) delta = -delta;
-	if (delta > 1024 * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (C) ");
+	if (delta < 0) delta = 0;
+	if (delta > OVERHEAD * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (C) ");
 	delta = (endcputime - startcputime);
 	if (delta < 0) delta = -delta;
-	if (delta > 1024 * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (D) ");
-
+	if (delta > OVERHEAD * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (D) ");
 	h2_sem_up(&sem_done);
 	h2_thread_stop();
 }

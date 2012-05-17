@@ -39,6 +39,22 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 #if __QDSP6_ARCH__ >= 4
 	p0 = cmp.eq(r0,#31)
 	r4 = VID
+
+#if ARCHV == 4
+	/* Work around V4SS errata */
+	{
+		r10 = memw(r16+#KG_l2_int_base)
+		r13:12 = bitsplit(r4,#5)
+	}
+	{
+		r10 = add(r10,#0x180)
+		r11 = add(r10,#0x100)
+		r12 = lsl(#1,r12)
+	}
+	if (p0) memw(r10+r13<<#2) = r12
+	if (p0) r12 = memw(r11+r13<<#2)
+#endif
+
 	if (p0) r0 = add(r4,#32)
 	r4 = #MAX_INTERRUPTS-1
 	r0 = minu(r4,r0)

@@ -1,10 +1,10 @@
 
 :mod:`waitcycles` -- querying the number of cycles spent in wait mode
-=============================================
+=====================================================================
 
 
 H2K_waitcycles_get
------------
+------------------
 
 .. cfunction:: u64_t  H2K_waitcycles_get(u32_t htid, H2K_thread_context *me)
 

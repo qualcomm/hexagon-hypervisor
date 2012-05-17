@@ -3,8 +3,15 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+======================================
 Welcome to H2's documentation!
 ======================================
+-------------------------------
+See also: `h2OS Documentation`_
+-------------------------------
+
+.. _h2OS Documentation: ./h2/index.html
+
 
 Contents:
 

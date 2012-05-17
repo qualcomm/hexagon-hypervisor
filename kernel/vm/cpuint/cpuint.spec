@@ -210,7 +210,7 @@ no interrupt is found, call the next handler.
 H2K_vm_cpuint_status
 --------------------
 
-s32_t H2K_vm_cpuint_status(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");
+.. cfunction:: s32_t H2K_vm_cpuint_status(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param dest: destination cpu for interrupt posting

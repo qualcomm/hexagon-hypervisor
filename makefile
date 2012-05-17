@@ -49,6 +49,7 @@ booterclean:
 	$(MAKE) -C booter clean
 
 docclean:
+	$(MAKE) -C libs/docs/dox clean
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
 testclean covclean: ucosclean
@@ -105,6 +106,7 @@ check:
 	$(MAKE) -C ucos check
 
 doc:
+	$(MAKE) -C libs/docs/dox
 	$(MAKE) -f scripts/docs/Makefile.sphinx prepare
 	$(MAKE) -f scripts/docs/Makefile.sphinx doctest html
 

@@ -18,6 +18,7 @@ results.txt
 make.log
 test.log
 test*.out
+gmon.*
 ID
 GPATH
 GRTAGS

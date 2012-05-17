@@ -18,22 +18,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define NUM_VCPU 3
+#define LINUX_NUM_VCPU 3
+#define UCOS_NUM_VCPU 3
 #define HW_INTS 32
 #define INTS_PER_VCPU 32
 #define SHARED_INTS 32
-#define CONTEXT_SIZE 288
 #define VCPU_STACK_SIZE 1024
 #define VM_PRIO 3
 
 #define HW_TIMER_INT 10
 #define LINUX_TIMER_INT 2
 
-char vmblock_space[65536];
-void *vmb;
+char linux_vmblock_space[65536];
+char ucos_vmblock_space[65536];
+void *linux_vmb;
 
-unsigned long long int vcpu_stacks[NUM_VCPU][VCPU_STACK_SIZE];
+unsigned long long int linux_vcpu_stacks[LINUX_NUM_VCPU][VCPU_STACK_SIZE];
+unsigned long long int ucos_vcpu_stacks[UCOS_NUM_VCPU][VCPU_STACK_SIZE];
 
 #ifdef NO_PRINT
 #define PRINTF(format, args...)
@@ -43,19 +46,22 @@ unsigned long long int vcpu_stacks[NUM_VCPU][VCPU_STACK_SIZE];
 
 #define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN)
 
-H2K_linear_fmt_t pmap[] = {
+H2K_linear_fmt_t linux_pmap[] = {
 #include "pmap.def"
 	{ .raw = 0 },
 };
 
-struct timerif {
-	unsigned int match;
-	unsigned int count;
-	unsigned int enable;
-	unsigned int clear;
+#ifdef UCOS
+H2K_linear_fmt_t ucos_pmap[] = {
+#include "../ucos/pmap_ucos.def"
+	{ .raw = 0 },
 };
 
-// volatile struct timerif *timerptr = (void *)0xAB000000;
+extern void ucos_image_start();
+extern void ucos_image_end();
+extern void ucos_loadaddr();
+extern void ucos_entry();
+#endif
 
 void FAIL(const char *str)
 {
@@ -89,7 +95,7 @@ int fastint(int intno) {
 		 );
 #endif
 
-	fic->vmblock = vmb;
+	fic->vmblock = linux_vmb;
 	fic->id.vmidx = 2;
 	fic->id.cpuidx = 0;
 	h2_vmtrap_intop(H2K_INTOP_POST, intno, 0);
@@ -97,37 +103,38 @@ int fastint(int intno) {
 	return 1; // re-enable
 }
 
-void *vm_setup() {
+void *vm_setup(char num_cpus, short num_ints, char vmblock_space[], H2K_linear_fmt_t pmap[], unsigned long trapmask) {
 
 	unsigned long vmb_size;
 	void *ret;
+	void *vmb;
 
-	int i, j;
-
-	h2_init(0);
-	h2_config_setfatal(fatal);
-	PRINTF("linux: H2 started\n");
-
-	vmb_size = h2_config_vmblock_size(NUM_VCPU, SHARED_INTS);
-	PRINTF("linux: vmb size %d\n", (int)vmb_size);
+	vmb_size = h2_config_vmblock_size(num_cpus, num_ints);
+	PRINTF("vmb size %d\n", (int)vmb_size);
 
 	vmb =	h2_config_vmblock_init(vmblock_space, SET_STORAGE, 0, 0);
 	if (vmb == NULL) FAIL("SET_STORAGE");
-	PRINTF("linux: vmb %08x\n", (unsigned int)vmb);
+	PRINTF("vmb %08x\n", (unsigned int)vmb);
 
 	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, (unsigned int)pmap, H2K_ASID_TRANS_TYPE_LINEAR);
 	if (ret != vmb) {
-		PRINTF("linux: ret %08x\n", (unsigned int)ret);
+		PRINTF("ret %08x\n", (unsigned int)ret);
 		FAIL("SET_PMAP_TYPE");
 	}
 
-	if (h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0, 0x1) != vmb) { // angel trap enabled
+	if (h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0, trapmask) != vmb) {
 		FAIL("SET_PRIO_TRAPMASK");
 	}
 
-	if (h2_config_vmblock_init(vmb, SET_CPUS_INTS, NUM_VCPU, SHARED_INTS) != vmb) {
+	if (h2_config_vmblock_init(vmb, SET_CPUS_INTS, num_cpus, num_ints) != vmb) {
 		FAIL("SET_CPUS_INTS");
 	}
+	return vmb;
+}
+
+void setup_ints(void *vmb) {
+
+	int i, j;
 
 	for (i = 0; i < HW_INTS; i++) {
 		/* if (i == LINUX_TIMER_INT) { */
@@ -170,7 +177,6 @@ void *vm_setup() {
 	/* timerptr->enable = 3; */
 	/* puts("linux: Timer set up..."); */
 
-	return vmb;
 }
 
 extern void linux_stext();
@@ -179,14 +185,21 @@ int main(int argc, char *argv[]) {
 
 	void *vmb;
 
+	h2_init(0);
+	h2_config_setfatal(fatal);
+	PRINTF("loadlinux: H2 started\n");
+
+#ifdef LINUX
 	PRINTF("linux: start boot\n");
 
-	vmb = vm_setup();
+	vmb = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_vmblock_space, linux_pmap, 0x1);
+	setup_ints(vmb);
+	linux_vmb = vmb;
 	PRINTF("linux: vm set up\n");
 
 #ifndef NO_LOAD
 	size_t count;
-	unsigned long *ptr = 0x0;
+	unsigned long *ptr = (unsigned long *)linux_stext;
 	FILE *file;
 	char fname[256] = "vmlinux.bin";
 
@@ -197,7 +210,7 @@ int main(int argc, char *argv[]) {
 	file = fopen(fname, "r");
 	if (file == NULL) FAIL("fopen");
 
-	PRINTF("linux: loading %s\n", fname);
+	PRINTF("linux: loading %s to 0x%08x\n", fname, (unsigned int)linux_stext);
 	do {
 		count = fread(ptr, sizeof(unsigned long), 0x40000, file);
 		ptr += count;
@@ -206,8 +219,27 @@ int main(int argc, char *argv[]) {
 	PRINTF ("linux: loaded %s\n", fname);
 #endif
 
-	if (h2_vmboot(linux_stext, &vcpu_stacks[0][VCPU_STACK_SIZE - 1],
-								0, VM_PRIO, vmb) == -1) FAIL("vmboot");
+	if (h2_vmboot(linux_stext, &linux_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
+								0, VM_PRIO, vmb) == -1) FAIL("linux vmboot");
+
+	PRINTF ("linux: booted\n");
+#endif
+
+#ifdef UCOS
+	PRINTF("ucos: start boot\n");
+	vmb = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, ucos_vmblock_space, ucos_pmap, 0xffffffff);
+	PRINTF("ucos: vm set up\n");
+
+	PRINTF("ucos: loading to 0x%08x from 0x%08x, size 0x%08x\n", (unsigned int)ucos_loadaddr, (unsigned int)ucos_image_start, (unsigned int)(ucos_image_end - ucos_image_start));
+	memcpy(ucos_loadaddr, ucos_image_start, ucos_image_end - ucos_image_start);
+
+	PRINTF("ucos: loaded\n");
+
+	if (h2_vmboot(ucos_entry, &ucos_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
+								0, VM_PRIO, vmb) == -1) FAIL("ucos vmboot");
+
+	PRINTF ("ucos: booted\n");
+#endif
 
 	h2_thread_stop();
 	return 0; // make gcc happy

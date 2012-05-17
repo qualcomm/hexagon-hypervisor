@@ -26,7 +26,8 @@
 #define INTS_PER_VCPU 32
 #define SHARED_INTS 32
 #define VCPU_STACK_SIZE 1024
-#define VM_PRIO 3
+#define LINUX_VM_PRIO 3
+#define UCOS_VM_PRIO 1
 
 #define HW_TIMER_INT 10
 #define LINUX_TIMER_INT 2
@@ -220,7 +221,7 @@ int main(int argc, char *argv[]) {
 #endif
 
 	if (h2_vmboot(linux_stext, &linux_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
-								0, VM_PRIO, vmb) == -1) FAIL("linux vmboot");
+								0, LINUX_VM_PRIO, vmb) == -1) FAIL("linux vmboot");
 
 	PRINTF ("linux: booted\n");
 #endif
@@ -236,7 +237,7 @@ int main(int argc, char *argv[]) {
 	PRINTF("ucos: loaded\n");
 
 	if (h2_vmboot(ucos_entry, &ucos_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
-								0, VM_PRIO, vmb) == -1) FAIL("ucos vmboot");
+								0, UCOS_VM_PRIO, vmb) == -1) FAIL("ucos vmboot");
 
 	PRINTF ("ucos: booted\n");
 #endif

@@ -14,11 +14,11 @@
 #include <tlbfmt.h>
 #include <tlbmisc.h>
 
-#define SPINS (1024)
+#define SPINS (256)
 #define STACK_SIZE 256
 #define N_THREADS 12
 
-#define MAX_DELTA 100000
+#define MAX_DELTA 200000
 
 void FAIL(const char *str)
 {
@@ -38,7 +38,7 @@ u64_t stacks[STACK_SIZE*N_THREADS];
 h2_sem_t donesem;
 
 #define RANDOM_SHIFT 14
-#define RANDOM_BASE 100000 /* .1 MSEC */
+#define RANDOM_BASE 50000 /* .05 MSEC */
 
 static inline u64_t random_delta(u64_t seed) {
 	return (((u32_t)seed * 2654435769U) >> RANDOM_SHIFT) + RANDOM_BASE;
@@ -47,7 +47,7 @@ static inline u64_t random_delta(u64_t seed) {
 void task(void *arg)
 {
 	u64_t start, wakeup, end, delta;
-	int i;
+	int i,ret;
 	set_vectors();
 	printf("Task started. id=%p\n",arg);
 	for (i = 0; i < SPINS; i++) {
@@ -58,11 +58,16 @@ void task(void *arg)
 		if (h2_time_set_timeout(wakeup) == 0) {
 			FAIL("timeout in past");
 		}
-		if (h2_futex_wait(&i,i) >= 0) FAIL("futex bad");
+		if ((ret = h2_futex_wait(&i,i)) >= 0) {
+			/* EJP: FIXME: is this when a thread does vmwork after vmwait? */
+		}
 		end = h2_time_get_time();
 		delta = end - wakeup;
-		printf("id=%p: start=%llx wakeup=%llx end=%llx\n",arg,start,wakeup,end);
-		if (delta > MAX_DELTA) FAIL("Delta too big");
+		//printf("id=%p: start=%llx wakeup=%llx end=%llx\n",arg,start,wakeup,end);
+		if (delta > MAX_DELTA) {
+			printf("delta: %llx\n",delta);
+			FAIL("Delta too big");
+		}
 	};
 	h2_sem_up(&donesem);
 	h2_thread_stop();

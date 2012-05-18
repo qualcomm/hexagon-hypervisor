@@ -184,7 +184,7 @@ static void H2K_timer_dotimeout(H2K_treenode_t *treenode, void *me)
 {
 	H2K_thread_context *dest = containerof(H2K_thread_context,tree,treenode);
 	dest->timeout = H2K_TIME_BIGBANG;
-	H2K_vm_cpuint_post(dest->vmblock,dest,H2K_TIME_GUESTINT,dest->vmblock->intinfo);
+	H2K_vm_cpuint_post_locked(dest->vmblock,dest,H2K_TIME_GUESTINT,dest->vmblock->intinfo);
 }
 
 void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
@@ -205,12 +205,11 @@ void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 	if (newtimeout) nextticks = newtimeout->key;
 	else nextticks = H2K_TIME_FOREVER;
 	H2K_timer_hw_set_timeout(nextticks);
-	BKL_UNLOCK();
-
-        H2K_intcontrol_enable(intnum);
 
 	/* Do Timeouts.  Make preemptible? cpu_offline? Better be fast, at least. */
 	H2K_tree_destructive_iterate(timedout,me,H2K_timer_dotimeout);
+	BKL_UNLOCK();
+        H2K_intcontrol_enable(intnum);
 }
 
 void H2K_timer_init()
@@ -251,6 +250,11 @@ static u64_t H2K_timer_set_timeout_tick(u32_t unused, u64_t timeout_tick, H2K_th
 	BKL_LOCK();
 	if (me->timeout) H2K_tree_remove(&H2K_gp->time.timeouts,&me->tree);
 	me->timeout = timeout_tick;
+	/* 
+	 * This seemed to be one of the more important fixes, but I think we should be wrapping 
+	 * this inside the tree functions itself.
+	 */
+	me->tree.rightleft = 0;
 	if (timeout_tick != H2K_TIME_BIGBANG) H2K_tree_add(&H2K_gp->time.timeouts,&me->tree);
 	BKL_UNLOCK();
 	H2K_timer_update_timeout(timeout_tick);

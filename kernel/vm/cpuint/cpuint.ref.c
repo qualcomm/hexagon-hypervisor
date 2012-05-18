@@ -29,6 +29,19 @@
 	} while (0)
 
 /* Note that "me" is actually "dst", but make it uniform */
+s32_t  H2K_vm_cpuint_post_locked(H2K_vmblock_t *vmblock, H2K_thread_context *me, 
+	u32_t intno, H2K_vm_int_opinfo_t *info)
+{
+	u32_t tmp;
+	H2K_atomic_setbit(&me->cpuint_pending,intno);
+	H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
+	tmp = me->cpuint_pending & me->cpuint_enabled;
+	if (tmp == 0) return 0;
+	H2K_vm_int_deliver_locked(vmblock,me,intno);
+	return 0;
+}
+
+/* Note that "me" is actually "dst", but make it uniform */
 s32_t  H2K_vm_cpuint_post(H2K_vmblock_t *vmblock, H2K_thread_context *me, 
 	u32_t intno, H2K_vm_int_opinfo_t *info)
 {

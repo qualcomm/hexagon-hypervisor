@@ -66,6 +66,13 @@ u64_t H2K_check_sanity_unlock(u64_t x)
 	return x;
 }
 
+u64_t H2K_check_sanity(u64_t x)
+{
+	TH_saw_check_sanity++;
+	checker_kernel_locked();
+	return x;
+}
+
 u64_t H2K_check_sched_mask(u64_t x)
 {
 	FAIL("Saw sched mask check");

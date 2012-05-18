@@ -128,6 +128,13 @@ u64_t H2K_check_sanity_unlock(u64_t ret)
 	return ret;
 }
 
+u64_t H2K_check_sanity(u64_t ret)
+{
+	if (TH_expected_sanity == 0) FAIL("Didn't expect sanity");
+	TH_saw_sanity = 1;
+	return ret;
+}
+
 u32_t TH_expected_popup_cancel = 0;
 u32_t TH_saw_popup_cancel = 0;
 void H2K_popup_cancel(H2K_thread_context *me)

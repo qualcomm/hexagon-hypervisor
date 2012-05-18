@@ -12,6 +12,7 @@
 #include <vmint.h>
 
 s32_t H2K_vm_cpuint_post(H2K_vmblock_t *vmblock, H2K_thread_context *dest, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");
+s32_t H2K_vm_cpuint_post_locked(H2K_vmblock_t *vmblock, H2K_thread_context *dest, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");
 s32_t H2K_vm_cpuint_clear(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");
 s32_t H2K_vm_cpuint_enable(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");
 s32_t H2K_vm_cpuint_disable(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");

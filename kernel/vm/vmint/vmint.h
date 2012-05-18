@@ -72,6 +72,7 @@ u32_t H2K_enable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.i
 u32_t H2K_disable_guest_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 s32_t H2K_vm_check_interrupts(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 void H2K_vm_int_deliver(H2K_vmblock_t *block, H2K_thread_context *dst, u32_t intno) IN_SECTION(".text.vm.int");
+void H2K_vm_int_deliver_locked(H2K_vmblock_t *block, H2K_thread_context *dst, u32_t intno) IN_SECTION(".text.vm.int");
 
 /* Trap multi-call */
 void H2K_vmtrap_intop(H2K_thread_context *me) IN_SECTION(".text.vm.int");

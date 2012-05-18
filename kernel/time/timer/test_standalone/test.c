@@ -54,6 +54,17 @@ s32_t H2K_vm_cpuint_post(H2K_vmblock_t *vmblock, H2K_thread_context *dest, u32_t
 	return 0;
 }
 
+s32_t H2K_vm_cpuint_post_locked(H2K_vmblock_t *vmblock, H2K_thread_context *dest, u32_t intno)
+{
+	if (TH_expected_cpuint_post == 0) FAIL("Unexpected post");
+	if (intno != H2K_TIME_GUESTINT) FAIL("cpuint wrong int posted");
+	if (dest != &a) FAIL("cpuint wrong dest");
+	if (vmblock != a.vmblock) FAIL("cpuint wrong vmblock");
+	if (a.timeout != 0) FAIL("timeout not reset");
+	TH_expected_cpuint_post = 0;
+	return 0;
+}
+
 void TH_reset()
 {
 	a.timeout = a.rightleft = 0ULL;

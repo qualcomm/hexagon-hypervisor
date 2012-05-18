@@ -33,6 +33,8 @@ u32_t TH_saw_preempt_call;
 
 jmp_buf env;
 
+u32_t intdev[0x1000];
+
 void FAIL(const char *str)
 {
 	puts(str);
@@ -235,6 +237,7 @@ int main()
 	TH_save_sgp();
 	/* Set up KGP correctly for direct calls */
 	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	H2K_kg.l2_int_base = H2K_kg.l2_ack_base = intdev;
 	printf("MAX_INTERRUPTS=%d\n",MAX_INTERRUPTS);
 	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {

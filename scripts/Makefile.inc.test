@@ -166,17 +166,12 @@ ifdef SUBDIRS
 #${SUBDIR_TARGETS}:
 #	${SUBDIR_MAKE}
 
-# Generate function list based on the contents of the kernel and lib  (!OPTIMIZE=-O0!)
-cov_fns:
-	echo "########################################################################"
-	echo "### make sure h2 is built with OPTIMIZE=O0 to catch inline functions ###"
-	echo "########################################################################"
-	${H2DIR}/scripts/gen_cov_fns.pl > ${H2DIR}/scripts/$@
-
 #  Uh...  don't run this unless all the tests are run for now.
 cov.txt:
 	find ./kernel ./libs -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
 
+cov.rpt: cov.txt
+	${H2DIR}/scripts/h2_cov_tool > $@
 
 #  every "subdir" needs to have a results.txt in it for this to run properly.
 #  if no results.txt, FAIL

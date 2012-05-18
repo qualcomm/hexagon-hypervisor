@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+open (FILE, "<cov.txt");
+
+#Hashref to store the goodies
+my $h={};
+
+sub finish_func($$) {
+  my ($ver, $func) = @_;
+  if ($h->{$ver}{$func}{total} == 0) {
+    $h->{$ver}{$func}{percent}=0;
+  }
+  else {
+    $h->{$ver}{$func}{percent}=int(100*($h->{$ver}{$func}{covered}/$h->{$ver}{$func}{total}) + .5);
+  }
+  delete $h->{$ver}{$func}{covered};
+  delete $h->{$ver}{$func}{total};
+}
+
+my $version;
+my $function;
+LINE: while(my $line = <FILE>) {
+  chomp $line;
+  if ($line =~ /^(v[345])/) {
+    if ($version) { finish_func($version, $function); }
+    $version = $line;
+    $version =~ s/\s//g;
+    undef $function;
+    next LINE;
+  }
+
+  if ($line =~ /^\s+\d+ cycle.*/) {
+    $h->{$version}{$function}{covered}++;
+    $h->{$version}{$function}{total}++;
+    next LINE;
+  }
+
+  if ($line =~ /^\*\* {12}0 cycles.*/) {
+    $h->{$version}{$function}{total}++;
+    next LINE;
+  }
+
+  if ($line =~ /No data!$/) {
+    next LINE;
+  }
+
+  if ($line =~ /^([A-Za-z0-9_]+)$/) {
+    my $saved = $1;
+    if ($function) {
+      finish_func($version, $function);
+    }
+    $function = $saved;
+    $h->{$version}{$function}{covered}=0;
+    $h->{$version}{$function}{total}=0;
+    next LINE;
+  }
+
+
+}
+finish_func($version, $function);
+close FILE;
+
+my @keys = keys %{$h};
+$version = shift @keys;
+
+my %final;
+
+print "$version unless otherwise specified.\n\n";
+#sort by lowest coverage to hightest
+for $function (sort {$h->{$version}{$a}{percent}<=>$h->{$version}{$b}{percent}} keys %{$h->{$version}}) {
+  my $entry;
+  #first we print the % covered and the function name
+  $entry = sprintf("%3u%%: %s ", $h->{$version}{$function}{percent}, $function);
+  my $ptmpv;
+  my $alsoversions;
+  #now look through the functions we know about
+  foreach my $tmpv (@keys) {
+    #If coverage %'s are different we want to indicate that...
+    if (defined $h->{$tmpv}{$function}) {
+      if ($h->{$version}{$function}{percent} != $h->{$tmpv}{$function}{percent}) {
+	#So if we already have found a case like this
+	if (defined $ptmpv && defined $h->{$ptmpv}{$function}) {
+	  #And we it is the same % as the previous result, just add it too the list
+	  if ($h->{$tmpv}{$function}{percent} == $h->{$ptmpv}{$function}{percent}) {
+	    $entry .= " ($tmpv)";
+	  }
+	  #If there is no previous result, Print the %, function, and version
+	  else {
+	    push @{$final{$h->{$version}{$function}{percent}}}, "$entry\n";
+	    $entry = sprintf("%3u%%: %s (%s)",$h->{$tmpv}{$function}{percent}, $function, $tmpv);
+	  }
+	}
+	# if we haven't got through this before, just print the %, function, and version
+	else {
+	  push @{$final{$h->{$version}{$function}{percent}}}, "$entry\n";
+	  $entry = sprintf("%3u%%: %s (%s)", $h->{$tmpv}{$function}{percent}, $function, $tmpv);
+	}
+      }
+    }
+    # save the previous version so we can compare the next one to it.
+    $ptmpv = $tmpv;
+  }
+  #Submit the current entry.
+  push @{$final{$h->{$version}{$function}{percent}}}, "$entry\n";
+  #Delete that function from all other versions
+  foreach my $tmpv(@keys) {
+    delete $h->{$tmpv}{$function};
+  }
+  #delete that function from starting version
+  delete $h->{$version}{$function};
+  #Left over function must not have been in the starting version
+}
+
+foreach my $ver (keys %{$h}) {
+  foreach my $func (keys %{$h->{$ver}}) {
+    #These are fucntions that are not common in all versions:
+    my $entry = sprintf("%3u%%: %s (%s)\n", $h->{$ver}{$func}{percent}, $func, $ver);
+    push @{$final{$h->{$ver}{$func}{percent}}}, $entry;
+  }
+}
+
+foreach my $percent (sort {$a <=> $b} keys %final) {
+  print @{$final{$percent}};
+}
+

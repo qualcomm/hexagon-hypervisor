@@ -40,7 +40,7 @@ all: ref doc gtags
 
 distclean: clean docclean
 
-clean: covclean ucosclean booterclean
+clean: covclean ucosclean booterclean docclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean && \
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean && \
 	rm -Rf size test.exe stats.txt install kernel/stats.txt
@@ -64,12 +64,14 @@ opt:
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
+	echo "v$(ARCHV) $@" > $(INSTALLPATH)/ver
 
 ref:
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
+	echo "v$(ARCHV) $@" > $(INSTALLPATH)/ver
 
 sim: ref
 	$(CC) -mv$(ARCHV) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
@@ -92,10 +94,10 @@ cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
 	$(MAKE) -C ucos sim 2>&1 | tee make.log
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.txt
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
-.PHONY: check-fail test-check cov-check
+.PHONY: check-fail test-check cov-check cov_fns
 
 check-fail test-check cov-check:
 	$(MAKE) -f scripts/Makefile.coverage check-fail
@@ -116,3 +118,13 @@ compat:
 gtags:
 	find kernel libs tst guest ucos linux -type f -print | gtags -I -w -v -f -
 	htags -afhnosTxv --show-position
+
+cov_fns:
+	$(MAKE) clean ref Q6VERSION=v4 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v4ref_cov_fns;
+	$(MAKE) clean opt Q6VERSION=v4 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v4opt_cov_fns;
+	$(MAKE) clean ref Q6VERSION=v5 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
+
+

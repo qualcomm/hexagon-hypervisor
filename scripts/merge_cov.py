@@ -113,6 +113,15 @@ def read_functions(file):
             fdata[line] = function_data(line)
    file.close()
 
+def get_veropt(file):
+   ver_patt = re.compile("(v\d)\s(ref|opt)")
+   for line in file:
+      match = ver_patt.match(line)
+      if match:
+         return (match.group(1),match.group(2))
+      else:
+         sys.exit("No version information found for compiled h2")
+
 def read_covfile(fn):
       fn = fn.splitlines()[0]
       if not fn:
@@ -164,13 +173,20 @@ if __name__ == "__main__":
          print __doc__
          sys.exit(0)
 
+   # Which style/version are we working on
+   fh = open("install/ver","r")
+   ver,opt = get_veropt(fh)
+
+   fname="scripts/"+ver+opt+"_cov_fns"
+
    #  cov_fns is going to be explicit
-   fh = open("scripts/cov_fns","r")
+   fh = open(fname,"r")
    read_functions(fh)
 
    for fn in sys.stdin:
       read_covfile(fn)
 
+   print ver+" "+opt
    for func in fdata.keys():
       print fdata[func].sprint()
 

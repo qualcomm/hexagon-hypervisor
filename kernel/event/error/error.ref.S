@@ -77,5 +77,5 @@ FUNC_START H2K_handle_debug .text.vm.error .p2align 2
 	r2 = #DEBUG_GEVB_OFFSET
 	r3 = r7
 	jump H2K_vm_event
-FUNC_END H2K_handle_rsvd
+FUNC_END H2K_handle_debug
 

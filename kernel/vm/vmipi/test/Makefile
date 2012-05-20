@@ -5,3 +5,4 @@ EXEC=test.elf
 
 include Makefile.inc
 OSLIB=
+CFLAGS+=-O0

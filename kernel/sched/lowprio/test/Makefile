@@ -5,3 +5,4 @@ EXEC=test.elf
 
 include Makefile.inc
 
+CFLAGS+= -O0

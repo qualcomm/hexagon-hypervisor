@@ -12,19 +12,23 @@ use warnings;
 
 my %funclist;
 
-my $test = shift @ARGV or die "Provide test on command line!";
-die "$test not found!" unless (-f $test);
-$test =~ s/test\.elf$//;
-$test .= "*.o";
+#my $test = shift @ARGV or die "Provide test on command line!";
+#die "$test not found!" unless (-f $test);
+#$test =~ s/test\.elf$//;
+#$test .= "*.o";
 
-my @tobj=`qdsp6-objdump --syms $test`;
+while (my $test = shift @ARGV) {
+  my @tobj=`qdsp6-objdump --syms $test`;
 
-foreach my $line (@tobj) {
-  if ($line =~ /\S+\s+\S+\s+F\s+[A-Za-z0-9_\.]+\s+\S+\s+(H2K_.*|h2_.*)/) {
-    $funclist{$1}=1;
-  }
-  elsif ($line =~ /\S+\s+g\s+[A-Za-z0-9_\.]+\s+\S+\s+(H2K_.*|h2_.*)/) {
-    $funclist{$1}=1;
+  foreach my $line (@tobj) {
+    # (g) functions are added to the ignore list
+    if ($line =~ /\S+\s+g\s+F\s+[A-Za-z0-9_\.]+\s+\S+\s+(H2K_.*|h2_.*)/) {
+      $funclist{$1}=1;
+    }
+    # Some functions don't have the F?
+    elsif ($line =~ /\S+\s+g\s+[A-Za-z0-9_\.]+\s+\S+\s+(H2K_.*|h2_.*)/) {
+      $funclist{$1}=1;
+    }
   }
 }
 

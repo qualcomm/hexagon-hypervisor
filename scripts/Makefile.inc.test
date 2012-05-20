@@ -273,8 +273,8 @@ ${EXEC}: ${OBJS}
 	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
-ignore_fns: ${EXEC}
-	${H2DIR}/scripts/gen_ignore_fns.pl ${EXEC} > $@
+ignore_fns: ${OBJS}
+	${H2DIR}/scripts/gen_ignore_fns.pl ${OBJS} > $@
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}

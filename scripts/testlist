@@ -71,4 +71,7 @@
 ./libs/h2/allsignal/test/trapfails
 ./libs/h2/anysignal/test/simple
 ./libs/h2/anysignal/test/trapfails
-
+./libs/h2/vmtraps/test/test_ie
+./libs/h2/vmtraps/test/test_pcycles
+./libs/h2/vmtraps/test/test_return
+./libs/h2/vmtraps/test/test_yield

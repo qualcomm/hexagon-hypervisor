@@ -122,7 +122,10 @@ foreach my $ver (keys %{$h}) {
   }
 }
 
+#Sort by percent
 foreach my $percent (sort {$a <=> $b} keys %final) {
-  print @{$final{$percent}};
+  #within a percent, sort by name (skip the percent part in the entry)
+  print sort { substr($a,6) cmp substr($b,6) } @{$final{$percent}};
+#  print @{$final{$percent}};
 }
 

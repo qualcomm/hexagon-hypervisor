@@ -171,7 +171,7 @@ cov.txt:
 	find ./kernel ./libs -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
 
 cov.rpt: cov.txt
-	${H2DIR}/scripts/h2_cov_tool > $@
+	${H2DIR}/scripts/cov_rpt_tool > $@
 
 #  every "subdir" needs to have a results.txt in it for this to run properly.
 #  if no results.txt, FAIL
@@ -252,7 +252,7 @@ DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 #  These are for actual terminal directories
 ################################################################################
 %.objdump: %.elf
-	${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
+	${OBJDUMP} -D ${@:.objdump=.elf} ${BOOTER} > $@; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
 
 ifdef PYTHON_GENERATOR_SCRIPT

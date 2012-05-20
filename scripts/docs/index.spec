@@ -6,12 +6,25 @@
 ======================================
 Welcome to H2's documentation!
 ======================================
--------------------------------
-See also: `h2OS Documentation`_
--------------------------------
 
-.. _h2OS Documentation: ./h2/index.html
+~~~~~~~~~~
+Wiki links
+~~~~~~~~~~
++----------------------+-----------------+---------------+
+|`H2 getting started`_ |`H2 Whitepaper`_ |`H2 Security`_ |
++----------------------+-----------------+---------------+
 
+~~~~~~~~~~~~
+H2OS Doxygen
+~~~~~~~~~~~~
++----------------------+
+|`H2OS Documentation`_ |
++----------------------+
+
+.. _H2 getting started: http://qwiki.qualcomm.com/hexagon-architecture/H2_Getting_started
+.. _H2 Whitepaper: http://qwiki.qualcomm.com/hexagon-architecture/H2_Whitepaper
+.. _H2 Security: http://qwiki.qualcomm.com/hexagon-architecture/Security_Overview
+.. _H2OS Documentation: ./h2/index.html
 
 Contents:
 

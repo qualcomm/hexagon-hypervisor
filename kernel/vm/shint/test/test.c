@@ -213,6 +213,9 @@ void TH_test_maskfuncs()
 		if ((TH_enable_storage[j/32] & (1<<(j % 32))) != 0) {
 			FAIL("Interrupt not cleared correctly");
 		}
+		if(j == MAX_TEST_INTERRUPTS/2) {
+			H2K_vm_shint_nop(&TH_vmblock,&TH_threads[0],j,info);
+		}
 		H2K_vm_shint_enable(&TH_vmblock,&TH_threads[0],j,info);
 		if ((TH_enable_storage[j/32] & (1<<(j % 32))) == 0) {
 			FAIL("H2K_vm_shint_enable failed");

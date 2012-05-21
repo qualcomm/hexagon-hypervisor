@@ -99,6 +99,7 @@ int main()
 	H2K_treenode_t *leftroot;
 	H2K_treenode_t *rightroot;
 	unsigned int keytmp;
+	int number;
 	for (idx = 0; tests[idx].name != NULL; idx++) {
 		printf("%s: %d elements [%d,%d]\n",tests[idx].name,tests[idx].size,tests[idx].min,tests[idx].max);
 		test = &(tests[idx]);
@@ -113,8 +114,14 @@ int main()
 		}
 		treetest(root,test->min,test->max);
 
+		//look for a big number we know is not in the list (max 700?)
+		tmp = H2K_tree_find(root,777);
+		if (tmp) FAIL("Found a node that doesn't exist!");
+
 		for (i = 0; i < 10; i++) {
-			tmp = root;
+			keytmp = test->data[rand() % test->size];
+			tmp = H2K_tree_find(root,keytmp);
+			if (tmp == 0) FAIL("Couldn't find node I know is there!");
 			H2K_tree_remove(&root,tmp);
 			tmp->rightleft = 0;
 			treetest(root,test->min,test->max);

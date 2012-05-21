@@ -200,6 +200,7 @@ H2K_tree_add
 H2K_tree_add_key
 H2K_tree_bisect
 H2K_tree_destructive_iterate
+H2K_tree_find
 H2K_tree_min
 H2K_tree_remove
 H2K_tree_remove_key
@@ -214,11 +215,13 @@ H2K_vm_cpuint_localen
 H2K_vm_cpuint_nop
 H2K_vm_cpuint_peek
 H2K_vm_cpuint_post
+H2K_vm_cpuint_post_locked
 H2K_vm_cpuint_setaffinity
 H2K_vm_cpuint_status
 H2K_vm_do_work
 H2K_vm_event
 H2K_vm_int_deliver
+H2K_vm_int_deliver_locked
 H2K_vm_int_intinfo_init
 H2K_vm_interrupt_get
 H2K_vm_interrupt_peek

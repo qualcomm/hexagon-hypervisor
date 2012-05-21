@@ -59,7 +59,7 @@ void spin()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-void delay(int id)
+void delay()
 {
 	while (1) {
 		spin();
@@ -97,7 +97,7 @@ int main()
 	h2_sem_init_val(&donesem,0);
 	// Start a delat thread for each HW thread.
 	for(i=0; i<NUM_THREADS-1; i++) {
-		h2_thread_create(delay,&delaystack[i][STACKSIZE],i,1); 
+		h2_thread_create(delay,&delaystack[i][STACKSIZE],NULL,1); 
 	}
 
 	// Start a thread that will yield

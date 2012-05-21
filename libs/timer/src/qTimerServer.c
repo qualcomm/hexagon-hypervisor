@@ -452,6 +452,9 @@ void qTimerServer ( void *arg)
     /* Start the IST thread */
     blast_timer_IST_init ();
 
+    /* Define this as zero to remove warning */
+    ack_signal=0;
+
     while (1) {
         respond = true;
         cmd.raw = blast_pipe_recv (qtimer_serv_pipe);

@@ -108,10 +108,16 @@ static H2K_thread_context *H2K_vmint_fixup_post(H2K_thread_context *me, u32_t *a
 	H2K_id_t id;
 	H2K_thread_context *dst;
 
-	/* FIXME: temporary hack so we can just pass the cpu # from linux, which
-		 currently doesn't know its vcpu IDs. */
-	id = me->id;
-	id.cpuidx = me->r02;
+	if (me->r02) {  // ID of cpu to receive interrupt
+		id.raw = me->r02;
+
+		/* FIXME: check if we can post interrupts to the other vm */
+		if (id.vmidx != me->id.vmidx) { // bad vm
+			return NULL;
+		}
+	} else {        // == 0 means me
+		id = me->id;
+	}
 
 	dst = H2K_id_to_context(id);
 	return dst;

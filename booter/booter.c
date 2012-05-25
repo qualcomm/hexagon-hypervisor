@@ -87,6 +87,18 @@ void spawn_vm(void *pc)
 	printf("vm booted\n");
 }
 
+void dcclean_range(unsigned long start, long range)
+{
+	unsigned long p;
+	p = start & -32;
+	range += start-p;
+	do {
+		asm volatile (" dccleana(%0)\n" : :"r"(p));
+		p += 32;
+		range -= 32;
+	} while (range >= 0); 
+}
+
 int main(int argc, char **argv)
 {
 	int ret,i;
@@ -112,6 +124,8 @@ int main(int argc, char **argv)
 		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 		fread((char *)phdr.p_paddr,1,phdr.p_filesz,f);
 		memset((char *)phdr.p_paddr+phdr.p_filesz,0,phdr.p_memsz-phdr.p_filesz);
+		/* Really, only need to clean out text sections */
+		dcclean_range(phdr.p_paddr,phdr.p_memsz);
 	}
 	spawn_vm((void *)ehdr.e_entry);
 	h2_thread_stop();

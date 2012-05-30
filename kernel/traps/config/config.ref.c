@@ -43,6 +43,15 @@ u32_t H2K_trap_config_vmblock_size(u32_t unused, void *unused2, u32_t max_cpus, 
 	return VMBLOCK_SIZE(max_cpus, num_ints);
 }
 
+/* FIXME: need to validate vmblock pointer to guest space in these functions */
+
+u32_t H2K_vmblock_valid(H2K_vmblock_t *vmblock) {
+	if (vmblock != NULL && H2K_gp->vmblocks[vmblock->vmidx] == vmblock) { // ok
+		return 1;
+	}
+	return 0;
+}
+
 /* initialize vm description */
 u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
 {
@@ -84,6 +93,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		return (u32_t)vmblock;
 
 	case SET_PMAP_TYPE:
+		if (!H2K_vmblock_valid(vmblock)) return 0;
 		if (arg2 >= H2K_ASID_TRANS_TYPE_XXX_LAST) return 0; // bad type
 		if (!arg1) {
 			/* use ptb from current thread as pmap by default */
@@ -96,6 +106,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		return (u32_t)vmblock;
 
 	case SET_PRIO_TRAPMASK:
+		if (!H2K_vmblock_valid(vmblock)) return 0;
 		if (arg1 > MAX_PRIO) return 0; /* bad arg */
 
 		vmblock->bestprio = (u8_t)arg1;
@@ -103,6 +114,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		return (u32_t)vmblock;
 
 	case SET_CPUS_INTS:
+		if (!H2K_vmblock_valid(vmblock)) return 0;
 		if ((arg1 > MAX_VM_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
 
 		vmblock->max_cpus = arg1;
@@ -158,6 +170,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		return (u32_t)vmblock;
 
 	case MAP_PHYS_INTR:
+		if (!H2K_vmblock_valid(vmblock)) return 0;
 		if (((u16_t)arg1 >= vmblock->num_ints) || ((physint_t)arg2) > MAX_INTERRUPTS) return 0; /* bad args */
 		vmblock->int_v2p[arg1] = (physint_t)arg2;
 		return (u32_t)vmblock;

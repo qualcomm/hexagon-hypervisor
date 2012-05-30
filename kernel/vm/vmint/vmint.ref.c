@@ -40,7 +40,7 @@ s32_t H2K_vm_int_deliver_locked(H2K_vmblock_t *vmblock, H2K_thread_context *thre
 	enqueue:
 		H2K_ready_append(thread);
 		H2K_check_sanity(0);
-		return;
+		return 0;
 	case H2K_STATUS_RUNNING:
 		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
 			H2K_vm_ipi_send_withlock(thread);

@@ -37,6 +37,7 @@ s32_t  H2K_vm_cpuint_post_locked(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
 	tmp = me->cpuint_pending & me->cpuint_enabled;
 	if (tmp == 0) return 0;
+	/* Ignore error from post to dead cpu */
 	H2K_vm_int_deliver_locked(vmblock,me,intno);
 	return 0;
 }
@@ -51,6 +52,7 @@ s32_t  H2K_vm_cpuint_post(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
 	tmp = me->cpuint_pending & me->cpuint_enabled;
 	if (tmp == 0) return 0;
+	/* Ignore error from post to dead cpu */
 	H2K_vm_int_deliver(vmblock,me,intno);
 	return 0;
 }

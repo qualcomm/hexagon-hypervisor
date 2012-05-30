@@ -184,6 +184,7 @@ static void H2K_timer_dotimeout(H2K_treenode_t *treenode, void *me)
 {
 	H2K_thread_context *dest = containerof(H2K_thread_context,tree,treenode);
 	dest->timeout = H2K_TIME_BIGBANG;
+	/* Ignore error from post to dead cpu */
 	H2K_vm_cpuint_post_locked(dest->vmblock,dest,H2K_TIME_GUESTINT,dest->vmblock->intinfo);
 }
 

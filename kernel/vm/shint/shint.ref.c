@@ -36,13 +36,18 @@ static s32_t H2K_vm_shint_deliver_cpu(H2K_vmblock_t *vmblock, H2K_thread_context
 	u32_t bitidx   = intno & 0x1f;
 	u32_t bitmask  = 1<<bitidx;
 	u32_t cpu = dest->id.cpuidx;
+	s32_t ret;
+
 	if (vmblock->percpu_mask[cpu][wordidx] & bitmask) {
-		if (dest->status == H2K_STATUS_DEAD) { // cpu stopped
-			return 0;
-		}
 		H2K_atomic_setbit(&dest->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
-		H2K_vm_int_deliver(vmblock,dest,intno);
-		return 1;
+
+		/* Might get an error from deliver if the cpu dies here */
+		ret = H2K_vm_int_deliver(vmblock,dest,intno);
+		if (ret == -1) {
+			return 0;  // keep trying
+		} else {
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -58,7 +63,8 @@ static void H2K_vm_shint_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	/* we only check the first 64 cpus */
 	i = Q6_R_ct0_P(vmblock->waiting_cpus);
 
-	for (; i < bits(long_bitmask_t) && (i < vmblock->num_cpus); i++) {
+	/* Have to check all the way up to max_cpus since IDs aren't contiguous */
+	for (; i < bits(long_bitmask_t) && (i < vmblock->max_cpus); i++) {
 		if ((vmblock->waiting_cpus >> i) & 0x1) { // found
 			if (H2K_vm_shint_deliver_cpu(vmblock, &vmblock->contexts[i], intno)) {
 				return;

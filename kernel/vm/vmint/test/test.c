@@ -187,6 +187,7 @@ void TH_clear_data()
 int main()
 {
 	int i,j,k;
+	s32_t ret;
 	TH_init_vmblock();
 	/* Set up post/get test masks */
 	TH_setup_intmask();
@@ -312,7 +313,8 @@ int main()
 	puts("A");
 	t0->vmstatus = 0;
 	t0->status = H2K_STATUS_DEAD;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != -1) FAIL("error code");
 	if (t0->status != H2K_STATUS_DEAD) FAIL("status");
 	if (t0->vmstatus != 0) FAIL("vmstatus");
 	
@@ -321,7 +323,8 @@ int main()
 	t0->vmstatus = 0;
 	t0->status = H2K_STATUS_VMWAIT;
 	TH_expected_sanity = 1;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_READY) FAIL("status");
 	if (t0->vmstatus != 0) FAIL("vmstatus");
 	if (TH_saw_sanity != 1) FAIL("no sanity check");
@@ -332,7 +335,8 @@ int main()
 	puts("C");
 	t0->vmstatus = 0;
 	t0->status = H2K_STATUS_RUNNING;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_RUNNING) FAIL("status");
 	if (t0->vmstatus != 0) FAIL("vmstatus");
 	
@@ -341,7 +345,8 @@ int main()
 	t0->vmstatus = H2K_VMSTATUS_IE;
 	t0->status = H2K_STATUS_RUNNING;
 	TH_expected_ipi = 1;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_RUNNING) FAIL("status");
 	if (t0->vmstatus != H2K_VMSTATUS_IE) FAIL("vmstatus");
 	if (TH_saw_ipi_send != 1) FAIL("Didn't see IPI");
@@ -353,7 +358,8 @@ int main()
 	t0->vmstatus = 0;
 	t0->status = H2K_STATUS_INTBLOCKED;
 	TH_expected_popup_cancel = 0;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_INTBLOCKED) FAIL("status");
 	if (t0->vmstatus != 0) FAIL("vmstatus");
 	if (TH_saw_popup_cancel != 0) FAIL("saw popup cancel");
@@ -366,7 +372,8 @@ int main()
 	t0->status = H2K_STATUS_INTBLOCKED;
 	TH_expected_popup_cancel = 1;
 	TH_expected_sanity = 1;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_READY) FAIL("status");
 	if (t0->vmstatus != H2K_VMSTATUS_IE) FAIL("vmstatus");
 	if (TH_saw_popup_cancel != 1) FAIL("Didn't see popup cancel");
@@ -381,7 +388,8 @@ int main()
 	t0->vmstatus = 0;
 	t0->status = H2K_STATUS_BLOCKED;
 	TH_expected_futex_cancel = 0;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_BLOCKED) FAIL("status");
 	if (t0->vmstatus != 0) FAIL("vmstatus");
 	if (TH_saw_futex_cancel != 0) FAIL("saw popup cancel");
@@ -394,7 +402,8 @@ int main()
 	t0->status = H2K_STATUS_BLOCKED;
 	TH_expected_futex_cancel = 1;
 	TH_expected_sanity = 1;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_READY) FAIL("status");
 	if (t0->vmstatus != H2K_VMSTATUS_IE) FAIL("vmstatus");
 	if (TH_saw_futex_cancel != 1) FAIL("Didn't see popup cancel");
@@ -408,7 +417,8 @@ int main()
 	puts("I");
 	t0->vmstatus = H2K_VMSTATUS_IE;
 	t0->status = H2K_STATUS_READY;
-	H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
+	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_READY) FAIL("status");
 	if (t0->vmstatus != H2K_VMSTATUS_IE) FAIL("vmstatus");
 

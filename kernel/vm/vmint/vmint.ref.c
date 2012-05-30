@@ -29,47 +29,54 @@
  */
 
 IN_SECTION(".text.vm.int")
-void H2K_vm_int_deliver_locked(H2K_vmblock_t *vmblock, H2K_thread_context *thread, u32_t intno)
+s32_t H2K_vm_int_deliver_locked(H2K_vmblock_t *vmblock, H2K_thread_context *thread, u32_t intno)
 {
 	switch (thread->status) {
-		case H2K_STATUS_VMWAIT:
-			if (thread->id.cpuidx < bits(long_bitmask_t)) {
-				vmblock->waiting_cpus &= ~(0x1 << thread->id.cpuidx);
-			}
-			thread->r00 = intno;
-		enqueue:
-			H2K_ready_append(thread);
-			H2K_check_sanity(0);
-			return;
-		case H2K_STATUS_RUNNING:
-			if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
-				H2K_vm_ipi_send_withlock(thread);
-			}
-			break;
-		case H2K_STATUS_INTBLOCKED:
-			if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
-				H2K_popup_cancel(thread);
-				goto enqueue;
-			}
-			break;
-		case H2K_STATUS_BLOCKED:
-			if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
-				H2K_futex_cancel(thread);
-				goto enqueue;
-			}
-			break;
-		case H2K_STATUS_READY:
-			break;
-		default: break;
+	case H2K_STATUS_VMWAIT:
+		if (thread->id.cpuidx < bits(long_bitmask_t)) {
+			vmblock->waiting_cpus &= ~(0x1 << thread->id.cpuidx);
+		}
+		thread->r00 = intno;
+	enqueue:
+		H2K_ready_append(thread);
+		H2K_check_sanity(0);
+		return;
+	case H2K_STATUS_RUNNING:
+		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
+			H2K_vm_ipi_send_withlock(thread);
+		}
+		break;
+	case H2K_STATUS_INTBLOCKED:
+		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
+			H2K_popup_cancel(thread);
+			goto enqueue;
+		}
+		break;
+	case H2K_STATUS_BLOCKED:
+		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
+			H2K_futex_cancel(thread);
+			goto enqueue;
+		}
+		break;
+	case H2K_STATUS_READY:
+		break;
+		
+	case H2K_STATUS_DEAD:
+	default:
+		return -1;
 	}
+	return 0;
 }
 
 IN_SECTION(".text.vm.int")
-void H2K_vm_int_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *thread, u32_t intno)
+s32_t H2K_vm_int_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *thread, u32_t intno)
 {
+	s32_t ret;
+
 	BKL_LOCK();
-	H2K_vm_int_deliver_locked(vmblock,thread,intno);
+	ret = H2K_vm_int_deliver_locked(vmblock,thread,intno);
 	BKL_UNLOCK();
+	return ret;
 }
 
 static s32_t H2K_vm_interrupt_peek(H2K_vmblock_t *vmblock, H2K_thread_context *me)

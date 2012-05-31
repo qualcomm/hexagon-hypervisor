@@ -24,16 +24,16 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 		r24 = add(##H2K_fastint_contexts,mpyi(r2,r9))
 		r4 = add(r16,#KG_inthandlers)
 	}
+	// FIXME: not optimized
+	r4 = addasl(r4, r0, #3)
 	{
 		/* Per-HThread stack may get corrputed by trap in int handler */
 		/* So save off important registers in fastint context that won't change */
 		memd(r24+#CONTEXT_totalcycles) = r31:30
-		r4 = memw(r4+r0<<#3)
+		r4 = memw(r4+#4)
 		r25 = r0
 		gp = r6
 	}
-	// FIXME: not optimized
-	r4 = add(r4, #4)
 	{
 		r29 = add(r24,#FASTINT_CONTEXT_SIZE)
 		callr r4

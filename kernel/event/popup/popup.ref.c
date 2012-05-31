@@ -20,9 +20,8 @@ void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 {
 	H2K_thread_context *woken;
 	BKL_LOCK(&H2K_bkl);
-	woken = H2K_gp->fastint_funcptrs[intnum];
-	H2K_gp->fastint_funcptrs[intnum] = NULL;
-	H2K_gp->inthandlers[intnum] = NULL;
+	woken = H2K_gp->inthandlers[intnum].param;
+	H2K_gp->inthandlers[intnum].raw = 0;
 	if (unlikely(woken == NULL)) {
 		/* Auto-disabled, now we should re-post interrupt, I think */
 		BKL_UNLOCK(&H2K_bkl);
@@ -53,12 +52,12 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 	if (intnum == 31) return -1;
 #endif
 	BKL_LOCK(&H2K_bkl);
-	if (H2K_gp->fastint_funcptrs[intnum] != NULL) {
+	if (H2K_gp->inthandlers[intnum].param != NULL) {
 		BKL_UNLOCK(&H2K_bkl);
 		return -1;
 	}
-	H2K_gp->fastint_funcptrs[intnum] = me;
-	H2K_gp->inthandlers[intnum] = H2K_popup_int;
+	H2K_gp->inthandlers[intnum].param = me;
+	H2K_gp->inthandlers[intnum].handler = H2K_popup_int;
 	H2K_runlist_remove(me);
 	me->status = H2K_STATUS_INTBLOCKED;
 	me->r0100 = intnum;
@@ -70,8 +69,7 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 void H2K_popup_cancel(H2K_thread_context *dest)
 {
 	u32_t intnum = dest->r00;
-	H2K_gp->fastint_funcptrs[intnum] = NULL;
-	H2K_gp->inthandlers[intnum] = NULL;
+	H2K_gp->inthandlers[intnum].raw = 0;
 	dest->r00 = -1;
 	/* intcontrol_disable intnum? */
 }

@@ -83,44 +83,6 @@ TH_call_saw_secondary_int:
 	ssr = r28
 	jump TH_saw_secondary_int
 
-#if 0
-// void TH_call_fastint_check(u32_t intno);
-	.global TH_call_fastint_check
-TH_call_fastint_check:
-	allocframe(#0)
-	memd(#lrfpsave) = r31:30
-	/* call H2K_interrupted_fastint_check */
-	/* Set up regs with correct values */
-	/* SGP and R0 are swapped */
-	/* IMASK replaced by value in r13 */
-	/* SSR in r14 */
-	/* r28-31 are restored from context @ r0 */
-	/* R4 has fast interrupt func ptrs */
-
-	/* We need to emulate that a fast interrupt was interrupted */
-	/* SP should be correct */
-	/* Interrupt should be in r12 */
-
-	r13 = #0
-	r12 = ssr
-	r12 = insert(r0,#8,#0)
-	ssr = r12
-	r14 = memw(#ssrsave)
-	r4 = add(r16,#KG_fastint_funcptrs)
-	r0.h = #hi(H2K_fastint_contexts)
-	r0.l = #lo(H2K_fastint_contexts)
-	r29 = add(r0,#FASTINT_CONTEXT_SIZE)
-	r31.h = #hi(1f)
-	r31.l = #lo(1f)
-	memd(r0+#CONTEXT_r2928) = r29:28
-	memd(r0+#CONTEXT_r3130) = r31:30
-	call H2K_interrupted_fastint_check
-1:
-	r31:30 = memd(#lrfpsave)
-	deallocframe
-	jumpr r31
-#endif
-
 // void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2);
 	.global TH_call_fastint_intpending
 TH_call_fastint_intpending:

@@ -36,7 +36,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 		r4 = add(r16,#KG_inthandlers)
 	}
 	{
-		r4 = addasl(r4,r0,#2)
+		r4 = addasl(r4,r0,#3)
 		r2 = r9
 	}
 	{
@@ -69,7 +69,7 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .falign
 		r29 += mpyi(r2,r3)
 		r1 = #0
 		r16 = add(r4,#-KG_inthandlers)
-		r4 = addasl(r4,r0,#2)
+		r4 = addasl(r4,r0,#3)
 	}
 	{
 		r4 = memw(r4)
@@ -98,7 +98,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .falign
 	}
 	{
 		r18 = sgp
-		r4 = addasl(r4,r0,#2)
+		r4 = addasl(r4,r0,#3)
 	}
 	{
 		r29 += mpyi(r2,r3)

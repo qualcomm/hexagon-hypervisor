@@ -48,8 +48,8 @@ int main()
 #endif
 	a.gpugp = 0xF000000012345678ULL;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		H2K_gp->fastint_funcptrs[i] = BAD;
-		H2K_gp->inthandlers[i] = BAD;
+		H2K_gp->inthandlers[i].handler = BAD;
+		H2K_gp->inthandlers[i].param = BAD;
 	}
 	for (i = 0; i < MAX_HTHREADS; i++) {
 		H2K_fastint_contexts[i].context.r0100 = 0xdeadbeefcafebabeULL;
@@ -59,17 +59,17 @@ int main()
 	H2K_intconfig_init();
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		if (i == RESCHED_INT) {
-			if (H2K_gp->inthandlers[i] != H2K_resched)
+			if (H2K_gp->inthandlers[i].handler != H2K_resched)
 				FAIL("wrong resched handler");
 		} else if (i == VM_IPI_INT) {
-			if (H2K_gp->inthandlers[i] != H2K_vm_ipi_do)
+			if (H2K_gp->inthandlers[i].handler != H2K_vm_ipi_do)
 				FAIL("wrong ipi handler");
 		} else if (i == TIMER_INT) {
-			if (H2K_gp->inthandlers[i] != H2K_timer_int)
+			if (H2K_gp->inthandlers[i].handler != H2K_timer_int)
 				FAIL("wrong ipi handler");
-		} else if (H2K_gp->inthandlers[i] != NULL) FAIL("uninitialized handler");
+		} else if (H2K_gp->inthandlers[i].handler != NULL) FAIL("uninitialized handler");
 
-		if (H2K_gp->fastint_funcptrs[i] != NULL) FAIL("uninitialized fastint ptr");
+		if (H2K_gp->inthandlers[i].param != NULL) FAIL("uninitialized fastint ptr");
 	}
 	for (i = 0; i < MAX_HTHREADS; i++) {
 		if (H2K_fastint_contexts[i].context.r0100) FAIL("Uninitialized fastint context");
@@ -79,21 +79,21 @@ int main()
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		if (i == RESCHED_INT) continue;
 		H2K_register_fastint(i,TH_handler,&a);
-		if (H2K_gp->inthandlers[i] != H2K_fastint) FAIL("fastint handler not set");
-		if (H2K_gp->fastint_funcptrs[i] != TH_handler) FAIL("wrong handler func");
+		if (H2K_gp->inthandlers[i].handler != H2K_fastint) FAIL("fastint handler not set");
+		if (H2K_gp->inthandlers[i].param != TH_handler) FAIL("wrong handler func");
 		if (H2K_gp->fastint_gp != 0xF0000000U) FAIL("fastint gp not set");
 	}
 	/* Lets try deregistering */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		if (i == RESCHED_INT) continue;
 		H2K_register_fastint(i,NULL,&a);
-		if (H2K_gp->inthandlers[i]) FAIL("fastint handler not cleared");
-		if (H2K_gp->fastint_funcptrs[i]) FAIL("handler func not cleared");
+		if (H2K_gp->inthandlers[i].handler) FAIL("fastint handler not cleared");
+		if (H2K_gp->inthandlers[i].param) FAIL("handler func not cleared");
 	}
 	/* Lets deregister an already deregistered fastint */
 	H2K_register_fastint(0,NULL,&a);
-	if (H2K_gp->inthandlers[0]) FAIL("fastint handler did not stay cleared");
-	if (H2K_gp->fastint_funcptrs[0]) FAIL("handler func did not stay cleared");
+	if (H2K_gp->inthandlers[0].handler) FAIL("fastint handler did not stay cleared");
+	if (H2K_gp->inthandlers[0].param) FAIL("handler func did not stay cleared");
 	puts("TEST PASSED\n");
 	return 0;
 }

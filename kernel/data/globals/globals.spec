@@ -67,10 +67,6 @@
 		This array contains a pointer to a thread in a ring of ready threads at
 		each priority.  If the ring is empty, the pointer should be NULL.
 
-	.. cmember:: void *fastint_funcptrs[MAX_INTERRUPTS]
-
-		Pointers to the fast interrupt handlers
-
 	.. cmember:: H2K_thread_context *futexhash[FUTEX_HASHSIZE]
 
 		Hash table of threads waiting on futexes.

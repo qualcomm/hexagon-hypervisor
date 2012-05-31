@@ -68,11 +68,10 @@ void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_th
 {
 	if (fastint_handler == NULL) { /* deregister */
 		H2K_fastint_disable(whatint);
-		H2K_gp->inthandlers[whatint] = NULL;
-		H2K_gp->fastint_funcptrs[whatint] = NULL;
+		H2K_gp->inthandlers[whatint].raw = 0;
 	} else {
-		H2K_gp->fastint_funcptrs[whatint] = fastint_handler;
-		H2K_gp->inthandlers[whatint] = H2K_fastint;
+		H2K_gp->inthandlers[whatint].param = fastint_handler;
+		H2K_gp->inthandlers[whatint].handler = H2K_fastint;
 		H2K_fastint_enable(whatint);
 
 		H2K_gp->fastint_gp = (u32_t)(me->gp);
@@ -101,12 +100,11 @@ void H2K_intconfig_init()
 	int i;
 	H2K_thread_context *tmp;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		H2K_gp->inthandlers[i] = NULL;
-		H2K_gp->fastint_funcptrs[i] = NULL;
+		H2K_gp->inthandlers[i].raw = 0;
 	}
-	H2K_gp->inthandlers[RESCHED_INT] = H2K_resched;
-	H2K_gp->inthandlers[VM_IPI_INT] = H2K_vm_ipi_do;
-	H2K_gp->inthandlers[TIMER_INT] = H2K_timer_int;
+	H2K_gp->inthandlers[RESCHED_INT].handler = H2K_resched;
+	H2K_gp->inthandlers[VM_IPI_INT].handler = H2K_vm_ipi_do;
+	H2K_gp->inthandlers[TIMER_INT].handler = H2K_timer_int;
 	for (i = 0; i < MAX_HTHREADS; i++) {
 		tmp = &H2K_fastint_contexts[i].context;
 		H2K_thread_context_clear(tmp);

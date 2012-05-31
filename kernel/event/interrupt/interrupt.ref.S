@@ -63,7 +63,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 #endif
 
 	r4 = add(r16,#KG_inthandlers)
-	r4 = addasl(r4,r0,#2)
+	r4 = addasl(r4,r0,#3)
 	r4 = memw(r4)
 	p0 = cmp.eq(r4,#0)
 
@@ -115,7 +115,7 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	r16.h = #hi(H2K_kg)
 	r16.l = #lo(H2K_kg)
 	r4 = add(r16,#KG_inthandlers)
-	r4 = addasl(r4,r0,#2)
+	r4 = addasl(r4,r0,#3)
 	r4 = memw(r4)
 	p0 = cmp.eq(r4,#0)
 	/* Registers set up, call specified handler */
@@ -169,7 +169,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	r1 = sgp	// thread context
 	r18 = r1
 	r4 = add(r16,#KG_inthandlers)
-	r4 = addasl(r4,r0,#2)
+	r4 = addasl(r4,r0,#3)
 	r4 = memw(r4)
 	p0 = cmp.eq(r4,#0)
 	/* Registers set up, call specified handler */

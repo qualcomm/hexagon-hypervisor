@@ -147,9 +147,9 @@ void TH_setup_inthandlers(u32_t interrupt)
 {
 	u32_t i;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		H2K_gp->inthandlers[i] = TH_bad_interrupt;
+		H2K_gp->inthandlers[i].handler = TH_bad_interrupt;
 	}
-	H2K_gp->inthandlers[interrupt] = TH_good_interrupt;
+	H2K_gp->inthandlers[interrupt].handler = TH_good_interrupt;
 }
 
 /*

@@ -43,8 +43,9 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	ssr = r11
 	gp = r6
 
-	r4 = add(r16,#KG_fastint_funcptrs)
-	r4 = addasl(r4,r0,#2)
+	r4 = add(r16,#KG_inthandlers)
+	r4 = addasl(r4,r0,#3)
+	r4 = add(r4, #4)
 	r4 = memw(r4)
 	callr r4
 
@@ -79,53 +80,4 @@ H2K_fastint_return:
 	r31:30 = memd(r24+#CONTEXT_totalcycles)
 	jumpr r31
 
-//1:
-//	r16.h = #hi(H2K_kg)
-//	r16.l = #lo(H2K_kg)
-//	r4 = add(r16,#KG_fastint_funcptrs)
-//	r0 = #0
-//	jump 2b
 FUNC_END H2K_fastint
-
-#if 0
-FUNC_START H2K_interrupted_fastint_check .text.core.fastint .p2align 2
-	// OK, we checked to see if there was a pending 
-	// interrupt, and there sure was!
-	// sgp and r0 have been swapped
-	// so r0 has our fastint context ptr
-	// Note that much of the fastint context has been clobbered
-	// r24-27, p1-3, and most lower regs are unchanged.
-	// r28-31,r20-23 are saved, but clobbered
-	// What do we need to do?
-	// restore r29-31 
-	// set sgp back to r0
-	// fastint_funcptrs in r4
-	// Get SSR for new fast interrupt number --> r0
-	// Replace SSR w/ precomputed SSR in r14
-	// replace IMASK w/ correct IMASK in r13
-	// sgp in r24
-	// compute new r30 == CIAD mask
-	// Last call returned to H2K_fastint_return, so r31 OK as-is
-	sgp = r0
-	r1 = ssr
-	imask = r13
-	{
-		r29:28 = memd(r0+#CONTEXT_r2928)
-		r31:30 = memd(r0+#CONTEXT_r3130)
-		r0 = and(r1,#0x1f)
-	}
-	{
-		r4 = addasl(r4,r0,#2)
-		r1 = sub(#31,r0)
-		r30 = #0
-	}
-	{
-		r4 = memw(r4)
-		r30 = setbit(r30,r1)
-	}
-	ssr = r14
-	{
-		jumpr r4
-	}
-FUNC_END H2K_interrupted_fastint_check
-#endif

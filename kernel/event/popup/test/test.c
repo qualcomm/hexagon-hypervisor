@@ -86,8 +86,7 @@ void TH_clear_popups()
 {
 	int i;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		H2K_gp->inthandlers[i] = NULL;
-		H2K_gp->fastint_funcptrs[i] = NULL;
+		H2K_gp->inthandlers[i].raw = 0;
 	}
 }
 
@@ -97,8 +96,8 @@ void TH_clear_popups()
 void TH_set_popup(int i, H2K_thread_context *thread)
 {
 	if (i >= MAX_INTERRUPTS) FAIL("Harness called invalid interrupt");
-	H2K_gp->inthandlers[i] = H2K_popup_int;
-	H2K_gp->fastint_funcptrs[i] = thread;
+	H2K_gp->inthandlers[i].handler = H2K_popup_int;
+	H2K_gp->inthandlers[i].param = thread;
 }
 
 /*
@@ -119,8 +118,8 @@ int TH_call_popup_wait(int i, H2K_thread_context *current)
  */
 void TH_check_waiting(int i, H2K_thread_context *thread)
 {
-	if (H2K_gp->inthandlers[i] != H2K_popup_int) FAIL("Wrong handler");
-	if (H2K_gp->fastint_funcptrs[i] != thread) FAIL("Wrong thread");
+	if (H2K_gp->inthandlers[i].handler != H2K_popup_int) FAIL("Wrong handler");
+	if (H2K_gp->inthandlers[i].param != thread) FAIL("Wrong thread");
 	if (thread->status != H2K_STATUS_INTBLOCKED) FAIL("Wrong status");
 	if (H2K_gp->runlist[thread->hthread] == thread) FAIL("Thread still scheduled");
 }
@@ -131,11 +130,11 @@ void TH_check_waiting(int i, H2K_thread_context *thread)
 void TH_check_running(int i, H2K_thread_context *thread)
 {
 #if 0
-	printf("Checking i=%d thread=%p inthandlers[i]=%p fastint_funcptrs[i]=%p\n",
-		i,thread,H2K_gp->inthandlers[i],H2K_gp->fastint_funcptrs[i]);
+	printf("Checking i=%d thread=%p inthandlers[i].handler=%p inthandlers[i].param=%p\n",
+		i,thread,H2K_gp->inthandlers[i].handler,H2K_gp->inthandlers[i].param);
 #endif
-	if (H2K_gp->inthandlers[i] != NULL) FAIL("Handler set");
-	if (H2K_gp->fastint_funcptrs[i] == thread) FAIL("Handler thread set");
+	if (H2K_gp->inthandlers[i].handler != NULL) FAIL("Handler set");
+	if (H2K_gp->inthandlers[i].param == thread) FAIL("Handler thread set");
 	if (thread->status != H2K_STATUS_RUNNING) FAIL("Wrong status");
 	if (H2K_gp->runlist[thread->hthread] != thread) FAIL("Thread not scheduled");
 }

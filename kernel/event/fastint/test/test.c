@@ -94,18 +94,18 @@ void TH_setup_fastinthandlers(u32_t interrupt)
 {
 	u32_t i;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		H2K_gp->fastint_funcptrs[i] = TH_bad_interrupt;
+		H2K_gp->inthandlers[i].param = TH_bad_interrupt;
 	}
-	H2K_gp->fastint_funcptrs[interrupt] = TH_good_interrupt;
+	H2K_gp->inthandlers[interrupt].param = TH_good_interrupt;
 }
 
 void TH_setup_fastinthandlers_ack(u32_t interrupt)
 {
 	u32_t i;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		H2K_gp->fastint_funcptrs[i] = TH_bad_interrupt;
+		H2K_gp->inthandlers[i].param = TH_bad_interrupt;
 	}
-	H2K_gp->fastint_funcptrs[interrupt] = TH_good_interrupt_ackl2;
+	H2K_gp->inthandlers[interrupt].param = TH_good_interrupt_ackl2;
 }
 
 void TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread)

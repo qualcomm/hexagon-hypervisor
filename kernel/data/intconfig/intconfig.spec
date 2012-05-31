@@ -48,7 +48,7 @@ When a valid function pointer is passed, the fastint_handler is placed in the
 funcptrs array, and H2K_fastint is placed in the inthadlers array.
 
 When a NULL function pointer is passed, we deregister the associated interrupt.
-We set the entries in the fastint_funcptr and inthandlers arrays to NULL.  
+We set the entries in the inthandlers array to NULL.  
 
 
 
@@ -66,7 +66,7 @@ Samples
 
 * Input: fastint_handler
 * Input: whatint
-* Output: H2K_fastint_funcptrs[whatint]
-* Output: H2K_inthandlers[whatint]
+* Output: H2K_inthandlers[whatint].param
+* Output: H2K_inthandlers[whatint].handler
 * Output: IAD bit for interrupt whatint cleared
 

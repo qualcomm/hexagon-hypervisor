@@ -37,7 +37,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	}
 	{
 		r1:0 = combine(r7,r4)
-		r3 = memw(r13+r4<<#2)
+		r3 = memw(r13+r4<<#3)
 		r2 = r9
 		call .Lint_jump_stub
 	}
@@ -86,7 +86,7 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	}
 	/* Registers set up, call specified handler */
 	{
-		r3 = memw(r4+r0<<#2)  // compute interrupt handler
+		r3 = memw(r4+r0<<#3)  // compute interrupt handler
 		r5 = mux(p0,##0x80000000,#0)
 	}
 	{
@@ -127,7 +127,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	}
 	/* Registers set up, call specified handler */
 	{
-		r3 = memw(r4+r0<<#2)  // compute interrupt handler
+		r3 = memw(r4+r0<<#3)  // compute interrupt handler
 		r5 = mux(p0,##0x80000000,#0)
 	}
 	{
@@ -181,7 +181,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	}
 	/* Registers set up, call specified handler */
 	{
-		r3 = memw(r4+r0<<#2)  		// compute interrupt handler
+		r3 = memw(r4+r0<<#3)  		// compute interrupt handler
 		r5 = mux(p0,##0x80000000,#0)	// Value to CIAD if L2 interrupt
 		r2 = htid
 	}

@@ -68,7 +68,6 @@ PRINT_KG_OFFSET(runlist);
 PRINT_KG_OFFSET(runlist_prios);
 PRINT_KG_OFFSET(ready);
 PRINT_KG_OFFSET(futexhash);
-PRINT_KG_OFFSET(fastint_funcptrs);
 PRINT_KG_OFFSET(inthandlers);
 PRINT_KG_OFFSET(trace_info);
 PRINT_KG_OFFSET(stacks_traptab);

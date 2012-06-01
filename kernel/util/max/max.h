@@ -74,7 +74,7 @@
 #endif
 #endif
 
-#define RESCHED_INT 3
+#define RESCHED_INT 1
 #define VM_IPI_INT 0
 #if ARCHV <= 4
 #define TIMER_INT 50

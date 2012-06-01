@@ -158,7 +158,7 @@ int main()
 	if (vmblock->percpu_mask !=  (bitmask_t **)((char *)(vmblock->intinfo) + 3*8)) FAIL ("Bad percpu_mask base");
 
 	for (i = 0; i < 33; i++) {
-		DPRINTF("i %d  ptr %08x  expect %08x\n", i, vmblock->percpu_mask[i], (u32_t)((char *)(vmblock->percpu_mask) + i*12));
+		DPRINTF("i %d  ptr %08x  expect %08x\n", i, (u32_t)vmblock->percpu_mask[i], (u32_t)((char *)(vmblock->percpu_mask) + i*12));
 		if (vmblock->percpu_mask[i] !=  (bitmask_t *)((char *)(vmblock->percpu_mask) + 33*4 + i*12)) FAIL("Bad percpu_mask pointer");
 	}
 

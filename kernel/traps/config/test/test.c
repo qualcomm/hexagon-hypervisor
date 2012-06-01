@@ -153,20 +153,19 @@ int main()
 	if (vmblock->num_cpus != 0) FAIL("Bad num_cpus");
 	if (vmblock->num_ints != 65) FAIL("Bad num_ints");
 
-#if 0
-	DPRINTF("pending %08x\n", (u32_t)vmblock->pending);
-	if (vmblock->pending != (bitmask_t *)((char *)vmblock + sizeof(H2K_vmblock_t)+288*33+33*4+)) FAIL("Bad pending base");
-	if (vmblock->enable !=  (bitmask_t *)((char *)vmblock + sizeof(H2K_vmblock_t)+288*33+12)) FAIL("Bad enable base");
-	if (vmblock->percpu_mask !=  (bitmask_t **)((char *)vmblock + sizeof(H2K_vmblock_t)+288*33+24)) FAIL ("Bad percpu_mask base");
+	if (vmblock->contexts != (H2K_thread_context *)((char *)vmblock + sizeof(H2K_vmblock_t))) FAIL("Bad cpu_contexts base");
+	if (vmblock->intinfo != (H2K_vm_int_opinfo_t *)((char *)(vmblock->contexts) + 33*288)) FAIL("Bad intinfo base");
+	if (vmblock->percpu_mask !=  (bitmask_t **)((char *)(vmblock->intinfo) + 3*8)) FAIL ("Bad percpu_mask base");
 
 	for (i = 0; i < 33; i++) {
-		DPRINTF("i %d  ptr %08x  expect %08x\n", i, vmblock->percpu_mask[i], (u32_t)((char *)vmblock + 196 + i * 12));
-		if (vmblock->percpu_mask[i] !=  (bitmask_t *)((char *)vmblock + 196 + i * 12)) FAIL("Bad percpu_mask pointer");
+		DPRINTF("i %d  ptr %08x  expect %08x\n", i, vmblock->percpu_mask[i], (u32_t)((char *)(vmblock->percpu_mask) + i*12));
+		if (vmblock->percpu_mask[i] !=  (bitmask_t *)((char *)(vmblock->percpu_mask) + 33*4 + i*12)) FAIL("Bad percpu_mask pointer");
 	}
 
-	if (vmblock->int_v2p != (physint_t *)((char *)vmblock + 592)) FAIL("Bad int_v2p base");
-#endif
-	if (vmblock->contexts != (H2K_thread_context *)((char *)vmblock + sizeof(H2K_vmblock_t))) FAIL("Bad cpu_contexts base");
+	if (vmblock->pending != (bitmask_t *)((char *)(vmblock->percpu_mask) + 33*4 + 33*12)) FAIL("Bad pending base");
+	if (vmblock->enable !=  (bitmask_t *)((char *)(vmblock->pending) + 12)) FAIL("Bad enable base");
+
+	if (vmblock->int_v2p != (physint_t *)((char *)(vmblock->enable) + 12)) FAIL("Bad int_v2p base");
 	
 	DPRINTF("MAP_PHYS_INTR\n\n");
 	/* MAP_PHYS_INTR bad vint*/

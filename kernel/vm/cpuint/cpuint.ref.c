@@ -77,7 +77,7 @@ s32_t  H2K_vm_cpuint_enable(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	if ((me->cpuint_enabled & bitmask) != 0) return 0;
 	/* Else, set bit atomically */
 	H2K_atomic_setbit(&me->cpuint_enabled,bitidx);
-	if (vmblock->int_v2p[intno]) { // mapped, re-enable phys
+	if (vmblock->int_v2p != NULL && vmblock->int_v2p[intno]) { // mapped, re-enable phys
 		H2K_intcontrol_enable(vmblock->int_v2p[intno]);
 	}
 	if ((me->cpuint_pending & bitmask) != 0) {

@@ -14,6 +14,14 @@
 #include <vm.h>
 #include <timeinfo.h>
 
+typedef	union {
+	u64_t raw;
+	struct {
+		void *handler;
+		void *param;
+	};
+} H2K_inthandler_t;
+
 typedef struct {
 	u64_t ready_valids[MAX_PRIOS/64] __attribute__((aligned(MAX_PRIOS/8)));
 	H2K_timeinfo_t time;
@@ -59,13 +67,7 @@ typedef struct {
 	u32_t on_simulator;
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
-	union {
-		u64_t raw;
-		struct {
-			void *handler;
-			void *param;
-		};
-	} inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
+	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");

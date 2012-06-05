@@ -13,6 +13,9 @@
 #include <globals.h>
 #include <vmipi.h>
 #include <timer.h>
+#include <idtype.h>
+#include <intcontrol.h>
+#include <passthru.h>
 
 H2K_fastint_context H2K_fastint_contexts[MAX_HTHREADS];
 
@@ -66,15 +69,40 @@ static void H2K_fastint_enable(u32_t whatint)
 
 void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
 {
+	H2K_inthandler_t tmp;
+
 	if (fastint_handler == NULL) { /* deregister */
 		H2K_fastint_disable(whatint);
 		H2K_gp->inthandlers[whatint].raw = 0;
 	} else {
-		H2K_gp->inthandlers[whatint].param = fastint_handler;
-		H2K_gp->inthandlers[whatint].handler = H2K_fastint;
+		/* write atomically */
+		tmp.param = fastint_handler;
+		tmp.handler = H2K_fastint;
+		H2K_gp->inthandlers[whatint].raw = tmp.raw;
 		H2K_fastint_enable(whatint);
 
 		H2K_gp->fastint_gp = (u32_t)(me->gp);
+	}
+}
+
+void H2K_register_passthru(u32_t phys_int, H2K_id_t id, u32_t virt_int) {
+
+	H2K_inthandler_t tmp;
+
+	if (id.vmidx == 0) { /* deregister */
+		H2K_intcontrol_disable(phys_int);
+		H2K_gp->inthandlers[phys_int].raw = 0;
+	} else {
+		/* write atomically */
+		if (virt_int >= 0x1 << H2K_ID_RSVD_BITS) { // too big
+			id.reserved = 0; // look in vmblock; it will have been set up there
+		} else {
+			id.reserved = virt_int;
+		}
+		tmp.param = (void *)id.raw;
+		tmp.handler = H2K_passthru;
+		H2K_gp->inthandlers[phys_int].raw = tmp.raw;
+		H2K_intcontrol_enable(phys_int);
 	}
 }
 

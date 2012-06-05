@@ -51,8 +51,9 @@ This function globally enables the interrupt intno.
 Functionality
 ~~~~~~~~~~~~~
 
-Set the enable mask for intno.  
-If the interrupt is pending, try to deliver.
+Set the enable mask for intno.  If this virtual interrupt is mapped to a
+physical interrupt in the vmblock, re-enable the physical interrupt via
+:cfunc:`H2K_intcontrol_enable()`.  If the interrupt is pending, try to deliver.
 
 
 H2K_vm_cpuint_disable

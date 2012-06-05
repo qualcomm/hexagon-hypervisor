@@ -12,6 +12,9 @@
 /** @addtogroup h2 
 @{ */
 
+/* FIXME: These duplicate kernel/config/config.h.  Should come from a
+	 shared header file */
+
 /**
 Operations that can be done during vmblock initialization
 */
@@ -23,6 +26,10 @@ typedef enum {
 	MAP_PHYS_INTR,		/**< Set a Physical to Guest Interrupt Map */
 	NUM_OPS			/**< Used to determine range of valid operations, not a valid op */
 } vmblock_init_op_t;
+
+#define H2_MAP_PHYS_INTR_CPU_BITS 16
+#define H2_CONFIG_PHYSINT_CPUID(phys, cpu) \
+	(((phys) << H2_MAP_PHYS_INTR_CPU_BITS) | ((cpu) & ((0x1 << H2_MAP_PHYS_INTR_CPU_BITS) - 1)))
 
 unsigned int h2_config_setfatal(void *handler);
 

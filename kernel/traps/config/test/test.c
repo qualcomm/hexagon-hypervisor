@@ -177,8 +177,8 @@ int main()
 	if (ret != 0) FAIL("Missed pint # too big");
 
 	/* MAP_PHYS_INTR */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, MAP_PHYS_INTR, 32, 13, NULL);
-	if (ret == 0) FAIL("Unexpected error 7");
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, MAP_PHYS_INTR, 32, (13 << 16), NULL);
+	if (ret == 0) FAIL("Unexpected error 6");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
 
 	if (vmblock->int_v2p[32] != 13) FAIL("Bad int_v2p");
@@ -187,7 +187,7 @@ int main()
 	DPRINTF("0 interrupts\n\n");
 	TH_expected_intinfo_ints = 0;
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock, SET_CPUS_INTS, 33, 0, NULL);
-	if (ret == 0) FAIL("Unexpected error 6");
+	if (ret == 0) FAIL("Unexpected error 7");
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
 
 	if (vmblock->max_cpus != 33) FAIL("Bad max_cpus 0");

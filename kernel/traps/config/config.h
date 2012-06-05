@@ -72,6 +72,10 @@ typedef enum {
 	NUM_OPS
 } vmblock_init_op_t;
 
+#define MAP_PHYS_INTR_CPU_BITS 16
+#define CONFIG_PHYSINT_CPUID(phys, cpu) \
+	(((phys) << MAP_PHYS_INTR_CPU_BITS) | ((cpu) & ((0x1 << MAP_PHYS_INTR_CPU_BITS) - 1))
+
 u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t val4, H2K_thread_context *me) IN_SECTION(".text.config.config");
 u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) IN_SECTION(".text.config.config");
 u32_t H2K_trap_config_vmblock_size(u32_t unused, void *unused2, u32_t num_cpus, u32_t num_ints, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.config");

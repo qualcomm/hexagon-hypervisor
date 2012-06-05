@@ -13,7 +13,7 @@
 #include <h2.h>
 #include <h2_vm.h>
 #include <h2_config.h>
-#include <h2_fastint.h>
+//#include <h2_fastint.h>
 #include <h2_vmtraps.h>
 
 #include <stdio.h>
@@ -75,34 +75,34 @@ void fatal () {
 	exit (1);
 }
 
-int fastint(int intno) {
+/* int fastint(int intno) { */
 
-	/* remap timer interrupt */
-	//	if (intno == HW_TIMER_INT) intno = LINUX_TIMER_INT;
+/* 	/\* remap timer interrupt *\/ */
+/* 	//	if (intno == HW_TIMER_INT) intno = LINUX_TIMER_INT; */
 
-	H2K_thread_context *fic;
+/* 	H2K_thread_context *fic; */
 
-#if __QDSP6_ARCH__ >= 4
-	__asm__ __volatile__ 
-		(
-		 " %0 = sgp0\n"
-		 : "=r" (fic)
-		 );
-#else
-	__asm__ __volatile__ 
-		(
-		 " %0 = sgp\n"
-		 : "=r" (fic)
-		 );
-#endif
+/* #if __QDSP6_ARCH__ >= 4 */
+/* 	__asm__ __volatile__  */
+/* 		( */
+/* 		 " %0 = sgp0\n" */
+/* 		 : "=r" (fic) */
+/* 		 ); */
+/* #else */
+/* 	__asm__ __volatile__  */
+/* 		( */
+/* 		 " %0 = sgp\n" */
+/* 		 : "=r" (fic) */
+/* 		 ); */
+/* #endif */
 
-	fic->vmblock = linux_vmb;
-	fic->id.vmidx = 2;
-	fic->id.cpuidx = 0;
-	h2_vmtrap_intop(H2K_INTOP_POST, intno, 0);
+/* 	fic->vmblock = linux_vmb; */
+/* 	fic->id.vmidx = 2; */
+/* 	fic->id.cpuidx = 0; */
+/* 	h2_vmtrap_intop(H2K_INTOP_POST, intno, 0); */
 
-	return 1; // re-enable
-}
+/* 	return 1; // re-enable */
+/* } */
 
 void *vm_setup(char num_cpus, short num_ints, char vmblock_space[], H2K_linear_fmt_t pmap[], unsigned long trapmask) {
 
@@ -133,28 +133,23 @@ void *vm_setup(char num_cpus, short num_ints, char vmblock_space[], H2K_linear_f
 	return vmb;
 }
 
-void setup_ints(void *vmb) {
+void setup_ints(void *vmb, char num_cpus) {
 
 	int i, j;
 
 	for (i = 0; i < HW_INTS; i++) {
-		/* if (i == LINUX_TIMER_INT) { */
-		/* 	if (h2_config_vmblock_init(vmb, MAP_PHYS_INTR, LINUX_TIMER_INT, HW_TIMER_INT) != vmb) { */
-		/* 		FAIL("MAP_PHYS_INTR"); */
-		/* 	} */
-		/* } else { */
-		/* if (i != VM_IPI_INT && i != HW_TIMER_INT */
-		/* 		&& h2_config_vmblock_init(vmb, MAP_PHYS_INTR, i, i) != vmb) { */
-		/* 	FAIL("MAP_PHYS_INTR"); */
-		/* } */
-		/* } */
-
-		if (i != RESCHED_INT && i != VM_IPI_INT && i != HW_TIMER_INT) {
-			/* if (h2_config_vmblock_init(vmb, MAP_PHYS_INTR, i, i) != vmb) { */
-			/* 	FAIL("MAP_PHYS_INTR"); */
-			/* } */
-
-			h2_register_fastint(i, fastint);
+		if (i != RESCHED_INT
+#ifdef H2K_L2_CONTROL
+				&& i != L2_CORE_INTERRUPT
+#endif
+				&& i != VM_IPI_INT
+				&& i != TIMER_INT) {
+			/* Send per-cpu HW interrupts to the first configured cpu, which is
+				 num_cpus - 1, in case Linux doesn't boot all its configured cpus */
+			if (h2_config_vmblock_init(vmb, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vmb) {
+				FAIL("MAP_PHYS_INTR");
+			}
+			//h2_register_fastint(i, fastint);
 		}
 	}
 
@@ -194,7 +189,7 @@ int main(int argc, char *argv[]) {
 	PRINTF("linux: start boot\n");
 
 	vmb = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_vmblock_space, linux_pmap, 0x1);
-	setup_ints(vmb);
+	setup_ints(vmb, LINUX_NUM_VCPU);
 	linux_vmb = vmb;
 	PRINTF("linux: vm set up\n");
 

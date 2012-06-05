@@ -13,6 +13,7 @@
 extern H2K_fastint_context H2K_fastint_contexts[] IN_SECTION(".data.core.interrupt");
 
 void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me) IN_SECTION(".text.misc.fastint");
+void H2K_register_passthru(u32_t phys_int, H2K_id_t id, u32_t virt_int);
 void H2K_intconfig_init() IN_SECTION(".text.init.int");
 
 #endif

@@ -11,6 +11,7 @@
 #include <hw.h>
 #include <vm.h>
 #include <max.h>
+#include <intconfig.h>
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -58,6 +59,9 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 	H2K_vmblock_t *vmblock;
 	bitmask_t **masks;
 	bitmask_t *mask;
+	physint_t phys_int;
+	u32_t virt_int;
+	H2K_id_t id;
 	struct _h2_thread_context *contexts;
 	u32_t *p;
 	u32_t i;
@@ -171,8 +175,24 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 
 	case MAP_PHYS_INTR:
 		if (!H2K_vmblock_valid(vmblock)) return 0;
-		if (((u16_t)arg1 >= vmblock->num_ints) || ((physint_t)arg2) > MAX_INTERRUPTS) return 0; /* bad args */
-		vmblock->int_v2p[arg1] = (physint_t)arg2;
+		phys_int = (physint_t)((arg2 & 0xffff0000) >> 16);
+		virt_int = arg1;
+		id.vmidx = vmblock->vmidx;
+		id.cpuidx = arg2 & 0x0000ffff;
+
+		if ((virt_int >= vmblock->num_ints) 
+				|| (phys_int >= MAX_INTERRUPTS)
+				|| (id.cpuidx >= vmblock->max_cpus)
+				|| (phys_int == RESCHED_INT)
+				|| (phys_int == VM_IPI_INT)
+				|| (phys_int == TIMER_INT)
+#ifdef H2K_L2_CONTROL
+				|| (phys_int == L2_CORE_INTERRUPT)
+#endif
+				|| (virt_int == 0))  return 0; /* bad args */
+		vmblock->int_v2p[virt_int] = phys_int;
+		/* FIXME: set up int mapping in vmblock for large vint# */
+		H2K_register_passthru(phys_int, id, virt_int);
 		return (u32_t)vmblock;
 	}
 	return 0; // bad op

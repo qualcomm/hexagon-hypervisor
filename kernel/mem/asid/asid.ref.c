@@ -9,6 +9,7 @@
 #include <tlbmisc.h>
 #include <q6protos.h>
 #include <max.h>
+#include <atomic.h>
 
 #define HASHVAL(X) (Q6_R_extractu_RII((((unsigned int)(X)) * 2654435761UL),ASID_BITS,32-ASID_BITS))
 #define NEXTIDX(X,Y) (((X)+(Y)) & ((1<<ASID_BITS)-1))
@@ -46,7 +47,7 @@ static inline H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
 	start = H2K_mem_asid_table+idx;
 	/* Start search @ Hash */
 	/* Search circularly for count==0 */
-	while (H2K_mem_asid_table[idx].count != 0) {
+	while (H2K_atomic_compare_swap((u32_t *)&H2K_mem_asid_table[idx].count, 0, 1) != 0) {
 		i++;
 		idx = NEXTIDX(idx,chain);
 		/* Not found? Return NULL */
@@ -66,7 +67,7 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 	}
 
 	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
-		tmp->count++;
+		H2K_atomic_add((u32_t *)&tmp->count, 1);
 		asid =  tmp-H2K_mem_asid_table;
 
 		if (flag) {
@@ -77,7 +78,6 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 		return asid;
 	} else if ((tmp = H2K_asid_table_eviction(ptb)) != NULL) {
 		tmp->ptb = ptb;
-		tmp->count = 1;
 		tmp->transtype = type;
 		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
@@ -90,7 +90,7 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 
 void H2K_asid_table_dec(u32_t asid)
 {
-	H2K_mem_asid_table[asid].count--;
+	H2K_atomic_add((u32_t *)&H2K_mem_asid_table[asid].count, -1);
 }
 
 s32_t H2K_asid_table_invalidate(u32_t ptb)

@@ -49,19 +49,13 @@ static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear(H2K_linear_fmt_t linea
 
 #endif
 
-H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
-{
+H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list) {
+
 	H2K_linear_fmt_t tmp;
-	u32_t list;
 	u32_t tvpn;
 	u32_t mask;
 	u32_t badvpn = badva >> PAGE_BITS; /* PAGEBITS or something */
-	H2K_mem_tlbfmt_t ret;
-	list = H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb;
-	if (list == 0) {
-		ret.raw = 0;
-		return ret;
-	}
+
 	tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
 	while (tmp.raw) {
 		if (tmp.chain) {
@@ -74,12 +68,31 @@ H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
 		mask = 0xffffffff << (tmp.size*2);
 		if ((tvpn & mask) == (badvpn & mask)) {
 			/* match */
-			return H2K_mem_tlbfmt_from_linear(tmp,me->ssr_asid);
+			return tmp;
 		}
 		list += sizeof(H2K_linear_fmt_t);
 		tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
 	}
+	tmp.raw = 0;
+	return tmp;
+}
+
+H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
+{
+	H2K_linear_fmt_t tmp;
+	u32_t list;
+	H2K_mem_tlbfmt_t ret;
+
+	list = H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb;
+	if (list == 0) {
+		ret.raw = 0;
+		return ret;
+	}
+
+	tmp = H2K_mem_lookup_linear(badva, list);
+	if (tmp.raw) {
+		return H2K_mem_tlbfmt_from_linear(tmp,me->ssr_asid);
+	}
 	ret.raw = 0;
 	return ret;
 }
-

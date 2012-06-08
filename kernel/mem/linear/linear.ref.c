@@ -9,6 +9,7 @@
 #include <tlbfmt.h>
 #include <max.h>
 #include <asid.h>
+#include <physread.h>
 
 #if __QDSP6_ARCH__ <= 3
 
@@ -50,22 +51,23 @@ static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear(H2K_linear_fmt_t linea
 
 H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
 {
-	H2K_linear_fmt_t *list, tmp;
+	H2K_linear_fmt_t tmp;
+	u32_t list;
 	u32_t tvpn;
 	u32_t mask;
 	u32_t badvpn = badva >> PAGE_BITS; /* PAGEBITS or something */
 	H2K_mem_tlbfmt_t ret;
-	list = (H2K_linear_fmt_t *)(H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb);
-	if (list == NULL) {
+	list = H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb;
+	if (list == 0) {
 		ret.raw = 0;
 		return ret;
 	}
-	tmp = *list;
+	tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
 	while (tmp.raw) {
 		if (tmp.chain) {
 			/* Pointer to next set of translations */
-			list = (H2K_linear_fmt_t *)tmp.low;
-			tmp = *list;
+			list = tmp.low;
+			tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
 			continue;
 		}
 		tvpn = tmp.vpn;
@@ -74,7 +76,8 @@ H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
 			/* match */
 			return H2K_mem_tlbfmt_from_linear(tmp,me->ssr_asid);
 		}
-		tmp = *(++list);
+		list += sizeof(H2K_linear_fmt_t);
+		tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
 	}
 	ret.raw = 0;
 	return ret;

@@ -83,6 +83,8 @@ void spawn_vm(void *pc)
 	vmb = h2_config_vmblock_init(vmb,SET_PMAP_TYPE,0,0);
 	h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
 	h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	/* Stats Reset */
+	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
 	h2_vmboot(pc,(void *)0x07fffff0,0,0,vmb);
 	printf("vm booted\n");
 }

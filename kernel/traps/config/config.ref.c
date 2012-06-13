@@ -12,6 +12,7 @@
 #include <vm.h>
 #include <max.h>
 #include <intconfig.h>
+#include <asid.h>
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -102,7 +103,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		if (!arg1) {
 			/* use ptb from current thread as pmap by default */
 			vmblock->pmap = H2K_mem_asid_table[me->ssr_asid].ptb;
-			vmblock->pmap_type = H2K_mem_asid_table[me->ssr_asid].transtype;
+			vmblock->pmap_type = H2K_mem_asid_table[me->ssr_asid].fields.transtype;
 		} else {
 			vmblock->pmap = (u32_t)arg1;
 			vmblock->pmap_type = arg2;

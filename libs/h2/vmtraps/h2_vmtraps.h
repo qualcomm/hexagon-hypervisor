@@ -7,7 +7,7 @@
 #define H2_VMTRAPS_H 1
 
 /* FIXME: need separate header with enums used in kernel and libs */
-#ifndef H2K_ASID_H
+#ifndef H2K_ASID_TYPES_H
 typedef enum {
 	H2K_ASID_TRANS_TYPE_LINEAR,
 	H2K_ASID_TRANS_TYPE_TABLE,

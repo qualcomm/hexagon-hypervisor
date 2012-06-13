@@ -68,7 +68,7 @@ void make_list(const char *fmt)
 	}
 	a.ssr_asid = 0;
 	H2K_mem_asid_table[0].ptb = (u32_t)(lin);
-	H2K_mem_asid_table[0].count = 1;
+	H2K_mem_asid_table[0].fields.count = 1;
 }
 
 void check_good(const char *good)

@@ -58,7 +58,7 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		H2K_mem_tlb_insert(entry,me);
 		return;
 	}
-	if (H2K_mem_asid_table[asid].transtype == H2K_ASID_TRANS_TYPE_LINEAR) {
+	if (H2K_mem_asid_table[asid].fields.transtype == H2K_ASID_TRANS_TYPE_LINEAR) {
 		trans_fn = H2K_mem_translate_linear;
 	} else {
 		trans_fn = H2K_mem_translate_pagetable;

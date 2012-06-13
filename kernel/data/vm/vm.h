@@ -6,7 +6,7 @@
 #ifndef H2K_VM_H
 #define H2K_VM_H 1
 
-#include<asid.h>
+#include<asid_types.h>
 #include <c_std.h>
 #include <vmdefs.h>
 #include <context.h>

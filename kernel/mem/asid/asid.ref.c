@@ -26,7 +26,7 @@ static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb)
 	chain = idx|1;
 	/* Start search @ Hash */
 	/* Search circularly */
-	maxhops = H2K_mem_asid_table[idx].maxhops;
+	maxhops = H2K_mem_asid_table[idx].fields.maxhops;
 	do {
 		if (H2K_mem_asid_table[idx].ptb == ptb) return H2K_mem_asid_table+idx;
 		idx = NEXTIDX(idx,chain);
@@ -47,16 +47,23 @@ static inline H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
 	start = H2K_mem_asid_table+idx;
 	/* Start search @ Hash */
 	/* Search circularly for count==0 */
-	while (H2K_atomic_compare_swap((u32_t *)&H2K_mem_asid_table[idx].count, 0, 1) != 0) {
+	while (H2K_atomic_compare_swap_mask((u32_t *)&H2K_mem_asid_table[idx].fields,
+																			0 << H2K_ASID_ENTRY_COUNT_POS,
+																			1 << H2K_ASID_ENTRY_COUNT_POS,
+																			0xffff << H2K_ASID_ENTRY_COUNT_POS) != 0) {
 		i++;
 		idx = NEXTIDX(idx,chain);
 		/* Not found? Return NULL */
 		if (i >= MAX_ASIDS) return NULL;
 	}
-	start->maxhops = Q6_R_max_RR(start->maxhops,i);
+
+	H2K_atomic_max_mask((u32_t *)&start->fields,
+											i << H2K_ASID_ENTRY_MAXHOPS_POS,
+											0xff << H2K_ASID_ENTRY_MAXHOPS_POS);
 	return H2K_mem_asid_table+idx;
 }
 
+//s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
 s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag)
 {
 	H2K_asid_entry_t *tmp;
@@ -67,7 +74,9 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 	}
 
 	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
-		H2K_atomic_add((u32_t *)&tmp->count, 1);
+		H2K_atomic_add_mask((u32_t *)&tmp->fields,
+												1 << H2K_ASID_ENTRY_COUNT_POS,
+												0xffff << H2K_ASID_ENTRY_COUNT_POS);
 		asid =  tmp-H2K_mem_asid_table;
 
 		if (flag) {
@@ -78,7 +87,7 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 		return asid;
 	} else if ((tmp = H2K_asid_table_eviction(ptb)) != NULL) {
 		tmp->ptb = ptb;
-		tmp->transtype = type;
+		tmp->fields.transtype = type;
 		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
 		H2K_mem_stlb_invalidate_asid(asid);
@@ -90,15 +99,18 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 
 void H2K_asid_table_dec(u32_t asid)
 {
-	H2K_atomic_add((u32_t *)&H2K_mem_asid_table[asid].count, -1);
+	H2K_atomic_add_mask((u32_t *)&H2K_mem_asid_table[asid].fields,
+											(-1 << H2K_ASID_ENTRY_COUNT_POS) & (0xffff << H2K_ASID_ENTRY_COUNT_POS),
+											0xffff << H2K_ASID_ENTRY_COUNT_POS);
 }
 
+/* FIXME: Is this needed?  Not currently called; similar to tlb_invalidate_flag */
 s32_t H2K_asid_table_invalidate(u32_t ptb)
 {
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
 	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
-		if (tmp->count != 0) return -1;
+		if (tmp->fields.count != 0) return -1;
 		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
 		H2K_mem_stlb_invalidate_asid(asid);

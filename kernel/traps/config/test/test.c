@@ -120,7 +120,7 @@ int main()
 	if (ret != (u32_t)vmblock) FAIL("vmblock pointer changed");
 	DPRINTF("pmap %08x  type %d\n", vmblock->pmap, vmblock->pmap_type);
 	if (vmblock->pmap != 0xfeedf00f) FAIL("Wrong ptb");
-	if (vmblock->pmap_type != H2K_mem_asid_table[a.ssr_asid].transtype) FAIL("Wrong pmap type");
+	if (vmblock->pmap_type != H2K_mem_asid_table[a.ssr_asid].fields.transtype) FAIL("Wrong pmap type");
 
 	DPRINTF("SET_PRIO_TRAPMASK\n\n");
 	/* SET_PRIO_TRAPMASK bad prio */

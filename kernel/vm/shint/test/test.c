@@ -40,6 +40,7 @@
 #include <context.h>
 #include <string.h>
 #include <shint.h>
+#include <max.h>
 
 void FAIL(const char *str)
 {

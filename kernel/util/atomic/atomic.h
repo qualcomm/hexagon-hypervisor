@@ -51,21 +51,22 @@ static inline u32_t H2K_atomic_swap(u32_t *word, u32_t val)
 	return t;
 }
 
-static inline int H2K_atomic_compare_swap(u32_t *word, u32_t expect, u32_t val)
-{
+/* if ((old = *word) == expect) *word = val; return old */
+static inline u32_t H2K_atomic_compare_swap(u32_t *word, u32_t expect, u32_t val) {
+
 	u32_t t;
 
-	asm volatile( "// atomic compare and swap\n"
-		"1:	%0 = memw_locked(%2);\n"
-		"	{ p0 = cmp.eq(%0, %3);\n"
-		"	  if (!p0.new) jump:nt 2f; }\n"
-		"	memw_locked(%2, p0) = %4;\n"
-		"	if (!p0) jump 1b;\n"
-		"2:\n"
-		: "=&r"(t), "+m"(*word)
-		: "r" (word), "r" (expect), "r" (val)
-		: "p0"
-	);
+	asm ( "// atomic compare and swap\n"
+				"1:	%0 = memw_locked(%2)\n"
+				"	{ p0 = cmp.eq(%0, %3)\n"
+				"	  if (!p0.new) jump:nt 2f }\n"
+				"	memw_locked(%2, p0) = %4\n"
+				"	if (!p0) jump 1b\n"
+				"2:\n"
+				: "=&r"(t), "+m"(*word)
+				: "r" (word), "r" (expect), "r" (val)
+				: "p0"
+				);
 	return t;
 }
 
@@ -106,6 +107,72 @@ static inline u32_t H2K_atomic_add(u32_t *word, u32_t val) {
 			 : "p0");
 
 	return t;
+}
+
+/* *_mask functions operate on (*word & mask).  Must call with other arguments
+	 *already in proper bit position; other bits must be 0  */
+
+static inline u32_t H2K_atomic_add_mask(u32_t *word, u32_t val, u32_t mask) {
+
+	u32_t t, x;
+
+	asm ("// atomic add mask\n"
+			 "1: %0 = memw_locked(%4)\n"
+			 "   %1 = and(%0, %5)\n"
+			 " { %0 = xor(%0, %1)\n"
+			 "   %1 = add(%1, %3) }\n"
+
+			 "   %1 = and(%1, %5)\n"
+			 "   %0 = or(%0, %1)\n"
+			 "   memw_locked(%4, p0) = %0\n"
+			 "   if !p0 jump 1b\n"
+			 : "=&r"(t), "=&r"(x),"+m"(*word)
+			 : "r"(val),"r"(word), "r"(mask)
+			 : "p0");
+
+	return x;
+}
+
+static inline u32_t H2K_atomic_max_mask(u32_t *word, u32_t val, u32_t mask) {
+
+	u32_t t, x;
+
+	asm ("// atomic max mask\n"
+			 "1: %0 = memw_locked(%4)\n"
+			 "   %1 = and(%0, %5)\n"
+			 " { %0 = xor(%0, %1)\n"
+			 "   %1 = max(%1, %3) }\n"
+
+			 "   %0 = or(%0, %1)\n"
+			 "   memw_locked(%4, p0) = %0\n"
+			 "   if !p0 jump 1b\n"
+			 : "=&r"(t), "=&r"(x),"+m"(*word)
+			 : "r"(val),"r"(word), "r"(mask)
+			 : "p0");
+
+	return x;
+}
+
+static inline u32_t H2K_atomic_compare_swap_mask(u32_t *word, u32_t expect, u32_t val, u32_t mask) {
+
+	u32_t t, x;
+
+	asm ( "// atomic compare and swap halfword\n"
+				"1:	%0 = memw_locked(%3)\n"
+				"   %1 = and(%0, %6)\n"
+				"	{ p0 = cmp.eq(%1, %4)\n"
+				"   %0 = xor(%0, %1)\n"
+				"	  if (!p0.new) jump:nt 2f }\n"
+
+				"   %0 = or(%0, %5)\n"
+				"	  memw_locked(%3, p0) = %0\n"
+				"	  if (!p0) jump 1b\n"
+				"2:\n"
+				: "=&r"(t), "=&r"(x), "+m"(*word)
+				: "r"(word), "r"(expect), "r"(val), "r"(mask)
+				: "p0"
+				);
+	return x;
 }
 
 #endif

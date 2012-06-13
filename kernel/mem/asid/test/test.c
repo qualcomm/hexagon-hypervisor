@@ -32,8 +32,8 @@ void print_max_hops(u32_t howfull)
 	u32_t max = 0;
 	u32_t sumhops = 0;
 	for (i = 0; i < MAX_ASIDS; i++) {
-		max = Q6_R_maxu_RR(H2K_mem_asid_table[i].maxhops,max);
-		sumhops += H2K_mem_asid_table[i].maxhops;
+		max = Q6_R_maxu_RR(H2K_mem_asid_table[i].fields.maxhops,max);
+		sumhops += H2K_mem_asid_table[i].fields.maxhops;
 	}
 	printf("Max hops: %d avg. max hops: %f\n",max,((float)sumhops)/howfull);
 }
@@ -74,7 +74,7 @@ void check_max()
 		if (entry.ptb != ((u32_t)(&bases[i]))) {
 			FAIL("Didn't update PTB field correctly");
 		}
-		if (entry.count != 2) FAIL("Didn't update counts correctly");
+		if (entry.fields.count != 2) FAIL("Didn't update counts correctly");
 	}
 
 	H2K_asid_table_dec(bases[0]);
@@ -89,7 +89,7 @@ void check_max()
 	if (entry.ptb != ((u32_t)(&bases[0]))) {
 		FAIL("Didn't keep PTB field");
 	}
-	if (entry.count != 0) FAIL("Didn't update counts correctly / dec");
+	if (entry.fields.count != 0) FAIL("Didn't update counts correctly / dec");
 
 	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE) < 0) {
 		FAIL("couldn't alloc asid after freeing");

@@ -9,7 +9,7 @@ CC = qdsp6-gcc
 AR = qdsp6-ar
 SIM := qdsp6-sim
 
-OPTIMIZE := -Os
+OPTIMIZE := -O2
 
 ifeq ($(H2K_LINK_ADDR),)
 export H2K_LINK_ADDR = 0xff000000

@@ -44,8 +44,10 @@ int main()
 	a.gosp = 0xfabcdef0;
 	a.gelr = a.gbadva = a.gssr = 0xdeadbeef;
 	H2K_gregs_restore(&a);
+	H2K_set_elr(a.elr);
 	H2K_vm_event(0xcafebabe,0x1234,0x20,&a);
 	H2K_gregs_save(&a);
+	a.elr = H2K_get_elr();
 	if (a.gssr != 0x80001234) FAIL("GSSR not set");
 	if (a.gbadva != 0xcafebabe) FAIL("GBADVA not set");
 	if (a.gelr != 0xabcd0abc) FAIL("GELR not exception point");
@@ -61,8 +63,10 @@ int main()
 	a.gosp = 0xfabcdef0;
 	a.gelr = a.gbadva = a.gssr = 0xdeadbeef;
 	H2K_gregs_restore(&a);
+	H2K_set_elr(a.elr);
 	H2K_vm_event(0xcafebabe,0x1234,0x20,&a);
 	H2K_gregs_save(&a);
+	a.elr = H2K_get_elr();
 	if (a.gssr != 0x00001234) FAIL("GSSR not set");
 	if (a.gbadva != 0xcafebabe) FAIL("GBADVA not set");
 	if (a.gelr != 0xabcd0abc) FAIL("GELR not exception point");

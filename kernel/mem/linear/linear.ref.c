@@ -77,7 +77,7 @@ H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list) {
 	return tmp;
 }
 
-H2K_mem_tlbfmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
+H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
 {
 	H2K_linear_fmt_t tmp;
 	u32_t list;

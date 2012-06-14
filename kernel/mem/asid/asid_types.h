@@ -35,7 +35,8 @@ typedef union {
 typedef enum {
 	H2K_ASID_TRANS_TYPE_LINEAR,
 	H2K_ASID_TRANS_TYPE_TABLE,
-	H2K_ASID_TRANS_TYPE_XXX_LAST
+	H2K_ASID_TRANS_TYPE_XXX_LAST,
+	H2K_ASID_TRANS_TYPE_OFFSET
 } translation_type;
 
 typedef enum {

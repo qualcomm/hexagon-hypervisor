@@ -101,7 +101,7 @@ void setup()
 	}
 	/* OK, set up ASID table... */
 	H2K_asid_table_init();
-	a.ssr_asid = H2K_asid_table_inc(((u32_t)l1pt), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE);
+	a.ssr_asid = H2K_asid_table_inc(((u32_t)l1pt), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 }
 
 void test_all_firstpage()
@@ -121,7 +121,7 @@ void test_all_firstpage()
 #if __QDSP6_ARCH__ <= 3
 void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
 {
-	H2K_mem_tlbfmt_t tlb = H2K_mem_translate_pagetable(addr,t);
+	H2K_mem_tlbfmt_t tlb = H2K_mem_get_pagetable(addr,t);
 	if (((expectval >> 5) & 7) == 0) {
 		CHECK(tlb.raw,==,0);
 		return;
@@ -140,7 +140,7 @@ void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t
 #else
 void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
 {
-	H2K_mem_tlbfmt_t tlb = H2K_mem_translate_pagetable(addr,t);
+	H2K_mem_tlbfmt_t tlb = H2K_mem_get_pagetable(addr,t);
 	if (((expectval >> 5) & 7) == 0) {
 		CHECK(tlb.raw,==,0);
 		return;

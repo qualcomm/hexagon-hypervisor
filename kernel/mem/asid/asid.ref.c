@@ -63,14 +63,18 @@ static inline H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
 	return H2K_mem_asid_table+idx;
 }
 
-//s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
-s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag)
+s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
 {
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
 	
 	if (type >= H2K_ASID_TRANS_TYPE_XXX_LAST) { // bad type
 		return -1;
+	}
+
+	if (vmblock != NULL) { // translate ptb using vmblock pmap
+		if (H2K_vm_translate(ptb, vmblock, &ptb) == -1) // bad ptb
+			return -1;
 	}
 
 	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
@@ -105,10 +109,16 @@ void H2K_asid_table_dec(u32_t asid)
 }
 
 /* FIXME: Is this needed?  Not currently called; similar to tlb_invalidate_flag */
-s32_t H2K_asid_table_invalidate(u32_t ptb)
+s32_t H2K_asid_table_invalidate(u32_t ptb, H2K_vmblock_t *vmblock)
 {
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
+
+	if (vmblock != NULL) { // translate ptb using vmblock pmap
+		if (H2K_vm_translate(ptb, vmblock, &ptb) == -1) // bad ptb
+			return -1;
+	}
+
 	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
 		if (tmp->fields.count != 0) return -1;
 		asid = tmp-H2K_mem_asid_table;

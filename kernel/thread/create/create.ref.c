@@ -68,7 +68,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->vmstatus = 0x0;            // all clear
 	tmp->gevb = me->gevb;
 
-	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE);
+	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 
 	if (asid == -1) { 						// can't allocate asid
 		vmblock->free_threads = tmp; // return to free list

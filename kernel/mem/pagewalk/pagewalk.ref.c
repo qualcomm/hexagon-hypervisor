@@ -53,10 +53,10 @@ H2K_pte_t H2K_mem_pagewalk(u32_t badva, H2K_thread_context *me)
 {
 	u32_t baseaddr;
 	baseaddr = (H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb);
-	return H2K_mem_translate_l1(badva,baseaddr);
+	return H2K_mem_pagewalk_l1(badva,baseaddr);
 }
 
-H2K_mem_tlbfmt_t H2K_mem_translate_pagetable(u32_t badva, H2K_thread_context *me)
+H2K_mem_tlbfmt_t H2K_mem_get_pagetable(u32_t badva, H2K_thread_context *me)
 {
 	H2K_pte_t pte;
 	H2K_mem_tlbfmt_t ret;

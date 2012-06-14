@@ -117,7 +117,7 @@ int main()
 	c = &TH_vm.contexts[2];
 	d = &TH_vm.contexts[3];
 
-	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE);
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 
 	a->gp = 0x12340000;
 	b->gp = c->gp = d->gp = 0x0;
@@ -127,7 +127,7 @@ int main()
 
 	vmblock->pmap = 0x55555;
 	vmblock->pmap_type = H2K_ASID_TRANS_TYPE_LINEAR;
-	asid_pmap = H2K_asid_table_inc(vmblock->pmap,vmblock->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE);
+	asid_pmap = H2K_asid_table_inc(vmblock->pmap,vmblock->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,vmblock,a)
 		!= 0xffffffff) FAIL("Created thread w/o storage");
@@ -176,11 +176,11 @@ int main()
 	vm.pmap_type = H2K_ASID_TRANS_TYPE_TABLE;
 
 	/* so we can check if properly decremented */
-	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE);
+	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 
 	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
 	/* asid count should have gone to 2 and then back to 1 */
-	if (H2K_mem_asid_table[asid].count != 1) FAIL("Bad asid count");
+	if (H2K_mem_asid_table[asid].fields.count != 1) FAIL("Bad asid count");
 	if (ret != -1) FAIL("Exceeded max_cpus");
 
 	vm.num_cpus = 1;

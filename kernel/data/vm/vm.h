@@ -58,23 +58,36 @@ typedef struct H2K_vmblock_struct {
 	H2K_thread_context *free_threads;
 	/* Pointer to thread context storage */
 	H2K_thread_context *contexts;
+
 	/* Pending Virtual Interrupts for this VM */
 	bitmask_t *pending;
 	/* Global enable */
 	bitmask_t *enable;
-	/* For each cpu, enable masks (which cpu, enabled or masked, etc) 0==disabled */
+	/* For each cpu, enable masks (which cpu, enabled or masked, etc)
+		 0 == disabled */
 	bitmask_t **percpu_mask;
 	/* Mapping back to the HW interrupt (if applicable) */
 	physint_t *int_v2p;
-	struct H2K_vm_int_opinfo_struct *intinfo;  
+	struct H2K_vm_int_opinfo_struct *intinfo;
+
 	/* physical memory map, page table style */
-	u32_t pmap;
+	union {
+		s64_t phys_offset;
+		u32_t pmap;
+	};
+	/* When pmap_type is offset, permitted physical range is fence_lo
+		 ... fence_hi.  phys == guest + phys_offset.  fence_hi == 0 means all
+		 memory */
+	u32_t fence_lo;
+	u32_t fence_hi;
 	translation_type pmap_type;
+
 	long_bitmask_t waiting_cpus;
 	u8_t interrupt_search_start;
 } __attribute__((aligned(32))) H2K_vmblock_t;
 
-void H2K_vmblock_clear(H2K_vmblock_t *);
+void H2K_vmblock_clear(H2K_vmblock_t *vmblock) IN_SECTION(".text.data.vm");
+s32_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock, u32_t *result) IN_SECTION(".text.data.vm");
 
 #endif
 

@@ -111,7 +111,7 @@ int main()
 
 	/* SET_PMAP_TYPE */
 	H2K_asid_table_init();
-	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE);
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 	if (asid < 0) FAIL("H2K_asid_table_inc");
 	a.ssr_asid = asid;
 	DPRINTF("ASID %d  ptb %08x\n\n", a.ssr_asid, H2K_mem_asid_table[a.ssr_asid].ptb);

@@ -66,6 +66,7 @@ typedef enum {
 typedef enum {
 	SET_STORAGE,
 	SET_PMAP_TYPE,
+	SET_FENCES,
 	SET_PRIO_TRAPMASK,
 	SET_CPUS_INTS,
 	MAP_PHYS_INTR,

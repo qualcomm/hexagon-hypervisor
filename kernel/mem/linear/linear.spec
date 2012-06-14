@@ -13,10 +13,10 @@ These values must be pinned into kernel memory.  The format is::
 
 The values must terminate with a value zero.
 
-H2K_mem_translate_linear
+H2K_mem_get_linear
 ------------------------
 
-.. cfunction:: H2K_linear_fmt_t H2K_mem_translate_linear(u32_t badva, H2K_thread_context *me)
+.. cfunction:: H2K_linear_fmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
 
 	:param badva: Virtual Address to translate
 	:param me: Context of the current thread
@@ -24,7 +24,7 @@ H2K_mem_translate_linear
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_mem_translate_linear()` function searches a linear list of
+The :cfunc:`H2K_mem_get_linear()` function searches a linear list of
 translations for a match for the virtual address "badva".  If such a
 translation is found, it is converted to the native TLB format and returned.
 Otherwise, we return all zeros.

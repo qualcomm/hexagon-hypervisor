@@ -112,7 +112,7 @@ void H2K_vmtrap_newmap(H2K_thread_context *me)
 	tlb_invalidate_flag flag = me->r02;
 
 	/* type is checked in H2K_asid_table_inc */
-	if ((newasid = H2K_asid_table_inc(newptb, type, flag)) < 0) {
+	if ((newasid = H2K_asid_table_inc(newptb, type, flag, me->vmblock)) < 0) {
 		me->r00 = -1;
 	} else {
 		H2K_asid_table_dec(me->ssr_asid);

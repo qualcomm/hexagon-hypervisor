@@ -89,7 +89,7 @@ void check_good(const char *good)
 		check.ppd = badva >> 11 | 1;
 		check.vpn = (badva >> 12);
 #endif
-		tmp = H2K_mem_translate_linear(badva,&a);
+		tmp = H2K_mem_get_linear(badva,&a);
 		if (tmp.raw != check.raw) {
 			printf("%s(%c)\n",good,good[i]);
 			printf("%llx vs %llx\n",tmp.raw,check.raw);
@@ -104,7 +104,7 @@ void check_bad(const char *bad)
 	u32_t badva;
 	for (i = 0; bad[i] != '\0'; i++) {
 		badva = (0xa + bad[i] - 'a') << 28;
-		if (H2K_mem_translate_linear(badva,&a).raw != 0) {
+		if (H2K_mem_get_linear(badva,&a).raw != 0) {
 			printf("%s(%c)\n",bad,bad[i]);
 			FAIL("Bad string failed");
 		}

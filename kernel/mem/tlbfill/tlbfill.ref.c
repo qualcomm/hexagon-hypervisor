@@ -52,18 +52,18 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 {
 	H2K_mem_tlbfmt_t entry;
 	u32_t asid = me->ssr_asid;
-	H2K_mem_tlbfmt_t (*trans_fn)(u32_t badva, H2K_thread_context *me);
+	H2K_mem_tlbfmt_t (*get_fn)(u32_t badva, H2K_thread_context *me);
 	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) return;
 		H2K_mem_tlb_insert(entry,me);
 		return;
 	}
 	if (H2K_mem_asid_table[asid].fields.transtype == H2K_ASID_TRANS_TYPE_LINEAR) {
-		trans_fn = H2K_mem_translate_linear;
+		get_fn = H2K_mem_get_linear;
 	} else {
-		trans_fn = H2K_mem_translate_pagetable;
+		get_fn = H2K_mem_get_pagetable;
 	}
-	if ((entry = trans_fn(va,me)).raw != 0) {
+	if ((entry = get_fn(va,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) return;
 		H2K_mem_stlb_add(va,asid,entry,me);
 		H2K_mem_tlb_insert(entry,me);

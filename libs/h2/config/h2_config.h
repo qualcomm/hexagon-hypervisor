@@ -20,7 +20,8 @@ Operations that can be done during vmblock initialization
 */
 typedef enum {
 	SET_STORAGE, 	/**< Set the storage */
-	SET_PMAP_TYPE,		/**< Set the physical mapping type */
+	SET_PMAP_TYPE,		/**< Set the physical map (or offset) and type */
+	SET_FENCES,  /**< Set fence addresses for offset mapping */
 	SET_PRIO_TRAPMASK,	/**< Set the best priority and trap mask */
 	SET_CPUS_INTS,		/**< Set the number of CPUs and Interrupts */
 	MAP_PHYS_INTR,		/**< Set a Physical to Guest Interrupt Map */

@@ -99,15 +99,34 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 
 	case SET_PMAP_TYPE:
 		if (!H2K_vmblock_valid(vmblock)) return 0;
+
+		if (arg2 == H2K_ASID_TRANS_TYPE_OFFSET) { // arg1 is signed offset value
+			if ((s32_t)arg1 > (0xffffffff >> PAGE_BITS)
+					|| (s32_t)arg1 < -(0xffffffff >> PAGE_BITS)) { // out of range
+				return 0;
+			}
+			vmblock->pmap_type = arg2;
+			vmblock->phys_offset = (s32_t)arg1 << PAGE_BITS;
+			vmblock->fence_hi = 1; // deny all mem, in case we forget to configure fences
+			return (u32_t)vmblock;
+		}
+
 		if (arg2 >= H2K_ASID_TRANS_TYPE_XXX_LAST) return 0; // bad type
+
 		if (!arg1) {
 			/* use ptb from current thread as pmap by default */
 			vmblock->pmap = H2K_mem_asid_table[me->ssr_asid].ptb;
 			vmblock->pmap_type = H2K_mem_asid_table[me->ssr_asid].fields.transtype;
 		} else {
-			vmblock->pmap = (u32_t)arg1;
+			vmblock->pmap = arg1;
 			vmblock->pmap_type = arg2;
 		}
+		return (u32_t)vmblock;
+
+	case SET_FENCES:
+		if (!H2K_vmblock_valid(vmblock)) return 0;
+		vmblock->fence_lo = arg1;
+		vmblock->fence_hi = arg2;
 		return (u32_t)vmblock;
 
 	case SET_PRIO_TRAPMASK:

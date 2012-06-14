@@ -183,15 +183,22 @@ cov.rpt: cov.txt
 report.html:
 	@echo "<html><body><table>" > report.html;\
 	for SUBDIR in ${SUBDIRS}; do\
-	   echo "<tr><td> $$SUBDIR<td>" >> report.html;\
+	   echo "<tr><td> $$SUBDIR</td>" >> report.html;\
 	   if [ ! -s $$SUBDIR/results.txt ]; then\
-	      echo '<font style="background-color: red;">' >> report.html; \
-	      grep -A 1 FAIL $$SUBDIR/test.log >> report.html; \
-	      echo '</font>' >> report.html; \
+	      echo '<td><font style="background-color: red;">' >> report.html; \
+	      echo 'Missing results.txt, that should not be!' >> report.html; \
+	      echo '</font></td>' >> report.html; \
 	   else\
-	      cat $$SUBDIR/results.txt >> report.html;\
-	   fi;\
-		 cat $$SUBDIR/make.log >> make.log;\
+	      grep "TEST PASSED" $$SUBDIR/results.txt > /dev/null; \
+	      if [ $$? -eq 0 ]; then \
+	         echo '<td>PASSED</td>' >> report.html; \
+	      else \
+	         echo '<td><font style="background-color: red;">' >> report.html; \
+		 cat $$SUBDIR/results.txt >> report.html; \
+		 echo '</font></td>' >> report.html; \
+	      fi; \
+	   fi; \
+	   cat $$SUBDIR/make.log >> make.log;\
 	done;\
 	echo "</table></body></html>" >> report.html;
 
@@ -205,9 +212,15 @@ check-fail:
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "ERROR:" $$SUBDIR/results.txt;\
+	   grep "ERROR" $$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - ERROR detected in results.txt; \
+	      echo; \
+	      exit 1;\
+	   fi;\
+	   grep "FAIL" $$SUBDIR/results.txt;\
+	   if [ $$? -eq 0 ]; then\
+	      echo FAIL - FAIL detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
@@ -228,9 +241,15 @@ check:
 	      echo; \
 	      continue;\
 	   fi;\
-	   grep "ERROR:" $$SUBDIR/results.txt;\
+	   grep "ERROR" $$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - ERROR detected in results.txt; \
+	      echo; \
+	      continue;\
+	   fi;\
+	   grep "FAIL" $$SUBDIR/results.txt;\
+	   if [ $$? -eq 0 ]; then\
+	      echo FAIL - FAIL detected in results.txt; \
 	      echo; \
 	      continue;\
 	   fi;\
@@ -305,13 +324,16 @@ clean:
 #  Pretty much a binary yes/no if the test passed or failed.
 results.txt: test.log
 	@grep "TEST PASSED" test.log > $@; \
-	grep "ERROR:" test.log; \
-	if [ $$? -eq 0 ]; then \
-		grep "ERROR:" test.log >> $@; \
-	fi; \
+	if [ $$? -eq 0 ]; then exit 0; fi; \
+	grep -A 1 "ERROR" test.log > $@; \
+	if [ $$? -eq 0 ]; then exit 0; fi; \
+	grep -A 1 "FAIL" test.log > $@; \
+	if [ $$? -eq 0 ]; then exit 0; fi; \
 	if [ ! -s test.log ]; then \
-	  echo "FAIL" >> $@; \
+	  echo "FAIL - Test log empty" > $@; \
+	  exit 0; \
 	fi; \
+	echo "NO PASS/FAIL/ERROR in log" > $@; \
 	true;
 
 all: results.txt ${COVFILES}

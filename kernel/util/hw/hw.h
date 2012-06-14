@@ -8,6 +8,7 @@
 
 #include <max.h>
 #include <q6protos.h>
+#include <context.h>
 
 static inline void ciad(u32_t mask)
 {
@@ -225,6 +226,24 @@ static inline void H2K_mutex_unlock_tlb()
 #define H2K_TLB_ATOMIC_END
 #endif
 
+#if (ARCHV <= 3)
+static inline void H2K_gregs_save(H2K_thread_context *me) { }
+static inline void H2K_gregs_restore(H2K_thread_context *me) { }
+#else
+static inline void H2K_gregs_save(H2K_thread_context *me) { 
+	u64_t g32,g10;
+	asm volatile ( " %0 = g3:2 ; %1 = g1:0 ; " : "=r"(g32),"=r"(g10));
+	me->gbadva_gosp = g32;
+	me->gssr_gelr = g10;
+}
+static inline void H2K_gregs_restore(H2K_thread_context *me) { 
+	u64_t g32,g10;
+	g32 = me->gbadva_gosp;
+	g10 = me->gssr_gelr;
+	asm volatile ( " g3:2 = %0 ; g1:0 = %1; " : : "r"(g32),"r"(g10));
+}
+#endif
+
 #define BKL_LOCK(...) H2K_mutex_lock_k0()
 #define BKL_UNLOCK(...) H2K_mutex_unlock_k0()
 #endif
@@ -253,6 +272,15 @@ MAKE_SETGET(pmucnt0)
 MAKE_SETGET(pmucnt1)
 MAKE_SETGET(pmucnt2)
 MAKE_SETGET(pmucnt3)
+MAKE_SETGET(elr)
+MAKE_SETGET(gp)
+
+#if (ARCHV <= 3)
+static inline u32_t H2K_get_ccr() { return 0; }
+static inline void H2K_set_ccr(u32_t val) { }
+#else
+MAKE_SETGET(ccr)
+#endif
 
 #undef MAKE_SETGET
 

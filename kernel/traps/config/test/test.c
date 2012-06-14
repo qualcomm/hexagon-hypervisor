@@ -68,7 +68,7 @@ static void __attribute__((noreturn)) foo(u32_t xyzzy)
 int main()
 {
 	u32_t i,ret;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_thread_init();
 	H2K_fatal_kernel_handler = NULL;
 	/* Bad config value */

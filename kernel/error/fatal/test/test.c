@@ -50,7 +50,7 @@ void H2K_thread_stop(H2K_thread_context *me)
 
 int main() 
 {
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_fatal_init();
 	H2K_trace_init();
 	H2K_fatal_kernel_handler = TH_handler;

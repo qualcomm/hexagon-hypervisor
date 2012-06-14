@@ -147,24 +147,36 @@ static void check(struct scenario *scenario)
 	}
 }
 
+static inline u64_t do_H2K_check_sanity(u64_t input)
+{
+	__asm__ __volatile__ (GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	return H2K_check_sanity(input);
+} 
+
+static inline u64_t do_H2K_check_sanity_unlock(u64_t input)
+{
+	__asm__ __volatile__ (GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	return H2K_check_sanity_unlock(input);
+} 
+
 /* Runs through the scenarios, setting them up and knocking them down. */
 int main()
 {
 	int num_scenarios = sizeof(scenarios) / sizeof(scenarios[0]);
 	int i;
 
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_clear_gie();
 	for (i = 0; i < num_scenarios; i++) {
 		setup(&scenarios[i]);
 		BKL_LOCK();
-		call(H2K_check_sanity, rand());
+		call(do_H2K_check_sanity, rand());
 		BKL_UNLOCK();
 		check(&scenarios[i]);
 
 		setup(&scenarios[i]);
 		BKL_LOCK();
-		call(H2K_check_sanity_unlock, rand());
+		call(do_H2K_check_sanity_unlock, rand());
 		check(&scenarios[i]);
 	}
 	puts("TEST PASSED\n");

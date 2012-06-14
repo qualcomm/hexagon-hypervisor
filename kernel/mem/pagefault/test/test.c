@@ -11,6 +11,7 @@
 #include <globals.h>
 #include <pagefault.h>
 #include <setjmp.h>
+#include <hw.h>
 
 void FAIL(const char *str)
 {
@@ -35,7 +36,7 @@ H2K_kg_t H2K_kg;
 
 int main()
 {
-	__asm__ __volatile(" r16 = %0\n" : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	TH_saw_fatal = 0;
 	a.gevb = NULL;
 	if (setjmp(env) == 0) {
@@ -47,7 +48,9 @@ int main()
 	a.ssr = 1<<SSR_GUEST_BIT;
 	a.r29 = 0xcafebabe;
 	a.gevb = main;
+	H2K_gregs_restore(&a);
 	H2K_mem_pagefault(0x12345678,&a);
+	H2K_gregs_save(&a);
 	if (a.gssr != 0x00000022) FAIL("gssr not set");
 	if (a.gosp != 0xdeadbeef) FAIL("gosp clobbered");
 	if (a.gbadva != 0x12345678) FAIL("gbadva not set");

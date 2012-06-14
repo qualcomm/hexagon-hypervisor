@@ -35,6 +35,7 @@ void H2K_vmtrap_version(H2K_thread_context *me)
 void H2K_vmtrap_return(H2K_thread_context *me)
 {
 	u32_t tmp;
+	H2K_gregs_save(me);
 	if (me->gssr & H2K_GSSR_UM) {
 		/* Swap stack pointers */
 		tmp = me->r29;
@@ -43,6 +44,7 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 		me->ssr &= (~(1<<SSR_GUEST_BIT));
 	}
 	me->elr = me->gelr;
+	H2K_set_elr(me->elr);
 
 	/* if guest had interrupts enabled, enable in guest status */
 	if (me->gssr & H2K_GSSR_IE) {
@@ -55,6 +57,7 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 		me->ssr_ss = 1;
 	}
 #endif
+	H2K_gregs_restore(me);
 }
 
 /* 2 */
@@ -271,11 +274,13 @@ void H2K_vmtrap_setregs(H2K_thread_context *me)
 {
 	me->gssr_gelr = me->r0100;
 	me->gbadva_gosp = me->r0302;
+	H2K_gregs_restore(me);
 }
 
 /* 22 */
 void H2K_vmtrap_getregs(H2K_thread_context *me)
 {
+	H2K_gregs_save(me);
 	me->r0100 = me->gssr_gelr;
 	me->r0302 = me->gbadva_gosp;
 }

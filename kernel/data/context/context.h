@@ -83,6 +83,7 @@ typedef struct _h2_thread_context
 		void *continuation;		// probably can be 30 bits.  34 bits for futex_ptr plus 30 bits for continuation fits.
 	};
 	union {
+		/* XXX: FIXME: Change to ccrssr because they are paired.  Move ELR. */
 		u64_t ssrelr;
 		struct {
 			u32_t elr;
@@ -131,18 +132,13 @@ typedef struct _h2_thread_context
 		};
 	};
 	// 96
-	u64_t r2726;	// OK FOR DCZEROA
-	u64_t r2524;
-	u64_t r2322;
-	u64_t r2120;
-	// 128
 	u64_t r1918;	// OK FOR DCZEROA
 	u64_t r1716;
 	union {
-		u64_t gpugp;
+		u64_t sr_preds;
 		struct {
-			u32_t ugp;
-			u32_t gp;
+			u32_t preds;
+			u32_t sr;
 		};
 	};
 	union {
@@ -155,12 +151,12 @@ typedef struct _h2_thread_context
 	/* Context required for interrupts... everything else */
 	/* Note: SR really needed for any context switch.  */
 	/* Note: Fast Interrupt contexts don't need these (can't be interrupted) */
-	// 160
+	// 128
 	u64_t r1514;	// OK FOR DCZEROA
 	u64_t r1312;
 	u64_t r1110;
 	u64_t r0908;
-	// 192
+	// 160
 	u64_t r0706;	// OK FOR DCZEROA
 	u64_t r0504;
 	union {
@@ -171,17 +167,22 @@ typedef struct _h2_thread_context
 		};
 	};
 	u64_t lc0sa0;
-	// 224
-	u64_t lc1sa1;	// OK FOR DCZEROA
-	u64_t m1m0;
+	// 192
 	union {
-		u64_t sr_preds;
+		u64_t gpugp;
 		struct {
-			u32_t preds;
-			u32_t sr;
+			u32_t ugp;
+			u32_t gp;
 		};
 	};
+	u64_t lc1sa1;	// OK FOR DCZEROA
+	u64_t m1m0;
 	u64_t cs1cs0;	// V4 regs
+	// 224
+	u64_t r2726;	// OK for dczeroa
+	u64_t r2524;
+	u64_t r2322;
+	u64_t r2120;
 	// 256
 	union {
 		u64_t gssr_gelr;	// OK to move to cleared area?

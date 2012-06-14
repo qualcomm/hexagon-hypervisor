@@ -79,10 +79,10 @@ void TH_check_interrupt(H2K_thread_context *src, H2K_thread_context *dest)
 	CHECK_INTERRUPT_TEST(r1514);
 	CHECK_INTERRUPT_TEST(r1716);
 	CHECK_INTERRUPT_TEST(r1918);
-	CHECK_INTERRUPT_TEST(r2120);
-	CHECK_INTERRUPT_TEST(r2322);
-	CHECK_INTERRUPT_TEST(r2524);
-	CHECK_INTERRUPT_TEST(r2726);
+	//CHECK_INTERRUPT_TEST(r2120);
+	//CHECK_INTERRUPT_TEST(r2322);
+	//CHECK_INTERRUPT_TEST(r2524);
+	//CHECK_INTERRUPT_TEST(r2726);
 	CHECK_INTERRUPT_TEST(r2928);
 	CHECK_INTERRUPT_TEST(r3130);
 }
@@ -119,7 +119,9 @@ void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 		TH_check_interrupt(TH_src_context, me);
 		if (TH_pass == 0) {
 			TH_pass = 1;
+			/* EJP: ELR may not be saved.  Also write register */
 			me->ssrelr = (me->ssrelr & 0xffffffff00000000ULL)  | ((u32_t)H2K_handle_int);
+			asm volatile ( " elr = %0 " : : "r"((u32_t)H2K_handle_int) :"memory");
 			return;
 		} else {
 			longjmp(env,1);
@@ -168,6 +170,7 @@ void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 	TH_pass = 0;
 	TH_saw_continuation = 0;
 	if (setjmp(env) == 0) {
+		//printf("%d: i\n",interrupt);
 		TH_do_interrupt(src,dest,interrupt);
 	}
 	TH_restore_sgp();
@@ -184,6 +187,7 @@ void TH_try_preempt_interrupt(H2K_thread_context *dest, u32_t interrupt)
 	TH_pass = 0;
 	TH_saw_continuation = 0;
 	if (setjmp(env) == 0) {
+		//printf("%d: p\n",interrupt);
 		TH_do_preempt(dest,src,interrupt);
 	}
 	TH_restore_sgp();
@@ -236,7 +240,7 @@ int main()
 	/* Setup SGP correctly */
 	TH_save_sgp();
 	/* Set up KGP correctly for direct calls */
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_kg.l2_int_base = H2K_kg.l2_ack_base = intdev;
 	printf("MAX_INTERRUPTS=%d\n",MAX_INTERRUPTS);
 	TH_fastint_check = 0;

@@ -82,7 +82,7 @@ int main()
 	double error;
 	H2K_thread_context *me = &a;
 
-        __asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	/* Test bad trap */
 	if ((ret = H2K_timer_trap(100,0,me)) != ~0ULL) FAIL("bad return on bad trap");
@@ -222,7 +222,7 @@ int main()
 	double error;
 	H2K_thread_context *me = &a;
 
-        __asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	/* Test bad trap */
 	if ((ret = H2K_timer_trap(100,0,me)) != ~0ULL) FAIL("bad return on bad trap");

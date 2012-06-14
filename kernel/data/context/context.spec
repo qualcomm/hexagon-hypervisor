@@ -157,7 +157,7 @@ and r30, it assumes that r0 and SGP are swapped.
 
 When we return, r31 holds the value of :cfunc:`H2K_context_restore_return()`.
 Additionally, r7 holds the current context pointer, r8 holds the SSR, r9 holds
-the HTID, r16 holds the KGP, and r29 holds the correct stack pointer. R0 through
+the HTID, r28 holds the KGP, and r29 holds the correct stack pointer. R0 through
 r6 are unchanged from the caller.
 
 

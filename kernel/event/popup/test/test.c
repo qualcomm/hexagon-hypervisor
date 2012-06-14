@@ -183,7 +183,7 @@ u32_t fakeint[0x200];
 int main() 
 {
 	int i;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 #if ARCHV >= 4
 	H2K_gp->l2_int_base = fakeint;

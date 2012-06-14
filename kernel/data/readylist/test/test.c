@@ -76,7 +76,7 @@ H2K_thread_context *H2K_ready_getbest_TB()
 
 int main() 
 {
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_gp->ready_valids[0] = 0xfeca1feddeadbeefULL;
 	H2K_gp->ready_valids[1] = 0xfa7510b5ca5cadedULL;
 	H2K_gp->ready_valids[2] = 0x5a5a5a5a5a5a5a5aULL;

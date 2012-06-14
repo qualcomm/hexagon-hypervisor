@@ -16,6 +16,8 @@ FUNC_START H2K_preempt .text.core.interrupt .p2align 2
 	r1 = #0			// EX=0 UM=0.. don't change IE
 	r3 = r2
 	r2 = insert(r1,#2,#16)
+	r10 = elr
+	memw(r0+#CONTEXT_elr) = r10
 	ssr = r2
 	isync
 	nop

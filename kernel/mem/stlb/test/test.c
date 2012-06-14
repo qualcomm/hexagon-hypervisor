@@ -88,7 +88,7 @@ int main()
 	/* Debug stuff */
 	/* int count,total; */
 	H2K_mem_tlbfmt_t entry, test;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_asid_table_init();
 	H2K_mem_stlb_init();
 

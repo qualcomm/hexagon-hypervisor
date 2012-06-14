@@ -59,7 +59,7 @@ int main()
 #if ARCHV >= 4
 	int l2i;
 #endif
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 #if ARCHV >= 4
 	H2K_gp->l2_int_base = fake_intctrl;
 	H2K_gp->l2_ack_base = fake_intctrl+0x200/sizeof(u32_t);

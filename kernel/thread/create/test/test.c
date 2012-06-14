@@ -22,6 +22,16 @@
 
 void H2K_interrupt_restore();
 
+static inline s32_t gpcall_H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me) {
+	u32_t gp_sav;
+	s32_t ret;
+	gp_sav = H2K_get_gp();
+	H2K_set_gp(me->gp);
+	ret = H2K_thread_create(pc,sp,arg1,prio,vmblock,me);
+	H2K_set_gp(gp_sav);
+	return ret;
+}
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -95,7 +105,7 @@ int main()
 	u32_t asid;
 	u32_t asid_pmap;
 	H2K_vmblock_t *vmblock = &TH_vm.vm;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_runlist_init();
 	H2K_readylist_init();
 	H2K_lowprio_init();
@@ -109,7 +119,7 @@ int main()
 
 	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE);
 
-	a->gp = 0x12345;
+	a->gp = 0x12340000;
 	b->gp = c->gp = d->gp = 0x0;
 	b->status = c->status = d->status = H2K_STATUS_DEAD;
 	vmblock->trapmask = a->trapmask = 0x55ffffff;
@@ -135,7 +145,7 @@ int main()
 
 	if (TH_saw_check_sanity != 0) FAIL("Called check_sanity on failure");
 
-	if (H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,2,vmblock,a) 
+	if (gpcall_H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,2,vmblock,a) 
 		!= (b->id.raw)) FAIL("Failed to create expected thread");
 	if (TH_saw_check_sanity == 0) FAIL("Did not call check_sanity");
 	if (H2K_gp->ready[2] != b) FAIL("Thread inserted incorrectly into ready list");

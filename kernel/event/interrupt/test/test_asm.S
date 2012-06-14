@@ -111,8 +111,8 @@ TH_do_preempt:
 	r0 = #1
 	sgp = r0
 	r0 = r1
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
+	H2K_GP.h = #hi(H2K_kg)
+	H2K_GP.l = #lo(H2K_kg)
 	jump H2K_handle_int
 
 /* This is our implementation of the H2_interrupted_fastint_check

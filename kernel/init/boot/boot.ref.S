@@ -61,7 +61,7 @@ FUNC_START start .text.init.boot .p2align 12
 	SETCONST(r0,_SDA_BASE_)	// boot thread should do this...
 	gp = r0
 
-	SETCONST(r16,H2K_kg)
+	SETCONST(H2K_GP,H2K_kg)
 
 #if __QDSP6_ARCH__ == 3
 	r0.h = #0x0100
@@ -181,17 +181,17 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	SETCONST(r0,_SDA_BASE_)
 	gp = r0
 
-	SETCONST(r16,H2K_kg)
+	SETCONST(H2K_GP,H2K_kg)
 
 	SETCONST(r29,H2K_stacks)
 #if __QDSP6_ARCH__ <= 3
-	r28 = ssr
-	r28 = extractu(r28,#3,#19)
+	r0 = ssr
+	r0 = extractu(r0,#3,#19)
 #else
-	r28 = HTID
+	r0 = HTID
 #endif
 	r3 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r3,r28)
+	r29 += mpyi(r3,r0)
 	r1:0 = #0
 	k0lock
 	jump H2K_switch

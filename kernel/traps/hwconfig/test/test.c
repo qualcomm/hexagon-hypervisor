@@ -83,7 +83,7 @@ void TH_test_pf()
 int main()
 {
 	u32_t syscfg,cur_size,cur_wb,i;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	__asm__ __volatile(" imask = %0 " : : "r"(-1));
 	H2K_set_syscfg(0x7f);
 

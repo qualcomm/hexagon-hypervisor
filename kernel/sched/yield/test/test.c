@@ -48,7 +48,7 @@ void TH_sched_yield(H2K_thread_context *me)
 
 int main() 
 {
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();

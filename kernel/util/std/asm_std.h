@@ -8,7 +8,7 @@
 
 #include <asm_offsets.h>
 
-#define H2K_GP R16
+#define H2K_GP R28
 
 #define NULL 0
 

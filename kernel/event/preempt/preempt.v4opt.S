@@ -10,15 +10,21 @@
 FUNC_START H2K_preempt .text.core.interrupt .falign
 	{
 		r1:0 = combine(#0,#1)	// EX=0 UM=0
-		r2 = ssr
+		r4 = elr
 	}
 	{
 		crswap(r0,sgp)
 		if (cmp.eq(r0.new,#0)) jump:nt .Lpreempt_done
-		r3 = r2
-		r2 = insert(r1,#2,#16)
 	}
-	ssr = r2
+	r2 = ssr
+	{
+		r2 = insert(r1,#2,#16)
+		r3 = r2
+		memw(r0+#CONTEXT_elr) = r4
+	}
+	{
+		ssr = r2
+	}
 	isync
 	ssr = r3
 	// interrupt was not taken

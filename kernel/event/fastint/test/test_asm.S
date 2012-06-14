@@ -114,24 +114,15 @@ TH_call_fastint_intpending:
 
 	.global TH_fastint_call
 TH_fastint_call:
-	allocframe(#64)
-	memd(r29+#0) = r17:16
-	memd(r29+#8) = r19:18
-	memd(r29+#16) = r21:20
-	memd(r29+#24) = r23:22
-	memd(r29+#32) = r25:24
-	memd(r29+#40) = r27:26
-	memd(r29+#48) = r31:30
-	memw(#stacksave2) = r29
+	allocframe(#8)
+	r4 = sgp
+	memd(r29+#0) = r5:4
+	sgp = r1
+	memw(#stacksave) = r29
 	call H2K_fastint
-	r29 = memw(#stacksave2)
-	r17:16 = memd(r29+#0)
-	r19:18 = memd(r29+#8)
-	r21:20 = memd(r29+#16)
-	r23:22 = memd(r29+#24)
-	r25:24 = memd(r29+#32)
-	r27:26 = memd(r29+#40)
-	r31:30 = memd(r29+#48)
+	r29 = memw(#stacksave)
+	r5:4 = memd(r29+#0)
+	sgp = r4
 	deallocframe
 	jumpr r31
 

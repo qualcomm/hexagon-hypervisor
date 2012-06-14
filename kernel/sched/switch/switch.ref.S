@@ -15,12 +15,12 @@
  */
 
 FUNC_START H2K_switch .text.core.switch .p2align 5
-	r25:24 = combine(r1,r0)	// save args for call
+	r17:16 = combine(r1,r0)	// save args for call
 	// Get current pcycle count
-	r27 = PCYCLEHI
-	r26 = PCYCLELO
+	r19 = PCYCLEHI
+	r18 = PCYCLELO
 	r5 = PCYCLEHI
-	p0 = cmp.eq(r27,r5)
+	p0 = cmp.eq(r19,r5)
 	if (!p0) jump H2K_switch
 
 #if (__QDSP6_ARCH__) <= 3
@@ -31,40 +31,100 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #endif
 	r15 = PMUCFG
 	r0 = #3
-	r3:2 = r27:26
+	r3:2 = r19:18
 	r10 = r5
 	//call H2K_trace
-	r1:0 = r25:24
-	r28 = #KG_oncpu_start
-	r28 = addasl(r28,r5,#3)
-	r28 = add(r16,r28)
+	r1:0 = r17:16
+	r8 = #KG_oncpu_start
+	r8 = addasl(r8,r5,#3)
+	r8 = add(H2K_GP,r8)
 
-	r23 = #KG_oncpu_wait
-	r23 = addasl(r23,r5,#3)
-	r23 = add(r16,r23)
+	r9 = #KG_oncpu_wait
+	r9 = addasl(r9,r5,#3)
+	r9 = add(H2K_GP,r9)
 
-	r22 = #KG_waitcycles
-	r22 = addasl(r22,r5,#3)
-	r22 = add(r16,r22)
+	r11 = #KG_waitcycles
+	r11 = addasl(r11,r5,#3)
+	r11 = add(H2K_GP,r11)
 
 	p1 = cmp.eq(r0,#0)
 	if (p1) jump .Lfrom_sleep
 
-	r5:4 = memd(r28)
-	r7:6 = sub(r27:26,r5:4)
+	r5:4 = memd(r8)
+	r7:6 = sub(r19:18,r5:4)
 	r5:4 = memd(r0+#CONTEXT_totalcycles)
 	r5:4 = add(r7:6,r5:4)
 	memd(r0+#CONTEXT_totalcycles) = r5:4
 
+	memd(r0+#CONTEXT_r2120) = r21:20
+	memd(r0+#CONTEXT_r2322) = r23:22
+	memd(r0+#CONTEXT_r2524) = r25:24
+	memd(r0+#CONTEXT_r2726) = r27:26
+
+	r14 = elr
+	r25 = m1
+	r24 = m0
+	r23 = gp
+	r22 = ugp
+	r21 = lc1
+	r20 = sa1
+
+	memw(r0+#CONTEXT_elr) = r14
+	memd(r0+#CONTEXT_gpugp) = r23:22
+	memd(r0+#CONTEXT_lc1sa1) = r21:20
+	memd(r0+#CONTEXT_m1m0) = r25:24
+
+#if __QDSP6_ARCH__ >= 4
+	r27:26 = g3:2
+	r25:24 = g1:0
+	r21 = cs1
+	r20 = cs0
+	r14 = ccr
+	memd(r0+#CONTEXT_gbadva_gosp) = r27:26
+	memd(r0+#CONTEXT_gssr_gelr) = r25:24
+	memd(r0+#CONTEXT_cs1cs0) = r21:20
+	memw(r0+#CONTEXT_ccr) = r14
+#endif
+
 .Lfrom_sleep:
 	if (r1 == #0) jump:nt .Lto_sleep
-	memd(r28) = r27:26
+	memd(r8) = r19:18
 
-	r5:4 = memd(r23)
-	r7:6 = sub(r27:26,r5:4)
-	r5:4 = memd(r22)
+#if __QDSP6_ARCH__ >= 4
+	r14 = memw(r1+#CONTEXT_ccr)
+	r21:20 = memd(r1+#CONTEXT_cs1cs0)
+	r25:24 = memd(r1+#CONTEXT_gssr_gelr)
+	r27:26 = memd(r1+#CONTEXT_gbadva_gosp)
+	ccr = r14
+	cs0 = r20
+	cs1 = r21
+	g1:0 = r25:24
+	g3:2 = r27:26
+#endif
+
+	r14 = memw(r1+#CONTEXT_elr)
+	r23:22 = memd(r1+#CONTEXT_gpugp)
+	r21:20 = memd(r1+#CONTEXT_lc1sa1)
+	r25:24 = memd(r1+#CONTEXT_m1m0)
+
+	elr = r14
+	m1 = r25
+	m0 = r24
+	gp = r23
+	ugp = r22
+	lc1 = r21
+	sa1 = r20
+
+	r21:20 = memd(r1+#CONTEXT_r2120)
+	r23:22 = memd(r1+#CONTEXT_r2322)
+	r25:24 = memd(r1+#CONTEXT_r2524)
+	r27:26 = memd(r1+#CONTEXT_r2726)
+
+	r5:4 = memd(r9)
+	r7:6 = sub(r19:18,r5:4)
+	r5:4 = memd(r11)
 	r5:4 = add(r7:6,r5:4)
-	if (p1) memd(r22) = r5:4
+	if (p1) memd(r11) = r5:4
 
 	memb(r1+#CONTEXT_hthread) = r10
 	r14 = memb(r1+#CONTEXT_pmu_on)
@@ -87,7 +147,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	jump H2K_check_sanity_unlock
 
 .Lto_sleep:
-	memd(r23) = r27:26
+	memd(r9) = r19:18
 #if (__QDSP6_ARCH__) <= 3
 	r5 = ssr
 	r5 = extractu(r5,#3,#19)
@@ -96,12 +156,12 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #endif
 	r15 = clrbit(r15,r5)
 	PMUCFG = r15
-	r9 = memw(r16+#KG_wait_mask)
-	r8 = memw(r16+#KG_priomask)
+	r9 = memw(H2K_GP+#KG_wait_mask)
+	r8 = memw(H2K_GP+#KG_priomask)
 	r9 = setbit(r9,r5)
 	r8 = setbit(r8,r5)
-	memw(r16+#KG_wait_mask) = r9
-	memw(r16+#KG_priomask) = r8
+	memw(H2K_GP+#KG_wait_mask) = r9
+	memw(H2K_GP+#KG_priomask) = r8
 	k0unlock
 	// set SGP to NULL
 	sgp = r1

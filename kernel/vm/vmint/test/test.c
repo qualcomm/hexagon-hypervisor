@@ -193,7 +193,7 @@ int main()
 	TH_setup_intmask();
 	TH_clear_data();
 	H2K_thread_context *t0 = &TH_threads[0];
-	__asm__ __volatile(" r16 = %0\n" : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	puts("VM enable/disable/check");
 

@@ -42,7 +42,7 @@ TB_func raise = H2K_raise_lowprio_TB;
 int main()
 {
 	int i;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	for (i = 0; i < 1000; i++) {
 		h2_init();
 	}

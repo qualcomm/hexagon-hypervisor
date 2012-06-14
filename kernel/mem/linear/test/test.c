@@ -113,7 +113,7 @@ void check_bad(const char *bad)
 
 int main()
 {
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	make_list(""); check_good(""); check_bad("abcdef");
 	make_list("a0b"); check_good("a"); check_bad("bcdef");
 	make_list("a!0b"); check_good("ab"); check_bad("cdef");

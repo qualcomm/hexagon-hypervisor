@@ -25,7 +25,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	}
 	/* R7 = context, r8 = SSR, r9 = HTID */
 	{
-		r13 = add(r16,#KG_inthandlers)
+		r13 = add(H2K_GP,#KG_inthandlers)
 		r4 = and(r8,#0x1f)  // extract interrupt number
 		r6 = VID
 		r5 = #0
@@ -71,12 +71,12 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	{
 		r0 = ssr
 		r29 = #KERNEL_STACK_SIZE
-		r16 = ##H2K_kg
+		H2K_GP = ##H2K_kg
 	}
 	{
 		r0 = and(r0,#0x1f)  // extract interrupt number
 		r1 = #0  // thread context == NULL
-		r4 = add(r16,#KG_inthandlers)
+		r4 = add(H2K_GP,#KG_inthandlers)
 		r5 = VID
 	}
 	{
@@ -112,12 +112,12 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	{
 		r0 = ssr
 		r29 = #KERNEL_STACK_SIZE
-		r4 = add(r16,#KG_inthandlers)
+		r4 = add(H2K_GP,#KG_inthandlers)
 	}
 	{
 		r0 = and(r0,#0x1f)  // extract interrupt number
 		r1 = sgp  // thread context == NULL	XXXXX
-		r4 = add(r16,#KG_inthandlers)
+		r4 = add(H2K_GP,#KG_inthandlers)
 		r5 = VID
 	}
 	{
@@ -164,13 +164,12 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	{
 		r2 = ssr
 		r29 = #KERNEL_STACK_SIZE
-		r16 = ##H2K_kg		// unnecessary if just preempt, but we're sharing code
-		r17 = r0		// save what was in SGP at interrupt time (0 or 1)
-					// allowed by duplex
+		H2K_GP = ##H2K_kg		// unnecessary if just preempt, but we're sharing code
 	}
 	{
+		r17 = r0		// save what was in SGP at interrupt time (0 or 1)
 		r2 = and(r2,#0x1f)  		// extract interrupt number
-		r4 = add(r16,#KG_inthandlers)	// inthandler pointer
+		r4 = add(H2K_GP,#KG_inthandlers)	// inthandler pointer
 		r5 = VID			// vector ID if L2 interrupt
 	}
 	{
@@ -191,9 +190,14 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		ciad(r5)			// Re-enable L2 controller interrupt if L2 int
 	}
 	{
-		r1 = mpyi(r1,r17)		// 0 or 1 times SGP == 0 or SGP
-		if (!p0) callr r3		// If non-null, call int handler
+		p1 = cmp.eq(r17,#1)
+		if (p1.new) r10 = memw(r1+#CONTEXT_elr)
+		if (!p1.new) r1 = #0		// 0 or SGP, was multiply which was fun
 		r18 = r1			// save SGP ptr
+	}
+	elr = r10
+	{
+		if (!p0) callr r3		// If non-null, call int handler
 	}
 	{
 		p0 = cmp.eq(r17,#0)		// If input was 0 (idle), go back to sleep
@@ -201,7 +205,9 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		if (!p0.new) r31 = memw(r18+#CONTEXT_continuation)	// Get continuation
 		if (!p0.new) r1:0 = memd(r18+#CONTEXT_r0100)		// Get return val
 	}
-	jumpr r31
+	{
+		jumpr r31
+	}
 1:						// We were idle, go back to sleep
 	{
 		k0lock

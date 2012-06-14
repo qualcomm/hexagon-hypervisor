@@ -24,7 +24,7 @@ H2K_trace_entry_t tmpbuf[2];
 int main()
 {
 	u32_t start_entries;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_trace_init();
 	start_entries = H2K_gp->trace_info.entries;
 	if (H2K_gp->trace_info.buf != H2K_trace_buf_default) FAIL("trace init fail");

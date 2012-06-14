@@ -46,7 +46,7 @@ u32_t get_all_hthreads_mask()
 
 int main()
 {
-	__asm__ __volatile(" r16 = %0\n" : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	__asm__ __volatile(" r15 = syscfg \n r15 = clrbit(r15,#4) \n syscfg = r15 \n" : : : "r15");
 	TH_saw_do_work = 0;
 

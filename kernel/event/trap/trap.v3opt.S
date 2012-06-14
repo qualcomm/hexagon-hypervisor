@@ -54,7 +54,7 @@ H2K_trap_nogood:
 	.falign
 .Ljump_to_trap:
 	{
-		r16.l = #lo(H2K_kg)
+		H2K_GP.l = #lo(H2K_kg)
 		memw(r7+#CONTEXT_continuation) = r31  // set up continuation in case we block  ??? not tested?
 		jumpr r17
 	}

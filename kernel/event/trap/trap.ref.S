@@ -20,16 +20,16 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
 	/* R7 = sgp, r8 = ssr, r9 = htid */
-	r23 = and(r8,#0xff)
-	p0 = cmp.gt(r23,#0x1f)
+	r19 = and(r8,#0xff)
+	p0 = cmp.gt(r19,#0x1f)
 	if (p0) jump 1f					// no, too big.
-	r22 = memw(r7+#CONTEXT_trapmask)
-	p0 = tstbit(r22,r23)
+	r18 = memw(r7+#CONTEXT_trapmask)
+	p0 = tstbit(r18,r19)
 	if (!p0) jump 1f				// no, disabled.
 
-	r22.h = #hi(H2K_traptab)
-	r22.l = #lo(H2K_traptab)
-	r22 = addasl(r22,r23,#3)
+	r18.h = #hi(H2K_traptab)
+	r18.l = #lo(H2K_traptab)
+	r18 = addasl(r18,r19,#3)
 
 	// set up continuation in case we block
 	call .Ljump_to_trap
@@ -45,7 +45,7 @@ H2K_guest_return:
 1:
 	memw(r7+#CONTEXT_continuation) = r31
 	r0 = #0
-	r1 = r23
+	r1 = r19
 	r2 = #TRAP0_GEVB_OFFSET
 	r3 = r7
 	call H2K_vm_event
@@ -54,11 +54,11 @@ H2K_guest_return:
 
 .Ljump_to_trap:
 	memw(r7+#CONTEXT_continuation) = r31
-	jumpr r22
+	jumpr r18
 
 	/* EJP: all context carefully saved */
 	/* We have a disabled or other trap failure, return to guest */
-	/* GEVB is in r23 */
+	/* GEVB is in r19 */
 	/* Preds are in R18 */
 	/* r17:16 == ssr:elr */
 FUNC_END H2K_handle_trap0

@@ -25,17 +25,17 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	}
 	/* sgp=r7, ssr=r8, htid=r9 */
 	{
-		r27 = and(r8,#0xff)
-		r24 = memw(r7+#CONTEXT_trapmask)
+		r19 = and(r8,#0xff)
+		r18 = memw(r7+#CONTEXT_trapmask)
 	}
 	{
-		p0 = !cmp.gtu(r27,#0x1f)
-		p0 = tstbit(r24,r27)
+		p0 = !cmp.gtu(r19,#0x1f)
+		p0 = tstbit(r18,r19)
 		if (!p0.new) jump:nt .Lreturn_to_guest
-		r24 = r27
+		r18 = r19
 	}
 	{
-		r24 = add(##H2K_traptab,asl(r24,#3))
+		r18 = add(##H2K_traptab,asl(r18,#3))
 		call .Ljump_to_trap
 	}
 	.falign
@@ -51,13 +51,13 @@ H2K_trap_nogood:
 .Ljump_to_trap:
 	{
 		memw(r7+#CONTEXT_continuation) = r31  // set up continuation in case we block  ??? not tested?
-		jumpr r24
+		jumpr r18
 	}
 
 	.falign
 .Lreturn_to_guest:
 	{
-		r1:0 = combine(r27,#0)
+		r1:0 = combine(r19,#0)
 		r3:2 = combine(r7,#TRAP0_GEVB_OFFSET)
 		call H2K_vm_event
 		memw(r7+#CONTEXT_continuation) = r31

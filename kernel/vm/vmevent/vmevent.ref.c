@@ -10,13 +10,16 @@
 #include <vmevent.h>
 #include <vmint.h>
 #include <fatal.h>
+#include <hw.h>
 
 void H2K_vm_event(u32_t gbadva, u32_t cause, u32_t vec_offset, H2K_thread_context *me)
 {
 	u32_t tmp;
+	H2K_gregs_save(me);
 	if (me->gevb == 0) return H2K_fatal_thread(-3,me,0,0,me->hthread);
 	me->gelr = me->elr;
 	me->elr = ((u32_t)me->gevb) + vec_offset;
+	H2K_set_elr(me->elr);
 	me->gbadva = gbadva;
 	if (me->ssr_guest == 0) {
 		tmp = me->r29;
@@ -44,6 +47,7 @@ void H2K_vm_event(u32_t gbadva, u32_t cause, u32_t vec_offset, H2K_thread_contex
 		me->gssr &= ~H2K_GSSR_SS;
 	}
 #endif
+	H2K_gregs_restore(me);
 	H2K_disable_guest_interrupts(me);
 }
 

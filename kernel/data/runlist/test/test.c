@@ -55,7 +55,7 @@ u32_t H2K_runlist_worst_prio_hthread_OK()
 
 int main() 
 {
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_gp->runlist[0] = &a;
 	H2K_runlist_init();
 	if (H2K_gp->runlist[0] != 0) FAIL("runlist_init failed to clear array");

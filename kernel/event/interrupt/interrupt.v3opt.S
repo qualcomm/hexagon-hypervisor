@@ -33,7 +33,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	{
 		r0 = and(r8,#MAX_INTERRUPTS-1)
 		/* ??? memw(rXX+#CONTEXT_continuation) = r31 */
-		r4 = add(r16,#KG_inthandlers)
+		r4 = add(H2K_GP,#KG_inthandlers)
 	}
 	{
 		r4 = addasl(r4,r0,#3)
@@ -68,7 +68,7 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .falign
 	{
 		r29 += mpyi(r2,r3)
 		r1 = #0
-		r16 = add(r4,#-KG_inthandlers)
+		H2K_GP = add(r4,#-KG_inthandlers)
 		r4 = addasl(r4,r0,#3)
 	}
 	{
@@ -89,7 +89,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .falign
 		r29.h = #hi(H2K_stacks)
 		r0 = ssr
 		r3 = #KERNEL_STACK_SIZE
-		r4 = add(r16,#KG_inthandlers)
+		r4 = add(H2K_GP,#KG_inthandlers)
 	}
 	{
 		r29.l = #lo(H2K_stacks)

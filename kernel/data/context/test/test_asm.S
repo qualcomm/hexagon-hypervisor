@@ -41,7 +41,7 @@
 	p1 = cmp.eq(r2,r4); \
 	p0 = and(p0,p1); \
 	SET_REG(r5,H2K_kg); \
-	p2 = cmp.eq(r16,r5); \
+	p2 = cmp.eq(r28,r5); \
 	p3 = cmp.eq(r29,#0); \
 	p0 = and(p0,p1); \
 	p0 = and(p0,!p3); \
@@ -112,20 +112,20 @@ TEST_ONE_PAIR(r13,r12,r1312,12)
 TEST_ONE_PAIR(r15,r14,r1514,14)
 TEST_ONE_PAIR(r17,r16,r1716,16)
 TEST_ONE_PAIR(r19,r18,r1918,18)
-TEST_ONE_PAIR(r21,r20,r2120,20)
-TEST_ONE_PAIR(r23,r22,r2322,22)
-TEST_ONE_PAIR(r25,r24,r2524,24)
-TEST_ONE_PAIR(r27,r26,r2726,26)
+//TEST_ONE_PAIR(r21,r20,r2120,20)
+//TEST_ONE_PAIR(r23,r22,r2322,22)
+//TEST_ONE_PAIR(r25,r24,r2524,24)
+//TEST_ONE_PAIR(r27,r26,r2726,26)
 TEST_ONE_PAIR(r29,r28,r2928,28)
 TEST_ONE_PAIR(lc0,sa0,lc0sa0,100)
-TEST_ONE_PAIR(lc1,sa1,lc1sa1,102)
-TEST_ONE_PAIR(m1,m0,m1m0,104)
+//TEST_ONE_PAIR(lc1,sa1,lc1sa1,102)
+//TEST_ONE_PAIR(m1,m0,m1m0,104)
 TEST_ONE_PAIR(usr,p3:0,sr_preds,(-0xDEA00000))
-TEST_ONE_PAIR(gp,ugp,gpugp,0x01000000)
+//TEST_ONE_PAIR(gp,ugp,gpugp,0x01000000)
 #if ARCHV >= 4
-TEST_ONE_PAIR(cs1,cs0,cs1cs0,108)
-TEST_ONE_PAIR(g1,g0,gssr_gelr,112)
-TEST_ONE_PAIR(g3,g2,gbadva_gosp,114)
+//TEST_ONE_PAIR(cs1,cs0,cs1cs0,108)
+//TEST_ONE_PAIR(g1,g0,gssr_gelr,112)
+//TEST_ONE_PAIR(g3,g2,gbadva_gosp,114)
 #endif
 	/* RESTORE r31:30 */
 	r0.h = #hi(SAVE)

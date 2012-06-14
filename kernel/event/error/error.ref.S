@@ -27,29 +27,29 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	call H2K_preempt
 	jump H2K_context_restore_return
 
-1:
+	/* EJP: Dead Code! */
 	/* Set up KSP and jump to fatal_thread */
 
-#if __QDSP6_ARCH__ <= 3
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
-	r28 = ssr
-	r28 = extractu(r28,#3,#19)
-	r2 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r2)
-#else
-	r28 = HTID
-	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##H2K_stacks,mpyi(r28,r29))
-#endif
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
-	r0 = #-3
-	r1 = r24
-	r3:2 = #0
-	r4 = r28
-	crswap(r24,sgp)
-	jump H2K_fatal_thread
+//#if __QDSP6_ARCH__ <= 3
+//	r29.h = #hi(H2K_stacks)
+//	r29.l = #lo(H2K_stacks)
+//	r28 = ssr
+//	r28 = extractu(r28,#3,#19)
+//	r2 = #KERNEL_STACK_SIZE
+//	r29 += mpyi(r28,r2)
+//#else
+//	r28 = HTID
+//	r29 = #KERNEL_STACK_SIZE
+//	r29 = add(##H2K_stacks,mpyi(r28,r29))
+//#endif
+//	r4 = r28
+//	r28.h = #hi(H2K_kg)
+//	r28.l = #lo(H2K_kg)
+//	r0 = #-3
+//	r1 = r24
+//	r3:2 = #0
+//	crswap(r24,sgp)
+//	jump H2K_fatal_thread
 
 FUNC_END H2K_handle_error
 
@@ -58,9 +58,9 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
 	r0 = #-3
-	r1 = r24
+	r1 = r7
 	r3:2 = #0
-	r4 = r28
+	r4 = r9
 	jump H2K_fatal_thread
 FUNC_END H2K_handle_nmi
 

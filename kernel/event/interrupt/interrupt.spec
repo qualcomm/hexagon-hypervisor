@@ -162,7 +162,7 @@ For non-NULL SGP value tests, the approriate entry in H2K_inthandlers will point
 
 .. cfunction::  void TH_do_preempt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
 
-This function will set R16 to point to the kernel globals, R0 to the storage
+This function will set R28 to point to the kernel globals, R0 to the storage
 pointed to by `dest`, set SGP to 0x1, and call :cfunc:`H2K_handle_int()` with
 the correct SSR CAUSE code for the interrupt corresponding to num having
 happened.

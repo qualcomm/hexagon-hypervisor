@@ -218,7 +218,7 @@ int main()
 {
 	int i;
 	/* Set up KGP */
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 #ifdef H2K_L2_CONTROL
 	H2K_gp->l2_ack_base = ackbuf;
 #endif

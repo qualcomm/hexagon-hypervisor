@@ -15,7 +15,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 		r3.h = #hi(H2K_fastint_contexts)
 		r9 = #FASTINT_CONTEXT_SIZE
 		r5 = #0
-		r6 = memw(r16+#KG_fastint_gp)
+		r6 = memw(H2K_GP+#KG_fastint_gp)
 	}
 	{
 		r3.l = #lo(H2K_fastint_contexts)
@@ -27,7 +27,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 		r3 += mpyi(r2,r9)
 		r5 = brev(r5)
 		r11.l = #0x0
-		r4 = add(r16,#KG_inthandlers)
+		r4 = add(H2K_GP,#KG_inthandlers)
 	}
 	// FIXME: not optimized
 	r11 = setbit(r11, #SSR_GUEST_BIT)

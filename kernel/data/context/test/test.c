@@ -37,7 +37,7 @@ H2K_thread_context a;
 int main() 
 {
 	/* Set up KGP correctly for direct calls */
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	dotest_asm(&a);
 	puts("TEST PASSED\n");
 	return 0;

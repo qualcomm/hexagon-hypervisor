@@ -108,7 +108,7 @@ int main()
 {
 	u32_t i;
 	u32_t found_thread;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	for (i = 0; i < MAX_HTHREADS; i++) {
 		H2K_gp->runlist[i] = 0;
 	}

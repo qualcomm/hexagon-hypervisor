@@ -68,7 +68,7 @@ void thread0(int thread)
 	u64_t endcputime;
 	s64_t delta;
 	H2K_thread_context *me;
-	asm volatile (" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 #if __QDSP6_ARCH__ <= 3
 	asm volatile (" %0 = sgp" : "=r"(me));
 #else

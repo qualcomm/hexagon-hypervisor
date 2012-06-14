@@ -72,7 +72,9 @@ typedef struct {
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");
 
-register H2K_kg_t * const H2K_gp asm ("r16");
+#define GLOBAL_REG_STR "r28"
+
+register H2K_kg_t * const H2K_gp asm (GLOBAL_REG_STR);
 
 void H2K_kg_init() IN_SECTION(".text.init.globals");
 

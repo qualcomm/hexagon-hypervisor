@@ -7,6 +7,7 @@ PYTHON_GENERATED_FILES=scenarios.h
 
 # Include the include makefile.
 include Makefile.inc
+CC += -I../../../include -ffixed-r28
 
 # Empty out the OSLIB variable.
 OSLIB=

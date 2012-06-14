@@ -87,7 +87,7 @@ H2K_kg_t H2K_kg;
 
 int main()
 {
-	__asm__ __volatile(" r16 = %0\n" : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	a.vmstatus = H2K_VMSTATUS_KILL;
 	TH_call_vm_do_work(&a);

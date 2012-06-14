@@ -68,7 +68,8 @@ void H2K_mem_tlb_fill(u32_t badva, H2K_thread_context *me)
 	// asm volatile (" ssr = %0 \n" : :"r"(0));
 	TH_check_interrupt(TH_src_context,me);
 	if (badva != TH_expected_badva) FAIL("Unexpected BADVA");
-	if (me->elr != TH_expected_elr) FAIL("Unexpected ELR");
+	// EJP: elr no longer saved automatically 
+	//if (me->elr != TH_expected_elr) FAIL("Unexpected ELR");
 	TH_saw_tlbfill = 1;
 	if (TH_fill_do_longjmp) {
 		longjmp(env,1);
@@ -141,7 +142,7 @@ void fill_srcdata(int i)
 int main() 
 {
 	int i = 3;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	fill_srcdata(i);
 
 	/* First, test call side of TLB miss */

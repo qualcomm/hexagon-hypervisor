@@ -4,5 +4,5 @@ EXEC=test.elf
 
 include Makefile.inc
 
-CC += -I../../../include
+CC += -I../../../include -ffixed-r28
 

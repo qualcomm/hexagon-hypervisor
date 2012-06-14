@@ -62,7 +62,7 @@ int main()
 	pa_t pa;
 	int i,j;
 	H2K_mem_tlbfmt_t trans;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	a.ssr_asid = 0x12;
 	if (H2K_safemem_check_and_lock((void *)0x1,0,&pa,&a)) FAIL("Misaligned pointer success");
 	if (H2K_safemem_check_and_lock((void *)0x2,0,&pa,&a)) FAIL("Misaligned pointer success");

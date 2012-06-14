@@ -11,6 +11,7 @@
 #include <globals.h>
 #include <vmevent.h>
 #include <setjmp.h>
+#include <hw.h>
 
 void FAIL(const char *str)
 {
@@ -34,7 +35,7 @@ H2K_kg_t H2K_kg;
 
 int main()
 {
-	__asm__ __volatile(" r16 = %0\n" : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	a.ssr = 0;
 	a.gevb = (void *)0x1000;
@@ -42,7 +43,9 @@ int main()
 	a.r29 = 0x290abcd0;
 	a.gosp = 0xfabcdef0;
 	a.gelr = a.gbadva = a.gssr = 0xdeadbeef;
+	H2K_gregs_restore(&a);
 	H2K_vm_event(0xcafebabe,0x1234,0x20,&a);
+	H2K_gregs_save(&a);
 	if (a.gssr != 0x80001234) FAIL("GSSR not set");
 	if (a.gbadva != 0xcafebabe) FAIL("GBADVA not set");
 	if (a.gelr != 0xabcd0abc) FAIL("GELR not exception point");
@@ -57,7 +60,9 @@ int main()
 	a.r29 = 0x290abcd0;
 	a.gosp = 0xfabcdef0;
 	a.gelr = a.gbadva = a.gssr = 0xdeadbeef;
+	H2K_gregs_restore(&a);
 	H2K_vm_event(0xcafebabe,0x1234,0x20,&a);
+	H2K_gregs_save(&a);
 	if (a.gssr != 0x00001234) FAIL("GSSR not set");
 	if (a.gbadva != 0xcafebabe) FAIL("GBADVA not set");
 	if (a.gelr != 0xabcd0abc) FAIL("GELR not exception point");

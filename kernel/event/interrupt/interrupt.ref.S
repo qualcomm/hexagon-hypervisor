@@ -43,7 +43,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 #if ARCHV == 4
 	/* Work around V4SS errata */
 	{
-		r10 = memw(r16+#KG_l2_int_base)
+		r10 = memw(H2K_GP+#KG_l2_int_base)
 		r13:12 = bitsplit(r4,#5)
 	}
 	{
@@ -62,7 +62,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	ciad(r5)
 #endif
 
-	r4 = add(r16,#KG_inthandlers)
+	r4 = add(H2K_GP,#KG_inthandlers)
 	r4 = addasl(r4,r0,#3)
 	r4 = memw(r4)
 	p0 = cmp.eq(r4,#0)
@@ -112,9 +112,9 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	ciad(r5)
 #endif
 	r1 = #0		// thread context == NULL
-	r16.h = #hi(H2K_kg)
-	r16.l = #lo(H2K_kg)
-	r4 = add(r16,#KG_inthandlers)
+	H2K_GP.h = #hi(H2K_kg)
+	H2K_GP.l = #lo(H2K_kg)
+	r4 = add(H2K_GP,#KG_inthandlers)
 	r4 = addasl(r4,r0,#3)
 	r4 = memw(r4)
 	p0 = cmp.eq(r4,#0)
@@ -132,7 +132,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	 * r0 has the real value for SGP.  But we've already swapped
 	 * it back.  
 	 * 
-	 * r16 has the H2K_kg
+	 * H2K_GP has the H2K_kg
 	 * 
 	 * There's a kernel stack pointer in r29, but it's not necessarily
 	 * the stack base pointer.  We'll just re-setup the stack.
@@ -140,6 +140,8 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	 * So, basically, this is the simplest case.  Most of the stuff
 	 * we need is already available, and the biggest work item is to
 	 * get the interrupt number, pointer, and jump to it.
+	 * 
+	 * Also restore ELR 
 	 */
 #if __QDSP6_ARCH__ <= 3
 	r29.h = #hi(H2K_stacks)
@@ -168,13 +170,18 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 #endif
 	r1 = sgp	// thread context
 	r18 = r1
-	r4 = add(r16,#KG_inthandlers)
+	r11 = memw(r1+#CONTEXT_elr)
+	elr = r11	// restore background task ELR, clobbered by interrupt
+	H2K_GP.h = #hi(H2K_kg)
+	H2K_GP.l = #lo(H2K_kg)
+	r4 = add(H2K_GP,#KG_inthandlers)
 	r4 = addasl(r4,r0,#3)
 	r4 = memw(r4)
 	p0 = cmp.eq(r4,#0)
 	/* Registers set up, call specified handler */
 	if (!p0) callr r4
 	/* OK, get continuation and jump to it.  Restore r1:0 */
+	r18 = sgp
 	r31 = memw(r18+#CONTEXT_continuation)
 	r1:0 = memd(r18+#CONTEXT_r0100)
 	jumpr r31

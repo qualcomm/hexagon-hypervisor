@@ -72,7 +72,7 @@ void TH_check_dead()
 
 int main()
 {
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	TH_init_vm();
 	//H2K_thread_init();
 	//H2K_readylist_init();

@@ -24,7 +24,7 @@ int main()
 {
 	int i;
 	char *x;
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	a.next = a.prev = &a;
 	a.tid = a.prio = 3;
 	a.gssr_gelr = 0x1234;

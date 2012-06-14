@@ -51,7 +51,7 @@ void TH_preempt(H2K_thread_context *x)
 }
 
 int main() {
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	TH_prepare();
 	TH_imask(-1);
 	TH_saw_interrupt = 0;

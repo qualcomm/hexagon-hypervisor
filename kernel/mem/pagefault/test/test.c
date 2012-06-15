@@ -49,8 +49,10 @@ int main()
 	a.r29 = 0xcafebabe;
 	a.gevb = main;
 	H2K_gregs_restore(&a);
+	H2K_set_elr(a.elr);
 	H2K_mem_pagefault(0x12345678,&a);
 	H2K_gregs_save(&a);
+	a.elr = H2K_get_elr();
 	if (a.gssr != 0x00000022) FAIL("gssr not set");
 	if (a.gosp != 0xdeadbeef) FAIL("gosp clobbered");
 	if (a.gbadva != 0x12345678) FAIL("gbadva not set");

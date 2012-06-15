@@ -9,23 +9,10 @@
 #include <c_std.h>
 #include <context.h>
 
-typedef enum {
-	H2K_CACHECTL_ICKILL,
-	H2K_CACHECTL_DCKILL,
-	H2K_CACHECTL_L2KILL,
-	H2K_CACHECTL_DCCLEANINVA,
-	H2K_CACHECTL_ICINVA,
-	H2K_CACHECTL_IDSYNC,
-	H2K_CACHECTL_BADOP
-} cacheop_type;
-
 void H2K_vmtrap_return(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_setvec(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_setie(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_getie(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
-void H2K_vmtrap_clrmap(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
-void H2K_vmtrap_newmap(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
-void H2K_vmtrap_cachectl(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_get_pcycles(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_set_pcycles(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_wait(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");

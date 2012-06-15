@@ -46,7 +46,7 @@ FUNC_END H2K_handle_trap1
 FUNC_START H2K_vmtrap_bad .text.vm.trap .falign
 .Lvmtrap_bad_noguest:
 	{
-		r3:2 = combine(r3,#0x1b)		/* me */
+		r3:2 = combine(r7,#ERROR_GEVB_OFFSET)	/* me */
 		r1:0 = combine(#0x1B,#0)		/* No Guest Permission */
 		jump H2K_vm_event
 	}

@@ -181,6 +181,8 @@ int main(int argc, char *argv[]) {
 
 	void *vmb;
 
+	unsigned int phys_offset = (unsigned int)H2K_PHYS_OFFSET;
+
 	h2_init(0);
 	h2_config_setfatal(fatal);
 	PRINTF("loadlinux: H2 started\n");
@@ -188,7 +190,8 @@ int main(int argc, char *argv[]) {
 #ifdef LINUX
 	PRINTF("linux: start boot\n");
 
-	vmb = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_vmblock_space, linux_pmap, 0x1);
+#warning Remove this total hack
+	vmb = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_vmblock_space, (H2K_linear_fmt_t *)((unsigned int)linux_pmap - phys_offset), 0x1);
 	setup_ints(vmb, LINUX_NUM_VCPU);
 	linux_vmb = vmb;
 	PRINTF("linux: vm set up\n");
@@ -247,7 +250,8 @@ int main(int argc, char *argv[]) {
 
 #ifdef UCOS
 	PRINTF("ucos: start boot\n");
-	vmb = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, ucos_vmblock_space, ucos_pmap, 0xffffffff);
+#warning Remove this total hack
+	vmb = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, ucos_vmblock_space, (H2K_linear_fmt_t *)((unsigned int)ucos_pmap - phys_offset), 0xffffffff);
 	PRINTF("ucos: vm set up\n");
 
 	PRINTF("ucos: loading to 0x%08x from 0x%08x, size 0x%08x\n", (unsigned int)ucos_loadaddr, (unsigned int)ucos_image_start, (unsigned int)(ucos_image_end - ucos_image_start));

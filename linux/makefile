@@ -51,6 +51,12 @@ H2K_LOAD_ADDR = 0xff000000
 endif
 export H2K_LOAD_ADDR
 
+# remove this temporary hack
+ifeq ($(H2K_PHYS_OFFSET),)
+H2K_PHYS_OFFSET = 0x7ec00000
+endif
+export H2K_PHYS_OFFSET
+
 ifeq ($(H2K_HEAP_SIZE),)
 H2K_HEAP_SIZE = 0x100000
 endif
@@ -70,7 +76,7 @@ endif
 LINUX_STEXT = $(LINUX_LINK_ADDR)
 LINUX_LOAD_ADDR = $(LINUX_LINK_ADDR)
 
-CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
+CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib -DH2K_PHYS_OFFSET=$(H2K_PHYS_OFFSET) $(EXTRA_CFLAGS)
 
 ifneq ($(NO_PRINT),)
 CFLAGS += -DNO_PRINT

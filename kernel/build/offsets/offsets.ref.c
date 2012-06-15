@@ -25,6 +25,7 @@ PRINT_CONTEXT_OFFSET(continuation);
 PRINT_CONTEXT_OFFSET(ssrelr);
 PRINT_CONTEXT_OFFSET(ssr);
 PRINT_CONTEXT_OFFSET(elr);
+PRINT_CONTEXT_OFFSET(r29);
 PRINT_CONTEXT_OFFSET(gpugp);
 PRINT_CONTEXT_OFFSET(r3130);
 PRINT_CONTEXT_OFFSET(r2928);
@@ -56,6 +57,7 @@ PRINT_CONTEXT_OFFSET(ccr);
 PRINT_CONTEXT_OFFSET(gssr_gelr);
 PRINT_CONTEXT_OFFSET(gbadva_gosp);
 PRINT_CONTEXT_OFFSET(cs1cs0);
+PRINT_CONTEXT_OFFSET(atomic_status_word);
 	printf("#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
 	printf("#define FASTINT_CONTEXT_SIZE %d\n",sizeof(H2K_fastint_context));
 

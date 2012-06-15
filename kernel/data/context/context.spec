@@ -160,6 +160,8 @@ Additionally, r7 holds the current context pointer, r8 holds the SSR, r9 holds
 the HTID, r28 holds the KGP, and r29 holds the correct stack pointer. R0 through
 r6 are unchanged from the caller.
 
+r30 is not modified
+
 
 Functionality
 ~~~~~~~~~~~~~

@@ -170,6 +170,12 @@ FUNC_START start .text.init.boot .p2align 12
 	r0 = #(1<<MAX_HTHREADS)-1
 	start(r0)
 
+	// r10 still has physical pc.  Calculate offset for boot vm pmap
+	r10 = lsr(r10, #BOOT_TLB_PGBITS)
+	r10 = asl(r10, #BOOT_TLB_PGBITS)
+	SETCONST(r11, H2K_LINK_ADDR)
+	r0 = sub(r11, r10)
+
 	jump H2K_thread_boot
 FUNC_END start
 

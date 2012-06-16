@@ -6,7 +6,9 @@
 #ifndef H2K_IDTYPE_H
 #define H2K_IDTYPE_H 1
 
+#ifndef ASM
 #include <c_std.h>
+#endif
 
 #define H2K_ID_RSVD_BITS 8
 #define H2K_ID_CPUIDX_BITS 18
@@ -18,6 +20,7 @@
 #error bits do not add up
 #endif
 
+#ifndef ASM
 typedef union {
 	u32_t raw;
 	struct {
@@ -26,5 +29,6 @@ typedef union {
 		u32_t vmidx:H2K_ID_VMIDX_BITS;
 	};
 } H2K_id_t;
+#endif
 
 #endif

@@ -12,10 +12,6 @@
 #include <context.h>
 #include <spinlock.h>
 
-/* Version supported */
-
-#define H2K_VM_VERSION 0x00000800
-
 /* How does this work?  */
 
 /* Trigger interrupt: 

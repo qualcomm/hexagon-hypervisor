@@ -10,6 +10,10 @@
 #else
 #endif
 
+/* Version supported */
+
+#define H2K_VM_VERSION 0x00000800
+
 #define RESET_GEVB_OFFSET (0*4)
 #define CHECK_GEVB_OFFSET (1*4)
 #define ERROR_GEVB_OFFSET (2*4)

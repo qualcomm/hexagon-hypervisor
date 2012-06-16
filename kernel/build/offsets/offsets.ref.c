@@ -7,9 +7,11 @@
 #include <context.h>
 #include <stddef.h>
 #include <globals.h>
+#include <vm.h>
 
 #define PRINT_CONTEXT_OFFSET(x) printf("#define CONTEXT_%s %d\n",#x,offsetof(H2K_thread_context,x))
 #define PRINT_KG_OFFSET(x) printf("#define KG_%s %d\n",#x,offsetof(H2K_kg_t,x))
+#define PRINT_VMBLOCK_OFFSET(x) printf("#define VMBLOCK_%s %d\n",#x,offsetof(H2K_vmblock_t,x))
 
 int main(int argc, char **argv)
 {
@@ -26,6 +28,7 @@ PRINT_CONTEXT_OFFSET(ssrelr);
 PRINT_CONTEXT_OFFSET(ssr);
 PRINT_CONTEXT_OFFSET(elr);
 PRINT_CONTEXT_OFFSET(r29);
+PRINT_CONTEXT_OFFSET(r00);
 PRINT_CONTEXT_OFFSET(gpugp);
 PRINT_CONTEXT_OFFSET(r3130);
 PRINT_CONTEXT_OFFSET(r2928);
@@ -83,11 +86,14 @@ PRINT_KG_OFFSET(l2_int_base);
 PRINT_KG_OFFSET(l2_ack_base);
 PRINT_KG_OFFSET(l2_intinfo);
 #endif
+PRINT_VMBLOCK_OFFSET(waiting_cpus);
 
 	printf("#define STATUS_DEAD       %d\n",H2K_STATUS_DEAD);
 	printf("#define STATUS_READY      %d\n",H2K_STATUS_READY);
 	printf("#define STATUS_RUNNING    %d\n",H2K_STATUS_RUNNING);
 	printf("#define STATUS_BLOCKED    %d\n",H2K_STATUS_BLOCKED);
+	printf("#define STATUS_INTBLOCKED %d\n",H2K_STATUS_VMWAIT);
+	printf("#define STATUS_VMWAIT     %d\n",H2K_STATUS_VMWAIT);
 
 	return 0;
 }

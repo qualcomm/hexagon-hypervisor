@@ -6,6 +6,10 @@
 #ifndef H2K_ASM_STD_H
 #define H2K_ASM_STD_H 1
 
+#ifndef ASM
+#define ASM 1
+#endif
+
 #include <asm_offsets.h>
 
 #define H2K_GP R28

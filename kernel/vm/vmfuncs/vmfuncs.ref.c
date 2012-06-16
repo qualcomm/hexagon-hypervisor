@@ -55,6 +55,8 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 	/* If guest wants to single step, set in SSR */
 	if (me->gssr & H2K_GSSR_SS) {
 		me->ssr_ss = 1;
+	} else {
+		me->ssr_ss = 0;
 	}
 #endif
 	H2K_gregs_restore(me);

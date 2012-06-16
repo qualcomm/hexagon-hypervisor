@@ -102,6 +102,8 @@ u32_t H2K_vm_do_work(H2K_thread_context *me)
 {
 	if (!TH_expected_work) FAIL("Didn't expect disable");
 	TH_expected_work = 0;
+	if ((H2K_get_syscfg() & (1<<12)) == 0) FAIL("no k0lock");
+	H2K_mutex_unlock_k0();
 	return TH_work_ret;
 }
 

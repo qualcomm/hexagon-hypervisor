@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#if 0
 #include <vmdefs.h>
 #include <max.h>
 
@@ -72,4 +71,3 @@ H2K_stacks:
 	.space 128
 	.space 128
 	.space 128
-#endif

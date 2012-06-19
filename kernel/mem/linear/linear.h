@@ -40,7 +40,9 @@ H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me) IN_SECT
 
 static inline u32_t H2K_mem_translate_linear(H2K_linear_fmt_t entry, u32_t va) {
 
-	return (va & (PAGE_SIZE - 1)) | (entry.ppn << PAGE_BITS);
+	u32_t size = PAGE_SIZE << (entry.size * 2);
+
+	return (va & (size - 1)) | (entry.ppn << PAGE_BITS);
 }
 
 #endif

@@ -63,21 +63,12 @@ static inline H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
 	return H2K_mem_asid_table+idx;
 }
 
-s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
-{
+s32_t H2K_do_asid_table_inc(u32_t phys_ptb, translation_type type, tlb_invalidate_flag flag) {
+
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
-	
-	if (type >= H2K_ASID_TRANS_TYPE_XXX_LAST) { // bad type
-		return -1;
-	}
 
-	if (vmblock != NULL) { // translate ptb using vmblock pmap
-		if (H2K_vm_translate(ptb, vmblock, &ptb) == -1) // bad ptb
-			return -1;
-	}
-
-	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
+	if ((tmp = H2K_asid_table_search(phys_ptb)) != NULL) {
 		H2K_atomic_add_mask((u32_t *)&tmp->fields,
 												1 << H2K_ASID_ENTRY_COUNT_POS,
 												0xffff << H2K_ASID_ENTRY_COUNT_POS);
@@ -89,8 +80,8 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 		}
 
 		return asid;
-	} else if ((tmp = H2K_asid_table_eviction(ptb)) != NULL) {
-		tmp->ptb = ptb;
+	} else if ((tmp = H2K_asid_table_eviction(phys_ptb)) != NULL) {
+		tmp->ptb = phys_ptb;
 		tmp->fields.transtype = type;
 		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
@@ -99,6 +90,26 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 	} else {
 		return -1;
 	}
+}
+
+s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
+{
+	u32_t phys_ptb = ptb;
+
+	if (type == H2K_ASID_TRANS_TYPE_OFFSET) {
+		return H2K_do_asid_table_inc(phys_ptb, type, flag);
+	}
+	
+	if (type >= H2K_ASID_TRANS_TYPE_XXX_LAST) { // bad type
+		return -1;
+	}
+
+	if (vmblock != NULL) { // translate ptb using vmblock pmap
+		if (H2K_vm_translate(ptb, vmblock, &phys_ptb) == -1) // bad ptb
+			return -1;
+	}
+
+	return H2K_do_asid_table_inc(phys_ptb, type, flag);
 }
 
 void H2K_asid_table_dec(u32_t asid)

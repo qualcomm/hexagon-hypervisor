@@ -12,12 +12,35 @@
 /** @addtogroup h2 
 @{ */
 
-/* FIXME: These duplicate kernel/config/config.h.  Should come from a
-	 shared header file */
-
 /**
 Operations that can be done during vmblock initialization
 */
+
+/* FIXME: These duplicate kernel/config/config.h and kernel/data/vm.h.  Should come from a
+	 shared header file */
+
+#ifndef H2K_VM_H
+
+typedef union {
+	unsigned int raw;
+	struct {
+		unsigned int size:4;
+		unsigned int cccc:4;
+		unsigned int xwru:4;
+		unsigned int pages:20;
+	};
+} H2K_offset_t;
+
+typedef union {
+	unsigned int raw;
+	struct {
+		unsigned int cpuidx:16;
+		unsigned int physint:16;
+	};
+} H2K_physint_config_t;
+
+#endif
+
 typedef enum {
 	SET_STORAGE, 	/**< Set the storage */
 	SET_PMAP_TYPE,		/**< Set the physical map (or offset) and type */

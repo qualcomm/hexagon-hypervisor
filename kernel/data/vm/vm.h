@@ -11,6 +11,8 @@
 #include <vmdefs.h>
 #include <context.h>
 #include <spinlock.h>
+#include <tlbfmt.h>
+#include <max.h>
 
 /* Version supported */
 
@@ -50,6 +52,24 @@ typedef u16_t physint_t;
 typedef u32_t bitmask_t;
 typedef u64_t long_bitmask_t;
 
+typedef union {
+	u32_t raw;
+	struct {
+		u32_t size:4;
+		u32_t cccc:4;
+		u32_t xwru:4;
+		u32_t pages:20;
+	};
+} H2K_offset_t;
+
+typedef union {
+	u32_t raw;
+	struct {
+		u32_t cpuidx:16;
+		u32_t physint:16;
+	};
+} H2K_physint_config_t;
+
 typedef struct H2K_vmblock_struct {
 	u32_t max_cpus;
 	u32_t num_cpus;
@@ -76,7 +96,7 @@ typedef struct H2K_vmblock_struct {
 
 	/* physical memory map, page table style */
 	union {
-		s64_t phys_offset;
+		H2K_offset_t phys_offset;
 		u32_t pmap;
 	};
 	/* When pmap_type is offset, permitted physical range is fence_lo
@@ -84,14 +104,76 @@ typedef struct H2K_vmblock_struct {
 		 memory */
 	u32_t fence_lo;
 	u32_t fence_hi;
-	translation_type pmap_type;
 
 	long_bitmask_t waiting_cpus;
+
+	translation_type pmap_type;
+
 	u8_t interrupt_search_start;
 } __attribute__((aligned(32))) H2K_vmblock_t;
 
 void H2K_vmblock_clear(H2K_vmblock_t *vmblock) IN_SECTION(".text.data.vm");
 s32_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock, u32_t *result) IN_SECTION(".text.data.vm");
+
+#if __QDSP6_ARCH__ <= 3
+
+static inline H2K_mem_tlbfmt_t H2K_vm_get_offset(u32_t addr, H2K_thread_context *me) {
+
+	H2K_mem_tlbfmt_t ret;
+	u32_t mask;
+	H2K_vmblock_t *vmblock = me->vmblock;
+	H2K_offset_t offset = vmblock->phys_offset;
+	u32_t xwru;
+
+	ret.raw = 0;
+	if (vmblock->pmap_type != H2K_ASID_TRANS_TYPE_OFFSET) { // woops
+		return ret;
+	}
+
+	mask = (0xffffffff) << (offset.size * 2);
+	xwru = offset.xwru;
+
+	ret.ccc = offset.cccc;
+	ret.xwr = xwru >> 1;
+	ret.guestonly = ~(xwru & 1);
+	ret.asid = me->ssr_asid;
+
+	ret.vpn = addr & mask;
+	ret.ppn = ret.vpn + (offset.pages << PAGE_BITS);
+	ret.size = offset.size;
+	ret.valid = 1;
+
+	return ret;
+}
+
+#else
+
+static inline H2K_mem_tlbfmt_t H2K_vm_get_offset(u32_t addr, H2K_thread_context *me) {
+
+	H2K_mem_tlbfmt_t ret;
+	u32_t mask;
+	H2K_vmblock_t *vmblock = me->vmblock;
+	H2K_offset_t offset = vmblock->phys_offset;
+
+	ret.raw = 0;
+	if (vmblock->pmap_type != H2K_ASID_TRANS_TYPE_OFFSET) { // woops
+		return ret;
+	}
+
+	mask = (0xffffffff) << (offset.size * 2);
+
+	ret.cccc = offset.cccc;
+	ret.xwru = offset.xwru;
+	ret.asid = me->ssr_asid;
+
+	ret.vpn = addr & mask;
+	ret.ppd = ((ret.vpn + (offset.pages << PAGE_BITS)) << 1) | (1 << offset.size);
+	ret.valid = 1;
+
+	return ret;
+}
+
+#endif
 
 #endif
 

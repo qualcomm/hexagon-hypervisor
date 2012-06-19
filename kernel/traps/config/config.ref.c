@@ -13,6 +13,7 @@
 #include <max.h>
 #include <intconfig.h>
 #include <asid.h>
+#include <translate.h>
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -60,12 +61,14 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 	H2K_vmblock_t *vmblock;
 	bitmask_t **masks;
 	bitmask_t *mask;
-	physint_t phys_int;
+	H2K_physint_config_t config_int;
+	physint_t physint;
 	u32_t virt_int;
 	H2K_id_t id;
 	struct _h2_thread_context *contexts;
 	u32_t *p;
 	u32_t i;
+	H2K_offset_t offset;
 
 	u32_t ptrtmp = (u32_t)ptr;
 	/* Align Pointer */
@@ -100,33 +103,52 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 	case SET_PMAP_TYPE:
 		if (!H2K_vmblock_valid(vmblock)) return 0;
 
-		if (arg2 == H2K_ASID_TRANS_TYPE_OFFSET) { // arg1 is signed offset value
-			if ((s32_t)arg1 > (0xffffffff >> PAGE_BITS)
-					|| (s32_t)arg1 < -(0xffffffff >> PAGE_BITS)) { // out of range
-				return 0;
-			}
+		if (arg2 == H2K_ASID_TRANS_TYPE_OFFSET) {
+			/* arg1 has offset[24]:size[8].  For negative offset wrap around by
+				 adding (0xffffffff - offset) */
+
+			offset.raw = arg1;
+
+			/* Make sure offset is aligned to a valid page size, and size field matches */
+			if ((i = Q6_R_ct0_R(offset.pages)) % 4 != 0 || offset.size != (i / 2)) return 0;
+
+			vmblock->phys_offset = offset;
 			vmblock->pmap_type = arg2;
-			vmblock->phys_offset = (s32_t)arg1 << PAGE_BITS;
 			vmblock->fence_hi = 1; // deny all mem, in case we forget to configure fences
 			return (u32_t)vmblock;
 		}
 
 		if (arg2 >= H2K_ASID_TRANS_TYPE_XXX_LAST) return 0; // bad type
 
-		if (!arg1) {
+		if (arg1 == 0) {
 			/* use ptb from current thread as pmap by default */
 			vmblock->pmap = H2K_mem_asid_table[me->ssr_asid].ptb;
 			vmblock->pmap_type = H2K_mem_asid_table[me->ssr_asid].fields.transtype;
 		} else {
-			vmblock->pmap = arg1;
 			vmblock->pmap_type = arg2;
+
+			if (me == NULL) { // we are setting up the boot vm
+				vmblock->pmap = arg1;
+			} else { // calling from a guest that might be remapped
+				if (H2K_translate(arg1, me->vmblock->pmap, me->vmblock->pmap_type, &vmblock->pmap) == -1) return 0;
+			}
 		}
 		return (u32_t)vmblock;
 
 	case SET_FENCES:
 		if (!H2K_vmblock_valid(vmblock)) return 0;
-		vmblock->fence_lo = arg1;
-		vmblock->fence_hi = arg2;
+
+		/* Ensure that fences are at given page boundaries */
+		offset = vmblock->phys_offset;
+		if ((Q6_R_ct0_R(arg1 >> PAGE_BITS) / 2 != offset.size)
+				|| Q6_R_ct0_R(arg2 >> PAGE_BITS) / 2 != offset.size) return 0;
+
+		/* Could be a problem here if we have two levels of offset remapping with different page sizes */
+		if (H2K_translate(arg1, me->vmblock->pmap, me->vmblock->pmap_type, &vmblock->fence_lo) == -1) return 0;
+		if (H2K_translate(arg2, me->vmblock->pmap, me->vmblock->pmap_type, &vmblock->fence_hi) == -1) return 0;
+
+		vmblock->fence_lo >>= PAGE_BITS;
+		vmblock->fence_hi >>= PAGE_BITS;
 		return (u32_t)vmblock;
 
 	case SET_PRIO_TRAPMASK:
@@ -195,24 +217,25 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 
 	case MAP_PHYS_INTR:
 		if (!H2K_vmblock_valid(vmblock)) return 0;
-		phys_int = (physint_t)((arg2 & 0xffff0000) >> 16);
+		config_int.raw = arg2;
+		physint = config_int.physint;
 		virt_int = arg1;
 		id.vmidx = vmblock->vmidx;
-		id.cpuidx = arg2 & 0x0000ffff;
+		id.cpuidx = config_int.cpuidx;
 
 		if ((virt_int >= vmblock->num_ints) 
-				|| (phys_int >= MAX_INTERRUPTS)
+				|| (physint >= MAX_INTERRUPTS)
 				|| (id.cpuidx >= vmblock->max_cpus)
-				|| (phys_int == RESCHED_INT)
-				|| (phys_int == VM_IPI_INT)
-				|| (phys_int == TIMER_INT)
+				|| (physint == RESCHED_INT)
+				|| (physint == VM_IPI_INT)
+				|| (physint == TIMER_INT)
 #ifdef H2K_L2_CONTROL
-				|| (phys_int == L2_CORE_INTERRUPT)
+				|| (physint == L2_CORE_INTERRUPT)
 #endif
 				|| (virt_int == 0))  return 0; /* bad args */
-		vmblock->int_v2p[virt_int] = phys_int;
+		vmblock->int_v2p[virt_int] = physint;
 		/* FIXME: set up int mapping in vmblock for large vint# */
-		H2K_register_passthru(phys_int, id, virt_int);
+		H2K_register_passthru(physint, id, virt_int);
 		return (u32_t)vmblock;
 	}
 	return 0; // bad op

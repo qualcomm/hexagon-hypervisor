@@ -19,6 +19,7 @@
 #include <vm.h>
 #include <asid.h>
 #include <create.h>
+#include <linear.h>
 
 void H2K_interrupt_restore();
 
@@ -115,9 +116,13 @@ int main()
 	vmblock->trapmask = a->trapmask = 0x55ffffff;
 	a->ssr_asid = asid;
 
-	vmblock->pmap = 0x55555;
-	vmblock->pmap_type = H2K_ASID_TRANS_TYPE_LINEAR;
-	asid_pmap = H2K_asid_table_inc(vmblock->pmap,vmblock->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
+	vmblock->phys_offset.size = 0;
+	vmblock->phys_offset.cccc = 7;
+	vmblock->phys_offset.xwru = 0xf;
+	vmblock->phys_offset.pages = 0;
+	vmblock->pmap_type = H2K_ASID_TRANS_TYPE_OFFSET;
+
+	asid_pmap = H2K_asid_table_inc((u32_t)vmblock,vmblock->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,vmblock,a)
 		!= 0xffffffff) FAIL("Created thread w/o storage");

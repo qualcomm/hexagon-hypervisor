@@ -1,17 +1,17 @@
 /* Hey emacs, this is -*- C -*- */
 
 //MEMORY MAP	GLOBAL	ASID	VPN		PERMISSIONS	CACHEABILITY	PGSIZE		PART	PPN
-// don't want this if h2 is linked at 0 and we have a pinned entry for it
-#if (H2K_LINK_ADDR != 0)
-MEMORY_MAP(	0,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
-#else
 // First two are covered by global pinned entries setup dynamically at boot,
-// MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 0) << 10),	URWX,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LINK_ADDR >> 22) + 0) << 10))
-// MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 1) << 10),	URWX,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LINK_ADDR >> 22) + 1) << 10))
+MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 0) << 10),	URWX,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LINK_ADDR >> 22) + 0) << 10))
+MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 1) << 10),	URWX,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LINK_ADDR >> 22) + 1) << 10))
 
 // These may also be set up at boot.  If they are, we'll never fill from here
 MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 2) << 10),	URWX,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LOAD_ADDR >> 22) + 2) << 10))
 MEMORY_MAP(	1,	0,	(((H2K_LINK_ADDR >> 22) + 3) << 10),	URWX,		L1WB_L2C,	SIZE_4M,	MAIN,	(((H2K_LOAD_ADDR >> 22) + 3) << 10))
+
+// don't want this if h2 is linked at 0 and we have a pinned entry for it
+#if (H2K_LINK_ADDR != 0)
+MEMORY_MAP(	0,	0,	0x00000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x00000)
 #endif
 
 MEMORY_MAP(	0,	0,	0x01000,	URWX,		L1WB_L2C,	SIZE_16M,	MAIN,	0x01000)

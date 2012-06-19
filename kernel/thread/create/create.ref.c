@@ -35,8 +35,12 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	trapmask = vmblock->trapmask;
 
 	if (vmblock->num_cpus == 0) { // starting first cpu
-		ptb = vmblock->pmap; 				/* initial page tables == pmap */
 		type = vmblock->pmap_type;
+		if (type == H2K_ASID_TRANS_TYPE_OFFSET) { // use vmblock as "ptb"
+			ptb = (u32_t)vmblock;
+		} else {
+			ptb = vmblock->pmap; 				/* initial page tables == pmap */
+		}
 	} else { // inherit
 		ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
 		type = H2K_mem_asid_table[me->ssr_asid].fields.transtype;

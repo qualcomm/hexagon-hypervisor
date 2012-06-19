@@ -12,9 +12,7 @@
 #define OLD_SP_SAVE r19
 #define OTHER_SGP r18
 #define TMP r14
-#define INTINFO r5:4
-#define INT_HANDLER r4
-#define INT_ARG r5
+#define INT_ARG r3
 #define TMP10 r11:10
 #define TMP1 r11
 #define TMP0 r10
@@ -30,7 +28,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	// r0 = intno
 	// r1 = me, can be NULL!
 	// r2 = hthread
-	// r3 = argument (future)
+	// r3 = argument
 	// H2K_GP = H2K_kg
 
 	/* EJP: Not all of the context has been saved/restored 
@@ -58,11 +56,9 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	}
 	{
 		crswap(OTHER_SGP,sgp0)
-		TMP = add(H2K_GP,#KG_inthandlers)
 		OLD_SP_SAVE = TMP
 	}
 	{
-		INTINFO = memd(TMP+r0<<#3)
 		TMP = memw(H2K_GP+#KG_fastint_gp)
 		if (p3) jump 1f
 		TMP32 = c13:12				// cs1:cs0

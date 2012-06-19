@@ -11,10 +11,11 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	// r0 = intno
 	// r1 = me... CAN BE NULL
 	// r2 = hthread
-	r3.h = #hi(H2K_fastint_contexts)
-	r3.l = #lo(H2K_fastint_contexts)
+	// r3 = param
+	r15.h = #hi(H2K_fastint_contexts)
+	r15.l = #lo(H2K_fastint_contexts)
 	r9 = #FASTINT_CONTEXT_SIZE
-	r3 += mpyi(r2,r9)
+	r15 += mpyi(r2,r9)
 
 	/* EJP: Not all of the context has been saved/restored 
 	 * In particular, many control registers need to be saved
@@ -28,14 +29,14 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	/* Per-HThread stack may get corrputed by trap in int handler */
 	/* So save off important registers in fastint context that won't change */
 	/* EJP: Possibly, can avoid save/restore of return since we know continuation */
-	r29 = add(r3,#FASTINT_CONTEXT_SIZE)
+	r29 = add(r15,#FASTINT_CONTEXT_SIZE)
 
 	allocframe(#16)
 	memd(sp+#8) = r19:18
 	memd(sp+#0) = r17:16
 	r17 = r10
 
-	r18 = r3
+	r18 = r15
 	crswap(r18,sgp)
 	p0 = cmp.eq(r18,#0)	// swapped from NULL?
 	if (p0) jump 1f
@@ -77,11 +78,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	ssr = r11
 	gp = r6
 
-	r4 = add(H2K_GP,#KG_inthandlers)
-	r4 = addasl(r4,r0,#3)
-	r4 = add(r4, #4)
-	r4 = memw(r4)
-	callr r4
+	callr r3
 
 H2K_fastint_return:
 	/* L2 Control: if returning TRUE, whack L2 Interrupt Controller */

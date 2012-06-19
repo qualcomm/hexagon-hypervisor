@@ -92,7 +92,7 @@ PRINT_VMBLOCK_OFFSET(waiting_cpus);
 	printf("#define STATUS_READY      %d\n",H2K_STATUS_READY);
 	printf("#define STATUS_RUNNING    %d\n",H2K_STATUS_RUNNING);
 	printf("#define STATUS_BLOCKED    %d\n",H2K_STATUS_BLOCKED);
-	printf("#define STATUS_INTBLOCKED %d\n",H2K_STATUS_VMWAIT);
+	printf("#define STATUS_INTBLOCKED %d\n",H2K_STATUS_INTBLOCKED);
 	printf("#define STATUS_VMWAIT     %d\n",H2K_STATUS_VMWAIT);
 
 	return 0;

@@ -33,9 +33,9 @@ void FAIL(const char *str)
 unsigned int ackbuf[MAX_INTERRUPTS/32] __attribute__((aligned(2*MAX_INTERRUPTS/8)));
 
 //void TH_call_fastint_check(u32_t intno);
-void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2);
+void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2, void *param);
 
-void TH_fastint_call(u32_t intno, H2K_thread_context *me, u32_t hthread);
+void TH_fastint_call(u32_t intno, H2K_thread_context *me, u32_t hthread, void *param);
 
 void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 {
@@ -96,7 +96,7 @@ void TH_setup_fastinthandlers(u32_t interrupt)
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->inthandlers[i].param = TH_bad_interrupt;
 	}
-	H2K_gp->inthandlers[interrupt].param = TH_good_interrupt;
+	//H2K_gp->inthandlers[interrupt].param = TH_good_interrupt;
 }
 
 void TH_setup_fastinthandlers_ack(u32_t interrupt)
@@ -105,12 +105,12 @@ void TH_setup_fastinthandlers_ack(u32_t interrupt)
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->inthandlers[i].param = TH_bad_interrupt;
 	}
-	H2K_gp->inthandlers[interrupt].param = TH_good_interrupt_ackl2;
+	//H2K_gp->inthandlers[interrupt].param = TH_good_interrupt_ackl2;
 }
 
-void TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread)
+void TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread, void *param)
 {
-	TH_fastint_call(interrupt,dest,0);
+	TH_fastint_call(interrupt,dest,0,param);
 	longjmp(env2,1);
 }
 
@@ -164,7 +164,7 @@ void TH_do_fastint(H2K_thread_context *dest, u32_t interrupt)
 	TH_setup_fastinthandlers(interrupt);
 	TH_clear_acks();
 	if (setjmp(env2) == 0) {
-		TH_fastint_wrapper(interrupt,dest,0);
+		TH_fastint_wrapper(interrupt,dest,0,TH_good_interrupt);
 	}
 	TH_check_nol2ack(interrupt);
 
@@ -172,7 +172,7 @@ void TH_do_fastint(H2K_thread_context *dest, u32_t interrupt)
 	TH_setup_fastinthandlers_ack(interrupt);
 	TH_clear_acks();
 	if (setjmp(env2) == 0) {
-		TH_fastint_wrapper(interrupt,dest,0);
+		TH_fastint_wrapper(interrupt,dest,0,TH_good_interrupt_ackl2);
 	}
 	TH_check_l2ack(interrupt);
 

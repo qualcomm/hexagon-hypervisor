@@ -16,11 +16,9 @@
 #include <max.h>
 #include <intcontrol.h>
 
-void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
+void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_thread_context *woken)
 {
-	H2K_thread_context *woken;
 	BKL_LOCK(&H2K_bkl);
-	woken = H2K_gp->inthandlers[intnum].param;
 	H2K_gp->inthandlers[intnum].raw = 0;
 	if (unlikely(woken == NULL)) {
 		/* Auto-disabled, now we should re-post interrupt, I think */

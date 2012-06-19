@@ -37,7 +37,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	}
 	{
 		r1:0 = combine(r7,r4)
-		r3 = memw(r13+r4<<#3)
+		r11:10 = memd(r13+r4<<#3)
 		r2 = r9
 		call .Lint_jump_stub
 	}
@@ -61,7 +61,8 @@ H2K_interrupt_restore:
 	}
 	{
 		memw(r7+#CONTEXT_continuation) = r31
-		jumpr r3
+		jumpr r10
+		r3 = r11
 	}
 
 FUNC_END H2K_handle_int
@@ -180,13 +181,13 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	}
 	/* Registers set up, call specified handler */
 	{
-		r3 = memw(r4+r0<<#3)  		// compute interrupt handler
+		r9:8 = memd(r4+r0<<#3) 		// compute interrupt handler
 		r5 = mux(p0,##0x80000000,#0)	// Value to CIAD if L2 interrupt
 		r2 = htid
 	}
 	{
 		r29 = add(##H2K_stacks,mpyi(r2,r29))
-		p0 = cmp.eq(r3,#0)		// Is handler NULL?
+		p0 = cmp.eq(r8,#0)		// Is handler NULL?
 		ciad(r5)			// Re-enable L2 controller interrupt if L2 int
 	}
 	{
@@ -197,7 +198,8 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	}
 	elr = r10
 	{
-		if (!p0) callr r3		// If non-null, call int handler
+		if (!p0) callr r8		// If non-null, call int handler
+		r3 = r9
 	}
 	{
 		p0 = cmp.eq(r17,#0)		// If input was 0 (idle), go back to sleep

@@ -111,10 +111,11 @@ void TH_interrupted_fastint_check()
 }
 
 /* Check to make sure that the interrupt was called correctly */
-void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
+void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum, u32_t param)
 {
 	if (intno != TH_intno) FAIL("Unexpected interrupt");
 	if (me != TH_dest_context) FAIL("Unexpected me pointer");
+	if (param != 0x600dbeef) FAIL("bad param");
 	if (me != NULL) {
 		TH_check_interrupt(TH_src_context, me);
 		if (TH_pass == 0) {
@@ -134,7 +135,7 @@ void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 }
 
 /* Fail */
-void TH_bad_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
+void TH_bad_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum, u32_t param)
 {
 	printf("intno=%d\n",intno);
 	FAIL("Wrong interrupt called");
@@ -150,8 +151,10 @@ void TH_setup_inthandlers(u32_t interrupt)
 	u32_t i;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->inthandlers[i].handler = TH_bad_interrupt;
+		H2K_gp->inthandlers[i].param = 0;
 	}
 	H2K_gp->inthandlers[interrupt].handler = TH_good_interrupt;
+	H2K_gp->inthandlers[interrupt].param = 0x600dbeef;
 }
 
 /*

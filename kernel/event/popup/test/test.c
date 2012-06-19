@@ -139,13 +139,28 @@ void TH_check_running(int i, H2K_thread_context *thread)
 	if (H2K_gp->runlist[thread->hthread] != thread) FAIL("Thread not scheduled");
 }
 
+void TH_check_old(H2K_thread_context *thread)
+{
+	if (thread == NULL) return;
+	if (thread->status != H2K_STATUS_READY) FAIL("preempted wrong status");
+	if (!H2K_ready_prio_valid(thread->prio)) FAIL("prio not set");
+	if (H2K_gp->ready[thread->prio] != thread) FAIL("preempted not in list");
+}
+
+void TH_clear_ready(H2K_thread_context *thread)
+{
+	if (thread == NULL) return;
+	H2K_gp->ready[thread->prio] = NULL;
+	H2K_ready_set_prio(thread->prio);
+}
+
 void TH_popup_int(int i, H2K_thread_context *interrupted, int hthread, H2K_thread_context *new)
 {
 	TH_saw_dosched = TH_saw_switch = 0;
 	TH_switch_old = TH_switch_new = NULL;
 	TH_set_popup(i,new);
 	if (setjmp(env) == 0) {
-		H2K_popup_int(i,interrupted,hthread);
+		H2K_popup_int(i,interrupted,hthread,new);
 		if (new != NULL) FAIL("Expected thread, but popup_int didn't call switch");
 	} else {
 		if (TH_saw_dosched != 0) FAIL("saw dosched");
@@ -246,6 +261,8 @@ int main()
 		TH_set_running(0,&a);
 		TH_popup_int(i,&a,0,&b);
 		TH_check_priowait_running(0,&b);
+		TH_check_old(&a);
+		TH_clear_ready(&a);
 	}
 	puts("TEST PASSED\n");
 	return 0;

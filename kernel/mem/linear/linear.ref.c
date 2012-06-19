@@ -83,9 +83,10 @@ H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
 	u32_t list;
 	H2K_mem_tlbfmt_t ret;
 
+	ret.raw = 0;
+
 	list = H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb;
 	if (list == 0) {
-		ret.raw = 0;
 		return ret;
 	}
 
@@ -93,6 +94,5 @@ H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
 	if (tmp.raw) {
 		return H2K_mem_tlbfmt_from_linear(tmp,me->ssr_asid);
 	}
-	ret.raw = 0;
 	return ret;
 }

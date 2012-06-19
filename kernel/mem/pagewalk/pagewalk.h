@@ -55,7 +55,9 @@ H2K_mem_tlbfmt_t H2K_mem_get_pagetable(u32_t badva, H2K_thread_context *me) IN_S
 
 static inline u32_t H2K_mem_translate_pagetable(H2K_pte_t entry, u32_t va) {
 
-	return (va & (PAGE_SIZE - 1)) | (entry.ppn << PAGE_BITS);
+	u32_t size = PAGE_SIZE << (entry.s * 2);
+
+	return (va & (size - 1)) | (entry.ppn << PAGE_BITS);
 }
 
 #endif

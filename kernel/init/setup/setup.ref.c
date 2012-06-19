@@ -38,9 +38,12 @@ void H2K_init_setup_bootvm(u32_t phys_offset)
 	bootvm = (H2K_vmblock_t *)H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock_space, SET_STORAGE, 0, 0, NULL);
 	H2K_gp->vmblocks[1] = bootvm;
 
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PMAP_TYPE, (u32_t)H2K_linear_bootmap - phys_offset, H2K_ASID_TRANS_TYPE_LINEAR, NULL);
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_CPUS_INTS, MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PMAP_TYPE,
+									(u32_t)H2K_linear_bootmap - phys_offset, H2K_ASID_TRANS_TYPE_LINEAR, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PRIO_TRAPMASK,
+									0, 0xffffffff, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_CPUS_INTS,
+									MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT, NULL);
 }
 
 IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset)

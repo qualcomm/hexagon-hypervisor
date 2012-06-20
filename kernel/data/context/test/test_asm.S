@@ -64,7 +64,7 @@
 	jump testFAIL; \
 1: \
 	SET_REG(r2,1f); \
-	elr = r2 \
+	elr = r2; \
 	SET_REG(r3,0x00000000); \
 	SET_REG(r2,0x000a0000); \
 	r0 = sgp; \

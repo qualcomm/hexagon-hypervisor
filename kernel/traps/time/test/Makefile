@@ -5,3 +5,5 @@ EXEC=test.elf
 
 include Makefile.inc
 
+CFLAGS += -ffixed-r28 
+

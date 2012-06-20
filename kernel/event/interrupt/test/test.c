@@ -153,7 +153,7 @@ void TH_setup_inthandlers(u32_t interrupt)
 		H2K_gp->inthandlers[i].param = 0;
 	}
 	H2K_gp->inthandlers[interrupt].handler = TH_good_interrupt;
-	H2K_gp->inthandlers[interrupt].param = 0x600dbeef;
+	H2K_gp->inthandlers[interrupt].param = (void *)0x600dbeef;
 }
 
 /*

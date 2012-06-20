@@ -120,8 +120,7 @@ void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum, u32_t 
 		TH_check_interrupt(TH_src_context, me);
 		if (TH_pass == 0) {
 			TH_pass = 1;
-			/* EJP: ELR may not be saved.  Also write register */
-			me->ssrelr = (me->ssrelr & 0xffffffff00000000ULL)  | ((u32_t)H2K_handle_int);
+			/* Write ELR to register */
 			asm volatile ( " elr = %0 " : : "r"((u32_t)H2K_handle_int) :"memory");
 			return;
 		} else {

@@ -84,9 +84,8 @@ typedef struct _h2_thread_context
 	};
 	union {
 		/* XXX: FIXME: Change to ccrssr because they are paired.  Move ELR. */
-		u64_t ssrelr;
+		u64_t ccrssr;
 		struct {
-			u32_t elr;
 			union {
 				u32_t ssr;
 				struct {
@@ -121,6 +120,7 @@ typedef struct _h2_thread_context
 #endif
 				};
 			};
+			u32_t ccr;
 		};
 	};
 	u64_t r3130;
@@ -177,7 +177,13 @@ typedef struct _h2_thread_context
 	};
 	u64_t lc1sa1;	// OK FOR DCZEROA
 	u64_t m1m0;
-	u64_t cs1cs0;	// V4 regs
+	union {
+		u64_t ccr_rsvd;		// OK to move to cleared area?
+		struct {
+			u32_t elr;
+			u32_t reserved_u32;
+		};
+	};
 	// 224
 	u64_t r2726;	// OK for dczeroa
 	u64_t r2524;
@@ -198,13 +204,7 @@ typedef struct _h2_thread_context
 			u32_t gbadva;
 		};
 	};
-	union {
-		u64_t ccr_rsvd;		// OK to move to cleared area?
-		struct {
-			u32_t ccr;
-			u32_t reserved_u32;
-		};
-	};
+	u64_t cs1cs0;	// V4 regs
 	u64_t reserved_u64_3;
 	// 288
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;

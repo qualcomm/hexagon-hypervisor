@@ -84,10 +84,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(SRC+#CONTEXT_gssr_gelr) = r1:0
-		r0 = ccr
-	}
-	{
-		memw(SRC+#CONTEXT_ccr) = r0
 	}
 	.falign
 .Lfrom_sleep:
@@ -123,6 +119,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		r21:20 = memd(DST+#CONTEXT_gpugp)
+		r0 = memw(DST+#CONTEXT_elr)
 		PMUVAL = insert(PMU_ON,r1:0)
 		START = sub(NOW,START)			// pcycles - oncpu wait
 	}
@@ -139,15 +136,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		g1:0 = r25:24
 	}
 	{
-		r0 = memw(DST+#CONTEXT_elr)
-		r1 = memw(DST+#CONTEXT_ccr)
 		g3:2 = r27:26
-	}
-	{
 		r25:24 = memd(DST+#CONTEXT_r2524)
 		r27:26 = memd(DST+#CONTEXT_r2726)
 	}
-	ccr = r1
 	elr = r0					// XXX: FIXME: cram somewhere...
 	PMUCFG = PMUVAL
 	{

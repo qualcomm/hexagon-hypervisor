@@ -26,7 +26,7 @@ TH_do_tlbmissx:
 	memw(#TH_helper_ref) = r0
 	memw(#TH_stack_save) = r29
 	/* Fill in register values */
-	r3:2 = memd(r0+#CONTEXT_ssrelr)
+	r3:2 = memd(r0+#CONTEXT_ccrssr)
 	r5:4 = memd(r0+#CONTEXT_m1m0)
 	r7:6 = memd(r0+#CONTEXT_lc1sa1)
 	r9:8 = memd(r0+#CONTEXT_lc0sa0)
@@ -82,7 +82,7 @@ TH_do_tlbmissrw:
 	memw(#TH_helper_ref) = r0
 	memw(#TH_stack_save) = r29
 	/* Fill in register values */
-	r3:2 = memd(r0+#CONTEXT_ssrelr)
+	r3:2 = memd(r0+#CONTEXT_ccrssr)
 	r5:4 = memd(r0+#CONTEXT_m1m0)
 	r7:6 = memd(r0+#CONTEXT_lc1sa1)
 	r9:8 = memd(r0+#CONTEXT_lc0sa0)

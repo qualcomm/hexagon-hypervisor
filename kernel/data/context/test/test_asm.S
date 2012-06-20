@@ -63,10 +63,12 @@
 	if (p0) jump 1f; \
 	jump testFAIL; \
 1: \
-	SET_REG(r3,0x000a0000); \
 	SET_REG(r2,1f); \
+	elr = r2 \
+	SET_REG(r3,0x00000000); \
+	SET_REG(r2,0x000a0000); \
 	r0 = sgp; \
-	memd(r0+#CONTEXT_ssrelr) = r3:2; \
+	memd(r0+#CONTEXT_ccrssr) = r3:2; \
 	SET_REG(REGHI,0); \
 	SET_REG(REGLO,0); \
 	jumpr r31; \

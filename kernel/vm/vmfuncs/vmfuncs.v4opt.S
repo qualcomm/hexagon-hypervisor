@@ -78,6 +78,7 @@ FUNC_START H2K_vmtrap_setvec .text.vm.funcs .falign
 	}
 FUNC_END H2K_vmtrap_setvec
 
+/* Is enable while enable common? disable while disabled? No change can go faster... */
 FUNC_START H2K_vmtrap_setie .text.vm.funcs .falign
 	{
 		r1 = memw(ME+#CONTEXT_r00)

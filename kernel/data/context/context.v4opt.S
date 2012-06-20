@@ -26,7 +26,7 @@ FUNC_START H2K_context_save .text.core.context .p2align 5
 	{
 		memd(r0+#CONTEXT_r1110) = r11:10
 		memd(r0+#CONTEXT_r0908) = r9:8
-		r8 = ssr
+		r9:8 = s7:6			// ccr:ssr
 		r29.l = #lo(H2K_stacks)
 	}
 	{
@@ -36,14 +36,14 @@ FUNC_START H2K_context_save .text.core.context .p2align 5
 		r28 = #KERNEL_STACK_SIZE
 	}
 	{
-		memd(r0+#CONTEXT_r0504) = r5:4
 		memd(r0+#CONTEXT_r0706) = r7:6
+		memd(r0+#CONTEXT_ccrssr) = r9:8
 		r9 = HTID
 		r7 = r0
 	}
 	{
 		memd(r7+#CONTEXT_r0302) = r3:2
-		memw(r7+#CONTEXT_ssr) = r8
+		memd(r7+#CONTEXT_r0504) = r5:4
 		r29 += mpyi(r9,r28)
 		r18 = p3:0
 	}
@@ -68,13 +68,13 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	 */
 	r16 = sgp					// can save if sgp in known register
 	{
-		r13:12 = memd(r16+#CONTEXT_ssrelr)
+		r13:12 = memd(r16+#CONTEXT_ccrssr)
 		r15:14 = memd(r16+#CONTEXT_sr_preds)
 	}
 	{
 		r29:28 = memd(r16+#CONTEXT_r2928)
 		r31:30 = memd(r16+#CONTEXT_r3130)
-		ssr = r13
+		s7:6 = r13:12				// ccr:ssr
 	}
 	{
 		r19:18 = memd(r16+#CONTEXT_lc0sa0)

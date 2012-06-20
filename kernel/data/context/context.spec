@@ -113,9 +113,13 @@ Description
 
 		Code location that will correctly return from the kernel to the thread
 
-	.. cmember:: u64_t ssrelr
+	.. cmember:: u64_t ccrssr
 
-		System Status Register and Event Link Register for the thread
+		System Status Register and Cache Control Register for the thread
+
+	.. cmember:: u34_t elr
+
+		Event Link Register for the thread
 
 	.. cmember:: u64_t **other_register_storage**
 

@@ -154,8 +154,7 @@ int main()
 	if (b->r0100 != 0x00000000deadbeefULL) FAIL("Incorrect argument");
 	if (b->trapmask != 0x55ffffff) FAIL("Incorrect trap mask");
 	if (b->continuation != H2K_interrupt_restore) FAIL("Incorrect continuation");
-	if ((b->ssrelr & 0x00000000FFFFFFFF) != ((u32_t)test_thread)) FAIL("Incorrect return address");
-	//if ((b->ssrelr >> 32) != (a->ssrelr >> 32)) FAIL("Incorrect inheritance of SSR"); /* Forces User mode I think */
+	if ((b->elr) != ((u32_t)test_thread)) FAIL("Incorrect return address");
 	if (b->gp != a->gp) FAIL("Incorrect inheritance of GP");
 	if (b->vmblock != vmblock) FAIL("vmblock is non-NULL");
 	if (b->ssr_asid != asid_pmap) FAIL("wrong asid/pmap");

@@ -53,13 +53,13 @@ typedef u32_t bitmask_t;
 typedef u64_t long_bitmask_t;
 
 typedef union {
-	u32_t raw;
 	struct {
 		u32_t size:4;
 		u32_t cccc:4;
 		u32_t xwru:4;
 		u32_t pages:20;
 	};
+	u32_t raw;
 } H2K_offset_t;
 
 typedef union {
@@ -100,10 +100,11 @@ typedef struct H2K_vmblock_struct {
 		u32_t pmap;
 	};
 	/* When pmap_type is offset, permitted physical range is fence_lo
-		 ... fence_hi.  phys == guest + phys_offset.  fence_hi == 0 means all
-		 memory */
-	u32_t fence_lo;
-	u32_t fence_hi;
+		 ... fence_hi (in pages of size given in offset).  phys == guest +
+		 phys_offset.  fence_hi == 0 means all memory. Signed values so we can use
+		 -1 as uninitialized value */
+	s32_t fence_lo;
+	s32_t fence_hi;
 
 	long_bitmask_t waiting_cpus;
 
@@ -151,7 +152,7 @@ static inline H2K_mem_tlbfmt_t H2K_vm_get_offset(u32_t addr, H2K_thread_context 
 static inline H2K_mem_tlbfmt_t H2K_vm_get_offset(u32_t addr, H2K_thread_context *me) {
 
 	H2K_mem_tlbfmt_t ret;
-	u32_t mask;
+	u32_t mask, vpn, ppn;
 	H2K_vmblock_t *vmblock = me->vmblock;
 	H2K_offset_t offset = vmblock->phys_offset;
 
@@ -162,14 +163,17 @@ static inline H2K_mem_tlbfmt_t H2K_vm_get_offset(u32_t addr, H2K_thread_context 
 
 	mask = (0xffffffff) << (offset.size * 2);
 
-	ret.cccc = offset.cccc;
-	ret.xwru = offset.xwru;
-	ret.asid = me->ssr_asid;
+	vpn = (addr >> PAGE_BITS) & mask;
+	ppn = vpn + offset.pages;
+	if (me->vmblock->fence_lo <= ppn && ppn <= me->vmblock->fence_hi) {
+		ret.cccc = offset.cccc;
+		ret.xwru = offset.xwru;
+		ret.asid = me->ssr_asid;
 
-	ret.vpn = addr & mask;
-	ret.ppd = ((ret.vpn + (offset.pages << PAGE_BITS)) << 1) | (1 << offset.size);
-	ret.valid = 1;
-
+		ret.vpn = vpn;
+		ret.ppd = (ppn << 1) | (1 << offset.size);
+		ret.valid = 1;
+	}
 	return ret;
 }
 

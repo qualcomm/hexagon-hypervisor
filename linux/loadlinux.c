@@ -13,7 +13,6 @@
 #include <h2.h>
 #include <h2_vm.h>
 #include <h2_config.h>
-//#include <h2_fastint.h>
 #include <h2_vmtraps.h>
 
 #include <stdio.h>
@@ -32,6 +31,13 @@
 #define HW_TIMER_INT 10
 #define LINUX_TIMER_INT 2
 
+H2K_offset_t linux_offset = {{
+	.size = SIZE_4M,
+	.cccc = L1WB_L2C,
+	.xwru = URWX,
+	.pages = 0
+	}};
+
 char linux_vmblock_space[65536];
 char ucos_vmblock_space[65536];
 void *linux_vmb;
@@ -45,14 +51,11 @@ unsigned long long int ucos_vcpu_stacks[UCOS_NUM_VCPU][VCPU_STACK_SIZE];
 #define PRINTF(format, args...) printf (format , ##args)
 #endif
 
+#ifdef UCOS
+
+/* can't use offset because ucos needs to write to frame-buffer addresses */
 #define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN)
 
-H2K_linear_fmt_t linux_pmap[] = {
-#include "pmap.def"
-	{ .raw = 0 },
-};
-
-#ifdef UCOS
 H2K_linear_fmt_t ucos_pmap[] = {
 #include "../ucos/pmap_ucos.def"
 	{ .raw = 0 },
@@ -75,36 +78,7 @@ void fatal () {
 	exit (1);
 }
 
-/* int fastint(int intno) { */
-
-/* 	/\* remap timer interrupt *\/ */
-/* 	//	if (intno == HW_TIMER_INT) intno = LINUX_TIMER_INT; */
-
-/* 	H2K_thread_context *fic; */
-
-/* #if __QDSP6_ARCH__ >= 4 */
-/* 	__asm__ __volatile__  */
-/* 		( */
-/* 		 " %0 = sgp0\n" */
-/* 		 : "=r" (fic) */
-/* 		 ); */
-/* #else */
-/* 	__asm__ __volatile__  */
-/* 		( */
-/* 		 " %0 = sgp\n" */
-/* 		 : "=r" (fic) */
-/* 		 ); */
-/* #endif */
-
-/* 	fic->vmblock = linux_vmb; */
-/* 	fic->id.vmidx = 2; */
-/* 	fic->id.cpuidx = 0; */
-/* 	h2_vmtrap_intop(H2K_INTOP_POST, intno, 0); */
-
-/* 	return 1; // re-enable */
-/* } */
-
-void *vm_setup(char num_cpus, short num_ints, char vmblock_space[], H2K_linear_fmt_t pmap[], unsigned long trapmask) {
+void *vm_setup(char num_cpus, short num_ints, char vmblock_space[], u32_t trans, unsigned long trapmask, translation_type pt) {
 
 	unsigned long vmb_size;
 	void *ret;
@@ -117,10 +91,18 @@ void *vm_setup(char num_cpus, short num_ints, char vmblock_space[], H2K_linear_f
 	if (vmb == NULL) FAIL("SET_STORAGE");
 	PRINTF("vmb %08x\n", (unsigned int)vmb);
 
-	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, (unsigned int)pmap, H2K_ASID_TRANS_TYPE_LINEAR);
+	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, trans, pt);
 	if (ret != vmb) {
 		PRINTF("ret %08x\n", (unsigned int)ret);
 		FAIL("SET_PMAP_TYPE");
+	}
+
+	if (pt == H2K_ASID_TRANS_TYPE_OFFSET) {
+		ret = h2_config_vmblock_init(vmb, SET_FENCES, 0x0, 0xff000000);
+		if (ret != vmb) {
+			PRINTF("ret %08x\n", (unsigned int)ret);
+			FAIL("SET_FENCES");
+		}
 	}
 
 	if (h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0, trapmask) != vmb) {
@@ -167,12 +149,6 @@ void setup_ints(void *vmb, char num_cpus) {
 			 deliver the interrupt */
 		H2K_vm_shint_enable(vmb, &(((H2K_vmblock_t *)vmb)->contexts[0]), i, ((H2K_vmblock_t *)vmb)->intinfo);
 	}
-
-	/* timerptr->clear = 1; */
-	/* timerptr->match = 32; */
-	/* timerptr->enable = 3; */
-	/* puts("linux: Timer set up..."); */
-
 }
 
 extern void linux_stext();
@@ -181,8 +157,6 @@ int main(int argc, char *argv[]) {
 
 	void *vmb;
 
-	unsigned int phys_offset = (unsigned int)H2K_PHYS_OFFSET;
-
 	h2_init(0);
 	h2_config_setfatal(fatal);
 	PRINTF("loadlinux: H2 started\n");
@@ -190,8 +164,7 @@ int main(int argc, char *argv[]) {
 #ifdef LINUX
 	PRINTF("linux: start boot\n");
 
-#warning Remove this total hack
-	vmb = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_vmblock_space, (H2K_linear_fmt_t *)((unsigned int)linux_pmap - phys_offset), 0x1);
+	vmb = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_vmblock_space, linux_offset.raw, 0x1, H2K_ASID_TRANS_TYPE_OFFSET);
 	setup_ints(vmb, LINUX_NUM_VCPU);
 	linux_vmb = vmb;
 	PRINTF("linux: vm set up\n");
@@ -250,8 +223,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef UCOS
 	PRINTF("ucos: start boot\n");
-#warning Remove this total hack
-	vmb = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, ucos_vmblock_space, (H2K_linear_fmt_t *)((unsigned int)ucos_pmap - phys_offset), 0xffffffff);
+	vmb = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, ucos_vmblock_space, (u32_t)ucos_pmap, 0xffffffff, H2K_ASID_TRANS_TYPE_LINEAR);
 	PRINTF("ucos: vm set up\n");
 
 	PRINTF("ucos: loading to 0x%08x from 0x%08x, size 0x%08x\n", (unsigned int)ucos_loadaddr, (unsigned int)ucos_image_start, (unsigned int)(ucos_image_end - ucos_image_start));

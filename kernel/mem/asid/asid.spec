@@ -22,15 +22,20 @@ Guest environments can have arbitrarily large numbers of address spaces,
 however a limited number of address spaces may be specified by all threads
 simultaneously.
 
-Each ASID has a reference count and a translation base.  When a thread is
-created, it increments the reference count on the interhited address space.
-When a thread changes to a new set of translations, the reference count for the
-old address space is decremented and the reference count for the new address
-space is incremented.  If a reference count drops to zero, the address space 
-is considered not currently used, and the ASID is available for reuse.  However,
-the address space is still considered valid until notifed otherwise by the guest.
+Each ASID has a reference count and a translation base. The translation base is
+passed as a logical address by the guest, but maintained as a physical address
+by the hypervisor to ensure that it is unique.  This translation of the base
+address is done using the translations associated with the vmblock of the
+guest.
 
-This allows guests to leave cached translations around for several address spaces.
+When a thread is created, it increments the reference count on the inherited
+address space.  When a thread changes to a new set of translations, the
+reference count for the old address space is decremented and the reference
+count for the new address space is incremented.  If a reference count drops to
+zero, the address space is considered not currently used, and the ASID is
+available for reuse.  However, the address space is still considered valid
+until notifed otherwise by the guest.  This allows guests to leave cached
+translations around for several address spaces.
 
 H2K_asid_table
 --------------
@@ -41,7 +46,7 @@ H2K_asid_table
 
 	.. cmember:: u32_t ptb
 
-		Base address for translation tables
+		Base physical address for translation tables
 
 	.. cmember:: u16_t count
 
@@ -90,9 +95,12 @@ Updates maxhops in the bucket hashed to.
 H2K_asid_table_inc
 ------------------
 
-.. cfunction:: s32_t H2K_asid_table_inc(u32_t ptb)
+.. cfunction:: s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
 
 	:param ptb: Address of the translation base
+	:param type: Type of translation
+	:param flag: Invalidate TLB entries for this ASID
+	:param vmblock: pointer to vmblock of guest
 
 Description
 ~~~~~~~~~~~
@@ -100,12 +108,20 @@ Description
 This routine searches for an ASID already configured to specify the
 address space pointed to by ptb.
 
+First the ptb is translated to its physical address using the vmblock pmap,
+unless the translation type is OFFSET.  In this case the ptb value is in fact
+the guest's vmblock pointer, which is already unique.  This value is used as a
+placeholder in the ASID table but is not actually referenced.
+
 If an ASID was already configured to specify the address space, 
 the reference count is incremented.  Otherwise, we find a free 
 ASID and set the reference count to 1.
 
+If flag is TRUE, invalidate the ASID in the TLB.
+
 If no free ASID is available, -1 is returned.  Otherwise, the ASID
 corresponding to the "ptb" is returned.
+
 
 Functionality
 ~~~~~~~~~~~~~
@@ -139,6 +155,7 @@ H2K_asid_table_invalidate
 
 Description
 ~~~~~~~~~~~
+FIXME: unused/unneeded
 
 This routine searches for an ASID that has been used for the specified 
 translations, and assures that no cached translations remain valid for 

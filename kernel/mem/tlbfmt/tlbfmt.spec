@@ -2,7 +2,7 @@
 :mod:`tlbfmt` -- Hardware TLB Entry Format Services
 ===================================================
 
-.. module:: tlbfill
+.. module:: tlbfmt
 
 H2K_mem_tlbfmt_t
 ----------------

@@ -16,12 +16,15 @@ void H2K_vmblock_clear(H2K_vmblock_t *vmblock) {
 
 s32_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock, u32_t *result) {
 
+	u32_t mask;
 	u32_t ret;
 
 	if (vmblock->pmap_type == H2K_ASID_TRANS_TYPE_OFFSET) { // check fence params
 		ret = addr + (vmblock->phys_offset.pages << PAGE_BITS);
 
-		if (vmblock->fence_lo <= ret && ret <= vmblock->fence_hi) {
+		mask = 0xffffffff << (vmblock->phys_offset.size * 2);
+		if (vmblock->fence_lo <= ((ret >> PAGE_BITS) & mask)
+				&& (((ret >> PAGE_BITS) & mask) <= vmblock->fence_hi)) {
 			*result = ret;
 			return 0;
 		}

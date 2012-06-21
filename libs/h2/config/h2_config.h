@@ -22,13 +22,13 @@ Operations that can be done during vmblock initialization
 #ifndef H2K_VM_H
 
 typedef union {
-	unsigned int raw;
 	struct {
 		unsigned int size:4;
 		unsigned int cccc:4;
 		unsigned int xwru:4;
 		unsigned int pages:20;
 	};
+	unsigned int raw;
 } H2K_offset_t;
 
 typedef union {

@@ -9,7 +9,7 @@
 #include <string.h>
 #include "elf.h"
 
-typedef unsigned long long int u64_t;
+//typedef unsigned long long int u64_t;
 
 #define SIZE_4K 0
 #define SIZE_16K 1
@@ -51,38 +51,71 @@ typedef unsigned long long int u64_t;
 
 #define NONE 0
 
-#define MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \
-        (((u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \
-                (unsigned int)((((u64_t)(PPN))) | (((u64_t)(CFIELD)) << 24) | ((u64_t)(PERM) << 28))) ,
+/* As long as the map is contiguous and all pages have the same cache attrs, we can use offset translations */
 
-u64_t map[] = {
-MEMORY_MAP_THREAD(      0,      0,      0x00000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x00000)
-MEMORY_MAP_THREAD(      0,      0,      0x01000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x01000)
-MEMORY_MAP_THREAD(      0,      0,      0x02000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x02000)
-MEMORY_MAP_THREAD(      0,      0,      0x03000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x03000)
-MEMORY_MAP_THREAD(      0,      0,      0x04000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x04000)
-MEMORY_MAP_THREAD(      0,      0,      0x05000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x05000)
-MEMORY_MAP_THREAD(      0,      0,      0x06000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x06000)
-MEMORY_MAP_THREAD(      0,      0,      0x07000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x07000)
-        0
-};
+/* #define MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \ */
+/*         (((u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \ */
+/*                 (unsigned int)((((u64_t)(PPN))) | (((u64_t)(CFIELD)) << 24) | ((u64_t)(PERM) << 28))) , */
+
+/* u64_t map[] = { */
+/* MEMORY_MAP_THREAD(      0,      0,      0x00000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x00000) */
+/* MEMORY_MAP_THREAD(      0,      0,      0x01000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x01000) */
+/* MEMORY_MAP_THREAD(      0,      0,      0x02000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x02000) */
+/* MEMORY_MAP_THREAD(      0,      0,      0x03000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x03000) */
+/* MEMORY_MAP_THREAD(      0,      0,      0x04000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x04000) */
+/* MEMORY_MAP_THREAD(      0,      0,      0x05000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x05000) */
+/* MEMORY_MAP_THREAD(      0,      0,      0x06000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x06000) */
+/* MEMORY_MAP_THREAD(      0,      0,      0x07000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x07000) */
+/*         0 */
+/* }; */
 
 #define MAX_SIZE (1024*1024)
 #define NUM_TOTAL_THREADS 32
+
+H2K_offset_t offset = {{
+	.size = SIZE_16M,
+	.cccc = L1WB_L2C,
+	.xwru = URWX,
+	.pages = 0
+	}};
+
+#define FENCE_LO 0
+#define FENCE_HI 0x07000000
+
 unsigned char storage[MAX_SIZE] __attribute__((aligned(32)));
+
+void FAIL(const char *str)
+{
+	printf("FAIL %s\n", str);
+	exit(1);
+}
+
 void spawn_vm(void *pc)
 {
 	unsigned int size;
 	void *vmb;
+	void *ret;
+
 	size = h2_config_vmblock_size(NUM_TOTAL_THREADS,1);
 	if (size > MAX_SIZE) {
 		printf("Size too small.");
 		exit(1);
 	}
 	vmb = h2_config_vmblock_init(storage,SET_STORAGE,0,0);
-	vmb = h2_config_vmblock_init(vmb,SET_PMAP_TYPE,0,0);
-	h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
-	h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	if (vmb == NULL) FAIL("SET_STORAGE");
+
+	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
+	if (ret != vmb) FAIL("SET_PMAP_TYPE");
+
+	ret = h2_config_vmblock_init(vmb, SET_FENCES, FENCE_LO, FENCE_HI);
+	if (ret != vmb) FAIL("SET_FENCES");
+
+	ret = h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
+	if (ret != vmb) FAIL("SET_CPUS_INTS");
+
+	ret = h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	if (ret != vmb) FAIL("SET_PRIO_TRAPMASK");
+
 	/* Stats Reset */
 	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
 	h2_vmboot(pc,(void *)0x07fffff0,0,0,vmb);
@@ -112,7 +145,7 @@ int main(int argc, char **argv)
 		printf("%s <file>",argv[0]);
 		return 1;
 	}
-	h2_vmtrap_newmap(map,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
+	//	h2_vmtrap_newmap(map,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
 	f = fopen(argv[1],"rb");
 	if ((ret = elf_get_ehdr(f,&ehdr)) < 0) {
 		printf("Invalid ELF file\n");

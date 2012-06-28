@@ -73,38 +73,38 @@ Each pair of instructions corresponds to the appropriate trap id.
 Several traps handlers may point to :cfunc:`H2K_thread_id()`, which 
 is used wherever empty traptab spaces exist.  The table is as follows:
 
-	0. :cfunc:`H2K_trap_angel()`: dummy handler for ANGEL semihosting
-	1. :cfunc:`H2K_thread_id()`: Get the thread ID
-	2. :cfunc:`H2K_futex_wait()`: Wait on a futex
-	3. :cfunc:`H2K_futex_resume()`: Wake threads waiting on a futex
-	4. :cfunc:`H2K_thread_create()`: Create a new thread
-	5. :cfunc:`H2K_thread_stop()`: Stop and recycle the current thread
-	6. :cfunc:`H2K_cputime_get()`: Get CPU time
-	7. :cfunc:`H2K_thread_id()`: Get the thread ID
-	8. :cfunc:`H2K_register_fastint()`: Register a fast interrupt handler
-	9. :cfunc:`H2K_prio_set()`: Change priority
-	10. :cfunc:`H2K_prio_get()`: Get priority
-	11. :cfunc:`H2K_popup_wait()`: Block, waiting on an interrupt
-	12. :cfunc:`H2K_sched_yield()`: Yield to another thread at the same priority
-	13. :cfunc:`H2K_thread_id()`: Get the thread ID
-	14. :cfunc:`H2K_thread_id()`: Get the thread ID
-	15. :cfunc:`H2K_thread_id()`: Get the thread ID
-	16. :cfunc:`H2K_pcycles_get()`: Get processor cycle count
-	17. :cfunc:`H2K_thread_id()`: Get the thread ID
-	18. :cfunc:`H2K_tid_set()`: Set software thread ID
-	19. :cfunc:`H2K_tid_get()`: Get software thread ID
-	20. :cfunc:`H2K_futex_lock_pi()`: Priority Inheritance Futexy-Mutex Lock
-	21. :cfunc:`H2K_futex_unlock_pi()`: Priority Inheritance Futexy-Mutex Unlock
-	22. :cfunc:`H2K_thread_id()`: Get the thread ID
-	23. :cfunc:`H2K_thread_id()`: Get the thread ID
-	24. :cfunc:`H2K_thread_id()`: Get the thread ID
-	25. :cfunc:`H2K_thread_id()`: Get the thread ID
-	26. :cfunc:`H2K_thread_id()`: Get the thread ID
-	27. :cfunc:`H2K_waitcycles_get()`: Get waitcycles for a hardware thread
-	28. :cfunc:`H2K_vmboot()`: Start VM
-	29. :cfunc:`H2K_trap_pmuconfig()`: Adjust PMU Configuration
-	30. :cfunc:`H2K_trap_config()`: Adjust Kernel Configuration
-	31. :cfunc:`H2K_trap_hwconfig()`: Adjust Hardware Configuration
+	0x00. :cfunc:`H2K_trap_angel()`: dummy handler for ANGEL semihosting
+	0x01. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x02. :cfunc:`H2K_futex_wait()`: Wait on a futex
+	0x03. :cfunc:`H2K_futex_resume()`: Wake threads waiting on a futex
+	0x04. :cfunc:`H2K_thread_create()`: Create a new thread
+	0x05. :cfunc:`H2K_thread_stop()`: Stop and recycle the current thread
+	0x06. :cfunc:`H2K_cputime_get()`: Get CPU time
+	0x07. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x08. :cfunc:`H2K_register_fastint()`: Register a fast interrupt handler
+	0x09. :cfunc:`H2K_prio_set()`: Change priority
+	0x0A. :cfunc:`H2K_prio_get()`: Get priority
+	0x0B. :cfunc:`H2K_popup_wait()`: Block, waiting on an interrupt
+	0x0C. :cfunc:`H2K_sched_yield()`: Yield to another thread at the same priority
+	0x0D. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x0E. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x0F. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x10. :cfunc:`H2K_pcycles_get()`: Get processor cycle count
+	0x11. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x12. :cfunc:`H2K_tid_set()`: Set software thread ID
+	0x13. :cfunc:`H2K_tid_get()`: Get software thread ID
+	0x14. :cfunc:`H2K_futex_lock_pi()`: Priority Inheritance Futexy-Mutex Lock
+	0x15. :cfunc:`H2K_futex_unlock_pi()`: Priority Inheritance Futexy-Mutex Unlock
+	0x16. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x17. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x18. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x19. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x1A. :cfunc:`H2K_thread_id()`: Get the thread ID
+	0x1B. :cfunc:`H2K_waitcycles_get()`: Get waitcycles for a hardware thread
+	0x1C. :cfunc:`H2K_vmboot()`: Start VM
+	0x1D. :cfunc:`H2K_trap_pmuconfig()`: Adjust PMU Configuration
+	0x1E. :cfunc:`H2K_trap_config()`: Adjust Kernel Configuration
+	0x1F. :cfunc:`H2K_trap_hwconfig()`: Adjust Hardware Configuration
 
 
 Testing

@@ -20,7 +20,7 @@
 	 * typedef union {
 	 * 	struct {
 	 * 		unsigned short threads_left;
-	 * 		unsigned short count;
+	 * 		unsigned short version;
 	 * 		unsigned int threads_total;
 	 * 	};
 	 * 	unsigned long long int raw;
@@ -96,6 +96,11 @@ h2_barrier_wait:
 	}
 1:
 	trap0(#H2_TRAP_FUTEX_WAIT)
+	/* Returned from futex wait.  This could be for two reasons:
+	 * 0. Trap fail (transitory / val changed / etc).  
+	 * 1. Woken up.
+	 * For either case, if the version has been bumped we are free to go.  Otherwise we 
+	 * want to wait on the new value, not what we read originally */
 	{
 		r2 = memw(r24)			// read count:threads_left
 		r3 = r25			// read orig_count:whatever
@@ -103,6 +108,7 @@ h2_barrier_wait:
 	r3:2 = vlsrw(r3:2,#16)			// shift both right to get counts
 	{
 		p0 = cmp.eq(r3,r2)		// If they match,
+		if (p0.new) r1 = r2
 		if (p0.new) jump:nt 1b		// spin again
 	}
 	{

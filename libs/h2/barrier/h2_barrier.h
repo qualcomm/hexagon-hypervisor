@@ -24,8 +24,8 @@
 /** @brief Barrier type definition.  Please do not access directly. */
 typedef union {
 	struct {
-		unsigned short count;
 		unsigned short threads_left;
+		unsigned short version;
 		unsigned int threads_total;
 	};
 	unsigned long long int raw;
@@ -42,7 +42,7 @@ configured to wait for threads_total threads to arrive.
 
 static inline int h2_barrier_init(h2_barrier_t *barrier, unsigned int threads_total)
 {
-	barrier->count = 0;
+	barrier->raw = 0;
 	barrier->threads_left = barrier->threads_total = threads_total;
 	return 0;
 }

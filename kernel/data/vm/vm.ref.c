@@ -14,24 +14,27 @@ void H2K_vmblock_clear(H2K_vmblock_t *vmblock) {
 	}
 }
 
-s32_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock, u32_t *result) {
+H2K_translation_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock) {
 
 	u32_t mask;
-	u32_t ret;
+	H2K_translation_t ret;
+
+	ret.raw = 0;
 
 	if (vmblock->pmap_type == H2K_ASID_TRANS_TYPE_OFFSET) { // check fence params
-		ret = addr + (vmblock->phys_offset.pages << PAGE_BITS);
+		ret.addr = addr + (vmblock->phys_offset.pages << PAGE_BITS);
 
-		mask = 0xffffffff << (vmblock->phys_offset.size * 2);
-		if (vmblock->fence_lo <= ((ret >> PAGE_BITS) & mask)
-				&& (((ret >> PAGE_BITS) & mask) <= vmblock->fence_hi)) {
-			*result = ret;
-			return 0;
+		mask = 0xffffffff << (PAGE_BITS + (vmblock->phys_offset.size * 2));
+		if (vmblock->fence_lo <= ((ret.addr & mask) >> PAGE_BITS)
+				&& ((ret.addr & mask) >> PAGE_BITS) <= vmblock->fence_hi) {
+
+			ret.size = vmblock->phys_offset.size;
+			ret.cccc = vmblock->phys_offset.cccc;
+			ret.xwru = vmblock->phys_offset.xwru;
+			ret.valid = 1;
 		}
-		else {
-			return -1;
-		}
+		return ret;
 	}
 
-	return H2K_translate(addr, vmblock->pmap, vmblock->pmap_type, result);
+	return H2K_translate(addr, vmblock);
 }

@@ -65,6 +65,7 @@ typedef struct {
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
 	u32_t on_simulator;
+	u32_t phys_offset;
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
 	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
@@ -74,7 +75,7 @@ extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");
 
 register H2K_kg_t * const H2K_gp asm ("r16");
 
-void H2K_kg_init() IN_SECTION(".text.init.globals");
+void H2K_kg_init(u32_t phys_offset) IN_SECTION(".text.init.globals");
 
 #endif
 

@@ -101,6 +101,7 @@ void setup()
 	}
 	/* OK, set up ASID table... */
 	H2K_asid_table_init();
+	H2K_thread_context_clear(&a);
 	a.ssr_asid = H2K_asid_table_inc(((u32_t)l1pt), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 }
 
@@ -220,6 +221,11 @@ void test_all_pages()
 
 int main()
 {
+	/* Set up KGP correctly for direct calls */
+	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+
+	H2K_gp->phys_offset = 0;
+	
 	setup();
 	test_all_firstpage();
 	puts("So far, so good...");

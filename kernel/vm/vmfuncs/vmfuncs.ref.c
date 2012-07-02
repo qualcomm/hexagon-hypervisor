@@ -108,11 +108,19 @@ void H2K_vmtrap_newmap(H2K_thread_context *me)
 {
 	s32_t newasid;
 	u32_t newptb = me->r00;
-	translation_type type = me->r01;
+	translation_type type;
 	tlb_invalidate_flag flag = me->r02;
 
-	/* type is checked in H2K_asid_table_inc */
-	if ((newasid = H2K_asid_table_inc(newptb, type, flag, me->vmblock)) < 0) {
+	
+	/* Don't allow guest to newmap offset translations for now.  FIXME?  Can
+		 maybe store offset descriptor in asid table */
+	if (me->r01 >= H2K_ASID_TRANS_TYPE_XXX_LAST) { // bad type
+		me->r00 = -1;
+		return;
+	}
+
+	type = me->r01;
+	if ((newasid = H2K_asid_table_inc(newptb, type, flag, me->vmblock)) == -1) {
 		me->r00 = -1;
 	} else {
 		H2K_asid_table_dec(me->ssr_asid);

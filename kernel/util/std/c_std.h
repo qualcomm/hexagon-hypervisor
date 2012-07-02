@@ -51,6 +51,9 @@ typedef u32_t pa_t;
 
 #define bits(type) (sizeof(type) * 8)
 
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 #define H2K_LANG_IS_C 1
 
 #endif

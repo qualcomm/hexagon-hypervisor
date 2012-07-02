@@ -130,11 +130,11 @@ Description
 
 Performs the requested initialization operation on the VM block.  The valid operations are:
 
-* SET_STORAGE: Initialize storage for VM block (ptr).
+* SET_STORAGE: Initialize storage for VM block (ptr).  Add vmblock pointer to global vmblocks array.  Set vm ID.
 * SET_PMAP_TYPE: Set page-map pointer (arg1).  If arg1 is NULL, use ptb of current thread as page map.  Set page-map translation type (linear, page tables, or offset) (arg2).  If type is 'offset', then arg1 contains an offset descriptor, [pages (20 bits) : xwru (4 bits) : cccc (4 bits) : size (4 bits)], that is used to generate translations on the fly.  The offset is an unsigned value; negative offsets are specified as large positive values that wrap around: (0xffffffff - offset).
 * SET_FENCES: For the offset translation type, set the low (arg1) and high (arg2) physical address of the memory region accessible by the VM.  These are stored as page numbers in the vmblock.
 * SET_PRIO_TRAPMASK: Set best allowed priority (arg1); set mask for allowed traps (arg2).
-* SET_CPUS_INTS: Set max number of virtual CPUs (arg1) and set number active to 0; set number of virtual interrupts (arg2) and clear enable/pending for each.
+* SET_CPUS_INTS: Set max number of virtual CPUs (arg1) and set number active to 0; set number of virtual interrupts (arg2) and clear enable/pending for each.  Initialize thread contexts for the given number of cpus.  
 * MAP_PHYS_INTR: Map virtual interrrupt number (arg1) to [physical interrupt number (16 bits) : virtual CPU index (16 bits)] (arg2).  Also sets up the passthru interrupt handler for the given physical interrupt, which will post the virtual interrupt (to the given CPU index in the case of a per-CPU interrupt).  If the virtual interrupt number is not in the per-CPU range, then the CPU-index argument is ignored.  
 
 SET_STORAGE must be the first operation invoked.  Subesequent operations should use the pointer value returned by SET_STORAGE.  MAP_PHYS_INTR may not precede SET_CPUS_INTS; other operations may be invoked in arbitrary order.

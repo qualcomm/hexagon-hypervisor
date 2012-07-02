@@ -94,22 +94,33 @@ s32_t H2K_do_asid_table_inc(u32_t phys_ptb, translation_type type, tlb_invalidat
 
 s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
 {
-	u32_t phys_ptb = ptb;
+	H2K_translation_t phys_translation;
+
+	phys_translation.addr = ptb;
+
+	if (ptb == 0) return -1; // no ptb; probably called from create and forgot to SET_PMAP_TYPE in config
 
 	if (type == H2K_ASID_TRANS_TYPE_OFFSET) {
-		return H2K_do_asid_table_inc(phys_ptb, type, flag);
+		return H2K_do_asid_table_inc(phys_translation.addr, type, flag);
 	}
 	
 	if (type >= H2K_ASID_TRANS_TYPE_XXX_LAST) { // bad type
 		return -1;
 	}
 
-	if (vmblock != NULL) { // translate ptb using vmblock pmap
-		if (H2K_vm_translate(ptb, vmblock, &phys_ptb) == -1) // bad ptb
-			return -1;
+	if (ptb == (u32_t)vmblock) { // type should have been offset
+		return -1;
 	}
 
-	return H2K_do_asid_table_inc(phys_ptb, type, flag);
+	if (vmblock != NULL
+			&& vmblock->pmap != 0  // FIXME: should be an error?
+			&& ptb != vmblock->pmap) { 
+		/* translate ptb using vmblock pmap */
+		phys_translation = H2K_vm_translate(ptb, vmblock);
+		if (!phys_translation.valid) return -1; // bad ptb
+	}
+
+	return H2K_do_asid_table_inc(phys_translation.addr, type, flag);
 }
 
 void H2K_asid_table_dec(u32_t asid)
@@ -124,13 +135,16 @@ s32_t H2K_asid_table_invalidate(u32_t ptb, H2K_vmblock_t *vmblock)
 {
 	H2K_asid_entry_t *tmp;
 	u32_t asid;
+	H2K_translation_t phys_translation;
+
+	phys_translation.addr = ptb;
 
 	if (vmblock != NULL) { // translate ptb using vmblock pmap
-		if (H2K_vm_translate(ptb, vmblock, &ptb) == -1) // bad ptb
-			return -1;
+		phys_translation = H2K_vm_translate(ptb, vmblock);
+		if (!phys_translation.valid) return -1; // bad ptb
 	}
 
-	if ((tmp = H2K_asid_table_search(ptb)) != NULL) {
+	if ((tmp = H2K_asid_table_search(phys_translation.addr)) != NULL) {
 		if (tmp->fields.count != 0) return -1;
 		asid = tmp-H2K_mem_asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);

@@ -32,7 +32,7 @@ void sys_Mtxinit(void **mutex)
 		}
 	}
 	h2_mutex_unlock(&bigmutex);
-	assert(*mutex != NULL);
+	//	assert(*mutex != NULL);
 }
 
 void sys_Mtxdst(void **mutex)

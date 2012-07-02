@@ -59,6 +59,12 @@ ifeq ($(LINUX_LINK_ADDR),)
 LINUX_LINK_ADDR = 0x00000000
 endif
 
+LINUX_STEXT = $(LINUX_LINK_ADDR)
+
+ifeq ($(LINUX_LOAD_ADDR),)
+LINUX_LOAD_ADDR = $(LINUX_LINK_ADDR)
+endif
+
 ifeq ($(FRAME_BUFFER),)
 FRAME_BUFFER = 0x89000000
 endif
@@ -66,9 +72,6 @@ endif
 ifeq ($(MILLISECONDS),)
 MILLISECONDS = 20
 endif
-
-LINUX_STEXT = $(LINUX_LINK_ADDR)
-LINUX_LOAD_ADDR = $(LINUX_LINK_ADDR)
 
 CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
 
@@ -134,6 +137,7 @@ loadlinux: loadlinux.o vapa.x $(UCOS_BIN) $(UCOS_OBJ)
 	${CC} ${CFLAGS} -c -o $@ $<
 
 clean:
+	$(MAKE) -C ../ucos clean
 	rm -f loadlinux.o loadlinux vapa.x ucos.bin
 
 

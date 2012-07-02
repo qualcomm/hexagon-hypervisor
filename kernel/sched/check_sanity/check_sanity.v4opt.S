@@ -41,7 +41,7 @@ FUNC_START H2K_check_sanity_unlock .text.core.sanity .p2align 5
 		R9:8 = memd(H2K_GP + #KG_ready_valids)         //  H2K_gp->ready_valids[0]
 		R11:10 = memd(H2K_GP + #KG_ready_valids + 8)   //  H2K_gp->ready_valids[1]
 		R7:6 = combine(#0,#-1)                         //  initial hthread : MAX(runlist_prio)
-		R28 = #4                                       //  initial hthread if >= 4
+		R28 = #8                                       //  initial hthread if >= 4
 	}
 	{
 		R8 = ct0(R9:8)
@@ -140,7 +140,7 @@ FUNC_START H2K_check_sanity .text.core.sanity .p2align 5
 		R9:8 = memd(H2K_GP + #KG_ready_valids)         //  H2K_gp->ready_valids[0]
 		R11:10 = memd(H2K_GP + #KG_ready_valids + 8)   //  H2K_gp->ready_valids[1]
 		R7:6 = combine(#0,#-1)                         //  initial hthread : MAX(runlist_prio)
-		R28 = #4                                       //  initial hthread if >= 4
+		R28 = #8                                       //  initial hthread if >= 4
 	}
 	{
 		R8 = ct0(R9:8)

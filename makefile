@@ -126,5 +126,7 @@ cov_fns:
 	./scripts/gen_cov_fns.pl > ./scripts/v4opt_cov_fns;
 	$(MAKE) clean ref Q6VERSION=v5 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
+	$(MAKE) clean opt Q6VERSION=v5 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v5opt_cov_fns;
 
 

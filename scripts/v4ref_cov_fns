@@ -4,8 +4,11 @@ H2K_asid_table_inc
 H2K_asid_table_init
 H2K_asid_table_invalidate
 H2K_asid_table_search
+H2K_atomic_add_mask
 H2K_atomic_clrbit
+H2K_atomic_compare_swap_mask
 H2K_atomic_insert
+H2K_atomic_max_mask
 H2K_atomic_setbit
 H2K_atomic_swap
 H2K_cache_d_clean
@@ -19,6 +22,7 @@ H2K_context_restore_return
 H2K_context_save
 H2K_cputime_get
 H2K_disable_guest_interrupts
+H2K_do_asid_table_inc
 H2K_dosched
 H2K_enable_guest_interrupts
 H2K_event_vectors
@@ -66,6 +70,7 @@ H2K_init_setup
 H2K_init_setup_bootvm
 H2K_intconfig_init
 H2K_intconfig_l2_init
+H2K_intcontrol_disable
 H2K_intcontrol_enable
 H2K_intcontrol_raise
 H2K_interrupted_preempt
@@ -73,8 +78,14 @@ H2K_interrupted_waitmode
 H2K_kg_init
 H2K_lowprio_init
 H2K_lowprio_notify
+H2K_mem_get_linear
+H2K_mem_get_pagetable
+H2K_mem_lookup_linear
 H2K_mem_pagefault
 H2K_mem_pagewalk
+H2K_mem_pagewalk_l1
+H2K_mem_pagewalk_l2
+H2K_mem_physread_dword
 H2K_mem_physread_word
 H2K_mem_stlb_add
 H2K_mem_stlb_check
@@ -97,14 +108,13 @@ H2K_mem_tlbfmt_from_linear
 H2K_mem_tlbfmt_get_basepa
 H2K_mem_tlbfmt_get_perms
 H2K_mem_tlbfmt_get_size
-H2K_mem_translate_l1
-H2K_mem_translate_l2
 H2K_mem_translate_linear
 H2K_mem_translate_pagetable
 H2K_mutex_lock_k0
 H2K_mutex_lock_tlb
 H2K_mutex_unlock_k0
 H2K_mutex_unlock_tlb
+H2K_passthru
 H2K_pcycles_get
 H2K_popup_cancel
 H2K_popup_int
@@ -125,6 +135,7 @@ H2K_ready_remove
 H2K_ready_set_prio
 H2K_readylist_init
 H2K_register_fastint
+H2K_register_passthru
 H2K_resched
 H2K_ring_append
 H2K_ring_append_real
@@ -165,6 +176,7 @@ H2K_thread_stop
 H2K_tid_get
 H2K_tid_set
 H2K_timer_cancel_withlock
+H2K_timer_delta
 H2K_timer_dotimeout
 H2K_timer_get_freq
 H2K_timer_get_resolution
@@ -184,6 +196,7 @@ H2K_timer_update_time
 H2K_timer_update_timeout
 H2K_trace
 H2K_trace_init
+H2K_translate
 H2K_trap_angel
 H2K_trap_config
 H2K_trap_config_setfatal
@@ -222,6 +235,7 @@ H2K_vm_cpuint_setaffinity
 H2K_vm_cpuint_status
 H2K_vm_do_work
 H2K_vm_event
+H2K_vm_get_offset
 H2K_vm_int_deliver
 H2K_vm_int_deliver_locked
 H2K_vm_int_intinfo_init
@@ -243,7 +257,9 @@ H2K_vm_shint_peek
 H2K_vm_shint_post
 H2K_vm_shint_setaffinity
 H2K_vm_shint_status
+H2K_vm_translate
 H2K_vmblock_clear
+H2K_vmblock_valid
 H2K_vmboot
 H2K_vmint_fixup_aff
 H2K_vmint_fixup_default

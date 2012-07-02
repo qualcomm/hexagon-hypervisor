@@ -32,7 +32,7 @@
 #define LINUX_TIMER_INT 2
 
 H2K_offset_t linux_offset = {{
-	.size = SIZE_4K,
+	.size = SIZE_4M,
 	.cccc = L1WB_L2C,
 	.xwru = URWX,
 	.pages = (LINUX_LOAD_ADDR >> PAGE_BITS)

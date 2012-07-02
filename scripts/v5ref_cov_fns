@@ -44,6 +44,9 @@ H2K_futex_pi_raise
 H2K_futex_resume
 H2K_futex_unlock_pi
 H2K_futex_wait
+H2K_get_ccr
+H2K_get_elr
+H2K_get_gp
 H2K_get_modectl
 H2K_get_pcycle_reg
 H2K_get_pmucfg
@@ -53,6 +56,8 @@ H2K_get_pmucnt2
 H2K_get_pmucnt3
 H2K_get_pmuevtcfg
 H2K_get_syscfg
+H2K_gregs_restore
+H2K_gregs_save
 H2K_handle_debug
 H2K_handle_error
 H2K_handle_int
@@ -151,6 +156,7 @@ H2K_runlist_worst_prio_hthread
 H2K_safemem_check_and_lock
 H2K_safemem_unlock
 H2K_sched_yield
+H2K_set_elr
 H2K_set_gie
 H2K_set_pmucfg
 H2K_set_pmucnt0

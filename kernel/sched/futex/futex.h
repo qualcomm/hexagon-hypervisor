@@ -9,6 +9,7 @@
 #define FUTEX_HASHBITS 5
 #define FUTEX_HASHSIZE (1<<FUTEX_HASHBITS)
 
+#ifndef ASM
 #include <context.h>
 
 s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) IN_SECTION(".text.core.futex");
@@ -17,5 +18,6 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me) IN_SECTION(".text.c
 s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me) IN_SECTION(".text.core.futex");
 void H2K_futex_cancel(H2K_thread_context *dst) IN_SECTION(".text.core.futex");
 void H2K_futex_init() IN_SECTION(".text.init.futex");
+#endif
 
 #endif

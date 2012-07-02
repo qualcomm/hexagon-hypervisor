@@ -68,11 +68,11 @@ static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 	max_future = nowticks + 0x0FFFFC000ULL;
 	if (nextticks < nowticks) nextticks = nowticks;
 	if (nextticks > max_future) nextticks = max_future;
-	if ((nextticks - nowticks) > TICK_GRANULARITY) {
-		H2K_gp->time.devptr[HW_MATCH] = nextticks;
-		H2K_gp->time.next_ticks = nextticks;
-	} else {
-		/* EXPIRE NOW */
+	H2K_gp->time.devptr[HW_MATCH] = nextticks;
+	H2K_gp->time.next_ticks = nextticks;
+	nowticks = H2K_timer_hw_read_count();
+	if ((nextticks - nowticks) < (TICK_GRANULARITY)) {
+		/* TOO CLOSE... EXPIRE NOW SW */
 		H2K_timer_hw_soft_raise();
 	}
 }

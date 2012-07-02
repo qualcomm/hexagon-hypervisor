@@ -17,8 +17,6 @@
 
 /* ***************** HW INTERFACES ********************* */
 
-static inline s64_t H2K_timer_delta(s64_t a, s64_t b) { return a-b; }
-
 #if ARCHV <= 4
 
 #define HW_COUNT 1
@@ -73,7 +71,7 @@ static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 	H2K_gp->time.devptr[HW_MATCH] = nextticks;
 	H2K_gp->time.next_ticks = nextticks;
 	nowticks = H2K_timer_hw_read_count();
-	if (H2K_timer_delta(nextticks,nowticks) < (TICK_GRANULARITY)) {
+	if (nowticks <= (nextticks + TICK_GRANULARITY)) {
 		/* TOO CLOSE... EXPIRE NOW SW */
 		H2K_timer_hw_soft_raise();
 	}

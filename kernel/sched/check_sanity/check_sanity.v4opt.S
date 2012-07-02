@@ -55,7 +55,7 @@ FUNC_START H2K_check_sanity_unlock .text.core.sanity .p2align 5
 		READY_VALIDS_0 = memd(H2K_GP + #KG_ready_valids)				//  H2K_gp->ready_valids[0]
 		READY_VALIDS_1 = memd(H2K_GP + #KG_ready_valids + 8)				//  H2K_gp->ready_valids[1]
 		MAXRESULTS = combine(#0,#-1)							//  initial hthread : MAX(runlist_prio)
-		TMP0 = #4									//  initial hthread if >= 4
+		TMP0 = #8									//  initial hthread if >= 4
 	}
 	{
 		TZ_0 = ct0(READY_VALIDS_0)

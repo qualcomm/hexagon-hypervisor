@@ -24,11 +24,10 @@ Indeed.
 H2K_vm_translate
 ----------------
 
-.. cfunction:: s32_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock, u32_t *result)
+.. cfunction:: H2K_translation_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock)
 
 	:param addr:  Address to translate
 	:param vmblock: Pointer to vmblock
-	:param result: Pointer to result
 
 Description
 ~~~~~~~~~~~
@@ -39,9 +38,9 @@ Functionality
 ~~~~~~~~~~~~~
 
 If the translation type of the vmblock is 'offset', calculate the translated
-address based on the offset descriptor (offset pages, page size).  Store result
-and return 0 if the translated address falls within the fence parameters of the
-vmblock.  Else return -1.
+address based on the offset descriptor (offset pages, page size).  Return result
+if the translated address falls within the fence parameters of the
+vmblock.  Else return a translation with the invalid bit set.
 
 For other translation types call :cfunc:`H2K_translate()` to handle the translation.
 

@@ -14,9 +14,9 @@ These values must be pinned into kernel memory.  The format is::
 The values must terminate with a value zero.
 
 H2K_mem_get_linear
-------------------------
+------------------
 
-.. cfunction:: H2K_linear_fmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
+.. cfunction:: H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
 
 	:param badva: Virtual Address to translate
 	:param me: Context of the current thread
@@ -41,4 +41,45 @@ to the next entry in the list.  If we find a zero entry, we have unsuccessfully
 searched the entire list, and so return zero.
 
 
+H2K_mem_translate_linear
+------------------------
 
+.. cfunction:: static inline H2K_translation_t H2K_mem_translate_linear(H2K_linear_fmt_t entry, u32_t va)
+
+	:param entry: Entry from linear translation list
+	:param va: Address to translate
+
+Description
+~~~~~~~~~~~
+
+Translate an address using the given entry.  Provides both the fully translated
+address as well as the page attributes of the translation.
+
+Functionality
+~~~~~~~~~~~~~
+
+Form the translated address and store in return struct.  Copy attributes to
+return struct.
+
+
+H2K_mem_lookup_linear
+---------------------
+
+.. cfunction:: H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list, H2K_vmblock_t *vmblock)
+
+	:param badva: Address to translate
+	:param list: Start address of linear translation list
+	:param vmblock: vmblock pointer
+
+Description
+~~~~~~~~~~~
+
+Search list of linear translations for entry matching the given address.  Return first match or 0 if not found.
+
+Functionality
+~~~~~~~~~~~~~
+
+The start address is assumed to be physical.  Read each entry until a match is
+found or the end marker (0 entry) is reached.  If a chain entry is encountered,
+translate the guest pointer to the next part of the list to a physical address
+using the vmblock translations.

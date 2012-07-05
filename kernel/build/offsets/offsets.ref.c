@@ -16,6 +16,7 @@
 int main(int argc, char **argv)
 {
 PRINT_CONTEXT_OFFSET(next);
+PRINT_CONTEXT_OFFSET(prev);
 PRINT_CONTEXT_OFFSET(hthread);
 PRINT_CONTEXT_OFFSET(status);
 PRINT_CONTEXT_OFFSET(vmstatus);

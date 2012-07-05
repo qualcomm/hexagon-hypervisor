@@ -12,24 +12,23 @@
 
 /* Data Structure Interface Functions */
 
-void H2K_futex_hash_add(pa_t pa, H2K_thread_context *me)
+void H2K_futex_hash_add_ring(H2K_thread_context **ring, H2K_thread_context *me)
 {
-	u32_t hashval = HASHVAL(pa);
 	H2K_thread_context *tmp;
-	if (H2K_gp->futexhash[hashval] == NULL) {
+	if (*ring == NULL) {
 		/* empty */
 		me->next = me->prev = me;
-		H2K_gp->futexhash[hashval] = me;
-	} else if (me->prio < H2K_gp->futexhash[hashval]->prio) {
+		*ring = me;
+	} else if (me->prio < (*ring)->prio) {
 		/* me is best prio */
-		me->next = H2K_gp->futexhash[hashval];
+		me->next = *ring;
 		me->prev = me->next->prev;
 		me->next->prev = me;
 		me->prev->next = me;
-		H2K_gp->futexhash[hashval] = me;
+		*ring = me;
 	} else {
 		/* Not the best priority, search backwards through lower prios (if any) */
-		tmp = H2K_gp->futexhash[hashval]->prev;
+		tmp = (*ring)->prev;
 		while (me->prio < tmp->prio) tmp = tmp->prev;
 		me->next = tmp->next;
 		me->prev = tmp;

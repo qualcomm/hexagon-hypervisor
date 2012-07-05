@@ -2,7 +2,7 @@ OUTPUT_FORMAT ("elf32-littleqdsp6",
                "elf32-bigqdsp6",
 	       "elf32-littleqdsp6")
 OUTPUT_ARCH (qdsp6)
-ENTRY (start)
+ENTRY (__boot)
 __DYNAMIC = 0;
 PHDRS
 {
@@ -45,7 +45,8 @@ SECTIONS
       PROVIDE_HIDDEN (__rel_iplt_end = .);
     }
   .CODE : {} :CODE
-  .start : AT(0xxxxxxxxx) { KEEP(*(.start)) }
+  .boot : AT(0xxxxxxxxx) { KEEP(*(.boot)) }
+  .start : { KEEP(*(.start)) }
   .init           :
   {
     KEEP (*(.init))

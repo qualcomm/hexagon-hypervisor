@@ -11,6 +11,7 @@
 #include <tlbfmt.h>
 #include <pagewalk.h>
 #include <asid.h>
+#include <thread.h>
 
 void FAIL(const char *str)
 {

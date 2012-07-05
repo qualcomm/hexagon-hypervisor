@@ -65,7 +65,7 @@ static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 	u64_t nowticks;
 	u64_t max_future;
 	nowticks = H2K_timer_hw_read_count();
-	max_future = nowticks + 0x0FFFFC000ULL;
+	max_future = nowticks + 0x0F0000000ULL;
 	if (nextticks < nowticks) nextticks = nowticks;
 	if (nextticks > max_future) nextticks = max_future;
 	H2K_gp->time.devptr[HW_MATCH] = nextticks;

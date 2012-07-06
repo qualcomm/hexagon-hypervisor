@@ -42,7 +42,7 @@ H2K_HEAP_SIZE = 0x100000
 endif
 
 ARCH=qdsp6
-SIM=${ARCH}-sim
+RUN=${ARCH}-sim
 CC=${ARCH}-gcc
 AS=${ARCH}-as
 LD=${ARCH}-ld
@@ -51,6 +51,10 @@ OBJDUMP=${ARCH}-objdump
 GMON_MERGE=${ARCH}-gmon-merge
 COV=${ARCH}-cov
 PYTHON=python
+
+BUSPENALTY=
+TIMING=
+include /prj/dsp/qdsp6/arch/make/simf.inc
 
 ################################################################################
 #  Rules for building the kernel if necessary; should be built way before any
@@ -191,7 +195,9 @@ report.html:
 	   else\
 	      grep "TEST PASSED" $$SUBDIR/results.txt > /dev/null; \
 	      if [ $$? -eq 0 ]; then \
-	         echo '<td>PASSED</td>' >> report.html; \
+	         echo '<td>' >> report.html; \
+		 cat $$SUBDIR/results.txt >> report.html; \
+		 echo '</td>' >> report.html; \
 	      else \
 	         echo '<td><font style="background-color: red;">' >> report.html; \
 		 cat $$SUBDIR/results.txt >> report.html; \
@@ -297,7 +303,7 @@ ignore_fns: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-	ulimit -t 60 && ${SIM} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee $@; \
+	ulimit -t 60 && ${RUN} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \

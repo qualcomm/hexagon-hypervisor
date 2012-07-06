@@ -75,3 +75,6 @@
 ./libs/h2/vmtraps/test/test_pcycles
 ./libs/h2/vmtraps/test/test_return
 ./libs/h2/vmtraps/test/test_yield
+
+./perf/setie
+./perf/myid

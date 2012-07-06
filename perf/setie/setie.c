@@ -21,5 +21,6 @@ int main(void){
 	end = h2_get_core_pcycles();
 	h2_vmtrap_setie(0);
 	printf("Average PCycles for 2 setie's (1 disable followed by 1 enable):  %.0f\n", (double) (end - start) / 1024.0);
+	printf("TEST PASSED - %.0f\n", (double) (end - start) / 1024.0);
 	return 0;
 }

@@ -6,6 +6,7 @@
 #ifndef H2K_SAFEMEM_H
 #define H2K_SAFEMEM_H 1
 
+#ifndef ASM
 #include <c_std.h>
 #include <context.h>
 #include <hw.h>
@@ -24,5 +25,15 @@ enum {
 	SAFEMEM_WX,
 	SAFEMEM_RWX
 };
+#else
+#define SAFEMEM_NONE 0
+#define SAFEMEM_R 1
+#define SAFEMEM_W 2
+#define SAFEMEM_RW 3
+#define SAFEMEM_X 4
+#define SAFEMEM_RX 5
+#define SAFEMEM_WX 6
+#define SAFEMEM_RWX 7
+#endif
 
 #endif

@@ -9,6 +9,12 @@
 #define FUTEX_HASHBITS 5
 #define FUTEX_HASHSIZE (1<<FUTEX_HASHBITS)
 
+#ifdef ASM
+#define FUTEX_PRIME 2654435761
+#else
+#define FUTEX_PRIME 2654435761UL
+#endif
+
 #include <futex_common.h>
 #include <futex_pi.h>
 #include <futex_classic.h>

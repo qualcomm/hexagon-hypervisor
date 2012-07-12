@@ -99,7 +99,6 @@ FUNC_START H2K_futex_hash_remove_one  .text.core.futex  .p2align  5
 	{
 		p0 = cmp.eq(START,#0)
 		if (p0.new) jump:nt .Lrm_bad
-		nop
 		if (!p0.new) CURLOCK = memw(CUR+#CONTEXT_futex_ptr)
 		if (!p0.new) NEXT = memw(CUR+#CONTEXT_next)
 	}

@@ -30,25 +30,25 @@ void FAIL(const char *str)
 
 void test_ptr_all(void *ptr)
 {
-	if (h2_futex_wait(ptr,0) >= 0) FAIL("Wait returned success");
+	if (h2_futex_wait(ptr,0) >= 0) FAIL("all/Wait returned success");
 	if (h2_futex_wake(ptr,1) >= 0) {
 		printf("ptr=%p\n",ptr);
-		FAIL("Wake returned success");
+		FAIL("all/Wake returned success");
 	}
-	if (h2_futex_lock_pi(ptr) >= 0) FAIL("Lock returned success");
-	if (h2_futex_unlock_pi(ptr) >= 0) FAIL("Unlock returned success");
+	if (h2_futex_lock_pi(ptr) >= 0) FAIL("all/Lock returned success");
+	if (h2_futex_unlock_pi(ptr) >= 0) FAIL("all/Unlock returned success");
 }
 
 void test_ptr_w(void *ptr)
 {
-	if (h2_futex_lock_pi(ptr) >= 0) FAIL("Lock returned success");
-	if (h2_futex_unlock_pi(ptr) >= 0) FAIL("Unlock returned success");
+	if (h2_futex_lock_pi(ptr) >= 0) FAIL("w/Lock returned success");
+	if (h2_futex_unlock_pi(ptr) >= 0) FAIL("w/Unlock returned success");
 }
 
 void test_ptr_rok(void *ptr)
 {
-	if (h2_futex_wait(ptr,0) >= 0) FAIL("Wait returned success?");
-	if (h2_futex_wake(ptr,1) > 0) FAIL("Wake woke thread?");
+	if (h2_futex_wait(ptr,0) >= 0) FAIL("r/Wait returned success?");
+	if (h2_futex_wake(ptr,1) > 0) FAIL("r/Wake woke thread?");
 }
 
 #if ARCHV <= 3

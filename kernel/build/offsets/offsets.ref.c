@@ -86,8 +86,11 @@ PRINT_KG_OFFSET(lowprio_masks);
 PRINT_KG_OFFSET(l2_int_base);
 PRINT_KG_OFFSET(l2_ack_base);
 PRINT_KG_OFFSET(l2_intinfo);
+PRINT_KG_OFFSET(vmblocks);
 #endif
 PRINT_VMBLOCK_OFFSET(waiting_cpus);
+PRINT_VMBLOCK_OFFSET(max_cpus);
+PRINT_VMBLOCK_OFFSET(contexts);
 
 	printf("#define STATUS_DEAD       %d\n",H2K_STATUS_DEAD);
 	printf("#define STATUS_READY      %d\n",H2K_STATUS_READY);

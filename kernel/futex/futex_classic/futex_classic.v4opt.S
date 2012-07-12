@@ -9,8 +9,6 @@
 #include <max.h>
 #include <safemem.h>
 
-#define PRIME 2654435761
-
 /* H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) */
 FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 	{
@@ -58,7 +56,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 	{
 		RUNLIST = add(H2K_GP,#KG_runlist)
 		RUNLIST_PRIOS = add(H2K_GP,#KG_runlist_prios)
-		HASH = mpyi(PA,##PRIME)
+		HASH = mpyi(PA,##FUTEX_PRIME)
 	}
 	{
 		memd(ME+#CONTEXT_r0100) = ZEROPAIR
@@ -123,11 +121,11 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 	tlbunlock
 	{
 		p0 = cmp.eq(r0,#0)
-		if (p0.new) jump:nt .Lresume_null
+		if (p0.new) jump:nt .Lresume_bad
 		PA = memw(r29)
 	}
 	{
-		HASH = mpyi(PA,##PRIME)
+		HASH = mpyi(PA,##FUTEX_PRIME)
 		RING = add(H2K_GP,#KG_futexhash)
 	}
 	{
@@ -174,7 +172,7 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 	}
 .Lresume_bad:
 	{
-		r1 = #-1
+		r0 = #-1
 		dealloc_return
 	}
 #undef ME

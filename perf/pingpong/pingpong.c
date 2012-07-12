@@ -16,7 +16,7 @@ unsigned long long int pong_stack[64];
 #ifdef DEBUG
 #define ITERS 10
 #else
-#define ITERS (100*1000)
+#define ITERS (1000)
 #endif
 
 #ifdef H2_H
@@ -76,21 +76,17 @@ char context_space[1024];
 
 int main() {
 	unsigned long long int start,end;
-#ifdef H2_H
-	h2_init(NULL);
-	h2_config_add_thread_storage(context_space,sizeof(context_space));
-#endif
 	blast_sem_init_val(&toping,0);
 	blast_sem_init_val(&topong,0);
 	blast_sem_init_val(&tomain,0);
-	my_thread_create((void *)ping,&ping_stack[63],64*8,NULL,254);
-	my_thread_create((void *)pong,&pong_stack[63],64*8,NULL,254);
+	my_thread_create((void *)ping,&ping_stack[64],64*8,NULL,254);
+	my_thread_create((void *)pong,&pong_stack[64],64*8,NULL,254);
 	blast_sem_down(&tomain);
 	blast_sem_down(&tomain);
 	start = blast_get_core_pcycles();
 	blast_sem_up(&toping);
 	blast_sem_down(&tomain);
 	end = blast_get_core_pcycles();
-	printf("Done! cycles=%lld\n", end-start);
+	printf("TEST PASSED - %.0f\n", (float) (end - start) / (float) ITERS);
+	return 0;
 }
-

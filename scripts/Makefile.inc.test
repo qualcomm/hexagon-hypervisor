@@ -54,7 +54,46 @@ PYTHON=python
 
 BUSPENALTY=
 TIMING=
-include /prj/dsp/qdsp6/arch/make/simf.inc
+#include /prj/dsp/qdsp6/arch/make/simf.inc
+#Till I figure out something better, here is that file
+ifeq ($(origin RUN), undefined)
+  RUN = qdsp6-sim
+endif
+
+ifeq ($(origin TIMING), undefined)
+  TIMING = --timing
+endif
+
+ifeq ($(origin BUSPENALTY), undefined)
+  BUSPENALTY = --buspenalty 50
+endif
+
+_BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
+
+ifeq (hexagon-sim, $(notdir $(firstword ${RUN})))
+SIMF=${_BASIC_SIMF}
+endif
+
+ifeq (qdsp6-sim, $(notdir $(firstword ${RUN})))
+SIMF=${_BASIC_SIMF}
+endif
+
+ifeq (angel, $(notdir $(firstword ${RUN})))
+SIMF=
+endif
+
+ifeq (sim, $(notdir $(firstword ${RUN})))
+SIMF=${_BASIC_SIMF} --quiet --magic_angel
+endif
+
+ifeq (archsim, $(notdir $(firstword ${RUN})))
+SIMF=${_BASIC_SIMF} --quiet --magic_angel
+endif
+
+ifeq (devsim, $(notdir $(firstword ${RUN})))
+SIMF=${_BASIC_SIMF} --quiet --magic_angel
+endif
+
 
 ################################################################################
 #  Rules for building the kernel if necessary; should be built way before any

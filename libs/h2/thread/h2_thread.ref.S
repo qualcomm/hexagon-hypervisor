@@ -36,7 +36,6 @@ h2_thread_myid:
 	jumpr r31
 1:
 	trap0(#H2_TRAP_THREAD_ID)
-	ugp = r0
 	jumpr r31
 
 	.global h2_yield

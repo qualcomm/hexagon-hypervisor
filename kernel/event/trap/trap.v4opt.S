@@ -22,36 +22,29 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	{
 		memd(r0+#CONTEXT_r3130) = r31:30
 		call H2K_context_save
+		r30 = ##H2K_traptab
 	}
 	/* sgp=r7, ssr=r8, htid=r9 */
 	{
 		r19 = and(r8,#0xff)
 		r18 = memw(r7+#CONTEXT_trapmask)
+		memw(r7+#CONTEXT_continuation) = r31
+		r30 = insert(r8,#5,#3)			// same as tableidxd
 	}
 	{
 		p0 = !cmp.gtu(r19,#0x1f)
 		p0 = tstbit(r18,r19)
 		if (!p0.new) jump:nt .Lreturn_to_guest
-		r18 = r19
 	}
 	{
-		r18 = add(##H2K_traptab,asl(r18,#3))
-		call .Ljump_to_trap
+		callr r30
 	}
 	.falign
-H2K_trap_nogood:
+H2K_trap_done:
 	r17 = sgp
 	{
 		memd(r17+#CONTEXT_r0100) = r1:0
-		call H2K_preempt
-	}
-	jump H2K_context_restore_return
-
-	.falign
-.Ljump_to_trap:
-	{
-		memw(r7+#CONTEXT_continuation) = r31  // set up continuation in case we block  ??? not tested?
-		jumpr r18
+		jump H2K_context_restore_return
 	}
 
 	.falign
@@ -59,11 +52,8 @@ H2K_trap_nogood:
 	{
 		r1:0 = combine(r19,#0)
 		r3:2 = combine(r7,#TRAP0_GEVB_OFFSET)
-		call H2K_vm_event
-		memw(r7+#CONTEXT_continuation) = r31
+		jump H2K_vm_event		// returns to continuation
 	}
-	call H2K_preempt
-	jump H2K_context_restore_return
 
 FUNC_END H2K_handle_trap0
 

@@ -34,7 +34,7 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	// set up continuation in case we block
 	call .Ljump_to_trap
 
-H2K_trap_nogood:
+H2K_trap_done:
 	r17 = sgp
 	memd(r17+#CONTEXT_r0100) = r1:0		// Save return value in case of preemption
 	call H2K_preempt			// Try to take interrupt before returning

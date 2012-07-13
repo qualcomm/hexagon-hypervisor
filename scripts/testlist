@@ -79,3 +79,5 @@
 ./perf/setie
 ./perf/myid
 ./perf/pingpong
+./perf/mutex
+./perf/mutex2

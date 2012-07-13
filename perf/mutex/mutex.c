@@ -13,7 +13,7 @@
 #define SPINRAND 16
 #define BASESPINS 64
 
-#define N_SPINS 1000
+#define N_SPINS 300
 
 #define POLYNOMIAL 0x800000000000000DULL
 
@@ -121,7 +121,7 @@ int main()
 	avg = (end-start-adj)/count;
 	printf("%lld locks/trylocks/unlocks, approx %d cycles per pair\n",count,avg);
 	printf("Done!\n");
-	printf("PASS avg=%d\n",avg);
+	printf("TEST PASSED - %d\n",avg);
 	return 0;
 }
 

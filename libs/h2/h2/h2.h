@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 
+#include "h2_atomic.h"
 #include "h2_alloc.h"
 #include "h2_futex.h"
 #include "h2_intwait.h"

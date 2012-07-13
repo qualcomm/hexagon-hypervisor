@@ -9,7 +9,7 @@
 
 #define N_MUTEXES 1
 
-#define N_SPINS 1000
+#define N_SPINS 300
 
 #define POLYNOMIAL 0x800000000000000DULL
 
@@ -90,7 +90,7 @@ int main()
 	avg = (end-start)/count;
 	printf("%lld locks/trylocks/unlocks, approx %d cycles per pair\n",count,avg);
 	printf("Done!\n");
-	printf("PASS avg=%d\n",avg);
+	printf("TEST PASSED avg=%d\n",avg);
 	return 0;
 }
 

@@ -61,7 +61,7 @@ void worker(void *arg)
 int main()
 {
 	int i;
-	unsigned long long int start,end,count,adj;
+	unsigned long long int start,end,count;
 	unsigned int avg;
 	printf("Hello!\n");
 	h2_sem_init_val(&donesem,0);

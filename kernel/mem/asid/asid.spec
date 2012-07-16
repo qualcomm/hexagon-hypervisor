@@ -108,6 +108,8 @@ Description
 This routine searches for an ASID already configured to specify the
 address space pointed to by ptb.
 
+If the ptb is null, error.  Return -1.
+
 First the ptb is translated to its physical address using the vmblock pmap,
 unless the translation type is OFFSET.  In this case the ptb value is in fact
 the guest's vmblock pointer, which is already unique.  This value is used as a

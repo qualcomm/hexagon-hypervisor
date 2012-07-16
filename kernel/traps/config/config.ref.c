@@ -13,6 +13,7 @@
 #include <max.h>
 #include <intconfig.h>
 #include <asid.h>
+#include <translate.h>
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -68,6 +69,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 	u32_t *p;
 	u32_t i;
 	H2K_offset_t offset;
+	H2K_translation_t phys_translation;
 
 	u32_t ptrtmp = (u32_t)ptr;
 	/* Align Pointer */
@@ -110,7 +112,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 			offset.raw = arg1;
 
 			/* Make sure offset is aligned to a valid page size, and size field matches */
-			if ((i = Q6_R_ct0_R(offset.pages)) % 4 != 0 || offset.size > (i / 2)) return 0;
+			if ((i = Q6_R_ct0_R(offset.pages)) % 2 != 0 || offset.size > (i / 2)) return 0;
 
 			vmblock->phys_offset = offset;
 			vmblock->pmap_type = arg2;
@@ -131,7 +133,13 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 			if (me == NULL) { // we are setting up the boot vm
 				vmblock->pmap = arg1;
 			} else { // calling from a guest that might be remapped
-				if (H2K_vm_translate(arg1, me->vmblock, &vmblock->pmap) == -1) return 0;
+				if ((arg1 & 0xff000000) == 0xff000000) { // FIXME: remove this once guests no longer in monitor space
+					vmblock->pmap = arg1 - H2K_gp->phys_offset;
+				} else {
+					phys_translation =	H2K_vm_translate(arg1, me->vmblock);
+					if (!phys_translation.valid) return 0;
+					vmblock->pmap = phys_translation.addr;
+				}
 			}
 		}
 		return (u32_t)vmblock;
@@ -144,12 +152,12 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		if ((Q6_R_ct0_R(arg1 >> PAGE_BITS) / 2 < offset.size)
 				|| Q6_R_ct0_R(arg2 >> PAGE_BITS) / 2 < offset.size) return 0;
 
-		/* Could be a problem here if we have two levels of offset remapping with different page sizes */
-		if (H2K_vm_translate(arg1, me->vmblock, (u32_t *)&vmblock->fence_lo) == -1) return 0;
-		if (H2K_vm_translate(arg2, me->vmblock, (u32_t *)&vmblock->fence_hi) == -1) return 0;
+		/* /\* Could be a problem here if we have two levels of offset remapping with different page sizes *\/ */
+		/* if (H2K_vm_translate(arg1, me->vmblock, (u32_t *)&vmblock->fence_lo) == -1) return 0; */
+		/* if (H2K_vm_translate(arg2, me->vmblock, (u32_t *)&vmblock->fence_hi) == -1) return 0; */
 
-		vmblock->fence_lo >>= PAGE_BITS;
-		vmblock->fence_hi >>= PAGE_BITS;
+		vmblock->fence_lo = (u32_t)vmblock->fence_lo >> PAGE_BITS;
+		vmblock->fence_hi = (u32_t)vmblock->fence_hi >> PAGE_BITS;
 		return (u32_t)vmblock;
 
 	case SET_PRIO_TRAPMASK:

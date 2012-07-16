@@ -182,6 +182,7 @@ H2K_thread_stop
 H2K_tid_get
 H2K_tid_set
 H2K_timer_cancel_withlock
+H2K_timer_delta
 H2K_timer_dotimeout
 H2K_timer_get_freq
 H2K_timer_get_resolution

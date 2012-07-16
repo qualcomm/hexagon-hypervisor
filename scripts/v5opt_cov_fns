@@ -104,9 +104,13 @@ H2K_mem_tlb_read
 H2K_mem_tlb_v3_user_check
 H2K_mem_tlb_write
 H2K_mem_tlbfmt_from_linear
+H2K_mem_tlbfmt_get_basepa
+H2K_mem_tlbfmt_get_perms
+H2K_mem_tlbfmt_get_size
 H2K_mem_translate_linear
 H2K_mem_translate_pagetable
 H2K_mutex_lock_k0
+H2K_mutex_lock_tlb
 H2K_mutex_unlock_k0
 H2K_mutex_unlock_tlb
 H2K_passthru

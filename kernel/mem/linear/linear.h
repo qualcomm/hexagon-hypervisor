@@ -10,6 +10,7 @@
 #include <context.h>
 #include <tlbfmt.h>
 #include <max.h>
+#include <translate.h>
 
 typedef union {
 	u64_t raw;
@@ -34,15 +35,23 @@ typedef union {
 	};
 } H2K_linear_fmt_t;
 
-H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list) IN_SECTION(".text.mem.linear");
+H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list, H2K_vmblock_t *vmblock) IN_SECTION(".text.mem.linear");
 
 H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me) IN_SECTION(".text.mem.linear");
 
-static inline u32_t H2K_mem_translate_linear(H2K_linear_fmt_t entry, u32_t va) {
+static inline H2K_translation_t H2K_mem_translate_linear(H2K_linear_fmt_t entry, u32_t va) {
 
-	u32_t size = PAGE_SIZE << (entry.size * 2);
+	u32_t page_offset_mask = (PAGE_SIZE << (entry.size * 2)) - 1;
+	H2K_translation_t ret;
 
-	return (va & (size - 1)) | (entry.ppn << PAGE_BITS);
+	ret.raw = 0;
+	ret.addr = (va & page_offset_mask) | (entry.ppn << PAGE_BITS);
+	ret.size = entry.size;
+	ret.cccc = entry.cccc;
+	ret.xwru = entry.xwru;
+	ret.valid = 1;
+
+	return ret;
 }
 
 #endif

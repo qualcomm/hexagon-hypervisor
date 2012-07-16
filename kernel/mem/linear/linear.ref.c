@@ -10,6 +10,7 @@
 #include <max.h>
 #include <asid.h>
 #include <physread.h>
+#include <globals.h>
 
 #if __QDSP6_ARCH__ <= 3
 
@@ -49,9 +50,10 @@ static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear(H2K_linear_fmt_t linea
 
 #endif
 
-H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list) {
+H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list, H2K_vmblock_t *vmblock) {
 
 	H2K_linear_fmt_t tmp;
+	H2K_translation_t phys_translation;
 	u32_t tvpn;
 	u32_t mask;
 	u32_t badvpn = badva >> PAGE_BITS; /* PAGEBITS or something */
@@ -61,6 +63,16 @@ H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list) {
 		if (tmp.chain) {
 			/* Pointer to next set of translations */
 			list = tmp.low;
+			if ((list & 0xff000000) == 0xff000000) { // FIXME: remove this once guests no longer in monitor space
+				list -= H2K_gp->phys_offset;
+			} else if (vmblock != NULL) {
+				phys_translation =	H2K_vm_translate(list, vmblock);
+				if (!phys_translation.valid) {
+					tmp.raw = 0;
+					return tmp;
+				}
+				list = phys_translation.addr;
+			}
 			tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
 			continue;
 		}
@@ -71,6 +83,7 @@ H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list) {
 			return tmp;
 		}
 		list += sizeof(H2K_linear_fmt_t);
+		/* FIXME: check that new list addr is in bounds of VM */
 		tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
 	}
 	tmp.raw = 0;
@@ -90,7 +103,7 @@ H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
 		return ret;
 	}
 
-	tmp = H2K_mem_lookup_linear(badva, list);
+	tmp = H2K_mem_lookup_linear(badva, list, me->vmblock);
 	if (tmp.raw) {
 		return H2K_mem_tlbfmt_from_linear(tmp,me->ssr_asid);
 	}

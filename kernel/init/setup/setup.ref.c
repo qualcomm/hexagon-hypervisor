@@ -22,6 +22,7 @@
 #include <id.h>
 #include <config.h>
 #include <timer.h>
+#include <bootmap_macros.h>
 
 void qdsp6_pre_main();
 void H2K_interrupt_restore();
@@ -32,23 +33,29 @@ static char vmblock_space[VMBLOCK_SIZE(MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT)
 
 H2K_vmblock_t *bootvm;
 
+H2K_offset_t boot_offset = {{
+	.size = SIZE_16M,
+	.cccc = L1WB_L2C,
+	.xwru = URWX,
+	.pages = 0
+	}};
+
 void H2K_init_setup_bootvm(u32_t phys_offset)
 {
 	BKL_UNLOCK();  // because config locks
 	bootvm = (H2K_vmblock_t *)H2K_trap_config(CONFIG_VMBLOCK_INIT, vmblock_space, SET_STORAGE, 0, 0, NULL);
 	H2K_gp->vmblocks[1] = bootvm;
 
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PMAP_TYPE,
-									(u32_t)H2K_linear_bootmap - phys_offset, H2K_ASID_TRANS_TYPE_LINEAR, NULL);
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PRIO_TRAPMASK,
-									0, 0xffffffff, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PMAP_TYPE, boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_FENCES, 0x0, 0xff000000, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, bootvm, SET_CPUS_INTS,
 									MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT, NULL);
 }
 
 IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset)
 {
-	H2K_kg_init();		/* Kernel Globals first! */
+	H2K_kg_init(phys_offset);		/* Kernel Globals first! */
 	H2K_trace_init();
 	H2K_fatal_init();
 	H2K_runlist_init();

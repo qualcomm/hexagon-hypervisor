@@ -35,7 +35,7 @@ H2K_offset_t linux_offset = {{
 	.size = SIZE_4M,
 	.cccc = L1WB_L2C,
 	.xwru = URWX,
-	.pages = 0
+	.pages = (LINUX_LOAD_ADDR >> PAGE_BITS)
 	}};
 
 char linux_vmblock_space[65536];
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
 
 #ifndef NO_LOAD
 	size_t count;
-	unsigned long *ptr = (unsigned long *)linux_stext;
+	unsigned long *ptr = (unsigned long *)LINUX_LOAD_ADDR;
 	FILE *file;
 	char fname[256] = "vmlinux.bin";
 
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
 	file = fopen(fname, "r");
 	if (file == NULL) FAIL("fopen");
 
-	PRINTF("linux: loading %s to 0x%08x\n", fname, (unsigned int)linux_stext);
+	PRINTF("linux: loading %s to 0x%08x\n", fname, (unsigned int)ptr);
 	do {
 		count = fread(ptr, sizeof(unsigned long), 0x40000, file);
 		ptr += count;

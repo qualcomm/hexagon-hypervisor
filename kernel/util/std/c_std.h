@@ -51,6 +51,13 @@ typedef u32_t pa_t;
 
 #define bits(type) (sizeof(type) * 8)
 
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
+static inline void __barrier() {
+	asm volatile ("" : : : "memory");
+}
+
 #define H2K_LANG_IS_C 1
 
 #endif

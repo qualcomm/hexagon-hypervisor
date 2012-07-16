@@ -6,19 +6,18 @@
 H2K_translate
 -------------
 
-.. cfunction:: s32_t H2K_translate(u32_t addr, u32_t pmap, translation_type type, u32_t *result)
+.. cfunction:: H2K_translation_t H2K_translate(u32_t addr, H2K_vmblock_t *vmblock)
 
 	:param addr: Address to translate
-	:param pmap: Translation base
-	:param type: Translation type
-	:param result: pointer to result
+	:param vmblock: vmblock pointer
 
 Description
 ~~~~~~~~~~~
 
-Translates the given address using given translation base and type.
+Translates the given address using translation base and type from vmblock.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Call the appropriate lookup function according to translation type.  If successful, store result and return 0, else return -1.
+Call the appropriate lookup function according to translation type.  If successful, call the corresponding translation function and return its result.  Else return 0 (invalid translation).
+

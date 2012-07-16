@@ -59,6 +59,12 @@ ifeq ($(LINUX_LINK_ADDR),)
 LINUX_LINK_ADDR = 0x00000000
 endif
 
+LINUX_STEXT = $(LINUX_LINK_ADDR)
+
+ifeq ($(LINUX_LOAD_ADDR),)
+LINUX_LOAD_ADDR = $(LINUX_LINK_ADDR)
+endif
+
 ifeq ($(FRAME_BUFFER),)
 FRAME_BUFFER = 0x89000000
 endif
@@ -66,9 +72,6 @@ endif
 ifeq ($(MILLISECONDS),)
 MILLISECONDS = 20
 endif
-
-LINUX_STEXT = $(LINUX_LINK_ADDR)
-LINUX_LOAD_ADDR = $(LINUX_LINK_ADDR)
 
 CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
 
@@ -107,6 +110,8 @@ UCOS_LINK = -Wl,--defsym=ucos_entry=$(UCOS_LINK_ADDR) -Wl,--defsym=ucos_loadaddr
 UCOS_OBJ = ucos_image.o
 endif
 
+BOOT_OBJ = boot.o
+
 .PHONY: all clean sim
 
 all: loadlinux
@@ -118,14 +123,17 @@ $(UCOS_BIN):
 $(UCOS_OBJ): ucos_image.S $(UCOS_BIN)
 	${CC} ${CFLAGS} -c -o $@ ucos_image.S
 
+$(BOOT_OBJ): boot.S
+	${CC} ${CFLAGS} -c -o $@ boot.S
+
 vapa.x: vapa.x.in
 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$$ENV{H2K_LOAD_ADDR}/' > $@
 
 # second link changes entry point to physical address
-loadlinux: loadlinux.o vapa.x $(UCOS_BIN) $(UCOS_OBJ)
-	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -o $@ loadlinux.o $(UCOS_OBJ)
+loadlinux: loadlinux.o vapa.x $(UCOS_BIN) $(UCOS_OBJ) $(BOOT_OBJ)
+	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -o $@ loadlinux.o $(UCOS_OBJ) $(BOOT_OBJ)
 
-	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -Wl,--entry=`qdsp6-nm loadlinux | egrep ' start$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o $@ loadlinux.o $(UCOS_OBJ)
+	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -Wl,--entry=`qdsp6-nm loadlinux | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o $@ loadlinux.o $(UCOS_OBJ) $(BOOT_OBJ)
 
 %.o: %.c
 	${CC} ${CFLAGS} -c -o $@ $<
@@ -134,7 +142,8 @@ loadlinux: loadlinux.o vapa.x $(UCOS_BIN) $(UCOS_OBJ)
 	${CC} ${CFLAGS} -c -o $@ $<
 
 clean:
-	rm -f loadlinux.o loadlinux vapa.x ucos.bin
+	$(MAKE) -C ../ucos clean
+	rm -f loadlinux.o loadlinux vapa.x ucos.bin $(UCOS_OBJ) $(BOOT_OBJ)
 
 
 sim test.log : loadlinux

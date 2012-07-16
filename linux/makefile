@@ -70,7 +70,7 @@ FRAME_BUFFER = 0x89000000
 endif
 
 ifeq ($(MILLISECONDS),)
-MILLISECONDS = 20
+MILLISECONDS = 5
 endif
 
 CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)

@@ -12,6 +12,7 @@
 #include <pagewalk.h>
 #include <asid.h>
 #include <thread.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -223,7 +224,7 @@ void test_all_pages()
 int main()
 {
 	/* Set up KGP correctly for direct calls */
-	__asm__ __volatile(" r16 = %0 " : : "r"(&H2K_kg));
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	H2K_gp->phys_offset = 0;
 	

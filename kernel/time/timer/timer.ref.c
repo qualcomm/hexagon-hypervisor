@@ -72,8 +72,8 @@ static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 	H2K_gp->time.next_ticks = nextticks;
 	__barrier(); // make sure we don't read again early
 	nowticks = H2K_timer_hw_read_count();
-	if (nowticks <= (nextticks + TICK_GRANULARITY)) {
-		/* TOO CLOSE... EXPIRE NOW SW */
+	if ((nowticks + TICK_GRANULARITY) >= nextticks) {
+		/* TOO CLOSE, NOW+SMALL > NEXT... EXPIRE NOW SW */
 		H2K_timer_hw_soft_raise();
 	}
 }

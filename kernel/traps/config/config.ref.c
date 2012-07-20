@@ -67,6 +67,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 	H2K_id_t id;
 	struct _h2_thread_context *contexts;
 	u32_t *p;
+	u32_t *clear_start;
 	u32_t i;
 	H2K_offset_t offset;
 	H2K_translation_t phys_translation;
@@ -193,33 +194,34 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		ptrtmp += INTINFO_SPACE(vmblock->num_ints);
 		H2K_vm_int_intinfo_init(vmblock,vmblock->num_ints);
 
+		vmblock->percpu_mask = NULL;
+		vmblock->pending = NULL;
+		vmblock->enable = NULL;
+
+		clear_start = (u32_t *)ptrtmp;
 		if (vmblock->num_ints > 0) {
 			/* allocate per-cpu mask blocks and clear */
 			vmblock->percpu_mask = masks = (bitmask_t **)ptrtmp;
 			ptrtmp += MASKPTR_SPACE(vmblock->max_cpus, vmblock->num_ints);
-			mask = (bitmask_t *)ptrtmp;
+			clear_start = mask = (bitmask_t *)ptrtmp;
 			ptrtmp += MASK_SPACE(vmblock->max_cpus, vmblock->num_ints);
 			/* allocate pending, enable blocks and clear  */
 			vmblock->pending = (bitmask_t *)ptrtmp;
 			ptrtmp += PENDING_SPACE(vmblock->num_ints);
 			vmblock->enable = (bitmask_t *)ptrtmp;
 			ptrtmp += ENABLE_SPACE(vmblock->num_ints);
-			/* allocate hw ints and set invalid */
-			vmblock->int_v2p = (physint_t *)ptrtmp;
-			ptrtmp += PHYSINT_SPACE(vmblock->num_ints);
-			p = (u32_t *)ptrtmp;
-			while (p != mask) {
-				*p = 0;
-				p--;
-			}
+
 			for (i = 0; i < vmblock->max_cpus; i++, mask += MASK_WORDS_PERCPU(vmblock->num_ints)) {
 				masks[i] = mask;
 			}
-		} else {
-			vmblock->percpu_mask = NULL;
-			vmblock->pending = NULL;
-			vmblock->enable = NULL;
-			vmblock->int_v2p = NULL;
+		}
+		/* allocate hw ints and set invalid */
+		vmblock->int_v2p = (physint_t *)ptrtmp;
+		ptrtmp += PHYSINT_SPACE(vmblock->num_ints + PERCPU_INTERRUPTS); // shared + per-cpu
+		p = (u32_t *)ptrtmp;
+		while (p >= clear_start) {
+			*p = 0;
+			p--;
 		}
 
 		return (u32_t)vmblock;
@@ -232,7 +234,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		id.vmidx = vmblock->vmidx;
 		id.cpuidx = config_int.cpuidx;
 
-		if ((virt_int >= vmblock->num_ints) 
+		if ((virt_int >= (vmblock->num_ints + PERCPU_INTERRUPTS)) 
 				|| (physint >= MAX_INTERRUPTS)
 				|| (id.cpuidx >= vmblock->max_cpus)
 				|| (physint == RESCHED_INT)

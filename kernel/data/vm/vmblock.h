@@ -75,7 +75,7 @@ typedef struct H2K_vmblock_struct {
 	u32_t num_cpus;
 	u32_t bestprio; 	/* best allowed priority */
 	u32_t vmidx;
-	u32_t num_ints;
+	u32_t num_ints; 	/* number of shared interrupts */
 	u32_t trapmask;  	/* allowed traps */
 	H2K_spinlock_t lock;
 	/* Linked List of free threads in this VM */

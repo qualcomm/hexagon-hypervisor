@@ -21,9 +21,8 @@
 
 #define LINUX_NUM_VCPU 3
 #define UCOS_NUM_VCPU 1
-#define HW_INTS 32
-#define INTS_PER_VCPU 32
-#define SHARED_INTS 32
+#define TOTAL_INTS 128
+#define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
 #define VCPU_STACK_SIZE 1024
 #define LINUX_VM_PRIO 3
 #define UCOS_VM_PRIO 1
@@ -119,7 +118,7 @@ void setup_ints(void *vmb, char num_cpus) {
 
 	int i, j;
 
-	for (i = 0; i < HW_INTS; i++) {
+	for (i = 0; i < TOTAL_INTS; i++) {
 		if (i != RESCHED_INT
 #ifdef H2K_L2_CONTROL
 				&& i != L2_CORE_INTERRUPT
@@ -137,7 +136,7 @@ void setup_ints(void *vmb, char num_cpus) {
 
 	/* FIXME: Linux should do the per-cpu and global enables */
 	/* can't call the trap here since it would use the boot vmblock */
-	for (i = 0; i < INTS_PER_VCPU; i++) {
+	for (i = 0; i < PERCPU_INTERRUPTS; i++) {
 		for (j = 0; j < ((H2K_vmblock_t *)vmb)->max_cpus; j++) {
 			H2K_vm_cpuint_enable(vmb, &(((H2K_vmblock_t *)vmb)->contexts[j]), i, ((H2K_vmblock_t *)vmb)->intinfo);
 		}

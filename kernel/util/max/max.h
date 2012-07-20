@@ -62,6 +62,8 @@
 #define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x20000)
 #endif
 
+#define PERCPU_INTERRUPTS 32
+
 #if __QDSP6_ARCH__ <= 3
 #define MAX_INTERRUPTS 32
 #else

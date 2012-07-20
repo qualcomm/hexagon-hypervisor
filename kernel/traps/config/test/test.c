@@ -38,15 +38,15 @@ char buf[sizeof(H2K_thread_context)*2] __attribute__((aligned(32)));
 #define NUM_SIZE_TESTS 8
 /* CPUS, INTS, SIZE */
 int size_test[NUM_SIZE_TESTS][3] = {
-								/* pnd,en,maskptr,mask,phys,ctx,info*/
-	{0, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 0+16},
-	{1, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 288*1+16},
-	{33, 0, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 288*33+16},
-	{1, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*1+4*1*1+64+288*1+24},
-	{1, 33, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*2+4*1+4*2*1+68+288*1+24},
-	{32, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*32+4*1*32+64+288*32+24},
-	{33, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*1+4*33+4*1*33+64+288*33+24},
-	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 + 8*3+4*33+4*3*33+132+288*33+24}
+								                                                /* pnd,  en,    maskptr, mask,    phys, ctx,     info*/
+	{0, 0,   ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  0   + 0    + 0      + 0      + 64  + 0      + 16},
+	{1, 0,   ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  0   + 0    + 0      + 0      + 64  + 288*1  + 16},
+	{33, 0,  ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  0   + 0    + 0      + 0      + 64  + 288*33 + 16},
+	{1, 32,  ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  4*1 + 4*1  + 4*1    + 4*1*1  + 128 + 288*1  + 24},
+	{1, 33,  ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  4*2 + 4*2  + 4*1    + 4*2*1  + 132 + 288*1  + 24},
+	{32, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  4*1 + 4*1  + 4*32   + 4*1*32 + 128 + 288*32 + 24},
+	{33, 32, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  4*1 + 4*1  + 4*33   + 4*1*33 + 128 + 288*33 + 24},
+	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  4*3 + 4*3  + 4*33   + 4*3*33 + 196 + 288*33 + 24}
 };
 
 char vmbuf[65536] __attribute__((aligned(32)));
@@ -196,7 +196,6 @@ int main()
 	if (vmblock->percpu_mask != NULL) FAIL("percpu_mask non-NULL");
 	if (vmblock->pending != NULL) FAIL("pending non-NULL");
 	if (vmblock->enable != NULL) FAIL("enable non-NULL");
-	if (vmblock->int_v2p != NULL) FAIL("int_v2p non-NULL");
 
 	
 

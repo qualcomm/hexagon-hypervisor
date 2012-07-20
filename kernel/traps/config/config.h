@@ -10,6 +10,7 @@
 #include <context.h>
 #include <vm.h>
 #include <vmint.h>
+#include <max.h>
 
 #define UNIT sizeof(u32_t)
 #define ROUND(expr) ((((expr) + UNIT - 1) / UNIT) * UNIT)
@@ -50,7 +51,7 @@
 	 ENABLE_SPACE(ints) + \
 	 MASKPTR_SPACE(cpus, ints) + \
 	 MASK_SPACE(cpus, ints) + \
-	 PHYSINT_SPACE(ints) + \
+	 PHYSINT_SPACE(ints + PERCPU_INTERRUPTS) + \
 	 CONTEXT_SPACE(cpus) + \
 	 INTINFO_SPACE(ints) + \
 	 (H2K_VMBLOCK_ALIGN - 1))

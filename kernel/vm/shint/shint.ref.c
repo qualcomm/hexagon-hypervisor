@@ -132,8 +132,8 @@ s32_t  H2K_vm_shint_enable(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t
 	/* Else, set bit atomically */
 	wptr = &vmblock->enable[wordidx];
 	H2K_atomic_setbit(wptr,bitidx);
-	if (vmblock->int_v2p != NULL && vmblock->int_v2p[intno]) { // mapped, re-enable phys
-		H2K_intcontrol_enable(vmblock->int_v2p[intno]);
+	if (vmblock->int_v2p != NULL && vmblock->int_v2p[intno + PERCPU_INTERRUPTS]) { // mapped, re-enable phys
+		H2K_intcontrol_enable(vmblock->int_v2p[intno + PERCPU_INTERRUPTS]);
 	}
 	if ((vmblock->pending[wordidx] & bitmask) != 0) {
 		H2K_vm_shint_deliver(vmblock,me,intno);

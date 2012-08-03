@@ -18,14 +18,13 @@
 #include <vmwork.h>
 #include <vmevent.h>
 #include <intcontrol.h>
-
-#define NUM_CPUINTS 32
+#include <max.h>
 
 #define CHECK_FOR_CHAIN(op) \
 	do { \
-		if (intno >= NUM_CPUINTS) { \
+		if (intno >= PERCPU_INTERRUPTS) { \
 			info++; \
-			return info->handlers->op(vmblock,me,intno-NUM_CPUINTS,info); \
+			return info->handlers->op(vmblock, me, intno - PERCPU_INTERRUPTS, info); \
 		} \
 	} while (0)
 
@@ -112,7 +111,7 @@ s32_t H2K_vm_cpuint_get(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 		return offset+bitidx;
 	} else {
 		info++;
-		return info->handlers->get(vmblock,me,offset+NUM_CPUINTS,info);
+		return info->handlers->get(vmblock,me,offset+PERCPU_INTERRUPTS,info);
 	}
 }
 
@@ -124,7 +123,7 @@ s32_t H2K_vm_cpuint_peek(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 		return offset+Q6_R_ct0_R(tmp);
 	}
 	info++;
-	return info->handlers->peek(vmblock,me,offset+NUM_CPUINTS,info);
+	return info->handlers->peek(vmblock,me,offset+PERCPU_INTERRUPTS,info);
 }
 
 s32_t H2K_vm_cpuint_status(H2K_vmblock_t *vmblock, H2K_thread_context *me, 

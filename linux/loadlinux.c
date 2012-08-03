@@ -157,9 +157,22 @@ void setup_ints(void *vmb, char num_cpus) {
 
 extern void linux_stext();
 
+volatile unsigned int *ss_pub_base = (void *)0xFFC00000;
+#define FLL_CTL (0x3c >> 2)
+#define FLL_STATUS (0x40 >> 2)
+#define GFMUX_CTL (0x30 >> 2)
+
 int main(int argc, char *argv[]) {
 
 	void *vmb;
+
+	ss_pub_base[FLL_CTL] = 0x150800; /* M/N */
+	ss_pub_base[FLL_CTL] = 0x150801; /* M/N/EN */
+	ss_pub_base[FLL_CTL] = 0x150807; /* M/N/EN/RST/SRC */
+	ss_pub_base[FLL_CTL] = 0x150805; /* M/N/EN/SRC */
+	while ((ss_pub_base[FLL_STATUS] & 1) == 0) /* wait for FLL */;
+	ss_pub_base[GFMUX_CTL] = ss_pub_base[GFMUX_CTL] | 0x0C; /* CLK SRC D */
+	PRINTF("Set Up Clocks\n");
 
 	h2_init(0);
 	h2_config_setfatal(fatal);

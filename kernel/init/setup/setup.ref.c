@@ -96,6 +96,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset)
 	BKL_LOCK();
 	H2K_runlist_push(boot);
 	H2K_init_complete = 1;
+	H2K_mutex_unlock_tlb();
 	H2K_switch(NULL,boot);
 }
 

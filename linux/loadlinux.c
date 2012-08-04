@@ -9,6 +9,7 @@
 #include <cpuint.h>
 #include <shint.h>
 #include <max.h>
+#include <globals.h>
 
 #include <h2.h>
 #include <h2_vm.h>
@@ -138,6 +139,8 @@ void setup_ints(void *vmb, char num_cpus) {
 	/* can't call the trap here since it would use the boot vmblock */
 	for (i = 0; i < PERCPU_INTERRUPTS; i++) {
 		for (j = 0; j < ((H2K_vmblock_t *)vmb)->max_cpus; j++) {
+
+			__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 			H2K_vm_cpuint_enable(vmb, &(((H2K_vmblock_t *)vmb)->contexts[j]), i, ((H2K_vmblock_t *)vmb)->intinfo);
 		}
 	}
@@ -146,6 +149,8 @@ void setup_ints(void *vmb, char num_cpus) {
 		/* There shouldn't be any interrupt pending at this point, but you never
 			 know.  Better make the context pointer valid in case we attempt to
 			 deliver the interrupt */
+
+		__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 		H2K_vm_shint_enable(vmb, &(((H2K_vmblock_t *)vmb)->contexts[0]), i, ((H2K_vmblock_t *)vmb)->intinfo);
 	}
 }

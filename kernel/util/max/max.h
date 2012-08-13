@@ -57,6 +57,7 @@
 #define Q6_SS_BASE_PA 0x28880000
 #define Q6_SS_BASE_VA 0xFFC80000
 #if ARCHV <= 4
+#define TIMER_BASE_PA (Q6_SS_BASE_PA + 0x04000)
 #define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x04000)
 #else
 #define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x20000)
@@ -73,6 +74,7 @@
 #define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
 
 #ifndef L2_INT_BASE
+#define L2_INT_BASE_PA (Q6_SS_BASE_PA + 0x10000)
 #define L2_INT_BASE (Q6_SS_BASE_VA + 0x10000)
 #endif
 #endif

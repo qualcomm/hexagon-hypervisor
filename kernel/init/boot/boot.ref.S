@@ -134,10 +134,8 @@ FUNC_START start .text.init.boot .p2align 12
 	r1 = #2
 	DO_TLBW(3,2,1)
   
-#define TIMER_BASE_PA_1 (TIMER_BASE_PA + 0x1000)
-#define TIMER_BASE_VA_1 (TIMER_BASE_VA + 0x1000)
-	SETCONST(r10,TIMER_BASE_PA_1)
-	MAKE_TLBHI_4K(r3,TIMER_BASE_VA_1)
+	SETCONST(r10,(TIMER_BASE_PA + 0x1000))
+	MAKE_TLBHI_4K(r3,(TIMER_BASE_VA + 0x1000))
 	MAKE_TLBLO_DEV_4K(r2,r10,r11)
 	r1 = #3
 	DO_TLBW(3,2,1)
@@ -146,6 +144,12 @@ FUNC_START start .text.init.boot .p2align 12
 	MAKE_TLBHI_4K(r3,L2_INT_BASE)
 	MAKE_TLBLO_DEV_4K(r2,r10,r11)
 	r1 = #4
+	DO_TLBW(3,2,1)
+  
+	SETCONST(r10,Q6_SS_BASE_PA)
+	MAKE_TLBHI_4K(r3,Q6_SS_BASE_VA)
+	MAKE_TLBLO_DEV_4K(r2,r10,r11)
+	r1 = #5
 	DO_TLBW(3,2,1)
   
 
@@ -160,7 +164,7 @@ FUNC_START start .text.init.boot .p2align 12
 	MAKE_TLBHI(r3,0)
 	r3 |= lsr(r10,#BOOT_TLB_ADDRBITS)
 	MAKE_TLBLO(r2,r10,r11)
-	r1 = #5
+	r1 = #6
 	DO_TLBW(3,2,1)
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
@@ -210,7 +214,7 @@ FUNC_START start .text.init.boot .p2align 12
 	nop
 	nop
 	// invalidate temporary TLB entries
-	r1 = #5
+	r1 = #6
 	r3:2 = #0
 	DO_TLBW(3,2,1)
 	isync

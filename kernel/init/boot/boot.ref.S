@@ -164,6 +164,9 @@ FUNC_START start .text.init.boot .p2align 12
 	DO_TLBW(3,2,1)
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
+	r0 = #1;
+	isdben = r0
+
 #if __QDSP6_ARCH__ <= 4
  	r0 = #0x77f
 #else
@@ -181,12 +184,31 @@ FUNC_START start .text.init.boot .p2align 12
 	syscfg = r0
 	isync
 
+	nop
+	nop
+	nop
+	nop
+	brkpt;
+	nop
+	nop
+	nop
+	nop
+
 	// make the jump to hyperspace
 	r1.h = #hi(1f)
 	r1.l = #lo(1f)
 	jumpr r1
 
 1:
+	nop
+	nop
+	nop
+	nop
+	brkpt;
+	nop
+	nop
+	nop
+	nop
 	// invalidate temporary TLB entries
 	r1 = #5
 	r3:2 = #0

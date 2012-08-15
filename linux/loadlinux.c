@@ -157,7 +157,9 @@ void setup_ints(void *vmb, char num_cpus) {
 
 extern void linux_stext();
 
-volatile unsigned int *ss_pub_base = (void *)0xFFC00000;
+//volatile unsigned int *ss_pub_base = (void *)0xFFC00000;
+//  Use physical address which will go through a straight-through mapping of device type.
+volatile unsigned int *ss_pub_base = (void *) 0x28800000;
 #define FLL_CTL (0x3c >> 2)
 #define FLL_STATUS (0x40 >> 2)
 #define GFMUX_CTL (0x30 >> 2)

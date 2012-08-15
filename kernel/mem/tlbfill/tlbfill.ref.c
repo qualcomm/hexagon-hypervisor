@@ -93,13 +93,12 @@ static inline s32_t H2K_mem_tlb_fixup(u32_t va, u32_t ptb, H2K_mem_tlbfmt_t *ent
 #if __QDSP6_ARCH__ <= 3
 	entry->size = phys_size;
 	u32_t xwru = phys_translation.xwru;
-	entry->ccc = phys_translation.cccc;
 	entry->xwr &= (xwru >> 1);
 	entry->guestonly &= ~(xwru & 1);
 
 	entry->ppn = (phys_addr & ~phys_offset_mask) >> PAGE_BITS;
 #else
-	entry->cccc = phys_translation.cccc;
+	/* FIXME: How should phys_translation.cccc be merged with the guest's, if at all? */
 	entry->xwru &= phys_translation.xwru;
 
 	entry->ppd = ((phys_addr & ~phys_offset_mask) >> (PAGE_BITS - 1)) | (1 << phys_size);

@@ -35,7 +35,7 @@ H2K_vmblock_t *bootvm;
 
 H2K_offset_t boot_offset = {{
 	.size = SIZE_16M,
-	.cccc = L1WB_L2C,
+	.cccc = UC,
 	.xwru = URWX,
 	.pages = 0
 	}};

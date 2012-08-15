@@ -146,13 +146,6 @@ FUNC_START start .text.init.boot .p2align 12
 	r1 = #4
 	DO_TLBW(3,2,1)
   
-	SETCONST(r10,Q6_SS_BASE_PA)
-	MAKE_TLBHI_4K(r3,Q6_SS_BASE_VA)
-	MAKE_TLBLO_DEV_4K(r2,r10,r11)
-	r1 = #5
-	DO_TLBW(3,2,1)
-  
-
 #endif
 
 	r10 = pc
@@ -164,7 +157,7 @@ FUNC_START start .text.init.boot .p2align 12
 	MAKE_TLBHI(r3,0)
 	r3 |= lsr(r10,#BOOT_TLB_ADDRBITS)
 	MAKE_TLBLO(r2,r10,r11)
-	r1 = #6
+	r1 = #5
 	DO_TLBW(3,2,1)
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
@@ -214,7 +207,7 @@ FUNC_START start .text.init.boot .p2align 12
 	nop
 	nop
 	// invalidate temporary TLB entries
-	r1 = #6
+	r1 = #5
 	r3:2 = #0
 	DO_TLBW(3,2,1)
 	isync

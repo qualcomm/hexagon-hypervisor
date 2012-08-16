@@ -168,6 +168,7 @@ int main(int argc, char *argv[]) {
 
 	void *vmb;
 
+#ifdef DO_CLOCK_SETUP
 	ss_pub_base[FLL_CTL] = 0x150800; /* M/N */
 	ss_pub_base[FLL_CTL] = 0x150801; /* M/N/EN */
 	ss_pub_base[FLL_CTL] = 0x150807; /* M/N/EN/RST/SRC */
@@ -175,6 +176,7 @@ int main(int argc, char *argv[]) {
 	while ((ss_pub_base[FLL_STATUS] & 1) == 0) /* wait for FLL */;
 	ss_pub_base[GFMUX_CTL] = ss_pub_base[GFMUX_CTL] | 0x0C; /* CLK SRC D */
 	PRINTF("Set Up Clocks\n");
+#endif
 
 	h2_init(0);
 	h2_config_setfatal(fatal);

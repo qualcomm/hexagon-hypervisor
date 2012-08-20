@@ -181,31 +181,12 @@ FUNC_START start .text.init.boot .p2align 12
 	syscfg = r0
 	isync
 
-	nop
-	nop
-	nop
-	nop
-	brkpt;
-	nop
-	nop
-	nop
-	nop
-
 	// make the jump to hyperspace
 	r1.h = #hi(1f)
 	r1.l = #lo(1f)
 	jumpr r1
 
 1:
-	nop
-	nop
-	nop
-	nop
-	brkpt;
-	nop
-	nop
-	nop
-	nop
 	// invalidate temporary TLB entries
 	r1 = #5
 	r3:2 = #0

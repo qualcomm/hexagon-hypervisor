@@ -21,7 +21,7 @@ ARCHV=$(subst v,,$(Q6VERSION))
 endif
 
 ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(PWD)/install
+export INSTALLPATH := $(CURDIR)/install
 endif
 
 OPT_JFLAG=-j 3

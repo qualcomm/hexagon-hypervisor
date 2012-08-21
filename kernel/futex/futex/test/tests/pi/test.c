@@ -231,6 +231,7 @@ void vmmain(void *x)
 	
 
 	info("Blocked thread inherited OK, shutting down that test thread\n");
+	/* EJP: Add extra test case: additional blocked thread in same bin */
 
 	TH_shutdown_now = 1;
 	TH_nextstep_id = thread_ids[2];

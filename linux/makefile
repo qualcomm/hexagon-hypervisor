@@ -32,11 +32,11 @@ SIMF+=$(COM_SIMF)
 endif
 
 ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(PWD)/../install
+export INSTALLPATH := $(CURDIR)/../install
 endif
 
 ifeq ($(KERNELPATH),)
-export KERNELPATH := $(PWD)/../kernel
+export KERNELPATH := $(CURDIR)/../kernel
 endif
 
 OPTIMIZE=-O2

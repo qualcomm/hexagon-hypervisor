@@ -111,11 +111,17 @@ h2_cond_wait:
 		if (!p0) jump 1b			// not atomic, try again
 		r0 = r26				// futexptr for trap
 	}
+2:
 	trap0(#H2_TRAP_FUTEX_WAIT)
 1:							// Now, decrement n_waiting
 	r0 = memw_locked(r26)
-	r1 = vsubuh(r0,r25):sat				// bump threads waiting
-	memw_locked(r26,p0) = r1			// write new value
+	{
+		r3 = vsubuh(r0,r25):sat			// bump threads waiting
+		p1 = vcmph.eq(r25:24,r1:0)		// we care about lowest halfword
+		if (p1.new) jump:nt 2b			// count didn't change, temporary fail? block again
+		if (p1.new) r1:0 = combine(r0,r26)
+	}
+	memw_locked(r26,p0) = r3			// write new value
 	if (!p0) jump 1b				// not atomic, try again
 8:							// lock and return
 	{

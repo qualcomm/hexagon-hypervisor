@@ -75,6 +75,61 @@ void TH_reset()
 }
 
 #if ARCHV <= 4
+
+void set_match(unsigned long long int x)
+{
+	mydev[MATCH] = (x & 0x0FFFFFFFF);
+}
+
+unsigned long long int get_match()
+{
+	return mydev[MATCH];
+}
+
+void set_count(unsigned long long int x)
+{
+	mydev[COUNT] = (x & 0x0FFFFFFFF);
+}
+
+unsigned long long int get_count()
+{
+	return mydev[COUNT];
+}
+
+#else
+
+void set_match(unsigned long long int x)
+{
+	mydev[MATCH_LO] = (x & 0x0FFFFFFFF);
+	mydev[MATCH_HI] = (x >> 32);
+}
+
+unsigned long long int get_match()
+{
+	unsigned long long int ret;
+	ret = mydev[MATCH_HI];
+	ret <<= 32;
+	ret |= mydev[MATCH_LO];
+	return ret;
+}
+
+void set_count(unsigned long long int x)
+{
+	mydev[COUNT_LO] = (x & 0x0FFFFFFFF);
+	mydev[COUNT_HI] = (x >> 32);
+}
+
+unsigned long long int get_count()
+{
+	unsigned long long int ret;
+	ret = mydev[COUNT_HI];
+	ret <<= 32;
+	ret |= mydev[COUNT_LO];
+	return ret;
+}
+
+#endif
+
 int main()
 {
 	u64_t ret;
@@ -101,18 +156,18 @@ int main()
 		FAIL("resolution");
 	}
 
-	mydev[COUNT] = 1;
+	set_count(1);
 	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_GET_TIME,0,me)) != resolution) {
 		printf("ret: 0x%016llx resolution=0x%016llx\n",ret,resolution);
 		FAIL("time/1");
 	}
 	if (H2K_gp->time.last_ticks != 1) FAIL("time/last ticks");
 
-	mydev[COUNT] = 2;
+	set_count(2);
 	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_GET_TIME,0,me)) != 2*resolution) FAIL("time/2");
 	if (H2K_gp->time.last_ticks != 2) FAIL("time/last ticks");
 
-	mydev[COUNT] = 0;
+	set_count(0x0000000100000000ULL);
 	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_GET_TIME,0,me)) != (resolution << 32)) {
 		FAIL("time/wrap");
 	}
@@ -133,12 +188,12 @@ int main()
 	if (H2K_gp->time.timeouts == NULL) FAIL("not put to tree");
 
 	TH_reset();
-	mydev[COUNT] = 2;
-	mydev[MATCH] = 0;
+	set_count(2);
+	set_match(0);
 	H2K_timer_int(0,NULL,0);
 
-	if (mydev[MATCH] <= 0x40000000) {
-		printf("new match: 0x%08x\n",mydev[MATCH]);
+	if (get_match() <= 0x40000000) {
+		printf("new match: 0x%08llx\n",get_match());
 		FAIL("Didn't set timer for future");
 	}
 	if (H2K_gp->time.last_ticks == 0) FAIL("Didn't update last_ticks");
@@ -162,38 +217,57 @@ int main()
 	if (H2K_gp->time.timeouts != NULL) FAIL("didn't clear out of timeout tree");
 	if (a.timeout != 0) FAIL("didn't clear timeout");
 
+	/* Test delta timers */
+	TH_reset();
+	a.timeout = 0;
+	H2K_gp->time.last_ticks = 2;
+	set_count(3);
+	set_match(0);
+	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_DELTA_TIMEOUT,0x12340ULL * resolution,me))
+		!= (0x12343ULL * resolution)) {
+		printf("%llx\n",ret);
+		FAIL("delta timeout return");
+	}
+	if (a.timeout != 0x12343) FAIL("bad ticks calculation");
+	if (H2K_gp->time.timeouts == NULL) FAIL("not put to tree");
+
+	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_DELTA_TIMEOUT,~0ULL,me)) != 0) {
+		printf("%llx\n",ret);
+		FAIL("delta timeout forever return");
+	}
+
 	/* Test timer interrupt */
 
 	TH_reset();
 	a.timeout = 0x12345;
-	mydev[COUNT] = 2;
-	mydev[MATCH] = 0;
+	set_count(2);
+	set_match(0);
 	H2K_gp->time.timeouts = &a.tree;
 	H2K_timer_int(0,NULL,0);
 
-	if (mydev[MATCH] != 0x12345) {
-		printf("new match: 0x%08x\n",mydev[MATCH]);
+	if (get_match() != 0x12345) {
+		printf("new match: 0x%08llx\n",get_match());
 		FAIL("Didn't set timer for next interrupt");
 	}
 	if (H2K_gp->time.last_ticks == 0) FAIL("didn't update last_ticks");
 	if (H2K_gp->time.timeouts != &a.tree) FAIL("erased unexpired timeout");
 
-	mydev[COUNT] = 0x12345;
+	set_count(0x12345);
 	TH_expected_cpuint_post = 1;
 	H2K_timer_int(0,NULL,0);
 	if (TH_expected_cpuint_post != 0) FAIL("Didn't call cpuint");
 	if (H2K_gp->time.timeouts != NULL) FAIL("Didn't empty timeout tree");
 	if (H2K_gp->time.last_ticks != 0x12345) FAIL("Didn't update last_ticks");
-	if (mydev[MATCH] == 0x12345) FAIL("didn't set timer for next interrupt");
+	if (get_match() == 0x12345) FAIL("didn't set timer for next interrupt");
 
 	H2K_gp->time.timeouts = &a.tree;
-	mydev[MATCH] = 0x12345;
-	mydev[COUNT] = 0x0;
+	set_match(0x12345);
+	set_count(0x0);
 	mydev[ENABLE] = 0x0;
 	mydev[3] = 0x0;
 	H2K_timer_init();
-	if (mydev[MATCH] == 0x12345) FAIL("init/match");
-	if (mydev[COUNT] != 0x0) FAIL("init/count");
+	if (get_match() == 0x12345) FAIL("init/match");
+	if (get_count() != 0x0) FAIL("init/count");
 	if (mydev[ENABLE] != 0x1) FAIL("init/enable");
 	if (H2K_gp->time.timeouts != NULL) FAIL("init/timeouts");
 	if (H2K_gp->time.last_ticks != 0) FAIL("ticks");
@@ -205,16 +279,17 @@ int main()
 
 	/* Test timer interrupt -- wrapping ticks when 32-bit timer wraps around */
 	TH_reset();
-	mydev[COUNT] = 0x40000000;
+	set_count(0x040000000ULL);
 	H2K_timer_int(0,NULL,0);
-	mydev[COUNT] = 0x30000000;
+	set_count(0x130000000ULL);
 	H2K_timer_int(0,NULL,0);
 	if (H2K_gp->time.last_ticks != 0x0000000130000000ULL) FAIL("wrap");
 
 	puts("TEST PASSED\n");
 	return 0;
 }
-#else
+
+#if 0
 int main()
 {
 	u64_t ret;

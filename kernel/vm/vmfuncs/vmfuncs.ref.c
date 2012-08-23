@@ -35,6 +35,7 @@ void H2K_vmtrap_version(H2K_thread_context *me)
 void H2K_vmtrap_return(H2K_thread_context *me)
 {
 	u32_t tmp;
+	u32_t ints_enabled;
 	H2K_gregs_save(me);
 	if (me->gssr & H2K_GSSR_UM) {
 		/* Swap stack pointers */
@@ -46,11 +47,6 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 	me->elr = me->gelr;
 	H2K_set_elr(me->elr);
 
-	/* if guest had interrupts enabled, enable in guest status */
-	if (me->gssr & H2K_GSSR_IE) {
-		H2K_enable_guest_interrupts(me);
-	}
-
 #if ARCHV >= 4
 	/* If guest wants to single step, set in SSR */
 	if (me->gssr & H2K_GSSR_SS) {
@@ -59,7 +55,15 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 		me->ssr_ss = 0;
 	}
 #endif
+	ints_enabled = (me->gssr & H2K_GSSR_IE);
 	H2K_gregs_restore(me);
+
+	/* if guest had interrupts enabled, enable in guest status */
+	if (ints_enabled) {
+		/* NOTE: this might cause a vmevent if interrupts are pending */
+		H2K_enable_guest_interrupts(me);
+	}
+
 }
 
 /* 2 */

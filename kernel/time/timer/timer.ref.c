@@ -271,6 +271,14 @@ static u64_t H2K_timer_set_timeout(u32_t unused, u64_t timeout, H2K_thread_conte
 	return H2K_timer_set_timeout_tick(0,timeout_tick,me);
 }
 
+static u64_t H2K_timer_delta_timeout(u32_t unused, u64_t delta, H2K_thread_context *me)
+{
+	u64_t delta_ticks = max(TIMERHW_NS2TICKS(delta),TICK_GRANULARITY);
+	u64_t timeout_ticks = H2K_timer_get_ticks() + delta_ticks;
+	if (delta == H2K_TIME_FOREVER) timeout_ticks = H2K_TIME_BIGBANG;
+	return H2K_timer_set_timeout_tick(0,timeout_ticks,me);
+}
+
 typedef u64_t (*H2K_timer_handler_t)(u32_t unused, u64_t arg, H2K_thread_context *me);
 
 static H2K_timer_handler_t H2K_timer_trap_handlers[] = {
@@ -279,6 +287,7 @@ static H2K_timer_handler_t H2K_timer_trap_handlers[] = {
 	H2K_timer_get_time,
 	H2K_timer_get_timeout,
 	H2K_timer_set_timeout,
+	H2K_timer_delta_timeout,
 };
 
 u64_t H2K_timer_trap(u32_t traptype, u64_t arg, H2K_thread_context *me)

@@ -1,2 +1,0 @@
-include $(MAKE_INC_DEFAULT)
-$($(MOD)_REF_OFILES) $($(MOD)_OPT_V4_OFILES) $($(MOD)_OPT_V4_OFILES): $(DIR)$(MOD).def

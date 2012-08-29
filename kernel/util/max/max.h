@@ -135,4 +135,7 @@
 #define INTS_PER_BOOT_CONTEXT 32
 #define BOOT_STACK_SIZE 128
 
+#define ALLOC_UNIT 8 /* Words per smallest allocatable block */
+#define ALLOC_NUNITS 1024
+
 #endif

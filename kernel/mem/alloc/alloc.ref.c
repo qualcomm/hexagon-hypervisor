@@ -16,7 +16,7 @@
 #define WORDS(X) (((X) + sizeof(H2K_mem_alloc_tag_t)) / sizeof(H2K_mem_alloc_tag_t))
 #define UNITS(X) (((X) + ALLOC_UNIT) / ALLOC_UNIT)
 
-static H2K_mem_alloc_tag_t H2K_mem_alloc_heap[TOTAL_SIZE] __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}} ;
+static H2K_mem_alloc_tag_t H2K_mem_alloc_heap[TOTAL_SIZE] __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}};
 static H2K_mem_alloc_tag_t *heap;
 static u32_t heap_size;
 
@@ -36,9 +36,9 @@ H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 	H2K_spinlock_lock(&heap_lock);
 	while (!(tag + tag->size)->free || BYTES(tag->size - 1) < request) {
 		tag += tag->size;
-		if (tag == &heap[heap_size - 1]) {
+		if (tag == &heap[heap_size - 1]) { // all out of bacon today
 			H2K_spinlock_unlock(&heap_lock);
-			return ret; // all out of bacon today
+			return ret;
 		}
 	}
 	/* Now we have a free block that's big enough */
@@ -89,8 +89,6 @@ u32_t H2K_mem_alloc_free(u32_t *ptr) {
 /* Wrapped init function to facilitate testing with different sizes */
 void H2K_mem_do_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
 
-	//	int i;
-
 	heap = (H2K_mem_alloc_tag_t *)addr;
 	heap_size = size;
 
@@ -102,10 +100,6 @@ void H2K_mem_do_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
 	/* The last word in the heap holds the tag for the "next" block, which
 		 doesn't exist, but we need it for the last block's free bit */
 	heap[heap_size - 1].free = 1; // the wilderness is wild and free
-
-	/* for (i = ALLOC_UNIT; i < heap_size - 1; i++) { */
-	/* 	heap[i].raw = 0; */
-	/* } */
 
 }
 

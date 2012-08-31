@@ -14,7 +14,6 @@
 #include <intconfig.h>
 #include <fatal.h>
 #include <asid.h>
-#include <bootmap.h>
 #include <stlb.h>
 #include <thread.h>
 #include <hw.h>

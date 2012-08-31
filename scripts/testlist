@@ -16,6 +16,7 @@
 ./kernel/event/passthru/test
 ./kernel/init/boot/test
 ./kernel/init/setup/test
+./kernel/mem/alloc/test
 ./kernel/mem/asid/test
 ./kernel/mem/linear/test
 ./kernel/mem/pagefault/test

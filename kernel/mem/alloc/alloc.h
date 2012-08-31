@@ -14,8 +14,16 @@ typedef union {
 	u64_t raw;
 } H2K_mem_alloc_block_t;
 
+typedef union {
+	struct {
+		u32_t free:1;  // PREVIOUS block is free
+		u32_t size:31; // in words, includes the tag
+	};
+	u32_t raw;
+} H2K_mem_alloc_tag_t;
+
 H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request);
 u32_t H2K_mem_alloc_free(u32_t *ptr);
-void H2K_mem_do_alloc_init(u32_t addr[], u32_t size);
+void H2K_mem_do_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size);
 void H2K_mem_alloc_init();
 

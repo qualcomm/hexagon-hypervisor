@@ -193,4 +193,6 @@ int main() {
 	check_freed(1, freed);
 
 	puts("TEST PASSED");
+
+	return 0;
 }

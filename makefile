@@ -116,7 +116,7 @@ compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
 gtags:
-	find kernel libs tst guest ucos linux booter -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
+	find kernel libs tst guest ucos linux booter perf -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
 	htags -afhnosTxv --show-position
 
 cov_fns:

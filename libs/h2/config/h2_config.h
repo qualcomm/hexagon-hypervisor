@@ -41,6 +41,7 @@ typedef union {
 
 #endif
 
+#ifndef H2K_CONFIG_H
 typedef enum {
 	SET_STORAGE, 	/**< Set the storage */
 	SET_PMAP_TYPE,		/**< Set the physical map (or offset) and type */
@@ -50,6 +51,7 @@ typedef enum {
 	MAP_PHYS_INTR,		/**< Set a Physical to Guest Interrupt Map */
 	NUM_OPS			/**< Used to determine range of valid operations, not a valid op */
 } vmblock_init_op_t;
+#endif
 
 #define H2_MAP_PHYS_INTR_CPU_BITS 16
 #define H2_CONFIG_PHYSINT_CPUID(phys, cpu) \

@@ -31,5 +31,7 @@ int main()
 	h2_sem_up(&semb);
 	h2_sem_down(&sema);
 	printf("Wahoo!\n");
+
+	return 0;
 }
 

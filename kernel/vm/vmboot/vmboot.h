@@ -9,5 +9,5 @@
 #include <vm.h>
 #include <context.h>
 
-s32_t H2K_vmboot(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");
+s32_t H2K_vmboot(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t vm, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");
 

@@ -1,11 +1,29 @@
+#If you are running outside hexframe.. sensible defaults
+ifeq (,${BUILD_DIR})
+ifneq (,${Q6VERSION})
+ARCHV=$(subst v,,$(Q6VERSION))
+else
+ARCHV=4
+endif
+CC=qdsp6-gcc
+RUN=qdsp6-sim
+SIMF=--timing
+#hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
+else
+ARCHV=$(subst v,,$(Q6VERSION))
+endif
+
+ifeq ($(INSTALLPATH),)
+export INSTALLPATH := $(CURDIR)/../install
+endif
 
 all: hello booter
 
 hello: hello.c
-	qdsp6-gcc -Os -mv$(ARCHV) -moslib=h2 -I../install/include -L../install/lib -Wl,--section-start=.start=0x00010000 -o hello hello.c 
+	qdsp6-gcc -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2 -I../install/include -L../install/lib -Wl,--section-start=.start=0x00010000 -o hello hello.c 
 
 booter: booter.c elf.c
-	qdsp6-gcc -Os -mv$(ARCHV) -o booter booter.c elf.c -moslib=h2 -lh2kernel -I../install/include -L../install/lib -Wl,--section-start=.start=0xff000000 -Wl,--defsym=HEAP_SIZE=0x100000
+	qdsp6-gcc -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -o booter booter.c elf.c -moslib=h2 -lh2kernel -I../install/include -L../install/lib -Wl,--section-start=.start=0xff000000 -Wl,--defsym=HEAP_SIZE=0x100000
 
 test: hello booter
 	qdsp6-sim -- booter hello

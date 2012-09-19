@@ -16,11 +16,11 @@
 #define WORDS(X) (((X) + sizeof(H2K_mem_alloc_tag_t)) / sizeof(H2K_mem_alloc_tag_t))
 #define UNITS(X) (((X) + ALLOC_UNIT) / ALLOC_UNIT)
 
-static H2K_mem_alloc_tag_t H2K_mem_alloc_heap[TOTAL_SIZE] __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}};
-static H2K_mem_alloc_tag_t *heap;
-static u32_t heap_size;
+static H2K_mem_alloc_tag_t H2K_mem_alloc_heap[TOTAL_SIZE] IN_SECTION(".data.core.globals") __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}} ;
+static H2K_mem_alloc_tag_t *heap IN_SECTION(".data.core.globals");
+static u32_t heap_size IN_SECTION(".data.core.globals");
 
-static u32_t heap_lock = 0;
+static u32_t heap_lock IN_SECTION(".data.core.globals");
 
 /* Request mem, in bytes.  Return size and pointer to beginning of aligned space, or NULL */
 H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
@@ -100,6 +100,8 @@ void H2K_mem_do_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
 	/* The last word in the heap holds the tag for the "next" block, which
 		 doesn't exist, but we need it for the last block's free bit */
 	heap[heap_size - 1].free = 1; // the wilderness is wild and free
+
+	heap_lock = 0;
 
 }
 

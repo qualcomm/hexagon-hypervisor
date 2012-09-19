@@ -13,7 +13,7 @@
 #define H2_VM_H 1
 
 /* basically thread_create but with a vmblock */
-int h2_vmboot(void *pc, void *stack, unsigned int arg, unsigned int prio, void *vmblock);
+int h2_vmboot(void *pc, void *stack, unsigned int arg, unsigned int prio, unsigned int vm);
 
 #endif
 

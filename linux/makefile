@@ -2,15 +2,15 @@ SHELL=/bin/bash
 ULIMIT=ulimit -t 300
 
 SIZE_TOOL = /prj/dsp/qdsp6/arch/scripts/section_size.py
-LD = qdsp6-gcc
+LD = hexagon-gcc
 
-SIM=qdsp6-sim
+SIM=hexagon-sim
 RUN=$(SIM)
 
 ifeq (,$(findstring -,$(RUN)))
 COM_SIMF=--timing --quiet --timer 32000 --timerpin 2
 else
-COM_SIMF=--timing --quiet --cosim_file timer.cfg
+COM_SIMF= --quiet --cosim_file cosim.cfg
 endif
 
 ifneq (,${Q6VERSION})
@@ -24,7 +24,7 @@ COM_LDFLAGS=
 
 #If you are running outside hexframe.. sensible defaults
 ifeq (,${BUILD_DIR})
-CC=qdsp6-gcc
+CC=hexagon-gcc
 SIMF=$(COM_SIMF)
 #hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
 else
@@ -77,7 +77,7 @@ ifeq ($(MILLISECONDS),)
 MILLISECONDS = 5
 endif
 
-CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
+CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
 
 ifneq ($(NO_PRINT),)
 CFLAGS += -DNO_PRINT
@@ -137,7 +137,7 @@ vapa.x: vapa.x.in
 loadlinux: loadlinux.o vapa.x $(UCOS_BIN) $(UCOS_OBJ) $(BOOT_OBJ)
 	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -o $@ loadlinux.o $(UCOS_OBJ) $(BOOT_OBJ)
 
-	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -Wl,--entry=`qdsp6-nm loadlinux | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o $@ loadlinux.o $(UCOS_OBJ) $(BOOT_OBJ)
+	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -Wl,--entry=`hexagon-nm loadlinux | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o $@ loadlinux.o $(UCOS_OBJ) $(BOOT_OBJ)
 
 %.o: %.c
 	${CC} ${CFLAGS} -c -o $@ $<
@@ -151,4 +151,4 @@ clean:
 
 
 sim test.log : loadlinux
-	$(ULIMIT) && $(RUN) $(SIMF) -- loadlinux $(LINUX) 2>&1 | tee test.log
+	$(ULIMIT) && $(RUN) $(SIMF) -- loadlinux 2>&1 | tee test.log

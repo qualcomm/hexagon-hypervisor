@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <h2_vm.h>
 #include "elf.h"
 
 //typedef unsigned long long int u64_t;
@@ -92,33 +93,23 @@ void FAIL(const char *str)
 
 void spawn_vm(void *pc)
 {
-	unsigned int size;
-	void *vmb;
-	void *ret;
+	unsigned long vm;
+	unsigned long ret;
 
-	size = h2_config_vmblock_size(NUM_TOTAL_THREADS,1);
-	if (size > MAX_SIZE) {
-		printf("Size too small.");
-		exit(1);
-	}
-	vmb = h2_config_vmblock_init(storage,SET_STORAGE,0,0);
-	if (vmb == NULL) FAIL("SET_STORAGE");
+	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,0);
 
-	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
-	if (ret != vmb) FAIL("SET_PMAP_TYPE");
+	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
+	if (ret != vm) FAIL("SET_PMAP_TYPE");
 
-	ret = h2_config_vmblock_init(vmb, SET_FENCES, FENCE_LO, FENCE_HI);
-	if (ret != vmb) FAIL("SET_FENCES");
+	ret = h2_config_vmblock_init(vm, SET_FENCES, FENCE_LO, FENCE_HI);
+	if (ret != vm) FAIL("SET_FENCES");
 
-	ret = h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
-	if (ret != vmb) FAIL("SET_CPUS_INTS");
-
-	ret = h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
-	if (ret != vmb) FAIL("SET_PRIO_TRAPMASK");
+	ret = h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	if (ret != vm) FAIL("SET_PRIO_TRAPMASK");
 
 	/* Stats Reset */
 	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
-	h2_vmboot(pc,(void *)0x07fffff0,0,0,vmb);
+	h2_vmboot(pc,(void *)0x07fffff0,0,0,vm);
 	printf("vm booted\n");
 }
 
@@ -164,5 +155,7 @@ int main(int argc, char **argv)
 	}
 	spawn_vm((void *)ehdr.e_entry);
 	h2_thread_stop();
+
+	return 0;
 }
 

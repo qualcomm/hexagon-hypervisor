@@ -110,7 +110,6 @@ typedef struct H2K_vmblock_struct {
 
 	translation_type pmap_type;
 
-	u8_t interrupt_search_start;
 } __attribute__((aligned(32))) H2K_vmblock_t;
 
 #endif

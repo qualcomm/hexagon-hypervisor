@@ -64,13 +64,18 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 	if (op != SET_CPUS_INTS) {
 		if (vm < H2K_ID_MAX_VMS && H2K_gp->vmblocks[vm] != NULL) { // ok
 			vmblock = H2K_gp->vmblocks[vm];
+
+			if (vmblock->num_cpus > 0) return 0;  // VM is running, don't touch it.
+			/* H2K_init_setup_bootvm() calls with me == NULL */
+			if (me != NULL && vmblock->parent != me->id.vmidx) return 0;  // Caller is not the parent
 		} else {
 			vmblock = NULL;
 		}
 	}
 
 	switch (op) {
-	case SET_CPUS_INTS:
+
+	case SET_CPUS_INTS:	/* Allocates a new VM  */
 		if ((arg1 > MAX_VM_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
 
 		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2));
@@ -99,6 +104,9 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		vmblock->max_cpus = arg1;
 		vmblock->num_cpus = 0;
 		vmblock->num_ints = arg2;
+		if (me != NULL) {
+			vmblock->parent = me->id.vmidx;
+		}
 
 		ptrtmp += VMBLOCK_SPACE;
 

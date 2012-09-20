@@ -24,10 +24,6 @@
 #include <badint.h>
 #include <id.h>
 
-/*
- * FIXME: How to post interrupts securely to other VMs?
- */
-
 IN_SECTION(".text.vm.int")
 s32_t H2K_vm_int_deliver_locked(H2K_vmblock_t *vmblock, H2K_thread_context *thread, u32_t intno)
 {
@@ -114,14 +110,26 @@ static H2K_thread_context *H2K_vmint_fixup_post(H2K_thread_context *me, u32_t *a
 {
 	H2K_id_t id;
 	H2K_thread_context *dst;
+	u32_t vm;  // target ID
+	H2K_vmblock_t *vmblock;  // target vmblock
 
 	if (me->r02) {  // ID of cpu to receive interrupt
 		id.raw = me->r02;
+		vm = id.vmidx;
 
-		/* FIXME: check if we can post interrupts to the other vm */
-		if (id.vmidx != me->id.vmidx) { // bad vm
+		if (vm < H2K_ID_MAX_VMS && H2K_gp->vmblocks[vm] != NULL) { // ok
+			vmblock = H2K_gp->vmblocks[vm];
+		} else {
 			return NULL;
 		}
+		/* me might be NULL if called from fastint */
+		if (me != NULL
+				&& me->id.vmidx != vmblock->parent  // parent -> child
+				&& me->vmblock->parent != vm        // child -> parent
+				&& me->id.vmidx != vm) {            // self
+			return NULL;  // unrelated
+		}
+
 	} else {        // == 0 means me
 		id = me->id;
 	}

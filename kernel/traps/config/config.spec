@@ -74,9 +74,9 @@ H2K_trap_config_vmblock_init
 Description
 ~~~~~~~~~~~
 
-Performs the requested initialization operation on the VM block.  The valid operations are:
+Performs the requested initialization operation on a VM block.  These operations are allowed only to create a new VM block, or to modify an existing VM block that was previously created by the caller.  Modification is allowed only for a VM that has 0 started CPUs.  The valid operations are:
 
-* SET_CPUS_INTS: Allocate storage for VM and associated CPU contexts.  Set max number of virtual CPUs (arg1) and set number active to 0; set number of virtual interrupts (arg2) and clear enable/pending for each.  Initialize CPU contexts for the given number of cpus.  Ignore VM ID parameter.
+* SET_CPUS_INTS: Allocate storage for VM and associated CPU contexts (always creates a new VM block).  Set max number of virtual CPUs (arg1) and set number active to 0; set number of virtual interrupts (arg2) and clear enable/pending for each.  Initialize CPU contexts for the given number of cpus.  Ignore VM ID parameter.
 * SET_PMAP_TYPE: Set page-map pointer (arg1).  If arg1 is NULL, use ptb of current thread as page map.  Set page-map translation type (linear, page tables, or offset) (arg2).  If type is 'offset', then arg1 contains an offset descriptor, [pages (20 bits) : xwru (4 bits) : cccc (4 bits) : size (4 bits)], that is used to generate translations on the fly.  The offset is an unsigned value; negative offsets are specified as large positive values that wrap around: (0xffffffff - offset).
 * SET_FENCES: For the offset translation type, set the low (arg1) and high (arg2) physical address of the memory region accessible by the VM.  These are stored as page numbers in the vmblock.
 * SET_PRIO_TRAPMASK: Set best allowed priority (arg1); set mask for allowed traps (arg2).

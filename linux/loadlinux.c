@@ -232,6 +232,6 @@ int main(int argc, char *argv[]) {
 	PRINTF ("ucos: booted\n");
 #endif
 
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0; // make gcc happy
 }

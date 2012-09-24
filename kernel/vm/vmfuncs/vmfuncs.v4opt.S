@@ -236,7 +236,11 @@ FUNC_START H2K_vmtrap_start .text.vm.funcs .falign
 FUNC_END H2K_vmtrap_start
 
 FUNC_START H2K_vmtrap_stop .text.vm.funcs .falign
-	jump H2K_thread_stop
+	{
+		r1 = ME
+		r0 = memw(ME + #CONTEXT_r00)
+		jump H2K_thread_stop
+	}
 FUNC_END H2K_vmtrap_stop
 
 FUNC_START H2K_vmtrap_vmpid .text.vm.funcs .falign

@@ -117,7 +117,7 @@ void thread0(int thread)
 	if (delta < 0) delta = -delta;
 	if (delta > OVERHEAD * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (D) ");
 	h2_sem_up(&sem_done);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void thread1(int thread)
@@ -126,7 +126,7 @@ void thread1(int thread)
 	h2_sem_down(&sem_call);
 	delay();
 	h2_sem_up(&sem_ret);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int vmmain()
@@ -193,7 +193,7 @@ int main()
 
 	h2_sem_down(&sem_start);
 	thread0(0);
-	h2_thread_stop();
+	h2_thread_stop(0);
 	exit(0);
 }
 

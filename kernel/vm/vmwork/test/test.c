@@ -40,7 +40,7 @@ void H2K_vm_event(u32_t badva, u32_t b, u32_t c, H2K_thread_context *d)
 	TH_saw_vm_event = 1;
 }
 
-void H2K_thread_stop(H2K_thread_context *me)
+void H2K_thread_stop(u32_t status, H2K_thread_context *me)
 {
 	TH_saw_thread_stop = 1;
 	longjmp(env,1);

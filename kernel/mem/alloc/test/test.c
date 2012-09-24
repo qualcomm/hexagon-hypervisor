@@ -81,11 +81,11 @@ void check_freed(u32_t unit, u32_t freed) {
 
 	H2K_mem_alloc_tag_t *tag = &Heap[unit * ALLOC_UNIT - 1];
 
-	if (freed != tag->size) {
-		FAIL_FSIZE(unit, tag->size, freed);
+	if (((H2K_mem_alloc_tag_t *)freed)->size != tag->size) {
+		FAIL_FSIZE(unit, tag->size, ((H2K_mem_alloc_tag_t *)freed)->size);
 	}
 
-	printf("OK Test %d Unit %u:  freed size %u\n", test, unit, freed);
+	printf("OK Test %d Unit %u:  freed size %u\n", test, unit, ((H2K_mem_alloc_tag_t *)freed)->size);
 	test++;
 }
 

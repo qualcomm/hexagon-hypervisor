@@ -138,7 +138,7 @@ void thread0(int thread)
 	puts("f.ok");
 
 	h2_sem_up(&sem_done);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void thread1(int thread)
@@ -148,7 +148,7 @@ void thread1(int thread)
 		delay();
 		h2_sem_up(&sem_ret);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void vmmain()
@@ -207,7 +207,7 @@ int main()
 #endif
 	H2K_mem_tlb_write(tlb_index, tlb_entry);
 	spawn_vm(vmmain);
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }
 

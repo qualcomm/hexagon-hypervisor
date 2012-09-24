@@ -88,7 +88,7 @@ void allow_finish()
 {
 	printf("delay_yield yielded\n");
 	h2_sem_up(&donesem);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int main() 

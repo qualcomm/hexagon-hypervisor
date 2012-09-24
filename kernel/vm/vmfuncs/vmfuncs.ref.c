@@ -156,7 +156,7 @@ void H2K_vmtrap_start(H2K_thread_context *me)
 void H2K_vmtrap_stop(H2K_thread_context *me)
 {
 	/* Destroy, or just make blocked? */
-	H2K_thread_stop(me);
+	H2K_thread_stop(me->r00, me);
 }
 
 /* 20 */

@@ -67,7 +67,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 
 			if (vmblock->num_cpus > 0) return 0;  // VM is running, don't touch it.
 			/* H2K_init_setup_bootvm() calls with me == NULL */
-			if (me != NULL && vmblock->parent != me->id.vmidx) return 0;  // Caller is not the parent
+			if (me != NULL && me->id.vmidx != vmblock->parent.vmidx) return 0;  // Call is not from parent VM
 		} else {
 			vmblock = NULL;
 		}
@@ -81,8 +81,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2));
 		if (block.ptr == NULL) return 0;  // no space
 
-		/* Align.  Should already be done by allocator */
-		vmblock = (H2K_vmblock_t *) (((u32_t)block.ptr + (H2K_VMBLOCK_ALIGN-1)) & (-H2K_VMBLOCK_ALIGN));
+		vmblock = (H2K_vmblock_t *)block.ptr;
 		ptrtmp = (u32_t)vmblock;
 
 		for (i = 1; i < H2K_ID_MAX_VMS; i++) {
@@ -105,8 +104,10 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		vmblock->num_cpus = 0;
 		vmblock->num_ints = arg2;
 		if (me != NULL) {
-			vmblock->parent = me->id.vmidx;
+			vmblock->parent = me->id;
 		}
+		/* ID of boot VM parent stays 0:0 */
+			
 
 		ptrtmp += VMBLOCK_SPACE;
 

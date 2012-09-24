@@ -124,9 +124,9 @@ static H2K_thread_context *H2K_vmint_fixup_post(H2K_thread_context *me, u32_t *a
 		}
 		/* me might be NULL if called from fastint */
 		if (me != NULL
-				&& me->id.vmidx != vmblock->parent  // parent -> child
-				&& me->vmblock->parent != vm        // child -> parent
-				&& me->id.vmidx != vm) {            // self
+				&& me->id.vmidx != vmblock->parent.vmidx  // parent -> child
+				&& me->vmblock->parent.vmidx != vm        // child -> parent
+				&& me->id.vmidx != vm) {                  // self
 			return NULL;  // unrelated
 		}
 

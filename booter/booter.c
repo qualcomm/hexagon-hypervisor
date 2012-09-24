@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 		dcclean_range(phdr.p_paddr,phdr.p_memsz);
 	}
 	spawn_vm((void *)ehdr.e_entry);
-	h2_thread_stop();
+	h2_thread_stop(0);
 
 	return 0;
 }

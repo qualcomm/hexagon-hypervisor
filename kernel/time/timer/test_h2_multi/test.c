@@ -70,7 +70,7 @@ void task(void *arg)
 		}
 	};
 	h2_sem_up(&donesem);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int main() 

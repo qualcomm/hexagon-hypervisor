@@ -93,7 +93,7 @@ void producer_thread(int x)
 	info("counter = %d; Resuming consumer\n", counter);
 	h2_futex_wake(&futex_pages[test_lock],1);
 
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 /*  Launch 2 threads, one at "low prio" and one at "high prio"; 
@@ -116,7 +116,7 @@ void consumer_thread(int prio)
 	info("Final counter value:  %d\n",counter);
 	done = 1;
 
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void vmmain(void *unused)
@@ -256,6 +256,6 @@ int main()
 #endif
 	H2K_mem_tlb_write(tlb_index, tlb_entry);
 	spawn_vm(vmmain);
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }

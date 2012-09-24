@@ -97,10 +97,10 @@ void spinner_thread(void * v_threadid)
 			h2_yield();
 		}
 		TH_nextstep_id = 0;
-		if (TH_shutdown_now) h2_thread_stop();
+		if (TH_shutdown_now) h2_thread_stop(0);
 		h2_futex_unlock_pi(&futex0);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 typedef struct {
@@ -120,7 +120,7 @@ void blocker_thread(blocker_thread_struct *info)
 		h2_yield();
 	}
 	TH_nextstep_id = 0;
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void pi_caller(int *futex_addr)
@@ -139,7 +139,7 @@ void pi_caller(int *futex_addr)
 		FAIL("Wrong futex val");
 	}
 	TH_caller_woke = 1;
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void spawn_spinner(int tnum, int prio)
@@ -324,6 +324,6 @@ int main()
 #endif
 	H2K_mem_tlb_write(tlb_index, tlb_entry);
 	spawn_vm(vmmain);
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }

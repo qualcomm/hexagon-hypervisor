@@ -63,7 +63,7 @@ void ping(void *id) {
 		blast_sem_up(out);
 	}
 	if (myid == MAX_THREADS-1) blast_sem_up(&tomain);
-	blast_thread_stop();
+	blast_thread_stop(0);
 }
 
 char context_space[1024];

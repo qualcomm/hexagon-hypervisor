@@ -35,14 +35,14 @@ void thread0(int thread)
 	h2_anysignal_set(&any_threads, 0xfffffffc);
 	if((any_threads.waiting & 0x1) != 0x1) { FAIL("anysignal acknowledged the wrong signal!"); }
 	h2_anysignal_set(&any_threads, 1);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void thread1(int thread)
 {
 	h2_printf("thread1 delay\n");
 	h2_anysignal_wait(&any_done, 0xfffffff0);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int main()

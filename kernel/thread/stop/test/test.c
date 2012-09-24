@@ -45,10 +45,11 @@ void H2K_dosched(H2K_thread_context *me, u32_t hwtnum)
 void TH_thread_stop(H2K_thread_context *me)
 {
 	if (setjmp(env) == 0) {
-		H2K_thread_stop(me);
+		H2K_thread_stop(0x01234567, me);
 	}
 }
 
+/* FIXME: check for interrupt post to parent CPU */
 int main() 
 {
 	H2K_vmblock_t myblock;

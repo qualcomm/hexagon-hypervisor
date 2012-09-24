@@ -91,7 +91,7 @@ void producer_thread(int x)
 	info("counter = %d; Resuming consumer (nr_to_wake=%d)\n", counter,nr_to_wake);
 	h2_futex_wake(&futex_pages[test_lock],nr_to_wake);
 
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 #endif
 
@@ -213,7 +213,7 @@ int main()
 
 	info("main() starting\n");
 	spawn_vm(vmmain);
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }
 

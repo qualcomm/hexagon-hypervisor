@@ -18,7 +18,7 @@
 #endif
 #endif
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define MAX_TLB_ENTRIES 63
 #define PHYSREAD_TEMP_MAP_IDX 63
 #define PHYSREAD_TEMP_MAP_VPN 0xfffff
@@ -28,7 +28,7 @@
 
 #define TLB_FIRST_REPLACEABLE_ENTRY 8
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define TLB_ENTRY_SIZE_BITS 20
 #define TLB_ENTRY_C_BITS 26
 #define TLB_ENTRY_GLOBAL_BIT 60
@@ -47,7 +47,7 @@
 #define MAX_PRIO ((MAX_PRIOS) - 1)
 #define BEST_PRIO 0
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define ASID_BITS 5
 #else
 #define ASID_BITS 7
@@ -66,7 +66,7 @@
 
 #define PERCPU_INTERRUPTS 32
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define MAX_INTERRUPTS 32
 #else
 #define H2K_L2_CONTROL 1
@@ -97,7 +97,7 @@
 
 #define SSR_IE_BIT 18
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define RESCHED_INT_INTMASK (0x80000000 >> RESCHED_INT)
 #define VM_IPI_INTMASK (0x80000000 >> VM_IPI_INT)
 #define SSR_GUEST_BIT 13
@@ -108,9 +108,9 @@
 #define SSR_SS_BIT 30
 #endif
 
-#if __QDSP6_ARCH__ <= 4
+#if ARCHV <= 4
 #define BOOT_THREAD_USR 0x00000000
-#elif __QDSP6_ARCH__ == 5
+#elif ARCHV == 5
 //HW D$ Prefetch off
 //#define BOOT_THREAD_USR 0x00050000
 //HW D$ Prefetch on

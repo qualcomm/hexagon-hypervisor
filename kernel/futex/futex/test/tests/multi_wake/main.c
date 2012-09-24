@@ -105,7 +105,7 @@ void producer_thread(int x)
 	info("counter = %d; Resuming consumer (nr_to_wake=%d)\n", counter,nr_to_wake);
 	h2_futex_wake(&futex_pages[test_lock],nr_to_wake);
 
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void consumer_thread(unsigned int *tinfo)
@@ -127,7 +127,7 @@ void consumer_thread(unsigned int *tinfo)
 	info("%x: %d Final counter value:  %d\n",prio,h2_thread_myid(),counter);
 	done = 1;
 
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void vmmain(void *unused)
@@ -314,7 +314,7 @@ int main()
 
 	info("main() starting\n");
 	spawn_vm(vmmain);
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }
 

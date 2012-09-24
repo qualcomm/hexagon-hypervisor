@@ -93,7 +93,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_create // 4
 	}
 	{
-		r0 = sgp
+		r1 = sgp
 		jump H2K_thread_stop // 5
 	}
 	{

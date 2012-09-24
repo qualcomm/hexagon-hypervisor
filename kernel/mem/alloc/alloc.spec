@@ -63,12 +63,35 @@ H2K_mem_alloc_free
 Description
 ~~~~~~~~~~~
 
-Free the given region. Return the size of the freed region.
+Free the given region. Return pointer to tag of the freed region.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Merge with any adjacent free regions.  
+Merge with any adjacent free regions.
+
+
+H2K_mem_alloc_release
+---------------------
+
+.. cfunction:: void H2K_mem_alloc_release(u32_t *ptr)
+
+	 :param ptr: Pointer to region to be released
+
+Description
+~~~~~~~~~~~
+
+Mark the given region as freeable.  Must be called with BKL held.  The region
+can be accessed until BKL_UNLOCK().
+
+Functionality
+~~~~~~~~~~~~~
+
+Set the released bit in the tag for the given block.  The next time that
+H2K_mem_alloc_get() encounters the block, it will free it under the BKL---after
+the caller of H2K_mem_alloc_release() has finished using the block and
+unlocked.  This is used by H2K_thread_stop(), which may release a vmblock
+before it enters H2K_switch(), which reads from the block before unlocking.
 
 
 H2K_mem_alloc_init

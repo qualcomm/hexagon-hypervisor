@@ -82,7 +82,7 @@ void thread0(int thread)
 		printf("T0\n");
 		h2_sem_down(&sem0);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void thread1(int thread)
@@ -95,7 +95,7 @@ void thread1(int thread)
 		printf("T1\n");
 		h2_sem_down(&sem1);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 volatile int int_num;
@@ -222,7 +222,7 @@ int main()
 		h2_sem_down(&int_sem);
 		hw_gen_int(int_num);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }
 

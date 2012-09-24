@@ -15,7 +15,7 @@ s32_t H2K_vm_do_work(H2K_thread_context *me)
 {
 	if (me->vmstatus & H2K_VMSTATUS_KILL) {
 		/* This thread must die */
-		H2K_thread_stop(me);
+		H2K_thread_stop(0xd1eed1ee, me);
 	}
 	
 	if (!(me->vmstatus & H2K_VMSTATUS_VMWORK)) return -1;

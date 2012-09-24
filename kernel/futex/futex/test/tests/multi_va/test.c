@@ -169,7 +169,7 @@ int main()
 #endif
 	}
 	spawn_vm(vmmain);
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }
 

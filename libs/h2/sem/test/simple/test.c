@@ -48,7 +48,7 @@ void thread0(int thread)
 		FAIL("trydown succeeded\n");
 	}
 	h2_sem_up(&sem_done);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void thread1(int thread)
@@ -56,7 +56,7 @@ void thread1(int thread)
 	h2_sem_up(&sem_c);
 	h2_sem_down(&sem_b);
 	h2_sem_up(&sem_done);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int main()

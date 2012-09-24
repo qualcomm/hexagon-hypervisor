@@ -26,11 +26,12 @@ Create a thread.
 int h2_thread_create(void *pc, void *stack, void *arg, unsigned int prio);
 
 /**
-Terminate the current thread.
+Terminate the current thread with the given status.
+@param[in] status  Termination status value
 @returns None; Does not return.
 @dependencies None
 */
-void h2_thread_stop(void);
+void h2_thread_stop(unsigned int status);
 
 /**
 Obtain the ID of the calling thread

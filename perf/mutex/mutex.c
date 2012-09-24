@@ -86,7 +86,7 @@ void worker(void *arg)
 	}
 	h2_sem_up(&donesem);
 	printf("Worker %x done\n",(unsigned int)arg);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int main()

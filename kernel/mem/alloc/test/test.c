@@ -77,22 +77,22 @@ void check_null(H2K_mem_alloc_block_t block) {
 	test++;
 }
 
-void check_freed(u32_t unit, u32_t freed) {
+void check_freed(u32_t unit, H2K_mem_alloc_tag_t *freed) {
 
 	H2K_mem_alloc_tag_t *tag = &Heap[unit * ALLOC_UNIT - 1];
 
-	if (((H2K_mem_alloc_tag_t *)freed)->size != tag->size) {
-		FAIL_FSIZE(unit, tag->size, ((H2K_mem_alloc_tag_t *)freed)->size);
+	if (freed->size != tag->size) {
+		FAIL_FSIZE(unit, tag->size, freed->size);
 	}
 
-	printf("OK Test %d Unit %u:  freed size %u\n", test, unit, ((H2K_mem_alloc_tag_t *)freed)->size);
+	printf("OK Test %d Unit %u:  freed size %u\n", test, unit, freed->size);
 	test++;
 }
 
 int main() {
 
 	H2K_mem_alloc_block_t block1, block2, block3;
-	u32_t freed;
+	H2K_mem_alloc_tag_t *freed;
 
 	H2K_mem_do_alloc_init(Heap, SIZE);
 

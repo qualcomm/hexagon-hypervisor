@@ -161,6 +161,6 @@ void blast_thread_exit(int status)
 			remove_thread(tmp);
 		}
 	}
-	h2_thread_stop(0);
+	h2_thread_stop(status);
 }
 

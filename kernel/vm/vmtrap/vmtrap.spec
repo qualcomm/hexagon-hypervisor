@@ -80,6 +80,21 @@ The table is as follows, and matches the Hexagon VM Architecture Spec:
  - 0x1F	:cfunc:`H2K_vmtrap_bad()`: Invalid Virtual Instruction
 
 
+H2K_vmtrap_bad
+--------------
+
+.. cfunction:: H2K_vmtrap_bad()
+
+Description
+~~~~~~~~~~~
+
+This routine handles a bad VM trap
+
+Functionality
+~~~~~~~~~~~~~
+
+We use :cfunc:`H2K_vm_event()` to raise an error in the guest.
+
 
 Testing
 -------

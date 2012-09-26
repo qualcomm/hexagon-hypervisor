@@ -185,6 +185,24 @@ Functionality
 
 Calls :cfunc:`H2K_sched_yield()` and puts 0 for success in r00.
 
+H2K_vmtrap_start
+----------------
+
+.. cfunction:: void H2K_vmtrap_start(H2K_thread_context *me)
+
+	:param me: Pointer to the current thread context
+
+Description
+~~~~~~~~~~~
+
+Starts another VCPU.
+
+Functionality
+~~~~~~~~~~~~~
+
+Calls :cfunc:`H2K_thread_create_no_squash()` using r0 as the start address, r1
+as the stack pointer, and with the same priority as the calling VCPU.
+
 H2K_vmtrap_stop
 ---------------
 

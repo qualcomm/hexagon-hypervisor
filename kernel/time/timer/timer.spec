@@ -56,6 +56,24 @@ Functionality
 
 We use a look up table of pointers to handler functions, described below.
 
+H2K_vmtrap_timer
+----------------
+
+.. cfunction:: void H2K_vmtrap_timer(H2K_thread_context *me)
+
+	:param me: Pointer to the current context
+
+
+Description
+~~~~~~~~~~~
+
+Handles timer operations 
+
+Functionality
+~~~~~~~~~~~~~
+
+Calls :cfunc:`H2K_timer_trap()` using r00 for the traptype and r0302 as the arg.
+
 
 H2K_timer_get_freq
 ~~~~~~~~~~~~~~~~~~
@@ -189,8 +207,17 @@ Description
 
 This function initializes the timer state.
 
+
+
 H2K_timer_dotimeout
 ~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
 
 
 

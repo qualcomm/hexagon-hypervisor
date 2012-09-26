@@ -113,7 +113,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(KG_CPUSTART+HTNUM<<#3) = NOW
-		TIDVAL = memub(DST+#CONTEXT_tid)
+		TIDVAL = memw(DST+#CONTEXT_status_prio_hthread_tid)
 		r1:0 = combine(#1,HTNUM)
 		c7:6 = r25:24				// m1m0
 	}

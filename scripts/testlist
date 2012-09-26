@@ -12,6 +12,7 @@
 ./kernel/event/preempt/test
 ./kernel/event/popup/test
 ./kernel/event/popup/test_h2
+./kernel/event/passthru/test
 ./kernel/init/boot/test
 ./kernel/init/setup/test
 ./kernel/mem/asid/test

@@ -63,6 +63,7 @@
 ./kernel/vm/vmipi/test
 ./kernel/vm/vmtrap/test
 ./kernel/vm/vmwork/test
+./kernel/vm/vmfuncs/test
 
 ./libs/h2/alloc/test
 ./libs/h2/sem/test/simple

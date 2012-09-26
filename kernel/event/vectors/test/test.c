@@ -98,13 +98,14 @@ int main()
 	typepun_t base,test;
 	base.vp = &H2K_event_vectors;
 	for (i = 0; i < (sizeof(testvals)/sizeof(testvals[0])); i++) {
-		if (testvals[i] < 0) continue;
+		//if (testvals[i] < 0) continue;
 		test.uip = base.uip + i;
 		ret = test.handler();
 		if (ret != testvals[i]) {
 			printf("event %d: expected %d\n",i,testvals[i]);
 			FAIL("Incorrect event return");
 		}
+		printf("%d\n",i);
 	}
 	puts("TEST PASSED\n");
 	return 0;

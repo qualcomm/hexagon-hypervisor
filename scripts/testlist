@@ -65,6 +65,8 @@
 ./kernel/vm/vmtrap/test
 ./kernel/vm/vmwork/test
 ./kernel/vm/vmfuncs/test
+./kernel/vm/vmmap/test
+./kernel/vm/vmcache/test
 
 ./libs/h2/alloc/test
 ./libs/h2/sem/test/simple

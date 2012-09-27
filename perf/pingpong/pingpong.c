@@ -16,7 +16,7 @@ unsigned long long int stacks[MAX_THREADS][64];
 #ifdef DEBUG
 #define ITERS 10
 #else
-#define ITERS (1000)
+#define ITERS (500)
 #endif
 
 #ifdef H2_H

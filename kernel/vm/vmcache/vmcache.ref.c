@@ -25,6 +25,7 @@
 #include <vmint.h>
 #include <dosched.h>
 #include <vmwork.h>
+#include <cache.h>
 
 /* 13 */
 void H2K_vmtrap_cachectl(H2K_thread_context *me)
@@ -34,8 +35,6 @@ void H2K_vmtrap_cachectl(H2K_thread_context *me)
 	cacheop_type op = (cacheop_type)me->r00;
 	// u32_t va = me->r01;
 	// u32_t count = me->r02;
-	u32_t i, j;
-	u32_t idx = 0;
 
 	if (me->r00 >= H2K_CACHECTL_BADOP) {
 		me->r00 = -1;
@@ -47,40 +46,22 @@ void H2K_vmtrap_cachectl(H2K_thread_context *me)
 	switch(op) {
 	case H2K_CACHECTL_ICKILL:
 	case H2K_CACHECTL_ICINVA:
-		asm volatile
-			(
-			 " ickill \n"
-			 );
+		H2K_ickill();
 		return;
 
 	case H2K_CACHECTL_DCKILL:
 	case H2K_CACHECTL_DCCLEANINVA:
-		for (i = 0; i < CACHEIDX_MAX; i++) {
-			asm volatile
-				(
-				 "dccleaninvidx(%0) \n"
-				 :
-				 : "r"(i)
-				 );
-		};
+		H2K_cache_d_cleaninv();
 		return;
 
 	case H2K_CACHECTL_IDSYNC:
-		for (i = 0; i < WAYS_MAX; i++) {
-			for (j = 0; j < (SETS_MAX * 32); j += 32) {
-				idx += i + j;
-				asm volatile
-					(
-					 "icinvidx(%0) \n"
-					 "dccleanidx(%0) \n"
-					 :
-					 : "r"(idx)
-					 );
-			}
-		}
+		H2K_cache_d_clean();
+		H2K_cache_i_inv();
 		return;
 
 	case H2K_CACHECTL_L2KILL:
+		H2K_cache_l2_cleaninv();
+		return;
 	case H2K_CACHECTL_BADOP:  // shut up warning
 		return;
 	}

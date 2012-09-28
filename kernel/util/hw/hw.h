@@ -128,6 +128,11 @@ static inline void H2K_isync()
 	asm volatile (" isync ");
 }
 
+static inline void H2K_ickill()
+{
+	asm volatile (" ickill ");
+}
+
 static inline u32_t H2K_get_modectl()
 {
 	u32_t ret;

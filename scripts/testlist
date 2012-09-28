@@ -5,6 +5,7 @@
 ./kernel/data/thread/test
 ./kernel/error/fatal/test
 ./kernel/event/error/test
+./kernel/event/error/test_debug
 ./kernel/event/fastint/test
 ./kernel/event/interrupt/test
 ./kernel/event/trap/test

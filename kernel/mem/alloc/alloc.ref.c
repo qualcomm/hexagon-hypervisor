@@ -17,7 +17,7 @@
 #define WORDS(X) (((X) + sizeof(H2K_mem_alloc_tag_t)) / sizeof(H2K_mem_alloc_tag_t))
 #define UNITS(X) (((X) + ALLOC_UNIT) / ALLOC_UNIT)
 
-static H2K_mem_alloc_tag_t H2K_mem_alloc_heap[TOTAL_SIZE] IN_SECTION(".data.core.globals") __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}} ;
+static H2K_mem_alloc_tag_t H2K_mem_alloc_heap[TOTAL_SIZE] IN_SECTION(".data.core.globals") __attribute__((aligned(ALLOC_UNIT * sizeof(u32_t)))) = {{{.size = 0, .free = 0}}} ;
 
 static H2K_mem_alloc_tag_t *heap IN_SECTION(".data.core.globals");
 static u32_t heap_size IN_SECTION(".data.core.globals");

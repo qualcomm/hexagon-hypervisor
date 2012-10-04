@@ -116,6 +116,25 @@ static void H2K_intconfig_l2_init()
 		intbase[(0x280/4) + i] = 0xFFFFFFFF;	/* EDGE/level TRIGGERED */
 		intbase[(0x300/4) + i] = 0x0;		/* Rising Edge / Level High */
 		intbase[(0x400/4) + i] = 0xFFFFFFFF;	/* Interrupt Clear */
+
+		/*  8960 SPI and TLMM summary apparently are level (high) triggered */
+		#define SPI_IRQ		65
+		#define SPI_WORD	(SPI_IRQ/32)
+		#define TLMM_IRQ	38
+		#define TLMM_WORD	(TLMM_IRQ/32)
+
+		/*  is there a "clear bit" around here?  */
+		if (i == SPI_WORD) {
+			intbase[(0x280/4) + i] &= ~(1<<(SPI_IRQ % 32));
+		}
+		if (i == TLMM_WORD) {
+			intbase[(0x280/4) + i] &= ~(1<<(TLMM_IRQ % 32));
+		}
+
+		#undef SPI_IRQ
+		#undef SPI_WORD
+		#undef TLMM_IRQ
+		#undef TLMM_WORD
 	}
 	ciad(0x80000000);				/* Enable L2 Interrupts */
 }

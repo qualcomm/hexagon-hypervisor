@@ -17,3 +17,9 @@
 h2_vmboot:
 	trap0(#H2_TRAP_VMBOOT)
 	jumpr r31
+
+	.global h2_vmstatus
+h2_vmstatus:
+	trap0(#H2_TRAP_VMSTATUS)
+	jumpr r31
+

@@ -15,5 +15,7 @@
 /* basically thread_create but with a vmblock */
 int h2_vmboot(void *pc, void *stack, unsigned int arg, unsigned int prio, unsigned int vm);
 
+unsigned int h2_vmstatus(unsigned int vm);
+
 #endif
 

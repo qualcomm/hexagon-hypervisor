@@ -82,6 +82,7 @@ int main()
 	h2_allsignal_signal(&all_done, 0x80000000);
 
 	puts("TEST PASSED\n");
+	h2_thread_stop(0);
 	return 0;
 }
 

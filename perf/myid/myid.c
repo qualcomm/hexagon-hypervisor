@@ -20,5 +20,6 @@ int main(void){
 	end = h2_get_core_pcycles();
 	printf("Average PCycles for h2_thread_myid():  %.0f\n", (double) (end - start) / 1024.0);
 	printf("TEST PASSED - %.0f\n", (double) (end - start) / 1024.0);
+	h2_thread_stop(0);
 	return 0;
 }

@@ -45,6 +45,7 @@ int main() {
 	}
 
 	info("TEST PASSED\n");
+	h2_thread_stop(0);
 	return(0);
 
 }

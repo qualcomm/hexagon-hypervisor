@@ -17,13 +17,19 @@ ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(CURDIR)/../install
 endif
 
+ifeq ($(KERNELPATH),)
+export KERNELPATH := $(CURDIR)/../kernel
+endif
+
+CFLAGS = -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2
+
 all: hello booter
 
 hello: hello.c
-	qdsp6-gcc -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2 -I../install/include -L../install/lib -Wl,--section-start=.start=0x00010000 -o hello hello.c 
+	qdsp6-gcc $(CFLAGS)  -I../install/include -L../install/lib -Wl,--section-start=.start=0x00010000 -o hello hello.c 
 
-booter: booter.c elf.c
-	qdsp6-gcc -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -o booter booter.c elf.c -moslib=h2 -lh2kernel -I../install/include -L../install/lib -Wl,--section-start=.start=0xff000000 -Wl,--defsym=HEAP_SIZE=0x100000
+booter: booter.c elf.c booter_event.S
+	qdsp6-gcc $(CFLAGS) -o booter booter.c elf.c booter_event.S -lh2kernel -I../install/include -I$(KERNELPATH)/include -L../install/lib -Wl,--section-start=.start=0xff000000 -Wl,--defsym=HEAP_SIZE=0x100000
 
 test: hello booter
 	qdsp6-sim -- booter hello

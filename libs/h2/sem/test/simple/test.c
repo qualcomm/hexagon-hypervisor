@@ -82,6 +82,7 @@ int main()
 	h2_sem_up(&sem_b);
 	h2_sem_down(&sem_done);
 	puts("TEST PASSED\n");
+	h2_thread_stop(0);
 	return 0;
 }
 

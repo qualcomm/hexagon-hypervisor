@@ -70,6 +70,7 @@ int main()
 	h2_anysignal_set(&any_done, 0x8000);
 
 	puts("TEST PASSED\n");
+	h2_thread_stop(0);
 	return 0;
 }
 

@@ -82,5 +82,6 @@ int main() {
 	blast_sem_down(&tomain);
 	end = blast_get_core_pcycles();
 	printf("TEST PASSED - %.0f\n", (float) (end - start) / (float) (ITERS*MAX_THREADS));
+	h2_thread_stop(0);
 	return 0;
 }

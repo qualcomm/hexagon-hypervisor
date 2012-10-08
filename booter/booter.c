@@ -8,67 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <h2_vm.h>
+#include <bootmap_macros.h>
 #include "elf.h"
-
-//typedef unsigned long long int u64_t;
-
-#define SIZE_4K 0
-#define SIZE_16K 1
-#define SIZE_64K 2
-#define SIZE_256K 3
-#define SIZE_1M 4
-#define SIZE_4M 5
-#define SIZE_16M 6
-
-#define L1WB_L2UC 0
-#define L1WT_L2UC 1
-#define L1WB_L2UC_S 2
-#define L1WT_L2UC_S 3
-#define UC 4
-#define L1WT_L2C 5
-#define UC_S 6
-#define L1WB_L2C 7
-#define L1WB_L2CWB_AUX 0xa
-
-#define MAIN 0
-#define AUX 1
-
-#define U 1
-#define R 2
-#define W 4
-#define X 8
-
-#define RW (R|W)
-#define RX (R|X)
-#define WX (W|X)
-#define RWX (R|W|X)
-#define UR (U|R)
-#define UW (U|W)
-#define UX (U|X)
-#define URW (U|R|W)
-#define URX (U|R|X)
-#define UWX (U|W|X)
-#define URWX (U|R|W|X)
-
-#define NONE 0
-
-/* As long as the map is contiguous and all pages have the same cache attrs, we can use offset translations */
-
-/* #define MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \ */
-/*         (((u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \ */
-/*                 (unsigned int)((((u64_t)(PPN))) | (((u64_t)(CFIELD)) << 24) | ((u64_t)(PERM) << 28))) , */
-
-/* u64_t map[] = { */
-/* MEMORY_MAP_THREAD(      0,      0,      0x00000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x00000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x01000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x01000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x02000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x02000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x03000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x03000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x04000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x04000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x05000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x05000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x06000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x06000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x07000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x07000) */
-/*         0 */
-/* }; */
 
 #define MAX_SIZE (1024*1024)
 #define NUM_TOTAL_THREADS 32
@@ -83,6 +24,8 @@ H2K_offset_t offset = {{
 #define FENCE_LO 0
 #define FENCE_HI 0x07000000
 
+#define CHILD_INTERRUPT 14
+
 unsigned char storage[MAX_SIZE] __attribute__((aligned(32)));
 
 void FAIL(const char *str)
@@ -91,7 +34,7 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-void spawn_vm(void *pc)
+unsigned int spawn_vm(void *pc)
 {
 	unsigned long vm;
 	unsigned long ret;
@@ -110,7 +53,8 @@ void spawn_vm(void *pc)
 	/* Stats Reset */
 	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
 	h2_vmboot(pc,(void *)0x07fffff0,0,0,vm);
-	printf("vm booted\n");
+	printf("vm booted ID %lu\n", vm);
+	return vm;
 }
 
 void dcclean_range(unsigned long start, long range)
@@ -125,9 +69,12 @@ void dcclean_range(unsigned long start, long range)
 	} while (range >= 0); 
 }
 
+extern void bootvm_vectors();
+
 int main(int argc, char **argv)
 {
 	int ret,i;
+	unsigned long vm;
 	FILE *f;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
@@ -153,8 +100,16 @@ int main(int argc, char **argv)
 		/* Really, only need to clean out text sections */
 		dcclean_range(phdr.p_paddr,phdr.p_memsz);
 	}
-	spawn_vm((void *)ehdr.e_entry);
-	h2_thread_stop(0);
+
+	h2_vmtrap_setvec(bootvm_vectors);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
+
+	vm = spawn_vm((void *)ehdr.e_entry);
+	h2_vmtrap_wait();
+	ret = h2_vmstatus(vm);
+	printf("VM %lu stopped, status %d\n", vm, ret);
+	// h2_thread_stop(0);
 
 	return 0;
 }

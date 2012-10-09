@@ -101,7 +101,7 @@ FUNC_START H2K_vm_event .text.vm.event .p2align 5
 	}
 .Lfatal:
 	{
-		r1:0 = combine(#-3,ME)
+		r1:0 = combine(ME,#-3)
 		r3:2 = #0
 		r4 = HTID
 		jump H2K_fatal_thread

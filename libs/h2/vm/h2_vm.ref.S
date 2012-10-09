@@ -23,3 +23,8 @@ h2_vmstatus:
 	trap0(#H2_TRAP_VMSTATUS)
 	jumpr r31
 
+	.global h2_vmfree
+h2_vmfree:
+	trap0(#H2_TRAP_VMFREE)
+	jumpr r31
+

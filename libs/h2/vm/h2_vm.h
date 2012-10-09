@@ -17,5 +17,7 @@ int h2_vmboot(void *pc, void *stack, unsigned int arg, unsigned int prio, unsign
 
 unsigned int h2_vmstatus(unsigned int vm);
 
+int h2_vmfree(unsigned int vm);
+
 #endif
 

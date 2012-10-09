@@ -6,6 +6,7 @@
 #include <create.h>
 #include <globals.h>
 #include <idtype.h>
+#include <alloc.h>
 
 s32_t H2K_vmboot(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t vm, H2K_thread_context *me)
 {
@@ -38,4 +39,23 @@ u32_t H2K_vmstatus(u32_t vm, H2K_thread_context *me) {
 	}
 
 	return vmblock->status;
+}
+
+s32_t H2K_vmfree(u32_t vm, H2K_thread_context *me) {
+
+	H2K_vmblock_t *vmblock;
+
+	/* Can only free a child vm (that isn't running) */
+	if (vm < H2K_ID_MAX_VMS && H2K_gp->vmblocks[vm] != NULL) { // ok
+		vmblock = H2K_gp->vmblocks[vm];
+		if ((me != NULL && me->id.vmidx != vmblock->parent.vmidx)
+				|| vmblock->num_cpus > 0) return -1;
+	} else {
+		return -1;
+	}
+
+	H2K_mem_alloc_free((u32_t *)vmblock);
+	H2K_gp->vmblocks[vm] = NULL;
+
+	return 0;
 }

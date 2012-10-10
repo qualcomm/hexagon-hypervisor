@@ -78,7 +78,7 @@ typedef struct H2K_vmblock_struct {
 	u32_t bestprio; 	/* best allowed priority */
 	u32_t vmidx;
 	H2K_id_t parent;
-	u32_t status;     /* status, e.g. halt, reboot */
+	s32_t status;     /* status, e.g. halt, reboot */
 	u32_t num_ints; 	/* number of shared interrupts */
 	u32_t trapmask;  	/* allowed traps */
 	H2K_spinlock_t lock;

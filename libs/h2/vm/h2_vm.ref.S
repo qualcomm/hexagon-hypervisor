@@ -13,18 +13,7 @@
 
 	.text
 	.p2align 3
-	.global h2_vmboot
-h2_vmboot:
-	trap0(#H2_TRAP_VMBOOT)
+	.global h2_vmop_trap
+h2_vmop_trap:
+	trap0(#H2_TRAP_VMOP)
 	jumpr r31
-
-	.global h2_vmstatus
-h2_vmstatus:
-	trap0(#H2_TRAP_VMSTATUS)
-	jumpr r31
-
-	.global h2_vmfree
-h2_vmfree:
-	trap0(#H2_TRAP_VMFREE)
-	jumpr r31
-

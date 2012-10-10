@@ -41,7 +41,7 @@ void  __attribute__((noreturn)) TH_handler(u32_t foo)
 	longjmp(env,1);
 }
 
-void H2K_thread_stop(u32_t status, H2K_thread_context *me)
+void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 {
 	if (TH_expected_stop == 0) FAIL("Didn't expect thread stop");
 	TH_saw_stop = 1;

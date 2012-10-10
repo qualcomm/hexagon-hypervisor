@@ -7,8 +7,23 @@
 #include <globals.h>
 #include <idtype.h>
 #include <alloc.h>
+#include <vmop.h>
 
-s32_t H2K_vmboot(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t vm, H2K_thread_context *me)
+typedef s32_t (*vmop_ptr_t)(vmop_t, u32_t, u32_t, u32_t, u32_t, u32_t, H2K_thread_context *);
+
+static const vmop_ptr_t H2K_vmoptab[VMOP_MAX] IN_SECTION(".data.config.config") = {
+	H2K_vmop_boot,
+	H2K_vmop_status,
+	H2K_vmop_free
+};
+
+s32_t H2K_vmop(vmop_t op, u32_t val1, u32_t val2, u32_t val3, u32_t val4, u32_t val5,  H2K_thread_context *me)
+{
+	if (op >= VMOP_MAX) return 0;
+	return H2K_vmoptab[op](0, val1, val2, val3, val4, val5, me);
+}
+
+s32_t H2K_vmop_boot(vmop_t unused0, u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t vm, H2K_thread_context *me)
 {
 	H2K_vmblock_t *vmblock;
 
@@ -26,7 +41,7 @@ s32_t H2K_vmboot(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t vm, H2K_threa
 	return H2K_thread_create_no_squash(pc, sp, arg1, prio, H2K_gp->vmblocks[vm], me);
 }
 
-u32_t H2K_vmstatus(u32_t vm, H2K_thread_context *me) {
+s32_t H2K_vmop_status(vmop_t unused0, u32_t vm, u32_t unused2, u32_t unused3, u32_t unused4, u32_t unused5, H2K_thread_context *me) {
 
 	H2K_vmblock_t *vmblock;
 
@@ -41,7 +56,7 @@ u32_t H2K_vmstatus(u32_t vm, H2K_thread_context *me) {
 	return vmblock->status;
 }
 
-s32_t H2K_vmfree(u32_t vm, H2K_thread_context *me) {
+s32_t H2K_vmop_free(vmop_t unused0, u32_t vm, u32_t unused2, u32_t unused3, u32_t unused4, u32_t unused5, H2K_thread_context *me) {
 
 	H2K_vmblock_t *vmblock;
 

@@ -17,7 +17,7 @@
 #include <id.h>
 #include <alloc.h>
 
-void H2K_thread_stop(u32_t status, H2K_thread_context *me)
+void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 {
 	H2K_vmblock_t *vmblock = me->vmblock;
 	H2K_thread_context *parent_context;

@@ -131,27 +131,7 @@ void setup_ints(void *vmb, char num_cpus) {
 			if (h2_config_vmblock_init(vmb, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vmb) {
 				FAIL("MAP_PHYS_INTR");
 			}
-			//h2_register_fastint(i, fastint);
 		}
-	}
-
-	/* FIXME: Linux should do the per-cpu and global enables */
-	/* can't call the trap here since it would use the boot vmblock */
-	for (i = 0; i < PERCPU_INTERRUPTS; i++) {
-		for (j = 0; j < ((H2K_vmblock_t *)vmb)->max_cpus; j++) {
-
-			__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-			H2K_vm_cpuint_enable(vmb, &(((H2K_vmblock_t *)vmb)->contexts[j]), i, ((H2K_vmblock_t *)vmb)->intinfo);
-		}
-	}
-
-	for (i = 0; i < SHARED_INTS; i++) {
-		/* There shouldn't be any interrupt pending at this point, but you never
-			 know.  Better make the context pointer valid in case we attempt to
-			 deliver the interrupt */
-
-		__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-		H2K_vm_shint_enable(vmb, &(((H2K_vmblock_t *)vmb)->contexts[0]), i, ((H2K_vmblock_t *)vmb)->intinfo);
 	}
 }
 

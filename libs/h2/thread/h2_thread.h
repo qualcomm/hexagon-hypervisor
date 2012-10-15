@@ -31,7 +31,7 @@ Terminate the current thread with the given status.
 @returns None; Does not return.
 @dependencies None
 */
-void h2_thread_stop(unsigned int status);
+void h2_thread_stop(int status);
 
 /**
 Obtain the ID of the calling thread

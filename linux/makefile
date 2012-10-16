@@ -134,10 +134,10 @@ vapa.x: vapa.x.in
 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$$ENV{H2K_LOAD_ADDR}/' > $@
 
 # second link changes entry point to physical address
-loadlinux: loadlinux.o vapa.x $(UCOS_BIN) $(UCOS_OBJ) $(BOOT_OBJ)
-	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -o $@ loadlinux.o $(UCOS_OBJ) $(BOOT_OBJ)
+loadlinux: loadlinux.o loadlinux_event.o vapa.x $(UCOS_BIN) $(UCOS_OBJ) $(BOOT_OBJ)
+	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -o $@ loadlinux.o loadlinux_event.o $(UCOS_OBJ) $(BOOT_OBJ)
 
-	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -Wl,--entry=`hexagon-nm loadlinux | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o $@ loadlinux.o $(UCOS_OBJ) $(BOOT_OBJ)
+	${CC} -moslib=h2 -moslib=h2kernel ${CFLAGS} -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=linux_stext=$(LINUX_STEXT) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) $(UCOS_LINK) -Wl,--script=vapa.x -Wl,--entry=`hexagon-nm loadlinux | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o $@ loadlinux.o loadlinux_event.o $(UCOS_OBJ) $(BOOT_OBJ)
 
 %.o: %.c
 	${CC} ${CFLAGS} -c -o $@ $<
@@ -147,7 +147,7 @@ loadlinux: loadlinux.o vapa.x $(UCOS_BIN) $(UCOS_OBJ) $(BOOT_OBJ)
 
 clean:
 	$(MAKE) -C ../ucos clean
-	rm -f loadlinux.o loadlinux vapa.x ucos.bin $(UCOS_OBJ) $(BOOT_OBJ)
+	rm -f loadlinux.o loadlinux_event.o loadlinux vapa.x ucos.bin $(UCOS_OBJ) $(BOOT_OBJ)
 
 
 sim test.log : loadlinux

@@ -31,6 +31,9 @@
 #define HW_TIMER_INT 10
 #define LINUX_TIMER_INT 2
 
+#define VM_STATUS_REBOOT 3
+#define CHILD_INTERRUPT 14
+
 H2K_offset_t linux_offset = {{
 	.size = SIZE_4M,
 	.cccc = L1WB_L2C,
@@ -149,30 +152,42 @@ void setup_ints(unsigned long vm, char num_cpus) {
 
 extern void linux_stext();
 
-int main(int argc, char *argv[]) {
+void boot_ucos() {
 
-	unsigned long vm;
+#ifdef UCOS
+	unsigned long ucos_vm;
 
-	h2_init(0);
-	h2_config_setfatal(fatal);
-	PRINTF("loadlinux: H2 started\n");
+	PRINTF("ucos: start boot\n");
+	ucos_vm = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, (u32_t)ucos_pmap, 0xffffffff, H2K_ASID_TRANS_TYPE_LINEAR);
+	PRINTF("ucos: vm set up\n");
+
+	PRINTF("ucos: loading to 0x%08x from 0x%08x, size 0x%08x\n", (unsigned int)ucos_loadaddr, (unsigned int)ucos_image_start, (unsigned int)(ucos_image_end - ucos_image_start));
+	memcpy(ucos_loadaddr, ucos_image_start, ucos_image_end - ucos_image_start);
+
+	PRINTF("ucos: loaded\n");
+
+	if (h2_vmboot(ucos_entry, &ucos_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
+								0, UCOS_VM_PRIO, ucos_vm) == -1) FAIL("ucos vmboot");
+
+	PRINTF ("ucos: booted\n");
+#endif
+}
+
+unsigned long boot_linux(char fname[]) {
+
+	unsigned long linux_vm = 0;
 
 #ifdef LINUX
 	PRINTF("linux: start boot\n");
 
-	vm = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_offset.raw, 0x1, H2K_ASID_TRANS_TYPE_OFFSET);
-	setup_ints(vm, LINUX_NUM_VCPU);
+	linux_vm = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_offset.raw, 0x1, H2K_ASID_TRANS_TYPE_OFFSET);
+	setup_ints(linux_vm, LINUX_NUM_VCPU);
 	PRINTF("linux: vm set up\n");
 
 #ifndef NO_LOAD
 	size_t count;
 	unsigned long *ptr = (unsigned long *)LINUX_LOAD_ADDR;
 	FILE *file;
-	char fname[256] = "vmlinux.bin";
-
-	if (argc > 1) {
-		sscanf(argv[1], "%s", fname);
-	}
 
 	file = fopen(fname, "r");
 	if (file == NULL) FAIL("fopen");
@@ -183,6 +198,7 @@ int main(int argc, char *argv[]) {
 		ptr += count;
 		if (count < 0x40000 && ferror(file)) FAIL("ferror");
 	} while (!feof(file));
+	fclose(file);
 	PRINTF ("linux: loaded %s\n", fname);
 #endif
 
@@ -211,27 +227,49 @@ int main(int argc, char *argv[]) {
 #endif
 
 	if (h2_vmboot(linux_stext, &linux_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
-								0, LINUX_VM_PRIO, vm) == -1) FAIL("linux vmboot");
+								0, LINUX_VM_PRIO, linux_vm) == -1) FAIL("linux vmboot");
 
 	PRINTF ("linux: booted\n");
 #endif
+	return linux_vm;
+}
 
-#ifdef UCOS
-	PRINTF("ucos: start boot\n");
-	vm = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, (u32_t)ucos_pmap, 0xffffffff, H2K_ASID_TRANS_TYPE_LINEAR);
-	PRINTF("ucos: vm set up\n");
+extern void bootvm_vectors();
 
-	PRINTF("ucos: loading to 0x%08x from 0x%08x, size 0x%08x\n", (unsigned int)ucos_loadaddr, (unsigned int)ucos_image_start, (unsigned int)(ucos_image_end - ucos_image_start));
-	memcpy(ucos_loadaddr, ucos_image_start, ucos_image_end - ucos_image_start);
+int main(int argc, char *argv[]) {
 
-	PRINTF("ucos: loaded\n");
+	char fname[256] = "vmlinux.bin";
+	unsigned long linux_vm;
+	int status, cpus;
 
-	if (h2_vmboot(ucos_entry, &ucos_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
-								0, UCOS_VM_PRIO, vm) == -1) FAIL("ucos vmboot");
+	if (argc > 1) {
+		sscanf(argv[1], "%s", fname);
+	}
 
-	PRINTF ("ucos: booted\n");
-#endif
+	h2_init(0);
+	h2_config_setfatal(fatal);
+	PRINTF("loadlinux: H2 started\n");
 
-	h2_thread_stop(0);
+	h2_vmtrap_setvec(bootvm_vectors);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
+
+	boot_ucos();
+
+	do {
+		linux_vm = boot_linux(fname);
+
+		do {  // wait for all child VM cpus to vmstop
+			h2_vmtrap_wait();
+			status = h2_vmstatus(VMOP_STATUS_STATUS, linux_vm);
+			printf("linux VM %lu status %d\n", linux_vm, status);
+			cpus = h2_vmstatus(VMOP_STATUS_CPUS, linux_vm);
+			printf("VM %lu Live CPUs: %d\n", linux_vm, status);
+		} while (cpus != 0);
+
+		h2_vmfree(linux_vm);
+	} while (status == VM_STATUS_REBOOT);
+
+	//h2_thread_stop(0);
 	return 0; // make gcc happy
 }

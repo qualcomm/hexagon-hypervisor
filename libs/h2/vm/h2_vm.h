@@ -20,6 +20,12 @@ typedef enum {
 	VMOP_MAX
 } vmop_t;
 
+typedef enum {
+	VMOP_STATUS_STATUS,
+	VMOP_STATUS_CPUS,
+	VMOP_STATUS_MAX
+} vmop_status_t;
+
 #endif
 
 int h2_vmop_trap(vmop_t op, unsigned int arg1, unsigned int arg2, unsigned int arg3, unsigned int arg4, unsigned int arg5);
@@ -30,9 +36,9 @@ static inline int h2_vmboot(void *pc, void *stack, unsigned int arg, unsigned in
 	return h2_vmop_trap(VMOP_BOOT, (unsigned int)pc, (unsigned int)stack, arg, prio, vm);
 }
 
-static inline int h2_vmstatus(unsigned int vm) {
+static inline int h2_vmstatus(vmop_status_t op, unsigned int vm) {
 
-	return h2_vmop_trap(VMOP_STATUS, vm, 0, 0, 0, 0);
+	return h2_vmop_trap(VMOP_STATUS, op, vm, 0, 0, 0);
 }
 	
 

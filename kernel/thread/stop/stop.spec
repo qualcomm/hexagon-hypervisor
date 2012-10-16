@@ -15,17 +15,19 @@ Description
 ~~~~~~~~~~~
 
 Terminate the calling thread and decrement the count of running virtual CPUs
-for the calling VM.  If the new count is 0, post the child-event interrupt to
-the virtual cpu (parent) that created the calling VM.  If the parent no longer
-exists, deallocate storage for the calling VM.  Does not return.
+for the calling VM.  If the new count is 0 or the status is non-zero, post the
+child-event interrupt to the virtual cpu (parent) that created the calling VM.
+If the parent no longer exists, deallocate storage for the calling VM if the
+CPU count has reached 0.  Does not return.
 
 Functionality
 ~~~~~~~~~~~~~
 
 First, we acquire the BKL and attempt to post the child-event interrupt if the
-new vcpu count is 0 and the parent context can be found and its status is not
-H2K_STATUS_DEAD.  Else, we call :cfunc: `H2K_mem_alloc_release()` to mark the
-vmblock as freeable (will not be freed until we relinquish BKL).
+new vcpu count is 0, or the status is non-zero, and the parent context can be
+found and its status is not H2K_STATUS_DEAD.  Else, when the vcpu count is 0,
+we call :cfunc: `H2K_mem_alloc_release()` to mark the vmblock as freeable (will
+not be freed until we relinquish BKL).
 
 Next, we cancel associated timers and remove the current thread from the
 runlist.  We then clear the thread context.  This has the effect of setting the

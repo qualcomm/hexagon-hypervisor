@@ -28,14 +28,14 @@ void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 	vmblock->num_cpus--;
 	vmblock->status = status;
 
-	if (vmblock->num_cpus == 0) { // all stopped, signal parent
+	if (status != 0 || vmblock->num_cpus == 0) { // signal parent
 		parent_context = H2K_id_to_context(vmblock->parent);
 		if (parent_context != NULL
 				&& parent_context->status != H2K_STATUS_DEAD) { // parent exists
 			parent_vmblock = parent_context->vmblock;
 
 			H2K_vm_cpuint_post_locked(parent_vmblock, parent_context, H2K_VM_CHILDINT, parent_vmblock->intinfo);
-		} else { // no parent; just deallocate.
+		} else if (vmblock->num_cpus == 0) { // no parent; just deallocate.
 			/* Can't free immediately because H2K_switch reads from *me */
 			H2K_mem_alloc_release((u32_t *)vmblock);  
 		}

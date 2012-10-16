@@ -106,9 +106,15 @@ int main(int argc, char **argv)
 	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
 
 	vm = spawn_vm((void *)ehdr.e_entry);
-	h2_vmtrap_wait();
-	ret = h2_vmstatus(vm);
-	printf("VM %lu stopped, status %d\n", vm, ret);
+	
+	do {  // wait for all child VM cpus to vmstop
+		h2_vmtrap_wait();
+		ret = h2_vmstatus(VMOP_STATUS_STATUS, vm);
+		printf("VM %lu status %d\n", vm, ret);
+		ret = h2_vmstatus(VMOP_STATUS_CPUS, vm);
+		printf("VM %lu Live CPUs: %d\n", vm, ret);
+	} while (ret != 0);
+
 	// h2_thread_stop(0);
 
 	return 0;

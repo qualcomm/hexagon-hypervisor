@@ -127,8 +127,8 @@ $(UCOS_BIN):
 $(UCOS_OBJ): ucos_image.S $(UCOS_BIN)
 	${CC} ${CFLAGS} -c -o $@ ucos_image.S
 
-$(BOOT_OBJ): boot.S
-	${CC} ${CFLAGS} -c -o $@ boot.S
+# $(BOOT_OBJ): boot.S
+# 	${CC} ${CFLAGS} -c -o $@ boot.S
 
 vapa.x: vapa.x.in
 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$$ENV{H2K_LOAD_ADDR}/' > $@

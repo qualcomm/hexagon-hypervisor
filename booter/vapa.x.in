@@ -45,7 +45,7 @@ SECTIONS
       PROVIDE_HIDDEN (__rel_iplt_end = .);
     }
   .CODE : {} :CODE
-  .boot : AT(0xff000000) { KEEP(*(.boot)) }
+  .boot : AT(0xxxxxxxxx) { KEEP(*(.boot)) }
   .start : { KEEP(*(.start)) }
   .init           :
   {

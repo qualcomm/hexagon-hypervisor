@@ -32,6 +32,10 @@ ifeq ($(H2K_LINK_ADDR),)
 export H2K_LINK_ADDR = 0xff000000
 endif
 
+ifeq ($(H2K_LOAD_ADDR),)
+export H2K_LOAD_ADDR = 0xff000000
+endif
+
 ifeq ($(H2K_HEAP_SIZE),)
 H2K_HEAP_SIZE = 0x100000
 endif

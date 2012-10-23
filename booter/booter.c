@@ -80,42 +80,46 @@ int main(int argc, char **argv)
 	Elf32_Phdr phdr;
 	h2_init(0);
 	if (argc < 2) {
-		printf("%s <file>",argv[0]);
+		printf("%s <file> ...",argv[0]);
 		return 1;
-	}
-	//	h2_vmtrap_newmap(map,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
-	f = fopen(argv[1],"rb");
-	if ((ret = elf_get_ehdr(f,&ehdr)) < 0) {
-		printf("Invalid ELF file\n");
-		return 1;
-	}
-	for (i = 0; i < ehdr.e_phnum; i++) {
-		if (elf_get_phdr(f,i,&phdr,&ehdr) < 0) continue;
-		if (phdr.p_memsz == 0) continue;
-		if (phdr.p_type != PT_LOAD) continue;
-		fseek(f,phdr.p_offset,SEEK_SET);
-		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
-		fread((char *)phdr.p_paddr,1,phdr.p_filesz,f);
-		memset((char *)phdr.p_paddr+phdr.p_filesz,0,phdr.p_memsz-phdr.p_filesz);
-		/* Really, only need to clean out text sections */
-		dcclean_range(phdr.p_paddr,phdr.p_memsz);
 	}
 
 	h2_vmtrap_setvec(bootvm_vectors);
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
 	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
 
-	vm = spawn_vm((void *)ehdr.e_entry);
-	
-	do {  // wait for all child VM cpus to vmstop
-		h2_vmtrap_wait();
-		ret = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-		printf("VM %lu status %d\n", vm, ret);
-		ret = h2_vmstatus(VMOP_STATUS_CPUS, vm);
-		printf("VM %lu Live CPUs: %d\n", vm, ret);
-	} while (ret != 0);
+	for (; argc > 1; argc--) {
 
-	// h2_thread_stop(0);
+		f = fopen(argv[argc - 1],"rb");
+		if ((ret = elf_get_ehdr(f,&ehdr)) < 0) {
+			printf("Invalid ELF file: %s\n", argv[argc - 1]);
+			return 1;
+		}
+		for (i = 0; i < ehdr.e_phnum; i++) {
+			if (elf_get_phdr(f,i,&phdr,&ehdr) < 0) continue;
+			if (phdr.p_memsz == 0) continue;
+			if (phdr.p_type != PT_LOAD) continue;
+			fseek(f,phdr.p_offset,SEEK_SET);
+			if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
+			fread((char *)phdr.p_paddr,1,phdr.p_filesz,f);
+			memset((char *)phdr.p_paddr+phdr.p_filesz,0,phdr.p_memsz-phdr.p_filesz);
+			/* Really, only need to clean out text sections */
+			dcclean_range(phdr.p_paddr,phdr.p_memsz);
+		}
+		fclose(f);
+
+		printf("Boot vm for %s\n", argv[argc - 1]);
+		vm = spawn_vm((void *)ehdr.e_entry);
+	
+		do {  // wait for all child VM cpus to vmstop
+			h2_vmtrap_wait();
+			ret = h2_vmstatus(VMOP_STATUS_STATUS, vm);
+			printf("VM %lu status %d\n", vm, ret);
+			ret = h2_vmstatus(VMOP_STATUS_CPUS, vm);
+			printf("VM %lu Live CPUs: %d\n", vm, ret);
+		} while (ret != 0);
+		h2_vmfree(vm);
+	}
 
 	return 0;
 }

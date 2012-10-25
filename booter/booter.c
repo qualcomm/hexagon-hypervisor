@@ -34,6 +34,13 @@ void FAIL(const char *str)
 	exit(1);
 }
 
+void usage()
+{
+	printf("Usage:\n");
+	printf("  booter <file> <file_args>\n");
+	printf("  booter --list <file1> <file2> ...\n");
+}		
+
 unsigned int spawn_vm(void *pc)
 {
 	unsigned long vm;
@@ -71,16 +78,51 @@ void dcclean_range(unsigned long start, long range)
 
 extern void bootvm_vectors();
 
-int main(int argc, char **argv)
+int run_elf(char *elf)
 {
-	int ret,i;
+	int ret, i;
 	unsigned long vm;
 	FILE *f;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
+
+	f = fopen(elf,"rb");
+	if ((ret = elf_get_ehdr(f,&ehdr)) < 0) {
+		printf("Invalid ELF file: %s\n", elf);
+		return 1;
+	}
+	for (i = 0; i < ehdr.e_phnum; i++) {
+		if (elf_get_phdr(f,i,&phdr,&ehdr) < 0) continue;
+		if (phdr.p_memsz == 0) continue;
+		if (phdr.p_type != PT_LOAD) continue;
+		fseek(f,phdr.p_offset,SEEK_SET);
+		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
+		fread((char *)phdr.p_paddr,1,phdr.p_filesz,f);
+		memset((char *)phdr.p_paddr+phdr.p_filesz,0,phdr.p_memsz-phdr.p_filesz);
+		/* Really, only need to clean out text sections */
+		dcclean_range(phdr.p_paddr,phdr.p_memsz);
+	}
+	fclose(f);
+	printf("Boot vm for %s\n", elf);
+	vm = spawn_vm((void *)ehdr.e_entry);
+	
+	do {  // wait for all child VM cpus to vmstop
+		h2_vmtrap_wait();
+		ret = h2_vmstatus(VMOP_STATUS_STATUS, vm);
+		printf("VM %lu status %d\n", vm, ret);
+		ret = h2_vmstatus(VMOP_STATUS_CPUS, vm);
+		printf("VM %lu Live CPUs: %d\n", vm, ret);
+	} while (ret != 0);
+	h2_vmfree(vm);
+
+	return 0;
+}
+
+int main(int argc, char **argv)
+{
 	h2_init(0);
 	if (argc < 2) {
-		printf("%s <file> ...",argv[0]);
+		usage();
 		return 1;
 	}
 
@@ -88,37 +130,17 @@ int main(int argc, char **argv)
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
 	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
 
-	for (; argc > 1; argc--) {
-
-		f = fopen(argv[argc - 1],"rb");
-		if ((ret = elf_get_ehdr(f,&ehdr)) < 0) {
-			printf("Invalid ELF file: %s\n", argv[argc - 1]);
-			return 1;
-		}
-		for (i = 0; i < ehdr.e_phnum; i++) {
-			if (elf_get_phdr(f,i,&phdr,&ehdr) < 0) continue;
-			if (phdr.p_memsz == 0) continue;
-			if (phdr.p_type != PT_LOAD) continue;
-			fseek(f,phdr.p_offset,SEEK_SET);
-			if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
-			fread((char *)phdr.p_paddr,1,phdr.p_filesz,f);
-			memset((char *)phdr.p_paddr+phdr.p_filesz,0,phdr.p_memsz-phdr.p_filesz);
-			/* Really, only need to clean out text sections */
-			dcclean_range(phdr.p_paddr,phdr.p_memsz);
-		}
-		fclose(f);
-
-		printf("Boot vm for %s\n", argv[argc - 1]);
-		vm = spawn_vm((void *)ehdr.e_entry);
+	if (0 == strcmp(argv[1], "--list")) {
+		// shift first arg off, decrement arg count (so --list is argv[0])
+		argc--;
+		argv = &argv[1];
 	
-		do {  // wait for all child VM cpus to vmstop
-			h2_vmtrap_wait();
-			ret = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-			printf("VM %lu status %d\n", vm, ret);
-			ret = h2_vmstatus(VMOP_STATUS_CPUS, vm);
-			printf("VM %lu Live CPUs: %d\n", vm, ret);
-		} while (ret != 0);
-		h2_vmfree(vm);
+		for (; argc > 1; argc--) {
+			run_elf(argv[argc - 1]);
+		}
+	}
+	else {
+		run_elf(argv[1]);
 	}
 
 	return 0;

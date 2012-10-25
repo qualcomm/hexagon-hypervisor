@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <h2_vm.h>
+#include <ctype.h>
 #include <bootmap_macros.h>
 #include "elf.h"
 
@@ -78,7 +79,22 @@ void dcclean_range(unsigned long start, long range)
 
 extern void bootvm_vectors();
 
-int run_elf(char *elf)
+static void set_cmdline(const char *cmdline, FILE *f, const Elf32_Ehdr *ehdr)
+{
+	char *dst;
+	int addr;
+	if ((addr=elf_get_symbol(f,"__boot_cmdline__",ehdr)) == -1) {
+		printf("__boot_cmdline__ not found.\n");
+	} else {
+		printf("__boot_cmdline__ found @ 0x%08x\n",addr);
+	}
+	dst = (char *)addr;
+	dst[0] = 0;
+	strcpy(dst,cmdline);
+	printf("cmdline set to <<%s>>\n",dst);
+}
+
+int run_elf(char *elf, char *cmdline)
 {
 	int ret, i;
 	unsigned long vm;
@@ -102,6 +118,7 @@ int run_elf(char *elf)
 		/* Really, only need to clean out text sections */
 		dcclean_range(phdr.p_paddr,phdr.p_memsz);
 	}
+	set_cmdline(cmdline,f,&ehdr);
 	fclose(f);
 	printf("Boot vm for %s\n", elf);
 	vm = spawn_vm((void *)ehdr.e_entry);
@@ -118,9 +135,32 @@ int run_elf(char *elf)
 	return 0;
 }
 
+#define BUFSIZE 256
+
+static void strip(char *buf)
+{
+	int i;
+	for (i = strlen(buf)-1; i >= 0; i--) {
+		if (isspace(buf[i])) {
+			buf[i] = 0;
+		} else {
+			break;
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
+	int i;
+	FILE *f;
 	h2_init(0);
+	char buf[BUFSIZE];
+	char file[64];
+	buf[0] = 0;
+	for (i = 0; i < argc; i++) {
+		strcat(buf,argv[i]);
+		strcat(buf," ");
+	}
 	if (argc < 2) {
 		usage();
 		return 1;
@@ -134,13 +174,27 @@ int main(int argc, char **argv)
 		// shift first arg off, decrement arg count (so --list is argv[0])
 		argc--;
 		argv = &argv[1];
-	
 		for (; argc > 1; argc--) {
-			run_elf(argv[argc - 1]);
+			run_elf(argv[argc - 1],"fill in cmdline here");
 		}
-	}
-	else {
-		run_elf(argv[1]);
+	} else if (0 == strcmp(argv[1], "--listfile")) {
+		if (argc < 3) {
+			usage();
+			return 1;
+		}
+		if ((f = fopen(argv[2],"r")) == NULL) {
+			usage();
+			return 1;
+		}
+		while (fgets(buf,BUFSIZE,f)) {
+			strip(buf);
+			if (sscanf(buf,"%s ",file) <= 0) {
+				continue;
+			}
+			run_elf(file,buf);
+		}
+	} else {
+		run_elf(argv[1],buf);
 	}
 
 	return 0;

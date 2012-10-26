@@ -69,7 +69,7 @@ int sys_fstat(fd_t fd, void *buffer)  /* Clean buffer? */
 
 errno_t sys_ftell(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FTELL,&fd,0); DEBUG_PRINTF("sys_ftell: fd=%d ret=%d\n",fd,ret); return ret; }
 
-unsigned char __boot_cmdline__[256] __attribute__((section(".data"))) = { 0 };
+char __boot_cmdline__[256] __attribute__((section(".data"))) = { 0 };
 
 errno_t sys_get_cmdline(char *buffer, count_t count)
 {

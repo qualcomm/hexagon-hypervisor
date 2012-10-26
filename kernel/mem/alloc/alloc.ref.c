@@ -17,10 +17,7 @@
 #define WORDS(X) (((X) + sizeof(H2K_mem_alloc_tag_t)) / sizeof(H2K_mem_alloc_tag_t))
 #define UNITS(X) (((X) + ALLOC_UNIT) / ALLOC_UNIT)
 
-#define ROUND(expr) ((((expr) + UNIT - 1) / UNIT) * UNIT)
-
-extern void *end;
-extern void h2k_alloc_heap_size() __attribute__ ((weak));
+static H2K_mem_alloc_tag_t H2K_mem_alloc_heap[TOTAL_SIZE] IN_SECTION(".data.core.globals") __attribute__((aligned(ALLOC_UNIT * sizeof(u32_t)))) = {{{.size = 0, .free = 0}}} ;
 
 static H2K_mem_alloc_tag_t *heap IN_SECTION(".data.core.globals");
 static u32_t heap_size IN_SECTION(".data.core.globals");
@@ -122,14 +119,11 @@ H2K_mem_alloc_tag_t *H2K_mem_alloc_free(u32_t *ptr) {
 	return ret;
 }
 
-void H2K_mem_alloc_init() {
-	
-	heap = (H2K_mem_alloc_tag_t *)(((end + 31) / 32) * 32); // align
-	if ((u32_t)h2k_alloc_heap_size == 0) { // unset
-		heap_size = TOTAL_SIZE;
-	} else {
-		heap_size = (u32_t)h2k_alloc_heap_size;
-	}
+/* Wrapped init function to facilitate testing with different sizes */
+void H2K_mem_do_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
+
+	heap = (H2K_mem_alloc_tag_t *)addr;
+	heap_size = size;
 
 	/* Last word before start of aligned space holds the tag for the first free
 		 block, which contains all allocatable space */
@@ -145,5 +139,10 @@ void H2K_mem_alloc_init() {
 
 	heap_lock = 0;
 
+}
+
+void H2K_mem_alloc_init() {
+
+	H2K_mem_do_alloc_init	(H2K_mem_alloc_heap, TOTAL_SIZE);
 }
 

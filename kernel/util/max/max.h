@@ -136,7 +136,9 @@
 #define BOOT_STACK_SIZE 128
 
 #define ALLOC_UNIT 8 /* Words per smallest allocatable block */
-/* FIXME: this is huge just because of one test that creates 1024 threads. Make this a linker symbol instead? */
-#define ALLOC_NUNITS 16384
+#define ALLOC_NUNITS 1024 // 32KB
 
+/* One extra unit at the beginning to hold the tag for the first block, so that
+	 pointers to allocated space are aligned.  We waste ALLOC_UNIT - 4 bytes. */
+#define DEFAULT_ALLOC_HEAP_SIZE ((ALLOC_NUNITS * ALLOC_UNIT) + ALLOC_UNIT)
 #endif

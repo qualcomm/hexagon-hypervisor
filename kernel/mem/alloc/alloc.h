@@ -26,6 +26,5 @@ typedef union {
 H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request);
 H2K_mem_alloc_tag_t *H2K_mem_alloc_free(u32_t *ptr);
 void H2K_mem_alloc_release(u32_t *ptr);
-void H2K_mem_do_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size);
-void H2K_mem_alloc_init();
+void H2K_mem_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size);
 

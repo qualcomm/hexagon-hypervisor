@@ -8,16 +8,9 @@
 #include <spinlock.h>
 #include <hw.h>
 
-/* One extra unit at the beginning to hold the tag for the first block, so that
-	 pointers to allocated space are aligned.  We waste ALLOC_UNIT - 4 bytes. */
-#define SIZE (ALLOC_NUNITS * ALLOC_UNIT)
-#define TOTAL_SIZE (SIZE + ALLOC_UNIT)
-
 #define BYTES(X) ((X) * sizeof(H2K_mem_alloc_tag_t))
 #define WORDS(X) (((X) + sizeof(H2K_mem_alloc_tag_t)) / sizeof(H2K_mem_alloc_tag_t))
 #define UNITS(X) (((X) + ALLOC_UNIT) / ALLOC_UNIT)
-
-static H2K_mem_alloc_tag_t H2K_mem_alloc_heap[TOTAL_SIZE] IN_SECTION(".data.core.globals") __attribute__((aligned(ALLOC_UNIT * sizeof(u32_t)))) = {{{.size = 0, .free = 0}}} ;
 
 static H2K_mem_alloc_tag_t *heap IN_SECTION(".data.core.globals");
 static u32_t heap_size IN_SECTION(".data.core.globals");
@@ -119,10 +112,10 @@ H2K_mem_alloc_tag_t *H2K_mem_alloc_free(u32_t *ptr) {
 	return ret;
 }
 
-/* Wrapped init function to facilitate testing with different sizes */
-void H2K_mem_do_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
-
-	heap = (H2K_mem_alloc_tag_t *)addr;
+/* Assume addr is cache-aligned */
+void H2K_mem_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
+	
+	heap = addr;
 	heap_size = size;
 
 	/* Last word before start of aligned space holds the tag for the first free
@@ -139,10 +132,5 @@ void H2K_mem_do_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
 
 	heap_lock = 0;
 
-}
-
-void H2K_mem_alloc_init() {
-
-	H2K_mem_do_alloc_init	(H2K_mem_alloc_heap, TOTAL_SIZE);
 }
 

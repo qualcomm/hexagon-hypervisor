@@ -115,6 +115,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		vmblock->contexts = contexts = (H2K_thread_context *)ptrtmp;
 		for (i = 0; i < vmblock->max_cpus; i++) {
 			H2K_thread_context_clear(&contexts[i]);
+			contexts[i].id.raw = 0;  // because H2K_thread_context_clear restores garbage
 			contexts[i].id.vmidx = vmblock->vmidx;
 			contexts[i].id.cpuidx = i;
 			contexts[i].next = vmblock->free_threads;

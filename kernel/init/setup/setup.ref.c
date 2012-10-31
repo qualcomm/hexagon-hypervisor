@@ -38,6 +38,9 @@ H2K_offset_t boot_offset = {{
 	.pages = 0
 	}};
 
+#define DEFAULT_HEAP_SIZE 0x4000000 /* 64MB */
+#define DEFAULT_STACK_SIZE 0x100000 /* 1MB */
+
 void H2K_init_setup_bootvm(u32_t phys_offset)
 {
 	u32_t vm;
@@ -52,8 +55,23 @@ void H2K_init_setup_bootvm(u32_t phys_offset)
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
 }
 
+extern void *end;
+extern void *HEAP_SIZE __attribute__ ((weak));
+extern void *STACK_SIZE __attribute__ ((weak));
+extern void *H2K_ALLOC_HEAP_SIZE __attribute__ ((weak));  // size in words
+
 IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset)
 {
+	/* FIXME: The allocator heap can just go at the end of data once boot VM is
+		 moved out of monitor space */
+	void *heap_top;
+	void *stack_base;
+	u32_t alloc_heap_size;
+
+	heap_top = (void *)((((u32_t)&HEAP_SIZE == 0 ? DEFAULT_HEAP_SIZE : (u32_t)&HEAP_SIZE) + (u32_t)&end + 15) & -16);
+	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & -16);
+	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
+
 	H2K_kg_init(phys_offset);		/* Kernel Globals first! */
 	H2K_trace_init();
 	H2K_fatal_init();
@@ -66,7 +84,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset)
 	H2K_asid_table_init();
 	H2K_mem_stlb_init();
 	H2K_timer_init();
-	H2K_mem_alloc_init();
+	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);
 	H2K_init_setup_bootvm(phys_offset);
 }
 

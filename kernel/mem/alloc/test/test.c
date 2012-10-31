@@ -94,7 +94,7 @@ int main() {
 	H2K_mem_alloc_block_t block1, block2, block3;
 	H2K_mem_alloc_tag_t *freed;
 
-	H2K_mem_do_alloc_init(Heap, SIZE);
+	H2K_mem_alloc_init(Heap, SIZE);
 
 	/* request too big */
 	block1 = H2K_mem_alloc_get(UNIT_BYTES * 4);

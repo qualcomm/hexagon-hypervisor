@@ -48,6 +48,8 @@ int size_test[NUM_SIZE_TESTS][3] = {
 	{33, 65, ROUND(sizeof(H2K_vmblock_t)) + H2K_VMBLOCK_ALIGN - 1 +  4*3 + 4*3  + 4*33   + 4*3*33 + 196 + 288*33 + 24}
 };
 
+H2K_mem_alloc_tag_t Heap[DEFAULT_ALLOC_HEAP_SIZE] __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}};
+
 H2K_vmblock_t *vmblock;
 H2K_thread_context a;
 s32_t asid;
@@ -68,7 +70,7 @@ int main()
 	u32_t i, vm, ret;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_thread_init();
-	H2K_mem_alloc_init();
+	H2K_mem_alloc_init(Heap, DEFAULT_ALLOC_HEAP_SIZE);
 	H2K_fatal_kernel_handler = NULL;
 	/* Bad config value */
 	vm = H2K_trap_config(CONFIG_MAX,NULL,0,0,0,NULL);

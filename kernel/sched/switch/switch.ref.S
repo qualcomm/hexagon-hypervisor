@@ -133,7 +133,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r15 = insert(r14,r11:10)
 	PMUCFG = r15
 	sgp = r1
-	r4 = memub(r1+#CONTEXT_tid)
+	r4 = memw(r1+#CONTEXT_status_prio_hthread_tid)
 #if (__QDSP6_ARCH__ <= 3)
 	tid = r4
 #else

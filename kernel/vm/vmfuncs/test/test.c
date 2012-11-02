@@ -60,14 +60,14 @@ u32_t H2K_disable_guest_interrupts(H2K_thread_context *me)
 u32_t TH_expected_yield = 0;
 void H2K_sched_yield(H2K_thread_context *me)
 {
-	if (!TH_expected_yield) FAIL("Didn't expect disable");
+	if (!TH_expected_yield) FAIL("Didn't expect yield");
 	TH_expected_yield = 0;
 }
 
 u32_t TH_expected_stop = 0;
-void H2K_thread_stop(H2K_thread_context *me)
+void H2K_thread_stop(u32_t status, H2K_thread_context *me)
 {
-	if (!TH_expected_stop) FAIL("Didn't expect disable");
+	if (!TH_expected_stop) FAIL("Didn't expect stop");
 	TH_expected_stop = 0;
 	longjmp(env,1);
 }
@@ -100,7 +100,7 @@ u32_t TH_expected_work = 0;
 u32_t TH_work_ret = 0;
 u32_t H2K_vm_do_work(H2K_thread_context *me)
 {
-	if (!TH_expected_work) FAIL("Didn't expect disable");
+	if (!TH_expected_work) FAIL("Didn't expect work");
 	TH_expected_work = 0;
 	if ((H2K_get_syscfg() & (1<<12)) == 0) FAIL("no k0lock");
 	H2K_mutex_unlock_k0();

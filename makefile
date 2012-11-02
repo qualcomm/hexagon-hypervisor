@@ -32,6 +32,10 @@ ifeq ($(H2K_LINK_ADDR),)
 export H2K_LINK_ADDR = 0xff000000
 endif
 
+ifeq ($(H2K_LOAD_ADDR),)
+export H2K_LOAD_ADDR = 0xff000000
+endif
+
 ifeq ($(H2K_HEAP_SIZE),)
 H2K_HEAP_SIZE = 0x100000
 endif
@@ -116,7 +120,7 @@ compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
 gtags:
-	find kernel libs tst guest ucos linux booter -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
+	find kernel libs tst guest ucos linux booter perf -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
 	htags -afhnosTxv --show-position
 
 cov_fns:

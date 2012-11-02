@@ -7,15 +7,15 @@
 H2K_futex_hash_add
 ------------------
 
-.. cfunction:: void H2K_futex_hash_add(pa_t pa, H2K_thread_context *me)
+.. cfunction:: void H2K_futex_hash_add_ring(H2K_thread_context **ring, H2K_thread_context *me)
 
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_futex_hash_add()` adds the thread context to the hash
+:cfunc:`H2K_futex_hash_add_ring()` adds the thread context to the ring
 
 Functionality
 ~~~~~~~~~~~~~
 
-Put in the hash at the right place
+Put in the hash at the right place (priority sorted)
 

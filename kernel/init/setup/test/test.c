@@ -38,6 +38,7 @@ enum {
         kg_init,
         trace_init,
         timer_init,
+				mem_alloc_init,
         //thread_init,
         //asid_table_init,
         //mem_stlb_init,
@@ -55,14 +56,20 @@ void H2K_interrupt_restore()
 }
 
 H2K_thread_context a;
+H2K_vmblock_t vmb;  // so we don't have to call the allocator
 
 u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t val4, H2K_thread_context *me)
 {
-	H2K_vmblock_t *block = ptr;
+	static int done = 0;
+	if (done) return 1;
+
+	done = 1;
+	H2K_vmblock_t *block = &vmb;
 	block->free_threads = &a;
 	block->contexts = &a;
 	block->trapmask = ~0;
-	return (u32_t)block;
+	H2K_gp->vmblocks[1] = block;
+	return 1;
 }
 
 #define HELPER_FUNC(X) void H2K_##X() { TH_init_seen |= 1<< X; }
@@ -75,6 +82,7 @@ HELPER_FUNC(futex_init)
 HELPER_FUNC(intconfig_init)
 HELPER_FUNC(trace_init)
 HELPER_FUNC(timer_init)
+HELPER_FUNC(mem_alloc_init)
 //HELPER_FUNC(thread_init)
 //HELPER_FUNC(asid_table_init)
 //HELPER_FUNC(mem_stlb_init)

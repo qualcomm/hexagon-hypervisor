@@ -52,7 +52,7 @@ s32_t H2K_tid_get() { return 19; }
 //s32_t H2K_futex_unlock_pi() { return 21; } -- defined in asm
 s32_t H2K_timer_trap() { return 22; }
 s32_t H2K_waitcycles_get() { return 27; }
-s32_t H2K_vmboot() { return 28; }
+s32_t H2K_vmop() { return 28; }
 s32_t H2K_trap_pmuconfig() { return 29; }
 s32_t H2K_trap_config() { return 30; }
 s32_t H2K_trap_hwconfig() { return 31; }

@@ -71,7 +71,8 @@ fd_t sys_open(const char *name, t_mode_t mode)
 {
 	int i;
 	struct { const char *name; int mode; int len; } x;
-	x.name = name; x.len = strlen(name); x.mode = 0;
+	x.name = ANGEL_OFFSET_PTR(name);
+	x.len = strlen(name); x.mode = 0;
 
 	mode &= (O_RDONLY
 		| O_WRONLY

@@ -36,6 +36,8 @@
 
 h2_sem_t donesem;
 
+int done = 0;
+
 unsigned long long int stack_yield[STACKSIZE];
 unsigned long long int stack_finish[STACKSIZE];
 
@@ -59,13 +61,14 @@ void spin()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-void delay()
+void delay(unsigned long arg)
 {
-	while (1) {
+	while (!done) {
 		spin();
 		// This will just swap around other delay() threads
 		h2_vmtrap_yield();
 	}
+	h2_thread_stop(arg + 3);
 }
 
 void delay_yield()
@@ -79,25 +82,26 @@ void delay_yield()
 		i=0;
 	}
 	// Only yield once... 
-	while (1) {
+	while (!done) {
 		spin();
 	}
+	h2_thread_stop(2);
 }
 
 void allow_finish()
 {
 	printf("delay_yield yielded\n");
 	h2_sem_up(&donesem);
-	h2_thread_stop();
+	h2_thread_stop(1);
 }
 
 int main() 
 {
-	short i;
+	int i;
 	h2_sem_init_val(&donesem,0);
 	// Start a delat thread for each HW thread.
 	for(i=0; i<NUM_THREADS-1; i++) {
-		h2_thread_create(delay,&delaystack[i][STACKSIZE],NULL,1); 
+		h2_thread_create(delay,&delaystack[i][STACKSIZE],(void *)i,1); 
 	}
 
 	// Start a thread that will yield
@@ -107,5 +111,7 @@ int main()
 
 	h2_sem_down(&donesem);
 	info("TEST PASSED\n");
+	done = 1;
+	h2_thread_stop(0);
 	return(0);
 }

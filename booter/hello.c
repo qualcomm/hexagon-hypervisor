@@ -13,17 +13,21 @@ unsigned long long int stack_space[THREAD_STACK_SIZE];
 
 void worker_thread(void *param)
 {
-	while (1) {
-		h2_sem_up(&sema);
-		h2_sem_down(&semb);
-	}
+	h2_sem_up(&sema);
+	h2_sem_down(&semb);
+	h2_sem_up(&sema);
+	h2_thread_stop(0);
 }
 
-int main()
+int main(int argc, char **argv)
 {
+	int i;
 	printf("Hello, World!\n");
+	for (i = 0; i < argc; i++) {
+		printf("arv[%d] = <%s>\n",i,argv[i]);
+	}
 	h2_sem_init_val(&sema,0);
-	h2_sem_init_val(&sema,0);
+	h2_sem_init_val(&semb,0);
 	if (h2_thread_create(worker_thread,&stack_space[THREAD_STACK_SIZE],0,4) == -1) {
 		printf("Can't create worker thread");
 	}
@@ -31,5 +35,8 @@ int main()
 	h2_sem_up(&semb);
 	h2_sem_down(&sema);
 	printf("Wahoo!\n");
+
+	h2_thread_stop(0);
+	return 0;
 }
 

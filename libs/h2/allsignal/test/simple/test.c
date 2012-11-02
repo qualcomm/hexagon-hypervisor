@@ -42,7 +42,7 @@ void thread0(int thread)
 		FAIL("allsignal acknowledged the wrong signal!");
 	}
 	h2_allsignal_signal(&all_threads, 1);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void thread1(int thread)
@@ -60,7 +60,7 @@ void thread1(int thread)
 	h2_allsignal_signal(&all_threads, 0x2);
 	h2_allsignal_wait(&all_done, 0x80000000);
 	if(all_done.waiting != 0) { FAIL("allsignal didn't block while waiting"); }
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int main()
@@ -82,6 +82,7 @@ int main()
 	h2_allsignal_signal(&all_done, 0x80000000);
 
 	puts("TEST PASSED\n");
+	h2_thread_stop(0);
 	return 0;
 }
 

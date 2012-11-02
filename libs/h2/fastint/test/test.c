@@ -60,7 +60,7 @@ void timer(int dummy)
 		asm volatile("R0 = #1; swi(R0);":::"r0");
 		puts("tick");
 	}
-	h2_thread_stop();  //  weird things happen without this here.
+	h2_thread_stop(0);  //  weird things happen without this here.
 }
 
 void watcher(int dummy)

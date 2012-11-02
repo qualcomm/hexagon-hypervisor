@@ -5,6 +5,7 @@
 ./kernel/data/thread/test
 ./kernel/error/fatal/test
 ./kernel/event/error/test
+./kernel/event/error/test_debug
 ./kernel/event/fastint/test
 ./kernel/event/interrupt/test
 ./kernel/event/trap/test
@@ -12,8 +13,10 @@
 ./kernel/event/preempt/test
 ./kernel/event/popup/test
 ./kernel/event/popup/test_h2
+./kernel/event/passthru/test
 ./kernel/init/boot/test
 ./kernel/init/setup/test
+./kernel/mem/alloc/test
 ./kernel/mem/asid/test
 ./kernel/mem/linear/test
 ./kernel/mem/pagefault/test
@@ -40,7 +43,7 @@
 ./kernel/traps/config/test
 ./kernel/traps/hwconfig/test
 ./kernel/traps/pmu/test_h2
-./kernel/traps/pmu/test_standalone 
+./kernel/traps/pmu/test_standalone
 ./kernel/traps/prio/test
 ./kernel/traps/tid/test
 ./kernel/traps/time/test
@@ -54,7 +57,7 @@
 ./kernel/util/trace/test
 ./kernel/util/tree/test
 ./kernel/util/intcontrol/test
-./kernel/vm/vmboot/test
+./kernel/vm/vmop/test
 ./kernel/vm/vmevent/test
 ./kernel/vm/cpuint/test
 ./kernel/vm/shint/test
@@ -63,6 +66,9 @@
 ./kernel/vm/vmipi/test
 ./kernel/vm/vmtrap/test
 ./kernel/vm/vmwork/test
+./kernel/vm/vmfuncs/test
+./kernel/vm/vmmap/test
+./kernel/vm/vmcache/test
 
 ./libs/h2/alloc/test
 ./libs/h2/sem/test/simple

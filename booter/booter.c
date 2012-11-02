@@ -7,67 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <h2_vm.h>
+#include <ctype.h>
+#include <bootmap_macros.h>
 #include "elf.h"
-
-//typedef unsigned long long int u64_t;
-
-#define SIZE_4K 0
-#define SIZE_16K 1
-#define SIZE_64K 2
-#define SIZE_256K 3
-#define SIZE_1M 4
-#define SIZE_4M 5
-#define SIZE_16M 6
-
-#define L1WB_L2UC 0
-#define L1WT_L2UC 1
-#define L1WB_L2UC_S 2
-#define L1WT_L2UC_S 3
-#define UC 4
-#define L1WT_L2C 5
-#define UC_S 6
-#define L1WB_L2C 7
-#define L1WB_L2CWB_AUX 0xa
-
-#define MAIN 0
-#define AUX 1
-
-#define U 1
-#define R 2
-#define W 4
-#define X 8
-
-#define RW (R|W)
-#define RX (R|X)
-#define WX (W|X)
-#define RWX (R|W|X)
-#define UR (U|R)
-#define UW (U|W)
-#define UX (U|X)
-#define URW (U|R|W)
-#define URX (U|R|X)
-#define UWX (U|W|X)
-#define URWX (U|R|W|X)
-
-#define NONE 0
-
-/* As long as the map is contiguous and all pages have the same cache attrs, we can use offset translations */
-
-/* #define MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \ */
-/*         (((u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \ */
-/*                 (unsigned int)((((u64_t)(PPN))) | (((u64_t)(CFIELD)) << 24) | ((u64_t)(PERM) << 28))) , */
-
-/* u64_t map[] = { */
-/* MEMORY_MAP_THREAD(      0,      0,      0x00000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x00000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x01000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x01000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x02000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x02000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x03000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x03000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x04000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x04000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x05000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x05000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x06000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x06000) */
-/* MEMORY_MAP_THREAD(      0,      0,      0x07000,        URWX,           L1WB_L2C,       SIZE_16M,       MAIN,   0x07000) */
-/*         0 */
-/* }; */
 
 #define MAX_SIZE (1024*1024)
 #define NUM_TOTAL_THREADS 32
@@ -82,6 +25,8 @@ H2K_offset_t offset = {{
 #define FENCE_LO 0
 #define FENCE_HI 0x07000000
 
+#define CHILD_INTERRUPT 14
+
 unsigned char storage[MAX_SIZE] __attribute__((aligned(32)));
 
 void FAIL(const char *str)
@@ -90,36 +35,34 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-void spawn_vm(void *pc)
+void usage()
 {
-	unsigned int size;
-	void *vmb;
-	void *ret;
+	printf("Usage:\n");
+	printf("  booter <file> <file_args>\n");
+	printf("  booter --list <file1> <file2> ...\n");
+}		
 
-	size = h2_config_vmblock_size(NUM_TOTAL_THREADS,1);
-	if (size > MAX_SIZE) {
-		printf("Size too small.");
-		exit(1);
-	}
-	vmb = h2_config_vmblock_init(storage,SET_STORAGE,0,0);
-	if (vmb == NULL) FAIL("SET_STORAGE");
+unsigned int spawn_vm(void *pc)
+{
+	unsigned long vm;
+	unsigned long ret;
 
-	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
-	if (ret != vmb) FAIL("SET_PMAP_TYPE");
+	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,0);
 
-	ret = h2_config_vmblock_init(vmb, SET_FENCES, FENCE_LO, FENCE_HI);
-	if (ret != vmb) FAIL("SET_FENCES");
+	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
+	if (ret != vm) FAIL("SET_PMAP_TYPE");
 
-	ret = h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
-	if (ret != vmb) FAIL("SET_CPUS_INTS");
+	ret = h2_config_vmblock_init(vm, SET_FENCES, FENCE_LO, FENCE_HI);
+	if (ret != vm) FAIL("SET_FENCES");
 
-	ret = h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
-	if (ret != vmb) FAIL("SET_PRIO_TRAPMASK");
+	ret = h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	if (ret != vm) FAIL("SET_PRIO_TRAPMASK");
 
 	/* Stats Reset */
 	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
-	h2_vmboot(pc,(void *)0x07fffff0,0,0,vmb);
-	printf("vm booted\n");
+	h2_vmboot(pc,(void *)0x07fffff0,0,0,vm);
+	printf("vm booted ID %lu\n", vm);
+	return vm;
 }
 
 void dcclean_range(unsigned long start, long range)
@@ -134,21 +77,34 @@ void dcclean_range(unsigned long start, long range)
 	} while (range >= 0); 
 }
 
-int main(int argc, char **argv)
+extern void bootvm_vectors();
+
+static void set_cmdline(const char *cmdline, FILE *f, const Elf32_Ehdr *ehdr)
 {
-	int ret,i;
+	char *dst;
+	int addr;
+	if ((addr=elf_get_symbol(f,"__boot_cmdline__",ehdr)) == -1) {
+		printf("__boot_cmdline__ not found.\n");
+	} else {
+		printf("__boot_cmdline__ found @ 0x%08x\n",addr);
+	}
+	dst = (char *)addr;
+	dst[0] = 0;
+	strcpy(dst,cmdline);
+	printf("cmdline set to <<%s>>\n",dst);
+}
+
+int run_elf(char *elf, char *cmdline)
+{
+	int ret, i;
+	unsigned long vm;
 	FILE *f;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
-	h2_init(0);
-	if (argc < 2) {
-		printf("%s <file>",argv[0]);
-		return 1;
-	}
-	//	h2_vmtrap_newmap(map,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
-	f = fopen(argv[1],"rb");
+
+	f = fopen(elf,"rb");
 	if ((ret = elf_get_ehdr(f,&ehdr)) < 0) {
-		printf("Invalid ELF file\n");
+		printf("Invalid ELF file: %s\n", elf);
 		return 1;
 	}
 	for (i = 0; i < ehdr.e_phnum; i++) {
@@ -162,7 +118,85 @@ int main(int argc, char **argv)
 		/* Really, only need to clean out text sections */
 		dcclean_range(phdr.p_paddr,phdr.p_memsz);
 	}
-	spawn_vm((void *)ehdr.e_entry);
-	h2_thread_stop();
+	set_cmdline(cmdline,f,&ehdr);
+	fclose(f);
+	printf("Boot vm for %s\n", elf);
+	vm = spawn_vm((void *)ehdr.e_entry);
+	
+	do {  // wait for all child VM cpus to vmstop
+		h2_vmtrap_wait();
+		ret = h2_vmstatus(VMOP_STATUS_STATUS, vm);
+		printf("VM %lu status %d\n", vm, ret);
+		ret = h2_vmstatus(VMOP_STATUS_CPUS, vm);
+		printf("VM %lu Live CPUs: %d\n", vm, ret);
+	} while (ret != 0);
+	h2_vmfree(vm);
+
+	return 0;
+}
+
+#define BUFSIZE 256
+
+static void strip(char *buf)
+{
+	int i;
+	for (i = strlen(buf)-1; i >= 0; i--) {
+		if (isspace(buf[i])) {
+			buf[i] = 0;
+		} else {
+			break;
+		}
+	}
+}
+
+int main(int argc, char **argv)
+{
+	int i;
+	FILE *f;
+	h2_init(0);
+	char buf[BUFSIZE];
+	char file[64];
+	buf[0] = 0;
+	for (i = 0; i < argc; i++) {
+		strcat(buf,argv[i]);
+		strcat(buf," ");
+	}
+	if (argc < 2) {
+		usage();
+		return 1;
+	}
+
+	h2_vmtrap_setvec(bootvm_vectors);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
+
+	if (0 == strcmp(argv[1], "--list")) {
+		// shift first arg off, decrement arg count (so --list is argv[0])
+		argc--;
+		argv = &argv[1];
+		for (; argc > 1; argc--) {
+			run_elf(argv[argc - 1],"fill in cmdline here");
+		}
+	} else if (0 == strcmp(argv[1], "--listfile")) {
+		if (argc < 3) {
+			usage();
+			return 1;
+		}
+		if ((f = fopen(argv[2],"r")) == NULL) {
+			usage();
+			return 1;
+		}
+		while (fgets(buf,BUFSIZE,f)) {
+			strip(buf);
+			if (sscanf(buf,"%s ",file) <= 0) {
+				continue;
+			}
+			run_elf(file,buf);
+		}
+	} else {
+		run_elf(argv[1],buf);
+	}
+
+	return 0;
 }
 

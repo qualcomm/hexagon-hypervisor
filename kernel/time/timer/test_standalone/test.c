@@ -163,6 +163,14 @@ int main()
 	}
 	if (H2K_gp->time.last_ticks != 1) FAIL("time/last ticks");
 
+	me->r00 = H2K_TIMER_TRAP_GET_TIME;
+	H2K_vmtrap_timer(me);
+	if (a.r0100 != resolution) {
+		printf("ret: 0x%016llx resolution=0x%016llx\n",ret,resolution);
+		FAIL("vmtrap time/1");
+	}
+	if (H2K_gp->time.last_ticks != 1) FAIL("time/last ticks");
+
 	set_count(2);
 	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_GET_TIME,0,me)) != 2*resolution) FAIL("time/2");
 	if (H2K_gp->time.last_ticks != 2) FAIL("time/last ticks");

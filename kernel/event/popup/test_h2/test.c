@@ -82,7 +82,7 @@ void thread0(int thread)
 		printf("T0\n");
 		h2_sem_down(&sem0);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void thread1(int thread)
@@ -95,7 +95,7 @@ void thread1(int thread)
 		printf("T1\n");
 		h2_sem_down(&sem1);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 volatile int int_num;
@@ -178,23 +178,17 @@ void vmmain(void *unused)
 
 #define NUM_TOTAL_THREADS 4
 
-#define MAX_SIZE (1024*1024)
 unsigned long long int main_thread_stack[STACK_SIZE];
-unsigned char storage[MAX_SIZE] __attribute__((aligned(32)));
+
 void spawn_vm(void *pc)
 {
-	unsigned int size;
-	void *vmb;
-	size = h2_config_vmblock_size(NUM_TOTAL_THREADS,1);
-	printf("vmblock size: %d\n",size);
-	if (size > MAX_SIZE) FAIL("Too much context needed\n");
-	vmb = h2_config_vmblock_init(storage,SET_STORAGE,0,0);
-	printf("vmb: %p\n",vmb);
-	vmb = h2_config_vmblock_init(vmb,SET_PMAP_TYPE,0,0);
-	h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
-	h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	unsigned long vm;
+
+	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,0);
+	h2_config_vmblock_init(vm,SET_PMAP_TYPE,0,0);
+	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
 	printf("initted\n");
-	h2_vmboot(pc,&main_thread_stack[STACK_SIZE-1],0,0,vmb);
+	h2_vmboot(pc,&main_thread_stack[STACK_SIZE-1],0,0,vm);
 	printf("vm booted\n");
 }
 
@@ -228,7 +222,7 @@ int main()
 		h2_sem_down(&int_sem);
 		hw_gen_int(int_num);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }
 

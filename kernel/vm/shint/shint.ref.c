@@ -56,7 +56,7 @@ static s32_t H2K_vm_shint_deliver_cpu(H2K_vmblock_t *vmblock, H2K_thread_context
 IN_SECTION(".text.vm.int")
 static void H2K_vm_shint_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno)
 {
-	u32_t i, start;
+	u32_t i;
 	/* FIXME: what is cpuidx in fastint context?  Always 0? */
 	u32_t cpu = me->id.cpuidx;
 
@@ -73,20 +73,16 @@ static void H2K_vm_shint_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 		}
 	}
 
-	/* Look for first CPU to interrupt */
-	start = i = cpu;
+	/* No luck with waiters; check them all now */
+	i = cpu;
 	do {
 		if (H2K_vm_shint_deliver_cpu(vmblock,&vmblock->contexts[i],intno)) {
-			goto out;
+			return;
 		} else {
 			if (++i >= vmblock->max_cpus) i = 0;
 		}
 	} while (i != cpu);
 	/* No CPU found to take interrupt, just return */
-
- out:
-	if (++start >= vmblock->num_cpus) start = 0;
-	vmblock->interrupt_search_start = start;
 }
 
 s32_t  H2K_vm_shint_post(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)

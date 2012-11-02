@@ -57,8 +57,10 @@ FUNC_START start .text.init.boot .p2align 12
 	ickill					// 2
 	dckill					// 3
 	l2kill					// 4
-	r15.h = #hi(H2K_bootmap_ptr)		// 5
-	r15.l = #lo(H2K_bootmap_ptr)		// 6
+	//	r15.h = #hi(H2K_bootmap_ptr)		// 5
+	//	r15.l = #lo(H2K_bootmap_ptr)		// 6
+	nop            // 5
+	nop 					 // 6
 	r0 = #6					// 7
 	syscfg = r0				// 0
 	isync					// 1 ... needs to be in same cache line as syscfg

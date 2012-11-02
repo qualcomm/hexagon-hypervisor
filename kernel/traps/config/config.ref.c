@@ -14,49 +14,33 @@
 #include <intconfig.h>
 #include <asid.h>
 #include <translate.h>
+#include <alloc.h>
 
 #ifdef DEBUG
 #include <stdio.h>
 #endif
 
-typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, u32_t, H2K_thread_context *);
+typedef u32_t (*configptr_t)(u32_t, void *, vmblock_init_op_t, u32_t, u32_t, H2K_thread_context *);
 
 static const configptr_t H2K_configtab[CONFIG_MAX] IN_SECTION(".data.config.config") = {
 	H2K_trap_config_setfatal,
-	H2K_trap_config_vmblock_size,
 	H2K_trap_config_vmblock_init,
 };
 
-u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
+u32_t H2K_trap_config(u32_t configtype, void *ptr, vmblock_init_op_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
 {
 	if (configtype >= CONFIG_MAX) return 0;
 	return H2K_configtab[configtype](0,ptr,val2,val3,val4,me);
 }
 
-u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)
+u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, vmblock_init_op_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)
 {
 	H2K_fatal_kernel_handler = handler;
 	return 0;
 }
 
-/* return vm storage size required for vm with given parameters */
-
-u32_t H2K_trap_config_vmblock_size(u32_t unused, void *unused2, u32_t max_cpus, u32_t num_ints, u32_t unused3, H2K_thread_context *me)
-{
-	return VMBLOCK_SIZE(max_cpus, num_ints);
-}
-
-/* FIXME: need to validate vmblock pointer to guest space in these functions */
-
-u32_t H2K_vmblock_valid(H2K_vmblock_t *vmblock) {
-	if (vmblock != NULL && H2K_gp->vmblocks[vmblock->vmidx] == vmblock) { // ok
-		return 1;
-	}
-	return 0;
-}
-
 /* initialize vm description */
-u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
+u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
 {
 	H2K_vmblock_t *vmblock;
 	bitmask_t **masks;
@@ -71,21 +55,35 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 	u32_t i;
 	H2K_offset_t offset;
 	H2K_translation_t phys_translation;
+	H2K_mem_alloc_block_t block;
+	u32_t ptrtmp;
 
-	u32_t ptrtmp = (u32_t)ptr;
-	/* Align Pointer */
-	ptrtmp = ((ptrtmp + (H2K_VMBLOCK_ALIGN-1)) & (-H2K_VMBLOCK_ALIGN));
-	vmblock = (H2K_vmblock_t *)ptrtmp;
+	u32_t vm = (u32_t)ptr;
+
+	/* Get vmblock initialized by previous SET_CPUS_INTS */
+	if (op != SET_CPUS_INTS) {
+		if (vm < H2K_ID_MAX_VMS && H2K_gp->vmblocks[vm] != NULL) { // ok
+			vmblock = H2K_gp->vmblocks[vm];
+
+			if (vmblock->num_cpus > 0) return 0;  // VM is running, don't touch it.
+			/* H2K_init_setup_bootvm() calls with me == NULL */
+			if (me != NULL && me->id.vmidx != vmblock->parent.vmidx) return 0;  // Call is not from parent VM
+		} else {
+			vmblock = NULL;
+		}
+	}
 
 	switch (op) {
-	case SET_STORAGE:
 
-		/* raw space, must align */
-		if (ptrtmp & (H2K_VMBLOCK_ALIGN-1)) {
-			ptrtmp += ((ptrtmp + (H2K_VMBLOCK_ALIGN - 1)) & (-H2K_VMBLOCK_ALIGN)) - ptrtmp;
-		}
-		ptrtmp = ROUND(ptrtmp);
-		vmblock = (H2K_vmblock_t *)ptrtmp;
+	case SET_CPUS_INTS:	/* Allocates a new VM  */
+		if ((arg1 > MAX_VM_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
+
+		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2));
+		if (block.ptr == NULL) return 0;  // no space
+
+		vmblock = (H2K_vmblock_t *)block.ptr;
+		ptrtmp = (u32_t)vmblock;
+
 		for (i = 1; i < H2K_ID_MAX_VMS; i++) {
 			BKL_LOCK();
 			if (H2K_gp->vmblocks[i] == NULL) {
@@ -100,82 +98,16 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 				continue;
 			}
 		}
-
-		return (u32_t)vmblock;
-
-	case SET_PMAP_TYPE:
-		if (!H2K_vmblock_valid(vmblock)) return 0;
-
-		if (arg2 == H2K_ASID_TRANS_TYPE_OFFSET) {
-			/* arg1 has offset_pages[20]:xwru[4]:cccc[4]:size[4].  For negative offset wrap around by
-				 using (0xffffffff - offset) */
-
-			offset.raw = arg1;
-
-			/* Make sure offset is aligned to a valid page size, and size field matches */
-			if ((i = Q6_R_ct0_R(offset.pages)) % 2 != 0 || offset.size > (i / 2)) return 0;
-
-			vmblock->phys_offset = offset;
-			vmblock->pmap_type = arg2;
-			vmblock->fence_lo = 0;
-			vmblock->fence_hi = -1; // uninitialized, denies all mem
-			return (u32_t)vmblock;
-		}
-
-		if (arg2 >= H2K_ASID_TRANS_TYPE_XXX_LAST) return 0; // bad type
-
-		if (arg1 == 0) {
-			/* use ptb from current thread as pmap by default */
-			vmblock->pmap = H2K_mem_asid_table[me->ssr_asid].ptb;
-			vmblock->pmap_type = H2K_mem_asid_table[me->ssr_asid].fields.transtype;
-		} else {
-			vmblock->pmap_type = arg2;
-
-			if (me == NULL) { // we are setting up the boot vm
-				vmblock->pmap = arg1;
-			} else { // calling from a guest that might be remapped
-				if ((arg1 & 0xff000000) == 0xff000000) { // FIXME: remove this once guests no longer in monitor space
-					vmblock->pmap = arg1 - H2K_gp->phys_offset;
-				} else {
-					phys_translation =	H2K_vm_translate(arg1, me->vmblock);
-					if (!phys_translation.valid) return 0;
-					vmblock->pmap = phys_translation.addr;
-				}
-			}
-		}
-		return (u32_t)vmblock;
-
-	case SET_FENCES:
-		if (!H2K_vmblock_valid(vmblock)) return 0;
-
-		/* Ensure that fences are at given page boundaries */
-		offset = vmblock->phys_offset;
-		if ((Q6_R_ct0_R(arg1 >> PAGE_BITS) / 2 < offset.size)
-				|| Q6_R_ct0_R(arg2 >> PAGE_BITS) / 2 < offset.size) return 0;
-
-		/* /\* Could be a problem here if we have two levels of offset remapping with different page sizes *\/ */
-		/* if (H2K_vm_translate(arg1, me->vmblock, (u32_t *)&vmblock->fence_lo) == -1) return 0; */
-		/* if (H2K_vm_translate(arg2, me->vmblock, (u32_t *)&vmblock->fence_hi) == -1) return 0; */
-
-		vmblock->fence_lo = (u32_t)vmblock->fence_lo >> PAGE_BITS;
-		vmblock->fence_hi = (u32_t)vmblock->fence_hi >> PAGE_BITS;
-		return (u32_t)vmblock;
-
-	case SET_PRIO_TRAPMASK:
-		if (!H2K_vmblock_valid(vmblock)) return 0;
-		if (arg1 > MAX_PRIO) return 0; /* bad arg */
-
-		vmblock->bestprio = (u8_t)arg1;
-		vmblock->trapmask = (u32_t)arg2;
-		return (u32_t)vmblock;
-
-	case SET_CPUS_INTS:
-		if (!H2K_vmblock_valid(vmblock)) return 0;
-		if ((arg1 > MAX_VM_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
+		if (i == H2K_ID_MAX_VMS) return 0;  // out of vm IDs
 
 		vmblock->max_cpus = arg1;
 		vmblock->num_cpus = 0;
 		vmblock->num_ints = arg2;
+		if (me != NULL) {
+			vmblock->parent = me->id;
+		}
+		/* ID of boot VM parent stays 0:0 */
+			
 
 		ptrtmp += VMBLOCK_SPACE;
 
@@ -183,6 +115,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		vmblock->contexts = contexts = (H2K_thread_context *)ptrtmp;
 		for (i = 0; i < vmblock->max_cpus; i++) {
 			H2K_thread_context_clear(&contexts[i]);
+			contexts[i].id.raw = 0;  // because H2K_thread_context_clear restores garbage
 			contexts[i].id.vmidx = vmblock->vmidx;
 			contexts[i].id.cpuidx = i;
 			contexts[i].next = vmblock->free_threads;
@@ -224,10 +157,83 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 			p--;
 		}
 
-		return (u32_t)vmblock;
+		return vmblock->vmidx;
+
+	case SET_PMAP_TYPE:
+
+		if (vmblock == NULL) return 0;
+
+		if (arg2 == H2K_ASID_TRANS_TYPE_OFFSET) {
+			/* arg1 has offset_pages[20]:xwru[4]:cccc[4]:size[4].  For negative offset wrap around by
+				 using (0xffffffff - offset) */
+
+			offset.raw = arg1;
+
+			/* Make sure offset is aligned to a valid page size, and size field matches */
+			if ((i = Q6_R_ct0_R(offset.pages)) % 2 != 0 || offset.size > (i / 2)) return 0;
+
+			vmblock->phys_offset = offset;
+			vmblock->pmap_type = arg2;
+			vmblock->fence_lo = 0;
+			vmblock->fence_hi = -1; // uninitialized, denies all mem
+			return vmblock->vmidx;
+		}
+
+		if (arg2 >= H2K_ASID_TRANS_TYPE_XXX_LAST) return 0; // bad type
+
+		if (arg1 == 0) {
+			/* use ptb from current thread as pmap by default */
+			vmblock->pmap = H2K_mem_asid_table[me->ssr_asid].ptb;
+			vmblock->pmap_type = H2K_mem_asid_table[me->ssr_asid].fields.transtype;
+		} else {
+			vmblock->pmap_type = arg2;
+
+			if (me == NULL) { // we are setting up the boot vm
+				vmblock->pmap = arg1;
+			} else { // calling from a guest that might be remapped
+				if ((arg1 & 0xff000000) == 0xff000000) { // FIXME: remove this once guests no longer in monitor space
+					vmblock->pmap = arg1 - H2K_gp->phys_offset;
+				} else {
+					phys_translation =	H2K_vm_translate(arg1, me->vmblock);
+					if (!phys_translation.valid) return 0;
+					vmblock->pmap = phys_translation.addr;
+				}
+			}
+		}
+		return vmblock->vmidx;
+
+	case SET_FENCES:
+
+		if (vmblock == NULL) return 0;
+
+		/* Ensure that fences are at given page boundaries */
+		offset = vmblock->phys_offset;
+		if ((Q6_R_ct0_R(arg1 >> PAGE_BITS) / 2 < offset.size)
+				|| Q6_R_ct0_R(arg2 >> PAGE_BITS) / 2 < offset.size) return 0;
+
+		/* /\* Could be a problem here if we have two levels of offset remapping with different page sizes *\/ */
+		/* if (H2K_vm_translate(arg1, me->vmblock, (u32_t *)&vmblock->fence_lo) == -1) return 0; */
+		/* if (H2K_vm_translate(arg2, me->vmblock, (u32_t *)&vmblock->fence_hi) == -1) return 0; */
+
+		vmblock->fence_lo = (u32_t)vmblock->fence_lo >> PAGE_BITS;
+		vmblock->fence_hi = (u32_t)vmblock->fence_hi >> PAGE_BITS;
+
+		return vmblock->vmidx;
+
+	case SET_PRIO_TRAPMASK:
+
+		if (vmblock == NULL) return 0;
+
+		if (arg1 > MAX_PRIO) return 0; /* bad arg */
+
+		vmblock->bestprio = (u8_t)arg1;
+		vmblock->trapmask = (u32_t)arg2;
+		return vmblock->vmidx;
 
 	case MAP_PHYS_INTR:
-		if (!H2K_vmblock_valid(vmblock)) return 0;
+
+		if (vmblock == NULL) return 0;
+
 		config_int.raw = arg2;
 		physint = config_int.physint;
 		virt_int = arg1;
@@ -247,7 +253,9 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, u32_t op, u32_t arg1
 		vmblock->int_v2p[virt_int] = physint;
 		/* FIXME: set up int mapping in vmblock for large vint# */
 		H2K_register_passthru(physint, id, virt_int);
-		return (u32_t)vmblock;
+		return vmblock->vmidx;
+
+	default:
+		return 0; // bad op
 	}
-	return 0; // bad op
 }

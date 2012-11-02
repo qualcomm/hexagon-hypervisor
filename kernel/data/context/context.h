@@ -29,10 +29,15 @@ typedef struct _h2_thread_context
 	struct _h2_thread_context *prev;
 	// #8
 	/* Other info */
-	u8_t prio;
-	u8_t hthread;			// could be < 8 bits
-	u8_t tid;
-	u8_t status;			// could be < 8 bits, combined with vmstatus?
+	union {
+		struct {
+			u8_t tid;
+			u8_t hthread;			// could be < 8 bits
+			u8_t prio;
+			u8_t status;			// could be < 8 bits, combined with vmstatus?
+		};
+		u32_t status_prio_hthread_tid;
+	};
 	// #12
 	union {				// must be updated with LL/SC?
 		u32_t atomic_status_word;

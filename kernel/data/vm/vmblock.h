@@ -45,6 +45,8 @@
  * Supporting multiple listeners?
  */
 
+#define H2K_VM_CHILDINT 14
+
 #define H2K_VMBLOCK_ALIGN 32
 #define H2K_VMBLOCK_V2P_INVALID 0x0
 
@@ -75,6 +77,8 @@ typedef struct H2K_vmblock_struct {
 	u32_t num_cpus;
 	u32_t bestprio; 	/* best allowed priority */
 	u32_t vmidx;
+	H2K_id_t parent;
+	s32_t status;     /* status, e.g. halt, reboot */
 	u32_t num_ints; 	/* number of shared interrupts */
 	u32_t trapmask;  	/* allowed traps */
 	H2K_spinlock_t lock;
@@ -110,7 +114,6 @@ typedef struct H2K_vmblock_struct {
 
 	translation_type pmap_type;
 
-	u8_t interrupt_search_start;
 } __attribute__((aligned(32))) H2K_vmblock_t;
 
 #endif

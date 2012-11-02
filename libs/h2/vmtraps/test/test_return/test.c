@@ -94,5 +94,6 @@ int main() {
 	}
 
 	info("TEST PASSED\n");
+	h2_thread_stop(1);
 	return(0);
 }

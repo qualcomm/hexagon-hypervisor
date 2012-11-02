@@ -9,7 +9,6 @@
 #include <cpuint.h>
 #include <shint.h>
 #include <max.h>
-#include <globals.h>
 
 #include <h2.h>
 #include <h2_vm.h>
@@ -31,16 +30,15 @@
 #define HW_TIMER_INT 10
 #define LINUX_TIMER_INT 2
 
+#define VM_STATUS_REBOOT 3
+#define CHILD_INTERRUPT 14
+
 H2K_offset_t linux_offset = {{
 	.size = SIZE_4M,
 	.cccc = L1WB_L2C,
 	.xwru = URWX,
 	.pages = (LINUX_OFFSET_ADDR >> PAGE_BITS)
 	}};
-
-char linux_vmblock_space[65536];
-char ucos_vmblock_space[65536];
-void *linux_vmb;
 
 unsigned long long int linux_vcpu_stacks[LINUX_NUM_VCPU][VCPU_STACK_SIZE];
 unsigned long long int ucos_vcpu_stacks[UCOS_NUM_VCPU][VCPU_STACK_SIZE];
@@ -78,46 +76,37 @@ void fatal () {
 	exit (1);
 }
 
-void *vm_setup(char num_cpus, short num_ints, char vmblock_space[], u32_t trans, unsigned long trapmask, translation_type pt) {
+unsigned long vm_setup(char num_cpus, short num_ints, u32_t trans, unsigned long trapmask, translation_type pt) {
 
-	unsigned long vmb_size;
-	void *ret;
-	void *vmb;
+	unsigned long vm, ret;
 
-	vmb_size = h2_config_vmblock_size(num_cpus, num_ints);
-	PRINTF("vmb size %d\n", (int)vmb_size);
+	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, num_cpus, num_ints);
+	if (vm == 0) FAIL("SET_CPUS_INTS");
 
-	vmb =	h2_config_vmblock_init(vmblock_space, SET_STORAGE, 0, 0);
-	if (vmb == NULL) FAIL("SET_STORAGE");
-	PRINTF("vmb %08x\n", (unsigned int)vmb);
-
-	ret = h2_config_vmblock_init(vmb, SET_PMAP_TYPE, trans, pt);
-	if (ret != vmb) {
+	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, trans, pt);
+	if (ret != vm) {
 		PRINTF("ret %08x\n", (unsigned int)ret);
 		FAIL("SET_PMAP_TYPE");
 	}
 
 	if (pt == H2K_ASID_TRANS_TYPE_OFFSET) {
-		ret = h2_config_vmblock_init(vmb, SET_FENCES, 0x0, 0xff000000);
-		if (ret != vmb) {
+		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x0, 0xff000000);
+		if (ret != vm) {
 			PRINTF("ret %08x\n", (unsigned int)ret);
 			FAIL("SET_FENCES");
 		}
 	}
 
-	if (h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0, trapmask) != vmb) {
+	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0, trapmask) != vm) {
 		FAIL("SET_PRIO_TRAPMASK");
 	}
 
-	if (h2_config_vmblock_init(vmb, SET_CPUS_INTS, num_cpus, num_ints) != vmb) {
-		FAIL("SET_CPUS_INTS");
-	}
-	return vmb;
+	return vm;
 }
 
-void setup_ints(void *vmb, char num_cpus) {
+void setup_ints(unsigned long vm, char num_cpus) {
 
-	int i, j;
+	int i;
 
 	for (i = 0; i < TOTAL_INTS; i++) {
 		if (i != RESCHED_INT
@@ -128,7 +117,7 @@ void setup_ints(void *vmb, char num_cpus) {
 				&& i != TIMER_INT) {
 			/* Send per-cpu HW interrupts to the first configured cpu, which is
 				 num_cpus - 1, in case Linux doesn't boot all its configured cpus */
-			if (h2_config_vmblock_init(vmb, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vmb) {
+			if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
 				FAIL("MAP_PHYS_INTR");
 			}
 		}
@@ -137,48 +126,42 @@ void setup_ints(void *vmb, char num_cpus) {
 
 extern void linux_stext();
 
-//volatile unsigned int *ss_pub_base = (void *)0xFFC00000;
-//  Use physical address which will go through a straight-through mapping of device type.
-volatile unsigned int *ss_pub_base = (void *) 0x28800000;
-#define FLL_CTL (0x3c >> 2)
-#define FLL_STATUS (0x40 >> 2)
-#define GFMUX_CTL (0x30 >> 2)
+void boot_ucos() {
 
-int main(int argc, char *argv[]) {
+#ifdef UCOS
+	unsigned long ucos_vm;
 
-	void *vmb;
+	PRINTF("ucos: start boot\n");
+	ucos_vm = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, (u32_t)ucos_pmap, 0xffffffff, H2K_ASID_TRANS_TYPE_LINEAR);
+	PRINTF("ucos: vm set up\n");
 
-#ifdef DO_CLOCK_SETUP
-	ss_pub_base[FLL_CTL] = 0x150800; /* M/N */
-	ss_pub_base[FLL_CTL] = 0x150801; /* M/N/EN */
-	ss_pub_base[FLL_CTL] = 0x150807; /* M/N/EN/RST/SRC */
-	ss_pub_base[FLL_CTL] = 0x150805; /* M/N/EN/SRC */
-	while ((ss_pub_base[FLL_STATUS] & 1) == 0) /* wait for FLL */;
-	ss_pub_base[GFMUX_CTL] = ss_pub_base[GFMUX_CTL] | 0x0C; /* CLK SRC D */
-	PRINTF("Set Up Clocks\n");
+	PRINTF("ucos: loading to 0x%08x from 0x%08x, size 0x%08x\n", (unsigned int)ucos_loadaddr, (unsigned int)ucos_image_start, (unsigned int)(ucos_image_end - ucos_image_start));
+	memcpy(ucos_loadaddr, ucos_image_start, ucos_image_end - ucos_image_start);
+
+	PRINTF("ucos: loaded\n");
+
+	if (h2_vmboot(ucos_entry, &ucos_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
+								0, UCOS_VM_PRIO, ucos_vm) == -1) FAIL("ucos vmboot");
+
+	PRINTF ("ucos: booted\n");
 #endif
+}
 
-	h2_init(0);
-	h2_config_setfatal(fatal);
-	PRINTF("loadlinux: H2 started\n");
+unsigned long boot_linux(char fname[]) {
+
+	unsigned long linux_vm = 0;
 
 #ifdef LINUX
 	PRINTF("linux: start boot\n");
 
-	vmb = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_vmblock_space, linux_offset.raw, 0x1, H2K_ASID_TRANS_TYPE_OFFSET);
-	setup_ints(vmb, LINUX_NUM_VCPU);
-	linux_vmb = vmb;
+	linux_vm = vm_setup(LINUX_NUM_VCPU, SHARED_INTS, linux_offset.raw, 0x1, H2K_ASID_TRANS_TYPE_OFFSET);
+	setup_ints(linux_vm, LINUX_NUM_VCPU);
 	PRINTF("linux: vm set up\n");
 
 #ifndef NO_LOAD
 	size_t count;
 	unsigned long *ptr = (unsigned long *)LINUX_LOAD_ADDR;
 	FILE *file;
-	char fname[256] = "vmlinux.bin";
-
-	if (argc > 1) {
-		sscanf(argv[1], "%s", fname);
-	}
 
 	file = fopen(fname, "r");
 	if (file == NULL) FAIL("fopen");
@@ -189,6 +172,7 @@ int main(int argc, char *argv[]) {
 		ptr += count;
 		if (count < 0x40000 && ferror(file)) FAIL("ferror");
 	} while (!feof(file));
+	fclose(file);
 	PRINTF ("linux: loaded %s\n", fname);
 #endif
 
@@ -217,27 +201,66 @@ int main(int argc, char *argv[]) {
 #endif
 
 	if (h2_vmboot(linux_stext, &linux_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
-								0, LINUX_VM_PRIO, vmb) == -1) FAIL("linux vmboot");
+								0, LINUX_VM_PRIO, linux_vm) == -1) FAIL("linux vmboot");
 
 	PRINTF ("linux: booted\n");
 #endif
+	return linux_vm;
+}
 
-#ifdef UCOS
-	PRINTF("ucos: start boot\n");
-	vmb = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, ucos_vmblock_space, (u32_t)ucos_pmap, 0xffffffff, H2K_ASID_TRANS_TYPE_LINEAR);
-	PRINTF("ucos: vm set up\n");
+extern void bootvm_vectors();
 
-	PRINTF("ucos: loading to 0x%08x from 0x%08x, size 0x%08x\n", (unsigned int)ucos_loadaddr, (unsigned int)ucos_image_start, (unsigned int)(ucos_image_end - ucos_image_start));
-	memcpy(ucos_loadaddr, ucos_image_start, ucos_image_end - ucos_image_start);
+//volatile unsigned int *ss_pub_base = (void *)0xFFC00000;
+//  Use physical address which will go through a straight-through mapping of device type.
+volatile unsigned int *ss_pub_base = (void *) 0x28800000;
+#define FLL_CTL (0x3c >> 2)
+#define FLL_STATUS (0x40 >> 2)
+#define GFMUX_CTL (0x30 >> 2)
 
-	PRINTF("ucos: loaded\n");
+int main(int argc, char *argv[]) {
 
-	if (h2_vmboot(ucos_entry, &ucos_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
-								0, UCOS_VM_PRIO, vmb) == -1) FAIL("ucos vmboot");
+	char fname[256] = "vmlinux.bin";
+	unsigned long linux_vm;
+	int status, cpus;
 
-	PRINTF ("ucos: booted\n");
+	if (argc > 1) {
+		sscanf(argv[1], "%s", fname);
+	}
+
+#ifdef DO_CLOCK_SETUP
+	ss_pub_base[FLL_CTL] = 0x150800; /* M/N */
+	ss_pub_base[FLL_CTL] = 0x150801; /* M/N/EN */
+	ss_pub_base[FLL_CTL] = 0x150807; /* M/N/EN/RST/SRC */
+	ss_pub_base[FLL_CTL] = 0x150805; /* M/N/EN/SRC */
+	while ((ss_pub_base[FLL_STATUS] & 1) == 0) /* wait for FLL */;
+	ss_pub_base[GFMUX_CTL] = ss_pub_base[GFMUX_CTL] | 0x0C; /* CLK SRC D */
+	PRINTF("Set Up Clocks\n");
 #endif
 
-	h2_thread_stop();
+	h2_init(0);
+	h2_config_setfatal(fatal);
+	PRINTF("loadlinux: H2 started\n");
+
+	h2_vmtrap_setvec(bootvm_vectors);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
+
+	boot_ucos();
+
+	do {
+		linux_vm = boot_linux(fname);
+
+		do {  // wait for all child VM cpus to vmstop
+			h2_vmtrap_wait();
+			status = h2_vmstatus(VMOP_STATUS_STATUS, linux_vm);
+			printf("linux VM %lu status %d\n", linux_vm, status);
+			cpus = h2_vmstatus(VMOP_STATUS_CPUS, linux_vm);
+			printf("VM %lu Live CPUs: %d\n", linux_vm, status);
+		} while (cpus != 0);
+
+		h2_vmfree(linux_vm);
+	} while (status == VM_STATUS_REBOOT);
+
+	//h2_thread_stop(0);
 	return 0; // make gcc happy
 }

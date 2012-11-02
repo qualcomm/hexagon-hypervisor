@@ -10,7 +10,6 @@ H2K_atomic_compare_swap_mask
 H2K_atomic_insert
 H2K_atomic_max_mask
 H2K_atomic_setbit
-H2K_atomic_swap
 H2K_cache_d_clean
 H2K_cache_d_cleaninv
 H2K_cache_i_inv
@@ -26,6 +25,7 @@ H2K_do_asid_table_inc
 H2K_dosched
 H2K_enable_guest_interrupts
 H2K_event_vectors
+H2K_event_vectors_end
 H2K_fastint
 H2K_fastint_disable
 H2K_fastint_disable_l2
@@ -36,11 +36,10 @@ H2K_fatal_kernel
 H2K_fatal_sim_exit
 H2K_fatal_thread
 H2K_futex_cancel
-H2K_futex_hash_add
+H2K_futex_hash_add_ring
 H2K_futex_hash_remove_one
 H2K_futex_init
 H2K_futex_lock_pi
-H2K_futex_pi_raise
 H2K_futex_resume
 H2K_futex_unlock_pi
 H2K_futex_wait
@@ -65,6 +64,7 @@ H2K_handle_tlbmissrw
 H2K_handle_tlbmissx
 H2K_handle_trap0
 H2K_handle_trap1
+H2K_ickill
 H2K_id_cpuidx_to_context
 H2K_id_from_context
 H2K_id_to_context
@@ -96,6 +96,7 @@ H2K_mem_stlb_lookup
 H2K_mem_stlb_match_asid
 H2K_mem_stlb_quick_random_way
 H2K_mem_tlb_fill
+H2K_mem_tlb_fixup
 H2K_mem_tlb_insert
 H2K_mem_tlb_invalidate_asid
 H2K_mem_tlb_invalidate_va
@@ -104,13 +105,9 @@ H2K_mem_tlb_read
 H2K_mem_tlb_v3_user_check
 H2K_mem_tlb_write
 H2K_mem_tlbfmt_from_linear
-H2K_mem_tlbfmt_get_basepa
-H2K_mem_tlbfmt_get_perms
-H2K_mem_tlbfmt_get_size
 H2K_mem_translate_linear
 H2K_mem_translate_pagetable
 H2K_mutex_lock_k0
-H2K_mutex_lock_tlb
 H2K_mutex_unlock_k0
 H2K_mutex_unlock_tlb
 H2K_passthru
@@ -122,12 +119,8 @@ H2K_preempt
 H2K_prio_get
 H2K_prio_set
 H2K_pte_to_tlbfmt
-H2K_raise_lowprio
 H2K_ready_append
-H2K_ready_clear_prio
-H2K_ready_insert
 H2K_ready_prio_valid
-H2K_ready_remove
 H2K_ready_set_prio
 H2K_readylist_init
 H2K_register_fastint
@@ -135,7 +128,6 @@ H2K_register_passthru
 H2K_resched
 H2K_ring_append
 H2K_ring_append_real
-H2K_ring_insert
 H2K_ring_insert_real
 H2K_ring_remove
 H2K_ring_remove_append_real
@@ -170,6 +162,7 @@ H2K_thread_stop
 H2K_tid_get
 H2K_tid_set
 H2K_timer_cancel_withlock
+H2K_timer_delta_timeout
 H2K_timer_dotimeout
 H2K_timer_get_freq
 H2K_timer_get_resolution

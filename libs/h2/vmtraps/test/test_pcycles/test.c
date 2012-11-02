@@ -76,5 +76,6 @@ int main()
 	/* h2_printf("end pcycles is   %8llu\n", endpcycles); */
 	
 	info("TEST PASSED\n");
+	h2_thread_stop(0);
 	return(0);
 }

@@ -97,10 +97,10 @@ void spinner_thread(void * v_threadid)
 			h2_yield();
 		}
 		TH_nextstep_id = 0;
-		if (TH_shutdown_now) h2_thread_stop();
+		if (TH_shutdown_now) h2_thread_stop(0);
 		h2_futex_unlock_pi(&futex0);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 typedef struct {
@@ -120,7 +120,7 @@ void blocker_thread(blocker_thread_struct *info)
 		h2_yield();
 	}
 	TH_nextstep_id = 0;
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void pi_caller(int *futex_addr)
@@ -139,7 +139,7 @@ void pi_caller(int *futex_addr)
 		FAIL("Wrong futex val");
 	}
 	TH_caller_woke = 1;
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 void spawn_spinner(int tnum, int prio)
@@ -283,23 +283,17 @@ void vmmain(void *x)
 	exit(0);
 }
 
-#define MAX_SIZE (1024*1024)
 unsigned long long int main_thread_stack[THREAD_STACK_SIZE];
-unsigned char storage[MAX_SIZE] __attribute__((aligned(32)));
+
 void spawn_vm(void *pc)
 {
-	unsigned int size;
-	void *vmb;
-	size = h2_config_vmblock_size(NUM_TOTAL_THREADS,1);
-	printf("vmblock size: %d\n",size);
-	if (size > MAX_SIZE) FAIL("Too much context needed\n");
-	vmb = h2_config_vmblock_init(storage,SET_STORAGE,0,0);
-	printf("vmb: %p\n",vmb);
-	vmb = h2_config_vmblock_init(vmb,SET_PMAP_TYPE,0,0);
-	h2_config_vmblock_init(vmb,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
-	h2_config_vmblock_init(vmb, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	unsigned long vm;
+
+	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,0);
+	h2_config_vmblock_init(vm,SET_PMAP_TYPE,0,0);
+	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
 	printf("initted\n");
-	h2_vmboot(pc,&main_thread_stack[THREAD_STACK_SIZE-1],0,0,vmb);
+	h2_vmboot(pc,&main_thread_stack[THREAD_STACK_SIZE-1],0,0,vm);
 	printf("vm booted\n");
 }
 
@@ -330,6 +324,6 @@ int main()
 #endif
 	H2K_mem_tlb_write(tlb_index, tlb_entry);
 	spawn_vm(vmmain);
-	h2_thread_stop();
+	h2_thread_stop(0);
 	return 0;
 }

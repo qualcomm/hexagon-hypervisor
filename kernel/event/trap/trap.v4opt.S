@@ -79,7 +79,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_create // 4
 	}
 	{
-		r0 = sgp0
+		r1 = sgp0
 		jump H2K_thread_stop // 5
 	}
 	{
@@ -173,8 +173,8 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_waitcycles_get // 27
 	}
 	{
-		r5 = sgp0
-		jump H2K_vmboot // 28
+		nop
+		jump .Lvmop_stub  // 28
 	}
 	{
 		r4 = sgp0
@@ -188,4 +188,12 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		r4 = sgp0
 		jump H2K_trap_hwconfig // 31
 	}
+
+.Lvmop_stub:
+	{
+		memw(r29 + #-8) = r7  // == sgp
+		r29 = add(r29, #-8)
+		jump H2K_vmop
+	}
+
 FUNC_END H2K_traptab

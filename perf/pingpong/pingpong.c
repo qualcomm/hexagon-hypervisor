@@ -16,7 +16,7 @@ unsigned long long int stacks[MAX_THREADS][64];
 #ifdef DEBUG
 #define ITERS 10
 #else
-#define ITERS (1000)
+#define ITERS (500)
 #endif
 
 #ifdef H2_H
@@ -63,7 +63,7 @@ void ping(void *id) {
 		blast_sem_up(out);
 	}
 	if (myid == MAX_THREADS-1) blast_sem_up(&tomain);
-	blast_thread_stop();
+	blast_thread_stop(0);
 }
 
 char context_space[1024];
@@ -82,5 +82,6 @@ int main() {
 	blast_sem_down(&tomain);
 	end = blast_get_core_pcycles();
 	printf("TEST PASSED - %.0f\n", (float) (end - start) / (float) (ITERS*MAX_THREADS));
+	h2_thread_stop(0);
 	return 0;
 }

@@ -86,7 +86,7 @@ void worker(void *arg)
 	}
 	h2_sem_up(&donesem);
 	printf("Worker %x done\n",(unsigned int)arg);
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int main()
@@ -122,6 +122,7 @@ int main()
 	printf("%lld locks/trylocks/unlocks, approx %d cycles per pair\n",count,avg);
 	printf("Done!\n");
 	printf("TEST PASSED - %d\n",avg);
+	h2_thread_stop(0);
 	return 0;
 }
 

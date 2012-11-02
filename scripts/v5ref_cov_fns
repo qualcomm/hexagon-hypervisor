@@ -26,6 +26,7 @@ H2K_do_asid_table_inc
 H2K_dosched
 H2K_enable_guest_interrupts
 H2K_event_vectors
+H2K_event_vectors_end
 H2K_fastint
 H2K_fastint_disable
 H2K_fastint_disable_l2
@@ -36,7 +37,7 @@ H2K_fatal_kernel
 H2K_fatal_sim_exit
 H2K_fatal_thread
 H2K_futex_cancel
-H2K_futex_hash_add
+H2K_futex_hash_add_ring
 H2K_futex_hash_remove_one
 H2K_futex_init
 H2K_futex_lock_pi
@@ -68,6 +69,7 @@ H2K_handle_tlbmissrw
 H2K_handle_tlbmissx
 H2K_handle_trap0
 H2K_handle_trap1
+H2K_ickill
 H2K_id_cpuidx_to_context
 H2K_id_from_context
 H2K_id_to_context
@@ -101,6 +103,7 @@ H2K_mem_stlb_lookup
 H2K_mem_stlb_match_asid
 H2K_mem_stlb_quick_random_way
 H2K_mem_tlb_fill
+H2K_mem_tlb_fixup
 H2K_mem_tlb_insert
 H2K_mem_tlb_invalidate_asid
 H2K_mem_tlb_invalidate_va
@@ -181,6 +184,7 @@ H2K_thread_stop
 H2K_tid_get
 H2K_tid_set
 H2K_timer_cancel_withlock
+H2K_timer_delta_timeout
 H2K_timer_dotimeout
 H2K_timer_get_freq
 H2K_timer_get_resolution

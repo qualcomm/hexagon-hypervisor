@@ -4,15 +4,15 @@
  */
 
 	.text
-	.global angel
-	.type angel,@function
+	.global __angel
+	.type __angel,@function
 	.p2align 2
-angel:
+__angel:
 	allocframe(#0)
 	trap0(#0)
 	deallocframe
 	jumpr r31
-	.size angel,.-angel
+	.size __angel,.-__angel
 
 	.global _exit
 	.type exit,@function
@@ -21,5 +21,5 @@ _exit:
 	r1 = r0
 	r2 = r0
 	r0 = #0x18
-	jump angel
+	jump __angel
 	.size _exit,.-_exit

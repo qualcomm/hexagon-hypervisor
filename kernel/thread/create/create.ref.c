@@ -30,11 +30,13 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	u32_t ptb;
 	translation_type type;
 	s32_t asid;
+	void *guest_evb;
 
 	bestprio = vmblock->bestprio;
 	trapmask = vmblock->trapmask;
 
 	if (vmblock->num_cpus == 0) { // starting first cpu
+		guest_evb = NULL;
 		type = vmblock->pmap_type;
 		if (type == H2K_ASID_TRANS_TYPE_OFFSET) { // use vmblock as "ptb"
 			ptb = (u32_t)vmblock;
@@ -42,6 +44,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 			ptb = vmblock->pmap; 				/* initial page tables == pmap */
 		}
 	} else { // inherit
+		guest_evb = me->gevb;
 		ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
 		type = H2K_mem_asid_table[me->ssr_asid].fields.transtype;
 	}
@@ -70,7 +73,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->trapmask = trapmask;
 	tmp->continuation = H2K_interrupt_restore;
 	tmp->vmstatus = 0x0;            // all clear
-	tmp->gevb = me->gevb;
+	tmp->gevb = guest_evb;
 
 	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 

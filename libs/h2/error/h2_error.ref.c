@@ -29,7 +29,7 @@ static void h2_default_error_handler(int evt)
 	    printf("%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",(unsigned int)ptr+i,
 		   ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);
 	}
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 static void (*errfuncs[16])(int) = {

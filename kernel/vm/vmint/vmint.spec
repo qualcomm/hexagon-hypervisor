@@ -150,5 +150,23 @@ locally.  If one is found, it is returned.  If no pending interrupt can be
 taken, a negative value is returned.
 
 
+H2K_vmtrap_intop
+----------------
+
+.. cfunction:: void H2K_vmtrap_intop(H2K_thread_context *me)
+
+	:param me: pointer to the thread context
+
+
+Description
+~~~~~~~~~~~
+
+Handles operations on the virtual interrupt controller.
+
+Functionality
+~~~~~~~~~~~~~
+
+First, parameters are fixed up to appropriate values.  We then call the appropriate
+operation from the optab in the first handling information block.
 
 

@@ -37,5 +37,6 @@ enum {
 };
 
 u64_t H2K_timer_trap(u32_t traptype, u64_t arg, H2K_thread_context *me);
+void H2K_vmtrap_timer(H2K_thread_context *me);
 
 #endif

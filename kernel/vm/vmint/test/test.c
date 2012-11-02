@@ -64,6 +64,7 @@ void TH_init_vmblock()
 	memset(&TH_vmblock,0,sizeof(TH_vmblock));
 	TH_vmblock.contexts = &TH_threads[0];
 	TH_vmblock.max_cpus = MAX_TEST_THREADS;
+	TH_vmblock.parent.vmidx = 1; // parent is boot VM
 	//TH_vmblock.num_cpus = MAX_TEST_THREADS;
 	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
 	TH_vmblock.pending = &TH_pending_storage[0];

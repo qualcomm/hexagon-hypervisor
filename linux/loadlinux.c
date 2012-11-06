@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
 			status = h2_vmstatus(VMOP_STATUS_STATUS, linux_vm);
 			printf("linux VM %lu status %d\n", linux_vm, status);
 			cpus = h2_vmstatus(VMOP_STATUS_CPUS, linux_vm);
-			printf("VM %lu Live CPUs: %d\n", linux_vm, status);
+			printf("VM %lu Live CPUs: %d\n", linux_vm, cpus);
 		} while (cpus != 0);
 
 		h2_vmfree(linux_vm);

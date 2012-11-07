@@ -30,4 +30,5 @@ bootvm__Trap0:
 	jump 1b
 
 bootvm__Interrupt:
+	call handle_child_int
 	trap1(#H2_VMTRAP_RETURN)

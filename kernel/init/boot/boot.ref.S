@@ -32,9 +32,6 @@
 #define MAKE_TLBHI(DST,CONSTVA) \
 	SETCONST(DST,BOOT_TLBHI | (((CONSTVA) >> BOOT_TLB_PGBITS)<<BOOT_TLB_SHIFT))
 
-#define MAKE_TLBHI_4K(DST,CONSTVA) \
-	SETCONST(DST,BOOT_TLBHI | (((CONSTVA) >> BOOT_TLB_PGBITS_4K)<<BOOT_TLB_SHIFT_4K))
-
 #define MAKE_TLBLO(DST,SRCVAL,TMP) \
 	SETCONST(DST,BOOT_TLBLO) ; \
 	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS); \
@@ -44,11 +41,6 @@
 	SETCONST(DST,BOOT_TLBLO_DEV) ; \
 	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS); \
 	DST |= asl(TMP, #  BOOT_TLB_SHIFT+SBIT_SIZE); 
-
-#define MAKE_TLBLO_DEV_4K(DST,SRCVAL,TMP) \
-	SETCONST(DST,BOOT_TLBLO_DEV_4K) ; \
-	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS_4K); \
-	DST |= asl(TMP, #  BOOT_TLB_SHIFT_4K+SBIT_SIZE); 
 
 FUNC_START start .text.init.boot .p2align 12
 	/* NOTE: 4096 bytes should contain all the way to jump to hyperspace... */
@@ -122,32 +114,11 @@ FUNC_START start .text.init.boot .p2align 12
 
 #if __QDSP6_ARCH__ > 3
 	// Set up entry for L2 interrupt controller
-#if 0
 	SETCONST(r10,Q6_SS_BASE_PA)
 	MAKE_TLBHI(r3,Q6_SS_BASE_VA)
 	MAKE_TLBLO_DEV(r2,r10,r11)
 	r1 = #2
 	DO_TLBW(3,2,1)
-#endif
-
-	SETCONST(r10,TIMER_BASE_PA)
-	MAKE_TLBHI_4K(r3,TIMER_BASE_VA)
-	MAKE_TLBLO_DEV_4K(r2,r10,r11)
-	r1 = #2
-	DO_TLBW(3,2,1)
-  
-	SETCONST(r10,(TIMER_BASE_PA + 0x1000))
-	MAKE_TLBHI_4K(r3,(TIMER_BASE_VA + 0x1000))
-	MAKE_TLBLO_DEV_4K(r2,r10,r11)
-	r1 = #3
-	DO_TLBW(3,2,1)
-  
-	SETCONST(r10,L2_INT_BASE_PA)
-	MAKE_TLBHI_4K(r3,L2_INT_BASE)
-	MAKE_TLBLO_DEV_4K(r2,r10,r11)
-	r1 = #4
-	DO_TLBW(3,2,1)
-  
 #endif
 
 	r10 = pc
@@ -159,7 +130,7 @@ FUNC_START start .text.init.boot .p2align 12
 	MAKE_TLBHI(r3,0)
 	r3 |= lsr(r10,#BOOT_TLB_ADDRBITS)
 	MAKE_TLBLO(r2,r10,r11)
-	r1 = #5
+	r1 = #3
 	DO_TLBW(3,2,1)
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
@@ -190,7 +161,7 @@ FUNC_START start .text.init.boot .p2align 12
 
 1:
 	// invalidate temporary TLB entries
-	r1 = #5
+	r1 = #3
 	r3:2 = #0
 	DO_TLBW(3,2,1)
 	isync

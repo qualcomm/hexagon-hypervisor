@@ -157,7 +157,8 @@ int main(int argc, char **argv)
 	char buf[BUFSIZE];
 	char file[64];
 	buf[0] = 0;
-	for (i = 0; i < argc; i++) {
+        //start at argv[1], thus removing booter from cmdline buf
+	for (i = 1; i < argc; i++) {
 		strcat(buf,argv[i]);
 		strcat(buf," ");
 	}
@@ -175,7 +176,7 @@ int main(int argc, char **argv)
 		argc--;
 		argv = &argv[1];
 		for (; argc > 1; argc--) {
-			run_elf(argv[argc - 1],"fill in cmdline here");
+			run_elf(argv[argc - 1],"");
 		}
 	} else if (0 == strcmp(argv[1], "--listfile")) {
 		if (argc < 3) {

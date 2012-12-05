@@ -40,6 +40,7 @@ void usage()
 	printf("Usage:\n");
 	printf("  booter <file> <file_args>\n");
 	printf("  booter --list <file1> <file2> ...\n");
+	printf("  booter --listfile <listfile>\n");
 }		
 
 unsigned int spawn_vm(void *pc)
@@ -157,12 +158,14 @@ int main(int argc, char **argv)
 	char buf[BUFSIZE];
 	char file[64];
 	buf[0] = 0;
-        //start at argv[1], thus removing booter from cmdline buf
-	for (i = 1; i < argc; i++) {
+	//Remove booter from cmdline
+	argc--;
+	argv++;
+	for (i = 0; i < argc; i++) {
 		strcat(buf,argv[i]);
 		strcat(buf," ");
 	}
-	if (argc < 2) {
+	if (argc < 1) {
 		usage();
 		return 1;
 	}
@@ -171,19 +174,19 @@ int main(int argc, char **argv)
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
 	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
 
-	if (0 == strcmp(argv[1], "--list")) {
-		// shift first arg off, decrement arg count (so --list is argv[0])
+	if (0 == strcmp(argv[0], "--list")) {
+		// shift '--list' off arg list
 		argc--;
-		argv = &argv[1];
-		for (; argc > 1; argc--) {
-			run_elf(argv[argc - 1],"");
+		argv++;
+		for (; argc > 0; argc--) {
+			run_elf(argv[argc - 1]," ");
 		}
-	} else if (0 == strcmp(argv[1], "--listfile")) {
-		if (argc < 3) {
+	} else if (0 == strcmp(argv[0], "--listfile")) {
+		if (argc < 2) {
 			usage();
 			return 1;
 		}
-		if ((f = fopen(argv[2],"r")) == NULL) {
+		if ((f = fopen(argv[1],"r")) == NULL) {
 			usage();
 			return 1;
 		}
@@ -195,7 +198,7 @@ int main(int argc, char **argv)
 			run_elf(file,buf);
 		}
 	} else {
-		run_elf(argv[1],buf);
+		run_elf(argv[0],buf);
 	}
 
 	return 0;

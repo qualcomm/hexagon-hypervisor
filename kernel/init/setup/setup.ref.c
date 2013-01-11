@@ -75,7 +75,6 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset)
 
 	H2K_kg_init(phys_offset);		/* Kernel Globals first! */
 	H2K_trace_init();
-	H2K_fatal_init();
 	H2K_runlist_init();
 	H2K_readylist_init();
 	H2K_lowprio_init();

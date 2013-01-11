@@ -4,9 +4,6 @@
 
 .. module:: fatal
 
-H2K_fatal_kernel
-----------------
-
 .. cfunction:: void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 	:param error_id: Unique ID of the error that happened
@@ -19,15 +16,12 @@ Description
 ~~~~~~~~~~~
 
 :cfunc:`H2K_fatal_kernel()` handles a fatal kernel error.  The kernel will attempt to
-halt execution completely, and calls the function specified by 
-H2K_fatal_kernel_handler.
+halt execution completely.
 
 Functionality
 ~~~~~~~~~~~~~
 
-First, we log the error.
-
-Next, we call H2K_fatal_kernel_handler.
+First, we log the error.  Then we spin forever or something?
 
 H2K_fatal_thread
 ----------------

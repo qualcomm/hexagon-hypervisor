@@ -35,8 +35,7 @@ u32_t H2K_trap_config(u32_t configtype, void *ptr, vmblock_init_op_t val2, u32_t
 
 u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, vmblock_init_op_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)
 {
-	H2K_fatal_kernel_handler = handler;
-	return 0;
+	return -1;
 }
 
 /* initialize vm description */

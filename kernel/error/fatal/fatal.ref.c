@@ -14,16 +14,12 @@ IN_SECTION(".text.misc.fatal")
 static void __attribute__((noreturn)) H2K_fatal_sim_exit(u32_t why)
 {
 	__asm__ __volatile__ (
-		" { r0 = %0\n"
-		" r1 = %1\n"
-		" r2 = %2 }\n"
+		" { r1:0 = combine(%1,%0)\n"
+		" r3:2 = combine(#0,%2) }\n"
 		" r24 = ssr \n"
-		" r4 = clrbit(r24,#16) \n"
-		" r4 = clrbit(r4,#17) \n"
-		" r4 = clrbit(r4,#18) \n"
-		" ssr = r4 \n"
-		" trap0(#0) \n"
+		" r24 = insert(r3,#3,#16) \n"
 		" ssr = r24 \n"
+		" trap0(#0) \n"
 		" 1: jump 1b\n"
 		: : "r"(0x18),"r"(why),"r"(why) :"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15","r28");
 	__builtin_trap();

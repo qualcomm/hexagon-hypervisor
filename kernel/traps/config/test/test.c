@@ -14,6 +14,7 @@
 #include <vm.h>
 #include <asid.h>
 #include <alloc.h>
+#include <trace.h>
 
 H2K_kg_t H2K_kg;
 
@@ -70,16 +71,15 @@ int main()
 	u32_t i, vm, ret;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_thread_init();
+	H2K_trace_init();
 	H2K_mem_alloc_init(Heap, DEFAULT_ALLOC_HEAP_SIZE);
-	H2K_fatal_kernel_handler = NULL;
 	/* Bad config value */
 	vm = H2K_trap_config(CONFIG_MAX,NULL,0,0,0,NULL);
 	if (vm != 0) FAIL("Bad return value");
 
-	/* Configure fatal kernel handler */
+	/* Configure fatal kernel handler , no longer exists */
 	vm = H2K_trap_config(CONFIG_SETFATAL,foo,0,0,0,NULL);
-	if (vm != 0) FAIL("Bad return value");
-	if (H2K_fatal_kernel_handler != foo) FAIL("Kernel fatal handler error");
+	if (vm == 0) FAIL("Bad return value/setfatal");
 
 	/* SET_CPUS_INTS */
 	/* SET_CPUS_INTS bad cpus */

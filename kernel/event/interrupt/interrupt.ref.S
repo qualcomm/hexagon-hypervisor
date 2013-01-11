@@ -6,15 +6,45 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 #include <max.h>
+#include <trace_asm_macro.h>
+#include <trace_constants.h>
+
+#define TMP r31
+
+#define INTNO r16
+
+#define TRACEDATA r13:12
+#define TRACEDATAHI r13
+#define TRACEDATALO r12
+
+#define INTINFO r11:10
+#define INTINFO_VAL r11
+#define INTINFO_FN r10
+
+#define HTNUM r9
+#define SSRVAL r8
+#define ME r7
+#define KG_INTHANDLERS r6
+#define ENTRIES_BUFADDR r5:4
+#define ENTRIES r5
+#define BUFADDR r4
+
+#define CIADVAL r2
+#define VIDVAL r1
+
+#define INT_SGP r0		// MUST BE R0
+
+#define ISL2INT p0
+#define TRACEPRED p1
 
 FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	/* If SGP is null, we've interrupted waitmode. */
-	crswap(r0,sgp)
-	if (r0==#0) jump:t H2K_interrupted_waitmode
+	crswap(INT_SGP,sgp)
+	if (INT_SGP==#0) jump:t H2K_interrupted_waitmode
 
 	/* If SGP is 0x00000001, we've interrupted the preemption point */
-	r0 = and(r0,#-2)
-	if (r0 == #0) jump:nt H2K_interrupted_preempt
+	INT_SGP = and(INT_SGP,#-2)
+	if (INT_SGP == #0) jump:nt H2K_interrupted_preempt
 
 	/* Save off all context */
 	/* Optimization Note:
@@ -25,52 +55,62 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	 * so the context offset macros work. 
 	 */
 
-	memd(r0+#CONTEXT_r3130) = r31:30
+	memd(INT_SGP+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
 
 	/* Stack set up, execute interrupt handler */
 	/* R9 = HTID, r8=SSR, r7 = thread context */
-	{
-		r0 = and(r8,#0x1f)
-		r1 = r7		// thread context
-		r2 = r9
-	}
+	INTNO = and(SSRVAL,#0x1f)
 
 #if __QDSP6_ARCH__ >= 4
-	p0 = cmp.eq(r0,#31)
-	r4 = VID
+	ISL2INT = cmp.eq(INTNO,#31)
+	VIDVAL = VID
 
 #if ARCHV == 4
 	/* Work around V4SS errata */
+#define BITSHI r15
+#define BITSLO r14
+#define BITS r15:14
+#define L2BASE2 r5
+#define L2BASE r4
 	{
-		r10 = memw(H2K_GP+#KG_l2_int_base)
-		r13:12 = bitsplit(r4,#5)
+		L2BASE = memw(H2K_GP+#KG_l2_int_base)
+		BITS = bitsplit(VIDVAL,#5)
 	}
 	{
-		r10 = add(r10,#0x180)
-		r11 = add(r10,#0x100)
-		r12 = lsl(#1,r12)
+		L2BASE = add(L2BASE,#0x180)
+		L2BASE2 = add(L2BASE,#0x100)
+		BITSLO = lsl(#1,BITSLO)
 	}
-	if (p0) memw(r10+r13<<#2) = r12
-	if (p0) r12 = memw(r11+r13<<#2)
+	if (ISL2INT) memw(L2BASE+BITSHI<<#2) = BITSLO	// clear enable
+	if (ISL2INT) L2BASE = memw(L2BASE2+BITSHI<<#2)	// sync
+#undef BITSHI
+#undef BITSLO
+#undef BITS
+#undef L2BASE 
+#undef L2BASE2
 #endif
 
-	if (p0) r0 = add(r4,#32)
-	r4 = #MAX_INTERRUPTS-1
-	r0 = minu(r4,r0)
-	r5 = mux(p0,##0x80000000,#0)
-	ciad(r5)
+	if (ISL2INT) INTNO = add(VIDVAL,#32)
+	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	ciad(CIADVAL)
 #endif
 
-	r4 = add(H2K_GP,#KG_inthandlers)
-	r4 = addasl(r4,r0,#3)
-	r5:4 = memd(r4)
-	r3 = r5				// param
-	p0 = cmp.eq(r4,#0)
+	TMP = #H2K_TRACE_INTERRUPT
+	TMP |= asl(INTNO,#8)
+	TRACEDATAHI = HTNUM
+	TRACEDATALO = pcyclelo
+	ASM_INLINE_TRACE(TMP,TRACEDATA,TRACEDATAHI,TRACEDATALO,ENTRIES_BUFADDR,
+		ENTRIES,BUFADDR,TRACEPRED,INTINFO_VAL,INTINFO_FN,VIDVAL,,)
+	dccleana(BUFADDR)
+
+	KG_INTHANDLERS = add(H2K_GP,#KG_inthandlers)
+	KG_INTHANDLERS = addasl(KG_INTHANDLERS,INTNO,#3)
+	INTINFO = memd(KG_INTHANDLERS)
 
 	/* Registers set up, call specified handler */
 
-	if (!p0) call .Lint_jump_stub 	// will jump to r4
+	call .Lint_jump_stub 	// will jump to r4
 
 H2K_interrupt_restore:
 	call H2K_preempt		// Try to take interrupt before returning
@@ -78,8 +118,10 @@ H2K_interrupt_restore:
 	jump H2K_context_restore_return
 
 .Lint_jump_stub:
-	memw(r1+#CONTEXT_continuation) = r31
-	jumpr r4
+	memw(ME+#CONTEXT_continuation) = r31
+	r3:2 = combine(INTINFO_VAL,HTNUM)
+	r1:0 = combine(ME,INTNO)
+	jumpr INTINFO_FN
 
 	.global H2K_interrupt_restore
 FUNC_END H2K_handle_int
@@ -88,42 +130,46 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 #if __QDSP6_ARCH__ <= 3
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
-	r28 = ssr
-	r28 = extractu(r28,#3,#19)
-	r2 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r2)
+	HTNUM = ssr
+	HTNUM = extractu(HTNUM,#3,#19)
+	TMP = #KERNEL_STACK_SIZE
+	r29 += mpyi(HTNUM,TMP)
 #else
-	r28 = HTID
+	HTNUM = HTID
 	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##H2K_stacks,mpyi(r28,r29))
+	r29 = add(##H2K_stacks,mpyi(HTNUM,r29))
 #endif
 	
-
-	/* Stack set up, execute interrupt handler */
-	r2 = r28 	// TNUM from above...
-	r0 = ssr
-	r0 = and(r0,#0x1f)
-#if __QDSP6_ARCH__ >= 4
-	p0 = cmp.eq(r0,#31)
-	r4 = VID
-	if (p0) r0 = add(r4,#32)
-	r4 = #MAX_INTERRUPTS-1
-	r0 = minu(r4,r0)
-	r5 = mux(p0,##0x80000000,#0)
-	ciad(r5)
-#endif
-	r1 = #0		// thread context == NULL
 	H2K_GP.h = #hi(H2K_kg)
 	H2K_GP.l = #lo(H2K_kg)
-	r4 = add(H2K_GP,#KG_inthandlers)
-	r4 = addasl(r4,r0,#3)
-	r5:4 = memd(r4)
-	r3 = r5
-	p0 = cmp.eq(r4,#0)
+
+	TMP = #H2K_TRACE_INTERRUPT
+	TMP |= asl(INTNO,#8)
+	TRACEDATAHI = HTNUM
+	TRACEDATALO = pcyclelo
+	ASM_INLINE_TRACE(TMP,TRACEDATA,TRACEDATAHI,TRACEDATALO,ENTRIES_BUFADDR,
+		ENTRIES,BUFADDR,TRACEPRED,INTINFO_VAL,INTINFO_FN,ME,,)
+	dccleana(BUFADDR)
+
+	/* Stack set up, execute interrupt handler */
+	SSRVAL = ssr
+	INTNO = and(SSRVAL,#0x1f)
+#if __QDSP6_ARCH__ >= 4
+	ISL2INT = cmp.eq(INTNO,#31)
+	VIDVAL = VID
+	if (ISL2INT) INTNO = add(VIDVAL,#32)
+	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	ciad(CIADVAL)
+#endif
+	r1 = #0		// thread context == NULL
+	KG_INTHANDLERS = add(H2K_GP,#KG_inthandlers)
+	KG_INTHANDLERS = addasl(KG_INTHANDLERS,INTNO,#3)
+	INTINFO = memd(KG_INTHANDLERS)
 	/* Registers set up, call specified handler */
-	if (!p0) callr r4
-	r0 = #0
-	r1 = #0
+	r3:2 = combine(INTINFO_VAL,HTNUM)
+	r1:0 = combine(#0,INTNO)
+	callr INTINFO_FN
+	r1:0 = #0
 	k0lock
 	jump H2K_switch
 
@@ -148,45 +194,50 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 #if __QDSP6_ARCH__ <= 3
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
-	r28 = ssr
-	r28 = extractu(r28,#3,#19)
-	r2 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r2)
+	HTNUM = ssr
+	HTNUM = extractu(HTNUM,#3,#19)
+	TMP = #KERNEL_STACK_SIZE
+	r29 += mpyi(HTNUM,TMP)
 #else
-	r28 = HTID
+	HTNUM = HTID
 	r29 = #KERNEL_STACK_SIZE
-	r29 = add(##H2K_stacks,mpyi(r28,r29))
+	r29 = add(##H2K_stacks,mpyi(HTNUM,r29))
 #endif
 	/* Stack set up, execute interrupt handler */
-	r2 = r28 	// TNUM from above...
-	r0 = ssr
-	r0 = and(r0,#0x1f)
+	SSRVAL = ssr
+	INTNO = and(SSRVAL,#0x1f)
 #if __QDSP6_ARCH__ >= 4
-	p0 = cmp.eq(r0,#31)
-	r4 = VID
-	if (p0) r0 = add(r4,#32)
-	r4 = #MAX_INTERRUPTS-1
-	r0 = minu(r4,r0)
-	r5 = mux(p0,##0x80000000,#0)
-	ciad(r5)
+	ISL2INT = cmp.eq(INTNO,#31)
+	VIDVAL = VID
+	if (ISL2INT) INTNO = add(VIDVAL,#32)
+	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	ciad(CIADVAL)
 #endif
-	r1 = sgp	// thread context
-	r18 = r1
-	r11 = memw(r1+#CONTEXT_elr)
-	elr = r11	// restore background task ELR, clobbered by interrupt
 	H2K_GP.h = #hi(H2K_kg)
 	H2K_GP.l = #lo(H2K_kg)
-	r4 = add(H2K_GP,#KG_inthandlers)
-	r4 = addasl(r4,r0,#3)
-	r5:4 = memd(r4)
-	r3 = r5
-	p0 = cmp.eq(r4,#0)
+
+	TMP = #H2K_TRACE_INTERRUPT
+	TMP |= asl(INTNO,#8)
+	TRACEDATAHI = HTNUM
+	TRACEDATALO = pcyclelo
+	ASM_INLINE_TRACE(TMP,TRACEDATA,TRACEDATAHI,TRACEDATALO,ENTRIES_BUFADDR,
+		ENTRIES,BUFADDR,TRACEPRED,INTINFO_VAL,INTINFO_FN,ME,,)
+	dccleana(BUFADDR)
+
+	ME = sgp	// thread context
+	TMP = memw(ME+#CONTEXT_elr)
+	elr = TMP	// restore background task ELR, clobbered by interrupt
+	KG_INTHANDLERS = add(H2K_GP,#KG_inthandlers)
+	KG_INTHANDLERS = addasl(KG_INTHANDLERS,INTNO,#3)
+	INTINFO = memd(KG_INTHANDLERS)
 	/* Registers set up, call specified handler */
-	if (!p0) callr r4
+	r3:2 = combine(INTINFO_VAL,HTNUM)
+	r1:0 = combine(ME,INTNO)
+	callr INTINFO_FN
 	/* OK, get continuation and jump to it.  Restore r1:0 */
-	r18 = sgp
-	r31 = memw(r18+#CONTEXT_continuation)
-	r1:0 = memd(r18+#CONTEXT_r0100)
+	ME = sgp
+	r31 = memw(ME+#CONTEXT_continuation)
+	r1:0 = memd(ME+#CONTEXT_r0100)
 	jumpr r31
 FUNC_END H2K_interrupted_preempt
 

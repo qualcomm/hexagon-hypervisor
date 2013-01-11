@@ -23,6 +23,7 @@
 #include <timer.h>
 #include <bootmap_macros.h>
 #include <alloc.h>
+#include <trace.h>
 
 void qdsp6_pre_main();
 void H2K_interrupt_restore();

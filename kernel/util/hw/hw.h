@@ -289,5 +289,15 @@ MAKE_SETGET(ccr)
 
 #undef MAKE_SETGET
 
+static inline void H2K_dccleana(void *ptr)
+{
+	asm volatile (" dccleana(%0) " : :"r"(ptr) : "memory");
+}
+
+static inline void H2K_dccleaninva(void *ptr)
+{
+	asm volatile (" dccleana(%0) " : :"r"(ptr) : "memory");
+}
+
 #endif
 

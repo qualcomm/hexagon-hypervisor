@@ -88,6 +88,7 @@
 #endif
 
 #define MAX_TRACE_LEVEL 0
+#define DEFAULT_TRACE_ENTRIES 16
 
 #define STLB_MAX_SETS 256
 #define STLB_MAX_WAYS 16

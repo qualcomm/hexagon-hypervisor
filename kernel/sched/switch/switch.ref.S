@@ -5,6 +5,8 @@
 
 #include <asm_offsets.h>
 #include <asm_std.h>
+#include <trace_asm_macro.h>
+#include <trace_constants.h>
 
 /*
  * We are switching from thread in r0 to thread in r1
@@ -29,6 +31,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #else
 	r5 = HTID
 #endif
+	r7:6 = combine(r5,r18)
 	r15 = PMUCFG
 	r0 = #3
 	r3:2 = r19:18
@@ -88,6 +91,11 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 .Lfrom_sleep:
 	if (r1 == #0) jump:nt .Lto_sleep
+	r27:26 = combine(r10,r18)
+	r20 = #H2K_TRACE_SWITCH
+	r14 = memw(r1+#CONTEXT_id)
+	r14 = insert(r20,#8,#0)
+	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 	memd(r8) = r19:18
 
 #if __QDSP6_ARCH__ >= 4
@@ -154,6 +162,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #else
 	r5 = HTID
 #endif
+	r27:26 = combine(r5,r18)
+	r14 = #H2K_TRACE_SWITCH
+	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
+
 	r15 = clrbit(r15,r5)
 	PMUCFG = r15
 	r9 = memw(H2K_GP+#KG_wait_mask)

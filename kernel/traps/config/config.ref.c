@@ -6,7 +6,6 @@
 #include <config.h>
 #include <asm_offsets.h>
 #include <thread.h>
-#include <fatal_handler.h>
 #include <globals.h>
 #include <hw.h>
 #include <vm.h>

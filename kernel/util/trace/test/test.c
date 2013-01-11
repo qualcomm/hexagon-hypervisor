@@ -29,10 +29,7 @@ int main()
 	if (H2K_gp->trace_info_entries == 0) FAIL("Trace init fail");
 	if (H2K_gp->trace_info_index != 0) FAIL("Trace init fail");
 	H2K_trace(-1,2,0x1234,1);
-	if (H2K_gp->trace_info_index != 1) {
-		printf(">>%x @ %x<<\n",H2K_gp->trace_info_index,&H2K_gp->trace_info_index);
-		FAIL("Trace idx fail (1)");
-	}
+	if (H2K_gp->trace_info_index != 1) FAIL("Trace idx fail (1)");
 	if (H2K_gp->trace_info_buf[0] != 0x000002ff00001231ULL) FAIL("Trace val fail");
 	H2K_trace(2,0xdead,0x2345,3);
 	if (H2K_gp->trace_info_index != 2) FAIL("Trace idx fail (2)");

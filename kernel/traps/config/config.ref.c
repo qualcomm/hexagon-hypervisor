@@ -209,10 +209,20 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		if ((Q6_R_ct0_R(arg1 >> PAGE_BITS) / 2 < offset.size)
 				|| Q6_R_ct0_R(arg2 >> PAGE_BITS) / 2 < offset.size) return 0;
 
-		/* /\* Could be a problem here if we have two levels of offset remapping with different page sizes *\/ */
-		/* if (H2K_vm_translate(arg1, me->vmblock, (u32_t *)&vmblock->fence_lo) == -1) return 0; */
-		/* if (H2K_vm_translate(arg2, me->vmblock, (u32_t *)&vmblock->fence_hi) == -1) return 0; */
+		if (me == NULL) { // we are setting up the boot vm, args are already phys addresses
+			vmblock->fence_lo = arg1;
+			vmblock->fence_hi = arg2;
+		} else { // translate, since the caller might be remapped
 
+			/* Could be a problem here if we have two levels of offset remapping with different page sizes */
+			phys_translation =	H2K_vm_translate(arg1, me->vmblock);
+			if (!phys_translation.valid) return 0;
+			vmblock->fence_lo = phys_translation.addr;
+
+			phys_translation =	H2K_vm_translate(arg2, me->vmblock);
+			if (!phys_translation.valid) return 0;
+			vmblock->fence_hi = phys_translation.addr;
+		}
 		vmblock->fence_lo = (u32_t)vmblock->fence_lo >> PAGE_BITS;
 		vmblock->fence_hi = (u32_t)vmblock->fence_hi >> PAGE_BITS;
 

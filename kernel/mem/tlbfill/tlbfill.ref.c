@@ -144,6 +144,7 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		H2K_mem_tlb_insert(entry,me);
 		return;
 	}
+	H2K_mutex_unlock_tlb();
 	return H2K_mem_pagefault(va,me);
 }
 

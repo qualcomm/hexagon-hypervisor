@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <bootmap_macros.h>
 #include "elf.h"
+#include "../kernel/include/hw.h"
 
 #define MAX_SIZE (1024*1024)
 #define NUM_TOTAL_THREADS 32
@@ -150,6 +151,12 @@ static void strip(char *buf)
 	}
 }
 
+static void die_usage()
+{
+	usage();
+	exit(1);
+}
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -157,14 +164,12 @@ int main(int argc, char **argv)
 	h2_init(0);
 	char buf[BUFSIZE];
 	char file[64];
+	unsigned int regval;
 	buf[0] = 0;
 	//Remove booter from cmdline
 	argc--;
 	argv++;
-	for (i = 0; i < argc; i++) {
-		strcat(buf,argv[i]);
-		strcat(buf," ");
-	}
+
 	if (argc < 1) {
 		usage();
 		return 1;
@@ -173,34 +178,64 @@ int main(int argc, char **argv)
 	h2_vmtrap_setvec(bootvm_vectors);
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
 	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
-
-	if (0 == strcmp(argv[0], "--list")) {
-		// shift '--list' off arg list
-		argc--;
-		argv++;
-		for (; argc > 0; argc--) {
-			run_elf(argv[argc - 1]," ");
-		}
-	} else if (0 == strcmp(argv[0], "--listfile")) {
-		if (argc < 2) {
-			usage();
-			return 1;
-		}
-		if ((f = fopen(argv[1],"r")) == NULL) {
-			usage();
-			return 1;
-		}
-		while (fgets(buf,BUFSIZE,f)) {
-			strip(buf);
-			if (sscanf(buf,"%s ",file) <= 0) {
-				continue;
+	while (1) {
+		if (0 == strcmp(argv[0],"--syscfg")) {
+			if (argc < 2) die_usage();
+			regval = H2K_get_syscfg();
+			printf("Old value for syscfg: 0x%08x\n",regval);
+			regval = strtoul(argv[1],NULL,0);
+			printf("New value for syscfg: 0x%08x\n",regval);
+			H2K_set_syscfg(regval);
+			argc -= 2; argv += 2;
+			continue;
+		} else if (0 == strcmp(argv[0],"--chicken")) {
+			if (argc < 2) die_usage();
+			regval = H2K_get_chicken();
+			printf("Old value for chicken: 0x%08x\n",regval);
+			regval = strtoul(argv[1],NULL,0);
+			printf("New value for chicken: 0x%08x\n",regval);
+			H2K_set_chicken(regval);
+			argc -= 2; argv += 2;
+			continue;
+		} else if (0 == strcmp(argv[0],"--rgdr")) {
+			if (argc < 2) die_usage();
+			regval = H2K_get_rgdr();
+			printf("Old value for rgdr: 0x%08x\n",regval);
+			regval = strtoul(argv[1],NULL,0);
+			printf("New value for rgdr: 0x%08x\n",regval);
+			H2K_set_rgdr(regval);
+			argc -= 2; argv += 2;
+			continue;
+		} else if (0 == strcmp(argv[0], "--list")) {
+			// shift '--list' off arg list
+			argc--;
+			argv++;
+			for (; argc > 0; argc--) {
+				run_elf(argv[argc - 1]," ");
 			}
-			run_elf(file,buf);
+			return 0;
+		} else if (0 == strcmp(argv[0], "--listfile")) {
+			if (argc < 2) die_usage();
+			if ((f = fopen(argv[1],"r")) == NULL) die_usage();
+			while (fgets(buf,BUFSIZE,f)) {
+				strip(buf);
+				if (sscanf(buf,"%s ",file) <= 0) {
+					continue;
+				}
+				run_elf(file,buf);
+			}
+			return 0;
+		} else {
+			break;
 		}
-	} else {
-		run_elf(argv[0],buf);
 	}
 
+	for (i = 0; i < argc; i++) {
+		strcat(buf,argv[i]);
+		strcat(buf," ");
+	}
+
+	run_elf(argv[0],buf);
 	return 0;
 }
 

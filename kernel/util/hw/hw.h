@@ -111,6 +111,30 @@ static inline void H2K_set_syscfg(u32_t val)
 	asm volatile (" syscfg = %0 // set syscfg" : : "r"(val));
 }
 
+static inline u32_t H2K_get_chicken()
+{
+	u32_t ret;
+	asm volatile (" %0 = s63 // get chicken" : "=r"(ret));
+	return ret;
+}
+
+static inline void H2K_set_chicken(u32_t val)
+{
+	asm volatile (" s63 = %0 // set chicken" : : "r"(val));
+}
+
+static inline u32_t H2K_get_rgdr()
+{
+	u32_t ret;
+	asm volatile (" %0 = s60 // get rgdr" : "=r"(ret));
+	return ret;
+}
+
+static inline void H2K_set_rgdr(u32_t val)
+{
+	asm volatile (" s60 = %0 // set rgdr" : : "r"(val));
+}
+
 static inline void H2K_clear_gie()
 {
 	u32_t scratch;

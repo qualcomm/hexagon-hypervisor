@@ -184,8 +184,9 @@ int main(int argc, char **argv)
 			regval = H2K_get_syscfg();
 			printf("Old value for syscfg: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			printf("New value for syscfg: 0x%08x\n",regval);
 			H2K_set_syscfg(regval);
+			regval = H2K_get_syscfg();
+			printf("New value for syscfg: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 		} else if (0 == strcmp(argv[0],"--chicken")) {
@@ -193,8 +194,9 @@ int main(int argc, char **argv)
 			regval = H2K_get_chicken();
 			printf("Old value for chicken: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			printf("New value for chicken: 0x%08x\n",regval);
 			H2K_set_chicken(regval);
+			regval = H2K_get_chicken();
+			printf("New value for chicken: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 		} else if (0 == strcmp(argv[0],"--rgdr")) {
@@ -202,8 +204,9 @@ int main(int argc, char **argv)
 			regval = H2K_get_rgdr();
 			printf("Old value for rgdr: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			printf("New value for rgdr: 0x%08x\n",regval);
 			H2K_set_rgdr(regval);
+			regval = H2K_get_rgdr();
+			printf("New value for rgdr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 		} else if (0 == strcmp(argv[0],"--ccr")) {
@@ -211,8 +214,9 @@ int main(int argc, char **argv)
 			regval = H2K_get_ccr();
 			printf("Old value for ccr: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			printf("New value for ccr: 0x%08x\n",regval);
 			H2K_set_ccr(regval);
+			regval = H2K_get_ccr();
+			printf("New value for ccr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 		} else if (0 == strcmp(argv[0], "--list")) {

@@ -206,6 +206,15 @@ int main(int argc, char **argv)
 			H2K_set_rgdr(regval);
 			argc -= 2; argv += 2;
 			continue;
+		} else if (0 == strcmp(argv[0],"--ccr")) {
+			if (argc < 2) die_usage();
+			regval = H2K_get_ccr();
+			printf("Old value for ccr: 0x%08x\n",regval);
+			regval = strtoul(argv[1],NULL,0);
+			printf("New value for ccr: 0x%08x\n",regval);
+			H2K_set_ccr(regval);
+			argc -= 2; argv += 2;
+			continue;
 		} else if (0 == strcmp(argv[0], "--list")) {
 			// shift '--list' off arg list
 			argc--;

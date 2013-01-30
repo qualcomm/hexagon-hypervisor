@@ -106,7 +106,7 @@ void H2K_tree_destructive_iterate(H2K_treenode_t *root, void *opaque, void (*fun
 
 H2K_treenode_t *H2K_tree_find(H2K_treenode_t *root, H2K_treekey_t key)
 {
-	if (root == NULL) { return 0; }
+	if (root == NULL) { return NULL; }
 	if (root->key == key) {
 		return root;
 	}

@@ -88,7 +88,20 @@ extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");
 
 #define GLOBAL_REG_STR "r28"
 
+#ifndef __llvm__
 register H2K_kg_t * const H2K_gp asm (GLOBAL_REG_STR);
+#else
+
+#define PURITY __attribute__((const))
+static inline H2K_kg_t PURITY *H2K_gp_llvm()
+{
+	H2K_kg_t *ret;
+	asm ( " %0 = " GLOBAL_REG_STR : "=r"(ret));
+	return ret;
+}
+#define H2K_gp H2K_gp_llvm()
+#undef PURITY
+#endif
 
 void H2K_kg_init(u32_t phys_offset) IN_SECTION(".text.init.globals");
 

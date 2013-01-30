@@ -43,7 +43,7 @@ FUNC_START H2K_tree_remove_key  .text.util.tree  .p2align  3
 		p1 = cmp.eq(RIGHT,#0)
 		if (!p1.new) jump:t H2K_tree_add_key
 		NODE = RIGHT
-		KEY = memd(RIGHT+#KEY_OFF)
+		if (!p1.new) KEY = memd(RIGHT+#KEY_OFF)
 	}
 9:
 	{

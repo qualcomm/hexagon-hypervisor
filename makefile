@@ -28,25 +28,16 @@ OPT_JFLAG=-j 3
 REF_JFLAG=-j 3
 TEST_JFLAG=-j 8
 
-ifeq ($(H2K_LINK_ADDR),)
-export H2K_LINK_ADDR = 0xff000000
-endif
-
-ifeq ($(H2K_LOAD_ADDR),)
-export H2K_LOAD_ADDR = 0xff000000
-endif
-
-ifeq ($(H2K_HEAP_SIZE),)
-H2K_HEAP_SIZE = 0x100000
-endif
+include scripts/Makefile.inc.config
 
 all: ref doc gtags
 
 distclean: clean docclean
 
 clean: covclean ucosclean booterclean docclean
-	$(MAKE) -C kernel ARCHV=$(ARCHV) clean && \
-	$(MAKE) -C libs ARCHV=$(ARCHV) clean && \
+	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
+	$(MAKE) -C stake ARCHV=$(ARCHV) clean
+	$(MAKE) -C libs ARCHV=$(ARCHV) clean
 	rm -Rf size test.exe stats.txt install kernel/stats.txt
 
 booterclean:
@@ -66,6 +57,7 @@ ucosclean:
 opt:
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
+	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@" > $(INSTALLPATH)/ver
@@ -73,7 +65,8 @@ opt:
 ref:
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
-	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
+	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
+	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@" > $(INSTALLPATH)/ver
 

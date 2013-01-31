@@ -25,7 +25,7 @@
 #include <alloc.h>
 #include <trace.h>
 
-void qdsp6_pre_main();
+void __bootvm_entry();
 void H2K_interrupt_restore();
 
 u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
@@ -33,7 +33,7 @@ u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
 H2K_vmblock_t *bootvm;
 
 H2K_offset_t boot_offset = {{
-	.size = SIZE_16M,
+	.size = SIZE_4M,
 	.cccc = L1WB_L2C,
 	.xwru = URWX,
 	.pages = 0
@@ -52,7 +52,8 @@ void H2K_init_setup_bootvm(u32_t phys_offset)
 	bootvm = H2K_gp->vmblocks[vm];
 
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PMAP_TYPE, boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, NULL);
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_FENCES, 0x0, 0xff000000, NULL);
+	/* FIXME: fence values need to be linker symbols */
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_FENCES, 0x00400000, 0xffffffff, NULL);
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
 }
 
@@ -103,7 +104,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset)
 	boot->gpugp = BOOT_THREAD_GPUGP;
 	boot->sr = BOOT_THREAD_USR;
 	boot->ssr = (BOOT_THREAD_SSR);
-	boot->elr = ((u32_t)(qdsp6_pre_main));
+	boot->elr = ((u32_t)(__bootvm_entry) - phys_offset);
 	boot->r0100 = 0;
 	boot->ccr = BOOT_THREAD_CCR;
 	boot->trapmask = bootvm->trapmask;

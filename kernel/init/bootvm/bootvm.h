@@ -3,11 +3,10 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <boot.h>
 #include <asm_std.h>
 
-FUNC_START __boot .boot .p2align 12
-jump start
+FUNC_START __bootvm_entry .bootvm .p2align BOOT_TLB_ADDRBITS
 
-.space 0x40
+//.incbin bootvm_image // here
 
-FUNC_END __boot

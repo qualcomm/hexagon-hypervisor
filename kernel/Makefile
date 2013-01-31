@@ -11,20 +11,7 @@ SIM := qdsp6-sim
 
 OPTIMIZE := -O2
 
-ifeq ($(H2K_LINK_ADDR),)
-export H2K_LINK_ADDR = 0xff000000
-endif
-
-ifeq ($(H2K_LOAD_ADDR),)
-H2K_LOAD_ADDR = $(H2K_LINK_ADDR)
-endif
-
-ifeq ($(H2K_HEAP_SIZE),)
-H2K_HEAP_SIZE = 0x100000
-endif
-
-
-NULL_ANGEL_TRAP = 1
+include ../scripts/Makefile.inc.config
 
 CFLAGS := @build/flags/abi -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g
 
@@ -34,10 +21,6 @@ ifdef NULL_ANGEL_TRAP
 CFLAGS += -DNULL_ANGEL_TRAP
 endif
 
-ifdef NO_MEMORY_MAP_GLOBAL_ZERO
-CFLAGS += -DNO_MEMORY_MAP_GLOBAL_ZERO
-endif
-
 ifdef DEBUG
 CFLAGS += -DDEBUG
 endif
@@ -45,6 +28,8 @@ endif
 ifdef HTHREADS
 CFLAGS += -DMAX_HTHREADS=$(HTHREADS)
 endif
+
+CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS)
 
 SRC_HFILES := 
 DEST_HFILES := 

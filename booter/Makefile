@@ -5,8 +5,8 @@ ARCHV=$(subst v,,$(Q6VERSION))
 else
 ARCHV=4
 endif
-CC=qdsp6-gcc
-RUN=qdsp6-sim
+CC=hexagon-gcc
+RUN=hexagon-sim
 SIMF=--timing
 #hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
 else
@@ -21,23 +21,22 @@ ifeq ($(KERNELPATH),)
 export KERNELPATH := $(CURDIR)/../kernel
 endif
 
-ifeq ($(H2K_LINK_ADDR),)
-H2K_LINK_ADDR = 0xff000000
-endif
-export H2K_LINK_ADDR
+include ../scripts/Makefile.inc.config
 
-ifeq ($(H2K_LOAD_ADDR),)
-H2K_LOAD_ADDR = 0xff000000
-endif
-export H2K_LOAD_ADDR
+CONSTANTS := $(INSTALLPATH)/scripts/Makefile.inc.constants
+VAPA_KERNEL := $(INSTALLPATH)/scripts/vapa_kernel.x
+VAPA_BOOTVM := $(INSTALLPATH)/scripts/vapa_bootvm.x
+BOOTVM_S := $(INSTALLPATH)/src/bootvm.S
+BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry.S
 
-ifeq ($(H2K_HEAP_SIZE),)
-H2K_HEAP_SIZE = 0x100000
-endif
+-include $(CONSTANTS)
 
-CFLAGS = -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -I../install/include -I$(KERNELPATH)/include 
-LDFLAGS = -L../install/lib -moslib=h2 
+CFLAGS = -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
+LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 LDLIBS = -lh2kernel
+
+CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS)
+
 
 all: hello booter
 
@@ -47,23 +46,41 @@ all: hello booter
 %.o: %.S
 	${CC} ${CFLAGS} -c -o $@ $<
 
-vapa.x: vapa.x.in
-	cat $< | perl -p -i -e 's/0xxxxxxxxx/$$ENV{H2K_LOAD_ADDR}/' > $@
+# vapa_kernel.x: vapa_kernel.x.in booter_tmp
+# 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/$(shell $(ADDRS) bootvm_offset booter_tmp)/;' > $@
+
+# vapa_kernel_tmp.x: vapa_kernel.x.in
+# 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/0x0/;' > $@
 
 hello: hello.c
-	qdsp6-gcc $(CFLAGS)  -I../install/include -L../install/lib -Wl,--section-start=.start=0x00010000 -o hello hello.c 
+	${CC} $(CFLAGS)  -I../install/include -L../install/lib -Wl,--section-start=.start=0x01000000 -o hello hello.c
 
-booter: booter.o elf.o booter_event.o boot.o vapa.x
-	${CC} $(LDFLAGS) $(CFLAGS) -moslib=h2 -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=`perl -e '$$_ = (oct $$ENV{H2K_LINK_ADDR}); $$_ -= (oct $$ENV{H2K_LOAD_ADDR}); $$_ = sprintf("0x%0x", $$_); print'` -Wl,--script=vapa.x -o booter booter.o elf.o booter_event.o boot.o $(LDLIBS)
+# # so we can calculate the number of kernel pages
+# booter_tmp: vapa_kernel_tmp.x
+# 	${CC} $(CFLAGS) -Wl,--whole-archive -lh2kernel -Wl,-no-whole-archive -moslib=h2kernel -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--defsym=__bootvm_entry=0x0 -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=0x0 -Wl,--script=vapa_kernel_tmp.x -o booter_tmp
 
-	${CC} $(LDFLAGS) $(CFLAGS) -moslib=h2kernel -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=`perl -e '$$_ = (oct $$ENV{H2K_LINK_ADDR}); $$_ -= (oct $$ENV{H2K_LOAD_ADDR}); $$_ = sprintf("0x%0x", $$_); print'` -Wl,--script=vapa.x -Wl,--entry=`hexagon-nm booter | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o booter booter.o elf.o booter_event.o boot.o $(LDLIBS)
+bootvm_image: booter.o elf.o booter_event.o bootvm_entry.o $(VAPA_BOOTVM) $(CONSTANTS)
+	${CC} $(CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--section-start=.entry=$(H2K_BOOTVM_OFFSET) -Wl,--script=$(VAPA_BOOTVM) -o bootvm_image booter.o elf.o booter_event.o bootvm_entry.o
+
+bootvm_image.bin: bootvm_image
+	hexagon-objcopy -O binary bootvm_image bootvm_image.bin
+
+bootvm.o: $(BOOTVM_S) bootvm_image.bin
+	${CC} ${CFLAGS} -c -o $@ $<
+
+bootvm_entry.o: $(BOOTVM_ENTRY_S)
+	${CC} ${CFLAGS} -c -o $@ $<
+
+booter: bootvm.o $(VAPA_KERNEL) $(CONSTANTS)
+	${CC} $(LDFLAGS) $(CFLAGS) -Wl,--whole-archive -lh2kernel -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=$(H2K_V2P_OFFSET) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR) -o booter bootvm.o
+
 
 test: hello booter
-	qdsp6-sim -- booter hello
+	hexagon-sim -- booter hello
 
 install: booter
 	mkdir -p $(INSTALLPATH)/bin
 	cp booter $(INSTALLPATH)/bin
 
 clean:
-	rm -f *.elf booter hello stats.* vapa.x *.o
+	rm -f *.elf booter bootvm_image bootvm_image.bin hello stats.* *.o

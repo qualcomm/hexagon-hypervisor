@@ -17,7 +17,6 @@
 #include "elf.h"
 #include "../kernel/include/hw.h"
 
-#define MAX_SIZE (1024*1024)
 #define NUM_TOTAL_THREADS 32
 
 H2K_offset_t offset = {{
@@ -27,12 +26,10 @@ H2K_offset_t offset = {{
 	.pages = 0
 	}};
 
-#define FENCE_LO 0
-#define FENCE_HI 0x07000000
+#define FENCE_LO 0x01000000
+#define FENCE_HI 0x08000000
 
 #define CHILD_INTERRUPT 14
-
-unsigned char storage[MAX_SIZE] __attribute__((aligned(32)));
 
 void FAIL(const char *str)
 {
@@ -165,7 +162,7 @@ int main(int argc, char **argv)
 {
 	int i;
 	FILE *f;
-	h2_init(0);
+
 	char buf[BUFSIZE];
 	char file[64];
 	unsigned int regval;

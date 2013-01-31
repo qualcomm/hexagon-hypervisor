@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 	int i;
 	printf("Hello, World!\n");
 	for (i = 0; i < argc; i++) {
-		printf("arv[%d] = <%s>\n",i,argv[i]);
+		printf("argv[%d] = <%s>\n",i,argv[i]);
 	}
 	h2_sem_init_val(&sema,0);
 	h2_sem_init_val(&semb,0);

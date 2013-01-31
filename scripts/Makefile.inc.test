@@ -18,9 +18,7 @@ ifneq (,$(Q6VERSION))
 ARCHV=$(subst v,,$(Q6VERSION))
 endif
 
-ifeq ($(ARCHV),)
-ARCHV = 4
-endif
+ARCHV ?= 4
 
 ifeq ($(MODEL),)
    MODEL = ref
@@ -33,13 +31,9 @@ else
    endif
 endif
 
-ifeq ($(H2K_LINK_ADDR),)
-export H2K_LINK_ADDR = 0xff000000
-endif
+H2K_HEAP_SIZE = 0x00100000
 
-ifeq ($(H2K_HEAP_SIZE),)
-H2K_HEAP_SIZE = 0x100000
-endif
+include $(H2DIR)/scripts/Makefile.inc.config
 
 ARCH=qdsp6
 RUN=${ARCH}-sim
@@ -56,17 +50,11 @@ BUSPENALTY=
 TIMING=
 #include /prj/dsp/qdsp6/arch/make/simf.inc
 #Till I figure out something better, here is that file
-ifeq ($(origin RUN), undefined)
-  RUN = qdsp6-sim
-endif
+RUN ?= qdsp6-sim
 
-ifeq ($(origin TIMING), undefined)
-  TIMING = --timing
-endif
+TIMING ?= --timing
 
-ifeq ($(origin BUSPENALTY), undefined)
-  BUSPENALTY = --buspenalty 50
-endif
+BUSPENALTY ?= --buspenalty 50
 
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
@@ -153,25 +141,35 @@ clean_top:
 
 OPTIMIZE := -O1
 
+# For tests are linked in monitor space we don't have __bootvm_entry.  Instead,
+# go directly to qdsp6_pre_main (i.e. the old way).  Tests that use booter are
+# unaffected by this.
+
+LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main
+
 ifdef BOOT
 BOOTER=${H2DIR}/install/bin/booter
 CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g
-LDFLAGS += -Wl,--section-start=.start=0x00010000
+LDFLAGS += -Wl,--section-start=.start=0x01000000
 else
 CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 endif
 
-ifdef STANDALONE #STANDALONE
+ifdef STANDALONE
 CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi -I ${H2DIR}/kernel/include
 LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/kernel/include
-else # STANDALONE
+
+else # non-STANDALONE
 OSLIB=-moslib=h2
-ifdef BOOT # BOOT
+
+ifdef BOOT # use booter
 LDFLAGS +=${OSLIB} -L ${H2DIR}/install/lib
-else # BOOT
+
+else # run in place of booter
 LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 endif # BOOT
+
 CFLAGS += -I ${H2DIR}/install/include
 ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 endif #STANDALONE

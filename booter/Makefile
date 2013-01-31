@@ -35,7 +35,9 @@ ifeq ($(H2K_HEAP_SIZE),)
 H2K_HEAP_SIZE = 0x100000
 endif
 
-CFLAGS = -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2 -I../install/include -I$(KERNELPATH)/include -L../install/lib
+CFLAGS = -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -I../install/include -I$(KERNELPATH)/include 
+LDFLAGS = -L../install/lib -moslib=h2 
+LDLIBS = -lh2kernel
 
 all: hello booter
 
@@ -52,9 +54,9 @@ hello: hello.c
 	qdsp6-gcc $(CFLAGS)  -I../install/include -L../install/lib -Wl,--section-start=.start=0x00010000 -o hello hello.c 
 
 booter: booter.o elf.o booter_event.o boot.o vapa.x
-	${CC} $(CFLAGS) -lh2kernel -moslib=h2kernel -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=`perl -e '$$_ = (oct $$ENV{H2K_LINK_ADDR}); $$_ -= (oct $$ENV{H2K_LOAD_ADDR}); $$_ = sprintf("0x%0x", $$_); print'` -Wl,--script=vapa.x -o booter booter.o elf.o booter_event.o boot.o
+	${CC} $(LDFLAGS) $(CFLAGS) -moslib=h2 -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=`perl -e '$$_ = (oct $$ENV{H2K_LINK_ADDR}); $$_ -= (oct $$ENV{H2K_LOAD_ADDR}); $$_ = sprintf("0x%0x", $$_); print'` -Wl,--script=vapa.x -o booter booter.o elf.o booter_event.o boot.o $(LDLIBS)
 
-	${CC} $(CFLAGS) -lh2kernel -moslib=h2kernel -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=`perl -e '$$_ = (oct $$ENV{H2K_LINK_ADDR}); $$_ -= (oct $$ENV{H2K_LOAD_ADDR}); $$_ = sprintf("0x%0x", $$_); print'` -Wl,--script=vapa.x -Wl,--entry=`hexagon-nm booter | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o booter booter.o elf.o booter_event.o boot.o
+	${CC} $(LDFLAGS) $(CFLAGS) -moslib=h2kernel -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=`perl -e '$$_ = (oct $$ENV{H2K_LINK_ADDR}); $$_ -= (oct $$ENV{H2K_LOAD_ADDR}); $$_ = sprintf("0x%0x", $$_); print'` -Wl,--script=vapa.x -Wl,--entry=`hexagon-nm booter | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o booter booter.o elf.o booter_event.o boot.o $(LDLIBS)
 
 test: hello booter
 	qdsp6-sim -- booter hello

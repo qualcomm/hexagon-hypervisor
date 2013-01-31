@@ -231,7 +231,7 @@ int qmsgq_attach(const char *name, qmsgq_t *msgq);
  *
  * @param attr  Attributes object
  */
-static inline void qmsgq_attr_init(qmsgq_attr_t* attr) { memset(attr,0,sizeof(attr));} 
+static inline void qmsgq_attr_init(qmsgq_attr_t* attr) { memset(attr,0,sizeof(*attr));} 
 
 /**
  * Set channel used to receive messages from message queue

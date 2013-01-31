@@ -1,11 +1,10 @@
 
 
-CC = qdsp6-gcc -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include
+CC = qdsp6-gcc
 AR = qdsp6-ar
-
+CFLAGS = -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -g $(OPTIMIZE) -G0
+ASFLAGS = -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include
 OPTIMIZE := -O2
-
-CFLAGS = -g $(OPTIMIZE) -G0
 
 export BLAST_LIB_INCLUDE=$(shell pwd)/include
 

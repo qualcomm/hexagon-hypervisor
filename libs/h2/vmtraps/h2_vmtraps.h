@@ -62,7 +62,7 @@ unsigned long long int h2_vmtrap_get_pcycles();
 void h2_vmtrap_set_pcycles(unsigned long long int);
 int h2_vmtrap_wait();
 void h2_vmtrap_yield();
-int h2_vmtrap_start(void *pc, void *stack);
+int h2_vmtrap_start(void *pc, void *stack, int relprio);
 void h2_vmtrap_stop(int);
 int h2_vmtrap_vmpid();
 void h2_vmtrap_setregs(unsigned int g0, unsigned int g1, unsigned int g2, unsigned int g3);

@@ -217,6 +217,7 @@ FUNC_START H2K_vmtrap_yield .text.vm.funcs .falign
 	}
 FUNC_END H2K_vmtrap_yield
 
+#if 0
 FUNC_START H2K_vmtrap_start .text.vm.funcs .falign
 	{
 		r17:16 = combine(r31,ME)
@@ -234,6 +235,7 @@ FUNC_START H2K_vmtrap_start .text.vm.funcs .falign
 		jumpr r17
 	}
 FUNC_END H2K_vmtrap_start
+#endif
 
 FUNC_START H2K_vmtrap_stop .text.vm.funcs .falign
 	{

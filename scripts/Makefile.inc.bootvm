@@ -1,0 +1,19 @@
+# Dear emacs, this is a -*- Makefile -*-
+
+CONSTANTS := $(INSTALLPATH)/scripts/Makefile.inc.constants
+VAPA_KERNEL := $(INSTALLPATH)/scripts/vapa_kernel.x
+VAPA_BOOTVM := $(INSTALLPATH)/scripts/vapa_bootvm.x
+BOOTVM_S := $(INSTALLPATH)/src/bootvm.S
+BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry.S
+
+-include $(CONSTANTS)
+
+CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS)
+
+BOOTVM_IMAGE_CFLAGS = -Wl,--section-start=.entry=$(H2K_BOOTVM_OFFSET) -Wl,--script=$(VAPA_BOOTVM) 
+
+BOOTVM_CFLAGS = -nostdinc -nostdlib -Wl,-mv$(ARCHV) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR)
+
+BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(CONSTANTS)
+
+BOOTVM_DEPS = $(VAPA_KERNEL) $(CONSTANTS) $(INSTALLPATH)/lib/libh2kernel.a

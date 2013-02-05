@@ -14,6 +14,7 @@
 #include <pagewalk.h>
 #include <asid.h>
 #include <tlbfill.h>
+#include <symbols.h>
 
 #if __QDSP6_ARCH__ >= 4
 static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me) { return 0; }
@@ -31,7 +32,7 @@ static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context
 	if ((index+1) < MAX_TLB_ENTRIES) {
 		H2K_gp->tlb_index = index+1;
 	} else {
-		H2K_gp->tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
+		H2K_gp->tlb_index = (u32_t)&TLB_FIRST_REPLACEABLE_ENTRY;
 	}
 #if __QDSP6_ARCH__ <= 3
 	/* set guest bit in the ASID if this was a guest miss */

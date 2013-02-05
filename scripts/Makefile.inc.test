@@ -31,9 +31,11 @@ else
    endif
 endif
 
-H2K_HEAP_SIZE = 0x00100000
+H2K_HEAP_SIZE = 0x00010000
 
 include $(H2DIR)/scripts/Makefile.inc.config
+
+include $(H2DIR)/install/scripts/Makefile.inc.constants
 
 ARCH=qdsp6
 RUN=${ARCH}-sim
@@ -143,9 +145,12 @@ OPTIMIZE := -O1
 
 # For tests are linked in monitor space we don't have __bootvm_entry.  Instead,
 # go directly to qdsp6_pre_main (i.e. the old way).  Tests that use booter are
-# unaffected by this.
+# unaffected by this, because booter has already been built.
 
-LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main
+# FIXME: Remove H2K_LOAD_ADDR=$(H2K_LINK_ADDR) when tests are no longer in
+# monitor space
+
+LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR)
 
 ifdef BOOT
 BOOTER=${H2DIR}/install/bin/booter

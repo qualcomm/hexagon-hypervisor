@@ -46,18 +46,8 @@ all: hello booter
 %.o: %.S
 	${CC} ${CFLAGS} -c -o $@ $<
 
-# vapa_kernel.x: vapa_kernel.x.in booter_tmp
-# 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/$(shell $(ADDRS) bootvm_offset booter_tmp)/;' > $@
-
-# vapa_kernel_tmp.x: vapa_kernel.x.in
-# 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/0x0/;' > $@
-
 hello: hello.c
 	${CC} $(CFLAGS)  -I../install/include -L../install/lib -Wl,--section-start=.start=0x01000000 -o hello hello.c
-
-# # so we can calculate the number of kernel pages
-# booter_tmp: vapa_kernel_tmp.x
-# 	${CC} $(CFLAGS) -Wl,--whole-archive -lh2kernel -Wl,-no-whole-archive -moslib=h2kernel -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--defsym=__bootvm_entry=0x0 -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=0x0 -Wl,--script=vapa_kernel_tmp.x -o booter_tmp
 
 bootvm_image: booter.o elf.o booter_event.o bootvm_entry.o $(VAPA_BOOTVM) $(CONSTANTS)
 	${CC} $(CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--section-start=.entry=$(H2K_BOOTVM_OFFSET) -Wl,--script=$(VAPA_BOOTVM) -o bootvm_image booter.o elf.o booter_event.o bootvm_entry.o
@@ -71,8 +61,8 @@ bootvm.o: $(BOOTVM_S) bootvm_image.bin
 bootvm_entry.o: $(BOOTVM_ENTRY_S)
 	${CC} ${CFLAGS} -c -o $@ $<
 
-booter: bootvm.o $(VAPA_KERNEL) $(CONSTANTS)
-	${CC} $(LDFLAGS) $(CFLAGS) -Wl,--whole-archive -lh2kernel -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=$(H2K_V2P_OFFSET) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR) -o booter bootvm.o
+booter: bootvm.o $(VAPA_KERNEL) $(CONSTANTS) $(INSTALLPATH)/lib/libh2kernel.a
+	${CC} -nostdinc -nostdlib $(LDFLAGS) $(CFLAGS) -Wl,-mv$(ARCHV) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=$(H2K_V2P_OFFSET) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR) -o booter bootvm.o
 
 
 test: hello booter

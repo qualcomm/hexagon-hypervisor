@@ -2,7 +2,7 @@ OUTPUT_FORMAT ("elf32-littleqdsp6",
                "elf32-bigqdsp6",
 	       "elf32-littleqdsp6")
 OUTPUT_ARCH (qdsp6)
-ENTRY (__kernel_entry)
+ENTRY (start)
 __DYNAMIC = 0;
 PHDRS
 {
@@ -68,7 +68,8 @@ SECTIONS
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
   .SDATA : {} :SDATA
-  . = ALIGN(512K);
+  /*. = ALIGN(512K);*/
+  . = ALIGN(32);
   PROVIDE(_SDA_BASE_ = .);
   .sdata : { *(.sdata .sdata.* .gnu.linkonce.s.*) }
   .lit : { 

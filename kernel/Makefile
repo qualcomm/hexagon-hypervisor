@@ -15,7 +15,7 @@ include ../scripts/Makefile.inc.config
 
 CFLAGS := @build/flags/abi -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g
 
-CFLAGS += -Werror -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_LOAD_ADDR=$(H2K_LOAD_ADDR)
+CFLAGS += -Werror -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) #-DH2K_LOAD_ADDR=$(H2K_LOAD_ADDR)
 
 ifdef NULL_ANGEL_TRAP
 CFLAGS += -DNULL_ANGEL_TRAP

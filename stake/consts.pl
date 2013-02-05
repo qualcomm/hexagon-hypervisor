@@ -8,7 +8,7 @@ use strict;
 my ($op, $image, $addrbits, $pgsize, $heapsize, $linkaddr, $loadaddr) = @ARGV;
 
 my $page_bits = $addrbits + (2 * $pgsize);
-my $heap_size = oct $heapsize;
+my $heap_size = (oct $heapsize) * 4; # size is in words
 my $v2p_offset = (oct $linkaddr) - (oct $loadaddr);
 
 my $end = `hexagon-nm $image | egrep \' end\$\'`;
@@ -42,6 +42,11 @@ for ($op) {
 
 	/^v2p_offset/ and do {
 		print sprintf("0x%0x\n", $v2p_offset);
+		last;
+	};
+
+	/^kernel_npages/ and do {
+		print sprintf("0x%0x\n", $vpage - (0xff000000 >> $page_bits));
 		last;
 	};
 }

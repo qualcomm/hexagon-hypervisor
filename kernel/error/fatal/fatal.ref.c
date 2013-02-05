@@ -11,7 +11,8 @@
 #include <hw.h>
 
 IN_SECTION(".text.misc.fatal")
-static void __attribute__((noreturn)) H2K_fatal_sim_exit(u32_t why)
+//static void __attribute__((noreturn)) H2K_fatal_sim_exit(u32_t why)
+static void H2K_fatal_sim_exit(u32_t why)
 {
 	__asm__ __volatile__ (
 		" { r1:0 = combine(%1,%0)\n"
@@ -22,7 +23,7 @@ static void __attribute__((noreturn)) H2K_fatal_sim_exit(u32_t why)
 		" trap0(#0) \n"
 		" 1: jump 1b\n"
 		: : "r"(0x18),"r"(why),"r"(why) :"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15","r28");
-	__builtin_trap();
+	//__builtin_trap();
 }
 
 /* void (*H2K_fatal_kernel_handler)(u32_t) __attribute__((noreturn)) = H2K_fatal_sim_exit; */

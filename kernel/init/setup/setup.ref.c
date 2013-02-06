@@ -53,7 +53,7 @@ void H2K_init_setup_bootvm(u32_t phys_offset)
 	bootvm = H2K_gp->vmblocks[vm];
 
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PMAP_TYPE, boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, NULL);
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_FENCES, (u32_t)(__bootvm_entry - phys_offset), 0xffffffff, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_FENCES, (u32_t)(__bootvm_entry - phys_offset), H2K_GUEST_END, NULL);
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
 }
 

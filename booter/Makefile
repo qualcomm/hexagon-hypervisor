@@ -36,11 +36,11 @@ all: hello booter
 %.o: %.S
 	${CC} ${CFLAGS} -c -o $@ $<
 
-hello: hello.c
-	${CC} $(CFLAGS)  -I../install/include -L../install/lib -Wl,--section-start=.start=0x01000000 -o hello hello.c
+hello: hello.o
+	${CC} $(LDFLAGS) $(CFLAGS)  -Wl,--section-start=.start=$(H2K_GUEST_START) -o hello hello.o
 
 bootvm_image: booter.o elf.o booter_event.o bootvm_entry.o $(BOOTVM_IMAGE_DEPS)
-	${CC} $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o bootvm_image booter.o elf.o booter_event.o bootvm_entry.o
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o bootvm_image booter.o elf.o booter_event.o bootvm_entry.o
 
 bootvm_image.bin: bootvm_image
 	hexagon-objcopy -O binary bootvm_image bootvm_image.bin

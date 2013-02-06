@@ -26,9 +26,6 @@ H2K_offset_t offset = {{
 	.pages = 0
 	}};
 
-#define FENCE_LO 0x01000000
-#define FENCE_HI 0x08000000
-
 #define CHILD_INTERRUPT 14
 
 void FAIL(const char *str)
@@ -55,7 +52,7 @@ unsigned int spawn_vm(void *pc)
 	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
 	if (ret != vm) FAIL("SET_PMAP_TYPE");
 
-	ret = h2_config_vmblock_init(vm, SET_FENCES, FENCE_LO, FENCE_HI);
+	ret = h2_config_vmblock_init(vm, SET_FENCES, H2K_GUEST_START, H2K_GUEST_END);
 	if (ret != vm) FAIL("SET_FENCES");
 
 	ret = h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);

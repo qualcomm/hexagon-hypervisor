@@ -25,7 +25,7 @@ void H2K_kg_init(u32_t phys_offset)
 		x[i] = 0;
 	}
 	H2K_kg.phys_offset = phys_offset;
-	H2K_kg.tlb_index = (u32_t)&TLB_FIRST_REPLACEABLE_ENTRY;
+	H2K_kg.tlb_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
 	H2K_kg.traptab_addr = H2K_traptab;
 	H2K_kg.stacks_addr = &H2K_stacks;
 #ifdef H2K_L2_CONTROL

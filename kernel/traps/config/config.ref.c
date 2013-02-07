@@ -251,16 +251,21 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		if ((virt_int >= (vmblock->num_ints + PERCPU_INTERRUPTS)) 
 				|| (physint >= MAX_INTERRUPTS)
 				|| (id.cpuidx >= vmblock->max_cpus)
-				|| (physint == RESCHED_INT)
-				|| (physint == VM_IPI_INT)
-				|| (physint == TIMER_INT)
+				)  return 0; /* bad args */
+
+		/* skip H2 interrupts instead of returning error */
+		if (! ((physint == RESCHED_INT)
+					 || (physint == VM_IPI_INT)
+					 || (physint == TIMER_INT)
 #ifdef H2K_L2_CONTROL
-				|| (physint == L2_CORE_INTERRUPT)
+					 || (physint == L2_CORE_INTERRUPT)
 #endif
-				|| (virt_int == 0))  return 0; /* bad args */
-		vmblock->int_v2p[virt_int] = physint;
-		/* FIXME: set up int mapping in vmblock for large vint# */
-		H2K_register_passthru(physint, id, virt_int);
+					 || (virt_int == 0) // reserved for large vint#
+					 )) {
+			vmblock->int_v2p[virt_int] = physint;
+			/* FIXME: set up int mapping in vmblock for large vint# */
+			H2K_register_passthru(physint, id, virt_int);
+		}
 		return vmblock->vmidx;
 
 	default:

@@ -17,16 +17,30 @@
 #include "elf.h"
 #include "../kernel/include/hw.h"
 
-#define NUM_TOTAL_THREADS 32
+#define CHILD_INTERRUPT 14
+#define VM_BEST_PRIO 0
 
-H2K_offset_t offset = {{
+/* VM config */
+static unsigned int num_vcpus = 32;
+static unsigned int num_shared_ints = 0;
+static unsigned int page_size = SIZE_16M;
+static unsigned int fence_lo = H2K_GUEST_START;
+static unsigned int fence_hi = H2K_GUEST_END;
+static unsigned int bestprio = VM_BEST_PRIO;
+static unsigned int trapmask = 0xffffffff;
+
+/* VM first CPU */
+static void *stack = (void *)(H2K_GUEST_END - 8);
+/* static void *stack = (void *)0x7ffffff0; */
+static unsigned int arg = 0;
+static unsigned int startprio = VM_BEST_PRIO;
+
+static H2K_offset_t offset = {{
 	.size = SIZE_16M,
 	.cccc = L1WB_L2C,
 	.xwru = URWX,
 	.pages = 0
 	}};
-
-#define CHILD_INTERRUPT 14
 
 void FAIL(const char *str)
 {
@@ -45,22 +59,32 @@ void usage()
 unsigned int spawn_vm(void *pc)
 {
 	unsigned long vm;
-	unsigned long ret;
+	long ret;
+	int i;
 
-	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,0);
+	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, num_vcpus, num_shared_ints);
 
+	offset.size = page_size;
 	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
 	if (ret != vm) FAIL("SET_PMAP_TYPE");
 
-	ret = h2_config_vmblock_init(vm, SET_FENCES, H2K_GUEST_START, H2K_GUEST_END);
+	ret = h2_config_vmblock_init(vm, SET_FENCES, fence_lo, fence_hi);
 	if (ret != vm) FAIL("SET_FENCES");
 
-	ret = h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
+	ret = h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, bestprio, trapmask);
 	if (ret != vm) FAIL("SET_PRIO_TRAPMASK");
+
+	/* set up interrupts */
+	for (i = 0; i < num_shared_ints + PERCPU_INTERRUPTS; i++) {
+		ret = h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_vcpus - 1));
+		if (ret != vm) FAIL("MAP_PHYS_INTR");
+	}
 
 	/* Stats Reset */
 	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
-	h2_vmboot(pc,(void *)0x07fffff0,0,0,vm);
+	ret = h2_vmboot(pc, stack, arg, startprio, vm);
+	if (ret == -1) FAIL("vmboot");
+
 	printf("vm booted ID %lu\n", vm);
 	return vm;
 }
@@ -187,6 +211,7 @@ int main(int argc, char **argv)
 			printf("New value for syscfg: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
+
 		} else if (0 == strcmp(argv[0],"--chicken")) {
 			if (argc < 2) die_usage();
 			regval = H2K_get_chicken();
@@ -197,6 +222,7 @@ int main(int argc, char **argv)
 			printf("New value for chicken: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
+
 		} else if (0 == strcmp(argv[0],"--rgdr")) {
 			if (argc < 2) die_usage();
 			regval = H2K_get_rgdr();
@@ -207,6 +233,7 @@ int main(int argc, char **argv)
 			printf("New value for rgdr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
+
 		} else if (0 == strcmp(argv[0],"--ccr")) {
 			if (argc < 2) die_usage();
 			regval = H2K_get_ccr();
@@ -217,6 +244,67 @@ int main(int argc, char **argv)
 			printf("New value for ccr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
+
+		} else if (0 == strcmp(argv[0], "--num_vcpus")) {
+			if (argc < 2) die_usage();
+			num_vcpus = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--num_shared_ints")) {
+			if (argc < 2) die_usage();
+			num_shared_ints = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--page_size")) {
+			if (argc < 2) die_usage();
+			page_size = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--fence_lo")) {
+			if (argc < 2) die_usage();
+			fence_lo = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--fence_hi")) {
+			if (argc < 2) die_usage();
+			fence_hi = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--bestprio")) {
+			if (argc < 2) die_usage();
+			bestprio = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--trapmask")) {
+			if (argc < 2) die_usage();
+			trapmask = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--stack")) {
+			if (argc < 2) die_usage();
+			stack = (void *)strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--arg")) {
+			if (argc < 2) die_usage();
+			arg = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--startprio")) {
+			if (argc < 2) die_usage();
+			startprio = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0], "--list")) {
 			// shift '--list' off arg list
 			argc--;

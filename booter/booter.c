@@ -35,6 +35,10 @@ static void *stack = (void *)(H2K_GUEST_END - 8);
 static unsigned int arg = 0;
 static unsigned int startprio = VM_BEST_PRIO;
 
+/* rebooting */
+static unsigned int boots = 1;
+static unsigned int expect_status = 0;
+
 static H2K_offset_t offset = {{
 	.size = SIZE_16M,
 	.cccc = L1WB_L2C,
@@ -120,7 +124,7 @@ static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr)
 
 int run_elf(char *elf, char *cmdline)
 {
-	int ret, i;
+	int ret, status, cpus, i;
 	unsigned long vm;
 	int fdesc;
 	Elf32_Ehdr ehdr;
@@ -149,12 +153,16 @@ int run_elf(char *elf, char *cmdline)
 	
 	do {  // wait for all child VM cpus to vmstop
 		h2_vmtrap_wait();
-		ret = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-		printf("VM %lu status %d\n", vm, ret);
-		ret = h2_vmstatus(VMOP_STATUS_CPUS, vm);
-		printf("VM %lu Live CPUs: %d\n", vm, ret);
+		status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
+		printf("VM %lu status %d\n", vm, status);
+		cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
+		printf("VM %lu Live CPUs: %d\n", vm, cpus);
 	} while (ret != 0);
 	h2_vmfree(vm);
+
+	if (status != expect_status) { // unexpected status
+		return 1;
+	}
 
 	return 0;
 }
@@ -181,7 +189,7 @@ static void die_usage()
 
 int main(int argc, char **argv)
 {
-	int i;
+	int i, ret = 0;
 	FILE *f;
 
 	char buf[BUFSIZE];
@@ -299,6 +307,18 @@ int main(int argc, char **argv)
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--boots")) {
+			if (argc < 2) die_usage();
+			boots = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--expect_status")) {
+			if (argc < 2) die_usage();
+			expect_status = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0], "--startprio")) {
 			if (argc < 2) die_usage();
 			startprio = strtoul(argv[1],NULL,0);
@@ -334,7 +354,8 @@ int main(int argc, char **argv)
 		strcat(buf," ");
 	}
 
-	run_elf(argv[0],buf);
-	return 0;
+	while (boots-- && ret == 0) {
+		ret = run_elf(argv[0],buf);
+	}
+	return ret;
 }
-

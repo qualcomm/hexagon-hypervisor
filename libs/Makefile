@@ -21,7 +21,7 @@ IMPL=opt
 H2_LIB=$(H2_DIR)build/opt_v$(ARCHV)/libh2.a
 endif
 
-MOST_LIBS= qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a timer/libtimer.a
+MOST_LIBS= qube/libqube.a syscall/angel/libangel.a blast/libblast.a timer/libtimer.a
 ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(MOST_LIBS)
 LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(SOS_DIR))
 
@@ -38,9 +38,6 @@ blast/libblast.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
 qube/libqube.a: tmp $(H2_LIB)
-	+${MAKE_LIB};
-
-posix/libposix.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
 syscall/angel/libangel.a: tmp $(H2_LIB)

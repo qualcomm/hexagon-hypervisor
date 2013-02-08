@@ -10,6 +10,10 @@
 #include <h2_vm.h>
 #include <ctype.h>
 #include <bootmap_macros.h>
+
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "elf.h"
 #include "../kernel/include/hw.h"
 
@@ -81,11 +85,11 @@ void dcclean_range(unsigned long start, long range)
 
 extern void bootvm_vectors();
 
-static void set_cmdline(const char *cmdline, FILE *f, const Elf32_Ehdr *ehdr)
+static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr)
 {
 	char *dst;
 	int addr;
-	if ((addr=elf_get_symbol(f,"__boot_cmdline__",ehdr)) == -1) {
+	if ((addr=elf_get_symbol(fdesc,"__boot_cmdline__",ehdr)) == -1) {
 		printf("__boot_cmdline__ not found.\n");
 	} else {
 		printf("__boot_cmdline__ found @ 0x%08x\n",addr);
@@ -100,28 +104,28 @@ int run_elf(char *elf, char *cmdline)
 {
 	int ret, i;
 	unsigned long vm;
-	FILE *f;
+	int fdesc;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
 
-	f = fopen(elf,"rb");
-	if ((ret = elf_get_ehdr(f,&ehdr)) < 0) {
+	fdesc = open(elf,O_RDONLY);
+	if ((ret = elf_get_ehdr(fdesc,&ehdr)) < 0) {
 		printf("Invalid ELF file: %s\n", elf);
 		return 1;
 	}
 	for (i = 0; i < ehdr.e_phnum; i++) {
-		if (elf_get_phdr(f,i,&phdr,&ehdr) < 0) continue;
+		if (elf_get_phdr(fdesc,i,&phdr,&ehdr) < 0) continue;
 		if (phdr.p_memsz == 0) continue;
 		if (phdr.p_type != PT_LOAD) continue;
-		fseek(f,phdr.p_offset,SEEK_SET);
+		lseek(fdesc,phdr.p_offset,SEEK_SET);
 		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
-		fread((char *)phdr.p_paddr,1,phdr.p_filesz,f);
+		read(fdesc,(char *)phdr.p_paddr,phdr.p_filesz);
 		memset((char *)phdr.p_paddr+phdr.p_filesz,0,phdr.p_memsz-phdr.p_filesz);
 		/* Really, only need to clean out text sections */
 		dcclean_range(phdr.p_paddr,phdr.p_memsz);
 	}
-	set_cmdline(cmdline,f,&ehdr);
-	fclose(f);
+	set_cmdline(cmdline,fdesc,&ehdr);
+	close(fdesc);
 	printf("Boot vm for %s\n", elf);
 	vm = spawn_vm((void *)ehdr.e_entry);
 	

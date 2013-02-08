@@ -270,10 +270,10 @@ typedef struct elf_program_struct {
 	Elf32_Word p_align;
 } Elf32_Phdr;
 
-int elf_get_ehdr(FILE *file, Elf32_Ehdr *ehdr);
-int elf_get_phdr(FILE *file, int i, Elf32_Phdr *phdr, const Elf32_Ehdr *ehdr);
-int elf_get_shdr(FILE *f, int i, Elf32_Shdr *shdr, const Elf32_Ehdr *ehdr);
-int elf_get_symbol(FILE *f, const char *sym, const Elf32_Ehdr *ehdr);
+int elf_get_ehdr(int fdesc, Elf32_Ehdr *ehdr);
+int elf_get_phdr(int fdesc, int i, Elf32_Phdr *phdr, const Elf32_Ehdr *ehdr);
+int elf_get_shdr(int fdesc, int i, Elf32_Shdr *shdr, const Elf32_Ehdr *ehdr);
+int elf_get_symbol(int fdesc, const char *sym, const Elf32_Ehdr *ehdr);
 
 #endif /* _ELF_H_ */
 

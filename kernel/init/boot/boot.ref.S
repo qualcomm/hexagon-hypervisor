@@ -99,7 +99,7 @@ FUNC_START start .entry .p2align 12
 	if (!p0) jump 1b
 
 	// Set up TLB entries for jump to virtual space
-	SETCONST(r10, H2K_LOAD_ADDR)
+	r10 = pc
 
 	SETCONST(r4, H2K_KERNEL_NPAGES)
 	r1 = #0
@@ -116,7 +116,7 @@ FUNC_START start .entry .p2align 12
 	DO_TLBW(3,2,1)
 
 	r1 = add(r1, #1)
-	SETCONST(r10, H2K_LOAD_ADDR)
+	r10 = pc
 	r10 += asl(r1,#BOOT_TLB_PGBITS)
 	r4 = add(r4, #-1)
 	p0 = cmp.eq(r4, #0)
@@ -131,7 +131,7 @@ FUNC_START start .entry .p2align 12
 	r1 = add(r1, #1)
 #endif
 
-	SETCONST(r10, H2K_LOAD_ADDR)
+	r10 = pc
 	SETCONST(r11,H2K_LINK_ADDR)
 	r12 = and(r11,r10)
 	p0 = cmp.eq(r12,r11)

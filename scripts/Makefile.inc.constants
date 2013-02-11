@@ -1,0 +1,14 @@
+# Dear emacs, this is a -*- Makefile -*-
+
+CONSTS := $(INSTALLPATH)/scripts/consts.pl
+PARAMS := $(H2K_KERNEL_ADDRBITS) $(H2K_KERNEL_PGSIZE) $(H2K_ALLOC_HEAP_SIZE) $(H2K_LINK_ADDR) $(H2K_LOAD_ADDR)
+KERNEL_TMP := $(INSTALLPATH)/stake/kernel_tmp
+
+
+.PHONY: constants
+
+constants: $(KERNEL_TMP)
+	$(eval export H2K_BOOTVM_OFFSET := $(shell $(CONSTS) bootvm_offset $(KERNEL_TMP) $(PARAMS)))
+	$(eval export H2K_BOOTVM_START := $(shell $(CONSTS) bootvm_start $(KERNEL_TMP) $(PARAMS)))
+	$(eval export H2K_V2P_OFFSET := $(shell $(CONSTS) v2p_offset $(KERNEL_TMP) $(PARAMS)))
+	$(eval export H2K_KERNEL_NPAGES := $(shell $(CONSTS) kernel_npages $(KERNEL_TMP) $(PARAMS)))

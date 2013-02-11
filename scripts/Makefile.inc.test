@@ -33,9 +33,18 @@ endif
 
 H2K_HEAP_SIZE = 0x00010000
 
+ifeq ($(INSTALLPATH),)
+export INSTALLPATH := $(H2DIR)/install
+endif
+
+ifeq ($(KERNELPATH),)
+export KERNELPATH := $(H2DIR)/kernel
+endif
+
+
 include $(H2DIR)/scripts/Makefile.inc.config
 
-include $(H2DIR)/install/scripts/Makefile.inc.constants
+include $(H2DIR)/scripts/Makefile.inc.constants
 
 ARCH=qdsp6
 RUN=${ARCH}-sim
@@ -336,7 +345,7 @@ endif
 	${CC} ${ASFLAGS} -c -o $@ $<; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
-${EXEC}: ${OBJS}
+${EXEC}: ${OBJS} constants
 	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 

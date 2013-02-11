@@ -9,7 +9,6 @@
 #include <cpuint.h>
 #include <shint.h>
 #include <max.h>
-#include <globals.h>
 
 #include <h2.h>
 #include <h2_vm.h>
@@ -66,6 +65,8 @@ extern void ucos_loadaddr();
 extern void ucos_entry();
 #endif
 
+extern void linux_stext();
+
 void FAIL(const char *str)
 {
 	PRINTF("linux: FAIL %s\n", str);
@@ -91,7 +92,7 @@ unsigned long vm_setup(char num_cpus, short num_ints, u32_t trans, unsigned long
 	}
 
 	if (pt == H2K_ASID_TRANS_TYPE_OFFSET) {
-		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x0, 0xff000000);
+		ret = h2_config_vmblock_init(vm, SET_FENCES, (unsigned int)linux_stext, H2K_GUEST_END);
 		if (ret != vm) {
 			PRINTF("ret %08x\n", (unsigned int)ret);
 			FAIL("SET_FENCES");
@@ -107,50 +108,14 @@ unsigned long vm_setup(char num_cpus, short num_ints, u32_t trans, unsigned long
 
 void setup_ints(unsigned long vm, char num_cpus) {
 
-	int i, j;
-
-	H2K_vmblock_t *vmb;
+	int i;
 
 	for (i = 0; i < TOTAL_INTS; i++) {
-		if (i != RESCHED_INT
-#ifdef H2K_L2_CONTROL
-				&& i != L2_CORE_INTERRUPT
-#endif
-				&& i != VM_IPI_INT
-				&& i != TIMER_INT) {
-			/* Send per-cpu HW interrupts to the first configured cpu, which is
-				 num_cpus - 1, in case Linux doesn't boot all its configured cpus */
-			if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
+		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
 				FAIL("MAP_PHYS_INTR");
-			}
-			//h2_register_fastint(i, fastint);
 		}
-	}
-
-	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	vmb = H2K_gp->vmblocks[vm];
-
-	/* FIXME: Linux should do the per-cpu and global enables */
-	/* can't call the trap here since it would use the boot vmblock */
-	for (i = 0; i < PERCPU_INTERRUPTS; i++) {
-		for (j = 0; j < vmb->max_cpus; j++) {
-
-			__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-			H2K_vm_cpuint_enable(vmb, &(vmb->contexts[j]), i, vmb->intinfo);
-		}
-	}
-
-	for (i = 0; i < SHARED_INTS; i++) {
-		/* There shouldn't be any interrupt pending at this point, but you never
-			 know.  Better make the context pointer valid in case we attempt to
-			 deliver the interrupt */
-
-		__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-		H2K_vm_shint_enable(vmb, &(vmb->contexts[0]), i, vmb->intinfo);
 	}
 }
-
-extern void linux_stext();
 
 void boot_ucos() {
 
@@ -246,7 +211,6 @@ int main(int argc, char *argv[]) {
 		sscanf(argv[1], "%s", fname);
 	}
 
-	h2_init(0);
 	h2_config_setfatal(fatal);
 	PRINTF("loadlinux: H2 started\n");
 

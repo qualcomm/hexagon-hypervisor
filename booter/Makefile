@@ -13,12 +13,14 @@ else
 ARCHV=$(subst v,,$(Q6VERSION))
 endif
 
+H2DIR ?= ..
+
 ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(CURDIR)/../install
+export INSTALLPATH := $(H2DIR)/install
 endif
 
 ifeq ($(KERNELPATH),)
-export KERNELPATH := $(CURDIR)/../kernel
+export KERNELPATH := $(H2DIR)/kernel
 endif
 
 CFLAGS = -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
@@ -39,20 +41,11 @@ all: hello booter
 hello: hello.o
 	${CC} $(LDFLAGS) $(CFLAGS)  -Wl,--section-start=.start=$(H2K_GUEST_START) -o hello hello.o
 
-bootvm_image: booter.o elf.o booter_event.o bootvm_entry.o $(BOOTVM_IMAGE_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o bootvm_image booter.o elf.o booter_event.o bootvm_entry.o
+bootvm_image: booter.o elf.o booter_event.o $(BOOTVM_IMAGE_DEPS)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o bootvm_image booter.o elf.o booter_event.o $(BOOTVM_ENTRY_O)
 
-bootvm_image.bin: bootvm_image
-	hexagon-objcopy -O binary bootvm_image bootvm_image.bin
-
-bootvm.o: $(BOOTVM_S) bootvm_image.bin
-	${CC} ${CFLAGS} -c -o $@ $<
-
-bootvm_entry.o: $(BOOTVM_ENTRY_S)
-	${CC} ${CFLAGS} -c -o $@ $<
-
-booter: bootvm.o $(BOOTVM_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -o booter bootvm.o
+booter: $(BOOTVM_O) $(BOOTVM_DEPS)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -o booter $(BOOTVM_O)
 
 
 test: hello booter
@@ -63,4 +56,4 @@ install: booter
 	cp booter $(INSTALLPATH)/bin
 
 clean:
-	rm -f *.elf booter bootvm_image bootvm_image.bin hello stats.* *.o
+	rm -f *.elf booter $(BOOTVM_CLEAN) hello stats.* *.o

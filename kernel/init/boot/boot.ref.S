@@ -43,6 +43,9 @@
 	DST |= asl(TMP, #  BOOT_TLB_SHIFT_4M + SBIT_SIZE); 
 
 FUNC_START start .entry .p2align 12
+	jump 1f
+	.space 0x40
+1:
 	/* NOTE: 4096 bytes should contain all the way to jump to hyperspace... */
 	r0 = #0					// 0
 	syscfg = r0				// 1

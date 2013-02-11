@@ -24,12 +24,14 @@ export KERNELPATH := $(H2DIR)/kernel
 endif
 
 
+all: kernel_tmp
+
 include ../scripts/Makefile.inc.config
 include ../scripts/Makefile.inc.bootvm
 
 CONSTS := ./consts.pl
 
-CFLAGS = -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2 -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L$(INSTALLPATH)/lib
+CFLAGS = $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2 -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L$(INSTALLPATH)/lib
 
 CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS)
 
@@ -37,8 +39,6 @@ SCRIPTS = $(CONSTS) vapa_bootvm.x vapa_kernel.x.in
 SRCFILES = bootvm_entry.S bootvm.S
 BINFILES = kernel_tmp
 FILES := $(SCRIPTS) $(SRCFILES) $(BINFILES)
-
-all: $(FILES)
 
 %.o: %.c
 	${CC} ${CFLAGS} -c -o $@ $<
@@ -51,7 +51,7 @@ vapa_kernel_tmp.x: vapa_kernel.x.in
 
 # so we can calculate the number of kernel pages
 kernel_tmp: vapa_kernel_tmp.x $(INSTALLPATH)/lib/libh2kernel.a
-	${CC} $(CFLAGS) -nostdinc -nostdlib -Wl,-mv$(ARCHV) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--defsym=__bootvm_entry=0x0 -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=0x0 -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -Wl,--script=vapa_kernel_tmp.x -o kernel_tmp
+	${CC} $(CFLAGS) -nostdinc -nostartfiles -Wl,-mv$(ARCHV) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--defsym=__bootvm_entry=0x0 -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=0x0 -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -Wl,--script=vapa_kernel_tmp.x -o kernel_tmp
 
 # $(INSTALLPATH)/stake/kernel_tmp: kernel_tmp
 # 	mkdir -p $(INSTALLPATH)/stake

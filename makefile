@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 SIZE_TOOL = /prj/dsp/qdsp6/arch/scripts/section_size.py
-LD = qdsp6-gcc
+LD = hexagon-gcc
 
 COM_CFLAGS= -Werror
 COM_LDFLAGS=
@@ -12,7 +12,7 @@ ARCHV=$(subst v,,$(Q6VERSION))
 else
 ARCHV=4
 endif
-CC=qdsp6-gcc
+CC=hexagon-gcc
 RUN=qdsp6-sim
 SIMF=--timing
 #hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....

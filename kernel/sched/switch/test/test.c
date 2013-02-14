@@ -46,14 +46,17 @@ void TH_cont_check()
 static void modify_goto_wait()
 {
 	u32_t *code_snippet_address;
-	__asm__ __volatile__ (
-		" call 1f \n"
-		" r31.h = #hi(TH_wait_check) \n"
-		" r31.l = #lo(TH_wait_check) \n"
-		" jumpr r31 \n"
-		"1: \n"
-		" %0 = r31 \n"
-		: "=r"(code_snippet_address) : : "r28","r31");
+	__asm__ __volatile__
+		(
+		 " memw(r29 + #0) = r31 \n"
+		 " call 1f \n"
+		 " r31.h = #hi(TH_wait_check) \n"
+		 " r31.l = #lo(TH_wait_check) \n"
+		 " jumpr r31 \n"
+		 "1: \n"
+		 " %0 = r31 \n"
+		 " r31 = memw(r29 +#0) \n"
+		 : "=r"(code_snippet_address) : : "r28","r31");
 	memcpy(H2K_wait_forever,code_snippet_address,3*sizeof(u32_t));
 }
 

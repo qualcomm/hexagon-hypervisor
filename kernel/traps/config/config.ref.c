@@ -79,7 +79,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2));
 		if (block.ptr == NULL) return 0;  // no space
 
-		vmblock = (H2K_vmblock_t *)block.ptr;
+		vmblock = (H2K_vmblock_t *)(void *)block.ptr;
 		ptrtmp = (u32_t)vmblock;
 
 		for (i = 1; i < H2K_ID_MAX_VMS; i++) {

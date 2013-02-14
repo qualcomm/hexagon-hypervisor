@@ -109,19 +109,19 @@ int main()
 	if (vmblock->num_cpus != 0) FAIL("Bad num_cpus");
 	if (vmblock->num_ints != OK_INTS) FAIL("Bad num_ints");
 
-	if (vmblock->contexts != (H2K_thread_context *)((char *)vmblock + sizeof(H2K_vmblock_t))) FAIL("Bad cpu_contexts base");
-	if (vmblock->intinfo != (H2K_vm_int_opinfo_t *)((char *)(vmblock->contexts) + OK_CPUS*288)) FAIL("Bad intinfo base");
-	if (vmblock->percpu_mask !=  (bitmask_t **)((char *)(vmblock->intinfo) + 3*8)) FAIL ("Bad percpu_mask base");
+	if (vmblock->contexts != (H2K_thread_context *)(void *)((char *)vmblock + sizeof(H2K_vmblock_t))) FAIL("Bad cpu_contexts base");
+	if (vmblock->intinfo != (H2K_vm_int_opinfo_t *)(void *)((char *)(vmblock->contexts) + OK_CPUS*288)) FAIL("Bad intinfo base");
+	if (vmblock->percpu_mask !=  (bitmask_t **)(void *)((char *)(vmblock->intinfo) + 3*8)) FAIL ("Bad percpu_mask base");
 
 	for (i = 0; i < OK_CPUS; i++) {
 		DPRINTF("i %d  ptr %08x  expect %08x\n", i, (u32_t)vmblock->percpu_mask[i], (u32_t)((char *)(vmblock->percpu_mask) + OK_CPUS*4 + i*12));
-		if (vmblock->percpu_mask[i] !=  (bitmask_t *)((char *)(vmblock->percpu_mask) + OK_CPUS*4 + i*12)) FAIL("Bad percpu_mask pointer");
+		if (vmblock->percpu_mask[i] !=  (bitmask_t *)(void *)((char *)(vmblock->percpu_mask) + OK_CPUS*4 + i*12)) FAIL("Bad percpu_mask pointer");
 	}
 
-	if (vmblock->pending != (bitmask_t *)((char *)(vmblock->percpu_mask) + OK_CPUS*4 + OK_CPUS*12)) FAIL("Bad pending base");
-	if (vmblock->enable !=  (bitmask_t *)((char *)(vmblock->pending) + 12)) FAIL("Bad enable base");
+	if (vmblock->pending != (bitmask_t *)(void *)((char *)(vmblock->percpu_mask) + OK_CPUS*4 + OK_CPUS*12)) FAIL("Bad pending base");
+	if (vmblock->enable !=  (bitmask_t *)(void *)((char *)(vmblock->pending) + 12)) FAIL("Bad enable base");
 
-	if (vmblock->int_v2p != (physint_t *)((char *)(vmblock->enable) + 12)) FAIL("Bad int_v2p base");
+	if (vmblock->int_v2p != (physint_t *)(void *)((char *)(vmblock->enable) + 12)) FAIL("Bad int_v2p base");
 	
 	/* SET_PMAP_TYPE bad type*/
 	DPRINTF("SET_PMAP_TYPE\n\n");

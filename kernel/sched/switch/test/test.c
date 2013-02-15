@@ -56,7 +56,7 @@ static void modify_goto_wait()
 		 "1: \n"
 		 " %0 = r31 \n"
 		 " r31 = memw(r29 +#0) \n"
-		 : "=r"(code_snippet_address) : : "r28","r31");
+		 : "=r"(code_snippet_address) : : "r31");
 	memcpy(H2K_wait_forever,code_snippet_address,3*sizeof(u32_t));
 }
 

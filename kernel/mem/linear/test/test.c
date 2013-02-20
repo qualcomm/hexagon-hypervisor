@@ -79,7 +79,7 @@ void check_good(const char *good)
 	for (i = 0; good[i] != '\0'; i++) {
 		badva = (0xa + good[i] - 'a') << 28;
 		check.raw = 0;
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 		check.xwr = 0x7;
 		check.valid = 1;
 		check.ppn = check.vpn = (badva >> 12);

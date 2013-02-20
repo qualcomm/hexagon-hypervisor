@@ -1,9 +1,9 @@
 ###############################################################################
 
 EXEC   := intsig_test
-LD      = qdsp6-gcc
-AS      = qdsp6-gcc
-RUN     = qdsp6-sim
+LD      = hexagon-gcc
+AS      = hexagon-gcc
+RUN     = hexagon-sim
 RM      = rm -f
 SIZE_TOOL = /prj/dsp/qdsp6/arch/scripts/section_size.py
 ULIMIT = ulimit -t 1300
@@ -14,7 +14,7 @@ COSIM =--cosim_file cosimcfg
 #If you are running outside hexframe.. sensible defaults
 ifeq (,${BUILD_DIR})
 Q6VERSION := v4
-CC     = qdsp6-gcc
+CC     = hexagon-gcc
 ifneq (,${DEBUG})
 CFLAGS += -O0 -g -DDEBUG
 else
@@ -64,7 +64,7 @@ sim : $(EXEC)
 	$(ULIMIT) && time $(RUN) $(COSIM) $(SIMF) -- $(EXEC)
 
 size: $(EXEC)
-	qdsp6-objdump -h $(OBJ) | $(SIZE_TOOL) text > size && \
+	hexagon-objdump -h $(OBJ) | $(SIZE_TOOL) text > size && \
 	cat size;
 
 clean :

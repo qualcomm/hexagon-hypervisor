@@ -12,7 +12,7 @@ call_trap1:
 	r10 = ssr
 	r10 = insert(r0,#8,#0)
 	ssr = r10
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	sgp = r1
 #else
 	sgp0 = r1

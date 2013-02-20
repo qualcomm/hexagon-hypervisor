@@ -61,7 +61,7 @@ BUSPENALTY=
 TIMING=
 #include /prj/dsp/qdsp6/arch/make/simf.inc
 #Till I figure out something better, here is that file
-RUN ?= qdsp6-sim
+RUN ?= hexagon-sim
 
 TIMING ?= --timing
 
@@ -73,7 +73,7 @@ ifeq (hexagon-sim, $(notdir $(firstword ${RUN})))
 SIMF=${_BASIC_SIMF}
 endif
 
-ifeq (qdsp6-sim, $(notdir $(firstword ${RUN})))
+ifeq (hexagon-sim, $(notdir $(firstword ${RUN})))
 SIMF=${_BASIC_SIMF}
 endif
 

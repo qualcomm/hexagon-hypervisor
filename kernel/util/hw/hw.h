@@ -7,7 +7,7 @@
 #define _HEADER_HW_H 1
 
 #include <max.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <context.h>
 
 static inline void ciad(u32_t mask)

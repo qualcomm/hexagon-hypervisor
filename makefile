@@ -13,7 +13,7 @@ else
 ARCHV=4
 endif
 CC=hexagon-gcc
-RUN=qdsp6-sim
+RUN=hexagon-sim
 SIMF=--timing
 #hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
 else
@@ -77,7 +77,7 @@ sim: ref
 	$(RUN) $(SIMF) -- test.exe;
 
 size:
-	qdsp6-objdump -h $(INSTALLPATH)/lib/*.a | $(SIZE_TOOL) text > size && \
+	hexagon-objdump -h $(INSTALLPATH)/lib/*.a | $(SIZE_TOOL) text > size && \
 	cat size;
 
 t:
@@ -85,8 +85,9 @@ t:
 
 test: ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst
-	$(MAKE) -C ucos sim 2>&1 | tee make.log
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
+	$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
+	fgrep -i warning: test.out; true
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
 cov:

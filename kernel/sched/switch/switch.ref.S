@@ -25,7 +25,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	p0 = cmp.eq(r19,r5)
 	if (!p0) jump H2K_switch
 
-#if (__QDSP6_ARCH__) <= 3
+#if (ARCHV) <= 3
 	r5 = ssr
 	r5 = extractu(r5,#3,#19)
 #else
@@ -77,7 +77,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r0+#CONTEXT_lc1sa1) = r21:20
 	memd(r0+#CONTEXT_m1m0) = r25:24
 
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	r27:26 = g3:2
 	r25:24 = g1:0
 	r21 = cs1
@@ -98,7 +98,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 	memd(r8) = r19:18
 
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	r14 = memw(r1+#CONTEXT_ccr)
 	r21:20 = memd(r1+#CONTEXT_cs1cs0)
 	r25:24 = memd(r1+#CONTEXT_gssr_gelr)
@@ -140,9 +140,9 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r10 = r5
 	r15 = insert(r14,r11:10)
 	PMUCFG = r15
-	sgp = r1
+	sgp0 = r1
 	r4 = memw(r1+#CONTEXT_status_prio_hthread_tid)
-#if (__QDSP6_ARCH__ <= 3)
+#if (ARCHV <= 3)
 	tid = r4
 #else
 	stid = r4
@@ -156,7 +156,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 .Lto_sleep:
 	memd(r9) = r19:18
-#if (__QDSP6_ARCH__) <= 3
+#if (ARCHV) <= 3
 	r5 = ssr
 	r5 = extractu(r5,#3,#19)
 #else
@@ -176,7 +176,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memw(H2K_GP+#KG_priomask) = r8
 	k0unlock
 	// set SGP to NULL
-	sgp = r1
+	sgp0 = r1
 
 	// set IMASK to receive most interrupts
 	r0 = imask
@@ -187,7 +187,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	// set TID to special value (-1)
 	r1 = #-1
-#if (__QDSP6_ARCH__ <= 3)
+#if (ARCHV <= 3)
 	tid = r1
 #else
 	stid = r1

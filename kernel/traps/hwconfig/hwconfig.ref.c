@@ -11,7 +11,7 @@
 #include <stmode.h>
 #include <hw.h>
 #include <cache.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
@@ -84,7 +84,7 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 {
 	/* SSR/CCR gets saved/restored at trap time.  If that changes to switch
 	 * time, modify SSR/CCR directly. */
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	switch (whatcache) {
 		case HWCONFIG_PREFETCH_HF_I: me->ssr = Q6_R_insert_RII(me->ssr,configval,1,22); break;
 		case HWCONFIG_PREFETCH_HF_D: me->ssr = Q6_R_insert_RII(me->ssr,configval,1,23); break;

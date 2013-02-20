@@ -5,14 +5,14 @@
 
 #include <c_std.h>
 #include <linear.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <tlbfmt.h>
 #include <max.h>
 #include <asid.h>
 #include <physread.h>
 #include <globals.h>
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 
 static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear(H2K_linear_fmt_t linear, u32_t asid)
 {

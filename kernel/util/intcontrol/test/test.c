@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <intcontrol.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 void FAIL(const char *str)
 {

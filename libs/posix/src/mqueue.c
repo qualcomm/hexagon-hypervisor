@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
-#include <q6protos.h> /* Q6_R_ct0_R */
+#include <hexagon_protos.h> /* Q6_R_ct0_R */
 
 #include <pthread.h>
 #include <mqueue.h>

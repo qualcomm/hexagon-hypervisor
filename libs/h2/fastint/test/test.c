@@ -16,7 +16,7 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define TEST_INT	31
 #else
 #define TEST_INT	0

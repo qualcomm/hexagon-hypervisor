@@ -42,7 +42,7 @@
 	.size \name,.-\name
 .endm
 
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 #define sgp sgp0
 #endif
 

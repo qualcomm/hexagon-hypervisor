@@ -11,9 +11,9 @@
 #include <tlbfmt.h>
 #include <tlbmisc.h>
 #include <hw.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 
 /* WARNING: Assuming that TLB lock is already held here */
 static inline u32_t H2K_mem_physread_word(u64_t pa)

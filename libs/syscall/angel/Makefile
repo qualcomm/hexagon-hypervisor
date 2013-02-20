@@ -1,6 +1,6 @@
 
-CC = qdsp6-gcc
-AR = qdsp6-ar
+CC = hexagon-gcc
+AR = hexagon-ar
 
 OPTIMIZE := -O2
 

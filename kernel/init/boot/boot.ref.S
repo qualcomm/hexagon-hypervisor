@@ -9,7 +9,7 @@
 #include <boot.h>
 #include <bootmap_macros.h>
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define DO_TLBW(HI,LO,IDX) \
 	tlbidx = r##IDX ; \
 	tlblo = r##LO ; \
@@ -20,7 +20,7 @@
 	tlbw(R##HI##:##LO,R##IDX)
 #endif
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define SETCONST(DST,VAL) \
 	DST.H = # hi(VAL); \
 	DST.L = # lo(VAL); 
@@ -68,14 +68,14 @@ FUNC_START start .entry .p2align 12
 
 	SETCONST(H2K_GP,H2K_kg)
 
-#if __QDSP6_ARCH__ == 3
+#if ARCHV == 3
 	r0.h = #0x0100
 	r0.l = #0x0000
 	s60 = r0
-#elif __QDSP6_ARCH__ == 4
+#elif ARCHV == 4
 	r0 = ##0x00002004
 	s63 = r0
-#elif __QDSP6_ARCH__ == 5
+#elif ARCHV == 5
 	r0 = #0     /* (No chickenbits) */
 	s63 = r0
 #else
@@ -125,7 +125,7 @@ FUNC_START start .entry .p2align 12
 	p0 = cmp.eq(r4, #0)
 	if (!p0) jump 2b
 
-#if __QDSP6_ARCH__ > 3
+#if ARCHV > 3
 	// Set up entry for L2 interrupt controller
 	SETCONST(r10,Q6_SS_BASE_PA)
 	MAKE_TLBHI(r3,Q6_SS_BASE_VA,BOOT_TLB_PGBITS_4M,BOOT_TLB_SHIFT_4M)
@@ -147,7 +147,7 @@ FUNC_START start .entry .p2align 12
 	DO_TLBW(3,2,1)
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
-#if __QDSP6_ARCH__ <= 4
+#if ARCHV <= 4
  	r0 = #0x77f
 #else
 	r0 = ##0xA77F    /* DMT and non-QoS */
@@ -156,7 +156,7 @@ FUNC_START start .entry .p2align 12
  	//r0 = #0x77F    /* IMT and QoS */
 #endif
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r0.h = #0x0083	/* 256KB L2 */
 #else
 	r0.h = #0x008b	/* 256KB L2 + ITCM */
@@ -204,7 +204,7 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	SETCONST(H2K_GP,H2K_kg)
 
 	SETCONST(r29,H2K_stacks)
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r0 = ssr
 	r0 = extractu(r0,#3,#19)
 #else

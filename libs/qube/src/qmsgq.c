@@ -5,7 +5,7 @@
 
 #include <h2.h>
 #include <qube.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 #if 0
 #define DEBUGMSG(...) blast_printf(__VA_ARGS__);

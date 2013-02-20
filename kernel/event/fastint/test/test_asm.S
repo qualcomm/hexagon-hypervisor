@@ -73,7 +73,7 @@ TH_call_saw_secondary_int:
 	r0 = and(r0,#0x1f)
 	r1 = #0
 	r1 = setbit(r1,r0)
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r1 = brev(r1)
 #endif
 	ciad(r1)
@@ -101,7 +101,7 @@ TH_call_fastint_intpending:
 	evb = r5
 	r4 = #0
 	r4 = setbit(r4,r2)
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r4 = brev(r4)
 #endif
 	swi(r4)

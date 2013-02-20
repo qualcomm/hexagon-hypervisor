@@ -31,7 +31,7 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	memd(r0+#CONTEXT_r0504) = r5:4
 	memd(r0+#CONTEXT_r0302) = r3:2
 	r7 = r0
-	crswap(r0,sgp)
+	crswap(r0,sgp0)
 	memd(r7+#CONTEXT_r0100) = r1:0
 	r15 = usr
 	r14 = p3:0
@@ -52,7 +52,7 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	//memd(r7+#CONTEXT_m1m0) = r15:14
 	//memd(r7+#CONTEXT_ssrelr) = r13:12
 	memw(r7+#CONTEXT_ssr) = r13
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	//r27:26 = g1:0
 	//r29:28 = g3:2
 	//memd(r7+#CONTEXT_gssr_gelr) = r27:26
@@ -79,8 +79,8 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 FUNC_END H2K_context_save
 
 FUNC_START H2K_context_restore_return .text.core.context .p2align 2
-	r7 = sgp
-#if __QDSP6_ARCH__ >= 4
+	r7 = sgp0
+#if ARCHV >= 4
 	//r21:20 = memd(r7+#CONTEXT_cs1cs0)
 	r11 = memw(r7+#CONTEXT_ccr)
 	//cs0 = r20
@@ -109,7 +109,7 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	p3:0 = r14
 	usr = r15
 	r1:0 = memd(r7+#CONTEXT_r0100)
-	crswap(r0,sgp)
+	crswap(r0,sgp0)
 	r3:2 = memd(r0+#CONTEXT_r0302)
 	r5:4 = memd(r0+#CONTEXT_r0504)
 	r7:6 = memd(r0+#CONTEXT_r0706)
@@ -125,7 +125,7 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	//r27:26 = memd(r0+#CONTEXT_r2726)
 	r29:28 = memd(r0+#CONTEXT_r2928)
 	r31:30 = memd(r0+#CONTEXT_r3130)
-	crswap(r0,sgp)
+	crswap(r0,sgp0)
 	rte
 FUNC_END H2K_context_restore_return
 

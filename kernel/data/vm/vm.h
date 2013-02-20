@@ -13,7 +13,7 @@
 void H2K_vmblock_clear(H2K_vmblock_t *vmblock) IN_SECTION(".text.data.vm");
 H2K_translation_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock) IN_SECTION(".text.data.vm");
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 
 static inline H2K_mem_tlbfmt_t H2K_vm_get_offset(u32_t addr, H2K_thread_context *me) {
 

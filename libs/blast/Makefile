@@ -1,7 +1,7 @@
 
 
-CC = qdsp6-gcc
-AR = qdsp6-ar
+CC = hexagon-gcc
+AR = hexagon-ar
 CFLAGS = -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -g $(OPTIMIZE) -G0
 ASFLAGS = -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include
 OPTIMIZE := -O2

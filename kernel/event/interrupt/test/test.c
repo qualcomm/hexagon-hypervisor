@@ -259,7 +259,7 @@ int main()
 	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		/* For each interrupt, try to do the interrupt */
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 		if (i == 31) continue;
 #endif
 		printf("i=%d\n",i);

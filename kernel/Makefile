@@ -5,9 +5,9 @@ ifeq ($(ARCHV),)
 ARCHV = 3
 endif
 
-CC = qdsp6-gcc 
-AR = qdsp6-ar
-SIM := qdsp6-sim
+CC = hexagon-gcc 
+AR = hexagon-ar
+SIM := hexagon-sim
 
 OPTIMIZE := -O2
 

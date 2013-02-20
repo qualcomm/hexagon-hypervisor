@@ -7,7 +7,7 @@
 #define TRACE_H 1
 
 #include <c_std.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <trace_constants.h>
 
 typedef union {

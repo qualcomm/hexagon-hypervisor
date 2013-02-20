@@ -13,7 +13,7 @@ FUNC_START H2K_preempt .text.core.interrupt .falign
 		r4 = elr
 	}
 	{
-		crswap(r0,sgp)
+		crswap(r0,sgp0)
 		if (cmp.eq(r0.new,#0)) jump:nt .Lpreempt_done
 	}
 	r2 = ssr
@@ -29,7 +29,7 @@ FUNC_START H2K_preempt .text.core.interrupt .falign
 	ssr = r3
 	// interrupt was not taken
 .Lpreempt_done:
-	sgp = r0			// swap task back in
+	sgp0 = r0			// swap task back in
 	{
 		p0 = cmp.eq(r0,#0)
 		if (!p0.new) r1:0 = memd(r0+#CONTEXT_r0100)

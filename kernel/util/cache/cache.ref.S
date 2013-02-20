@@ -6,7 +6,7 @@
 #include <asm_offsets.h>
 #include <asm_std.h>
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define L2_SETS (256*1024/32/4/4)
 #define L2_WAYS 4
 #define DC_SETS (32*1024/32/16)

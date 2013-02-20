@@ -121,7 +121,7 @@ void test_all_firstpage()
 }
 
 #define CHECK(A,OP,B) if (!((A) OP (B))) FAIL(#A #OP #B);
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
 {
 	H2K_mem_tlbfmt_t tlb = H2K_mem_get_pagetable(addr,t);

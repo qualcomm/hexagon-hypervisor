@@ -31,7 +31,7 @@
 
 #define BOOT_TLBHI ((1 << (TLB_ENTRY_VALID_BIT - 32)) | (1 << (TLB_ENTRY_GLOBAL_BIT - 32)))
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define BOOT_TLBLO ((BOOT_TLB_PGSIZE << TLB_ENTRY_SIZE_BITS) | (7 << TLB_ENTRY_C_BITS) | ((BOOT_TLB_PERM >> 1) << 29))
 #define SBIT_SIZE 0
 #else

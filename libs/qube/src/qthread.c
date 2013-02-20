@@ -4,7 +4,7 @@
  */
 
 #include <blast.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <qube.h>
 //#include "blast_thread.h"
 //#include "blast_tls.h"

@@ -6,7 +6,7 @@
 #ifndef H2K_VMDEFS_H
 #define H2K_VMDEFS_H 1
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #else
 #endif
 

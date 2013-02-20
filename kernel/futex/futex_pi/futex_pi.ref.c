@@ -11,7 +11,7 @@
 #include <readylist.h>
 #include <ring.h>
 #include <check_sanity.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <globals.h>
 #include <atomic.h>
 #include <safemem.h>

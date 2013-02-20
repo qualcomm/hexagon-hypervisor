@@ -7,9 +7,9 @@
 #define H2K_TLBFMT_H 1
 
 #include <c_std.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 typedef union {
 	u64_t raw;
 	struct {

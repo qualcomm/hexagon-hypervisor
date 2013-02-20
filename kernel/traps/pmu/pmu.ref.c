@@ -10,7 +10,7 @@
 #include <atomic.h>
 #include <hw.h>
 #include <id.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 typedef u32_t (*pmuconfigptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 

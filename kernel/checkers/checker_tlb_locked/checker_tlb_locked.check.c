@@ -10,7 +10,7 @@
 
 s32_t checker_tlb_locked()
 {
-#if __QDSP6_ARCH__ >= 3
+#if ARCHV >= 3
 	u32_t syscfg = H2K_get_syscfg();
 	if ((syscfg & (1<<11)) == 0) {
 		FAIL("checker_kernel_locked: TLB not locked.");
@@ -23,7 +23,7 @@ s32_t checker_tlb_locked()
 
 s32_t checker_tlb_unlocked()
 {
-#if __QDSP6_ARCH__ >= 3
+#if ARCHV >= 3
 	u32_t syscfg = H2K_get_syscfg();
 	if ((syscfg & (1<<11)) != 0) {
 		FAIL("checker_kernel_unlocked: TLB is Locked.");

@@ -8,7 +8,7 @@ ifndef Q6VERSION
  Q6VERSION=v2
 endif
 
-RUN = qdsp6-sim
+RUN = hexagon-sim
 RELEASE_DIR:=$(shell which ${RUN})
 RELEASE_DIR:=$(shell dirname ${RELEASE_DIR})/../..
 INCLUDE_DIR := $(RELEASE_DIR)/qc/include/iss/

@@ -16,10 +16,10 @@
  */
 
 FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
-	crswap(r0,sgp)
+	crswap(r0,sgp0)
 	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
-	/* R7 = sgp, r8 = ssr, r9 = htid */
+	/* R7 = sgp0, r8 = ssr, r9 = htid */
 	r19 = and(r8,#0xff)
 	p0 = cmp.gt(r19,#0x1f)
 	if (p0) jump 1f					// no, too big.
@@ -35,7 +35,7 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	call .Ljump_to_trap
 
 H2K_trap_done:
-	r17 = sgp
+	r17 = sgp0
 	memd(r17+#CONTEXT_r0100) = r1:0		// Save return value in case of preemption
 	call H2K_preempt			// Try to take interrupt before returning
 

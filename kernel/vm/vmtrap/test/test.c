@@ -81,7 +81,7 @@ static inline void setup_guest()
 	a.gevb = TH_vectors;
 	a.gosp = (u32_t)(&guest_stack[127]);
 //Write guest regs if in v4
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	u32_t g2;
 	u64_t g32;
 	g2 = (u32_t)(&guest_stack[127]);

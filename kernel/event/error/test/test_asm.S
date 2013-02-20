@@ -47,7 +47,7 @@ FUNC_START TH_error_handler .text .p2align 2
 	jump TH_error_check
 FUNC_END TH_do_error
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define SSR_BIT 13
 #else
 #define SSR_BIT 19

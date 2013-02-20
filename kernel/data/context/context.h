@@ -95,7 +95,7 @@ typedef struct _h2_thread_context
 				u32_t ssr;
 				struct {
 					u8_t ssr_cause;
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 					u8_t ssr_asid:5;
 					u8_t ssr_guest:1; /* Fake guest bit using a bit of ASID */
 					u8_t ssr_asid_byte_unused:2;
@@ -106,7 +106,7 @@ typedef struct _h2_thread_context
 					u8_t ssr_um:1;
 					u8_t ssr_ex:1;
 					u8_t ssr_ie:1;
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 					u8_t ssr_tnum:3;
 					u8_t ssr_hfi:1;
 					u8_t ssr_hfd:1;

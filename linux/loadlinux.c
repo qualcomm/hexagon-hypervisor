@@ -169,7 +169,7 @@ unsigned long boot_linux(char fname[]) {
 
 	/* FIXME: set up I$ prefetch and DMT for linux */
 	unsigned long val;
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	__asm__ __volatile__ 
 		(
 		 /* " %0 = usr\n" */

@@ -58,9 +58,9 @@ clean:
 libh2.a: ${ALL_LIBS}
 	cd tmp;\
 	for lib in $(notdir ${ALL_LIBS}); do\
-		qdsp6-ar x $$lib;\
+		hexagon-ar x $$lib;\
 	done;\
-	qdsp6-ar cru ../libh2.a *.o
+	hexagon-ar cru ../libh2.a *.o
 
 #  tar is used instead of cp so we can recursively copy and also exclude CVS
 #  Also, /pkg/gnu/bin/tar doesn't seem to work right.

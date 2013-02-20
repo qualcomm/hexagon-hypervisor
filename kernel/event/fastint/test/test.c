@@ -53,7 +53,7 @@ int TH_good_interrupt(u32_t intno)
 	if ((u32_t)(sp_check - ((u32_t)(&H2K_fastint_contexts[0]))) > ((u32_t)FASTINT_CONTEXT_SIZE)) {
 		FAIL("Not fastint context sp");
 	}
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	asm ( " %0 = sgp " : "=r"(sgp_check));
 #else
 	asm ( " %0 = sgp0 " : "=r"(sgp_check));
@@ -73,7 +73,7 @@ int TH_good_interrupt_ackl2(u32_t intno)
 	if ((u32_t)(sp_check - ((u32_t)(&H2K_fastint_contexts[0]))) > ((u32_t)FASTINT_CONTEXT_SIZE)) {
 		FAIL("Not fastint context sp");
 	}
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	asm ( " %0 = sgp " : "=r"(sgp_check));
 #else
 	asm ( " %0 = sgp0 " : "=r"(sgp_check));

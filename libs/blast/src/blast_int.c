@@ -7,7 +7,7 @@
 #include <h2.h>
 #include <max.h>
 #include "atomic_ops.h"
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 //  Maybe should have these defined elsewhere.
 /* EJP: yes. :-) */

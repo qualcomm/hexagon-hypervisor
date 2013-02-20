@@ -8,7 +8,7 @@
 
 #include <context.h>
 #include <max.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <globals.h>
 
 static inline void H2K_runlist_push(H2K_thread_context *newthread)

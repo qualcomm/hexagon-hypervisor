@@ -7,7 +7,7 @@
 #include <globals.h>
 #include <trace.h>
 #include <max.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <hw.h>
 #include <id.h>
 #include <atomic.h>

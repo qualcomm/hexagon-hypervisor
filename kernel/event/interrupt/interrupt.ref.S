@@ -62,7 +62,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	/* R9 = HTID, r8=SSR, r7 = thread context */
 	INTNO = and(SSRVAL,#0x1f)
 
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	ISL2INT = cmp.eq(INTNO,#31)
 	VIDVAL = VID
 
@@ -127,7 +127,7 @@ H2K_interrupt_restore:
 FUNC_END H2K_handle_int
 
 FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
 	HTNUM = ssr
@@ -154,7 +154,7 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	/* Stack set up, execute interrupt handler */
 	SSRVAL = ssr
 	INTNO = and(SSRVAL,#0x1f)
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	ISL2INT = cmp.eq(INTNO,#31)
 	VIDVAL = VID
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
@@ -191,7 +191,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	 * 
 	 * Also restore ELR 
 	 */
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r29.h = #hi(H2K_stacks)
 	r29.l = #lo(H2K_stacks)
 	HTNUM = ssr
@@ -206,7 +206,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	/* Stack set up, execute interrupt handler */
 	SSRVAL = ssr
 	INTNO = and(SSRVAL,#0x1f)
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	ISL2INT = cmp.eq(INTNO,#31)
 	VIDVAL = VID
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
@@ -224,7 +224,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 		ENTRIES,BUFADDR,TRACEPRED,INTINFO_VAL,INTINFO_FN,ME,,)
 	dccleana(BUFADDR)
 
-	ME = sgp	// thread context
+	ME = sgp0	// thread context
 	TMP = memw(ME+#CONTEXT_elr)
 	elr = TMP	// restore background task ELR, clobbered by interrupt
 	KG_INTHANDLERS = add(H2K_GP,#KG_inthandlers)
@@ -235,7 +235,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	r1:0 = combine(ME,INTNO)
 	callr INTINFO_FN
 	/* OK, get continuation and jump to it.  Restore r1:0 */
-	ME = sgp
+	ME = sgp0
 	r31 = memw(ME+#CONTEXT_continuation)
 	r1:0 = memd(ME+#CONTEXT_r0100)
 	jumpr r31

@@ -30,7 +30,7 @@ void H2K_cache_l2_cleaninv()
 	TH_saw_l2_cleaninv = 1;
 }
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 void TH_test_pf()
 {
 	u32_t checkval = 0;
@@ -153,7 +153,7 @@ int main()
 		syscfg = H2K_get_syscfg();
 		if (((syscfg >> 25) & 3) != i) FAIL("Bad partition config (D)");
 	}
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	for (i = 0; i < 4; i++) {
 		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_L2,i,&a);
 		syscfg = H2K_get_syscfg();

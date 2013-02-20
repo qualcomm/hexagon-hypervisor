@@ -51,7 +51,7 @@
 /* hi word needs to be non-0; 0 marks the end of the list */
 #define TLB_INVALID_ENTRY ((u64_t) 0xffffffffffffffffULL & ~(1ULL << TLB_ENTRY_VALID_BIT)),
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 
 #define MEMORY_MAP_BOOT(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \
         (((u64_t)((VPN) | ((ASID) << 20) | ((G) << 28) | (1<<29)) << 32) | \

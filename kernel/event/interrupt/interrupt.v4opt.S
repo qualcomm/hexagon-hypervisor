@@ -145,7 +145,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		ISL2INT = cmp.eq(INTNO,#31)		// L2 interrupt?
 		if (ISL2INT.new) INTNO = add(VIDVAL,#32)	// Yes, use VID + offset
 		IDXADDR = add(H2K_GP,#KG_trace_info_index)
-		ME = sgp			// scheduled task or garbage
+		ME = sgp0			// scheduled task or garbage
 	}
 	{
 		ENTRIES_BUFADDR = memd(H2K_GP+#KG_trace_info_entries_buf)
@@ -192,7 +192,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		dccleana(BUFADDR)
 	}
 	{
-		ME = sgp
+		ME = sgp0
 		if (cmp.eq(ME.new,#0)) jump:t 1f
 	}
 	{

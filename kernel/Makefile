@@ -13,7 +13,7 @@ OPTIMIZE := -O2
 
 include ../scripts/Makefile.inc.config
 
-CFLAGS := @build/flags/abi -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g
+CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g
 
 CFLAGS += -Werror -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_GUEST_END=$(H2K_GUEST_END)
 
@@ -112,7 +112,8 @@ build/ref/libh2check.a: $(CHECK_OFILES)
 
 clean:
 	rm -rf $(ALL_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref build/opt* \
-	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h
+	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h \
+	pmu_statsfile.txt
 
 dummy:
 	@echo $(REF_CFILES)

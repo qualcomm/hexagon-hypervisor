@@ -159,6 +159,8 @@ OPTIMIZE := -O1
 # FIXME: Remove H2K_LOAD_ADDR=$(H2K_LINK_ADDR) when tests are no longer in
 # monitor space
 
+KERNEL_INCLUDES := -I ${H2DIR}/kernel/include -I ${H2DIR}/libs/h2/common
+
 LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR)
 
 ifdef BOOT
@@ -171,9 +173,9 @@ LDFLAGS += -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(
 endif
 
 ifdef STANDALONE
-CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi -I ${H2DIR}/kernel/include
+CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES)
 LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
-ASFLAGS += -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/kernel/include
+ASFLAGS += -mv${ARCHV} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
 
 else # non-STANDALONE
 OSLIB=-moslib=h2
@@ -194,8 +196,8 @@ LDFLAGS+= -mv${ARCHV}
 #  Optimization level needs to match whatever the kernel is compiled with.
 
 ifdef INC_KERNEL
-CFLAGS += -I${H2DIR}/kernel/include
-ASFLAGS += -I${H2DIR}/kernel/include
+CFLAGS += $(KERNEL_INCLUDES)
+ASFLAGS += $(KERNEL_INCLUDES)
 endif
 
 ifdef DEBUG
@@ -376,7 +378,7 @@ ${COVFILES}: ${DUMP} gmon.out ignore_fns
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
 CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
-CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns
+CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt
 
 clean:
 	rm -rf ${CLEANUP}

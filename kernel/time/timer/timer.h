@@ -10,6 +10,7 @@
 #include <timeinfo.h>
 #include <tree.h>
 #include <hw.h>
+#include <h2_common_timer.h>
 
 void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum);
 void H2K_timer_init();
@@ -25,16 +26,6 @@ static inline void H2K_timer_cancel(H2K_thread_context *me)
 	H2K_timer_cancel_withlock(me);
 	BKL_UNLOCK();
 }
-
-enum {
-	H2K_TIMER_TRAP_GET_FREQ,
-	H2K_TIMER_TRAP_GET_RESOLUTION,
-	H2K_TIMER_TRAP_GET_TIME,
-	H2K_TIMER_TRAP_GET_TIMEOUT,
-	H2K_TIMER_TRAP_SET_TIMEOUT,
-	H2K_TIMER_TRAP_DELTA_TIMEOUT,
-	H2K_TIMER_TRAP_INVALID
-};
 
 u64_t H2K_timer_trap(u32_t traptype, u64_t arg, H2K_thread_context *me);
 void H2K_vmtrap_timer(H2K_thread_context *me);

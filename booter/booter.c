@@ -10,6 +10,7 @@
 #include <h2_vm.h>
 #include <ctype.h>
 #include <bootmap_macros.h>
+#include <h2_common_config.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -80,7 +81,7 @@ unsigned int spawn_vm(void *pc)
 
 	/* set up interrupts */
 	for (i = 0; i < num_shared_ints + PERCPU_INTERRUPTS; i++) {
-		ret = h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_vcpus - 1));
+		ret = h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, num_vcpus - 1));
 		if (ret != vm) FAIL("MAP_PHYS_INTR");
 	}
 

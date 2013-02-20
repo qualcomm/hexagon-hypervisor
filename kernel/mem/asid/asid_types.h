@@ -7,6 +7,7 @@
 #define H2K_ASID_TYPES_H 1
 
 #include <c_std.h>
+#include <h2_common_asid.h>
 
 /* For call to H2K_atomic_*_mask  */
 #define H2K_ASID_ENTRY_COUNT_POS (offsetof(H2K_asid_entry_fields_t, count) * 8)
@@ -31,18 +32,5 @@ typedef union {
 		H2K_asid_entry_fields_t fields;
 	};
 } H2K_asid_entry_t;
-
-typedef enum {
-	H2K_ASID_TRANS_TYPE_LINEAR,
-	H2K_ASID_TRANS_TYPE_TABLE,
-	H2K_ASID_TRANS_TYPE_XXX_LAST,
-	H2K_ASID_TRANS_TYPE_OFFSET
-} translation_type;
-
-typedef enum {
-	H2K_ASID_TLB_INVALIDATE_FALSE,
-	H2K_ASID_TLB_INVALIDATE_TRUE,
-	H2K_ASID_TLB_INVALIDATE_XXX_LAST
-} tlb_invalidate_flag;
 
 #endif

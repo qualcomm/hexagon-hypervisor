@@ -7,7 +7,7 @@ BOOTVM_S := $(INSTALLPATH)/src/bootvm.S
 BOOTVM_O := bootvm.o
 BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry.S
 BOOTVM_ENTRY_O := bootvm_entry.o
-BOOTVM_CLEAN := bootvm_image bootvm_image.bin
+BOOTVM_CLEAN := bootvm_image bootvm_image.bin $(VAPA_KERNEL)
 
 include $(H2DIR)/scripts/Makefile.inc.constants
 

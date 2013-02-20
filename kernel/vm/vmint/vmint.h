@@ -9,21 +9,7 @@
 #include <c_std.h>
 #include <vm.h>
 #include <context.h>
-
-typedef enum {
-	H2K_INTOP_NOP,
-	H2K_INTOP_GLOBEN,
-	H2K_INTOP_GLOBDIS,
-	H2K_INTOP_LOCEN,
-	H2K_INTOP_LOCDIS,
-	H2K_INTOP_AFFINITY,
-	H2K_INTOP_GET,
-	H2K_INTOP_PEEK,
-	H2K_INTOP_STATUS,
-	H2K_INTOP_POST,
-	H2K_INTOP_CLEAR,
-	H2K_INTOP_FIRST_INVALID_OP
-} intop_type;
+#include <h2_common_vmint.h>
 
 typedef s32_t (*H2K_vm_int_op_fn_t)(H2K_vmblock_t *vmblock, 
 		H2K_thread_context *me, u32_t intno, struct H2K_vm_int_opinfo_struct *info);

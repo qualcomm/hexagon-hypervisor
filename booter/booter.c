@@ -121,6 +121,7 @@ unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr)
 			printf("Are you really going to type page tables on the command line?\n");
 			exit(1);
 		}
+		trans = trans_type;
 		base.raw = offset.raw;
 		base.size = page_size;
 		base.pages = offset_pages;

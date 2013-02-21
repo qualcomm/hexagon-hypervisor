@@ -7,7 +7,7 @@
 #include <asm_offsets.h>
 #include <max.h>
 #include <boot.h>
-#include <bootmap_macros.h>
+#include <h2_common_pmap.h>
 
 #if ARCHV <= 3
 #define DO_TLBW(HI,LO,IDX) \

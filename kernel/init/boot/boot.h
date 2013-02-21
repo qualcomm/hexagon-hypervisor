@@ -7,7 +7,7 @@
 #define H2K_BOOT_H 1
 
 #include <max.h>
-#include <bootmap_macros.h>
+#include <h2_common_pmap.h>
 
 #if (H2K_LINK_ADDR != 0)
 #define BOOT_TLB_PERM  0x0

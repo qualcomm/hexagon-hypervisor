@@ -87,7 +87,7 @@ test: ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
 	$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
-	fgrep -i warning: test.out; true
+	[ `fgrep -c -i warning: test.out` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
 
 cov:

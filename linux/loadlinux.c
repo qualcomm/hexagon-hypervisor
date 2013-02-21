@@ -5,7 +5,7 @@
 
 #include <context.h>
 #include <linear.h>
-#include <bootmap_macros.h>
+#include <h2_common_pmap.h>
 #include <cpuint.h>
 #include <shint.h>
 #include <max.h>

@@ -8,6 +8,7 @@
 
 #include <h2_common_vmblock.h>
 #include <h2_common_config.h>
+#include <h2_common_asid.h>
 
 /** @file h2_config.h
  @brief Configuration of the Virtual Machine
@@ -15,12 +16,14 @@
 /** @addtogroup h2 
 @{ */
 
+typedef struct {
+	translation_type type;
+	H2K_offset_t base;
+} h2_guest_pmap_t;
+
 /**
 Operations that can be done during vmblock initialization
 */
-
-/* FIXME: These duplicate kernel/config/config.h and kernel/data/vm.h.  Should come from a
-	 shared header file */
 
 unsigned int h2_config_setfatal(void *handler);
 

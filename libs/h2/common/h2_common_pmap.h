@@ -3,10 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef H2K_BOOTMAP_MACROS_H
-#define H2K_BOOTMAP_MACROS_H
-
-#include <max.h>
+#ifndef H2_COMMON_PMAP_H
+#define H2_COMMON_PMAP_H 1
 
 #define SIZE_4K 0
 #define SIZE_16K 1
@@ -48,24 +46,7 @@
 
 #define NONE 0
 
-/* hi word needs to be non-0; 0 marks the end of the list */
-#define TLB_INVALID_ENTRY ((u64_t) 0xffffffffffffffffULL & ~(1ULL << TLB_ENTRY_VALID_BIT)),
-
-#if ARCHV <= 3
-
-#define MEMORY_MAP_BOOT(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \
-        (((u64_t)((VPN) | ((ASID) << 20) | ((G) << 28) | (1<<29)) << 32) | \
-				 (u32_t)((PPN) | ((PGSIZE) << 20) | ((CFIELD) << 26) | (((PERM) >> 1) << 29) | ((MAINAUX) << 24))),
-
-#else
-
-#define MEMORY_MAP_BOOT(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \
-        (((u64_t)((VPN) | ((ASID) << 20) | ((G) << 30) | (1<<31)) << 32) | \
-        (u32_t)(((PPN)<<1) | (1<<(PGSIZE)) | ((CFIELD) << 24) | ((PERM) << 28))),
-
-#endif
-
-#define MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) \
+#define MEMORY_MAP(VPN,PERM,CFIELD,PGSIZE,PPN) \
 	{ .raw = \
 		(((u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \
 		(u32_t)(((PPN)) | ((CFIELD) << 24) | ((PERM) << 28))) \

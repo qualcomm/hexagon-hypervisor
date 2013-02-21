@@ -9,7 +9,7 @@
 #include <string.h>
 #include <h2_vm.h>
 #include <ctype.h>
-#include <bootmap_macros.h>
+#include <h2_common_pmap.h>
 #include <h2_common_config.h>
 
 #include <fcntl.h>
@@ -25,6 +25,8 @@
 static unsigned int num_vcpus = 32;
 static unsigned int num_shared_ints = 0;
 static unsigned int page_size = SIZE_16M;
+static unsigned int offset_pages = 0;
+static int trans_type = -1;
 static unsigned int fence_lo = H2K_GUEST_START;
 static unsigned int fence_hi = H2K_GUEST_END;
 static unsigned int bestprio = VM_BEST_PRIO;
@@ -41,10 +43,10 @@ static unsigned int boots = 1;
 static unsigned int expect_status = 0;
 
 static H2K_offset_t offset = {{
-	.size = SIZE_16M,
-	.cccc = L1WB_L2C,
-	.xwru = URWX,
-	.pages = 0
+		.size = SIZE_16M,
+		.cccc = L1WB_L2C,
+		.xwru = URWX,
+		.pages = 0
 	}};
 
 void FAIL(const char *str)
@@ -61,20 +63,76 @@ void usage()
 	printf("  booter --listfile <listfile>\n");
 }		
 
-unsigned int spawn_vm(void *pc)
+static h2_guest_pmap_t *get_pmap(int fdesc, const Elf32_Ehdr *ehdr) {
+
+	int addr;
+
+	if ((addr = elf_get_symbol(fdesc, "__guest_pmap__", ehdr)) == -1) {
+		printf("__guest_pmap__ not found.\n");
+		return 0;
+	} else {
+		printf("__guest_pmap__ found @ 0x%08x\n",addr);
+	}
+
+	return (h2_guest_pmap_t *)addr;
+}
+
+static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr)
+{
+	char *dst;
+	int addr;
+	if ((addr=elf_get_symbol(fdesc,"__boot_cmdline__",ehdr)) == -1) {
+		printf("__boot_cmdline__ not found.\n");
+	} else {
+		printf("__boot_cmdline__ found @ 0x%08x\n",addr);
+	}
+	dst = (char *)addr;
+	dst[0] = 0;
+	strcpy(dst,cmdline);
+	printf("cmdline set to <<%s>>\n",dst);
+}
+
+unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr)
 {
 	unsigned long vm;
 	long ret;
 	int i;
+	h2_guest_pmap_t *pmap;
+	void *pc = (void *)ehdr->e_entry;
+	H2K_offset_t base;
+	int trans;
 
 	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, num_vcpus, num_shared_ints);
 
-	offset.size = page_size;
-	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
+	if (trans_type == -1) { // not set on cmdline, get from guest image
+		pmap = get_pmap(fdesc, ehdr);
+
+		if (pmap != NULL) { // found
+			trans = pmap->type;
+			base.raw = pmap->base.raw;
+		} else { // default
+			trans = H2K_ASID_TRANS_TYPE_OFFSET;
+			base.raw = offset.raw;
+			base.size = page_size;
+			base.pages = offset_pages;
+		}
+	} else { // translation type forced; better only be offset for now
+		if (trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
+			printf("Are you really going to type page tables on the command line?\n");
+			exit(1);
+		}
+		base.raw = offset.raw;
+		base.size = page_size;
+		base.pages = offset_pages;
+	}
+
+	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)base.raw, trans);
 	if (ret != vm) FAIL("SET_PMAP_TYPE");
 
-	ret = h2_config_vmblock_init(vm, SET_FENCES, fence_lo, fence_hi);
-	if (ret != vm) FAIL("SET_FENCES");
+	if (trans == H2K_ASID_TRANS_TYPE_OFFSET) {
+		ret = h2_config_vmblock_init(vm, SET_FENCES, fence_lo, fence_hi);
+		if (ret != vm) FAIL("SET_FENCES");
+	}
 
 	ret = h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, bestprio, trapmask);
 	if (ret != vm) FAIL("SET_PRIO_TRAPMASK");
@@ -108,21 +166,6 @@ void dcclean_range(unsigned long start, long range)
 
 extern void bootvm_vectors();
 
-static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr)
-{
-	char *dst;
-	int addr;
-	if ((addr=elf_get_symbol(fdesc,"__boot_cmdline__",ehdr)) == -1) {
-		printf("__boot_cmdline__ not found.\n");
-	} else {
-		printf("__boot_cmdline__ found @ 0x%08x\n",addr);
-	}
-	dst = (char *)addr;
-	dst[0] = 0;
-	strcpy(dst,cmdline);
-	printf("cmdline set to <<%s>>\n",dst);
-}
-
 int run_elf(char *elf, char *cmdline)
 {
 	int ret, status, cpus, i;
@@ -148,9 +191,9 @@ int run_elf(char *elf, char *cmdline)
 		dcclean_range(phdr.p_paddr,phdr.p_memsz);
 	}
 	set_cmdline(cmdline,fdesc,&ehdr);
-	close(fdesc);
 	printf("Boot vm for %s\n", elf);
-	vm = spawn_vm((void *)ehdr.e_entry);
+	vm = spawn_vm(fdesc, &ehdr);
+	close(fdesc);
 	
 	do {  // wait for all child VM cpus to vmstop
 		h2_vmtrap_wait();
@@ -269,6 +312,18 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--page_size")) {
 			if (argc < 2) die_usage();
 			page_size = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--offset_pages")) {
+			if (argc < 2) die_usage();
+			offset_pages = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--translation_type")) {
+			if (argc < 2) die_usage();
+			trans_type = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

@@ -21,7 +21,7 @@
 #include <id.h>
 #include <config.h>
 #include <timer.h>
-#include <bootmap_macros.h>
+#include <h2_common_pmap.h>
 #include <boot.h>
 #include <alloc.h>
 #include <trace.h>

@@ -9,11 +9,6 @@
 #include "atomic_ops.h"
 #include <hexagon_protos.h>
 
-//  Maybe should have these defined elsewhere.
-/* EJP: yes. :-) */
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)     __builtin_expect((x),0)
-
 /*
  * EJP: FIXME: needs rewrite
  * 

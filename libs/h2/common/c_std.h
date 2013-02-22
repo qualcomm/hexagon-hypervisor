@@ -6,6 +6,17 @@
 #ifndef H2K_C_STD_H
 #define H2K_C_STD_H 1
 
+/* For code that includes lib headers but doesn't define ARCHV (i.e. apps) */
+#ifndef ARCHV
+#ifdef __QDSP6_ARCH__
+#define ARCHV __QDSP6_ARCH__
+#else
+#ifdef __HEXAGON_ARCH__
+#define ARCHV __HEXAGON_ARCH__
+#endif
+#endif
+#endif
+
 #ifndef NULL
 #define NULL ((void *)0)
 #endif

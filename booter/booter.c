@@ -29,6 +29,7 @@ static unsigned int offset_pages = 0;
 static int trans_type = -1;
 static unsigned int fence_lo = H2K_GUEST_START;
 static unsigned int fence_hi = H2K_GUEST_END;
+static long load_offset = -1;
 static unsigned int bestprio = VM_BEST_PRIO;
 static unsigned int trapmask = 0xffffffff;
 
@@ -43,7 +44,7 @@ static unsigned int boots = 1;
 static unsigned int expect_status = 0;
 
 static H2K_offset_t offset = {{
-		.size = SIZE_16M,
+		.size = SIZE_4M,
 		.cccc = L1WB_L2C,
 		.xwru = URWX,
 		.pages = 0
@@ -83,6 +84,7 @@ static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr)
 	int addr;
 	if ((addr=elf_get_symbol(fdesc,"__boot_cmdline__",ehdr)) == -1) {
 		printf("__boot_cmdline__ not found.\n");
+		return;
 	} else {
 		printf("__boot_cmdline__ found @ 0x%08x\n",addr);
 	}
@@ -92,15 +94,17 @@ static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr)
 	printf("cmdline set to <<%s>>\n",dst);
 }
 
-unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr)
+unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long phys_offset)
 {
 	unsigned long vm;
 	long ret;
 	int i;
 	h2_guest_pmap_t *pmap;
-	void *pc = (void *)ehdr->e_entry;
+	void *pc = (void *)ehdr->e_entry - phys_offset + load_offset;
 	H2K_offset_t base;
 	int trans;
+
+	printf("pc %08lx\n", (unsigned long)pc);
 
 	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, num_vcpus, num_shared_ints);
 
@@ -174,9 +178,11 @@ int run_elf(char *elf, char *cmdline)
 	int fdesc;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
+	long phys_offset = -1;
+	int bytes_read;
 
 	fdesc = open(elf,O_RDONLY);
-	if ((ret = elf_get_ehdr(fdesc,&ehdr)) < 0) {
+	if (elf_get_ehdr(fdesc,&ehdr) < 0) {
 		printf("Invalid ELF file: %s\n", elf);
 		return 1;
 	}
@@ -186,14 +192,33 @@ int run_elf(char *elf, char *cmdline)
 		if (phdr.p_type != PT_LOAD) continue;
 		lseek(fdesc,phdr.p_offset,SEEK_SET);
 		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
-		read(fdesc,(char *)phdr.p_paddr,phdr.p_filesz);
-		memset((char *)phdr.p_paddr+phdr.p_filesz,0,phdr.p_memsz-phdr.p_filesz);
+
+		/* FIXME: Assuming first program header contains entry point*/
+		if (phys_offset == -1) { //unset
+			phys_offset = phdr.p_vaddr - phdr.p_paddr;
+			printf("phys_offset %lx\n", phys_offset);
+		}
+		/* FIXME: Assuming prog headers in sorted order.  Override with --load_offset if needed */
+		if (load_offset == -1) {
+			load_offset = H2K_GUEST_START - phdr.p_paddr;
+			printf("load_offset %lx\n", load_offset);
+		}
+		phdr.p_paddr += load_offset;
+
+		printf("load VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
+		bytes_read = 0;
+		do {
+			bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
+		} while (ret > 0);
+		if (ret == -1) FAIL("read()");
+
+		memset((char *)phdr.p_paddr+phdr.p_filesz, 0, phdr.p_memsz-phdr.p_filesz);
 		/* Really, only need to clean out text sections */
-		dcclean_range(phdr.p_paddr,phdr.p_memsz);
+		dcclean_range(phdr.p_paddr, phdr.p_memsz);
 	}
 	set_cmdline(cmdline,fdesc,&ehdr);
 	printf("Boot vm for %s\n", elf);
-	vm = spawn_vm(fdesc, &ehdr);
+	vm = spawn_vm(fdesc, &ehdr, phys_offset);
 	close(fdesc);
 	
 	do {  // wait for all child VM cpus to vmstop
@@ -202,7 +227,7 @@ int run_elf(char *elf, char *cmdline)
 		printf("VM %lu status %d\n", vm, status);
 		cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
 		printf("VM %lu Live CPUs: %d\n", vm, cpus);
-	} while (ret != 0);
+	} while (cpus != 0);
 	h2_vmfree(vm);
 
 	if (status != expect_status) { // unexpected status
@@ -337,6 +362,12 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--fence_hi")) {
 			if (argc < 2) die_usage();
 			fence_hi = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--load_offset")) {
+			if (argc < 2) die_usage();
+			load_offset = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

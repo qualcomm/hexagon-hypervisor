@@ -111,7 +111,7 @@ void setup_ints(unsigned long vm, char num_cpus) {
 	int i;
 
 	for (i = 0; i < TOTAL_INTS; i++) {
-		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
+		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
 				FAIL("MAP_PHYS_INTR");
 		}
 	}

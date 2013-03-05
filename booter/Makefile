@@ -56,4 +56,5 @@ install: booter
 	cp booter $(INSTALLPATH)/bin
 
 clean:
-	rm -f *.elf booter $(BOOTVM_CLEAN) hello stats.* *.o
+	rm -f *.elf booter $(BOOTVM_CLEAN) hello stats.* *.o pmu_statsfile.txt
+

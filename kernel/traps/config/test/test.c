@@ -28,10 +28,6 @@ void FAIL(const char *str)
 #define UNIT sizeof(u32_t)
 #define ROUND(expr) ((((expr) + UNIT - 1) / UNIT) * UNIT)
 
-#define H2_MAP_PHYS_INTR_CPU_BITS 16
-#define H2_CONFIG_PHYSINT_CPUID(phys, cpu) \
-	(((phys) << H2_MAP_PHYS_INTR_CPU_BITS) | ((cpu) & ((0x1 << H2_MAP_PHYS_INTR_CPU_BITS) - 1)))
-
 #define DEBUG 1
 #ifdef DEBUG
 #define DPRINTF(...) printf(__VA_ARGS__)
@@ -155,7 +151,7 @@ int main()
 
 	DPRINTF("MAP_PHYS_INTR\n\n");
 	/* MAP_PHYS_INTR bad vint*/
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, vmblock->num_ints + PERCPU_INTERRUPTS, H2_CONFIG_PHYSINT_CPUID(vmblock->num_ints + PERCPU_INTERRUPTS - 1, OK_CPUS - 1), NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, vmblock->num_ints + PERCPU_INTERRUPTS, CONFIG_PHYSINT_CPUID(vmblock->num_ints + PERCPU_INTERRUPTS - 1, OK_CPUS - 1), NULL);
 	if (ret!= 0) FAIL("Missed vint # too big");
 
 	/* MAP_PHYS_INTR bad pint */
@@ -163,7 +159,7 @@ int main()
 	if (ret!= 0) FAIL("Missed pint # too big");
 
 	/* MAP_PHYS_INTR */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, OK_INTS - 1, H2_CONFIG_PHYSINT_CPUID(13, 0), NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, OK_INTS - 1, CONFIG_PHYSINT_CPUID(13, 0), NULL);
 	if (ret == 0) FAIL("Unexpected error 6");
 
 	if (vmblock->int_v2p[OK_INTS - 1] != 13) FAIL("Bad int_v2p");

@@ -25,6 +25,7 @@ uart_pty
 cov.out
 cov.rpt
 make.out
+pmu_statsfile.txt
 Doxyfile
 ID
 GPATH

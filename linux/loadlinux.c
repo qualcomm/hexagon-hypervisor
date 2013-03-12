@@ -51,8 +51,8 @@ unsigned long long int ucos_vcpu_stacks[UCOS_NUM_VCPU][VCPU_STACK_SIZE];
 
 #ifdef UCOS
 
-/* can't use offset because ucos needs to write to frame-buffer addresses */
-#define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN)
+/* /\* can't use offset because ucos needs to write to frame-buffer addresses *\/ */
+/* #define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) */
 
 H2K_linear_fmt_t ucos_pmap[] = {
 #include "../ucos/pmap_ucos.def"

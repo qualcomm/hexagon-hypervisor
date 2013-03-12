@@ -6,7 +6,7 @@
 //#include "blast_mutex.h"
 #include "h2.h"
 #include "blast_tls.h"
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include "blast_error.h"
 
 /* BLAST TLS reservation */

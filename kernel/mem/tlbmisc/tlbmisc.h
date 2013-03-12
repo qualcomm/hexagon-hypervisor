@@ -9,7 +9,7 @@
 #include <c_std.h>
 #include <context.h>
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
 {
 	u32_t ret;

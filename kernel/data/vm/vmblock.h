@@ -13,6 +13,7 @@
 #include <tlbfmt.h>
 #include <max.h>
 #include <asid_types.h>
+#include <h2_common_vmblock.h>
 
 /* Version supported */
 
@@ -53,24 +54,6 @@
 typedef u16_t physint_t;
 typedef u32_t bitmask_t;
 typedef u64_t long_bitmask_t;
-
-typedef union {
-	struct {
-		u32_t size:4;
-		u32_t cccc:4;
-		u32_t xwru:4;
-		u32_t pages:20;
-	};
-	u32_t raw;
-} H2K_offset_t;
-
-typedef union {
-	u32_t raw;
-	struct {
-		u32_t cpuidx:16;
-		u32_t physint:16;
-	};
-} H2K_physint_config_t;
 
 typedef struct H2K_vmblock_struct {
 	u32_t max_cpus;

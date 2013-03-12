@@ -7,7 +7,7 @@
 #include <intconfig.h>
 #include <resched.h>
 #include <max.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <thread.h>
 #include <hw.h>
 #include <globals.h>
@@ -48,7 +48,7 @@ static void H2K_fastint_disable(u32_t whatint)
 	u32_t siad_intmask;
 	siad_intmask = 1<<whatint;
 	if (whatint < 32) {
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 		siad(siad_intmask);
 #endif
 		return;
@@ -60,7 +60,7 @@ static void H2K_fastint_enable(u32_t whatint)
 	u32_t ciad_intmask;
 	if (whatint < 32) {
 		ciad_intmask = 1<<whatint;
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 		ciad_intmask = Q6_R_brev_R(ciad_intmask);
 #endif
 		ciad(ciad_intmask);

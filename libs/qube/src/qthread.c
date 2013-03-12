@@ -4,7 +4,7 @@
  */
 
 #include <blast.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <qube.h>
 //#include "blast_thread.h"
 //#include "blast_tls.h"
@@ -133,7 +133,7 @@ int qthread_start(qthread_t thr, void (*start_func)(void *), void *arg)
 	if (tmp == NULL) return EINVALID;
 
 	if (tmp->attrs.stackaddr == 0) {
-		if ((tmp->attrs.stackaddr = (blast_addr_t)(blast_malloc(tmp->attrs.stacksize))) == NULL) {
+		if ((tmp->attrs.stackaddr = (blast_addr_t)(blast_malloc(tmp->attrs.stacksize))) == (unsigned int)NULL) {
 			return EMEM;
 		}
 	}

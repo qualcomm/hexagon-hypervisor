@@ -21,7 +21,7 @@ IMPL=opt
 H2_LIB=$(H2_DIR)build/opt_v$(ARCHV)/libh2.a
 endif
 
-MOST_LIBS= qube/libqube.a syscall/angel/libangel.a blast/libblast.a posix/libposix.a timer/libtimer.a
+MOST_LIBS= qube/libqube.a syscall/angel/libangel.a blast/libblast.a timer/libtimer.a
 ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(MOST_LIBS)
 LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(SOS_DIR))
 
@@ -38,9 +38,6 @@ blast/libblast.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
 qube/libqube.a: tmp $(H2_LIB)
-	+${MAKE_LIB};
-
-posix/libposix.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
 syscall/angel/libangel.a: tmp $(H2_LIB)
@@ -61,9 +58,9 @@ clean:
 libh2.a: ${ALL_LIBS}
 	cd tmp;\
 	for lib in $(notdir ${ALL_LIBS}); do\
-		qdsp6-ar x $$lib;\
+		hexagon-ar x $$lib;\
 	done;\
-	qdsp6-ar cru ../libh2.a *.o
+	hexagon-ar cru ../libh2.a *.o
 
 #  tar is used instead of cp so we can recursively copy and also exclude CVS
 #  Also, /pkg/gnu/bin/tar doesn't seem to work right.

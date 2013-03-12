@@ -14,24 +14,7 @@
 /** @addtogroup h2 
 @{ */
 
-/** 
-Constants for choosing a cache to change partitioning on
-*/
-enum {
-	HWCONFIG_PARTITION_D,	/**< Select the Data Cache */
-	HWCONFIG_PARTITION_I,	/**< Select the Instruction Cache */
-	HWCONFIG_PARTITION_L2	/**< Select the L2 Cache */
-};
-
-/** 
-Constants for choosing a partitioning type
-*/
-enum {
-	HWCONFIG_PARTITION_SHARED,	/**< Select fully shared */
-	HWCONFIG_PARTITION_AUX_HALF,	/**< Select Half and Half partition */
-	HWCONFIG_PARTITION_AUX_QUARTER,	/**< Select 1/4 and 3/4 partition */
-	HWCONFIG_PARTITION_AUX_EIGHTH	/**< Select 1/8 and 7/8 partition */
-};
+#include <h2_common_hwconfig.h>
 
 /** 
 Raw interface for the hwconfig trap.  Do not use.  Instead, use an interface function such

@@ -6,49 +6,9 @@
 #ifndef H2_VMTRAPS_H
 #define H2_VMTRAPS_H 1
 
-/* FIXME: need separate header with enums used in kernel and libs */
-#ifndef H2K_ASID_TYPES_H
-typedef enum {
-	H2K_ASID_TRANS_TYPE_LINEAR,
-	H2K_ASID_TRANS_TYPE_TABLE,
-	H2K_ASID_TRANS_TYPE_XXX_LAST,
-	H2K_ASID_TRANS_TYPE_OFFSET
-} translation_type;
-
-typedef enum {
-	H2K_ASID_TLB_INVALIDATE_FALSE,
-	H2K_ASID_TLB_INVALIDATE_TRUE,
-	H2K_ASID_TLB_INVALIDATE_XXX_LAST
-} tlb_invalidate_flag;
-
-#endif
-
-#ifndef H2K_VMINT_H
-typedef enum {
-	H2K_INTOP_NOP,
-	H2K_INTOP_GLOBEN,
-	H2K_INTOP_GLOBDIS,
-	H2K_INTOP_LOCEN,
-	H2K_INTOP_LOCDIS,
-	H2K_INTOP_AFFINITY,
-	H2K_INTOP_GET,
-	H2K_INTOP_PEEK,
-	H2K_INTOP_STATUS,
-	H2K_INTOP_POST,
-	H2K_INTOP_CLEAR
-} intop_type;
-#endif
-
-#ifndef H2K_TIMER_H
-typedef enum {
-	H2K_TIMER_TRAP_GET_FREQ,
-	H2K_TIMER_TRAP_GET_RESOLUTION,
-	H2K_TIMER_TRAP_GET_TIME,
-	H2K_TIMER_TRAP_GET_TIMEOUT,
-	H2K_TIMER_TRAP_SET_TIMEOUT,
-	H2K_TIMER_TRAP_DELTA_TIMEOUT,
-} timerop_type;
-#endif
+#include <h2_common_asid.h>
+#include <h2_common_vmint.h>
+#include <h2_common_timer.h>
 
 void h2_vmtrap_return();
 int h2_vmtrap_setvec(void *ptr);

@@ -12,7 +12,7 @@
 
 H2K_mem_stlb_asid_info_t *H2K_mem_stlb_asid_infos;// IN_SECTION(".data.mem.stlb"); /* MOVE TO GLOBALS */
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 
 static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry)
 {

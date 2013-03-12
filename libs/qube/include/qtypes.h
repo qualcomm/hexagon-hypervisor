@@ -77,7 +77,7 @@ typedef enum {
  * Cache mode type
  */
 typedef enum {
-#if __QDSP6_ARCH__ >= 2
+#if ARCHV >= 2
         QMEM_CACHE_WRITEBACK=7,
         QMEM_CACHE_NONE_SHARED=6,
         QMEM_CACHE_WRITETHROUGH=5,

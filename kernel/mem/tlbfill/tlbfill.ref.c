@@ -14,8 +14,9 @@
 #include <pagewalk.h>
 #include <asid.h>
 #include <tlbfill.h>
+#include <symbols.h>
 
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me) { return 0; }
 #else
 static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me)
@@ -31,9 +32,9 @@ static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context
 	if ((index+1) < MAX_TLB_ENTRIES) {
 		H2K_gp->tlb_index = index+1;
 	} else {
-		H2K_gp->tlb_index = TLB_FIRST_REPLACEABLE_ENTRY;
+		H2K_gp->tlb_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
 	}
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	/* set guest bit in the ASID if this was a guest miss */
 	if (me->ssr_guest) entry.guestonly = 1;
 	rawentry = entry.raw;
@@ -69,7 +70,7 @@ static inline s32_t H2K_mem_tlb_fixup(u32_t va, u32_t ptb, H2K_mem_tlbfmt_t *ent
 			|| ptb == (u32_t)me->vmblock // offset mapping
 			|| ptb == me->vmblock->pmap) return 0;
 
-#if __QDSP6_ARCH__ <=3
+#if ARCHV <=3
 	guest_size = entry->size;
 	guest_offset_mask = (PAGE_SIZE << (guest_size * 2)) - 1;
 	guest_addr = (va & guest_offset_mask);
@@ -90,7 +91,7 @@ static inline s32_t H2K_mem_tlb_fixup(u32_t va, u32_t ptb, H2K_mem_tlbfmt_t *ent
 
 	phys_offset_mask = (PAGE_SIZE << (phys_size * 2)) - 1;
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	entry->size = phys_size;
 	u32_t xwru = phys_translation.xwru;
 	entry->xwr &= (xwru >> 1);
@@ -144,6 +145,7 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		H2K_mem_tlb_insert(entry,me);
 		return;
 	}
+	H2K_mutex_unlock_tlb();
 	return H2K_mem_pagefault(va,me);
 }
 

@@ -18,9 +18,7 @@ ifneq (,$(Q6VERSION))
 ARCHV=$(subst v,,$(Q6VERSION))
 endif
 
-ifeq ($(ARCHV),)
-ARCHV = 4
-endif
+ARCHV ?= 4
 
 ifeq ($(MODEL),)
    MODEL = ref
@@ -33,13 +31,20 @@ else
    endif
 endif
 
-ifeq ($(H2K_LINK_ADDR),)
-export H2K_LINK_ADDR = 0xff000000
+H2K_HEAP_SIZE = 0x00010000
+
+ifeq ($(INSTALLPATH),)
+export INSTALLPATH := $(H2DIR)/install
 endif
 
-ifeq ($(H2K_HEAP_SIZE),)
-H2K_HEAP_SIZE = 0x100000
+ifeq ($(KERNELPATH),)
+export KERNELPATH := $(H2DIR)/kernel
 endif
+
+
+include $(H2DIR)/scripts/Makefile.inc.config
+
+include $(H2DIR)/scripts/Makefile.inc.constants
 
 ARCH=qdsp6
 RUN=${ARCH}-sim
@@ -56,17 +61,11 @@ BUSPENALTY=
 TIMING=
 #include /prj/dsp/qdsp6/arch/make/simf.inc
 #Till I figure out something better, here is that file
-ifeq ($(origin RUN), undefined)
-  RUN = qdsp6-sim
-endif
+RUN ?= hexagon-sim
 
-ifeq ($(origin TIMING), undefined)
-  TIMING = --timing
-endif
+TIMING ?= --timing
 
-ifeq ($(origin BUSPENALTY), undefined)
-  BUSPENALTY = --buspenalty 50
-endif
+BUSPENALTY ?= --buspenalty 50
 
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
@@ -74,7 +73,7 @@ ifeq (hexagon-sim, $(notdir $(firstword ${RUN})))
 SIMF=${_BASIC_SIMF}
 endif
 
-ifeq (qdsp6-sim, $(notdir $(firstword ${RUN})))
+ifeq (hexagon-sim, $(notdir $(firstword ${RUN})))
 SIMF=${_BASIC_SIMF}
 endif
 
@@ -153,27 +152,43 @@ clean_top:
 
 OPTIMIZE := -O1
 
+# For tests are linked in monitor space we don't have __bootvm_entry.  Instead,
+# go directly to qdsp6_pre_main (i.e. the old way).  Tests that use booter are
+# unaffected by this, because booter has already been built.
+
+# FIXME: Remove H2K_LOAD_ADDR=$(H2K_LINK_ADDR) when tests are no longer in
+# monitor space
+
+KERNEL_INCLUDES := -I ${H2DIR}/kernel/include -I ${H2DIR}/libs/h2/common
+
+LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR)
+
 ifdef BOOT
 BOOTER=${H2DIR}/install/bin/booter
-CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g
-LDFLAGS += -Wl,--section-start=.start=0x00010000
+CFLAGS += $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g
+LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
-CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+CFLAGS += $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g
+LDFLAGS += -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 endif
 
-ifdef STANDALONE #STANDALONE
-CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi -I ${H2DIR}/kernel/include
+ifdef STANDALONE
+CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES)
 LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
-ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/kernel/include
-else # STANDALONE
+ASFLAGS += -mv${ARCHV} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
+
+else # non-STANDALONE
 OSLIB=-moslib=h2
-ifdef BOOT # BOOT
+
+ifdef BOOT # use booter
 LDFLAGS +=${OSLIB} -L ${H2DIR}/install/lib
-else # BOOT
+
+else # run in place of booter
 LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 endif # BOOT
+
 CFLAGS += -I ${H2DIR}/install/include
-ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
+ASFLAGS += -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 endif #STANDALONE
 LDFLAGS+= -mv${ARCHV}
 #  Turn on call() support for assertion checking
@@ -181,13 +196,15 @@ LDFLAGS+= -mv${ARCHV}
 #  Optimization level needs to match whatever the kernel is compiled with.
 
 ifdef INC_KERNEL
-CFLAGS += -I${H2DIR}/kernel/include
-ASFLAGS += -I${H2DIR}/kernel/include
+CFLAGS += $(KERNEL_INCLUDES)
+ASFLAGS += $(KERNEL_INCLUDES)
 endif
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
 endif
+
+CFLAGS += $(EXTRA_CFLAGS)
 
 ################################################################################
 #  Convenience shortcuts
@@ -333,7 +350,7 @@ endif
 	${CC} ${ASFLAGS} -c -o $@ $<; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
-${EXEC}: ${OBJS}
+${EXEC}: ${OBJS} constants
 	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
 
@@ -361,7 +378,7 @@ ${COVFILES}: ${DUMP} gmon.out ignore_fns
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
 CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
-CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns
+CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt
 
 clean:
 	rm -rf ${CLEANUP}

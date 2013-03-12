@@ -7,9 +7,9 @@
 #include <asm_offsets.h>
 #include <max.h>
 #include <boot.h>
-#include <bootmap_macros.h>
+#include <h2_common_pmap.h>
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define DO_TLBW(HI,LO,IDX) \
 	tlbidx = r##IDX ; \
 	tlblo = r##LO ; \
@@ -20,7 +20,7 @@
 	tlbw(R##HI##:##LO,R##IDX)
 #endif
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define SETCONST(DST,VAL) \
 	DST.H = # hi(VAL); \
 	DST.L = # lo(VAL); 
@@ -29,8 +29,8 @@
 	DST = # ## # (VAL) ;
 #endif
 
-#define MAKE_TLBHI(DST,CONSTVA) \
-	SETCONST(DST,BOOT_TLBHI | (((CONSTVA) >> BOOT_TLB_PGBITS)<<BOOT_TLB_SHIFT))
+#define MAKE_TLBHI(DST,CONSTVA,PGBITS,SHIFT) \
+	SETCONST(DST,BOOT_TLBHI | (((CONSTVA) >> PGBITS)<<SHIFT))
 
 #define MAKE_TLBLO(DST,SRCVAL,TMP) \
 	SETCONST(DST,BOOT_TLBLO) ; \
@@ -39,10 +39,13 @@
 
 #define MAKE_TLBLO_DEV(DST,SRCVAL,TMP) \
 	SETCONST(DST,BOOT_TLBLO_DEV) ; \
-	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS); \
-	DST |= asl(TMP, #  BOOT_TLB_SHIFT+SBIT_SIZE); 
+	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS_4M); \
+	DST |= asl(TMP, #  BOOT_TLB_SHIFT_4M + SBIT_SIZE); 
 
-FUNC_START start .text.init.boot .p2align 12
+FUNC_START start .entry .p2align 12
+	jump 1f
+	.space 0x40
+1:
 	/* NOTE: 4096 bytes should contain all the way to jump to hyperspace... */
 	r0 = #0					// 0
 	syscfg = r0				// 1
@@ -65,14 +68,14 @@ FUNC_START start .text.init.boot .p2align 12
 
 	SETCONST(H2K_GP,H2K_kg)
 
-#if __QDSP6_ARCH__ == 3
+#if ARCHV == 3
 	r0.h = #0x0100
 	r0.l = #0x0000
 	s60 = r0
-#elif __QDSP6_ARCH__ == 4
+#elif ARCHV == 4
 	r0 = ##0x00002004
 	s63 = r0
-#elif __QDSP6_ARCH__ == 5
+#elif ARCHV == 5
 	r0 = #0     /* (No chickenbits) */
 	s63 = r0
 #else
@@ -101,24 +104,34 @@ FUNC_START start .text.init.boot .p2align 12
 	// Set up TLB entries for jump to virtual space
 	r10 = pc
 
-	MAKE_TLBHI(r3,H2K_LINK_ADDR)
-	MAKE_TLBLO(r2,r10,r11)
+	SETCONST(r4, H2K_KERNEL_NPAGES)
 	r1 = #0
-	DO_TLBW(3,2,1)
 
-	r1 = #1
-	r10 += asl(r1,#BOOT_TLB_PGBITS)
-	MAKE_TLBHI(r3,H2K_LINK_ADDR+(1<<BOOT_TLB_PGBITS))
+2:
+	r2 = asl(r1, #BOOT_TLB_PGBITS)
+	SETCONST(r3, H2K_LINK_ADDR)
+	r3 = add(r3, r2)
+	r3 = lsr(r3, #BOOT_TLB_PGBITS)
+	r3 = asl(r3, #BOOT_TLB_SHIFT)
+	SETCONST(r2, BOOT_TLBHI)
+	r3 = or(r3, r2)
 	MAKE_TLBLO(r2,r10,r11)
 	DO_TLBW(3,2,1)
 
-#if __QDSP6_ARCH__ > 3
+	r1 = add(r1, #1)
+	r10 = pc
+	r10 += asl(r1,#BOOT_TLB_PGBITS)
+	r4 = add(r4, #-1)
+	p0 = cmp.eq(r4, #0)
+	if (!p0) jump 2b
+
+#if ARCHV > 3
 	// Set up entry for L2 interrupt controller
 	SETCONST(r10,Q6_SS_BASE_PA)
-	MAKE_TLBHI(r3,Q6_SS_BASE_VA)
+	MAKE_TLBHI(r3,Q6_SS_BASE_VA,BOOT_TLB_PGBITS_4M,BOOT_TLB_SHIFT_4M)
 	MAKE_TLBLO_DEV(r2,r10,r11)
-	r1 = #2
 	DO_TLBW(3,2,1)
+	r1 = add(r1, #1)
 #endif
 
 	r10 = pc
@@ -127,17 +140,14 @@ FUNC_START start .text.init.boot .p2align 12
 	p0 = cmp.eq(r12,r11)
 	if (p0) jump 1f
 
-	MAKE_TLBHI(r3,0)
+	/* This one page had better be enough */
+	MAKE_TLBHI(r3,0,BOOT_TLB_PGBITS,BOOT_TLB_SHIFT)
 	r3 |= lsr(r10,#BOOT_TLB_ADDRBITS)
 	MAKE_TLBLO(r2,r10,r11)
-	r1 = #3
 	DO_TLBW(3,2,1)
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
-	r0 = #1;
-	isdben = r0
-
-#if __QDSP6_ARCH__ <= 4
+#if ARCHV <= 4
  	r0 = #0x77f
 #else
 	r0 = ##0xA77F    /* DMT and non-QoS */
@@ -146,7 +156,7 @@ FUNC_START start .text.init.boot .p2align 12
  	//r0 = #0x77F    /* IMT and QoS */
 #endif
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r0.h = #0x0083	/* 256KB L2 */
 #else
 	r0.h = #0x008b	/* 256KB L2 + ITCM */
@@ -155,13 +165,12 @@ FUNC_START start .text.init.boot .p2align 12
 	isync
 
 	// make the jump to hyperspace
-	r1.h = #hi(1f)
-	r1.l = #lo(1f)
-	jumpr r1
+	r2.h = #hi(1f)
+	r2.l = #lo(1f)
+	jumpr r2
 
 1:
-	// invalidate temporary TLB entries
-	r1 = #3
+	// invalidate temporary TLB entry
 	r3:2 = #0
 	DO_TLBW(3,2,1)
 	isync
@@ -195,7 +204,7 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	SETCONST(H2K_GP,H2K_kg)
 
 	SETCONST(r29,H2K_stacks)
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r0 = ssr
 	r0 = extractu(r0,#3,#19)
 #else

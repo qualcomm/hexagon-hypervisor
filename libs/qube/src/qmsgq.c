@@ -5,7 +5,7 @@
 
 #include <h2.h>
 #include <qube.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 #if 0
 #define DEBUGMSG(...) blast_printf(__VA_ARGS__);
@@ -280,7 +280,7 @@ int qchannel_recv(qch_t ch, int *msgtype, void **data, size_t *msgsize, qobject_
 	if (__builtin_expect(((unsigned int)msg.raw & 7) != 0,1)) {
 		int ret = qchannel_recv_fast(msgq,msgtype,data,msgsize,msg.raw);
 		if (obj)
-			*obj = NULL;
+			*obj = (qobject_t)NULL;
 		return ret;
 	}
 	else return qchannel_recv_slow(msgq,msgtype,data,msgsize,msg,obj);
@@ -296,7 +296,7 @@ int qchannel_tryrecv(qch_t ch, int *msgtype, void **data, size_t *msgsize, qobje
 	if (__builtin_expect(((unsigned int)msg.raw & 7) != 0, 1)) {
 		int ret = qchannel_recv_fast(msgq,msgtype,data,msgsize,msg.raw);
 		if (obj)
-			*obj = NULL;
+			*obj = (qobject_t)NULL;
 		return ret;
 	}
 	else return qchannel_recv_slow(msgq,msgtype,data,msgsize,msg,obj);

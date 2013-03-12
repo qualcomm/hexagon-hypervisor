@@ -11,6 +11,7 @@
 #include <switch.h>
 #include <setjmp.h>
 #include <globals.h>
+#include <trace.h>
 
 void FAIL(const char *str)
 {
@@ -45,14 +46,17 @@ void TH_cont_check()
 static void modify_goto_wait()
 {
 	u32_t *code_snippet_address;
-	__asm__ __volatile__ (
-		" call 1f \n"
-		" r31.h = #hi(TH_wait_check) \n"
-		" r31.l = #lo(TH_wait_check) \n"
-		" jumpr r31 \n"
-		"1: \n"
-		" %0 = r31 \n"
-		: "=r"(code_snippet_address) : : "r28","r31");
+	__asm__ __volatile__
+		(
+		 " memw(r29 + #0) = r31 \n"
+		 " call 1f \n"
+		 " r31.h = #hi(TH_wait_check) \n"
+		 " r31.l = #lo(TH_wait_check) \n"
+		 " jumpr r31 \n"
+		 "1: \n"
+		 " %0 = r31 \n"
+		 " r31 = memw(r29 +#0) \n"
+		 : "=r"(code_snippet_address) : : "r31");
 	memcpy(H2K_wait_forever,code_snippet_address,3*sizeof(u32_t));
 }
 
@@ -75,6 +79,7 @@ int main()
 	unsigned int scratch;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	__asm__ __volatile(" %0 = syscfg; %0 = clrbit(%0,#4); syscfg = %0 " : "=r"(scratch));
+	H2K_trace_init();
 	modify_goto_wait();
 	a.continuation = TH_cont_check;
 	b.continuation = TH_cont_check;
@@ -107,7 +112,7 @@ int main()
 	TH_do_switch();
 	if (TH_saw_wait != 0) FAIL("went to wait");
 	if (TH_saw_cont == 0) FAIL("did not go to continuation");
-
+	printf("trace index=%d\n",H2K_kg.trace_info_index);
 	puts("TEST PASSED\n");
 	return 0;
 }

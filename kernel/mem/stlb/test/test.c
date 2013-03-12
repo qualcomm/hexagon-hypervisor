@@ -47,7 +47,7 @@ void TH_mem_stlb_init()
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].vpn = rand() % (1U<<20);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].global = rand() % (1U<<1);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].valid = rand() % (1U<<1);
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].ppn = rand() % (1U<<20);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].size = rand() % (1U<<4);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].part = rand() % (1U<<2);
@@ -93,7 +93,7 @@ int main()
 	H2K_mem_stlb_init();
 
 	srand(TEST_SEED);
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	entry.ppn = 0;
 	entry.ccc = 0;
 	entry.xwr = 0x7;

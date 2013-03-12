@@ -6,4 +6,7 @@ PYTHON_GENERATOR_SCRIPT=gentests.py
 PYTHON_GENERATED_FILES=generated_tests.dat
 
 include Makefile.inc
+
+H2K_HEAP_SIZE := 0x00100000
+
 OSLIB=

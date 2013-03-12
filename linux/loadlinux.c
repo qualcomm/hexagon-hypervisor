@@ -5,7 +5,7 @@
 
 #include <context.h>
 #include <linear.h>
-#include <bootmap_macros.h>
+#include <h2_common_pmap.h>
 #include <cpuint.h>
 #include <shint.h>
 #include <max.h>
@@ -62,6 +62,8 @@ extern void ucos_loadaddr();
 extern void ucos_entry();
 #endif
 
+extern void linux_stext();
+
 void FAIL(const char *str)
 {
 	PRINTF("linux: FAIL %s\n", str);
@@ -87,7 +89,7 @@ unsigned long vm_setup(char num_cpus, short num_ints, u32_t trans, unsigned long
 	}
 
 	if (pt == H2K_ASID_TRANS_TYPE_OFFSET) {
-		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x0, 0xff000000);
+		ret = h2_config_vmblock_init(vm, SET_FENCES, (unsigned int)linux_stext, H2K_GUEST_END);
 		if (ret != vm) {
 			PRINTF("ret %08x\n", (unsigned int)ret);
 			FAIL("SET_FENCES");
@@ -106,22 +108,11 @@ void setup_ints(unsigned long vm, char num_cpus) {
 	int i;
 
 	for (i = 0; i < TOTAL_INTS; i++) {
-		if (i != RESCHED_INT
-#ifdef H2K_L2_CONTROL
-				&& i != L2_CORE_INTERRUPT
-#endif
-				&& i != VM_IPI_INT
-				&& i != TIMER_INT) {
-			/* Send per-cpu HW interrupts to the first configured cpu, which is
-				 num_cpus - 1, in case Linux doesn't boot all its configured cpus */
-			if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, H2_CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
+		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
 				FAIL("MAP_PHYS_INTR");
-			}
 		}
 	}
 }
-
-extern void linux_stext();
 
 void boot_ucos() {
 
@@ -175,7 +166,7 @@ unsigned long boot_linux(char fname[]) {
 
 	/* FIXME: set up I$ prefetch and DMT for linux */
 	unsigned long val;
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	__asm__ __volatile__ 
 		(
 		 /* " %0 = usr\n" */
@@ -228,17 +219,6 @@ int main(int argc, char *argv[]) {
 		sscanf(argv[1], "%s", fname);
 	}
 
-#ifdef DO_CLOCK_SETUP
-	ss_pub_base[FLL_CTL] = 0x150800; /* M/N */
-	ss_pub_base[FLL_CTL] = 0x150801; /* M/N/EN */
-	ss_pub_base[FLL_CTL] = 0x150807; /* M/N/EN/RST/SRC */
-	ss_pub_base[FLL_CTL] = 0x150805; /* M/N/EN/SRC */
-	while ((ss_pub_base[FLL_STATUS] & 1) == 0) /* wait for FLL */;
-	ss_pub_base[GFMUX_CTL] = ss_pub_base[GFMUX_CTL] | 0x0C; /* CLK SRC D */
-	PRINTF("Set Up Clocks\n");
-#endif
-
-	h2_init(0);
 	h2_config_setfatal(fatal);
 	PRINTF("loadlinux: H2 started\n");
 

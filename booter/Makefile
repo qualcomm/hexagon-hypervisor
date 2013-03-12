@@ -5,37 +5,30 @@ ARCHV=$(subst v,,$(Q6VERSION))
 else
 ARCHV=4
 endif
-CC=qdsp6-gcc
-RUN=qdsp6-sim
+CC=hexagon-gcc
+RUN=hexagon-sim
 SIMF=--timing
 #hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
 else
 ARCHV=$(subst v,,$(Q6VERSION))
 endif
 
+H2DIR ?= ..
+
 ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(CURDIR)/../install
+export INSTALLPATH := $(H2DIR)/install
 endif
 
 ifeq ($(KERNELPATH),)
-export KERNELPATH := $(CURDIR)/../kernel
+export KERNELPATH := $(H2DIR)/kernel
 endif
 
-ifeq ($(H2K_LINK_ADDR),)
-H2K_LINK_ADDR = 0xff000000
-endif
-export H2K_LINK_ADDR
+CFLAGS = $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
+LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 
-ifeq ($(H2K_LOAD_ADDR),)
-H2K_LOAD_ADDR = 0xff000000
-endif
-export H2K_LOAD_ADDR
+include ../scripts/Makefile.inc.config
+include ../scripts/Makefile.inc.bootvm
 
-ifeq ($(H2K_HEAP_SIZE),)
-H2K_HEAP_SIZE = 0x100000
-endif
-
-CFLAGS = -Os $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2 -I../install/include -I$(KERNELPATH)/include -L../install/lib
 
 all: hello booter
 
@@ -45,23 +38,23 @@ all: hello booter
 %.o: %.S
 	${CC} ${CFLAGS} -c -o $@ $<
 
-vapa.x: vapa.x.in
-	cat $< | perl -p -i -e 's/0xxxxxxxxx/$$ENV{H2K_LOAD_ADDR}/' > $@
+hello: hello.o
+	${CC} $(LDFLAGS) $(CFLAGS)  -Wl,--section-start=.start=$(H2K_GUEST_START) -o hello hello.o
 
-hello: hello.c
-	qdsp6-gcc $(CFLAGS)  -I../install/include -L../install/lib -Wl,--section-start=.start=0x00010000 -o hello hello.c 
+bootvm_image: booter.o elf.o booter_event.o $(BOOTVM_IMAGE_DEPS)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o bootvm_image booter.o elf.o booter_event.o $(BOOTVM_ENTRY_O)
 
-booter: booter.o elf.o booter_event.o boot.o vapa.x
-	${CC} $(CFLAGS) -lh2kernel -moslib=h2kernel -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=`perl -e '$$_ = (oct $$ENV{H2K_LINK_ADDR}); $$_ -= (oct $$ENV{H2K_LOAD_ADDR}); $$_ = sprintf("0x%0x", $$_); print'` -Wl,--script=vapa.x -o booter booter.o elf.o booter_event.o boot.o
+booter: $(BOOTVM_O) $(BOOTVM_DEPS)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -o booter $(BOOTVM_O)
 
-	${CC} $(CFLAGS) -lh2kernel -moslib=h2kernel -Wl,--section-start=.boot=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=h2_v2p_offset=`perl -e '$$_ = (oct $$ENV{H2K_LINK_ADDR}); $$_ -= (oct $$ENV{H2K_LOAD_ADDR}); $$_ = sprintf("0x%0x", $$_); print'` -Wl,--script=vapa.x -Wl,--entry=`hexagon-nm booter | egrep ' __boot$$' | perl -p -e 's/\s.*//; $$_ = oct "0x$$_"; $$_ -= ((oct $$ENV{H2K_LINK_ADDR}) - (oct $$ENV{H2K_LOAD_ADDR}));$$_ = sprintf("0x%0x", $$_)'` -o booter booter.o elf.o booter_event.o boot.o
 
 test: hello booter
-	qdsp6-sim -- booter hello
+	hexagon-sim -- booter hello
 
 install: booter
 	mkdir -p $(INSTALLPATH)/bin
 	cp booter $(INSTALLPATH)/bin
 
 clean:
-	rm -f *.elf booter hello stats.* vapa.x *.o
+	rm -f *.elf booter $(BOOTVM_CLEAN) hello stats.* *.o pmu_statsfile.txt
+

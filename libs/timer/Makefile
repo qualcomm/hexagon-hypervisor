@@ -1,12 +1,13 @@
 
 INCLUDES = -I../h2/include -I../blast/include -I../qube/include -Iinclude
 
-CC = qdsp6-gcc -mv$(ARCHV) $(INCLUDES) -Wall
-AR = qdsp6-ar
+CC = hexagon-gcc
+AR = hexagon-ar
 
 OPTIMIZE := -O2
 
-CFLAGS = -g $(OPTIMIZE) -G0
+CFLAGS = -mv$(ARCHV) $(INCLUDES) -Wall -g $(OPTIMIZE) -G0
+ASFLAGS = -mv$(ARCHV) $(INCLUDES) -Wall
 
 ifeq (v4, $(Q6VERSION))
 CFLAGS += -Wa,--gdwarf2

@@ -7,6 +7,7 @@
 #include <asm_std.h>
 #include <max.h>
 #include <vmdefs.h>
+#include <trace_asm_macro.h>
 
 /*
  * We are switching from thread in r0 to thread in r1
@@ -16,21 +17,22 @@
  * Otherwise, load continuation into LR and jump to check_sanity_unlock
  */
 
-#define NOW r19:18
-#define HTNUM r7
 #define KG_CPUSTART r6
-#define KG_CPUWAIT r9
+#define HTNUM r7
 #define KG_WAITCYCLES r8
+#define KG_CPUWAIT r9
 #define START r11:10
 #define P_FROMWAIT p1
 #define P_VMWORK p3
-#define SRC r16
-#define DST r17
-#define DSTSRC r17:16
 #define PMUVAL r12
 #define PMU_ON r13
 #define VMSTATUS r14
 #define TIDVAL r15
+#define DSTSRC r17:16
+#define SRC r16
+#define DST r17
+#define NOW r19:18
+#define NOW_LO r18
 
 FUNC_START H2K_switch .text.core.switch .p2align 5
 /* EJP: seems like trace is commented out... maybe need to add trace... */
@@ -94,13 +96,61 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		if (!p0.new) PMU_ON = memub(DST+#CONTEXT_pmu_on)
 		if (!p0.new) VMSTATUS = memub(DST+#CONTEXT_vmstatus)
 	}
-	/* Load rest-of-context for new thread */
-	SGP0 = DST
+	/* Load rest-of-context for new thread and trace */
+	/* r0-r5 are available */
+	/* r20-27 are available now, will be loaded later */
+#define OLDIDX r0
+#define NEWIDX r1
+#define IDXADDR r31
+#define DATAHI r3
+#define DATALO r2
+#define DATA r3:2
+#define ENTRIES r5
+#define BUFADDR r4
+#define ENTRIES_BUFADDR r5:4
 	{
-		P_VMWORK = tstbit(VMSTATUS,#H2K_VMSTATUS_VMWORK_BIT)
-		KG_WAITCYCLES = add(H2K_GP,#KG_waitcycles)
+		IDXADDR = add(H2K_GP,#KG_trace_info_index)
+		ENTRIES_BUFADDR = memd(H2K_GP+#KG_trace_info_entries_buf)
+		KG_WAITCYCLES = DST
+		crswap(DST,sgp0)
+	}
+1:
+	{
+		OLDIDX = memw_locked(IDXADDR)		// trace: get index
+		NEWIDX = add(ENTRIES,#-1)
+		DATALO = HTNUM
+		DST = KG_WAITCYCLES
+	}
+	{
+		p0 = cmp.eq(NEWIDX,OLDIDX)
+		if (!p0.new) NEWIDX = add(OLDIDX,#1)
+		if (p0.new) NEWIDX = #0
+		DATAHI = memw(DST+#CONTEXT_id)		// lets already fill this with switch id
+	}
+	{
+		memw_locked(IDXADDR,p0) = NEWIDX	// trace: new index
+		BUFADDR = addasl(BUFADDR,OLDIDX,#3)
+		DATALO |= and(NOW_LO,#-16)
+	}
+	{
+		if (!p0) jump 1b			// repeat if not atomic
+		if (p0) memd(BUFADDR) = DATA		// store trace info
 		r21:20 = memd(DST+#CONTEXT_lc1sa1)
 	}
+	{
+		dccleana(BUFADDR)
+		P_VMWORK = tstbit(VMSTATUS,#H2K_VMSTATUS_VMWORK_BIT)
+		KG_WAITCYCLES = add(H2K_GP,#KG_waitcycles)
+	}
+#undef OLDIDX
+#undef NEWIDX
+#undef IDXADDR
+#undef DATAHI
+#undef DATALO
+#undef DATA
+#undef ENTRIES
+#undef BUFADDR
+#undef ENTRIES_BUFADDR
 	{
 		r23:22 = memd(DST+#CONTEXT_cs1cs0)
 		r25:24 = memd(DST+#CONTEXT_m1m0)
@@ -155,6 +205,12 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	.falign
 .Lto_sleep:
+	/* Don't care as much about register values here, certainly not r0-r5 and r20-27 */
+	{
+		r1:0 = combine(HTNUM,NOW_LO)
+		r31 = #0
+	}
+	ASM_INLINE_TRACE(r31,r1:0,r1,r0,r3:2,r3,r2,p0,r5,r4,r20,,)
 	{
 		memd(KG_CPUWAIT+HTNUM<<#3) = NOW       // oncpu wait
 		r0 = lsl(#1,HTNUM)

@@ -13,6 +13,7 @@
 #include <vm.h>
 #include <timeinfo.h>
 #include <timer.h>
+#include <trace.h>
 
 void FAIL(const char *str)
 {
@@ -134,10 +135,11 @@ int main()
 {
 	u64_t ret;
 	u64_t resolution;
-	double error;
+	float error;
 	H2K_thread_context *me = &a;
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	H2K_trace_init();
 
 	/* Test bad trap */
 	if ((ret = H2K_timer_trap(100,0,me)) != ~0ULL) FAIL("bad return on bad trap");
@@ -148,9 +150,11 @@ int main()
 	H2K_gp->time.devptr = mydev;
 	H2K_gp->time.last_ticks = 0;
 	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_GET_FREQ,0,me)) < 100) FAIL("bad freq");
-	error = ((double)ret / 1e9);
+	error = ((float)ret / 1e9);
 	if (error < 1.0) error = 2.0 - error;
 	if (error > 1.1) FAIL("Freq not near nanoseconds");
+	/* FP stuff may have clobbered r28... */
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	if ((resolution = H2K_timer_trap(H2K_TIMER_TRAP_GET_RESOLUTION,0,me)) <= 2) {
 		FAIL("resolution");

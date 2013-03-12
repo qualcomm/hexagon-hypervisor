@@ -1,0 +1,36 @@
+# Dear emacs, this is a -*- Makefile -*-
+
+VAPA_KERNEL_X_IN := $(INSTALLPATH)/scripts/vapa_kernel.x.in
+VAPA_KERNEL := vapa_kernel.x
+VAPA_BOOTVM := $(INSTALLPATH)/scripts/vapa_bootvm.x
+BOOTVM_S := $(INSTALLPATH)/src/bootvm.S
+BOOTVM_O := bootvm.o
+BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry.S
+BOOTVM_ENTRY_O := bootvm_entry.o
+BOOTVM_CLEAN := bootvm_image bootvm_image.bin $(VAPA_KERNEL)
+
+include $(H2DIR)/scripts/Makefile.inc.constants
+
+
+CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS) -DH2K_GUEST_START=$(H2K_GUEST_START) -DH2K_GUEST_END=$(H2K_GUEST_END)
+
+BOOTVM_IMAGE_CFLAGS = -Wl,--section-start=.entry=$(H2K_BOOTVM_OFFSET) -Wl,--script=$(VAPA_BOOTVM) 
+
+BOOTVM_CFLAGS = -nostartfiles -Wl,-mv$(ARCHV) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR)
+
+BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) constants
+
+BOOTVM_DEPS = $(VAPA_KERNEL) $(INSTALLPATH)/lib/libh2kernel.a constants
+
+
+$(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S)
+	${CC} ${CFLAGS} -c -o $@ $<
+
+bootvm_image.bin: bootvm_image
+	hexagon-objcopy -O binary bootvm_image bootvm_image.bin
+
+$(BOOTVM_O): $(BOOTVM_S) bootvm_image.bin
+	${CC} ${CFLAGS} -c -o $@ $<
+
+$(VAPA_KERNEL): $(VAPA_KERNEL_X_IN) $(KERNEL_TMP) constants
+	cat $< | perl -p -i -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/$(H2K_BOOTVM_OFFSET)/;' > $@

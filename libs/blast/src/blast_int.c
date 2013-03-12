@@ -7,12 +7,7 @@
 #include <h2.h>
 #include <max.h>
 #include "atomic_ops.h"
-#include <q6protos.h>
-
-//  Maybe should have these defined elsewhere.
-/* EJP: yes. :-) */
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)     __builtin_expect((x),0)
+#include <hexagon_protos.h>
 
 /*
  * EJP: FIXME: needs rewrite

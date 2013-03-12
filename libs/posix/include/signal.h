@@ -7,7 +7,7 @@
 #define _SIGNAL_H_
 
 #include <sys/types.h>
-#include <q6protos.h> /* Q6_R_ct0_R */
+#include <hexagon_protos.h> /* Q6_R_ct0_R */
 
 /*this line will cause a warning in time.h:99: warning: 
   "struct sigevent" declared inside parameter list */

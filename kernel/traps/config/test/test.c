@@ -14,6 +14,7 @@
 #include <vm.h>
 #include <asid.h>
 #include <alloc.h>
+#include <trace.h>
 
 H2K_kg_t H2K_kg;
 
@@ -35,6 +36,10 @@ void FAIL(const char *str)
 #endif
 
 #define NUM_SIZE_TESTS 8
+
+#define OK_CPUS 33
+#define OK_INTS 65
+
 /* CPUS, INTS, SIZE */
 int size_test[NUM_SIZE_TESTS][3] = {
 								                                                /* pnd,  en,    maskptr, mask,    phys, ctx,     info*/
@@ -70,16 +75,15 @@ int main()
 	u32_t i, vm, ret;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_thread_init();
+	H2K_trace_init();
 	H2K_mem_alloc_init(Heap, DEFAULT_ALLOC_HEAP_SIZE);
-	H2K_fatal_kernel_handler = NULL;
 	/* Bad config value */
 	vm = H2K_trap_config(CONFIG_MAX,NULL,0,0,0,NULL);
 	if (vm != 0) FAIL("Bad return value");
 
-	/* Configure fatal kernel handler */
+	/* Configure fatal kernel handler , no longer exists */
 	vm = H2K_trap_config(CONFIG_SETFATAL,foo,0,0,0,NULL);
-	if (vm != 0) FAIL("Bad return value");
-	if (H2K_fatal_kernel_handler != foo) FAIL("Kernel fatal handler error");
+	if (vm == 0) FAIL("Bad return value/setfatal");
 
 	/* SET_CPUS_INTS */
 	/* SET_CPUS_INTS bad cpus */
@@ -91,29 +95,29 @@ int main()
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_CPUS_INTS, 1, MAX_VM_INTS + 1, NULL);
 	if (ret!= 0) FAIL("Missed bad ints");
 
-	TH_expected_intinfo_ints = 65;
-	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, NULL, SET_CPUS_INTS, 33, 65, NULL);
+	TH_expected_intinfo_ints = OK_INTS;
+	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, NULL, SET_CPUS_INTS, OK_CPUS, OK_INTS, NULL);
 	if (vm == 0) FAIL("Unexpected error 5");
 
 	vmblock = H2K_gp->vmblocks[vm];
 
-	if (vmblock->max_cpus != 33) FAIL("Bad max_cpus");
+	if (vmblock->max_cpus != OK_CPUS) FAIL("Bad max_cpus");
 	if (vmblock->num_cpus != 0) FAIL("Bad num_cpus");
-	if (vmblock->num_ints != 65) FAIL("Bad num_ints");
+	if (vmblock->num_ints != OK_INTS) FAIL("Bad num_ints");
 
-	if (vmblock->contexts != (H2K_thread_context *)((char *)vmblock + sizeof(H2K_vmblock_t))) FAIL("Bad cpu_contexts base");
-	if (vmblock->intinfo != (H2K_vm_int_opinfo_t *)((char *)(vmblock->contexts) + 33*288)) FAIL("Bad intinfo base");
-	if (vmblock->percpu_mask !=  (bitmask_t **)((char *)(vmblock->intinfo) + 3*8)) FAIL ("Bad percpu_mask base");
+	if (vmblock->contexts != (H2K_thread_context *)(void *)((char *)vmblock + sizeof(H2K_vmblock_t))) FAIL("Bad cpu_contexts base");
+	if (vmblock->intinfo != (H2K_vm_int_opinfo_t *)(void *)((char *)(vmblock->contexts) + OK_CPUS*288)) FAIL("Bad intinfo base");
+	if (vmblock->percpu_mask !=  (bitmask_t **)(void *)((char *)(vmblock->intinfo) + 3*8)) FAIL ("Bad percpu_mask base");
 
-	for (i = 0; i < 33; i++) {
-		DPRINTF("i %d  ptr %08x  expect %08x\n", i, (u32_t)vmblock->percpu_mask[i], (u32_t)((char *)(vmblock->percpu_mask) + 33*4 + i*12));
-		if (vmblock->percpu_mask[i] !=  (bitmask_t *)((char *)(vmblock->percpu_mask) + 33*4 + i*12)) FAIL("Bad percpu_mask pointer");
+	for (i = 0; i < OK_CPUS; i++) {
+		DPRINTF("i %d  ptr %08x  expect %08x\n", i, (u32_t)vmblock->percpu_mask[i], (u32_t)((char *)(vmblock->percpu_mask) + OK_CPUS*4 + i*12));
+		if (vmblock->percpu_mask[i] !=  (bitmask_t *)(void *)((char *)(vmblock->percpu_mask) + OK_CPUS*4 + i*12)) FAIL("Bad percpu_mask pointer");
 	}
 
-	if (vmblock->pending != (bitmask_t *)((char *)(vmblock->percpu_mask) + 33*4 + 33*12)) FAIL("Bad pending base");
-	if (vmblock->enable !=  (bitmask_t *)((char *)(vmblock->pending) + 12)) FAIL("Bad enable base");
+	if (vmblock->pending != (bitmask_t *)(void *)((char *)(vmblock->percpu_mask) + OK_CPUS*4 + OK_CPUS*12)) FAIL("Bad pending base");
+	if (vmblock->enable !=  (bitmask_t *)(void *)((char *)(vmblock->pending) + 12)) FAIL("Bad enable base");
 
-	if (vmblock->int_v2p != (physint_t *)((char *)(vmblock->enable) + 12)) FAIL("Bad int_v2p base");
+	if (vmblock->int_v2p != (physint_t *)(void *)((char *)(vmblock->enable) + 12)) FAIL("Bad int_v2p base");
 	
 	/* SET_PMAP_TYPE bad type*/
 	DPRINTF("SET_PMAP_TYPE\n\n");
@@ -147,28 +151,28 @@ int main()
 
 	DPRINTF("MAP_PHYS_INTR\n\n");
 	/* MAP_PHYS_INTR bad vint*/
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, vmblock->num_ints, 0, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, vmblock->num_ints + PERCPU_INTERRUPTS, CONFIG_PHYSINT_CPUID(vmblock->num_ints + PERCPU_INTERRUPTS - 1, OK_CPUS - 1), NULL);
 	if (ret!= 0) FAIL("Missed vint # too big");
 
 	/* MAP_PHYS_INTR bad pint */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, 0, MAX_INTERRUPTS + 1, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, OK_INTS - 1, MAX_INTERRUPTS + 1, NULL);
 	if (ret!= 0) FAIL("Missed pint # too big");
 
 	/* MAP_PHYS_INTR */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, 32, (13 << 16), NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, OK_INTS - 1, CONFIG_PHYSINT_CPUID(13, 0), NULL);
 	if (ret == 0) FAIL("Unexpected error 6");
 
-	if (vmblock->int_v2p[32] != 13) FAIL("Bad int_v2p");
+	if (vmblock->int_v2p[OK_INTS - 1] != 13) FAIL("Bad int_v2p");
 
 	/* 0 interrupts */
 	DPRINTF("0 interrupts\n\n");
 	TH_expected_intinfo_ints = 0;
-	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, NULL, SET_CPUS_INTS, 33, 0, NULL);
+	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, NULL, SET_CPUS_INTS, OK_CPUS, 0, NULL);
 	if (vm == 0) FAIL("Unexpected error 7");
 
 	vmblock = H2K_gp->vmblocks[vm];
 
-	if (vmblock->max_cpus != 33) FAIL("Bad max_cpus 0");
+	if (vmblock->max_cpus != OK_CPUS) FAIL("Bad max_cpus 0");
 	if (vmblock->num_cpus != 0) FAIL("Bad num_cpus 0");
 	if (vmblock->num_ints != 0) FAIL("Bad num_ints 0");
 	if (vmblock->percpu_mask != NULL) FAIL("percpu_mask non-NULL");

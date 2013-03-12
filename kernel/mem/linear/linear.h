@@ -11,29 +11,7 @@
 #include <tlbfmt.h>
 #include <max.h>
 #include <translate.h>
-
-typedef union {
-	u64_t raw;
-	struct {
-		union {
-			u32_t low;
-			struct {
-				u32_t ppn:24;
-				u32_t cccc:4;
-				u32_t xwru:4;
-			};
-		};
-		union {
-			u32_t high;
-			struct {
-				u32_t vpn:20;
-				u32_t size:4;
-				u32_t unused:7;
-				u32_t chain:1;
-			};
-		};
-	};
-} H2K_linear_fmt_t;
+#include <h2_common_linear.h>
 
 H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list, H2K_vmblock_t *vmblock) IN_SECTION(".text.mem.linear");
 

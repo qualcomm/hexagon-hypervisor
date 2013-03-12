@@ -6,6 +6,17 @@
 #ifndef H2K_C_STD_H
 #define H2K_C_STD_H 1
 
+/* For code that includes lib headers but doesn't define ARCHV (i.e. apps) */
+#ifndef ARCHV
+#ifdef __QDSP6_ARCH__
+#define ARCHV __QDSP6_ARCH__
+#else
+#ifdef __HEXAGON_ARCH__
+#define ARCHV __HEXAGON_ARCH__
+#endif
+#endif
+#endif
+
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
@@ -47,7 +58,7 @@ typedef u32_t pa_t;
  * thread = containerof(H2K_thread_context, some_list, listptr)
  *
  */
-#define containerof(type, element, ptr) ((type *)((u8_t *)(ptr) - offsetof(type,element)))
+#define containerof(type, element, ptr) ((type *)((void *)((u8_t *)(ptr) - offsetof(type,element))))
 
 #define bits(type) (sizeof(type) * 8)
 

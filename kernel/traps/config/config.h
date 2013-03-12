@@ -11,6 +11,7 @@
 #include <vm.h>
 #include <vmint.h>
 #include <max.h>
+#include <h2_common_config.h>
 
 #define UNIT sizeof(u32_t)
 #define ROUND(expr) ((((expr) + UNIT - 1) / UNIT) * UNIT)
@@ -62,19 +63,6 @@ typedef enum {
 	CONFIG_VMBLOCK_INIT,
 	CONFIG_MAX
 } config_type_t;
-
-typedef enum {
-	SET_PMAP_TYPE,
-	SET_FENCES,
-	SET_PRIO_TRAPMASK,
-	SET_CPUS_INTS,
-	MAP_PHYS_INTR,
-	NUM_OPS
-} vmblock_init_op_t;
-
-#define MAP_PHYS_INTR_CPU_BITS 16
-#define CONFIG_PHYSINT_CPUID(phys, cpu) \
-	(((phys) << MAP_PHYS_INTR_CPU_BITS) | ((cpu) & ((0x1 << MAP_PHYS_INTR_CPU_BITS) - 1))
 
 u32_t H2K_trap_config(u32_t configtype, void *ptr, vmblock_init_op_t val2, u32_t val3, u32_t val4, H2K_thread_context *me) IN_SECTION(".text.config.config");
 u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, vmblock_init_op_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) IN_SECTION(".text.config.config");

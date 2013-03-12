@@ -67,10 +67,10 @@ LIB_DINKUMWARE_ROOT := "$(Q6_TOOLS_ROOT)"/dinkumware/lib/$(Q6VERSION)
 LIB_DSP_ROOT := "$(Q6_TOOLS_ROOT)"/qc/lib/$(Q6VERSION)
 endif
 
-CC := "$(Q6_TOOLS_ROOT)"/gnu/bin/qdsp6-gcc
-LD := "$(Q6_TOOLS_ROOT)"/gnu/bin/qdsp6-ld
-SIM := "$(Q6_TOOLS_ROOT)"/qc/bin/qdsp6-sim
-OBJDUMP := "$(Q6_TOOLS_ROOT)"/gnu/bin/qdsp6-objdump
+CC := "$(Q6_TOOLS_ROOT)"/gnu/bin/hexagon-gcc
+LD := "$(Q6_TOOLS_ROOT)"/gnu/bin/hexagon-ld
+SIM := "$(Q6_TOOLS_ROOT)"/qc/bin/hexagon-sim
+OBJDUMP := "$(Q6_TOOLS_ROOT)"/gnu/bin/hexagon-objdump
 
 ifeq (cygwin, $(OSTYPE))
 QURT_MODEL := $(Q6_RTOS_ROOT)/debugger/cygwin/Qurt_model.dll
@@ -107,7 +107,7 @@ build:
 	$(CC) -c $(CFLAGS) allmutex.c $(INCLUDES) -o $(BUILD_DIR)/app1.o
 	$(LD) $(LDFLAGS_PREFIX) $(BUILD_DIR)/app1.o $(LDFLAGS) -Map $(BUILD_DIR)/bootimg_org.map -o $(BUILD_DIR)/bootimg.pbn
 ifndef NO_RELOC
-	./qdsp6-relocate $(BUILD_DIR)/bootimg.pbn +0x10000000
+	./hexagon-relocate $(BUILD_DIR)/bootimg.pbn +0x10000000
 endif
 	$(OBJDUMP) -dClx $(BUILD_DIR)/bootimg.pbn > $(BUILD_DIR)/bootimg.dump
 

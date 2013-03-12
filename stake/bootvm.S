@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <c_std.h>
+#include <bootvm.h>
 
-void (*H2K_fatal_kernel_handler)(u32_t) __attribute__((noreturn));
-
+.incbin "bootvm_image.bin"

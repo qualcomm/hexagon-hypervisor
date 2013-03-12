@@ -38,7 +38,7 @@ void H2K_vm_event(u32_t gbadva, u32_t cause, u32_t vec_offset, H2K_thread_contex
 		me->gssr &= ~H2K_GSSR_IE;
 	}
 
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	/* Save Single Step status and disable */
 	if (me->ssr_ss) {
 		me->gssr |= H2K_GSSR_SS;

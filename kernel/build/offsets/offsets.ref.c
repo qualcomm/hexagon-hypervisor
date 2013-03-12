@@ -78,11 +78,17 @@ PRINT_KG_OFFSET(runlist_prios);
 PRINT_KG_OFFSET(ready);
 PRINT_KG_OFFSET(futexhash);
 PRINT_KG_OFFSET(inthandlers);
-PRINT_KG_OFFSET(trace_info);
 PRINT_KG_OFFSET(stacks_traptab);
 PRINT_KG_OFFSET(stacks_addr);
 PRINT_KG_OFFSET(traptab_addr);
 PRINT_KG_OFFSET(lowprio_masks);
+PRINT_KG_OFFSET(trace_info_entries_buf);
+PRINT_KG_OFFSET(trace_info_buf);
+PRINT_KG_OFFSET(trace_info_entries);
+PRINT_KG_OFFSET(trace_info_max_level_index);
+PRINT_KG_OFFSET(trace_info_index);
+PRINT_KG_OFFSET(trace_info_max_trace_level);
+PRINT_KG_OFFSET(trace_buf_default);
 #ifdef H2K_L2_CONTROL
 PRINT_KG_OFFSET(l2_int_base);
 PRINT_KG_OFFSET(l2_ack_base);

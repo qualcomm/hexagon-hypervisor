@@ -53,7 +53,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	memd(r18+#CONTEXT_lc1sa1) = r7:6
 	memd(r18+#CONTEXT_m1m0) = r5:4
 	memd(r18+#CONTEXT_gpugp) = r13:12
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	r11 = cs1
 	r10 = cs0
 	memd(r18+#CONTEXT_cs1cs0) = r11:10
@@ -62,7 +62,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 1:
 	r19 = #0
 	r19 = setbit(r19,r0)
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	r19 = brev(r19)
 #endif
 	r6 = memw(H2K_GP+#KG_fastint_gp)
@@ -112,7 +112,7 @@ H2K_fastint_return:
 	p0 = cmp.eq(r18,#0)
 	if (p0) jump 1f
 	/* Context Restore */
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	r11:10 = memd(r18+#CONTEXT_cs1cs0)
 	cs0 = r10
 	cs1 = r11

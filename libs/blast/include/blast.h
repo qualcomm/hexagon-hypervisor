@@ -12,10 +12,6 @@
 #include <h2_rename.h>
 #undef RENAME_PREFIX
 
-#include <blast_fd.h>
-#include <blast_tls.h>
-#include <blast_power.h>
-
 #include <stddef.h>
 #include <assert.h>
 
@@ -30,6 +26,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif //__cplusplus
+
+#include <blast_fd.h>
+#include <blast_tls.h>
+#include <blast_power.h>
 
 static inline void blast_rmutex_destroy(blast_rmutex_t *lock)
 {

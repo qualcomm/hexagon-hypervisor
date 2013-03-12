@@ -69,7 +69,7 @@ void thread0(int thread)
 	s64_t delta;
 	H2K_thread_context *me;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	asm volatile (" %0 = sgp" : "=r"(me));
 #else
 	asm volatile (" %0 = sgp0" : "=r"(me));
@@ -181,7 +181,7 @@ int main()
 
 	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	tlb_entry |= 0x7ULL << 29;
 #else
 	tlb_entry |= 0xfULL << 28;

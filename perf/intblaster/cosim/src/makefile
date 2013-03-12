@@ -15,7 +15,7 @@ ifndef Q6VERSION
 endif
 
 COSIMNAME = intblast
-RUN = qdsp6-sim
+RUN = hexagon-sim
 #RELEASE_DIR:=$(shell which ${RUN})
 #RELEASE_DIR:=$(shell dirname ${RELEASE_DIR})/../..
 RELEASE_DIR:=/pkg/qct/software/hexagon/releases/tools/3.0.08
@@ -139,7 +139,7 @@ ifeq (CYGWIN, $(findstring CYGWIN,$(SYSTEM)))
 endif
 
 app:
-	qdsp6-gcc -m${Q6VERSION} -o ${BINDIR}/${TEST} ${TEST_DIR}/${TEST}.c
+	hexagon-gcc -m${Q6VERSION} -o ${BINDIR}/${TEST} ${TEST_DIR}/${TEST}.c
 
 makedirs:
 	mkdir -p $(BINDIR) $(OBJDIR);

@@ -12,21 +12,7 @@
 #ifndef H2_VM_H
 #define H2_VM_H 1
 
-#ifndef H2K_VMOP_H
-typedef enum {
-	VMOP_BOOT,
-	VMOP_STATUS,
-	VMOP_FREE,
-	VMOP_MAX
-} vmop_t;
-
-typedef enum {
-	VMOP_STATUS_STATUS,
-	VMOP_STATUS_CPUS,
-	VMOP_STATUS_MAX
-} vmop_status_t;
-
-#endif
+#include <h2_common_vm.h>
 
 int h2_vmop_trap(vmop_t op, unsigned int arg1, unsigned int arg2, unsigned int arg3, unsigned int arg4, unsigned int arg5);
 

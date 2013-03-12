@@ -20,9 +20,9 @@ Get run time in pcycles
 
 unsigned long long int h2_get_pcycles(void);
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define H2_CYCLES__PER_THREAD 6
-#elif __QDSP6_ARCH__ >= 4
+#elif ARCHV >= 4
 #define H2_CYCLES__PER_THREAD 3
 #else
 #error define cycles per thread

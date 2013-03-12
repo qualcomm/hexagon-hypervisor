@@ -7,7 +7,7 @@
 #define LOWPRIO_H 1
 
 #include <runlist.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <hw.h>
 #include <globals.h>
 

@@ -7,7 +7,7 @@
 #include <context.h>
 #include <h2.h>
 #include <hw.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <max.h>
 #include <stdio.h>
 

@@ -66,7 +66,7 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	 * EJP: note that some lines are likely to be in cache already:
 	 * next/prev in first line, continuation in third line
 	 */
-	r16 = sgp					// can save if sgp in known register
+	r16 = sgp0					// can save if sgp in known register
 	{
 		r13:12 = memd(r16+#CONTEXT_ccrssr)
 		r15:14 = memd(r16+#CONTEXT_sr_preds)

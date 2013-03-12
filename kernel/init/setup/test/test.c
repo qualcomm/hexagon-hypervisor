@@ -29,8 +29,7 @@ u32_t TH_init_seen;
 u32_t TH_switch_seen;
 
 enum {
-        fatal_init = 0,
-        runlist_init,
+        runlist_init = 0,
         readylist_init,
         lowprio_init,
         futex_init,
@@ -38,7 +37,7 @@ enum {
         kg_init,
         trace_init,
         timer_init,
-				mem_alloc_init,
+	mem_alloc_init,
         //thread_init,
         //asid_table_init,
         //mem_stlb_init,
@@ -74,7 +73,6 @@ u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t
 
 #define HELPER_FUNC(X) void H2K_##X() { TH_init_seen |= 1<< X; }
 
-HELPER_FUNC(fatal_init)
 HELPER_FUNC(runlist_init)
 HELPER_FUNC(readylist_init)
 HELPER_FUNC(lowprio_init)

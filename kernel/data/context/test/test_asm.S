@@ -11,7 +11,7 @@
 	r0.l = #lo(VAL); \
 	REGNO = r0;
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 #define GET_HTID(REG) \
 	REG = ssr; \
 	REG = extractu(REG,#3,#19);

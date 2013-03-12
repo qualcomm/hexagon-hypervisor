@@ -8,7 +8,7 @@
 	.text
 	.global h2_set_prefetch
 h2_set_prefetch:
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	jumpr r31
 #else
 	r1 = usr

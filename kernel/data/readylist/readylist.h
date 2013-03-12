@@ -8,7 +8,7 @@
 
 #include <context.h>
 #include <ring.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <max.h>
 #include <globals.h>
 

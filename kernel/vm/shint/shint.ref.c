@@ -11,7 +11,7 @@
 #include <shint.h>
 #include <vmipi.h>
 #include <atomic.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <globals.h>
 #include <hw.h>
 #include <readylist.h>

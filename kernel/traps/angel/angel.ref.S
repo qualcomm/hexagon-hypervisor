@@ -16,8 +16,8 @@ FUNC_END H2K_trap_angel
 
 #else
 FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
-	r6 = #0x20
-#if __QDSP6_ARCH__ <= 3
+	r6 = ##H2K_LINK_ADDR+0x20
+#if ARCHV <= 3
 	r7 = ssr
 	r7 = extractu(r7,#3,#19)
 #else

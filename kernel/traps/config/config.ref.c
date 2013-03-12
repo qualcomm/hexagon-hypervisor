@@ -6,7 +6,6 @@
 #include <config.h>
 #include <asm_offsets.h>
 #include <thread.h>
-#include <fatal_handler.h>
 #include <globals.h>
 #include <hw.h>
 #include <vm.h>
@@ -35,8 +34,7 @@ u32_t H2K_trap_config(u32_t configtype, void *ptr, vmblock_init_op_t val2, u32_t
 
 u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, vmblock_init_op_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)
 {
-	H2K_fatal_kernel_handler = handler;
-	return 0;
+	return -1;
 }
 
 /* initialize vm description */
@@ -81,7 +79,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2));
 		if (block.ptr == NULL) return 0;  // no space
 
-		vmblock = (H2K_vmblock_t *)block.ptr;
+		vmblock = (H2K_vmblock_t *)(void *)block.ptr;
 		ptrtmp = (u32_t)vmblock;
 
 		for (i = 1; i < H2K_ID_MAX_VMS; i++) {
@@ -211,10 +209,20 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		if ((Q6_R_ct0_R(arg1 >> PAGE_BITS) / 2 < offset.size)
 				|| Q6_R_ct0_R(arg2 >> PAGE_BITS) / 2 < offset.size) return 0;
 
-		/* /\* Could be a problem here if we have two levels of offset remapping with different page sizes *\/ */
-		/* if (H2K_vm_translate(arg1, me->vmblock, (u32_t *)&vmblock->fence_lo) == -1) return 0; */
-		/* if (H2K_vm_translate(arg2, me->vmblock, (u32_t *)&vmblock->fence_hi) == -1) return 0; */
+		if (me == NULL) { // we are setting up the boot vm, args are already phys addresses
+			vmblock->fence_lo = arg1;
+			vmblock->fence_hi = arg2;
+		} else { // translate, since the caller might be remapped
 
+			/* Could be a problem here if we have two levels of offset remapping with different page sizes */
+			phys_translation =	H2K_vm_translate(arg1, me->vmblock);
+			if (!phys_translation.valid) return 0;
+			vmblock->fence_lo = phys_translation.addr;
+
+			phys_translation =	H2K_vm_translate(arg2, me->vmblock);
+			if (!phys_translation.valid) return 0;
+			vmblock->fence_hi = phys_translation.addr;
+		}
 		vmblock->fence_lo = (u32_t)vmblock->fence_lo >> PAGE_BITS;
 		vmblock->fence_hi = (u32_t)vmblock->fence_hi >> PAGE_BITS;
 
@@ -243,16 +251,21 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		if ((virt_int >= (vmblock->num_ints + PERCPU_INTERRUPTS)) 
 				|| (physint >= MAX_INTERRUPTS)
 				|| (id.cpuidx >= vmblock->max_cpus)
-				|| (physint == RESCHED_INT)
-				|| (physint == VM_IPI_INT)
-				|| (physint == TIMER_INT)
+				)  return 0; /* bad args */
+
+		/* skip H2 interrupts instead of returning error */
+		if (! ((physint == RESCHED_INT)
+					 || (physint == VM_IPI_INT)
+					 || (physint == TIMER_INT)
 #ifdef H2K_L2_CONTROL
-				|| (physint == L2_CORE_INTERRUPT)
+					 || (physint == L2_CORE_INTERRUPT)
 #endif
-				|| (virt_int == 0))  return 0; /* bad args */
-		vmblock->int_v2p[virt_int] = physint;
-		/* FIXME: set up int mapping in vmblock for large vint# */
-		H2K_register_passthru(physint, id, virt_int);
+					 || (virt_int == 0) // reserved for large vint#
+					 )) {
+			vmblock->int_v2p[virt_int] = physint;
+			/* FIXME: set up int mapping in vmblock for large vint# */
+			H2K_register_passthru(physint, id, virt_int);
+		}
 		return vmblock->vmidx;
 
 	default:

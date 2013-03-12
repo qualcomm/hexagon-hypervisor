@@ -16,6 +16,7 @@
 #include <fatal.h>
 #include <stop.h>
 #include <globals.h>
+#include <trace.h>
 
 void FAIL(const char *str)
 {
@@ -53,7 +54,6 @@ int main()
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_fatal_init();
 	H2K_trace_init();
-	H2K_fatal_kernel_handler = TH_handler;
 	TH_expected_stop = TH_saw_stop = 0;
 	TH_expected_handler = TH_saw_handler = 0;
 
@@ -63,10 +63,6 @@ int main()
 
 	TH_expected_stop = TH_saw_stop = 0;
 	TH_expected_handler = TH_saw_handler = 0;
-
-	TH_expected_handler = 1;
-	if (setjmp(env) == 0) H2K_fatal_kernel(-1,&a,0,1,0);
-	if (TH_saw_handler == 0) FAIL("Didn't see handler call");
 
 	H2K_fatal_init();
 	puts("TEST PASSED (unless more text follows)");

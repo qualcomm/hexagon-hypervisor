@@ -8,19 +8,7 @@
 
 #include <vm.h>
 #include <context.h>
-
-typedef enum {
-	VMOP_BOOT,
-	VMOP_STATUS,
-	VMOP_FREE,
-	VMOP_MAX
-} vmop_t;
-
-typedef enum {
-	VMOP_STATUS_STATUS,
-	VMOP_STATUS_CPUS,
-	VMOP_STATUS_MAX
-} vmop_status_t;
+#include <h2_common_vm.h>
 
 s32_t H2K_vmop_boot(vmop_t unused0, u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t vm, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");
 

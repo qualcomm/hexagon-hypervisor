@@ -25,7 +25,7 @@ TH_do_interrupt:
 	r4 = insert(r5,#8,#0)
 	r4 = insert(r2,#5,#0)
 	ssr = r4
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	p0 = cmp.gtu(r2,#31)
 	if (!p0) jump 1f
 	r5 = #31
@@ -96,7 +96,7 @@ TH_do_preempt:
 	r4 = insert(r5,#8,#0)
 	r4 = insert(r2,#5,#0)
 	ssr = r4
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	p0 = cmp.gtu(r2,#31)
 	if (!p0) jump 1f
 	r5 = #31

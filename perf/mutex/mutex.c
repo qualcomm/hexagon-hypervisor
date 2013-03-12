@@ -5,7 +5,7 @@
 
 #include <h2.h>
 #include <stdio.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 #define N_MUTEXES 16
 

@@ -30,7 +30,7 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	/* EJP: Dead Code! */
 	/* Set up KSP and jump to fatal_thread */
 
-//#if __QDSP6_ARCH__ <= 3
+//#if ARCHV <= 3
 //	r29.h = #hi(H2K_stacks)
 //	r29.l = #lo(H2K_stacks)
 //	r28 = ssr

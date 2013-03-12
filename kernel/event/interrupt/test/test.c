@@ -11,6 +11,7 @@
 #include <setjmp.h>
 #include <max.h>
 #include <globals.h>
+#include <trace.h>
 
 /*
  * Strategy:
@@ -114,7 +115,10 @@ void TH_interrupted_fastint_check()
 void TH_good_interrupt(u32_t intno, H2K_thread_context *me, u32_t hwtnum, u32_t param)
 {
 	if (intno != TH_intno) FAIL("Unexpected interrupt");
-	if (me != TH_dest_context) FAIL("Unexpected me pointer");
+	if (me != TH_dest_context) {
+		printf("0x%p != 0x%p\n",me,TH_dest_context);
+		FAIL("Unexpected me pointer");
+	}
 	if (param != 0x600dbeef) FAIL("bad param");
 	if (me != NULL) {
 		TH_check_interrupt(TH_src_context, me);
@@ -164,6 +168,7 @@ void TH_setup_inthandlers(u32_t interrupt)
 
 void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 {
+	int traceidx;
 	H2K_thread_context *src = &srcdata;
 	TH_src_context = src;
 	TH_dest_context = dest;
@@ -171,10 +176,12 @@ void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 	TH_setup_inthandlers(interrupt);
 	TH_pass = 0;
 	TH_saw_continuation = 0;
+	traceidx = H2K_gp->trace_info_index;
 	if (setjmp(env) == 0) {
 		//printf("%d: i\n",interrupt);
 		TH_do_interrupt(src,dest,interrupt);
 	}
+	if (traceidx == H2K_gp->trace_info_index) FAIL("no trace");
 	TH_restore_sgp();
 	if (TH_saw_continuation != 0) FAIL("Called continuation");
 }
@@ -182,16 +189,19 @@ void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 void TH_try_preempt_interrupt(H2K_thread_context *dest, u32_t interrupt)
 {
 	H2K_thread_context *src = dest;
+	int traceidx;
 	TH_src_context = dest;
 	TH_dest_context = dest;		/* we shouldn't be saving or restoring here */
 	TH_intno = interrupt;
 	TH_setup_inthandlers(interrupt);
 	TH_pass = 0;
 	TH_saw_continuation = 0;
+	traceidx = H2K_gp->trace_info_index;
 	if (setjmp(env) == 0) {
 		//printf("%d: p\n",interrupt);
 		TH_do_preempt(dest,src,interrupt);
 	}
+	if (traceidx == H2K_gp->trace_info_index) FAIL("no trace/preempt");
 	TH_restore_sgp();
 	if (TH_saw_continuation == 0) FAIL("Didn't call continuation");
 }
@@ -243,12 +253,13 @@ int main()
 	TH_save_sgp();
 	/* Set up KGP correctly for direct calls */
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	H2K_trace_init();
 	H2K_kg.l2_int_base = H2K_kg.l2_ack_base = intdev;
 	printf("MAX_INTERRUPTS=%d\n",MAX_INTERRUPTS);
 	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		/* For each interrupt, try to do the interrupt */
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 		if (i == 31) continue;
 #endif
 		printf("i=%d\n",i);

@@ -7,7 +7,7 @@
 #include <asid.h>
 #include <stlb.h>
 #include <tlbmisc.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <max.h>
 #include <atomic.h>
 

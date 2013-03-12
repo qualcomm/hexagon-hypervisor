@@ -12,19 +12,7 @@
 #include <physread.h>
 #include <translate.h>
 #include <globals.h>
-
-typedef union {
-	u32_t raw;
-	struct {
-		u32_t s:3;
-		u32_t rsvd:1;
-		u32_t t:1;
-		u32_t u:1;
-		u32_t ccc:3;
-		u32_t xwr:3;
-		u32_t ppn:20;
-	};
-} H2K_pte_t;
+#include <h2_common_pagewalk.h>
 
 /* This is rather complex */
 /* For L1 page, look up PTB | ((va >> 22) << 2) */

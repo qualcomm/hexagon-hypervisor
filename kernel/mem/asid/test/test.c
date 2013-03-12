@@ -10,7 +10,7 @@
 #include <max.h>
 #include <globals.h>
 #include <asid.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 void FAIL(const char *str)
 {

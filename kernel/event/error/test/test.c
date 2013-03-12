@@ -106,7 +106,7 @@ void TH_call_error()
 int main()
 {
 	h2_init(NULL);
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 	asm (" %0 = sgp\n" : "=r"(me));
 #else
 	asm (" %0 = sgp0\n" : "=r"(me));
@@ -131,7 +131,7 @@ int main()
 	me->gevb = (TH_guest_vectors);
 	me->gssr = 0;
 	me->gosp = (u32_t)(&guest_stack[128]);
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	asm volatile (" g2 = %0 " : :"r"(me->gosp));
 #endif
 	TH_expect_fatal = 0;
@@ -148,7 +148,7 @@ int main()
 	me->gevb = (TH_guest_vectors);
 	me->gssr = 0;
 	me->gosp = (u32_t)(&guest_stack[128]);
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	asm volatile (" g2 = %0 " : :"r"(me->gosp));
 #endif
 	TH_expect_fatal = 0;

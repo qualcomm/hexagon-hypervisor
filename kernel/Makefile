@@ -5,37 +5,20 @@ ifeq ($(ARCHV),)
 ARCHV = 3
 endif
 
-CC = qdsp6-gcc 
-AR = qdsp6-ar
-SIM := qdsp6-sim
+CC = hexagon-gcc 
+AR = hexagon-ar
+SIM := hexagon-sim
 
 OPTIMIZE := -O2
 
-ifeq ($(H2K_LINK_ADDR),)
-export H2K_LINK_ADDR = 0xff000000
-endif
+include ../scripts/Makefile.inc.config
 
-ifeq ($(H2K_LOAD_ADDR),)
-H2K_LOAD_ADDR = $(H2K_LINK_ADDR)
-endif
+CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g
 
-ifeq ($(H2K_HEAP_SIZE),)
-H2K_HEAP_SIZE = 0x100000
-endif
-
-
-NULL_ANGEL_TRAP = 1
-
-CFLAGS := @build/flags/abi -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g
-
-CFLAGS += -Werror -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_LOAD_ADDR=$(H2K_LOAD_ADDR)
+CFLAGS += -Werror -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_GUEST_END=$(H2K_GUEST_END)
 
 ifdef NULL_ANGEL_TRAP
 CFLAGS += -DNULL_ANGEL_TRAP
-endif
-
-ifdef NO_MEMORY_MAP_GLOBAL_ZERO
-CFLAGS += -DNO_MEMORY_MAP_GLOBAL_ZERO
 endif
 
 ifdef DEBUG
@@ -45,6 +28,8 @@ endif
 ifdef HTHREADS
 CFLAGS += -DMAX_HTHREADS=$(HTHREADS)
 endif
+
+CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS)
 
 SRC_HFILES := 
 DEST_HFILES := 
@@ -127,7 +112,8 @@ build/ref/libh2check.a: $(CHECK_OFILES)
 
 clean:
 	rm -rf $(ALL_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref build/opt* \
-	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h
+	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h \
+	pmu_statsfile.txt
 
 dummy:
 	@echo $(REF_CFILES)

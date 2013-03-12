@@ -60,7 +60,7 @@ int main()
 	delay();
 	endpcycles = h2_vmtrap_get_pcycles();
 	delta = (endpcycles - startpcycles) - (SPINS * PCYCLES_PER_TCYCLE);
-	if (delta < 0) delta = 0;
+	//if (delta < 0) delta = 0;
 	if (delta > OVERHEAD * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay");
 	/* h2_printf("start pcycles is %8llu\n", startpcycles); */
 	/* h2_printf("end pcycles is   %8llu\n", endpcycles); */

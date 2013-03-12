@@ -89,7 +89,7 @@ static inline void setup_guest()
 {
 	a.gevb = TH_vectors;
 	a.gosp = (u32_t)(&guest_stack[127]);
-#if __QDSP6_ARCH__ >= 4
+#if ARCHV >= 4
 	asm volatile (" g2 = %0 " : :"r"(a.gosp));
 #endif
 }

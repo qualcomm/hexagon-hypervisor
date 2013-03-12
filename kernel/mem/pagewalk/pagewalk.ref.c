@@ -8,12 +8,12 @@
 #include <tlbmisc.h>
 #include <tlbfmt.h>
 #include <hw.h>
-#include <q6protos.h>
+#include <hexagon_protos.h>
 #include <context.h>
 #include <asid.h>
 #include <pagewalk.h>
 
-#if __QDSP6_ARCH__ <= 3
+#if ARCHV <= 3
 
 static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_t badva)
 {

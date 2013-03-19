@@ -50,6 +50,7 @@
 
 #define H2K_VMBLOCK_ALIGN 32
 #define H2K_VMBLOCK_V2P_INVALID 0x0
+#define H2K_BOOTVM_INDEX 1
 
 typedef u16_t physint_t;
 typedef u32_t bitmask_t;

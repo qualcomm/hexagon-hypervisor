@@ -47,10 +47,6 @@ unsigned long long int ucos_vcpu_stacks[UCOS_NUM_VCPU][VCPU_STACK_SIZE];
 #endif
 
 #ifdef UCOS
-
-/* /\* can't use offset because ucos needs to write to frame-buffer addresses *\/ */
-/* #define MEMORY_MAP(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) MEMORY_MAP_THREAD(G,ASID,VPN,PERM,CFIELD,PGSIZE,MAINAUX,PPN) */
-
 H2K_linear_fmt_t ucos_pmap[] = {
 #include "../ucos/pmap_ucos.def"
 	{ .raw = 0 },
@@ -89,7 +85,8 @@ unsigned long vm_setup(char num_cpus, short num_ints, u32_t trans, unsigned long
 	}
 
 	if (pt == H2K_ASID_TRANS_TYPE_OFFSET) {
-		ret = h2_config_vmblock_init(vm, SET_FENCES, (unsigned int)linux_stext, H2K_GUEST_END);
+		/* Memory map:  0 ... Linux ... frame buffer ... H2 ... boot VM ... ucos */
+		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x0, FRAME_BUFFER);
 		if (ret != vm) {
 			PRINTF("ret %08x\n", (unsigned int)ret);
 			FAIL("SET_FENCES");

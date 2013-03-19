@@ -222,6 +222,7 @@ int main()
 	TH_expected_create = 1;
 	a.r00 = 0x10203040;
 	a.r01 = 0x50607080;
+	a.r02 = 0;
 	a.base_prio = 4;
 	a.vmblock = (void *)&a;
 	TH_create_ret = 0x0a0b0c0d;

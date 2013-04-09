@@ -36,7 +36,9 @@ int main()
 	for (i = 1; i < PAGES; i++) {
 		page = (void *)((memidx+i)<<PAGE_SHIFT);
 		physmem_add_4k_page(page);
+		//buddy_dump();
 	}
+	printf("added 4k pages");
 	buddy_dump();
 	for (i = 1; i < PAGES; i++) {
 		if ((buddy_alloc(0)) == NULL) FAIL("Couldn't realloc");

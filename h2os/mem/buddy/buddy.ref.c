@@ -95,6 +95,7 @@ void *buddy_alloc(int order)
 void buddy_init()
 {
 	int i;
+	h2_mutex_init(&buddy_mutex);
 	for (i = 0; i <= MAX_ORDER; i++) {
 		freelist[i] = NULL;
 	}

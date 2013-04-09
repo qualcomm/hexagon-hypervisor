@@ -107,7 +107,7 @@ OPTIMIZE := -O1
 CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g  -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 ifdef STANDALONE
 CFLAGS += -I ${H2DIR}/include
-LDFLAGS += -L ${H2DIR}/build/ref  -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -lh2os #-lh2 -lh2check 
+LDFLAGS += -L ${H2DIR}/build/ref -L${H2DIR}/../install/lib  -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--section-start=.start=0x80000000 -lh2os -lh2 #-lh2check 
 ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/kernel/include
 else
 OSLIB=-moslib=h2

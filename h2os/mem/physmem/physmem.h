@@ -137,12 +137,12 @@ static inline void *pa_to_va(pa_t pa)
 static inline pa_t va_to_pa(void *va)
 {
 	pa_t pa = (pa_t)(unsigned long)va;
-	pa -= KERN_OFFSET;
+	pa -= KERN_PHYS_OFFSET;
 	return pa;
 }
 static inline void *pa_to_va(pa_t pa)
 {
-	pa += KERN_OFFSET;
+	pa += KERN_PHYS_OFFSET;
 	return (void *)(long)pa;
 }
 #endif
@@ -150,14 +150,14 @@ static inline void *pa_to_va(pa_t pa)
 static inline ppage_t *va_to_ppage(void *va)
 {
 	u32_t va_raw = (u32_t)va;
-	u32_t idx = (va_raw - KERN_OFFSET) >> PAGE_SHIFT;
+	u32_t idx = (va_raw - KERN_PHYS_OFFSET) >> PAGE_SHIFT;
 	return &pages[idx];
 }
 
 static inline void *ppage_to_va(ppage_t *ppage)
 {
 	u32_t idx = (ppage - pages);
-	u32_t va_raw = KERN_OFFSET + (idx << PAGE_SHIFT);
+	u32_t va_raw = KERN_PHYS_OFFSET + (idx << PAGE_SHIFT);
 	return (void *)va_raw;
 }
 

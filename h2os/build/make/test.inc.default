@@ -1,0 +1,311 @@
+# Dear emacs, this is a -*- Makefile -*-
+
+################################################################################
+#  Test makefile doesn't share above the test dir
+################################################################################
+
+#  symbolic link to h2 project directory
+#h2: 
+#	-ln -s ${H2DIR} $@
+
+################################################################################
+#  Tool stuff
+################################################################################
+
+default-target: all
+
+ifneq (,$(Q6VERSION))
+ARCHV=$(subst v,,$(Q6VERSION))
+endif
+
+ifeq ($(ARCHV),)
+ARCHV = 4
+endif
+
+ifeq ($(MODEL),)
+   MODEL = ref
+   MODELSTR = ${MODEL}
+else
+   ifeq ($(MODEL),ref)
+      MODELSTR = ${MODEL}
+   else
+      MODELSTR = ${MODEL}_v${ARCHV}
+   endif
+endif
+
+
+ifeq ($(H2K_HEAP_SIZE),)
+H2K_HEAP_SIZE = 0x1000000
+endif
+
+ARCH=qdsp6
+SIM=${ARCH}-sim
+CC=${ARCH}-gcc
+AS=${ARCH}-as
+LD=${ARCH}-ld
+AR=${ARCH}-ar
+OBJDUMP=${ARCH}-objdump
+GMON_MERGE=${ARCH}-gmon-merge
+COV=${ARCH}-cov
+PYTHON=python
+
+################################################################################
+#  Rules for building the kernel if necessary; should be built way before any
+#  batch jobs are run else they will maul each other in the animal farm.
+#
+#  Actually, I've broken the dependency between the libs and the executable so 
+#  they will never actually try to build the libs; if you need the libs, you 
+#  should 'make libs' before you run.
+################################################################################
+
+LIBH2_DIR=${H2DIR}/install/lib
+LIBH2=${LIBH2_DIR}/libh2.a
+
+LIBH2KERNEL_DIR=${H2DIR}/install/lib
+LIBH2KERNEL=${LIBH2KERNEL_DIR}/libh2os.a
+LIBH2CHECK=${H2DIR}/kernel/libh2check.a
+
+#  Needs to have the tools already in path...
+#SIMPATH=/pkg/qct/software/hexagon/releases/tools/1.2/qc/bin
+#TOOLPATH=/pkg/qct/software/hexagon/releases/tools/1.2/gnu/bin
+#COVPATH=/pkg/qct/software/hexagon/releases/tools/1.2/examples/utils/bin
+
+${LIBH2KERNEL}: ${H2DIR}/install
+
+#check is always in ref/
+${LIBH2CHECK}: ${H2DIR}/install
+	+cd ${H2DIR}/kernel;\
+	$(MAKE) check DEBUG=0 ARCHV=${ARCHV};\
+	cp build/ref/libh2check.a ../install/lib
+
+${LIBH2}:  ${H2DIR}/install
+
+${H2DIR}/install:
+	cd ${H2DIR};\
+	+$(MAKE) ${MODEL} ARCHV=${ARCHV}
+
+# (_8^(|)  d'oh!
+#  Need to tell people to stop using this one and use 'prepare'
+libs: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
+
+prepare: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL}
+
+clean_libs:
+	cd ${H2DIR};\
+	rm -rf install; $(MAKE) clean
+
+clean_top:
+	rm -Rf test.cov_fns cov.txt report.html make.log
+
+
+################################################################################
+#  Standard compilation flags
+################################################################################
+
+OPTIMIZE := -O1
+
+CFLAGS +=${OSLIB} $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g  -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+ifdef STANDALONE
+CFLAGS += -I ${H2DIR}/include
+LDFLAGS += -L ${H2DIR}/build/ref  -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -lh2os #-lh2 -lh2check 
+ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/kernel/include
+else
+OSLIB=-moslib=h2
+LDFLAGS +=${OSLIB} -L ${H2DIR}/build/ref  -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -lh2os #-lh2 -lh2check 
+CFLAGS += -I ${H2DIR}/install/include
+ASFLAGS +=${OSLIB} -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
+endif
+LDFLAGS+= -mv${ARCHV}
+#  Turn on call() support for assertion checking
+#CFLAGS += -DDEBUG
+#  Optimization level needs to match whatever the kernel is compiled with.
+
+ifdef INC_KERNEL
+CFLAGS += -I${H2DIR}/include
+ASFLAGS += -I${H2DIR}/include
+endif
+
+ifdef DEBUG
+CFLAGS += -DDEBUG
+endif
+
+################################################################################
+#  Convenience shortcuts
+################################################################################
+
+ifdef SUBDIRS
+
+################################################################################
+#  Recursive subdirectory traversal
+################################################################################
+
+#SUBDIR_MAKE=+for SUBDIR in ${SUBDIRS}; do\
+#	$(MAKE) -C $$SUBDIR $(MAKECMDGOALS) TEST=$$SUBDIR; TSTAT=$$?; \
+#        if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi; \
+#	done; exit $$STAT
+
+#SUBDIR_TARGETS=clean all
+
+#${SUBDIR_TARGETS}:
+#	${SUBDIR_MAKE}
+
+#  The plan was to do this recursive gmon/coverage thing, but that doesn't
+#  work so well with multiple binaries
+
+#  I could get sneaky cat here and do a clever recursive thing, but that seems
+#  excessive.  Todo:  maybe this can go into the specfiles somehow?
+test.cov_fns:
+	find ./kernel -name "test.cov_fns" -exec cat {} \; >> $@
+
+#  Uh...  don't run this unless all the tests are run for now.
+cov.txt: test.cov_fns 
+	find . -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
+
+
+#  every "subdir" needs to have a results.txt in it for this to run properly.
+#  if no results.txt, FAIL
+#  if results.txt is empty, FAIL
+#  
+#	      grep -A 1 FAIL $$SUBDIR/test.log >> report.html; \
+#	      echo FAIL:  no pass signature >> report.html;\
+
+report.html:
+	@echo "<html><body><table>" > report.html;\
+	for SUBDIR in ${SUBDIRS}; do\
+	   echo "<tr><td> $$SUBDIR<td>" >> report.html;\
+	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	      echo '<font style="background-color: red;">' >> report.html; \
+	      grep -A 1 FAIL $$SUBDIR/test.log >> report.html; \
+	      echo '</font>' >> report.html; \
+	   else\
+	      cat $$SUBDIR/results.txt >> report.html;\
+	   fi;\
+		 cat $$SUBDIR/make.log >> make.log;\
+	done;\
+	echo "</table></body></html>" >> report.html;
+
+.PHONY: check
+
+check-fail:
+	@for SUBDIR in ${SUBDIRS}; do\
+	   echo -n "$$SUBDIR: "; \
+	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	      echo FAIL - Empty/No results.txt; \
+	      echo; \
+	      exit 1;\
+	   fi;\
+	   grep "ERROR:" $$SUBDIR/results.txt;\
+	   if [ $$? -eq 0 ]; then\
+	      echo FAIL - ERROR detected in results.txt; \
+	      echo; \
+	      exit 1;\
+	   fi;\
+	   grep "TEST PASSED" $$SUBDIR/results.txt;\
+	   if [ $$? -ne 0 ]; then\
+	      echo FAIL - No PASS detected in results.txt; \
+	      echo; \
+	      exit 1;\
+	   fi;\
+	   echo; \
+	done
+
+check:
+	@for SUBDIR in ${SUBDIRS}; do\
+	   echo -n "$$SUBDIR: "; \
+	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	      echo FAIL - Empty/No results.txt; \
+	      echo; \
+	      continue;\
+	   fi;\
+	   grep "ERROR:" $$SUBDIR/results.txt;\
+	   if [ $$? -eq 0 ]; then\
+	      echo FAIL - ERROR detected in results.txt; \
+	      echo; \
+	      continue;\
+	   fi;\
+	   grep "TEST PASSED" $$SUBDIR/results.txt;\
+	   if [ $$? -ne 0 ]; then\
+	      echo FAIL - No PASS detected in results.txt; \
+	      echo; \
+	      continue;\
+	   fi;\
+	   echo; \
+	done
+
+
+else
+
+DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
+
+################################################################################
+#  These are for actual terminal directories
+################################################################################
+
+%.objdump: %.elf
+	${OBJDUMP} -D ${@:.objdump=.elf} > $@; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
+
+ifdef PYTHON_GENERATOR_SCRIPT
+${PYTHON_GENERATED_FILES}: ${PYTHON_GENERATOR_SCRIPT}
+	${PYTHON} $<; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+endif
+
+%.o: %.c ${PYTHON_GENERATED_FILES}
+	${CC} ${CFLAGS} -c -o $@ $<; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+
+%.o: %.S ${PYTHON_GENERATED_FILES}
+	${CC} ${ASFLAGS} -c -o $@ $<; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+
+${EXEC}: ${OBJS}
+	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+
+# each test has a max of 60 seconds!
+test.log: ${EXEC}
+	ulimit -t 60 && ${SIM} --profile ${EXEC} | tee $@; \
+	CODE=$${PIPESTATUS[0]}; \
+	if [ "$$CODE" -eq 137 ]; then \
+	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \
+	fi;
+
+# Coverage stuff -- single testcase
+
+gmon.out: test.log
+	${GMON_MERGE} -o gmon.out gmon.t_*
+
+COVFILES=cov.txt
+GMON_FILES=gmon.out gmon.t_0 gmon.t_1 gmon.t_2 gmon.t_3 gmon.t_4 gmon.t_5
+
+#${COVFILES}: ${EXEC} gmon
+#	${COV} -i ${EXEC} -o cov.txt -c cov.csv gmon
+
+${COVFILES}: ${DUMP} gmon.out
+	${COV} -F -d ${DUMP} -o cov.txt gmon.out; \
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
+
+CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
+CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt
+
+clean:
+	rm -rf ${CLEANUP}
+
+#  Pretty much a binary yes/no if the test passed or failed.
+results.txt: test.log
+	@grep "TEST PASSED" test.log > $@; \
+	grep "ERROR:" test.log; \
+	if [ $$? -eq 0 ]; then \
+		grep "ERROR:" test.log >> $@; \
+	fi; \
+	if [ ! -s test.log ]; then \
+	  echo "FAIL" >> $@; \
+	fi; \
+	true;
+
+all: results.txt ${COVFILES}
+tst: results.txt
+
+
+endif

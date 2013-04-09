@@ -1,0 +1,139 @@
+
+Things we want to do:
+
+* Translate VA to PA, VA to PTE, etc.  Basically, same as hardware walk.
+
+* Traverse VA range; for each PTE in a VA range, call a specified function. 
+	This way, for example, for COW, we have a traversal function that can
+	mark all the necessary pages as COW/read-only.
+
+* Accessor helpers to for setting r/w/x/u
+
+* Cloning a set of page tables
+
+* It would be super nice if we could have a dummy version that didn't do much 
+  with translation but could handle the interfaces...
+
+
+
+Maybe this shouldn't really be called page tables, but should be "MMU info",
+and should have other things beyond just the page tables... TBD. Start w/ pts.
+
+
+
+
+/* ***** ***** DIATRIBE ***** ***** */
+
+I really hate all the code duplication that these OSs seem to have with stuff like
+
+	pwe = pwe_offset(mm,va)
+	if (is_invalid_pye(pye)) ....
+
+	pxe = pxe_offset(pwe,va)
+	if (is_invalid_pxe(pxe)) ...
+
+	pye = pxe_offset(pxe,va)
+	if (is_invalid_pye(pye)) ...
+
+	pze = pxe_offset(pze,va)
+	if (is_invalid_pze(pze)) ...
+
+
+OOPS, we have to go back in and add all kinds of HugePage TLB support in there...
+
+blech.
+
+But I understand kind of what the deal is:
+
+	At any stage you might have a valid or invalid page
+	Formats may be different at each stage
+	If you have a valid intermediate page, it might be a big page or a
+		nother level of page tables
+
+How do you solve this elegantly?
+
+Well, you might use some kind of Object Oriented technique...
+
+class Translation might have an interface with size, valid, etc.
+Then you could have inheriting classes for translation_1G, translation_2MB, translation_4KB,
+and a walk method and... blech.  You need virtual functions and all sorts of things...
+
+One of the reasons you want to get the PTE at each stage is that you need to look at 
+different things and make different decisions at different times.  By having the walk
+split up into several stages, you can inspect everything and make whatever decisions you
+need at each step.  But usually those aren't so important unless you get to a terminal 
+page, that is, one that is invalid or one that has the actual mapping.  Either the 
+invalid page, or the one with the actual mapping (in the case of huge pages) can be 
+the normal small (4KB) page size, or bigger.
+
+So what if we flipped this around.  Instead of pulling the next stage of information
+into the current scope and then attempting to handle various scenarios (with a high 
+likelyhood of just walking down to the next level of the tables), what if we push 
+the work up into the walker?
+
+The walker would walk as far as it could for a virtual address, and would stop when
+it reached a terminal.  It would then give the information about the terminal to the
+function.  
+
+create_page_at(pte_t *pte, vaddr_t va, int pagesize, void *opaque)
+{
+	if (is_invalid(*pte)) {
+		if (pagesize == 4KB) {
+			/* Allocate a new page here */
+			alloc_zpage_pte(pte);
+			return;
+		} else {
+			/* Allocate a new level of page table */
+			page = alloc_page();
+			make_pgdir(pte,page,pagesize);
+			/* And then restart */
+			return pagewalk(va,opaque,page_handler);
+		}
+	} else {
+		/* Valid terminal page! */
+		/* So... we don't have to do anything, there's a page there already! */
+		return;
+	}
+}
+
+One thing: we want to make sure that the compiler has visibility to the pagewalk functions 
+so that they can be inlined with the handler function.  Hopefully the compiler can turn this
+into the correct loops, rather than actually doing function calls, when possible.
+
+I think this technique can work well for other things, too:
+
+	* Visit all pages in a page table (for duplicating a process, like fork())
+	* Splitting huge pages into smaller ones
+
+pagewalk can be recursive, or have different helper functions per stage.
+
+We want to make sure we have convienient parameters for the handler function:
+
+	* Pointer to the PTE that we are stopped on, so we can look at / modify it
+		(pass value too?)
+	* VA that we are walking (for restart, etc)
+	* Page size, so we know where in the walk we are going
+
+Should the helper function return something?  Could be a value to pass all the way back,
+or a value that could be used to have some constant indication (like "invalidate TLB-VA")
+
+It might also be nice to have the ability to restart the walk from anywhere, not just 
+from the beginning.  Though that's not always possible to do, *that* function could
+restart from the beginning if it can't do it... I guess that signature would be, instead of:
+
+	pagewalk(va,opaque,handler)
+
+something like:
+
+	pagewalk_step(va,opaque,handler,pagesize,pte_t *current)
+
+On nicely behaved page tables, pagewalk would start out with pagewalk_step
+pointing at the right starting page size and pte pointer.  On wierdo page 
+tables, pagewalk would do all the work, and pagewalk_step would just always
+call pagewalk to start from the beginning.
+
+
+We might also need to pass around a memory management state structure pointer.
+
+
+

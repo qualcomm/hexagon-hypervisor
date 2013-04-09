@@ -1,0 +1,19 @@
+
+
+* Fork:
+	+ Duplicate all the segments
+	+ for each page: 
+		- increase refs
+		- if NORMAL and Writable
+			- make COW 
+			- Clear W bit and evict from TLB
+
+
+
+
+MMAP'd files can be:
+	* SHARED, in which case all fork'd children observe same window, and writes go to memory, or
+	* PRIVATE, in which case we don't write back to file and children get their own versions
+	* PRIVATE is much like COW
+	* Maybe everything should be MMAP'd, with anonymous really mmap'ing /dev/zero?
+

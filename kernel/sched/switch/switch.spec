@@ -20,7 +20,7 @@ Description
 :cfunc:`H2K_switch()` switches to a new thread that has been chosen to be scheduled.
 If the new thread is NULL, we will go to wait mode.
 
-.. InputAssert::
+.. fixme InputAssert::
 	ASSERT(kernel_locked())
 
 

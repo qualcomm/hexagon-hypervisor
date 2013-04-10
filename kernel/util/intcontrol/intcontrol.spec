@@ -23,7 +23,7 @@ Description
 
 INPUT_ASSERT((intno < MAX_INTERRUPTS) && ((ARCHV <= 3) || (intno != 31)))
 
-.. InputAssert::
+.. fixme InputAssert::
 	assert((intno < MAX_INTERRUPTS) && ((ARCHV <= 3) || (intno != 31)))
 
 Functionality
@@ -45,7 +45,7 @@ Description
 
 INPUT_ASSERT((intno < MAX_INTERRUPTS) && ((ARCHV <= 3) || (intno != 31)))
 
-.. InputAssert::
+.. fixme InputAssert::
 	assert((intno < MAX_INTERRUPTS) && ((ARCHV <= 3) || (intno != 31)))
 
 Functionality

@@ -60,7 +60,7 @@ Description
 
 If an event is less than MAX_TRACE_LEVEL, log a kernel event.
 
-.. InputAssert::
+.. fixme InputAssert::
 	assert(H2K_kg.trace_info.index < H2K_kg.trace_info.entries)
 
 

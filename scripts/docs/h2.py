@@ -169,9 +169,9 @@ class OutputAssertDirective(Directive):
 def process_h2_nodes(app, doctree, fromdocname):
    env=app.builder.env
 
-   for docname in env.h2_functions.keys():
-      create_debug_file(docname,env.h2_functions[docname])
-      del env.h2_functions[docname]
+#   for docname in env.h2_functions.keys():
+#      create_debug_file(docname,env.h2_functions[docname])
+#      del env.h2_functions[docname]
 
 def purge_h2_nodes(app, env, docname):
    if not hasattr(env,'h2_functions'):

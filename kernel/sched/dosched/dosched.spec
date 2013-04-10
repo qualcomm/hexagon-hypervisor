@@ -19,7 +19,7 @@ sleep if there is no ready thread.
 
 INPUT_ASSERT(kernel_locked)
 
-.. InputAssert::
+.. fixme InputAssert::
 	assert(kernel_locked());
 
 

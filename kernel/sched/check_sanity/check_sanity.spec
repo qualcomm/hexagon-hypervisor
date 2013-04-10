@@ -32,11 +32,11 @@ This function must return the input argument.  This facilitates use during
 the system call return process.
    
 
-.. InputAssert::
+.. fixme InputAssert::
    assert(checker_kernel_locked());
 
    
-.. OutputAssert::
+.. fixme OutputAssert::
    assert(checker_kernel_locked());
    assert(retval == arg0);
 
@@ -75,11 +75,11 @@ This function must return the input argument.  This facilitates use
 during the system call return process.
 
 
-.. InputAssert::
+.. fixme InputAssert::
    assert(checker_kernel_locked());
 
 
-.. OutputAssert::
+.. fixme OutputAssert::
    assert(!checker_kernel_locked());
    assert(retval == arg0);
 

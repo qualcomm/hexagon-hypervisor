@@ -55,9 +55,7 @@ FUNC_START H2K_handle_tlbmissrw .text.mem.tlbmiss .p2align 2
 	r2 = badva
 .Ltlbmiss_common:
 	r1:0 = combine(r7,r2)	// H2K_mem_tlb_fill(va,me)
-	call H2K_mem_tlb_fill
-	/* Return! And unlock the TLB! */
-	tlbunlock
+	call H2K_mem_tlb_fill // unlocks
 	jump H2K_context_restore_return
 
 FUNC_END H2K_handle_tlbmissrw

@@ -230,9 +230,9 @@ int main(int argc, char *argv[]) {
 		do {  // wait for all child VM cpus to vmstop
 			h2_vmtrap_wait();
 			status = h2_vmstatus(VMOP_STATUS_STATUS, linux_vm);
-			printf("linux VM %lu status %d\n", linux_vm, status);
+			PRINTF("linux VM %lu status %d\n", linux_vm, status);
 			cpus = h2_vmstatus(VMOP_STATUS_CPUS, linux_vm);
-			printf("VM %lu Live CPUs: %d\n", linux_vm, cpus);
+			PRINTF("VM %lu Live CPUs: %d\n", linux_vm, cpus);
 		} while (cpus != 0);
 
 		h2_vmfree(linux_vm);

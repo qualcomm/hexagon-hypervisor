@@ -38,14 +38,21 @@ static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context
 	/* set guest bit in the ASID if this was a guest miss */
 	if (me->ssr_guest) entry.guestonly = 1;
 	rawentry = entry.raw;
-	asm volatile (
-	" tlbhi = %H0\n"
-	" tlblo = %L0\n"
-	" tlbidx = %1\n" 
-	" tlbw\n" : :"r"(rawentry),"r"(index));
+	asm volatile
+		(
+		 " tlbhi = %H0\n"
+		 " tlblo = %L0\n"
+		 " tlbidx = %1\n" 
+		 " tlbw\n"
+		 " isync\n"
+		 : :"r"(rawentry),"r"(index));
 #else
 	rawentry = entry.raw;
-	asm volatile (" tlbw(%0,%1)\n" : : "r"(rawentry),"r"(index));
+	asm volatile
+		(
+		 " tlbw(%0,%1)\n"
+		 " isync\n"
+		 : : "r"(rawentry),"r"(index));
 #endif
 }
 
@@ -115,8 +122,12 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 	H2K_mem_tlbfmt_t (*get_fn)(u32_t badva, H2K_thread_context *me);
 
 	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw != 0) {
-		if (H2K_mem_tlb_v3_user_check(me)) return;
+		if (H2K_mem_tlb_v3_user_check(me)) {
+			H2K_mutex_unlock_tlb();
+			return;
+		}
 		H2K_mem_tlb_insert(entry,me);
+		H2K_mutex_unlock_tlb();
 		return;
 	}
 
@@ -134,17 +145,26 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		break;
 
 	default:
+		H2K_mutex_unlock_tlb();
 		return;
 	}
 
 	if ((entry = get_fn(va,me)).raw != 0) {
-		if (H2K_mem_tlb_v3_user_check(me)) return;
-		if (H2K_mem_tlb_fixup(va, H2K_mem_asid_table[asid].ptb, &entry, me) == -1) return; // next translation failed
+		if (H2K_mem_tlb_v3_user_check(me)) {
+			H2K_mutex_unlock_tlb();
+			return;
+		}
+		if (H2K_mem_tlb_fixup(va, H2K_mem_asid_table[asid].ptb, &entry, me) == -1) { // next translation failed
+			H2K_mutex_unlock_tlb();
+			return;
+		}
 
 		H2K_mem_stlb_add(va,asid,entry,me);
 		H2K_mem_tlb_insert(entry,me);
+		H2K_mutex_unlock_tlb();
 		return;
 	}
+	/* Unlock here in case thread is killed by pagefault */
 	H2K_mutex_unlock_tlb();
 	return H2K_mem_pagefault(va,me);
 }

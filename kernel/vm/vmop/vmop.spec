@@ -76,10 +76,7 @@ Description
 ~~~~~~~~~~~
 Returns VM status according to the requested operation:
 
-* VMOP_STATUS_STATUS: Returns the status word of the target VM, whose value is
-set by the most recent call to :cfunc:`H2K_thread_stop()`.  This value is not
-interpreted in any way by the H2 kernel (however, it should not conflict with
-the error value that may be returned by this function) .  
+* VMOP_STATUS_STATUS: Returns the status word of the target VM, whose value is set by the most recent call to :cfunc:`H2K_thread_stop()`.  This value is not interpreted in any way by the H2 kernel (however, it should not conflict with the error value that may be returned by this function) .  
 
 * VMOP_STATUS_CPUS: Returns the number of running virtual CPUS
 

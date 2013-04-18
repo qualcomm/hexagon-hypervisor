@@ -1,20 +1,9 @@
 
 ALL: dummy
 
-ifeq ($(ARCHV),)
-ARCHV = 4
-endif
+include ../scripts/Makefile.inc.tools
 
-CC = qdsp6-gcc 
-AR = qdsp6-ar
-SIM := qdsp6-sim
-
-OPTIMIZE := -O2
-
-
-NULL_ANGEL_TRAP = 1
-
-CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g
+CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
 
 SRC_HFILES := 
 DEST_HFILES := 
@@ -60,7 +49,7 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
-ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES)
+ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES)
 
 $(ALL_OFILES): $(DEST_HFILES)
 
@@ -74,6 +63,10 @@ endif
 
 ifeq ($(ARCHV),5)
 OPT_OFILES := $(OPT_V5_OFILES)
+endif
+
+ifeq ($(ARCHV),60)
+OPT_OFILES := $(OPT_V60_OFILES)
 endif
 
 build/ref/libh2os.a: $(REF_OFILES)

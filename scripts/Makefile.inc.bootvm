@@ -16,7 +16,7 @@ CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_K
 
 BOOTVM_IMAGE_CFLAGS = -Wl,--section-start=.entry=$(H2K_BOOTVM_OFFSET) -Wl,--script=$(VAPA_BOOTVM) 
 
-BOOTVM_CFLAGS = -nostartfiles -Wl,-mv$(ARCHV) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR)
+BOOTVM_CFLAGS = -nostartfiles -Wl,-mv$(TOOLARCH) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR)
 
 BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) constants
 

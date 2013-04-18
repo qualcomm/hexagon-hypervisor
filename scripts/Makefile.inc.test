@@ -14,11 +14,7 @@
 
 default-target: all
 
-ifneq (,$(Q6VERSION))
-ARCHV=$(subst v,,$(Q6VERSION))
-endif
-
-ARCHV ?= 4
+include $(H2DIR)/scripts/Makefile.inc.tools
 
 ifeq ($(MODEL),)
    MODEL = ref
@@ -165,17 +161,17 @@ LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NP
 
 ifdef BOOT
 BOOTER=${H2DIR}/install/bin/booter
-CFLAGS += $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -Wall -g
+CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -g
 LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
-CFLAGS += $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g
+CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g
 LDFLAGS += -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 endif
 
 ifdef STANDALONE
 CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES)
 LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
-ASFLAGS += -mv${ARCHV} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
+ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
 
 else # non-STANDALONE
 OSLIB=-moslib=h2
@@ -188,9 +184,9 @@ LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--secti
 endif # BOOT
 
 CFLAGS += -I ${H2DIR}/install/include
-ASFLAGS += -mv${ARCHV} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
+ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
 endif #STANDALONE
-LDFLAGS+= -mv${ARCHV}
+LDFLAGS+= -mv${TOOLARCH}
 #  Turn on call() support for assertion checking
 #CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.

@@ -13,8 +13,8 @@
 #define MAX_HTHREADS 3
 #elif ARCHV == 5
 #define MAX_HTHREADS 6
-#elif ARCHV == 6
-#error probably four threads here
+#elif ARCHV == 60
+#define MAX_HTHREADS 4
 #endif
 #endif
 
@@ -115,6 +115,9 @@
 //HW D$ Prefetch off
 //#define BOOT_THREAD_USR 0x00050000
 //HW D$ Prefetch on
+#define BOOT_THREAD_USR 0x00056000
+#elif ARCHV == 60
+//FIXME
 #define BOOT_THREAD_USR 0x00056000
 #else
 #endif

@@ -1,17 +1,9 @@
 
 ALL: dummy
 
-ifeq ($(ARCHV),)
-ARCHV = 3
-endif
-
-CC = hexagon-gcc
-AR = hexagon-ar
-SIM = hexagon-sim
-
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -g
+CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -78,6 +70,10 @@ endif
 
 ifeq ($(ARCHV),5)
 OPT_OFILES := $(OPT_V5_OFILES)
+endif
+
+ifeq ($(ARCHV),60)
+OPT_OFILES := $(OPT_V60_OFILES)
 endif
 
 build/ref/libsos.a: $(REF_OFILES)

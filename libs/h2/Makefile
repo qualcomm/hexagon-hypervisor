@@ -1,17 +1,9 @@
 
 ALL: dummy
 
-ifeq ($(ARCHV),)
-ARCHV = 3
-endif
-
-CC = hexagon-gcc
-AR = hexagon-ar
-SIM = hexagon-sim
-
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -g
+CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -56,6 +48,10 @@ OPT_V5_CFILES :=
 OPT_V5_SFILES := 
 OPT_V5_OFILES := 
 
+OPT_V60_CFILES := 
+OPT_V60_SFILES := 
+OPT_V60_OFILES := 
+
 BUILD_DIR := .
 
 MKINCLUDES := $(shell find . -name make.inc)
@@ -71,7 +67,7 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
-ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES)
+ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES)
 
 $(ALL_OFILES): $(DEST_HFILES)
 
@@ -85,6 +81,10 @@ endif
 
 ifeq ($(ARCHV),5)
 OPT_OFILES := $(OPT_V5_OFILES)
+endif
+
+ifeq ($(ARCHV),60)
+OPT_OFILES := $(OPT_V60_OFILES)
 endif
 
 build/ref/libh2.a: $(REF_OFILES)

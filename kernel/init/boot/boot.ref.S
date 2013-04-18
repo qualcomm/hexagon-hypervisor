@@ -75,7 +75,7 @@ FUNC_START start .entry .p2align 12
 #elif ARCHV == 4
 	r0 = ##0x00002004
 	s63 = r0
-#elif ARCHV == 5
+#elif ARCHV >= 5
 	r0 = #0     /* (No chickenbits) */
 	s63 = r0
 #else

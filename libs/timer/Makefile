@@ -1,13 +1,8 @@
 
 INCLUDES = -I../h2/include -I../blast/include -I../qube/include -Iinclude
 
-CC = hexagon-gcc
-AR = hexagon-ar
-
-OPTIMIZE := -O2
-
-CFLAGS = -mv$(ARCHV) $(INCLUDES) -Wall -g $(OPTIMIZE) -G0
-ASFLAGS = -mv$(ARCHV) $(INCLUDES) -Wall
+CFLAGS = -mv$(TOOLARCH) $(INCLUDES) -Wall -g $(OPTIMIZE) -G0
+ASFLAGS = -mv$(TOOLARCH) $(INCLUDES) -Wall
 
 ifeq (v4, $(Q6VERSION))
 CFLAGS += -Wa,--gdwarf2

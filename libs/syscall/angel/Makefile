@@ -1,11 +1,6 @@
 
-CC = hexagon-gcc
-AR = hexagon-ar
-
-OPTIMIZE := -O2
-
-CFLAGS = -mv$(ARCHV) -Iinclude -Wall -I../../h2/include -g $(OPTIMIZE) -G0
-ASFLAGS = -mv$(ARCHV) -Iinclude -Wall -I../../h2/include 
+CFLAGS = -mv$(TOOLARCH) -Iinclude -Wall -I../../h2/include -g $(OPTIMIZE) -G0
+ASFLAGS = -mv$(TOOLARCH) -Iinclude -Wall -I../../h2/include 
 
 export BLAST_LIB_INCLUDE=$(shell pwd)/include
 

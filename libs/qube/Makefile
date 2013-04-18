@@ -1,12 +1,7 @@
 
 
-CC = hexagon-gcc
-AR = hexagon-ar
-
-OPTIMIZE := -O2
-
-CFLAGS =  -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -I../blast/include -I../timer/include -g $(OPTIMIZE) -G0
-ASFLAGS =  -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -I../blast/include -I../timer/include 
+CFLAGS =  -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../../kernel/include -I../blast/include -I../timer/include -g $(OPTIMIZE) -G0
+ASFLAGS =  -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../../kernel/include -I../blast/include -I../timer/include 
 
 export QUBE_LIB_INCLUDE=$(shell pwd)/include
 

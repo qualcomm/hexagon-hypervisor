@@ -1,35 +1,7 @@
 SHELL=/bin/bash
 ULIMIT=ulimit -t 300
 
-SIZE_TOOL = /prj/dsp/qdsp6/arch/scripts/section_size.py
-LD = hexagon-gcc
-
-SIM=hexagon-sim
-RUN=$(SIM)
-
-ifeq (,$(findstring -,$(RUN)))
-COM_SIMF=--timing --quiet --timer 32000 --timerpin 2
-else
-COM_SIMF= --quiet --cosim_file cosim.cfg
-endif
-
-ifneq (,${Q6VERSION})
-ARCHV=$(subst v,,$(Q6VERSION))
-else
-ARCHV=4
-endif
-
-COM_CFLAGS=
-COM_LDFLAGS=
-
-#If you are running outside hexframe.. sensible defaults
-ifeq (,${BUILD_DIR})
-CC=hexagon-gcc
-SIMF=$(COM_SIMF)
-#hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
-else
-SIMF+=$(COM_SIMF)
-endif
+include ../scripts/Makefile.inc.tools
 
 H2DIR := ..
 
@@ -44,7 +16,7 @@ endif
 
 OPTIMIZE=-O2
 
-CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${ARCHV} -DARCHV=${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
+CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 
 H2K_LOAD_ADDR := 0xbf800000

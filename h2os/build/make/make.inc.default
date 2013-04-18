@@ -24,6 +24,10 @@ $(MOD)_OPT_V5_CFILES := $(wildcard $(DIR)$(MOD).v5opt.c)
 $(MOD)_OPT_V5_SFILES := $(wildcard $(DIR)$(MOD).v5opt.S)
 $(MOD)_OPT_V5_OFILES := $($(MOD)_OPT_V5_CFILES:%.c=%.o) $($(MOD)_OPT_V5_SFILES:%.S=%.o)
 
+$(MOD)_OPT_V60_CFILES := $(wildcard $(DIR)$(MOD).v60opt.c)
+$(MOD)_OPT_V60_SFILES := $(wildcard $(DIR)$(MOD).v60opt.S)
+$(MOD)_OPT_V60_OFILES := $($(MOD)_OPT_V60_CFILES:%.c=%.o) $($(MOD)_OPT_V60_SFILES:%.S=%.o)
+
 ifeq "$(strip $($(MOD)_OPT_V3_OFILES))" ""
 $(MOD)_OPT_V3_OFILES := $($(MOD)_REF_OFILES)
 endif
@@ -34,6 +38,10 @@ endif
 
 ifeq "$(strip $($(MOD)_OPT_V5_OFILES))" ""
 $(MOD)_OPT_V5_OFILES := $($(MOD)_REF_OFILES)
+endif
+
+ifeq "$(strip $($(MOD)_OPT_V60_OFILES))" ""
+$(MOD)_OPT_V60_OFILES := $($(MOD)_REF_OFILES)
 endif
 
 
@@ -71,3 +79,7 @@ OPT_V4_OFILES += $($(MOD)_OPT_V4_OFILES)
 OPT_V5_CFILES += $($(MOD)_OPT_V5_CFILES)
 OPT_V5_SFILES += $($(MOD)_OPT_V5_SFILES)
 OPT_V5_OFILES += $($(MOD)_OPT_V5_OFILES)
+
+OPT_V60_CFILES += $($(MOD)_OPT_V60_CFILES)
+OPT_V60_SFILES += $($(MOD)_OPT_V60_SFILES)
+OPT_V60_OFILES += $($(MOD)_OPT_V60_OFILES)

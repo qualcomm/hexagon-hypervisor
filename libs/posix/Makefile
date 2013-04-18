@@ -1,12 +1,9 @@
 LIBNAME=posix
 
-CC = hexagon-gcc
-AR = hexagon-ar
-
 OPTIMIZE := -O1
 
-CFLAGS =  -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../blast/include -g $(OPTIMIZE) -G0
-ASFLAGS = -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../blast/include 
+CFLAGS =  -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../blast/include -g $(OPTIMIZE) -G0
+ASFLAGS = -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../blast/include 
 
 export BLAST_LIB_INCLUDE=$(shell pwd)/include
 

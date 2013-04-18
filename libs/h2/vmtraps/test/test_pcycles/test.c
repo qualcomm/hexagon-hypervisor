@@ -29,6 +29,10 @@
 #elif ARCHV == 5
 #define PCYCLES_PER_TCYCLE 3
 #define OVERHEAD 1536
+#elif ARCHV == 60
+// FIXME
+#define PCYCLES_PER_TCYCLE 3
+#define OVERHEAD 1536
 #else
 #error define pcycles per tcycle and overhead
 #endif

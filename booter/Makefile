@@ -1,17 +1,5 @@
-#If you are running outside hexframe.. sensible defaults
-ifeq (,${BUILD_DIR})
-ifneq (,${Q6VERSION})
-ARCHV=$(subst v,,$(Q6VERSION))
-else
-ARCHV=4
-endif
-CC=hexagon-gcc
-RUN=hexagon-sim
-SIMF=--timing
-#hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
-else
-ARCHV=$(subst v,,$(Q6VERSION))
-endif
+
+include ../scripts/Makefile.inc.tools
 
 H2DIR ?= ..
 
@@ -23,7 +11,7 @@ ifeq ($(KERNELPATH),)
 export KERNELPATH := $(H2DIR)/kernel
 endif
 
-CFLAGS = $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
+CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 
 include ../scripts/Makefile.inc.config

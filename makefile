@@ -1,24 +1,5 @@
-SHELL=/bin/bash
-SIZE_TOOL = /prj/dsp/qdsp6/arch/scripts/section_size.py
-LD = hexagon-gcc
 
-COM_CFLAGS= -Werror
-COM_LDFLAGS=
-
-#If you are running outside hexframe.. sensible defaults
-ifeq (,${BUILD_DIR})
-ifneq (,${Q6VERSION})
-ARCHV=$(subst v,,$(Q6VERSION))
-else
-ARCHV=4
-endif
-CC=hexagon-gcc
-RUN=hexagon-sim
-SIMF=--timing
-#hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
-else
-ARCHV=$(subst v,,$(Q6VERSION))
-endif
+include scripts/Makefile.inc.tools
 
 ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(CURDIR)/install
@@ -73,7 +54,7 @@ ref:
 	echo "v$(ARCHV) $@" > $(INSTALLPATH)/ver
 
 sim: ref
-	$(CC) -mv$(ARCHV) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
+	$(CC) -mv$(TOOLARCH) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
 	$(RUN) $(SIMF) -- test.exe;
 
 size:

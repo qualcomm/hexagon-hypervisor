@@ -27,6 +27,9 @@
 #define NUM_THREADS 3
 #elif ARCHV == 5
 #define NUM_THREADS 3
+#elif ARCHV == 60
+// FIXME
+#define NUM_THREADS 3
 #else
 #error define NUM_THREADS
 #endif

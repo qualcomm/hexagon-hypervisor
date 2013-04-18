@@ -1,0 +1,40 @@
+# Dear emacs, this is a -*- Makefile -*-
+
+export SHELL := /bin/bash
+
+#If you are running outside hexframe.. sensible defaults
+ifeq (,${BUILD_DIR})
+
+ifneq (,${Q6VERSION})
+export ARCHV := $(subst v,,$(Q6VERSION))
+else
+export ARCHV=4
+endif
+
+export CC := hexagon-gcc
+export AR := hexagon-ar
+export RUN := hexagon-sim
+export SIM := $(RUN)
+#export SIMF := --timing
+
+export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
+export LD := hexagon-gcc
+
+export COM_CFLAGS := -Werror
+export COM_LDFLAGS :=
+
+
+#hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
+else
+export ARCHV := $(subst v,,$(Q6VERSION))
+endif
+
+
+# FIXME: TOOLARCH := $(ARCHV) once tools support -mv60
+ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
+export TOOLARCH := 5
+else
+export TOOLARCH := $(ARCHV)
+endif
+
+export OPTIMIZE := -O2

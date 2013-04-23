@@ -114,7 +114,7 @@ def read_functions(file):
    file.close()
 
 def get_veropt(file):
-   ver_patt = re.compile("(v\d)\s(ref|opt)")
+   ver_patt = re.compile("(v\d+)\s(ref|opt)")
    for line in file:
       match = ver_patt.match(line)
       if match:

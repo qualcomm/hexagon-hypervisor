@@ -31,7 +31,6 @@ H2K_fastint_disable
 H2K_fastint_disable_l2
 H2K_fastint_enable
 H2K_fastint_enable_l2
-H2K_fatal_init
 H2K_fatal_kernel
 H2K_fatal_sim_exit
 H2K_fatal_thread
@@ -78,6 +77,11 @@ H2K_intcontrol_raise
 H2K_interrupted_waitmode_or_preempt
 H2K_kg_init
 H2K_lowprio_init
+H2K_mem_alloc_free
+H2K_mem_alloc_free_spinlocked
+H2K_mem_alloc_get
+H2K_mem_alloc_init
+H2K_mem_alloc_release
 H2K_mem_get_linear
 H2K_mem_get_pagetable
 H2K_mem_lookup_linear
@@ -149,6 +153,7 @@ H2K_set_syscfg
 H2K_set_tid_reg
 H2K_spinlock_lock
 H2K_spinlock_trylock
+H2K_spinlock_unlock
 H2K_stmode_begin
 H2K_stmode_end
 H2K_switch
@@ -187,7 +192,6 @@ H2K_trap_angel
 H2K_trap_config
 H2K_trap_config_setfatal
 H2K_trap_config_vmblock_init
-H2K_trap_config_vmblock_size
 H2K_trap_hwconfig
 H2K_trap_hwconfig_l2cache
 H2K_trap_hwconfig_partitions
@@ -245,12 +249,14 @@ H2K_vm_shint_setaffinity
 H2K_vm_shint_status
 H2K_vm_translate
 H2K_vmblock_clear
-H2K_vmblock_valid
-H2K_vmboot
 H2K_vmint_fixup_aff
 H2K_vmint_fixup_default
 H2K_vmint_fixup_getpeek
 H2K_vmint_fixup_post
+H2K_vmop
+H2K_vmop_boot
+H2K_vmop_free
+H2K_vmop_status
 H2K_vmtrap_bad
 H2K_vmtrap_cachectl
 H2K_vmtrap_clrmap

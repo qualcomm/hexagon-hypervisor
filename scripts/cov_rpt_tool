@@ -24,7 +24,7 @@ my $version;
 my $function;
 LINE: while(my $line = <FILE>) {
   chomp $line;
-  if ($line =~ /^(v[345])/) {
+  if ($line =~ /^(v\d+\s+(ref|opt))/) {
     if ($version) { finish_func($version, $function); }
     $version = $line;
     $version =~ s/\s//g;

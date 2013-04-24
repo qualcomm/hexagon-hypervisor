@@ -38,6 +38,7 @@ void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_con
 			H2K_TLB_ATOMIC_END;
 		}
 #endif
+		H2K_isync();
 	}
 }
 
@@ -59,5 +60,6 @@ void H2K_mem_tlb_invalidate_asid(u32_t asid)
 			H2K_TLB_ATOMIC_END;
 		}
 	}
+	H2K_isync();
 }
 

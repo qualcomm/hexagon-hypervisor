@@ -30,4 +30,13 @@ bootvm__Trap0:
 	jump 1b
 
 bootvm__Interrupt:
+	r29 = add(r29, #-8)
+	memd(r29+#0) = r1:0
+
+	r0 = #1 // VMINTOP_GLOBEN
+	r1 = #14 // CHILD_INTERRUPT
+	trap1(#H2_VMTRAP_INTOP)
+
+	r1:0 = memd(r29+#0)
+	r29 = add(r29, #8)
 	trap1(#H2_VMTRAP_RETURN)

@@ -222,7 +222,10 @@ int run_elf(char *elf, char *cmdline)
 	close(fdesc);
 	
 	do {  // wait for all child VM cpus to vmstop
+		h2_vmtrap_setie(0);
+		printf("Waiting for child interrupt\n");
 		h2_vmtrap_wait();
+		h2_vmtrap_setie(1); // take the interrupt to clear it
 		status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
 		printf("VM %lu status %d\n", vm, status);
 		cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
@@ -277,7 +280,7 @@ int main(int argc, char **argv)
 
 	h2_vmtrap_setvec(bootvm_vectors);
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
-	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
+	//h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
 	while (1) {
 		if (0 == strcmp(argv[0],"--syscfg")) {
 			if (argc < 2) die_usage();

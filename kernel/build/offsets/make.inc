@@ -1,5 +1,4 @@
-
-
+# Yo.  -*- Makefile -*-
 
 include/asm_offsets.h: $(BUILD_DIR)/offsets
 	$(SIM) $< > $@

@@ -88,7 +88,6 @@ typedef struct _h2_thread_context
 		void *continuation;		// probably can be 30 bits.  34 bits for futex_ptr plus 30 bits for continuation fits.
 	};
 	union {
-		/* XXX: FIXME: Change to ccrssr because they are paired.  Move ELR. */
 		u64_t ccrssr;
 		struct {
 			union {
@@ -121,7 +120,7 @@ typedef struct _h2_thread_context
 					u8_t ssr_badva_pe:1;
 					u8_t ssr_hi_rsvd:5;
 					u8_t ssr_ss:1;
-					u8_t ssr_sdb:1;
+					u8_t ssr_xe:1;
 #endif
 				};
 			};
@@ -213,6 +212,11 @@ typedef struct _h2_thread_context
 	u64_t reserved_u64_3;
 	// 288
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
+
+typedef struct {
+	u32_t vregs[32][8];
+	u32_t qregs[4];
+} __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_ext_context;
 
 typedef struct {
 	H2K_thread_context context;

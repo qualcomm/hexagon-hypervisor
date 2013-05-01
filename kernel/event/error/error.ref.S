@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <max.h>
 #include <asm_offsets.h>
 #include <asm_std.h>
 #include <max.h>
@@ -18,11 +19,25 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
 	/* r7 = me, r8 = ssr, r9 = htid */
-
-	r0 = badva
-	r1 = and(r8,#0xff)
-	r2 = #ERROR_GEVB_OFFSET
 	r3 = r7
+	r1 = and(r8, #0xff)
+
+#ifdef HAVE_EXTENSIONS
+	p0 = cmp.eq(r1, #0x16)  // XE exception?
+	if (!p0) jump 1f
+	r0 = memw(r7 + #CONTEXT_vmblock)
+	r10 = memw(r0 + #VMBLOCK_flags)
+	p0 = tstbit(r10, #0)
+	if (!p0) jump 1f  // VM using ext?
+
+	jump H2K_ext_context_restore // continues to H2K_context_restore_return
+#endif
+
+1:
+	r0 = badva
+	// r1 = cause
+	r2 = #ERROR_GEVB_OFFSET
+	// r3 = me
 	call H2K_vm_event
 	call H2K_preempt
 	jump H2K_context_restore_return

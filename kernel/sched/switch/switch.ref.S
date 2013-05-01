@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <max.h>
 #include <asm_offsets.h>
 #include <asm_std.h>
 #include <trace_asm_macro.h>
 #include <trace_constants.h>
+#include <vmdefs.h>
+#include <idtype.h>
 
 /*
  * We are switching from thread in r0 to thread in r1
@@ -89,6 +92,83 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memw(r0+#CONTEXT_ccr) = r14
 #endif
 
+#ifdef HAVE_EXTENSIONS
+
+	// check if ext needs saving, and mark as saved
+	r13 = add(r0, ##CONTEXT_atomic_status_word)
+1:
+	r14 = memw_locked(r13)
+	{ p1 = tstbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)  // ext regs live?
+		r14 = clrbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)
+	}
+	memw_locked(r13, p0) = r14
+	if (!p0) jump 1b
+
+	// cause exception on next ext access to restore
+	r14 = memw(r0 + #CONTEXT_ssr)
+	r14 = clrbit(r14, #SSR_XE_BIT)
+  memw(r0 + #CONTEXT_ssr) = r14
+
+	if (!p1) jump .Lfrom_sleep  // no need to save
+
+	// save; cpuid is ext_context index
+	r14 = memw(r0 + #CONTEXT_id)
+	r20 = ##H2K_ID_CPUIDX_MASK
+	r14 = and(r14, r20)
+	r14 = lsr(r14, #H2K_ID_RSVD_BITS)  // index
+	r22 = ##EXT_CONTEXT_SIZE
+	r20 = memw(r0 + #CONTEXT_vmblock)
+	r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
+	r21 += mpyu(r22.l, r14.l)  // my ext context
+
+	r23 = ssr
+	r23 = setbit(r23, #SSR_XE_BIT)
+	ssr = r23
+
+	vmem(r21++#32) = v0
+	vmem(r21++#32) = v1
+	vmem(r21++#32) = v2
+	vmem(r21++#32) = v3
+	vmem(r21++#32) = v4
+	vmem(r21++#32) = v5
+	vmem(r21++#32) = v6
+	vmem(r21++#32) = v7
+	vmem(r21++#32) = v8
+	vmem(r21++#32) = v9
+	vmem(r21++#32) = v10
+	vmem(r21++#32) = v11
+	vmem(r21++#32) = v12
+	vmem(r21++#32) = v13
+	vmem(r21++#32) = v14
+	vmem(r21++#32) = v15
+	vmem(r21++#32) = v16
+	vmem(r21++#32) = v17
+	vmem(r21++#32) = v18
+	vmem(r21++#32) = v19
+	vmem(r21++#32) = v20
+	vmem(r21++#32) = v21
+	vmem(r21++#32) = v22
+	vmem(r21++#32) = v23
+	vmem(r21++#32) = v24
+	vmem(r21++#32) = v25
+	vmem(r21++#32) = v26
+	vmem(r21++#32) = v27
+	vmem(r21++#32) = v28
+	vmem(r21++#32) = v29
+	vmem(r21++#32) = v30
+	vmem(r21+#0) = v31
+
+	// predicates
+	v0 = vpushqb(q0, v0)
+	v0 = vpushqb(q1, v0)
+	v0 = vpushqb(q2, v0)
+	v0 = vpushqb(q3, v0)
+	r20 = ##0xffff0000 // vector store mask
+	q0 = r20
+	r21 = add(r21, #16) // overlaps top half of v31
+	if (q0) vmem(r21+#0) = v0
+#endif
+
 .Lfrom_sleep:
 	if (r1 == #0) jump:nt .Lto_sleep
 	r27:26 = combine(r10,r18)
@@ -99,11 +179,12 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r8) = r19:18
 
 #if ARCHV >= 4
-	r14 = memw(r1+#CONTEXT_ccr)
+	r15:14 = memd(r1+#CONTEXT_ccrssr)
 	r21:20 = memd(r1+#CONTEXT_cs1cs0)
 	r25:24 = memd(r1+#CONTEXT_gssr_gelr)
 	r27:26 = memd(r1+#CONTEXT_gbadva_gosp)
-	ccr = r14
+	ccr = r15
+	ssr = r14
 	cs0 = r20
 	cs1 = r21
 	g1:0 = r25:24
@@ -147,6 +228,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #else
 	stid = r4
 #endif
+
 	r17 = r1
 	r0 = r17
 	call H2K_vm_do_work

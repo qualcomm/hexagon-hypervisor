@@ -13,9 +13,6 @@ endif
 
 export CC := hexagon-gcc
 export AR := hexagon-ar
-export RUN := hexagon-sim
-export SIM := $(RUN)
-#export SIMF := --timing
 
 export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
 export LD := hexagon-gcc
@@ -33,8 +30,13 @@ endif
 # FIXME: TOOLARCH := $(ARCHV) once tools support -mv60
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
 export TOOLARCH := 5
+export RUN := archsim
 else
 export TOOLARCH := $(ARCHV)
+export RUN := hexagon-sim
 endif
+
+export SIM := $(RUN)
+#export SIMF := --timing
 
 export OPTIMIZE := -O2

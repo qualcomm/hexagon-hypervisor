@@ -19,4 +19,12 @@ typedef enum {
 #define CONFIG_PHYSINT_CPUID(phys, cpu) \
 	(((phys) << MAP_PHYS_INTR_CPU_BITS) | ((cpu) & ((0x1 << MAP_PHYS_INTR_CPU_BITS) - 1)))
 
+#ifdef HAVE_EXTENSIONS
+#define CONFIG_USE_EXT 0x80000000
+#define CONFIG_CPUS(use_ext, cpus) ((use_ext) ? ((cpus) | CONFIG_USE_EXT) : (cpus))
+
+#else
+#define CONFIG_CPUS(use_ext, cpus) (cpus)
+#endif
+
 #endif

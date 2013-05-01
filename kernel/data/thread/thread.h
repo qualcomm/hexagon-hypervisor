@@ -11,5 +11,9 @@
 void H2K_thread_init() IN_SECTION(".text.init.thread");
 void H2K_thread_context_clear(H2K_thread_context *thread) IN_SECTION(".text.misc.thread");
 
+#ifdef HAVE_EXTENSIONS
+void H2K_ext_context_clear(H2K_ext_context *ext) IN_SECTION(".text.misc.thread");
+#endif
+
 #endif
 

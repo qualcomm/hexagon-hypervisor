@@ -18,6 +18,10 @@
 #endif
 #endif
 
+#if ARCHV >= 60
+#define HAVE_EXTENSIONS 1
+#endif
+
 #if ARCHV <= 3
 #define MAX_TLB_ENTRIES 63
 #define PHYSREAD_TEMP_MAP_IDX 63
@@ -107,6 +111,10 @@
 #define VM_IPI_INTMASK (0x00000001 << VM_IPI_INT)
 #define SSR_GUEST_BIT 19
 #define SSR_SS_BIT 30
+#endif
+
+#ifdef HAVE_EXTENSIONS
+#define SSR_XE_BIT 31
 #endif
 
 #if ARCHV <= 4

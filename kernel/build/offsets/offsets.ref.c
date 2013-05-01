@@ -64,6 +64,9 @@ PRINT_CONTEXT_OFFSET(gbadva_gosp);
 PRINT_CONTEXT_OFFSET(cs1cs0);
 PRINT_CONTEXT_OFFSET(atomic_status_word);
 	printf("#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
+#ifdef HAVE_EXTENSIONS
+	printf("#define EXT_CONTEXT_SIZE %d\n",sizeof(H2K_ext_context));
+#endif
 	printf("#define FASTINT_CONTEXT_SIZE %d\n",sizeof(H2K_fastint_context));
 
 PRINT_KG_OFFSET(ready_valids);
@@ -98,6 +101,10 @@ PRINT_KG_OFFSET(vmblocks);
 PRINT_VMBLOCK_OFFSET(waiting_cpus);
 PRINT_VMBLOCK_OFFSET(max_cpus);
 PRINT_VMBLOCK_OFFSET(contexts);
+#ifdef HAVE_EXTENSIONS
+PRINT_VMBLOCK_OFFSET(ext_contexts);
+#endif
+PRINT_VMBLOCK_OFFSET(flags);
 
 	printf("#define STATUS_DEAD       %d\n",H2K_STATUS_DEAD);
 	printf("#define STATUS_READY      %d\n",H2K_STATUS_READY);

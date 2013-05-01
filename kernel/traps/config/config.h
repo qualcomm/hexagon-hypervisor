@@ -20,7 +20,24 @@
 #define BYTES_PER_WORD (sizeof(u32_t) / sizeof(u8_t))
 #define PHYS_PER_WORD (sizeof(u32_t) / sizeof(physint_t))
 
-#define VMBLOCK_SPACE ROUND(sizeof(H2K_vmblock_t))
+#define VMBLOCK_SPACE (sizeof(H2K_vmblock_t))
+
+// cpu_contexts
+#define CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_thread_context))
+
+#ifdef HAVE_EXTENSIONS
+// extended contexts
+#define EXT_CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_ext_context))
+#endif
+
+// interrupt handler info
+#define INTINFO_SPACE(ints) (((ints > 0) ? 3 : 2) * sizeof(H2K_vm_int_opinfo_t))
+
+// percpu_mask
+#define MASKPTR_SPACE(cpus, ints) (ints > 0 ? ROUND((cpus * sizeof(bitmask_t *))) : 0)
+#define MASK_WORDS_PERCPU(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
+#define MASK_WORDS(cpus, ints) (cpus * MASK_WORDS_PERCPU(ints))
+#define MASK_SPACE(cpus, ints) ROUND(MASK_WORDS(cpus, ints) * BYTES_PER_WORD)
 
 // pending
 #define PENDING_WORDS(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
@@ -30,33 +47,32 @@
 #define ENABLE_WORDS(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
 #define ENABLE_SPACE(ints) ROUND(ENABLE_WORDS(ints) * BYTES_PER_WORD)
 
-// percpu_mask
-#define MASKPTR_SPACE(cpus, ints) (ints > 0 ? ROUND((cpus * sizeof(bitmask_t *))) : 0)
-#define MASK_WORDS_PERCPU(ints) ((ints + BITS_PER_WORD - 1) / BITS_PER_WORD)
-#define MASK_WORDS(cpus, ints) (cpus * MASK_WORDS_PERCPU(ints))
-#define MASK_SPACE(cpus, ints) ROUND(MASK_WORDS(cpus, ints) * BYTES_PER_WORD)
-
 // int_v2p
 #define PHYSINT_WORDS(ints) ((ints + PHYS_PER_WORD - 1) / PHYS_PER_WORD)
 #define PHYSINT_SPACE(ints) ROUND(PHYSINT_WORDS(ints) * BYTES_PER_WORD)
 
-/* Interrupt Handler Info */
-#define INTINFO_SPACE(ints) (((ints > 0) ? 3 : 2) * sizeof(H2K_vm_int_opinfo_t))
+#define VMBLOCK_SIZE_BASE(cpus, ints)						\
+	(VMBLOCK_SPACE +															\
+	 CONTEXT_SPACE(cpus) +												\
+	 INTINFO_SPACE(ints) +												\
+	 MASKPTR_SPACE(cpus, ints) +									\
+	 MASK_SPACE(cpus, ints) +											\
+	 PENDING_SPACE(ints) +												\
+	 ENABLE_SPACE(ints) +													\
+	 PHYSINT_SPACE(ints + PERCPU_INTERRUPTS))
 
-// cpu_contexts
-#define CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_thread_context))
-
-#define VMBLOCK_SIZE(cpus, ints) \
-	(VMBLOCK_SPACE + \
-	 PENDING_SPACE(ints) + \
-	 ENABLE_SPACE(ints) + \
-	 MASKPTR_SPACE(cpus, ints) + \
-	 MASK_SPACE(cpus, ints) + \
-	 PHYSINT_SPACE(ints + PERCPU_INTERRUPTS) + \
-	 CONTEXT_SPACE(cpus) + \
-	 INTINFO_SPACE(ints) + \
+#ifdef HAVE_EXTENSIONS
+#define VMBLOCK_SIZE(cpus, ints, ext)			 \
+	(VMBLOCK_SIZE_BASE(cpus, ints) +				 \
+	 (ext ? (EXT_CONTEXT_SPACE(cpus)) : 0) + \
 	 (H2K_VMBLOCK_ALIGN - 1))
    // space to align if needed
+#else
+#define VMBLOCK_SIZE(cpus, ints)								\
+	(VMBLOCK_SIZE_BASE(cpus, ints) +							\
+	 (H2K_VMBLOCK_ALIGN - 1))
+   // space to align if needed
+#endif
 
 typedef enum {
 	CONFIG_SETFATAL,

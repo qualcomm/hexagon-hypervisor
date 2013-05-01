@@ -70,6 +70,9 @@ typedef struct H2K_vmblock_struct {
 	H2K_thread_context *free_threads;
 	/* Pointer to thread context storage */
 	H2K_thread_context *contexts;
+#ifdef HAVE_EXTENSIONS
+	H2K_ext_context *ext_contexts;
+#endif
 
 	/* Pending Virtual Interrupts for this VM */
 	bitmask_t *pending;
@@ -97,6 +100,18 @@ typedef struct H2K_vmblock_struct {
 	long_bitmask_t waiting_cpus;
 
 	translation_type pmap_type;
+
+	union {
+		u32_t flags;
+		struct {
+#ifdef HAVE_EXTENSIONS
+			u32_t use_ext:1;
+			u32_t flags_unused:31;
+#else
+			u32_t flags_unused:32;
+#endif
+		};
+	};
 
 } __attribute__((aligned(32))) H2K_vmblock_t;
 

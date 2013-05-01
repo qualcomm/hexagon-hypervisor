@@ -47,7 +47,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 	physint_t physint;
 	u32_t virt_int;
 	H2K_id_t id;
-	struct _h2_thread_context *contexts;
+	H2K_thread_context *contexts;
 	u32_t *p;
 	u32_t *clear_start;
 	u32_t i;
@@ -55,6 +55,11 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 	H2K_translation_t phys_translation;
 	H2K_mem_alloc_block_t block;
 	u32_t ptrtmp;
+
+#ifdef HAVE_EXTENSIONS
+	u32_t use_ext;
+	H2K_ext_context *ext_contexts;
+#endif
 
 	u32_t vm = (u32_t)ptr;
 
@@ -74,9 +79,18 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 	switch (op) {
 
 	case SET_CPUS_INTS:	/* Allocates a new VM  */
+#ifdef HAVE_EXTENSIONS
+		use_ext = arg1 & CONFIG_USE_EXT;
+		arg1 &= ~CONFIG_USE_EXT;
+#endif
+
 		if ((arg1 > MAX_VM_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
 
+#if ARCHV >=60
+		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2, use_ext));
+#else
 		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2));
+#endif
 		if (block.ptr == NULL) return 0;  // no space
 
 		vmblock = (H2K_vmblock_t *)(void *)block.ptr;
@@ -105,8 +119,6 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 			vmblock->parent = me->id;
 		}
 		/* ID of boot VM parent stays 0:0 */
-			
-
 		ptrtmp += VMBLOCK_SPACE;
 
 		/* allocate cpu contexts and set invalid */
@@ -121,6 +133,19 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 			vmblock->free_threads = &contexts[i];
 		}
 		ptrtmp += vmblock->max_cpus * sizeof(H2K_thread_context);
+
+#ifdef HAVE_EXTENSIONS
+		/* maybe initialize extended contexts */
+		if (use_ext) {
+			vmblock->use_ext = 1;
+			vmblock->ext_contexts = ext_contexts = (H2K_ext_context *)ptrtmp;
+			for (i = 0; i < vmblock->max_cpus; i++) {
+				H2K_ext_context_clear(&ext_contexts[i]);
+			}
+			ptrtmp += vmblock->max_cpus * sizeof(H2K_ext_context);
+		}
+#endif
+
 		vmblock->intinfo = (H2K_vm_int_opinfo_t *)ptrtmp; 
 		ptrtmp += INTINFO_SPACE(vmblock->num_ints);
 		H2K_vm_int_intinfo_init(vmblock,vmblock->num_ints);

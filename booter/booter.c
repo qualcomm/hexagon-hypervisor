@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <max.h>
 #include <h2.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,13 +17,16 @@
 #include <unistd.h>
 
 #include "elf.h"
-#include "../kernel/include/hw.h"
+#include <hw.h>
 
 #define CHILD_INTERRUPT 14
 #define VM_BEST_PRIO 0
 
 /* VM config */
 static unsigned int num_vcpus = 32;
+#ifdef HAVE_EXTENSIONS
+static unsigned int use_ext = 0;
+#endif
 static unsigned int num_shared_ints = 0;
 static unsigned int page_size = SIZE_16M;
 static unsigned int offset_pages = 0;
@@ -106,7 +110,7 @@ unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long phys_offset)
 
 	printf("pc %08lx\n", (unsigned long)pc);
 
-	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, num_vcpus, num_shared_ints);
+	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, CONFIG_CPUS(use_ext, num_vcpus), num_shared_ints);
 
 	if (trans_type == -1) { // not set on cmdline, get from guest image
 		pmap = get_pmap(fdesc, ehdr);
@@ -331,6 +335,14 @@ int main(int argc, char **argv)
 			num_vcpus = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
+
+#ifdef HAVE_EXTENSIONS
+		} else if (0 == strcmp(argv[0], "--use_ext")) {
+			if (argc < 2) die_usage();
+			use_ext = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+#endif
 
 		} else if (0 == strcmp(argv[0], "--num_shared_ints")) {
 			if (argc < 2) die_usage();

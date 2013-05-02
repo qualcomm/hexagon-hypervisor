@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <max.h>
 #include <asm_offsets.h>
 #include <asm_std.h>
-#include <max.h>
 #include <vmdefs.h>
+#include <idtype.h>
 #include <trace_asm_macro.h>
 
 /*
@@ -87,6 +88,84 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	{
 		memd(SRC+#CONTEXT_gssr_gelr) = r1:0
 	}
+
+#ifdef HAVE_EXTENSIONS
+
+	// check if ext needs saving, and mark as saved
+	r13 = add(SRC, ##CONTEXT_atomic_status_word)
+1:
+	r14 = memw_locked(r13)
+	{ p1 = tstbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)  // ext regs live?
+		r14 = clrbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)
+	}
+	memw_locked(r13, p0) = r14
+	if (!p0) jump 1b
+
+	// cause exception on next ext access to restore
+	r14 = memw(SRC + #CONTEXT_ssr)
+	r14 = clrbit(r14, #SSR_XE_BIT)
+  memw(SRC + #CONTEXT_ssr) = r14
+
+	if (!p1) jump .Lfrom_sleep  // no need to save
+
+	// save; cpuid is ext_context index
+	r14 = memw(SRC + #CONTEXT_id)
+	r20 = ##H2K_ID_CPUIDX_MASK
+	r14 = and(r14, r20)
+	r14 = lsr(r14, #H2K_ID_RSVD_BITS)  // index
+	r22 = ##EXT_CONTEXT_SIZE
+	r20 = memw(SRC + #CONTEXT_vmblock)
+	r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
+	r21 += mpyu(r22.l, r14.l)  // my ext context
+
+	r23 = ssr
+	r23 = setbit(r23, #SSR_XE_BIT)
+	ssr = r23
+
+	vmem(r21++#32) = v0
+	vmem(r21++#32) = v1
+	vmem(r21++#32) = v2
+	vmem(r21++#32) = v3
+	vmem(r21++#32) = v4
+	vmem(r21++#32) = v5
+	vmem(r21++#32) = v6
+	vmem(r21++#32) = v7
+	vmem(r21++#32) = v8
+	vmem(r21++#32) = v9
+	vmem(r21++#32) = v10
+	vmem(r21++#32) = v11
+	vmem(r21++#32) = v12
+	vmem(r21++#32) = v13
+	vmem(r21++#32) = v14
+	vmem(r21++#32) = v15
+	vmem(r21++#32) = v16
+	vmem(r21++#32) = v17
+	vmem(r21++#32) = v18
+	vmem(r21++#32) = v19
+	vmem(r21++#32) = v20
+	vmem(r21++#32) = v21
+	vmem(r21++#32) = v22
+	vmem(r21++#32) = v23
+	vmem(r21++#32) = v24
+	vmem(r21++#32) = v25
+	vmem(r21++#32) = v26
+	vmem(r21++#32) = v27
+	vmem(r21++#32) = v28
+	vmem(r21++#32) = v29
+	vmem(r21++#32) = v30
+	vmem(r21+#0) = v31
+
+	// predicates
+	v0 = vpushqb(q0, v0)
+	v0 = vpushqb(q1, v0)
+	v0 = vpushqb(q2, v0)
+	v0 = vpushqb(q3, v0)
+	r20 = ##0xffff0000 // vector store mask
+	q0 = r20
+	r21 = add(r21, #16) // overlaps top half of v31
+	if (q0) vmem(r21+#0) = v0
+#endif
+
 	.falign
 .Lfrom_sleep:
 	{
@@ -180,6 +259,11 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r27:26 = memd(DST+#CONTEXT_gbadva_gosp)
 		c11:10 = r21:20				// gp:ugp
 	}
+
+	elr = r0
+	r21:20 = memd(DST+#CONTEXT_ccrssr)
+	s7:6 = r21:20
+
 	{
 		r21:20 = memd(DST+#CONTEXT_r2120)
 		r23:22 = memd(DST+#CONTEXT_r2322)
@@ -190,7 +274,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r25:24 = memd(DST+#CONTEXT_r2524)
 		r27:26 = memd(DST+#CONTEXT_r2726)
 	}
-	elr = r0					// XXX: FIXME: cram somewhere...
+
 	PMUCFG = PMUVAL
 	{
 		if (P_FROMWAIT) memd(KG_WAITCYCLES+HTNUM<<#3) = r3:2  // waitcycles

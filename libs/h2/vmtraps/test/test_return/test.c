@@ -30,6 +30,10 @@ void FAIL(const char *str)
 	exit(1);
 }
 
+void stop() {
+	h2_thread_stop(0);
+}
+
 void ie_return()
 {
 	unsigned int ie;
@@ -40,6 +44,7 @@ void ie_return()
 		FAIL("Interrupts should be enabled (ie_return)");
 	}
 	h2_sem_up(&donesem);
+	h2_vmtrap_setregs((unsigned long)stop, 0, 0, 0);  // set gelr to something sane
 	h2_vmtrap_return();
 }
 
@@ -53,6 +58,7 @@ void id_return()
 		FAIL("Interrupts should be disabled (id_return)");
 	}
 	h2_sem_up(&donesem);
+	h2_vmtrap_setregs((unsigned long)stop, 0, 0, 0);
 	h2_vmtrap_return();
 }
 

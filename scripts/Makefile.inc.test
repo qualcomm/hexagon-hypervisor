@@ -43,7 +43,10 @@ include $(H2DIR)/scripts/Makefile.inc.config
 include $(H2DIR)/scripts/Makefile.inc.constants
 
 ARCH=qdsp6
-RUN=${ARCH}-sim
+
+
+RUN := $(ARCH)-sim
+
 CC=${ARCH}-gcc
 AS=${ARCH}-as
 LD=${ARCH}-ld

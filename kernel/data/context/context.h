@@ -215,7 +215,7 @@ typedef struct _h2_thread_context
 
 typedef struct {
 	u32_t vregs[32][8];
-	u32_t qregs[4];
+	u32_t qregs[8];
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_ext_context;
 
 typedef struct {

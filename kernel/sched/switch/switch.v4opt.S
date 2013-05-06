@@ -153,17 +153,30 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	vmem(r21++#32) = v28
 	vmem(r21++#32) = v29
 	vmem(r21++#32) = v30
-	vmem(r21+#0) = v31
+	vmem(r21++#32) = v31
 
 	// predicates
-	v0 = vpushqb(q0, v0)
-	v0 = vpushqb(q1, v0)
-	v0 = vpushqb(q2, v0)
-	v0 = vpushqb(q3, v0)
-	r20 = ##0xffff0000 // vector store mask
-	q0 = r20
-	r21 = add(r21, #16) // overlaps top half of v31
-	if (q0) vmem(r21+#0) = v0
+	r20 = #0x00000000
+	v0 = vsplatw(r20)
+
+	r20 = ##0x01010101
+	v1 = vsplatw(r20)
+	v3 = vmux(q0, v1, v0)
+
+	r20 = #1
+	v1 = vaslw(v1, r20) // 0x02020202
+	v2 = vmux(q1, v1, v0)
+	v3 = vor(v3, v2)
+
+	v1 = vaslw(v1, r20) // 0x04040404
+	v2 = vmux(q2, v1, v0)
+	v3 = vor(v3, v2)
+
+	v1 = vaslw(v1, r20) // 0x08080808
+	v2 = vmux(q3, v1, v0)
+	v3 = vor(v3, v2)
+
+	vmem(r21+#0) = v3
 #endif
 
 	.falign

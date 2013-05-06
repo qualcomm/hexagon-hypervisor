@@ -123,6 +123,28 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	r13 = setbit(r13, #SSR_XE_BIT)
 	ssr = r13
 
+	// predicates
+	r14 = add(r11, #(32 * 32))
+	v3 = vmem(r14+#0)
+	r12 = #1
+	r13 = ##0x01010101
+
+	v1 = vsplatw(r13)
+	v2 = vand(v3, v1)
+	q0 = vcmpb.equ(v2, v1)
+
+	v1 = vaslw(v1, r12) // 0x02020202
+	v2 = vand(v3, v1)
+	q1 = vcmpb.equ(v2, v1)
+
+	v1 = vaslw(v1, r12) // 0x04040404
+	v2 = vand(v3, v1)
+	q2 = vcmpb.equ(v2, v1)
+
+	v1 = vaslw(v1, r12) // 0x08080808
+	v2 = vand(v3, v1)
+	q3 = vcmpb.equ(v2, v1)
+
 	v0 = vmem(r11++#32)
 	v1 = vmem(r11++#32)
 	v2 = vmem(r11++#32)
@@ -155,13 +177,6 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	v29 = vmem(r11++#32)
 	v30 = vmem(r11++#32)
 	v31 = vmem(r11++#32)
-
-	r13:12 = memd(r11++#8)
-  q0 = r12
-	q1 = r13
-	r13:12 = memd(r11++#8)
-  q2 = r12
-	q3 = r13
 
 	// mark ext as live
 	r10 = add(r3, ##CONTEXT_atomic_status_word)

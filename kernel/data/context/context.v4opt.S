@@ -104,92 +104,127 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	{
 		r17:16 = memd(r16+#CONTEXT_r1716)
 	}
-	rte						// simulator bug?  Should be able to schedule w/ above
+	rte						// FIXME: simulator bug?  Should be able to schedule w/ above
 FUNC_END H2K_context_restore_return
 
 #ifdef HAVE_EXTENSIONS
 FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 // r0 = vmblock, r3 = me
 
-	r10 = memw(r3 + #CONTEXT_id)
-	r11 = ##H2K_ID_CPUIDX_MASK
-	r10 = and(r10, r11)
-	r10 = lsr(r10, #H2K_ID_RSVD_BITS) // index
-	r12 = ##EXT_CONTEXT_SIZE
-	r11 = memw(r0 + #VMBLOCK_ext_contexts) // start of ext contexts
-	r11 += mpyu(r12.l, r10.l)  // my ext context
-
-	r13 = ssr
-	r13 = setbit(r13, #SSR_XE_BIT)
-	ssr = r13
-
-	// predicates
-	r14 = add(r11, #(32 * 32))
-	v3 = vmem(r14+#0)
-	r12 = #1
-	r13 = ##0x01010101
-
-	v1 = vsplatw(r13)
-	v2 = vand(v3, v1)
-	q0 = vcmpb.equ(v2, v1)
-
-	v1 = vaslw(v1, r12) // 0x02020202
-	v2 = vand(v3, v1)
-	q1 = vcmpb.equ(v2, v1)
-
-	v1 = vaslw(v1, r12) // 0x04040404
-	v2 = vand(v3, v1)
-	q2 = vcmpb.equ(v2, v1)
-
-	v1 = vaslw(v1, r12) // 0x08080808
-	v2 = vand(v3, v1)
-	q3 = vcmpb.equ(v2, v1)
-
-	v0 = vmem(r11++#32)
-	v1 = vmem(r11++#32)
-	v2 = vmem(r11++#32)
-	v3 = vmem(r11++#32)
-	v4 = vmem(r11++#32)
-	v5 = vmem(r11++#32)
-	v6 = vmem(r11++#32)
-	v7 = vmem(r11++#32)
-	v8 = vmem(r11++#32)
-	v9 = vmem(r11++#32)
-	v10 = vmem(r11++#32)
-	v11 = vmem(r11++#32)
-	v12 = vmem(r11++#32)
-	v13 = vmem(r11++#32)
-	v14 = vmem(r11++#32)
-	v15 = vmem(r11++#32)
-	v16 = vmem(r11++#32)
-	v17 = vmem(r11++#32)
-	v18 = vmem(r11++#32)
-	v19 = vmem(r11++#32)
-	v20 = vmem(r11++#32)
-	v21 = vmem(r11++#32)
-	v22 = vmem(r11++#32)
-	v23 = vmem(r11++#32)
-	v24 = vmem(r11++#32)
-	v25 = vmem(r11++#32)
-	v26 = vmem(r11++#32)
-	v27 = vmem(r11++#32)
-	v28 = vmem(r11++#32)
-	v29 = vmem(r11++#32)
-	v30 = vmem(r11++#32)
-	v31 = vmem(r11++#32)
-
-	// mark ext as live
-	r10 = add(r3, ##CONTEXT_atomic_status_word)
+	{
+		r10 = memw(r3 + #CONTEXT_id)
+		r11 = ##H2K_ID_CPUIDX_MASK
+		r13 = ssr
+	}
+	{
+		r10 = and(r10, r11)
+		r12 = ##EXT_CONTEXT_SIZE
+		r11 = memw(r0 + #VMBLOCK_ext_contexts) // start of ext contexts
+	}
+	{
+		r10 = lsr(r10, #H2K_ID_RSVD_BITS) // index
+		r16 = #1
+		r13 = setbit(r13, #SSR_XE_BIT)
+	}
+	{
+		r11 += mpyu(r12.l, r10.l)  // my ext context
+		r15 = ##0x01010101
+		ssr = r13
+	}
+	{
+	 	r14 = add(r11, #(32 * 32))
+		v0 = vmem(r11++#32)
+		v1 = vmem(r11++#32)
+	}
+	{
+		v31 = vmem(r14+#0)
+// predicates
+	 	v29 = vsplatw(r15)		// 0x01010101
+	}
+	{
+		v30 = vand(v31, v29)
+		v2 = vmem(r11++#32)
+		v3 = vmem(r11++#32)
+	}
+	{
+		q0 = vcmpb.equ(v30, v29)
+		v4 = vmem(r11++#32)
+		v5 = vmem(r11++#32)
+	}
+	{
+		v29 = vaslw(v29, r16) // 0x02020202
+		v6 = vmem(r11++#32)
+		v7 = vmem(r11++#32)
+	}
+	{
+		v30 = vand(v31, v29)
+		v8 = vmem(r11++#32)
+		v9 = vmem(r11++#32)
+	}
+	{
+		q1 = vcmpb.equ(v30, v29)
+		v10 = vmem(r11++#32)
+		v11 = vmem(r11++#32)
+	}
+	{
+		v29 = vaslw(v29, r16) // 0x04040404
+		v12 = vmem(r11++#32)
+		v13 = vmem(r11++#32)
+	}
+	{
+		v30 = vand(v31, v29)
+		v14 = vmem(r11++#32)
+		v15 = vmem(r11++#32)
+	}
+	{
+		q2 = vcmpb.equ(v30, v29)
+		v16 = vmem(r11++#32)
+		v17 = vmem(r11++#32)
+	}
+	{
+		v29 = vaslw(v29, r16) // 0x08080808
+		v18 = vmem(r11++#32)
+		v19 = vmem(r11++#32)
+	}
+	{
+		v30 = vand(v31, v29)
+		v20 = vmem(r11++#32)
+		v21 = vmem(r11++#32)
+	}
+	{
+		q3 = vcmpb.equ(v30, v29)
+		v22 = vmem(r11++#32)
+		v23 = vmem(r11++#32)
+	}
+	{
+// enable ext
+	 	r13 = memw(r3 + #CONTEXT_ssr)
+		v24 = vmem(r11++#32)
+	}
+	{
+		r13 = setbit(r13, #SSR_XE_BIT)
+		v25 = vmem(r11++#32)
+		v26 = vmem(r11++#32)
+	}
+	{
+		memw(r3 + #CONTEXT_ssr) = r13
+		v27 = vmem(r11++#32)
+	}
+	{
+		v28 = vmem(r11++#32)
+		v29 = vmem(r11++#32)
+	}
+	{
+		v30 = vmem(r11++#32)
+		v31 = vmem(r11++#32)
+// mark ext as live
+		r10 = add(r3, ##CONTEXT_atomic_status_word)
+	}
 1:
 	r11 = memw_locked(r10)
 	r12 = setbit(r11, #H2K_VMSTATUS_SAVEXT_BIT)
 	memw_locked(r10, p0) = r12
 	if (!p0) jump 1b
-
-	// enable ext
-	r13 = memw(r3 + #CONTEXT_ssr)
-	r13 = setbit(r13, #SSR_XE_BIT)
-	memw(r3 + #CONTEXT_ssr) = r13
 
 	jump H2K_context_restore_return
 

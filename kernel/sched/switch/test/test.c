@@ -30,6 +30,7 @@ static u32_t TH_saw_cont = 0;
 H2K_thread_context a,b;
 H2K_thread_context *TH_to;
 H2K_thread_context *TH_from;
+H2K_vmblock_t vmb;
 
 void TH_wait_check()
 {
@@ -82,7 +83,10 @@ int main()
 	H2K_trace_init();
 	modify_goto_wait();
 	a.continuation = TH_cont_check;
+	a.vmblock = &vmb;
 	b.continuation = TH_cont_check;
+	b.vmblock = &vmb;
+
 	TH_saw_wait = 0;
 	TH_to = NULL;
 	TH_from = NULL;

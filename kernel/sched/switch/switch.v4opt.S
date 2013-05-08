@@ -87,12 +87,11 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(SRC+#CONTEXT_gssr_gelr) = r1:0
-	}
-
 #ifdef HAVE_EXTENSIONS
 
-	// check if ext needs saving, and mark as saved
-	r13 = add(SRC, ##CONTEXT_atomic_status_word)
+// check if ext needs saving, and mark as saved
+	 	r13 = add(SRC, ##CONTEXT_atomic_status_word)
+	}
 1:
 	r14 = memw_locked(r13)
 	{ p1 = tstbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)  // ext regs live?
@@ -102,41 +101,95 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	if (!p0) jump 1b
 
 	// cause exception on next ext access to restore
-	r14 = memw(SRC + #CONTEXT_ssr)
-	r14 = clrbit(r14, #SSR_XE_BIT)
-  memw(SRC + #CONTEXT_ssr) = r14
+	{
+		r15 = memw(SRC + #CONTEXT_ssr)
+		r14 = memw(SRC + #CONTEXT_id)
+		r20 = ##H2K_ID_CPUIDX_MASK
+	}
+	{
+		r15 = clrbit(r15, #SSR_XE_BIT)
+		r14 = and(r14, r20)
+		r22 = ##EXT_CONTEXT_SIZE
+	}
+	{
+	  memw(SRC + #CONTEXT_ssr) = r15
+		r14 = lsr(r14, #H2K_ID_RSVD_BITS)  // index
+		r20 = memw(SRC + #CONTEXT_vmblock)
+		r23 = ssr
+	}
+	{
+		r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
+		r23 = setbit(r23, #SSR_XE_BIT)
+		if (!p1) jump .Lfrom_sleep  // no need to save
+	}
 
-	if (!p1) jump .Lfrom_sleep  // no need to save
+// save; cpuid is ext_context index
+	{
+		r21 += mpyu(r22.l, r14.l)  // my ext context
+		ssr = r23
+	}
 
-	// save; cpuid is ext_context index
-	r14 = memw(SRC + #CONTEXT_id)
-	r20 = ##H2K_ID_CPUIDX_MASK
-	r14 = and(r14, r20)
-	r14 = lsr(r14, #H2K_ID_RSVD_BITS)  // index
-	r22 = ##EXT_CONTEXT_SIZE
-	r20 = memw(SRC + #CONTEXT_vmblock)
-	r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
-	r21 += mpyu(r22.l, r14.l)  // my ext context
-
-	r23 = ssr
-	r23 = setbit(r23, #SSR_XE_BIT)
-	ssr = r23
-
-	vmem(r21++#32) = v0
-	vmem(r21++#32) = v1
-	vmem(r21++#32) = v2
-	vmem(r21++#32) = v3
-	vmem(r21++#32) = v4
-	vmem(r21++#32) = v5
-	vmem(r21++#32) = v6
-	vmem(r21++#32) = v7
-	vmem(r21++#32) = v8
-	vmem(r21++#32) = v9
-	vmem(r21++#32) = v10
-	vmem(r21++#32) = v11
-	vmem(r21++#32) = v12
-	vmem(r21++#32) = v13
-	vmem(r21++#32) = v14
+	{
+		vmem(r21++#32) = v0
+// predicates
+	 	r20 = #0x00000000
+	}
+	{
+		v0 = vsplatw(r20)
+		vmem(r21++#32) = v1
+	}
+	{
+		r20 = ##0x01010101
+		vmem(r21++#32) = v2
+	}
+	{
+		v1 = vsplatw(r20)
+		vmem(r21++#32) = v3
+	}
+	{
+		v3 = vmux(q0, v1, v0)
+		vmem(r21++#32) = v4
+	}
+	{
+		r20 = #1
+		vmem(r21++#32) = v5
+	}
+	{
+		v1 = vaslw(v1, r20) // 0x02020202
+		vmem(r21++#32) = v6
+	}
+	{
+		v2 = vmux(q1, v1, v0)
+		vmem(r21++#32) = v7
+	}
+	{
+		v3 = vor(v3, v2)
+		vmem(r21++#32) = v8
+	}
+	{
+		v1 = vaslw(v1, r20) // 0x04040404
+		vmem(r21++#32) = v9
+	}
+	{
+		v2 = vmux(q2, v1, v0)
+		vmem(r21++#32) = v10
+	}
+	{
+		v3 = vor(v3, v2)
+		vmem(r21++#32) = v11
+	}
+	{
+		v1 = vaslw(v1, r20) // 0x08080808
+		vmem(r21++#32) = v12
+	}
+	{
+		v2 = vmux(q3, v1, v0)
+		vmem(r21++#32) = v13
+	}
+	{
+		v3 = vor(v3, v2)
+		vmem(r21++#32) = v14
+	}
 	vmem(r21++#32) = v15
 	vmem(r21++#32) = v16
 	vmem(r21++#32) = v17
@@ -155,28 +208,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	vmem(r21++#32) = v30
 	vmem(r21++#32) = v31
 
-	// predicates
-	r20 = #0x00000000
-	v0 = vsplatw(r20)
-
-	r20 = ##0x01010101
-	v1 = vsplatw(r20)
-	v3 = vmux(q0, v1, v0)
-
-	r20 = #1
-	v1 = vaslw(v1, r20) // 0x02020202
-	v2 = vmux(q1, v1, v0)
-	v3 = vor(v3, v2)
-
-	v1 = vaslw(v1, r20) // 0x04040404
-	v2 = vmux(q2, v1, v0)
-	v3 = vor(v3, v2)
-
-	v1 = vaslw(v1, r20) // 0x08080808
-	v2 = vmux(q3, v1, v0)
-	v3 = vor(v3, v2)
-
+// save predicates
 	vmem(r21+#0) = v3
+#else
+	} // end of packet at #ifdef HAVE_EXTENSIONS
 #endif
 
 	.falign

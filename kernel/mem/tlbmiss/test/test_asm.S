@@ -22,7 +22,7 @@ TH_do_tlbmissx:
 	r4 = insert(r2,#8,#0)
 	ssr = r4
 	/* Put dest into r1 */
-	sgp = r1
+	sgp0 = r1
 	memw(#TH_helper_ref) = r0
 	memw(#TH_stack_save) = r29
 	/* Fill in register values */
@@ -78,7 +78,7 @@ TH_do_tlbmissrw:
 	r4 = insert(r2,#8,#0)
 	ssr = r4
 	/* Put dest into r1 */
-	sgp = r1
+	sgp0 = r1
 	memw(#TH_helper_ref) = r0
 	memw(#TH_stack_save) = r29
 	/* Fill in register values */
@@ -124,7 +124,7 @@ TH_do_tlbmissrw:
 TH_return_helper:
 	memd(#TH_helper_tmp) = r1:0
 	memd(#TH_helper_tmp2) = r3:2
-	r0 = sgp
+	r0 = sgp0
 	r1 = memw(#TH_helper_ref)
 	CHECK(CONTEXT_r0504,r5:4)
 	CHECK(CONTEXT_r0706,r7:6)

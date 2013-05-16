@@ -19,6 +19,7 @@ make.log
 test.log
 test*.out
 gmon.*
+gmon-*.out
 gdb*.cmd
 *devsim.cfg
 uart_pty
@@ -26,6 +27,7 @@ cov.out
 cov.rpt
 make.out
 pmu_statsfile.txt
+pmu_stats.txt
 Doxyfile
 ID
 GPATH

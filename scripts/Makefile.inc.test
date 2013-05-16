@@ -42,10 +42,11 @@ include $(H2DIR)/scripts/Makefile.inc.config
 
 include $(H2DIR)/scripts/Makefile.inc.constants
 
-ARCH=qdsp6
+ARCH=hexagon
 
 
-RUN := $(ARCH)-sim
+#RUN := $(ARCH)-sim
+#RUN := archsim
 
 CC=${ARCH}-gcc
 AS=${ARCH}-as
@@ -58,7 +59,6 @@ PYTHON=python
 
 BUSPENALTY=
 TIMING=
-#include /prj/dsp/qdsp6/arch/make/simf.inc
 #Till I figure out something better, here is that file
 RUN ?= hexagon-sim
 
@@ -168,12 +168,14 @@ CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -g
 LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
 CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g
+ifndef STANDALONE
 LDFLAGS += -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+endif
 endif
 
 ifdef STANDALONE
 CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES)
-LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
 ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
 
 else # non-STANDALONE
@@ -183,7 +185,7 @@ ifdef BOOT # use booter
 LDFLAGS +=${OSLIB} -L ${H2DIR}/install/lib
 
 else # run in place of booter
-LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
 endif # BOOT
 
 CFLAGS += -I ${H2DIR}/install/include

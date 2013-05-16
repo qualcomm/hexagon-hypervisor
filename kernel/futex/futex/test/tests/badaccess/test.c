@@ -30,7 +30,7 @@ void FAIL(const char *str)
 
 void test_ptr_all(void *ptr)
 {
-	if (h2_futex_wait(ptr,0) >= 0) FAIL("all/Wait returned success");
+	if (h2_futex_wait(ptr,1) >= 0) FAIL("all/Wait returned success");
 	if (h2_futex_wake(ptr,1) >= 0) {
 		printf("ptr=%p\n",ptr);
 		FAIL("all/Wake returned success");
@@ -47,7 +47,7 @@ void test_ptr_w(void *ptr)
 
 void test_ptr_rok(void *ptr)
 {
-	if (h2_futex_wait(ptr,0) >= 0) FAIL("r/Wait returned success?");
+	if (h2_futex_wait(ptr,1) >= 0) FAIL("r/Wait returned success?");
 	if (h2_futex_wake(ptr,1) > 0) FAIL("r/Wake woke thread?");
 }
 
@@ -126,6 +126,9 @@ int main()
 	void *a;
 	u32_t asid;
 	H2K_mem_tlbfmt_t trans;
+
+	puts("Starting\n");
+
 	h2_init(0);
 
 	asm volatile (

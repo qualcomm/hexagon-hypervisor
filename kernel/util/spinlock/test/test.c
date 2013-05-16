@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <spinlock.h>
-#include <q6standalone.h>
+#include <hexagon_standalone.h>
 
 void FAIL(const char *str)
 {

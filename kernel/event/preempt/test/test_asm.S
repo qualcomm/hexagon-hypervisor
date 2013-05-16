@@ -64,14 +64,14 @@ TH_nonint_vec:
 
 TH_intvec:
 	allocframe(#0)
-	r2 = sgp
+	r2 = sgp0
 	r1.h = #hi(a)
 	r1.l = #lo(a)
 	p0 = cmp.eq(r2,#1)
 	p1 = cmp.eq(r0,r1)
 	p0 = and(p0,p1)
 	r0 = mux(p0,#1,#0)
-	sgp = r0
+	sgp0 = r0
 	call TH_interrupt
 	deallocframe
 	rte
@@ -114,10 +114,10 @@ TH_pend_int:
 TH_call_preempt:
 	allocframe(#8)
 	memd(r29) = r17:16
-	r17 = sgp
-	sgp = r0
+	r17 = sgp0
+	sgp0 = r0
 	call H2K_preempt
-	sgp = r17
+	sgp0 = r17
 	r17:16 = memd(r29)
 	deallocframe
 	jumpr r31

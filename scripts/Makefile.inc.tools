@@ -11,8 +11,6 @@ else
 export ARCHV=4
 endif
 
-export RUN := hexagon-sim
-export SIM := $(RUN)
 #export SIMF := --timing
 
 export CC := hexagon-gcc
@@ -32,10 +30,13 @@ endif
 
 
 # FIXME: TOOLARCH := $(ARCHV) once tools support -mv60
-ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
+ifeq (0, $(shell [ $(ARCHV) -gt 5 ]; echo $$?))
 export TOOLARCH := 5
+export RUN := archsim
 else
 export TOOLARCH := $(ARCHV)
+export RUN := hexagon-sim
 endif
 
+export SIM := $(RUN)
 export OPTIMIZE := -O2

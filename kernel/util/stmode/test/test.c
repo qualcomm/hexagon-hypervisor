@@ -9,7 +9,7 @@
 #include <max.h>
 #include <stmode.h>
 #include <hw.h>
-#include <q6standalone.h>
+#include <hexagon_standalone.h>
 
 void FAIL(const char *str)
 {

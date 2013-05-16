@@ -31,9 +31,9 @@
 	deallocframe; \
 	SET_REG(REGHI,0xDEA00000+UNIQ); \
 	SET_REG(REGLO,0xBEEF0000+UNIQ+1); \
-	crswap(r0,sgp); \
+	crswap(r0,sgp0); \
 	call H2K_context_save; \
-	r0 = sgp; \
+	r0 = sgp0; \
 	r3:2 = memd(r0+#CONTEXT_##PAIRNAME); \
 	SET_REG(r5,0xDEA00000+UNIQ); \
 	SET_REG(r4,0xBEEF0000+UNIQ+1); \
@@ -49,7 +49,7 @@
 	jump testFAIL; \
 1: \
 	/* Also test me/ssr/htid */ \
-	r2 = sgp; \
+	r2 = sgp0; \
 	r3 = r7; \
 	p0 = cmp.eq(r2,r3); \
 	r2 = ssr; \
@@ -67,7 +67,7 @@
 	elr = r2; \
 	SET_REG(r3,0x00000000); \
 	SET_REG(r2,0x000a0000); \
-	r0 = sgp; \
+	r0 = sgp0; \
 	memd(r0+#CONTEXT_ccrssr) = r3:2; \
 	SET_REG(REGHI,0); \
 	SET_REG(REGLO,0); \
@@ -100,7 +100,7 @@ dotest_asm:
 	allocframe(#8)
 	allocframe(#8)
 	memd(r0+#CONTEXT_r3130) = r31:30
-	sgp = r0
+	sgp0 = r0
 	r1.h = #hi(SAVE)
 	r1.l = #lo(SAVE)
 	memd(r1) = r31:30

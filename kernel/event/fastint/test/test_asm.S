@@ -115,14 +115,14 @@ TH_call_fastint_intpending:
 	.global TH_fastint_call
 TH_fastint_call:
 	allocframe(#8)
-	r4 = sgp
+	r4 = sgp0
 	memd(r29+#0) = r5:4
-	sgp = r1
+	sgp0 = r1
 	memw(#stacksave) = r29
 	call H2K_fastint
 	r29 = memw(#stacksave)
 	r5:4 = memd(r29+#0)
-	sgp = r4
+	sgp0 = r4
 	deallocframe
 	jumpr r31
 

@@ -38,7 +38,7 @@ TH_do_interrupt:
 #endif
 
 	/* Put dest into r1 */
-	sgp = r1
+	sgp0 = r1
 
 	/* Fill in register values */
 	r3:2 = memd(r0+#CONTEXT_ccrssr)
@@ -109,7 +109,7 @@ TH_do_preempt:
 #endif
 
 	r0 = #1
-	sgp = r0
+	sgp0 = r0
 	r0 = r1
 	H2K_GP.h = #hi(H2K_kg)
 	H2K_GP.l = #lo(H2K_kg)
@@ -124,7 +124,7 @@ H2K_interrupted_fastint_check:
 	r31:30 = memd(r0+#CONTEXT_r3130)
 	r29:28 = memd(r0+#CONTEXT_r2928)
 	r29 = add(r0,#FASTINT_CONTEXT_SIZE)
-	crswap(r0,sgp)
+	crswap(r0,sgp0)
 	jump TH_interrupted_fastint_check
 
 /*
@@ -142,7 +142,7 @@ H2K_fastint:
 TH_save_sgp:
 	r0.h = #hi(TH_sgp_word)
 	r0.l = #lo(TH_sgp_word)
-	r1 = sgp
+	r1 = sgp0
 	memw(r0) = r1
 	jumpr r31
 
@@ -155,7 +155,7 @@ TH_restore_sgp:
 	r0.h = #hi(TH_sgp_word)
 	r0.l = #lo(TH_sgp_word)
 	r0 = memw(r0)
-	sgp = r0
+	sgp0 = r0
 	jumpr r31
 
 	.data

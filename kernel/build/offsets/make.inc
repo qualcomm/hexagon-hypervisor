@@ -2,7 +2,7 @@
 
 
 # FIXME: need to build v60 with v60_tools, but that has no hexagon-sim
-ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
+ifeq (0, $(shell [ $(ARCHV) -gt 5 ]; echo $$?))
 OFFSETS_SIM := PKW_VERSIONS=hexagon-tools=v60_stable $(SIM)
 else
 OFFSETS_SIM := PKW_VERSIONS=hexagon-tools=default $(SIM)

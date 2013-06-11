@@ -4,5 +4,9 @@ H2DIR=${UPDIR}../../../..
 #  Everything else defined here
 include ${H2DIR}/scripts/Makefile.inc.test
 
-SIMF += --cosim_file timer_v${ARCHV}.cfg
+# FIXME: remove this and use devsim when devsim has qtimer
+RUN := hexagon-sim
+SIMF := $(subst, --magic_angel,, $(SIMF))
+
+SIMF += --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
 

@@ -15,8 +15,12 @@ import re
 
 # group(1) is PC, group(2) is name
 function_patt = re.compile("(\w+)\s+\<(\w+)\>:")
-covdata_patt = re.compile("\**\s+(\w+\s+cycles)*\s+(\w+):\s+(.+)")
-skip_patt = re.compile("--\sOut\sof\srange\s--.*")
+covdata_patt = re.compile("\**\s+(\w+\s+(cycles|0))*\s+(\w+):\s+(.+)")
+skip_patt = re.compile('No data!|--\sOut\sof\srange\s--.*')
+packet_start_patt = re.compile('.*\{')
+packet_end_patt = re.compile('.*\}')
+
+do_offsets = 0
 
 class function_data(object):
 
@@ -30,7 +34,11 @@ class function_data(object):
 
    def sprint(self,indent=""):
       output = ""
-      output += self.name + "\n"
+      if self.offset:
+         output += "%08x <" %(self.offset)
+      else:
+         output += "0x00000000 <"
+      output += self.name + ">:\n"
       pclist = self.text.keys()
       pclist.sort()
       if len(self.text) == 0:
@@ -42,10 +50,11 @@ class function_data(object):
             if self.ccount[pc] == 0:
                zero = "**"
             ccount = "%d cycles" % (self.ccount[pc])
-         output += "%2s%20s %06x: %s\n" % (zero,ccount, pc,self.text[pc])  
+         output += "%2s%20s %08x: %s\n" % (zero,ccount, pc,self.text[pc])  
       return output
 
    def set_offset(self,name,offset):
+      # print "Set offset %s %08x" % (name, offset)
       if self.name != name:
          print "mismatching function name"
       self.offset = offset
@@ -58,14 +67,25 @@ class function_data(object):
 
    def add_data(self,fh,fn=""):
       mode = "compare"
+      skip_packet = 0;
+
       if len(self.text) == 0:
          mode = "new"
          self.firstfile = fn
       for line in fh:
          line = line.splitlines()[0] 
+         # print "LINE: %s" % (line)
          if not line: 
             return
-         if skip_patt.match(line):
+         if skip_packet:
+            if packet_end_patt.match(line):
+               skip_packet = 0
+            continue
+         m = skip_patt.match(line)
+         if m:
+            if packet_start_patt.match(line):  # found '{'
+               if not packet_end_patt.match(line): # packet ends on subsequent line
+                  skip_packet = 1;
             continue
          m = covdata_patt.match(line)
          if not m:
@@ -73,14 +93,24 @@ class function_data(object):
             sys.exit(1)
          ccount = None
          if m.group(1):
-            ccount = long(m.group(1).replace(" cycles",""),10)
-         pc = long(m.group(2),16) - self.offset
-         text = m.group(3)
+            countstr = m.group(1).replace(" cycles","")
+            countstr = countstr.replace(" 0", "")
+            ccount = long(countstr, 10)
+         # FIXME: hexagon-cov sometimes fails to mark instructions as -- Out of
+         # range -- when they in fact are.  If there is no annotation, assume
+         # for now that it's out of range.
+         else:
+            continue
+         # print "XXX %s %08x" %(m.group(3), self.offset)
+         pc = long(m.group(3),16)
+         if (do_offsets):
+            pc -= self.offset
+         text = m.group(4)
 
          if text.find("nop") != -1:  #  silently dump all nop lines
             continue
 
-         #print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
+         # print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
          if ccount != None:
             if not self.ccount.has_key(pc):
                self.ccount[pc] = ccount
@@ -152,7 +182,7 @@ def read_covfile(fn):
          match = function_patt.match(line)
          if match and match.group(2) in fn_list and match.group(2) not in ignore_fn_list:
             pc = long(match.group(1),16)
-            #print "%8d Function found:  %s" % (counter,match.group(2))
+            # print "%8d Function found:  %s" % (counter,match.group(2))
             #  add label
             #  start parsing until empty line
             fdata[match.group(2)].set_offset(match.group(2),pc)
@@ -161,23 +191,31 @@ def read_covfile(fn):
 if __name__ == "__main__":
 
    try:
-      opts, args = getopt.getopt(sys.argv[1:], "", ["help"])
+      opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dir=", "offset_pc"])
 
    except getopt.GetoptError:
       # print help information and exit:
       print __doc__
       sys.exit(2)
 
+   h2dir = "."
+
    for o, a in opts:
       if o in ("-h", "--help"):
          print __doc__
          sys.exit(0)
 
+      if o in ("-d", "--dir"):
+         h2dir = a
+
+      if o in ("-o", "--offset_pc"):
+         do_offsets = 1
+
    # Which style/version are we working on
-   fh = open("install/ver","r")
+   fh = open(h2dir+"/install/ver","r")
    ver,opt = get_veropt(fh)
 
-   fname="scripts/"+ver+opt+"_cov_fns"
+   fname = h2dir+"/scripts/"+ver+opt+"_cov_fns"
 
    #  cov_fns is going to be explicit
    fh = open(fname,"r")

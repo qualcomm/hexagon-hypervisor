@@ -8,5 +8,5 @@ include ${H2DIR}/scripts/Makefile.inc.test
 RUN := hexagon-sim
 SIMF := $(subst, --magic_angel,, $(SIMF))
 
-SIMF += --cosim_file timer_v${ARCHV}.cfg
+SIMF += --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
 

@@ -47,7 +47,7 @@ LINE: while(my $line = <FILE>) {
     next LINE;
   }
 
-  if ($line =~ /^([A-Za-z0-9_]+)$/) {
+  if ($line =~ /^\w+\s+<(\w+)>:/) {
     my $saved = $1;
     if ($function) {
       finish_func($version, $function);

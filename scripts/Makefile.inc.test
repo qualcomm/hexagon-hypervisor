@@ -229,7 +229,7 @@ ifdef SUBDIRS
 
 #  Uh...  don't run this unless all the tests are run for now.
 cov.txt:
-	find ./kernel ./libs -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
+	find ./kernel ./libs -name "cov.txt" | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --offset_pc > $@
 
 cov.rpt: cov.txt
 	${H2DIR}/scripts/cov_rpt_tool > $@
@@ -368,17 +368,28 @@ test.log: ${EXEC}
 
 # Coverage stuff -- single testcase
 
-gmon.out: test.log
-	${GMON_MERGE} -o gmon.out gmon.t_*
+.PHONY: try_gmon_out
 
-COVFILES=cov.txt
-GMON_FILES=gmon.out gmon.t_0 gmon.t_1 gmon.t_2 gmon.t_3 gmon.t_4 gmon.t_5
+try_gmon_out: test.log
+	find . -maxdepth 1 | egrep -q 'gmon\.t_'; \
+	if [ $$? -eq 0 ]; then \
+		${GMON_MERGE} -o gmon.out gmon.t_*; \
+	fi
 
-${COVFILES}: ${DUMP} gmon.out ignore_fns
-	${COV} -F -d ${DUMP} -o cov.txt gmon.out; \
+COVFILE=cov.txt
+GMON_FILES=gmon.* gmon-*
+
+${COVFILE}: ${DUMP} try_gmon_out ignore_fns
+	if [ -f gmon.out ]; then \
+		${COV} -F -d ${DUMP} -o cov.txt gmon.out; \
+		if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi; \
+	else \
+		find . -maxdepth 1 -name 'gmon-0x????????.out' | perl -ne 'chomp; $$f = $$_; s/^\.\/gmon-//; s/.out$$//; system("hexagon-cov -F -d test.objdump -o cov-$$_.txt $$f")'; \
+		find . -name 'cov-0x*.txt' | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --dir $(H2DIR) > $@; \
+	fi; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
-CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILES} ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
+CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILE} cov-*.txt ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
 CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt
 
 clean:
@@ -399,7 +410,7 @@ results.txt: test.log
 	echo "NO PASS/FAIL/ERROR in log" > $@; \
 	true;
 
-all: results.txt ${COVFILES}
+all: results.txt ${COVFILE}
 tst: results.txt
 
 

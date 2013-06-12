@@ -49,6 +49,7 @@ static void modify_goto_wait()
 	u32_t *code_snippet_address;
 	__asm__ __volatile__
 		(
+		 " r29 = add(r29, #-4) \n"
 		 " memw(r29 + #0) = r31 \n"
 		 " call 1f \n"
 		 " r31.h = #hi(TH_wait_check) \n"
@@ -57,6 +58,7 @@ static void modify_goto_wait()
 		 "1: \n"
 		 " %0 = r31 \n"
 		 " r31 = memw(r29 +#0) \n"
+		 " r29 = add(r29, #4) \n"
 		 : "=r"(code_snippet_address) : : "r31");
 	memcpy(H2K_wait_forever,code_snippet_address,3*sizeof(u32_t));
 }
@@ -84,8 +86,10 @@ int main()
 	modify_goto_wait();
 	a.continuation = TH_cont_check;
 	a.vmblock = &vmb;
+	a.vmstatus = 0;
 	b.continuation = TH_cont_check;
 	b.vmblock = &vmb;
+	b.vmstatus = 0;
 
 	TH_saw_wait = 0;
 	TH_to = NULL;

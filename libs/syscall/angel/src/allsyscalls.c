@@ -7,6 +7,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define ALIGN32_DOWN(X) ((X) & -32)
+#define ALIGN32_UP(X) (((X) + 31) & -32)
+
 unsigned int angel(unsigned int r0, void *r1, unsigned int r2) {
 
 	return __angel(r0, ANGEL_OFFSET_PTR(r1), r2);
@@ -19,8 +22,7 @@ static inline void clean(const void *vx,int words)
 	for (i = 0; i < words; i++) {
 		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
 	};
-	asm volatile (" %0 = memb(%1) " : "=r"(i) : "r"(x));
-	asm volatile (" dccleaninva(%0) " : : "r"(x));
+	asm volatile (" syncht ");
 }
 
 /* X must be 32-byte aligned and COUNT must be a multiple of 32. */
@@ -28,19 +30,19 @@ static inline void invalidate(const char *x,count_t count)
 {
 	count_t i;
 	for (i = 0; i < count; i += 32) {
-		asm volatile ("dcinva(%0)" : :"r"(x+i):"memory");
+		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
 	};
+	asm volatile (" syncht ");
 }
 
 static inline void clean_str(const char *x)
 {
 	int len = strlen(x);
 	int i;
-	for (i = 0; i <= len; i++) {
+	for (i = 0; i <= (len+1); i++) {
 		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
 	}
-	asm volatile (" %0 = memb(%1) " : "=r"(i) : "r"(x));
-	asm volatile (" dccleaninva(%0) " : : "r"(x));
+	asm volatile (" syncht ");
 }
 
 errno_t sys_clock() { int x = 0; return ANGEL(SYS_CLOCK,&x,0); }
@@ -107,40 +109,15 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 {
 	count_t ret;
 	struct { fd_t fd; char *buf; count_t count; } x;
-	char *malloc_ret;
-	count_t offset, start, middle, leftover;
+	unsigned long start,end;
+	start = ALIGN32_DOWN((unsigned long)buffer);
+	end = ALIGN32_UP((unsigned long)buffer + count);
+	invalidate((void *)start, end-start);
+	x.buf = ANGEL_OFFSET_PTR(buffer);
 	x.fd = fd;
-	offset = ((unsigned long)buffer)&31;
-	start = (offset == 0) ? 0 : (32-offset > count) ? count : 32-offset;
-	middle = (count-start)&-32;
-	leftover = count-middle;
-	if (middle) {
-		x.buf = ANGEL_OFFSET_PTR(buffer+start);
-		x.count = middle;
-		clean(&x,3);
-		invalidate(x.buf,middle);
-		ret = ANGEL(SYS_READ,&x,0);
-		invalidate(x.buf,middle);
-		if (start) {
-			memmove(buffer,x.buf,middle-ret);
-		}
-		if (ret) {
-			DEBUG_PRINTF("ANGEL read: wanted %d, returned %d\n",count,ret);
-			return ret+leftover;
-		}
-	}
-	if (leftover) {
-		malloc_ret = malloc(96);
-		x.buf = ANGEL_OFFSET_PTR((char *)((((unsigned long)malloc_ret)+31)&-32));
-		x.count = leftover;
-		clean(&x,3);
-		invalidate(x.buf,64);
-		ret = ANGEL(SYS_READ,&x,0);
-		invalidate(x.buf,64);
-		memcpy(buffer+middle,x.buf,leftover-ret);
-		free(malloc_ret);
-	}
-	DEBUG_PRINTF("ANGEL read: wanted %d, returned %d\n",count,ret);
+	x.count = count;
+	clean(&x,3);
+	ret = ANGEL(SYS_READ,&x,0);
 	return ret;
 }
 

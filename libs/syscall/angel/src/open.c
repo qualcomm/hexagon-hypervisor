@@ -92,15 +92,3 @@ fd_t sys_open(const char *name, t_mode_t mode)
 	return ANGEL(SYS_OPEN,&x,0);
 }
 _STD_END
-
-/*
- * Copyright (c) 2006 by P.J. Plauger.  ALL RIGHTS RESERVED. 
- * Consult your license regarding permissions and restrictions.
- */
-
-/*
-061015 pjp: added new file
-061016 pjp: changed arg1 to an array
-061017 pjp: added masking for mode
- */
-

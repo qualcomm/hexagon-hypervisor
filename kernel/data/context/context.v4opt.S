@@ -133,7 +133,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	}
 	{
 	 	r14 = add(r11, #(32 * 32))
-		v0 = vmem(r11++#32)
+		v0 = vmem(r11++#1)
 	}
 	{
 		v31 = vmem(r14+#0)
@@ -142,79 +142,79 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	}
 	{
 		v30 = vand(v31, v29)
-		v1 = vmem(r11++#32)
+		v1 = vmem(r11++#1)
 	}
 	{
 		q0 = vcmpb.equ(v30, v29)
-		v2 = vmem(r11++#32)
+		v2 = vmem(r11++#1)
 	}
 	{
 		v29 = vaslw(v29, r16) // 0x02020202
-		v3 = vmem(r11++#32)
+		v3 = vmem(r11++#1)
 	}
 	{
 		v30 = vand(v31, v29)
-		v4 = vmem(r11++#32)
+		v4 = vmem(r11++#1)
 	}
 	{
 		q1 = vcmpb.equ(v30, v29)
-		v5 = vmem(r11++#32)
+		v5 = vmem(r11++#1)
 	}
 	{
 		v29 = vaslw(v29, r16) // 0x04040404
-		v6 = vmem(r11++#32)
+		v6 = vmem(r11++#1)
 	}
 	{
 		v30 = vand(v31, v29)
-		v7 = vmem(r11++#32)
+		v7 = vmem(r11++#1)
 	}
 	{
 		q2 = vcmpb.equ(v30, v29)
-		v8 = vmem(r11++#32)
+		v8 = vmem(r11++#1)
 	}
 	{
 		v29 = vaslw(v29, r16) // 0x08080808
-		v9 = vmem(r11++#32)
+		v9 = vmem(r11++#1)
 	}
 	{
 		v30 = vand(v31, v29)
-		v10 = vmem(r11++#32)
+		v10 = vmem(r11++#1)
 	}
 	{
 		q3 = vcmpb.equ(v30, v29)
-		v11 = vmem(r11++#32)
+		v11 = vmem(r11++#1)
 	}
 	{
 // enable ext
 	 	r13 = memw(r3 + #CONTEXT_ssr)
-		v12 = vmem(r11++#32)
+		v12 = vmem(r11++#1)
 	}
 	{
 		r13 = setbit(r13, #SSR_XE_BIT)
-		v13 = vmem(r11++#32)
+		v13 = vmem(r11++#1)
 	}
 	{
 		memw(r3 + #CONTEXT_ssr) = r13
-		v14 = vmem(r11++#32)
+		v14 = vmem(r11++#1)
 	}
-	v15 = vmem(r11++#32)
-	v16 = vmem(r11++#32)
-	v17 = vmem(r11++#32)
-	v18 = vmem(r11++#32)
-	v19 = vmem(r11++#32)
-	v20 = vmem(r11++#32)
-	v21 = vmem(r11++#32)
-	v22 = vmem(r11++#32)
-	v23 = vmem(r11++#32)
-	v24 = vmem(r11++#32)
-	v25 = vmem(r11++#32)
-	v26 = vmem(r11++#32)
-	v27 = vmem(r11++#32)
-	v28 = vmem(r11++#32)
-	v29 = vmem(r11++#32)
-	v30 = vmem(r11++#32)
+	v15 = vmem(r11++#1)
+	v16 = vmem(r11++#1)
+	v17 = vmem(r11++#1)
+	v18 = vmem(r11++#1)
+	v19 = vmem(r11++#1)
+	v20 = vmem(r11++#1)
+	v21 = vmem(r11++#1)
+	v22 = vmem(r11++#1)
+	v23 = vmem(r11++#1)
+	v24 = vmem(r11++#1)
+	v25 = vmem(r11++#1)
+	v26 = vmem(r11++#1)
+	v27 = vmem(r11++#1)
+	v28 = vmem(r11++#1)
+	v29 = vmem(r11++#1)
+	v30 = vmem(r11++#1)
 	{
-		v31 = vmem(r11++#32)
+		v31 = vmem(r11++#1)
 // mark ext as live
 		r10 = add(r3, ##CONTEXT_atomic_status_word)
 	}

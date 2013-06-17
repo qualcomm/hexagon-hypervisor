@@ -130,83 +130,83 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 
 	{
-		vmem(r21++#32) = v0
+		vmem(r21++#1) = v0
 // predicates
 	 	r20 = #0x00000000
 	}
 	{
 		v0 = vsplatw(r20)
-		vmem(r21++#32) = v1
+		vmem(r21++#1) = v1
 	}
 	{
 		r20 = ##0x01010101
-		vmem(r21++#32) = v2
+		vmem(r21++#1) = v2
 	}
 	{
 		v1 = vsplatw(r20)
-		vmem(r21++#32) = v3
+		vmem(r21++#1) = v3
 	}
 	{
 		v3 = vmux(q0, v1, v0)
-		vmem(r21++#32) = v4
+		vmem(r21++#1) = v4
 	}
 	{
 		r20 = #1
-		vmem(r21++#32) = v5
+		vmem(r21++#1) = v5
 	}
 	{
 		v1 = vaslw(v1, r20) // 0x02020202
-		vmem(r21++#32) = v6
+		vmem(r21++#1) = v6
 	}
 	{
 		v2 = vmux(q1, v1, v0)
-		vmem(r21++#32) = v7
+		vmem(r21++#1) = v7
 	}
 	{
 		v3 = vor(v3, v2)
-		vmem(r21++#32) = v8
+		vmem(r21++#1) = v8
 	}
 	{
 		v1 = vaslw(v1, r20) // 0x04040404
-		vmem(r21++#32) = v9
+		vmem(r21++#1) = v9
 	}
 	{
 		v2 = vmux(q2, v1, v0)
-		vmem(r21++#32) = v10
+		vmem(r21++#1) = v10
 	}
 	{
 		v3 = vor(v3, v2)
-		vmem(r21++#32) = v11
+		vmem(r21++#1) = v11
 	}
 	{
 		v1 = vaslw(v1, r20) // 0x08080808
-		vmem(r21++#32) = v12
+		vmem(r21++#1) = v12
 	}
 	{
 		v2 = vmux(q3, v1, v0)
-		vmem(r21++#32) = v13
+		vmem(r21++#1) = v13
 	}
 	{
 		v3 = vor(v3, v2)
-		vmem(r21++#32) = v14
+		vmem(r21++#1) = v14
 	}
-	vmem(r21++#32) = v15
-	vmem(r21++#32) = v16
-	vmem(r21++#32) = v17
-	vmem(r21++#32) = v18
-	vmem(r21++#32) = v19
-	vmem(r21++#32) = v20
-	vmem(r21++#32) = v21
-	vmem(r21++#32) = v22
-	vmem(r21++#32) = v23
-	vmem(r21++#32) = v24
-	vmem(r21++#32) = v25
-	vmem(r21++#32) = v26
-	vmem(r21++#32) = v27
-	vmem(r21++#32) = v28
-	vmem(r21++#32) = v29
-	vmem(r21++#32) = v30
-	vmem(r21++#32) = v31
+	vmem(r21++#1) = v15
+	vmem(r21++#1) = v16
+	vmem(r21++#1) = v17
+	vmem(r21++#1) = v18
+	vmem(r21++#1) = v19
+	vmem(r21++#1) = v20
+	vmem(r21++#1) = v21
+	vmem(r21++#1) = v22
+	vmem(r21++#1) = v23
+	vmem(r21++#1) = v24
+	vmem(r21++#1) = v25
+	vmem(r21++#1) = v26
+	vmem(r21++#1) = v27
+	vmem(r21++#1) = v28
+	vmem(r21++#1) = v29
+	vmem(r21++#1) = v30
+	vmem(r21++#1) = v31
 
 // save predicates
 	vmem(r21+#0) = v3

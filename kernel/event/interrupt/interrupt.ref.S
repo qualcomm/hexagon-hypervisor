@@ -143,6 +143,10 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	H2K_GP.h = #hi(H2K_kg)
 	H2K_GP.l = #lo(H2K_kg)
 
+	/* Stack set up, execute interrupt handler */
+	SSRVAL = ssr
+	INTNO = and(SSRVAL,#0x1f)
+
 	TMP = #H2K_TRACE_INTERRUPT
 	TMP |= asl(INTNO,#8)
 	TRACEDATAHI = HTNUM
@@ -151,9 +155,6 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 		ENTRIES,BUFADDR,TRACEPRED,INTINFO_VAL,INTINFO_FN,ME,,)
 	dccleana(BUFADDR)
 
-	/* Stack set up, execute interrupt handler */
-	SSRVAL = ssr
-	INTNO = and(SSRVAL,#0x1f)
 #if ARCHV >= 4
 	ISL2INT = cmp.eq(INTNO,#31)
 	VIDVAL = VID

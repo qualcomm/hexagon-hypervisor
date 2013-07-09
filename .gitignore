@@ -25,6 +25,10 @@ gdb*.cmd
 uart_pty
 cov.out
 cov.rpt
+cov.txt
+cov-0x*.txt
+ignore_fns
+*.objdump
 make.out
 pmu_statsfile.txt
 pmu_stats.txt

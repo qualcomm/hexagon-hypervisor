@@ -1,0 +1,6 @@
+
+make the .o in the normal V5 way.
+
+To link: hexagon-gcc -nostdlib -o test.elf crt0.S test.o -Wl,--defsym=__bootvm_entry=hexagon_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=0x1 -Wl,--defsym=H2K_LOAD_ADDR=0xff000000 -Wl,--section-start=.start=0xff000000 -Wl,--defsym=HEAP_SIZE=0x00010000 -moslib=h2 -lh2kernel -lh2 -lh2check -L ../../../../install/lib -mv5
+
+

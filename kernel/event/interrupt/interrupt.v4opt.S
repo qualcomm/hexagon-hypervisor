@@ -179,6 +179,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		if (!TRACEPRED) jump 1b
 		if (TRACEPRED) memd(BUFADDR) = TRACEDATA
 		if (ISPREEMPT) ELRTMP = memw(ME+#CONTEXT_elr)
+		if (!ISPREEMPT) ELRTMP = #-1
 	}
 	{
 		ciad(CIADVAL)			// Re-enable L2 controller interrupt if L2 int

@@ -6,6 +6,8 @@
 #include <max.h>
 #include <h2.h>
 #include <stdio.h>
+#include <errno.h>
+#include <angel.h>
 #include <stdlib.h>
 #include <string.h>
 #include <h2_vm.h>
@@ -53,6 +55,20 @@ static H2K_offset_t offset = {{
 		.xwru = URWX,
 		.pages = 0
 	}};
+
+/* Misc */
+#define ERRSTR_LEN 1024
+static char errstr[ERRSTR_LEN];
+
+void error(char *str1, char *str2) {
+
+	int err = sys_errno();
+	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr));
+	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr));
+	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr));
+	errno = err;
+	perror(errstr);
+}
 
 void FAIL(const char *str)
 {
@@ -186,6 +202,10 @@ int run_elf(char *elf, char *cmdline)
 	int bytes_read;
 
 	fdesc = open(elf,O_RDONLY);
+	if (fdesc == -1) {
+		error("Can't open file ", elf);
+		return 1;
+	}
 	if (elf_get_ehdr(fdesc,&ehdr) < 0) {
 		printf("Invalid ELF file: %s\n", elf);
 		return 1;
@@ -194,7 +214,10 @@ int run_elf(char *elf, char *cmdline)
 		if (elf_get_phdr(fdesc,i,&phdr,&ehdr) < 0) continue;
 		if (phdr.p_memsz == 0) continue;
 		if (phdr.p_type != PT_LOAD) continue;
-		lseek(fdesc,phdr.p_offset,SEEK_SET);
+		if (lseek(fdesc,phdr.p_offset,SEEK_SET) == -1) {
+			error("Can't lseek() in ", elf);
+			return 1;
+		}
 		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 
 		/* FIXME: Assuming first program header contains entry point*/
@@ -274,6 +297,7 @@ int main(int argc, char **argv)
 	unsigned int regval;
 	buf[0] = 0;
 	//Remove booter from cmdline
+	strncpy(errstr, argv[0], ERRSTR_LEN);
 	argc--;
 	argv++;
 

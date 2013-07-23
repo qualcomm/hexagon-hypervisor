@@ -36,6 +36,7 @@ static int trans_type = -1;
 static unsigned int fence_lo = H2K_GUEST_START;
 static unsigned int fence_hi = H2K_GUEST_END;
 static long load_offset = -1;
+static unsigned int skip_load = 0;
 static unsigned int bestprio = VM_BEST_PRIO;
 static unsigned int trapmask = 0xffffffff;
 
@@ -79,9 +80,33 @@ void FAIL(const char *str)
 void usage()
 {
 	printf("Usage:\n");
-	printf("  booter <file> <file_args>\n");
-	printf("  booter --list <file1> <file2> ...\n");
-	printf("  booter --listfile <listfile>\n");
+	printf("  booter [options] <file> <file_args>\n");
+	printf("  booter [options] --list <file1> <file2> ...\n");
+	printf("  booter [options] --listfile <listfile>\n");
+	printf("\nConfig options:\n");
+	printf("  --chicken <int>\n\tSet the chicken bits.\n");
+	printf("  --ccr <int>\n\tSet ccr.\n");
+	printf("  --rgdr <int>\n\tSet rgdr.\n");
+	printf("  --syscfg <int>\n\tSet syscfg.\n");
+	printf("\nVM options:\n");
+	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs.\n");
+	printf("  --use_ext (0|1)\n\tSupport extended contexts\n");
+	printf("  --num_shared_ints <int>\n\tNumber of shared interrupts.\n");
+	printf("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map. Default 6 (16M).\n");
+	printf("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map. Default 0.\n");
+	printf("  --translation_type <int>\n\tTranslation type for guest->phys map. Default OFFSET (only OFFSET works from cmdline right now).\n");
+	printf("  --fence_lo <int>\n\tLowest physical page accessible by guest VM. Must be page_size-aligned. Default 0x01000000.\n");
+	printf("  --fence_hi <int>\n\tHighest physical page accessible by guest VM. Must be page_size-aligned. Default 0xff000000.\n");
+	printf("  --load_offset <int>\n\tOffset for loading ELF image. Default (0x01000000 - <first_program_header_addr>).\n");
+	printf("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf)\n");
+	printf("  --bestprio <int>\n\tBest allowed priority for a virtual CPU. Default 0.\n");
+	printf("  --trapmask <int>\n\tBitmask of allowed trap0 numbers. Default 0xffffffff (all allowed).\n");
+	printf("  --stack <int>\n\tStack pointer VA for first virtual CPU. Default 0xfeffff8.\n");
+	printf("  --arg <int>\n\tInitial argument (R0) for first virtual CPU. Default 0.\n");
+	printf("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status. Default 1.\n");
+	printf("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached. Default 0.\n");
+	printf("  --startprio <int>\n\tInitial priority of first virtual CPU. Default 0.\n");
+
 }		
 
 static h2_guest_pmap_t *get_pmap(int fdesc, const Elf32_Ehdr *ehdr) {
@@ -232,16 +257,18 @@ int run_elf(char *elf, char *cmdline)
 		}
 		phdr.p_paddr += load_offset;
 
-		printf("load VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
-		bytes_read = 0;
-		do {
-			bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
-		} while (ret > 0);
-		if (ret == -1) FAIL("read()");
+		if (!skip_load) {
+			printf("load VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
+			bytes_read = 0;
+			do {
+				bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
+			} while (ret > 0);
+			if (ret == -1) FAIL("read()");
 
-		memset((char *)phdr.p_paddr+phdr.p_filesz, 0, phdr.p_memsz-phdr.p_filesz);
-		/* Really, only need to clean out text sections */
-		dcclean_range(phdr.p_paddr, phdr.p_memsz);
+			memset((char *)phdr.p_paddr+phdr.p_filesz, 0, phdr.p_memsz-phdr.p_filesz);
+			/* Really, only need to clean out text sections */
+			dcclean_range(phdr.p_paddr, phdr.p_memsz);
+		}
 	}
 	set_cmdline(cmdline,fdesc,&ehdr);
 	printf("Boot vm for %s\n", elf);
@@ -410,6 +437,12 @@ int main(int argc, char **argv)
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--skip_load")) {
+			if (argc < 2) die_usage();
+			skip_load = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0], "--bestprio")) {
 			if (argc < 2) die_usage();
 			bestprio = strtoul(argv[1],NULL,0);
@@ -450,6 +483,11 @@ int main(int argc, char **argv)
 			if (argc < 2) die_usage();
 			startprio = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--help")) {
+			usage();
+			exit(0);
 			continue;
 
 		} else if (0 == strcmp(argv[0], "--list")) {

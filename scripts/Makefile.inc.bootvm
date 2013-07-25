@@ -5,9 +5,15 @@ VAPA_KERNEL := vapa_kernel.x
 VAPA_BOOTVM := $(INSTALLPATH)/scripts/vapa_bootvm.x
 BOOTVM_S := $(INSTALLPATH)/src/bootvm.S
 BOOTVM_O := bootvm.o
+BOOTVM_IMAGE := bootvm_image
+BOOTVM_IMAGE_BIN := bootvm_image.bin
 BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry.S
 BOOTVM_ENTRY_O := bootvm_entry.o
-BOOTVM_CLEAN := bootvm_image bootvm_image.bin $(VAPA_KERNEL)
+BOOTVM_SYMBOLS := bootvm_image.sym
+BOOTVM_PROG_TMP := $(BOOTVM_PROG)_tmp
+BOOTVM_CLEAN := $(BOOTVM_IMAGE) $(BOOTVM_IMAGE_BIN) $(BOOTVM_SYMBOLS) $(VAPA_KERNEL) $(BOOTVM_PROG) $(BOOTVM_PROG_TMP)
+
+SYMS := $(INSTALLPATH)/scripts/syms.pl
 
 include $(H2DIR)/scripts/Makefile.inc.constants
 
@@ -16,21 +22,30 @@ CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_K
 
 BOOTVM_IMAGE_CFLAGS = -Wl,--section-start=.entry=$(H2K_BOOTVM_OFFSET) -Wl,--script=$(VAPA_BOOTVM) 
 
-BOOTVM_CFLAGS = -nostartfiles -Wl,-mv$(TOOLARCH) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR)
+BOOTVM_CFLAGS = -nostartfiles -Wl,-mv$(TOOLARCH) -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--script=$(VAPA_KERNEL) -Wl,--entry=$(H2K_LOAD_ADDR) # -Wl,--just-symbols=$(BOOTVM_SYMBOLS)
 
 BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) constants
 
 BOOTVM_DEPS = $(VAPA_KERNEL) $(INSTALLPATH)/lib/libh2kernel.a constants
 
 
-$(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S)
-	${CC} ${CFLAGS} -c -o $@ $<
-
-bootvm_image.bin: bootvm_image
-	hexagon-objcopy -O binary bootvm_image bootvm_image.bin
-
-$(BOOTVM_O): $(BOOTVM_S) bootvm_image.bin
+$(BOOTVM_O): $(BOOTVM_S) $(BOOTVM_IMAGE_BIN)
 	${CC} ${CFLAGS} -c -o $@ $<
 
 $(VAPA_KERNEL): $(VAPA_KERNEL_X_IN) $(KERNEL_TMP) constants
 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/$(H2K_BOOTVM_OFFSET)/;' > $@
+
+$(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S)
+	${CC} ${CFLAGS} -c -o $@ $<
+
+$(BOOTVM_IMAGE_BIN): $(BOOTVM_IMAGE)
+	hexagon-objcopy -O binary $(BOOTVM_IMAGE) $@
+
+$(BOOTVM_PROG_TMP): $(BOOTVM_O) $(BOOTVM_DEPS)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -o $@ $(BOOTVM_O)
+
+$(BOOTVM_SYMBOLS): $(BOOTVM_IMAGE) $(BOOTVM_PROG_TMP)
+	$(SYMS) $(BOOTVM_PROG_TMP) $(BOOTVM_IMAGE) $@
+
+$(BOOTVM_PROG): $(BOOTVM_O) $(BOOTVM_DEPS)  $(BOOTVM_SYMBOLS)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -Wl,@$(BOOTVM_SYMBOLS) -o $@ $(BOOTVM_O)

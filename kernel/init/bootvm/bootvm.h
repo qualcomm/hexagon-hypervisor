@@ -8,5 +8,5 @@
 
 FUNC_START __bootvm_entry .bootvm .p2align BOOT_TLB_ADDRBITS
 
-//.incbin bootvm_image // here
+//.incbin bootvm_image here
 

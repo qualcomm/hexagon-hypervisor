@@ -2,7 +2,7 @@ OUTPUT_FORMAT ("elf32-littleqdsp6",
                "elf32-bigqdsp6",
 	       "elf32-littleqdsp6")
 OUTPUT_ARCH (qdsp6)
-ENTRY (__bootvm_entry)
+ENTRY (__bootvm_entry_point)
 __DYNAMIC = 0;
 PHDRS
 {

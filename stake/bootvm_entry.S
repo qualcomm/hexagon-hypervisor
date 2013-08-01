@@ -7,6 +7,6 @@
 
 // 
 FUNC_START __bootvm_entry_point .entry .p2align 12
-jump qdsp6_pre_main
+jump hexagon_pre_main
 
 FUNC_END __bootvm_entry_point

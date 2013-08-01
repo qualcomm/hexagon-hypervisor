@@ -11,8 +11,17 @@
 #include <tlbmisc.h>
 #include <h2_atomic.h>
 
+#ifndef SELF_INT
+#ifndef INTERRUPT_NUM
 #define INTERRUPT_NUM 32
-#define ITERS 1
+#endif
+#else
+#ifndef INTERRUPT_NUM
+#define INTERRUPT_NUM 30
+#endif
+#endif
+
+#define ITERS 2
 
 #define PASSFAIL_PA 0x01000000
 #define PASSFAIL_VA 0xE0000000
@@ -47,9 +56,9 @@ void vmmain(void *unused) {
 	int ret;
 	u32_t *sigil = (void *)(PASSFAIL_VA);
 
-	for (j = 0; j < ITERS; j++) {
+	h2_sem_init_val(&done, 0);
 
-		h2_sem_init_val(&done, 0);
+	for (j = 0; j < ITERS; j++) {
 		awake = 0;
 
 		for (i = 0; i < TASKS; i++) {
@@ -66,16 +75,23 @@ void vmmain(void *unused) {
 			h2_sem_up(&sems[i]);
 		}
 
-		h2_sem_down(&done);
+		for (i = 0; i < TASKS; i++) {
+			h2_sem_down(&done);
+		}
+#ifdef SELF_INT
+		*sigil = j + 1;
+#endif
 	}
 
 	*sigil = 0xe0f0beef;
 	h2_thread_stop(0);
 }
 
-/* void intr() { */
-/* 	swi(1 << INTERRUPT_NUM); */
-/* } */
+#ifdef SELF_INT
+void intr() {
+	swi(1 << INTERRUPT_NUM);
+}
+#endif
 
 int main() 
 {
@@ -119,11 +135,18 @@ int main()
 
 	h2_vmboot(vmmain, &main_thread_stack[STACK_SIZE - 1], 0, 0, vm);
 
-	/* int i = 10000; */
-	/* while (i--); */
-	/* intr(); */
+#ifdef SELF_INT
+	int j;
+	volatile int i;
+	for (j = 0; j < ITERS; j++) {
+		i = 10000;
+		while (i--);
+		intr();
+		i = 100000;
+		while (i--);
+	}
+#endif
 
 	h2_thread_stop(0);
 	return 0;
 }
-

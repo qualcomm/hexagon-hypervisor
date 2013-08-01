@@ -10,6 +10,8 @@
 _start:
 	jump start
 hexagon_pre_main:
+	r0 = ##_SDA_BASE_
+	gp = r0
 	r29 = ##stack
 	{
 		r0 = r29

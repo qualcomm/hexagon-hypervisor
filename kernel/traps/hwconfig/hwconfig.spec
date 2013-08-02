@@ -130,5 +130,24 @@ configval parameters, as appropriate for the architecture.
 
 
 
+H2K_trap_hwconfig_extbits
+-------------------------
 
+.. cfunction:: u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me)
 
+	:param unused: Unused parameter
+	:param unusedp: Unused parameter
+	:param xa: XA bits
+	:param xe: XE bit
+	:param me: Pointer to the current thread context
+	:returns: 0 on success, nonzero on failure
+
+Description
+~~~~~~~~~~~
+
+Set XA, XE bits.
+
+Functionality
+~~~~~~~~~~~~~
+
+Set SSR:XA and SSR:XE in the current thread context to the given values.

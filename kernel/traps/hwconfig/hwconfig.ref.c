@@ -15,18 +15,16 @@
 
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
-#define MAX_CONFIGS 4
-
-static const configptr_t H2K_hwconfigtab[MAX_CONFIGS] IN_SECTION(".data.config.hwconfig") = {
+static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.hwconfig") = {
 	H2K_trap_hwconfig_l2cache,
 	H2K_trap_hwconfig_partitions,
 	H2K_trap_hwconfig_prefetch,
 	H2K_trap_hwconfig_extbits,
 };
 
-u32_t H2K_trap_hwconfig(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 {
-	if (configtype >= MAX_CONFIGS) return 0;
+	if (configtype >= HWCONFIG_MAX) return 0;
 	return H2K_hwconfigtab[configtype](0,ptr,val2,val3,me);
 }
 

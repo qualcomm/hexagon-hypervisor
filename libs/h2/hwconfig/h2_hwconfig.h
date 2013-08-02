@@ -27,20 +27,7 @@ as h2_hwconfig_partition().
 @dependencies None
 */
 
-int h2_hwconfig_trap(unsigned int whichtrap, void *ptr, unsigned int a, unsigned int b);
-
-/** 
-Configure partitioning.
-@param[in] whichcache	Select the cache to change partitioning on
-@param[in] partition_cfg	What type of partitioning for the specified cache
-@returns 0 on success, negative value on error
-@dependencies None
-*/
-
-static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int partition_cfg)
-{
-	return h2_hwconfig_trap(1,NULL,whichcache,partition_cfg);
-}
+int h2_hwconfig_trap(hwconfig_type_t whichtrap, void *ptr, unsigned int a, unsigned int b);
 
 /** 
 Configure the L2 cache size.
@@ -52,12 +39,46 @@ Configure the L2 cache size.
 
 static inline int h2_hwconfig_l2cache_size(unsigned int sizeval, unsigned int use_wb)
 {
-	return h2_hwconfig_trap(0,NULL,sizeval,use_wb);
+	return h2_hwconfig_trap(HWCONFIG_L2CACHE, NULL, sizeval, use_wb);
 }
+
+/** 
+Configure partitioning.
+@param[in] whichcache	Select the cache to change partitioning on
+@param[in] partition_cfg	What type of partitioning for the specified cache
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int prefetch_cfg)
+{
+	return h2_hwconfig_trap(HWCONFIG_PARTITIONS, NULL, whichcache, prefetch_cfg);
+}
+
+/** 
+Configure prefetch.
+@param[in] whichcache	Select the cache to change partitioning on
+@param[in] prefetch_cfg Prefetch type
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int partition_cfg)
+{
+	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, partition_cfg);
+}
+
+/** 
+Set XA, XE bits.
+@param[in] xa XA value
+@param[in] xe XE value
+@returns 0 on success, negative value on error
+@dependencies None
+*/
 
 static inline int h2_hwconfig_extbits(unsigned int xa, unsigned int xe)
 {
-	return h2_hwconfig_trap(4, NULL, xa, xe);
+	return h2_hwconfig_trap(HWCONFIG_EXTBITS, NULL, xa, xe);
 }
 
 /** @} */

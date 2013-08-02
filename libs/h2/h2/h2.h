@@ -34,6 +34,7 @@ extern "C" {
 #include "h2_vmtraps.h"
 #include "h2_error.h"
 #include "h2_pmu.h"
+#include "h2_vecaccess.h"
 
 #ifdef __cplusplus
 } /* closing brace for extern "C" */

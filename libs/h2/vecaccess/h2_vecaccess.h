@@ -6,6 +6,10 @@
 #ifndef H2_VECACCESS_H
 #define H2_VECACCESS_H 1
 
+#include <h2_common_params.h>
+
+#ifdef HAVE_EXTENSIONS
+
 /** @file h2_vecaccess.h
  @brief Vector Access for V60
 */
@@ -77,6 +81,8 @@ static inline void h2_vecaccess_release(h2_vecaccess_t *vacc, int idx)
 }
 
 /** @} */
+
+#endif
 
 #endif
 

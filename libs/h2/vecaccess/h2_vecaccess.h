@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef H2_SEM_H
-#define H2_SEM_H 1
+#ifndef H2_VECACCESS_H
+#define H2_VECACCESS_H 1
 
 /** @file h2_vecaccess.h
  @brief Vector Access for V60
@@ -25,7 +25,7 @@
 */
 typedef struct {
 	h2_sem_t sem;
-	volatile unsigned int active;
+	atomic_u32_t active;
 } h2_vecaccess_t;
 
 /**

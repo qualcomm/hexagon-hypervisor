@@ -6,6 +6,8 @@
 #ifndef H2K_MAX_H
 #define H2K_MAX_H
 
+#include <h2_common_params.h>
+
 #ifndef MAX_HTHREADS
 #if ARCHV <= 3
 #define MAX_HTHREADS 6
@@ -16,10 +18,6 @@
 #elif ARCHV == 60
 #define MAX_HTHREADS 4
 #endif
-#endif
-
-#if ARCHV >= 60
-#define HAVE_EXTENSIONS 1
 #endif
 
 //#define DO_EXT_SWITCH 1

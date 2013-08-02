@@ -19,7 +19,9 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_l2cache,
 	H2K_trap_hwconfig_partitions,
 	H2K_trap_hwconfig_prefetch,
+#ifdef HAVE_EXTENSIONS
 	H2K_trap_hwconfig_extbits,
+#endif
 };
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
@@ -101,6 +103,7 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	return 0;
 }
 
+#ifdef HAVE_EXTENSIONS
 u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) {
 
 	me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
@@ -108,3 +111,4 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 
 	return 0;
 }
+#endif

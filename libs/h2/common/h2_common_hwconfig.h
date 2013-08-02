@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <h2_common_params.h>
+
 #ifndef H2_COMMON_HWCONFIG_H
 #define H2_COMMON_HWCONFIG_H 1
 
@@ -10,7 +12,9 @@ typedef enum {
 	HWCONFIG_L2CACHE,
 	HWCONFIG_PARTITIONS,
 	HWCONFIG_PREFETCH,
+#ifdef HAVE_EXTENSIONS
 	HWCONFIG_EXTBITS,
+#endif
 	HWCONFIG_MAX
 } hwconfig_type_t;
 

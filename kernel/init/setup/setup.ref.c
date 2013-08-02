@@ -53,7 +53,9 @@ void H2K_init_setup_bootvm(u32_t phys_offset)
 	bootvm = H2K_gp->vmblocks[vm];
 
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PMAP_TYPE, boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, NULL);
-	/* FIXME: Need page tables for boot VM guest->phys */
+	/* FIXME: Need page tables for boot VM guest->phys so that we don't need to
+		 allow access to all of memory in order to be able to load at any
+		 address */
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_FENCES, 0x0, (0xffffffff >> BOOT_TLB_PGBITS) << BOOT_TLB_PGBITS, NULL);
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
 }

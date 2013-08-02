@@ -5,10 +5,10 @@
 
 	.section .start,"awx",@progbits
 
-	.global _start
+#	.global _start
 	.global hexagon_pre_main
-_start:
-	jump start
+#_start:
+#	jump start
 hexagon_pre_main:
 	r0 = ##_SDA_BASE_
 	gp = r0
@@ -18,7 +18,7 @@ hexagon_pre_main:
 		r1 = #1
 		call main
 	}
-	jump start
+#	jump start
 
 	.data
 	.p2align 8

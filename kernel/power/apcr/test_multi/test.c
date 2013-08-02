@@ -10,21 +10,23 @@
 #include <tlbfmt.h>
 #include <tlbmisc.h>
 #include <h2_atomic.h>
+#include <h2_common_pmap.h>
+#include <boot.h>
+#include <bootvm_entry.h>
 
-#ifndef SELF_INT
+#ifndef DEBUG
+#define ITERS 1
 #ifndef INTERRUPT_NUM
 #define INTERRUPT_NUM 32
 #endif
 #else
+#define ITERS 2
 #ifndef INTERRUPT_NUM
 #define INTERRUPT_NUM 30
 #endif
 #endif
 
-#define ITERS 2
-
-#define PASSFAIL_PA 0x01000000
-#define PASSFAIL_VA 0xE0000000
+#define PASSFAIL_VA 0x01000000
 
 #define STACK_SIZE 128
 #define TASKS 4
@@ -78,7 +80,7 @@ void vmmain(void *unused) {
 		for (i = 0; i < TASKS; i++) {
 			h2_sem_down(&done);
 		}
-#ifdef SELF_INT
+#ifdef DEBUG
 		*sigil = j + 1;
 #endif
 	}
@@ -87,7 +89,7 @@ void vmmain(void *unused) {
 	h2_thread_stop(0);
 }
 
-#ifdef SELF_INT
+#ifdef DEBUG
 void intr() {
 	swi(1 << INTERRUPT_NUM);
 }
@@ -95,47 +97,16 @@ void intr() {
 
 int main() 
 {
-	H2K_mem_tlbfmt_t pte;
 	unsigned long vm;
-	u32_t asid;
-
-	h2_init(NULL);
-
-	pte.raw = 0;
-	pte.ppd = ((PASSFAIL_PA >> 12) << 1) | 1;
-	pte.cccc = 0x6;
-	pte.xwru = 0xf;
-	pte.vpn = (PASSFAIL_VA >> 12);
-	pte.global = 1;
-	pte.valid = 1;
-
-	H2K_mem_tlb_write(9,pte.raw);
-
-	/* set URWX in monitor TLB entry permissions */
-	/* not really necessary to find our asid since the TLB entry will be global
-		 anyway, but... */
-	asm volatile (
-	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n" 
-	: "=r"(asid));
-
-	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
-	/* if (tlb_index == 0x80000000) { */
-	/* 	FAIL("Can't find monitor TLB entry"); */
-	/* } */
-	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-	tlb_entry |= 0xfULL << 28;
-	H2K_mem_tlb_write(tlb_index, tlb_entry);
-
-	asm volatile ("syncht");
 
 	vm = h2_config_vmblock_init(0,SET_CPUS_INTS, TASKS + 1, 0);
 	h2_config_vmblock_init(vm, SET_PMAP_TYPE, 0, 0);
+	h2_config_vmblock_init(vm, SET_FENCES, (unsigned long)__bootvm_entry_point, (0xffffffff >> BOOT_TLB_PGBITS) << BOOT_TLB_PGBITS);
 	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
 
 	h2_vmboot(vmmain, &main_thread_stack[STACK_SIZE - 1], 0, 0, vm);
 
-#ifdef SELF_INT
+#ifdef DEBUG
 	int j;
 	volatile int i;
 	for (j = 0; j < ITERS; j++) {

@@ -1,7 +1,7 @@
 
-include ../scripts/Makefile.inc.tools
-
 H2DIR ?= ..
+
+include $(H2DIR)/scripts/Makefile.inc.tools
 
 ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(H2DIR)/install
@@ -16,8 +16,8 @@ BOOTVM_PROG := booter
 CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 
-include ../scripts/Makefile.inc.config
-include ../scripts/Makefile.inc.bootvm
+include $(H2DIR)/scripts/Makefile.inc.config
+include $(H2DIR)/scripts/Makefile.inc.bootvm
 
 
 all: hello $(BOOTVM_PROG)

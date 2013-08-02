@@ -15,12 +15,13 @@
 
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
-#define MAX_CONFIGS 3
+#define MAX_CONFIGS 4
 
 static const configptr_t H2K_hwconfigtab[MAX_CONFIGS] IN_SECTION(".data.config.hwconfig") = {
 	H2K_trap_hwconfig_l2cache,
 	H2K_trap_hwconfig_partitions,
 	H2K_trap_hwconfig_prefetch,
+	H2K_trap_hwconfig_extbits,
 };
 
 u32_t H2K_trap_hwconfig(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
@@ -102,3 +103,10 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	return 0;
 }
 
+u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) {
+
+	me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
+	me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+
+	return 0;
+}

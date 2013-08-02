@@ -25,7 +25,7 @@
 // cpu_contexts
 #define CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_thread_context))
 
-#ifdef HAVE_EXTENSIONS
+#ifdef DO_EXT_SWITCH
 // extended contexts
 #define EXT_CONTEXT_SPACE(cpus) ROUND(cpus * sizeof(H2K_ext_context))
 #endif
@@ -61,7 +61,7 @@
 	 ENABLE_SPACE(ints) +													\
 	 PHYSINT_SPACE(ints + PERCPU_INTERRUPTS))
 
-#ifdef HAVE_EXTENSIONS
+#ifdef DO_EXT_SWITCH
 #define VMBLOCK_SIZE(cpus, ints, ext)			 \
 	(VMBLOCK_SIZE_BASE(cpus, ints) +				 \
 	 (ext ? (EXT_CONTEXT_SPACE(cpus)) : 0) + \

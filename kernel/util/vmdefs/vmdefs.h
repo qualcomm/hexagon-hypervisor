@@ -33,7 +33,7 @@
 #define H2K_VMSTATUS_KILL_BIT   1
 #define H2K_VMSTATUS_KILL	(0x01 << (H2K_VMSTATUS_KILL_BIT))
 
-#ifdef HAVE_EXTENSIONS
+#ifdef DO_EXT_SWITCH
 /* extended registers are live */
 #define H2K_VMSTATUS_SAVEXT_BIT     6
 #define H2K_VMSTATUS_SAVEXT		(0x01 << (H2K_VMSTATUS_SAVEXT_BIT))

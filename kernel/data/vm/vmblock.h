@@ -70,7 +70,7 @@ typedef struct H2K_vmblock_struct {
 	H2K_thread_context *free_threads;
 	/* Pointer to thread context storage */
 	H2K_thread_context *contexts;
-#ifdef HAVE_EXTENSIONS
+#ifdef DO_EXT_SWITCH
 	H2K_ext_context *ext_contexts;
 #endif
 

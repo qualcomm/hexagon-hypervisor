@@ -92,7 +92,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memw(r0+#CONTEXT_ccr) = r14
 #endif
 
-#ifdef HAVE_EXTENSIONS
+#ifdef DO_EXT_SWITCH
 
 	// check if ext needs saving, and mark as saved
 	r13 = add(r0, ##CONTEXT_atomic_status_word)

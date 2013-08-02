@@ -55,6 +55,11 @@ static inline int h2_hwconfig_l2cache_size(unsigned int sizeval, unsigned int us
 	return h2_hwconfig_trap(0,NULL,sizeval,use_wb);
 }
 
+static inline int h2_hwconfig_extbits(unsigned int xa, unsigned int xe)
+{
+	return h2_hwconfig_trap(4, NULL, xa, xe);
+}
+
 /** @} */
 
 #endif

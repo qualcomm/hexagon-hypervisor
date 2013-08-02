@@ -58,7 +58,9 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 
 #ifdef HAVE_EXTENSIONS
 	u32_t use_ext;
+#ifdef DO_EXT_SWITCH
 	H2K_ext_context *ext_contexts;
+#endif
 #endif
 
 	u32_t vm = (u32_t)ptr;
@@ -86,7 +88,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 
 		if ((arg1 > MAX_VM_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
 
-#if ARCHV >=60
+#ifdef DO_EXT_SWITCH
 		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2, use_ext));
 #else
 		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2));
@@ -138,11 +140,13 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 		/* maybe initialize extended contexts */
 		if (use_ext) {
 			vmblock->use_ext = 1;
+#ifdef DO_EXT_SWITCH
 			vmblock->ext_contexts = ext_contexts = (H2K_ext_context *)ptrtmp;
 			for (i = 0; i < vmblock->max_cpus; i++) {
 				H2K_ext_context_clear(&ext_contexts[i]);
 			}
 			ptrtmp += vmblock->max_cpus * sizeof(H2K_ext_context);
+#endif
 		}
 #endif
 

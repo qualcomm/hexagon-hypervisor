@@ -22,7 +22,7 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	r3 = r7
 	r1 = and(r8, #0xff)
 
-#ifdef HAVE_EXTENSIONS
+#ifdef DO_EXT_SWITCH
 	p0 = cmp.eq(r1, #0x16)  // XE exception?
 	if (!p0) jump 1f
 	r0 = memw(r7 + #CONTEXT_vmblock)

@@ -22,6 +22,8 @@
 #define HAVE_EXTENSIONS 1
 #endif
 
+//#define DO_EXT_SWITCH 1
+
 #if ARCHV <= 3
 #define MAX_TLB_ENTRIES 63
 #define PHYSREAD_TEMP_MAP_IDX 63
@@ -117,6 +119,9 @@
 #endif
 
 #ifdef HAVE_EXTENSIONS
+#define SSR_XA_BITS 27
+#define SSR_XA_NBITS 3
+#define SSR_XA_BITS_MASK (((0x1 << (SSR_XA_NBITS)) - 1) << SSR_XA_BITS)
 #define SSR_XE_BIT 31
 #endif
 

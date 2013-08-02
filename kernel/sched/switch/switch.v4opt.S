@@ -87,7 +87,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(SRC+#CONTEXT_gssr_gelr) = r1:0
-#ifdef HAVE_EXTENSIONS
+#ifdef DO_EXT_SWITCH
 
 // check if ext needs saving, and mark as saved
 	 	r13 = add(SRC, ##CONTEXT_atomic_status_word)
@@ -211,7 +211,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 // save predicates
 	vmem(r21+#0) = v3
 #else
-	} // end of packet at #ifdef HAVE_EXTENSIONS
+	} // end of packet at #ifdef DO_EXT_SWITCH
 #endif
 
 	.falign

@@ -107,7 +107,7 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	rte						// FIXME: simulator bug?  Should be able to schedule w/ above
 FUNC_END H2K_context_restore_return
 
-#ifdef HAVE_EXTENSIONS
+#ifdef DO_EXT_SWITCH
 FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 // r0 = vmblock, r3 = me
 

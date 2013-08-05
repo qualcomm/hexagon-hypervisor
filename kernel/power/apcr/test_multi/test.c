@@ -32,6 +32,13 @@
 #define TASKS 4
 #define PRIO 3
 
+H2K_offset_t offset = {{
+		.size = BOOT_TLB_PGSIZE,
+		.cccc = L1WB_L2C,
+		.xwru = URWX,
+		.pages = 0
+	}};
+
 u64_t stacks[TASKS][STACK_SIZE];
 unsigned long long int main_thread_stack[STACK_SIZE];
 h2_sem_t sems[TASKS];
@@ -100,7 +107,7 @@ int main()
 	unsigned long vm;
 
 	vm = h2_config_vmblock_init(0,SET_CPUS_INTS, TASKS + 1, 0);
-	h2_config_vmblock_init(vm, SET_PMAP_TYPE, 0, 0);
+	h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
 	h2_config_vmblock_init(vm, SET_FENCES, (unsigned long)__bootvm_entry_point, (0xffffffff >> BOOT_TLB_PGBITS) << BOOT_TLB_PGBITS);
 	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
 

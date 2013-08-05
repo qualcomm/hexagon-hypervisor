@@ -32,6 +32,15 @@ BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) constants
 BOOTVM_DEPS = $(VAPA_KERNEL) $(INSTALLPATH)/lib/libh2kernel.a constants
 
 
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+%.o: %.S
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(CRT0_O): $(CRT0_S)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 $(BOOTVM_O): $(BOOTVM_S) $(BOOTVM_IMAGE_BIN)
 	${CC} ${CFLAGS} -c -o $@ $<
 

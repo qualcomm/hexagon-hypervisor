@@ -24,7 +24,7 @@ CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2
 CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS)
 
 SCRIPTS = $(CONSTS) $(SYMS) vapa_bootvm.x vapa_kernel.x.in
-SRCFILES = bootvm_entry.S bootvm.S
+SRCFILES = bootvm_entry.S bootvm.S min_crt0.S
 BINFILES = kernel_tmp
 FILES := $(SCRIPTS) $(SRCFILES) $(BINFILES)
 

@@ -68,7 +68,6 @@ static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int par
 	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, partition_cfg);
 }
 
-#ifdef HAVE_EXTENSIONS
 /** 
 Set XA, XE bits.
 @param[in] xa XA value
@@ -84,6 +83,4 @@ static inline int h2_hwconfig_extbits(unsigned int xa, unsigned int xe)
 #endif
 
 /** @} */
-
-#endif
 

@@ -7,6 +7,12 @@
 #define H2_COMMON_CONFIG_H 1
 
 typedef enum {
+	CONFIG_SETFATAL,
+	CONFIG_VMBLOCK_INIT,
+	CONFIG_MAX
+} config_type_t;
+
+typedef enum {
 	SET_PMAP_TYPE,
 	SET_FENCES,
 	SET_PRIO_TRAPMASK,

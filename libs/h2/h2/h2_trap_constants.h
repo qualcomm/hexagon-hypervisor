@@ -61,8 +61,5 @@
 #define H2_VMTRAP_GETREGS 22
 #define H2_VMTRAP_TIMEROP 24
 
-#define H2_CONFIG_SETFATAL 0
-#define H2_CONFIG_VMBLOCK_INIT 1
-
 #endif
 

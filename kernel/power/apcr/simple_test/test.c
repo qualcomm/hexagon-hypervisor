@@ -3,18 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <c_std.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <context.h>
-#include <max.h>
-#include <hw.h>
-//#include <globals.h>
-#include <h2.h>
-#include <h2_vm.h>
-#include <tlbfmt.h>
-#include <tlbmisc.h>
+#include <h2_cache.h>
+#include <h2_intwait.h>
+#include <h2_thread.h>
 
 #ifndef DEBUG
 #define ITERS 1
@@ -33,7 +24,7 @@
 int main() 
 {
 	int i;
-	u32_t *sigil = (void *)(PASSFAIL_VA);
+	unsigned int *sigil = (void *)(PASSFAIL_VA);
 
 	for (i = 0; i < ITERS; i++) {
 		h2_intwait(INTERRUPT_NUM);
@@ -43,7 +34,7 @@ int main()
 #endif
 	}
 	*sigil = 0xe0f0beef;
-
+	h2_dccleana(sigil);
 	h2_thread_stop(0);
 	return 0;
 }

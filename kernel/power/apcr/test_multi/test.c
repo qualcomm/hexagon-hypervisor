@@ -3,16 +3,18 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <c_std.h>
-#include <hw.h>
-#include <h2.h>
 #include <h2_vm.h>
-#include <tlbfmt.h>
-#include <tlbmisc.h>
 #include <h2_atomic.h>
+#include <h2_cache.h>
+#include <h2_config.h>
 #include <h2_common_pmap.h>
+#include <h2_common_vmblock.h>
+#include <h2_sem.h>
+#include <h2_intwait.h>
+#include <h2_thread.h>
 #include <boot.h>
 #include <bootvm_entry.h>
+#include <hw.h>
 
 #ifndef DEBUG
 #define ITERS 1
@@ -39,12 +41,12 @@ H2K_offset_t offset = {{
 		.pages = 0
 	}};
 
-u64_t stacks[TASKS][STACK_SIZE];
+unsigned long long int stacks[TASKS][STACK_SIZE];
 unsigned long long int main_thread_stack[STACK_SIZE];
 h2_sem_t sems[TASKS];
 h2_sem_t done;
 
-volatile u32_t awake;
+volatile unsigned int awake;
 
 void task (void *tnum) {
 
@@ -63,7 +65,7 @@ void task (void *tnum) {
 void vmmain(void *unused) {
 	int i, j;
 	int ret;
-	u32_t *sigil = (void *)(PASSFAIL_VA);
+	unsigned int *sigil = (void *)(PASSFAIL_VA);
 
 	h2_sem_init_val(&done, 0);
 
@@ -93,6 +95,7 @@ void vmmain(void *unused) {
 	}
 
 	*sigil = 0xe0f0beef;
+	h2_dccleana(sigil);
 	h2_thread_stop(0);
 }
 

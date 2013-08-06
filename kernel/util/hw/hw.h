@@ -320,7 +320,7 @@ static inline void H2K_dccleana(void *ptr)
 
 static inline void H2K_dccleaninva(void *ptr)
 {
-	asm volatile (" dccleana(%0) " : :"r"(ptr) : "memory");
+	asm volatile (" dccleaninva(%0) " : :"r"(ptr) : "memory");
 }
 
 #endif

@@ -6,7 +6,7 @@
 #ifndef H2_ATOMIC_H
 #define H2_ATOMIC_H 1
 
-/** @file h2_mutex.h
+/** @file h2_atomic.h
  * 
  * @brief Atomic modification of memory
  */

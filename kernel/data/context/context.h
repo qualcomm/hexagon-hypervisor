@@ -9,6 +9,7 @@
 #include <c_std.h>
 #include <tree.h>
 #include <idtype.h>
+#include <max.h>
 
 #define H2K_CONTEXT_ALIGN 32
 
@@ -118,9 +119,19 @@ typedef struct _h2_thread_context
 					u8_t ssr_badva_bvs:1;
 					u8_t ssr_badva_ce:1;
 					u8_t ssr_badva_pe:1;
+#ifdef HAVE_EXTENSIONS
+					u8_t ssr_hi_rsvd:2;
+					u8_t ssr_xa:3;
+#else
 					u8_t ssr_hi_rsvd:5;
+#endif
 					u8_t ssr_ss:1;
+#ifdef HAVE_EXTENSIONS
 					u8_t ssr_xe:1;
+#else
+					u8_t ssr_unused:1;
+#endif
+
 #endif
 				};
 			};

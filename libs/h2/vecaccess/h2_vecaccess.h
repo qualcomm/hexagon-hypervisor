@@ -29,51 +29,84 @@ typedef struct {
 } h2_vecaccess_t;
 
 /**
+@brief Vector-length selection.
+*/
+typedef enum {
+	H2_VECACCESS_VLENGTH64,
+	H2_VECACCESS_VLENGTH32,
+	H2_VECACCESS_VLENGTH_MAX
+} h2_vecaccess_vlength_t;
+
+/**
 Initialize the Vector Access type.
 @param[in] vacc		Address of the Vector Access structure
 @returns None
 @dependencies None
 */
 
-static inline void h2_vecaccess_init(h2_vecaccess_t *vacc) { vacc->active = 0; h2_sem_init_val(&vacc->sem,VEC_ACCESS_NUM_CONTEXTS); };
+static inline void h2_vecaccess_init(h2_vecaccess_t *vacc) {
+	vacc->active = 0; h2_sem_init_val(&vacc->sem,VEC_ACCESS_NUM_CONTEXTS);
+}
 
 /**
-Get mmvector access
+Get mmvector access.
 @param[in] vacc		Address of the Vector Access structure
-@returns Index of the acquired context
+@returns Index of the acquired context or negative value on error
 @dependencies None
 */
 
-static inline int h2_vecaccess_acquire(h2_vecaccess_t *vacc)
-{
-	int idx;
+static inline int h2_vecaccess_acquire(h2_vecaccess_t *vacc) {
+
+	int idx, ret;
 	unsigned int old_active;
 	unsigned int new_active;
+
 	h2_sem_down(&vacc->sem); 
 	do {
 		old_active = vacc->active;
 		idx = Q6_R_ct1_R(old_active);
 		new_active = old_active | (1<<idx);
 	} while (h2_atomic_compare_swap32(&vacc->active,old_active,new_active) != old_active);
-	h2_hwconfig_extbits(VEC_ACCESS_START + (idx<<1),1);
 	/* TURN ON VECTOR */
-	return idx;
+	ret = h2_hwconfig_extbits(VEC_ACCESS_START + (idx << 1), 1);
+	return (ret < 0 ? ret : idx);
+}
+
+/**
+Set vector length.  Call after acquiring vector.
+@param[in] index  Previously-acquired index
+@param[in] length  Vector length to set
+@returns Index of the context or negative value on error
+@dependencies None
+*/
+
+static inline int h2_vecaccess_vlength(int idx, h2_vecaccess_vlength_t length) {
+
+	int ret;
+
+	if (length >= H2_VECACCESS_VLENGTH_MAX) return -1;
+	ret = h2_hwconfig_extbits(VEC_ACCESS_START + (idx << 1) + length, 1);
+	return (ret < 0 ? ret : idx);
 }
 
 /**
 Release mmvector access
 @param[in] vacc		Address of the Vector Access structure
 @param[in] idx		Index of the context
-@returns None
+@returns 0 on success or negative value on error
 @dependencies None
 */
 
-static inline void h2_vecaccess_release(h2_vecaccess_t *vacc, int idx) 
+static inline int h2_vecaccess_release(h2_vecaccess_t *vacc, int idx) 
 {
+	int ret;
+
 	/* TURN OFF VECTORS */
-	h2_hwconfig_extbits(0,0);
+	ret = h2_hwconfig_extbits(0,0);
 	h2_atomic_clrbit32(&vacc->active,idx);
 	h2_sem_up(&vacc->sem);
+
+	return ret;
 }
 
 /** @} */

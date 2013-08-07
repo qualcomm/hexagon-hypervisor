@@ -26,7 +26,7 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 {
-	if (configtype >= HWCONFIG_MAX) return 0;
+	if (configtype >= HWCONFIG_MAX) return -1;
 	return H2K_hwconfigtab[configtype](0,ptr,val2,val3,me);
 }
 

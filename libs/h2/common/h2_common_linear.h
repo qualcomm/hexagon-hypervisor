@@ -7,7 +7,6 @@
 #define H2_COMMON_LINEAR_H 1
 
 typedef union {
-	u64_t raw;
 	struct {
 		union {
 			u32_t low;
@@ -27,6 +26,7 @@ typedef union {
 			};
 		};
 	};
+	u64_t raw;
 } H2K_linear_fmt_t;
 
 #endif

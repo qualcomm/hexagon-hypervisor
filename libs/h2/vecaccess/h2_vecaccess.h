@@ -103,11 +103,11 @@ static inline h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc
 Set vector length.  Call after acquiring vector.
 @param[in] index  Previously-acquired index
 @param[in] length  Vector length to set
-@returns Index of the context or negative value on error
+@returns Index and length of the acquired context.  Negative index on error.
 @dependencies None
 */
 
-static inline h2_vecaccess_ret_t h2_vecaccess_vlength(int idx, h2_vecaccess_vlength_t length) {
+static inline h2_vecaccess_ret_t h2_vecaccess_vlength(h2_vecaccess_state_t *vacc,  int idx, h2_vecaccess_vlength_t length) {
 
 	int res;
 	h2_vecaccess_ret_t ret = {{

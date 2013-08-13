@@ -16,17 +16,17 @@ allocation unduly slow.  We reduce overhead since we have no external free
 list, reduce code size somewhat, and marginally speed up the allocate/free
 bookkeeping.
 
-# .. ctype:: H2K_mem_alloc_block_t
+.. ctype:: H2K_mem_alloc_block_t
 
-#   Allocation return value
+  Allocation return value
 
-# 	.. cmember:: u32_t ptr
+	.. cmember:: u32_t ptr
 
-#     Pointer to 32-byte-aligned allocated region
+    Pointer to 32-byte-aligned allocated region
 
-# 	.. cmember:: u32_t size
+	.. cmember:: u32_t size
 
-# 	  Actual size of allocated region, in bytes
+	  Actual size of allocated region, in bytes
 
 
 H2K_mem_alloc_get

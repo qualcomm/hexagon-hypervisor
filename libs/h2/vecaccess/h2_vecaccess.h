@@ -76,10 +76,10 @@ static inline h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc
 	int idx, res;
 	unsigned int old_active;
 	unsigned int new_active;
-	h2_vecaccess_ret_t ret = {{
-			.idx = -1,  // bad
-			.length = H2_VECACCESS_VLENGTH_MAX
-		}};
+	h2_vecaccess_ret_t ret;
+
+	ret.idx = -1;
+	ret.length = H2_VECACCESS_VLENGTH_MAX;
 
 	if (length == H2_VECACCESS_VLENGTH_MOST) length = H2_VECACCESS_VLENGTH64;
 	if (length < H2_VECACCESS_VLENGTH32 || length >= H2_VECACCESS_VLENGTH_MAX) return ret;  // error
@@ -99,6 +99,7 @@ static inline h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc
 	return ret;
 }
 
+#if 0
 /**
 Set vector length.  Call after acquiring vector.
 @param[in] index  Previously-acquired index
@@ -110,10 +111,10 @@ Set vector length.  Call after acquiring vector.
 static inline h2_vecaccess_ret_t h2_vecaccess_vlength(h2_vecaccess_state_t *vacc,  int idx, h2_vecaccess_vlength_t length) {
 
 	int res;
-	h2_vecaccess_ret_t ret = {{
-			.idx = -1,  // bad
-			.length = H2_VECACCESS_VLENGTH_MAX
-		}};
+	h2_vecaccess_ret_t ret;
+
+	ret.idx = -1;
+	ret.length = H2_VECACCESS_VLENGTH_MAX;
 
 	if (length == H2_VECACCESS_VLENGTH_MOST) length = H2_VECACCESS_VLENGTH64;
 	if (length < H2_VECACCESS_VLENGTH32 || length >= H2_VECACCESS_VLENGTH_MAX) return ret;  // error
@@ -125,6 +126,7 @@ static inline h2_vecaccess_ret_t h2_vecaccess_vlength(h2_vecaccess_state_t *vacc
 	}
 	return ret;
 }
+#endif
 
 /**
 Release mmvector access

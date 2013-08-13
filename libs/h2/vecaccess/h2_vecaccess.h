@@ -71,7 +71,7 @@ Get mmvector access.
 @dependencies None
 */
 
-static inline h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc, int length) {
+static inline h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc,  h2_vecaccess_vlength_t length) {
 
 	int idx, res;
 	unsigned int old_active;

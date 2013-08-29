@@ -157,7 +157,7 @@ static inline u32_t H2K_atomic_compare_swap_mask(u32_t *word, u32_t expect, u32_
 
 	u32_t t, x;
 
-	asm ( "// atomic compare and swap halfword\n"
+	asm ( "// atomic compare and swap mask\n"
 				"1:	%0 = memw_locked(%3)\n"
 				"   %1 = and(%0, %6)\n"
 				"	{ p0 = cmp.eq(%1, %4)\n"

@@ -13,7 +13,7 @@ include scripts/Makefile.inc.config
 
 all: ref doc gtags
 
-distclean: clean docclean
+distclean: clean docclean gtagsclean
 
 clean: covclean ucosclean booterclean docclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
@@ -96,9 +96,14 @@ doc:
 compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
+.PHONY: gtags gtagsclean
+
 gtags:
-	find kernel libs tst guest ucos linux booter perf -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
+	find booter examples kernel libs linux perf scripts stake tst ucos -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
 	htags -afhnosTxv --show-position
+
+gtagsclean:
+	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML
 
 cov_fns:
 	$(MAKE) clean ref ARCHV=v4 OPTIMIZE='-Os -fno-inline';

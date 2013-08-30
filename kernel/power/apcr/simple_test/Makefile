@@ -10,7 +10,7 @@ ifeq ($(KERNELPATH),)
 export KERNELPATH := $(H2DIR)/kernel
 endif
 
-H2K_KERNEL_PGSIZE := 2
+#H2K_KERNEL_PGSIZE := 2
 H2K_ALLOC_HEAP_SIZE := 0x1000
 
 BOOTVM_PROG := test.elf

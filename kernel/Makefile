@@ -17,6 +17,10 @@ ifdef DEBUG
 CFLAGS += -DDEBUG
 endif
 
+ifdef PRELOAD_TLB
+CFLAGS += -DPRELOAD_TLB
+endif
+
 ifdef HTHREADS
 CFLAGS += -DMAX_HTHREADS=$(HTHREADS)
 endif

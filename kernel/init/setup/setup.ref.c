@@ -27,11 +27,6 @@
 #include <trace.h>
 #include <symbols.h>
 
-#ifdef PRELOAD_TLB
-#include <tlbfmt.h>
-#include <tlbfill.h>
-#endif
-
 void H2K_interrupt_restore();
 
 u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
@@ -115,19 +110,6 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset)
 	boot->vmstatus = 0x0;
 	asid = H2K_asid_table_inc((u32_t)bootvm->pmap, bootvm->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 	boot->ssr_asid = asid;
-
-	/* To prevent TLB miss, for DV porpoises */
-#ifdef PRELOAD_TLB
-	H2K_mem_tlbfmt_t entry;
-	entry = H2K_vm_get_offset(boot->elr, boot);
-	/* The entry has to be global to prevent a TLB miss from a child VM that
-		 lives in the boot VM's address space, but gets its own asid.  If we have
-		 something else with this VA range, then we are SOL.  Don't use
-		 PRELOAD_TLB; it's a hack for a particular situation. */
-	entry.global = 1;
-	H2K_mem_tlb_insert(entry, boot);
-#endif
-
 	BKL_LOCK();
 	H2K_runlist_push(boot);
 	H2K_init_complete = 1;

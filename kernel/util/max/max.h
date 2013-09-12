@@ -67,10 +67,17 @@
 #define Q6_SS_BASE_PA 0x28880000
 #define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x04000)
 #else
+#ifdef MODEM
+#define Q6_SS_BASE_VA 0xFFC00000
+#define Q6_SS_BASE_PA 0xFC800000  // actually it's 0xFC880000, but make the arithmetic easier
+#define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x120000)
+#define L2_INT_BASE   (Q6_SS_BASE_VA + 0x110000)
+#else
 #define Q6_SS_BASE_VA 0xFFC00000
 #define Q6_SS_BASE_PA 0xFE000000
 #define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x2A0000)
 #define L2_INT_BASE   (Q6_SS_BASE_VA + 0x290000)
+#endif
 #endif
 
 #define PERCPU_INTERRUPTS 32

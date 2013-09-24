@@ -76,8 +76,14 @@ FUNC_START start .entry .p2align 12
 	r0 = ##0x00002004
 	s63 = r0
 #elif ARCHV >= 5
-	r0 = #0     /* (No chickenbits) */
+	r0 = #0     /* (New chickenbits) */
+	r0 = setbit(r0,#2);	//  AXI L1 Snoop something
+	r0 = setbit(r0,#27);	//  force store
+	r0 = setbit(r0,#12);	//  HW loops
 	s63 = r0
+	r0 = #0
+	r0 = setbit(r0,#22);	//  fix for address calculation corruption
+	s62 = r0
 #else
 #endif
 
@@ -147,6 +153,12 @@ FUNC_START start .entry .p2align 12
 	DO_TLBW(3,2,1)
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
+
+#ifdef ISDBEN
+	r0 = #1;
+	isdben = r0
+#endif
+
 #if ARCHV <= 4
  	r0 = #0x77f
 #else
@@ -163,7 +175,6 @@ FUNC_START start .entry .p2align 12
 #endif
 	syscfg = r0
 	isync
-
 	// make the jump to hyperspace
 	r2.h = #hi(1f)
 	r2.l = #lo(1f)

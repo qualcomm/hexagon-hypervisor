@@ -117,19 +117,45 @@ static void H2K_intconfig_l2_init()
 		intbase[(0x300/4) + i] = 0x0;		/* Rising Edge / Level High */
 		intbase[(0x400/4) + i] = 0xFFFFFFFF;	/* Interrupt Clear */
 
+#if ARCHV == 4
 		/*  8960 SPI and TLMM summary apparently are level (high) triggered */
 		#define SPI_IRQ		65
 		#define SPI_WORD	(SPI_IRQ/32)
 		#define TLMM_IRQ	38
 		#define TLMM_WORD	(TLMM_IRQ/32)
+#endif
+#if ARCHV >= 5
+		/*  8974 SPI ("blsp1_qup1") and "summary_irq_sensors"  */
+		#define SPI_IRQ		64
+		#define SPI_WORD	(SPI_IRQ/32)
+		#define TLMM_IRQ	38
+		#define TLMM_WORD	(TLMM_IRQ/32)
 
+		#define SPMI_ARB_PERIPH_IRQ	48
+		#define SPMI_ARB_PERIPH_WORD	(SPMI_ARB_PERIPH_IRQ/32)
+		#define SPMI_ARB_EE_IRQ		49
+		#define SPMI_ARB_EE_WORD	(SPMI_ARB_EE_IRQ/32)
+#endif
 		/*  is there a "clear bit" around here?  */
+		/*  There's probably a better way to do this.  */
 		if (i == SPI_WORD) {
 			intbase[(0x280/4) + i] &= ~(1<<(SPI_IRQ % 32));
 		}
 		if (i == TLMM_WORD) {
 			intbase[(0x280/4) + i] &= ~(1<<(TLMM_IRQ % 32));
 		}
+#if ARCHV >= 5
+		if (i == SPMI_ARB_PERIPH_WORD) {
+			intbase[(0x280/4) + i] &= ~(1<<(SPMI_ARB_PERIPH_IRQ % 32));
+		}
+		if (i == SPMI_ARB_EE_WORD) {
+			intbase[(0x280/4) + i] &= ~(1<<(SPMI_ARB_EE_IRQ % 32));
+		}
+		#undef SPMI_ARB_PERIPH_IRQ
+		#undef SPMI_ARB_PERIPH_WORD
+		#undef SPMI_ARB_EE_IRQ
+		#undef SPMI_ARB_EE_WORD
+#endif
 
 		#undef SPI_IRQ
 		#undef SPI_WORD

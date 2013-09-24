@@ -51,6 +51,11 @@ static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context
 	asm volatile
 		(
 		 " tlbw(%0,%1)\n"
+#if ARCHV == 5
+		 " nop\n"
+		 " nop\n"
+		 " nop\n"
+#endif
 		 " isync\n"
 		 : : "r"(rawentry),"r"(index));
 #endif

@@ -21,14 +21,11 @@
 
 #define LINUX_NUM_VCPU 3
 #define UCOS_NUM_VCPU 1
-#define TOTAL_INTS 128
+#define TOTAL_INTS 160
 #define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
 #define VCPU_STACK_SIZE 1024
 #define LINUX_VM_PRIO 3
 #define UCOS_VM_PRIO 1
-
-#define HW_TIMER_INT 10
-#define LINUX_TIMER_INT 2
 
 #define VM_STATUS_REBOOT 3
 #define CHILD_INTERRUPT 14
@@ -198,6 +195,17 @@ unsigned long boot_linux(char fname[]) {
 
 extern void bootvm_vectors();
 
+//volatile unsigned int *ss_pub_base = (void *)0xFFC00000;
+//  Use physical address which will go through a straight-through mapping of device type.
+volatile unsigned int *ss_pub_base = (void *) 0x28800000;
+#define FLL_CTL (0x3c >> 2)
+#define FLL_STATUS (0x40 >> 2)
+#define GFMUX_CTL (0x30 >> 2)
+
+void handle_child_int() {
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+}
+
 int main(int argc, char *argv[]) {
 
 	char fname[256] = "vmlinux.bin";
@@ -213,7 +221,6 @@ int main(int argc, char *argv[]) {
 
 	h2_vmtrap_setvec(bootvm_vectors);
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
-	h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
 
 	boot_ucos();
 
@@ -231,6 +238,5 @@ int main(int argc, char *argv[]) {
 		h2_vmfree(linux_vm);
 	} while (status == VM_STATUS_REBOOT);
 
-	//h2_thread_stop(0);
 	return 0; // make gcc happy
 }

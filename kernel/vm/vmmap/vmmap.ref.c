@@ -30,8 +30,9 @@
 void H2K_vmtrap_clrmap(H2K_thread_context *me)
 {
 	/* Invalidate HW/STLB entry */
-	u32_t va, count;
-	va = me->r00;
+	u32_t count;
+	//	u32_t va;
+	//  va = me->r00;
 	count = me->r01;
 
 	me->r00 = 0;

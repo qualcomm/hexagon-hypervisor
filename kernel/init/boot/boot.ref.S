@@ -171,7 +171,11 @@ FUNC_START start .entry .p2align 12
 #if ARCHV <= 3
 	r0.h = #0x0083	/* 256KB L2 */
 #else
+#ifdef L2_512K
+	r0.h = #0x008c	/* 512B L2 + ITCM */
+#else
 	r0.h = #0x008b	/* 256KB L2 + ITCM */
+#endif
 #endif
 	syscfg = r0
 	isync

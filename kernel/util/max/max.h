@@ -28,6 +28,8 @@
 #define MAX_TLB_ENTRIES 63
 #define PHYSREAD_TEMP_MAP_IDX 63
 #define PHYSREAD_TEMP_MAP_VPN 0xfffff
+#elif ARCHV >= 5
+#define MAX_TLB_ENTRIES 128
 #else
 #define MAX_TLB_ENTRIES 64
 #endif
@@ -99,6 +101,8 @@
 #define VM_IPI_INT 0
 #if ARCHV <= 4
 #define TIMER_INT 50
+#elif ARCHV >= 5
+#define TIMER_INT 34
 #else
 #define TIMER_INT 35
 #endif

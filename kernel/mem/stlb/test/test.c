@@ -64,7 +64,7 @@ void TH_mem_stlb_init()
 #endif
 		}
 	}
-	H2K_mem_stlb_asid_infos = TH_mem_stlb_asid_infos;
+	H2K_kg.stlbptr = TH_mem_stlb_asid_infos;
 }
 
 void TH_compare_tlbfmt(H2K_mem_tlbfmt_t original, H2K_mem_tlbfmt_t test)

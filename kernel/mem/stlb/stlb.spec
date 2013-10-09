@@ -197,7 +197,7 @@ Harness
 
 .. cfunction:: void TH_mem_stlb_init() 
 
-This function initializes the extern H2K_mem_stlb_asid_info_t \*H2K_mem_stlb_asid_infos
+This function initializes the H2K_mem_stlb_asid_infos
 pointer to a local array H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS].
 Each of these structures had its baseaddr pointer set throuought an array of H2K_mem_tlbfmt_t
 entires in TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS].  The entries are randomized.

@@ -10,7 +10,7 @@
 
 /* EJP: define check and match_asid */
 
-H2K_mem_stlb_asid_info_t *H2K_mem_stlb_asid_infos;// IN_SECTION(".data.mem.stlb"); /* MOVE TO GLOBALS */
+// H2K_mem_stlb_asid_info_t *H2K_mem_stlb_asid_infos;// IN_SECTION(".data.mem.stlb"); /* MOVE TO GLOBALS */
 
 #if ARCHV <= 3
 
@@ -65,8 +65,8 @@ H2K_mem_tlbfmt_t H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *m
 	int i;
 	H2K_mem_tlbfmt_t ret;
 	ret.raw = 0;
-	if (H2K_mem_stlb_asid_infos == NULL) return ret;
-	myinfo = &H2K_mem_stlb_asid_infos[asid];
+	if (H2K_gp->stlbptr == NULL) return ret;
+	myinfo = &H2K_gp->stlbptr[asid];
 	if ((i = H2K_mem_stlb_find(va,asid,myinfo)) >= 0) {
 		return myinfo->baseaddr[i];
 	}
@@ -78,8 +78,8 @@ void H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_c
 	H2K_mem_stlb_asid_info_t *myinfo;
 	u32_t idx = (va >> PAGE_BITS) & (STLB_MAX_SETS-1);
 	u32_t i;
-	if (H2K_mem_stlb_asid_infos == NULL) return;
-	myinfo = &H2K_mem_stlb_asid_infos[asid];
+	if (H2K_gp->stlbptr == NULL) return;
+	myinfo = &H2K_gp->stlbptr[asid];
 	if (((myinfo->valids[idx >> 6] >> (idx & 0x3f)) & 1) == 0) {
 		for (i = 0; i < STLB_MAX_WAYS; i++) {
 			if (H2K_mem_stlb_match_asid(asid,myinfo->baseaddr[idx*STLB_MAX_WAYS+i])) {
@@ -100,9 +100,9 @@ void H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_co
 	u32_t end = (va + count - 1) >> PAGE_BITS;
 	u32_t page;
 
-	if (H2K_mem_stlb_asid_infos == NULL) return;
+	if (H2K_gp->stlbptr == NULL) return;
 
-	myinfo = &H2K_mem_stlb_asid_infos[asid];
+	myinfo = &H2K_gp->stlbptr[asid];
 
 	/* FIXME: Be smarter about page size */
 	for (page = start; page <= end; page++) {
@@ -116,14 +116,14 @@ void H2K_mem_stlb_invalidate_asid(u32_t asid)
 {
 	int i;
 	H2K_mem_stlb_asid_info_t *myinfo;
-	if (H2K_mem_stlb_asid_infos == NULL) return;
-	myinfo = &H2K_mem_stlb_asid_infos[asid];
+	if (H2K_gp->stlbptr == NULL) return;
+	myinfo = &H2K_gp->stlbptr[asid];
 	for (i = 0; i < (STLB_MAX_SETS/64); i++) myinfo->valids[i] = 0;
 	return;
 }
 
 void H2K_mem_stlb_init()
 {
-	H2K_mem_stlb_asid_infos = NULL;
+	H2K_gp->stlbptr = NULL;
 }
 

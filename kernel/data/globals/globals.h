@@ -11,6 +11,7 @@
 #include <context.h>
 #include <futex.h>
 #include <vm.h>
+#include <stlb.h>
 #include <timeinfo.h>
 
 typedef	union {
@@ -32,10 +33,10 @@ typedef struct {
 		};
 	};
 	union {
-		u64_t fastint_gpunused;
+		u64_t fastint_gp_stlbptr;
 		struct {
 			u32_t fastint_gp;
-			u32_t unused;
+			H2K_mem_stlb_asid_info_t *stlbptr;
 		};
 	};
 	union {

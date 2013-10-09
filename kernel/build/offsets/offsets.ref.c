@@ -7,11 +7,13 @@
 #include <context.h>
 #include <stddef.h>
 #include <globals.h>
+#include <stlb.h>
 #include <vm.h>
 
 #define PRINT_CONTEXT_OFFSET(x) printf("#define CONTEXT_%s %d\n",#x,offsetof(H2K_thread_context,x))
 #define PRINT_KG_OFFSET(x) printf("#define KG_%s %d\n",#x,offsetof(H2K_kg_t,x))
 #define PRINT_VMBLOCK_OFFSET(x) printf("#define VMBLOCK_%s %d\n",#x,offsetof(H2K_vmblock_t,x))
+#define PRINT_STLB_OFFSET(x) printf("#define STLB_INFO_%s %d\n",#x,offsetof(H2K_mem_stlb_asid_info_t,x))
 
 int main(int argc, char **argv)
 {
@@ -92,6 +94,7 @@ PRINT_KG_OFFSET(trace_info_max_level_index);
 PRINT_KG_OFFSET(trace_info_index);
 PRINT_KG_OFFSET(trace_info_max_trace_level);
 PRINT_KG_OFFSET(trace_buf_default);
+PRINT_KG_OFFSET(stlbptr);
 #ifdef H2K_L2_CONTROL
 PRINT_KG_OFFSET(l2_int_base);
 PRINT_KG_OFFSET(l2_ack_base);
@@ -105,6 +108,11 @@ PRINT_VMBLOCK_OFFSET(contexts);
 PRINT_VMBLOCK_OFFSET(ext_contexts);
 #endif
 PRINT_VMBLOCK_OFFSET(flags);
+PRINT_STLB_OFFSET(valids);
+PRINT_STLB_OFFSET(pagesize);
+PRINT_STLB_OFFSET(waymask);
+PRINT_STLB_OFFSET(baseaddr);
+	printf("#define STLB_INFO_SIZE %d\n",sizeof(H2K_mem_stlb_asid_info_t));
 
 	printf("#define STATUS_DEAD       %d\n",H2K_STATUS_DEAD);
 	printf("#define STATUS_READY      %d\n",H2K_STATUS_READY);

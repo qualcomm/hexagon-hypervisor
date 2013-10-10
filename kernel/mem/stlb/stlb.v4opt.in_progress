@@ -1,0 +1,164 @@
+#include <asm_std.h>
+#include <asm_offsets.h>
+#include <max.h>
+
+/*
+H2K_mem_stlb_find(va,asid,myinfo)
+IDX = (va >> PAGE_BITS) & (STLB_MAX_SETS-1)
+IDX:SHIFT = bitsplit(idx,5)
+ASIDVA = (va >> 12) | (asid << 20)
+BITS = memw(myinfo->valids+IDX<<#2)
+p = TSTBIT(BITS,SHIFT)
+if (!p) return NOT_FOUND
+loop0(.Loop,STLB_MAX_WAYS)
+PTR = myinfo->baseaddr+mpyi(IDX,STLB_MAX_WAYS)
+.Loop:
+	VAL = memd(PTR++#8)
+	p = tlbmatch(VAL,ASIDVA)
+	if (p) jump:nt found // or set result or whatever
+	endloop
+notfound:
+	return NOT_FOUND
+found:
+	PTR and VAL are useful
+*/
+
+#if STLB_INFO_valids != 0
+#fatal assumed valids at beginning of struct
+#endif
+
+/* H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *me) */
+FUNC_START H2K_mem_stlb_lookup .text.mem.stlb .p2align 5
+	{
+		STLB = memw(H2K_gp->stlbptr)
+		if (cmp.eq(STLB.new,#0)) jump:nt .Lno_stlb
+		IDX = extractu(VA,#STLB_MAX_SETS_LOG2,#PAGE_BITS+5)
+		SHIFT = extractu(VA,#5,#PAGE_BITS)
+	}
+	{
+		JUNK_ASIDVA = lsr(ASID_VA_IN,#12)
+		STLB += mpyi(ASID_IN,#STLB_INFO_SIZE)
+		RET = #0
+	}
+	{
+		BASEADDR = memw(STLB+#STLB_baseaddr)
+		BITS = memw(STLB+IDX<<#2)
+		OFF = mpyi(IDX,#STLB_MAX_WAYS*8)
+	}
+	{
+		p0 = tstbit(BITS,SHIFT)
+		if (!p0.new) jump:nt .Lnotfound
+		PTR = add(BASEADDR,OFF)
+		VAL = memd(BASEADDR+OFF<<#0)
+	}
+	.falign
+1:
+	{
+		p0 = tlbmatch(VAL,ASIDVA)
+		if (p0.new) RET = VAL
+		VAL = memd(PTR++#8)
+	}:endloop0
+	{
+		p0 = tlbmatch(VAL,ASIDVA)
+		if (p0.new) RET = VAL
+	}
+.Lnotfound:
+	{
+		r1:0 = RET
+		jumpr r31
+	}
+FUNC_END H2K_mem_stlb_lookup
+
+/* H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_context *me) */
+FUNC_START H2K_mem_stlb_add .text.mem.stlb .p2align 5
+	{
+		IDX = extractu(VA,#STLB_MAX_SETS_LOG2,#PAGE_BITS+5)
+		STLB = memw(H2K_gp->stlbptr)
+		TMP = mpyi(ASID_IN,#STLB_INFO_SIZE)
+		if (cmp.eq(STLB.new,#0)) jump:nt .Lno_stlb
+	}
+	{
+		RNDIDX = pcyclelo
+		BIT = extractu(VA,#5,#PAGE_BITS)
+		MYINFO = add(STLB,TMP)
+	}
+	{
+		VALID_VAL = memw(MYINFO+IDX<<#2)
+		loop0(1f,#STLB_MAX_WAYS-2)
+		ROWADDR = memw(MYINFO+#STLB_baseaddr)
+		ROWOFF = mpyi(IDX,#STLB_MAX_WAYS*8)
+	}
+	{
+		p0 = tstbit(VALID_VAL,BIT)
+		if (p0.new) jump:t .Lstlb_add_insert
+		RNDIDX = and(RNDIDX,#STLB_MAX_WAYS-1)
+		ROWADDR = add(ROWADDR,ROWOFF)
+	}
+	{
+		DATA = memd(ROWADDR)
+		PTR = add(ROWADDR,#8)
+		VALID_VAL = setbit(VALID_VAL,BIT)
+	}
+	{
+		DATA = memd(PTR++#8)
+		TESTASID = extractu(DATAHI,#7,#20)
+	}
+1:
+	{
+		DATA = memd(PTR++#8)
+		TESTASID = extractu(DATAHI,#7,#20)
+		p0 = cmp.eq(TESTASID,ASID)
+		if (p0.new) memd(ROWADDR+#-16) = ZERO
+	}
+	{
+		TESTASID = extractu(DATAHI,#7,#20)
+		p0 = cmp.eq(TESTASID,ASID)
+		if (p0.new) memd(ROWADDR+#-16) = ZERO
+	}
+	{
+		p0 = cmp.eq(TESTASID,ASID)
+		if (p0.new) memd(ROWADDR+#-16) = ZERO
+		memw(MYINFO+IDX<<#2) = VALID_VAL
+	}
+.Lstlb_add_insert:
+	{
+		memd(ROWADDR+RNDIDX<<#3) = ENTRY
+		jumpr r31
+	}
+.Lno_stlb:
+	jumpr r31
+FUNC_END H2K_mem_stlb_add
+
+/* H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) */
+FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
+
+FUNC_END H2K_mem_stlb_invalidate_va
+
+FUNC_START H2K_mem_stlb_invalidate_asid .text.mem.stlb .p2algin 4
+#define ASID_IN r0
+#define PTR r1
+	{
+		PTR = add(H2K_GP,#KG_stlbptr)
+		loop0(1f,##STLB_MAX_SETS/(32*8))
+	}
+	{
+		PTR += mpyi(ASID_IN,#STLB_INFO_SIZE))
+	}
+	.falign
+1:
+	{
+		dczeroa(PTR)
+		PTR = add(PTR,#32)
+	}:endloop0
+	jumpr r31
+#undef ASID_IN
+#undef PTR
+FUNC_END H2K_mem_stlb_invalidate_asid
+
+FUNC_START H2K_mem_stlb_init .text.init.stlb .p2align 4
+	{
+		memw(H2K_GP+#KG_stlbptr) = #0
+		jumpr r31
+	}
+FUNC_END H2K_mem_stlb_init
+

@@ -29,7 +29,7 @@ H2K_mem_tlbfmt_t H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *m
 void H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_context *me) IN_SECTION(".text.mem.stlb");
 void H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) IN_SECTION(".text.mem.stlb");
 void H2K_mem_stlb_invalidate_asid(u32_t asid) IN_SECTION(".text.mem.stlb");
-void H2K_mem_stlb_init() IN_SECTION(".text.init.stlb");
+s32_t H2K_mem_stlb_alloc() IN_SECTION(".text.init.stlb");
 
 #endif
 

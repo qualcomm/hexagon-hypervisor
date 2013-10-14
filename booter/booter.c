@@ -334,8 +334,13 @@ int main(int argc, char **argv)
 	}
 
 	h2_vmtrap_setvec(bootvm_vectors);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
-	//h2_vmtrap_intop(H2K_INTOP_LOCEN, CHILD_INTERRUPT, 0);
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
+	}
+	if (h2_config_stlb_alloc() < 0) {
+		FAIL("STLB alloc");
+	}
+
 	while (1) {
 		if (0 == strcmp(argv[0],"--syscfg")) {
 			if (argc < 2) die_usage();

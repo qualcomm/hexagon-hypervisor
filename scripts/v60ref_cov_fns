@@ -102,7 +102,7 @@ H2K_mem_physread_word
 H2K_mem_stlb_add
 H2K_mem_stlb_check
 H2K_mem_stlb_find
-H2K_mem_stlb_init
+H2K_mem_stlb_alloc
 H2K_mem_stlb_invalidate_asid
 H2K_mem_stlb_invalidate_va
 H2K_mem_stlb_lookup

@@ -66,11 +66,6 @@ void FAIL(const char *str)
 	exit(1);
 }
 
-void fatal () {
-	PRINTF("H2 kernel: Oops\n");
-	exit (1);
-}
-
 unsigned long vm_setup(char num_cpus, short num_ints, u32_t trans, unsigned long trapmask, translation_type pt) {
 
 	unsigned long vm, ret;
@@ -217,11 +212,15 @@ int main(int argc, char *argv[]) {
 		sscanf(argv[1], "%s", fname);
 	}
 
-	h2_config_setfatal(fatal);
 	PRINTF("loadlinux: H2 started\n");
 
 	h2_vmtrap_setvec(bootvm_vectors);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
+	}
+	if (h2_config_stlb_alloc() < 0) {
+		FAIL("STLB alloc");
+	}
 
 	boot_ucos();
 

@@ -14,31 +14,27 @@
 #include <asid.h>
 #include <translate.h>
 #include <alloc.h>
+#include <stlb.h>
 
 #ifdef DEBUG
 #include <stdio.h>
 #endif
 
-typedef u32_t (*configptr_t)(u32_t, void *, vmblock_init_op_t, u32_t, u32_t, H2K_thread_context *);
+typedef u32_t (*configptr_t)(u32_t, u32_t, vmblock_init_op_t, u32_t, u32_t, H2K_thread_context *);
 
 static const configptr_t H2K_configtab[CONFIG_MAX] IN_SECTION(".data.config.config") = {
-	H2K_trap_config_setfatal,
 	H2K_trap_config_vmblock_init,
+	H2K_trap_config_stlb_alloc
 };
 
-u32_t H2K_trap_config(u32_t configtype, void *ptr, vmblock_init_op_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
+u32_t H2K_trap_config(u32_t configtype, u32_t val1, vmblock_init_op_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
 {
 	if (configtype >= CONFIG_MAX) return 0;
-	return H2K_configtab[configtype](0,ptr,val2,val3,val4,me);
-}
-
-u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, vmblock_init_op_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)
-{
-	return -1;
+	return H2K_configtab[configtype](0, val1, val2, val3, val4, me);
 }
 
 /* initialize vm description */
-u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
+u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, vmblock_init_op_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
 {
 	H2K_vmblock_t *vmblock;
 	bitmask_t **masks;
@@ -62,8 +58,6 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 	H2K_ext_context *ext_contexts;
 #endif
 #endif
-
-	u32_t vm = (u32_t)ptr;
 
 	/* Get vmblock initialized by previous SET_CPUS_INTS */
 	if (op != SET_CPUS_INTS) {
@@ -300,4 +294,9 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op
 	default:
 		return 0; // bad op
 	}
+}
+
+u32_t H2K_trap_config_stlb_alloc(u32_t unused, u32_t sets, vmblock_init_op_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) {
+
+	return H2K_mem_stlb_alloc();
 }

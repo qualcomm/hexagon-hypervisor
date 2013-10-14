@@ -7,8 +7,8 @@
 #define H2_COMMON_CONFIG_H 1
 
 typedef enum {
-	CONFIG_SETFATAL,
 	CONFIG_VMBLOCK_INIT,
+	CONFIG_STLB_ALLOC,
 	CONFIG_MAX
 } config_type_t;
 

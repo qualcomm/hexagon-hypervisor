@@ -69,15 +69,15 @@ H2K_mem_stlb_asid_info_t
 	        Pointer to available memory
 
 
-H2K_mem_stlb_init
+H2K_mem_stlb_alloc
 -----------------
 
-.. cfunction:: void H2K_mem_stlb_init()
+.. cfunction:: void H2K_mem_stlb_alloc()
 
 Description
 ~~~~~~~~~~~
 
-This function initilizes the stlb information.
+This function allocates and initilizes the stlb information.
 
 H2K_mem_stlb_lookup
 -------------------

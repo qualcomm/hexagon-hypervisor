@@ -33,7 +33,7 @@ as h2_config_vmblock_init().
 @dependencies None
 */
 
-int h2_config_trap(config_type_t whichtrap, void *ptr, unsigned int a, unsigned int b, unsigned int c);
+int h2_config_trap(config_type_t whichtrap, unsigned int a, unsigned int b, unsigned int c, unsigned int d);
 
 /**
 Initialize fields for a vm block
@@ -46,15 +46,19 @@ Initialize fields for a vm block
 */
 
 static inline unsigned int h2_config_vmblock_init(unsigned int vm, vmblock_init_op_t op, unsigned int arg1, unsigned int arg2) {
-	return h2_config_trap(CONFIG_VMBLOCK_INIT, (void *)vm, op, arg1, arg2);
+	return h2_config_trap(CONFIG_VMBLOCK_INIT, vm, op, arg1, arg2);
+}
+
+/**
+Allocate and initialize STLB
+@returns number of STLB entries; -1 on failure
+*/
+
+static inline int h2_config_stlb_alloc() {
+	return h2_config_trap(CONFIG_STLB_ALLOC, 0, 0, 0, 0);
 }
 
 /** @} */
-
-/* FIXME: deprecated? */
-static inline unsigned int h2_config_setfatal(void *handler) {
-	return h2_config_trap(CONFIG_SETFATAL, handler, 0, 0, 0);
-}
 
 #endif
 

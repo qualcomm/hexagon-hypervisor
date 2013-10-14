@@ -52,12 +52,12 @@ void H2K_init_setup_bootvm(u32_t phys_offset)
 									MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT, NULL);
 	bootvm = H2K_gp->vmblocks[vm];
 
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PMAP_TYPE, boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PMAP_TYPE, boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, NULL);
 	/* FIXME: Need page tables for boot VM guest->phys so that we don't need to
 		 allow access to all of memory in order to be able to load at any
 		 address */
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_FENCES, 0x0, (0xffffffff >> BOOT_TLB_PGBITS) << BOOT_TLB_PGBITS, NULL);
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_FENCES, 0x0, (0xffffffff >> BOOT_TLB_PGBITS) << BOOT_TLB_PGBITS, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
 }
 
 IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset)
@@ -81,7 +81,6 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset)
 	H2K_intconfig_init();
 	H2K_thread_init();
 	H2K_asid_table_init();
-	H2K_mem_stlb_init();
 	H2K_timer_init();
 	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);
 	H2K_init_setup_bootvm(phys_offset);

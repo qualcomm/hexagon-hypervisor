@@ -121,9 +121,3 @@ void H2K_mem_stlb_invalidate_asid(u32_t asid)
 	for (i = 0; i < (STLB_MAX_SETS/64); i++) myinfo->valids[i] = 0;
 	return;
 }
-
-void H2K_mem_stlb_init()
-{
-	H2K_gp->stlbptr = NULL;
-}
-

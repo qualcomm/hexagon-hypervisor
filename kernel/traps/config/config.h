@@ -74,9 +74,9 @@
    // space to align if needed
 #endif
 
-u32_t H2K_trap_config(u32_t configtype, void *ptr, vmblock_init_op_t val2, u32_t val3, u32_t val4, H2K_thread_context *me) IN_SECTION(".text.config.config");
-u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, vmblock_init_op_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) IN_SECTION(".text.config.config");
-u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me) IN_SECTION(".text.config.config");
+u32_t H2K_trap_config(u32_t configtype, u32_t val1, vmblock_init_op_t val2, u32_t val3, u32_t val4, H2K_thread_context *me) IN_SECTION(".text.config.config");
+u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, vmblock_init_op_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me) IN_SECTION(".text.config.config");
+u32_t H2K_trap_config_stlb_alloc(u32_t unused, u32_t sets, vmblock_init_op_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me);
 
 #endif
 

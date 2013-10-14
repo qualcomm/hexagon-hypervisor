@@ -39,5 +39,6 @@ void H2K_kg_init(u32_t phys_offset)
 	} else {
 		H2K_kg.on_simulator = 0;
 	}
-}
 
+	H2K_kg.stlbptr = NULL;
+}

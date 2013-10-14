@@ -20,7 +20,6 @@
 #endif
 
 H2K_thread_context a;
-extern H2K_mem_stlb_asid_info_t *H2K_mem_stlb_asid_infos;// IN_SECTION(".data.mem.stlb"); /* MOVE TO GLOBALS */  
 
 H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS];
 H2K_mem_tlbfmt_t TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS];
@@ -90,7 +89,6 @@ int main()
 	H2K_mem_tlbfmt_t entry, test;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_asid_table_init();
-	H2K_mem_stlb_init();
 
 	srand(TEST_SEED);
 #if ARCHV <= 3
@@ -111,7 +109,6 @@ int main()
 #endif
         /* No storage */
 	H2K_asid_table_init();
-	H2K_mem_stlb_init();
 	H2K_mem_stlb_invalidate_va(0,1,0,&a);
 	H2K_mem_stlb_invalidate_asid(0);
 	H2K_mem_stlb_add(0,0,entry,&a);

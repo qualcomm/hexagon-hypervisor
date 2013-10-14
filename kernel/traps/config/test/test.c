@@ -65,11 +65,6 @@ void H2K_vm_int_intinfo_init(H2K_vmblock_t *vmblock, u32_t num_ints)
 	if (num_ints != TH_expected_intinfo_ints) FAIL("intinfo ints");
 }
 
-static void __attribute__((noreturn)) foo(u32_t xyzzy)
-{
-	__builtin_trap();
-}
-
 int main()
 {
 	u32_t i, vm, ret;
@@ -78,25 +73,21 @@ int main()
 	H2K_trace_init();
 	H2K_mem_alloc_init(Heap, DEFAULT_ALLOC_HEAP_SIZE);
 	/* Bad config value */
-	vm = H2K_trap_config(CONFIG_MAX,NULL,0,0,0,NULL);
+	vm = H2K_trap_config(CONFIG_MAX,0,0,0,0,NULL);
 	if (vm != 0) FAIL("Bad return value");
-
-	/* Configure fatal kernel handler , no longer exists */
-	vm = H2K_trap_config(CONFIG_SETFATAL,foo,0,0,0,NULL);
-	if (vm == 0) FAIL("Bad return value/setfatal");
 
 	/* SET_CPUS_INTS */
 	/* SET_CPUS_INTS bad cpus */
 	DPRINTF("SET_CPUS_INTS\n\n");
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_CPUS_INTS, MAX_VM_CPUS + 1, 0, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_CPUS_INTS, MAX_VM_CPUS + 1, 0, NULL);
 	if (ret!= 0) FAIL("Missed bad cpus");
 
 		/* SET_CPUS_INTS bad ints */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_CPUS_INTS, 1, MAX_VM_INTS + 1, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_CPUS_INTS, 1, MAX_VM_INTS + 1, NULL);
 	if (ret!= 0) FAIL("Missed bad ints");
 
 	TH_expected_intinfo_ints = OK_INTS;
-	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, NULL, SET_CPUS_INTS, OK_CPUS, OK_INTS, NULL);
+	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, 0, SET_CPUS_INTS, OK_CPUS, OK_INTS, NULL);
 	if (vm == 0) FAIL("Unexpected error 5");
 
 	vmblock = H2K_gp->vmblocks[vm];
@@ -121,7 +112,7 @@ int main()
 	
 	/* SET_PMAP_TYPE bad type*/
 	DPRINTF("SET_PMAP_TYPE\n\n");
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PMAP_TYPE, 0, H2K_ASID_TRANS_TYPE_XXX_LAST, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PMAP_TYPE, 0, H2K_ASID_TRANS_TYPE_XXX_LAST, NULL);
 	if (ret!= 0) FAIL("Missed bad translation type");
 
 	/* SET_PMAP_TYPE */
@@ -130,7 +121,7 @@ int main()
 	if (asid < 0) FAIL("H2K_asid_table_inc");
 	a.ssr_asid = asid;
 	DPRINTF("ASID %d  ptb %08x\n\n", a.ssr_asid, H2K_mem_asid_table[a.ssr_asid].ptb);
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PMAP_TYPE, 0, 0, &a);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PMAP_TYPE, 0, 0, &a);
 	if (ret == 0) FAIL("Unexpected error 3");
 
 	DPRINTF("pmap %08x  type %d\n", vmblock->pmap, vmblock->pmap_type);
@@ -139,11 +130,11 @@ int main()
 
 	DPRINTF("SET_PRIO_TRAPMASK\n\n");
 	/* SET_PRIO_TRAPMASK bad prio */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PRIO_TRAPMASK, MAX_PRIO + 1, 0, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PRIO_TRAPMASK, MAX_PRIO + 1, 0, NULL);
 	if (ret!= 0) FAIL("Missed bad prio");
 
 	/* SET_PRIO_TRAPMASK */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, SET_PRIO_TRAPMASK, 11, 0xfeeefaaa, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PRIO_TRAPMASK, 11, 0xfeeefaaa, NULL);
 	if (ret == 0) FAIL("Unexpected error 4");
 
 	if (vmblock->bestprio != 11) FAIL("Bad prio");
@@ -151,15 +142,15 @@ int main()
 
 	DPRINTF("MAP_PHYS_INTR\n\n");
 	/* MAP_PHYS_INTR bad vint*/
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, vmblock->num_ints + PERCPU_INTERRUPTS, CONFIG_PHYSINT_CPUID(vmblock->num_ints + PERCPU_INTERRUPTS - 1, OK_CPUS - 1), NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, MAP_PHYS_INTR, vmblock->num_ints + PERCPU_INTERRUPTS, CONFIG_PHYSINT_CPUID(vmblock->num_ints + PERCPU_INTERRUPTS - 1, OK_CPUS - 1), NULL);
 	if (ret!= 0) FAIL("Missed vint # too big");
 
 	/* MAP_PHYS_INTR bad pint */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, OK_INTS - 1, MAX_INTERRUPTS + 1, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, MAP_PHYS_INTR, OK_INTS - 1, MAX_INTERRUPTS + 1, NULL);
 	if (ret!= 0) FAIL("Missed pint # too big");
 
 	/* MAP_PHYS_INTR */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, (void *)vm, MAP_PHYS_INTR, OK_INTS - 1, CONFIG_PHYSINT_CPUID(13, 0), NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, MAP_PHYS_INTR, OK_INTS - 1, CONFIG_PHYSINT_CPUID(13, 0), NULL);
 	if (ret == 0) FAIL("Unexpected error 6");
 
 	if (vmblock->int_v2p[OK_INTS - 1] != 13) FAIL("Bad int_v2p");
@@ -167,7 +158,7 @@ int main()
 	/* 0 interrupts */
 	DPRINTF("0 interrupts\n\n");
 	TH_expected_intinfo_ints = 0;
-	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, NULL, SET_CPUS_INTS, OK_CPUS, 0, NULL);
+	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, 0, SET_CPUS_INTS, OK_CPUS, 0, NULL);
 	if (vm == 0) FAIL("Unexpected error 7");
 
 	vmblock = H2K_gp->vmblocks[vm];

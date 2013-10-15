@@ -57,34 +57,17 @@ typedef u32_t bitmask_t;
 typedef u64_t long_bitmask_t;
 
 typedef struct H2K_vmblock_struct {
-	u32_t max_cpus;
-	u32_t num_cpus;
-	u32_t bestprio; 	/* best allowed priority */
 	u32_t vmidx;
 	H2K_id_t parent;
 	s32_t status;     /* status, e.g. halt, reboot */
-	u32_t num_ints; 	/* number of shared interrupts */
 	u32_t trapmask;  	/* allowed traps */
 	H2K_spinlock_t lock;
-	/* Linked List of free threads in this VM */
-	H2K_thread_context *free_threads;
-	/* Pointer to thread context storage */
-	H2K_thread_context *contexts;
+
 #ifdef DO_EXT_SWITCH
 	H2K_ext_context *ext_contexts;
 #endif
 
-	/* Pending Virtual Interrupts for this VM */
-	bitmask_t *pending;
-	/* Global enable */
-	bitmask_t *enable;
-	/* For each cpu, enable masks (which cpu, enabled or masked, etc)
-		 0 == disabled */
-	bitmask_t **percpu_mask;
-	/* Mapping back to the HW interrupt (if applicable) */
-	physint_t *int_v2p;
-	struct H2K_vm_int_opinfo_struct *intinfo;
-
+	translation_type pmap_type;
 	/* physical memory map, page table style */
 	union {
 		H2K_offset_t phys_offset;
@@ -98,8 +81,26 @@ typedef struct H2K_vmblock_struct {
 	s32_t fence_hi;
 
 	long_bitmask_t waiting_cpus;
+	u32_t num_ints; 	/* number of shared interrupts */
+	/* Pending Virtual Interrupts for this VM */
+	bitmask_t *pending;
+	/* Global enable */
+	bitmask_t *enable;
+	/* For each cpu, enable masks (which cpu, enabled or masked, etc)
+		 0 == disabled */
+	bitmask_t **percpu_mask;
+	/* Mapping back to the HW interrupt (if applicable) */
+	physint_t *int_v2p;
+	struct H2K_vm_int_opinfo_struct *intinfo;
 
-	translation_type pmap_type;
+	u32_t max_cpus;
+	u32_t num_cpus;
+	u32_t bestprio; 	/* best allowed priority */
+
+	/* Linked List of free threads in this VM */
+	H2K_thread_context *free_threads;
+	/* Pointer to thread context storage */
+	H2K_thread_context *contexts;
 
 	union {
 		u32_t flags;

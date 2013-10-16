@@ -10,10 +10,10 @@ This module contains routines to manage the Performance Monitor Unit.
 H2K_trap_pmuconfig
 ------------------
 
-.. cfunction:: u32_t H2K_trap_pmuconfig(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_pmuconfig(u32_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
 
 	:param configtype: Configuration operation to do
-	:param ptr: Operation-dependent pointer value
+	:param val1: Operation-dependent value
 	:param val2: Operation-dependent value
 	:param val3: Operation-dependent value
 	:param me: Pointer to the current thread context
@@ -38,10 +38,10 @@ appropriate routine.
 H2K_trap_pmuconfig_threadset
 ----------------------------
 
-.. cfunction:: u32_t H2K_trap_pmuconfig_threadset(u32_t unused, H2K_thread_context *dest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_pmuconfig_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused paramater
-	:param dest: thread to change PMU configuration for
+	:param vdest: thread ID to change PMU configuration for
 	:param turnon: 0 to disable PMU monitoring, 1 to enable
 	:param unused3: Unused parameter
 	:param me: Pointer to the current thread context
@@ -71,7 +71,7 @@ We then release the BKL and return.
 H2K_trap_pmuconfig_setreg
 -------------------------
 
-.. cfunction:: u32_t H2K_trap_pmuconcig_setreg(u32_t unused, void *unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_pmuconcig_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param unused2: Unused parameter
@@ -93,7 +93,7 @@ Write the PMU register
 H2K_trap_pmuconfig_getreg
 -------------------------
 
-.. cfunction:: u32_t H2K_trap_pmuconcig_getreg(u32_t unused, void *unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_pmuconcig_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param unused2: Unused parameter

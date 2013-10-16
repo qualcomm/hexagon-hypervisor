@@ -108,6 +108,12 @@ PRINT_VMBLOCK_OFFSET(contexts);
 PRINT_VMBLOCK_OFFSET(ext_contexts);
 #endif
 PRINT_VMBLOCK_OFFSET(flags);
+
+#ifdef COUNT_TLB_MISSES
+PRINT_VMBLOCK_OFFSET(tlbmissx);
+PRINT_VMBLOCK_OFFSET(tlbmissrw);
+#endif
+
 PRINT_STLB_OFFSET(valids);
 PRINT_STLB_OFFSET(pagesize);
 PRINT_STLB_OFFSET(waymask);

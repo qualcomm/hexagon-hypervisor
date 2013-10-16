@@ -113,6 +113,23 @@ typedef struct H2K_vmblock_struct {
 #endif
 		};
 	};
+#ifdef COUNT_TLB_MISSES
+	union {
+		struct {
+			u32_t tlbmissx_lo;
+			u32_t tlbmissx_hi;
+		};
+		u64_t tlbmissx;
+	};
+
+	union {
+		struct {
+			u32_t tlbmissrw_lo;
+			u32_t tlbmissrw_hi;
+		};
+		u64_t tlbmissrw;
+	};
+#endif
 
 } __attribute__((aligned(32))) H2K_vmblock_t;
 

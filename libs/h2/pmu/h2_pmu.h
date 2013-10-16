@@ -27,13 +27,13 @@
 /**
 PMU Configuration Trap Interface.  Please do not use this directly, instead use the other h2_pmu functions.
 @param[in] configtype		Type of operation
-@param[in] ptr			Generic Pointer Argument
+@param[in] val1			Generic Value
 @param[in] val2			Generic Value
 @param[in] val3			Generic Value
 @returns 0 on success, nonzero otherwise 
 */
 
-int h2_pmuconfig_trap(int configtype, void *ptr, int val2, int val3);
+int h2_pmuconfig_trap(int configtype, int val1, int val2, int val3);
 
 /**
 Write PMU register
@@ -44,7 +44,7 @@ Write PMU register
 
 static inline int h2_pmu_setreg(int reg, int val)
 {
-	return h2_pmuconfig_trap(H2_PMUCONFIG_SETREG,NULL,reg,val);
+	return h2_pmuconfig_trap(H2_PMUCONFIG_SETREG, 0, reg, val);
 }
 
 /**
@@ -55,7 +55,7 @@ Read PMU register
 
 static inline int h2_pmu_getreg(int reg)
 {
-	return h2_pmuconfig_trap(H2_PMUCONFIG_GETREG,NULL,reg,0);
+	return h2_pmuconfig_trap(H2_PMUCONFIG_GETREG, 0, reg, 0);
 }
 
 /**
@@ -66,7 +66,7 @@ Enable PMU monitoring for a thread
 
 static inline int h2_pmu_enable(int threadid)
 {
-	return h2_pmuconfig_trap(H2_PMUCONFIG_THREADSET,(void *)threadid,1,0);
+	return h2_pmuconfig_trap(H2_PMUCONFIG_THREADSET, threadid, 1, 0);
 }
 
 /**
@@ -77,7 +77,7 @@ Disable PMU monitoring for a thread
 
 static inline int h2_pmu_disable(int threadid)
 {
-	return h2_pmuconfig_trap(H2_PMUCONFIG_THREADSET,(void *)threadid,0,0);
+	return h2_pmuconfig_trap(H2_PMUCONFIG_THREADSET, threadid, 0, 0);
 }
 
 /** @} */

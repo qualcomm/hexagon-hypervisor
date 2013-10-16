@@ -272,6 +272,23 @@ Functionality
 
 Sets r0 with GELR, r1 with GSSR, r2 with GOSP, and r3 with GBADVA.
 
+H2K_vmtrap_pmuconfig
+--------------------
+
+.. cfunction:: void H2K_vmtrap_pmuconfig(H2K_thread_context *me)
+
+	:param me: Pointer to the current thread context
+
+Description
+~~~~~~~~~~~
+
+Call H2K_trap_pmuconfig()
+
+Functionality
+~~~~~~~~~~~~~
+
+Return the result of H2K_trap_pmuconfig() in r0.
+
 Testing
 -------
 

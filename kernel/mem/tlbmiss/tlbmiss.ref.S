@@ -36,6 +36,19 @@ FUNC_START H2K_handle_tlbmissx .text.mem.tlbmiss .p2align 2
 	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
 	/* r7 = me, r8 = ssr, r9 = htid */
+
+#ifdef COUNT_TLB_MISSES
+	// atomically increment me->vmblock->tlbmissx
+	r10 = memw(r7 + #CONTEXT_vmblock)
+	r10 = add(r10, #VMBLOCK_tlbmissx)
+	r4 = #1
+2:
+	r3:2 = memd_locked(r10)
+	r3:2 = add(r3:2, r4)
+	memd_locked(r10, p0) = r3:2
+	if !p0 jump 2b
+#endif
+
 	r3 = and(r8,#3)
 	r2 = elr
 	p0 = cmp.eq(r3,#1)
@@ -52,6 +65,19 @@ FUNC_START H2K_handle_tlbmissrw .text.mem.tlbmiss .p2align 2
 	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
 	/* r7 = me, r8 = ssr, r9 = htid */
+
+#ifdef COUNT_TLB_MISSES
+	// atomically increment me->vmblock->tlbmissrw
+	r10 = memw(r7 + #CONTEXT_vmblock)
+	r10 = add(r10, #VMBLOCK_tlbmissrw)
+	r4 = #1
+3:
+	r3:2 = memd_locked(r10)
+	r3:2 = add(r3:2, r4)
+	memd_locked(r10, p0) = r3:2
+	if !p0 jump 3b
+#endif
+
 	r2 = badva
 .Ltlbmiss_common:
 	r1:0 = combine(r7,r2)	// H2K_mem_tlb_fill(va,me)

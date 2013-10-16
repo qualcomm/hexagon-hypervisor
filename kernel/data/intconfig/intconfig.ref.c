@@ -125,6 +125,18 @@ static void H2K_intconfig_l2_init()
 		#define TLMM_WORD	(TLMM_IRQ/32)
 #endif
 #if ARCHV >= 5
+
+#ifdef MODEM
+		#define SPI_IRQ		245
+		#define SPI_WORD	(SPI_IRQ/32)
+		#define TLMM_IRQ	239
+		#define TLMM_WORD	(TLMM_IRQ/32)
+
+		#define SPMI_ARB_PERIPH_IRQ	75
+		#define SPMI_ARB_PERIPH_WORD	(SPMI_ARB_PERIPH_IRQ/32)
+		#define SPMI_ARB_EE_IRQ		76
+		#define SPMI_ARB_EE_WORD	(SPMI_ARB_EE_IRQ/32)
+#else
 		/*  8974 SPI ("blsp1_qup1") and "summary_irq_sensors"  */
 		#define SPI_IRQ		64
 		#define SPI_WORD	(SPI_IRQ/32)
@@ -135,6 +147,7 @@ static void H2K_intconfig_l2_init()
 		#define SPMI_ARB_PERIPH_WORD	(SPMI_ARB_PERIPH_IRQ/32)
 		#define SPMI_ARB_EE_IRQ		49
 		#define SPMI_ARB_EE_WORD	(SPMI_ARB_EE_IRQ/32)
+#endif  //  !MODEM
 #endif
 		/*  is there a "clear bit" around here?  */
 		/*  There's probably a better way to do this.  */

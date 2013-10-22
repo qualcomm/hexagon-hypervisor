@@ -41,10 +41,10 @@ FUNC_START H2K_handle_tlbmissx .text.mem.tlbmiss .p2align 2
 	// atomically increment me->vmblock->tlbmissx
 	r10 = memw(r7 + #CONTEXT_vmblock)
 	r10 = add(r10, #VMBLOCK_tlbmissx)
-	r4 = #1
+	r5:4 = #1
 2:
 	r3:2 = memd_locked(r10)
-	r3:2 = add(r3:2, r4)
+	r3:2 = add(r3:2, r5:4)
 	memd_locked(r10, p0) = r3:2
 	if !p0 jump 2b
 #endif
@@ -70,10 +70,10 @@ FUNC_START H2K_handle_tlbmissrw .text.mem.tlbmiss .p2align 2
 	// atomically increment me->vmblock->tlbmissrw
 	r10 = memw(r7 + #CONTEXT_vmblock)
 	r10 = add(r10, #VMBLOCK_tlbmissrw)
-	r4 = #1
+	r5:4 = #1
 3:
 	r3:2 = memd_locked(r10)
-	r3:2 = add(r3:2, r4)
+	r3:2 = add(r3:2, r5:4)
 	memd_locked(r10, p0) = r3:2
 	if !p0 jump 3b
 #endif

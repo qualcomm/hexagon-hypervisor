@@ -337,9 +337,9 @@ int main(int argc, char **argv)
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
 		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
 	}
-	if (h2_config_stlb_alloc() < 0) {
-		FAIL("STLB alloc");
-	}
+	/* if (h2_config_stlb_alloc() < 0) { */
+	/* 	FAIL("STLB alloc"); */
+	/* } */
 
 	while (1) {
 		if (0 == strcmp(argv[0],"--syscfg")) {

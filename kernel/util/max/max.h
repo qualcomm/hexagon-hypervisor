@@ -173,3 +173,40 @@
 	 pointers to allocated space are aligned.  We waste ALLOC_UNIT - 4 bytes. */
 #define DEFAULT_ALLOC_HEAP_SIZE ((ALLOC_NUNITS * ALLOC_UNIT) + ALLOC_UNIT)
 #endif
+
+#define SYSCFG_M (0x1 << 0)
+#define SYSCFG_I (0x1 << 1)
+#define SYSCFG_D (0x1 << 2)
+#define SYSCFG_T (0x1 << 3)
+#define SYSCFG_G (0x1 << 4)
+#define SYSCFG_R (0x1 << 5)
+#define SYSCFG_C (0x1 << 6)
+
+#define SYSCFG_IDA (0x1 << 8)
+#define SYSCFG_PM (0x1 << 9)
+#define SYSCFG_TE (0x1 << 10)
+#define SYSCFG_TL (0x1 << 11)
+#define SYSCFG_KL (0x1 << 12)
+#define SYSCFG_BQ (0x1 << 13)
+
+#define SYSCFG_DMT (0x1 << 15)
+
+#define SYSCFG_L2CFG_BITS 16
+#define SYSCFG_L2CFG (0x7 << SYSCFG_L2CFG_BITS)
+#define SYSCFG_L2CFG_0K (0 << SYSCFG_L2CFG_BITS)
+#define SYSCFG_L2CFG_64K (1 << SYSCFG_L2CFG_BITS)
+#define SYSCFG_L2CFG_128K (2 << SYSCFG_L2CFG_BITS)
+#define SYSCFG_L2CFG_256K (3 << SYSCFG_L2CFG_BITS)
+#define SYSCFG_L2CFG_512K (4 << SYSCFG_L2CFG_BITS)
+
+#define SYSCFG_ITCM (0x1 << 19)
+
+#define SYSCFG_L2NWA (0x1 << 21)
+#define SYSCFG_L2NRA (0x1 << 22)
+
+#define SYSCFG_L2WB_BIT 23
+#define SYSCFG_L2WB (0x1 << SYSCFG_L2WB_BIT)
+#define SYSCFG_L2P (0x1 << 24)
+#define SYSCFG_L1DP (0x3 << 25)
+#define SYSCFG_L1IP (0x3 << 27)
+#define SYSCFG_L2PART (0x3 << 29)

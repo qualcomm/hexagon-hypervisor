@@ -46,7 +46,11 @@ FUNC_START start .entry .p2align 12
 	jump 1f
 	.space 0x40
 1:
-	/* NOTE: 4096 bytes should contain all the way to jump to hyperspace... */
+	 /* FIXME: Read syscfg and set bits, don't zero, in case earlier boot code
+	has set it up */
+
+	/* NOTE: 4096 bytes should contain all the way to jump to
+	hyperspace... */
 	r0 = #0					// 0
 	syscfg = r0				// 1
 	ickill					// 2
@@ -56,7 +60,7 @@ FUNC_START start .entry .p2align 12
 	//	r15.l = #lo(H2K_bootmap_ptr)		// 6
 	nop            // 5
 	nop 					 // 6
-	r0 = #6					// 7
+	r0 = #(SYSCFG_G | SYSCFG_D)					// 7
 	syscfg = r0				// 0
 	isync					// 1 ... needs to be in same cache line as syscfg
 	/* Setup EVB */
@@ -159,22 +163,41 @@ FUNC_START start .entry .p2align 12
 	isdben = r0
 #endif
 
+#define SYSCFG_LO_ALL ( \
+				  SYSCFG_M \
+				| SYSCFG_I \
+				| SYSCFG_D \
+				| SYSCFG_T \
+				| SYSCFG_G \
+				| SYSCFG_R \
+				| SYSCFG_C \
+				| SYSCFG_IDA \
+				| SYSCFG_PM \
+				| SYSCFG_TE \
+				)
+
 #if ARCHV <= 4
- 	r0 = #0x77f
+ 	r0 = #SYSCFG_LO_ALL
 #else
-	r0 = ##0xA77F    /* DMT and non-QoS */
+	r0 = ##(SYSCFG_LO_ALL | SYSCFG_BQ | SYSCFG_DMT)
+	//r0 = ##0xA77F    /* DMT and non-QoS */
  	//r0 = ##0x877F    /* DMT and QoS */
 	//r0 = #0x277F    /* IMT and non-QoS */
  	//r0 = #0x77F    /* IMT and QoS */
 #endif
 
+#define SYSCFG_HI_ALL (SYSCFG_L2WB)
+
 #if ARCHV <= 3
-	r0.h = #0x0083	/* 256KB L2 */
+	r0.h = #((SYSCFG_HI_ALL | SYSCFG_L2CFG_256K) >> 16)
+	//r0.h = #0x0083	/* 256KB L2 */
 #else
 #ifdef L2_512K
-	r0.h = #0x008c	/* 512B L2 + ITCM */
+	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM | SYSCFG_L2CFG_512K) >> 16)
+	//r0.h = #0x008c	/* 512B L2 + ITCM */
 #else
-	r0.h = #0x008b	/* 256KB L2 + ITCM */
+	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM | SYSCFG_L2CFG_256K) >> 16)
+	//r0.h = #0x008b	/* 256KB L2 + ITCM */
 #endif
 #endif
 	syscfg = r0

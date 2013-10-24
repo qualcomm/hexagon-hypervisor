@@ -36,8 +36,8 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 	u32_t cur_wb;
 	u32_t syscfg;
 	syscfg = H2K_get_syscfg();
-	cur_size = (syscfg >> 16) & 0x7;
-	cur_wb = (syscfg >> 23) & 1;
+	cur_size = (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS;
+	cur_wb = (syscfg & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT;
 	size &= 0x7;
 	use_wb &= 1;
 
@@ -50,20 +50,20 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 			H2K_cache_l2_cleaninv();
 		}
 		/* Set to 0 size */
-		syscfg &= 0xfff8ffff;
+		syscfg &= ~SYSCFG_L2CFG;
 		H2K_set_syscfg(syscfg);
 		/* L2kill */
 		asm volatile (" l2kill ; isync ");
 		/* Update size, mode */
-		syscfg |= ((size << 16) | (use_wb << 23));
+		syscfg |= ((size << SYSCFG_L2CFG_BITS) | (use_wb ? SYSCFG_L2WB : 0));
 	} else if (use_wb && !cur_wb) {
-		syscfg |= (use_wb<<23);
+		syscfg |= SYSCFG_L2WB;
 	} else if (!use_wb && cur_wb) {
 		/* Just leave WB mode */
 		/* Clean entire cache */
 		H2K_cache_l2_cleaninv();
 		/* Disable WB mode on L2$ */
-		syscfg = Q6_R_clrbit_RR(syscfg,23);
+		syscfg &= ~SYSCFG_L2WB;
 	}
 	H2K_set_syscfg(syscfg);
 	H2K_stmode_end();

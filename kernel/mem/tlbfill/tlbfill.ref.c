@@ -15,6 +15,7 @@
 #include <asid.h>
 #include <tlbfill.h>
 #include <symbols.h>
+#include <atomic.h>
 
 #if ARCHV >= 4
 static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me) { return 0; }
@@ -28,12 +29,25 @@ static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me)
 static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
 {
 	u64_t rawentry;
-	u32_t index = H2K_gp->tlb_index;
-	if ((index+1) < MAX_TLB_ENTRIES) {
-		H2K_gp->tlb_index = index+1;
-	} else {
-		H2K_gp->tlb_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
+#if ARCHV >= 5
+	u32_t result;
+#endif
+
+	u32_t volatile *p_index = &H2K_gp->tlb_index;
+	u32_t index;
+	u32_t old;
+
+	while (1) {
+		index = *p_index;
+
+		if ((index + 1) < MAX_TLB_ENTRIES) {
+			old = H2K_atomic_compare_swap((u32_t *)p_index, index, index + 1);
+		} else {
+			old = H2K_atomic_compare_swap((u32_t *)p_index, index, ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1);
+		}
+		if (old == index) break;
 	}
+
 #if ARCHV <= 3
 	/* set guest bit in the ASID if this was a guest miss */
 	if (me->ssr_guest) entry.guestonly = 1;
@@ -50,14 +64,14 @@ static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context
 	rawentry = entry.raw;
 	asm volatile
 		(
-		 " tlbw(%0,%1)\n"
-#if ARCHV == 5
-		 " nop\n"
-		 " nop\n"
-		 " nop\n"
+#if ARCHV >= 5
+		 " %0 = ctlbw(%1,%2)\n"
+#else
+		 " tlbw(%1,%2)\n"
 #endif
 		 " isync\n"
-		 : : "r"(rawentry),"r"(index));
+		 : "=&r" (result)
+		 : "r"(rawentry),"r"(index));
 #endif
 }
 

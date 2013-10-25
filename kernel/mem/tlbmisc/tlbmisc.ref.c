@@ -42,8 +42,18 @@ void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_con
 	}
 }
 
-void H2K_mem_tlb_invalidate_asid(u32_t asid)
-{
+void H2K_mem_tlb_invalidate_asid(u32_t asid) {
+
+#if ARCHV >= 5
+	asid <<=  (32 - PAGE_BITS);
+	asm volatile
+		(
+		 " tlbinvasid(%0)\n"
+		 :
+		 : "r"(asid)
+		 );
+
+#else
 	u32_t i;
 	u64_t tmp,mask,check;
 	mask = ((u64_t)(MAX_ASIDS - 1)) << (32+20);
@@ -60,6 +70,7 @@ void H2K_mem_tlb_invalidate_asid(u32_t asid)
 			H2K_TLB_ATOMIC_END;
 		}
 	}
+#endif
 	H2K_isync();
 }
 

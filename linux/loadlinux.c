@@ -22,7 +22,11 @@
 #define LINUX_NUM_VCPU 3
 #define UCOS_NUM_VCPU 1
 
+#ifdef MODEM
 #define TOTAL_INTS 288
+#else
+#define TOTAL_INTS 160
+#endif
 
 #define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
 #define VCPU_STACK_SIZE 1024
@@ -108,7 +112,7 @@ void setup_ints(unsigned long vm, char num_cpus) {
 #define INTERRUPT_SHIFT (0)
 #endif
 
-	for (i = 32; i < TOTAL_INTS; i++) {
+	for (i = (0 + INTERRUPT_SHIFT); i < TOTAL_INTS; i++) {
 		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i-INTERRUPT_SHIFT, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
 				FAIL("MAP_PHYS_INTR");
 		}

@@ -163,6 +163,12 @@ FUNC_START start .entry .p2align 12
 	isdben = r0
 #endif
 
+#ifdef USE_TLB_AUTOLOCK
+#define SYSCFG_TE_VAL SYSCFG_TE
+#else
+#define SYSCFG_TE_VAL 0
+#endif
+
 #define SYSCFG_LO_ALL ( \
 				  SYSCFG_M \
 				| SYSCFG_I \
@@ -173,7 +179,7 @@ FUNC_START start .entry .p2align 12
 				| SYSCFG_C \
 				| SYSCFG_IDA \
 				| SYSCFG_PM \
-				| SYSCFG_TE \
+				| SYSCFG_TE_VAL \
 				)
 
 #if ARCHV <= 4

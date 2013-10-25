@@ -4,10 +4,10 @@
 
 .. module:: tlbfill
 
-H2K_mem_tlb_insert
+H2K_mem_tlb_insert_unlock
 ------------------
 
-.. cfunction:: static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry)
+.. cfunction:: static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry)
 
 	:param entry: TLB entry
 
@@ -15,7 +15,7 @@ H2K_mem_tlb_insert
 Description
 ~~~~~~~~~~~
 
-Inserts an entry into the TLB in the appriate place.
+Inserts an entry into the TLB at the next index to be replaced and releases the TLB lock.
 
 Functionality
 ~~~~~~~~~~~~~
@@ -26,8 +26,10 @@ value, and store the next replacement index.
 This function uses the architecture-specific code to insert an entry into the
 TLB.  For V3 and earlier, the TLBHI, TLBLO, and TLBIDX registers must be used
 to read, write, and probe TLB entries.  If the entry is being filled in
-response to a guest miss, we set the guest bit in the entry's ASID.  For V4 and
-later, registers can be used directly.
+response to a guest miss, we set the guest bit in the ASID of the entry.  For
+V4 and later, registers can be used directly.
+
+Call :cfunc:`H2K_mutex_unlock_tlb()`.
 
 
 H2K_mem_tlb_fill

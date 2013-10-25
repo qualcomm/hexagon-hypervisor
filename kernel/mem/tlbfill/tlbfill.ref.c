@@ -26,15 +26,22 @@ static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me)
 }
 #endif
 
-static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
+static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
 {
 	u64_t rawentry;
-#if ARCHV >= 5
 	u32_t result;
+
+#if ARCHV < 5
+#ifndef USE_TLB_AUTOLOCK
+	u32_t tag = entry.vpn | (entry.asid << (32 - PAGE_BITS));
+#endif
 #endif
 
 	u32_t volatile *p_index = &H2K_gp->tlb_index;
 	u32_t index;
+
+#ifdef USE_TLB_AUTOLOCK
+	/* Need to update the counter atomically due to TLB lock HW bug */
 	u32_t old;
 
 	while (1) {
@@ -47,6 +54,17 @@ static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context
 		}
 		if (old == index) break;
 	}
+#else
+	/* Need to tlblock even with ctlbw because futex code needs to lock TLB */
+	H2K_mutex_lock_tlb();
+	index = *p_index;
+
+	if ((index + 1) < MAX_TLB_ENTRIES) {
+		*p_index = index + 1;
+	} else {
+		*p_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
+	}
+#endif
 
 #if ARCHV <= 3
 	/* set guest bit in the ASID if this was a guest miss */
@@ -60,19 +78,39 @@ static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context
 		 " tlbw\n"
 		 " isync\n"
 		 : :"r"(rawentry),"r"(index));
-#else
+
+#else // >= V4
 	rawentry = entry.raw;
 	asm volatile
 		(
-#if ARCHV >= 5
+	#if ARCHV >= 5
 		 " %0 = ctlbw(%1,%2)\n"
-#else
+	#else // == V4
+		#ifdef USE_TLB_AUTOLOCK
 		 " tlbw(%1,%2)\n"
-#endif
+		#else
+		 " %0 = tlbp(%3)\n"
+		 " p0 = tstbit(%0, #31)\n"
+		 " if (!p0) jump 1f\n"
+		 " tlbw(%1,%2)\n"
+
+		#endif
+	#endif
 		 " isync\n"
+		 "1:\n"
 		 : "=&r" (result)
-		 : "r"(rawentry),"r"(index));
+		 : "r"(rawentry),
+			 "r"(index)
+	#if ARCHV == 4
+		#ifndef USE_TLB_AUTOLOCK
+			 ,"r"(tag)
+		 : "p0"
+		#endif
+	#endif
 #endif
+		 );
+
+	H2K_mutex_unlock_tlb();
 }
 
 /* Walk the next table for this asid, if any, and fix up the pa in the entry.
@@ -90,7 +128,7 @@ static inline s32_t H2K_mem_tlb_fixup(u32_t va, u32_t ptb, H2K_mem_tlbfmt_t *ent
 	u32_t phys_offset_mask;
 	H2K_translation_t phys_translation;
 
-  /* just leave the entry alone if no guest address bounds/translations, or if
+	/* just leave the entry alone if no guest address bounds/translations, or if
 		 the guest is using the vm pmap as its translations */
 	if (me->vmblock->pmap == 0
 			|| ptb == (u32_t)me->vmblock // offset mapping
@@ -142,11 +180,12 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 
 	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) {
+#ifdef USE_TLB_AUTOLOCK
 			H2K_mutex_unlock_tlb();
+#endif
 			return;
 		}
-		H2K_mem_tlb_insert(entry,me);
-		H2K_mutex_unlock_tlb();
+		H2K_mem_tlb_insert_unlock(entry,me);
 		return;
 	}
 
@@ -164,27 +203,34 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		break;
 
 	default:
+#ifdef USE_TLB_AUTOLOCK
 		H2K_mutex_unlock_tlb();
+#endif
 		return;
 	}
 
 	if ((entry = get_fn(va,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) {
+#ifdef USE_TLB_AUTOLOCK
 			H2K_mutex_unlock_tlb();
+#endif
 			return;
 		}
 		if (H2K_mem_tlb_fixup(va, H2K_mem_asid_table[asid].ptb, &entry, me) == -1) { // next translation failed
+#ifdef USE_TLB_AUTOLOCK
 			H2K_mutex_unlock_tlb();
+#endif
 			return;
 		}
 
 		H2K_mem_stlb_add(va,asid,entry,me);
-		H2K_mem_tlb_insert(entry,me);
-		H2K_mutex_unlock_tlb();
+		H2K_mem_tlb_insert_unlock(entry,me);
 		return;
 	}
 	/* Unlock here in case thread is killed by pagefault */
+#ifdef USE_TLB_AUTOLOCK
 	H2K_mutex_unlock_tlb();
+#endif
 	return H2K_mem_pagefault(va,me);
 }
 

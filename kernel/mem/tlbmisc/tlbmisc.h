@@ -18,7 +18,7 @@ static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
 	" tlbp\n"
 	" %0 = tlbidx\n"
 	: "=r"(ret)
-	: "r"((asid<<20)|(va >> 12)));
+	: "r"((asid << (32 - PAGE_BITS)) | (va >> PAGE_BITS)));
 	return ret;
 }
 
@@ -53,7 +53,7 @@ static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
 	asm (
 	" %0 = tlbp(%1);\n"
 	: "=r"(ret)
-	: "r"((asid<<20)|(va >> 12)));
+	: "r"((asid << (32 - PAGE_BITS)) | (va >> PAGE_BITS)));
 	return ret;
 }
 

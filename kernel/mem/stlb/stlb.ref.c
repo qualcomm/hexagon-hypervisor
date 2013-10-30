@@ -28,7 +28,7 @@ static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t en
 
 static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t tentry)
 {
-	u32_t asid_va = (va >> 12) | (asid << 20);
+	u32_t asid_va = (va >> PAGE_BITS) | (asid << (32 - PAGE_BITS));
 	return Q6_p_tlbmatch_PR(tentry.raw,asid_va);
 }
 

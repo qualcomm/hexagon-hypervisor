@@ -31,8 +31,8 @@ void H2K_vmtrap_clrmap(H2K_thread_context *me)
 {
 	/* Invalidate HW/STLB entry */
 	u32_t count;
-	//	u32_t va;
-	//  va = me->r00;
+	u32_t va;
+	va = me->r00;
 	count = me->r01;
 
 	me->r00 = 0;
@@ -41,11 +41,14 @@ void H2K_vmtrap_clrmap(H2K_thread_context *me)
 		// me->r00 = -1;
 		return;
 	}
-	/* FIXME: temporary hack */
-	/* H2K_mem_stlb_invalidate_va(va, count, me->ssr_asid, me); */
-	/* H2K_mem_tlb_invalidate_va(va, count, me->ssr_asid, me); */
-	H2K_mem_stlb_invalidate_asid(me->ssr_asid);
-	H2K_mem_tlb_invalidate_asid(me->ssr_asid);
+
+	if (count < 0x80000000) {
+		H2K_mem_stlb_invalidate_va(va, count, me->ssr_asid, me);
+		H2K_mem_tlb_invalidate_va(va, count, me->ssr_asid, me);
+	} else {  // really big range; just blow away the whole asid
+		H2K_mem_stlb_invalidate_asid(me->ssr_asid);
+		H2K_mem_tlb_invalidate_asid(me->ssr_asid);
+	}
 }
 
 /* 11 */

@@ -26,7 +26,7 @@ static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_
 	ret.guestonly = ~(pte.u);
 	ret.asid = asid;
 	ret.size = pte.s;
-	ret.vpn = badva >> 12;
+	ret.vpn = badva >> PAGE_BITS;
 	ret.valid = 1;
 	return ret;
 }
@@ -41,7 +41,7 @@ static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_
 	ret.ppd = ((pte.ppn<<1) | (1<<pte.s)) & (~((1<<pte.s)-1));
 	ret.cccc = pte.ccc;
 	ret.xwru = (pte.xwr<<1) | pte.u;
-	ret.vpn = badva >> 12;
+	ret.vpn = badva >> PAGE_BITS;
 	ret.asid = asid;
 	ret.valid = 1;
 	return ret;

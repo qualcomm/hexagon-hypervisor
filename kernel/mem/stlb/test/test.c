@@ -131,17 +131,22 @@ int main()
 	TH_tlbfmt_iszero(test);
 
 	for(i=0; i<MAX_ASIDS; i++) {
+		//printf("Testing asid=%x\n",i);
 		entry.asid=i;
-		for(j=0; j<(1ULL<<20); j+=0x10000) {
+		for(j=0; j<(1ULL<<22); j+=0x1000) {
+			//printf("addr=%08x\n",j);
 			entry.vpn=j>>PAGE_BITS;
 			H2K_mem_stlb_add(j,i,entry,&a);
 			test = H2K_mem_stlb_lookup(j,i,&a);
+			//printf("add/lookup\n");
 			TH_compare_tlbfmt(entry, test);
-			test = H2K_mem_stlb_lookup(j+rand() % 0xfff,i,&a);
+			test = H2K_mem_stlb_lookup(j+(rand() & 0xfff),i,&a);
 			TH_compare_tlbfmt(entry, test);
+			//printf("add/lookup other in page\n");
 			//Invalidate entry.
 			H2K_mem_stlb_invalidate_va(j,1,i,&a);
 			test = H2K_mem_stlb_lookup(j,i,&a);
+			//printf("lookup after invalidate\n");
 			TH_tlbfmt_iszero(test);
 		}
 
@@ -157,7 +162,7 @@ int main()
 			H2K_mem_stlb_add(j,i,entry,&a);
 			test = H2K_mem_stlb_lookup(j,i,&a);
 			TH_compare_tlbfmt(entry, test);
-			test = H2K_mem_stlb_lookup(j-rand() % 0xfff,i,&a);
+			test = H2K_mem_stlb_lookup(j-(rand() & 0xfff),i,&a);
 			TH_compare_tlbfmt(entry, test);
 			H2K_mem_stlb_invalidate_va(j,1,i,&a);
 			test = H2K_mem_stlb_lookup(j,i,&a);

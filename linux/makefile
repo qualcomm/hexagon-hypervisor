@@ -56,6 +56,10 @@ ifneq ($(NO_LOAD),)
 CFLAGS += -DNO_LOAD
 endif
 
+ifneq ($(NO_STLB),)
+CFLAGS += -DNO_STLB
+endif
+
 LINUX = 1
 
 ifneq ($(LINUX),)

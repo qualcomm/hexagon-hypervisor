@@ -24,6 +24,9 @@
 #define CHILD_INTERRUPT 14
 #define VM_BEST_PRIO 0
 
+/* Kernel config */
+static unsigned int use_stlb = 1;
+
 /* VM config */
 static unsigned int num_vcpus = 32;
 #ifdef HAVE_EXTENSIONS
@@ -314,6 +317,20 @@ static void die_usage()
 	exit(1);
 }
 
+void kernel_setup() {
+
+	h2_vmtrap_setvec(bootvm_vectors);
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
+	}
+
+	if (use_stlb) {
+		if (h2_config_stlb_alloc() < 0) {
+			FAIL("STLB alloc");
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int i, ret = 0;
@@ -332,14 +349,6 @@ int main(int argc, char **argv)
 		usage();
 		return 1;
 	}
-
-	h2_vmtrap_setvec(bootvm_vectors);
-	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
-		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
-	}
-	/* if (h2_config_stlb_alloc() < 0) { */
-	/* 	FAIL("STLB alloc"); */
-	/* } */
 
 	while (1) {
 		if (0 == strcmp(argv[0],"--syscfg")) {
@@ -490,6 +499,12 @@ int main(int argc, char **argv)
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--use_stlb")) {
+			if (argc < 2) die_usage();
+			use_stlb = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0], "--help")) {
 			usage();
 			exit(0);
@@ -499,6 +514,7 @@ int main(int argc, char **argv)
 			// shift '--list' off arg list
 			argc--;
 			argv++;
+			kernel_setup();
 			for (; argc > 0; argc--) {
 				run_elf(argv[argc - 1]," ");
 			}
@@ -506,6 +522,7 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--listfile")) {
 			if (argc < 2) die_usage();
 			if ((f = fopen(argv[1],"r")) == NULL) die_usage();
+			kernel_setup();
 			while (fgets(buf,BUFSIZE,f)) {
 				strip(buf);
 				if (sscanf(buf,"%s ",file) <= 0) {
@@ -524,6 +541,7 @@ int main(int argc, char **argv)
 		strcat(buf," ");
 	}
 
+	kernel_setup();
 	while (boots-- && ret == 0) {
 		ret = run_elf(argv[0],buf);
 	}

@@ -95,11 +95,11 @@ PRINT_KG_OFFSET(trace_info_index);
 PRINT_KG_OFFSET(trace_info_max_trace_level);
 PRINT_KG_OFFSET(trace_buf_default);
 PRINT_KG_OFFSET(stlbptr);
+PRINT_KG_OFFSET(vmblocks);
 #ifdef H2K_L2_CONTROL
 PRINT_KG_OFFSET(l2_int_base);
 PRINT_KG_OFFSET(l2_ack_base);
 PRINT_KG_OFFSET(l2_intinfo);
-PRINT_KG_OFFSET(vmblocks);
 #endif
 PRINT_VMBLOCK_OFFSET(waiting_cpus);
 PRINT_VMBLOCK_OFFSET(max_cpus);

@@ -28,19 +28,18 @@ static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me)
 
 static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
 {
-	u64_t rawentry;
+	u64_t rawentry = entry.raw;
 	u32_t result;
 
-#if ARCHV < 5
-#ifndef USE_TLB_AUTOLOCK
+#if (ARCHV < 5) && !defined(USE_TLB_AUTOLOCK)
 	u32_t tag = entry.vpn | (entry.asid << (32 - PAGE_BITS));
-#endif
 #endif
 
 	u32_t volatile *p_index = &H2K_gp->tlb_index;
 	u32_t index;
 
 #ifdef USE_TLB_AUTOLOCK
+	#if ARCHV == 5
 	/* Need to update the counter atomically due to TLB lock HW bug */
 	u32_t old;
 
@@ -54,8 +53,17 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 		}
 		if (old == index) break;
 	}
+	#else // assume autolock works ARCHV > 5
+	index = *p_index;
+
+	if ((index + 1) < MAX_TLB_ENTRIES) {
+		*p_index = index + 1;
+	} else {
+		*p_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
+	}
+	#endif
 #else
-	/* Need to tlblock even with ctlbw because futex code needs to lock TLB */
+	/* Need to tlblock even with ctlbw because futex code locks TLB */
 	H2K_mutex_lock_tlb();
 	index = *p_index;
 
@@ -69,7 +77,6 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 #if ARCHV <= 3
 	/* set guest bit in the ASID if this was a guest miss */
 	if (me->ssr_guest) entry.guestonly = 1;
-	rawentry = entry.raw;
 	asm volatile
 		(
 		 " tlbhi = %H0\n"
@@ -80,7 +87,6 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 		 : :"r"(rawentry),"r"(index));
 
 #else // >= V4
-	rawentry = entry.raw;
 	asm volatile
 		(
 	#if ARCHV >= 5
@@ -101,11 +107,9 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 		 : "=&r" (result)
 		 : "r"(rawentry),
 			 "r"(index)
-	#if ARCHV == 4
-		#ifndef USE_TLB_AUTOLOCK
+	#if (ARCHV == 4) && !defined(USE_TLB_AUTOLOCK)
 			 ,"r"(tag)
 		 : "p0"
-		#endif
 	#endif
 #endif
 		 );
@@ -233,4 +237,3 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 #endif
 	return H2K_mem_pagefault(va,me);
 }
-

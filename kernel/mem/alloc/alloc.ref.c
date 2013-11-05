@@ -130,7 +130,7 @@ void H2K_mem_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
 	heap[heap_size - 1].free = 1;     // the wilderness is wild and free
 	heap[heap_size - 1].released = 0; // don't care
 
-	heap_lock = 0;
+	H2K_spinlock_init(&heap_lock);
 
 }
 

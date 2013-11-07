@@ -111,6 +111,51 @@ FUNC_START start .entry .p2align 12
 	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
 	if (!p0) jump 1b
 
+	// Read cfg_table
+	r9 = cfgbase
+	r9 = asl(r9, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
+
+	r10 = pc
+	r13 = r10  // save for boot_offset
+
+#ifdef H2K_USE_TCM
+
+	r8 = #CFG_TABLE_L2TCM
+	r8 = memw_phys(r8, r9) // r8 == L2TCM[35:16]
+	r8 = asl(r8, #CFG_TABLE_SHIFT)  // TCM base
+
+	/* FIXME?  Go ahead and assume TCM is in lower 4G and aligned to at least
+	kernel page size */
+
+	// copy ourselves to TCM
+
+	r10 = lsr(r10, #BOOT_TLB_PGBITS)
+	r10 = asl(r10, #BOOT_TLB_PGBITS)  // first kernel page
+	SETCONST(r6, H2K_LINK_ADDR)
+	SETCONST(r7, end)
+	r7 = sub(r7, r6)  // size
+	r6 = r8
+	r5 = #0	
+3:
+	r1:0 = memd(r10)
+	memd(r6) = r1:0
+	r10 = add(r10, #8)
+	r6 = add(r6, #8)
+	r5 = add(r5, #8)
+	p0 = cmp.gt(r5, r7)
+	if (!p0) jump 3b
+
+	// go there
+	SETCONST(r10, .Lthere)
+	r10 = asl(r10, #(32 - BOOT_TLB_PGBITS))
+	r10 = lsr(r10, #(32 - BOOT_TLB_PGBITS))  // offset of .Lthere
+	r7 = or(r8, r10)
+	jumpr r7
+
+.Lthere:
+
+#endif
+
 	// Set up TLB entries for jump to virtual space
 	r10 = pc
 
@@ -228,11 +273,16 @@ FUNC_START start .entry .p2align 12
 	r0 = #(1<<MAX_HTHREADS)-1
 	start(r0)
 
-	// r10 still has physical pc.  Calculate offset for boot vm pmap
+	// r10 == physical pc after possible copy to TCM; r13 == phys pc at load addr
+	SETCONST(r11, H2K_LINK_ADDR)
+
 	r10 = lsr(r10, #BOOT_TLB_PGBITS)
 	r10 = asl(r10, #BOOT_TLB_PGBITS)
-	SETCONST(r11, H2K_LINK_ADDR)
-	r0 = sub(r11, r10)
+	r0 = sub(r11, r10)  // phys_offset
+
+	r13 = lsr(r13, #BOOT_TLB_PGBITS)
+	r13 = asl(r13, #BOOT_TLB_PGBITS)
+	r1 = sub(r11, r13)  // boot_offset
 
 	jump H2K_thread_boot
 FUNC_END start

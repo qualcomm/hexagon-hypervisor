@@ -86,7 +86,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset)
 	H2K_init_setup_bootvm(phys_offset);
 }
 
-IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset)
+IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot_offset)
 {
 	s32_t asid;
 
@@ -101,7 +101,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset)
 	boot->gpugp = BOOT_THREAD_GPUGP;
 	boot->sr = BOOT_THREAD_USR;
 	boot->ssr = (BOOT_THREAD_SSR);
-	boot->elr = ((u32_t)(__bootvm_entry) - phys_offset);
+	boot->elr = ((u32_t)(__bootvm_entry) - boot_offset);
 	boot->r0100 = 0;
 	boot->ccr = BOOT_THREAD_CCR;
 	boot->trapmask = bootvm->trapmask;

@@ -110,7 +110,7 @@
 #define MAX_TRACE_LEVEL 0
 #define DEFAULT_TRACE_ENTRIES 16
 
-#define STLB_MAX_SETS_LOG2 8
+#define STLB_MAX_SETS_LOG2 9
 #define STLB_MAX_SETS (1<<(STLB_MAX_SETS_LOG2))
 #define STLB_MAX_WAYS 16
 
@@ -211,3 +211,9 @@
 #define SYSCFG_L1DP (0x3 << 25)
 #define SYSCFG_L1IP (0x3 << 27)
 #define SYSCFG_L2PART (0x3 << 29)
+
+#define PHYSREAD_HI_SHIFT 11
+
+#define CFG_TABLE_SHIFT 16
+#define CFG_TABLE_L2TCM 0
+

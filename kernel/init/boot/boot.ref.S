@@ -118,11 +118,15 @@ FUNC_START start .entry .p2align 12
 	r10 = pc
 	r13 = r10  // save for boot_offset
 
+	r8 = #CFG_TABLE_SSBASE
+	r14 = memw_phys(r8, r9) // r14 == SSBASE[35:16]
+	r14 = asl(r14, #CFG_TABLE_SHIFT)  // SSBASE
+
 #ifdef H2K_USE_TCM
 
 	r8 = #CFG_TABLE_L2TCM
-	r8 = memw_phys(r8, r9) // r8 == L2TCM[35:16]
-	r8 = asl(r8, #CFG_TABLE_SHIFT)  // TCM base
+	r11 = memw_phys(r8, r9) // r11 == L2TCM[35:16]
+	r11 = asl(r11, #CFG_TABLE_SHIFT)  // TCM base
 
 	/* FIXME?  Go ahead and assume TCM is in lower 4G and aligned to at least
 	kernel page size */
@@ -134,7 +138,7 @@ FUNC_START start .entry .p2align 12
 	SETCONST(r6, H2K_LINK_ADDR)
 	SETCONST(r7, end)
 	r7 = sub(r7, r6)  // size
-	r6 = r8
+	r6 = r11
 	r5 = #0	
 3:
 	r1:0 = memd(r10)
@@ -149,7 +153,7 @@ FUNC_START start .entry .p2align 12
 	SETCONST(r10, .Lthere)
 	r10 = asl(r10, #(32 - BOOT_TLB_PGBITS))
 	r10 = lsr(r10, #(32 - BOOT_TLB_PGBITS))  // offset of .Lthere
-	r7 = or(r8, r10)
+	r7 = or(r11, r10)
 	jumpr r7
 
 .Lthere:
@@ -182,9 +186,9 @@ FUNC_START start .entry .p2align 12
 
 #if ARCHV > 3
 	// Set up entry for L2 interrupt controller
-	SETCONST(r10,Q6_SS_BASE_PA)
 	MAKE_TLBHI(r3,Q6_SS_BASE_VA,BOOT_TLB_PGBITS_4M,BOOT_TLB_SHIFT_4M)
-	MAKE_TLBLO_DEV(r2,r10,r11)
+	// r14 == SSBASE
+	MAKE_TLBLO_DEV(r2, r14, r11)
 	DO_TLBW(3,2,1)
 	r1 = add(r1, #1)
 #endif
@@ -231,10 +235,6 @@ FUNC_START start .entry .p2align 12
  	r0 = #SYSCFG_LO_ALL
 #else
 	r0 = ##(SYSCFG_LO_ALL | SYSCFG_BQ | SYSCFG_DMT)
-	//r0 = ##0xA77F    /* DMT and non-QoS */
- 	//r0 = ##0x877F    /* DMT and QoS */
-	//r0 = #0x277F    /* IMT and non-QoS */
- 	//r0 = #0x77F    /* IMT and QoS */
 #endif
 
 #define SYSCFG_HI_ALL (SYSCFG_L2WB)
@@ -242,15 +242,30 @@ FUNC_START start .entry .p2align 12
 #if ARCHV <= 3
 	r0.h = #((SYSCFG_HI_ALL | SYSCFG_L2CFG_256K) >> 16)
 	//r0.h = #0x0083	/* 256KB L2 */
-#else
-#ifdef L2_512K
-	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM | SYSCFG_L2CFG_512K) >> 16)
-	//r0.h = #0x008c	/* 512B L2 + ITCM */
-#else
-	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM | SYSCFG_L2CFG_256K) >> 16)
-	//r0.h = #0x008b	/* 256KB L2 + ITCM */
+#elif ARCHV == 4
+	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
+	r2 = ##SYSCFG_L2CFG_256K
+	r15 = rev
+	r15 = lsr(r15, #8)
+	r15 = and(r15, #0xff)
+	p0 = cmp.eq(r15, #0)
+	if (!p0) jump 2f
+	r2 = ##SYSCFG_L2CFG_512K
+2:
+	r0 = or(r0, r2)
+#else // ARCHV >= 5
+	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
+	r2 = ##SYSCFG_L2CFG_256K
+	r15 = rev
+	r15 = lsr(r15, #12)
+	r15 = and(r15, #0x4)
+	p0 = cmp.eq(r15, #0)
+	if (p0) jump 3f
+	r2 = ##SYSCFG_L2CFG_512K
+3:
+	r0 = or(r0, r2)
 #endif
-#endif
+
 	syscfg = r0
 	isync
 	// make the jump to hyperspace
@@ -283,6 +298,8 @@ FUNC_START start .entry .p2align 12
 	r13 = lsr(r13, #BOOT_TLB_PGBITS)
 	r13 = asl(r13, #BOOT_TLB_PGBITS)
 	r1 = sub(r11, r13)  // boot_offset
+
+	r2 = r14  // subsystem base
 
 	jump H2K_thread_boot
 FUNC_END start

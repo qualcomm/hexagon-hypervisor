@@ -144,7 +144,7 @@ static void H2K_timer_hw_init()
 	H2K_gp->time.devptr[HW_CNTACR] = ~0;
 	H2K_gp->time.devptr[HW_CNTFRQ] = 19200000;
 	H2K_gp->time.devptr[HW_ENABLE] = 1;
-        H2K_intcontrol_enable(TIMER_INT);
+	H2K_intcontrol_enable(TIMER_INT);
 }
 
 #endif
@@ -209,14 +209,16 @@ void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 	/* Do Timeouts.  Make preemptible? cpu_offline? Better be fast, at least. */
 	H2K_tree_destructive_iterate(timedout,me,H2K_timer_dotimeout);
 	BKL_UNLOCK();
-        H2K_intcontrol_enable(intnum);
+	H2K_intcontrol_enable(intnum);
 }
 
-void H2K_timer_init()
-{
+void H2K_timer_init(u32_t devpage_offset) {
+
+	u32_t timer_base = Q6_SS_BASE_VA + devpage_offset + TIMER_OFFSET;
 	/* Register fastint */
 	H2K_gp->time.timeouts = NULL;
-	if (H2K_gp->time.devptr == NULL) H2K_gp->time.devptr = (void *)(TIMER_BASE_VA);
+
+	if (H2K_gp->time.devptr == NULL) H2K_gp->time.devptr = (void *)(timer_base);
 	H2K_timer_hw_init();
 	H2K_timer_get_ticks();
 }

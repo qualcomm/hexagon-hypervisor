@@ -107,73 +107,98 @@ void H2K_register_passthru(u32_t phys_int, H2K_id_t id, u32_t virt_int) {
 }
 
 #ifdef H2K_L2_CONTROL
-static void H2K_intconfig_l2_init()
+static void H2K_intconfig_l2_init(ssbase)
 {
+
 	int i;
 	volatile unsigned int *intbase = H2K_gp->l2_int_base;
+
+	u32_t spi_irq, spi_word, tlmm_irq, tlmm_word;
+
+#if ARCHV >= 5
+	u32_t spmi_arb_periph_irq, spmi_arb_periph_word, spmi_arb_ee_irq, spmi_arb_ee_word;
+#endif
+
+#if ARCHV == 4
+	/*  8960 SPI and TLMM summary apparently are level (high) triggered */
+#define SPI_IRQ		65
+#define SPI_WORD	(SPI_IRQ/32)
+#define TLMM_IRQ	38
+#define TLMM_WORD	(TLMM_IRQ/32)
+
+	spi_irq = MSS_SPI_IRQ;
+	spi_word = MSS_SPI_WORD;
+	tlmm_irq = MSS_TLMM_IRQ;
+	tlmm_word = MSS_TLMM_WORD;
+#endif
+
+#if ARCHV >= 5
+#define MSS_SPI_IRQ		245
+#define MSS_SPI_WORD	(MSS_SPI_IRQ/32)
+#define MSS_TLMM_IRQ	239
+#define MSS_TLMM_WORD	(MSS_TLMM_IRQ/32)
+
+#define MSS_SPMI_ARB_PERIPH_IRQ	75
+#define MSS_SPMI_ARB_PERIPH_WORD	(MSS_SPMI_ARB_PERIPH_IRQ/32)
+#define MSS_SPMI_ARB_EE_IRQ		76
+#define MSS_SPMI_ARB_EE_WORD	(MSS_SPMI_ARB_EE_IRQ/32)
+
+		/*  8974 SPI ("blsp1_qup1") and "summary_irq_sensors"  */
+#define LPASS_SPI_IRQ		64
+#define LPASS_SPI_WORD	(LPASS_SPI_IRQ/32)
+#define LPASS_TLMM_IRQ	38
+#define LPASS_TLMM_WORD	(LPASS_TLMM_IRQ/32)
+
+#define LPASS_SPMI_ARB_PERIPH_IRQ	48
+#define LPASS_SPMI_ARB_PERIPH_WORD	(LPASS_SPMI_ARB_PERIPH_IRQ/32)
+#define LPASS_SPMI_ARB_EE_IRQ		49
+#define LPASS_SPMI_ARB_EE_WORD	(LPASS_SPMI_ARB_EE_IRQ/32)
+
+	/* Ew ew ew */
+	if (ssbase == QDSP6SS_PRIV_BASE_MSS) {
+		spi_irq = MSS_SPI_IRQ;
+		spi_word = MSS_SPI_WORD;
+		tlmm_irq = MSS_TLMM_IRQ;
+		tlmm_word = MSS_TLMM_WORD;
+		spmi_arb_periph_irq = MSS_SPMI_ARB_PERIPH_IRQ;
+		spmi_arb_periph_word = MSS_SPMI_ARB_PERIPH_WORD;
+		spmi_arb_ee_irq = MSS_SPMI_ARB_EE_IRQ;
+		spmi_arb_ee_word = MSS_SPMI_ARB_EE_WORD;
+	
+	} else {  // guess LPASS
+		spi_irq = LPASS_SPI_IRQ;
+		spi_word = LPASS_SPI_WORD;
+		tlmm_irq = LPASS_TLMM_IRQ;
+		tlmm_word = LPASS_TLMM_WORD;
+		spmi_arb_periph_irq = LPASS_SPMI_ARB_PERIPH_IRQ;
+		spmi_arb_periph_word = LPASS_SPMI_ARB_PERIPH_WORD;
+		spmi_arb_ee_irq = LPASS_SPMI_ARB_EE_IRQ;
+		spmi_arb_ee_word = LPASS_SPMI_ARB_EE_WORD;
+	}
+#endif
+
 	for (i = 0; i < ((MAX_INTERRUPTS-32)/32); i++) {
 		intbase[(0x100/4) + i] = 0x0; 		/* DISABLED */
 		intbase[(0x280/4) + i] = 0xFFFFFFFF;	/* EDGE/level TRIGGERED */
 		intbase[(0x300/4) + i] = 0x0;		/* Rising Edge / Level High */
 		intbase[(0x400/4) + i] = 0xFFFFFFFF;	/* Interrupt Clear */
 
-#if ARCHV == 4
-		/*  8960 SPI and TLMM summary apparently are level (high) triggered */
-		#define SPI_IRQ		65
-		#define SPI_WORD	(SPI_IRQ/32)
-		#define TLMM_IRQ	38
-		#define TLMM_WORD	(TLMM_IRQ/32)
-#endif
-#if ARCHV >= 5
-
-#ifdef MODEM
-		#define SPI_IRQ		245
-		#define SPI_WORD	(SPI_IRQ/32)
-		#define TLMM_IRQ	239
-		#define TLMM_WORD	(TLMM_IRQ/32)
-
-		#define SPMI_ARB_PERIPH_IRQ	75
-		#define SPMI_ARB_PERIPH_WORD	(SPMI_ARB_PERIPH_IRQ/32)
-		#define SPMI_ARB_EE_IRQ		76
-		#define SPMI_ARB_EE_WORD	(SPMI_ARB_EE_IRQ/32)
-#else
-		/*  8974 SPI ("blsp1_qup1") and "summary_irq_sensors"  */
-		#define SPI_IRQ		64
-		#define SPI_WORD	(SPI_IRQ/32)
-		#define TLMM_IRQ	38
-		#define TLMM_WORD	(TLMM_IRQ/32)
-
-		#define SPMI_ARB_PERIPH_IRQ	48
-		#define SPMI_ARB_PERIPH_WORD	(SPMI_ARB_PERIPH_IRQ/32)
-		#define SPMI_ARB_EE_IRQ		49
-		#define SPMI_ARB_EE_WORD	(SPMI_ARB_EE_IRQ/32)
-#endif  //  !MODEM
-#endif
 		/*  is there a "clear bit" around here?  */
 		/*  There's probably a better way to do this.  */
-		if (i == SPI_WORD) {
-			intbase[(0x280/4) + i] &= ~(1<<(SPI_IRQ % 32));
+		if (i == spi_word) {
+			intbase[(0x280/4) + i] &= ~(1<<(spi_irq % 32));
 		}
-		if (i == TLMM_WORD) {
-			intbase[(0x280/4) + i] &= ~(1<<(TLMM_IRQ % 32));
+		if (i == tlmm_word) {
+			intbase[(0x280/4) + i] &= ~(1<<(tlmm_irq % 32));
 		}
 #if ARCHV >= 5
-		if (i == SPMI_ARB_PERIPH_WORD) {
-			intbase[(0x280/4) + i] &= ~(1<<(SPMI_ARB_PERIPH_IRQ % 32));
+		if (i == spmi_arb_periph_word) {
+			intbase[(0x280/4) + i] &= ~(1<<(spmi_arb_periph_irq % 32));
 		}
-		if (i == SPMI_ARB_EE_WORD) {
-			intbase[(0x280/4) + i] &= ~(1<<(SPMI_ARB_EE_IRQ % 32));
+		if (i == spmi_arb_ee_word) {
+			intbase[(0x280/4) + i] &= ~(1<<(spmi_arb_ee_irq % 32));
 		}
-		#undef SPMI_ARB_PERIPH_IRQ
-		#undef SPMI_ARB_PERIPH_WORD
-		#undef SPMI_ARB_EE_IRQ
-		#undef SPMI_ARB_EE_WORD
 #endif
-
-		#undef SPI_IRQ
-		#undef SPI_WORD
-		#undef TLMM_IRQ
-		#undef TLMM_WORD
 	}
 	ciad(0x80000000);				/* Enable L2 Interrupts */
 }
@@ -181,7 +206,7 @@ static void H2K_intconfig_l2_init()
 static inline void H2K_intconfig_l2_init() {}
 #endif
 
-void H2K_intconfig_init()
+void H2K_intconfig_init(u32_t ssbase)
 {
 	int i;
 	H2K_thread_context *tmp;
@@ -197,6 +222,6 @@ void H2K_intconfig_init()
 		tmp->hthread = i;
 		tmp->trapmask = FASTINT_TRAPMASK;
 	}
-	H2K_intconfig_l2_init();
+	H2K_intconfig_l2_init(ssbase);
 }
 

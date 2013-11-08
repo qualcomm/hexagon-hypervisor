@@ -104,7 +104,7 @@ static inline H2K_kg_t PURITY *H2K_gp_llvm()
 #undef PURITY
 #endif
 
-void H2K_kg_init(u32_t phys_offset) IN_SECTION(".text.init.globals");
+void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset) IN_SECTION(".text.init.globals");
 
 #endif
 

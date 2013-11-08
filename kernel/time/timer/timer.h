@@ -13,7 +13,7 @@
 #include <h2_common_timer.h>
 
 void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum);
-void H2K_timer_init();
+void H2K_timer_init(u32_t devpage_offset);
 
 static inline void H2K_timer_cancel_withlock(H2K_thread_context *me)
 {

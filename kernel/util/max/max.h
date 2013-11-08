@@ -6,6 +6,8 @@
 #ifndef H2K_MAX_H
 #define H2K_MAX_H
 
+#include <h2_common_pmap.h>
+
 #ifndef MAX_HTHREADS
 #if ARCHV <= 3
 #define MAX_HTHREADS 6
@@ -63,38 +65,41 @@
 
 #define MAX_ASIDS (1<<(ASID_BITS))
 
-/* EJP: FIXME: PA should be learned from cfgtable in v4+ */
-#if ARCHV <= 4
-#define Q6_SS_BASE_VA 0xFFC80000
-#define Q6_SS_BASE_PA 0x28880000
-#define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x04000)
-#else
-#ifdef MODEM
+/* QDSP6SS_PRIV_BASE_* is the subsystem base value read from cfg_table. We map that address to Q6_SS_BASE_VA. */
+
+#define DEVICE_PAGE_SIZE SIZE_4M
+
 #define Q6_SS_BASE_VA 0xFFC00000
-#define Q6_SS_BASE_PA 0xFC800000  // actually it's 0xFC880000, but make the arithmetic easier
-#define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x120000)
-#define L2_INT_BASE   (Q6_SS_BASE_VA + 0x110000)
-#else
-#define Q6_SS_BASE_VA 0xFFC00000
-#define Q6_SS_BASE_PA 0xFE000000
-#define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x2A0000)
-#define L2_INT_BASE   (Q6_SS_BASE_VA + 0x290000)
+
+#if ARCHV == 4
+/* #define QDSP6SS_PRIV_BASE_FW    0x08880000 */
+/* #define QDSP6SS_PRIV_BASE_SW    0x08980000 */
+/* #define QDSP6SS_PRIV_BASE_LPASS 0x28880000 */
+
+#define L2VIC_OFFSET 0x10000
+#define TIMER_OFFSET 0x4000
+
 #endif
+
+#if ARCHV >= 5
+#define QDSP6SS_PRIV_BASE_MSS   0xFC900000
+#define QDSP6SS_PRIV_BASE_LPASS 0xFE280000
+
+#define L2VIC_OFFSET 0x10000
+#define TIMER_OFFSET 0x20000
+
 #endif
 
 #define PERCPU_INTERRUPTS 32
 
 #if ARCHV <= 3
 #define MAX_INTERRUPTS 32
+
 #else
 #define H2K_L2_CONTROL 1
 #define L2_CORE_INTERRUPT 31
 #define MAX_L2_INTERRUPTS 480
 #define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
-
-#ifndef L2_INT_BASE
-#define L2_INT_BASE (Q6_SS_BASE_VA + 0x10000)
-#endif
 #endif
 
 #define RESCHED_INT 1
@@ -216,4 +221,4 @@
 
 #define CFG_TABLE_SHIFT 16
 #define CFG_TABLE_L2TCM 0
-
+#define CFG_TABLE_SSBASE 8

@@ -122,7 +122,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		r11 = memw(r0 + #VMBLOCK_ext_contexts) // start of ext contexts
 	}
 	{
-		r10 = lsr(r10, #H2K_ID_RSVD_BITS) // index
+		r10 = lsr(r10, #H2K_ID_VINT_BITS) // index
 		r16 = #1
 		r13 = setbit(r13, #SSR_XE_BIT)
 	}

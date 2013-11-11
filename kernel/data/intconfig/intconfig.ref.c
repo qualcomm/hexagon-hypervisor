@@ -94,7 +94,7 @@ void H2K_register_passthru(u32_t phys_int, H2K_id_t id, u32_t virt_int) {
 		H2K_gp->inthandlers[phys_int].raw = 0;
 	} else {
 		/* write atomically */
-		if (virt_int >= 0x1 << H2K_ID_RSVD_BITS) { // too big
+		if (virt_int >= 0x1 << H2K_ID_VINT_BITS) { // too big
 			id.reserved = 0; // look in vmblock; it will have been set up there
 		} else {
 			id.reserved = virt_int;

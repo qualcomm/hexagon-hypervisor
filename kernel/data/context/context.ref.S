@@ -138,7 +138,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	r10 = memw(r3 + #CONTEXT_id)
 	r11 = ##H2K_ID_CPUIDX_MASK
 	r10 = and(r10, r11)
-	r10 = lsr(r10, #H2K_ID_RSVD_BITS) // index
+	r10 = lsr(r10, #H2K_ID_VINT_BITS) // index
 	r12 = ##EXT_CONTEXT_SIZE
 	r11 = memw(r0 + #VMBLOCK_ext_contexts) // start of ext contexts
 	r11 += mpyu(r12.l, r10.l)  // my ext context

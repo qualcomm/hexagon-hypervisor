@@ -113,7 +113,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 	  memw(SRC + #CONTEXT_ssr) = r15
-		r14 = lsr(r14, #H2K_ID_RSVD_BITS)  // index
+		r14 = lsr(r14, #H2K_ID_VINT_BITS)  // index
 		r20 = memw(SRC + #CONTEXT_vmblock)
 		r23 = ssr
 	}

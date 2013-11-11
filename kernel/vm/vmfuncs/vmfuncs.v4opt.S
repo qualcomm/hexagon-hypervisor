@@ -180,7 +180,7 @@ FUNC_START H2K_vmtrap_wait .text.vm.funcs .falign
 		if (p0.new) VMBLOCK = memw(MESAV+#CONTEXT_vmblock)
 	}
 	{
-		ID = extractu(ID,#H2K_ID_CPUIDX_BITS,#H2K_ID_RSVD_BITS)
+		ID = extractu(ID,#H2K_ID_CPUIDX_BITS,#H2K_ID_VINT_BITS)
 		WAITING = memd(VMBLOCK+#VMBLOCK_waiting_cpus)
 		NEWMASK = #1
 		HTHREAD = HTID

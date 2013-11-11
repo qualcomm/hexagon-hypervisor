@@ -66,8 +66,8 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		TMP = or(TMP,#1)
 		p0 = cmp.eq(TMP,#0)
-		VM = extractu(TMP,#H2K_ID_VMIDX_BITS,#(H2K_ID_RSVD_BITS+H2K_ID_CPUIDX_BITS))
-		VCPU = extractu(TMP,#H2K_ID_CPUIDX_BITS,#H2K_ID_RSVD_BITS)
+		VM = extractu(TMP,#H2K_ID_VMIDX_BITS,#(H2K_ID_VINT_BITS+H2K_ID_CPUIDX_BITS))
+		VCPU = extractu(TMP,#H2K_ID_CPUIDX_BITS,#H2K_ID_VINT_BITS)
 	}
 	{
 		memw_locked(LOCK,p2) = TMP

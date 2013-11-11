@@ -115,7 +115,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = memw(r0 + #CONTEXT_id)
 	r20 = ##H2K_ID_CPUIDX_MASK
 	r14 = and(r14, r20)
-	r14 = lsr(r14, #H2K_ID_RSVD_BITS)  // index
+	r14 = lsr(r14, #H2K_ID_VINT_BITS)  // index
 	r22 = ##EXT_CONTEXT_SIZE
 	r20 = memw(r0 + #CONTEXT_vmblock)
 	r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts

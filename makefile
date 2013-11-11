@@ -1,4 +1,19 @@
 
+ifeq ($(TARGET), 8960)
+ARCHV := 4
+H2K_KERNEL_PGSIZE := 3
+H2K_ALLOC_HEAP_SIZE := 0xb000
+export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_MISSES
+endif
+
+ifeq ($(TARGET), 8974)
+ARCHV := 5
+H2K_KERNEL_PGSIZE := 3
+H2K_ALLOC_HEAP_SIZE := 0xb000
+export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_MISSES
+endif
+
+
 include scripts/Makefile.inc.tools
 
 ifeq ($(INSTALLPATH),)

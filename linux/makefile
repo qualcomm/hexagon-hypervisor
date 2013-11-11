@@ -1,6 +1,37 @@
 SHELL=/bin/bash
 ULIMIT=ulimit -t 300
 
+ifeq ($(TARGET), 8960)
+ARCHV := 4
+H2K_KERNEL_PGSIZE := 3
+H2K_ALLOC_HEAP_SIZE := 0xb000
+NO_LOAD=1
+NO_PRINT=1
+H2K_LOAD_ADDR=0xbf800000
+LINUX_LINK_ADDR=0x80400000
+endif
+
+ifeq ($(TARGET), 8974_LPASS)
+ARCHV := 5
+H2K_KERNEL_PGSIZE := 3
+H2K_ALLOC_HEAP_SIZE := 0xb000
+NO_LOAD=1
+NO_PRINT=1
+H2K_LOAD_ADDR=0x0
+LINUX_LINK_ADDR=0x02000000
+endif
+
+ifeq ($(TARGET), 8974_MSS)
+ARCHV := 5
+H2K_KERNEL_PGSIZE := 3
+H2K_ALLOC_HEAP_SIZE := 0xb000
+NO_LOAD=1
+NO_PRINT=1
+H2K_LOAD_ADDR=0x0
+LINUX_LINK_ADDR=0x02000000
+EXTRA_CFLAGS=-DMODEM
+endif
+
 include ../scripts/Makefile.inc.tools
 
 H2DIR := ..
@@ -18,8 +49,6 @@ OPTIMIZE=-O2
 
 CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
-
-H2K_LOAD_ADDR := 0xbf800000
 
 include ../scripts/Makefile.inc.config
 include ../scripts/Makefile.inc.bootvm

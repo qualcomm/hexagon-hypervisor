@@ -11,7 +11,7 @@ ifeq (,${BUILD_DIR})
 ifneq (,${Q6VERSION})
 export ARCHV := $(subst v,,$(Q6VERSION))
 else
-export ARCHV=4
+export ARCHV ?= 4
 endif
 
 #export SIMF := --timing

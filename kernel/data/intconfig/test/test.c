@@ -56,7 +56,11 @@ int main()
 		H2K_fastint_contexts[i].context.hthread = 0xf;
 		H2K_fastint_contexts[i].context.trapmask = 0xdead;
 	}
-	H2K_intconfig_init();
+#if ARCHV >= 5
+	H2K_intconfig_init(QDSP6SS_PRIV_BASE_LPASS);
+#else
+	H2K_intconfig_init(0);
+#endif
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		if (i == RESCHED_INT) {
 			if (H2K_gp->inthandlers[i].handler != H2K_resched)

@@ -1,6 +1,8 @@
 
 ALL: dummy
 
+H2DIR ?= ..
+
 include ../scripts/Makefile.inc.tools
 
 include ../scripts/Makefile.inc.config

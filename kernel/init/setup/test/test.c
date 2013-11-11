@@ -77,7 +77,8 @@ HELPER_FUNC(runlist_init)
 HELPER_FUNC(readylist_init)
 HELPER_FUNC(lowprio_init)
 HELPER_FUNC(futex_init)
-HELPER_FUNC(intconfig_init)
+//HELPER_FUNC(intconfig_init)
+void H2K_intconfig_init(u32_t ssbase) { TH_init_seen |= 1<< intconfig_init; }
 HELPER_FUNC(trace_init)
 HELPER_FUNC(timer_init)
 HELPER_FUNC(mem_alloc_init)
@@ -85,7 +86,7 @@ HELPER_FUNC(mem_alloc_init)
 //HELPER_FUNC(asid_table_init)
 //HELPER_FUNC(mem_stlb_init)
 
-void H2K_kg_init(u32_t phys_offset) { TH_init_seen |= 1<< kg_init; }
+void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset) { TH_init_seen |= 1<< kg_init; }
 
 extern H2K_vmblock_t *bootvm;
 

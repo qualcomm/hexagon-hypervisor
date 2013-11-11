@@ -126,10 +126,10 @@ static void H2K_intconfig_l2_init(ssbase)
 #define TLMM_IRQ	38
 #define TLMM_WORD	(TLMM_IRQ/32)
 
-	spi_irq = MSS_SPI_IRQ;
-	spi_word = MSS_SPI_WORD;
-	tlmm_irq = MSS_TLMM_IRQ;
-	tlmm_word = MSS_TLMM_WORD;
+	spi_irq = SPI_IRQ;
+	spi_word = SPI_WORD;
+	tlmm_irq = TLMM_IRQ;
+	tlmm_word = TLMM_WORD;
 #endif
 
 #if ARCHV >= 5
@@ -203,7 +203,7 @@ static void H2K_intconfig_l2_init(ssbase)
 	ciad(0x80000000);				/* Enable L2 Interrupts */
 }
 #else
-static inline void H2K_intconfig_l2_init() {}
+static inline void H2K_intconfig_l2_init(u32_t ssbase) {}
 #endif
 
 void H2K_intconfig_init(u32_t ssbase)

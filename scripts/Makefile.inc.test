@@ -48,9 +48,6 @@ include $(H2DIR)/scripts/Makefile.inc.constants
 ARCH=hexagon
 
 
-#RUN := $(ARCH)-sim
-#RUN := archsim
-
 CC=${ARCH}-gcc
 AS=${ARCH}-as
 LD=${ARCH}-ld
@@ -78,23 +75,6 @@ endif
 ifeq (hexagon-sim, $(notdir $(firstword ${RUN})))
 SIMF=${_BASIC_SIMF}
 endif
-
-ifeq (angel, $(notdir $(firstword ${RUN})))
-SIMF=
-endif
-
-ifeq (sim, $(notdir $(firstword ${RUN})))
-SIMF=${_BASIC_SIMF} --quiet --magic_angel
-endif
-
-ifeq (archsim, $(notdir $(firstword ${RUN})))
-SIMF=${_BASIC_SIMF} --quiet --magic_angel
-endif
-
-ifeq (devsim, $(notdir $(firstword ${RUN})))
-SIMF=${_BASIC_SIMF} --quiet --magic_angel
-endif
-
 
 ################################################################################
 #  Rules for building the kernel if necessary; should be built way before any

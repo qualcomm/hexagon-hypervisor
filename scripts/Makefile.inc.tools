@@ -31,14 +31,22 @@ else
 export ARCHV := $(subst v,,$(Q6VERSION))
 endif
 
+# These are the LPASS bases; assumed in scripts/timer_v*.cfg
+ifeq (4, $(ARCHV))
+export SUBSYSTEM_BASE_ARCHSIM := 0x28880000
+export SUBSYSTEM_BASE_TOOLSIM := 0x2888
+else # >= V5
+export SUBSYSTEM_BASE_ARCHSIM := 0xfe280000
+export SUBSYSTEM_BASE_TOOLSIM := 0xfe28
+endif
 
 # FIXME: TOOLARCH := $(ARCHV) once tools support -mv60
 ifeq (0, $(shell [ $(ARCHV) -gt 5 ]; echo $$?))
 export TOOLARCH := 5
-export RUN := archsim
+export RUN := devsim --quiet --magic_angel --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
 else
 export TOOLARCH := $(ARCHV)
-export RUN := hexagon-sim
+export RUN := hexagon-sim --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
 endif
 
 export SIM := $(RUN)

@@ -1,7 +1,7 @@
 # Yo.  -*- Makefile -*-
 
 ifeq (0, $(shell [ $(ARCHV) -gt 5 ]; echo $$?))
-OFFSETS_SIM := PKW_VERSIONS=hexagon-tools=v60_latest $(RUN) --quiet
+OFFSETS_SIM := PKW_VERSIONS=hexagon-tools=v60_stable $(RUN) --quiet
 else
 OFFSETS_SIM := PKW_VERSIONS=hexagon-tools=default $(RUN) --quiet
 endif

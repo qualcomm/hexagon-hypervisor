@@ -343,7 +343,9 @@ ignore_fns: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-	ulimit -t 60 && ${RUN} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee $@; \
+	echo PKW_VERSIONS $(PKW_VERSIONS) > $@
+	echo PATH $(PATH) >> $@
+	ulimit -t 60 && ${RUN} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee -a $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \

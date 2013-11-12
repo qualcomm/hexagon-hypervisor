@@ -40,13 +40,27 @@ export SUBSYSTEM_BASE_ARCHSIM := 0xfe280000
 export SUBSYSTEM_BASE_TOOLSIM := 0xfe28
 endif
 
+ifeq (4, $(ARCHV))
+export PKW_VERSIONS := hexagon-tools=default arch=v4_stable
+else
+ifeq (5, $(ARCHV))
+export PKW_VERSIONS := hexagon-tools=default arch=v5_stable
+else
+export PKW_VERSIONS := hexagon-tools=v60_stable arch=v60_stable
+endif
+endif
+
+export RUN_DEVSIM := devsim --quiet --magic_angel --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
+
+export RUN_TOOLSIM := hexagon-sim --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
+
 # FIXME: TOOLARCH := $(ARCHV) once tools support -mv60
-ifeq (0, $(shell [ $(ARCHV) -gt 5 ]; echo $$?))
+ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
 export TOOLARCH := 5
-export RUN := devsim --quiet --magic_angel --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
+export RUN := $(RUN_DEVSIM)
 else
 export TOOLARCH := $(ARCHV)
-export RUN := hexagon-sim --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
+export RUN := $(RUN_TOOLSIM)
 endif
 
 export SIM := $(RUN)

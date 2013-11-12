@@ -38,7 +38,7 @@ u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(u64_t)] __attribute__((aligne
 #define PCYCLES_PER_TCYCLE 3
 #define OVERHEAD 1536
 #elif ARCHV == 60
-#define PCYCLES_PER_TCYCLE 4
+#define PCYCLES_PER_TCYCLE 2
 #define OVERHEAD 1536
 #else
 #error define pcycles per tcycle and overhead

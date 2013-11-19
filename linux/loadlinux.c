@@ -22,11 +22,7 @@
 #define LINUX_NUM_VCPU 3
 #define UCOS_NUM_VCPU 1
 
-#ifdef MODEM
 #define TOTAL_INTS 288
-#else
-#define TOTAL_INTS 160
-#endif
 
 #define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
 #define VCPU_STACK_SIZE 1024
@@ -106,7 +102,7 @@ void setup_ints(unsigned long vm, char num_cpus) {
 
 	int i;
 
-#ifdef MODEM
+#ifdef INT_SHIFT
 #define INTERRUPT_SHIFT (32)
 #else
 #define INTERRUPT_SHIFT (0)

@@ -23,7 +23,7 @@ ifdef HTHREADS
 CFLAGS += -DMAX_HTHREADS=$(HTHREADS)
 endif
 
-ifdef USE_TCM
+ifeq ($(USE_TCM), 1)
 CFLAGS += -DH2K_USE_TCM
 endif
 

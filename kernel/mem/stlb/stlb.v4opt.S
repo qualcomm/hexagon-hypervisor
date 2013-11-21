@@ -11,7 +11,7 @@
 
 /*
 H2K_mem_stlb_find(va,asid,myinfo)
-IDX = (va >> PAGE_BITS) & (STLB_MAX_SETS-1)
+IDX = (va >> STLB_SHIFT) & (STLB_MAX_SETS-1) (and maybe ^ ASID?)
 IDX:SHIFT = bitsplit(idx,5)
 ASIDVA = (va >> 12) | (asid << 20)
 BITS = memw(myinfo->valids+IDX<<#2)
@@ -54,8 +54,8 @@ FUNC_START H2K_mem_stlb_lookup .text.mem.stlb .p2align 5
 	{
 		STLB = memw(H2K_GP+#KG_stlbptr)
 		if (cmp.eq(STLB.new,#0)) jump:nt .Lno_stlb
-		IDX = extractu(VA,#STLB_MAX_SETS_LOG2-5,#PAGE_BITS+5)
-		SHIFT = extractu(VA,#5,#PAGE_BITS)
+		IDX = extractu(VA,#STLB_MAX_SETS_LOG2-5,#STLB_SHIFT+5)
+		SHIFT = extractu(VA,#5,#STLB_SHIFT)
 	}
 	{
 		JUNK_ASIDVA = lsr(ASID_VA_IN,#12)
@@ -138,13 +138,13 @@ FUNC_START H2K_mem_stlb_add .text.mem.stlb .p2align 5
 #define DATAHI r15
 #define DATALO r14
 	{
-		IDX = extractu(VA,#STLB_MAX_SETS_LOG2-5,#PAGE_BITS+5)
+		IDX = extractu(VA,#STLB_MAX_SETS_LOG2-5,#STLB_SHIFT+5)
 		MYINFO = memw(H2K_GP+#KG_stlbptr)
 		RNDIDX = pcyclelo
 		if (cmp.eq(MYINFO.new,#0)) jump:nt .Lno_stlb
 	}
 	{
-		BIT = extractu(VA,#5,#PAGE_BITS)
+		BIT = extractu(VA,#5,#STLB_SHIFT)
 		MYINFO += mpyi(ASID_IN,#STLB_INFO_SIZE)
 	}
 #undef VA
@@ -234,7 +234,7 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 	{
 		STLB = memw(H2K_GP+#KG_stlbptr)
 		COUNT_VA = vlsrw(COUNT_VA,#PAGE_BITS)
-		IDX = extractu(VA,#STLB_MAX_SETS_LOG2-5,#PAGE_BITS+5)
+		IDX = extractu(VA,#STLB_MAX_SETS_LOG2-5,#STLB_SHIFT+5)
 		if (cmp.eq(STLB.new,#0)) jump:nt .Lno_stlb
 	}
 #undef VA
@@ -243,7 +243,6 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 #define COUNT_VPN r1:0
 	{
 		p0 = cmp.gt(COUNT,#STLB_MAX_PAGES_FOR_VA_INV-1)
-		SHIFT = and(VPN,#0x1f)
 		VPN |= asl(ASID,#20)
 		STLB += mpyi(ASID,#STLB_INFO_SIZE)
 	}
@@ -259,6 +258,7 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 		BITS = memw(STLB+IDX<<#2)
 		PTR = add(BASEADDR,mpyi(#(STLB_MAX_WAYS*8),IDX))
 		DZERO = #0
+		SHIFT = extractu(VPN,#5,#STLB_SHIFT-PAGE_BITS)
 	}
 	{
 		p0 = tstbit(BITS,SHIFT)
@@ -282,8 +282,7 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 .Linvalidate_va_loop_notfound:
 	{
 		VPN = NEXTVPN
-		IDX = extractu(NEXTVPN,#STLB_MAX_SETS_LOG2-5,#5)
-		BITS = and(NEXTVPN,#0x1f)
+		IDX = extractu(NEXTVPN,#STLB_MAX_SETS_LOG2-5,#STLB_SHIFT-PAGE_BITS+5)
 	}:endloop1
 	jumpr r31
 #undef VA

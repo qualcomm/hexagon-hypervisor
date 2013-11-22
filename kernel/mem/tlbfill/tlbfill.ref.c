@@ -31,38 +31,13 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 	u64_t rawentry = entry.raw;
 	u32_t result;
 
-#if (ARCHV < 5) && !defined(USE_TLB_AUTOLOCK)
+#if ARCHV < 5
 	u32_t tag = entry.vpn | (entry.asid << (32 - PAGE_BITS));
 #endif
 
 	u32_t volatile *p_index = &H2K_gp->tlb_index;
 	u32_t index;
 
-#ifdef USE_TLB_AUTOLOCK
-	#if ARCHV == 5
-	/* Need to update the counter atomically due to TLB lock HW bug */
-	u32_t old;
-
-	while (1) {
-		index = *p_index;
-
-		if ((index + 1) < MAX_TLB_ENTRIES) {
-			old = H2K_atomic_compare_swap((u32_t *)p_index, index, index + 1);
-		} else {
-			old = H2K_atomic_compare_swap((u32_t *)p_index, index, ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1);
-		}
-		if (old == index) break;
-	}
-	#else // assume autolock works ARCHV > 5
-	index = *p_index;
-
-	if ((index + 1) < MAX_TLB_ENTRIES) {
-		*p_index = index + 1;
-	} else {
-		*p_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
-	}
-	#endif
-#else
 	/* Need to tlblock even with ctlbw because futex code locks TLB */
 	H2K_mutex_lock_tlb();
 	index = *p_index;
@@ -72,7 +47,6 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 	} else {
 		*p_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
 	}
-#endif
 
 #if ARCHV <= 3
 	/* set guest bit in the ASID if this was a guest miss */
@@ -92,22 +66,17 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 	#if ARCHV >= 5
 		 " %0 = ctlbw(%1,%2)\n"
 	#else // == V4
-		#ifdef USE_TLB_AUTOLOCK
-		 " tlbw(%1,%2)\n"
-		#else
 		 " %0 = tlbp(%3)\n"
 		 " p0 = tstbit(%0, #31)\n"
 		 " if (!p0) jump 1f\n"
 		 " tlbw(%1,%2)\n"
-
-		#endif
 	#endif
 		 " isync\n"
 		 "1:\n"
 		 : "=&r" (result)
 		 : "r"(rawentry),
 			 "r"(index)
-	#if (ARCHV == 4) && !defined(USE_TLB_AUTOLOCK)
+	#if ARCHV == 4
 			 ,"r"(tag)
 		 : "p0"
 	#endif
@@ -184,9 +153,6 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 
 	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) {
-#ifdef USE_TLB_AUTOLOCK
-			H2K_mutex_unlock_tlb();
-#endif
 			return;
 		}
 		H2K_mem_tlb_insert_unlock(entry,me);
@@ -207,23 +173,14 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		break;
 
 	default:
-#ifdef USE_TLB_AUTOLOCK
-		H2K_mutex_unlock_tlb();
-#endif
 		return;
 	}
 
 	if ((entry = get_fn(va,me)).raw != 0) {
 		if (H2K_mem_tlb_v3_user_check(me)) {
-#ifdef USE_TLB_AUTOLOCK
-			H2K_mutex_unlock_tlb();
-#endif
 			return;
 		}
 		if (H2K_mem_tlb_fixup(va, H2K_mem_asid_table[asid].ptb, &entry, me) == -1) { // next translation failed
-#ifdef USE_TLB_AUTOLOCK
-			H2K_mutex_unlock_tlb();
-#endif
 			return;
 		}
 
@@ -232,8 +189,5 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		return;
 	}
 	/* Unlock here in case thread is killed by pagefault */
-#ifdef USE_TLB_AUTOLOCK
-	H2K_mutex_unlock_tlb();
-#endif
 	return H2K_mem_pagefault(va,me);
 }

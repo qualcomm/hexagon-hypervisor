@@ -376,7 +376,7 @@ ${COVFILE}: ${DUMP} try_gmon_out ignore_fns
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
 CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILE} cov-*.txt ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
-CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt
+CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt pmu_stats.txt
 
 clean:
 	rm -rf ${CLEANUP}

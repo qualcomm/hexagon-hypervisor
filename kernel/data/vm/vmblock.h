@@ -113,7 +113,7 @@ typedef struct H2K_vmblock_struct {
 #endif
 		};
 	};
-#ifdef COUNT_TLB_MISSES
+#ifdef COUNT_TLB_EVENTS
 	union {
 		struct {
 			u32_t tlbmissx_lo;
@@ -128,6 +128,14 @@ typedef struct H2K_vmblock_struct {
 			u32_t tlbmissrw_hi;
 		};
 		u64_t tlbmissrw;
+	};
+
+	union {
+		struct {
+			u32_t stlbmiss_lo;
+			u32_t stlbmiss_hi;
+		};
+		u64_t stlbmiss;
 	};
 #endif
 

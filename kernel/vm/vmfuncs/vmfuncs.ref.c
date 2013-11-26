@@ -96,6 +96,7 @@ void H2K_vmtrap_get_pcycles(H2K_thread_context *me)
 {
 	/* Return current cpu time */
 	me->r0100 = H2K_cputime_get(me);
+	me->r0302 = H2K_pcycles_get(me);
 }
 
 /* 15 -- REMOVE */

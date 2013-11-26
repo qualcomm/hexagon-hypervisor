@@ -37,7 +37,10 @@ FUNC_START H2K_handle_tlbmissx .text.mem.tlbmiss .p2align 2
 	call H2K_context_save
 	/* r7 = me, r8 = ssr, r9 = htid */
 
-#ifdef COUNT_TLB_MISSES
+#ifdef COUNT_TLB_EVENTS
+	r10 = memub(r7 + #CONTEXT_pmu_on)
+	p0 = cmp.eq(r10, #0)
+	if (p0) jump 3f
 	// atomically increment me->vmblock->tlbmissx
 	r10 = memw(r7 + #CONTEXT_vmblock)
 	r10 = add(r10, #VMBLOCK_tlbmissx)
@@ -47,6 +50,7 @@ FUNC_START H2K_handle_tlbmissx .text.mem.tlbmiss .p2align 2
 	r3:2 = add(r3:2, r5:4)
 	memd_locked(r10, p0) = r3:2
 	if !p0 jump 2b
+3:
 #endif
 
 	r3 = and(r8,#3)
@@ -66,16 +70,20 @@ FUNC_START H2K_handle_tlbmissrw .text.mem.tlbmiss .p2align 2
 	call H2K_context_save
 	/* r7 = me, r8 = ssr, r9 = htid */
 
-#ifdef COUNT_TLB_MISSES
+#ifdef COUNT_TLB_EVENTS
+	r10 = memub(r7 + #CONTEXT_pmu_on)
+	p0 = cmp.eq(r10, #0)
+	if (p0) jump 5f
 	// atomically increment me->vmblock->tlbmissrw
 	r10 = memw(r7 + #CONTEXT_vmblock)
 	r10 = add(r10, #VMBLOCK_tlbmissrw)
 	r5:4 = #1
-3:
+4:
 	r3:2 = memd_locked(r10)
 	r3:2 = add(r3:2, r5:4)
 	memd_locked(r10, p0) = r3:2
-	if !p0 jump 3b
+	if !p0 jump 4b
+5:
 #endif
 
 	r2 = badva

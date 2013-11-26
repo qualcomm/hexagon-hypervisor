@@ -27,7 +27,7 @@ static const configptr_t H2K_configtab[CONFIG_MAX] IN_SECTION(".data.config.conf
 	H2K_trap_config_stlb_alloc
 };
 
-u32_t H2K_trap_config(u32_t configtype, u32_t val1, vmblock_init_op_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
+u32_t H2K_trap_config(config_type_t configtype, u32_t val1, vmblock_init_op_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
 {
 	if (configtype >= CONFIG_MAX) return 0;
 	return H2K_configtab[configtype](0, val1, val2, val3, val4, me);

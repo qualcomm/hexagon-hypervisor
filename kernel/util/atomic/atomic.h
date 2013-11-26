@@ -109,6 +109,19 @@ static inline u32_t H2K_atomic_add(u32_t *word, u32_t val) {
 	return t;
 }
 
+static inline u64_t H2K_atomic_add64(u64_t *word, u64_t val) {
+	u64_t t;
+	asm ("// atomic add64\n"
+			 "1: %0 = memd_locked(%3)\n"
+			 "   %0 = add(%0, %2)\n"
+			 "   memd_locked(%3, p0) = %0\n"
+			 "   if !p0 jump 1b\n"
+			 : "=&r"(t),"+m"(*word)
+			 : "r"(val),"r"(word)
+			 : "p0");
+	return t;
+}
+
 /* *_mask functions operate on (*word & mask).  Must call with other arguments
 	 *already in proper bit position; other bits must be 0  */
 

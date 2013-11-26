@@ -115,13 +115,13 @@ H2K_vmtrap_get_pcycles
 Description
 ~~~~~~~~~~~
 
-This function gets the cpu time for the current virtual CPU.
+Returns the cpu time for the current virtual CPU in r1:0, and the hardware PMU counters in r3:2.
 
 Functionality
 ~~~~~~~~~~~~~
 
-This function uses :cfunc:`H2K_cputime_get()` to get the CPU time, and places
-the result in the context r0100.
+This function uses :cfunc:`H2K_cputime_get()` to get the CPU time, places
+the result in the context r0100, and copies pcycle registers to r0302.
 
 H2K_vmtrap_set_pcycles
 ----------------------
@@ -213,13 +213,13 @@ H2K_vmtrap_stop
 Description
 ~~~~~~~~~~~
 
-Terminates the current thread and makes it ready for reallocation for 
+Terminates the current thread and makes it ready for reallocation by 
 :cfunc:`H2K_vmtrap_start()`.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Calls :cfunc:`H2K_thread_stop`.
+Calls :cfunc:`H2K_thread_stop()`.
 
 H2K_vmtrap_vmpid
 ----------------
@@ -231,7 +231,7 @@ H2K_vmtrap_vmpid
 Description
 ~~~~~~~~~~~
 
-Returns a unique ID for the current Virtual CPU
+Returns a unique ID for the current Virtual CPU.
 
 Functionality
 ~~~~~~~~~~~~~
@@ -287,7 +287,11 @@ Call H2K_trap_pmuconfig()
 Functionality
 ~~~~~~~~~~~~~
 
-Return the result of H2K_trap_pmuconfig() in r0.
+If r0 == PMUCONFIG_THREADSET (enable/disable PMU for CPU) and r1 == 0 (thread
+ID 0) then call :cfunc:`H2K_trap_pmuconfig()` with the given arguments for each
+thread ID in the current vmblock.  Return the number of successful calls in r0.
+
+Else return the result of :cfunc:`H2K_trap_pmuconfig()` in r0.
 
 Testing
 -------

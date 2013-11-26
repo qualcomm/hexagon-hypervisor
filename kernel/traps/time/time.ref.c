@@ -9,7 +9,6 @@
 
 u64_t H2K_pcycles_get(H2K_thread_context *me)
 {
-	/* EJP: FIXME: Move into hw.h, use pair xfer for v4 and later */
 	return H2K_get_pcycle_reg();
 }
 
@@ -17,6 +16,5 @@ u64_t H2K_cputime_get(H2K_thread_context *me)
 {
 	u64_t now = H2K_pcycles_get(me);
 	return me->totalcycles + (now - H2K_gp->oncpu_start[get_hwtnum()]);
-	//return now;
 }
 

@@ -319,7 +319,7 @@ Atomically swap a word in memory.
 static inline atomic_u64_t h2_atomic_swap64(atomic_u64_t *word, atomic_u64_t val)
 {
 	atomic_u64_t t;
-	asm (	"// atomic swap\n"
+	asm (	"// atomic swap64\n"
 		"1: %0 = memd_locked(%3)\n"
 		"   memd_locked(%3,p0) = %2\n"
 		"   if (!p0) jump 1b\n"
@@ -342,7 +342,7 @@ static inline atomic_u64_t h2_atomic_compare_swap64(atomic_u64_t *word, atomic_u
 
 	atomic_u64_t t;
 
-	asm ( "// atomic compare and swap\n"
+	asm ( "// atomic compare and swap64\n"
 				"1:	%0 = memd_locked(%2)\n"
 				"	{ p0 = cmp.eq(%0, %3)\n"
 				"	  if (!p0.new) jump:nt 2f }\n"
@@ -378,7 +378,7 @@ static inline atomic_u64_t h2_atomic_insert64(atomic_u64_t *word, atomic_u64_t v
 	} x;
 	x.width = width;
 	x.offset = offset;
-	asm (	"// atomic insert\n"
+	asm (	"// atomic insert64\n"
 		"1: %0 = memd_locked(%3)\n"
 		"   %0 = insert(%2,%4)\n"
 		"   memd_locked(%3,p0) = %0\n"
@@ -399,7 +399,7 @@ Atomically add to a word in memory
 
 static inline atomic_u64_t h2_atomic_add64(atomic_u64_t *word, atomic_u64_t val) {
 	atomic_u64_t t;
-	asm ("// atomic add\n"
+	asm ("// atomic add64\n"
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = add(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
@@ -420,7 +420,7 @@ Atomically subtract from a word in memory
 
 static inline atomic_u64_t h2_atomic_sub64(atomic_u64_t *word, atomic_u64_t val) {
 	atomic_u64_t t;
-	asm ("// atomic sub\n"
+	asm ("// atomic sub64\n"
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = sub(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
@@ -441,7 +441,7 @@ Atomically subtract a word in memory from a value
 
 static inline atomic_u64_t h2_atomic_bus64(atomic_u64_t *word, atomic_u64_t val) {
 	atomic_u64_t t;
-	asm ("// atomic sub\n"
+	asm ("// atomic bus64\n"
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = sub(%2, %0)\n"
 			 "   memd_locked(%3, p0) = %0\n"
@@ -462,7 +462,7 @@ Atomically inclusive or a word in memory with a value
 
 static inline atomic_u64_t h2_atomic_or64(atomic_u64_t *word, atomic_u64_t val) {
 	atomic_u64_t t;
-	asm ("// atomic or\n"
+	asm ("// atomic or64\n"
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = or(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
@@ -483,7 +483,7 @@ Atomically logical AND a word in memory with a value
 
 static inline atomic_u64_t h2_atomic_and64(atomic_u64_t *word, atomic_u64_t val) {
 	atomic_u64_t t;
-	asm ("// atomic and\n"
+	asm ("// atomic and64\n"
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = and(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
@@ -504,7 +504,7 @@ Atomically exclusive or a word in memory with a value
 
 static inline atomic_u64_t h2_atomic_xor64(atomic_u64_t *word, atomic_u64_t val) {
 	atomic_u64_t t;
-	asm ("// atomic xor\n"
+	asm ("// atomic xor64\n"
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = xor(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"

@@ -53,6 +53,10 @@ typedef u32_t pa_t;
 #define offsetof(type,element) ((u32_t)(&(((type *)0)->element)))
 #endif
 
+#ifndef member_size
+#define member_size(type, member) (sizeof(((type *)0)->member))
+#endif
+
 /*
  * If we have a pointer "listptr" to an H2K_ringnode_t called "some_list" in a thread context,
  * thread = containerof(H2K_thread_context, some_list, listptr)

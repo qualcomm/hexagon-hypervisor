@@ -151,7 +151,13 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 	u32_t asid = me->ssr_asid;
 	H2K_mem_tlbfmt_t (*get_fn)(u32_t badva, H2K_thread_context *me);
 
-	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw != 0) {
+	if ((entry = H2K_mem_stlb_lookup(va,asid,me)).raw == 0) {
+#ifdef COUNT_TLB_EVENTS
+		if (me->pmu_on) {
+			H2K_atomic_add64(&me->vmblock->stlbmiss, 1);
+		}
+#endif
+	} else {
 		if (H2K_mem_tlb_v3_user_check(me)) {
 			return;
 		}

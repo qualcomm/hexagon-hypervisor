@@ -132,10 +132,11 @@ FUNC_START H2K_vmtrap_get_pcycles .text.vm.funcs .falign
 	}
 	{
 		r5:4 = add(r5:4,r3:2)
-		r3:2 = memd(r1+r6<<#3)
+		r9:8 = memd(r1+r6<<#3)
 	}
 	{
-		r5:4 = sub(r5:4,r3:2)
+		r5:4 = sub(r5:4,r9:8)
+		memd(ME+#CONTEXT_r0302) = r3:2
 	}
 	{
 		memd(ME+#CONTEXT_r0100) = r5:4

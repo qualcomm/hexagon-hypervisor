@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 #endif
 	PRINT_VMBLOCK_OFFSET(flags);
 
-#ifdef COUNT_TLB_MISSES
+#ifdef COUNT_TLB_EVENTS
 	PRINT_VMBLOCK_OFFSET(tlbmissx);
 	PRINT_VMBLOCK_OFFSET(tlbmissrw);
 #endif

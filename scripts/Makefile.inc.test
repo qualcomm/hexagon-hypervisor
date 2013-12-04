@@ -66,6 +66,8 @@ TIMING ?= --timing
 
 BUSPENALTY ?= --buspenalty 50
 
+ULIMIT ?= 60
+
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
 ifeq (hexagon-sim, $(notdir $(firstword ${RUN})))
@@ -346,7 +348,7 @@ test.log: ${EXEC}
 	echo PKW_VERSIONS $(PKW_VERSIONS) > $@
 	echo PKW_arch $(PKW_arch) >> $@
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
-	ulimit -t 60 && ${RUN} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee -a $@; \
+	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee -a $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \

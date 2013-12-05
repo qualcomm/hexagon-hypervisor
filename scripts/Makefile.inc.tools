@@ -41,10 +41,10 @@ export SUBSYSTEM_BASE_TOOLSIM := 0xfe28
 endif
 
 ifeq (4, $(ARCHV))
-export PKW_VERSIONS := hexagon-tools=5.0.12 arch=v4_stable
+export PKW_VERSIONS := hexagon-tools=default arch=v4_stable
 else
 ifeq (5, $(ARCHV))
-export PKW_VERSIONS := hexagon-tools=5.0.12 arch=v5_stable
+export PKW_VERSIONS := hexagon-tools=default arch=v5_stable
 else
 export PKW_VERSIONS := hexagon-tools=v60_stable arch=v60_latest
 endif

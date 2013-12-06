@@ -319,7 +319,7 @@ DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 #  These are for actual terminal directories
 ################################################################################
 %.objdump: %.elf
-	${OBJDUMP} -D ${@:.objdump=.elf} ${BOOTER} > $@; \
+	${OBJDUMP} -d ${@:.objdump=.elf} ${BOOTER} > $@; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
 
 ifdef PYTHON_GENERATOR_SCRIPT

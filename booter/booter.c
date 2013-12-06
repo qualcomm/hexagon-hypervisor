@@ -25,7 +25,7 @@
 #define VM_BEST_PRIO 0
 
 /* Kernel config */
-static unsigned int use_stlb = 1;
+static unsigned int use_stlb = 0;
 
 /* VM config */
 static unsigned int num_vcpus = 32;
@@ -92,24 +92,24 @@ void usage()
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
 	printf("  --syscfg <int>\n\tSet syscfg.\n");
 	printf("\nVM options:\n");
-	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs.\n");
-	printf("  --use_ext (0|1)\n\tSupport extended contexts\n");
-	printf("  --num_shared_ints <int>\n\tNumber of shared interrupts.\n");
-	printf("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map. Default 6 (16M).\n");
-	printf("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map. Default 0.\n");
-	printf("  --translation_type <int>\n\tTranslation type for guest->phys map. Default OFFSET (only OFFSET works from cmdline right now).\n");
-	printf("  --fence_lo <int>\n\tLowest physical page accessible by guest VM. Must be page_size-aligned. Default 0x01000000.\n");
-	printf("  --fence_hi <int>\n\tHighest physical page accessible by guest VM. Must be page_size-aligned. Default 0xff000000.\n");
-	printf("  --load_offset <int>\n\tOffset for loading ELF image. Default (0x01000000 - <first_program_header_addr>).\n");
-	printf("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf)\n");
-	printf("  --bestprio <int>\n\tBest allowed priority for a virtual CPU. Default 0.\n");
-	printf("  --trapmask <int>\n\tBitmask of allowed trap0 numbers. Default 0xffffffff (all allowed).\n");
-	printf("  --stack <int>\n\tStack pointer VA for first virtual CPU. Default 0xfeffff8.\n");
-	printf("  --arg <int>\n\tInitial argument (R0) for first virtual CPU. Default 0.\n");
-	printf("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status. Default 1.\n");
-	printf("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached. Default 0.\n");
-	printf("  --startprio <int>\n\tInitial priority of first virtual CPU. Default 0.\n");
-
+	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
+	printf("  --use_ext (0|1)\n\tSupport extended contexts.  Default 0.\n");
+	printf("  --num_shared_ints <int>\n\tNumber of shared interrupts.  Default 0.\n");
+	printf("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
+	printf("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default 0.\n");
+	printf("  --translation_type <int>\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now).\n");
+	printf("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default 0x01000000.\n");
+	printf("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default 0xff000000.\n");
+	printf("  --load_offset <int>\n\tOffset for loading ELF image.  Default (0x01000000 - <first_program_header_addr>).\n");
+	printf("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf).  Default 0.\n");
+	printf("  --bestprio <int>\n\tBest allowed priority for a virtual CPU.  Default 0.\n");
+	printf("  --trapmask <int>\n\tBitmask of allowed trap0 numbers.  Default 0xffffffff (all allowed).\n");
+	printf("  --stack <int>\n\tStack pointer VA for first virtual CPU.  Default 0xfeffff8.\n");
+	printf("  --arg <int>\n\tInitial argument (R0) for first virtual CPU.  Default 0.\n");
+	printf("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status.  Default 1.\n");
+	printf("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
+	printf("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
+	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 }		
 
 static h2_guest_pmap_t *get_pmap(int fdesc, const Elf32_Ehdr *ehdr) {

@@ -48,10 +48,6 @@
 		Total accumulated cycle count spent in wait mode, for each
 		hardware thread.
 
-	.. cmember:: H2K_trace_info_t trace_info
-
-		Information about the kernel trace infrastructure
-
 	.. cmember:: H2K_thread_context *runlist[MAX_HTHREADS]
 
 		This array contains pointers to the threads running on each hardware

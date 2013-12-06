@@ -95,13 +95,6 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(stacks_addr);
 	PRINT_KG_OFFSET(traptab_addr);
 	PRINT_KG_OFFSET(lowprio_masks);
-	PRINT_KG_OFFSET(trace_info_entries_buf);
-	PRINT_KG_OFFSET(trace_info_buf);
-	PRINT_KG_OFFSET(trace_info_entries);
-	PRINT_KG_OFFSET(trace_info_max_level_index);
-	PRINT_KG_OFFSET(trace_info_index);
-	PRINT_KG_OFFSET(trace_info_max_trace_level);
-	PRINT_KG_OFFSET(trace_buf_default);
 	PRINT_KG_OFFSET(stlbptr);
 	PRINT_KG_OFFSET(vmblocks);
 #ifdef H2K_L2_CONTROL

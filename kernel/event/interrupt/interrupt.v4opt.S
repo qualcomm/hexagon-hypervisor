@@ -64,38 +64,23 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 		INTNO = and(SSRVAL,#0x1f)  // extract interrupt number
 		PCYCLO = insert(HTNUM,#4,#0)
 		VIDVAL = VID
-		IDXADDR = add(H2K_GP,#KG_trace_info_index)
 	}
 	{
 		ISL2INT = cmp.eq(INTNO,#31)
 		if (ISL2INT.new) INTNO = add(VIDVAL,#32)
-		TRACEDATA = combine(#H2K_TRACE_INTERRUPT,PCYCLO)
-		ENTRIES_BUFADDR = memd(H2K_GP+#KG_trace_info_entries_buf)
+		TRACEDATAHI = #H2K_TRACE_INTERRUPT
 	}
-1:
 	{
-		OLDIDX = memw_locked(IDXADDR)
-		NEWIDX = add(ENTRIES,#-1)
 		TRACEDATAHI |= asl(INTNO,#8)
-	}
-	{
-		TRACEPRED = cmp.eq(NEWIDX,OLDIDX)
-		if (!TRACEPRED.new) NEWIDX = add(OLDIDX,#1)
-		if (TRACEPRED.new) NEWIDX = #0
 		KG_INTHANDLERS = add(H2K_GP,#KG_inthandlers)
 	}
 	{
-		memw_locked(IDXADDR,TRACEPRED) = NEWIDX
 		BUFADDR = addasl(BUFADDR,OLDIDX,#3)
 		CIADVAL = mux(ISL2INT,##0x80000000,#0)
+		trace(TRACEDATAHI)
 	}
 	{
-		if (!TRACEPRED) jump 1b
-		if (TRACEPRED) memd(BUFADDR) = TRACEDATA
 		INTINFO = memd(KG_INTHANDLERS+INTNO<<#3)
-	}
-	{
-		dccleana(BUFADDR)
 		call .Lint_jump_stub
 	}
 
@@ -144,42 +129,25 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	{
 		ISL2INT = cmp.eq(INTNO,#31)		// L2 interrupt?
 		if (ISL2INT.new) INTNO = add(VIDVAL,#32)	// Yes, use VID + offset
-		IDXADDR = add(H2K_GP,#KG_trace_info_index)
 		ME = sgp0			// scheduled task or garbage
 	}
 	{
-		ENTRIES_BUFADDR = memd(H2K_GP+#KG_trace_info_entries_buf)
 		HTNUM = htid
 		if (!ISPREEMPT) ME = #0		// 0 or SGP, was multiply which was fun
-	}
-	{
 		TRACEDATAHI = #H2K_TRACE_INTERRUPT
 		INTINFO = memd(KG_INTHANDLERS+INTNO<<#3)	// compute interrupt handler
-		TRACEDATALO = PCYCLELO
 	}
-1:
 	{
-		OLDIDX = memw_locked(IDXADDR)
-		NEWIDX = add(ENTRIES,#-1)
 		TRACEDATAHI |= asl(INTNO,#8)
-		TRACEDATALO = insert(HTNUM,#4,#0)
-	}
-	{
-		TRACEPRED = cmp.eq(NEWIDX,OLDIDX)
-		if (!TRACEPRED.new) NEWIDX = add(OLDIDX,#1)
-		if (TRACEPRED.new) NEWIDX = #0
 		SGP0 = ME
 	}
 	{
-		memw_locked(IDXADDR,TRACEPRED) = NEWIDX
-		BUFADDR = addasl(BUFADDR,OLDIDX,#3)
-		CIADVAL = mux(ISL2INT,##0x80000000,#0)	// Value to CIAD if L2 interrupt
-	}
-	{
-		if (!TRACEPRED) jump 1b
-		if (TRACEPRED) memd(BUFADDR) = TRACEDATA
 		if (ISPREEMPT) ELRTMP = memw(ME+#CONTEXT_elr)
 		if (!ISPREEMPT) ELRTMP = #-1
+	}
+	{
+		CIADVAL = mux(ISL2INT,##0x80000000,#0)	// Value to CIAD if L2 interrupt
+		trace(TRACEDATAHI)
 	}
 	{
 		ciad(CIADVAL)			// Re-enable L2 controller interrupt if L2 int
@@ -190,7 +158,6 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		callr INTINFO_FN
 		r1:0 = combine(ME,INTNO)
 		r3:2 = combine(INTINFO_VAL,HTNUM)
-		dccleana(BUFADDR)
 	}
 	{
 		ME = sgp0

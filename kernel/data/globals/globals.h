@@ -57,20 +57,6 @@ typedef struct {
 #endif
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
-	union {
-		u64_t trace_info_entries_buf;
-		struct {
-			u64_t *trace_info_buf;
-			u32_t trace_info_entries;
-		};
-	};
-	union {
-		u64_t trace_info_max_level_index;
-		struct {
-			u32_t trace_info_index;
-			s32_t trace_info_max_trace_level; // needed?
-		};
-	};
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];
 	u64_t waitcycles[MAX_HTHREADS];
@@ -82,7 +68,6 @@ typedef struct {
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
 	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
-	u64_t trace_buf_default[DEFAULT_TRACE_ENTRIES];
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");

@@ -120,7 +120,6 @@ int main()
 	TH_do_switch();
 	if (TH_saw_wait != 0) FAIL("went to wait");
 	if (TH_saw_cont == 0) FAIL("did not go to continuation");
-	printf("trace index=%d\n",H2K_kg.trace_info_index);
 	puts("TEST PASSED\n");
 	return 0;
 }

@@ -27,6 +27,11 @@ static inline void swi(u32_t mask)
 	asm (" swi(%0) // clear IAD " : : "r"(mask));
 }
 
+static inline void H2K_hw_trace(u32_t val)
+{
+	asm (" trace(%0) // trace " : : "r"(val));
+}
+
 #if (ARCHV <= 2)
 static inline void int_hthread(u32_t hthread)
 {

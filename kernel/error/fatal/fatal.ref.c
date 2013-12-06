@@ -36,7 +36,7 @@ void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t
 
 void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	H2K_trace(H2K_TRACE_FATAL_THREAD,me->id.raw >> 24,H2K_get_pcycle_reg(),hthread);
+	H2K_trace(H2K_TRACE_FATAL_THREAD,me->id.raw >> 8,H2K_get_pcycle_reg(),hthread);
 	return H2K_thread_stop(0xaaafa7a1, me);  // get it?
 }
 

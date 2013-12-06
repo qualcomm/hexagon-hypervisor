@@ -92,9 +92,15 @@ void worker(void *arg)
 int main()
 {
 	int i;
+	int id;
 	unsigned long long int start,end,count,adj;
 	unsigned int avg;
+	FILE *threadmap;
 	printf("Hello!\n");
+	if ((threadmap = fopen("threadmap.py","w")) == NULL) {
+		printf("Can't open threadmap.py output\n");
+		exit(1);
+	}
 	h2_sem_init_val(&donesem,0);
 	h2_sem_init_val(&startsem,0);
 	for (i = 0; i < N_MUTEXES; i++) {
@@ -102,9 +108,14 @@ int main()
 		counters[i] = 0;
 	}
 	printf("Starting Workers...\n");
+	fprintf(threadmap,"{\n");
+	fprintf(threadmap," 0x%08x : 'main',\n",h2_thread_myid());
 	for (i = 0; i < N_WORKERS; i++) {
-		h2_thread_create(worker,&stacks[i][STACKSIZE],(void *)i,100+i);
+		id = h2_thread_create(worker,&stacks[i][STACKSIZE],(void *)i,100+i);
+		fprintf(threadmap," 0x%08x : 'worker%d',\n",id,i);
 	}
+	fprintf(threadmap,"}\n");
+	fclose(threadmap);
 	spin(10000);
 	h2_sem_add(&startsem,100);
 	start = h2_get_core_pcycles();

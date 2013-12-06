@@ -236,38 +236,17 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #define BUFADDR r4
 #define ENTRIES_BUFADDR r5:4
 	{
-		IDXADDR = add(H2K_GP,#KG_trace_info_index)
-		ENTRIES_BUFADDR = memd(H2K_GP+#KG_trace_info_entries_buf)
-		KG_WAITCYCLES = DST
-		crswap(DST,sgp0)
+		sgp0 = DST
 	}
 1:
 	{
-		OLDIDX = memw_locked(IDXADDR)		// trace: get index
-		NEWIDX = add(ENTRIES,#-1)
-		DATALO = HTNUM
-		DST = KG_WAITCYCLES
-	}
-	{
-		p0 = cmp.eq(NEWIDX,OLDIDX)
-		if (!p0.new) NEWIDX = add(OLDIDX,#1)
-		if (p0.new) NEWIDX = #0
 		DATAHI = memw(DST+#CONTEXT_id)		// lets already fill this with switch id
-	}
-	{
-		memw_locked(IDXADDR,p0) = NEWIDX	// trace: new index
-		BUFADDR = addasl(BUFADDR,OLDIDX,#3)
-		DATALO |= and(NOW_LO,#-16)
-	}
-	{
-		if (!p0) jump 1b			// repeat if not atomic
-		if (p0) memd(BUFADDR) = DATA		// store trace info
 		r21:20 = memd(DST+#CONTEXT_lc1sa1)
 	}
 	{
-		dccleana(BUFADDR)
 		P_VMWORK = tstbit(VMSTATUS,#H2K_VMSTATUS_VMWORK_BIT)
 		KG_WAITCYCLES = add(H2K_GP,#KG_waitcycles)
+		trace(DATAHI)
 	}
 #undef OLDIDX
 #undef NEWIDX

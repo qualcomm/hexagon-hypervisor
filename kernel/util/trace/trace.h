@@ -11,10 +11,8 @@
 #include <trace_constants.h>
 
 typedef union {
-	u64_t raw;
+	u32_t raw;
 	struct {
-		u64_t htid:4;
-		u64_t cycle:28;
 		u64_t what:8;
 		u64_t info:24;
 	};

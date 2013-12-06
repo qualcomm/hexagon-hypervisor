@@ -168,7 +168,6 @@ void TH_setup_inthandlers(u32_t interrupt)
 
 void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 {
-	int traceidx;
 	H2K_thread_context *src = &srcdata;
 	TH_src_context = src;
 	TH_dest_context = dest;
@@ -176,12 +175,10 @@ void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 	TH_setup_inthandlers(interrupt);
 	TH_pass = 0;
 	TH_saw_continuation = 0;
-	traceidx = H2K_gp->trace_info_index;
 	if (setjmp(env) == 0) {
 		//printf("%d: i\n",interrupt);
 		TH_do_interrupt(src,dest,interrupt);
 	}
-	if (traceidx == H2K_gp->trace_info_index) FAIL("no trace");
 	TH_restore_sgp();
 	if (TH_saw_continuation != 0) FAIL("Called continuation");
 }
@@ -189,19 +186,16 @@ void TH_try_interrupt(H2K_thread_context *dest, u32_t interrupt)
 void TH_try_preempt_interrupt(H2K_thread_context *dest, u32_t interrupt)
 {
 	H2K_thread_context *src = dest;
-	int traceidx;
 	TH_src_context = dest;
 	TH_dest_context = dest;		/* we shouldn't be saving or restoring here */
 	TH_intno = interrupt;
 	TH_setup_inthandlers(interrupt);
 	TH_pass = 0;
 	TH_saw_continuation = 0;
-	traceidx = H2K_gp->trace_info_index;
 	if (setjmp(env) == 0) {
 		//printf("%d: p\n",interrupt);
 		TH_do_preempt(dest,src,interrupt);
 	}
-	if (traceidx == H2K_gp->trace_info_index) FAIL("no trace/preempt");
 	TH_restore_sgp();
 	if (TH_saw_continuation == 0) FAIL("Didn't call continuation");
 }

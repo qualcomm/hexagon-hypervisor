@@ -68,7 +68,7 @@ void lock_some_more(unsigned long long int *lfsrp, int base)
 
 void worker(void *arg)
 {
-	unsigned long long int lfsr;
+	unsigned long long int lfsr __attribute__((unused)) ;
 	int i,j,base,count,thismax;
 	lfsr = (unsigned long)arg * 1234567ULL;
 	printf("Worker %x started\n",(unsigned int)arg);

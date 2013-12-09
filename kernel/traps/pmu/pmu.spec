@@ -75,7 +75,7 @@ H2K_trap_pmuconfig_setreg
 
 	:param unused: Unused paramater
 	:param unused2: Unused parameter
-	:param whichreg: 0-3 specify PMUCNT0-3, -1 specifies PMUEVTCFG
+	:param whichreg: 0-3 :PMUCNT0-3; -1: PMUEVTCFG; -2: TLBMISSX_LO; -3: TLBMISSX_HI; -4: TLBMISSRW_LO; -5: TLBMISSRW_HI; -6: STLBMISS_LO; -7: STLBMISS_HI.
 	:param newval: new value for the register
 	:param me: Pointer to the current thread context
 	:returns: zero on success, nonzero otherwise
@@ -97,7 +97,7 @@ H2K_trap_pmuconfig_getreg
 
 	:param unused: Unused paramater
 	:param unused2: Unused parameter
-	:param whichreg: 0-3 specify PMUCNT0-3, 0xFFFFFFFF specifies PMUEVTCFG
+	:param whichreg: 0-3 :PMUCNT0-3; -1: PMUEVTCFG; -2: TLBMISSX_LO; -3: TLBMISSX_HI; -4: TLBMISSRW_LO; -5: TLBMISSRW_HI; -6: STLBMISS_LO; -7: STLBMISS_HI.
 	:param unused3: Unused parameter
 	:param me: Pointer to the current thread context
 	:returns: zero on success, nonzero otherwise

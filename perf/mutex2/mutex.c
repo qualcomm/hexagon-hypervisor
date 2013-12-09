@@ -40,7 +40,7 @@ void FAIL(const char *msg)
 
 void worker(void *arg)
 {
-	unsigned long long int lfsr;
+	unsigned long long int lfsr __attribute__((unused)) ;
 	int i,base,count;
 	lfsr = (unsigned long)arg * 1234567ULL;
 	printf("Worker %x started\n",(unsigned int)arg);

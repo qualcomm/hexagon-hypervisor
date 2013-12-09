@@ -165,7 +165,6 @@ static int qtimer_lib_get_attr ( qtimer_client_ptr client, qtimer_attr_t *attr )
 static int qtimer_lib_sleep_activate (  qtimer_duration_t duration, qtimer_callback_t *callback)
 {
     /* Result, success or failure */
-    int result; 
 
     /* Pointer to the new timer */
     qtimer_client_ptr new_timer;
@@ -189,7 +188,7 @@ static int qtimer_lib_sleep_activate (  qtimer_duration_t duration, qtimer_callb
     new_timer->func = qtimer_lib_process_sleep_callback;
 
     /* Perform the actual timer set */
-    result = qtimer_lib_new( new_timer, duration, QTIMER_DEFAULT_EXPIRY, 0 /*one-shot type*/, QTIMER_DEFAULT_GROUP); 
+    qtimer_lib_new( new_timer, duration, QTIMER_DEFAULT_EXPIRY, 0 /*one-shot type*/, QTIMER_DEFAULT_GROUP); 
 
     /* Return success */
     return EOK;

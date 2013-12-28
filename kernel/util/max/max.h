@@ -115,9 +115,9 @@
 #define MAX_TRACE_LEVEL 0
 #define DEFAULT_TRACE_ENTRIES 16
 
-#define STLB_MAX_SETS_LOG2 9
+#define STLB_MAX_SETS_LOG2 11
 #define STLB_MAX_SETS (1<<(STLB_MAX_SETS_LOG2))
-#define STLB_MAX_WAYS 16
+#define STLB_MAX_WAYS 4
 #define STLB_SHIFT 16		// optimize for 64KB pages
 
 #define PAGE_BITS 12 /* Minimum page size: 4K */

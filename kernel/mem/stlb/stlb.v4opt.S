@@ -50,6 +50,8 @@ FUNC_START H2K_mem_stlb_lookup .text.mem.stlb .p2align 5
 #define STLB r9
 #define SHIFT r10
 #define PTR r11
+#define SET r12
+#define ISIZE r13
 #define VAL r15:14
 	{
 		STLB = memw(H2K_GP+#KG_stlbptr)
@@ -58,8 +60,12 @@ FUNC_START H2K_mem_stlb_lookup .text.mem.stlb .p2align 5
 		SHIFT = extractu(VA,#5,#STLB_SHIFT)
 	}
 	{
+		SET = extractu(VA, #STLB_MAX_SETS_LOG2, #STLB_SHIFT)
+		ISIZE = #STLB_INFO_SIZE
+	}
+	{
 		JUNK_ASIDVA = lsr(ASID_VA_IN,#12)
-		STLB += mpyi(ASID_IN,#STLB_INFO_SIZE)
+		STLB += mpyi(ASID_IN, ISIZE)
 #undef VA
 #undef ASID_IN
 #undef ASID_VA_IN
@@ -69,7 +75,7 @@ FUNC_START H2K_mem_stlb_lookup .text.mem.stlb .p2align 5
 	{
 		BASEADDR = memw(STLB+#STLB_INFO_baseaddr)
 		BITS = memw(STLB+IDX<<#2)
-		OFF = mpyi(IDX,#STLB_MAX_WAYS*8)
+		OFF = mpyi(SET, #STLB_MAX_WAYS*8)
 		loop0(1f,#STLB_MAX_WAYS-2)
 	}
 	{
@@ -116,6 +122,8 @@ FUNC_START H2K_mem_stlb_lookup .text.mem.stlb .p2align 5
 #undef PTR
 #undef VAL
 #undef RET
+#undef SET
+#undef ISIZE
 
 FUNC_END H2K_mem_stlb_lookup
 
@@ -125,7 +133,8 @@ FUNC_START H2K_mem_stlb_add .text.mem.stlb .p2align 5
 #define ASID_IN r1
 #define ENTRY r3:2
 // #define ME r4 -- unused
-#define ZERO r5:4
+#define ISIZE r4
+#define SET r5
 #define MYINFO r6
 #define RNDIDX r7
 #define BIT r8
@@ -144,8 +153,12 @@ FUNC_START H2K_mem_stlb_add .text.mem.stlb .p2align 5
 		if (cmp.eq(MYINFO.new,#0)) jump:nt .Lno_stlb
 	}
 	{
+		SET = extractu(VA, #STLB_MAX_SETS_LOG2, #STLB_SHIFT)
+		ISIZE = #STLB_INFO_SIZE
+	}
+	{
 		BIT = extractu(VA,#5,#STLB_SHIFT)
-		MYINFO += mpyi(ASID_IN,#STLB_INFO_SIZE)
+		MYINFO += mpyi(ASID_IN, ISIZE)
 	}
 #undef VA
 #define TESTASID r0
@@ -153,8 +166,11 @@ FUNC_START H2K_mem_stlb_add .text.mem.stlb .p2align 5
 		VALID_VAL = memw(MYINFO+IDX<<#2)
 		loop0(1f,#STLB_MAX_WAYS-2)
 		ROWADDR = memw(MYINFO+#STLB_INFO_baseaddr)
-		ROWOFF = mpyi(IDX,#STLB_MAX_WAYS*8)
+		ROWOFF = mpyi(SET, #STLB_MAX_WAYS*8)
 	}
+#undef SET
+#undef ISIZE
+#define ZERO r5:4
 	{
 		p0 = tstbit(VALID_VAL,BIT)
 		if (p0.new) jump:t .Lstlb_add_insert
@@ -230,7 +246,7 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 #define PTR r9
 #define NEXTVPN r10
 #define VAL r13:12
-#define DZERO r15:14
+#define ISIZE r14
 	{
 		STLB = memw(H2K_GP+#KG_stlbptr)
 		COUNT_VA = vlsrw(COUNT_VA,#PAGE_BITS)
@@ -241,11 +257,14 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 #undef COUNT_VA
 #define VPN r0
 #define COUNT_VPN r1:0
+	ISIZE = #STLB_INFO_SIZE
 	{
 		p0 = cmp.gt(COUNT,#STLB_MAX_PAGES_FOR_VA_INV-1)
 		VPN |= asl(ASID,#20)
-		STLB += mpyi(ASID,#STLB_INFO_SIZE)
+		STLB += mpyi(ASID, ISIZE)
 	}
+#undef ISIZE
+#define DZERO r15:14
 	{
 		if (p0) jump H2K_mem_stlb_invalidate_asid
 		if (p0) r1:0 = combine(ME,ASID)
@@ -305,14 +324,16 @@ FUNC_END H2K_mem_stlb_invalidate_va
 FUNC_START H2K_mem_stlb_invalidate_asid .text.mem.stlb .p2align 4
 #define ASID_IN r0
 #define PTR r1
+#define ISIZE r2
 	{
 		PTR = memw(H2K_GP+#KG_stlbptr)
 		loop0(1f,#STLB_MAX_SETS/(32*8))
+		ISIZE = #STLB_INFO_SIZE
 	}
 	{
 		p0 = cmp.eq(PTR,#0)
 		if (p0.new) jump:nt 9f
-		PTR += mpyi(ASID_IN,#STLB_INFO_SIZE)
+		PTR += mpyi(ASID_IN, ISIZE)
 	}
 	.falign
 1:
@@ -324,12 +345,5 @@ FUNC_START H2K_mem_stlb_invalidate_asid .text.mem.stlb .p2align 4
 	jumpr r31
 #undef ASID_IN
 #undef PTR
+#undef ISIZE
 FUNC_END H2K_mem_stlb_invalidate_asid
-
-FUNC_START H2K_mem_stlb_init .text.init.stlb .p2align 4
-	{
-		memw(H2K_GP+#KG_stlbptr) = #0
-		jumpr r31
-	}
-FUNC_END H2K_mem_stlb_init
-

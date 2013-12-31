@@ -245,8 +245,10 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 #define SHIFT r8
 #define PTR r9
 #define NEXTVPN r10
-#define VAL r13:12
-#define ISIZE r14
+#define ISIZE r12
+#define SET R13
+#define DZERO r15:14
+
 	{
 		STLB = memw(H2K_GP+#KG_stlbptr)
 		COUNT_VA = vlsrw(COUNT_VA,#PAGE_BITS)
@@ -257,25 +259,32 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 #undef COUNT_VA
 #define VPN r0
 #define COUNT_VPN r1:0
-	ISIZE = #STLB_INFO_SIZE
 	{
-		p0 = cmp.gt(COUNT,#STLB_MAX_PAGES_FOR_VA_INV-1)
+		SET = extractu(VPN, #STLB_MAX_SETS_LOG2, #STLB_SHIFT - PAGE_BITS)
+		ISIZE = #STLB_INFO_SIZE
 		VPN |= asl(ASID,#20)
-		STLB += mpyi(ASID, ISIZE)
-	}
-#undef ISIZE
-#define DZERO r15:14
+		p0 = cmp.gt(COUNT,#STLB_MAX_PAGES_FOR_VA_INV-1)
 	{
 		if (p0) jump H2K_mem_stlb_invalidate_asid
 		if (p0) r1:0 = combine(ME,ASID)
+		STLB += mpyi(ASID, ISIZE)
+	}
+#undef ISIZE
+#undef ME
+#define LSET r3
+	{
+		LSET = SET
 		BASEADDR = memw(STLB+#STLB_INFO_baseaddr)
 		loop1(.Linvalidate_va_loop,COUNT)
 	}
+#undef SET
+#define VAL r13:12
+
 	.falign
 .Linvalidate_va_loop:
 	{
 		BITS = memw(STLB+IDX<<#2)
-		PTR = add(BASEADDR,mpyi(#(STLB_MAX_WAYS*8),IDX))
+		PTR = add(BASEADDR, mpyi(#(STLB_MAX_WAYS*8), LSET))
 		DZERO = #0
 		SHIFT = extractu(VPN,#5,#STLB_SHIFT-PAGE_BITS)
 	}
@@ -302,6 +311,7 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 	{
 		VPN = NEXTVPN
 		IDX = extractu(NEXTVPN,#STLB_MAX_SETS_LOG2-5,#STLB_SHIFT-PAGE_BITS+5)
+		LSET = extractu(NEXTVPN, #STLB_MAX_SETS_LOG2, #STLB_SHIFT - PAGE_BITS)
 	}:endloop1
 	jumpr r31
 #undef VA

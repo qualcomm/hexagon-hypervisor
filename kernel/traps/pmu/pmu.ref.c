@@ -12,21 +12,21 @@
 #include <id.h>
 #include <hexagon_protos.h>
 
-typedef u32_t (*pmuconfigptr_t)(u32_t, u32_t, u32_t, u32_t, H2K_thread_context *);
+typedef u32_t (*pmuctrlptr_t)(u32_t, u32_t, u32_t, u32_t, H2K_thread_context *);
 
-static const pmuconfigptr_t H2K_pmuconfigtab[PMUCONFIG_MAX] IN_SECTION(".data.config.pmuconfig") = {
-	H2K_trap_pmuconfig_threadset,
-	H2K_trap_pmuconfig_setreg,
-	H2K_trap_pmuconfig_getreg
+static const pmuctrlptr_t H2K_pmuctrltab[PMUCTRL_MAX] IN_SECTION(".data.config.pmuctrl") = {
+	H2K_trap_pmuctrl_threadset,
+	H2K_trap_pmuctrl_setreg,
+	H2K_trap_pmuctrl_getreg
 };
 
-u32_t H2K_trap_pmuconfig(pmuop_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
+u32_t H2K_trap_pmuctrl(pmuop_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
 {
-	if (configtype >= PMUCONFIG_MAX) return -1;
-	return H2K_pmuconfigtab[configtype](0,val1,val2,val3,me);
+	if (configtype >= PMUCTRL_MAX) return -1;
+	return H2K_pmuctrltab[configtype](0,val1,val2,val3,me);
 }
 
-u32_t H2K_trap_pmuconfig_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
+u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
 {
 	u32_t val;
 	H2K_id_t id;
@@ -55,7 +55,7 @@ u32_t H2K_trap_pmuconfig_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_
 	return 0;
 }
 
-u32_t H2K_trap_pmuconfig_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
+u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
 {
 	switch ((s32_t)whichreg) {
 	case -1: H2K_set_pmuevtcfg(newval); return 0;
@@ -79,7 +79,7 @@ u32_t H2K_trap_pmuconfig_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32
 	return -1;
 }
 
-u32_t H2K_trap_pmuconfig_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
+u32_t H2K_trap_pmuctrl_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
 {
 	switch ((s32_t)whichreg) {
 	case -1: return H2K_get_pmuevtcfg();

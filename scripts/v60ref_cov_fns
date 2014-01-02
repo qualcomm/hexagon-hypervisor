@@ -219,10 +219,10 @@ H2K_trap_hwconfig
 H2K_trap_hwconfig_l2cache
 H2K_trap_hwconfig_partitions
 H2K_trap_hwconfig_prefetch
-H2K_trap_pmuconfig
-H2K_trap_pmuconfig_getreg
-H2K_trap_pmuconfig_setreg
-H2K_trap_pmuconfig_threadset
+H2K_trap_pmuctrl
+H2K_trap_pmuctrl_getreg
+H2K_trap_pmuctrl_setreg
+H2K_trap_pmuctrl_threadset
 H2K_traptab
 H2K_tree_add
 H2K_tree_add_key

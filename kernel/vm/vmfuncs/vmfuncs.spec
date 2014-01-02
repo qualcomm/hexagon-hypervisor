@@ -272,26 +272,26 @@ Functionality
 
 Sets r0 with GELR, r1 with GSSR, r2 with GOSP, and r3 with GBADVA.
 
-H2K_vmtrap_pmuconfig
+H2K_vmtrap_pmuctrl
 --------------------
 
-.. cfunction:: void H2K_vmtrap_pmuconfig(H2K_thread_context *me)
+.. cfunction:: void H2K_vmtrap_pmuctrl(H2K_thread_context *me)
 
 	:param me: Pointer to the current thread context
 
 Description
 ~~~~~~~~~~~
 
-Call H2K_trap_pmuconfig()
+Call H2K_trap_pmuctrl()
 
 Functionality
 ~~~~~~~~~~~~~
 
-If r0 == PMUCONFIG_THREADSET (enable/disable PMU for CPU) and r1 == 0 (thread
-ID 0) then call :cfunc:`H2K_trap_pmuconfig()` with the given arguments for each
+If r0 == PMUCTRL_THREADSET (enable/disable PMU for CPU) and r1 == 0 (thread
+ID 0) then call :cfunc:`H2K_trap_pmuctrl()` with the given arguments for each
 thread ID in the current vmblock.  Return the number of successful calls in r0.
 
-Else return the result of :cfunc:`H2K_trap_pmuconfig()` in r0.
+Else return the result of :cfunc:`H2K_trap_pmuctrl()` in r0.
 
 Testing
 -------

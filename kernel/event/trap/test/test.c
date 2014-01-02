@@ -53,7 +53,7 @@ s32_t H2K_tid_get() { return 19; }
 s32_t H2K_timer_trap() { return 22; }
 s32_t H2K_waitcycles_get() { return 27; }
 s32_t H2K_vmop() { return 28; }
-s32_t H2K_trap_pmuconfig() { return 29; }
+s32_t H2K_trap_pmuctrl() { return 29; }
 s32_t H2K_trap_config() { return 30; }
 s32_t H2K_trap_hwconfig() { return 31; }
 

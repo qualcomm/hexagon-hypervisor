@@ -6,7 +6,7 @@
 #include <pmu.h>
 #include <vmblock.h>
 
-void H2K_vmtrap_pmuconfig(H2K_thread_context *me) {
+void H2K_vmtrap_pmuctrl(H2K_thread_context *me) {
 
 	u32_t op = me->r00;
 	H2K_id_t id;
@@ -17,18 +17,18 @@ void H2K_vmtrap_pmuconfig(H2K_thread_context *me) {
 
 	id.raw = me->r01;
 
-	if (op == PMUCONFIG_THREADSET && id.raw == 0) {
+	if (op == PMUCTRL_THREADSET && id.raw == 0) {
 		id.vmidx = vmblock->vmidx;
 		// Turn on/off for all vcpus
 		for (i = 0; i < vmblock->max_cpus; i++) {
 			id.cpuidx = i;
 			/* Ignore error from dead CPUs */
-			if (H2K_trap_pmuconfig(op, id.raw, turnon, 0, me) == 0) {
+			if (H2K_trap_pmuctrl(op, id.raw, turnon, 0, me) == 0) {
 				ret++;
 			}
 		}
 		me ->r00 = ret;
 	} else {
-		me->r00 = H2K_trap_pmuconfig(me->r00, me->r01, me->r02, me->r03, me);
+		me->r00 = H2K_trap_pmuctrl(me->r00, me->r01, me->r02, me->r03, me);
 	}
 }

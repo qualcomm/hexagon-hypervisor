@@ -184,7 +184,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 	}
 	{
 		r4 = r7
-		jump H2K_trap_pmuconfig // 29
+		jump H2K_trap_pmuctrl // 29
 	}
 	{
 		r5 = r7

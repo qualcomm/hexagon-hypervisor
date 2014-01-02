@@ -7,10 +7,10 @@
 #define H2_COMMON_PMU_H 1
 
 typedef enum {
-	PMUCONFIG_THREADSET,  /**< Operation: Enable PMU Counting for the specified thread */
-	PMUCONFIG_SETREG,     /**< Operation: write a register */
-	PMUCONFIG_GETREG,     /**< Operation: read a register */
-	PMUCONFIG_MAX
+	PMUCTRL_THREADSET,  /**< Operation: Enable PMU Counting for the specified thread */
+	PMUCTRL_SETREG,     /**< Operation: write a register */
+	PMUCTRL_GETREG,     /**< Operation: read a register */
+	PMUCTRL_MAX
 } pmuop_t;
 
 #endif

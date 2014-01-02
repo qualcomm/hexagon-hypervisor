@@ -51,7 +51,7 @@ FUNC_START H2K_vmtraptab .text.vm.trap .p2align 5
 	jump H2K_vmtrap_getregs		// 16
 	jump H2K_vmtrap_bad		// 17
 	jump H2K_vmtrap_timer		// 18
-	jump H2K_vmtrap_pmuconfig		// 19
+	jump H2K_vmtrap_pmuctrl		// 19
 	jump H2K_vmtrap_bad		// 1a
 	jump H2K_vmtrap_bad		// 1b
 	jump H2K_vmtrap_bad		// 1c

@@ -7,10 +7,10 @@
 
 This module contains routines to manage the Performance Monitor Unit.
 
-H2K_trap_pmuconfig
+H2K_trap_pmuctrl
 ------------------
 
-.. cfunction:: u32_t H2K_trap_pmuconfig(u32_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_pmuctrl(u32_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
 
 	:param configtype: Configuration operation to do
 	:param val1: Operation-dependent value
@@ -31,14 +31,14 @@ Functionality
 The configtype parameter determines which configuration routine is called.
 If an invalid configtype parameter is given, we return imediately.
 
-We look up which configuration routine in H2K_pmuconfigtab, and jump to the 
+We look up which configuration routine in H2K_pmuctrltab, and jump to the 
 appropriate routine.
 
 
-H2K_trap_pmuconfig_threadset
+H2K_trap_pmuctrl_threadset
 ----------------------------
 
-.. cfunction:: u32_t H2K_trap_pmuconfig_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
+.. cfunction:: u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param vdest: thread ID to change PMU configuration for
@@ -68,7 +68,7 @@ the parameter.
 We then release the BKL and return.
 
 
-H2K_trap_pmuconfig_setreg
+H2K_trap_pmuctrl_setreg
 -------------------------
 
 .. cfunction:: u32_t H2K_trap_pmuconcig_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
@@ -90,7 +90,7 @@ Functionality
 
 Write the PMU register
 
-H2K_trap_pmuconfig_getreg
+H2K_trap_pmuctrl_getreg
 -------------------------
 
 .. cfunction:: u32_t H2K_trap_pmuconcig_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
@@ -134,7 +134,7 @@ Harness
 
 Standalone environment, but linked with h2kernel.
 
-We try several calls to H2K_trap_pmuconfig, and check that the registers are read/written
+We try several calls to H2K_trap_pmuctrl, and check that the registers are read/written
 correctly, or that the PMU enable field is managed correctly in the destination thread.
 
 

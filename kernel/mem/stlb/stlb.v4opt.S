@@ -264,6 +264,7 @@ FUNC_START H2K_mem_stlb_invalidate_va .text.mem.stlb .p2align 4
 		ISIZE = #STLB_INFO_SIZE
 		VPN |= asl(ASID,#20)
 		p0 = cmp.gt(COUNT,#STLB_MAX_PAGES_FOR_VA_INV-1)
+	}		
 	{
 		if (p0) jump H2K_mem_stlb_invalidate_asid
 		if (p0) r1:0 = combine(ME,ASID)

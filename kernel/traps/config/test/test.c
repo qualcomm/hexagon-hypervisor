@@ -79,7 +79,7 @@ int main()
 	/* SET_CPUS_INTS */
 	/* SET_CPUS_INTS bad cpus */
 	DPRINTF("SET_CPUS_INTS\n\n");
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_CPUS_INTS, MAX_VM_CPUS + 1, 0, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_CPUS_INTS, H2K_ID_MAX_CPUS + 1, 0, NULL);
 	if (ret!= 0) FAIL("Missed bad cpus");
 
 		/* SET_CPUS_INTS bad ints */

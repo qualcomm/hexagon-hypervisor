@@ -80,7 +80,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, vmblock_init_op_t op,
 		arg1 &= ~CONFIG_USE_EXT;
 #endif
 
-		if ((arg1 > MAX_VM_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
+		if ((arg1 > H2K_ID_MAX_CPUS) || (arg2 > MAX_VM_INTS)) return 0; /* bad args */
 
 #ifdef DO_EXT_SWITCH
 		block = H2K_mem_alloc_get(VMBLOCK_SIZE(arg1, arg2, use_ext));

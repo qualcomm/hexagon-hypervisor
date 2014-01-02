@@ -111,7 +111,7 @@ H2K_mem_stlb_match_asid
 H2K_mem_stlb_quick_random_way
 H2K_mem_tlb_fill
 H2K_mem_tlb_fixup
-H2K_mem_tlb_insert
+H2K_mem_tlb_insert_unlock
 H2K_mem_tlb_invalidate_asid
 H2K_mem_tlb_invalidate_va
 H2K_mem_tlb_probe

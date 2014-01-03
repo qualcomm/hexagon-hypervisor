@@ -29,13 +29,6 @@ H2K_mem_alloc_tag_t Heap[SIZE] __attribute__((aligned(ALLOC_UNIT))) = {{{.size =
 
 int test = 1;
 
-/* void FAIL(const char *str, u32_t unit, u32_t expect, u32_t val) */
-/* { */
-/* 	puts("FAIL"); */
-/* 	printf(str, unit, expect, val); */
-/* 	exit(1); */
-/* } */
-
 void check_heap(u32_t unit, u32_t size, u32_t free) {
 
 	H2K_mem_alloc_tag_t *tag = &Heap[unit * ALLOC_UNIT - 1];

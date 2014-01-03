@@ -18,10 +18,10 @@ u32_t H2K_trap_info(u32_t op, H2K_thread_context *me) {
 		return H2K_gp->build_id;
 
 	case INFO_BOOT_FLAGS:
-		return H2K_gp->info_boot_flags.boot_flags;
+		return H2K_gp->info_boot_flags.raw;
 
 	case INFO_STLB:
-		return H2K_gp->info_stlb.stlb_config;
+		return H2K_gp->info_stlb.raw;
 
 	case INFO_SYSCFG:
 		asm volatile ( "%0 = syscfg\n" : "=r" (val));

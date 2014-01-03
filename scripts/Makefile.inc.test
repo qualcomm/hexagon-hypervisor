@@ -159,7 +159,7 @@ endif
 endif
 
 ifdef STANDALONE
-CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES)
+CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
 LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
 ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
 

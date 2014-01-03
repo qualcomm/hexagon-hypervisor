@@ -219,6 +219,7 @@ H2K_trap_hwconfig
 H2K_trap_hwconfig_l2cache
 H2K_trap_hwconfig_partitions
 H2K_trap_hwconfig_prefetch
+H2K_trap_info
 H2K_trap_pmuctrl
 H2K_trap_pmuctrl_getreg
 H2K_trap_pmuctrl_setreg

@@ -117,8 +117,10 @@
 
 #define STLB_MAX_SETS_LOG2 11
 #define STLB_MAX_SETS (1<<(STLB_MAX_SETS_LOG2))
+#define STLB_MULT 2
 #define STLB_MAX_WAYS 4
 #define STLB_SHIFT 16		// optimize for 64KB pages
+#define STLB_ENTRIES (STLB_MAX_SETS * STLB_MAX_WAYS * STLB_MULT)
 
 #define PAGE_BITS 12 /* Minimum page size: 4K */
 #define PAGE_SIZE (0x1 << PAGE_BITS)

@@ -14,19 +14,23 @@ typedef enum {
 	INFO_MAX
 } info_type;
 
-typedef struct {
-	unsigned long boot_flags;
-	unsigned long boot_use_tcm:1;  /**< Hypervisor in TCM? */
-	unsigned long boot_unused:31;
+typedef union {
+	struct {
+		unsigned long boot_use_tcm:1;  /**< Hypervisor in TCM? */
+		unsigned long boot_unused:31;
+	};
+	unsigned long raw;
 } info_boot_flags_type;
 
-typedef struct {
-	unsigned long stlb_config;
-	unsigned long stlb_max_sets_log2:8;  /**< Sets per ASID */
-	unsigned long stlb_max_ways:8;
-	unsigned long stlb_size:8;           /**< Multiple of sets * ways */
-	unsigned long stlb_unused:7;
-	unsigned long stlb_enabled:1;
+typedef union {
+	struct {
+		unsigned long stlb_max_sets_log2:8;  /**< Sets per ASID */
+		unsigned long stlb_max_ways:8;
+		unsigned long stlb_size:8;           /**< Multiple of sets * ways */
+		unsigned long stlb_unused:7;
+		unsigned long stlb_enabled:1;
+	};
+	unsigned long raw;
 } info_stlb_type;
 
 #endif

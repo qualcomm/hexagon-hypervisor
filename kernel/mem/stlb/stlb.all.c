@@ -12,9 +12,6 @@ s32_t H2K_mem_stlb_alloc() {
 	H2K_mem_alloc_block_t block;
 	int i, j;
 
-#define STLB_MULT 2
-#define STLB_ENTRIES (STLB_MAX_SETS * STLB_MAX_WAYS * STLB_MULT)
-
 	block = H2K_mem_alloc_get(sizeof(H2K_mem_stlb_asid_info_t) * MAX_ASIDS);
 	if (block.ptr == NULL) {
 		H2K_gp->stlbptr = NULL;

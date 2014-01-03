@@ -55,6 +55,8 @@ void H2K_vmtrap_vmpid(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); m
 void H2K_vmtrap_setregs(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x15; }
 void H2K_vmtrap_getregs(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x16; }
 void H2K_vmtrap_timer(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x18; }
+void H2K_vmtrap_pmuctrl(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x19; }
+void H2K_vmtrap_info(H2K_thread_context *me) { if (me != &a) FAIL("bad ptr"); me->r00 = 0x1a; }
 
 s32_t call_trap1(u32_t trapnum, H2K_thread_context *context);
 void TH_vectors();
@@ -66,7 +68,7 @@ u64_t guest_stack[128] __attribute__((aligned(128*8)));
 
 s32_t testvals[] = {
 	 0, 1, 2, 3, 4, 5,-1,-1,-1,-1,10,11,-1,13,14,15,
-	16,17,18,19,20,21,22,-1,24,-1,-1,-1,-1,-1,-1,-1
+	16,17,18,19,20,21,22,-1,24,25,26,-1,-1,-1,-1,-1
 };
 
 H2K_kg_t H2K_kg;

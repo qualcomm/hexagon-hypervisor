@@ -24,5 +24,6 @@ void H2K_vmtrap_vmpid(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_setregs(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_getregs(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 void H2K_vmtrap_pmuctrl(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
+void H2K_vmtrap_info(H2K_thread_context *me) IN_SECTION(".text.vm.funcs");
 
 #endif

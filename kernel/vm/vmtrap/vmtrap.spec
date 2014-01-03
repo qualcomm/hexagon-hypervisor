@@ -71,8 +71,8 @@ The table is as follows, and matches the Hexagon VM Architecture Spec:
  - 0x16	:cfunc:`H2K_vmtrap_getregs()`: Get Guest Registers
  - 0x17	:cfunc:`H2K_vmtrap_bad()`: Invalid Virtual Instruction
  - 0x18	:cfunc:`H2K_vmtrap_timer()`: Operate Virtual Timer
- - 0x19	:cfunc:`H2K_vmtrap_bad()`: Invalid Virtual Instruction
- - 0x1A	:cfunc:`H2K_vmtrap_bad()`: Invalid Virtual Instruction
+ - 0x19	:cfunc:`H2K_vmtrap_pmuctrl()`: Virtual PMU control
+ - 0x1A	:cfunc:`H2K_vmtrap_info()`: System configuration info
  - 0x1B	:cfunc:`H2K_vmtrap_bad()`: Invalid Virtual Instruction
  - 0x1C	:cfunc:`H2K_vmtrap_bad()`: Invalid Virtual Instruction
  - 0x1D	:cfunc:`H2K_vmtrap_bad()`: Invalid Virtual Instruction

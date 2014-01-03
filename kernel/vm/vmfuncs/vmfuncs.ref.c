@@ -26,11 +26,6 @@
 #include <dosched.h>
 #include <vmwork.h>
 
-void H2K_vmtrap_version(H2K_thread_context *me)
-{
-	me->r00 = H2K_VM_VERSION;
-}
-
 /* 1 */
 void H2K_vmtrap_return(H2K_thread_context *me)
 {

@@ -9,6 +9,8 @@
 #include <h2_common_asid.h>
 #include <h2_common_vmint.h>
 #include <h2_common_timer.h>
+#include <h2_common_pmu.h>
+#include <h2_common_info.h>
 
 void h2_vmtrap_return();
 int h2_vmtrap_setvec(void *ptr);
@@ -28,6 +30,8 @@ int h2_vmtrap_vmpid();
 void h2_vmtrap_setregs(unsigned int g0, unsigned int g1, unsigned int g2, unsigned int g3);
 void h2_vmtrap_getregs(unsigned int *regsptr);
 unsigned long long int h2_vmtrap_timerop(timerop_type op, unsigned long long int timeout);
+int h2_vmtrap_pmuctrl(pmuop_type op, unsigned int id, unsigned int arg1, unsigned int arg2);
+int h2_vmtrap_info(info_type type);
 
 #endif
 

@@ -11,14 +11,6 @@
 
 #define ME r0
 
-FUNC_START H2K_vmtrap_version .text.vm.funcs .falign
-	{
-		r1 = ##H2K_VM_VERSION
-		memw(ME+#CONTEXT_r00) = r1.new
-		jumpr r31
-	}
-FUNC_END H2K_vmtrap_version
-
 FUNC_START H2K_vmtrap_return .text.vm.funcs .falign
 #define SSR r1
 #define GSSR_GELR r3:2

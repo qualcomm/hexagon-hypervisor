@@ -12,7 +12,8 @@ s32_t H2K_mem_stlb_alloc() {
 	H2K_mem_alloc_block_t block;
 	int i, j;
 
-#define STLB_ENTRIES (STLB_MAX_SETS * 2 * STLB_MAX_WAYS)
+#define STLB_MULT 2
+#define STLB_ENTRIES (STLB_MAX_SETS * STLB_MAX_WAYS * STLB_MULT)
 
 	block = H2K_mem_alloc_get(sizeof(H2K_mem_stlb_asid_info_t) * MAX_ASIDS);
 	if (block.ptr == NULL) {
@@ -35,6 +36,11 @@ s32_t H2K_mem_stlb_alloc() {
 		H2K_gp->stlbptr[i].waymask = 0xffffffff;
 		H2K_gp->stlbptr[i].pagesize = 0; // FIXME?
 	}
+
+	H2K_gp->info_stlb.stlb_max_sets_log2 = STLB_MAX_SETS_LOG2;
+	H2K_gp->info_stlb.stlb_max_ways = STLB_MAX_WAYS;
+	H2K_gp->info_stlb.stlb_size = STLB_MULT;
+	H2K_gp->info_stlb.stlb_enabled = 1;
 
 	return STLB_ENTRIES;
 }

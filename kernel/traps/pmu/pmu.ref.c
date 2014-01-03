@@ -20,7 +20,7 @@ static const pmuctrlptr_t H2K_pmuctrltab[PMUCTRL_MAX] IN_SECTION(".data.config.p
 	H2K_trap_pmuctrl_getreg
 };
 
-u32_t H2K_trap_pmuctrl(pmuop_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
+u32_t H2K_trap_pmuctrl(pmuop_type configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
 {
 	if (configtype >= PMUCTRL_MAX) return -1;
 	return H2K_pmuctrltab[configtype](0,val1,val2,val3,me);

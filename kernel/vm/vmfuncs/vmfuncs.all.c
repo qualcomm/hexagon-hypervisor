@@ -5,6 +5,8 @@
 
 #include <pmu.h>
 #include <vmblock.h>
+#include <globals.h>
+#include <info.h>
 
 void H2K_vmtrap_pmuctrl(H2K_thread_context *me) {
 
@@ -32,3 +34,14 @@ void H2K_vmtrap_pmuctrl(H2K_thread_context *me) {
 		me->r00 = H2K_trap_pmuctrl(me->r00, me->r01, me->r02, me->r03, me);
 	}
 }
+
+void H2K_vmtrap_version(H2K_thread_context *me)
+{
+	me->r00 = H2K_VM_VERSION;
+}
+
+void H2K_vmtrap_info(H2K_thread_context *me) {
+
+	me->r00 = H2K_trap_info(me->r00, me);
+}
+

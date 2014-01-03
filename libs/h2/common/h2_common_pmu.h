@@ -11,6 +11,6 @@ typedef enum {
 	PMUCTRL_SETREG,     /**< Operation: write a register */
 	PMUCTRL_GETREG,     /**< Operation: read a register */
 	PMUCTRL_MAX
-} pmuop_t;
+} pmuop_type;
 
 #endif

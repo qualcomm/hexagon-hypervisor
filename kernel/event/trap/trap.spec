@@ -99,9 +99,9 @@ is used wherever empty traptab spaces exist.  The table is as follows:
  - 0x17 :cfunc:`H2K_thread_id()`: Get the thread ID
  - 0x18 :cfunc:`H2K_thread_id()`: Get the thread ID
  - 0x19 :cfunc:`H2K_thread_id()`: Get the thread ID
- - 0x1A :cfunc:`H2K_thread_id()`: Get the thread ID
+ - 0x1A :cfunc:`H2K_trap_info()`: Get system configuration info
  - 0x1B :cfunc:`H2K_waitcycles_get()`: Get waitcycles for a hardware thread
- - 0x1C :cfunc:`H2K_vmboot()`: Start VM
+ - 0x1C :cfunc:`H2K_vmop()`: Boot/query/free a VM
  - 0x1D :cfunc:`H2K_trap_pmuctrl()`: Adjust PMU Configuration
  - 0x1E :cfunc:`H2K_trap_config()`: Adjust Kernel Configuration
  - 0x1F :cfunc:`H2K_trap_hwconfig()`: Adjust Hardware Configuration

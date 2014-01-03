@@ -273,7 +273,7 @@ Functionality
 Sets r0 with GELR, r1 with GSSR, r2 with GOSP, and r3 with GBADVA.
 
 H2K_vmtrap_pmuctrl
---------------------
+------------------
 
 .. cfunction:: void H2K_vmtrap_pmuctrl(H2K_thread_context *me)
 
@@ -292,6 +292,22 @@ ID 0) then call :cfunc:`H2K_trap_pmuctrl()` with the given arguments for each
 thread ID in the current vmblock.  Return the number of successful calls in r0.
 
 Else return the result of :cfunc:`H2K_trap_pmuctrl()` in r0.
+
+H2K_vmtrap_info
+---------------
+
+.. cfunction:: void H2K_vmtrap_info(H2K_thread_context *me)
+
+	:param me: Pointer to the current thread context
+
+Description
+~~~~~~~~~~~
+
+Call H2K_trap_info()
+
+Functionality
+~~~~~~~~~~~~~
+Return the result of :cfunc:`H2K_trap_info()` in r0;
 
 Testing
 -------

@@ -27,7 +27,7 @@ int main() {
 
 	info_stlb_type stlb_info;
 
-	u32_t sysc;
+	u32_t val;
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_kg_init(0, 0);
@@ -48,8 +48,11 @@ int main() {
 	if (stlb_info.stlb_size != STLB_MULT) FAIL("STLB size");
 	if (stlb_info.stlb_enabled != 1) FAIL("STLB enabled");
 
-	asm volatile ( "%0 = syscfg\n" : "=r" (sysc));
-	if (H2K_trap_info(INFO_SYSCFG, 0) != sysc) FAIL("SYSCFG");
+	asm volatile ( "%0 = syscfg\n" : "=r" (val));
+	if (H2K_trap_info(INFO_SYSCFG, 0) != val) FAIL("SYSCFG");
+
+	asm volatile ( "%0 = rev\n" : "=r" (val));
+	if (H2K_trap_info(INFO_REV, 0) != val) FAIL("REV");
 
 	puts("TEST PASSED\n");
 	return 0;

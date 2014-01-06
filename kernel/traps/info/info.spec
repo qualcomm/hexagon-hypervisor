@@ -19,5 +19,5 @@ Return the requested configuration parameter
 Functionality
 ~~~~~~~~~~~~~
 
-Return one of: build ID, boot flags, STLB configuration, SYSCFG register.
+Return one of: build ID, boot flags, STLB configuration, SYSCFG register, REV register.
 Return -1 on unknown request.

@@ -27,6 +27,10 @@ u32_t H2K_trap_info(u32_t op, H2K_thread_context *me) {
 		asm volatile ( "%0 = syscfg\n" : "=r" (val));
 		return val;
 
+	case INFO_REV:
+		asm volatile ( "%0 = rev\n" : "=r" (val));
+		return val;
+
 	default:
 		return -1;
 	}

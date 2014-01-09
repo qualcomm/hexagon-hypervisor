@@ -56,8 +56,6 @@ FUNC_START start .entry .p2align 12
 	ickill					// 2
 	dckill					// 3
 	l2kill					// 4
-	//	r15.h = #hi(H2K_bootmap_ptr)		// 5
-	//	r15.l = #lo(H2K_bootmap_ptr)		// 6
 	nop            // 5
 	nop 					 // 6
 	r0 = #(SYSCFG_G | SYSCFG_D)					// 7
@@ -123,6 +121,21 @@ FUNC_START start .entry .p2align 12
 	r14 = asl(r14, #CFG_TABLE_SHIFT)  // SSBASE
 
 #ifdef H2K_USE_TCM
+
+	// First see if there's room; only possible on v5
+#if ARCHV <= 4
+#error USE_TCM on <= v4?
+#endif
+
+	// FIXME: We do this all over again later.  Maybe set up this part of
+	// SYSCFG here.
+	r15 = rev
+	r15 = lsr(r15, #12)
+	r15 = and(r15, #0xf)
+
+	// Bail out if L2 size not 768K
+	p0 = cmp.eq(r15, #6)
+	if (!p0) jump .Lthere
 
 	r8 = #CFG_TABLE_L2TCM
 	r11 = memw_phys(r8, r9) // r11 == L2TCM[35:16]

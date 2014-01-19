@@ -6,6 +6,8 @@
 #ifndef H2_COMMON_LINEAR_H
 #define H2_COMMON_LINEAR_H 1
 
+#include "c_std.h"
+
 typedef union {
 	struct {
 		union {

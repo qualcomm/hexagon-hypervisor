@@ -127,8 +127,6 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_pcycles_get // 16
 	}
 	{
-		//r1 = sgp0
-		//jump H2K_set_prefetch // 17
 		r0 = sgp0
 		jump H2K_thread_id
 	}
@@ -161,8 +159,8 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_id // 24
 	}
 	{
-		r0 = sgp0
-		jump H2K_thread_id // 25
+		r2 = sgp0
+		jump H2K_thread_state // 25
 	}
 	{
 		r1 = sgp0

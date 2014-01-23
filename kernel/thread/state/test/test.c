@@ -71,7 +71,7 @@ int main() {
 			q++;
 		}
 
-		if (v = H2K_thread_state(id, offset, &me) != val) {
+		if ((v = H2K_thread_state(id, offset, &me)) != val) {
 			printf("Read 0x%016llu, expected 0x%016llu at offset %d\n", v, val, offset);
 			FAIL("Bad value from context");
 		}

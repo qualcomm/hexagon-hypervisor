@@ -47,7 +47,7 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	//r14 = m0
 	r13 = ssr
 	//r12 = elr
-	memd(r7+#CONTEXT_sr_preds) = r15:14
+	memd(r7+#CONTEXT_usrp30) = r15:14
 	//memd(r7+#CONTEXT_gpugp) = r23:22
 	memd(r7+#CONTEXT_lc0sa0) = r19:18
 	//memd(r7+#CONTEXT_lc1sa1) = r17:16
@@ -98,7 +98,7 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	//r17:16 = memd(r7+#CONTEXT_lc1sa1)
 	r19:18 = memd(r7+#CONTEXT_lc0sa0)
 	//r23:22 = memd(r7+#CONTEXT_gpugp)
-	r15:14 = memd(r7+#CONTEXT_sr_preds)
+	r15:14 = memd(r7+#CONTEXT_usrp30)
 	ssr = r12
 	//m0 = r14
 	//m1 = r15

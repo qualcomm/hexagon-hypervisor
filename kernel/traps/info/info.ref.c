@@ -6,9 +6,8 @@
 #include <c_std.h>
 #include <context.h>
 #include <globals.h>
-#include <h2_common_info.h>
 
-u32_t H2K_trap_info(u32_t op, H2K_thread_context *me) {
+u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 	u32_t val;
 

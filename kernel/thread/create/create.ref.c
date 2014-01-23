@@ -64,7 +64,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	vmblock->free_threads = vmblock->free_threads->next;
 	tmp->base_prio = tmp->prio = prio;
 	tmp->gp = H2K_get_gp();
-	tmp->sr = me->sr;
+	tmp->usr = me->usr;
 	tmp->ssr = me->ssr;
 	tmp->elr = pc;
 	tmp->r29 = sp;

@@ -30,7 +30,7 @@ TH_do_tlbmissx:
 	r5:4 = memd(r0+#CONTEXT_m1m0)
 	r7:6 = memd(r0+#CONTEXT_lc1sa1)
 	r9:8 = memd(r0+#CONTEXT_lc0sa0)
-	r11:10 = memd(r0+#CONTEXT_sr_preds)
+	r11:10 = memd(r0+#CONTEXT_usrp30)
 	r13:12 = memd(r0+#CONTEXT_gpugp)
 	//ssr = r3
 	//elr = r2
@@ -86,7 +86,7 @@ TH_do_tlbmissrw:
 	r5:4 = memd(r0+#CONTEXT_m1m0)
 	r7:6 = memd(r0+#CONTEXT_lc1sa1)
 	r9:8 = memd(r0+#CONTEXT_lc0sa0)
-	r11:10 = memd(r0+#CONTEXT_sr_preds)
+	r11:10 = memd(r0+#CONTEXT_usrp30)
 	r13:12 = memd(r0+#CONTEXT_gpugp)
 	//ssr = r3
 	//elr = r2

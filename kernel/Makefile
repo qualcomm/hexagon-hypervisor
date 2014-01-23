@@ -137,13 +137,17 @@ ref: build/ref/libh2kernel.a
 
 ref_install: ref
 	mkdir -p $(INSTALLPATH)/lib
+	mkdir -p $(INSTALLPATH)/include
 	cp build/ref/libh2kernel.a $(INSTALLPATH)/lib
+	cp include/asm_offsets.h $(INSTALLPATH)/include # for state trap
 
 opt: build/opt_v$(ARCHV)/libh2kernel.a
 
 opt_install: opt
 	mkdir -p $(INSTALLPATH)/lib
+	mkdir -p $(INSTALLPATH)/include
 	cp build/opt_v$(ARCHV)/libh2kernel.a $(INSTALLPATH)/lib
+	cp include/asm_offsets.h $(INSTALLPATH)/include # for state trap
 
 check: build/ref/libh2check.a
 

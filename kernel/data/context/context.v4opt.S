@@ -57,7 +57,7 @@ FUNC_START H2K_context_save .text.core.context .p2align 5
 	}
 	{
 		memd(r7+#CONTEXT_r0100) = r1:0
-		memd(r7+#CONTEXT_sr_preds) = r19:18
+		memd(r7+#CONTEXT_usrp30) = r19:18
 		callr r31
 		r28.l = #lo(H2K_kg)
 	}
@@ -71,7 +71,7 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	r16 = sgp0					// can save if sgp in known register
 	{
 		r13:12 = memd(r16+#CONTEXT_ccrssr)
-		r15:14 = memd(r16+#CONTEXT_sr_preds)
+		r15:14 = memd(r16+#CONTEXT_usrp30)
 	}
 	{
 		r29:28 = memd(r16+#CONTEXT_r2928)

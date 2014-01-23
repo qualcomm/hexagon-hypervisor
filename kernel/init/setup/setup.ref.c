@@ -101,7 +101,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 
 	boot->base_prio = boot->prio = bootvm->bestprio;
 	boot->gpugp = BOOT_THREAD_GPUGP;
-	boot->sr = BOOT_THREAD_USR;
+	boot->usr = BOOT_THREAD_USR;
 	boot->ssr = (BOOT_THREAD_SSR);
 	boot->elr = ((u32_t)(__bootvm_entry) - boot_offset);
 	boot->r0100 = 0;

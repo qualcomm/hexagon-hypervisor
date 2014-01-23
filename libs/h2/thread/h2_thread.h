@@ -60,6 +60,15 @@ Read the Software TID, a value used by the debug hardware to distinguish softwar
 @returns Current TID value
 @dependencies None
 */
-unsigned int h2_thread_get_tid (void);
+unsigned int h2_thread_get_tid(void);
+
+/**
+Read values from the given offset in the thread context specified by id.
+@param[in] id  Thread ID to query
+@param[in] offset  Byte offset of data to read
+@returns 64-bit value at offset, or -1ULL if error
+*/
+unsigned long long int h2_thread_state(unsigned int id, unsigned int offset);
+
 #endif
 

@@ -1,5 +1,5 @@
 
-:mod:`waitcycles` -- querying the number of cycles spent in wait mode
+:mod:`waitcycles` -- Query the number of cycles spent in wait mode
 =====================================================================
 
 

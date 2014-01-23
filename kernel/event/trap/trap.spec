@@ -95,10 +95,10 @@ is used wherever empty traptab spaces exist.  The table is as follows:
  - 0x13 :cfunc:`H2K_tid_get()`: Get software thread ID
  - 0x14 :cfunc:`H2K_futex_lock_pi()`: Priority Inheritance Futexy-Mutex Lock
  - 0x15 :cfunc:`H2K_futex_unlock_pi()`: Priority Inheritance Futexy-Mutex Unlock
- - 0x16 :cfunc:`H2K_thread_id()`: Get the thread ID
+ - 0x16 :cfunc:`H2K_timer_trap()`: Timer operations
  - 0x17 :cfunc:`H2K_thread_id()`: Get the thread ID
  - 0x18 :cfunc:`H2K_thread_id()`: Get the thread ID
- - 0x19 :cfunc:`H2K_thread_id()`: Get the thread ID
+ - 0x19 :cfunc:`H2K_thread_state()`: Read thread context
  - 0x1A :cfunc:`H2K_trap_info()`: Get system configuration info
  - 0x1B :cfunc:`H2K_waitcycles_get()`: Get waitcycles for a hardware thread
  - 0x1C :cfunc:`H2K_vmop()`: Boot/query/free a VM

@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(lc0sa0);
 	PRINT_CONTEXT_OFFSET(lc1sa1);
 	PRINT_CONTEXT_OFFSET(m1m0);
-	PRINT_CONTEXT_OFFSET(sr_preds);
+	PRINT_CONTEXT_OFFSET(usrp30);
 	PRINT_CONTEXT_OFFSET(totalcycles);
 	PRINT_CONTEXT_OFFSET(id);
 	PRINT_CONTEXT_OFFSET(vmblock);
@@ -73,6 +73,7 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(gbadva_gosp);
 	PRINT_CONTEXT_OFFSET(cs1cs0);
 	PRINT_CONTEXT_OFFSET(atomic_status_word);
+	PRINT_CONTEXT_OFFSET(cpuint_enabled_pending);
 	fprintf(outfile, "#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
 #ifdef DO_EXT_SWITCH
 	fprintf(outfile, "#define EXT_CONTEXT_SIZE %d\n",sizeof(H2K_ext_context));

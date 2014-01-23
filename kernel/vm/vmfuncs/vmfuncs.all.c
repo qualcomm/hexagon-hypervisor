@@ -42,6 +42,6 @@ void H2K_vmtrap_version(H2K_thread_context *me)
 
 void H2K_vmtrap_info(H2K_thread_context *me) {
 
-	me->r00 = H2K_trap_info(me->r00, me);
+	me->r00 = H2K_trap_info((info_type)(me->r00), me);
 }
 

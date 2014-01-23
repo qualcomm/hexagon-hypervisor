@@ -150,10 +150,10 @@ typedef struct _h2_thread_context
 	u64_t r1918;	// OK FOR DCZEROA
 	u64_t r1716;
 	union {
-		u64_t sr_preds;
+		u64_t usrp30;
 		struct {
-			u32_t preds;
-			u32_t sr;
+			u32_t p30;
+			u32_t usr;
 		};
 	};
 	union {
@@ -193,7 +193,7 @@ typedef struct _h2_thread_context
 	u64_t lc1sa1;	// OK FOR DCZEROA
 	u64_t m1m0;
 	union {
-		u64_t ccr_rsvd;		// OK to move to cleared area?
+		u64_t reserved_elr;		// OK to move to cleared area?
 		struct {
 			u32_t elr;
 			u32_t reserved_u32;

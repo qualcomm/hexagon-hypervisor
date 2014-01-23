@@ -39,6 +39,7 @@
 ./kernel/sched/yield/test
 ./kernel/thread/create/test
 ./kernel/thread/id/test
+./kernel/thread/state/test
 ./kernel/thread/stop/test
 ./kernel/traps/config/test
 ./kernel/traps/hwconfig/test

@@ -5,25 +5,80 @@
 
 #include <stdio.h>
 #include <h2.h>
+#include <asm_offsets.h>
+
+typedef union {
+	struct {
+		unsigned int word0;
+		unsigned int word1;
+	};
+	unsigned long long int raw;
+} val_t;
+
+#define CPRINT_PAIR(name) \
+	val.raw = h2_thread_state(id, CONTEXT_ ## name);  \
+	printf(#name ":\t0x%08x  0x%08x\n", val.word1, val.word0);
+
+#define CPRINT_WORD(name) \
+	val.raw = h2_thread_state(id, CONTEXT_ ## name);  \
+	printf(#name ":\t0x%08x\n", val.word0);
+
+#define CPRINT_BYTE(name) \
+	val.raw = h2_thread_state(id, CONTEXT_ ## name);					\
+	printf(#name ":\t0x%02x\n", val.word0 & 0xff);
 
 static void h2_default_error_handler(int evt)
 {
 	unsigned int regs[4];
-	unsigned int *ptr;
 	unsigned int i;
+	unsigned int id;
+	val_t val;
+	unsigned int *ptr;
+
 	regs[0] = 0xcafe;
 	regs[1] = 0xbabe;
 	regs[2] = 0xdead;
 	regs[3] = 0xbeef;
-	printf("Fatal error: %d/0x%x",evt,evt);
+	printf("Fatal error: %d/0x%x\n",evt,evt);
 	h2_vmtrap_getregs(regs);
-	printf("g0: 0x%08x g1: 0x%08x g2: 0x%08x g3: 0x%08x\n",
+	printf("GELR (g0): 0x%08x\nGSSR (g1): 0x%08x\nGOSP (g2): 0x%08x\nGBADVA (g3): 0x%08x\n",
 		regs[0],regs[1],regs[2],regs[3]);
-	ptr = (void *)h2_thread_myid();
-	printf("ThreadID: %08x\n",(unsigned int)ptr);
-	for (i = 0; i < 64; i+=4) {
-		printf("%d: 0x%08x 0x%08x 0x%08x 0x%08x\n",i*4,ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);
-	}
+	id = h2_thread_myid();
+	printf("ThreadID: %08x\n\n", id);
+
+	printf("Registers:\n\n");
+	CPRINT_PAIR(r0100);
+	CPRINT_PAIR(r0302);
+	CPRINT_PAIR(r0504);
+	CPRINT_PAIR(r0706);
+	CPRINT_PAIR(r0908);
+	CPRINT_PAIR(r1110);
+	CPRINT_PAIR(r1312);
+	CPRINT_PAIR(r1514);
+	CPRINT_PAIR(r1716);
+	CPRINT_PAIR(r1918);
+	CPRINT_PAIR(r2120);
+	CPRINT_PAIR(r2322);
+	CPRINT_PAIR(r2524);
+	CPRINT_PAIR(r2726);
+	CPRINT_PAIR(r2928);
+	CPRINT_PAIR(r3130);
+	CPRINT_PAIR(gpugp);
+	CPRINT_PAIR(lc0sa0);
+	CPRINT_PAIR(lc1sa1);
+	CPRINT_PAIR(m1m0);
+	CPRINT_PAIR(usrp30);
+	CPRINT_PAIR(cs1cs0);
+	CPRINT_PAIR(ccrssr);
+	CPRINT_WORD(elr);
+
+	printf("\nOther state:\n\n");
+	CPRINT_BYTE(tid);
+	CPRINT_BYTE(hthread);
+	CPRINT_BYTE(prio);
+	CPRINT_PAIR(cpuint_enabled_pending);
+
+	printf("\nStack:\n\n");
 	asm ( " %0 = r30 " : "=r"(ptr));
 	for (i = 0; i < 64; i+=4) {
 	    printf("%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",(unsigned int)ptr+i,

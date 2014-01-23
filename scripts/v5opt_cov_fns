@@ -165,6 +165,7 @@ H2K_thread_create
 H2K_thread_create_no_squash
 H2K_thread_id
 H2K_thread_init
+H2K_thread_state
 H2K_thread_stop
 H2K_tid_get
 H2K_tid_set

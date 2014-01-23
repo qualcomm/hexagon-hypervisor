@@ -122,7 +122,7 @@ TEST_ONE_PAIR(r29,r28,r2928,28)
 TEST_ONE_PAIR(lc0,sa0,lc0sa0,100)
 //TEST_ONE_PAIR(lc1,sa1,lc1sa1,102)
 //TEST_ONE_PAIR(m1,m0,m1m0,104)
-TEST_ONE_PAIR(usr,p3:0,sr_preds,(-0xDEA00000))
+TEST_ONE_PAIR(usr,p3:0,usrp30,(-0xDEA00000))
 //TEST_ONE_PAIR(gp,ugp,gpugp,0x01000000)
 #if ARCHV >= 4
 //TEST_ONE_PAIR(cs1,cs0,cs1cs0,108)

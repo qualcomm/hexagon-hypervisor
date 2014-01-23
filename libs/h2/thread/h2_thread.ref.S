@@ -52,3 +52,8 @@ h2_thread_set_tid:
 h2_thread_get_tid:
 	trap0(#H2_TRAP_GET_TID)
 	jumpr r31
+
+	.global h2_thread_state
+h2_thread_state:
+	trap0(#H2_TRAP_THREAD_STATE)
+	jumpr r31

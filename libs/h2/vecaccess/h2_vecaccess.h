@@ -17,7 +17,7 @@
 #include <h2_hwconfig.h>
 #include <hexagon_protos.h>
 
-#define VEC_ACCESS_NUM_CONTEXTS 2
+#define VEC_ACCESS_NUM_CONTEXTS 4
 #define VEC_ACCESS_START 4
 
 /**
@@ -82,7 +82,7 @@ static inline h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc
 	ret.length = H2_VECACCESS_VLENGTH_MAX;
 
 	if (length == H2_VECACCESS_VLENGTH_MOST) length = H2_VECACCESS_VLENGTH64;
-	if (length < H2_VECACCESS_VLENGTH32 || length >= H2_VECACCESS_VLENGTH_MAX) return ret;  // error
+	if (length <= H2_VECACCESS_VLENGTH32 || length >= H2_VECACCESS_VLENGTH_MAX) return ret;  // error
 
 	h2_sem_down(&vacc->sem); 
 	do {
@@ -91,7 +91,7 @@ static inline h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc
 		new_active = old_active | (1<<idx);
 	} while (h2_atomic_compare_swap32(&vacc->active,old_active,new_active) != old_active);
 	/* TURN ON VECTOR */
-	res = h2_hwconfig_extbits(VEC_ACCESS_START + (idx << 1) + (length == H2_VECACCESS_VLENGTH32), 1);
+	res = h2_hwconfig_extbits(VEC_ACCESS_START + idx, 1);
 	if (res == 0) {
 		ret.idx = idx;
 		ret.length = length;

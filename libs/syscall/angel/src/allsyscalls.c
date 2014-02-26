@@ -21,7 +21,7 @@ typedef int __attribute__((__may_alias__)) int_a;
 static inline void clean(const void *vx,int words)
 {
 	const int_a volatile *x = (int_a *)vx;
-	int dummy __attribute__((unused));
+	//	int dummy __attribute__((unused));
 	int i;
 	int lines = 1;
 
@@ -32,11 +32,7 @@ static inline void clean(const void *vx,int words)
 	for (i = 0; i < lines; i++) {
 		asm volatile ("dccleaninva(%0)" : :"r"(x + (i * 8)):"memory");
 	};
-
-	// read back to sync mem
-	for (i = 0; i < lines; i++) {
-		dummy = *(x + (i * 8));
-	};
+	asm volatile (" syncht " : : : "memory");
 }
 
 static inline void clean_str(const char *x)

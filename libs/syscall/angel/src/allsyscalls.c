@@ -6,10 +6,9 @@
 #include <angel.h>
 #include <string.h>
 #include <stdlib.h>
-#include <c_std.h>
 
-#define ALIGN4_DOWN(X) ((X) & -4)
-#define ALIGN4_UP(X) (((X) + 3) & -4)
+#define ALIGN32_DOWN(X) ((X) & -32)
+#define ALIGN32_UP(X) (((X) + 31) & -32)
 
 unsigned int angel(unsigned int r0, void *r1, unsigned int r2) {
 
@@ -18,32 +17,32 @@ unsigned int angel(unsigned int r0, void *r1, unsigned int r2) {
 
 static inline void clean(const void *vx,int words)
 {
-	const int volatile *x = vx;
-	int dummy __attribute__((unused));
+	const int *x = vx;
 	int i;
-	int lines = 1;
-
-	words -= min(words, 8 - (((unsigned int)x & 31) >> 2));  // words in first line
-	lines += words >> 3;                                       // whole lines
-	lines += ((words & 0x7) > 0 ? 1 : 0);                      // remainder line
-
-	for (i = 0; i < lines; i++) {
-		asm volatile ("dccleaninva(%0)" : :"r"(x + (i * 8)):"memory");
+	for (i = 0; i < words; i++) {
+		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
 	};
+	asm volatile (" syncht ");
+}
 
-	// read back to sync mem
-	for (i = 0; i < lines; i++) {
-		dummy = *(x + (i * 8));
+/* X must be 32-byte aligned and COUNT must be a multiple of 32. */
+static inline void invalidate(const char *x,count_t count)
+{
+	count_t i;
+	for (i = 0; i < count; i += 32) {
+		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
 	};
+	asm volatile (" syncht ");
 }
 
 static inline void clean_str(const char *x)
 {
 	int len = strlen(x);
-	unsigned long start = ALIGN4_DOWN((unsigned int)x);
-	unsigned long end = ALIGN4_UP((unsigned int)x + len);
-
-	clean((void *)start, (end - start) / 4);
+	int i;
+	for (i = 0; i <= (len+1); i++) {
+		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
+	}
+	asm volatile (" syncht ");
 }
 
 errno_t sys_clock() { int x = 0; return ANGEL(SYS_CLOCK,&x,0); }
@@ -111,9 +110,9 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 	count_t ret;
 	struct { fd_t fd; char *buf; count_t count; } x;
 	unsigned long start,end;
-	start = ALIGN4_DOWN((unsigned long)buffer);
-	end = ALIGN4_UP((unsigned long)buffer + count);
-	clean((void *)start, end-start);
+	start = ALIGN32_DOWN((unsigned long)buffer);
+	end = ALIGN32_UP((unsigned long)buffer + count);
+	invalidate((void *)start, end-start);
 	x.buf = ANGEL_OFFSET_PTR(buffer);
 	x.fd = fd;
 	x.count = count;

@@ -16,11 +16,9 @@ unsigned int angel(unsigned int r0, void *r1, unsigned int r2) {
 	return __angel(r0, ANGEL_OFFSET_PTR(r1), r2);
 }
 
-typedef int __attribute__((__may_alias__)) int_a;
-
 static inline void clean(const void *vx,int words)
 {
-	const int_a volatile *x = (int_a *)vx;
+	const int volatile *x = vx;
 	int dummy __attribute__((unused));
 	int i;
 	int lines = 1;

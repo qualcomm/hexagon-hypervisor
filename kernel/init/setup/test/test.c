@@ -86,7 +86,7 @@ HELPER_FUNC(mem_alloc_init)
 //HELPER_FUNC(asid_table_init)
 //HELPER_FUNC(mem_stlb_init)
 
-void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset) { TH_init_seen |= 1<< kg_init; }
+void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index) { TH_init_seen |= 1<< kg_init; }
 
 extern H2K_vmblock_t *bootvm;
 

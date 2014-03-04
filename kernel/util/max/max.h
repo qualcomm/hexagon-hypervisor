@@ -27,16 +27,9 @@
 //#define DO_EXT_SWITCH 1
 
 #if ARCHV <= 3
-#define MAX_TLB_ENTRIES 63
 #define PHYSREAD_TEMP_MAP_IDX 63
 #define PHYSREAD_TEMP_MAP_VPN 0xfffff
-#elif ARCHV >= 5
-#define MAX_TLB_ENTRIES 128
-#else
-#define MAX_TLB_ENTRIES 64
 #endif
-
-#define TLB_LAST_KERNEL_ENTRY H2K_KERNEL_NPAGES
 
 #if ARCHV <= 3
 #define TLB_ENTRY_SIZE_BITS 20

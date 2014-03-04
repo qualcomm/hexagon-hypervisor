@@ -15,7 +15,7 @@ extern u64_t H2K_stacks;
 
 extern void _end();
 
-void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset) {
+void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index) {
 	int i;
 	u64_t *x;
 	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
@@ -25,7 +25,8 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset) {
 		x[i] = 0;
 	}
 	H2K_kg.phys_offset = phys_offset;
-	H2K_kg.tlb_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
+	H2K_kg.tlb_index = 0;
+	H2K_kg.last_tlb_index = last_tlb_index;
 	H2K_kg.traptab_addr = H2K_traptab;
 	H2K_kg.stacks_addr = &H2K_stacks;
 

@@ -58,6 +58,7 @@ typedef struct {
 #endif
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
+	u32_t last_tlb_index;
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];
 	u64_t waitcycles[MAX_HTHREADS];
@@ -95,7 +96,7 @@ static inline H2K_kg_t PURITY *H2K_gp_llvm()
 #undef PURITY
 #endif
 
-void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset) IN_SECTION(".text.init.globals");
+void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index) IN_SECTION(".text.init.globals");
 
 #endif
 

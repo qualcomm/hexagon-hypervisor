@@ -42,10 +42,10 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 	H2K_mutex_lock_tlb();
 	index = *p_index;
 
-	if ((index + 1) < MAX_TLB_ENTRIES) {
+	if ((index + 1) <= H2K_gp->last_tlb_index) {
 		*p_index = index + 1;
 	} else {
-		*p_index = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1;
+		*p_index = 0;
 	}
 
 #if ARCHV <= 3

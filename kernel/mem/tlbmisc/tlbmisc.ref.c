@@ -12,6 +12,7 @@
 #include <asid.h>
 #include <linear.h>
 #include <pagewalk.h>
+#include <globals.h>
 
 void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me)
 {
@@ -55,8 +56,8 @@ void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_con
 		gsize = H2K_mem_tlbfmt_get_size(entry) * 2;
 	}
 
-	if ((end >> gsize) - (start >> gsize) > MAX_TLB_ENTRIES) {
-		for (i = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1; i < MAX_TLB_ENTRIES; i++) {
+	if ((end >> gsize) - (start >> gsize) > H2K_gp->last_tlb_index) {
+		for (i = 0; i <= H2K_gp->last_tlb_index; i++) {
 			entry.raw = H2K_mem_tlb_read(i);
 			size = 0x1 << (H2K_mem_tlbfmt_get_size(entry) * 2 + PAGE_BITS);
 			if (entry.vpn >= start && entry.vpn + size - 1 <= end) { // in range
@@ -103,7 +104,7 @@ void H2K_mem_tlb_invalidate_asid(u32_t asid) {
 	u64_t tmp,mask,check;
 	mask = ((u64_t)(MAX_ASIDS - 1)) << (32+20);
 	check = (((u64_t)(asid)) << (32+20)) & mask;
-	for (i = ((u32_t)&TLB_LAST_KERNEL_ENTRY) + 1; i < MAX_TLB_ENTRIES; i++) {
+	for (i = 0; i <= H2K_gp->last_tlb_index; i++) {
 
 		H2K_TLB_ATOMIC_START;
 		tmp = H2K_mem_tlb_read(i);

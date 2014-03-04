@@ -99,16 +99,6 @@ FUNC_START start .entry .p2align 12
 	cswi(r0)
 	ciad(r0)
 
-	/* Clear TLB */
-	r3:2 = #0
-	r1 = #0
-1:
-	DO_TLBW(3,2,1)
-
-	r1 = add(r1,#1)
-	p0 = cmp.eq(r1,#MAX_TLB_ENTRIES)
-	if (!p0) jump 1b
-
 	// Read cfg_table
 	r9 = cfgbase
 	r9 = asl(r9, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
@@ -120,6 +110,8 @@ FUNC_START start .entry .p2align 12
 	r14 = memw_phys(r8, r9) // r14 == SSBASE[35:16]
 	r14 = asl(r14, #CFG_TABLE_SHIFT)  // SSBASE
 
+	r15 = rev
+
 #ifdef H2K_USE_TCM
 
 	// First see if there's room; only possible on v5
@@ -129,12 +121,11 @@ FUNC_START start .entry .p2align 12
 
 	// FIXME: We do this all over again later.  Maybe set up this part of
 	// SYSCFG here.
-	r15 = rev
-	r15 = lsr(r15, #12)
-	r15 = and(r15, #0xf)
+	r16 = lsr(r15, #12)
+	r16 = and(r16, #0xf)  // L2 size
 
 	// Bail out if L2 size not 768K
-	p0 = cmp.eq(r15, #6)
+	p0 = cmp.eq(r16, #6)
 	if (!p0) jump .Lthere
 
 	r8 = #CFG_TABLE_L2TCM
@@ -173,14 +164,57 @@ FUNC_START start .entry .p2align 12
 
 #endif
 
+	r16 = and(r15, #0xff)    // arch version
+	p0 = cmp.eq(r16, #0x60)  // v60?
+	if (p0) jump .Lv60
+
+	// < v60
+	r16 = lsr(r15, #8)
+	r16 = and(r16, #0xf)  // uarch config
+	p0 = cmp.eq(r16, #2)  // v55c
+	if (p0) jump .Ljtlb64
+	p0 = cmp.eq(r16, #3)  // v55d
+	if (p0) jump .Ljtlb64
+
+	r16 = #128            // all others
+	jump .Ltlbsetup
+
+.Lv60:
+	r16 = lsr(r15, #8)
+	r16 = and(r16, #0xf)  // uarch config
+	p0 = cmp.eq(r16, #2)  // v60c
+	if (p0) jump .Ljtlb64
+	p0 = cmp.eq(r16, #5)  // v60f
+	if (p0) jump .Ljtlb64
+
+	r16 = #128            // all others
+	jump .Ltlbsetup
+
+.Ljtlb64:
+	r16 = #64
+
+.Ltlbsetup:
+	/* Clear TLB */
+	r3:2 = #0
+	r1 = #0
+4:
+	DO_TLBW(3,2,1)
+
+	r1 = add(r1,#1)
+	p0 = cmp.eq(r1, r16)  // # tlb entries
+	if (!p0) jump 4b
+
 	// Set up TLB entries for jump to virtual space
 	r10 = pc
 
 	SETCONST(r4, H2K_KERNEL_NPAGES)
-	r1 = #0
+	r1 = sub(r16, r4)
+	r1 = add(r1, #-1)  // starting index for pinned entries
+	r16 = add(r1, #-1) // last free entry
+	r5 = #0
 
 2:
-	r2 = asl(r1, #BOOT_TLB_PGBITS)
+	r2 = asl(r5, #BOOT_TLB_PGBITS)
 	SETCONST(r3, H2K_LINK_ADDR)
 	r3 = add(r3, r2)
 	r3 = lsr(r3, #BOOT_TLB_PGBITS)
@@ -191,6 +225,7 @@ FUNC_START start .entry .p2align 12
 	DO_TLBW(3,2,1)
 
 	r1 = add(r1, #1)
+	r5 = add(r5, #1)
 	r10 = pc
 	r10 += asl(r1,#BOOT_TLB_PGBITS)
 	r4 = add(r4, #-1)
@@ -203,9 +238,13 @@ FUNC_START start .entry .p2align 12
 	// r14 == SSBASE
 	MAKE_TLBLO_DEV(r2, r14, r11)
 	DO_TLBW(3,2,1)
-	r1 = add(r1, #1)
+
+	// index for temporary entry
+	r1 = #0
 #endif
 
+	// Don't make a temporary entry if we're loaded at the link address,
+	// to avoid multiple tlb match since the permanent entry will match.
 	r10 = pc
 	SETCONST(r11,H2K_LINK_ADDR)
 	r12 = and(r11,r10)
@@ -305,7 +344,8 @@ FUNC_START start .entry .p2align 12
 	r13 = asl(r13, #BOOT_TLB_PGBITS)
 	r1 = sub(r11, r13)  // boot_offset
 
-	r2 = r14  // subsystem base
+	r2 = r14  // ssbase
+	r3 = r16  // # last_tlb_index
 
 	jump H2K_thread_boot
 FUNC_END start

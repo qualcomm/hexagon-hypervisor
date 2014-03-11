@@ -284,7 +284,7 @@ int run_elf(char *elf, char *cmdline)
 		h2_vmtrap_wait();
 		h2_vmtrap_setie(1); // take the interrupt to clear it
 		status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-		printf("VM %lu status %x\n", vm, status);
+		printf("VM %lu status 0x%x\n", vm, status);
 		cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
 		printf("VM %lu Live CPUs: %d\n", vm, cpus);
 	} while (cpus != 0);

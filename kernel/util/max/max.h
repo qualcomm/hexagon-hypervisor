@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+/* defines only */
+
 #ifndef H2K_MAX_H
 #define H2K_MAX_H
 
 #include <h2_common_pmap.h>
+#include <h2_common_defs.h>
 
 #ifndef MAX_HTHREADS
 #if ARCHV <= 3
@@ -18,10 +21,6 @@
 #elif ARCHV == 60
 #define MAX_HTHREADS 4
 #endif
-#endif
-
-#if ARCHV >= 60
-#define HAVE_EXTENSIONS 1
 #endif
 
 //#define DO_EXT_SWITCH 1
@@ -182,6 +181,11 @@
 #define SYSCFG_G (0x1 << 4)
 #define SYSCFG_R (0x1 << 5)
 #define SYSCFG_C (0x1 << 6)
+
+#ifdef HAVE_EXTENSIONS
+#define SYSCFG_V2X (0x1 << 7)
+#define V2X_LENGTH 7
+#endif
 
 #define SYSCFG_IDA (0x1 << 8)
 #define SYSCFG_PM (0x1 << 9)

@@ -183,7 +183,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_trap_config // 30
 	}
 	{
-		r4 = sgp0
+		r5 = sgp0
 		jump H2K_trap_hwconfig // 31
 	}
 

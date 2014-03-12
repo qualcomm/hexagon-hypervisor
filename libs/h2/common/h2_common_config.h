@@ -6,6 +6,8 @@
 #ifndef H2_COMMON_CONFIG_H
 #define H2_COMMON_CONFIG_H 1
 
+#include <h2_common_defs.h>
+
 typedef enum {
 	CONFIG_VMBLOCK_INIT,
 	CONFIG_STLB_ALLOC,

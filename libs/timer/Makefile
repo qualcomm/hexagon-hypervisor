@@ -1,8 +1,8 @@
 
 INCLUDES = -I../h2/include -I../blast/include -I../qube/include -Iinclude
 
-CFLAGS = -mv$(TOOLARCH) $(INCLUDES) -Wall -g $(OPTIMIZE) -G0
-ASFLAGS = -mv$(TOOLARCH) $(INCLUDES) -Wall
+CFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) $(INCLUDES) -Wall -g $(OPTIMIZE) -G0
+ASFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) $(INCLUDES) -Wall
 
 ifeq (v4, $(Q6VERSION))
 CFLAGS += -Wa,--gdwarf2

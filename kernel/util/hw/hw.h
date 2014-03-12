@@ -162,6 +162,11 @@ static inline void H2K_ickill()
 	asm volatile (" ickill ");
 }
 
+static inline void H2K_l2kill()
+{
+	asm volatile (" l2kill ");
+}
+
 static inline u32_t H2K_get_modectl()
 {
 	u32_t ret;

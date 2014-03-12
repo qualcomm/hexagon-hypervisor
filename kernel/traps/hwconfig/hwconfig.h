@@ -11,13 +11,13 @@
 #include <h2_common_hwconfig.h>
 #include <max.h>
 
-u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
-u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *ptr, u32_t size, u32_t unused2, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
-u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *ptr, u32_t size, u32_t unused2, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
-u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t val4, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *ptr, u32_t size, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *ptr, u32_t size, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *handler, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 
 #ifdef HAVE_EXTENSIONS
-u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, u32_t length, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 #endif
 
 #endif

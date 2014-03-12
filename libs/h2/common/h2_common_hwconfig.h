@@ -6,6 +6,8 @@
 #ifndef H2_COMMON_HWCONFIG_H
 #define H2_COMMON_HWCONFIG_H 1
 
+#include <h2_common_defs.h>
+
 typedef enum {
 	HWCONFIG_L2CACHE,
 	HWCONFIG_PARTITIONS,

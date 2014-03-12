@@ -101,7 +101,6 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	return 0;
 }
 
-#ifdef HAVE_EXTENSIONS
 u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, u32_t length, H2K_thread_context *me) {
 
 #ifdef HAVE_EXTENSIONS
@@ -134,4 +133,3 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	return -1;
 #endif
 }
-#endif

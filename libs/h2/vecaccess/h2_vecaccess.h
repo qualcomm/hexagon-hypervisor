@@ -69,7 +69,7 @@ typedef enum {
 Initialize the Vector Access type.
 @param[in] vacc    Address of the Vector Access structure
 @param[in] length  Requested vector length
-@returns 0 on success; -1 on error
+@returns 0 on success; negative on error
 @dependencies None
 */
 

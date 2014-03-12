@@ -27,7 +27,7 @@ as h2_hwconfig_partition().
 @dependencies None
 */
 
-int h2_hwconfig_trap(hwconfig_type_t whichtrap, void *ptr, unsigned int a, unsigned int b, unsigned int c);
+int h2_hwconfig_trap(hwconfig_type_t whichtrap, void *ptr, unsigned int a, unsigned int b);
 
 /** 
 Configure the L2 cache size.
@@ -39,7 +39,7 @@ Configure the L2 cache size.
 
 static inline int h2_hwconfig_l2cache_size(unsigned int sizeval, unsigned int use_wb)
 {
-	return h2_hwconfig_trap(HWCONFIG_L2CACHE, NULL, sizeval, use_wb, 0);
+	return h2_hwconfig_trap(HWCONFIG_L2CACHE, NULL, sizeval, use_wb);
 }
 
 /** 
@@ -52,7 +52,7 @@ Configure partitioning.
 
 static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int prefetch_cfg)
 {
-	return h2_hwconfig_trap(HWCONFIG_PARTITIONS, NULL, whichcache, prefetch_cfg, 0);
+	return h2_hwconfig_trap(HWCONFIG_PARTITIONS, NULL, whichcache, prefetch_cfg);
 }
 
 /** 
@@ -65,23 +65,27 @@ Configure prefetch.
 
 static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int partition_cfg)
 {
-	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, partition_cfg, 0);
+	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, partition_cfg);
 }
 
 /** 
-Set XA, XE bits, vector length.
+Set XA, XE bits.
 @param[in] xa XA value
 @param[in] xe XE value
-@param[in] length LOG2(vector length); 0 == don't change
 @returns 0 on success, negative value on error
 @dependencies None
 */
 
-static inline int h2_hwconfig_extbits(unsigned int xa, unsigned int xe, unsigned int length)
+static inline int h2_hwconfig_extbits(unsigned int xa, unsigned int xe)
 {
-	return h2_hwconfig_trap(HWCONFIG_EXTBITS, NULL, xa, xe, length);
+	return h2_hwconfig_trap(HWCONFIG_EXTBITS, NULL, xa, xe);
 }
+
+static inline int h2_hwconfig_vlength(unsigned int vlength)
+{
+	return h2_hwconfig_trap(HWCONFIG_EXTBITS, NULL, vlength, 0);
+}
+
 #endif
 
 /** @} */
-

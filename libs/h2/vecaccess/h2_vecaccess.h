@@ -17,7 +17,19 @@
 #include <h2_hwconfig.h>
 #include <hexagon_protos.h>
 
-#define H2_VECACCESS_NUM_CONTEXTS 4  // when using shortest vlength
+#define H2_VECACCESS_NUM_HVX_CONTEXTS 4  // when using shortest vlength
+
+enum {
+	H2_VECACCESS_EXT_SILVER = 0,
+	H2_VECACCESS_EXT_HVX = 4
+};
+
+enum {
+	H2_VECACCESS_VLENGTH_MIN,
+	H2_VECACCESS_VLENGTH_32 = 5,
+	H2_VECACCESS_VLENGTH_64,
+	H2_VECACCESS_VLENGTH_128
+};
 
 /**
 @brief Definition of the vecaccess type.  Please do not use directly.
@@ -40,74 +52,60 @@ typedef union {
 	unsigned long long int raw;
 } h2_vecaccess_ret_t;
 
-enum {
-	H2_VECACCESS_VLENGTH_32 = 5,
-	H2_VECACCESS_VLENGTH_64,
-	H2_VECACCESS_VLENGTH_128,
-	H2_VECACCESS_VLENGTH_MAX = 0xffff,
-	H2_VECACCESS_VLENGTH_END
-};
-
-enum {
-	H2_VECACCESS_EXT_SILVER = 0,
-	H2_VECACCESS_EXT_HVX = 4,
-	H2_VECACCESS_EXT_END
-};
-
 /**
 @brief Extension and vector-length selection.
 */
 typedef enum {
-	H2_VECACCESS_SILVER_32 = (H2_VECACCESS_EXT_SILVER << 16) + H2_VECACCESS_VLENGTH_32,
-	H2_VECACCESS_SILVER = (H2_VECACCESS_EXT_SILVER << 16) + H2_VECACCESS_VLENGTH_MAX,
-	H2_VECACCESS_HVX_64 = (H2_VECACCESS_EXT_HVX << 16) + H2_VECACCESS_VLENGTH_64,
-	H2_VECACCESS_HVX_128 = (H2_VECACCESS_EXT_HVX << 16) + H2_VECACCESS_VLENGTH_128,
-	H2_VECACCESS_HVX = (H2_VECACCESS_EXT_HVX << 16) + H2_VECACCESS_VLENGTH_MAX
+	H2_VECACCESS_SILVER,
+	H2_VECACCESS_SILVER_MAX,
+	H2_VECACCESS_HVX_64,
+	H2_VECACCESS_HVX_128,
+	H2_VECACCESS_HVX_MAX
 } h2_vecaccess_request_t;
 
 /**
 Initialize the Vector Access type.
-@param[in] vacc    Address of the Vector Access structure
-@param[in] length  Requested vector length
-@returns 0 on success; negative on error
+@param[in] vacc  Address of the Vector Access structure
+@param[in] req  Requested extension and vector length
+@returns 0 on success; -1 on error
 @dependencies None
 */
 
-#define EXT_LEN_LO 0
-#define EXT_LEN_HI 1
-
 static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, h2_vecaccess_request_t req) {
 
-	static int ext_sizes[H2_VECACCESS_EXT_END][2] =
-		{
-			[H2_VECACCESS_EXT_SILVER] = {H2_VECACCESS_VLENGTH_32, H2_VECACCESS_VLENGTH_32},
-			[H2_VECACCESS_EXT_HVX] = {H2_VECACCESS_VLENGTH_64, H2_VECACCESS_VLENGTH_128}
-		};
-
-	unsigned int length = (unsigned int)req & 0xffff;
-	unsigned int ext = req >> 16;
 	int ret;
 
-	if (ext >= H2_VECACCESS_EXT_END) {
-		return -2;      // invalid extension
-	}
-	if (ext_sizes[ext][EXT_LEN_LO] == 0) {
-		return -3;  // invalid extension
-	}
-		
-	if (length < ext_sizes[ext][EXT_LEN_LO] || length > ext_sizes[ext][EXT_LEN_HI]) {
-		return -4;  // bad length
-	}
+	/* Block be default if init fails */
+	h2_sem_init_val(&vacc->sem, 0);
 
-	ret = h2_hwconfig_extbits(0, 0, length);  // set vector length
-	if (ret < 0) {  // error
-		return ret;
-	}
+	switch(req) {
+	case H2_VECACCESS_SILVER:
+	case H2_VECACCESS_SILVER_MAX:
+		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_MIN)) <0) return ret;
+		vacc->ext = H2_VECACCESS_EXT_SILVER;
+		vacc->length = H2_VECACCESS_VLENGTH_128;
+		h2_sem_init_val(&vacc->sem, 1);
+		break;
 
+	case H2_VECACCESS_HVX_64:
+		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_64)) <0) return ret;
+		vacc->ext = H2_VECACCESS_EXT_HVX;
+		vacc->length = H2_VECACCESS_VLENGTH_64;
+		h2_sem_init_val(&vacc->sem, H2_VECACCESS_NUM_HVX_CONTEXTS);
+		break;
+
+	case H2_VECACCESS_HVX_128:
+	case H2_VECACCESS_HVX_MAX:
+		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_128)) <0) return ret;
+		vacc->ext = H2_VECACCESS_EXT_HVX;
+		vacc->length = H2_VECACCESS_VLENGTH_128;
+		h2_sem_init_val(&vacc->sem, H2_VECACCESS_NUM_HVX_CONTEXTS / 2);
+		break;
+
+	default:
+		return -1;
+	}
 	vacc->active = 0;
-	vacc->length = length;
-	vacc->ext = ext;
-	h2_sem_init_val(&vacc->sem, H2_VECACCESS_NUM_CONTEXTS / (1 << (length - ext_sizes[ext][EXT_LEN_LO])));
 	return 0;
 }
 
@@ -135,7 +133,7 @@ static inline h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc
 		new_active = old_active | (1<<idx);
 	} while (h2_atomic_compare_swap32(&vacc->active,old_active,new_active) != old_active);
 	/* TURN ON VECTOR */
-	res = h2_hwconfig_extbits(vacc->ext + idx, 1, 0);
+	res = h2_hwconfig_extbits(vacc->ext + idx, 1);
 	if (res == 0) {
 		ret.idx = idx;
 		ret.length = vacc->length;
@@ -156,7 +154,7 @@ static inline int h2_vecaccess_release(h2_vecaccess_state_t *vacc, int idx)
 	int ret;
 
 	/* TURN OFF VECTORS */
-	ret = h2_hwconfig_extbits(0, 0, 0);
+	ret = h2_hwconfig_extbits(0, 0);
 	h2_atomic_clrbit32(&vacc->active,idx);
 	h2_sem_up(&vacc->sem);
 

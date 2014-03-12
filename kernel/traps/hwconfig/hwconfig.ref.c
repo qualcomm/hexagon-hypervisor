@@ -13,26 +13,29 @@
 #include <cache.h>
 #include <hexagon_protos.h>
 
-typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, u32_t, H2K_thread_context *);
+typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
 static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.hwconfig") = {
 	H2K_trap_hwconfig_l2cache,
 	H2K_trap_hwconfig_partitions,
 	H2K_trap_hwconfig_prefetch,
 	H2K_trap_hwconfig_extbits,
+	H2K_trap_hwconfig_vlength,
 };
 
-u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t val4, H2K_thread_context *me)
+u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 {
 	if (configtype >= HWCONFIG_MAX) return -1;
-	return H2K_hwconfigtab[configtype](0, ptr, val2, val3, val4, me);
+	return H2K_hwconfigtab[configtype](0, ptr, val2, val3, me);
 }
 
-u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t use_wb, u32_t unused4, H2K_thread_context *me)
+u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t use_wb, H2K_thread_context *me)
 {
 	u32_t cur_size;
 	u32_t cur_wb;
 	u32_t syscfg;
+
+	/* Don't need to lock here since we only proceed in ST mode */
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS;
 	cur_wb = (syscfg & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT;
@@ -68,18 +71,20 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 	return 0;
 }
 
-u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, u32_t unused4, H2K_thread_context *me)
+u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)
 {
 	u32_t syscfg;
 	u64_t insertval;
 	insertval = (2ULL << 32) | (25+(2*whatcache));
+	BKL_LOCK();
 	syscfg = H2K_get_syscfg();
 	syscfg = Q6_R_insert_RP(syscfg,configval,insertval);
 	H2K_set_syscfg(syscfg);
+	BKL_UNLOCK();
 	return 0;
 }
 
-u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, u32_t unused4, H2K_thread_context *me)
+u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)
 {
 	/* SSR/CCR gets saved/restored at trap time.  If that changes to switch
 	 * time, modify SSR/CCR directly. */
@@ -101,33 +106,46 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	return 0;
 }
 
-u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, u32_t length, H2K_thread_context *me) {
+u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) {
 
 #ifdef HAVE_EXTENSIONS
-	u32_t cur, new;
-	
-/* FIXME: This needs to be virtualized */
-	if (length > 0) {
-		cur = H2K_get_syscfg();
-		if (length >= V2X_LENGTH) {  // turn on long vectors
-			new = cur | SYSCFG_V2X;
-		} else {
-			new = cur & ~SYSCFG_V2X;
-		}
-		if (new != cur) {
-			H2K_set_syscfg(new);
-			H2K_isync();
-			cur = H2K_get_syscfg();
-			if (cur != new) {  // failed
-				return -1;
-			}
-		}
-	}
 
 	/* FIXME: should check for allowed XA values here */
 	me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
 	me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
 
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {
+
+#ifdef HAVE_EXTENSIONS
+
+	u32_t cur, new;
+	
+/* FIXME: This needs to be virtualized */
+
+	BKL_LOCK();
+	cur = H2K_get_syscfg();
+	if (vlength >= V2X_LENGTH) {  // turn on long vectors
+		new = cur | SYSCFG_V2X;
+	} else {
+		new = cur & ~SYSCFG_V2X;
+	}
+	if (new != cur) {
+		H2K_set_syscfg(new);
+		H2K_isync();
+		cur = H2K_get_syscfg();
+		BKL_UNLOCK();
+		if (cur != new) {  // failed
+			return -1;
+		}
+	}
+
+	BKL_UNLOCK();
 	return 0;
 #else
 	return -1;

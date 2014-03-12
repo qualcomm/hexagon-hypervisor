@@ -35,22 +35,22 @@ void TH_test_pf()
 {
 	u32_t checkval = 0;
 	a.ssr = 0;
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,1,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,1,&a);
 	checkval |= 1<<22;
 	if (a.ssr != checkval) FAIL("HF_I");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,1,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,1,&a);
 	checkval |= 1<<23;
 	if (a.ssr != checkval) FAIL("HF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,1,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,1,&a);
 	checkval |= 1<<24;
 	if (a.ssr != checkval) FAIL("SF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,0,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,0,&a);
 	checkval ^= 1<<22;
 	if (a.ssr != checkval) FAIL("!HF_I");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,0,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,0,&a);
 	checkval ^= 1<<23;
 	if (a.ssr != checkval) FAIL("!HF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,0,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,0,&a);
 	checkval ^= 1<<24;
 	if (a.ssr != checkval) FAIL("!SF_D");
 }
@@ -59,22 +59,22 @@ void TH_test_pf()
 {
 	u32_t checkval = 0;
 	a.ccr = 0;
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,1,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,1,&a);
 	checkval |= 1<<16;
 	if (a.ccr != checkval) FAIL("HF_I");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,1,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,1,&a);
 	checkval |= 1<<17;
 	if (a.ccr != checkval) FAIL("HF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,1,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,1,&a);
 	checkval |= 1<<20;
 	if (a.ccr != checkval) FAIL("SF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,0,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,0,&a);
 	checkval ^= 1<<16;
 	if (a.ccr != checkval) FAIL("!HF_I");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,0,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,0,&a);
 	checkval ^= 1<<17;
 	if (a.ccr != checkval) FAIL("!HF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,0,0, &a);
+	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,0,&a);
 	checkval ^= 1<<20;
 	if (a.ccr != checkval) FAIL("!SF_D");
 }
@@ -89,7 +89,7 @@ int main()
 
 	/* Check base functionality for l2cache hwconfig */
 	TH_saw_l2_cleaninv = 0;
-	H2K_trap_hwconfig(0,NULL,1,0,0, &a);
+	H2K_trap_hwconfig(0,NULL,1,0,&a);
 	if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
@@ -98,7 +98,7 @@ int main()
 	if (cur_wb != 0) FAIL("Invalid mode");
 
 	TH_saw_l2_cleaninv = 0;
-	H2K_trap_hwconfig(0,NULL,1,1,0, &a);
+	H2K_trap_hwconfig(0,NULL,1,1,&a);
 	if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
@@ -107,7 +107,7 @@ int main()
 	if (cur_wb != 1) FAIL("Invalid mode");
 
 	TH_saw_l2_cleaninv = 0;
-	H2K_trap_hwconfig(0,NULL,1,0,0, &a);
+	H2K_trap_hwconfig(0,NULL,1,0,&a);
 	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
@@ -116,7 +116,7 @@ int main()
 	if (cur_wb != 0) FAIL("Invalid mode");
 
 	TH_saw_l2_cleaninv = 0;
-	H2K_trap_hwconfig(0,NULL,2,1,0, &a);
+	H2K_trap_hwconfig(0,NULL,2,1,&a);
 	if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
@@ -125,7 +125,7 @@ int main()
 	if (cur_wb != 1) FAIL("Invalid mode");
 
 	TH_saw_l2_cleaninv = 0;
-	H2K_trap_hwconfig(0,NULL,2,1,0, &a);
+	H2K_trap_hwconfig(0,NULL,2,1,&a);
 	if (TH_saw_l2_cleaninv) FAIL("no change");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
@@ -134,7 +134,7 @@ int main()
 	if (cur_wb != 1) FAIL("Invalid mode");
 
 	TH_saw_l2_cleaninv = 0;
-	H2K_trap_hwconfig(0,NULL,3,1,0, &a);
+	H2K_trap_hwconfig(0,NULL,3,1,&a);
 	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
@@ -144,18 +144,18 @@ int main()
 
 	/* Check for partitioning */
 	for (i = 0; i < 4; i++) {
-		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_I,i,0, &a);
+		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_I,i,&a);
 		syscfg = H2K_get_syscfg();
 		if (((syscfg >> 27) & 3) != i) FAIL("Bad partition config (I)");
 	}
 	for (i = 0; i < 4; i++) {
-		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_D,i,0, &a);
+		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_D,i,&a);
 		syscfg = H2K_get_syscfg();
 		if (((syscfg >> 25) & 3) != i) FAIL("Bad partition config (D)");
 	}
 #if ARCHV >= 4
 	for (i = 0; i < 4; i++) {
-		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_L2,i,0, &a);
+		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_L2,i,&a);
 		syscfg = H2K_get_syscfg();
 		if (((syscfg >> 29) & 3) != i) FAIL("Bad partition config (L2)");
 	}

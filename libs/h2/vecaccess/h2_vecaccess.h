@@ -20,7 +20,7 @@
 #define H2_VECACCESS_NUM_HVX_CONTEXTS 4  // when using shortest vlength
 
 enum {
-	H2_VECACCESS_EXT_SILVER = 0,
+	H2_VECACCESS_EXT_SILVER = 3,
 	H2_VECACCESS_EXT_HVX = 4
 };
 

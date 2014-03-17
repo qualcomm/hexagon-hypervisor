@@ -20,6 +20,8 @@ endif
 #
 #O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 
+CFLAGS += $(H2_EXTRA_CFLAGS)
+
 SRC_HFILES := 
 DEST_HFILES := 
 CLEAN_EXTRAS := 

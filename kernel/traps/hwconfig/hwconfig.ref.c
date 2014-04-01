@@ -139,8 +139,8 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 		H2K_set_syscfg(new);
 		H2K_isync();
 		cur = H2K_get_syscfg();
-		BKL_UNLOCK();
 		if (cur != new) {  // failed
+			BKL_UNLOCK();
 			return -1;
 		}
 	}

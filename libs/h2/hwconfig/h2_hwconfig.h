@@ -83,7 +83,7 @@ static inline int h2_hwconfig_extbits(unsigned int xa, unsigned int xe)
 
 static inline int h2_hwconfig_vlength(unsigned int vlength)
 {
-	return h2_hwconfig_trap(HWCONFIG_EXTBITS, NULL, vlength, 0);
+	return h2_hwconfig_trap(HWCONFIG_VLENGTH, NULL, vlength, 0);
 }
 
 #endif

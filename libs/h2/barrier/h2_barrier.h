@@ -26,7 +26,8 @@ typedef union {
 	struct {
 		unsigned short threads_left;
 		unsigned short version;
-		unsigned int threads_total;
+		unsigned short threads_total;
+		unsigned short spin_cycles;
 	};
 	unsigned long long int raw;
 } h2_barrier_t;
@@ -40,11 +41,17 @@ configured to wait for threads_total threads to arrive.
 @dependencies None
 */
 
-static inline int h2_barrier_init(h2_barrier_t *barrier, unsigned int threads_total)
+static inline int h2_barrier_init_spin(h2_barrier_t *barrier, unsigned short threads_total, unsigned short spin_cycles)
 {
 	barrier->raw = 0;
 	barrier->threads_left = barrier->threads_total = threads_total;
+	barrier->spin_cycles = spin_cycles;
 	return 0;
+}
+
+static inline int h2_barrier_init(h2_barrier_t *barrier, unsigned short threads_total)
+{
+	return h2_barrier_init_spin(barrier, threads_total, 0);
 }
 
 /**

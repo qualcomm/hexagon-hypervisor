@@ -62,21 +62,22 @@ h2_barrier_wait:
 	{
 		r4 = #1
 		r3.h = #1
+		r6 = lsr(r5, #16)  // spins
 	}
 	r2 = memw_locked(r0)
 	{
-		p0 = vcmph.eq(r5:4,r3:2)	// is least-significant half 1?
-		r1 = vaddh(r2,r3)		// add 1 to upper half, lower don't care
+		p0 = vcmph.eq(r5:4,r3:2)	// is threads_left (low hword) 1?
+		r1 = vaddh(r2,r3)		// add 1 to version, lower don't care
 	}
 	{
 		if (!p0) jump 4f		// Nope, go to wait
-		r1 = combine(r1.h,r5.l)		// incremented_count:threads_total
-		r3 = vsubh(r2,r4)		// sub 1 to lower half, upper unchanged
+		r1 = combine(r1.h,r5.l)		// incremented_version:threads_total
+		r3 = vsubh(r2,r4)		// threads_left--
 	}
 	memw_locked(r0,p0) = r1
 	{
 		if (!p0) jump 1b		// not atomic, start over
-		r1 = r5
+		r1 = and(r5, ##0xffff)  // threads_total
 	}
 	trap0(#H2_TRAP_FUTEX_WAKE)
 	{
@@ -87,6 +88,14 @@ h2_barrier_wait:
 	.falign
 4:
 	// we will probably need to block, waiting for others
+
+	// spin
+2:
+	{
+		p1 = cmp.eq(r6, #0)
+		if (!p1.new) jump:t 2b
+		r6 = add(r6, #-1)
+	}
 	memw_locked(r0,p0) = r3
 	{
 		if (!p0) jump 1b		// not atomic, start over

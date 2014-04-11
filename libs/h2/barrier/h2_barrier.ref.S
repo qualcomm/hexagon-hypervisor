@@ -55,22 +55,21 @@
 	.p2align 4
 h2_barrier_wait:
 	{
-		r29 = add(r29,#-8)
 		r5 = memw(r0+#4)		// get reset value
 	}
 1:
 	{
 		r4 = #1
 		r3.h = #1
-		r6 = lsr(r5, #16)  // spins
+		r2 = memw_locked(r0)
 	}
-	r2 = memw_locked(r0)
 	{
 		p0 = vcmph.eq(r5:4,r3:2)	// is threads_left (low hword) 1?
 		r1 = vaddh(r2,r3)		// add 1 to version, lower don't care
+		r6 = lsr(r5, #16)  // spins
 	}
 	{
-		if (!p0) jump 4f		// Nope, go to wait
+		if (!p0) jump 2f		// Nope, go to wait
 		r1 = combine(r1.h,r5.l)		// incremented_version:threads_total
 		r3 = vsubh(r2,r4)		// threads_left--
 	}
@@ -81,16 +80,12 @@ h2_barrier_wait:
 	}
 	trap0(#H2_TRAP_FUTEX_WAKE)
 	{
-		r29 = add(r29,#8)
 		r0 = #H2_BARRIER_SERIAL_THREAD
 		jumpr r31
 	}
 	.falign
-4:
-	// we will probably need to block, waiting for others
-
-	// spin
 2:
+	// spin
 	{
 		p1 = cmp.eq(r6, #0)
 		if (!p1.new) jump:t 2b
@@ -99,11 +94,10 @@ h2_barrier_wait:
 	memw_locked(r0,p0) = r3
 	{
 		if (!p0) jump 1b		// not atomic, start over
-		if (p0) memd(r29+#0) = r25:24	// save callee-save regs
-		if (p0) r25:24 = combine(r2,r0)	// orig count, ptr
+		if (p0) r9:8 = combine(r2,r0)	// orig count, ptr
 		if (p0) r1 = r3			// expected val
 	}
-1:
+3:
 	trap0(#H2_TRAP_FUTEX_WAIT)
 	/* Returned from futex wait.  This could be for two reasons:
 	 * 0. Trap fail (transitory / val changed / etc).  
@@ -111,17 +105,17 @@ h2_barrier_wait:
 	 * For either case, if the version has been bumped we are free to go.  Otherwise we 
 	 * want to wait on the new value, not what we read originally */
 	{
-		r2 = memw(r24)			// read count:threads_left
-		r3 = r25			// read orig_count:whatever
+		r2 = memw(r8)			// read version:threads_left
+		r3 = r9			// read orig_version:whatever
 	}
-	r3:2 = vlsrw(r3:2,#16)			// shift both right to get counts
+	r3:2 = vlsrw(r3:2,#16)			// shift both right to get versions
 	{
 		p0 = cmp.eq(r3,r2)		// If they match,
+		if (p0.new) r0 = r8
 		if (p0.new) r1 = r2
-		if (p0.new) jump:nt 1b		// spin again
+		if (p0.new) jump:nt 3b		// spin again
 	}
 	{
-		r25:24 = memd(r29++#8)		// read callee-save regs
 		r0 = #H2_BARRIER_OTHER
 		jumpr r31
 	}

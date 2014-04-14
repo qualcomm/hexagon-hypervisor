@@ -19,7 +19,7 @@ O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 all: libtimer.a
 
 libtimer.a: $(O_FILES)
-	$(AR) cru $@ $(O_FILES)
+	$(AR) cru $@ $(sort $(O_FILES))
 
 clean:
 	rm -Rf libtimer.a $(O_FILES)

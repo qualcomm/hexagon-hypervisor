@@ -18,5 +18,5 @@ clean:
 	rm -f libqube.a $(O_FILES)
 
 libqube.a: $(O_FILES)
-	$(AR) cru $@ $(O_FILES)
+	$(AR) cru $@ $(sort $(O_FILES))
 

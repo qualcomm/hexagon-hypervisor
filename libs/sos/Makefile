@@ -78,12 +78,12 @@ endif
 
 build/ref/libsos.a: $(REF_OFILES)
 	mkdir -p $(dir $@); \
-	$(AR) cru $@ $(REF_OFILES);
+	$(AR) cru $@ $(sort $(REF_OFILES);)
 
 build/opt_v$(ARCHV)/libsos.a: $(OPT_V$(ARCHV)_OFILES)
 	echo $(OPT_V$(ARCHV)_OFILES); \
 	mkdir -p $(dir $@); \
-	$(AR) cru $@ $(OPT_V$(ARCHV)_OFILES);
+	$(AR) cru $@ $(sort $(OPT_V$(ARCHV)_OFILES);)
 
 %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<

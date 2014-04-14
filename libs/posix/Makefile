@@ -19,5 +19,5 @@ clean:
 	rm -f libposix.a $(O_FILES)
 
 lib${LIBNAME}.a: $(O_FILES)
-	$(AR) cru $@ $(O_FILES)
+	$(AR) cru $@ $(sort $(O_FILES))
 

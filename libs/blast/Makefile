@@ -19,5 +19,5 @@ clean:
 	rm -f libblast.a $(O_FILES)
 
 libblast.a: $(O_FILES)
-	$(AR) cru $@ $(O_FILES)
+	$(AR) cru $@ $(sort $(O_FILES))
 

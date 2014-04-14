@@ -71,16 +71,16 @@ endif
 
 build/ref/libh2os.a: $(REF_OFILES)
 	mkdir -p $(dir $@)
-	$(AR) cru $@ $(REF_OFILES)
+	$(AR) cru $@ $(sort $(REF_OFILES))
 
 build/opt_v$(ARCHV)/libh2os.a: $(OPT_V$(ARCHV)_OFILES)
 	@echo $(OPT_V$(ARCHV)_OFILES)
 	mkdir -p $(dir $@)
-	$(AR) cru $@ $(OPT_V$(ARCHV)_OFILES)
+	$(AR) cru $@ $(sort $(OPT_V$(ARCHV)_OFILES))
 
 build/ref/libh2check.a: $(CHECK_OFILES)
 	mkdir -p $(dir $@)
-	$(AR) cru $@ $(CHECK_OFILES)
+	$(AR) cru $@ $(sort $(CHECK_OFILES))
 
 
 %.o : %.c

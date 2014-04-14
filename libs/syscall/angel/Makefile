@@ -15,5 +15,5 @@ clean:
 	rm -f libangel.a $(O_FILES)
 
 libangel.a: $(O_FILES)
-	$(AR) cru $@ $(O_FILES)
+	$(AR) cru $@ $(sort $(O_FILES))
 

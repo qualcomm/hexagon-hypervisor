@@ -98,10 +98,10 @@
 #define VM_IPI_INT 0
 #if ARCHV <= 4
 #define TIMER_INT 50
-#elif ARCHV >= 5
+#elif ARCHV == 5
 #define TIMER_INT 34
 #else
-#define TIMER_INT 35
+#define TIMER_INT 33
 #endif
 
 #define MAX_TRACE_LEVEL 0

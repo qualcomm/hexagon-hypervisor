@@ -54,12 +54,13 @@ export RUN_DEVSIM := devsim --quiet --magic_angel --subsystem_base $(SUBSYSTEM_B
 
 export RUN_TOOLSIM := hexagon-sim --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
 
-# FIXME: TOOLARCH := $(ARCHV) once tools support -mv60
+export TOOLARCH := $(ARCHV)
+
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
-export TOOLARCH := 5
+#export TOOLARCH := 5
 export RUN := $(RUN_DEVSIM)
 else
-export TOOLARCH := $(ARCHV)
+#export TOOLARCH := $(ARCHV)
 export RUN := $(RUN_TOOLSIM)
 endif
 

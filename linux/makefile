@@ -21,6 +21,16 @@ H2K_LOAD_ADDR=0x0
 LINUX_LINK_ADDR=0x02000000
 endif
 
+ifeq ($(TARGET), zebu_v60)
+ARCHV := 60
+H2K_KERNEL_PGSIZE := 3
+H2K_ALLOC_HEAP_SIZE := 0xb000
+#NO_LOAD=1
+#NO_PRINT=1
+H2K_LOAD_ADDR=0x0
+LINUX_LINK_ADDR=0x04000000
+endif
+
 include ../scripts/Makefile.inc.tools
 
 H2DIR := ..

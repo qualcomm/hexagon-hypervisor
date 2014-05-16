@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define LINUX_NUM_VCPU 3
+#define LINUX_NUM_VCPU 4
 #define UCOS_NUM_VCPU 1
 
 #define TOTAL_INTS 288

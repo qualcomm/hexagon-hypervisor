@@ -46,6 +46,8 @@ endif
 
 OPTIMIZE=-O2
 
+BOOTVM_PROG := loadlinux
+
 CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -I. -Iinc -Isrc -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L. -L$(INSTALLPATH)/lib $(EXTRA_CFLAGS)
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 
@@ -132,17 +134,8 @@ $(UCOS_BIN):
 $(UCOS_OBJ): ucos_image.S $(UCOS_BIN)
 	${CC} ${CFLAGS} -c -o $@ ucos_image.S
 
-bootvm_image: loadlinux.o loadlinux_event.o $(BOOTVM_IMAGE_DEPS) $(UCOS_BIN) $(UCOS_OBJ)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=linux_stext=$(LINUX_STEXT) $(UCOS_LINK) -o bootvm_image loadlinux.o loadlinux_event.o $(UCOS_OBJ) $(BOOTVM_ENTRY_O)
-
-loadlinux: $(BOOTVM_O) $(BOOTVM_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -o loadlinux $(BOOTVM_O)
-
-%.o: %.c
-	${CC} ${CFLAGS} -c -o $@ $<
-
-%.o: %.S
-	${CC} ${CFLAGS} -c -o $@ $<
+$(BOOTVM_IMAGE): loadlinux.o loadlinux_event.o $(BOOTVM_IMAGE_DEPS) $(UCOS_BIN) $(UCOS_OBJ)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=linux_stext=$(LINUX_STEXT) $(UCOS_LINK) -o $@ loadlinux.o loadlinux_event.o $(UCOS_OBJ) $(BOOTVM_ENTRY_O)
 
 clean:
 	$(MAKE) -C ../ucos clean

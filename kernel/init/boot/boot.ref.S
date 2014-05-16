@@ -58,7 +58,7 @@ FUNC_START start .entry .p2align 12
 	l2kill					// 4
 	nop            // 5
 	nop 					 // 6
-	r0 = #(SYSCFG_G | SYSCFG_D)					// 7
+	r0 = #(SYSCFG_I | SYSCFG_D)					// 7
 	syscfg = r0				// 0
 	isync					// 1 ... needs to be in same cache line as syscfg
 	/* Setup EVB */

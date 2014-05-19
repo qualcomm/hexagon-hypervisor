@@ -106,7 +106,7 @@ void H2K_register_passthru(u32_t phys_int, H2K_id_t id, u32_t virt_int) {
 	}
 }
 
-#ifdef H2K_L2_CONTROL
+#if H2K_L2_CONTROL && ! defined NO_DEVICES
 static void H2K_intconfig_l2_init(ssbase)
 {
 

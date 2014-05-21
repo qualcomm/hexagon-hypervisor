@@ -21,4 +21,10 @@ typedef enum {
 	H2K_INTOP_FIRST_INVALID_OP
 } intop_type;
 
+typedef enum {
+	H2K_IE_DISABLE,
+	H2K_IE_ENABLE,
+	H2K_IE_END
+} ie_type;
+
 #endif

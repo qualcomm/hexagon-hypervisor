@@ -77,6 +77,7 @@ static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 	}
 }
 
+#ifndef NO_DEVICES
 static void H2K_timer_hw_init()
 {
 	H2K_gp->time.last_ticks = H2K_TIME_BIGBANG;
@@ -85,6 +86,7 @@ static void H2K_timer_hw_init()
 	H2K_gp->time.devptr[HW_ENABLE] = 1;
         H2K_intcontrol_enable(TIMER_INT);
 }
+#endif
 
 #else /* <= V4 TIMERS */
 
@@ -135,6 +137,7 @@ static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 	H2K_gp->time.devptr[HW_MATCH_HI] = nextticks >> 32;
 }
 
+#ifndef NO_DEVICES
 static void H2K_timer_hw_init()
 {
 	H2K_gp->time.last_ticks = H2K_TIME_BIGBANG;
@@ -147,6 +150,7 @@ static void H2K_timer_hw_init()
 	H2K_intcontrol_enable(TIMER_INT);
 }
 
+#endif
 #endif
 
 /* ***************** KERNEL INFRASTRUCTURE ********************* */
@@ -214,6 +218,8 @@ void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 
 void H2K_timer_init(u32_t devpage_offset) {
 
+#ifndef NO_DEVICES
+
 	u32_t timer_base = Q6_SS_BASE_VA + devpage_offset + TIMER_OFFSET;
 	/* Register fastint */
 	H2K_gp->time.timeouts = NULL;
@@ -221,6 +227,8 @@ void H2K_timer_init(u32_t devpage_offset) {
 	if (H2K_gp->time.devptr == NULL) H2K_gp->time.devptr = (void *)(timer_base);
 	H2K_timer_hw_init();
 	H2K_timer_get_ticks();
+
+#endif
 }
 
 /* ***************** USER INTERFACES ********************* */

@@ -112,7 +112,7 @@ void vmmain(void *unused)
 {
 	unsigned int i;
 	unsigned int flag;
-	h2_handle_errors();
+	h2_handle_errors(0);
 	printf("Hello, World!\n");
 	printf("TID: %x\n",h2_thread_myid());
 	//h2_config_add_thread_storage(context_space,sizeof(context_space));

@@ -165,7 +165,7 @@ void spawn_pi_caller(int tnum, int prio, int *futex_addr)
 
 void vmmain(void *x)
 {
-	h2_handle_errors();
+	h2_handle_errors(0);
 	futex1 = futex0 = h2_thread_myid();
 
 	h2_sem_init_val(&startup_sem,0);

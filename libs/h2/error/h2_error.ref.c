@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <h2.h>
 #include <asm_offsets.h>
+#include <h2_common_error.h>
 
 typedef union {
 	struct {
@@ -26,6 +27,8 @@ typedef union {
 #define CPRINT_BYTE(name) \
 	val.raw = h2_thread_state(id, CONTEXT_ ## name);					\
 	printf(#name ":\t0x%02x\n", val.word0 & 0xff);
+
+static int do_exit = 0;
 
 static void h2_default_error_handler(int evt)
 {
@@ -84,7 +87,11 @@ static void h2_default_error_handler(int evt)
 	    printf("%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",(unsigned int)ptr+i,
 		   ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);
 	}
-	h2_thread_stop(0);
+
+	if (do_exit) {
+		exit(1);
+	}
+	h2_thread_stop(H2_THREAD_FATAL_ERROR);
 }
 
 static void (*errfuncs[16])(int) = {
@@ -123,7 +130,7 @@ void h2_handle_eventd() { errfuncs[0xd](0xd); }
 void h2_handle_evente() { errfuncs[0xe](0xe); }
 void h2_handle_eventf() { errfuncs[0xf](0xf); }
 
-void h2_handle_errors()
+void h2_handle_errors(int exit_flag)
 {
 	void *errtab;
 	__asm__ __volatile__ (
@@ -150,6 +157,8 @@ void h2_handle_errors()
 	" { %0 = r31; r31 = %0 }\n"
 	: "=r"(errtab));
 	h2_vmtrap_setvec(errtab);
+
+	do_exit = exit_flag;
 }
 
 void h2_set_handler(int eventnum, void (*fn)(int))

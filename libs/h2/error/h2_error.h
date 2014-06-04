@@ -15,11 +15,13 @@
 /**
 Sets up basic error handling, causing any exception to crash with a (hopefully)
 useful diagnostic message
+
+@param[in] exit_flag  TRUE == call exit()
 @returns None
 @dependencies None
 */
 
-void h2_handle_errors(void);
+void h2_handle_errors(int exit_flag);
 
 /**
 If H2 error handling is enabled using h2_handle_errors(), this routine allows

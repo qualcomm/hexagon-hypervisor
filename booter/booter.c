@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include <h2_common_pmap.h>
 #include <h2_common_config.h>
+#include <h2_common_error.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -52,6 +53,9 @@ static unsigned int startprio = VM_BEST_PRIO;
 /* rebooting */
 static unsigned int boots = 1;
 static unsigned int expect_status = 0;
+
+/* exit on error */
+static unsigned int error_exit = 0;
 
 static H2K_offset_t offset = {{
 		.size = SIZE_4M,
@@ -108,6 +112,7 @@ void usage()
 	printf("  --arg <int>\n\tInitial argument (R0) for first virtual CPU.  Default 0.\n");
 	printf("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status.  Default 1.\n");
 	printf("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
+	printf("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 0.\n");
 	printf("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 }		
@@ -287,6 +292,10 @@ int run_elf(char *elf, char *cmdline)
 		printf("VM %lu status 0x%x\n", vm, status);
 		cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
 		printf("VM %lu Live CPUs: %d\n", vm, cpus);
+
+		if (error_exit && H2_THREAD_FATAL_ERROR == status) {
+			exit(1);
+		}
 	} while (cpus != 0);
 	h2_vmfree(vm);
 
@@ -490,6 +499,12 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--expect_status")) {
 			if (argc < 2) die_usage();
 			expect_status = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--error_exit")) {
+			if (argc < 2) die_usage();
+			error_exit = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

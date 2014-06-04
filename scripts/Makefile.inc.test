@@ -43,6 +43,8 @@ endif
 
 include $(H2DIR)/scripts/Makefile.inc.config
 
+include $(H2DIR)/scripts/Makefile.inc.version
+
 include $(H2DIR)/scripts/Makefile.inc.constants
 
 ARCH=hexagon

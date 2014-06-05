@@ -55,7 +55,7 @@ static unsigned int boots = 1;
 static unsigned int expect_status = 0;
 
 /* exit on error */
-static unsigned int error_exit = 0;
+static unsigned int error_exit = 1;
 
 static H2K_offset_t offset = {{
 		.size = SIZE_4M,
@@ -112,7 +112,7 @@ void usage()
 	printf("  --arg <int>\n\tInitial argument (R0) for first virtual CPU.  Default 0.\n");
 	printf("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status.  Default 1.\n");
 	printf("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
-	printf("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 0.\n");
+	printf("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 1.\n");
 	printf("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 }		

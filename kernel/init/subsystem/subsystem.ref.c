@@ -10,9 +10,9 @@
 /* Power up HVX */
 void H2K_hvx_init(u32_t devpage_offset) {
 
-	u32_t *clk = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_CLK_CTL);
-	u32_t *reset = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_RESET);
-	u32_t *pwr = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_PWR_CTL);
+	u32_t volatile *clk = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_CLK_CTL);
+	u32_t volatile *reset = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_RESET);
+	u32_t volatile *pwr = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_PWR_CTL);
 
 	volatile u32_t delay = 2000;
 

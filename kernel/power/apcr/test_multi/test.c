@@ -111,7 +111,7 @@ int main()
 
 	vm = h2_config_vmblock_init(0,SET_CPUS_INTS, TASKS + 1, 0);
 	h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
-	h2_config_vmblock_init(vm, SET_FENCES, (unsigned long)__bootvm_entry_point, (0xffffffff >> BOOT_TLB_PGBITS) << BOOT_TLB_PGBITS);
+	h2_config_vmblock_init(vm, SET_FENCES, (unsigned long)__bootvm_entry_point, 0xffffffff & BOOT_TLB_PAGE_MASK);
 	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
 
 	h2_vmboot(vmmain, &main_thread_stack[STACK_SIZE - 1], 0, 0, vm);

@@ -57,7 +57,7 @@ void H2K_init_setup_bootvm(u32_t phys_offset)
 	/* FIXME: Need page tables for boot VM guest->phys so that we don't need to
 		 allow access to all of memory in order to be able to load at any
 		 address */
-	H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_FENCES, 0x0, (0xffffffff >> BOOT_TLB_PGBITS) << BOOT_TLB_PGBITS, NULL);
+	H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_FENCES, 0x0, 0xffffffff & BOOT_TLB_PAGE_MASK, NULL);
 	H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PRIO_TRAPMASK, 0, 0xffffffff, NULL);
 }
 

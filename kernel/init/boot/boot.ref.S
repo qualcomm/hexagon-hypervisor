@@ -34,12 +34,12 @@
 
 #define MAKE_TLBLO(DST,SRCVAL,TMP) \
 	SETCONST(DST,BOOT_TLBLO) ; \
-	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS); \
+	TMP = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS); \
 	DST |= asl(TMP, #  BOOT_TLB_SHIFT+SBIT_SIZE); 
 
 #define MAKE_TLBLO_DEV(DST,SRCVAL,TMP) \
 	SETCONST(DST,BOOT_TLBLO_DEV) ; \
-	TMP = lsr(SRCVAL, #  BOOT_TLB_PGBITS_4M); \
+	TMP = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS_4M); \
 	DST |= asl(TMP, #  BOOT_TLB_SHIFT_4M + SBIT_SIZE); 
 
 FUNC_START start .entry .p2align 12
@@ -137,8 +137,8 @@ FUNC_START start .entry .p2align 12
 
 	// copy ourselves to TCM
 
-	r10 = lsr(r10, #BOOT_TLB_PGBITS)
-	r10 = asl(r10, #BOOT_TLB_PGBITS)  // first kernel page
+	// r10 == pc
+	r10 = and(r10, ##BOOT_TLB_PAGE_MASK)  // first kernel page
 	SETCONST(r6, H2K_LINK_ADDR)
 	SETCONST(r7, end)
 	r7 = sub(r7, r6)  // size
@@ -155,8 +155,7 @@ FUNC_START start .entry .p2align 12
 
 	// go there
 	SETCONST(r10, .Lthere)
-	r10 = asl(r10, #(32 - BOOT_TLB_PGBITS))
-	r10 = lsr(r10, #(32 - BOOT_TLB_PGBITS))  // offset of .Lthere
+	r10 = and(r10, ##BOOT_TLB_OFFSET_MASK)  // offset of .Lthere
 	r7 = or(r11, r10)
 	jumpr r7
 
@@ -214,10 +213,10 @@ FUNC_START start .entry .p2align 12
 	r5 = #0
 
 2:
-	r2 = asl(r5, #BOOT_TLB_PGBITS)
+	r2 = asl(r5, #BOOT_TLB_OFFSET_BITS)
 	SETCONST(r3, H2K_LINK_ADDR)
 	r3 = add(r3, r2)
-	r3 = lsr(r3, #BOOT_TLB_PGBITS)
+	r3 = lsr(r3, #BOOT_TLB_OFFSET_BITS)
 	r3 = asl(r3, #BOOT_TLB_SHIFT)
 	SETCONST(r2, BOOT_TLBHI)
 	r3 = or(r3, r2)
@@ -227,14 +226,14 @@ FUNC_START start .entry .p2align 12
 	r1 = add(r1, #1)
 	r5 = add(r5, #1)
 	r10 = pc
-	r10 += asl(r1,#BOOT_TLB_PGBITS)
+	r10 += asl(r1,#BOOT_TLB_OFFSET_BITS)
 	r4 = add(r4, #-1)
 	p0 = cmp.eq(r4, #0)
 	if (!p0) jump 2b
 
 #if ARCHV > 3
 	// Set up entry for L2 interrupt controller
-	MAKE_TLBHI(r3,Q6_SS_BASE_VA,BOOT_TLB_PGBITS_4M,BOOT_TLB_SHIFT_4M)
+	MAKE_TLBHI(r3,Q6_SS_BASE_VA,BOOT_TLB_OFFSET_BITS_4M,BOOT_TLB_SHIFT_4M)
 	// r14 == SSBASE
 	MAKE_TLBLO_DEV(r2, r14, r11)
 	DO_TLBW(3,2,1)
@@ -252,7 +251,7 @@ FUNC_START start .entry .p2align 12
 	if (p0) jump 1f
 
 	/* This one page had better be enough */
-	MAKE_TLBHI(r3,0,BOOT_TLB_PGBITS,BOOT_TLB_SHIFT)
+	MAKE_TLBHI(r3,0,BOOT_TLB_OFFSET_BITS,BOOT_TLB_SHIFT)
 	r3 |= lsr(r10,#BOOT_TLB_ADDRBITS)
 	MAKE_TLBLO(r2,r10,r11)
 	DO_TLBW(3,2,1)
@@ -300,15 +299,21 @@ FUNC_START start .entry .p2align 12
 	r0 = or(r0, r2)
 #else // ARCHV >= 5
 	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
-	r2 = ##SYSCFG_L2CFG_256K
+
 	r15 = rev
-	r15 = lsr(r15, #12)
-	r15 = and(r15, #0x4)
-	p0 = cmp.eq(r15, #0)
-	if (p0) jump 3f
-	r2 = ##SYSCFG_L2CFG_512K
-3:
-	r0 = or(r0, r2)
+	r15 = extractu (r15, #4, #12)  // L2 size from rev
+
+// get table address; r10 == phys pc
+	r10 = and(r10, ##BOOT_TLB_PAGE_MASK)  // phys page
+
+	SETCONST(r11, l2_sizes)
+	r11 = and(r11, ##BOOT_TLB_OFFSET_MASK)  // offset
+	r11 = or(r10, r11)
+	r11 = add(r11, r15)  // entry pointer
+
+	r15 = memb(r11)  // value
+	r0 = insert(r15, #3, #16)
+
 #endif
 
 	syscfg = r0
@@ -333,15 +338,12 @@ FUNC_START start .entry .p2align 12
 	r0 = #(1<<MAX_HTHREADS)-1
 	start(r0)
 
-	// r10 == physical pc after possible copy to TCM; r13 == phys pc at load addr
+	// r10 == physical page after possible copy to TCM; r13 == phys pc at load addr
 	SETCONST(r11, H2K_LINK_ADDR)
 
-	r10 = lsr(r10, #BOOT_TLB_PGBITS)
-	r10 = asl(r10, #BOOT_TLB_PGBITS)
 	r0 = sub(r11, r10)  // phys_offset
 
-	r13 = lsr(r13, #BOOT_TLB_PGBITS)
-	r13 = asl(r13, #BOOT_TLB_PGBITS)
+	r13 = and(r13, ##BOOT_TLB_PAGE_MASK)
 	r1 = sub(r11, r13)  // boot_offset
 
 	r2 = r14  // ssbase
@@ -374,3 +376,20 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	jump H2K_switch
 FUNC_END H2K_handle_reset
 
+l2_sizes:
+	.byte 0x0  //  0: 0K
+	.byte 0x2  //  1: 128K
+	.byte 0x3  //  2: 256k
+	.byte 0x7  //  3: reserved
+	.byte 0x4  //  4: 512K
+	.byte 0x7  //  5: reserved
+	.byte 0x4  //  6: 512K + 256K TCM
+	.byte 0x7  //  7: reserved
+	.byte 0x4  //  8: 512K + 512K TCM (or 0K + 1024K TCM ?)
+	.byte 0x7  //  9: reserved
+	.byte 0x7  //  10: reserved
+	.byte 0x7  //  11: reserved
+	.byte 0x7  //  12: reserved
+	.byte 0x7  //  13: reserved
+	.byte 0x7  //  14: reserved
+	.byte 0x7  //  15: reserved

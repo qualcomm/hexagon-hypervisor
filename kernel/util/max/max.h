@@ -233,5 +233,21 @@
 #define PHYSREAD_HI_SHIFT 11
 
 #define CFG_TABLE_SHIFT 16
-#define CFG_TABLE_L2TCM 0
-#define CFG_TABLE_SSBASE 8
+#define CFG_TABLE_L2TCM 0x0
+#define CFG_TABLE_SSBASE 0x8
+#define CFG_TABLE_L2REGS 0x10
+
+#define L2REGS_QOS_MODE                  0x100
+#define L2REGS_QOS_MODE_DEFAULT  0x0000022a
+
+#define L2REGS_QOS_MAX_TRANS             0x104
+#define L2REGS_QOS_ISSUE_RATE            0x108
+#define L2REGS_QOS_DANGER_ISSUE_RATE     0x10c
+#define L2REGS_QOS_SCOREBOARD_WATERMARK  0x110
+#define L2REGS_QOS_SYS_PRI               0x114
+#define L2REGS_QOS_DANGER_0             0x1000
+#define L2REGS_QOS_DANGER_1             0x2000
+#define L2REGS_QOS_DANGER_2             0x3000
+#define L2REGS_QOS_DANGER_3             0x4000
+
+#define L2REGS_MAX L2REGS_QOS_DANGER_3

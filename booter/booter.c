@@ -95,6 +95,7 @@ void usage()
 	printf("  --ccr <int>\n\tSet ccr.\n");
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
 	printf("  --syscfg <int>\n\tSet syscfg.\n");
+	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
 	printf("\nVM options:\n");
 	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
 	printf("  --use_ext (0|1)\n\tSupport extended contexts.  Default 0.\n");
@@ -340,6 +341,39 @@ void kernel_setup() {
 	}
 }
 
+unsigned long physread_word(unsigned long long pa)
+{
+	unsigned long ret;
+	unsigned long upper_bits = pa >> 11;
+	unsigned long lower_bits = pa & 0x7fc;
+	asm (" %0 = memw_phys(%1,%2)" : "=r"(ret) :"r"(lower_bits),"r"(upper_bits));
+	return ret;
+}
+
+void set_l2_reg(unsigned long offset, unsigned long val) {
+
+	unsigned long cfg;
+	unsigned long *l2_cfg_base;
+
+	if (offset > L2REGS_MAX) {
+		FAIL("Set L2 reg offset out of bounds.");
+	}
+
+	asm volatile
+		(
+		 " %0 = cfgbase \n"
+		 : "=r" (cfg)
+		 );
+
+	l2_cfg_base = (unsigned long *)((physread_word((cfg << 16) + CFG_TABLE_L2REGS)) << 16);
+
+	printf("Set L2 reg at 0x%08x (offset 0x%08x):\n", (unsigned int)(l2_cfg_base + (offset / 4)), (unsigned int)offset);
+	printf("\tOld value:  0x%08x\n", (unsigned int)(*(l2_cfg_base + (offset / 4))));
+	*(l2_cfg_base + (offset / 4)) = val;
+	dcclean_range((unsigned long)(l2_cfg_base + (offset / 4)), 4);
+	printf ("\tNew value:  0x%08x\n", (unsigned int)(*(l2_cfg_base + (offset / 4))));
+}
+
 int main(int argc, char **argv)
 {
 	int i, ret = 0;
@@ -402,6 +436,12 @@ int main(int argc, char **argv)
 			regval = H2K_get_ccr();
 			printf("New value for ccr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--l2_reg")) {
+			if (argc < 3) die_usage();
+			set_l2_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
+			argc -= 3; argv += 3;
 			continue;
 
 		} else if (0 == strcmp(argv[0], "--num_vcpus")) {

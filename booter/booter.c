@@ -327,9 +327,14 @@ static void die_usage()
 	exit(1);
 }
 
+extern void bootvm__Interrupt(int);
+
 void kernel_setup() {
 
-	h2_vmtrap_setvec(bootvm_vectors);
+	//	h2_vmtrap_setvec(bootvm_vectors);
+
+	h2_handle_errors(0);
+	h2_set_handler(7, bootvm__Interrupt);
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
 		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
 	}
@@ -368,7 +373,7 @@ void set_l2_reg(unsigned long offset, unsigned long val) {
 	l2_cfg_base = (unsigned long *)((physread_word((cfg << 16) + CFG_TABLE_L2REGS)) << 16);
 
 	printf("Set L2 reg at 0x%08x (offset 0x%08x):\n", (unsigned int)(l2_cfg_base + (offset / 4)), (unsigned int)offset);
-	printf("\tOld value:  0x%08x\n", (unsigned int)(*(l2_cfg_base + (offset / 4))));
+	//	printf("\tOld value:  0x%08x\n", (unsigned int)(*(l2_cfg_base + (offset / 4))));
 	*(l2_cfg_base + (offset / 4)) = val;
 	dcclean_range((unsigned long)(l2_cfg_base + (offset / 4)), 4);
 	printf ("\tNew value:  0x%08x\n", (unsigned int)(*(l2_cfg_base + (offset / 4))));

@@ -29,6 +29,7 @@ bootvm__Trap0:
 1:
 	jump 1b
 
+.global bootvm__Interrupt
 bootvm__Interrupt:
 	r29 = add(r29, #-8)
 	memd(r29+#0) = r1:0

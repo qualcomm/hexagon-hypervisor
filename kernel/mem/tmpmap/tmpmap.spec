@@ -1,24 +1,50 @@
-:mod:`translate` -- Translate an address
+:mod:`tmpmap` -- Add/remove temporary translation
 ========================================
 
-.. module:: translate
+.. module:: tmpmap
 
-H2K_translate
--------------
+H2K_tmpmap_add_and_lock
+-----------------------
 
-.. cfunction:: H2K_translation_t H2K_translate(u32_t addr, H2K_vmblock_t *vmblock)
+.. cfunction:: u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc)
 
-	:param addr: Address to translate
-	:param vmblock: vmblock pointer
+	:param pa:  physical address to map
+	:param cccc:  cacheability attributes
 
 Description
 ~~~~~~~~~~~
 
-Translates the given address using translation base and type from vmblock.
+Maps the page TEMP_MAP_VA, size TEMP_MAP_PG_SIZE to the physical page containing pa; returns with spinlock held.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Call the appropriate lookup function according to translation type.  If successful, call the corresponding translation function and return its result.  Else return 0 (invalid translation).
+Acquire tmpmap_lock; lock TLB; free up a TLB entry by decrementing last_tlb_index; insert new mapping at free entry (unlocks TLB); return va corresponding to pa.
 
 
+H2K_tmpmap_remove_and_unlock
+----------------------------
+
+.. cfunction:: void H2K_tmpmap_remove_and_unlock()
+
+Description
+~~~~~~~~~~~
+
+Removes temporary mapping; releases spinlock.
+
+Functionality
+~~~~~~~~~~~~~
+
+Lock TLB; invalidate temporary entry; increment last_tlb_index; unlock TLB; release tmpmap_lock.
+
+
+
+H2K_tmpmap_init
+---------------
+
+.. cfunction:: void H2K_tmpmap_init()
+
+Description
+~~~~~~~~~~~
+
+Initializes tmpmap_lock.

@@ -13,7 +13,7 @@
 static u32_t tmpmap_lock IN_SECTION(".data.core.globals");
 
 /* Return va of pa */
-u32_t H2K_tmpmap_add_and_lock(u32_t pa, u32_t cccc) {
+u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc) {
 
 	H2K_mem_tlbfmt_t entry;
 	u32_t index;

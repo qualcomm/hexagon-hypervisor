@@ -69,6 +69,12 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 FUNC_END H2K_handle_error
 
 FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
+
+#ifdef NMI_STOP
+	r1=##0xe0f0beef
+	stop(r0)
+#endif
+
 	crswap(r0,sgp)
 	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save

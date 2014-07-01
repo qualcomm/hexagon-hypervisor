@@ -7,7 +7,7 @@
 #include <globals.h>
 #include <spinlock.h>
 #include <hw.h>
-#include <tlbfill.h>
+#include <tlbinsert.h>
 #include <tlbmisc.h>
 
 static u32_t tmpmap_lock IN_SECTION(".data.core.globals");

@@ -37,7 +37,8 @@ enum {
         kg_init,
         trace_init,
         timer_init,
-	mem_alloc_init,
+				mem_alloc_init,
+				tmpmap_init,
         //thread_init,
         //asid_table_init,
         //mem_stlb_init,
@@ -82,6 +83,7 @@ void H2K_intconfig_init(u32_t ssbase) { TH_init_seen |= 1<< intconfig_init; }
 HELPER_FUNC(trace_init)
 HELPER_FUNC(timer_init)
 HELPER_FUNC(mem_alloc_init)
+HELPER_FUNC(tmpmap_init)
 //HELPER_FUNC(thread_init)
 //HELPER_FUNC(asid_table_init)
 //HELPER_FUNC(mem_stlb_init)

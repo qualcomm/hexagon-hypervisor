@@ -12,6 +12,8 @@
 #include <hw.h>
 #include <cache.h>
 #include <hexagon_protos.h>
+#include <physread.h>
+#include <tmpmap.h>
 
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
@@ -21,6 +23,8 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_prefetch,
 	H2K_trap_hwconfig_extbits,
 	H2K_trap_hwconfig_vlength,
+	H2K_trap_hwconfig_getl2reg,
+	H2K_trap_hwconfig_setl2reg
 };
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
@@ -150,4 +154,62 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 #else
 	return -1;
 #endif
+}
+
+u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me)
+{
+	u32_t va;
+	u32_t cfg;
+	u32_t l2_cfg_base;
+	u32_t volatile *reg;
+	u32_t ret;
+
+	if (offset > L2REGS_MAX) {  // out of range
+		return -1;
+	}
+
+	asm volatile
+		(
+		 " %0 = cfgbase \n"
+		 : "=r" (cfg)
+		 );
+
+	l2_cfg_base = H2K_mem_physread_word((cfg << 16) + CFG_TABLE_L2REGS) << 16;
+
+	va = H2K_tmpmap_add_and_lock(l2_cfg_base, UC_S);
+	reg = (u32_t *) (va + offset);
+	ret = *reg;
+	H2K_tmpmap_remove_and_unlock();
+
+	return ret;
+}
+
+u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me)
+{
+	u32_t va;
+	u32_t cfg;
+	u32_t l2_cfg_base;
+	u32_t volatile *reg;
+	u32_t ret;
+
+	if (offset > L2REGS_MAX) {  // out of range
+		return -1;
+	}
+
+	asm volatile
+		(
+		 " %0 = cfgbase \n"
+		 : "=r" (cfg)
+		 );
+
+	l2_cfg_base = H2K_mem_physread_word((cfg << 16) + CFG_TABLE_L2REGS) << 16;
+
+	va = H2K_tmpmap_add_and_lock(l2_cfg_base, UC_S);
+	reg = (u32_t *) (va + offset);
+	ret = *reg;
+	*reg = val;
+	H2K_dccleana((void *)reg);
+	H2K_tmpmap_remove_and_unlock();
+
+	return ret;
 }

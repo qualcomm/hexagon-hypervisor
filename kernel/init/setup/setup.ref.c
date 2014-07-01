@@ -27,6 +27,7 @@
 #include <trace.h>
 #include <symbols.h>
 #include <subsystem.h>
+#include <tmpmap.h>
 
 void H2K_interrupt_restore();
 
@@ -89,6 +90,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 	H2K_hvx_init(devpage_offset);
 #endif
 	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);
+	H2K_tmpmap_init();
 	H2K_init_setup_bootvm(phys_offset);
 }
 

@@ -331,14 +331,6 @@ extern void bootvm__Interrupt(int);
 
 void kernel_setup() {
 
-	//	h2_vmtrap_setvec(bootvm_vectors);
-
-	h2_handle_errors(0);
-	h2_set_handler(7, bootvm__Interrupt);
-	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
-		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
-	}
-
 	if (use_stlb) {
 		if (h2_config_stlb_alloc() < 0) {
 			FAIL("STLB alloc");
@@ -346,37 +338,18 @@ void kernel_setup() {
 	}
 }
 
-unsigned long physread_word(unsigned long long pa)
-{
-	unsigned long ret;
-	unsigned long upper_bits = pa >> 11;
-	unsigned long lower_bits = pa & 0x7fc;
-	asm (" %0 = memw_phys(%1,%2)" : "=r"(ret) :"r"(lower_bits),"r"(upper_bits));
-	return ret;
-}
+void set_l2_reg(unsigned int offset, unsigned int val) {
 
-void set_l2_reg(unsigned long offset, unsigned long val) {
+	unsigned int old = h2_hwconfig_l2_get_reg(offset);
+	unsigned int ret = h2_hwconfig_l2_set_reg(offset, val);
 
-	unsigned long cfg;
-	unsigned long *l2_cfg_base;
-
-	if (offset > L2REGS_MAX) {
-		FAIL("Set L2 reg offset out of bounds.");
+	if (ret != old) {
+		FAIL("set_l2_reg mismatch.");
 	}
 
-	asm volatile
-		(
-		 " %0 = cfgbase \n"
-		 : "=r" (cfg)
-		 );
-
-	l2_cfg_base = (unsigned long *)((physread_word((cfg << 16) + CFG_TABLE_L2REGS)) << 16);
-
-	printf("Set L2 reg at 0x%08x (offset 0x%08x):\n", (unsigned int)(l2_cfg_base + (offset / 4)), (unsigned int)offset);
-	//	printf("\tOld value:  0x%08x\n", (unsigned int)(*(l2_cfg_base + (offset / 4))));
-	*(l2_cfg_base + (offset / 4)) = val;
-	dcclean_range((unsigned long)(l2_cfg_base + (offset / 4)), 4);
-	printf ("\tNew value:  0x%08x\n", (unsigned int)(*(l2_cfg_base + (offset / 4))));
+	printf("Set L2 reg at offset 0x%08x:\n", offset);
+	printf("\tOld value:  0x%08x\n", old);
+	printf("\tNew value:  0x%08x\n", val);
 }
 
 int main(int argc, char **argv)
@@ -396,6 +369,12 @@ int main(int argc, char **argv)
 	if (argc < 1) {
 		usage();
 		return 1;
+	}
+
+	h2_handle_errors(0);
+	h2_set_handler(7, bootvm__Interrupt);
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
 	}
 
 	while (1) {

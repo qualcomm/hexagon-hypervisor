@@ -25,21 +25,14 @@
 
 //#define DO_EXT_SWITCH 1
 
-#if ARCHV <= 3
-#define PHYSREAD_TEMP_MAP_IDX 63
-#define PHYSREAD_TEMP_MAP_VPN 0xfffff
-#endif
+#define TEMP_MAP_VA 0xff800000
+#define TEMP_MAP_PG_SIZE SIZE_4M
+#define TEMP_MAP_PG_MASK (0xffffffff << (PAGE_BITS + (TEMP_MAP_PG_SIZE * 2)))
+#define TEMP_MAP_OFF_MASK (~TEMP_MAP_PG_MASK)
 
-#if ARCHV <= 3
-#define TLB_ENTRY_SIZE_BITS 20
-#define TLB_ENTRY_C_BITS 26
-#define TLB_ENTRY_GLOBAL_BIT 60
-#define TLB_ENTRY_VALID_BIT 61
-#else
 #define TLB_ENTRY_C_BITS 24
 #define TLB_ENTRY_GLOBAL_BIT 62
 #define TLB_ENTRY_VALID_BIT 63
-#endif
 
 #define MAX_THREADS 16
 

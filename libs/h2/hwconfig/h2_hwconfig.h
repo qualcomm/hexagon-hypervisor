@@ -16,7 +16,7 @@
 
 #include <h2_common_hwconfig.h>
 
-/** 
+/**
 Raw interface for the hwconfig trap.  Do not use.  Instead, use an interface function such
 as h2_hwconfig_partition().
 @param[in] whichtrap	Which hardware configuration trap to use
@@ -29,7 +29,32 @@ as h2_hwconfig_partition().
 
 int h2_hwconfig_trap(hwconfig_type_t whichtrap, void *ptr, unsigned int a, unsigned int b);
 
-/** 
+/**
+Get L2 register.
+@param[in] offset  Offset from L2 register base
+@returns register value or -1 on failure
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_l2_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETL2REG, NULL, offset, 0);
+}
+
+/**
+Set L2 register.
+@param[in] offset  Offset from L2 register base
+@param[in] val  Value to write
+@returns previous register value or -1 on failure
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_l2_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETL2REG, NULL, offset, val);
+}
+
+/**
 Configure the L2 cache size.
 @param[in] sizeval	Size to configure the L2 cache
 @param[in] use_wb	1 enables write-back mode in the L2, 0 disables write-back mode
@@ -42,7 +67,7 @@ static inline int h2_hwconfig_l2cache_size(unsigned int sizeval, unsigned int us
 	return h2_hwconfig_trap(HWCONFIG_L2CACHE, NULL, sizeval, use_wb);
 }
 
-/** 
+/**
 Configure partitioning.
 @param[in] whichcache	Select the cache to change partitioning on
 @param[in] partition_cfg	What type of partitioning for the specified cache
@@ -55,7 +80,7 @@ static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int pr
 	return h2_hwconfig_trap(HWCONFIG_PARTITIONS, NULL, whichcache, prefetch_cfg);
 }
 
-/** 
+/**
 Configure prefetch.
 @param[in] whichcache	Select the cache to change partitioning on
 @param[in] prefetch_cfg Prefetch type
@@ -68,7 +93,7 @@ static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int par
 	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, partition_cfg);
 }
 
-/** 
+/**
 Set XA, XE bits.
 @param[in] xa XA value
 @param[in] xe XE value

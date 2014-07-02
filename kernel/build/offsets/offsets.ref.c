@@ -98,6 +98,7 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(lowprio_masks);
 	PRINT_KG_OFFSET(stlbptr);
 	PRINT_KG_OFFSET(vmblocks);
+	PRINT_KG_OFFSET(phys_offset);
 #ifdef H2K_L2_CONTROL
 	PRINT_KG_OFFSET(l2_int_base);
 	PRINT_KG_OFFSET(l2_ack_base);

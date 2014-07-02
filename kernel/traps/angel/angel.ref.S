@@ -7,6 +7,7 @@
 #include <asm_std.h>
 #include <max.h>
 #include <vmdefs.h>
+#include <h2_common_pmap.h>
 
 #ifdef NULL_ANGEL_TRAP
 FUNC_START H2K_trap_angel .text.event.trap0 .p2align 2
@@ -16,15 +17,30 @@ FUNC_END H2K_trap_angel
 
 #else
 FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
+
+	// if we're loaded at 0, no need to tmpmap; k0lock instead
+	r27 = memw(H2K_GP + #KG_phys_offset)
+	p0 = cmp.eq(r27, ##H2K_LINK_ADDR)
+	if (p0) jump .Lat0
+				
+	// save regs clobbered by calls
+	r26 = r31
+	r25:24 = r1:0
+	
+	r0 = #0x20
+	r1 = #UC_S
+	call H2K_tmpmap_add_and_lock
+	r6 = r0  // va of mailbox base
+	r1:0 = r25:24
+	jump .Llocked
+
+.Lat0:
 	r6 = ##H2K_LINK_ADDR+0x20
-#if ARCHV <= 3
-	r7 = ssr
-	r7 = extractu(r7,#3,#19)
-#else
-	r7 = htid
-#endif
-	r8 = #1
 	k0lock
+
+.Llocked:
+	r7 = htid
+	r8 = #1
 	memd(r6+#0) = r1:0
 	memw(r6+#8) = r7
 	dccleaninva(r6)
@@ -41,8 +57,19 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 	{ nop }:endloop0
 	r8 = memw(r6+#12)
 	dccleaninva(r6)
-	r1:0 = memd(r6+#0)
+	r25:24 = memd(r6+#0)
+
+	p0 = cmp.eq(r27, ##H2K_LINK_ADDR)  // did we tmpmap?
+	if (p0) jump .Lno_tmpmap
+	call H2K_tmpmap_remove_and_unlock
+	r31 = r26  // restore
+	jump .Lunlocked
+
+.Lno_tmpmap:
 	k0unlock
+
+.Lunlocked:
+	r1:0 = r25:24
 	jumpr r31
 9:
 	r5 = #0x1c

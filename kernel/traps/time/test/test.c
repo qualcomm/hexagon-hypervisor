@@ -99,12 +99,13 @@ void thread0(int thread)
 	endcputime = H2K_cputime_get(me);
 	delta = (endpcycles - startpcycles) - (SPINS * PCYCLES_PER_TCYCLE);
 	if (delta < 0) delta = -delta;
-	printf("delta=%lld,pcycles=%lld\n",delta,64ULL*PCYCLES_PER_TCYCLE);
+	printf("delta 1 = %lld,pcycles=%lld\n",delta,64ULL*PCYCLES_PER_TCYCLE);
 	if (delta > 64 * PCYCLES_PER_TCYCLE) {
 		FAIL("Unexpected delta based on delay (A) ");
 	}
 	delta = (endcputime - startcputime) - (SPINS * PCYCLES_PER_TCYCLE);
 	if (delta < 0) delta = -delta;
+	printf("delta 2 = %lld\n", delta);
 	if (delta > 64 * PCYCLES_PER_TCYCLE) FAIL("Unexpected delta based on delay (B) ");
 
 	startpcycles = H2K_pcycles_get(me);

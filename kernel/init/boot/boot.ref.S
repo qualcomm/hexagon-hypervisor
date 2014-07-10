@@ -234,7 +234,9 @@ FUNC_START start .entry .p2align 12
 #if ARCHV > 3
 	// Set up entry for L2 interrupt controller
 	MAKE_TLBHI(r3,Q6_SS_BASE_VA,BOOT_TLB_OFFSET_BITS_4M,BOOT_TLB_SHIFT_4M)
-	// r14 == SSBASE
+	// r14 == SSBASE (PRIV_BASE)
+	// apply offet to get PUB_BASE
+	r14 = add(r14, ##-QDSP6SS_PUB_PRIV_OFFSET)
 	MAKE_TLBLO_DEV(r2, r14, r11)
 	DO_TLBW(3,2,1)
 

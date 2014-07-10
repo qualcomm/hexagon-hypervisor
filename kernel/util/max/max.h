@@ -50,11 +50,14 @@
 
 #define MAX_ASIDS (1<<(ASID_BITS))
 
-/* QDSP6SS_PRIV_BASE_* is the subsystem base value read from cfg_table. We map that address to Q6_SS_BASE_VA. */
+/* QDSP6SS_PRIV_BASE is the subsystem base value read from cfg_table, but we
+	 map QDSP6SS_PUB_BASE to Q6_SS_BASE_VA so we can get at the public registers.
+	 FIXME? Is the QDSP6SS_PUB_PRIV_OFFSET the same for all subsystems? */
 
 #define DEVICE_PAGE_SIZE SIZE_4M
 
 #define Q6_SS_BASE_VA 0xFFC00000
+#define QDSP6SS_PUB_PRIV_OFFSET 0x80000
 
 #if ARCHV == 4
 /* #define QDSP6SS_PRIV_BASE_FW    0x08880000 */

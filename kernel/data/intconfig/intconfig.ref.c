@@ -155,7 +155,7 @@ static void H2K_intconfig_l2_init(ssbase)
 #define LPASS_SPMI_ARB_EE_WORD	(LPASS_SPMI_ARB_EE_IRQ/32)
 
 	/* Ew ew ew */
-	if (ssbase == QDSP6SS_PRIV_BASE_MSS) {
+	if (ssbase == QDSP6SS_PRIV_BASE_MSS - QDSP6SS_PUB_PRIV_OFFSET) {
 		spi_irq = MSS_SPI_IRQ;
 		spi_word = MSS_SPI_WORD;
 		tlmm_irq = MSS_TLMM_IRQ;

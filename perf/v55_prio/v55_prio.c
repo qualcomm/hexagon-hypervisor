@@ -40,7 +40,7 @@ void spin(void *arg) {
 	//printf("Thread %d:  tcycles:  %d  ctr:  %d\n", (int)arg, end - start, ctrs[(int)arg]);
 	h2_sem_up(&tomain);
 
-	h2_thread_stop();
+	h2_thread_stop(0);
 }
 
 int main() {

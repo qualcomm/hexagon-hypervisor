@@ -38,7 +38,7 @@ $(BOOTVM_IMAGE): booter.o elf.o booter_event.o $(BOOTVM_IMAGE_DEPS)
 test: hello $(BOOTVM_PROG)
 	$(SIM) -- $(BOOTVM_PROG) hello
 
-install: $(BOOTVM_PROG)
+install: all
 	mkdir -p $(INSTALLPATH)/bin
 	cp $(BOOTVM_PROG) $(INSTALLPATH)/bin
 

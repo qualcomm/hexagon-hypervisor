@@ -31,7 +31,7 @@ void *sys_sbrk(ptrdiff_t more)
 		if (((unsigned int)(heapBase)) >= ((unsigned int)(&end))) {
 			heap_start = heap_base = (void *)(ALIGN_UP((unsigned int)heapBase,CHUNK_SIZE));
 		} else {
-			heap_start = heap_base = (void *)(ALIGN_UP((unsigned int)end,CHUNK_SIZE));
+			heap_start = heap_base = (void *)(ALIGN_UP((unsigned int)(&end),CHUNK_SIZE));
 		}
 	}
 	old_base = heap_base;

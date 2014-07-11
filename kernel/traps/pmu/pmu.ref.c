@@ -39,9 +39,9 @@ u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t 
 	if (dest->status == H2K_STATUS_DEAD) return -1;
 	BKL_LOCK();
 	H2K_atomic_insert(&dest->atomic_status_word,turnon,
-										member_size(H2K_thread_context, pmu_on) * 8,
-										(offsetof(H2K_thread_context, pmu_on)
-										 - offsetof(H2K_thread_context, atomic_status_word)) * 8);
+		member_size(H2K_thread_context, pmu_on) * 8,
+		(offsetof(H2K_thread_context, pmu_on)
+		 - offsetof(H2K_thread_context, atomic_status_word)) * 8);
 	if (dest->status == H2K_STATUS_RUNNING) {
 		val = H2K_get_pmucfg();
 		if (turnon) {

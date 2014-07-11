@@ -27,8 +27,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return val;
 
 	case INFO_REV:
-		asm volatile ( "%0 = rev\n" : "=r" (val));
-		return val;
+		return H2K_gp->core_rev;
 
 	default:
 		return -1;

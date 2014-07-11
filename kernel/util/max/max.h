@@ -25,6 +25,10 @@
 
 //#define DO_EXT_SWITCH 1
 
+#define CORE_REV_UARCH_MASK 0xf00
+#define CORE_V60C 0x200
+#define CORE_V60F 0x500
+
 #define TEMP_MAP_VA 0xff800000
 #define TEMP_MAP_PG_SIZE SIZE_4M
 #define TEMP_MAP_PG_MASK (0xffffffff << (PAGE_BITS + (TEMP_MAP_PG_SIZE * 2)))

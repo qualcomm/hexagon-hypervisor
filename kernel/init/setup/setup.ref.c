@@ -71,9 +71,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 	void *stack_base;
 	u32_t alloc_heap_size;
 	u32_t devpage_priv_offset = DEVICE_PAGE_OFFSET(ssbase + QDSP6SS_PUB_PRIV_OFFSET);
-#ifdef HAVE_EXTENSIONS
 	u32_t devpage_pub_offset = DEVICE_PAGE_OFFSET(ssbase);
-#endif
 
 	heap_top = (void *)((((u32_t)&HEAP_SIZE == 0 ? DEFAULT_HEAP_SIZE : (u32_t)&HEAP_SIZE) + (u32_t)&end + 15) & -16);
 	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & -16);
@@ -89,9 +87,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 	H2K_thread_init();
 	H2K_asid_table_init();
 	H2K_timer_init(devpage_priv_offset);
-#ifdef HAVE_EXTENSIONS
 	H2K_hvx_init(devpage_pub_offset);
-#endif
 	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);
 	H2K_tmpmap_init();
 	H2K_init_setup_bootvm(phys_offset);

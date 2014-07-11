@@ -74,6 +74,7 @@ typedef struct {
 	u32_t build_id;
 	info_boot_flags_type info_boot_flags;
 	info_stlb_type info_stlb;
+	u32_t core_rev;
 		
 } H2K_kg_t;
 

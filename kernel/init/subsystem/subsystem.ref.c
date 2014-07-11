@@ -5,10 +5,18 @@
 
 #include <c_std.h>
 #include <max.h>
+#include <globals.h>
 
-#ifdef HAVE_EXTENSIONS
 /* Power up HVX */
 void H2K_hvx_init(u32_t devpage_offset) {
+
+#ifdef HAVE_EXTENSIONS
+
+	/* Don't init if no HVX present */
+	if (((H2K_gp->core_rev & CORE_REV_UARCH_MASK) == CORE_V60C)
+			|| ((H2K_gp->core_rev & CORE_REV_UARCH_MASK) == CORE_V60F)) {
+		return;
+	}
 
 	u32_t volatile *clk = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_CLK_CTL);
 	u32_t volatile *reset = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_RESET);
@@ -24,6 +32,5 @@ void H2K_hvx_init(u32_t devpage_offset) {
 	*pwr = QDSP6SS_CP_PWR_CTL_CLAMP_IO_OFF;
 	*reset = QDSP6SS_CP_RESET_DEASSERT;
 	*clk = QDSP6SS_CP_CLK_CTL_ENABLE;
-}
-
 #endif
+}

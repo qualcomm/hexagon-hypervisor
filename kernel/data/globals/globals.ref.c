@@ -48,4 +48,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index) 
 #else
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 #endif
+
+	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
 }

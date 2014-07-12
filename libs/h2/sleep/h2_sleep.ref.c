@@ -14,7 +14,6 @@ unsigned long long int h2_nanosleep(unsigned long long int time)
 	old_ie = h2_vmtrap_setie(1);
 	h2_vmtrap_intop(H2K_INTOP_LOCEN,12,0);
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN,12,0);
-	h2_printf("Trying for interrupt @ %016llx\n",end);
 	h2_vmtrap_timerop(H2K_TIMER_TRAP_SET_TIMEOUT,end);
 	h2_vmtrap_wait();
 	now = h2_vmtrap_timerop(H2K_TIMER_TRAP_GET_TIME,0);

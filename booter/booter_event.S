@@ -26,8 +26,7 @@ bootvm__Rsvd:
 bootvm__Rsvd:
 bootvm__Error:
 bootvm__Trap0:
-1:
-	jump 1b
+	jump h2_error_event
 
 .global bootvm__Interrupt
 bootvm__Interrupt:

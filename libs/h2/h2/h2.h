@@ -11,6 +11,8 @@ extern "C" {
 #endif
 
 #include "h2_alloc.h"
+#include "h2_context.h"
+#include "h2_error.h"
 #include "h2_allsignal.h"
 #include "h2_anysignal.h"
 #include "h2_atomic.h"
@@ -40,6 +42,8 @@ extern "C" {
 #include "h2_vm.h"
 #include "h2_vmtraps.h"
 #include "h2_waitcycles.h"
+#include "h2_debug.h"
+#include "h2_sleep.h"
 
 #ifdef __cplusplus
 } /* closing brace for extern "C" */

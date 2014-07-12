@@ -371,8 +371,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	h2_handle_errors(0);
-	h2_set_handler(7, bootvm__Interrupt);
+	h2_vmtrap_setvec(bootvm_vectors);
+
+	//h2_handle_errors(0);
+	//h2_set_handler(7, bootvm__Interrupt);
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
 		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
 	}

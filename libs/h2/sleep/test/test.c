@@ -4,6 +4,7 @@
  */
 
 #include <h2.h>
+#include <stdio.h>
 
 #define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
 #define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}
@@ -22,6 +23,6 @@ int main()
 	printf("Time: %016llx\n",h2_vmtrap_timerop(H2K_TIMER_TRAP_GET_TIME,0));
 	h2_nanosleep(1000*1000*5);
 	printf("Time: %016llx\n",h2_vmtrap_timerop(H2K_TIMER_TRAP_GET_TIME,0));
-	printf("PASS\n");
+	printf("TEST PASSED\n");
 	return(0);
 }

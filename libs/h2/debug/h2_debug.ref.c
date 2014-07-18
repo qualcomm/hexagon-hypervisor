@@ -48,7 +48,7 @@ void h2_debug_context_dump(h2_context_t *context)
 	printf("\n");
 
 	printf("\nStack:\n\n");
-	ptr = context->r29;
+	ptr = (unsigned int *)(context->r29);
 	for (i = 0 ; i < 64 ; i += 4) {
 		printf("%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",(unsigned int)(ptr + i),
 		   ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);

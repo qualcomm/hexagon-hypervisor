@@ -24,7 +24,5 @@ typedef struct {
 #define H2K_TIME_FOREVER (~0ULL)
 #define H2K_TIME_BIGBANG 0ULL
 
-#define H2K_TIME_GUESTINT 12
-
 #endif
 

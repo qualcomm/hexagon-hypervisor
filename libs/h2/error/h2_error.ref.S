@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include "h2_trap_constants.h"
+#include <h2_trap_constants.h>
+#include <h2_common_error.h>
 #define ASM 1
 #include <h2_context.h>
 
@@ -12,11 +13,13 @@
 	.global h2_handle_errors
 	.global h2_error_event
 h2_handle_errors:
+	allocframe(#0)
 	r1 = ##do_exit
 	memw(r1) = r0
+	call h2_debug_mutex_init
 	r0 = ##vectors
 	trap1(#H2_VMTRAP_SETVEC)
-	jumpr r31
+	dealloc_return
 
 vectors:
 	jump h2_error_event
@@ -46,7 +49,7 @@ h2_error_event:
 		if (!p0.new) jump:nt .Ltrap_exit
 	}
 	{
-		r0 = #1
+		r0 = ##H2_THREAD_FATAL_ERROR
 		call h2_thread_stop
 	}
 .Ltrap_exit:
@@ -54,8 +57,9 @@ h2_error_event:
 		r0 = #1
 		call exit
 	}
+	// normally shouldn't reach here
 	{
-		r0 = #1
+		r0 = ##H2_THREAD_FATAL_ERROR
 		call h2_thread_stop
 	}
 
@@ -66,6 +70,7 @@ h2_interrupt_event:	// interrupt
 
 	.data
 	.p2align 2
+
 do_exit:
 	.word 0x0
 

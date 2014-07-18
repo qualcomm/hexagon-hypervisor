@@ -7,14 +7,20 @@
 #include <h2.h>
 	
 #define PRINT_RPAIR(NAME0,NAME1) \
-	printf("r"#NAME1 ":\t0x%08x\tr" #NAME0 ":\t0x%08x\n", context->r##NAME1, context->r##NAME0);
+	printf("r"#NAME0 ":\t0x%08x\tr" #NAME1 ":\t0x%08x\n", context->r##NAME0, context->r##NAME1);
 
 #define PRINT_CPAIR(NAME0,NAME1) \
-	printf(#NAME1 ":\t0x%08x\t" #NAME0 ":\t0x%08x\n", context->NAME1, context->NAME0);
+	printf(#NAME0 ":\t0x%08x\t" #NAME1 ":\t0x%08x\n", context->NAME0, context->NAME1);
+
+static h2_mutex_t debug_mutex;
 
 void h2_debug_context_dump(h2_context_t *context)
 {
-	printf("DEBUG DUMP threadid=%x\n",h2_thread_myid());
+	unsigned int *ptr;
+	unsigned int i;
+
+	h2_mutex_lock(&debug_mutex);
+	printf("DEBUG DUMP threadid = 0x%08x, core_pcycles = 0x%016llx\n\n", h2_thread_myid(), h2_get_core_pcycles());
 	PRINT_RPAIR(31,30);
 	PRINT_RPAIR(29,28);
 	PRINT_RPAIR(27,26);
@@ -39,5 +45,19 @@ void h2_debug_context_dump(h2_context_t *context)
 	PRINT_CPAIR(usr,p3_0);
 	PRINT_CPAIR(lc1,sa1);
 	PRINT_CPAIR(lc0,sa0);
+	printf("\n");
+
+	printf("\nStack:\n\n");
+	ptr = context->r29;
+	for (i = 0 ; i < 64 ; i += 4) {
+		printf("%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",(unsigned int)(ptr + i),
+		   ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);
+	}
+	printf("\n");
+
+	h2_mutex_unlock(&debug_mutex);
 }
 
+void h2_debug_mutex_init() {
+	h2_mutex_init(&debug_mutex);
+}

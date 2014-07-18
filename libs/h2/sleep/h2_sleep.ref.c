@@ -4,6 +4,7 @@
  */
 
 #include <h2.h>
+#include <h2_common_timer.h>
 
 unsigned long long int h2_nanosleep(unsigned long long int time)
 {
@@ -12,12 +13,11 @@ unsigned long long int h2_nanosleep(unsigned long long int time)
 	long long int delta;
 	int old_ie;
 	old_ie = h2_vmtrap_setie(0);
-	h2_vmtrap_intop(H2K_INTOP_LOCEN,12,0);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN,12,0);
-	h2_vmtrap_timerop(H2K_TIMER_TRAP_SET_TIMEOUT,end);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT, 0);
+	h2_vmtrap_timerop(H2K_TIMER_TRAP_SET_TIMEOUT, end);
 	h2_vmtrap_wait();
 	h2_vmtrap_setie(1);
-	now = h2_vmtrap_timerop(H2K_TIMER_TRAP_GET_TIME,0);
+	now = h2_vmtrap_timerop(H2K_TIMER_TRAP_GET_TIME, 0);
 	delta = end-now;
 	if (delta < 0) delta = 0;
 	h2_vmtrap_setie(old_ie);

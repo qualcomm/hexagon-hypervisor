@@ -11,6 +11,7 @@
 #include <atomic.h>
 #include <cpuint.h>
 #include <intcontrol.h>
+#include <h2_common_timer.h>
 
 /* EJP: FIXME: locking for timeinfo */
 /* EJP: FIXME: cancel timer carefully on thread death */

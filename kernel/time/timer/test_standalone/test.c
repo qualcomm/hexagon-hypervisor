@@ -14,6 +14,7 @@
 #include <timeinfo.h>
 #include <timer.h>
 #include <trace.h>
+#include <h2_common_timer.h>
 
 void FAIL(const char *str)
 {

@@ -12,6 +12,7 @@ typedef enum {
 	INFO_STLB,        /**< STLB configuration */
 	INFO_SYSCFG,      /**< SYSCFG register */
 	INFO_REV,         /**< REV register */
+	INFO_SSBASE,      /**< subsystem base from cfg_table */
 	INFO_MAX
 } info_type;
 

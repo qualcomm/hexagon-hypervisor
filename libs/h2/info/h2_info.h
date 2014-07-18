@@ -16,7 +16,7 @@
 
 /**
 Get info.
-@param[in] type  Requested configuration parameter; one of:  build ID, boot flags, STLB configuration, SYSCFG register, REV register.
+@param[in] type  Requested configuration parameter; one of:  build ID, boot flags, STLB configuration, SYSCFG register, REV register, subsystem base address.
 @returns Paremeter value or -1 on unknown request.
 @dependencies None
 */

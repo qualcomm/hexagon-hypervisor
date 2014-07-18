@@ -6,6 +6,8 @@
 #include <c_std.h>
 #include <context.h>
 #include <globals.h>
+#include <max.h>
+#include <physread.h>
 
 u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
@@ -28,6 +30,10 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 	case INFO_REV:
 		return H2K_gp->core_rev;
+
+	case INFO_SSBASE:
+		asm volatile ( "%0 = cfgbase\n" : "=r" (val));
+		return (u32_t)(H2K_mem_physread_word((val << CFG_TABLE_SHIFT) + CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT);
 
 	default:
 		return -1;

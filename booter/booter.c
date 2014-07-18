@@ -329,6 +329,34 @@ static void die_usage()
 
 extern void bootvm__Interrupt(int);
 
+void print_infos() {
+	info_boot_flags_type boot_flags;
+	info_stlb_type  stlb_info;
+
+	boot_flags.raw = h2_info(INFO_BOOT_FLAGS);
+	stlb_info.raw = h2_info(INFO_STLB);
+
+	printf("H2/core info:\n");
+	printf("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
+	printf("\tH2 kernel in TCM: ");
+	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
+	printf("\tSTLB:\n");
+	printf("\t\tEnabled: ");
+	if (stlb_info.stlb_enabled) {
+		printf("true\n");
+		printf("\t\tSets per ASID: %d\n", 1 << stlb_info.stlb_max_sets_log2);
+		printf("\t\tWays: %d\n", stlb_info.stlb_max_ways);
+		printf("\t\tSize: %d\n", stlb_info.stlb_size);
+		printf("\t\tEntries: %d\n", (1 << stlb_info.stlb_max_sets_log2) * stlb_info.stlb_max_ways * stlb_info.stlb_size);
+	} else {
+		printf("false\n");
+	}
+	printf("\tsyscfg: 0x%08x\n", h2_info(INFO_SYSCFG));
+	printf("\trev: 0x%08x\n", h2_info(INFO_REV));
+	printf("\tSubsystem base: 0x%08x\n", h2_info(INFO_SSBASE));
+	printf("\n");
+}
+
 void kernel_setup() {
 
 	if (use_stlb) {
@@ -556,6 +584,7 @@ int main(int argc, char **argv)
 			argc--;
 			argv++;
 			kernel_setup();
+			print_infos();
 			for (; argc > 0; argc--) {
 				run_elf(argv[argc - 1]," ");
 			}
@@ -564,6 +593,7 @@ int main(int argc, char **argv)
 			if (argc < 2) die_usage();
 			if ((f = fopen(argv[1],"r")) == NULL) die_usage();
 			kernel_setup();
+			print_infos();
 			while (fgets(buf,BUFSIZE,f)) {
 				strip(buf);
 				if (sscanf(buf,"%s ",file) <= 0) {
@@ -583,6 +613,7 @@ int main(int argc, char **argv)
 	}
 
 	kernel_setup();
+	print_infos();
 	while (boots-- && ret == 0) {
 		ret = run_elf(argv[0],buf);
 	}

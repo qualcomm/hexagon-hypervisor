@@ -43,7 +43,7 @@ void sleeper() {
 
 int main() 
 {
-	int i;
+	int i = 0;
 
 	h2_handle_errors(0);
 

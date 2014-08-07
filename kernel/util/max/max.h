@@ -165,7 +165,11 @@
 #endif
 
 #define BOOT_THREAD_SSR (0x01c60000 | (1<<SSR_GUEST_BIT))
-#define BOOT_THREAD_CCR 0xffff0000
+#if ARCHV=60
+#define BOOT_THREAD_CCR 0x00130000	// for istariv1
+#else
+#define BOOT_THREAD_CCR 0x00170000
+#endif
 
 /* ensure UGP is 0 for default thread ID behavior in h2 libs */
 #define BOOT_THREAD_GPUGP 0

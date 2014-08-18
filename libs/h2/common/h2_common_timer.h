@@ -8,6 +8,7 @@
 
 #define H2K_TIME_GUESTINT 12
 
+#ifndef ASM
 typedef enum {
 	H2K_TIMER_TRAP_GET_FREQ,
 	H2K_TIMER_TRAP_GET_RESOLUTION,
@@ -17,5 +18,6 @@ typedef enum {
 	H2K_TIMER_TRAP_DELTA_TIMEOUT,
 	H2K_TIMER_TRAP_INVALID
 } timerop_type;
+#endif
 
 #endif

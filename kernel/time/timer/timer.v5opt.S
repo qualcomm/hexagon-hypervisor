@@ -406,7 +406,6 @@ FUNC_START H2K_timer_set_timeout_tick .text.time.timer
 		NEXT_TICKS = memd(H2K_GP+#KG_time_next_ticks)
 		DEVPTR = memw(H2K_GP+#KG_time_devptr)
 	}
-foo:
 	{
 		p0 = cmp.gtu(NEXT_TICKS,TIMEOUT_TICK)
 		if (!p0.new) jump:nt .Lskip_hw_set
@@ -655,6 +654,7 @@ FUNC_START H2K_vmtrap_timer .text.time.timer
 	{
 		r3:2 = memd(ME+#CONTEXT_r0302)
 		r0 = memw(ME+#CONTEXT_r00)
+		r4 = ME
 		call H2K_timer_trap
 	}
 	.falign

@@ -196,7 +196,10 @@ int main()
 	a.timeout = 0;
 	H2K_gp->time.last_ticks = 2;
 	if ((ret = H2K_timer_trap(H2K_TIMER_TRAP_SET_TIMEOUT,0x12340ULL * resolution,me)) 
-		!= (0x12340 * resolution)) FAIL("set timeout return");
+		!= (0x12340 * resolution)) {
+		printf("ret=%llx expected=%llx",ret,0x12340*resolution);
+		FAIL("set timeout return");
+	}
 	if (a.timeout != 0x12340) FAIL("bad ticks calculation");
 	if (H2K_gp->time.timeouts == NULL) FAIL("not put to tree");
 

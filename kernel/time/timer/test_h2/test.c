@@ -30,8 +30,8 @@ extern u64_t h2_time_get_time();
 extern u64_t h2_time_set_timeout(u64_t timeout);
 extern void set_vectors();
 
-volatile unsigned int *timerbase = (void *)0xFFCA0000;
-volatile unsigned int *l2vicbase = (void *)0xFFC90000;
+volatile unsigned int *timerbase = (void *)0xFFEA0000;
+volatile unsigned int *l2vicbase = (void *)0xFFE90000;
 
 int main() 
 {

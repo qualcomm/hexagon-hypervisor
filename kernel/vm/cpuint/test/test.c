@@ -292,16 +292,20 @@ void TH_test_status()
 int main()
 {
 	int j;
+	puts("0");
 	TH_init_vmblock();
 
 	/* Check status */
+	puts("1");
 	TH_test_status();
 
+	puts("2");
 	/* int_v2p not set up */
 	/* pmap not set up */
 	/* Set set/clear mask functions basic functionality */
 	TH_test_maskfuncs();
 
+	puts("3");
 	/* Set up for interrupt disabled checks */
 	TH_vmstatus_setting = 0;
 	TH_expected_ipi = 0;

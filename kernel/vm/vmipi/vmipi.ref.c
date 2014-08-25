@@ -29,13 +29,14 @@ void H2K_vm_ipi_do(u32_t ipi_intno, H2K_thread_context *me, u32_t cpu)
 	if (me != NULL) H2K_vm_do_work(me);
 }
 
-void H2K_vm_ipi_send_withlock(H2K_thread_context *dest)
+int H2K_vm_ipi_send_withlock(H2K_thread_context *dest)
 {
 	if (dest->status == H2K_STATUS_RUNNING) {
 		H2K_atomic_setbit(&H2K_gp->mask_for_ipi,dest->hthread);
 		iassignw(VM_IPI_INT,~H2K_gp->mask_for_ipi);
 		swi(VM_IPI_INTMASK);
 	}
+	return 0;
 }
 
 void H2K_vm_ipi_send(H2K_thread_context *dest)

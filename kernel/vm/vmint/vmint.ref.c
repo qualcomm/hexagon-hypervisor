@@ -30,7 +30,7 @@ s32_t H2K_vm_int_deliver_locked(H2K_vmblock_t *vmblock, H2K_thread_context *thre
 	switch (thread->status) {
 	case H2K_STATUS_VMWAIT:
 		if (thread->id.cpuidx < bits(long_bitmask_t)) {
-			vmblock->waiting_cpus &= ~(0x1 << thread->id.cpuidx);
+			vmblock->waiting_cpus &= ~(0x1ULL << thread->id.cpuidx);
 		}
 		thread->r00 = intno;
 	enqueue:
@@ -39,7 +39,7 @@ s32_t H2K_vm_int_deliver_locked(H2K_vmblock_t *vmblock, H2K_thread_context *thre
 		return 0;
 	case H2K_STATUS_RUNNING:
 		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
-			H2K_vm_ipi_send_withlock(thread);
+			return H2K_vm_ipi_send_withlock(thread);
 		}
 		break;
 	case H2K_STATUS_INTBLOCKED:
@@ -150,7 +150,7 @@ static H2K_thread_context *H2K_vmint_fixup_default(H2K_thread_context *me, u32_t
 
 typedef H2K_thread_context *(*H2K_vmint_fixup_fn_t)(H2K_thread_context *me, u32_t *argptr);
 
-H2K_vmint_fixup_fn_t H2K_intops_fixups[H2K_INTOP_FIRST_INVALID_OP] = {
+const H2K_vmint_fixup_fn_t H2K_intops_fixups[H2K_INTOP_FIRST_INVALID_OP] = {
 	H2K_vmint_fixup_default,	/* H2K_INTOP_NOP */
 	H2K_vmint_fixup_default,	/* H2K_INTOP_GLOBEN */
 	H2K_vmint_fixup_default,	/* H2K_INTOP_GLOBDIS */

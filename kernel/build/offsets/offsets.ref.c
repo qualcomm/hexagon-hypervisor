@@ -75,6 +75,8 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(cs1cs0);
 	PRINT_CONTEXT_OFFSET(atomic_status_word);
 	PRINT_CONTEXT_OFFSET(cpuint_enabled_pending);
+	PRINT_CONTEXT_OFFSET(cpuint_enabled);
+	PRINT_CONTEXT_OFFSET(cpuint_pending);
 	PRINT_CONTEXT_OFFSET(tree);
 	PRINT_CONTEXT_OFFSET(rightleft);
 	PRINT_CONTEXT_OFFSET(timeout);
@@ -119,6 +121,14 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(max_cpus);
 	PRINT_VMBLOCK_OFFSET(contexts);
 	PRINT_VMBLOCK_OFFSET(intinfo);
+	PRINT_VMBLOCK_OFFSET(waiting_cpus);
+	PRINT_VMBLOCK_OFFSET(pending);
+	PRINT_VMBLOCK_OFFSET(enable);
+	PRINT_VMBLOCK_OFFSET(percpu_mask);
+	PRINT_VMBLOCK_OFFSET(int_v2p);
+	PRINT_VMBLOCK_OFFSET(max_cpus);
+	PRINT_VMBLOCK_OFFSET(num_cpus);
+	PRINT_VMBLOCK_OFFSET(contexts);
 #ifdef DO_EXT_SWITCH
 	PRINT_VMBLOCK_OFFSET(ext_contexts);
 #endif

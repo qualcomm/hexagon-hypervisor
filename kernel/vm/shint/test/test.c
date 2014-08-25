@@ -198,6 +198,7 @@ void TH_test_affinity(u32_t j)
 				} 
 			} else {
 				if ((TH_localdis_storage[k][j/32] & (1<<(j%32))) != 0) {
+					printf("j=%d i=%d k=%d\n",j,i,k);
 					FAIL("Setaffinity did not disable for thread");
 				} 
 			}
@@ -538,6 +539,7 @@ int main()
 	if (H2K_vm_shint_peek(&TH_vmblock,&TH_threads[0],0,info) != 1) {
 		FAIL("Didn't get first valid interrupt/peek");
 	}
+	puts("F");
 	TH_vmblock.pending[0] = 0;
 	TH_vmblock.num_ints = 32;
 	TH_expected_next.peek = 1;

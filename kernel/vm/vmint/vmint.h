@@ -6,6 +6,8 @@
 #ifndef H2K_VMINT_H
 #define H2K_VMINT_H 1
 
+#ifndef ASM
+
 #include <c_std.h>
 #include <vm.h>
 #include <context.h>
@@ -62,5 +64,25 @@ s32_t H2K_vm_int_deliver_locked(H2K_vmblock_t *block, H2K_thread_context *dst, u
 
 /* Trap multi-call */
 void H2K_vmtrap_intop(H2K_thread_context *me) IN_SECTION(".text.vm.int");
+
+#else
+	// ASM
+#define INTOP_INDEX_nop         0
+#define INTOP_INDEX_enable      1
+#define INTOP_INDEX_disable     2
+#define INTOP_INDEX_localen     3
+#define INTOP_INDEX_localdis    4
+#define INTOP_INDEX_setaffinity 5
+#define INTOP_INDEX_get         6
+#define INTOP_INDEX_peek        7
+#define INTOP_INDEX_status      8
+#define INTOP_INDEX_post        9
+#define INTOP_INDEX_clear       10
+
+#define INTINFO_SIZE 8
+#define INTINFO_num_ints 0
+#define INTINFO_handlers 4
+
+#endif
 
 #endif

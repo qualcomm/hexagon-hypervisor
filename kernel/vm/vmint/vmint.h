@@ -78,6 +78,7 @@ void H2K_vmtrap_intop(H2K_thread_context *me) IN_SECTION(".text.vm.int");
 #define INTOP_INDEX_status      8
 #define INTOP_INDEX_post        9
 #define INTOP_INDEX_clear       10
+#define INTOP_INDEX_INVALID     11
 
 #define INTINFO_SIZE 8
 #define INTINFO_num_ints 0

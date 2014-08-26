@@ -102,9 +102,10 @@ u32_t TH_vmstatus_setting = 0;
 u32_t TH_saw_ipi_send = 0;
 u32_t TH_expected_ipi = 0;
 
-void H2K_vm_ipi_send_withlock(H2K_thread_context *thread)
+int H2K_vm_ipi_send_withlock(H2K_thread_context *thread)
 {
 	TH_saw_ipi_send = 1;
+	return 0;
 }
 
 u32_t TH_expected_event = 0;

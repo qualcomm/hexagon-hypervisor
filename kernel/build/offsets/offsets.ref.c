@@ -121,6 +121,7 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(max_cpus);
 	PRINT_VMBLOCK_OFFSET(contexts);
 	PRINT_VMBLOCK_OFFSET(intinfo);
+	PRINT_VMBLOCK_OFFSET(parent);
 	PRINT_VMBLOCK_OFFSET(waiting_cpus);
 	PRINT_VMBLOCK_OFFSET(pending);
 	PRINT_VMBLOCK_OFFSET(enable);

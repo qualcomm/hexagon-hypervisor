@@ -236,6 +236,11 @@ static inline u32_t get_hwtnum()
 }
 #endif
 
+static inline void syncht()
+{
+	asm volatile (" syncht " : : : "memory");
+}
+
 #if (ARCHV >= 3)
 static inline void H2K_mutex_lock_k0()
 {

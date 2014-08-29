@@ -70,6 +70,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 		/* Disable WB mode on L2$ */
 		syscfg &= ~SYSCFG_L2WB;
 	}
+	syncht();
 	H2K_set_syscfg(syscfg);
 	syncht();
 	H2K_stmode_end();

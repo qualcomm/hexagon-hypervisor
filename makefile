@@ -66,7 +66,7 @@ opt:
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@" > $(INSTALLPATH)/ver
+	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 
 ref:
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
@@ -75,7 +75,7 @@ ref:
 	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@" > $(INSTALLPATH)/ver
+	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 
 sim: ref
 	$(CC) -mv$(TOOLARCH) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \

@@ -151,3 +151,49 @@ Functionality
 ~~~~~~~~~~~~~
 
 Set SSR:XA and SSR:XE in the current thread context to the given values.
+
+
+H2K_trap_hwconfig_vlength
+-------------------------
+
+.. cfunction:: u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me)
+
+	:param unused: Unused parameter
+	:param unusedp: Unused parameter
+	:param vlength: Vector length log 2
+	:param unused3: Unused parameter
+	:param me: Pointer to the current thread context
+	:returns: 0 on success, nonzero on failure
+
+Description
+~~~~~~~~~~~
+
+Set extension vector length.
+
+Functionality
+~~~~~~~~~~~~~
+
+If vlength is at least the double-vector-length threshold (7), set V2X bit in SYSCFG, else clear V2X.
+
+
+H2K_trap_hwconfig_extpower
+-------------------------
+
+.. cfunction:: u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t unused3, H2K_thread_context *me)
+
+	:param unused: Unused parameter
+	:param unusedp: Unused parameter
+	:param state: Requested power state
+	:param unused3: Unused parameter
+	:param me: Pointer to the current thread context
+	:returns: 0 on success, nonzero on failure
+
+Description
+~~~~~~~~~~~
+
+Set extension power state to the requested value.
+
+Functionality
+~~~~~~~~~~~~~
+
+Currently specific to HVX.  Call :cfunc:`H2K_hvx_poweron()` if state is non-zero, else call :cfunc:`H2K_hvx_poweroff()`.

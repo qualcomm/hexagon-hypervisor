@@ -6,31 +6,21 @@
 #include <c_std.h>
 #include <max.h>
 #include <globals.h>
+#include <hvx.h>
 
 /* Power up HVX */
 void H2K_hvx_init(u32_t devpage_offset) {
 
 #ifdef HAVE_EXTENSIONS
 
-	/* Don't init if no HVX present */
-	if (((H2K_gp->core_rev & CORE_REV_UARCH_MASK) == CORE_V60C)
-			|| ((H2K_gp->core_rev & CORE_REV_UARCH_MASK) == CORE_V60F)) {
+	if (!H2K_gp->info_boot_flags.boot_have_hvx) {
 		return;
 	}
 
-	u32_t volatile *clk = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_CLK_CTL);
-	u32_t volatile *reset = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_RESET);
-	u32_t volatile *pwr = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_PWR_CTL);
+	H2K_gp->hvx_clock = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_CLK_CTL);
+	H2K_gp->hvx_reset = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_RESET);
+	H2K_gp->hvx_power = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_PWR_CTL);
+	H2K_gp->hvx_state = H2K_HVX_STATE_OFF;
 
-	volatile u32_t delay = 2000;
-
-	/* From HPG 4.7.8 */
-	*clk = QDSP6SS_CP_CLK_CTL_DISABLE;
-	*reset = QDSP6SS_CP_RESET_ASSERT;
-	*pwr = QDSP6SS_CP_PWR_CTL_CLAMP_IO_ON;
-	while (--delay);  // spec says wait for 1(TBD?) microsecond
-	*pwr = QDSP6SS_CP_PWR_CTL_CLAMP_IO_OFF;
-	*reset = QDSP6SS_CP_RESET_DEASSERT;
-	*clk = QDSP6SS_CP_CLK_CTL_ENABLE;
 #endif
 }

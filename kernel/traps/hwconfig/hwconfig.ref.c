@@ -14,6 +14,7 @@
 #include <hexagon_protos.h>
 #include <physread.h>
 #include <tmpmap.h>
+#include <hvx.h>
 
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
@@ -23,6 +24,7 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_prefetch,
 	H2K_trap_hwconfig_extbits,
 	H2K_trap_hwconfig_vlength,
+	H2K_trap_hwconfig_extpower,
 	H2K_trap_hwconfig_getl2reg,
 	H2K_trap_hwconfig_setl2reg
 };
@@ -119,6 +121,9 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	/* FIXME: should check for allowed XA values here */
 	me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
 	me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+	if (xe) {
+		H2K_hvx_poweron(); // make sure the lights are on
+	}
 
 	return 0;
 #else
@@ -152,6 +157,22 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 	}
 
 	BKL_UNLOCK();
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t unused3, H2K_thread_context *me) {
+
+#ifdef HAVE_EXTENSIONS
+
+	/* Just HVX for now */
+	if (state) {
+		H2K_hvx_poweron();
+	} else {
+		H2K_hvx_poweroff();
+	}
 	return 0;
 #else
 	return -1;

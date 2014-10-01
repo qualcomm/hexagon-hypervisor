@@ -92,6 +92,7 @@
 #define QDSP6SS_CP_PWR_CTL 0x000000f0
 #define QDSP6SS_CP_PWR_CTL_CLAMP_IO_ON  0x011fffff
 #define QDSP6SS_CP_PWR_CTL_CLAMP_IO_OFF 0x010fffff
+#define QDSP6SS_CP_PWR_CTL_POWER_OFF    0x001fffff
 #endif
 
 #endif

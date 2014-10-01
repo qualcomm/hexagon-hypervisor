@@ -19,7 +19,8 @@ typedef enum {
 typedef union {
 	struct {
 		unsigned long boot_use_tcm:1;  /**< Hypervisor in TCM? */
-		unsigned long boot_unused:31;
+		unsigned long boot_have_hvx:1;
+		unsigned long boot_unused:30;
 	};
 	unsigned long raw;
 } info_boot_flags_type;

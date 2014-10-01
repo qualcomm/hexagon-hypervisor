@@ -56,6 +56,12 @@ typedef struct {
 		};
 	};
 #endif
+#ifdef HAVE_EXTENSIONS
+	u32_t *hvx_clock;
+	u32_t *hvx_reset;
+	u32_t *hvx_power;
+	u32_t hvx_state;
+#endif
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
 	u32_t last_tlb_index;

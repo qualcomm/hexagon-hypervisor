@@ -49,5 +49,15 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index) 
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 #endif
 
+#ifdef HAVE_EXTENSIONS
+	/* HVX present? */
+	if (((H2K_gp->core_rev & CORE_REV_UARCH_MASK) == CORE_V60C)
+			|| ((H2K_gp->core_rev & CORE_REV_UARCH_MASK) == CORE_V60F)) {
+		H2K_kg.info_boot_flags.boot_have_hvx = 0;
+	} else {
+		H2K_kg.info_boot_flags.boot_have_hvx = 1;
+	}
+#endif
+
 	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
 }

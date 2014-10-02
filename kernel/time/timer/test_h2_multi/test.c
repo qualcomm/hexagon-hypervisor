@@ -46,7 +46,7 @@ static inline u64_t random_delta(u64_t seed) {
 
 void task(void *arg)
 {
-	u64_t start, wakeup, end, delta;
+	s64_t start, wakeup, end, delta;
 	int i,ret;
 	set_vectors();
 	printf("Task started. id=%p\n",arg);
@@ -63,6 +63,7 @@ void task(void *arg)
 		}
 		end = h2_time_get_time();
 		delta = end - wakeup;
+		if (delta < 0) delta = -delta;
 		//printf("id=%p: start=%llx wakeup=%llx end=%llx\n",arg,start,wakeup,end);
 		if (delta > MAX_DELTA) {
 			printf("delta: %llx\n",delta);

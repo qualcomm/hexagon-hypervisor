@@ -1,0 +1,35 @@
+ucos/h2:
+
+cd h2; make clean; make ARCHV=xx opt
+cd ucos; make clean ; make ARCHV=xx pingpong
+archsim --timing --quiet -- ~/pwa/tmp/h2/install/bin/booter pingpong 1000
+
+
+qurt/h2:
+
+cd h2; make clean; make ARCHV=xx opt
+cd perf/pingpong; make clean; make ARCHV=xx test.elf
+archsim --timing --quiet  -- .../h2/install/bin/booter test.elf
+
+
+qurt/h2 1t:
+
+cd h2; make clean; make ARCHV=xx H2K_EXTRA_CFLAGS=-DMAX_HTHREADS=1 opt
+cd perf/pingpong; make clean; make ARCHV=xx test.elf
+archsim --timing --quiet  -- .../h2/install/bin/booter test.elf
+
+
+threadx 1cpu:
+
+cd h2; make clean; make ARCHV=xx opt
+cd threadx/thx_1cpu
+make clean ; make -j8 OPTIMIZE=-O3 ARCHV=5 APP=hexagon/threadx_pingpong.c NO_TIMER=1 threadx
+archsim --timing --quiet -- .../h2/install/bin/booter threadx
+
+
+threadx smp:
+
+cd h2; make clean; make ARCHV=xx opt
+cd threadx/thx_smp
+make clean ; make -j8 OPTIMIZE=-O3 ARCHV=5 APP=hexagon/threadx_pingpong.c NO_TIMER=1 threadx
+archsim --timing --quiet -- .../h2/install/bin/booter threadx

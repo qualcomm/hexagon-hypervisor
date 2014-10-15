@@ -10,8 +10,7 @@
  */
 
 #include "h2_trap_constants.h"
-#define ASM 1
-#include "h2_barrier.h"
+#include "h2_barrier_defs.h"
 
 	.text
 	.global h2_barrier_wait

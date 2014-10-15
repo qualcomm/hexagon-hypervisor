@@ -6,7 +6,7 @@
 #ifndef H2_CONTEXT_H
 #define H2_CONTEXT_H 1
 
-#ifndef ASM
+#include <h2_context_defs.h>
 
 #define REGPAIR(ODD,EVEN) \
 	union { \
@@ -61,8 +61,3 @@ typedef struct {
 } h2_context_t;
 
 #endif
-
-#define H2_CONTEXT_SIZE 192
-
-#endif
-

@@ -5,8 +5,7 @@
 
 #include <h2_trap_constants.h>
 #include <h2_common_error.h>
-#define ASM 1
-#include <h2_context.h>
+#include <h2_context_defs.h>
 
 	.text
 	// h2_handle_errors(int exit_flag)

@@ -6,9 +6,8 @@
 #ifndef H2_COMMON_TIMER_H
 #define H2_COMMON_TIMER_H 1
 
-#define H2K_TIME_GUESTINT 12
+#include <h2_common_timer_defs.h>
 
-#ifndef ASM
 typedef enum {
 	H2K_TIMER_TRAP_GET_FREQ,
 	H2K_TIMER_TRAP_GET_RESOLUTION,
@@ -18,6 +17,5 @@ typedef enum {
 	H2K_TIMER_TRAP_DELTA_TIMEOUT,
 	H2K_TIMER_TRAP_INVALID
 } timerop_type;
-#endif
 
 #endif

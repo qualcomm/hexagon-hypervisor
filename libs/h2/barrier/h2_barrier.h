@@ -12,13 +12,7 @@
 /** @addtogroup h2 
 @{ */
 
-/** Return value for one of the threads at the barrier, arbitrarily */
-#define H2_BARRIER_SERIAL_THREAD 1
-
-/** Return value for all other threads at the barrier */
-#define H2_BARRIER_OTHER 0
-
-#ifndef ASM
+#include <h2_barrier_defs.h>
 #include <h2_mutex.h>
 
 /** @brief Barrier type definition.  Please do not access directly. */
@@ -62,8 +56,6 @@ Wait at a barrier.  When the configured number of threads have arrived at the ba
 */
 
 int h2_barrier_wait(h2_barrier_t *barrier);
-
-#endif
 
 /** @} */
 

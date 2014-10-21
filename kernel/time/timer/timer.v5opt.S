@@ -22,6 +22,8 @@
 #define HW_CNTSR    0x0004
 #define HW_CNTACR   0x0040
 
+#ifndef NO_DEVICES
+
 FUNC_START H2K_timer_hw_init  .text.time.timer  .falign
 #define DEVPTR r1
 #define DEVSLICE r0
@@ -66,6 +68,8 @@ FUNC_START H2K_timer_hw_init  .text.time.timer  .falign
 #undef DEVSLICE
 FUNC_END H2K_timer_hw_init
 
+#endif
+
 FUNC_START H2K_timer_get_ticks  .text.time.timer  .falign
 #define TICKHI r1
 #define TICKLO r0
@@ -109,6 +113,8 @@ FUNC_START H2K_timer_get_ticks  .text.time.timer  .falign
 FUNC_END H2K_timer_get_ticks
 
 FUNC_START H2K_timer_init  .text.time.timer  .falign	// init(devpage_offset)
+
+#ifndef NO_DEVICES
 	{
 		allocframe(#0)
 		r5:4 = #0
@@ -127,6 +133,10 @@ FUNC_START H2K_timer_init  .text.time.timer  .falign	// init(devpage_offset)
 		deallocframe
 		jump H2K_timer_get_ticks
 	}
+#else
+	jumpr r31
+#endif
+
 FUNC_END H2K_timer_init
 
 /* H2K_timer_dotimeout(H2K_treenode_t *treenode, void *me) */

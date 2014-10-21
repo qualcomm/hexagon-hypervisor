@@ -166,13 +166,26 @@ FUNC_START start .entry .p2align 12
 	r16 = and(r15, #0xff)    // arch version
 	p0 = cmp.eq(r16, #0x60)  // v60?
 	if (p0) jump .Lv60
+	p0 = cmp.eq(r16, #0x56)  // v60?
+	if (p0) jump .Lv56
 
-	// < v60
+	// < v56
 	r16 = lsr(r15, #8)
 	r16 = and(r16, #0xf)  // uarch config
 	p0 = cmp.eq(r16, #2)  // v55c
 	if (p0) jump .Ljtlb64
 	p0 = cmp.eq(r16, #3)  // v55d
+	if (p0) jump .Ljtlb64
+
+	r16 = #128            // all others
+	jump .Ltlbsetup
+
+.Lv56:
+	r16 = lsr(r15, #8)
+	r16 = and(r16, #0xf)  // uarch config
+	p0 = cmp.eq(r16, #6)  // v56t
+	if (p0) jump .Ljtlb64
+	p0 = cmp.eq(r16, #8)  // v56u
 	if (p0) jump .Ljtlb64
 
 	r16 = #128            // all others

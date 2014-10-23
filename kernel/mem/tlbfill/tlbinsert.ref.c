@@ -12,15 +12,15 @@ void H2K_mem_tlb_insert_index_unlock(H2K_mem_tlbfmt_t entry, u32_t index) {
 	u64_t rawentry = entry.raw;
 	u32_t result;
 
-#if ARCHV < 5
+#if ARCHV < 60
 	u32_t tag = entry.vpn | (entry.asid << (32 - PAGE_BITS));
 #endif
 
 	asm volatile
 		(
-#if ARCHV >= 5
+#if ARCHV >= 60
 		 " %0 = ctlbw(%1,%2)\n"
-#else // == V4
+#else // < V60
 		 " %0 = tlbp(%3)\n"
 		 " p0 = tstbit(%0, #31)\n"
 		 " if (!p0) jump 1f\n"
@@ -31,7 +31,7 @@ void H2K_mem_tlb_insert_index_unlock(H2K_mem_tlbfmt_t entry, u32_t index) {
 		 : "=&r" (result)
 		 : "r"(rawentry),
 			 "r"(index)
-#if ARCHV == 4
+#if ARCHV < 60
 			 ,"r"(tag)
 		 : "p0"
 #endif

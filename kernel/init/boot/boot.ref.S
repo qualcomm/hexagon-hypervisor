@@ -32,15 +32,44 @@
 #define MAKE_TLBHI(DST,CONSTVA,PGBITS,SHIFT) \
 	SETCONST(DST,BOOT_TLBHI | (((CONSTVA) >> PGBITS)<<SHIFT))
 
-#define MAKE_TLBLO(DST,SRCVAL,TMP) \
+#define MAKE_TLBLO(DST,SRCVAL,TMPREG) \
 	SETCONST(DST,BOOT_TLBLO) ; \
-	TMP = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS); \
-	DST |= asl(TMP, #  BOOT_TLB_SHIFT+SBIT_SIZE); 
+	TMPREG = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS); \
+	DST |= asl(TMPREG, #  BOOT_TLB_SHIFT+SBIT_SIZE);
 
-#define MAKE_TLBLO_DEV(DST,SRCVAL,TMP) \
+#define MAKE_TLBLO_DEV(DST,SRCVAL,TMPREG) \
 	SETCONST(DST,BOOT_TLBLO_DEV) ; \
-	TMP = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS_4M); \
-	DST |= asl(TMP, #  BOOT_TLB_SHIFT_4M + SBIT_SIZE); 
+	TMPREG = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS_4M); \
+	DST |= asl(TMPREG, #  BOOT_TLB_SHIFT_4M + SBIT_SIZE);
+
+#define DATA       r1:0
+
+#define INDEX        r1
+#define TLB_ENTRY  r3:2  // TLB data
+#define TLB_LO       r2
+#define TLB_HI       r3
+#define NPAGES       r4  // # kernel pages
+#define PAGE_COUNT   r5  // counter for TLB setup
+#define IMAGE_SIZE   r7
+#define CFG_IDX      r8  // cfg_table index
+#define CFG_HI       r9  // cfg_table address [35:11]
+#define TMP         r10
+#define TABLE_PTR   r11
+#define TCM_BASE    r12  // TCM base from cfg_table
+#define BOOT_OFFSET r13  // subtract from __bootvm_entry to get bootvm VA
+#define SS_BASE     r14  // *public* subsystem base
+#define REVID       r15  // rev
+#define LAST_TLB    r16  // last replaceable TLB index
+#define PHYS_ADDR   r17  // where we are loaded, page-aligned
+#define L2_SIZE     r18  // L2 mem size from rev
+#define REV_ARCH    r19  // arch from rev
+#define REV_UARCH   r20  // uarch from rev
+#define LINK_ADDR   r21  // kernel VA
+#define COUNTER     r22
+#define TMP_L2      r23
+#define L2CFG       r24
+
+#define SP          r29
 
 FUNC_START start .entry .p2align 12
 	jump 1f
@@ -51,66 +80,71 @@ FUNC_START start .entry .p2align 12
 
 	/* NOTE: 4096 bytes should contain all the way to jump to
 	hyperspace... */
-	r0 = #0					// 0
-	syscfg = r0				// 1
+	TMP = #0					// 0
+	syscfg = TMP				// 1
 	ickill					// 2
 	dckill					// 3
 	l2kill					// 4
 	nop            // 5
 	nop 					 // 6
-	r0 = #(SYSCFG_I | SYSCFG_D)					// 7
-	syscfg = r0				// 0
+	TMP = #(SYSCFG_I | SYSCFG_D)					// 7
+	syscfg = TMP				// 0
 	isync					// 1 ... needs to be in same cache line as syscfg
 	/* Setup EVB */
-	SETCONST(r0,H2K_event_vectors)
-	evb = r0
+	SETCONST(TMP,H2K_event_vectors)
+	evb = TMP
 
-	SETCONST(r0,_SDA_BASE_)	// boot thread should do this...
-	gp = r0
+	SETCONST(TMP,_SDA_BASE_)	// boot thread should do this...
+	gp = TMP
 
 	SETCONST(H2K_GP,H2K_kg)
 
 #if ARCHV == 3
-	r0.h = #0x0100
-	r0.l = #0x0000
-	s60 = r0
+	TMP.h = #0x0100
+	TMP.l = #0x0000
+	s60 = TMP
 #elif ARCHV == 4
-	r0 = ##0x00002004
-	s63 = r0
+	TMP = ##0x00002004
+	s63 = TMP
 #elif ARCHV == 5
-	r0 = #0     /* (New chickenbits) */
-	r0 = setbit(r0,#2);	//  AXI L1 Snoop something
-	r0 = setbit(r0,#27);	//  force store
-	r0 = setbit(r0,#12);	//  HW loops
-	s63 = r0
-	r0 = #0
-	r0 = setbit(r0,#22);	//  fix for address calculation corruption
-	s62 = r0
+	TMP = #0     /* (New chickenbits) */
+	TMP = setbit(TMP,#2);	//  AXI L1 Snoop something
+	TMP = setbit(TMP,#27);	//  force store
+	TMP = setbit(TMP,#12);	//  HW loops
+	s63 = TMP
+	TMP = #0
+	TMP = setbit(TMP,#22);	//  fix for address calculation corruption
+	s62 = TMP
 #else
 #endif
 
 	/* Set up rising edge triggered */
-	r0 = #-1
+	TMP = #-1
 	/* Set imask to -1, since we are not lowest priority at boot */
  	/* (other idle threads) */
-	imask = r0
-	iel = r0
-	iahl = r0
-	cswi(r0)
-	ciad(r0)
+	imask = TMP
+	iel = TMP
+	iahl = TMP
+	cswi(TMP)
+	ciad(TMP)
+
+	PHYS_ADDR = pc
+	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)
+	SETCONST(LINK_ADDR, H2K_LINK_ADDR)
+	BOOT_OFFSET = sub(LINK_ADDR, PHYS_ADDR)
+	SETCONST(NPAGES, H2K_KERNEL_NPAGES)
+	REVID = rev
+	REV_ARCH = and(REVID, #0xff)         // arch version
+	REV_UARCH = extractu(REVID, #4, #8)  // uarch version
+	L2_SIZE = extractu (REVID, #4, #12)  // L2 mem size
 
 	// Read cfg_table
-	r9 = cfgbase
-	r9 = asl(r9, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
+	CFG_HI = cfgbase
+	CFG_HI = asl(CFG_HI, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
 
-	r10 = pc
-	r13 = r10  // save for boot_offset
-
-	r8 = #CFG_TABLE_SSBASE
-	r14 = memw_phys(r8, r9) // r14 == SSBASE[35:16]
-	r14 = asl(r14, #CFG_TABLE_SHIFT)  // SSBASE
-
-	r15 = rev
+	CFG_IDX = #CFG_TABLE_SSBASE
+	SS_BASE = memw_phys(CFG_IDX, CFG_HI) // == SSBASE[35:16]
+	SS_BASE = asl(SS_BASE, #CFG_TABLE_SHIFT)  // SSBASE
 
 #ifdef H2K_USE_TCM
 
@@ -119,163 +153,158 @@ FUNC_START start .entry .p2align 12
 #error USE_TCM on <= v4?
 #endif
 
-	// FIXME: We do this all over again later.  Maybe set up this part of
-	// SYSCFG here.
-	r16 = lsr(r15, #12)
-	r16 = and(r16, #0xf)  // L2 size
-
 	// Bail out if L2 size not 768K
-	p0 = cmp.eq(r16, #6)
+	p0 = cmp.eq(L2_SIZE, #6)
 	if (!p0) jump .Lthere
 
-	r8 = #CFG_TABLE_L2TCM
-	r11 = memw_phys(r8, r9) // r11 == L2TCM[35:16]
-	r11 = asl(r11, #CFG_TABLE_SHIFT)  // TCM base
+	CFG_IDX = #CFG_TABLE_L2TCM
+	TCM_BASE = memw_phys(CFG_IDX, CFG_HI) // == L2TCM[35:16]
+	TCM_BASE = asl(TCM_BASE, #CFG_TABLE_SHIFT)
 
 	/* FIXME?  Go ahead and assume TCM is in lower 4G and aligned to at least
 	kernel page size */
 
 	// copy ourselves to TCM
 
-	// r10 == pc
-	r10 = and(r10, ##BOOT_TLB_PAGE_MASK)  // first kernel page
-	SETCONST(r6, H2K_LINK_ADDR)
-	SETCONST(r7, end)
-	r7 = sub(r7, r6)  // size
-	r6 = r11
-	r5 = #0	
+#define ORG_PTR     r25  // TCM copy-from pointer
+#define TCM_PTR     r27  // TCM copy-to pointer
+
+	ORG_PTR = PHYS_ADDR  // first kernel page
+	PHYS_ADDR = TCM_BASE
+	SETCONST(IMAGE_SIZE, end)
+	IMAGE_SIZE = sub(IMAGE_SIZE, LINK_ADDR)
+	TCM_PTR = TCM_BASE
+	COUNTER = #0	
 3:
-	r1:0 = memd(r10)
-	memd(r6) = r1:0
-	r10 = add(r10, #8)
-	r6 = add(r6, #8)
-	r5 = add(r5, #8)
-	p0 = cmp.gt(r5, r7)
+	DATA = memd(ORG_PTR)
+	memd(TCM_PTR) = DATA
+	ORG_PTR = add(ORG_PTR, #8)
+	TCM_PTR = add(TCM_PTR, #8)
+	COUNTER = add(COUNTER, #8)
+	p0 = cmp.gt(COUNTER, IMAGE_SIZE)
 	if (!p0) jump 3b
 
 	// go there
-	SETCONST(r10, .Lthere)
-	r10 = and(r10, ##BOOT_TLB_OFFSET_MASK)  // offset of .Lthere
-	r7 = or(r11, r10)
-	jumpr r7
+	SETCONST(TCM_PTR, .Lthere)
+	TCM_PTR = and(TCM_PTR, ##BOOT_TLB_OFFSET_MASK)  // offset of .Lthere
+	TCM_PTR = or(TCM_BASE, TCM_PTR)
+	jumpr TCM_PTR
 
 .Lthere:
 
+#undef ORG_PTR
+#undef TCM_PTR
+
 #endif
 
-	r16 = and(r15, #0xff)    // arch version
-	p0 = cmp.eq(r16, #0x60)  // v60?
+	p0 = cmp.eq(REV_ARCH, #0x60)  // v60?
 	if (p0) jump .Lv60
-	p0 = cmp.eq(r16, #0x56)  // v60?
+	p0 = cmp.eq(REV_ARCH, #0x56)  // v60?
 	if (p0) jump .Lv56
 
 	// < v56
-	r16 = lsr(r15, #8)
-	r16 = and(r16, #0xf)  // uarch config
-	p0 = cmp.eq(r16, #2)  // v55c
+	p0 = cmp.eq(REV_UARCH, #2)  // v55c
 	if (p0) jump .Ljtlb64
-	p0 = cmp.eq(r16, #3)  // v55d
+	p0 = cmp.eq(REV_UARCH, #3)  // v55d
 	if (p0) jump .Ljtlb64
 
-	r16 = #128            // all others
+	LAST_TLB = #128            // all others
 	jump .Ltlbsetup
 
 .Lv56:
-	r16 = lsr(r15, #8)
-	r16 = and(r16, #0xf)  // uarch config
-	p0 = cmp.eq(r16, #6)  // v56t
+	p0 = cmp.eq(REV_UARCH, #6)  // v56t
 	if (p0) jump .Ljtlb64
-	p0 = cmp.eq(r16, #8)  // v56u
+	p0 = cmp.eq(REV_UARCH, #8)  // v56u
 	if (p0) jump .Ljtlb64
 
-	r16 = #128            // all others
+	LAST_TLB = #128            // all others
 	jump .Ltlbsetup
 
 .Lv60:
-	r16 = lsr(r15, #8)
-	r16 = and(r16, #0xf)  // uarch config
-	p0 = cmp.eq(r16, #2)  // v60c
+	p0 = cmp.eq(REV_UARCH, #2)  // v60c
 	if (p0) jump .Ljtlb64
-	p0 = cmp.eq(r16, #5)  // v60f
+	p0 = cmp.eq(REV_UARCH, #5)  // v60f
 	if (p0) jump .Ljtlb64
 
-	r16 = #128            // all others
+	LAST_TLB = #128            // all others
 	jump .Ltlbsetup
 
 .Ljtlb64:
-	r16 = #64
+	LAST_TLB = #64
 
 .Ltlbsetup:
 	/* Clear TLB */
-	r3:2 = #0
-	r1 = #0
+	TLB_ENTRY = #0
+	INDEX = #0
 4:
 	DO_TLBW(3,2,1)
 
-	r1 = add(r1,#1)
-	p0 = cmp.eq(r1, r16)  // # tlb entries
+	INDEX = add(INDEX,#1)
+	p0 = cmp.eq(INDEX, LAST_TLB)  // # tlb entries
 	if (!p0) jump 4b
 
 	// Set up TLB entries for jump to virtual space
-	r10 = pc
+#define TLB_PHYS    r26  // phys page being mapped
+#define TLB_TMP     r27
 
-	SETCONST(r4, H2K_KERNEL_NPAGES)
-	r1 = sub(r16, r4)
-	r1 = add(r1, #-1)  // starting index for pinned entries
-	r16 = add(r1, #-1) // last free entry
-	r5 = #0
+	TLB_PHYS = PHYS_ADDR
+
+	INDEX = sub(LAST_TLB, NPAGES)
+	INDEX = add(INDEX, #-1)  // starting index for pinned entries
+	LAST_TLB = add(INDEX, #-1) // last free entry
+	COUNTER = #0
+	PAGE_COUNT = NPAGES
 
 2:
-	r2 = asl(r5, #BOOT_TLB_OFFSET_BITS)
-	SETCONST(r3, H2K_LINK_ADDR)
-	r3 = add(r3, r2)
-	r3 = lsr(r3, #BOOT_TLB_OFFSET_BITS)
-	r3 = asl(r3, #BOOT_TLB_SHIFT)
-	SETCONST(r2, BOOT_TLBHI)
-	r3 = or(r3, r2)
-	MAKE_TLBLO(r2,r10,r11)
+	TMP = asl(COUNTER, #BOOT_TLB_OFFSET_BITS)
+	SETCONST(TLB_HI, H2K_LINK_ADDR)
+	TLB_HI = add(TLB_HI, TMP)
+	TLB_HI = lsr(TLB_HI, #BOOT_TLB_OFFSET_BITS)
+	TLB_HI = asl(TLB_HI, #BOOT_TLB_SHIFT)
+	SETCONST(TMP, BOOT_TLBHI)
+	TLB_HI = or(TLB_HI, TMP)
+	MAKE_TLBLO(TLB_LO, TLB_PHYS, TLB_TMP)
 	DO_TLBW(3,2,1)
 
-	r1 = add(r1, #1)
-	r5 = add(r5, #1)
-	r10 = pc
-	r10 += asl(r1,#BOOT_TLB_OFFSET_BITS)
-	r4 = add(r4, #-1)
-	p0 = cmp.eq(r4, #0)
+	INDEX = add(INDEX, #1)
+	COUNTER = add(COUNTER, #1)
+	TLB_PHYS = PHYS_ADDR
+	TLB_PHYS += asl(INDEX, #BOOT_TLB_OFFSET_BITS)
+	
+	PAGE_COUNT = add(PAGE_COUNT, #-1)
+	p0 = cmp.eq(PAGE_COUNT, #0)
 	if (!p0) jump 2b
 
 #if ARCHV > 3
 	// Set up entry for L2 interrupt controller
-	MAKE_TLBHI(r3,Q6_SS_BASE_VA,BOOT_TLB_OFFSET_BITS_4M,BOOT_TLB_SHIFT_4M)
-	// r14 == SSBASE (PRIV_BASE)
+	MAKE_TLBHI(TLB_HI,Q6_SS_BASE_VA,BOOT_TLB_OFFSET_BITS_4M,BOOT_TLB_SHIFT_4M)
+	// SS_BASE == SSBASE (PRIV_BASE)
 	// apply offet to get PUB_BASE
-	r14 = add(r14, ##-QDSP6SS_PUB_PRIV_OFFSET)
-	MAKE_TLBLO_DEV(r2, r14, r11)
+	SS_BASE = add(SS_BASE, ##-QDSP6SS_PUB_PRIV_OFFSET)
+	MAKE_TLBLO_DEV(TLB_LO, SS_BASE, TLB_TMP)
 	DO_TLBW(3,2,1)
 
 	// index for temporary entry
-	r1 = #0
+	INDEX = #0
 #endif
 
 	// Don't make a temporary entry if we're loaded at the link address,
 	// to avoid multiple tlb match since the permanent entry will match.
-	r10 = pc
-	SETCONST(r11,H2K_LINK_ADDR)
-	r12 = and(r11,r10)
-	p0 = cmp.eq(r12,r11)
+	TMP = and(LINK_ADDR, PHYS_ADDR)
+	p0 = cmp.eq(TMP, LINK_ADDR)
 	if (p0) jump 1f
 
 	/* This one page had better be enough */
-	MAKE_TLBHI(r3,0,BOOT_TLB_OFFSET_BITS,BOOT_TLB_SHIFT)
-	r3 |= lsr(r10,#BOOT_TLB_ADDRBITS)
-	MAKE_TLBLO(r2,r10,r11)
+	MAKE_TLBHI(TLB_HI,0,BOOT_TLB_OFFSET_BITS,BOOT_TLB_SHIFT)
+	TLB_HI |= lsr(PHYS_ADDR, #BOOT_TLB_ADDRBITS)
+	MAKE_TLBLO(TLB_LO, PHYS_ADDR, TLB_TMP)
 	DO_TLBW(3,2,1)
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
 
 #ifdef ISDBEN
-	r0 = #1;
-	isdben = r0
+	TMP = #1;
+	isdben = TMP
 #endif
 
 #define SYSCFG_LO_ALL ( \
@@ -291,78 +320,68 @@ FUNC_START start .entry .p2align 12
 				)
 
 #if ARCHV <= 4
- 	r0 = #SYSCFG_LO_ALL
+ 	TMP = #SYSCFG_LO_ALL
 #else
-	r0 = ##(SYSCFG_LO_ALL | SYSCFG_BQ | SYSCFG_DMT)
+	TMP = ##(SYSCFG_LO_ALL | SYSCFG_BQ | SYSCFG_DMT)
 #endif
 
 #define SYSCFG_HI_ALL (SYSCFG_L2WB)
 
 #if ARCHV <= 3
-	r0.h = #((SYSCFG_HI_ALL | SYSCFG_L2CFG_256K) >> 16)
-	//r0.h = #0x0083	/* 256KB L2 */
+	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_L2CFG_256K) >> 16)
+	//TMP.h = #0x0083	/* 256KB L2 */
 #elif ARCHV == 4
-	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
-	r2 = ##SYSCFG_L2CFG_256K
-	r15 = rev
-	r15 = lsr(r15, #8)
-	r15 = and(r15, #0xff)
-	p0 = cmp.eq(r15, #0)
+	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
+	L2CFG = ##SYSCFG_L2CFG_256K
+	TMP_L2 = lsr(REVID, #8)
+	TMP_L2 = and(TMP_L2, #0xff)
+	p0 = cmp.eq(TMP_L2, #0)
 	if (!p0) jump 2f
-	r2 = ##SYSCFG_L2CFG_512K
+	L2CFG = ##SYSCFG_L2CFG_512K
 2:
-	r0 = or(r0, r2)
+	TMP = or(TMP, L2CFG)
 #else // ARCHV >= 5
-	r0.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
+	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
 
-	r15 = rev
-	r15 = extractu (r15, #4, #12)  // L2 size from rev
+	TMP_L2 = extractu (REVID, #4, #12)  // L2 size from rev
 
-// get table address; r10 == phys pc
-	r10 = and(r10, ##BOOT_TLB_PAGE_MASK)  // phys page
+  // get table address
+	SETCONST(TABLE_PTR, l2_sizes)
+	TABLE_PTR = and(TABLE_PTR, ##BOOT_TLB_OFFSET_MASK)  // offset
+	TABLE_PTR = or(PHYS_ADDR, TABLE_PTR)
+	TABLE_PTR = add(TABLE_PTR, TMP_L2)  // entry pointer
 
-	SETCONST(r11, l2_sizes)
-	r11 = and(r11, ##BOOT_TLB_OFFSET_MASK)  // offset
-	r11 = or(r10, r11)
-	r11 = add(r11, r15)  // entry pointer
-
-	r15 = memb(r11)  // value
-	r0 = insert(r15, #3, #16)
+	TMP_L2 = memb(TABLE_PTR)  // value
+	TMP = insert(TMP_L2, #3, #16)
 
 #endif
 
-	syscfg = r0
+	syscfg = TMP
 	isync
 	// make the jump to hyperspace
-	r2.h = #hi(1f)
-	r2.l = #lo(1f)
-	jumpr r2
+	TMP.h = #hi(1f)
+	TMP.l = #lo(1f)
+	jumpr TMP
 
 1:
 	// invalidate temporary TLB entry
-	r3:2 = #0
+	TLB_ENTRY = #0
 	DO_TLBW(3,2,1)
 	isync
 
-	SETCONST(r29,H2K_stacks)
+	SETCONST(SP,H2K_stacks)
 	// lock kernel
 
 	k0lock
 
 	// Wake up other threads
-	r0 = #(1<<MAX_HTHREADS)-1
-	start(r0)
+	TMP = #(1<<MAX_HTHREADS)-1
+	start(TMP)
 
-	// r10 == physical page after possible copy to TCM; r13 == phys pc at load addr
-	SETCONST(r11, H2K_LINK_ADDR)
-
-	r0 = sub(r11, r10)  // phys_offset
-
-	r13 = and(r13, ##BOOT_TLB_PAGE_MASK)
-	r1 = sub(r11, r13)  // boot_offset
-
-	r2 = r14  // ssbase
-	r3 = r16  // # last_tlb_index
+	r0 = sub(LINK_ADDR, PHYS_ADDR)  // phys_offset
+	r1 = BOOT_OFFSET
+	r2 = SS_BASE
+	r3 = LAST_TLB
 
 	jump H2K_thread_boot
 FUNC_END start
@@ -371,25 +390,29 @@ FUNC_START h2_init .text.init.boot .p2align 2
 	jumpr r31
 FUNC_END h2_init
 
+#undef INDEX
+#define STACK_SIZE r3
 FUNC_START H2K_handle_reset .text.init.boot .p2align 2
-	SETCONST(r0,_SDA_BASE_)
-	gp = r0
+	SETCONST(TMP,_SDA_BASE_)
+	gp = TMP
 
 	SETCONST(H2K_GP,H2K_kg)
 
-	SETCONST(r29,H2K_stacks)
+	SETCONST(SP ,H2K_stacks)
 #if ARCHV <= 3
-	r0 = ssr
-	r0 = extractu(r0,#3,#19)
+	TMP = ssr
+	TMP = extractu(TMP,#3,#19)
 #else
-	r0 = HTID
+	TMP = HTID
 #endif
-	r3 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r3,r0)
-	r1:0 = #0
+	STACK_SIZE = #KERNEL_STACK_SIZE
+	SP += mpyi(STACK_SIZE, TMP)
+	DATA = #0
 	k0lock
 	jump H2K_switch
 FUNC_END H2K_handle_reset
+
+.p2align 2
 
 l2_sizes:
 	.byte 0x0  //  0: 0K

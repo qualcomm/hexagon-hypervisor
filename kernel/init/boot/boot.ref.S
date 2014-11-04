@@ -329,31 +329,10 @@ FUNC_START start .entry .p2align 12
 
 #if ARCHV <= 3
 	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_L2CFG_256K) >> 16)
-	//TMP.h = #0x0083	/* 256KB L2 */
 #elif ARCHV == 4
 	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
-	L2CFG = ##SYSCFG_L2CFG_256K
-	TMP_L2 = lsr(REVID, #8)
-	TMP_L2 = and(TMP_L2, #0xff)
-	p0 = cmp.eq(TMP_L2, #0)
-	if (!p0) jump 2f
-	L2CFG = ##SYSCFG_L2CFG_512K
-2:
-	TMP = or(TMP, L2CFG)
 #else // ARCHV >= 5
 	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
-
-	TMP_L2 = extractu (REVID, #4, #12)  // L2 size from rev
-
-  // get table address
-	SETCONST(TABLE_PTR, l2_sizes)
-	TABLE_PTR = and(TABLE_PTR, ##BOOT_TLB_OFFSET_MASK)  // offset
-	TABLE_PTR = or(PHYS_ADDR, TABLE_PTR)
-	TABLE_PTR = add(TABLE_PTR, TMP_L2)  // entry pointer
-
-	TMP_L2 = memb(TABLE_PTR)  // value
-	TMP = insert(TMP_L2, #3, #16)
-
 #endif
 
 	syscfg = TMP
@@ -369,14 +348,7 @@ FUNC_START start .entry .p2align 12
 	DO_TLBW(3,2,1)
 	isync
 
-	SETCONST(SP,H2K_stacks)
-	// lock kernel
-
-	k0lock
-
-	// Wake up other threads
-	TMP = #(1<<MAX_HTHREADS)-1
-	start(TMP)
+	SETCONST(SP, H2K_stacks)
 
 	r0 = sub(LINK_ADDR, PHYS_ADDR)  // phys_offset
 	r1 = BOOT_OFFSET
@@ -414,20 +386,3 @@ FUNC_END H2K_handle_reset
 
 .p2align 2
 
-l2_sizes:
-	.byte 0x0  //  0: 0K
-	.byte 0x2  //  1: 128K
-	.byte 0x3  //  2: 256k
-	.byte 0x7  //  3: reserved
-	.byte 0x4  //  4: 512K
-	.byte 0x7  //  5: reserved
-	.byte 0x4  //  6: 512K + 256K TCM
-	.byte 0x7  //  7: reserved
-	.byte 0x4  //  8: 512K + 512K TCM (or 0K + 1024K TCM ?)
-	.byte 0x7  //  9: reserved
-	.byte 0x7  //  10: reserved
-	.byte 0x7  //  11: reserved
-	.byte 0x7  //  12: reserved
-	.byte 0x7  //  13: reserved
-	.byte 0x7  //  14: reserved
-	.byte 0x7  //  15: reserved

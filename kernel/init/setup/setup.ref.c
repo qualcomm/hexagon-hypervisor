@@ -28,6 +28,8 @@
 #include <symbols.h>
 #include <subsystem.h>
 #include <tmpmap.h>
+#include <l2cache.h>
+#include <tcm.h>
 
 void H2K_interrupt_restore();
 
@@ -48,7 +50,7 @@ H2K_offset_t boot_offset = {{
 void H2K_init_setup_bootvm(u32_t phys_offset)
 {
 	u32_t vm;
-	BKL_UNLOCK();  // because config locks
+	//	BKL_UNLOCK();  // because config locks
 
 	vm = H2K_trap_config(CONFIG_VMBLOCK_INIT, 0, SET_CPUS_INTS,
 									MAX_BOOT_CONTEXTS, INTS_PER_BOOT_CONTEXT, NULL);
@@ -78,6 +80,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
 	H2K_kg_init(phys_offset, devpage_priv_offset, last_tlb_index);		/* Kernel Globals first! */
+	H2K_tcm_copy(H2K_l2cache_init(), last_tlb_index);
 	H2K_trace_init();
 	H2K_runlist_init();
 	H2K_readylist_init();
@@ -96,6 +99,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot_offset, u32_t ssbase, u32_t last_tlb_index)
 {
 	s32_t asid;
+	u32_t hthreads = (1<<MAX_HTHREADS)-1;
 
 	H2K_init_setup(phys_offset, ssbase, last_tlb_index);
 
@@ -117,6 +121,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	asid = H2K_asid_table_inc((u32_t)bootvm->pmap, bootvm->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 	boot->ssr_asid = asid;
 	BKL_LOCK();
+	asm volatile( "start(%0) \n" :: "r"(hthreads));
 	H2K_runlist_push(boot);
 	H2K_init_complete = 1;
 	H2K_mutex_unlock_tlb();

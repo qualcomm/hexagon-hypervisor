@@ -25,7 +25,12 @@
 
 //#define DO_EXT_SWITCH 1
 
+#define CORE_REV_ARCH_MASK 0xff
 #define CORE_REV_UARCH_MASK 0xf00
+#define CORE_REV_UARCH_SHIFT 8
+#define CORE_REV_L2_MASK 0xf000
+#define CORE_REV_L2_SHIFT 12
+
 #define CORE_V60C 0x200
 #define CORE_V60F 0x500
 

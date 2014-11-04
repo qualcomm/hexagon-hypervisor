@@ -39,6 +39,7 @@ enum {
         timer_init,
 				mem_alloc_init,
 				tmpmap_init,
+				l2cache_init,
         //thread_init,
         //asid_table_init,
         //mem_stlb_init,
@@ -84,6 +85,7 @@ HELPER_FUNC(trace_init)
 HELPER_FUNC(timer_init)
 HELPER_FUNC(mem_alloc_init)
 HELPER_FUNC(tmpmap_init)
+HELPER_FUNC(l2cache_init)
 //HELPER_FUNC(thread_init)
 //HELPER_FUNC(asid_table_init)
 //HELPER_FUNC(mem_stlb_init)

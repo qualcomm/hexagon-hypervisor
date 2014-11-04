@@ -11,6 +11,8 @@
 #include <physread.h>
 #include <tmpmap.h>
 
+#define PAGESIZE (1 << (PAGE_BITS + (H2K_KERNEL_PGSIZE * 2)))
+
 void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 
 #ifdef H2K_USE_TCM
@@ -27,7 +29,7 @@ void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 	u32_t page_num;
 	u64_t tmp;
 
-	if (l2 * L2_CHUNK > (1 << l2_tags) * L2_TAG_CHUNK) {  // room in TCM?
+	if (l2 * L2_CHUNK - (1 << l2_tags) * L2_TAG_CHUNK > (u32_t)&H2K_KERNEL_NPAGES * PAGESIZE) {  // room in TCM?
 		
 		asm volatile ( "%0 = cfgbase\n" : "=r" (cfg_base));
 		tcm_base = (H2K_mem_physread_word((cfg_base << CFG_TABLE_SHIFT) + CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT);
@@ -37,18 +39,18 @@ void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 
 		for (page_num = 0; page_num < (u32_t)&H2K_KERNEL_NPAGES; page_num++) {
 			entry.raw = 0;
-			page = tcm_base + (page_num << (PAGE_BITS + (H2K_KERNEL_PGSIZE * 2)));
+			page = tcm_base + (page_num * PAGESIZE);
 			entry.ppd = (page >> (PAGE_BITS - 1)) | (1 << H2K_KERNEL_PGSIZE);
 			entry.cccc = L1WB_L2UC;
 			entry.xwru = 0;  // only monitor access
-			page = H2K_LINK_ADDR + (page_num << (PAGE_BITS + (H2K_KERNEL_PGSIZE * 2)));
+			page = H2K_LINK_ADDR + (page_num * PAGESIZE);
 			entry.vpn = (page >> PAGE_BITS);
 			// entry.asid = don't care
 			entry.global = 1;
 			entry.valid = 1;
 
 			from = (u64_t *)page;
-			to = (u64_t *)(TEMP_MAP_VA + (page_num << (PAGE_BITS + (H2K_KERNEL_PGSIZE * 2))));
+			to = (u64_t *)(TEMP_MAP_VA + (page_num * PAGESIZE));
 			len = 1 << (PAGE_BITS + (H2K_KERNEL_PGSIZE * 2));
 
 			/* Copy a page at a time to TCM and replace the TLB entry right out from

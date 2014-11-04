@@ -6,6 +6,6 @@
 #ifndef TCM_H
 #define TCM_H 1
 
-void H2K_tcm_copy(u32_t l2_size, u32_t last_tlb_index) IN_SECTION(".text.init.tcm");
+void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) IN_SECTION(".text.init.tcm");
 
 #endif

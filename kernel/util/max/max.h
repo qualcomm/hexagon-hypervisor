@@ -30,6 +30,8 @@
 #define CORE_REV_UARCH_SHIFT 8
 #define CORE_REV_L2_MASK 0xf000
 #define CORE_REV_L2_SHIFT 12
+#define L2_TAG_CHUNK 32
+#define L2_CHUNK 128
 
 #define CORE_V60C 0x200
 #define CORE_V60F 0x500

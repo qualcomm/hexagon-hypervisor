@@ -80,6 +80,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
 	H2K_kg_init(phys_offset, devpage_priv_offset, last_tlb_index);		/* Kernel Globals first! */
+	H2K_tmpmap_init();
 	H2K_tcm_copy(H2K_l2cache_init(), last_tlb_index);
 	H2K_trace_init();
 	H2K_runlist_init();
@@ -92,7 +93,6 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 	H2K_timer_init(devpage_priv_offset);
 	H2K_hvx_init(devpage_pub_offset);
 	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);
-	H2K_tmpmap_init();
 	H2K_init_setup_bootvm(phys_offset);
 }
 

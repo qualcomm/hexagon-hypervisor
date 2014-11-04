@@ -43,11 +43,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index) 
 
 	H2K_kg.stlbptr = NULL;
 	H2K_kg.build_id = H2K_GIT_COMMIT;
-#ifdef H2K_USE_TCM
-	H2K_kg.info_boot_flags.boot_use_tcm = 1;
-#else
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
-#endif
 
 #ifdef HAVE_EXTENSIONS
 	/* HVX present? */

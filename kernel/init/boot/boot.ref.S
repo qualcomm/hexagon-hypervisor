@@ -146,57 +146,6 @@ FUNC_START start .entry .p2align 12
 	SS_BASE = memw_phys(CFG_IDX, CFG_HI) // == SSBASE[35:16]
 	SS_BASE = asl(SS_BASE, #CFG_TABLE_SHIFT)  // SSBASE
 
-#ifdef H2K_USE_TCM
-
-	// First see if there's room; only possible on v5
-#if ARCHV <= 4
-#error USE_TCM on <= v4?
-#endif
-
-	// Bail out if L2 size not 768K
-	p0 = cmp.eq(L2_SIZE, #6)
-	if (!p0) jump .Lthere
-
-	CFG_IDX = #CFG_TABLE_L2TCM
-	TCM_BASE = memw_phys(CFG_IDX, CFG_HI) // == L2TCM[35:16]
-	TCM_BASE = asl(TCM_BASE, #CFG_TABLE_SHIFT)
-
-	/* FIXME?  Go ahead and assume TCM is in lower 4G and aligned to at least
-	kernel page size */
-
-	// copy ourselves to TCM
-
-#define ORG_PTR     r25  // TCM copy-from pointer
-#define TCM_PTR     r27  // TCM copy-to pointer
-
-	ORG_PTR = PHYS_ADDR  // first kernel page
-	PHYS_ADDR = TCM_BASE
-	SETCONST(IMAGE_SIZE, end)
-	IMAGE_SIZE = sub(IMAGE_SIZE, LINK_ADDR)
-	TCM_PTR = TCM_BASE
-	COUNTER = #0	
-3:
-	DATA = memd(ORG_PTR)
-	memd(TCM_PTR) = DATA
-	ORG_PTR = add(ORG_PTR, #8)
-	TCM_PTR = add(TCM_PTR, #8)
-	COUNTER = add(COUNTER, #8)
-	p0 = cmp.gt(COUNTER, IMAGE_SIZE)
-	if (!p0) jump 3b
-
-	// go there
-	SETCONST(TCM_PTR, .Lthere)
-	TCM_PTR = and(TCM_PTR, ##BOOT_TLB_OFFSET_MASK)  // offset of .Lthere
-	TCM_PTR = or(TCM_BASE, TCM_PTR)
-	jumpr TCM_PTR
-
-.Lthere:
-
-#undef ORG_PTR
-#undef TCM_PTR
-
-#endif
-
 	p0 = cmp.eq(REV_ARCH, #0x60)  // v60?
 	if (p0) jump .Lv60
 	p0 = cmp.eq(REV_ARCH, #0x56)  // v60?
@@ -269,7 +218,7 @@ FUNC_START start .entry .p2align 12
 	INDEX = add(INDEX, #1)
 	COUNTER = add(COUNTER, #1)
 	TLB_PHYS = PHYS_ADDR
-	TLB_PHYS += asl(INDEX, #BOOT_TLB_OFFSET_BITS)
+	TLB_PHYS += asl(COUNTER, #BOOT_TLB_OFFSET_BITS)
 	
 	PAGE_COUNT = add(PAGE_COUNT, #-1)
 	p0 = cmp.eq(PAGE_COUNT, #0)

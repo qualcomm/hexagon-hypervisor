@@ -47,7 +47,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return cfg_table(CFG_TABLE_L2TCM);
 
 	case INFO_TCM_SIZE:
-		return l2 * L2_CHUNK - (1 << H2K_gp->l2_tags) * L2_TAG_CHUNK;
+		return l2 * L2_CHUNK - (H2K_gp->l2_tags > 0 ? (1 << H2K_gp->l2_tags) * L2_TAG_CHUNK : 0);
 
 	case INFO_H2K_PGSIZE:
 		return H2K_PAGESIZE;

@@ -9,25 +9,11 @@
 #include <boot.h>
 #include <h2_common_pmap.h>
 
-#if ARCHV <= 3
-#define DO_TLBW(HI,LO,IDX) \
-	tlbidx = r##IDX ; \
-	tlblo = r##LO ; \
-	tlbhi = r##HI ; \
-	tlbw ;
-#else
-#define DO_TLBW(HI,LO,IDX) \
-	tlbw(R##HI##:##LO,R##IDX)
-#endif
+#define DO_TLBW \
+	tlbw(TLB_ENTRY, TLB_INDEX)
 
-#if ARCHV <= 3
-#define SETCONST(DST,VAL) \
-	DST.H = # hi(VAL); \
-	DST.L = # lo(VAL); 
-#else
 #define SETCONST(DST,VAL) \
 	DST = # ## # (VAL) ;
-#endif
 
 #define MAKE_TLBHI(DST,CONSTVA,PGBITS,SHIFT) \
 	SETCONST(DST,BOOT_TLBHI | (((CONSTVA) >> PGBITS)<<SHIFT))
@@ -44,18 +30,17 @@
 
 #define DATA       r1:0
 
-#define INDEX        r1
+#define TLB_INDEX        r1
 #define TLB_ENTRY  r3:2  // TLB data
 #define TLB_LO       r2
 #define TLB_HI       r3
 #define NPAGES       r4  // # kernel pages
 #define PAGE_COUNT   r5  // counter for TLB setup
-#define IMAGE_SIZE   r7
+
 #define CFG_IDX      r8  // cfg_table index
 #define CFG_HI       r9  // cfg_table address [35:11]
 #define TMP         r10
-#define TABLE_PTR   r11
-#define TCM_BASE    r12  // TCM base from cfg_table
+
 #define BOOT_OFFSET r13  // subtract from __bootvm_entry to get bootvm VA
 #define SS_BASE     r14  // *public* subsystem base
 #define REVID       r15  // rev
@@ -66,8 +51,7 @@
 #define REV_UARCH   r20  // uarch from rev
 #define LINK_ADDR   r21  // kernel VA
 #define COUNTER     r22
-#define TMP_L2      r23
-#define L2CFG       r24
+#define STACK_SIZE  r23
 
 #define SP          r29
 
@@ -99,11 +83,7 @@ FUNC_START start .entry .p2align 12
 
 	SETCONST(H2K_GP,H2K_kg)
 
-#if ARCHV == 3
-	TMP.h = #0x0100
-	TMP.l = #0x0000
-	s60 = TMP
-#elif ARCHV == 4
+#if ARCHV == 4
 	TMP = ##0x00002004
 	s63 = TMP
 #elif ARCHV == 5
@@ -115,7 +95,6 @@ FUNC_START start .entry .p2align 12
 	TMP = #0
 	TMP = setbit(TMP,#22);	//  fix for address calculation corruption
 	s62 = TMP
-#else
 #endif
 
 	/* Set up rising edge triggered */
@@ -146,51 +125,29 @@ FUNC_START start .entry .p2align 12
 	SS_BASE = memw_phys(CFG_IDX, CFG_HI) // == SSBASE[35:16]
 	SS_BASE = asl(SS_BASE, #CFG_TABLE_SHIFT)  // SSBASE
 
-	p0 = cmp.eq(REV_ARCH, #0x60)  // v60?
-	if (p0) jump .Lv60
-	p0 = cmp.eq(REV_ARCH, #0x56)  // v60?
-	if (p0) jump .Lv56
+	// Clear TLB and probe size.  We rely on the index wrapping around!
+	TLB_ENTRY = #0
+	TLB_INDEX = #1
+4:
+	DO_TLBW
 
-	// < v56
-	p0 = cmp.eq(REV_UARCH, #2)  // v55c
-	if (p0) jump .Ljtlb64
-	p0 = cmp.eq(REV_UARCH, #3)  // v55d
-	if (p0) jump .Ljtlb64
+	TLB_INDEX = add(TLB_INDEX,#1)
+	p0 = cmp.eq(TLB_INDEX, #MAX_TLB_ENTRIES)  // # tlb entries
+	if (!p0) jump 4b
 
-	LAST_TLB = #128            // all others
-	jump .Ltlbsetup
+	// mark entry 0 so we can tell when index wraps
+	TLB_ENTRY = #1
+	TLB_INDEX = #0
+	DO_TLBW
 
-.Lv56:
-	p0 = cmp.eq(REV_UARCH, #6)  // v56t
-	if (p0) jump .Ljtlb64
-	p0 = cmp.eq(REV_UARCH, #8)  // v56u
-	if (p0) jump .Ljtlb64
-
-	LAST_TLB = #128            // all others
-	jump .Ltlbsetup
-
-.Lv60:
-	p0 = cmp.eq(REV_UARCH, #2)  // v60c
-	if (p0) jump .Ljtlb64
-	p0 = cmp.eq(REV_UARCH, #5)  // v60f
-	if (p0) jump .Ljtlb64
-
-	LAST_TLB = #128            // all others
-	jump .Ltlbsetup
-
-.Ljtlb64:
-	LAST_TLB = #64
+5:
+	TLB_INDEX = add(TLB_INDEX,#1)
+	TLB_ENTRY = tlbr(TLB_INDEX)
+	p0 = cmp.eq(TLB_LO, #1)
+	if (!p0) jump 5b
+	LAST_TLB = TLB_INDEX
 
 .Ltlbsetup:
-	/* Clear TLB */
-	TLB_ENTRY = #0
-	INDEX = #0
-4:
-	DO_TLBW(3,2,1)
-
-	INDEX = add(INDEX,#1)
-	p0 = cmp.eq(INDEX, LAST_TLB)  // # tlb entries
-	if (!p0) jump 4b
 
 	// Set up TLB entries for jump to virtual space
 #define TLB_PHYS    r26  // phys page being mapped
@@ -198,9 +155,9 @@ FUNC_START start .entry .p2align 12
 
 	TLB_PHYS = PHYS_ADDR
 
-	INDEX = sub(LAST_TLB, NPAGES)
-	INDEX = add(INDEX, #-1)  // starting index for pinned entries
-	LAST_TLB = add(INDEX, #-1) // last free entry
+	TLB_INDEX = sub(LAST_TLB, NPAGES)
+	TLB_INDEX = add(TLB_INDEX, #-1)  // starting index for pinned entries
+	LAST_TLB = add(TLB_INDEX, #-1) // last free entry
 	COUNTER = #0
 	PAGE_COUNT = NPAGES
 
@@ -213,9 +170,9 @@ FUNC_START start .entry .p2align 12
 	SETCONST(TMP, BOOT_TLBHI)
 	TLB_HI = or(TLB_HI, TMP)
 	MAKE_TLBLO(TLB_LO, TLB_PHYS, TLB_TMP)
-	DO_TLBW(3,2,1)
+	DO_TLBW
 
-	INDEX = add(INDEX, #1)
+	TLB_INDEX = add(TLB_INDEX, #1)
 	COUNTER = add(COUNTER, #1)
 	TLB_PHYS = PHYS_ADDR
 	TLB_PHYS += asl(COUNTER, #BOOT_TLB_OFFSET_BITS)
@@ -224,18 +181,16 @@ FUNC_START start .entry .p2align 12
 	p0 = cmp.eq(PAGE_COUNT, #0)
 	if (!p0) jump 2b
 
-#if ARCHV > 3
 	// Set up entry for L2 interrupt controller
 	MAKE_TLBHI(TLB_HI,Q6_SS_BASE_VA,BOOT_TLB_OFFSET_BITS_4M,BOOT_TLB_SHIFT_4M)
 	// SS_BASE == SSBASE (PRIV_BASE)
 	// apply offet to get PUB_BASE
 	SS_BASE = add(SS_BASE, ##-QDSP6SS_PUB_PRIV_OFFSET)
 	MAKE_TLBLO_DEV(TLB_LO, SS_BASE, TLB_TMP)
-	DO_TLBW(3,2,1)
+	DO_TLBW
 
 	// index for temporary entry
-	INDEX = #0
-#endif
+	TLB_INDEX = #0
 
 	// Don't make a temporary entry if we're loaded at the link address,
 	// to avoid multiple tlb match since the permanent entry will match.
@@ -247,7 +202,7 @@ FUNC_START start .entry .p2align 12
 	MAKE_TLBHI(TLB_HI,0,BOOT_TLB_OFFSET_BITS,BOOT_TLB_SHIFT)
 	TLB_HI |= lsr(PHYS_ADDR, #BOOT_TLB_ADDRBITS)
 	MAKE_TLBLO(TLB_LO, PHYS_ADDR, TLB_TMP)
-	DO_TLBW(3,2,1)
+	DO_TLBW
 1:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
 
@@ -276,9 +231,7 @@ FUNC_START start .entry .p2align 12
 
 #define SYSCFG_HI_ALL (SYSCFG_L2WB)
 
-#if ARCHV <= 3
-	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_L2CFG_256K) >> 16)
-#elif ARCHV == 4
+#if ARCHV == 4
 	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
 #else // ARCHV >= 5
 	TMP.h = #((SYSCFG_HI_ALL | SYSCFG_ITCM) >> 16)
@@ -294,7 +247,7 @@ FUNC_START start .entry .p2align 12
 1:
 	// invalidate temporary TLB entry
 	TLB_ENTRY = #0
-	DO_TLBW(3,2,1)
+	DO_TLBW
 	isync
 
 	SETCONST(SP, H2K_stacks)
@@ -311,8 +264,6 @@ FUNC_START h2_init .text.init.boot .p2align 2
 	jumpr r31
 FUNC_END h2_init
 
-#undef INDEX
-#define STACK_SIZE r3
 FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	SETCONST(TMP,_SDA_BASE_)
 	gp = TMP
@@ -320,18 +271,10 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	SETCONST(H2K_GP,H2K_kg)
 
 	SETCONST(SP ,H2K_stacks)
-#if ARCHV <= 3
-	TMP = ssr
-	TMP = extractu(TMP,#3,#19)
-#else
 	TMP = HTID
-#endif
 	STACK_SIZE = #KERNEL_STACK_SIZE
 	SP += mpyi(STACK_SIZE, TMP)
 	DATA = #0
 	k0lock
 	jump H2K_switch
 FUNC_END H2K_handle_reset
-
-.p2align 2
-

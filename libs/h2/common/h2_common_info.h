@@ -13,6 +13,15 @@ typedef enum {
 	INFO_SYSCFG,      /**< SYSCFG register */
 	INFO_REV,         /**< REV register */
 	INFO_SSBASE,      /**< subsystem base from cfg_table */
+	INFO_TLB,         /**< Number of replaceable TLB entries */
+	INFO_PHYSADDR,    /**< Kernel physical address */
+	INFO_TCM_BASE,    /**< TCM base address */
+	INFO_TCM_SIZE,    /**< TCM size */
+	INFO_H2K_PGSIZE,  /**< Kernel page size */
+	INFO_H2K_NPAGES,  /**< Number of kernel pages */
+	INFO_L2VIC_BASE,  /**< Interrupt controller physical address */
+	INFO_TIMER_BASE,  /**< Timer physical address */
+	INFO_TIMER_INT,   /**< Timer interrupt number */
 	INFO_MAX
 } info_type;
 

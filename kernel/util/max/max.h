@@ -138,6 +138,7 @@
 
 #define PAGE_BITS 12 /* Minimum page size: 4K */
 #define PAGE_SIZE (0x1 << PAGE_BITS)
+#define H2K_PAGESIZE (1 << ((PAGE_BITS) + ((H2K_KERNEL_PGSIZE) * 2)))
 
 #define SSR_IE_BIT 18
 

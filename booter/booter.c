@@ -280,7 +280,7 @@ int run_elf(char *elf, char *cmdline)
 		}
 	}
 	set_cmdline(cmdline,fdesc,&ehdr);
-	printf("Boot vm for %s\n", elf);
+	printf("\nBoot vm for %s\n", elf);
 	vm = spawn_vm(fdesc, &ehdr, phys_offset);
 	close(fdesc);
 	
@@ -338,8 +338,17 @@ void print_infos() {
 
 	printf("H2/core info:\n");
 	printf("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
+	printf("\tHVX present: ");
+	printf((boot_flags.boot_have_hvx ? "true\n" : "false\n"));
+	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
+	printf("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
+	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
 	printf("\tH2 kernel in TCM: ");
 	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
+	printf("\tTCM base: 0x%08x\n", h2_info(INFO_TCM_BASE));
+	printf("\tTCM size: %dK\n", h2_info(INFO_TCM_SIZE) / 1024);
+
+	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB));
 	printf("\tSTLB:\n");
 	printf("\t\tEnabled: ");
 	if (stlb_info.stlb_enabled) {
@@ -347,14 +356,17 @@ void print_infos() {
 		printf("\t\tSets per ASID: %d\n", 1 << stlb_info.stlb_max_sets_log2);
 		printf("\t\tWays: %d\n", stlb_info.stlb_max_ways);
 		printf("\t\tSize: %d\n", stlb_info.stlb_size);
-		printf("\t\tEntries: %d\n", (1 << stlb_info.stlb_max_sets_log2) * stlb_info.stlb_max_ways * stlb_info.stlb_size);
+		printf("\t\tEntries: %dK\n", ((1 << stlb_info.stlb_max_sets_log2) * stlb_info.stlb_max_ways * stlb_info.stlb_size) / 1024);
 	} else {
 		printf("false\n");
 	}
 	printf("\tsyscfg: 0x%08x\n", h2_info(INFO_SYSCFG));
 	printf("\trev: 0x%08x\n", h2_info(INFO_REV));
 	printf("\tSubsystem base: 0x%08x\n", h2_info(INFO_SSBASE));
-	printf("\n");
+	printf("\tL2VIC physical base: 0x%08x\n", h2_info(INFO_L2VIC_BASE));
+	printf("\tTimer physical base: 0x%08x\n", h2_info(INFO_TIMER_BASE));
+	printf("\tTimer interrupt: %d\n", h2_info(INFO_TIMER_INT));
+	printf("\nBoot VM info:\n");
 }
 
 void kernel_setup() {

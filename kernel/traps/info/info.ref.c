@@ -8,10 +8,13 @@
 #include <globals.h>
 #include <max.h>
 #include <physread.h>
+#include <symbols.h>
+#include <cfg_table.h>
 
 u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 	u32_t val;
+	u32_t l2 = (H2K_gp->core_rev & CORE_REV_L2_MASK) >> CORE_REV_L2_SHIFT;
 
 	switch(op) {
 
@@ -32,8 +35,34 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return H2K_gp->core_rev;
 
 	case INFO_SSBASE:
-		asm volatile ( "%0 = cfgbase\n" : "=r" (val));
-		return (u32_t)(H2K_mem_physread_word((val << CFG_TABLE_SHIFT) + CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT);
+		return cfg_table(CFG_TABLE_SSBASE);
+
+	case INFO_TLB:
+		return H2K_gp->last_tlb_index + 1;
+
+	case INFO_PHYSADDR:
+		return H2K_LINK_ADDR - H2K_gp->phys_offset;
+
+	case INFO_TCM_BASE:
+		return cfg_table(CFG_TABLE_L2TCM);
+
+	case INFO_TCM_SIZE:
+		return l2 * L2_CHUNK - (1 << H2K_gp->l2_tags) * L2_TAG_CHUNK;
+
+	case INFO_H2K_PGSIZE:
+		return H2K_PAGESIZE;
+
+	case INFO_H2K_NPAGES:
+		return (u32_t)&H2K_KERNEL_NPAGES;
+
+	case INFO_L2VIC_BASE:
+		return cfg_table(CFG_TABLE_SSBASE) + L2VIC_OFFSET;
+
+	case INFO_TIMER_BASE:
+		return cfg_table(CFG_TABLE_SSBASE) + TIMER_OFFSET;
+
+	case INFO_TIMER_INT:
+		return TIMER_INT;
 
 	default:
 		return -1;

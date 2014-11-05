@@ -575,5 +575,6 @@ u32_t H2K_l2cache_init() {
 	if (H2K_trap_hwconfig_l2cache(0, NULL, size, 1, NULL) == -1) {  // error
 		H2K_fatal_kernel(0, 0, 0, 0, 0);
 	}
+	H2K_gp->l2_tags = size;
 	return size;
 }

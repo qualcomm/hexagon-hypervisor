@@ -20,7 +20,8 @@ void h2_debug_context_dump(h2_context_t *context)
 	unsigned int i;
 
 	h2_mutex_lock(&debug_mutex);
-	printf("DEBUG DUMP threadid = 0x%08x, core_pcycles = 0x%016llx\n\n", h2_thread_myid(), h2_get_core_pcycles());
+	printf("DEBUG DUMP threadid = 0x%08x, core_pcycles = 0x%016llx\n", h2_thread_myid(), h2_get_core_pcycles());
+	printf("Exception PC (g0) = 0x%08x, cause (g1 & 0xff) = 0x%02x\n\n", context->g0, context->g1 & 0xff);
 	PRINT_RPAIR(31,30);
 	PRINT_RPAIR(29,28);
 	PRINT_RPAIR(27,26);

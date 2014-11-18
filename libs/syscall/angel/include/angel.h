@@ -40,16 +40,28 @@ unsigned int angel(unsigned int r0, void *r1, unsigned int r2);
 #define SYS_HEAPINFO	22
 #define SYS_EXIT		24
 #define SYS_WRITECREG           0x43
+#define SYSCALL			0x53
 
 #define SYS_FTELL		0x100
 #define SYS_FSTAT		0x101
 #define SYS_FSTATVFS		0x102
+#define SYS_STAT		0x103
+/* #define SYS_GETCWD		0x104 */
+/* #define SYS_ACCESS		0x105 */
+/* #define SYS_FCNTL		0x106 */
+/* #define SYS_GETTIMEOFDAY	0x107 */
 
 #define SYS_OPENDIR		0x180
 #define SYS_CLOSEDIR		0x181
 #define SYS_READDIR		0x182
 #define SYS_MKDIR		0x183
 #define SYS_RMDIR		0x184
+
+/* #define SYS_MMAP        0x200 */
+/* #define SYS_MUNMAP      0x201 */
+/* #define SYS_MPROTECT    0x202 */
+/* #define SYS_FORK        0x203 */
+/* #define SYS_EXECVE      0x204 */
 
 	/* TYPES */
 typedef int count_t;
@@ -71,12 +83,28 @@ struct heap_info {	/* heap information */
 	int stack_limit;
 	};
 
+struct __sys_stat
+{
+    unsigned long long int dev;
+    unsigned long long int ino;
+    unsigned long mode;
+    unsigned long nlink;
+    unsigned long long int rdev;
+    unsigned long size;
+    unsigned long __pad1;
+    unsigned long atime;
+    unsigned long mtime;
+    unsigned long ctime;
+    unsigned long __pad2;
+}__attribute__ ((aligned (8)));
+
 	/* SYSTEM CALL FUNCTIONS */
 errno_t sys_clock(void);
 errno_t sys_close(fd_t);
 errno_t sys_errno(void);
 void sys_exit(okay_t);
 errno_t sys_flen(fd_t);
+errno_t sys_fstat(fd_t fd, void *buffer);
 errno_t sys_ftell(fd_t);
 errno_t sys_get_cmdline(char *, count_t);
 struct heap_info *sys_heapinfo(struct heap_info *);

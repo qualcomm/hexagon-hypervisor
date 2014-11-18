@@ -49,7 +49,7 @@ errno_t sys_clock() { int x = 0; return ANGEL(SYS_CLOCK,&x,0); }
 
 errno_t sys_close(fd_t fd) { clean(&fd,1); return ANGEL(SYS_CLOSE,&fd,0); }
 
-int sys_closedir(int dir) { return ANGEL(SYS_CLOSEDIR,dir,0); }
+errno_t sys_closedir(int dir) { return ANGEL(SYS_CLOSEDIR,dir,0); }
 
 errno_t sys_errno() { int x = 0; clean(&x,1); return ANGEL(SYS_ERRNO,&x,0); }
 
@@ -57,16 +57,33 @@ void sys_exit(okay_t status) { ANGEL(SYS_EXIT,&status,status); }
 
 errno_t sys_flen(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FLEN,&fd,0); DEBUG_PRINTF("sys_flen: fd=%d ret=%d\n",fd,ret); return ret; }
 
-int sys_fstat(fd_t fd, void *buffer)  /* Clean buffer? */
-{
+errno_t sys_fstat(fd_t fd, void *buffer) {
+
 	struct {
 		fd_t fd;
 		void *buf;
 	} x;
 	x.fd = fd;
-	x.buf = buffer;
-	clean(&x,2);
+	x.buf = ANGEL_OFFSET_PTR(buffer);
+
+	clean(buffer, sizeof(struct __sys_stat) / 4);
+	clean(&x, 2);
 	return ANGEL(SYS_FSTAT,&x,0);
+}
+
+errno_t sys_stat(const char *name, void *buffer) {
+
+	struct {
+		char *n;
+		void *buf;
+	} x;
+	x.n = ANGEL_OFFSET_PTR(name);
+	x.buf = buffer;
+
+	clean_str(name);
+	clean(buffer, sizeof(struct __sys_stat) / 4);
+	clean(&x, 2);
+	return ANGEL(SYS_STAT, &x, 0);
 }
 
 errno_t sys_ftell(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FTELL,&fd,0); DEBUG_PRINTF("sys_ftell: fd=%d ret=%d\n",fd,ret); return ret; }
@@ -101,9 +118,9 @@ struct heap_info *sys_heapinfo(struct heap_info *buffer)
 
 okay_t sys_iserror(errno_t errcode) { clean(&errcode,1); return ANGEL(SYS_ISERROR,&errcode,0); }
 
-int sys_mkdir(char *name, int mode) { clean_str(name); return ANGEL(SYS_MKDIR,ANGEL_OFFSET_PTR(name),mode); }
+int sys_mkdir(char *name, int mode) { clean_str(name); return ANGEL(SYS_MKDIR, name, mode); }
 
-int sys_opendir(const char *name) { clean_str(name); return ANGEL(SYS_OPENDIR,ANGEL_OFFSET_PTR(name),0); }
+int sys_opendir(const char *name) { clean_str(name); return ANGEL(SYS_OPENDIR, name, 0); }
 
 count_t sys_read(fd_t fd, char *buffer, count_t count)
 {
@@ -123,8 +140,11 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 
 unsigned char sys_readc() { return ANGEL(SYS_READC,0,0); }
 
-struct dirent *sys_readdir(int dir, struct dirent *dptr)  /* Clean something? */
-{ return VANGEL(SYS_READDIR,dir,ANGEL_OFFSET_PTR(dptr)); }
+struct dirent *sys_readdir(int dir, struct dirent *dptr) {
+
+	clean(dptr, sizeof(struct dirent) / 4);
+	return VANGEL(SYS_READDIR,dir,ANGEL_OFFSET_PTR(dptr));
+}
 
 okay_t sys_remove(const char *name)
 {
@@ -143,7 +163,10 @@ okay_t sys_rename(const char *oldname, const char *newname)
 	return ANGEL(SYS_RENAME,&x,0);
 }
 
-int sys_rmdir(const char *name) { clean_str(name); return ANGEL(SYS_RENAME,&name,0); }
+int sys_rmdir(const char *name) {
+	clean_str(name);
+	return ANGEL(SYS_RENAME, name, 0);
+}
 
 errno_t sys_seek(fd_t fd, count_t offset)
 {
@@ -157,20 +180,31 @@ errno_t sys_seek(fd_t fd, count_t offset)
 
 int sys_statvfs(char *rootdir, void *buffer)  /* Clean buffer? */
 {
-	struct { char *rd; void *buf; } x;
+	struct {
+		char *rd;
+		void *buf;
+	} x;
 	x.rd = ANGEL_OFFSET_PTR(rootdir);
 	x.buf = ANGEL_OFFSET_PTR(buffer);
-	clean_str(rootdir); clean(&x,2);
+
+	clean(buffer, sizeof(struct __sys_stat) / 4);
+	clean_str(rootdir);
+	clean(&x, 2);
 	return ANGEL(SYS_FSTATVFS,&x,0);
 }
 
 okay_t sys_system(const char *command)
 {
-	struct { const char *cmd; int cl; } x;
+	struct {
+		const char *cmd;
+		int cl;
+	} x;
 	x.cmd = ANGEL_OFFSET_PTR(command);
 	x.cl = strlen(x.cmd);
-	clean_str(command); clean(&x,2);
-	return ANGEL(SYS_SYSTEM,&x,0);
+
+	clean_str(command);
+	clean(&x,2);
+	return ANGEL(SYS_SYSTEM, &x, 0);
 }
 
 count_t sys_time() { return ANGEL(SYS_TIME,0,0); }
@@ -186,7 +220,11 @@ errno_t sys_tmpnam(char *buffer, unsigned char target, count_t count)
 	return ret;
 }
 
-void sys_write0(const char *str) { clean_str(str); clean(&str,1); ANGEL(SYS_WRITE0,&str,0); }
+void sys_write0(const char *str) {
+	clean_str(str);
+	clean(&str, 1);
+	ANGEL(SYS_WRITE0, &str, 0);
+}
 
 count_t sys_write(fd_t fd, const char *buffer, count_t count)
 {
@@ -197,5 +235,8 @@ count_t sys_write(fd_t fd, const char *buffer, count_t count)
 	clean(buffer,count/4+3); clean(&x,3); return ANGEL(SYS_WRITE,&x,0);
 }
 
-void sys_writec(unsigned char ch) { clean(&ch,1); ANGEL(SYS_WRITEC,&ch,0); }
+void sys_writec(unsigned char ch) {
+	clean(&ch, 1);
+	ANGEL(SYS_WRITEC, &ch, 0);
+}
 

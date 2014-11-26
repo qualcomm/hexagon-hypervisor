@@ -16,7 +16,7 @@ typedef struct {
 
 // L2 tag sizes
 enum {
-	s0 = 0, s64 = 1, s128 = 2, s256 = 3, s512 = 4, reserved = 7
+	s0 = 0, s64 = 1, s128 = 2, s256 = 3, s512 = 4, s1024 = 5, reserved = 7
 };
 
 // array size -> tag size
@@ -512,6 +512,29 @@ static u8_t l2_v60_0[] =
 #define l2_v60_5 (l2_v60_0)
 #define l2_v60_f (l2_v60_0)
 
+static u8_t l2_v61_0[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,      // FIXME: for bogus 0x4x61 revid.  Remove when that's fixed.
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = s512,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = s1024,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+// so far there is one l2 tag size for each array size in v61
+#define l2_v61_f (l2_v61_0)
+
 static u8_t *uarches_v60[] =
 	{
 		[0x0] = l2_v60_0,
@@ -533,10 +556,31 @@ static u8_t *uarches_v60[] =
 		[0xf] = l2_v60_f
 	};
 
+static u8_t *uarches_v61[] =
+	{
+		[0x0] = l2_v61_0,
+		[0x1] = NULL,
+		[0x2] = NULL,
+		[0x3] = NULL,
+		[0x4] = NULL,
+		[0x5] = NULL,
+		[0x6] = NULL,
+		[0x6] = NULL,
+		[0x7] = NULL,
+		[0x8] = NULL,
+		[0x9] = NULL,
+		[0xa] = NULL,
+		[0xb] = NULL,
+		[0xc] = NULL,
+		[0xd] = NULL,
+		[0xe] = NULL,
+		[0xf] = l2_v61_f
+	};
+
 arch_t arches[] =
 	{
 		{0x60, uarches_v60},
-		{0x61, uarches_v60},
+		{0x61, uarches_v61},
 		{0x0, NULL}
 	};
 

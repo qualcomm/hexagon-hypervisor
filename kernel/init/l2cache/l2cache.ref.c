@@ -522,18 +522,19 @@ static u8_t l2_v61_0[] =
 		[0x5] = reserved,
 		[0x6] = reserved,
 		[0x7] = reserved,
-		[0x8] = s512,
+		[0x8] = reserved,
 		[0x9] = reserved,
-		[0xa] = reserved,
+		[0xa] = s1024,    // FIXME: ? will this change
 		[0xb] = reserved,
-		[0xc] = s1024,
+		[0xc] = reserved,
 		[0xd] = reserved,
 		[0xe] = reserved,
 		[0xf] = reserved
 	};
 
 // so far there is one l2 tag size for each array size in v61
-#define l2_v61_f (l2_v61_0)
+#define l2_v61_3 (l2_v61_0)
+#define l2_v61_f (l2_v61_0)  // FIXME:  remove?
 
 static u8_t *uarches_v60[] =
 	{
@@ -561,7 +562,7 @@ static u8_t *uarches_v61[] =
 		[0x0] = l2_v61_0,
 		[0x1] = NULL,
 		[0x2] = NULL,
-		[0x3] = NULL,
+		[0x3] = l2_v61_3,  // FIXME: ?
 		[0x4] = NULL,
 		[0x5] = NULL,
 		[0x6] = NULL,
@@ -574,7 +575,7 @@ static u8_t *uarches_v61[] =
 		[0xc] = NULL,
 		[0xd] = NULL,
 		[0xe] = NULL,
-		[0xf] = l2_v61_f
+		[0xf] = l2_v61_f  // FIXME: ?
 	};
 
 arch_t arches[] =

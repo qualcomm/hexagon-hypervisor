@@ -15,6 +15,7 @@
 #include <h2_common_pmap.h>
 #include <h2_common_config.h>
 #include <h2_common_error.h>
+#include <h2_kerror.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -400,6 +401,8 @@ int main(int argc, char **argv)
 	char buf[BUFSIZE];
 	char file[64];
 	unsigned int regval;
+	unsigned int kerror;
+
 	buf[0] = 0;
 	//Remove booter from cmdline
 	strncpy(errstr, argv[0], ERRSTR_LEN);
@@ -408,6 +411,14 @@ int main(int argc, char **argv)
 
 	if (argc < 1) {
 		usage();
+		return 1;
+	}
+
+	// check for kernel boot errors
+	kerror = h2_info(INFO_ERROR);
+	if (kerror != KERROR_NONE) {
+		printf("Kernel error: %s\n\n", kerror_msg[kerror]);
+		print_infos();
 		return 1;
 	}
 

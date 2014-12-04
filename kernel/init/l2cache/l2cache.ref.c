@@ -8,6 +8,7 @@
 #include <hwconfig.h>
 #include <globals.h>
 #include <hw.h>
+#include <h2_common_kerror.h>
 
 typedef struct {
 	u32_t archv;
@@ -600,23 +601,27 @@ u32_t H2K_l2cache_init() {
 
 	while (arches[i].archv != arch) {
 		if (0 == arches[i].archv) {  // whoa
-			H2K_fatal_kernel(0, 0, 0, 0, 0);  // FIXME: better args?
+			H2K_gp->kernel_error = KERROR_L2CACHE_INIT_ARCH;
+			return 0;
 		}
 		i++;
 	}
 	ptr = (arches[i].ua)[uarch];
 
 	if (NULL == ptr) {  // no table
-		H2K_fatal_kernel(0, 0, 0, 0, 0);
+		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_UARCH;
+		return 0;
 	}
 
 	size = ptr[l2];
 	if (reserved == size) {
-		H2K_fatal_kernel(0, 0, 0, 0, 0);
+		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_SIZE;
+		return 0;
 	}		
 
 	if (H2K_trap_hwconfig_l2cache(0, NULL, size, 1, NULL) == -1) {  // error
-		H2K_fatal_kernel(0, 0, 0, 0, 0);
+		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_CONFIG;
+		return 0;
 	}
 	H2K_gp->l2_tags = size;
 	return size;

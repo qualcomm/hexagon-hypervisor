@@ -14,6 +14,7 @@
 #include <stlb.h>
 #include <timeinfo.h>
 #include <h2_common_info.h>
+#include <h2_common_kerror.h>
 
 typedef	union {
 	u64_t raw;
@@ -82,6 +83,7 @@ typedef struct {
 	info_boot_flags_type info_boot_flags;
 	info_stlb_type info_stlb;
 	u32_t core_rev;
+	kerror_type kernel_error;
 		
 } H2K_kg_t;
 

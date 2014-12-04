@@ -22,6 +22,7 @@ typedef enum {
 	INFO_L2VIC_BASE,  /**< Interrupt controller physical address */
 	INFO_TIMER_BASE,  /**< Timer physical address */
 	INFO_TIMER_INT,   /**< Timer interrupt number */
+	INFO_ERROR,       /**< Kernel error */
 	INFO_MAX
 } info_type;
 

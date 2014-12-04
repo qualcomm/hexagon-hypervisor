@@ -64,6 +64,9 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_TIMER_INT:
 		return TIMER_INT;
 
+	case INFO_ERROR:
+		return H2K_gp->kernel_error;
+
 	default:
 		return -1;
 	}

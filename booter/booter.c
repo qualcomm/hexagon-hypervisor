@@ -417,7 +417,7 @@ int main(int argc, char **argv)
 	// check for kernel boot errors
 	kerror = h2_info(INFO_ERROR);
 	if (kerror != KERROR_NONE) {
-		printf("Kernel error: %s\n\n", kerror_msg[kerror]);
+		printf("\nKernel error: %s\n\n", kerror_msg[kerror]);
 		print_infos();
 		return 1;
 	}

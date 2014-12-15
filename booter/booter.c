@@ -36,6 +36,8 @@ static unsigned int use_ext = 0;
 #endif
 static unsigned int num_shared_ints = 0;
 static unsigned int page_size = SIZE_16M;
+static unsigned int cccc = L1WB_L2C;
+static unsigned int xwru = URWX;
 static unsigned int offset_pages = 0;
 static int trans_type = -1;
 static unsigned int fence_lo = H2K_GUEST_START;
@@ -57,13 +59,6 @@ static unsigned int expect_status = 0;
 
 /* exit on error */
 static unsigned int error_exit = 1;
-
-static H2K_offset_t offset = {{
-		.size = SIZE_4M,
-		.cccc = L1WB_L2C,
-		.xwru = URWX,
-		.pages = 0
-	}};
 
 /* Misc */
 #define ERRSTR_LEN 1024
@@ -105,8 +100,9 @@ void usage()
 	printf("  --use_ext (0|1)\n\tSupport extended contexts.  Default 0.\n");
 	printf("  --num_shared_ints <int>\n\tNumber of shared interrupts.  Default 0.\n");
 	printf("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
+	printf("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C (0xa == L1WB_L2CWB_AUX).\n");
 	printf("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default 0.\n");
-	printf("  --translation_type <int>\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now).\n");
+	printf("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
 	printf("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default 0x01000000.\n");
 	printf("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default 0xff000000.\n");
 	printf("  --load_offset <int>\n\tOffset for loading ELF image.  Default (0x01000000 - <first_program_header_addr>).\n");
@@ -166,6 +162,11 @@ unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long phys_offset)
 
 	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, CONFIG_CPUS(use_ext, num_vcpus), num_shared_ints);
 
+	base.size = page_size;
+	base.cccc = cccc;
+	base.xwru = xwru;
+	base.pages = offset_pages;
+
 	if (trans_type == -1) { // not set on cmdline, get from guest image
 		pmap = get_pmap(fdesc, ehdr);
 
@@ -174,9 +175,6 @@ unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long phys_offset)
 			base.raw = pmap->base.raw;
 		} else { // default
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
-			base.raw = offset.raw;
-			base.size = page_size;
-			base.pages = offset_pages;
 		}
 	} else { // translation type forced; better only be offset for now
 		if (trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
@@ -184,9 +182,6 @@ unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long phys_offset)
 			exit(1);
 		}
 		trans = trans_type;
-		base.raw = offset.raw;
-		base.size = page_size;
-		base.pages = offset_pages;
 	}
 
 	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)base.raw, trans);
@@ -531,6 +526,12 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--page_size")) {
 			if (argc < 2) die_usage();
 			page_size = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--cccc")) {
+			if (argc < 2) die_usage();
+			cccc = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

@@ -75,9 +75,9 @@ Configure partitioning.
 @dependencies None
 */
 
-static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int prefetch_cfg)
+static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int partition_cfg)
 {
-	return h2_hwconfig_trap(HWCONFIG_PARTITIONS, NULL, whichcache, prefetch_cfg);
+	return h2_hwconfig_trap(HWCONFIG_PARTITIONS, NULL, whichcache, partition_cfg);
 }
 
 /**
@@ -88,9 +88,9 @@ Configure prefetch.
 @dependencies None
 */
 
-static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int partition_cfg)
+static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int prefetch_cfg)
 {
-	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, partition_cfg);
+	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, prefetch_cfg);
 }
 
 /**

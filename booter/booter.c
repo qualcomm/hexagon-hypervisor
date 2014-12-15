@@ -96,6 +96,9 @@ void usage()
 	printf("  --ccr <int>\n\tSet ccr.\n");
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
 	printf("  --syscfg <int>\n\tSet syscfg.\n");
+	printf("  --l1dp [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 data cache partitioning (ARCHV <= 5).\n");
+	printf("  --l1ip [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 instruction cache partitioning (ARCHV <= 5).\n");
+	printf("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
 	printf("\nVM options:\n");
 	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
@@ -472,6 +475,30 @@ int main(int argc, char **argv)
 			H2K_set_ccr(regval);
 			regval = H2K_get_ccr();
 			printf("New value for ccr: 0x%08x\n",regval);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--l1dp")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_partition(HWCONFIG_PARTITION_D, strtoul(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_PARTITION_D");
+			}
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--lidp")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_partition(HWCONFIG_PARTITION_I, strtoul(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_PARTITION_I");
+			}
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--l2part")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_partition(HWCONFIG_PARTITION_L2, strtoul(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_PARTITION_L2");
+			}
 			argc -= 2; argv += 2;
 			continue;
 

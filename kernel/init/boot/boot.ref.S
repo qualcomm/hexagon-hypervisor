@@ -226,7 +226,7 @@ FUNC_START start .entry .p2align 12
 #if ARCHV <= 4
  	TMP = #SYSCFG_LO_ALL
 #else
-	TMP = ##(SYSCFG_LO_ALL | SYSCFG_BQ | SYSCFG_DMT)
+	TMP = ##(SYSCFG_LO_ALL | SYSCFG_DMT)
 #endif
 
 #define SYSCFG_HI_ALL (SYSCFG_L2WB)

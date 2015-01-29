@@ -24,6 +24,9 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index) 
 	for (i = 0; i < sizeof(H2K_kg)/sizeof(*x); i++) {
 		x[i] = 0;
 	}
+
+	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
+
 	H2K_kg.phys_offset = phys_offset;
 	H2K_kg.tlb_index = 0;
 	H2K_kg.last_tlb_index = last_tlb_index;
@@ -46,14 +49,12 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index) 
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 
 #ifdef HAVE_EXTENSIONS
-	/* HVX present? */
-	if (((H2K_gp->core_rev & CORE_REV_UARCH_MASK) == CORE_V60C)
-			|| ((H2K_gp->core_rev & CORE_REV_UARCH_MASK) == CORE_V60F)) {
-		H2K_kg.info_boot_flags.boot_have_hvx = 0;
-	} else {
+	/* HVX present?  Only V60A, V61A. */
+	if (((H2K_kg.core_rev & CORE_REV_UARCH_MASK) == CORE_V60A)
+			|| ((H2K_kg.core_rev & CORE_REV_UARCH_MASK) == CORE_V61A)) {
 		H2K_kg.info_boot_flags.boot_have_hvx = 1;
+	} else {
+		H2K_kg.info_boot_flags.boot_have_hvx = 0;
 	}
 #endif
-
-	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
 }

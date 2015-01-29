@@ -33,8 +33,8 @@
 #define L2_TAG_CHUNK 0x8000  // 32K
 #define L2_CHUNK 0x20000     // 128K
 
-#define CORE_V60C 0x200
-#define CORE_V60F 0x500
+#define CORE_V60A 0x000
+#define CORE_V61A 0x000
 
 #define TEMP_MAP_VA 0xff800000
 #define TEMP_MAP_PG_SIZE SIZE_4M

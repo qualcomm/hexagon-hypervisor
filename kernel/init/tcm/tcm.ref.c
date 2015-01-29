@@ -27,8 +27,16 @@ void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 	u32_t page;
 	u32_t page_num;
 	u64_t tmp;
+	u32_t l2size;
 
-	if (l2 * L2_CHUNK - (1 << l2_tags) * L2_TAG_CHUNK > (u32_t)&H2K_KERNEL_NPAGES * H2K_PAGESIZE) {  // room in TCM?
+	if (l2 > CORE_REV_L2_CHUNK_SWITCH) {
+		l2size = (CORE_REV_L2_CHUNK_SWITCH * L2_CHUNK)
+			+ ((l2 - CORE_REV_L2_CHUNK_SWITCH) * L2_BIG_CHUNK);
+	} else {
+		l2size = l2 * L2_CHUNK;
+	}
+
+	if (l2size - (1 << l2_tags) * L2_TAG_CHUNK > (u32_t)&H2K_KERNEL_NPAGES * H2K_PAGESIZE) {  // room in TCM?
 		
 		asm volatile ( "%0 = cfgbase\n" : "=r" (cfg_base));
 		tcm_base = (H2K_mem_physread_word((cfg_base << CFG_TABLE_SHIFT) + CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT);

@@ -345,6 +345,7 @@ void print_infos() {
 	printf("\tH2 kernel in TCM: ");
 	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
 	printf("\tTCM base: 0x%08x\n", h2_info(INFO_TCM_BASE));
+	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
 	printf("\tTCM size: %dK\n", h2_info(INFO_TCM_SIZE) / 1024);
 
 	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB));

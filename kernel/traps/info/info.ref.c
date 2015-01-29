@@ -15,6 +15,14 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 	u32_t val;
 	u32_t l2 = (H2K_gp->core_rev & CORE_REV_L2_MASK) >> CORE_REV_L2_SHIFT;
+	u32_t l2size;
+
+	if (l2 > CORE_REV_L2_CHUNK_SWITCH) {
+		l2size = (CORE_REV_L2_CHUNK_SWITCH * L2_CHUNK)
+			+ ((l2 - CORE_REV_L2_CHUNK_SWITCH) * L2_BIG_CHUNK);
+	} else {
+		l2size = l2 * L2_CHUNK;
+	}
 
 	switch(op) {
 
@@ -46,8 +54,11 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_TCM_BASE:
 		return cfg_table(CFG_TABLE_L2TCM);
 
+	case INFO_L2MEM_SIZE:
+		return l2size;
+
 	case INFO_TCM_SIZE:
-		return l2 * L2_CHUNK - (H2K_gp->l2_tags > 0 ? (1 << H2K_gp->l2_tags) * L2_TAG_CHUNK : 0);
+		return l2size - (H2K_gp->l2_tags > 0 ? (1 << H2K_gp->l2_tags) * L2_TAG_CHUNK : 0);
 
 	case INFO_H2K_PGSIZE:
 		return H2K_PAGESIZE;

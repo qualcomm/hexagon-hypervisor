@@ -16,6 +16,7 @@ typedef enum {
 	INFO_TLB,         /**< Number of replaceable TLB entries */
 	INFO_PHYSADDR,    /**< Kernel physical address */
 	INFO_TCM_BASE,    /**< TCM base address */
+	INFO_L2MEM_SIZE,  /**< L2 cache array size */
 	INFO_TCM_SIZE,    /**< TCM size */
 	INFO_H2K_PGSIZE,  /**< Kernel page size */
 	INFO_H2K_NPAGES,  /**< Number of kernel pages */

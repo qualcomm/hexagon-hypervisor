@@ -130,6 +130,30 @@ static inline int h2_hwconfig_extpower(unsigned int state)
 	return h2_hwconfig_trap(HWCONFIG_EXTPOWER, NULL, state, 0);
 }
 
+/**
+L2 lock address range
+@param[in] Virtual Address, should be aligned to 64 bytes
+@param[in] Length in bytes, should be multiple of 64 bytes
+@returns 0 on success, nonzero value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_l2locka(void *addr, unsigned int len)
+{
+	return h2_hwconfig_trap(HWCONFIG_L2LOCKA, addr, len, 0);
+}
+
+/**
+L2 unlock everything
+@returns 0 on success, nonzero value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_unlock()
+{
+	return h2_hwconfig_trap(HWCONFIG_L2UNLOCK, NULL, 0, 0);
+}
+
 #endif
 
 /** @} */

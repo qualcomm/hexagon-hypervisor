@@ -346,5 +346,17 @@ static inline void H2K_dccleaninva(void *ptr)
 	asm volatile (" dccleaninva(%0) " : :"r"(ptr) : "memory");
 }
 
+static inline unsigned char H2K_l2locka(void *ptr)
+{
+	unsigned char out;
+	asm volatile (" p0 = l2locka(%0) ; %0 = p0 " : "=r"(out) :"p"(ptr) : "memory","p0");
+	return out;
+}
+
+static inline void H2K_l2unlock()
+{
+	asm volatile (" l2gunlock " : : : "memory");
+}
+
 #endif
 

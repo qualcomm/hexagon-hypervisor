@@ -15,6 +15,7 @@
 #include <physread.h>
 #include <tmpmap.h>
 #include <hvx.h>
+#include <safemem.h>
 
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
@@ -26,7 +27,9 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_vlength,
 	H2K_trap_hwconfig_extpower,
 	H2K_trap_hwconfig_getl2reg,
-	H2K_trap_hwconfig_setl2reg
+	H2K_trap_hwconfig_setl2reg,
+	H2K_trap_hwconfig_l2locka,
+	H2K_trap_hwconfig_l2unlock,
 };
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
@@ -236,3 +239,43 @@ u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 
 	return ret;
 }
+
+u32_t H2K_trap_hwconfig_l2locka(u32_t unused, void *addr, u32_t len, u32_t unused3, H2K_thread_context *me)
+{
+#if ARCHV >= 56
+#if ARCHV >= 60
+#define L2LINESIZE 64
+#else
+#define L2LINESIZE 32
+#endif
+	pa_t pa;
+	char *caddr = addr;
+	u32_t off;
+	u32_t count;
+	u32_t ret = 1;
+	if (!H2K_safemem_check_and_lock(addr,SAFEMEM_RW,&pa,me)) return 1;
+	for (off = 0; off < len; off += L2LINESIZE) {
+		count = 0;
+		while (H2K_l2locka(caddr+off) != 0) {
+			if (++count > (1024*1024)) goto fail;
+		}
+	}
+	ret = 0;
+fail:
+	H2K_safemem_unlock();
+	return ret;
+#else
+	return 1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_l2unlock(u32_t unused, void *addr, u32_t len, u32_t unused3, H2K_thread_context *me)
+{
+#if ARCHV >= 56
+	H2K_l2unlock();
+	return 0;
+#else
+	return 1;
+#endif
+}
+

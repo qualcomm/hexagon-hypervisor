@@ -48,6 +48,16 @@ typedef struct {
 			void *stacks_addr;
 		};
 	};
+	union {
+		u32_t core_rev;
+		struct {
+			u32_t arch:8;
+			u32_t uarch:4;
+			u32_t l2sz:4;
+			u32_t metal:16;
+		};
+	};
+
 #ifdef H2K_L2_CONTROL
 	union {
 		u64_t l2_intinfo;
@@ -82,7 +92,6 @@ typedef struct {
 	u32_t build_id;
 	info_boot_flags_type info_boot_flags;
 	info_stlb_type info_stlb;
-	u32_t core_rev;
 	kerror_type kernel_error;
 		
 } H2K_kg_t;

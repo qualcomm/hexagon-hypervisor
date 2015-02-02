@@ -119,6 +119,11 @@ static inline ticks_t H2K_timer_hw_read_count()
 			u32_t hi;
 		};
 	} ticktmp;
+
+	if ((H2K_gp->core_rev & CORE_REV_ARCH_MASK) >= CORE_V61) { // use core timer regs
+		return H2K_get_timer_reg();
+	}
+
 	do {
 		tmphi = H2K_gp->time.devptr[HW_COUNT_HI];
 		ticktmp.lo = H2K_gp->time.devptr[HW_COUNT_LO];

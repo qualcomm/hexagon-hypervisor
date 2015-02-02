@@ -212,8 +212,16 @@ u64_t ret;
 		" p0 = cmp.eq(r15,%H0) \n"
 		" if (!p0) jump 1b \n" : "=r"(ret) : : "r15","p0");
 #else
-	asm volatile ( " %0 = s31:30 // READ PCYCLES \n" : "=r"(ret));
+		asm volatile ( " %0 = s31:30 // READ PCYCLES \n" : "=r"(ret));
+		//	}
 #endif
+	return ret;
+}
+
+static inline u64_t H2K_get_timer_reg() {
+	u64_t ret;
+
+	asm volatile ( " %0 = s57:56 // READ TIMER \n" : "=r"(ret));
 	return ret;
 }
 

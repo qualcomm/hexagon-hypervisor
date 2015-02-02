@@ -8,6 +8,8 @@
 #include <max.h>
 #include <h2_common_timer_defs.h>
 
+#define TIMERHILO s57:56
+
 #define TIMERHW_TICK_REALFREQ 19200000
 #define TIMERHW_NSEC_PER_TICK 52
 #define TIMERHW_NSEC_FREQ (TIMERHW_TICK_REALFREQ * TIMERHW_NSEC_PER_TICK)
@@ -78,26 +80,39 @@ FUNC_START H2K_timer_get_ticks  .text.time.timer  .falign
 #define PCYCLES r5:4
 #define DEVPTR r3
 #define LASTTICKS r7:6
+#define CREV r8
+#define V61 r9
 	{
 		DEVPTR = memw(H2K_GP+#KG_time_devptr)
+		CREV = rev
+		V61 = #CORE_V61
 	}
 	{
 		PCYCLES = s31:30
 		LASTTICKS = memd(H2K_GP+#KG_time_last_ticks)
 		DEVPTR = add(DEVPTR,#HW_COUNT_LO)
+		CREV = and(CREV, #CORE_REV_ARCH_MASK)
 	}
 	{
-		TICKHI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
-		TICKLO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
+		p0 = cmp.ltu(CREV, V61)
+		if (p0.new) TICKHI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		if (p0.new) TICKLO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
+		if (p0.new) jump:nt 1f
 	}
+	{
+		TICKS = TIMERHILO
+	}
+1:
 	{
 		p1 = cmp.gtu(TICKS,LASTTICKS)		// nowticks > last_ticks?
-		TICKHI2 = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		if (p0) TICKHI2 = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		if (!p0) jump 2f
 	}
 	{
 		p0 = cmp.eq(TICKHI2,TICKHI)
 		if (!p0.new) jump:nt H2K_timer_get_ticks
 	}
+2:
 	{
 		if (p1) memd(H2K_GP+#KG_time_last_ticks) = TICKS
 		if (p1) memd(H2K_GP+#KG_time_last_pcycles) = PCYCLES
@@ -110,6 +125,8 @@ FUNC_START H2K_timer_get_ticks  .text.time.timer  .falign
 #undef PCYCLES
 #undef DEVPTR
 #undef LASTTICKS
+#undef CREV
+#undef V61
 FUNC_END H2K_timer_get_ticks
 
 FUNC_START H2K_timer_init  .text.time.timer  .falign	// init(devpage_offset)
@@ -289,26 +306,44 @@ FUNC_START H2K_timer_get_time .text.time.timer
 #define DEVPTR r5
 #define PCYCLES r7:6
 #define NSEC_PER_TICK r8
+#define CREV r9
 #define LAST_TICKS r11:10
+#define V61 r12
 	{
 		DEVPTR = memw(H2K_GP+#KG_time_devptr)
-		LAST_TICKS = memd(H2K_GP+#KG_time_last_ticks)
+		CREV = rev
+		V61 = #CORE_V61
 		NSEC_PER_TICK = #TIMERHW_NSEC_PER_TICK
 	}
 	{
+		PCYCLES = s31:30
+		LAST_TICKS = memd(H2K_GP+#KG_time_last_ticks)
 		DEVPTR = add(DEVPTR,#HW_COUNT_LO)
+		CREV = and(CREV, #CORE_REV_ARCH_MASK)
 	}
 	{
-		TICKS_HI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
-		TICKS_LO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
-		PCYCLES = s31:30
+		p0 = cmp.ltu(CREV, V61)
+		if (p0.new) TICKS_HI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		if (p0.new) TICKS_LO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
+		if (p0.new) jump:nt 1f
 	}
+	{
+		TICKS = TIMERHILO
+	}
+1:
 	{
 		p1 = cmp.gtu(TICKS,LAST_TICKS)		// nowticks > last_ticks?
-		NSECS = mpyu(TICKS_LO,NSEC_PER_TICK)
-		TICKS_HI2 = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
-		if (!cmp.eq(TICKS_HI2.new,TICKS_HI)) jump:nt H2K_timer_get_time
 	}
+	{
+		NSECS = mpyu(TICKS_LO,NSEC_PER_TICK)
+		if (p0) TICKS_HI2 = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		if (!p0) jump 2f
+	}
+	{
+		p2 = cmp.eq(TICKS_HI2,TICKS_HI)
+		if (!p2.new) jump:nt H2K_timer_get_time
+	}
+2:
 	{
 		NSECS_HI += mpyi(TICKS_HI,NSEC_PER_TICK)
 		if (p1) memd(H2K_GP+#KG_time_last_ticks) = TICKS
@@ -326,6 +361,8 @@ FUNC_START H2K_timer_get_time .text.time.timer
 #undef NSECS_HI
 #undef NSECS
 #undef LAST_TICKS
+#undef CREV
+#undef V61
 FUNC_END H2K_timer_get_time 
 
 FUNC_START H2K_timer_get_timeout .text.time.timer
@@ -535,13 +572,19 @@ FUNC_START H2K_timer_delta_timeout .text.time.timer
 #define LH_H r11
 #define LH_L r10
 #define HH r9:8
-#define TIMEOUT_TICK r7:6
+#define CREV r7
+#define V61 r6
 #define DEVPTR r5
 #define ME r4
 #define TIMEOUT r3:2
 #define TIMEOUT_HI r3
 #define TIMEOUT_LO r2
 #define MAGIC_HI r0
+
+	{
+		CREV = rev
+		V61 = #CORE_V61
+	}
 	{
 		MAGIC_LO_ONE = combine(##0xc4ec4ec5,#1)
 		MAGIC_HI = ##0x4ec4ec4e
@@ -554,12 +597,24 @@ FUNC_START H2K_timer_delta_timeout .text.time.timer
 	}
 #undef MAGIC_LO
 #undef MAGIC_LO_ONE
+#define TICKS_HI r15
+#define TICKS_LO r14
+#define TICKS r15:14
 	{
 		LH += mpyu(TIMEOUT_LO,MAGIC_HI)
 		HH = mpyu(TIMEOUT_HI,MAGIC_HI)
 		DEVPTR = add(DEVPTR,#HW_COUNT_LO)
+		CREV = and(CREV, #CORE_REV_ARCH_MASK)
+	}
+	{
+		p0 = cmp.ltu(CREV, V61)
+		if (p0.new) jump:nt 2f
+	}
+	{
+		TICKS = TIMERHILO
 	}
 #undef MAGIC_HI
+2:
 	{
 		HH += lsr(HL,#32)
 		LH += mpyu(HL_L,ONE)
@@ -567,24 +622,29 @@ FUNC_START H2K_timer_delta_timeout .text.time.timer
 #undef HL_H
 #undef HL_L
 #undef ONE
-#define TICKS_HI r15
-#define TICKS_LO r14
-#define TICKS r15:14
 #define MIN r13:12
 #define TICKS_HI2 r0
-		TICKS_HI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
-		TICKS_LO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
+		if (p0) TICKS_HI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		if (p0) TICKS_LO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
 	}
 	{
 		HH += lsr(LH,#32)
 #undef LH
 #define LASTTICKS r11:10
 		MIN = #TICK_GRANULARITY
-		TICKS_HI2 = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
-		if (!cmp.eq(TICKS_HI2.new,TICKS_HI)) jump:nt H2K_timer_delta_timeout
+		if (p0) TICKS_HI2 = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		if (!p0) jump 1f
+	}
+	{
+		p1 = cmp.eq(TICKS_HI2,TICKS_HI)
+		if (!p1.new) jump:nt H2K_timer_delta_timeout
 	}
 #undef TICKS_HI2
 #define FOREVER r1:0
+#undef CREV
+#undef V61
+#define TIMEOUT_TICK r7:6
+1:
 	{
 		LASTTICKS = memd(H2K_GP+#KG_time_last_ticks)
 		TIMEOUT_TICK = lsr(HH,#4)

@@ -35,6 +35,8 @@
 #define L2_CHUNK 0x20000     // 128K
 #define L2_BIG_CHUNK 0x40000 // 256K
 
+#define CORE_V61 0x61
+
 #define CORE_V60A 0x000
 #define CORE_V61A 0x000
 

@@ -14,7 +14,7 @@
 u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 	u32_t val;
-	u32_t l2 = (H2K_gp->core_rev & CORE_REV_L2_MASK) >> CORE_REV_L2_SHIFT;
+	u32_t l2 = H2K_gp->l2size;
 	u32_t l2size;
 
 	if (l2 > CORE_REV_L2_CHUNK_SWITCH) {

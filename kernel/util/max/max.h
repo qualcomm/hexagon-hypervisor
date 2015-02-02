@@ -26,19 +26,15 @@
 //#define DO_EXT_SWITCH 1
 
 #define CORE_REV_ARCH_MASK 0xff
-#define CORE_REV_UARCH_MASK 0xf00
-#define CORE_REV_UARCH_SHIFT 8
-#define CORE_REV_L2_MASK 0xf000
-#define CORE_REV_L2_SHIFT 12
+
 #define CORE_REV_L2_CHUNK_SWITCH 0x8 // where we start using bigger chunks. HATE
 #define L2_TAG_CHUNK 0x8000  //  32K
 #define L2_CHUNK 0x20000     // 128K
 #define L2_BIG_CHUNK 0x40000 // 256K
 
 #define CORE_V61 0x61
-
-#define CORE_V60A 0x000
-#define CORE_V61A 0x000
+#define CORE_V60A 0x0
+#define CORE_V61A 0x0
 
 #define TEMP_MAP_VA 0xff800000
 #define TEMP_MAP_PG_SIZE SIZE_4M

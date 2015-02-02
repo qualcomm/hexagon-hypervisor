@@ -120,7 +120,7 @@ static inline ticks_t H2K_timer_hw_read_count()
 		};
 	} ticktmp;
 
-	if ((H2K_gp->core_rev & CORE_REV_ARCH_MASK) >= CORE_V61) { // use core timer regs
+	if (H2K_gp->arch >= CORE_V61) { // use core timer regs
 		return H2K_get_timer_reg();
 	}
 

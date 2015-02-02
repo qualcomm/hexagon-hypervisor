@@ -594,12 +594,12 @@ arch_t arches[] =
 
 u32_t H2K_l2cache_init() {
 
-	u32_t arch = (H2K_gp->core_rev & CORE_REV_ARCH_MASK);
-	u32_t uarch = (H2K_gp->core_rev & CORE_REV_UARCH_MASK) >> CORE_REV_UARCH_SHIFT;
-	u32_t l2 = (H2K_gp->core_rev & CORE_REV_L2_MASK) >> CORE_REV_L2_SHIFT;
+	u32_t arch = H2K_gp->arch;
+	u32_t uarch = H2K_gp->uarch;
+	u32_t l2 = H2K_gp->l2size;
 	u32_t i = 0;
 	u8_t *ptr;
-	u32_t size;
+	u32_t tag_size;
 
 	while (arches[i].archv != arch) {
 		if (0 == arches[i].archv) {  // whoa
@@ -615,16 +615,16 @@ u32_t H2K_l2cache_init() {
 		return 0;
 	}
 
-	size = ptr[l2];
-	if (reserved == size) {
+	tag_size = ptr[l2];
+	if (reserved == tag_size) {
 		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_SIZE;
 		return 0;
-	}		
+	}
 
-	if (H2K_trap_hwconfig_l2cache(0, NULL, size, 1, NULL) == -1) {  // error
+	if (H2K_trap_hwconfig_l2cache(0, NULL, tag_size, 1, NULL) == -1) {  // error
 		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_CONFIG;
 		return 0;
 	}
-	H2K_gp->l2_tags = size;
-	return size;
+	H2K_gp->l2_tags = tag_size;
+	return tag_size;
 }

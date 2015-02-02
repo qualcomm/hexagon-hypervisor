@@ -53,7 +53,7 @@ typedef struct {
 		struct {
 			u32_t arch:8;
 			u32_t uarch:4;
-			u32_t l2sz:4;
+			u32_t l2size:4;
 			u32_t metal:16;
 		};
 	};

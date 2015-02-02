@@ -16,7 +16,7 @@ void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 
 #ifdef H2K_USE_TCM
 
-	u32_t l2 = (H2K_gp->core_rev & CORE_REV_L2_MASK) >> CORE_REV_L2_SHIFT;
+	u32_t l2 = H2K_gp->l2size;
 	u32_t cfg_base;
 	u32_t tcm_base;
 	u64_t *from, *rd;

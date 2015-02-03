@@ -254,6 +254,7 @@ u32_t H2K_trap_hwconfig_l2locka(u32_t unused, void *addr, u32_t len, u32_t unuse
 	u32_t count;
 	u32_t ret = 1;
 	if (!H2K_safemem_check_and_lock(addr,SAFEMEM_RW,&pa,me)) return 1;
+	/* EJP: FIXME: need to check for every page */
 	for (off = 0; off < len; off += L2LINESIZE) {
 		count = 0;
 		while (H2K_l2locka(caddr+off) != 0) {

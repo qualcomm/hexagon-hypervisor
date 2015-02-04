@@ -15,6 +15,7 @@
 #include <h2_common_pmap.h>
 #include <h2_common_config.h>
 #include <h2_common_error.h>
+#include <h2_common_defs.h>
 #include <h2_kerror.h>
 
 #include <fcntl.h>
@@ -60,6 +61,18 @@ static unsigned int expect_status = 0;
 /* exit on error */
 static unsigned int error_exit = 1;
 
+typedef struct {
+	const char *name;
+	int pos;
+	int len;  // bits
+} syscfg_field;
+
+syscfg_field syscfg[] = {
+	{"BQ", SYSCFG_BQ_BIT, 1},
+	{"DMT", SYSCFG_DMT_BIT, 1},
+	{NULL, 0, 0}
+};
+
 /* Misc */
 #define ERRSTR_LEN 1024
 static char errstr[ERRSTR_LEN];
@@ -91,9 +104,11 @@ void usage()
 	printf("  --ccr <int>\n\tSet ccr.\n");
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
 	printf("  --syscfg <int>\n\tSet syscfg.\n");
+	printf("  --syscfg_bit <name> <int>\n\tSet syscfg bit(s) not covered by other options.\n");
 	printf("  --l1dp [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 data cache partitioning (ARCHV <= 5).\n");
 	printf("  --l1ip [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 instruction cache partitioning (ARCHV <= 5).\n");
 	printf("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
+	printf("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
 	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
 	printf("\nVM options:\n");
 	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
@@ -392,6 +407,27 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 	printf("\tNew value:  0x%08x\n", val);
 }
 
+void set_syscfg_field(char *name, unsigned int val) {
+
+	int i = 0;
+	unsigned int old = h2_info(INFO_SYSCFG);
+	unsigned int mask;
+
+	while (syscfg[i].name != NULL) {
+		if (strcasecmp(syscfg[i].name, name) == 0) {
+			mask = (( 0x1 << syscfg[i].len) - 1);
+			val = val & mask;
+			val <<= syscfg[i].pos;
+			mask <<= syscfg[i].pos;
+			H2K_set_syscfg((old & ~mask) | val);
+			return;
+		}
+		i++;
+	}
+	printf("Unknown SYSCFG bit %s\n", name);
+	FAIL("set_syscfg_field");
+}
+
 int main(int argc, char **argv)
 {
 	int i, ret = 0;
@@ -432,11 +468,13 @@ int main(int argc, char **argv)
 	while (1) {
 		if (0 == strcmp(argv[0],"--syscfg")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_syscfg();
+			regval = h2_info(INFO_SYSCFG);
 			printf("Old value for syscfg: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
+
 			H2K_set_syscfg(regval);
-			regval = H2K_get_syscfg();
+
+			regval = h2_info(INFO_SYSCFG);
 			printf("New value for syscfg: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
@@ -482,7 +520,7 @@ int main(int argc, char **argv)
 			argc -= 2; argv += 2;
 			continue;
 
-		} else if (0 == strcmp(argv[0], "--lidp")) {
+		} else if (0 == strcmp(argv[0], "--l1ip")) {
 			if (argc < 2) die_usage();
 			if (h2_hwconfig_partition(HWCONFIG_PARTITION_I, strtoul(argv[1],NULL,0)) == -1) {
 				FAIL("HWCONFIG_PARTITION_I");
@@ -496,6 +534,20 @@ int main(int argc, char **argv)
 				FAIL("HWCONFIG_PARTITION_L2");
 			}
 			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--l2cfg")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_l2cache_size(strtoul(argv[1],NULL,0), strtoul(argv[2], NULL, 0)) == -1) {
+				FAIL("HWCONFIG_L2CACHE");
+			}
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--syscfg_bit")) {
+			if (argc < 3) die_usage();
+			set_syscfg_field(argv[1], strtoul(argv[2], NULL, 0));
+			argc -= 3; argv += 3;
 			continue;
 
 		} else if (0 == strcmp(argv[0], "--l2_reg")) {

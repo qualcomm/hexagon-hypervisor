@@ -61,18 +61,6 @@ static unsigned int expect_status = 0;
 /* exit on error */
 static unsigned int error_exit = 1;
 
-typedef struct {
-	const char *name;
-	int pos;
-	int len;  // bits
-} syscfg_field;
-
-syscfg_field syscfg[] = {
-	{"BQ", SYSCFG_BQ_BIT, 1},
-	{"DMT", SYSCFG_DMT_BIT, 1},
-	{NULL, 0, 0}
-};
-
 /* Misc */
 #define ERRSTR_LEN 1024
 static char errstr[ERRSTR_LEN];
@@ -407,6 +395,30 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 	printf("\tNew value:  0x%08x\n", val);
 }
 
+/* Need to clean when clearing L2WB */
+void set_l2wb (unsigned int val) {
+	unsigned int old = h2_info(INFO_SYSCFG);
+
+	// Leave L2CFG unchanged
+	if (h2_hwconfig_l2cache_size((old & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, val) == -1) {
+		FAIL("HWCONFIG_L2CACHE");
+	}
+}
+
+typedef struct {
+	const char *name;
+	int pos;
+	int len;  // bits
+	void (* handler)(unsigned int);
+} syscfg_field;
+
+static syscfg_field syscfg[] = {
+	{"BQ", SYSCFG_BQ_BIT, SYSCFG_BQ_LEN, H2K_set_syscfg},
+	{"DMT", SYSCFG_DMT_BIT, SYSCFG_DMT_LEN, H2K_set_syscfg},
+	{"L2WB", SYSCFG_L2WB_BIT, SYSCFG_L2WB_LEN, set_l2wb},
+	{NULL, 0, 0}
+};
+
 void set_syscfg_field(char *name, unsigned int val) {
 
 	int i = 0;
@@ -419,7 +431,7 @@ void set_syscfg_field(char *name, unsigned int val) {
 			val = val & mask;
 			val <<= syscfg[i].pos;
 			mask <<= syscfg[i].pos;
-			H2K_set_syscfg((old & ~mask) | val);
+			syscfg[i].handler((old & ~mask) | val);
 			return;
 		}
 		i++;
@@ -538,7 +550,10 @@ int main(int argc, char **argv)
 
 		} else if (0 == strcmp(argv[0], "--l2cfg")) {
 			if (argc < 2) die_usage();
-			if (h2_hwconfig_l2cache_size(strtoul(argv[1],NULL,0), strtoul(argv[2], NULL, 0)) == -1) {
+
+			// Keep L2WB unchanged; use --syscfg_bit to modify that
+			regval = h2_info(INFO_SYSCFG);
+			if (h2_hwconfig_l2cache_size(strtoul(argv[1],NULL,0), (regval & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT) == -1) {
 				FAIL("HWCONFIG_L2CACHE");
 			}
 			argc -= 2; argv += 2;

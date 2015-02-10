@@ -167,6 +167,13 @@ static inline void H2K_l2kill()
 	asm volatile (" l2kill ");
 }
 
+#if ARCHV >= 60
+static inline void H2K_l2gcleaninv()
+{
+	asm volatile (" l2gcleaninv ");
+}
+#endif
+
 static inline u32_t H2K_get_modectl()
 {
 	u32_t ret;
@@ -244,7 +251,7 @@ static inline u32_t get_hwtnum()
 }
 #endif
 
-static inline void syncht()
+static inline void H2K_syncht()
 {
 	asm volatile (" syncht " : : : "memory");
 }

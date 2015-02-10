@@ -42,12 +42,16 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 {
 	u32_t cur_size;
 	u32_t cur_wb;
+	u32_t cur_nwa;
+	u32_t cur_nra;
 	u32_t syscfg;
 
 	/* Don't need to lock here since we only proceed in ST mode */
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS;
-	cur_wb = (syscfg & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT;
+	cur_wb = syscfg & SYSCFG_L2WB;
+	cur_nwa = syscfg & SYSCFG_L2NWA;
+	cur_nra = syscfg & SYSCFG_L2NRA;
 	size &= 0x7;
 	use_wb &= 1;
 
@@ -55,10 +59,20 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 	if (H2K_stmode_begin() != 0) return -1;
 
 	if (size != cur_size) {
-		if (cur_wb) {
-			/* Clean entire cache */
-			H2K_cache_l2_cleaninv();
-		}
+		/* write-through, no write-alloc, no read-alloc */
+		syscfg &= ~SYSCFG_L2WB;
+		syscfg &= ~SYSCFG_L2NWA;
+		syscfg &= ~SYSCFG_L2NRA;
+		H2K_set_syscfg(syscfg);
+		H2K_syncht();
+
+		/* Clean entire cache */
+#if ARCHV >= 60
+		H2K_l2gcleaninv();
+#else
+		H2K_cache_l2_cleaninv();
+#endif
+
 		/* Set to 0 size */
 		syscfg &= ~SYSCFG_L2CFG;
 		H2K_set_syscfg(syscfg);
@@ -66,18 +80,26 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 		H2K_isync();
 		/* Update size, mode */
 		syscfg |= ((size << SYSCFG_L2CFG_BITS) | (use_wb ? SYSCFG_L2WB : 0));
+		syscfg |= cur_wb | cur_nwa | cur_nra;
+
 	} else if (use_wb && !cur_wb) {
 		syscfg |= SYSCFG_L2WB;
+
 	} else if (!use_wb && cur_wb) {
 		/* Just leave WB mode */
 		/* Clean entire cache */
+#if ARCHV >= 60
+		H2K_l2gcleaninv();
+#else
 		H2K_cache_l2_cleaninv();
+#endif
 		/* Disable WB mode on L2$ */
 		syscfg &= ~SYSCFG_L2WB;
 	}
-	syncht();
+
+	H2K_syncht();
 	H2K_set_syscfg(syscfg);
-	syncht();
+	H2K_syncht();
 	H2K_stmode_end();
 	return 0;
 }

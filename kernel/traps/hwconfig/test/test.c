@@ -90,7 +90,8 @@ int main()
 	/* Check base functionality for l2cache hwconfig */
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,1,0,&a);
-	if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv");
+	// We always clean now
+	// if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv 1");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
@@ -99,7 +100,7 @@ int main()
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,1,1,&a);
-	if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv");
+	if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv 2");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
@@ -108,7 +109,10 @@ int main()
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,1,0,&a);
-	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache");
+#if ARCHV < 60
+	// FIXME: Find a way to check the inline l2gcleaninv
+	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache 1");
+#endif
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
@@ -117,11 +121,12 @@ int main()
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,2,1,&a);
-	if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv");
+	// We always clean now
+	//	if (TH_saw_l2_cleaninv) FAIL("Clean cache shouldn't cause cleaninv 3");
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
-	if (cur_size != 2) FAIL("Invalid cache size");
+	if (cur_size != 2) FAIL("Invalid cache size 1");
 	if (cur_wb != 1) FAIL("Invalid mode");
 
 	TH_saw_l2_cleaninv = 0;
@@ -130,16 +135,19 @@ int main()
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
-	if (cur_size != 2) FAIL("Invalid cache size");
+	if (cur_size != 2) FAIL("Invalid cache size 2");
 	if (cur_wb != 1) FAIL("Invalid mode");
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,3,1,&a);
-	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache");
+#if ARCHV < 60
+	// FIXME: Find a way to check the inline l2gcleaninv
+	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache 2");
+#endif
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
-	if (cur_size != 3) FAIL("Invalid cache size");
+	if (cur_size != 3) FAIL("Invalid cache size 3");
 	if (cur_wb != 1) FAIL("Invalid mode");
 
 	/* Check for partitioning */

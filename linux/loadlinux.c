@@ -119,6 +119,7 @@ void boot_ucos() {
 
 #ifdef UCOS
 	unsigned long ucos_vm;
+	int i;
 
 	PRINTF("ucos: start boot\n");
 	ucos_vm = vm_setup(UCOS_NUM_VCPU, SHARED_INTS, (u32_t)ucos_pmap, 0xffffffff, H2K_ASID_TRANS_TYPE_LINEAR);
@@ -126,6 +127,12 @@ void boot_ucos() {
 
 	PRINTF("ucos: loading to 0x%08x from 0x%08x, size 0x%08x\n", (unsigned int)ucos_loadaddr, (unsigned int)ucos_image_start, (unsigned int)(ucos_image_end - ucos_image_start));
 	memcpy(ucos_loadaddr, ucos_image_start, ucos_image_end - ucos_image_start);
+
+	for (i = 0; i < ((ucos_image_end - ucos_image_start + 32) / 32) * 32; i += 32) {
+		asm volatile ("dccleana(%0)" : :"r"(ucos_loadaddr + i):"memory");
+		asm volatile ("icinva(%0)" : :"r"(ucos_loadaddr + i):"memory");
+	};
+	asm volatile (" syncht ");
 
 	PRINTF("ucos: loaded\n");
 

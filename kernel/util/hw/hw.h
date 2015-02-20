@@ -356,7 +356,7 @@ static inline void H2K_dccleaninva(void *ptr)
 static inline unsigned char H2K_l2locka(void *ptr)
 {
 	unsigned char out;
-	asm volatile (" p0 = l2locka(%0) ; %0 = p0 " : "=r"(out) :"p"(ptr) : "memory","p0");
+	asm volatile (" p0 = l2locka(%1) ; %0 = p0 " : "=r"(out) :"p"(ptr) : "memory","p0");
 	return out;
 }
 

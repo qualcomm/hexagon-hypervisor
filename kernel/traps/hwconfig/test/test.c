@@ -30,6 +30,27 @@ void H2K_cache_l2_cleaninv()
 	TH_saw_l2_cleaninv = 1;
 }
 
+#if ARCHV < 56
+void TH_test_l2locka() {}
+#else
+
+int H2K_safemem_check_and_lock(void *addr, int type, pa_t *pa, H2K_thread_context *me)
+{
+	if (pa) *pa = (pa_t)addr;
+	return 1;
+}
+
+char x[128] __attribute__((aligned(64)));
+
+int TH_test_l2locka(int len) {
+	u32_t ret;
+	if ((ret = H2K_trap_hwconfig(HWCONFIG_L2LOCKA,&x,len,0,&a)) != 0) FAIL("returned fail");
+	if (H2K_trap_hwconfig(HWCONFIG_L2UNLOCK,NULL,0,0,&a) != 0) FAIL("unlock returned fail");
+	return 0;
+}
+
+#endif
+
 #if ARCHV <= 3
 void TH_test_pf()
 {
@@ -171,6 +192,9 @@ int main()
 
 	/* Check for PF bits */
 	TH_test_pf();
+
+	TH_test_l2locka(64);
+	TH_test_l2locka(128);
 
 	puts("TEST PASSED\n");
 	return 0;

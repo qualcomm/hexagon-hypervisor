@@ -1,0 +1,32 @@
+# Dear emacs, this is a -*- Makefile -*-
+#  This behaves kind of like a SUBDIRS makefile.
+#  It is meant to be run from the top level ob directory.
+
+export H2DIR := $(PWD)
+
+SUBDIRS:=$(shell cat ./scripts/qurt_testlist)
+
+all:
+	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=all
+
+tst:
+	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=tst
+
+clean:
+	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=clean
+
+$(SUBDIRS)::
+	cd $@/src;\
+	if [ "$(TARG)" != "clean" ]; then \
+	(echo; echo; echo "##########   $@   ##########") > make.log; \
+	fi; \
+	$(MAKE) -f $(H2DIR)/scripts/Makefile.qurt_test $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
+	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
+
+.PHONY: $(SUBDIRS) tst
+
+export BOOT=1
+export OBJS=main.o
+export EXEC=test.elf
+
+include ./scripts/Makefile.inc.test

@@ -48,7 +48,7 @@ all: ref doc gtags
 
 distclean: clean docclean gtagsclean
 
-clean: covclean ucosclean booterclean docclean
+clean: covclean ucosclean booterclean docclean qurtclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
@@ -67,6 +67,9 @@ testclean covclean: ucosclean
 
 ucosclean:
 	$(MAKE) -C ucos clean
+
+qurtclean:
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) clean
 
 opt:
 	echo PKW_VERSIONS $(PKW_VERSIONS)
@@ -107,6 +110,12 @@ test: ucosclean
 	$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
 	[ `fgrep -c -i warning: test.out` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
+
+qurt_test: ./qurt/test/testcases
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee test.out
+	[ `fgrep -c -i warning: test.out` -eq 0 ]
+#	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_report.html
 
 cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare

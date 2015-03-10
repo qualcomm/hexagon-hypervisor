@@ -12,6 +12,9 @@ all:
 tst:
 	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=tst
 
+tst_single:
+	@$(MAKE) -f scripts/Makefile.qurt $(TEST) TARG=tst
+
 clean:
 	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=clean
 

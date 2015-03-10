@@ -117,6 +117,11 @@ qurt_test: ./qurt/test/testcases
 	[ `fgrep -c -i warning: test.out` -eq 0 ]
 #	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_report.html
 
+qurt_test_single: ./qurt/test/testcases
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee test.out
+	[ `fgrep -c -i warning: test.out` -eq 0 ]
+
 cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all

@@ -2,21 +2,35 @@
 #  This behaves kind of like a SUBDIRS makefile.
 #  It is meant to be run from the top level ob directory.
 
-export H2DIR := $(PWD)
+export H2DIR := $(CURDIR)
+export TESTTOP := $(H2DIR)/qurt/test
+
+QURT_TEST_LIBTOP := $(TESTTOP)/lib
+QURT_TEST_LIBDIRS := backdoor myqmsgq passfail profile
+QURT_TEST_LIBS := $(foreach libdir, $(QURT_TEST_LIBDIRS), $(QURT_TEST_LIBTOP)/$(libdir))
+QURT_TEST_LIBS_INCLUDES := $(foreach libdir, $(QURT_TEST_LIBDIRS), -I $(QURT_TEST_LIBTOP)/$(libdir)/include)
+
 
 SUBDIRS:=$(shell cat ./scripts/qurt_testlist)
 
 all:
 	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=all
 
-tst:
+tst: qurt_test_libs
 	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=tst
 
-tst_single:
+tst_single: qurt_test_libs
 	@$(MAKE) -f scripts/Makefile.qurt $(TEST) TARG=tst
 
 clean:
 	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=clean
+
+qurt_test_libs: $(QURT_TEST_LIBS)
+
+$(QURT_TEST_LIBS)::
+	cd $@;\
+	$(MAKE) clean_qurt_test_libs;\
+	$(MAKE) qurt_test_libs
 
 $(SUBDIRS)::
 	cd $@/src;\
@@ -26,10 +40,8 @@ $(SUBDIRS)::
 	$(MAKE) -f $(H2DIR)/scripts/Makefile.qurt_test $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
 	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
 
-.PHONY: $(SUBDIRS) tst
-
-export BOOT=1
-export OBJS=main.o
-export EXEC=test.elf
+.PHONY: $(SUBDIRS) tst qurt_test_libs
 
 include ./scripts/Makefile.inc.test
+
+export CFLAGS += $(QURT_TEST_LIBS_INCLUDES)

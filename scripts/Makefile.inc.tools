@@ -15,6 +15,7 @@ endif
 
 export CC := hexagon-gcc
 export AR := hexagon-ar
+export RANLIB := hexagon-ranlib
 
 export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
 export LD := hexagon-gcc

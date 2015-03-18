@@ -122,6 +122,9 @@ qurt_test_single: ./qurt/test/testcases
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee test.out
 	[ `fgrep -c -i warning: test.out` -eq 0 ]
 
+qurt_test_libs:
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
+
 cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
@@ -150,7 +153,7 @@ compat:
 .PHONY: gtags gtagsclean
 
 gtags:
-	find booter examples kernel libs linux perf scripts stake tst ucos -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
+	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
 	htags -afhnosTxv --show-position
 
 gtagsclean:

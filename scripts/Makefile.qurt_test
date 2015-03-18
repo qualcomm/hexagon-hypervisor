@@ -1,1 +1,7 @@
+BOOT=1
+OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
+EXEC=test.elf
+
+
+
 include ${H2DIR}/scripts/Makefile.inc.test

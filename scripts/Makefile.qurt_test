@@ -5,3 +5,5 @@ EXEC=test.elf
 
 
 include ${H2DIR}/scripts/Makefile.inc.test
+
+LDFLAGS += $(LDFLAGS_EXTRA)

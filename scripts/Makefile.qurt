@@ -9,6 +9,7 @@ QURT_TEST_LIBTOP := $(TESTTOP)/lib
 QURT_TEST_LIBDIRS := backdoor myqmsgq passfail profile
 QURT_TEST_LIBS := $(foreach libdir, $(QURT_TEST_LIBDIRS), $(QURT_TEST_LIBTOP)/$(libdir))
 QURT_TEST_LIBS_INCLUDES := $(foreach libdir, $(QURT_TEST_LIBDIRS), -I $(QURT_TEST_LIBTOP)/$(libdir)/include)
+QURT_TEST_LIBS_L := $(foreach libdir, $(QURT_TEST_LIBDIRS), -l $(libdir))
 
 
 SUBDIRS:=$(shell cat ./scripts/qurt_testlist)
@@ -45,3 +46,4 @@ $(SUBDIRS)::
 include ./scripts/Makefile.inc.test
 
 export CFLAGS += $(QURT_TEST_LIBS_INCLUDES)
+export LDFLAGS_EXTRA := -L $(QURT_TEST_LIBTOP) $(QURT_TEST_LIBS_L)

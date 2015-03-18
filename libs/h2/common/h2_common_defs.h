@@ -12,6 +12,18 @@
 #define HAVE_EXTENSIONS 1
 #endif
 
+#ifndef MAX_HTHREADS
+#if ARCHV <= 3
+#define MAX_HTHREADS 6
+#elif ARCHV == 4
+#define MAX_HTHREADS 3
+#elif ARCHV == 5
+#define MAX_HTHREADS 6
+#elif ARCHV == 60
+#define MAX_HTHREADS 4
+#endif
+#endif
+
 #define SYSCFG_M_BIT 0
 #define SYSCFG_M_LEN 1
 #define SYSCFG_M (((0x1 << SYSCFG_M_LEN) - 1) << SYSCFG_M_BIT)

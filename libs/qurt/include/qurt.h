@@ -67,6 +67,7 @@ extern "C" {
 #include "qurt_thread_context.h"
 #include "qurt_hvx.h"
 #include "qurt_island.h"
+#include "qurt_utcb.h"
 
 #ifdef __cplusplus
 } /* closing brace for extern "C" */

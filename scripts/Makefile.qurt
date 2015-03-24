@@ -6,7 +6,7 @@ export H2DIR := $(CURDIR)
 export TESTTOP := $(H2DIR)/qurt/test
 
 QURT_TEST_LIBTOP := $(TESTTOP)/lib
-QURT_TEST_LIBDIRS := backdoor myqmsgq passfail profile
+QURT_TEST_LIBDIRS := backdoor passfail profile
 QURT_TEST_LIBS := $(foreach libdir, $(QURT_TEST_LIBDIRS), $(QURT_TEST_LIBTOP)/$(libdir))
 QURT_TEST_LIBS_INCLUDES := $(foreach libdir, $(QURT_TEST_LIBDIRS), -I $(QURT_TEST_LIBTOP)/$(libdir)/include)
 QURT_TEST_LIBS_L := $(foreach libdir, $(QURT_TEST_LIBDIRS), -l $(libdir))

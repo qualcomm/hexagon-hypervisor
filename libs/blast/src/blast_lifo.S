@@ -14,20 +14,20 @@ blast_lifo_pop:
 	{
 		p0 = cmp.eq(r2,#0)
 		if p0.new jump:nt 1f 
-        if !p0.new r1 = memw( r2 ) 
+		if !p0.new r1 = memw( r2 ) 
 	}
 	memw_locked(r0,p0) = r1
-    {
-        if p0 jumpr r31
-        if p0 r0 = r2
-    }
-    jump blast_lifo_pop
+	{
+		if p0 jumpr r31
+		if p0 r0 = r2
+	}
+	jump qurt_lifo_pop
 1:
-    {
-        r0 = r2
-	    jumpr r31
-    }
-	.size blast_lifo_pop, .-blast_lifo_pop
+	{
+		r0 = r2
+		jumpr r31
+	}
+	.size qurt_lifo_pop, .-qurt_lifo_pop
 
 	.type	blast_lifo_push, @function
 blast_lifo_push:

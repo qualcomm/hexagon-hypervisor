@@ -11,6 +11,8 @@
 #include <blast_lifo.h>
 #include <blast_fd.h>
 
+/* EJP: WTF is all this? Not sure it's even around any more... */
+
 #define DEBUG_ASSERT(...)
 //#define DEBUG_ASSERT qube_assert
 //

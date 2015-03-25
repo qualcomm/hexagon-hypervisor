@@ -20,13 +20,13 @@
  Confidential and Proprietary - Qualcomm Technologies, Inc.
  ======================================================================*/
 
-void *qurt_malloc( unsigned int size);
+static inline void *qurt_malloc( unsigned int size) { return h2_malloc(size); }
 
-void *qurt_calloc(unsigned int elsize, unsigned int num);
+static inline void *qurt_calloc(unsigned int elsize, unsigned int num) { return h2_calloc(elsize,num); }
 
-void *qurt_realloc(void *ptr,  int newsize);
+static inline void *qurt_realloc(void *ptr,  int newsize) { return h2_realloc(ptr,newsize); }
 
-void qurt_free( void *ptr);
+static inline void qurt_free( void *ptr) { return h2_free(ptr); }
 
 #endif /* QURT_ALLOC_H */
 

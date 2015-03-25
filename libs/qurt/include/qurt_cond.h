@@ -43,12 +43,12 @@ static inline void qurt_cond_broadcast(qurt_cond_t *cond) { h2_cond_broadcast(co
 
 static inline void qurt_cond_wait(qurt_cond_t *cond, qurt_mutex_t *mutex)
 {
-	h2_cond_wait(cond,mutex);
+	h2_cond_wait_rmutex(cond,mutex);
 }
 
 static inline void qurt_cond_wait2(qurt_cond_t *cond, qurt_rmutex2_t *mutex)
 {
-	return h2_cond_wait(cond,mutex);
+	return h2_cond_wait_rmutex(cond,mutex);
 }
 
 #endif /* QURT_COND_H */

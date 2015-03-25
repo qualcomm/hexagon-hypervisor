@@ -35,7 +35,7 @@
  *
 */
 
-static inline int qurt_spawn_flags(const char * name, int flags) { UNSUPPORTED; } 
+static inline int qurt_spawn_flags(const char * name, int flags) { R_UNSUPPORTED; } 
 
 /**
    The qurt_spawn() function creates and starts a process from an ELF file of the specified name. The slash symbols 
@@ -69,7 +69,7 @@ static inline int qurt_spawn_flags(const char * name, int flags) { UNSUPPORTED; 
  *                  negative error code if failed
  *
 */
-static inline int qurt_space_switch(int asid) { UNSUPPORTED; }
+static inline int qurt_space_switch(int asid) { R_UNSUPPORTED; }
 
 /**
  * The qurt_wait() function  waits for status change in a child process. It could be used by parent
@@ -83,6 +83,6 @@ static inline int qurt_space_switch(int asid) { UNSUPPORTED; }
  *
 */
 
-static inline int qurt_wait(int *status) { UNSUPPORTED; }
+static inline int qurt_wait(int *status) { R_UNSUPPORTED; }
 
 #endif

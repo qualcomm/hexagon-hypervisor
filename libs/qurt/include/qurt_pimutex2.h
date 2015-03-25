@@ -43,7 +43,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
    None.
   
  */
-static inline void qurt_pimutex2_init(qurt_rmutex2_t *lock) { return h2_mutex_init(lock); }
+static inline void qurt_pimutex2_init(qurt_rmutex2_t *lock) { return h2_rmutex_init(lock); }
 
 /**@ingroup func_qurt_pimutex2_destroy
   Destroys the specified recursive mutex. \n
@@ -95,7 +95,7 @@ static inline void qurt_pimutex2_destroy(qurt_rmutex2_t *lock) {}
    None.
   
  */
-static inline void qurt_pimutex2_lock(qurt_rmutex2_t *lock) { return h2_mutex_lock(lock); }
+static inline void qurt_pimutex2_lock(qurt_rmutex2_t *lock) { return h2_rmutex_lock(lock); }
 
 /**@ingroup func_qurt_pimutex2_unlock
    Unlocks the specified recursive mutex. \n 
@@ -115,7 +115,7 @@ static inline void qurt_pimutex2_lock(qurt_rmutex2_t *lock) { return h2_mutex_lo
    None.
   
  */
-static inline void qurt_pimutex2_unlock(qurt_rmutex2_t *lock) { return h2_mutex_unlock(lock); }
+static inline void qurt_pimutex2_unlock(qurt_rmutex2_t *lock) { return h2_rmutex_unlock(lock); }
 
 /**@ingroup func_qurt_rmutex2_try_lock
    Attempts to lock the specified recursive mutex.\n
@@ -135,6 +135,6 @@ static inline void qurt_pimutex2_unlock(qurt_rmutex2_t *lock) { return h2_mutex_
    Nonzero -- Failure. 
   
  */
-static inline int qurt_rmutex2_try_lock(qurt_rmutex2_t *lock) { return h2_mutex_trylock(lock); }
+static inline int qurt_pimutex2_try_lock(qurt_rmutex2_t *lock) { return h2_rmutex_trylock(lock); }
 
 #endif /* QURT_PIMUTEX2_H */

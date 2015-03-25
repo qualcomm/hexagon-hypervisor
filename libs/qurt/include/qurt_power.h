@@ -5,6 +5,8 @@
 
 #ifndef QURT_POWER_H
 #define QURT_POWER_H
+
+#include "qurt_error.h"
 /**
   @file qurt_power.h 
   @brief  Prototypes of power API  
@@ -259,7 +261,7 @@ static inline void qurt_power_wait_for_active (void) {}
   @dependencies
   None.
  */
-static inline unsigned int qurt_system_ipend_get (void) { UNSUPPORTED; };
+static inline unsigned int qurt_system_ipend_get (void) { R_UNSUPPORTED; };
 
 /*
    Sets the AVS configuration register. 
@@ -284,7 +286,7 @@ static inline void qurt_system_avscfg_set(unsigned int avscfg_value) { UNSUPPORT
    @dependencies
    None.
  */
-static inline unsigned int qurt_system_avscfg_get(void) { UNSUPPORTED; };
+static inline unsigned int qurt_system_avscfg_get(void) { R_UNSUPPORTED; };
 
 /**@ingroup func_qurt_system_vid_get  
   Gets the VID register. \n
@@ -300,7 +302,7 @@ static inline unsigned int qurt_system_avscfg_get(void) { UNSUPPORTED; };
   @dependencies
   None.
  */
-static inline unsigned int qurt_system_vid_get(void) { UNSUPPORTED; };
+static inline unsigned int qurt_system_vid_get(void) { R_UNSUPPORTED; };
 
 /*
    Gets the number of power collapses and counts of processor cycles 
@@ -343,6 +345,7 @@ static inline unsigned int qurt_system_vid_get(void) { UNSUPPORTED; };
 static inline int qurt_power_shutdown_get_pcycles( unsigned long long *enter_pcycles,  unsigned long long *exit_pcycles )
 {
 	*enter_pcycles = *exit_pcycles = h2_get_core_pcycles();
+	return 0;
 }
 
 static inline int qurt_system_tcm_set_size(unsigned int new_size) { return new_size; }
@@ -368,7 +371,8 @@ static inline int qurt_system_tcm_set_size(unsigned int new_size) { return new_s
 static inline int qurt_power_shutdown_get_hw_ticks( unsigned long long *before_pc_ticks,  
 	unsigned long long *after_wb_ticks ) 
 {
-	*before_pc_tics = *after_wb_ticks = 0;
+	*before_pc_ticks = *after_wb_ticks = 0;
+	return 0;
 };
 
 #endif /* QURT_POWER_H */

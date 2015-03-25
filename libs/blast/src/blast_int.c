@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <blast.h>
 #include <h2.h>
+#include <qurt.h>
 #include <max.h>
 #include "atomic_ops.h"
 #include <hexagon_protos.h>
@@ -59,7 +59,7 @@ unsigned long SIRC_IRQ_POLARITY[SIRC_COUNT] =	{ 0x00000000,0x00000000,0x00000000
 
 /*  
 
-Legacy BLAST interrupt->signal support  
+Legacy QURT interrupt->signal support  
 
 From what I can gather:
 
@@ -74,12 +74,12 @@ Only one signal per sigset
 typedef struct {
 	h2_anysignal_t *signal_ptr;
 	int signal_mask;
-} blast_interrupt_table_entry_t;
+} qurt_interrupt_table_entry_t;
 
-blast_interrupt_table_entry_t int_sigsets[MAX_SYS_INTERRUPTS];
+qurt_interrupt_table_entry_t int_sigsets[MAX_SYS_INTERRUPTS];
 
 //  Fast interrupt handler
-int blast_int2signal(int intnum)
+int qurt_int2signal(int intnum)
 {
 	//  maybe need to check if it's been registered first...
 	//  safe to call sigset from within fastint context
@@ -89,7 +89,7 @@ int blast_int2signal(int intnum)
 	return 1;
 }
 
-int blast_dummy(int intnum)
+int qurt_dummy(int intnum)
 {
 	return 0;
 }
@@ -101,7 +101,7 @@ void l2_controller_init(void)
 {
 }
 
-int blast_register_interrupt(int int_num, 
+int qurt_register_interrupt(int int_num, 
 	h2_anysignal_t *int_signal, int signal_mask)
 {
 	int_num += 32;
@@ -113,19 +113,30 @@ int blast_register_interrupt(int int_num,
 	int_sigsets[int_num].signal_mask = signal_mask;
 	h2_anysignal_clear(int_sigsets[int_num].signal_ptr,
 		int_sigsets[int_num].signal_mask);
-	h2_register_fastint(int_num,blast_int2signal);
+	h2_register_fastint(int_num,qurt_int2signal);
 	return 0;
 }
 
-unsigned int blast_deregister_interrupt(int int_num)
+unsigned int qurt_deregister_interrupt(int int_num)
 {
 	int_num += 32;
 	h2_anysignal_set(int_sigsets[int_num].signal_ptr,1<<SIGNAL_INT_ABORT);
 	//  May need to make this atomic or use a lock or something
-	//h2_register_fastint(int_num,blast_dummy);
+	//h2_register_fastint(int_num,qurt_dummy);
 	h2_deregister_fastint(int_num);
 	//  wouldn't need to do this if code didn't check it in the first place
 	int_sigsets[int_num].signal_ptr = 0;  
 	return 0;
 }
 
+unsigned int qurt_interrupt_status(int int_num, int *status)
+{
+	assert(0);
+	return EOK;
+}
+
+unsigned int qurt_interrupt_clear(int int_num)
+{
+	assert(0);
+	return EOK;
+}

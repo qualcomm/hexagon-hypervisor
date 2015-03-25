@@ -45,7 +45,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
   None.
  
  */
-static inline void qurt_pimutex_init(qurt_mutex_t *lock) { return h2_mutex_init(lock); }
+static inline void qurt_pimutex_init(qurt_mutex_t *lock) { return h2_rmutex_init(lock); }
 
 /**@ingroup func_qurt_pimutex_destroy
    Destroys the specified priority inheritance mutex.  
@@ -105,7 +105,7 @@ static inline void qurt_pimutex_destroy(qurt_mutex_t *lock) { }
   None.
   
  */
-static inline void qurt_pimutex_lock(qurt_mutex_t *lock) { return h2_mutex_lock(lock); }
+static inline void qurt_pimutex_lock(qurt_mutex_t *lock) { return h2_rmutex_lock(lock); }
 
 /**@ingroup func_qurt_pimutex_unlock
    Unlocks the specified priority inheritance mutex.  \n
@@ -129,7 +129,7 @@ static inline void qurt_pimutex_lock(qurt_mutex_t *lock) { return h2_mutex_lock(
    None.
  
  */
-static inline void qurt_pimutex_unlock(qurt_mutex_t *lock) { return h2_mutex_unlock(lock); }
+static inline void qurt_pimutex_unlock(qurt_mutex_t *lock) { return h2_rmutex_unlock(lock); }
 
 /**@ingroup func_qurt_pimutex_try_lock
   Attempts to lock the specified priority inheritance mutex.\n
@@ -152,6 +152,6 @@ static inline void qurt_pimutex_unlock(qurt_mutex_t *lock) { return h2_mutex_unl
   @dependencies
   None. 
  */
-static inline int qurt_pimutex_try_lock(qurt_mutex_t *lock) { return h2_mutex_trylock(lock); }
+static inline int qurt_pimutex_try_lock(qurt_mutex_t *lock) { return h2_rmutex_trylock(lock); }
 
 #endif /* QURT_PIMUTEX_H */

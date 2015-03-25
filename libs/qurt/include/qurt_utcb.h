@@ -25,35 +25,56 @@
 
 typedef struct QURT_utcb 
 {
-   /* SW Thread ID */
-   unsigned int thread_id;
+	/* SW Thread ID */
+	unsigned int thread_id;
 
-   /* Entry point of higher layer */
-   void (*entrypoint)(void *);
+	/* Entry point of higher layer */
+	void (*entrypoint)(void *);
 
-   /* Argument to be to higher layer entry point */
-   void *arg;
+	/* Argument to be to higher layer entry point */
+	void *arg;
 
-   /* process startup flags passed in by the user when creating the process */
-   int startup_flags;
+	/* process startup flags passed in by the user when creating the process */
+	int startup_flags;
 
-   /* qdi_info has to be 8 bytes aligned */
+	/* qdi_info has to be 8 bytes aligned */
 
-   struct {
-      void *qurt_qdi_table0_ptr;           /* Offset 80, points at handle table #0 */
-      int   qurt_qdi_table0_max;           /* Offset 84, max index in handle table #0 */
-      void *qurt_qdi_outertable_ptr;       /* Offset 88, points at table of handle tables */
-      int   qurt_qdi_outertable_max;       /* Offset 92, max index in table of handle tables */
-      int   qurt_qdi_localhandle_max;      /* Offset 96, max handle which dispatches locally */
-   } qdi_info __attribute__((aligned(8)));
+	struct {
+	void *qurt_qdi_table0_ptr;           /* Offset 80, points at handle table #0 */
+	int   qurt_qdi_table0_max;           /* Offset 84, max index in handle table #0 */
+	void *qurt_qdi_outertable_ptr;       /* Offset 88, points at table of handle tables */
+	int   qurt_qdi_outertable_max;       /* Offset 92, max index in table of handle tables */
+	int   qurt_qdi_localhandle_max;      /* Offset 96, max handle which dispatches locally */
+	} qdi_info __attribute__((aligned(8)));
 
-   short asid;
-   short pid;
+	short asid;
+	short pid;
 
-      /* Thread attributes */
-   qurt_thread_attr_t attr;
+	/* Thread attributes */
+	qurt_thread_attr_t attr;
 
 } QURT_utcb_t;
+
+struct QURT_tls_reserve {
+   unsigned int tls_bitmask[QURT_MAX_TLS_INDEX];
+   void (*destructor [QURT_MAX_TLS]) (void *);
+};
+
+/* EJP: What a horrible name for this. */
+struct QURT_ugp_ptr {
+	/* Define QURT_UTCB here */
+	QURT_utcb_t utcb;
+
+	/* STUFF to manage UTCB / joining */
+	struct QURT_ugp_ptr *next;
+	h2_mutex_t join_lock;
+	h2_cond_t join_cond;
+	int join_refcount;
+	enum { QURT_JOIN_STATE_RUNNING, QURT_JOIN_STATE_DONE } join_state;
+
+	/* Maybe some extra stuff for TLS? */
+	void *tls[QURT_MAX_TLS];
+};
 
 /**
  * Get Qurt UTCB pointer

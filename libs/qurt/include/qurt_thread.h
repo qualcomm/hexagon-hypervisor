@@ -164,8 +164,9 @@ static inline void qurt_thread_attr_init (qurt_thread_attr_t *attr)
 */
 static inline void qurt_thread_attr_set_name (qurt_thread_attr_t *attr, char *name)
 {
-    strlcpy (attr->name, name, QURT_THREAD_ATTR_NAME_MAXLEN);
-    attr->name[QURT_THREAD_ATTR_NAME_MAXLEN - 1] = 0;
+	/* EJP: doesn't strlcpy guarantee zero termination? */
+	strlcpy (attr->name, name, QURT_THREAD_ATTR_NAME_MAXLEN);
+	attr->name[QURT_THREAD_ATTR_NAME_MAXLEN - 1] = 0;
 }
 
 /**@ingroup func_qurt_thread_attr_set_tcb_partition
@@ -189,7 +190,7 @@ static inline void qurt_thread_attr_set_name (qurt_thread_attr_t *attr, char *na
 */
 static inline void qurt_thread_attr_set_tcb_partition (qurt_thread_attr_t *attr, unsigned char tcb_partition)
 {
-    attr->tcb_partition = tcb_partition;
+	attr->tcb_partition = tcb_partition;
 }
 
 /**@ingroup func_qurt_thread_attr_set_priority
@@ -211,7 +212,7 @@ static inline void qurt_thread_attr_set_tcb_partition (qurt_thread_attr_t *attr,
 */
 static inline void qurt_thread_attr_set_priority (qurt_thread_attr_t *attr, unsigned short priority)
 {
-    attr->priority = priority;
+	attr->priority = priority;
 }
 
 /**@ingroup func_qurt_thread_attr_set_affinity
@@ -243,7 +244,7 @@ static inline void qurt_thread_attr_set_priority (qurt_thread_attr_t *attr, unsi
 */
 static inline void qurt_thread_attr_set_affinity (qurt_thread_attr_t *attr, unsigned char affinity)
 {
-    attr->affinity = affinity;
+	attr->affinity = affinity;
 }
 /*RTOS_user_guide */
 /**@ingroup func_qurt_thread_attr_set_timetest_id
@@ -268,7 +269,7 @@ static inline void qurt_thread_attr_set_affinity (qurt_thread_attr_t *attr, unsi
   */
 static inline void qurt_thread_attr_set_timetest_id (qurt_thread_attr_t *attr, unsigned short timetest_id)
 {
-    attr->timetest_id = timetest_id;
+	attr->timetest_id = timetest_id;
 }
 
 /**@ingroup func_qurt_thread_attr_set_stack_size
@@ -295,7 +296,7 @@ static inline void qurt_thread_attr_set_timetest_id (qurt_thread_attr_t *attr, u
 
 static inline void qurt_thread_attr_set_stack_size (qurt_thread_attr_t *attr, unsigned int stack_size)
 {
-    attr->stack_size = stack_size;
+	attr->stack_size = stack_size;
 }
 
 /**@ingroup func_qurt_thread_attr_set_stack_addr
@@ -325,7 +326,7 @@ static inline void qurt_thread_attr_set_stack_size (qurt_thread_attr_t *attr, un
 */
 static inline void qurt_thread_attr_set_stack_addr (qurt_thread_attr_t *attr, void *stack_addr)
 {
-    attr->stack_addr = stack_addr;
+	attr->stack_addr = stack_addr;
 }
 
 /**@ingroup func_qurt_thread_attr_set_bus_priority
@@ -352,7 +353,7 @@ static inline void qurt_thread_attr_set_stack_addr (qurt_thread_attr_t *attr, vo
 */
 static inline void qurt_thread_attr_set_bus_priority ( qurt_thread_attr_t *attr, unsigned short bus_priority)
 {
-    attr->bus_priority = bus_priority;
+	attr->bus_priority = bus_priority;
 }
 
 /**@ingroup func_qurt_thread_get_name

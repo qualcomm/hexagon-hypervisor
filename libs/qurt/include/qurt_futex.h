@@ -23,7 +23,7 @@
 
 static inline int qurt_futex_wait(void *lock, int val) { return h2_futex_wait(lock,val); }
 static inline int qurt_futex_wait_cancellable(void *lock, int val) { return qurt_futex_wait(lock,val); }
-static inline int qurt_futex_wait64(void *lock, long long val) { UNSUPPORTED; }
+static inline int qurt_futex_wait64(void *lock, long long val) { R_UNSUPPORTED; }
 static inline int qurt_futex_wake(void *lock, int n_to_wake) { return h2_futex_wake(lock,n_to_wake); }
 
 #endif /* QURT_FUTEX_H */

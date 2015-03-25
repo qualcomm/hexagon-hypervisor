@@ -124,7 +124,7 @@ typedef struct qurt_sysevent_pagefault {
 */
 static inline int qurt_sysenv_get_swap_spool0 (qurt_sysenv_swap_pools_t *pools )
 {
-	UNSUPPORTED;
+	R_UNSUPPORTED;
 }
 
 /*
@@ -143,7 +143,7 @@ static inline int qurt_sysenv_get_swap_spool0 (qurt_sysenv_swap_pools_t *pools )
 */
 static inline int qurt_sysenv_get_swap_spool1(qurt_sysenv_swap_pools_t *pools )
 {
-	UNSUPPORTED;
+	R_UNSUPPORTED;
 }
 
 /**@ingroup func_qurt_sysenv_get_app_heap  
@@ -163,7 +163,7 @@ static inline int qurt_sysenv_get_swap_spool1(qurt_sysenv_swap_pools_t *pools )
 */
 static inline int qurt_sysenv_get_app_heap(qurt_sysenv_app_heap_t *aheap )
 {
-	UNSUPPORTED;
+	R_UNSUPPORTED;
 }
 
 /**@ingroup func_qurt_sysenv_get_hw_timer
@@ -183,7 +183,7 @@ static inline int qurt_sysenv_get_app_heap(qurt_sysenv_app_heap_t *aheap )
 */
 int qurt_sysenv_get_hw_timer(qurt_sysenv_hw_timer_t *timer )
 {
-	UNSUPPORTED;
+	R_UNSUPPORTED;
 }
 
 /**@ingroup func_qurt_sysenv_get_arch_version
@@ -266,8 +266,8 @@ static inline int qurt_sysenv_get_max_pi_prio(qurt_sysenv_max_pi_prio_t *mpip )
 */
 static inline int qurt_sysenv_get_process_name(qurt_sysenv_procname_t *pname )
 {
-	strcpy(procname->name,"PROC");
-	procname->asid = 0;
+	strcpy(pname->name,"PROC");
+	pname->asid = 0;
 	return QURT_EOK;
 }
 
@@ -304,6 +304,7 @@ static inline unsigned int qurt_exception_wait (unsigned int *ip, unsigned int *
 	h2_sem_t sem;
 	h2_sem_init_val(&sem,0);
 	while (1) h2_sem_down(&sem);
+	return QURT_EFATAL;
 }
 
 unsigned int  qurt_exception_wait_ext (qurt_sysevent_error_t * sys_err); // should be inlined away
@@ -345,6 +346,7 @@ static inline unsigned int qurt_exception_wait2(qurt_sysevent_error_t * sys_err)
 	h2_sem_t sem;
 	h2_sem_init_val(&sem,0);
 	while (1) h2_sem_down(&sem);
+	return QURT_EFATAL;
 }
 
 /**@ingroup func_qurt_exception_raise_nonfatal
@@ -442,7 +444,7 @@ void qurt_exception_shutdown_fatal2(void);
 */
 static inline unsigned int qurt_exception_register_fatal_notification ( void(*entryfuncpoint)(void *), void *argp)
 {
-	UNSUPPORTED;
+	R_UNSUPPORTED;
 }
 
 /**@ingroup func_qurt_exception_enable_fp_exceptions
@@ -503,6 +505,7 @@ static inline unsigned int qurt_exception_wait_pagefault (qurt_sysevent_pagefaul
 	h2_sem_t sem;
 	h2_sem_init_val(&sem,0);
 	while (1) h2_sem_down(&sem);
+	return QURT_EFATAL;
 }
 
 #endif /* QURT_EVENT_H */

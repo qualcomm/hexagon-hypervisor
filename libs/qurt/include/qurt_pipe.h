@@ -26,6 +26,7 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
 
 #include <qurt_mutex.h>
 #include <qurt_sem.h>
+#include <qurt_error.h>
 /** @addtogroup pipe_types
 @{ */
 
@@ -61,49 +62,46 @@ static inline void qurt_pipe_attr_set_buffer(qurt_pipe_attr_t *attr, qurt_pipe_d
 	attr->buffer = buffer;
 }
 
+static inline int qurt_pipe_init(qurt_pipe_t *pipe, qurt_pipe_attr_t *attr)
+{
+	return (h2_pipe_create(pipe,attr->buffer,attr->elements) != NULL) ? QURT_EOK : QURT_EFAILED;
+}
+
 static inline int qurt_pipe_create(qurt_pipe_t **pipe, qurt_pipe_attr_t *attr)
 {
 	if ((*pipe = malloc(sizeof(*pipe))) == NULL) {
 		return QURT_EFAILED; // ENOMEM
 	}
-	return qurt_pipe_init(pipe,attr);
+	return qurt_pipe_init(*pipe,attr);
 }
 
-static inline int qurt_pipe_init(qurt_pipe_t *pipe, qurt_pipe_attr *attr)
-{
-	return h2_pipe_create(pipe,attr->buffer,attr->elements);
-}
-
-static inline int qurt_pipe_destroy(qurt_pipe_t *pipe) { }
-static inline int qurt_pipe_delete(qurt_pipe_t *pipe) { h2_pipe_free(pipe); }
+static inline void qurt_pipe_destroy(qurt_pipe_t *pipe) { }
+static inline void qurt_pipe_delete(qurt_pipe_t *pipe) { h2_pipe_free(pipe); }
 
 static inline void qurt_pipe_send(qurt_pipe_t *pipe, qurt_pipe_data_t data)
 {
 	return h2_pipe_send(pipe,data);
 }
 
-static inline qurt_pipe_data_t qurt_pipe_receive(qurt_pipe_t *pipe);
+static inline qurt_pipe_data_t qurt_pipe_receive(qurt_pipe_t *pipe)
 {
 	return h2_pipe_recv(pipe);
 }
 
 static inline int qurt_pipe_trysend(qurt_pipe_t *pipe, qurt_pipe_data_t data)
 {
-	return h2_pipe_try_send(pipe,data);
+	return h2_pipe_trysend(pipe,data);
 }
 
-static inline qurt_pipe_data_t qurt_pipe_try_receive(qurt_pipe_t *pipe,int *success);
+static inline qurt_pipe_data_t qurt_pipe_try_receive(qurt_pipe_t *pipe,int *success)
 {
 	return h2_pipe_tryrecv(pipe,success);
 }
 
 int qurt_pipe_receive_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t *result)
 {
-	qurt_pipe_data_t data;
-	int success;
-	data = qurt_pipe_receive(pipe,&success);
-	if (success) *result = data;
-	return success;
+	*result = qurt_pipe_receive(pipe);
+	return QURT_EOK;
 }
 int qurt_pipe_send_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t data)
 {
@@ -520,6 +518,8 @@ int qurt_pipe_receive_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t *result);
 */
 /* ======================================================================*/
 int qurt_pipe_send_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t data);
+
+#endif
 
 #endif  /* QURT_PIPE_H */
 

@@ -111,7 +111,7 @@ static inline void qurt_mutex_destroy(qurt_mutex_t *lock) {}
    @dependencies
    None.  
  */
-static inline void qurt_mutex_lock(qurt_mutex_t *lock) { h2_rmutex_lock(lock); }
+static inline void qurt_mutex_lock(qurt_mutex_t *lock) { return h2_rmutex_lock(lock); }
 
 /**@ingroup func_qurt_mutex_unlock
   Unlocks the specified mutex.  \n
@@ -133,7 +133,7 @@ static inline void qurt_mutex_lock(qurt_mutex_t *lock) { h2_rmutex_lock(lock); }
    @dependencies
    None.  
  */
-static inline void qurt_mutex_unlock(qurt_mutex_t *lock) { h2_rmutex_unlock(lock); }
+static inline void qurt_mutex_unlock(qurt_mutex_t *lock) { return h2_rmutex_unlock(lock); }
 
 /**@ingroup func_qurt_mutex_try_lock
    Attempts to lock the specified mutex. 
@@ -157,7 +157,7 @@ static inline void qurt_mutex_unlock(qurt_mutex_t *lock) { h2_rmutex_unlock(lock
   @dependencies
   None.
  */
-static inline int qurt_mutex_try_lock(qurt_mutex_t *lock) { h2_rmutex_trylock(lock); }
+static inline int qurt_mutex_try_lock(qurt_mutex_t *lock) { return h2_rmutex_trylock(lock); }
 
 #endif /* QURT_MUTEX_H */
 

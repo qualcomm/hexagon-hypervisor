@@ -49,7 +49,7 @@ typedef struct _qurt_process_attr {
   @dependencies
   None.
 */
-static inline int qurt_process_create (qurt_process_attr_t *attr) { UNSUPPORTED; }
+static inline int qurt_process_create (qurt_process_attr_t *attr) { R_UNSUPPORTED; }
 
 /**@ingroup func_qurt_process_get_id
   Returns the process identifier for the current thread. 

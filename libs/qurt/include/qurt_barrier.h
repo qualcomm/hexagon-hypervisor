@@ -46,7 +46,7 @@ static inline int qurt_barrier_init(qurt_barrier_t *barrier, unsigned int thread
 	return h2_barrier_init(barrier,threads_total);
 }
 
-static inline int qurt_barrier_destroy(qurt_barrier_t *barrier) { }
+static inline int qurt_barrier_destroy(qurt_barrier_t *barrier) { return QURT_EOK; }
 
 static inline int qurt_barrier_wait(qurt_barrier_t *barrier)
 {

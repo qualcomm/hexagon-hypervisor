@@ -44,7 +44,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
    None.
   
  */
-static inline void qurt_rmutex_init(qurt_mutex_t *lock) { return h2_mutex_init(lock); }
+static inline void qurt_rmutex_init(qurt_mutex_t *lock) { return h2_rmutex_init(lock); }
 
 /**@ingroup func_qurt_rmutex_destroy
   Destroys the specified recursive mutex. \n
@@ -95,7 +95,7 @@ static inline void qurt_rmutex_destroy(qurt_mutex_t *lock) { };
    None.
   
  */
-static inline void qurt_rmutex_lock(qurt_mutex_t *lock) { return h2_mutex_lock(lock); };
+static inline void qurt_rmutex_lock(qurt_mutex_t *lock) { return h2_rmutex_lock(lock); };
 
 /**@ingroup func_qurt_rmutex_unlock
    Unlocks the specified recursive mutex. \n 
@@ -115,7 +115,7 @@ static inline void qurt_rmutex_lock(qurt_mutex_t *lock) { return h2_mutex_lock(l
    None.
   
  */
-static inline void qurt_rmutex_unlock(qurt_mutex_t *lock) { return h2_mutex_unlock(lock); };
+static inline void qurt_rmutex_unlock(qurt_mutex_t *lock) { return h2_rmutex_unlock(lock); };
 
 /**@ingroup func_qurt_rmutex_try_lock
    Attempts to lock the specified recursive mutex.\n
@@ -140,7 +140,7 @@ static inline void qurt_rmutex_unlock(qurt_mutex_t *lock) { return h2_mutex_unlo
    Nonzero -- Failure. 
   
  */
-static inline int qurt_rmutex_try_lock(qurt_mutex_t *lock) { return h2_mutex_trylock(lock); }
+static inline int qurt_rmutex_try_lock(qurt_mutex_t *lock) { return h2_rmutex_trylock(lock); }
 
 /**
   Attempts to lock a mutex object recursively. If the mutex is available, 
@@ -160,6 +160,6 @@ static inline int qurt_rmutex_try_lock(qurt_mutex_t *lock) { return h2_mutex_try
   @dependencies
   None.
  */
-static inline int qurt_rmutex_try_lock_block_once(qurt_mutex_t *lock) { return h2_mutex_trylock(lock); }
+static inline int qurt_rmutex_try_lock_block_once(qurt_mutex_t *lock) { return h2_rmutex_trylock(lock); }
 
 #endif /* QURT_RMUTEX_H */

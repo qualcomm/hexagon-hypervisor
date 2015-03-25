@@ -83,7 +83,7 @@ static inline int qmutex_create(qmutex_t *mutex, qmutex_attr_t *attr) {
 	if ((*mutex = qurt_malloc(sizeof(qmutex_struct))) == NULL) {
 		return QURT_EMEM;
 	}
-	*mutex->type = (attr == NULL) ? QMUTEX_LOCAL : attr->type;
+	(*mutex)->type = (attr == NULL) ? QMUTEX_LOCAL : attr->type;
 	qurt_pimutex_init(&(*mutex)->qurt_mutex);
 	return QURT_EOK;
 }
@@ -144,7 +144,7 @@ static inline int qmutex_lock(qmutex_t mutex)
  */
 static inline int qmutex_trylock(qmutex_t mutex)
 {
-	return (qurt_pimutex_try_lock(&mutex->qurt_mutex) == 0) ? EOK : EFAILED;
+	return (qurt_pimutex_try_lock(&mutex->qurt_mutex) == 0) ? QURT_EOK : QURT_EFAILED;
 }
 
 /**
@@ -161,7 +161,7 @@ static inline int qmutex_trylock(qmutex_t mutex)
 static inline int qmutex_unlock(qmutex_t mutex)
 {
 	qurt_pimutex_unlock(&mutex->qurt_mutex);
-	return EOK;
+	return QURT_EOK;
 }
 
 #ifdef __cplusplus

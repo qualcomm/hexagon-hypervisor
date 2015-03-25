@@ -131,13 +131,9 @@
 ./qurt/test/testcases/qmemory_tcm_t1/app1
 ./qurt/test/testcases/firm_vdec/qube/apps
 ./qurt/test/testcases/firm_vdec/qube/apps/common/utest/atomic/app
-./qurt/test/testcases/firm_vdec/qube/apps/common/utest/atomic/app/src/app_main.c
 ./qurt/test/testcases/firm_vdec/qube/apps/common/utest/pipe/app1
-./qurt/test/testcases/firm_vdec/qube/apps/common/utest/pipe/app1/src/app_main1.c
 ./qurt/test/testcases/firm_vdec/qube/apps/common/utest/pipe/app2
-./qurt/test/testcases/firm_vdec/qube/apps/common/utest/pipe/app2/src/app_main2.c
 ./qurt/test/testcases/firm_vdec/qube/apps/common/utest/pipe/app
-./qurt/test/testcases/firm_vdec/qube/apps/common/utest/pipe/app/src/app_main.c
 ./qurt/test/testcases/qmemory_t1.phys_cont/app1
 ./qurt/test/testcases/qurt_scheduler_t5/app1
 ./qurt/test/testcases/q6_excep_5/app1

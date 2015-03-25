@@ -47,3 +47,4 @@ include ./scripts/Makefile.inc.test
 
 export CFLAGS += $(QURT_TEST_LIBS_INCLUDES)
 export LDFLAGS_EXTRA := -L $(QURT_TEST_LIBTOP) $(QURT_TEST_LIBS_L)
+export QURT_TEST := 1

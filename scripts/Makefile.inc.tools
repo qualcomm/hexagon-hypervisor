@@ -54,7 +54,7 @@ export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR) arch=$(ARCH_FLAVOR)
 
 export RUN_DEVSIM := $(DEVSIM) $(DEVSIM_EXTRA) --quiet --magic_angel --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(DEVICE_CONFIG)
 
-export RUN_TOOLSIM := hexagon-sim --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
+export RUN_TOOLSIM := hexagon-sim --simulated_returnval --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
 
 export TOOLARCH := $(ARCHV)
 

@@ -25,7 +25,7 @@
 void qurt_profile_reset_idle_pcycles (void);
 	 
 
-unsigned long long int qurt_profile_get_thread_pcycles(void)
+static inline unsigned long long int qurt_profile_get_thread_pcycles(void)
 {
 	return h2_get_pcycles();
 }
@@ -36,7 +36,7 @@ static inline unsigned long long int qurt_profile_get_thread_tcycles(void)
 }
 	
 
-unsigned long long int qurt_get_core_pcycles(void)
+static inline unsigned long long int qurt_get_core_pcycles(void)
 {
 	return h2_get_core_pcycles();
 }
@@ -51,12 +51,12 @@ static inline void qurt_profile_get_threadid_pcycles (int thread_id, unsigned lo
 	UNSUPPORTED;
 }
 
-void qurt_profile_reset_threadid_pcycles (int thread_id)
+static inline void qurt_profile_reset_threadid_pcycles (int thread_id)
 {
 	UNSUPPORTED;
 }
 
-void qurt_profile_enable (int enable) {}
+static inline void qurt_profile_enable (int enable) {}
 
 #endif
 

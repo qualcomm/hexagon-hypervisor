@@ -98,12 +98,12 @@ static inline qurt_pipe_data_t qurt_pipe_try_receive(qurt_pipe_t *pipe,int *succ
 	return h2_pipe_tryrecv(pipe,success);
 }
 
-int qurt_pipe_receive_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t *result)
+static inline int qurt_pipe_receive_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t *result)
 {
 	*result = qurt_pipe_receive(pipe);
 	return QURT_EOK;
 }
-int qurt_pipe_send_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t data)
+static inline int qurt_pipe_send_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t data)
 {
 	qurt_pipe_send(pipe,data);
 	return QURT_EOK;

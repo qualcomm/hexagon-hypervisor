@@ -48,7 +48,7 @@ static inline void qurt_allsignal_wait(qurt_allsignal_t *signal, unsigned int ma
 	return h2_allsignal_wait(signal,mask);
 }
 
-void qurt_allsignal_set(qurt_allsignal_t *signal, unsigned int mask)
+static inline void qurt_allsignal_set(qurt_allsignal_t *signal, unsigned int mask)
 {
 	return h2_allsignal_signal(signal,mask);
 }

@@ -181,7 +181,7 @@ static inline int qurt_sysenv_get_app_heap(qurt_sysenv_app_heap_t *aheap )
   @dependencies
   None.
 */
-int qurt_sysenv_get_hw_timer(qurt_sysenv_hw_timer_t *timer )
+static inline int qurt_sysenv_get_hw_timer(qurt_sysenv_hw_timer_t *timer )
 {
 	R_UNSUPPORTED;
 }

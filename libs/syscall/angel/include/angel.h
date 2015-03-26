@@ -6,13 +6,15 @@
 #ifndef SYSCALL_ANGEL_ANGEL_H
 #define SYSCALL_ANGEL_ANGEL_H 1
 
-extern void *H2_V2P_OFFSET __attribute__ ((weak));
+//extern void *H2_V2P_OFFSET __attribute__ ((weak));
+
+extern long __boot_net_phys_offset__;
 
 unsigned int __angel(unsigned int r0, void *r1, unsigned int r2);
 
 unsigned int angel(unsigned int r0, void *r1, unsigned int r2);
 
-#define ANGEL_OFFSET_PTR(P) ((void *)((void *)(P) - (void *)&H2_V2P_OFFSET))
+#define ANGEL_OFFSET_PTR(P) ((void *)((unsigned long)(P) + __boot_net_phys_offset__))
 
 #define ANGEL(A,B,C) (angel((A),((void *)(B)),((unsigned int)(C))))
 #define VANGEL(A,B,C) ((void *)angel((A),((void *)(B)),((unsigned int)(C))))

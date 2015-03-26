@@ -39,12 +39,11 @@ static unsigned int num_shared_ints = 0;
 static unsigned int page_size = SIZE_16M;
 static unsigned int cccc = L1WB_L2C;
 static unsigned int xwru = URWX;
-static unsigned int offset_pages = 0;
+static long offset_pages = -1;
 static int trans_type = -1;
 static unsigned int fence_lo = H2K_GUEST_START;
 static unsigned int fence_hi = H2K_GUEST_END;
 static long load_offset = -1;
-static long phys_offset = -1;
 static unsigned int skip_load = 0;
 static unsigned int bestprio = VM_BEST_PRIO;
 static unsigned int trapmask = 0xffffffff;
@@ -105,7 +104,7 @@ void usage()
 	printf("  --num_shared_ints <int>\n\tNumber of shared interrupts.  Default 0.\n");
 	printf("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
 	printf("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C (0xa == L1WB_L2CWB_AUX).\n");
-	printf("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default 0.\n");
+	printf("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
 	printf("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
 	printf("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default 0x01000000.\n");
 	printf("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default 0xff000000.\n");
@@ -136,29 +135,44 @@ static h2_guest_pmap_t *get_pmap(int fdesc, const Elf32_Ehdr *ehdr) {
 	return (h2_guest_pmap_t *)addr;
 }
 
-static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr, long load_offset)
+static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr, long offset)
 {
 	char *dst;
-	int addr;
-	if ((addr=elf_get_symbol(fdesc,"__boot_cmdline__",ehdr)) == -1) {
+	unsigned long addr;
+	if ((addr = (unsigned long)elf_get_symbol(fdesc,"__boot_cmdline__",ehdr)) == -1) {
 		printf("__boot_cmdline__ not found.\n");
 		return;
 	} else {
-		printf("__boot_cmdline__ found @ 0x%08x\n",addr);
+		printf("__boot_cmdline__ found @ 0x%08x\n", (unsigned int)addr);
 	}
-	dst = (char *)addr + load_offset;
+	dst = (char *)(addr + offset);
 	dst[0] = 0;
 	strcpy(dst,cmdline);
-	printf("cmdline set to <<%s>>\n",dst);
+	printf("cmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);
 }
 
-unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long phys_offset)
+void set_net_phys_offset(int fdesc, const Elf32_Ehdr *ehdr, long offset) {
+
+	long *dst;
+	unsigned long addr;
+	if ((addr = (unsigned long)elf_get_symbol(fdesc,"__boot_net_phys_offset__",ehdr)) == -1) {
+		printf("__boot_net_phys_offset__ not found.\n");
+		return;
+	} else {
+		printf("__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
+	}
+	dst = (long *)(addr + offset);
+	*dst = offset;
+	printf("net phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
+}
+
+unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long offset)
 {
 	unsigned long vm;
 	long ret;
 	int i;
 	h2_guest_pmap_t *pmap;
-	void *pc = (void *)ehdr->e_entry - phys_offset + load_offset;
+	void *pc = (void *)ehdr->e_entry;
 	H2K_offset_t base;
 	int trans;
 
@@ -169,7 +183,7 @@ unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long phys_offset)
 	base.size = page_size;
 	base.cccc = cccc;
 	base.xwru = xwru;
-	base.pages = offset_pages;
+	base.pages = (unsigned long)offset_pages + (offset >> (page_size * 2));
 
 	if (trans_type == -1) { // not set on cmdline, get from guest image
 		pmap = get_pmap(fdesc, ehdr);
@@ -235,6 +249,7 @@ int run_elf(char *elf, char *cmdline)
 	int fdesc;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
+	long phys_offset = -1;
 	int bytes_read;
 
 	fdesc = open(elf,O_RDONLY);
@@ -259,12 +274,14 @@ int run_elf(char *elf, char *cmdline)
 		/* FIXME: Assuming first program header contains entry point*/
 		if (phys_offset == -1) { //unset
 			phys_offset = phdr.p_vaddr - phdr.p_paddr;
-			printf("phys_offset %lx\n", phys_offset);
+			printf("phys_offset 0x%08lx\n", phys_offset);
 		}
 		/* FIXME: Assuming prog headers in sorted order.  Override with --load_offset if needed */
 		if (load_offset == -1) {
 			load_offset = H2K_GUEST_START - phdr.p_paddr;
-			printf("load_offset %lx\n", load_offset);
+		}
+		if (offset_pages == -1) {
+			offset_pages = load_offset >> (page_size * 2);
 		}
 		phdr.p_paddr += load_offset;
 
@@ -281,7 +298,11 @@ int run_elf(char *elf, char *cmdline)
 			dcclean_range(phdr.p_paddr, phdr.p_memsz);
 		}
 	}
-	set_cmdline(cmdline,fdesc,&ehdr,load_offset);
+	printf("load_offset 0x%08lx\n", load_offset);
+	printf("offset_pages 0x%lx\n", offset_pages);
+
+	set_cmdline(cmdline, fdesc,&ehdr, phys_offset + load_offset);
+	set_net_phys_offset(fdesc,&ehdr, phys_offset + load_offset);
 	printf("\nBoot vm for %s\n", elf);
 	vm = spawn_vm(fdesc, &ehdr, phys_offset);
 	close(fdesc);
@@ -630,12 +651,6 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--load_offset")) {
 			if (argc < 2) die_usage();
 			load_offset = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--phys_offset")) {
-			if (argc < 2) die_usage();
-			phys_offset = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

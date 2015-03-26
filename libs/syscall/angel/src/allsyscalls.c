@@ -10,6 +10,8 @@
 #define ALIGN32_DOWN(X) ((X) & -32)
 #define ALIGN32_UP(X) (((X) + 31) & -32)
 
+long __boot_net_phys_offset__;
+
 unsigned int angel(unsigned int r0, void *r1, unsigned int r2) {
 
 	return __angel(r0, ANGEL_OFFSET_PTR(r1), r2);

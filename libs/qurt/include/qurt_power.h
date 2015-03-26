@@ -7,6 +7,8 @@
 #define QURT_POWER_H
 
 #include "qurt_error.h"
+#include "qurt_cycles.h"
+#include "qurt_sem.h"
 /**
   @file qurt_power.h 
   @brief  Prototypes of power API  
@@ -21,6 +23,18 @@ Copyright (c) 2013  by Qualcomm Technologies, Inc.  All Rights Reserved.
 Confidential and Proprietary - Qualcomm Technologies, Inc.
 
 =============================================================================*/
+
+/* EJP: maybe these should do something else, like warn somehow. 
+ * In my normal flow I have them infinite loop. 
+ */
+
+#ifndef R_UNSUPPORTED
+#define R_UNSUPPORTED return 0
+#endif
+
+#ifndef UNSUPPORTED
+#define UNSUPPORTED do {} while (0)
+#endif
 
 static inline int qurt_power_shutdown_prepare(void){ return 0;}
 
@@ -199,9 +213,9 @@ static inline int qurt_power_tcxo_exit (void) { return QURT_EOK; }
 static inline void qurt_power_override_wait_for_idle(int enable)
 {
 	/* Wait forever */
-	h2_sem_t sem;
-	h2_sem_init_val(&sem,0);
-	while (1) h2_sem_down(&sem);
+	qurt_sem_t sem;
+	qurt_sem_init_val(&sem,0);
+	while (1) qurt_sem_down(&sem);
 }
 
 /**@ingroup power_management
@@ -344,7 +358,7 @@ static inline unsigned int qurt_system_vid_get(void) { R_UNSUPPORTED; };
  */ 
 static inline int qurt_power_shutdown_get_pcycles( unsigned long long *enter_pcycles,  unsigned long long *exit_pcycles )
 {
-	*enter_pcycles = *exit_pcycles = h2_get_core_pcycles();
+	*enter_pcycles = *exit_pcycles = qurt_get_core_pcycles();
 	return 0;
 }
 

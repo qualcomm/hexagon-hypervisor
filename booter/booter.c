@@ -44,6 +44,7 @@ static int trans_type = -1;
 static unsigned int fence_lo = H2K_GUEST_START;
 static unsigned int fence_hi = H2K_GUEST_END;
 static long load_offset = -1;
+static long phys_offset = -1;
 static unsigned int skip_load = 0;
 static unsigned int bestprio = VM_BEST_PRIO;
 static unsigned int trapmask = 0xffffffff;
@@ -135,7 +136,7 @@ static h2_guest_pmap_t *get_pmap(int fdesc, const Elf32_Ehdr *ehdr) {
 	return (h2_guest_pmap_t *)addr;
 }
 
-static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr)
+static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr, long load_offset)
 {
 	char *dst;
 	int addr;
@@ -145,7 +146,7 @@ static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr)
 	} else {
 		printf("__boot_cmdline__ found @ 0x%08x\n",addr);
 	}
-	dst = (char *)addr;
+	dst = (char *)addr + load_offset;
 	dst[0] = 0;
 	strcpy(dst,cmdline);
 	printf("cmdline set to <<%s>>\n",dst);
@@ -234,7 +235,6 @@ int run_elf(char *elf, char *cmdline)
 	int fdesc;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
-	long phys_offset = -1;
 	int bytes_read;
 
 	fdesc = open(elf,O_RDONLY);
@@ -281,7 +281,7 @@ int run_elf(char *elf, char *cmdline)
 			dcclean_range(phdr.p_paddr, phdr.p_memsz);
 		}
 	}
-	set_cmdline(cmdline,fdesc,&ehdr);
+	set_cmdline(cmdline,fdesc,&ehdr,load_offset);
 	printf("\nBoot vm for %s\n", elf);
 	vm = spawn_vm(fdesc, &ehdr, phys_offset);
 	close(fdesc);
@@ -630,6 +630,12 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--load_offset")) {
 			if (argc < 2) die_usage();
 			load_offset = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--phys_offset")) {
+			if (argc < 2) die_usage();
+			phys_offset = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

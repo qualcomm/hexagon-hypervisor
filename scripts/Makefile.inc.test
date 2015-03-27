@@ -322,32 +322,32 @@ DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 ################################################################################
 %.objdump: %.elf
 	${OBJDUMP} -d ${@:.objdump=.elf} ${BOOTER} > $@; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; fi
 
 ifdef PYTHON_GENERATOR_SCRIPT
 ${PYTHON_GENERATED_FILES}: ${PYTHON_GENERATOR_SCRIPT}
 	${PYTHON} $<; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 endif
 
 %.o: %.c ${PYTHON_GENERATED_FILES}
 	${CC} ${CFLAGS} -c -o $@ $<; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
 %.o: %.S ${PYTHON_GENERATED_FILES}
 	${CC} ${ASFLAGS} -c -o $@ $<; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
 ${EXEC}: ${OBJS} constants
 	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; exit 1; fi
+	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
 ignore_fns: ${OBJS}
 	${H2DIR}/scripts/gen_ignore_fns.pl ${OBJS} > $@
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
-	echo PKW_VERSIONS $(PKW_VERSIONS) > $@
+	echo PKW_VERSIONS $(PKW_VERSIONS) >> $@
 	echo PKW_arch $(PKW_arch) >> $@
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
 	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee -a $@; \
@@ -390,15 +390,15 @@ results.txt: test.log
 	@grep "TEST PASSED" test.log > $@; \
 	if [ $$? -eq 0 ]; then exit 0; fi; \
 	grep -A 1 "ERROR" test.log > $@; \
-	if [ $$? -eq 0 ]; then exit 0; fi; \
+	if [ $$? -eq 0 ]; then exit 1; fi; \
 	grep -A 1 "FAIL" test.log > $@; \
-	if [ $$? -eq 0 ]; then exit 0; fi; \
+	if [ $$? -eq 0 ]; then exit 1; fi; \
 	if [ ! -s test.log ]; then \
 	  echo "FAIL - Test log empty" > $@; \
-	  exit 0; \
+	  exit 1; \
 	fi; \
 	echo "NO PASS/FAIL/ERROR in log" > $@; \
-	true;
+	exit 1;
 
 all: results.txt ${COVFILE}
 tst: results.txt

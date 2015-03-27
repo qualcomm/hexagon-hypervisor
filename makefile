@@ -70,6 +70,7 @@ ucosclean:
 
 qurtclean:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) clean
+	$(MAKE) -f scripts/Makefile.qurt clean_top
 
 opt:
 	echo PKW_VERSIONS $(PKW_VERSIONS)

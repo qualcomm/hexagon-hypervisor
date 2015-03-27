@@ -41,14 +41,19 @@ export SUBSYSTEM_BASE_TOOLSIM := 0xfe28
 endif
 
 ifeq (4, $(ARCHV))
-export PKW_VERSIONS := hexagon-tools=default arch=v4_stable
+TOOLS_FLAVOR ?= default
+ARCH_FLAVOR ?= v4_stable
 else
 ifeq (5, $(ARCHV))
-export PKW_VERSIONS := hexagon-tools=default arch=v5_stable
+TOOLS_FLAVOR ?= default
+ARCH_FLAVOR ?= v5_stable
 else
-export PKW_VERSIONS := hexagon-tools=v60_stable arch=v60_latest
+TOOLS_FLAVOR ?= v60_stable
+ARCH_FLAVOR ?= v60_latest
 endif
 endif
+
+export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR) arch=$(ARCH_FLAVOR)
 
 export RUN_DEVSIM := devsim --quiet --magic_angel --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
 

@@ -166,7 +166,7 @@ void set_net_phys_offset(int fdesc, const Elf32_Ehdr *ehdr, long offset) {
 	printf("net phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
 }
 
-unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long offset)
+unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long pages)
 {
 	unsigned long vm;
 	long ret;
@@ -183,7 +183,7 @@ unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long offset)
 	base.size = page_size;
 	base.cccc = cccc;
 	base.xwru = xwru;
-	base.pages = (unsigned long)offset_pages + (offset >> (page_size * 2));
+	base.pages = (unsigned long)pages;
 
 	if (trans_type == -1) { // not set on cmdline, get from guest image
 		pmap = get_pmap(fdesc, ehdr);
@@ -271,7 +271,8 @@ int run_elf(char *elf, char *cmdline)
 		}
 		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 
-		/* FIXME: Assuming first program header contains entry point*/
+		/* FIXME: Assuming first program header contains entry point and phys
+			 offset is identical for all segments*/
 		if (phys_offset == -1) { //unset
 			phys_offset = phdr.p_vaddr - phdr.p_paddr;
 			printf("phys_offset 0x%08lx\n", phys_offset);
@@ -281,7 +282,7 @@ int run_elf(char *elf, char *cmdline)
 			load_offset = H2K_GUEST_START - phdr.p_paddr;
 		}
 		if (offset_pages == -1) {
-			offset_pages = load_offset >> (page_size * 2);
+			offset_pages = (phys_offset + load_offset) >> (page_size * 2);
 		}
 		phdr.p_paddr += load_offset;
 
@@ -304,7 +305,7 @@ int run_elf(char *elf, char *cmdline)
 	set_cmdline(cmdline, fdesc,&ehdr, phys_offset + load_offset);
 	set_net_phys_offset(fdesc,&ehdr, phys_offset + load_offset);
 	printf("\nBoot vm for %s\n", elf);
-	vm = spawn_vm(fdesc, &ehdr, phys_offset);
+	vm = spawn_vm(fdesc, &ehdr, offset_pages);
 	close(fdesc);
 	
 	do {  // wait for all child VM cpus to vmstop

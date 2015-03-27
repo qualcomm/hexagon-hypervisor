@@ -252,29 +252,8 @@ report.html:
 	done;\
 	echo "</table></body></html>" >> report.html;
 
-qurt_report.html:
-	@echo "<html><body><table>" > qurt_report.html;\
-	for SUBDIR in ${SUBDIRS}; do\
-	   echo "<tr><td> $$SUBDIR</td>" >> qurt_report.html;\
-	   if [ ! -s $$SUBDIR/src/results.txt ]; then\
-	      echo '<td><font style="background-color: red;">' >> qurt_report.html; \
-	      echo 'Missing results.txt, that should not be!' >> qurt_report.html; \
-	      echo '</font></td>' >> qurt_report.html; \
-	   else\
-	      grep "TEST PASSED" $$SUBDIR/src/results.txt > /dev/null; \
-	      if [ $$? -eq 0 ]; then \
-	         echo '<td>' >> qurt_report.html; \
-		 cat $$SUBDIR/src/results.txt >> qurt_report.html; \
-		 echo '</td>' >> qurt_report.html; \
-	      else \
-	         echo '<td><font style="background-color: red;">' >> qurt_report.html; \
-		 cat $$SUBDIR/src/results.txt >> qurt_report.html; \
-		 echo '</font></td>' >> qurt_report.html; \
-	      fi; \
-	   fi; \
-	   cat $$SUBDIR/src/make.log >> make.log;\
-	done;\
-	echo "</table></body></html>" >> qurt_report.html;
+qurt_report.html: report.html
+	mv report.html qurt_report.html
 
 .PHONY: check
 

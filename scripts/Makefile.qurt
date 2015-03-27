@@ -34,7 +34,7 @@ $(QURT_TEST_LIBS)::
 	$(MAKE) qurt_test_libs
 
 $(SUBDIRS)::
-	cd $@/src;\
+	cd $@;\
 	if [ "$(TARG)" != "clean" ]; then \
 	(echo; echo; echo "##########   $@   ##########") > make.log; \
 	fi; \

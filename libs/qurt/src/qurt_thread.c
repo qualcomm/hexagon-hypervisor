@@ -178,3 +178,12 @@ void qurt_thread_get_name(char *name, unsigned char max_len)
 	strlcpy(name,tmp->utcb.attr.name,max_len);
 }
 
+/* Generic hook for all stuff that needs to be initialized */
+void qurt_init()
+{
+	static int initted = 0;
+	if (initted) return;
+	initted = 1;
+	qurt_memory_init();
+}
+

@@ -10,7 +10,7 @@ CFLAGS = -g $(OPTIMIZE) -G0
 export QURT_LIB_INCLUDE=$(shell pwd)/include
 
 ASM_FILES = src/qurt_lifo.S 
-C_FILES = src/qurt_tls.c src/qurt_thread.c
+C_FILES = src/qurt_tls.c src/qurt_thread.c src/qurt_pgalloc.c src/qurt_memory.c src/qurt_fatal.c
 
 O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 

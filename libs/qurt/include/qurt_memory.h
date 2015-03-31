@@ -21,6 +21,7 @@
 
 #include <qurt_error.h>
 #include <qurt_types.h>
+#include <h2_common_linear.h>
 //#include <qurt_util_macros.h>
 
 #ifdef __cplusplus
@@ -30,7 +31,8 @@ extern "C" {
 /** @addtogroup memory_management_types
 @{ */
 
-extern qurt_mem_pool_t qurt_mem_default_pool;
+extern qurt_mem_pool_t qurt_mem_default_pool; // <-- qurt_mem_pool_t is unsigned int  ... OR IS IT!?!??!!?! let's make it a pointer to a real pool.
+// qurt_mem_region_t is unsigned int also.
 
 /** @} */ /* end_addtogroup memory_management_types */
 
@@ -48,9 +50,9 @@ extern qurt_mem_pool_t qurt_mem_default_pool;
   @param[in] addr      Address of data to be flushed.
   @param[in]  size     Size (in bytes) of data to be flushed.
   @param[in] opcode    Type of cache clean operation: \n QURT_MEM_CACHE_FLUSH,\n QURT_MEM_CACHE_INVALIDATE,\n 
-                       QURT_MEM_CACHE_FLUSH_INVALIDATE,\n QURT_MEM_CACHE_FLUSH_ALL.\n
-                       @note1 QURT_MEM_CACHE_FLUSH_ALL is valid only when the type is QURT_MEM_DCACHE
-  @param type          Cache type: QURT_MEM_ICACHE, QURT_MEM_DCACHE.
+		       QURT_MEM_CACHE_FLUSH_INVALIDATE,\n QURT_MEM_CACHE_FLUSH_ALL.\n
+		       @note1 QURT_MEM_CACHE_FLUSH_ALL is valid only when the type is QURT_MEM_DCACHE
+  @param type	  Cache type: QURT_MEM_ICACHE, QURT_MEM_DCACHE.
  
   @return
   QURT_EOK -- Cache operation performed successfully.\n
@@ -60,7 +62,27 @@ extern qurt_mem_pool_t qurt_mem_default_pool;
   @dependencies
   None.
 */
-int qurt_mem_cache_clean(qurt_addr_t addr, qurt_size_t size, qurt_mem_cache_op_t opcode, qurt_mem_cache_type_t type);
+static inline int qurt_mem_cache_clean(qurt_addr_t addr, qurt_size_t size, qurt_mem_cache_op_t opcode, qurt_mem_cache_type_t type)
+{
+	if (type == QURT_MEM_ICACHE) {
+		switch (opcode) {
+			case QURT_MEM_CACHE_FLUSH: return QURT_EOK;
+			case QURT_MEM_CACHE_INVALIDATE: /* FALLTHROUGH h2_inv_icache_range(data,size); return QURT_EOK; */
+			case QURT_MEM_CACHE_FLUSH_INVALIDATE: h2_cache_icinv_range((void *)addr,size); return QURT_EOK;
+			default: return QURT_EVAL;
+		}
+	} else if (type == QURT_MEM_DCACHE) {
+		switch (opcode) {
+			case QURT_MEM_CACHE_FLUSH:
+				h2_cache_dcclean_range((void *)addr,size); return QURT_EOK;
+			case QURT_MEM_CACHE_INVALIDATE: /* FALLTHROUGH */
+			case QURT_MEM_CACHE_FLUSH_INVALIDATE:
+				h2_cache_dccleaninv_range((void *)addr,size); return QURT_EOK;
+			default: return QURT_EVAL;
+		}
+	}
+	return QURT_EVAL;
+}
 
 /**@ingroup func_qurt_mem_l2cache_line_lock 
   Performs an L2 cache line locking operation. This function locks selective lines in the L2 cache memory.
@@ -81,7 +103,10 @@ int qurt_mem_cache_clean(qurt_addr_t addr, qurt_size_t size, qurt_mem_cache_op_t
   @dependencies
   None.
 */
-int qurt_mem_l2cache_line_lock (qurt_addr_t addr, qurt_size_t size);
+static inline int qurt_mem_l2cache_line_lock (qurt_addr_t addr, qurt_size_t size)
+{
+	R_UNSUPPORTED;
+}
 
 /**@ingroup func_qurt_mem_l2cache_line_unlock 
   Performs an L2 cache line unlocking operation. This function unlocks selective lines in the L2 cache memory.
@@ -103,7 +128,10 @@ int qurt_mem_l2cache_line_lock (qurt_addr_t addr, qurt_size_t size);
   @dependencies
   None.
 */
-int qurt_mem_l2cache_line_unlock(qurt_addr_t addr, qurt_size_t size);
+static inline int qurt_mem_l2cache_line_unlock(qurt_addr_t addr, qurt_size_t size)
+{
+	R_UNSUPPORTED;
+}
 
 /**@ingroup func_qurt_mem_region_attr_init
   @xreflabel{sec:qurt_mem_region_attr_init} 
@@ -116,7 +144,7 @@ int qurt_mem_l2cache_line_unlock(qurt_addr_t addr, qurt_size_t size);
   - Size -- -1 
 
     @note1hang The memory physical address attribute must be explicitly set by calling the
-             qmmem_attr_set_physaddr() function. The size and pool attributes are set directly 
+	     qmmem_attr_set_physaddr() function. The size and pool attributes are set directly 
 			 as parameters in the memory region create operation.
 
   @datatypes
@@ -130,7 +158,17 @@ int qurt_mem_l2cache_line_unlock(qurt_addr_t addr, qurt_size_t size);
   @dependencies
   None.
  */
-void qurt_mem_region_attr_init(qurt_mem_region_attr_t *attr);
+static inline void qurt_mem_region_attr_init(qurt_mem_region_attr_t *attr) 
+{
+	attr->ppn = 0;
+	attr->vpn = 0;
+	attr->size = 0;
+	attr->perms = QURT_PERM_READ | QURT_PERM_WRITE;
+	attr->mapping_type = QURT_MEM_MAPPING_VIRTUAL;
+	attr->type = QURT_MEM_REGION_LOCAL;
+	attr->cccc = QURT_MEM_CACHE_WRITEBACK;
+	attr->abits = 0;
+} 
 
 /**@ingroup func_qurt_mem_pool_attach 
   Initializes a memory pool object to be attached to a pool predefined in the system
@@ -141,9 +179,9 @@ void qurt_mem_region_attr_init(qurt_mem_region_attr_t *attr);
   (Section @xref{sec:mem_region_create}).
 
   @note1hang QuRT predefines the memory pool object qurt_mem_default_pool
-             (Section @xref{dox:mem_management}) for allocation memory regions in SMI memory. The pool attach
-             operation is necessary only when allocating memory regions in nonstandard
-             memory units such as TCM.
+	     (Section @xref{dox:mem_management}) for allocation memory regions in SMI memory. The pool attach
+	     operation is necessary only when allocating memory regions in nonstandard
+	     memory units such as TCM.
  
   @datatypes
   #qurt_mem_pool_t
@@ -168,13 +206,13 @@ int qurt_mem_pool_attach(char *name, qurt_mem_pool_t *pool);
    boundaries, and must be expressed as the actual base address and size values divided by 4K.
 
    For example, the function call: 
-         @code
-         qurt_mem_pool_create ("TCM_PHYSPOOL", 0xd8020, 0x20, &pool)
+	 @code
+	 qurt_mem_pool_create ("TCM_PHYSPOOL", 0xd8020, 0x20, &pool)
 		 @endcode
    ... is equivalent to the following static pool definition in the QuRT system configuration file:
-        @code
+	@code
        <physical_pool name="TCM_PHYSPOOL">
-            <region base="0xd8020000" size="0x20000" />
+	    <region base="0xd8020000" size="0x20000" />
        </physical_pool>
 	   @endcode
 
@@ -188,10 +226,10 @@ int qurt_mem_pool_attach(char *name, qurt_mem_pool_t *pool);
   @datatypes
   #qurt_mem_pool_t
 
-  @param[in] name           Pointer to the memory pool name. 
-  @param[in] base           Base address of the memory region (divided by 4K).
-  @param[in] size           Size (in bytes) of the memory region (divided by 4K).
-  @param[out] pool          Pointer to the memory pool object.
+  @param[in] name	   Pointer to the memory pool name. 
+  @param[in] base	   Base address of the memory region (divided by 4K).
+  @param[in] size	   Size (in bytes) of the memory region (divided by 4K).
+  @param[out] pool	  Pointer to the memory pool object.
 
   @return
   QURT_EOK -- Success.
@@ -208,7 +246,7 @@ int qurt_mem_pool_create(char *name, unsigned base, unsigned size, qurt_mem_pool
   @datatypes
   #qurt_mem_pool_t
 
-  @param[in] pool           The memory pool handle.
+  @param[in] pool	   The memory pool handle.
   @param[in] first_pageno   First page number of the range (address >> 12)
   @param[in] size_in_pages  Number of pages in the range (size >> 12)
 
@@ -218,9 +256,12 @@ int qurt_mem_pool_create(char *name, unsigned base, unsigned size, qurt_mem_pool
   @dependencies
   None.
 */
-int qurt_mem_pool_add_pages(qurt_mem_pool_t pool,
-                            unsigned first_pageno,
-                            unsigned size_in_pages);
+static inline int qurt_mem_pool_add_pages(qurt_mem_pool_t pool,
+			    unsigned first_pageno,
+			    unsigned size_in_pages)
+{
+	R_UNSUPPORTED;
+}
 
 /**@ingroup func_qurt_mem_pool_remove_pages
   Remove a physical address range from an existing memory pool object.
@@ -233,29 +274,29 @@ int qurt_mem_pool_add_pages(qurt_mem_pool_t pool,
   @datatypes
   #qurt_mem_pool_t
 
-  @param[in] pool           The memory pool handle.
+  @param[in] pool	   The memory pool handle.
   @param[in] first_pageno   First page number of the range (address >> 12)
   @param[in] size_in_pages  Number of pages in the range (size >> 12)
-  @param[in] flags          Flags controlling how to handle portions of the
-                            range which are either not in the pool or which
-                            are currently in use.  More flags will be added
-                            in the future.  Pass 0 for default behavior.
+  @param[in] flags	  Flags controlling how to handle portions of the
+			    range which are either not in the pool or which
+			    are currently in use.  More flags will be added
+			    in the future.  Pass 0 for default behavior.
 
-                            Flags defined include:
+			    Flags defined include:
 
-                            QURT_POOL_REMOVE_ALL_OR_NONE -- only proceed
-                              with the API if the entire range specified
-                              is contained in the pool's free space with
-                              no holes.  (Default behavior is that holes
-                              in the range which are not part of the pool
-                              are silently skipped.)
+			    QURT_POOL_REMOVE_ALL_OR_NONE -- only proceed
+			      with the API if the entire range specified
+			      is contained in the pool's free space with
+			      no holes.  (Default behavior is that holes
+			      in the range which are not part of the pool
+			      are silently skipped.)
   @param[in] callback       A callback function to be called when the
-                            removal is complete.  Only called if the
-                            operation is completed; if the API returns
-                            an error, the function is not called. A
-                            value of 0 can be passed to skip the callback.
-  @param[in] arg            The argument to be passed to the callback
-                            function when the operation is complete.
+			    removal is complete.  Only called if the
+			    operation is completed; if the API returns
+			    an error, the function is not called. A
+			    value of 0 can be passed to skip the callback.
+  @param[in] arg	    The argument to be passed to the callback
+			    function when the operation is complete.
 
   @return
   QURT_EOK -- The pages were successfully removed.
@@ -263,14 +304,17 @@ int qurt_mem_pool_add_pages(qurt_mem_pool_t pool,
   @dependencies
   None.
 */
-int qurt_mem_pool_remove_pages(qurt_mem_pool_t pool,
-                               unsigned first_pageno,
-                               unsigned size_in_pages,
-                               unsigned flags,
-                               void (*callback)(void *),
-                               void *arg);
+static inline int qurt_mem_pool_remove_pages(qurt_mem_pool_t pool,
+			       unsigned first_pageno,
+			       unsigned size_in_pages,
+			       unsigned flags,
+			       void (*callback)(void *),
+			       void *arg)
+{
+	R_UNSUPPORTED;
+}
 
-#define QURT_POOL_REMOVE_ALL_OR_NONE            1
+#define QURT_POOL_REMOVE_ALL_OR_NONE	    1
 
 /**@ingroup func_qurt_mem_pool_attr_get  
    Gets the memory pool attributes. \n
@@ -310,11 +354,11 @@ int qurt_mem_pool_attr_get (qurt_mem_pool_t pool, qurt_mem_pool_attr_t *attr);
 */
 static inline int qurt_mem_pool_attr_get_size (qurt_mem_pool_attr_t *attr, int range_id, qurt_size_t *size){
     if ((range_id >= MAX_POOL_RANGES) || (range_id < 0)){
-        (*size) = 0;
-        return QURT_EINVALID;
+	(*size) = 0;
+	return QURT_EINVALID;
     }
     else {
-        (*size) = attr->ranges[range_id].size; 
+	(*size) = attr->ranges[range_id].size<<12; 
     }
     return QURT_EOK;
 }
@@ -326,7 +370,7 @@ static inline int qurt_mem_pool_attr_get_size (qurt_mem_pool_attr_t *attr, int r
   #qurt_mem_pool_attr_t \n
   #qurt_addr_t
   
-  @param[in] attr        Pointer to the memory pool attribute structure.
+  @param[in] attr	Pointer to the memory pool attribute structure.
   @param[in]  range_id   Memory pool range key.
   @param[out] addr       Pointer to the destination variable for range start address.
 
@@ -339,11 +383,11 @@ static inline int qurt_mem_pool_attr_get_size (qurt_mem_pool_attr_t *attr, int r
 */
 static inline int qurt_mem_pool_attr_get_addr (qurt_mem_pool_attr_t *attr, int range_id, qurt_addr_t *addr){
     if ((range_id >= MAX_POOL_RANGES) || (range_id < 0)){
-        (*addr) = 0;
-        return QURT_EINVALID;
+	(*addr) = 0;
+	return QURT_EINVALID;
     }
     else {
-        (*addr) = (attr->ranges[range_id].start)<<12;
+	(*addr) = (attr->ranges[range_id].start)<<12;
    }
    return QURT_EOK;
 }
@@ -363,15 +407,15 @@ static inline int qurt_mem_pool_attr_get_addr (qurt_mem_pool_attr_t *attr, int r
   address is also automatically assigned.\n
 
   @note1hang The physical address attribute is explicitly set in the attribute structure only
-             for memory regions with physical-contiguous-mapped mapping.
+	     for memory regions with physical-contiguous-mapped mapping.
 
   Memory regions are always assigned to memory pools. The pool value specifies the memory pool
   that the memory region is assigned to.
 
   @note1hang If attr is specified as NULL, the memory region is created with default
-             attribute values (Section @xref{sec:qurt_mem_region_attr_init}).
-             QuRT predefines the memory pool object qurt_mem_default_pool
-             (Section @xref{dox:mem_management}) which allocates memory regions in SMI memory.
+	     attribute values (Section @xref{sec:qurt_mem_region_attr_init}).
+	     QuRT predefines the memory pool object qurt_mem_default_pool
+	     (Section @xref{dox:mem_management}) which allocates memory regions in SMI memory.
 
   @datatypes
   #qurt_mem_region_t \n
@@ -381,7 +425,7 @@ static inline int qurt_mem_pool_attr_get_addr (qurt_mem_pool_attr_t *attr, int r
 
   @param[out] region Pointer to the memory region object.
   @param[in]  size   Memory region size (in bytes). If size is not an integral multiple of 4K,
-                     it is rounded up to a 4K boundary.
+		     it is rounded up to a 4K boundary.
   @param[in]  pool   Memory pool of the region.
   @param[in]  attr   Pointer to the memory region attribute structure.
 
@@ -451,8 +495,8 @@ int qurt_mem_region_attr_get(qurt_mem_region_t region, qurt_mem_region_attr_t *a
 
   @param[in,out] attr  Pointer to memory region attribute structure.
   @param[in]     type  Memory type. Values: \n
-                       - QURT_MEM_REGION_LOCAL \n
-                       - QURT_MEM_REGION_SHARED @tablebulletend
+		       - QURT_MEM_REGION_LOCAL \n
+		       - QURT_MEM_REGION_SHARED @tablebulletend
   @return
   None.
 
@@ -480,7 +524,7 @@ static inline void qurt_mem_region_attr_set_type(qurt_mem_region_attr_t *attr, q
   None.
  */
 static inline void qurt_mem_region_attr_get_size(qurt_mem_region_attr_t *attr, qurt_size_t *size){
-    (*size) = attr->size;
+    (*size) = (attr->size << 12);
 }
 
 /**@ingroup func_qurt_mem_region_attr_get_type
@@ -507,8 +551,8 @@ static inline void qurt_mem_region_attr_get_type(qurt_mem_region_attr_t *attr, q
   Sets the memory region 32-bit physical address in the specified memory attribute structure.
 
   @note1hang The physical address attribute is explicitly set only for memory regions with
-             physical-contiguous-mapped mapping. Otherwise it is automatically set by
-             QuRT when the memory region is created.
+	     physical-contiguous-mapped mapping. Otherwise it is automatically set by
+	     QuRT when the memory region is created.
 
   @datatypes
   #qurt_mem_region_attr_t \n
@@ -560,7 +604,7 @@ static inline void qurt_mem_region_attr_get_physaddr(qurt_mem_region_attr_t *att
   None.
  */
 static inline void qurt_mem_region_attr_set_virtaddr(qurt_mem_region_attr_t *attr, qurt_addr_t addr){
-    attr->virtaddr = addr;
+    attr->vpn = addr>>12;
 }
 
 /**@ingroup func_qurt_mem_region_attr_get_virtaddr
@@ -579,7 +623,7 @@ static inline void qurt_mem_region_attr_set_virtaddr(qurt_mem_region_attr_t *att
   None.
  */
 static inline void qurt_mem_region_attr_get_virtaddr(qurt_mem_region_attr_t *attr, unsigned int *addr){
-    (*addr) = (unsigned int)(attr->virtaddr);
+    (*addr) = (unsigned int)(attr->vpn << 12);
 }
 
 /**@ingroup func_qurt_mem_region_attr_set_mapping
@@ -615,12 +659,12 @@ static inline void qurt_mem_region_attr_get_virtaddr(qurt_mem_region_attr_t *att
   
   @param[in,out] attr     Pointer to the memory region attribute structure.
   @param[in] mapping  Mapping. Values: \n
-                      QURT_MEM_MAPPING_VIRTUAL, \n
-                      QURT_MEM_MAPPING_PHYS_CONTIGUOUS, \n
-                      QURT_MEM_MAPPING_IDEMPOTENT, \n
-                      QURT_MEM_MAPPING_VIRTUAL_FIXED, \n
-                      QURT_MEM_MAPPING_NONE, \n
-                      QURT_MEM_MAPPING_VIRTUAL_FIXED_ADDR.
+		      QURT_MEM_MAPPING_VIRTUAL, \n
+		      QURT_MEM_MAPPING_PHYS_CONTIGUOUS, \n
+		      QURT_MEM_MAPPING_IDEMPOTENT, \n
+		      QURT_MEM_MAPPING_VIRTUAL_FIXED, \n
+		      QURT_MEM_MAPPING_NONE, \n
+		      QURT_MEM_MAPPING_VIRTUAL_FIXED_ADDR.
 
   @return
   None.
@@ -663,13 +707,13 @@ static inline void qurt_mem_region_attr_get_mapping(qurt_mem_region_attr_t *attr
   
   @param[in,out] attr  Pointer to the memory region attribute structure.
   @param[in] mode      Cache mode. Values:  \n
-                    QURT_MEM_CACHE_WRITEBACK, \n
-                    QURT_MEM_CACHE_WRITETHROUGH,\n
-                    QURT_MEM_CACHE_WRITEBACK_ NONL2CACHEABLE,\n
-                    QURT_MEM_CACHE_WRITETHROUGH_ NONL2CACHEABLE,\n
-                    QURT_MEM_CACHE_WRITEBACK_L2CACHEABLE,\n
-                    QURT_MEM_CACHE_WRITETHROUGH_ L2CACHEABLE,\n
-                    QURT_MEM_CACHE_NONE.
+		    QURT_MEM_CACHE_WRITEBACK, \n
+		    QURT_MEM_CACHE_WRITETHROUGH,\n
+		    QURT_MEM_CACHE_WRITEBACK_ NONL2CACHEABLE,\n
+		    QURT_MEM_CACHE_WRITETHROUGH_ NONL2CACHEABLE,\n
+		    QURT_MEM_CACHE_WRITEBACK_L2CACHEABLE,\n
+		    QURT_MEM_CACHE_WRITETHROUGH_ L2CACHEABLE,\n
+		    QURT_MEM_CACHE_NONE.
   @return
   None.
 
@@ -677,7 +721,8 @@ static inline void qurt_mem_region_attr_get_mapping(qurt_mem_region_attr_t *attr
   None.
  */
 static inline void qurt_mem_region_attr_set_cache_mode(qurt_mem_region_attr_t *attr, qurt_mem_cache_mode_t mode){
-    QURT_PGATTR_C_SET(attr->pga, (unsigned)mode);
+    //QURT_PGATTR_C_SET(attr->pga, (unsigned)mode);
+	attr->cccc = mode;
 }
 
 /**@ingroup func_qurt_mem_region_attr_get_cache_mode
@@ -697,7 +742,7 @@ static inline void qurt_mem_region_attr_set_cache_mode(qurt_mem_region_attr_t *a
   None.
  */
 static inline void qurt_mem_region_attr_get_cache_mode(qurt_mem_region_attr_t *attr, qurt_mem_cache_mode_t *mode){
-    (*mode) = (qurt_mem_cache_mode_t)QURT_PGATTR_C_GET(attr->pga);
+	(*mode) = attr->cccc;
 }
 
 /**@ingroup func_qurt_mem_region_attr_set_bus_attr
@@ -718,7 +763,7 @@ static inline void qurt_mem_region_attr_get_cache_mode(qurt_mem_region_attr_t *a
   None.
  */
 static inline void qurt_mem_region_attr_set_bus_attr(qurt_mem_region_attr_t *attr, unsigned abits){
-    QURT_PGATTR_A_SET(attr->pga, abits);
+	attr->abits = abits;
 }
 
 /**@ingroup func_qurt_mem_region_attr_get_bus_attr
@@ -729,7 +774,7 @@ static inline void qurt_mem_region_attr_set_bus_attr(qurt_mem_region_attr_t *att
 
   @param[in]  attr  Pointer to the memory region attribute structure.
   @param[out] pbits Pointer to an unsigned integer which is filled in with
-                    the (A1, A0) bits from the memory region attribute structure, expressed as a 2-bit binary number.
+		    the (A1, A0) bits from the memory region attribute structure, expressed as a 2-bit binary number.
 
   @return
   None.
@@ -738,144 +783,21 @@ static inline void qurt_mem_region_attr_set_bus_attr(qurt_mem_region_attr_t *att
   None.
  */
 static inline void qurt_mem_region_attr_get_bus_attr(qurt_mem_region_attr_t *attr, unsigned *pbits){
-    (*pbits) = QURT_PGATTR_A_GET(attr->pga);
+	(*pbits) = attr->abits;
 }
 
-void qurt_mem_region_attr_set_owner(qurt_mem_region_attr_t *attr, int handle);
-void qurt_mem_region_attr_get_owner(qurt_mem_region_attr_t *attr, int *p_handle);
-void qurt_mem_region_attr_set_perms(qurt_mem_region_attr_t *attr, unsigned perms);
-void qurt_mem_region_attr_get_perms(qurt_mem_region_attr_t *attr, unsigned *p_perms);
+static inline void qurt_mem_region_attr_set_owner(qurt_mem_region_attr_t *attr, int handle) { UNSUPPORTED; }
+static inline void qurt_mem_region_attr_get_owner(qurt_mem_region_attr_t *attr, int *p_handle) { UNSUPPORTED; }
 
-/**@ingroup func_qurt_mem_map_static_query
-  Determines if a memory page is statically mapped.
-  Pages are specified by the following attributes: physical address, page size, cache mode,
-  and memory permissions: \n
-  - If the specified page is statically mapped, vaddr returns the page's virtual
-     address. \n
-  - If the page is not statically mapped (or if it does not exist as specified), vaddr
-     returns -1 as the virtual address value.\n
-  QuRT memory maps are defined in the system configuration file.
- 
-  @datatypes
-  #qurt_addr_t \n
-  #qurt_mem_cache_mode_t \n
-  #qurt_perm_t
-  
-  @param[out]  vaddr             Virtual address corresponding to paddr.
-  @param[in]   paddr             Physical address.  
-  @param[in]   page_size         Size of the mapped memory page.
-  @param[in]   cache_attribs     Cache mode (writeback, etc.).
-  @param[in]   perm              Access permissions.
-
-  @return
-  QURT_EOK -- Specified page is statically mapped, virtual address is returned in vaddr. \n
-  QURT_EMEM -- Specified page is not statically mapped, -1 is returned in vaddr. \n
-  QURT_EVAL -- Specified page does not exist.
-
-  @dependencies
-  None.
- */
-int qurt_mem_map_static_query(qurt_addr_t *vaddr, qurt_addr_t paddr, unsigned int page_size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm);
-
-/**@ingroup func_qurt_mem_region_query
-  Queries a memory region. \n
-  This function determines whether a dynamically-created memory region (Section @xref{sec:mem_region_create}) exists for the
-  specified virtual or physical address.  
-  Once a memory region has been determined to exist, its attributes can be
-  accessed (Section @xref{sec:mem_region_attr_get}).
-
-  @note1hang This function returns QURT_EFATAL if QURT_EINVALID is passed to both
-             vaddr and paddr (or to neither). 
-
-  @datatypes
-  #qurt_mem_region_t \n
-  #qurt_paddr_t 
-   
-  @param[out] region_handle    Pointer to the memory region object (if it exists).
-  @param[in]  vaddr            Virtual address to query; if vaddr is specified, paddr must be set to
-                               the value QURT_EINVALID.
-  @param[in]  paddr            Physical address to query; if paddr is specified, vaddr must be set to
-                               the value QURT_EINVALID.
-
-  @return 
-  QURT_EOK -- Query successfully performed. \n
-  QURT_EMEM -- Region not found for the specified address. \n
-  QURT_EFATAL -- Invalid input parameters.
-
-  @dependencies
-  None.
- */
-int qurt_mem_region_query(qurt_mem_region_t *region_handle, qurt_addr_t vaddr, qurt_paddr_t paddr);
-
-/**@ingroup func_qurt_mapping_create
-  Creates a new memory mapping in the page table.
-
-  @datatypes
-  #qurt_addr_t \n
-  #qurt_size_t \n
-  #qurt_mem_cache_mode_t \n
-  #qurt_perm_t
- 
-  @param vaddr			Virtual address.
-  @param paddr			Physical address.
-  @param size			Size (4K-aligned) of the mapped memory page.
-  @param cache_attribs		Cache mode (writeback, etc.).
-  @param perm			Access permissions.
-
-  @return			
-  QURT_EOK -- Mapping created. \n
-  QURT_EMEM -- Failed to create mapping. 	
-
-  @dependencies
-  None.
-*/
-int qurt_mapping_create(qurt_addr_t vaddr, qurt_addr_t paddr, qurt_size_t size,
-                         qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm);
-
-/**@ingroup func_qurt_mapping_remove
-  Deletes the specified memory mapping from the page table.
- 
-  @datatypes
-  #qurt_addr_t \n
-  #qurt_size_t
-
-  @param[in] vaddr			Virtual address.
-  @param[in] paddr			Physical address.
-  @param[in] size			Size of the mapped memory page (4K-aligned).
-
-  @return 			
-  QURT_EOK -- Mapping created successfully.
-
-  @dependencies
-  None.
-  		
- */ 		
-int qurt_mapping_remove(qurt_addr_t vaddr, qurt_addr_t paddr, qurt_size_t size);
-
-/**@ingroup func_qurt_lookup_physaddr
-  Translates a virtual memory address to the physical memory address it is mapped to.
-
-  @datatypes
-  #qurt_addr_t
-  #qurt_paddr_t
-
-  @param[in] vaddr   Virtual address.
-
-  @return
-  Nonzero -- Physical address the virtual address is mapped to.\n
-  0 -- Virtual address not mapped.
-
-  @dependencies
-  None.
-*/
-qurt_paddr_t qurt_lookup_physaddr (qurt_addr_t vaddr);
+static inline void qurt_mem_region_attr_set_perms(qurt_mem_region_attr_t *attr, unsigned perms) { attr->perms = perms; }
+static inline void qurt_mem_region_attr_get_perms(qurt_mem_region_attr_t *attr, unsigned *p_perms) { *p_perms = attr->perms; }
 
 /**@ingroup func_qurt_mem_region_attr_set_physaddr_64
   Sets the memory region 64-bit physical address in the specified memory attribute structure.
 
   @note1hang The physical address attribute is explicitly set only for memory regions with
-             physically contiguous mapping. Otherwise it is automatically set by
-             QuRT when the memory region is created.
+	     physically contiguous mapping. Otherwise it is automatically set by
+	     QuRT when the memory region is created.
 
   @datatypes
   #qurt_mem_region_attr_t \n
@@ -911,6 +833,76 @@ static inline void qurt_mem_region_attr_get_physaddr_64(qurt_mem_region_attr_t *
     (*addr_64) = (unsigned long long)(((unsigned long long)(attr->ppn))<<12);
 }
 
+/**@ingroup func_qurt_mem_region_query_64
+  Determines if a dynamically created memory region (Section @xref{sec:mem_region_create}) exists for the
+  specified virtual or physical address. Once a memory region has been determined to exist, its attributes can be
+  accessed (Section @xref{sec:mem_region_attr_get}).
+
+  @note1hang This function returns QURT_EFATAL if QURT_EINVALID is passed to both
+	     vaddr and paddr (or to neither).   
+
+  @datatypes
+  #qurt_mem_region_t \n
+  #qurt_addr_t \n
+  #qurt_paddr_64_t 
+ 
+  @param[out] region_handle    Pointer to the memory region object (if it exists).
+  @param[in]  vaddr	    Virtual address to query; if vaddr is specified, paddr must be set to
+			       the value QURT_EINVALID.
+  @param[in]  paddr_64	 64-bit physical address to query; if paddr is specified, vaddr must be set to
+			       the value QURT_EINVALID.
+
+  @return 
+  QURT_EOK -- Success. \n
+  QURT_EMEM -- Region not found for the specified address. \n
+  QURT_EFATAL -- Invalid input parameters.
+
+  @dependencies
+  None.
+ */
+int qurt_mem_region_query_64_vpn(qurt_mem_region_t *region_handle, unsigned long vpn);
+int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long ppn);
+static inline int qurt_mem_region_query_64(qurt_mem_region_t *region_handle, 
+	qurt_addr_t vaddr, qurt_paddr_64_t paddr)
+{
+	if (paddr != QURT_EINVALID) return qurt_mem_region_query_64_ppn(region_handle,paddr>>12);
+	if (vaddr != QURT_EINVALID) return qurt_mem_region_query_64_vpn(region_handle,((unsigned long)vaddr) >> 12);
+	return QURT_EFATAL;
+}
+
+/**@ingroup func_qurt_mem_region_query
+  Queries a memory region. \n
+  This function determines whether a dynamically-created memory region (Section @xref{sec:mem_region_create}) exists for the
+  specified virtual or physical address.  
+  Once a memory region has been determined to exist, its attributes can be
+  accessed (Section @xref{sec:mem_region_attr_get}).
+
+  @note1hang This function returns QURT_EFATAL if QURT_EINVALID is passed to both
+	     vaddr and paddr (or to neither). 
+
+  @datatypes
+  #qurt_mem_region_t \n
+  #qurt_paddr_t 
+   
+  @param[out] region_handle    Pointer to the memory region object (if it exists).
+  @param[in]  vaddr	    Virtual address to query; if vaddr is specified, paddr must be set to
+			       the value QURT_EINVALID.
+  @param[in]  paddr	    Physical address to query; if paddr is specified, vaddr must be set to
+			       the value QURT_EINVALID.
+
+  @return 
+  QURT_EOK -- Query successfully performed. \n
+  QURT_EMEM -- Region not found for the specified address. \n
+  QURT_EFATAL -- Invalid input parameters.
+
+  @dependencies
+  None.
+ */
+static inline int qurt_mem_region_query(qurt_mem_region_t *region_handle, qurt_addr_t vaddr, qurt_paddr_t paddr)
+{
+	return qurt_mem_region_query_64(region_handle,vaddr,(unsigned long)paddr);
+}
+
 /**@ingroup func_qurt_mem_map_static_query_64
   Determines if a memory page is statically mapped.
   Pages are specified by the following attributes: 64-bit physical address, page size, cache mode,
@@ -927,11 +919,11 @@ static inline void qurt_mem_region_attr_get_physaddr_64(qurt_mem_region_attr_t *
   #qurt_mem_cache_mode_t \n
   #qurt_perm_t
   
-  @param[out]  vaddr             Virtual address corresponding to paddr.
-  @param[in]   paddr_64          64-bit physical address.  
-  @param[in]   page_size         Size of the mapped memory page.
+  @param[out]  vaddr	     Virtual address corresponding to paddr.
+  @param[in]   paddr_64	  64-bit physical address.  
+  @param[in]   page_size	 Size of the mapped memory page.
   @param[in]   cache_attribs     Cache mode (writeback, etc.).
-  @param[in]   perm              Access permissions.
+  @param[in]   perm	      Access permissions.
 
   @return
   QURT_EOK -- Specified page is statically mapped, virtual address is returned in vaddr. \n
@@ -941,36 +933,49 @@ static inline void qurt_mem_region_attr_get_physaddr_64(qurt_mem_region_attr_t *
   @dependencies
   None.
  */
-int qurt_mem_map_static_query_64(qurt_addr_t *vaddr, qurt_paddr_64_t paddr_64, unsigned int page_size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm);
+static inline int qurt_mem_map_static_query_64(qurt_addr_t *vaddr, qurt_paddr_64_t paddr_64, unsigned int page_size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)
+{
+	qurt_mem_region_t region;
+	qurt_mem_region_attr_t attrs;
+	if ((qurt_mem_region_query_64(&region,QURT_EINVALID,paddr_64)) != QURT_EOK) return QURT_EVAL;
+	qurt_mem_region_attr_get(region,&attrs);
+	qurt_mem_region_attr_get_virtaddr(&attrs,vaddr);
+	return QURT_EOK;
+}
 
-/**@ingroup func_qurt_mem_region_query_64
-  Determines if a dynamically created memory region (Section @xref{sec:mem_region_create}) exists for the
-  specified virtual or physical address. Once a memory region has been determined to exist, its attributes can be
-  accessed (Section @xref{sec:mem_region_attr_get}).
-
-  @note1hang This function returns QURT_EFATAL if QURT_EINVALID is passed to both
-             vaddr and paddr (or to neither).   
-
-  @datatypes
-  #qurt_mem_region_t \n
-  #qurt_addr_t \n
-  #qurt_paddr_64_t 
+/**@ingroup func_qurt_mem_map_static_query
+  Determines if a memory page is statically mapped.
+  Pages are specified by the following attributes: physical address, page size, cache mode,
+  and memory permissions: \n
+  - If the specified page is statically mapped, vaddr returns the page's virtual
+     address. \n
+  - If the page is not statically mapped (or if it does not exist as specified), vaddr
+     returns -1 as the virtual address value.\n
+  QuRT memory maps are defined in the system configuration file.
  
-  @param[out] region_handle    Pointer to the memory region object (if it exists).
-  @param[in]  vaddr            Virtual address to query; if vaddr is specified, paddr must be set to
-                               the value QURT_EINVALID.
-  @param[in]  paddr_64         64-bit physical address to query; if paddr is specified, vaddr must be set to
-                               the value QURT_EINVALID.
+  @datatypes
+  #qurt_addr_t \n
+  #qurt_mem_cache_mode_t \n
+  #qurt_perm_t
+  
+  @param[out]  vaddr	     Virtual address corresponding to paddr.
+  @param[in]   paddr	     Physical address.  
+  @param[in]   page_size	 Size of the mapped memory page.
+  @param[in]   cache_attribs     Cache mode (writeback, etc.).
+  @param[in]   perm	      Access permissions.
 
-  @return 
-  QURT_EOK -- Success. \n
-  QURT_EMEM -- Region not found for the specified address. \n
-  QURT_EFATAL -- Invalid input parameters.
+  @return
+  QURT_EOK -- Specified page is statically mapped, virtual address is returned in vaddr. \n
+  QURT_EMEM -- Specified page is not statically mapped, -1 is returned in vaddr. \n
+  QURT_EVAL -- Specified page does not exist.
 
   @dependencies
   None.
  */
-int qurt_mem_region_query_64(qurt_mem_region_t *region_handle, qurt_addr_t vaddr, qurt_paddr_64_t paddr_64);
+static inline int qurt_mem_map_static_query(qurt_addr_t *vaddr, qurt_addr_t paddr, unsigned int page_size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)
+{
+	return qurt_mem_map_static_query_64(vaddr,(unsigned long)paddr, page_size, cache_attribs, perm);
+}
 
 /**@ingroup func_qurt_mapping_create_64
   Creates a new memory mapping in the page table.
@@ -982,7 +987,7 @@ int qurt_mem_region_query_64(qurt_mem_region_t *region_handle, qurt_addr_t vaddr
   #qurt_mem_cache_mode_t \n
   #qurt_perm_t
  
-  @param[in] vaddr	        Virtual address.
+  @param[in] vaddr		Virtual address.
   @param[in] paddr_64		64-bit physical address.
   @param[in] size			Size (4K-aligned) of the mapped memory page.
   @param[in] cache_attribs  Cache mode (writeback, etc.).
@@ -995,8 +1000,63 @@ int qurt_mem_region_query_64(qurt_mem_region_t *region_handle, qurt_addr_t vaddr
   @dependencies
   None.
 */
-int qurt_mapping_create_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size,
-                         qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm);
+
+int qurt_mapping_create_linear(H2K_linear_fmt_t entry);
+
+/* EJP: make this static inline because we get a lot of constant parameters and hopefully
+ * the compiler can optimize building the linear format 
+ */
+static inline int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn, 
+	unsigned int size, unsigned int cache_attribs, unsigned int perm, unsigned int abits)
+{
+	H2K_linear_fmt_t tmp;
+	tmp.raw = 0;
+	tmp.ppn = ppn;
+	tmp.cccc = cache_attribs;
+	tmp.xwru = perm<<1;
+	tmp.vpn = vpn;
+	tmp.abits = abits;
+	tmp.size = (__builtin_ctz(size))>>1;
+	return qurt_mapping_create_linear(tmp);
+}
+
+static inline int qurt_mapping_create_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size,
+			 qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)
+{
+	/* EJP: shouldn't it be caller's responsibility here? */
+	if (size & 0xFFF) return QURT_EMEM;
+	if (size == 0) return QURT_EMEM;
+	if (perm == 0) return QURT_EMEM;
+	return qurt_mapping_create_vpn(vaddr>>12,paddr_64>>12,size>>12,cache_attribs,perm,0);
+}
+
+/**@ingroup func_qurt_mapping_create
+  Creates a new memory mapping in the page table.
+
+  @datatypes
+  #qurt_addr_t \n
+  #qurt_size_t \n
+  #qurt_mem_cache_mode_t \n
+  #qurt_perm_t
+ 
+  @param vaddr			Virtual address.
+  @param paddr			Physical address.
+  @param size			Size (4K-aligned) of the mapped memory page.
+  @param cache_attribs		Cache mode (writeback, etc.).
+  @param perm			Access permissions.
+
+  @return			
+  QURT_EOK -- Mapping created. \n
+  QURT_EMEM -- Failed to create mapping. 	
+
+  @dependencies
+  None.
+*/
+static inline int qurt_mapping_create(qurt_addr_t vaddr, qurt_addr_t paddr, qurt_size_t size,
+			 qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)
+{
+	return qurt_mapping_create_64(vaddr,(unsigned long)paddr,size,cache_attribs,perm);
+}
 
 /**@ingroup func_qurt_mapping_remove_64
   Deletes the specified memory mapping from the page table.
@@ -1016,8 +1076,39 @@ int qurt_mapping_create_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_siz
   @dependencies
   None.
   		
+ */
+
+void qurt_mapping_remove_vpn(unsigned int vpn);
+
+static inline int qurt_mapping_remove_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size)
+{
+	if (size & 0xFFF) return QURT_EVAL;
+	qurt_mapping_remove_vpn(vaddr >> 12);
+	return QURT_EOK;
+}
+
+/**@ingroup func_qurt_mapping_remove
+  Deletes the specified memory mapping from the page table.
+ 
+  @datatypes
+  #qurt_addr_t \n
+  #qurt_size_t
+
+  @param[in] vaddr			Virtual address.
+  @param[in] paddr			Physical address.
+  @param[in] size			Size of the mapped memory page (4K-aligned).
+
+  @return 			
+  QURT_EOK -- Mapping created successfully.
+
+  @dependencies
+  None.
+  		
  */ 		
-int qurt_mapping_remove_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size);
+static inline int qurt_mapping_remove(qurt_addr_t vaddr, qurt_addr_t paddr, qurt_size_t size)
+{
+	return qurt_mapping_remove_64(vaddr,(unsigned long)paddr,size);
+}
 
 /**@ingroup func_qurt_lookup_physaddr_64
   Translates a virtual memory address to the 64-bit physical memory address it is mapped to.
@@ -1037,6 +1128,28 @@ int qurt_mapping_remove_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_siz
 */
 qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr);
    
+
+/**@ingroup func_qurt_lookup_physaddr
+  Translates a virtual memory address to the physical memory address it is mapped to.
+
+  @datatypes
+  #qurt_addr_t
+  #qurt_paddr_t
+
+  @param[in] vaddr   Virtual address.
+
+  @return
+  Nonzero -- Physical address the virtual address is mapped to.\n
+  0 -- Virtual address not mapped.
+
+  @dependencies
+  None.
+*/
+static inline qurt_paddr_t qurt_lookup_physaddr (qurt_addr_t vaddr)
+{
+	return qurt_lookup_physaddr_64(vaddr);
+}
+
 /**@ingroup func_qurt_mapping_reclaim
   Deallocates all QuRT resources associated with the specified virtual
   memory area, making it available for user memory management:\n
@@ -1051,8 +1164,8 @@ qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr);
   If no pool is specified, the freed physical memory is not added to any pool.
 
   @note1hang The virtual memory area is currently restricted to being
-         filled with locked TLB entries that are contiguous
-         within the memory area, and contained by it.
+	 filled with locked TLB entries that are contiguous
+	 within the memory area, and contained by it.
 
   @datatypes
   #qurt_addr_t \n
@@ -1062,7 +1175,7 @@ qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr);
   @param[in] vaddr   Virtual address of the memory area to be freed.
   @param[in] vsize   Size (in bytes) of the memory area to be freed.
   @param[in] pool    Handle to the physical pool where freed physical memory is added.
-                     If set to 0, freed physical memory is not added to any pool.
+		     If set to 0, freed physical memory is not added to any pool.
 
   @return
   0 -- Success. \n
@@ -1072,7 +1185,10 @@ qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr);
   @dependencies
   None.
 */
-int qurt_mapping_reclaim(qurt_addr_t vaddr, qurt_size_t vsize, qurt_mem_pool_t pool);
+static inline int qurt_mapping_reclaim(qurt_addr_t vaddr, qurt_size_t vsize, qurt_mem_pool_t pool)
+{
+	R_UNSUPPORTED;
+}
 
 /**@ingroup qurt_mem_configure_cache_partition
   Configure Hexagon cache partition at system level
@@ -1083,15 +1199,15 @@ int qurt_mapping_reclaim(qurt_addr_t vaddr, qurt_size_t vsize, qurt_mem_pool_t p
 
   @param[in] 
   cache type       cache type for partition configuration.
-                      HEXAGON_L1_I_CACHE
-                      HEXAGON_L1_D_CACHE
-                      HEXAGON_L2_CACHE
+		      HEXAGON_L1_I_CACHE
+		      HEXAGON_L1_D_CACHE
+		      HEXAGON_L2_CACHE
 
   partition_size   cache partition size
-                      FULL_SIZE
-                      HALF_SIZE
-                      THREE_QUARTER_SIZE
-                      SEVEN_EIGHTHS_SIZE
+		      FULL_SIZE
+		      HALF_SIZE
+		      THREE_QUARTER_SIZE
+		      SEVEN_EIGHTHS_SIZE
 
   @return 			
        QURT_EOK     // success
@@ -1101,7 +1217,10 @@ int qurt_mapping_reclaim(qurt_addr_t vaddr, qurt_size_t vsize, qurt_mem_pool_t p
   None.
   		
  */ 		
-int qurt_mem_configure_cache_partition(qurt_cache_type_t cache_type, qurt_cache_partition_size_t partition_size);
+static inline int qurt_mem_configure_cache_partition(qurt_cache_type_t cache_type, qurt_cache_partition_size_t partition_size)
+{
+	R_UNSUPPORTED;
+}
 
 /**@ingroup func_qurt_l2fetch_disable
   Disables L2FETCH activities on all hardware threads.
@@ -1113,8 +1232,13 @@ int qurt_mem_configure_cache_partition(qurt_cache_type_t cache_type, qurt_cache_
   None.
   		
  */ 		
-void qurt_l2fetch_disable(void);
+static inline void qurt_l2fetch_disable(void) { UNSUPPORTED; }
 
+/*
+ * Qurt memory init.
+ * Call this before doing any memory stuff 
+ */
+void qurt_memory_init();
     
 #ifdef __cplusplus
 } /* closing brace for extern "C" */

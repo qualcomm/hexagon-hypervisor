@@ -48,6 +48,7 @@ h2_vmtrap_intop:
 	jumpr r31
 
 h2_vmtrap_clrmap:
+	r1 = #1
 	trap1(#H2_VMTRAP_CLRMAP)
 	jumpr r31
 

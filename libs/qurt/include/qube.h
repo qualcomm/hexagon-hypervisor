@@ -27,6 +27,8 @@ extern "C" {
 #define EINVALID                        QURT_EINVALID
 #endif /* EINVALID */
 
+static inline void qube_init() { qurt_init(); }
+
 #ifdef __cplusplus
 } /* closing brace for extern "C" */
 #endif

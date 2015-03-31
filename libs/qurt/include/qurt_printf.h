@@ -23,7 +23,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
 /** @addtogroup chapter_function_tracing
 @{ */
 
-int qurt_printf(const char* format, ...);
+#define qurt_printf h2_printf
 
 /** @} */ /* end_addtogroup chapter_function_tracing */
 

@@ -9,7 +9,8 @@
 /* EJP: things that we'll use in header files */
 #include <h2.h>
 
-#define UNSUPPORTED while (1) { /* SPIN */ }
-#define R_UNSUPPORTED do { while (1) { /* SPIN */ }; return 1; } while (0)
+#define UNSUP_PRINT h2_printf("UNSUPPORTED: %s: %s\n",__FILE__,__PRETTY_FUNCTION__)
+#define UNSUPPORTED do { UNSUP_PRINT;  while (1) { /* SPIN */ } } while  (0)
+#define R_UNSUPPORTED do { UNSUP_PRINT; while (1) { /* SPIN */ }; return 1; } while (0)
 
 #endif

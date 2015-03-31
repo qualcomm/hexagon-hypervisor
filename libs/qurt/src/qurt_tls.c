@@ -6,7 +6,7 @@
 //#include "qurt_mutex.h"
 #include "h2.h"
 #include "qurt.h"
-#include <q6protos.h>
+#include <hexagon_protos.h>
 
 /* QURT TLS reservation */
 struct QURT_tls_reserve QURT_tls_reserve = {{0}, {0}};

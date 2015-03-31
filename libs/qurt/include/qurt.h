@@ -26,12 +26,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void qurt_init();
+
 #include "qurt_prelim.h"
 #include "qurt_consts.h"
 #include "qurt_consts_internal.h"
 #include "qurt_alloc.h"
 #include "qurt_futex.h"
 #include "qurt_mutex.h"
+#include "qurt_pgalloc.h"
 #include "qurt_pipe.h"
 #include "qurt_printf.h"
 #include "qurt_assert.h"

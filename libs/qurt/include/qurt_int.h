@@ -90,7 +90,7 @@
    @dependencies
    None.
 */
- unsigned int qurt_interrupt_register(int int_num, qurt_anysignal_t *int_signal, int signal_mask);
+unsigned int qurt_interrupt_register(int int_num, qurt_anysignal_t *int_signal, int signal_mask);
 
 /*
  * Waits for registered interrupt signal

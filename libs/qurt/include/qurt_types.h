@@ -29,12 +29,16 @@ extern "C" {
 
 /** @addtogroup memory_management_types
 @{ */
+
+struct qurt_mem_pool_struct;	// leave opaque here, define in implementation
+struct qurt_mem_region_struct;	// leave opaque here, define in implementation
+struct qurt_freelist_node;
 typedef unsigned int qurt_addr_t;          /**< */
 typedef unsigned int qurt_paddr_t;         /**<  */ 
-typedef unsigned long long qurt_paddr_64_t; /**<  */
-typedef unsigned int qurt_mem_region_t;    /**< Memory regions are represented as objects of this type. */
+typedef unsigned long long int qurt_paddr_64_t; /**<  */
+typedef struct qurt_mem_region_struct *qurt_mem_region_t;    /**< Memory regions are represented as objects of this type. */
 typedef unsigned int qurt_mem_fs_region_t; /**<  */
-typedef unsigned int qurt_mem_pool_t;      /**< Memory pools are represented in QuRT as objects of this type.*/
+typedef struct qurt_mem_pool_struct *qurt_mem_pool_t;      /**< Memory pools are represented in QuRT as objects of this type.*/
 typedef unsigned int qurt_size_t;          /**< */
 
 /*
@@ -104,6 +108,7 @@ typedef enum {
                                            qmem_region_create() with QMEM_MAPPING_NONE 
                                            mapping. */
         QURT_MEM_MAPPING_NONE=4,  /**< Reserves a virtual memory area (VMA). */
+        QURT_MEM_MAPPING_VIRTUAL_FIXED_ADDR=5,  /**< UNUSED? */
         QURT_MEM_MAPPING_VIRTUAL_RANDOM=7,  /**< The system chooses a random virtual address and
                                             maps it to available contiguous physical addresses.*/
         QURT_MEM_MAPPING_INVALID=10,        /**< Reserved as an invalid mapping type. */
@@ -180,16 +185,16 @@ typedef struct qurt_pgattr qurt_pgattr_t;
    memory region, it can only be queried by the qmem_attr_getvirtaddr() function.
  */
 typedef struct {
-    /** @cond */
-    qurt_mem_mapping_t    mapping_type; 
-    unsigned char          perms;
-    short                  owner;
-    qurt_pgattr_t          pga;
-    unsigned               ppn; //physical page number (physical>>12)
-    qurt_addr_t            virtaddr;
-    qurt_mem_region_type_t   type;   
-    qurt_size_t               size;
-    /** @endcond */
+	/** @cond */
+	unsigned long ppn;
+	unsigned long vpn;
+	qurt_size_t size; // in pages
+	qurt_mem_mapping_t mapping_type; 
+	qurt_mem_region_type_t type;
+	unsigned char perms;
+	unsigned char cccc;
+	unsigned char abits;
+	/** @endcond */
 } qurt_mem_region_attr_t;
 
 /** Definition of the user physical memory pool. */

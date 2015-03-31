@@ -23,7 +23,8 @@ typedef union {
 			struct {
 				u32_t vpn:20;
 				u32_t size:4;
-				u32_t unused:7;
+				u32_t abits:2;
+				u32_t unused:5;
 				u32_t chain:1;
 			};
 		};

@@ -47,6 +47,25 @@ qurt_timetick_word_t hw_timer_curr_timetick (void) {
 	return ticktmp.pair;
 }
 
+qurt_timetick_word_t hw_timer_match_val (void) {
+
+	unsigned long tmphi;
+	union {
+		unsigned long long pair;
+		struct {
+			unsigned long lo;
+			unsigned long hi;
+		};
+	} ticktmp;
+
+	do {
+		tmphi = devptr[HW_MATCH_HI];
+		ticktmp.lo = devptr[HW_MATCH_LO];
+		ticktmp.hi = devptr[HW_MATCH_HI];
+	} while (tmphi != ticktmp.hi);
+	return ticktmp.pair;
+}
+
 qurt_timetick_word_t hw_timer_prg_next_interrupt (qurt_timetick_word_t match, qurt_timetick_word_t count, unsigned int order) {
 
 	hw_set_timeout(match);
@@ -64,4 +83,8 @@ void hw_timer_init (qurt_timetick_word_t match) {
 	 devptr[HW_CNTFRQ] = 19200000;
 	 devptr[HW_ENABLE] = 1;
 
+}
+
+unsigned long long qurt_timer_timetick_to_us( unsigned long long n ) {
+	return (n*5ULL/96ULL);
 }

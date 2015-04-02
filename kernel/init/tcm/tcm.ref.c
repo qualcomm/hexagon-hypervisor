@@ -42,7 +42,7 @@ void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 		tcm_base = (H2K_mem_physread_word((cfg_base << CFG_TABLE_SHIFT) + CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT);
 
 		// remap
-		H2K_tmpmap_add_and_lock((pa_t)tcm_base, UC);
+		H2K_tmpmap_add_and_lock((pa_t)tcm_base, DEVICE_TYPE);
 
 		for (page_num = 0; page_num < (u32_t)&H2K_KERNEL_NPAGES; page_num++) {
 			entry.raw = 0;

@@ -224,7 +224,7 @@ u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 
 	l2_cfg_base = H2K_mem_physread_word((cfg << 16) + CFG_TABLE_L2REGS) << 16;
 
-	va = H2K_tmpmap_add_and_lock(l2_cfg_base, UC_S);
+	va = H2K_tmpmap_add_and_lock(l2_cfg_base, UNCACHED);
 	reg = (u32_t *) (va + offset);
 	ret = *reg;
 	H2K_tmpmap_remove_and_unlock();
@@ -252,7 +252,7 @@ u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 
 	l2_cfg_base = H2K_mem_physread_word((cfg << 16) + CFG_TABLE_L2REGS) << 16;
 
-	va = H2K_tmpmap_add_and_lock(l2_cfg_base, UC_S);
+	va = H2K_tmpmap_add_and_lock(l2_cfg_base, UNCACHED);
 	reg = (u32_t *) (va + offset);
 	ret = *reg;
 	*reg = val;

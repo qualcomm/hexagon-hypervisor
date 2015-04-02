@@ -20,6 +20,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
  ======================================================================*/
 
 #include <qurt_signal.h>
+#include <h2.h>
 
 /**@ingroup anysignals_types                                                 
  The caller of signal_wait can be woken up if any bits in mask are set.  */

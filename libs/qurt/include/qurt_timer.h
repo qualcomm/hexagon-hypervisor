@@ -20,6 +20,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
 
 =============================================================================*/
 
+#include "h2.h"
 #include "qurt_anysignal.h"
 #include "qurt_signal2.h"
 #ifdef __cplusplus
@@ -120,6 +121,8 @@ typedef struct
 qurt_timer_attr_t;
 
 /** @} */ /* end_addtogroup timer_types */
+
+	void qurt_timer_init();
 
 /**@ingroup func_qurt_timer_stop
   @xreflabel{sec:qurt_timer_stop}  

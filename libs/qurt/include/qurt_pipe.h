@@ -34,8 +34,6 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
 #define QURT_PIPE_ATTR_MEM_PARTITION_RAM 0
 #define QURT_PIPE_ATTR_MEM_PARTITION_TCM 1
 
-/* EJP: WTF Is happening below?  */
-
 #if 1
 
 typedef h2_pipe_data_t qurt_pipe_data_t;
@@ -110,6 +108,7 @@ static inline int qurt_pipe_send_cancellable(qurt_pipe_t *pipe, qurt_pipe_data_t
 }
 
 #else
+/* EJP: I don't understand what is happening below. Why the function pointers? */
 
 /** Represents pipe data values. */
 typedef unsigned long long int qurt_pipe_data_t;

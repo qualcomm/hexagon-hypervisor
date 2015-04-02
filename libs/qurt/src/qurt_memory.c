@@ -5,6 +5,7 @@
 
 #include "qurt.h"
 #include <h2_common_linear.h>
+#include <h2_common_pmap.h>
 
 /*
  * EJP: try and make a qurt memory 
@@ -411,9 +412,9 @@ void qurt_memory_init()
 	entry.raw = 0;
 	entry.ppn = 0x01000;
 	entry.vpn = 0x01000;
-	entry.size = 6;
-	entry.xwru = 0xF;
-	entry.cccc = 0x7;
+	entry.size = SIZE_16M;
+	entry.xwru = URWX;
+	entry.cccc = L1WB_L2C;
 	qurt_mem_pool_create("vpool",0x80000,0xF8000,&vpool);
 	/* FOR NOW... initialize some default stuff */
 	qurt_mem_pool_create("DEFAULT_PHYSPOOL",0x10000,0x40000,&qurt_mem_default_pool);
@@ -422,6 +423,15 @@ void qurt_memory_init()
 		entry.ppn += 0x01000;
 		entry.vpn += 0x01000;
 	}
+
+	/* map device space for timer */
+	entry.ppn = 0xfe000;
+	entry.vpn = 0xfe000;
+	entry.size = SIZE_16M;
+	entry.xwru = URWX;
+	entry.cccc = DEVICE_TYPE;
+	qurt_mapping_create_linear(entry);
+
 	qurt_mem_pool_attach("DEFAULT_PHYSPOOL",&qurt_mem_default_pool);
 	qurt_pprint_mappings();
 	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);

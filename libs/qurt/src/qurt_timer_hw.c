@@ -15,7 +15,7 @@
 #define HW_CNTSR	(0x0004/4)
 #define HW_CNTACR	(0x0040/4)
 
-#define QURT_TIMER_BASE 0xfe2a0000
+#define QURT_TIMER_BASE 0xfe2b0000
 
 #define TIME_FOREVER (~0ULL)
 

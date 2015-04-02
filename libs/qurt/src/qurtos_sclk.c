@@ -308,6 +308,7 @@ void qurt_timer_IST (void *arg)
 
 	while (1) {
 		h2_intwait(QURT_TIMER_INTERRUPT);
+qurtos_printf("Timer interrupt\n");
 
 #ifdef CONFIG_PRIORITY_INHERITANCE
    qurt_pimutex_lock(&qurt_sclk_mutex);
@@ -344,11 +345,12 @@ void qurt_timer_IST (void *arg)
 /*    qurtos_assert(0); */
 }
 
-unsigned long long qurt_timer_IST_stack[1024];
+#define IST_STACK_SIZE 1024
+unsigned long long qurt_timer_IST_stack[IST_STACK_SIZE];
 
 void qurt_timer_IST_init (void)
 {
-	h2_thread_create(qurt_timer_IST, &qurt_timer_IST_stack, 0, 0);
+	h2_thread_create(qurt_timer_IST, &qurt_timer_IST_stack[IST_STACK_SIZE - 1], 0, 0);
 
 /*     void *stack; */
 /*     struct qurtos_thread_info *info = &timerIST_thread_info; */

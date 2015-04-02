@@ -133,7 +133,9 @@ unsigned int qurt_interrupt_register(int int_num, qurt_anysignal_t *int_signal, 
   @dependencies
   None.	
 */
-int qurt_interrupt_acknowledge(int int_num);
+/* EJP: most important maybe fixme. Normal interrupts will ack themselves.  We could (should)? 
+ * change this to match.  If so, we need to actually ack interrupt. */
+static inline int qurt_interrupt_acknowledge(int int_num) { return QURT_EOK; }
 
 /**@ingroup func_qurt_interrupt_deregister
   Disables the specified interrupt and disassociate it from any QuRT signal object.
@@ -176,7 +178,8 @@ unsigned int qurt_interrupt_deregister(int int_num);
   None.
 
 */
- unsigned int qurt_interrupt_enable(int int_num);
+// EJP: fixme
+static inline unsigned int qurt_interrupt_enable(int int_num) { return QURT_EOK; }
 
 /**@ingroup func_qurt_interrupt_disable
   Disables the interrupt.\n
@@ -195,7 +198,8 @@ unsigned int qurt_interrupt_deregister(int int_num);
   @dependencies
   None.
 */
- unsigned int qurt_interrupt_disable(int int_num);
+// EJP: fixme
+static inline unsigned int qurt_interrupt_disable(int int_num) { return QURT_EOK; }
 
 /**@ingroup func_qurt_interrupt_status
   Returns a value indicating the pending status of the specified interrupt.
@@ -211,7 +215,8 @@ unsigned int qurt_interrupt_deregister(int int_num);
   @dependencies
   None.
  */
-unsigned int qurt_interrupt_status(int int_num, int *status);
+// EJP: fixme
+static inline unsigned int qurt_interrupt_status(int int_num, int *status) { *status = 0; return QURT_EOK; }
 
 /**@ingroup func_qurt_interrupt_clear
   Clears the pending status of the specified interrupt.
@@ -227,7 +232,8 @@ unsigned int qurt_interrupt_status(int int_num, int *status);
   @dependencies
   None.
  */
-unsigned int qurt_interrupt_clear(int int_num);
+// EJP: fixme
+static inline unsigned int qurt_interrupt_clear(int int_num) { return QURT_EOK; }
 
 /**@ingroup func_qurt_interrupt_get_registered
   Gets the registered L1 interrupts. \n
@@ -243,7 +249,8 @@ unsigned int qurt_interrupt_clear(int int_num);
   @dependencies
   None.
  */
-unsigned int qurt_interrupt_get_registered(void);
+// EJP: fixme
+static inline unsigned int qurt_interrupt_get_registered(void) { return 0; }
 
 /**@ingroup func_qurt_interrupt_get_config
   Gets the L2VIC interrupt configuration. \n
@@ -264,7 +271,12 @@ unsigned int qurt_interrupt_get_registered(void);
   @dependencies
   None.
  */
-unsigned int qurt_interrupt_get_config(unsigned int int_num, unsigned int *int_type, unsigned int *int_polarity);
+// EJP: fixme
+static inline unsigned int qurt_interrupt_get_config(unsigned int int_num, unsigned int *int_type, unsigned int *int_polarity)
+{
+	*int_type = *int_polarity = 0;
+	return QURT_EOK;
+}
 
 /**@ingroup func_qurt_interrupt_set_config
   Sets the type and polarity of the specified L2VIC interrupt.
@@ -286,7 +298,11 @@ unsigned int qurt_interrupt_get_config(unsigned int int_num, unsigned int *int_t
   @dependencies
   None.
  */
-unsigned int qurt_interrupt_set_config(unsigned int int_num, unsigned int int_type, unsigned int int_polarity);
+// EJP: fixme
+static inline unsigned int qurt_interrupt_set_config(unsigned int int_num, unsigned int int_type, unsigned int int_polarity)
+{
+	return QURT_EOK;
+}
 
 /**@ingroup func_qurt_interrupt_raise
   Raises the interrupt. \n
@@ -302,7 +318,15 @@ unsigned int qurt_interrupt_set_config(unsigned int int_num, unsigned int int_ty
   @dependencies
   None.
  */
-int qurt_interrupt_raise(unsigned int interrupt_num);
+static inline int qurt_interrupt_raise(unsigned int interrupt_num)
+{
+	return h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,interrupt_num+32,0);
+}
+
+static inline int rtos_set_interrupt(unsigned int interrupt_num) 
+{
+	return qurt_interrupt_raise(interrupt_num);
+}
 
 /**
   Check if the current function is called from the callback function of fastint or ISR
@@ -316,8 +340,8 @@ int qurt_interrupt_raise(unsigned int interrupt_num);
   @dependencies
   None.
  */
-
-int qurt_isr_subcall(void);
+// EJP: fixme
+static inline int qurt_isr_subcall(void) { return QURT_EVAL; }
 
 #endif /* QURT_INT_H */
 

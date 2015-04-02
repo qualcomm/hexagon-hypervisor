@@ -22,6 +22,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_l2locka(u32_t unused, void *addr, u32_t len, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_l2unlock(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_hwintop(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 
 #endif
 

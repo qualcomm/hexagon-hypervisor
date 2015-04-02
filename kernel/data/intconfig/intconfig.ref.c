@@ -24,64 +24,19 @@ H2K_fastint_context H2K_fastint_contexts[MAX_HTHREADS];
 
 void H2K_fastint();
 
-#ifdef H2K_L2_CONTROL
-static void H2K_fastint_enable_l2(u32_t whatint)
-{
-	volatile unsigned int *l2_enable = (void *)H2K_gp->l2_ack_base;
-	whatint -= 32;
-	l2_enable[(whatint)/32] = (1 << (whatint & 0x1f));
-}
-
-static void H2K_fastint_disable_l2(u32_t whatint)
-{
-	volatile unsigned int *l2_disable = (void *)(((unsigned int)H2K_gp->l2_int_base) + 0x180);
-	whatint -= 32;
-	l2_disable[(whatint)/32] = (1 << (whatint & 0x1f));
-}
-
-#else
-static inline void H2K_fastint_enable_l2(int whatint) {}
-static inline void H2K_fastint_disable_l2(int whatint) {}
-#endif
-
-static void H2K_fastint_disable(u32_t whatint)
-{
-	u32_t siad_intmask;
-	siad_intmask = 1<<whatint;
-	if (whatint < 32) {
-#if ARCHV >= 4
-		siad(siad_intmask);
-#endif
-		return;
-	} else H2K_fastint_disable_l2(whatint);
-}
-
-static void H2K_fastint_enable(u32_t whatint)
-{
-	u32_t ciad_intmask;
-	if (whatint < 32) {
-		ciad_intmask = 1<<whatint;
-#if ARCHV <= 3
-		ciad_intmask = Q6_R_brev_R(ciad_intmask);
-#endif
-		ciad(ciad_intmask);
-	} else H2K_fastint_enable_l2(whatint);
-}
-
 void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
 {
 	H2K_inthandler_t tmp;
 
 	if (fastint_handler == NULL) { /* deregister */
-		H2K_fastint_disable(whatint);
+		H2K_intcontrol_disable(whatint);
 		H2K_gp->inthandlers[whatint].raw = 0;
 	} else {
 		/* write atomically */
 		tmp.param = fastint_handler;
 		tmp.handler = H2K_fastint;
 		H2K_gp->inthandlers[whatint].raw = tmp.raw;
-		H2K_fastint_enable(whatint);
-
+		H2K_intcontrol_enable(whatint);
 		H2K_gp->fastint_gp = (u32_t)(me->gp);
 	}
 }

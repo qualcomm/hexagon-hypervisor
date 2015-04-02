@@ -52,10 +52,13 @@ static void add_thread(struct QURT_ugp_ptr *ptr)
 }
 
 /* mostly from qurt_thread.c */
-int qurt_thread_initial_setup (struct QURT_ugp_ptr *pUgp)
+static inline void qurt_thread_initial_setup (struct QURT_ugp_ptr *pUgp)
 {
-   /* Set thread_id */
-   pUgp->utcb.thread_id = h2_thread_myid();
+
+	/* We now set the thread id in thread_create already, from the return value
+		 of h2_thread_create */
+
+	//   pUgp->utcb.thread_id = h2_thread_myid();
 
    /* Set UGP Value.  Need to do this after the call to h2_thread_myid above so
       that ugp == 0 will cause the thread_id trap to be called */
@@ -65,9 +68,7 @@ int qurt_thread_initial_setup (struct QURT_ugp_ptr *pUgp)
 			:"r"(pUgp)
 			);
 
-  add_thread(pUgp);
-  
-  return 0;
+	//  add_thread(pUgp);
 }
 
 /* from qurt_thread.c */
@@ -112,17 +113,14 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 	pUgp->utcb.arg = arg;
 	pUgp->utcb.attr = *attr;
 
-	//	return h2_thread_create(pc,stack,arg,prio);
 	*thread_id = h2_thread_create((void *)qurt_trampoline, (unsigned int *)(((unsigned int)attr->stack_addr + attr->stack_size) & (-8)), (void *)pUgp, attr->priority);
- 	return (*thread_id == 0) ? QURT_EFATAL : QURT_EOK;
-}
 
-/* int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void (*entrypoint) (void *), void *arg) */
-/* { */
-/* 	*thread_id = h2_thread_create((void *)entrypoint, attr->stack_addr, arg, (unsigned int)attr->priority); */
-/* 	h2_printf("I created thread 0x%x\nentrypoint 0x%x\nstackptr is 0x%x\n",*thread_id, entrypoint, attr->stack_addr); */
-/* 	return (*thread_id == 0) ? QURT_EFATAL : EOK; */
-/* } */
+	if (-1 != *thread_id) {
+		pUgp->utcb.thread_id = *thread_id;
+		add_thread(pUgp);
+	}
+ 	return (*thread_id == -1) ? QURT_EFATAL : QURT_EOK;
+}
 
 int qurt_thread_join(unsigned int threadid, int *status)
 {
@@ -185,5 +183,6 @@ void qurt_init()
 	if (initted) return;
 	initted = 1;
 	qurt_memory_init();
+	qurt_timer_init();
 }
 

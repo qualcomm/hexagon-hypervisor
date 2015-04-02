@@ -466,7 +466,10 @@ qurt_cache_partition_t qurt_thread_get_l2cache_partition (void);
    @dependencies
    None.
  */
-void qurt_thread_set_timetest_id (unsigned short tid);
+static inline void qurt_thread_set_timetest_id (unsigned short tid)
+{
+	h2_thread_set_tid(tid);
+}
 
 /**@ingroup func_qurt_thread_set_cache_partition
    Sets the cache partition for the current thread. This function uses the type qurt_cache_partition_t to select the cache partition 
@@ -534,7 +537,10 @@ void qurt_thread_set_coprocessor(unsigned int enable, unsigned int coproc_id);
    @dependencies
    None.
  */
-unsigned short qurt_thread_get_timetest_id (void);
+static inline unsigned short qurt_thread_get_timetest_id (void)
+{
+	return h2_thread_get_tid();
+}
 
 /**@ingroup func_qurt_thread_exit
    @xreflabel{sec:qurt_thread_exit}
@@ -581,21 +587,6 @@ void qurt_thread_exit(int status);
  */
 int qurt_thread_join(unsigned int tid, int *status);
 
-/**@ingroup func_qurt_thread_get_anysignal
-   Gets the signal of the current thread.
-   Returns the RTOS-assigned signal of the current thread.
-
-   QuRT assigns every thread a signal to support communication between threads.
-   
-   @return  
-   Signal object address -- Any-signal object assigned to the current thread.
-
-   @dependencies
-   None.
-  
- */
-unsigned int qurt_thread_get_anysignal(void);
-
 /**@ingroup func_qurt_thread_get_priority 
    Gets the priority of the specified thread. \n 
    Returns the thread priority of the specified thread.\n
@@ -615,7 +606,10 @@ unsigned int qurt_thread_get_anysignal(void);
    @dependencies
    None.
  */
-int qurt_thread_get_priority (qurt_thread_t threadid);
+static inline int qurt_thread_get_priority (qurt_thread_t threadid)
+{
+	return h2_get_prio();// hopefully it's the calling thread! :-)
+}
 
 /**@ingroup func_qurt_thread_set_priority
    Sets the priority of the specified thread.\n
@@ -638,7 +632,10 @@ int qurt_thread_get_priority (qurt_thread_t threadid);
    @dependencies
    None.
  */
-int qurt_thread_set_priority (qurt_thread_t threadid, unsigned short newprio);
+static inline int qurt_thread_set_priority (qurt_thread_t threadid, unsigned short newprio)
+{
+	return h2_set_prio(threadid,newprio);
+}
 
 /*
    Gets the QuRT API version.

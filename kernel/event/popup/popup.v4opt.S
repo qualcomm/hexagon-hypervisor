@@ -170,12 +170,12 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 		memh(RUNLIST_PRIOS+HWTNUM<<#1) = NEGONE
 		memw(RUNLIST+HWTNUM<<#2) = ZERO
 		RETURN_PAIR = combine(#0,INTNO)
-		WIDX_BITNO = bitsplit(INTNO,#5)
+		INTNO = add(INTNO,#-32)
 	}
 	{
 		memb(ME+#CONTEXT_status) = #STATUS_INTBLOCKED
 		memd(ME+#CONTEXT_r0100) = RETURN_PAIR
-		INTNO = add(INTNO,#-32)
+		WIDX_BITNO = bitsplit(INTNO,#5)
 	}
 	{
 		ACKBASE = memw(H2K_GP+#KG_l2_ack_base)

@@ -41,12 +41,12 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	{
 		CONTEXT_SIZE_VAL = #FASTINT_CONTEXT_SIZE
 		p3 = cmp.eq(r1,#0)
-		SSR_VAL = ##0x01c80000
+		TMP54 = memd(H2K_GP+#KG_fastint_gp_ssr)
 	}
 	{
 		TMP = r29
 		r29 = add(##H2K_fastint_contexts+FASTINT_CONTEXT_SIZE,mpyi(r2,CONTEXT_SIZE_VAL))
-		ssr = SSR_VAL  // AXOK (if changing bits other than IE, EX, UM)
+		ssr = TMP4  // AXOK (if changing bits other than IE, EX, UM)
 	}
 	{
 		allocframe(#8)
@@ -57,9 +57,9 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	{
 		crswap(OTHER_SGP,sgp0)
 		OLD_SP_SAVE = TMP
+		TMP = TMP5	// move GP over
 	}
 	{
-		TMP = memw(H2K_GP+#KG_fastint_gp)
 		if (p3) jump 1f
 		TMP32 = c13:12				// cs1:cs0
 	}

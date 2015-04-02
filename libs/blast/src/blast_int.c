@@ -96,3 +96,6 @@ unsigned int qurt_interrupt_deregister(int int_num)
 	return 0;
 }
 
+unsigned int QURT_MAX_HTHREADS __attribute__((section(".sdata"))) = 6;
+unsigned int QURTK_MAX_HTHREADS __attribute__((section(".sdata"))) = 6;
+

@@ -38,6 +38,7 @@ void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_th
 		H2K_gp->inthandlers[whatint].raw = tmp.raw;
 		H2K_intcontrol_enable(whatint);
 		H2K_gp->fastint_gp = (u32_t)(me->gp);
+		H2K_gp->fastint_ssr= (u32_t)(me->ssr & 0x00007F00); /* Set ASID field */
 	}
 }
 

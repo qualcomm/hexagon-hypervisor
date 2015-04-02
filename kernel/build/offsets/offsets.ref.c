@@ -95,6 +95,7 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(oncpu_wait);
 	PRINT_KG_OFFSET(waitcycles);
 	PRINT_KG_OFFSET(fastint_gp);
+	PRINT_KG_OFFSET(fastint_gp_ssr);
 	PRINT_KG_OFFSET(runlist);
 	PRINT_KG_OFFSET(runlist_prios);
 	PRINT_KG_OFFSET(ready);

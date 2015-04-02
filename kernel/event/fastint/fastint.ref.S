@@ -65,18 +65,17 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 #if ARCHV <= 3
 	r19 = brev(r19)
 #endif
-	r6 = memw(H2K_GP+#KG_fastint_gp)
+	r7:6 = memd(H2K_GP+#KG_fastint_gp_ssr)
 
 	// r4 = fastint_functions
 	// r5 = mask for ciad
-	// r6 = gp
+	// r7 = gp
+	// r6 = ssr
 
-	r11.h = #0x01c0
-	r11.l = #0x0
 	r11 = setbit(r11, #SSR_GUEST_BIT)
 	r16 = r0		// save intno in r26 for L2 Control
-	ssr = r11
-	gp = r6
+	ssr = r6
+	gp = r7
 
 	callr r3
 

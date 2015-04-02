@@ -35,10 +35,10 @@ typedef struct {
 		};
 	};
 	union {
-		u64_t fastint_gp_stlbptr;
+		u64_t fastint_gp_ssr;
 		struct {
+			u32_t fastint_ssr;
 			u32_t fastint_gp;
-			H2K_mem_stlb_asid_info_t *stlbptr;
 		};
 	};
 	union {
@@ -46,6 +46,13 @@ typedef struct {
 		struct {
 			void *traptab_addr;
 			void *stacks_addr;
+		};
+	};
+	union {
+		u64_t unused_stlbptr;
+		struct {
+			H2K_mem_stlb_asid_info_t *stlbptr;
+			u32_t unused;
 		};
 	};
 	union {

@@ -68,7 +68,7 @@ TIMING ?= --timing
 
 BUSPENALTY ?= --buspenalty 50
 
-ULIMIT ?= 60
+ULIMIT ?= 120
 
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 

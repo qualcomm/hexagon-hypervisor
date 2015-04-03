@@ -435,7 +435,9 @@ int qurt_thread_resume(unsigned int thread_id);
    @dependencies
    None.
  */
-qurt_thread_t qurt_thread_get_id (void);
+static inline qurt_thread_t qurt_thread_get_id (void) {
+	return h2_thread_myid();
+}
 
 /**@ingroup func_qurt_thread_get_l2cache_partition
    Gets the information of the cache partition assigned to the caller thread.\n

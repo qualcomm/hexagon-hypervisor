@@ -85,6 +85,7 @@ typedef struct {
 	u32_t tlb_index;
 	u32_t last_tlb_index;
 	u32_t tlb_size;
+	u64_t pinned_tlb_mask;
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];
 	u64_t waitcycles[MAX_HTHREADS];

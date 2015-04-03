@@ -32,6 +32,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.tlb_index = 0;
 	H2K_kg.last_tlb_index = last_tlb_index;
 	H2K_kg.tlb_size = tlb_size;
+	H2K_kg.pinned_tlb_mask = (~0ULL) << ((last_tlb_index+1) & 0x3F);
 	H2K_kg.traptab_addr = H2K_traptab;
 	H2K_kg.stacks_addr = &H2K_stacks;
 

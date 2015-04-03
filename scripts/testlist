@@ -49,6 +49,7 @@
 ./kernel/traps/prio/test
 ./kernel/traps/tid/test
 ./kernel/traps/time/test
+./kernel/traps/tlb/test
 ./kernel/traps/waitcycles/test
 ./kernel/time/timer/test_standalone
 ./kernel/time/timer/test_h2

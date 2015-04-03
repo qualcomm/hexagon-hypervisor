@@ -51,9 +51,35 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
   QURT_ETLBCREATEUNALIGNED -- Entry was not created; an unaligned address was specified.
 
  */
-int  qurt_tlb_entry_create (unsigned int *entry_id, qurt_addr_t vaddr, qurt_paddr_t paddr, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms, int asid);
 
-int qurt_tlb_entry_create_64 (unsigned int *entry_id, qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms, int asid);
+static inline u64_t qurt_tlb_form_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms)
+{
+	u64_t entry;
+	entry = 0xC0000000 | (vaddr >> 12);
+	entry <<= 32;
+	entry |= perms << 28;
+	entry |= cache_attribs << 24;
+	entry |= ((paddr_64 >> 11) & (0x00FFFFFF) & (-2 << (size*2)));
+	entry |= (1<<(size*2));
+	return entry;
+}
+
+static inline int qurt_tlb_entry_create_64 (unsigned int *entry_id, qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms, int asid __attribute__((unused)))
+{
+	int ret;
+	ret = h2_tlb_alloc(qurt_tlb_from_entry(vaddr,paddr_64,size,cache_attribs,perms));
+	if (ret >= 0) {
+		*entry_id = ret;
+		return QURT_EOK;
+	} else {
+		return QURT_EFATAL;
+	}
+}
+
+static inline int  qurt_tlb_entry_create (unsigned int *entry_id, qurt_addr_t vaddr, qurt_paddr_t paddr, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms, int asid)
+{
+	return qurt_tlb_entry_create_64(entry_id,vaddr,(unsigned long)paddr,size,cache_attribs,perms,asid);
+}
 
 /**@ingroup func_qurt_tlb_entry_delete 
   Deletes the specified TLB entry from the Hexagon processor's TLB.
@@ -68,7 +94,11 @@ int qurt_tlb_entry_create_64 (unsigned int *entry_id, qurt_addr_t vaddr, qurt_pa
   @dependencies
   None.
  **/
-int qurt_tlb_entry_delete (unsigned int entry_id);
+static inline int qurt_tlb_entry_delete (unsigned int entry_id)
+{
+	h2_tlb_free(entry_id);
+	return QURT_EOK;
+}
 
 /**@ingroup func_qurt_tlb_entry_query
   Searches for the specified TLB entry in the Hexagon processor's TLB.
@@ -85,7 +115,16 @@ int qurt_tlb_entry_delete (unsigned int entry_id);
   @dependencies
   None.
  **/
-int qurt_tlb_entry_query (unsigned int *entry_id, qurt_addr_t vaddr, int asid);
+static inline int qurt_tlb_entry_query (unsigned int *entry_id, qurt_addr_t vaddr, int asid __attribute__((unused)))
+{
+	int idx = h2_tlb_query(vaddr);
+	if (idx >= 0) {
+		*entry_id = idx;
+		return QURT_EOK;
+	} else {
+		return QURT_EFATAL;
+	}
+}
 
 /**@ingroup func_qurt_tlb_entry_set
   Sets the TLB entry by storing an entry at the specified location 
@@ -101,7 +140,10 @@ int qurt_tlb_entry_query (unsigned int *entry_id, qurt_addr_t vaddr, int asid);
   @dependencies
   None.
  **/
-int qurt_tlb_entry_set (unsigned int entry_id, unsigned long long int entry);
+static inline int qurt_tlb_entry_set (unsigned int entry_id, unsigned long long int entry)
+{
+	return h2_tlb_write(entry_id,entry);
+}
 
 /**@ingroup func_qurt_tlb_entry_get
   Gets the TLB entry. \n
@@ -117,7 +159,11 @@ int qurt_tlb_entry_set (unsigned int entry_id, unsigned long long int entry);
   @dependencies
   None.
  **/
-int qurt_tlb_entry_get (unsigned int entry_id, unsigned long long int *entry);
+static inline int qurt_tlb_entry_get (unsigned int entry_id, unsigned long long int *entry)
+{
+	*entry = h2_tlb_read(entry_id);
+	return QURT_EOK;
+}
 
 /**@ingroup func_qurt_tlb_entry_get_available
   Gets the number of TLB entries.\n
@@ -131,7 +177,11 @@ int qurt_tlb_entry_get (unsigned int entry_id, unsigned long long int *entry);
   @dependencies
   None.
  */
-unsigned short qurt_tlb_entry_get_available(void);
+static inline unsigned int qurt_tlb_entry_get_available(void)
+{
+	/* EJP: Guess an average. I am a horrible person. */
+	return 10;
+}
 
 /**@ingroup func_qurt_tlb_get_pager_physaddrs
 Searches the Hexagon processor's TLB, and returns all physical addresses that belong to the pager.

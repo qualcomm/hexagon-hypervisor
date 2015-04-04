@@ -537,6 +537,30 @@ static u8_t l2_v61_0[] =
 #define l2_v61_1 (l2_v61_0)
 #define l2_v61_3 (l2_v61_0)
 
+static u8_t l2_v62_0[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s1024,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+// so far there is one l2 tag size for each array size in v62
+#define l2_v62_1 (l2_v62_0)
+#define l2_v62_6 (l2_v62_0)
+
 static u8_t l2_v65_1[] =
 	{
 		[0x0] = s0,
@@ -557,6 +581,7 @@ static u8_t l2_v65_1[] =
 		[0xf] = reserved
 	};
 
+// so far there is blah blah blah
 #define l2_v65_2 (l2_v65_1)
 
 // uarch -> (array-size -> tag-size map)
@@ -603,6 +628,27 @@ static u8_t *uarches_v61[] =
 		[0xf] = NULL,
 	};
 
+static u8_t *uarches_v62[] =
+	{
+		[0x0] = l2_v62_0,
+		[0x1] = l2_v62_1,
+		[0x2] = NULL,
+		[0x3] = NULL,
+		[0x4] = NULL,
+		[0x5] = NULL,
+		[0x6] = NULL,
+		[0x6] = l2_v62_6,
+		[0x7] = NULL,
+		[0x8] = NULL,
+		[0x9] = NULL,
+		[0xa] = NULL,
+		[0xb] = NULL,
+		[0xc] = NULL,
+		[0xd] = NULL,
+		[0xe] = NULL,
+		[0xf] = NULL,
+	};
+
 static u8_t *uarches_v65[] =
 	{
 		[0x0] = NULL,
@@ -624,10 +670,11 @@ static u8_t *uarches_v65[] =
 		[0xf] = NULL,
 	};
 
-arch_t arches[] =
+static arch_t arches[] =
 	{
 		{0x60, uarches_v60},
 		{0x61, uarches_v61},
+		{0x62, uarches_v62},
 		{0x65, uarches_v65},
 		{0x0, NULL}
 	};

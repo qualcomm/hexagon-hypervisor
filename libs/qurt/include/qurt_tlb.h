@@ -52,7 +52,7 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
 
  */
 
-static inline u64_t qurt_tlb_from_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms)
+static inline u64_t qurt_tlb_from_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, unsigned int size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms)
 {
 	u64_t entry;
 	entry = 0xC0000000 | (vaddr >> 12);
@@ -64,10 +64,28 @@ static inline u64_t qurt_tlb_from_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr
 	return entry;
 }
 
+static inline int qurt_tlb_size_to_sizeid(qurt_size_t size)
+{
+	switch(size) {
+	case 0x00001000: return 0;
+	case 0x00004000: return 1;
+	case 0x00010000: return 2;
+	case 0x00040000: return 3;
+	case 0x00100000: return 4;
+	case 0x00400000: return 5;
+	case 0x01000000: return 6;
+	default: return -1;
+	}
+}
+
 static inline int qurt_tlb_entry_create_64 (unsigned int *entry_id, qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms, int asid __attribute__((unused)))
 {
 	int ret;
-	ret = h2_tlb_alloc(qurt_tlb_from_entry(vaddr,paddr_64,size,cache_attribs,perms));
+	int sizeid;
+	if ((sizeid = qurt_tlb_size_to_sizeid(size)) < 0) return QURT_ETLBCREATESIZE;
+	if (vaddr & (size-1)) return QURT_ETLBCREATEUNALIGNED;
+	if (paddr_64 & (size-1)) return QURT_ETLBCREATEUNALIGNED;
+	ret = h2_tlb_alloc(qurt_tlb_from_entry(vaddr,paddr_64,sizeid,cache_attribs,perms));
 	if (ret >= 0) {
 		*entry_id = ret;
 		return QURT_EOK;
@@ -162,7 +180,7 @@ static inline int qurt_tlb_entry_set (unsigned int entry_id, unsigned long long 
  **/
 static inline int qurt_tlb_entry_get (unsigned int entry_id, unsigned long long int *entry)
 {
-	*entry = h2_tlb_read(entry_id);
+	*entry = (h2_tlb_read(entry_id) & 0xF80fffffffffffffULL);
 	return QURT_EOK;
 }
 

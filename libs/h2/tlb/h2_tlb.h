@@ -26,7 +26,7 @@ as h2_tlb_alloc().
 @dependencies None
 */
 
-int h2_tlb_trap(unsigned int whichtrap, unsigned int val32, unsigned long long int val64);
+long long int h2_tlb_trap(unsigned int whichtrap, unsigned int val32, unsigned long long int val64);
 
 /**
 Read TLB entry
@@ -47,7 +47,7 @@ Write TLB entry
 
 static inline void h2_tlb_write(unsigned int index, unsigned long long int entry)
 {
-	h2_tlb_trap(TLBOP_TLBWRITE, index, 0);
+	h2_tlb_trap(TLBOP_TLBWRITE, index, entry);
 }
 
 /**

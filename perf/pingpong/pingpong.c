@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <blast.h>
+#include <qurt.h>
 #include <stdio.h>
 
 #define MAX_THREADS 8
 
-blast_sem_t pingsem[MAX_THREADS];
-blast_sem_t tomain;
+qurt_sem_t pingsem[MAX_THREADS];
+qurt_sem_t tomain;
 
 unsigned long long int stacks[MAX_THREADS][64];
 
@@ -50,20 +50,20 @@ void ping(void *id) {
 	int i;
 	int myid = (int)id;
 	printf("Ping thread %d\n",myid);
-	blast_sem_t *in, *out;
+	qurt_sem_t *in, *out;
 	in = &pingsem[myid];
 	if (myid == (MAX_THREADS-1)) out = &pingsem[0];
 	else out = &pingsem[myid+1];
-	blast_sem_up(&tomain);
+	qurt_sem_up(&tomain);
 	for (i = 0; i < ITERS; i++) {
-		blast_sem_down(in);
+		qurt_sem_down(in);
 		#ifdef DEBUG
 		printf("%d: ping!\n",myid);
 		#endif
-		blast_sem_up(out);
+		qurt_sem_up(out);
 	}
-	if (myid == MAX_THREADS-1) blast_sem_up(&tomain);
-	blast_thread_stop(0);
+	if (myid == MAX_THREADS-1) qurt_sem_up(&tomain);
+	qurt_thread_stop();
 }
 
 char context_space[1024];
@@ -71,16 +71,16 @@ char context_space[1024];
 int main() {
 	unsigned long long int start,end;
 	int i;
-	blast_sem_init_val(&tomain,0);
+	qurt_sem_init_val(&tomain,0);
 	for (i = 0; i < MAX_THREADS; i++) {
-		blast_sem_init_val(&pingsem[i],0);
+		qurt_sem_init_val(&pingsem[i],0);
 		my_thread_create(ping,&stacks[i][64],64*8,(void *)i,100);
-		blast_sem_down(&tomain);
+		qurt_sem_down(&tomain);
 	}
-	start = blast_get_core_pcycles();
-	blast_sem_up(&pingsem[0]);
-	blast_sem_down(&tomain);
-	end = blast_get_core_pcycles();
+	start = qurt_get_core_pcycles();
+	qurt_sem_up(&pingsem[0]);
+	qurt_sem_down(&tomain);
+	end = qurt_get_core_pcycles();
 	printf("TEST PASSED - %.0f\n", (float) (end - start) / (float) (ITERS*MAX_THREADS));
 	h2_thread_stop(0);
 	return 0;

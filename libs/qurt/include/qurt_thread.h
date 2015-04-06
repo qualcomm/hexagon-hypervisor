@@ -400,17 +400,6 @@ void qurt_thread_get_name (char *name, unsigned char max_len);
  */
 int qurt_thread_create (qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void (*entrypoint) (void *), void *arg);
 
-/*
-   Stops the current thread, frees the kernel TCB, and yields to the next highest ready thread. 
-  
-   @return
-   void 
-
-   @dependencies
-   None.
- */
-void qurt_thread_stop(void);
-
 /**@ingroup func_qurt_thread_resume
    Resumes the execution of a suspended thread.
   
@@ -564,6 +553,17 @@ static inline unsigned short qurt_thread_get_timetest_id (void)
    None.
  */
 void qurt_thread_exit(int status);
+
+/*
+   Stops the current thread, frees the kernel TCB, and yields to the next highest ready thread. 
+  
+   @return
+   void 
+
+   @dependencies
+   None.
+ */
+static inline void qurt_thread_stop(void) { qurt_thread_exit(0); }
 
 /**@ingroup func_qurt_thread_join
    @xreflabel{sec:thread_join}

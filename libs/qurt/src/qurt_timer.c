@@ -575,8 +575,6 @@ int qurt_timer_sleep ( qurt_timer_duration_t duration )
     qurtos_timer_lock (&qurt_timer_lock);
     result = qurt_timer_lib_sleep_activate (duration, &cb_signal, QURT_TIMER_CLIENT_ACK_SIGMASK);
     qurtos_timer_unlock (&qurt_timer_lock);
-    return result;
-
     
     if (result != QURT_EOK)
         return result;        

@@ -308,7 +308,7 @@ void qurt_timer_IST (void *arg)
 
 	while (1) {
 		h2_intwait(QURT_TIMER_INTERRUPT);
-qurtos_printf("Timer interrupt\n");
+qurtos_printf("qurt timer interrupt\n");
 
 #ifdef CONFIG_PRIORITY_INHERITANCE
    qurt_pimutex_lock(&qurt_sclk_mutex);

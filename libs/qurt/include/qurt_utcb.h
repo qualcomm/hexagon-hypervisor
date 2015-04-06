@@ -70,6 +70,7 @@ struct QURT_ugp_ptr {
 	h2_mutex_t join_lock;
 	h2_cond_t join_cond;
 	int join_refcount;
+	int status;
 	enum { QURT_JOIN_STATE_RUNNING, QURT_JOIN_STATE_DONE } join_state;
 
 	/* Maybe some extra stuff for TLS? */

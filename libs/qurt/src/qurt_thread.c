@@ -146,6 +146,7 @@ int qurt_thread_join(unsigned int threadid, int *status)
 	if (tmp == 0) {
 		remove_thread(ptr);
 	}
+	*status = ptr->status;
 	return 0;
 }
 
@@ -156,6 +157,7 @@ void qurt_thread_exit(int status)
 	if (tmp) {
 		h2_mutex_lock(&tmp->join_lock);
 		tmp->join_state = QURT_JOIN_STATE_DONE;
+		tmp->status = status;
 		if (tmp->join_refcount) {
 			DEBUG_PRINTF("QURT THREAD: %x waking up waiting threads...\n",h2_thread_myid());
 			h2_cond_broadcast(&tmp->join_cond);

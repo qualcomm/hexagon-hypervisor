@@ -61,7 +61,7 @@ docclean:
 	$(MAKE) -C libs/docs/dox clean
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
-testclean covclean: ucosclean
+testclean covclean: ucosclean qurtclean
 	$(MAKE) -f scripts/Makefile.coverage clean && \
 	$(MAKE) -f scripts/Makefile.coverage clean_top
 
@@ -105,12 +105,16 @@ size:
 t:
 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
-test: ucosclean
+test:	qurt_test h2_test
+	head -n -1 h2_report.html > report.html
+	tail -n +2 qurt_report.html >> report.html
+
+h2_test: ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
 	#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
 	#[ `fgrep -c -i warning: test.out` -eq 0 ]
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
@@ -126,12 +130,16 @@ qurt_test_single: ./qurt/test/testcases
 qurt_test_libs:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
 
-cov:
+cov: qurt_test h2_cov
+	head -n -1 h2_report.html > report.html
+	tail -n +2 qurt_report.html >> report.html
+
+h2_cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
-	$(MAKE) -C ucos sim 2>&1 | tee make.log
+#	$(MAKE) -C ucos sim 2>&1 | tee make.log
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 
 .PHONY: check-fail test-check cov-check cov_fns
 
@@ -141,7 +149,7 @@ check-fail test-check cov-check:
 
 check:
 	$(MAKE) -f scripts/Makefile.coverage check
-	$(MAKE) -C ucos check
+#	$(MAKE) -C ucos check
 
 doc:
 	$(MAKE) -C libs/docs/dox
@@ -155,7 +163,7 @@ compat:
 
 gtags:
 	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
-	htags -afhnosTxv --show-position
+#	htags -afhnosTxv --show-position
 
 gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML

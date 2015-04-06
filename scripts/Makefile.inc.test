@@ -255,6 +255,9 @@ report.html:
 qurt_report.html: report.html
 	mv report.html qurt_report.html
 
+h2_report.html: report.html
+	mv report.html h2_report.html
+
 .PHONY: check
 
 check-fail:

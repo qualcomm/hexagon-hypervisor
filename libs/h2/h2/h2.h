@@ -37,6 +37,7 @@ extern "C" {
 #include "h2_rmutex.h"
 #include "h2_sem.h"
 #include "h2_thread.h"
+#include "h2_tlb.h"
 #include "h2_vmtraps.h"
 #include "h2_vecaccess.h"
 #include "h2_vm.h"

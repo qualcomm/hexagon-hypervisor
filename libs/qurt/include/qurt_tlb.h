@@ -52,7 +52,7 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
 
  */
 
-static inline u64_t qurt_tlb_form_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms)
+static inline u64_t qurt_tlb_from_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms)
 {
 	u64_t entry;
 	entry = 0xC0000000 | (vaddr >> 12);
@@ -142,7 +142,8 @@ static inline int qurt_tlb_entry_query (unsigned int *entry_id, qurt_addr_t vadd
  **/
 static inline int qurt_tlb_entry_set (unsigned int entry_id, unsigned long long int entry)
 {
-	return h2_tlb_write(entry_id,entry);
+	h2_tlb_write(entry_id,entry);
+	return QURT_EOK;
 }
 
 /**@ingroup func_qurt_tlb_entry_get

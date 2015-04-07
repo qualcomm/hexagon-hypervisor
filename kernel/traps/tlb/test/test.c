@@ -90,7 +90,6 @@ void free_all_1()
 void test_readwriteprobe()
 {
 	int i;
-	int idx;
 	a.ssr_asid = ASID;
 	for (i = 32; i < 96; i++) {
 		if (H2K_tlb_tlbop(TLBOP_TLBWRITE,i,VALID_TLB_ENTRY,&a) != 0) FAIL("tlbw");
@@ -113,7 +112,7 @@ int main()
 #if ARCHV > 4
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	printf("Hello!\n");
-	H2K_kg_init(0,0,125);
+	H2K_kg_init(0,0,125, 128);
 	printf("initted!\n");
 	if (H2K_gp->pinned_tlb_mask != 0xC000000000000000ULL) {
 		FAIL("mask setup");

@@ -13,7 +13,8 @@ typedef enum {
 	INFO_SYSCFG,      /**< SYSCFG register */
 	INFO_REV,         /**< REV register */
 	INFO_SSBASE,      /**< subsystem base from cfg_table */
-	INFO_TLB,         /**< Number of replaceable TLB entries */
+	INFO_TLB_FREE,    /**< Number of replaceable TLB entries */
+	INFO_TLB_SIZE,    /**< Number of TLB entries */
 	INFO_PHYSADDR,    /**< Kernel physical address */
 	INFO_TCM_BASE,    /**< TCM base address */
 	INFO_L2MEM_SIZE,  /**< L2 cache array size */

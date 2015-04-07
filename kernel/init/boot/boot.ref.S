@@ -52,6 +52,7 @@
 #define LINK_ADDR   r21  // kernel VA
 #define COUNTER     r22
 #define STACK_SIZE  r23
+#define TLB_SIZE 		r24
 
 #define SP          r29
 
@@ -146,6 +147,7 @@ FUNC_START start .entry .p2align 12
 	p0 = cmp.eq(TLB_LO, #1)
 	if (!p0) jump 5b
 	LAST_TLB = TLB_INDEX
+	TLB_SIZE = TLB_INDEX
 
 .Ltlbsetup:
 
@@ -156,7 +158,7 @@ FUNC_START start .entry .p2align 12
 	TLB_PHYS = PHYS_ADDR
 
 	TLB_INDEX = sub(LAST_TLB, NPAGES)
-	TLB_INDEX = add(TLB_INDEX, #-1)  // starting index for pinned entries
+	TLB_INDEX = add(TLB_INDEX, #-1)  // -1 for device page = starting index for pinned entries
 	LAST_TLB = add(TLB_INDEX, #-1) // last free entry
 	COUNTER = #0
 	PAGE_COUNT = NPAGES
@@ -256,6 +258,7 @@ FUNC_START start .entry .p2align 12
 	r1 = BOOT_OFFSET
 	r2 = SS_BASE
 	r3 = LAST_TLB
+	r4 = TLB_SIZE
 
 	jump H2K_thread_boot
 FUNC_END start

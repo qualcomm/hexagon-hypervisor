@@ -373,7 +373,8 @@ void print_infos() {
 	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
 	printf("\tTCM size: %dK\n", h2_info(INFO_TCM_SIZE) / 1024);
 
-	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB));
+	printf("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
+	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
 	printf("\tSTLB:\n");
 	printf("\t\tEnabled: ");
 	if (stlb_info.stlb_enabled) {

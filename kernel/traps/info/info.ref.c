@@ -45,8 +45,11 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_SSBASE:
 		return cfg_table(CFG_TABLE_SSBASE);
 
-	case INFO_TLB:
+	case INFO_TLB_FREE:
 		return H2K_gp->last_tlb_index + 1;
+
+	case INFO_TLB_SIZE:
+		return H2K_gp->tlb_size;
 
 	case INFO_PHYSADDR:
 		return H2K_LINK_ADDR - H2K_gp->phys_offset;

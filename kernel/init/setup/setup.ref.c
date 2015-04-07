@@ -66,7 +66,7 @@ void H2K_init_setup_bootvm(u32_t phys_offset)
 
 #define DEVICE_PAGE_OFFSET(ADDR) ((ADDR) & ((0x1 << (H2K_KERNEL_ADDRBITS + (2 * DEVICE_PAGE_SIZE))) - 1))
 
-IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssbase, u32_t last_tlb_index) {
+IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size) {
 	/* FIXME: The allocator heap can just go at the end of data once boot VM is
 		 moved out of monitor space */
 	void *heap_top;
@@ -79,7 +79,7 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & -16);
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
-	H2K_kg_init(phys_offset, devpage_priv_offset, last_tlb_index);		/* Kernel Globals first! */
+	H2K_kg_init(phys_offset, devpage_priv_offset, last_tlb_index, tlb_size);		/* Kernel Globals first! */
 	H2K_tmpmap_init();
 	H2K_tcm_copy(H2K_l2cache_init(), last_tlb_index);
 	H2K_trace_init();
@@ -96,12 +96,12 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 	H2K_init_setup_bootvm(phys_offset);
 }
 
-IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot_offset, u32_t ssbase, u32_t last_tlb_index)
+IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot_offset, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size)
 {
 	s32_t asid;
 	u32_t hthreads = (1<<MAX_HTHREADS)-1;
 
-	H2K_init_setup(phys_offset, ssbase, last_tlb_index);
+	H2K_init_setup(phys_offset, ssbase, last_tlb_index, tlb_size);
 
 	/* allocate first thread */
 	H2K_thread_context *boot = bootvm->free_threads;

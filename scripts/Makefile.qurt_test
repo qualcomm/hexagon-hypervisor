@@ -1,7 +1,7 @@
 BOOT=1
 OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 EXEC=test.elf
-
+ULIMIT := 240
 
 
 include ${H2DIR}/scripts/Makefile.inc.test

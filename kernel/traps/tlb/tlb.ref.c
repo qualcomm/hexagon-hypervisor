@@ -8,6 +8,7 @@
 #include <hw.h>
 #include <hexagon_protos.h>
 #include <tlbmisc.h>
+#include <symbols.h>
 
 typedef s64_t (*tlbopptr_t)(u32_t, u32_t, u64_t, H2K_thread_context *);
 
@@ -39,7 +40,7 @@ static s64_t H2K_tlb_tlballoc(u32_t unused0, u32_t unused1, u64_t entry, H2K_thr
 	H2K_mutex_lock_tlb();
 	mask = H2K_gp->pinned_tlb_mask;
 	maskidx = 63-Q6_R_cl1_P(mask);
-	idx = maskidx + (MAX_TLB_ENTRIES-64);
+	idx = maskidx + (H2K_gp->tlb_size - 64);
 	if (mask == ~0L) {
 		H2K_mutex_unlock_tlb();
 		return -1;
@@ -55,9 +56,10 @@ static s64_t H2K_tlb_tlballoc(u32_t unused0, u32_t unused1, u64_t entry, H2K_thr
 static s64_t H2K_tlb_tlbfree(u32_t unused0, u32_t index, u64_t unused32, H2K_thread_context *me)
 {
 	int maskidx = index & 0x3f;
-	if (index > MAX_TLB_ENTRIES) return -1;
-	if (index <= H2K_gp->last_tlb_index) return -1;
+	if (index >= H2K_gp->tlb_size - ((u32_t)&H2K_KERNEL_NPAGES + 1)) return -1;
+
 	H2K_mutex_lock_tlb();
+	if (index <= H2K_gp->last_tlb_index) return -1;
 	H2K_mem_tlb_write(index,0);
 	H2K_gp->pinned_tlb_mask &= ~(1ULL<<(maskidx));	/* Clear Bit */
 	/* While free spots at the end, grow replaceable section */

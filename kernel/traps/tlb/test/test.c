@@ -110,6 +110,7 @@ void random_test()
 int main()
 {
 	int i;
+#if ARCHV > 4
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	printf("Hello!\n");
 	H2K_kg_init(0,0,125);
@@ -132,6 +133,7 @@ int main()
 	for (i = 0; i < 1000; i++) {
 		random_test();
 	}
+#endif
 	puts("TEST PASSED\n");
 	return 0;
 }

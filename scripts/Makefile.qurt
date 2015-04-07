@@ -12,7 +12,7 @@ QURT_TEST_LIBS_INCLUDES := $(foreach libdir, $(QURT_TEST_LIBDIRS), -I $(QURT_TES
 QURT_TEST_LIBS_L := $(foreach libdir, $(QURT_TEST_LIBDIRS), -l $(libdir))
 
 
-SUBDIRS:=$(shell cat ./scripts/qurt_testlist)
+SUBDIRS := $(shell cat ./scripts/qurt_testlist | perl -p -e 's/^\s*\#.*//;')
 
 all:
 	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=all

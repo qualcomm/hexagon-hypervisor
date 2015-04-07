@@ -4,7 +4,7 @@
 
 H2DIR=.
 
-SUBDIRS:=$(shell cat ./scripts/testlist)
+SUBDIRS:=$(shell cat ./scripts/testlist | perl -p -e 's/^\s*\#.*//;')
 
 all:
 	@$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all

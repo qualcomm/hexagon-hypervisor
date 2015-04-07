@@ -1,3 +1,5 @@
+# Expected to work
+
 ./qurt/test/testcases/atomic_space_t/app1/src
 ./qurt/test/testcases/cxx_constructor/app1/src
 ./qurt/test/testcases/libc_fileio/app1/src
@@ -177,3 +179,42 @@
 ./qurt/test/testcases/stackprotection_t1/app1/src
 ./qurt/test/testcases/stackprotection_t2/app1/src
 ./qurt/test/testcases/vma_t1/app1/src
+
+# Disabled
+
+# ./qurt/test/testcases/qthread_malloc/app1/src
+# ./qurt/test/testcases/qmemory_t5/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup/app1/src
+# ./qurt/test/testcases/qmemory_t1.phys_cont/app1/src
+# ./qurt/test/testcases/qmemory_tcm_t1/app1/src
+# ./qurt/test/testcases/qmemory_uncach_shared/app1/src
+# ./qurt/test/testcases/qmemory_t4/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup_all.3/app1/src
+# ./qurt/test/testcases/qmemory_t1/app1/src
+# ./qurt/test/testcases/qmemory_query/app1/src
+# ./qurt/test/testcases/qmemory_unit/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup_all/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup_all.2/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup_all.1/app1/src
+# ./qurt/test/testcases/qurt_profile_t1/app1/src
+# ./qurt/test/testcases/qurt_memory_t1.profile/app1/src
+# ./qurt/test/testcases/qthread_t1.profile/app1/src
+# ./qurt/test/testcases/qsignal.profile/app1/src
+# ./qurt/test/testcases/qurt_ipi_t1.profile/app1/src
+# ./qurt/test/testcases/qurt_profile_t2/app1/src
+# ./qurt/test/testcases/qmemory_t1.profile/app1/src
+# ./qurt/test/testcases/perf_4kb_table_walk/app1/src
+# ./qurt/test/testcases/qurt_island_excep_1/app1/src
+# ./qurt/test/testcases/qurt_island_excep_3/app1/src
+# ./qurt/test/testcases/qurt_island_apis/app1/src
+# ./qurt/test/testcases/qurt_island_excep_2/app1/src
+# ./qurt/test/testcases/qurt_island_footprint/app1/src
+# ./qurt/test/testcases/qdi_basic/app1/src
+# ./qurt/test/testcases/mp_usermalloc/app1
+# ./qurt/test/testcases/mp_usermalloc/app2
+# ./qurt/test/testcases/mp_qdi/app1
+# ./qurt/test/testcases/mp_qdi/app2
+# ./qurt/test/testcases/mp_qdi_prof/app1
+# ./qurt/test/testcases/mp_qdi_prof/app2
+# ./qurt/test/testcases/mp_qurt/app1/src
+# ./qurt/test/testcases/mp_qurt/app2/src

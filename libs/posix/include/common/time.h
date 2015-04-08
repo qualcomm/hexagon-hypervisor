@@ -11,9 +11,6 @@
 typedef int              clockid_t; /* ignored */
 #define _CLOCKID_T
 
-typedef struct timer_i * timer_t; /* handle to internal struct */
-#define _TIMER_T
-
 #if !defined(CLOCK_REALTIME)
 # define CLOCK_REALTIME 0
 #endif

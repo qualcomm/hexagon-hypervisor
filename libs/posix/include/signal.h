@@ -36,11 +36,6 @@
 
 typedef unsigned long int   sigset_t;
 
-typedef unsigned long int   pid_t;
-#define _PID_T
-typedef unsigned long int   uid_t;
-#define _UID_T
-
 union sigval
 {
     int  sival_int;   /* Integer signal value. */

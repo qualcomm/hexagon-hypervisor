@@ -22,7 +22,7 @@ H2_LIB=$(H2_DIR)build/opt_v$(ARCHV)/libh2.a
 endif
 
 #MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a 
-MOST_LIBS= syscall/angel/libangel.a qurt/libqurt.a #posix/libposix.a
+MOST_LIBS= syscall/angel/libangel.a qurt/libqurt.a posix/libposix.a
 
 ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(MOST_LIBS)
 LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(SOS_DIR))
@@ -36,7 +36,10 @@ tmp:
 $(H2_LIB): tmp
 	+${MAKE} -C $(H2_DIR) $(IMPL); cp $@ tmp/
 
-blast/libblast.a: tmp $(H2_LIB)
+posix/libposix.a: tmp $(H2_LIB) qurt/libqurt.a
+	+${MAKE_LIB};
+
+qurt/libqurt.a: tmp $(H2_LIB)
 	+${MAKE_LIB};
 
 syscall/angel/libangel.a: tmp $(H2_LIB)

@@ -39,6 +39,11 @@ typedef signed int   ssize_t;
 #define FALSE    0
 #endif
 
+typedef unsigned long int   pid_t;
+#define _PID_T
+typedef unsigned long int   uid_t;
+#define _UID_T
+
 typedef unsigned int cpu_set_t;
 
 typedef unsigned int pthread_t;
@@ -174,5 +179,12 @@ typedef long int   time_t;
 #endif
 
 typedef int pthread_key_t;
+
+#define _TIMER_T
+
+typedef struct timer_i * timer_t; /* handle to internal struct */
+#define _TIMER_T
+
+#include <types.h>
 
 #endif /* _POSIX_SCHED_H_ */

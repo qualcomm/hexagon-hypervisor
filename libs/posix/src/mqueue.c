@@ -19,7 +19,7 @@
 
 #include <pthread.h>
 #include <mqueue.h>
-#include <fcntl.h>
+#include <posix_fcntl.h>
 #include "pthread_internal.h"
 #include "mq_internal.h"
 

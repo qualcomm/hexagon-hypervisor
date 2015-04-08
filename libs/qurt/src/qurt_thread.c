@@ -178,6 +178,7 @@ void qurt_thread_get_name(char *name, unsigned char max_len)
 	strlcpy(name,tmp->utcb.attr.name,max_len);
 }
 
+extern int _posix_init();
 /* Generic hook for all stuff that needs to be initialized */
 void qurt_init()
 {
@@ -186,5 +187,6 @@ void qurt_init()
 	initted = 1;
 	qurt_memory_init();
 	qurt_timer_init();
+	(void)_posix_init();
 }
 

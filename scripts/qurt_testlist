@@ -1,5 +1,6 @@
 # Expected to work
 
+./qurt/test/testcases/posix/test/src
 ./qurt/test/testcases/atomic_space_t/app1/src
 ./qurt/test/testcases/cxx_constructor/app1/src
 ./qurt/test/testcases/libc_fileio/app1/src

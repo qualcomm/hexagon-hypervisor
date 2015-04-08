@@ -9,11 +9,14 @@
 #include <pthread.h>
 #include "pthread_internal.h"
 
+/* EJP: This is unacceptable.  Particularly things like the pthread_mutex implementations. */
+
 extern void* __attribute__((weak)) rex_create_fake_tcb(void* sp, size_t siz, char* tname);
 extern void  __attribute__((weak)) rex_destroy_fake_tcb(void* tcb_ptr);
 
 #define QURT_INIT_ID                       0xFEFEFEFE
 #define EXTERNAL_CONTEXT_BITMASK           0x0
+#define CONFIG_PRIORITY_SET 1
 
 static const char pthread_default_name[] = PTHREAD_DEFAULT_NAME;
 pthread_mutex_t pthread_mtx = PTHREAD_MUTEX_INITIALIZER;

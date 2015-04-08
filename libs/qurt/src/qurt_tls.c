@@ -22,7 +22,7 @@ h2_mutex_t qurt_tls_lock = H2_MUTEX_T_INIT;
  * @return  0      - SUCCESS
  *          EAGAIN - No free TLS key available
  */
-int qurt_tls_key_create (int *key, void (*destructor)(void *))
+int qurt_tls_create_key (int *key, void (*destructor)(void *))
 {
    int index, bit_pos;
 
@@ -61,7 +61,7 @@ int qurt_tls_key_create (int *key, void (*destructor)(void *))
  * @return  0        - SUCCESS
  *          EINVALID - Not a valid key
  */
-int qurt_tls_setspecific (int key, const void *value)
+int qurt_tls_set_specific (int key, const void *value)
 {
    struct QURT_ugp_ptr *pUgp;
 
@@ -83,7 +83,7 @@ int qurt_tls_setspecific (int key, const void *value)
  * @param   key   - Operated TLS key
  * @return  value saved in TLS indexed by key
  */
-void *qurt_tls_getspecific (int key)
+void *qurt_tls_get_specific (int key)
 {
    struct QURT_ugp_ptr *pUgp;
 
@@ -104,7 +104,7 @@ void *qurt_tls_getspecific (int key)
  * @return  0      - SUCCESS
  *          ENOENT - The key is not already free
  */
-int qurt_tls_key_delete (int key)
+int qurt_tls_delete_key (int key)
 {
    int index, bit_pos;
 

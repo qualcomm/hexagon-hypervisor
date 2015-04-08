@@ -16,9 +16,9 @@
  * whack interrupt automatically.  Maybe change H2 interface? Another level
  * of indirection?
  */
-static inline unsigned int qurt_fastint_register(int intno, void (*fn)(int))
+static inline unsigned int qurt_fastint_register(int intno, int (*fn)(int))
 {
-	h2_register_fastint(intno+32,(void *)fn);
+	h2_register_fastint(intno+32,fn);
 	return QURT_EOK;
 }
 
@@ -28,7 +28,7 @@ static inline unsigned int qurt_fastint_deregister(int intno)
 	return QURT_EOK;
 }
 
-static inline unsigned int qurt_isr_register(int intno, void (*fn)(int)) { return qurt_fastint_register(intno+32,fn); }
+static inline unsigned int qurt_isr_register(int intno, int (*fn)(int)) { return qurt_fastint_register(intno+32,fn); }
 
 static inline unsigned int qurt_isr_deregister(int intno) { return qurt_fastint_deregister(intno+32); }
 

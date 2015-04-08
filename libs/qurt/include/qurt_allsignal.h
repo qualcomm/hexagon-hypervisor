@@ -21,6 +21,7 @@
  ======================================================================*/
 
 #include <h2.h>
+#include <qurt_prelim.h>
 
 /** @addtogroup all_signal_types
 @{ */
@@ -52,6 +53,8 @@ static inline void qurt_allsignal_set(qurt_allsignal_t *signal, unsigned int mas
 {
 	return h2_allsignal_signal(signal,mask);
 }
+
+static inline void qurt_allsignal_clear(qurt_allsignal_t *signal, unsigned int mask) { UNSUPPORTED; }
 
 #endif /* QURT_ALLSIGNAL_H */
 

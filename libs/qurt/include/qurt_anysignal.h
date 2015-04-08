@@ -19,7 +19,7 @@ Copyright (c) 2013  by Qualcomm Technologies, Inc.  All Rights Reserved.
 Confidential and Proprietary - Qualcomm Technologies, Inc.
  ======================================================================*/
 
-#include <qurt_signal.h>
+//#include <qurt_signal.h>
 #include <h2.h>
 
 /**@ingroup anysignals_types                                                 

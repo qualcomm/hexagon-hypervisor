@@ -23,31 +23,42 @@
 #define QURT_SIGNAL_ATTR_WAIT_ANY 0x00000000
 #define QURT_SIGNAL_ATTR_WAIT_ALL 0x00000001
 
+#include <qurt_anysignal.h>
+#include <qurt_allsignal.h>
+
 /** @addtogroup signals_types
 @{ */
 /** qurt_signal type                                           
  */
-typedef union {
-    /** @cond */
-	unsigned long long int raw;
-	struct {
-		unsigned int signals;
-		unsigned int waiting;
-		unsigned int queue;
-		unsigned int attribute;
-	}X;
-    /** @endcond */
+typedef struct {
+	union {
+		qurt_anysignal_t anysignal;
+		qurt_allsignal_t allsignal;
+	};
+	int type;
 } qurt_signal_t;
 /** @} */ /* end_addtogroup signals_types */
 
  
 
-void qurt_signal_init(qurt_signal_t *signal);
+static inline void qurt_signal_init(qurt_signal_t *signal)
+{
+	signal->type = QURT_SIGNAL_ATTR_WAIT_ANY;
+	qurt_anysignal_init(&signal->anysignal);
+}
 
-void qurt_signal_destroy(qurt_signal_t *signal);
+static inline void qurt_signal_destroy(qurt_signal_t *signal) {}
 
-unsigned int qurt_signal_wait(qurt_signal_t *signal, unsigned int mask, 
-                unsigned int attribute);
+static inline unsigned int qurt_signal_wait(qurt_signal_t *signal, unsigned int mask, 
+                unsigned int attribute)
+{
+	signal->type = attribute;
+	if (attribute == QURT_SIGNAL_ATTR_WAIT_ANY) return qurt_anysignal_wait(&signal->anysignal,mask);
+	else {
+		qurt_allsignal_wait(&signal->allsignal,mask);
+		return signal->allsignal.signals_in;
+	}
+}
 
 static inline unsigned int qurt_signal_wait_any(qurt_signal_t *signal, unsigned int mask)
 {
@@ -59,11 +70,23 @@ static inline unsigned int qurt_signal_wait_all(qurt_signal_t *signal, unsigned 
   return qurt_signal_wait(signal, mask, QURT_SIGNAL_ATTR_WAIT_ALL);
 }
 
-void qurt_signal_set(qurt_signal_t *signal, unsigned int mask);
+static inline void qurt_signal_set(qurt_signal_t *signal, unsigned int mask)
+{
+	if (signal->type == QURT_SIGNAL_ATTR_WAIT_ANY) qurt_anysignal_set(&signal->anysignal,mask);
+	else qurt_allsignal_set(&signal->allsignal,mask);
+}
 
-unsigned int qurt_signal_get(qurt_signal_t *signal);
+static inline unsigned int qurt_signal_get(qurt_signal_t *signal)
+{
+	if (signal->type == QURT_SIGNAL_ATTR_WAIT_ANY) return qurt_anysignal_get(&signal->anysignal);
+	else return qurt_allsignal_get(&signal->allsignal);
+}
 
-void qurt_signal_clear(qurt_signal_t *signal, unsigned int mask);
+static inline void qurt_signal_clear(qurt_signal_t *signal, unsigned int mask)
+{
+	if (signal->type == QURT_SIGNAL_ATTR_WAIT_ANY) qurt_anysignal_clear(&signal->anysignal,mask);
+	else qurt_allsignal_clear(&signal->allsignal,mask);
+}
 
 /**@ingroup func_qurt_signal_wait_cancellable    
   Suspends the current thread until either the specified signals are set or the wait operation is cancelled.
@@ -100,8 +123,11 @@ void qurt_signal_clear(qurt_signal_t *signal, unsigned int mask);
   None.
 */
 /* ======================================================================*/
-int qurt_signal_wait_cancellable(qurt_signal_t *signal, unsigned int mask, 
+static inline int qurt_signal_wait_cancellable(qurt_signal_t *signal, unsigned int mask, 
                                  unsigned int attribute,
-                                 unsigned int *return_mask);
+                                 unsigned int *return_mask __attribute__((unused)))
+{
+	return qurt_signal_wait(signal,mask,attribute);
+}
 
 #endif /* QURT_SIGNAL_H */

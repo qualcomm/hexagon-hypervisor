@@ -74,7 +74,11 @@ typedef struct {
   @dependencies
   None.
  */
-static inline int qurt_island_attr_create (qurt_island_attr_t **attr, int max_attrs) { *attr = NULL; return QURT_EOK; }
+static inline int qurt_island_attr_create (qurt_island_attr_t **attr, int max_attrs)
+{
+	*attr = ((qurt_island_attr_t *)NULL) /* &$*&# C++ */ ; 
+	return QURT_EOK;
+}
 
 /**@ingroup func_qurt_island_attr_delete
   Deletes QuRT island attribute.\n

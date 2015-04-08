@@ -742,7 +742,7 @@ static inline void qurt_mem_region_attr_set_cache_mode(qurt_mem_region_attr_t *a
   None.
  */
 static inline void qurt_mem_region_attr_get_cache_mode(qurt_mem_region_attr_t *attr, qurt_mem_cache_mode_t *mode){
-	(*mode) = attr->cccc;
+	(*mode) = (qurt_mem_cache_mode_t)attr->cccc;
 }
 
 /**@ingroup func_qurt_mem_region_attr_set_bus_attr

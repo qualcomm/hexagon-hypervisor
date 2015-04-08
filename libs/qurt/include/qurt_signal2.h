@@ -27,28 +27,17 @@
 @{ */
 /** qurt_signal2 type                                           
  */
-typedef struct {
-   /** @cond */
-   unsigned int cur_mask __attribute__((aligned(8)));  /* Current set of signal bits that are set */
-   unsigned int sig_state;                             /* Current state */
-                                                       /*   Bit 0 = currently in "anysignal" wait */
-                                                       /*   Bit 1 = currently in "allsignal" wait */
-                                                       /*   Bit 2 = currently in "interrupt" wait */
-                                                       /*   Bits 31-3 = reference count field */
-   unsigned int queue;                                 /* Kernel-maintained "futex queue" value */
-   unsigned int wait_mask;                             /* If sig_state indicates a waiter is present, this is the wait mask */
-   /** @endcond */
-} qurt_signal2_t;
+typedef qurt_signal_t qurt_signal2_t;
 /** @} */ /* end_addtogroup signals_types */
 
  
 
-void qurt_signal2_init(qurt_signal2_t *signal);
+static inline void qurt_signal2_init(qurt_signal2_t *signal) { qurt_signal_init(signal); }
 
-void qurt_signal2_destroy(qurt_signal2_t *signal);
+static inline void qurt_signal2_destroy(qurt_signal2_t *signal) { qurt_signal_destroy(signal); }
 
-unsigned int qurt_signal2_wait(qurt_signal2_t *signal, unsigned int mask, 
-                unsigned int attribute);
+static inline unsigned int qurt_signal2_wait(qurt_signal2_t *signal, unsigned int mask, 
+                unsigned int attribute) { return qurt_signal_wait(signal,mask,attribute); }
 
 static inline unsigned int qurt_signal2_wait_any(qurt_signal2_t *signal, unsigned int mask)
 {
@@ -60,15 +49,15 @@ static inline unsigned int qurt_signal2_wait_all(qurt_signal2_t *signal, unsigne
   return qurt_signal2_wait(signal, mask, QURT_SIGNAL_ATTR_WAIT_ALL);
 }
 
-void qurt_signal2_set(qurt_signal2_t *signal, unsigned int mask);
+static inline void qurt_signal2_set(qurt_signal2_t *signal, unsigned int mask) { return qurt_signal_set(signal,mask); }
 
-unsigned int qurt_signal2_get(qurt_signal2_t *signal);
+static inline unsigned int qurt_signal2_get(qurt_signal2_t *signal) { return qurt_signal_get(signal); }
 
-void qurt_signal2_clear(qurt_signal2_t *signal, unsigned int mask);
+static inline void qurt_signal2_clear(qurt_signal2_t *signal, unsigned int mask) { return qurt_signal_clear(signal,mask); }
 
 int qurt_signal2_wait_cancellable(qurt_signal2_t *signal,
                                   unsigned int mask, 
                                   unsigned int attribute,
-                                  unsigned int *p_returnmask);
+                                  unsigned int *p_returnmask) { return qurt_signal_wait_cancellable(signal,mask,attribute,p_returnmask); }
 
 #endif /* QURT_SIGNAL2_H */

@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <qurt_assert.h>
+#include <assert.h>
 #include <string.h>
-#include <qurt.h>
 #include <pthread.h>
 #include <mqueue.h>
 #include "mq_internal.h"
@@ -20,7 +19,7 @@ unsigned int mqlist_next_slot = 0;
 /* mutex to protect read/write on the global array of mq's */
 pthread_mutex_t mqlist_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#ifdef BLAST_LOCKFREE_LIFO
+#ifdef QURT_LOCKFREE_LIFO
 
 extern void * qbuf_alloc_real( void *buf_head );
 extern void qbuf_free_real( void *buf_head, void * buf );
@@ -44,7 +43,7 @@ static int msgbuf_alloc_and_init(mq * mq_node, const struct mq_attr *attr)
         return -1;
     }
     
-#ifndef BLAST_LOCKFREE_LIFO
+#ifndef QURT_LOCKFREE_LIFO
     mq_node->free_list = mq_node->buff_depot; /* point put ptr to first free node */
     mq_node->recv_list = NULL;              /* point get ptr to NULL, since no msg available at init*/
 
@@ -134,7 +133,7 @@ static void mqlist_node_free(mq * mq_node)
 {
     if (mq_node)
     {
-        (void) qurt_rmutex_destroy(mq_node->mq_lock);
+        (void) pthread_mutex_destroy(mq_node->mq_lock);
         free(mq_node->mq_lock);
         threadbuf_free(mq_node);
         msgbuf_free(mq_node);
@@ -146,11 +145,7 @@ static void mqlist_node_free(mq * mq_node)
 mqd_t mqlist_node_alloc(const char *name, unsigned long mode, const struct mq_attr *attr)
 {
     /* allocate memory for a mq */
-    size_t copy_length;
-    mq * mq_node; 
-
-    copy_length = strlen(name) + 1;
-    mq_node = (mq *) malloc(sizeof(mq) + copy_length);
+    mq * mq_node = (mq *) malloc(sizeof(mq) + strlen(name) + 1);
     if (!mq_node)
     {
         errno = ENOMEM;
@@ -159,29 +154,17 @@ mqd_t mqlist_node_alloc(const char *name, unsigned long mode, const struct mq_at
 
     /* allocate and init memory for msgs in the mq */
     if (0 != msgbuf_alloc_and_init(mq_node, attr))
-    {
-        errno = ENOMEM;
         goto mqlist_node_alloc_err;
-    }
 
     /* allocate and init memory for threads waiting in the mq*/
     if (0 != threadbuf_alloc_and_init(mq_node))
-    {
-        errno = ENOMEM;
         goto mqlist_node_alloc_err;
-    }
 
     /* initialize mq node */
     mq_node->mq_name = (char *) ((unsigned int) mq_node + sizeof(mq));
-    (void) strlcpy(mq_node->mq_name, name, copy_length);
-    
-    mq_node->mq_lock = (qurt_mutex_t *)malloc(sizeof(qurt_mutex_t));
-    if (NULL == mq_node->mq_lock)
-    {
-        errno = ENOMEM;
-        goto mqlist_node_alloc_err;        
-    }
-    qurt_rmutex_init(mq_node->mq_lock);
+    (void) memcpy(mq_node->mq_name, name, strlen(name) + 1);
+    mq_node->mq_lock            = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(mq_node->mq_lock, 0);
     mq_node->mq_mode            = mode;
     mq_node->mq_refcount        = 1;
     mq_node->mq_attr.mq_flags   = attr->mq_flags;
@@ -282,7 +265,7 @@ static void mqlist_insert_thread(mq * mq_node, pthread_t thread, unsigned int pr
 
     if (mq_node->thread_num >= MQ_MAX_NUM_WAITING_THREADS)
     {
-        qurt_assert(0);
+        assert(0);
         return;
     }
 
@@ -304,7 +287,7 @@ static void mqlist_insert_thread(mq * mq_node, pthread_t thread, unsigned int pr
     p_node = mq_node->empty_list;
     if (NULL == p_node)
 	{
-        qurt_assert(0);
+        assert(0);
         return;
 	}
     
@@ -388,9 +371,9 @@ int mqlist_msg_put(mqd_t mq_desc, const char * msg, size_t msg_len, unsigned int
     *thread = 0;
     *prio   = 0;
 
-    (void) qurt_rmutex_lock(mq_node->mq_lock);
+    (void) pthread_mutex_lock(mq_node->mq_lock);
 
-#ifndef BLAST_LOCKFREE_LIFO
+#ifndef QURT_LOCKFREE_LIFO
 
     /*check if mq is full */
     if (mq_node->mq_attr.mq_maxmsg == mq_node->mq_attr.mq_curmsgs)
@@ -438,7 +421,7 @@ int mqlist_msg_put(mqd_t mq_desc, const char * msg, size_t msg_len, unsigned int
 
     /* copy the msg. truncate the msg to max msgsize incase msg provided is larger */
     /* note: we can choose to fail if msg sent is more than max size specified */
-    (memcpy)((void *) new_node->msg, (void *) msg, ((mq_node->mq_attr.mq_msgsize > (long) msg_len) ?
+    memcpy((void *) new_node->msg, (void *) msg, ((mq_node->mq_attr.mq_msgsize > (long) msg_len) ?
                                                   (long) msg_len : mq_node->mq_attr.mq_msgsize));
     new_node->msg_prio = msg_prio;
     new_node->msg_len  = msg_len;
@@ -452,7 +435,7 @@ int mqlist_msg_put(mqd_t mq_desc, const char * msg, size_t msg_len, unsigned int
     ret = 0;
 
  return_msg_put:
-    (void) qurt_rmutex_unlock(mq_node->mq_lock);
+    (void) pthread_mutex_unlock(mq_node->mq_lock);
     return ret;
 }
 
@@ -474,7 +457,7 @@ int mqlist_msg_get(mqd_t mq_desc, char * msg, size_t msg_len, unsigned int * msg
     if (!mq_node)
         return -1;
 
-    (void) qurt_rmutex_lock(mq_node->mq_lock);
+    (void) pthread_mutex_lock(mq_node->mq_lock);
 
     /* no msgs in the mq ?*/
     if (!mq_node->mq_attr.mq_curmsgs)
@@ -497,7 +480,7 @@ int mqlist_msg_get(mqd_t mq_desc, char * msg, size_t msg_len, unsigned int * msg
         copy_bytes = (msg_len < pickup_node->msg_len ? msg_len : pickup_node->msg_len);
 
         /* copy msg into the user specified buffer */
-        (memcpy)((void *) msg, (void *) pickup_node->msg, copy_bytes);
+        memcpy((void *) msg, (void *) pickup_node->msg, copy_bytes);
 
         /* return copied msg size in the out param */
         *msg_received = copy_bytes;
@@ -512,7 +495,7 @@ int mqlist_msg_get(mqd_t mq_desc, char * msg, size_t msg_len, unsigned int * msg
 
         mq_node->recv_list  = mq_node->recv_list->next;
 
-#ifndef BLAST_LOCKFREE_LIFO
+#ifndef QURT_LOCKFREE_LIFO
 
         pickup_node->next = mq_node->free_list;
         mq_node->free_list  = pickup_node;
@@ -523,7 +506,7 @@ int mqlist_msg_get(mqd_t mq_desc, char * msg, size_t msg_len, unsigned int * msg
     }
 
  return_msg_get:
-    (void) qurt_rmutex_unlock(mq_node->mq_lock);
+    (void) pthread_mutex_unlock(mq_node->mq_lock);
 
     return ret;
 }
@@ -543,7 +526,7 @@ int mqlist_msg_exists(mqd_t mq_desc, pthread_t thread, unsigned int prio)
     if (!mq_node)
         return ret;
 
-    (void) qurt_rmutex_lock(mq_node->mq_lock);
+    (void) pthread_mutex_lock(mq_node->mq_lock);
 
     /* is msg available ?*/
     if (!mq_node->mq_attr.mq_curmsgs)
@@ -555,7 +538,7 @@ int mqlist_msg_exists(mqd_t mq_desc, pthread_t thread, unsigned int prio)
     else
         ret = TRUE;
 
-    (void) qurt_rmutex_unlock(mq_node->mq_lock);
+    (void) pthread_mutex_unlock(mq_node->mq_lock);
 
     return ret;
 }
@@ -630,22 +613,15 @@ int mqlist_node_decref(mqd_t mq_desc)
     {
         ref_count = --mq_node->mq_refcount;
 
-        (void) qurt_rmutex_lock(mq_node->mq_lock);
+        (void) pthread_mutex_lock(mq_node->mq_lock);;
 
         /* if the caller is in the mq's wait list, remove it */
         (void) mqlist_remove_thread(mq_node, pthread_self(), 0, 0);
 
-        (void) qurt_rmutex_unlock(mq_node->mq_lock);
+        (void) pthread_mutex_unlock(mq_node->mq_lock);
     }
 
     (void) pthread_mutex_unlock(&mqlist_mutex);
 
     return ref_count;
 }
-
-/* this function is needed for test framework which needs to clean up memory when teardown */
-void _mq_teardown()
-{
-    (void)pthread_mutex_destroy(&mqlist_mutex);
-}
-

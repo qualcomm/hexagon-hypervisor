@@ -26,7 +26,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
 void qurt_assert_error(const char *filename, int lineno) __attribute__((noreturn));
 
 /* EJP: why not __FILE__? */
-#define qurt_assert(cond) ((cond)?(void)0:qurt_assert_error(__QURTFILENAME__,__LINE__))
+#define qurt_assert(cond) ((cond)?(void)0:qurt_assert_error(__FILE__,__LINE__))
 
 /** @} */ /* end_ingroup func_qurt_assert */
 

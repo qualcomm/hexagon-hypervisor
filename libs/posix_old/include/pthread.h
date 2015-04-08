@@ -4,19 +4,22 @@
  */
 
 #ifndef QURT_PTHREAD_H
-#define QURT_PTHREAD_H  
+#define QURT_PTHREAD_H    1
 
 #include <sys/types.h>
 #include <sys/sched.h>  /* For struct sched_param */
-#include <sys/errno.h>  /* error values */
+#include <errno.h>  /* error values */
 #include <qurt.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <common/time.h>
 
-/* the range of the set supported by the kernel data type used to represent CPU sets. */
-#define CONFIG_NR_CPUS QURT_THREAD_CFG_BITMASK_ALL
+int _posix_init(void);
+
+/* the range of the set supported by the kernel data type used to represent 
+CPU sets. Should get from QURT header file */
+#define CONFIG_NR_CPUS 0x3F
 
 #define UNIMPLEMENTED(FUNC, RETURNTYPE, ARGS)    static inline RETURNTYPE FUNC ARGS { qurt_printf("Unimplemented: %s... exiting\n", __FUNCTION__); exit(1); }
 
@@ -57,7 +60,7 @@ pthread_t pthread_self(void);
 int pthread_cancel(pthread_t thread);
 static inline void pthread_yield(void)
 {
-    return;
+    qurt_yield();
 }
 
 int pthread_kill(pthread_t thread, int sig);
@@ -89,9 +92,6 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex);
 int pthread_mutex_trylock(pthread_mutex_t *mutex);
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
 
-/* For Mutex with type PTHREAD_MUTEX_NORMAL, Priority Inheritance is not 
- * supported even PTHREAD_PRIO_INHERIT is defined since QURT does not support
- * this kind of Mutex */
 int pthread_mutexattr_init(pthread_mutexattr_t *attr);
 int pthread_mutexattr_destroy(pthread_mutexattr_t *attr);
 int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict, int *restrict);
@@ -132,8 +132,6 @@ int pthread_barrierattr_getpshared(const pthread_barrierattr_t *restrict attr, i
 int pthread_barrierattr_setpshared(pthread_barrierattr_t *attr, int pshared);
 
 /** set CPU affinity attribute in thread attributes object.
-
- * @param attr       [in] pthread attributes 
  * @param cpusetsize [in] The argument cpusetsize is the length (in bytes) 
                           of the buffer pointed to by cpuset. Typically, 
                           this argument would be specified as 
@@ -158,7 +156,6 @@ int pthread_barrierattr_setpshared(pthread_barrierattr_t *attr, int pshared);
 int pthread_attr_setaffinity_np(pthread_attr_t *attr, size_t cpusetsize, const cpu_set_t *cpuset);
 
 /** get CPU affinity attribute in thread attributes object.
- * @param attr       [in] pthread attributes 
  * @param cpusetsize [in] The argument cpusetsize is the length (in bytes) 
                           of the buffer pointed to by cpuset. Typically, 
                           this argument would be specified as 
@@ -180,18 +177,10 @@ int pthread_attr_setaffinity_np(pthread_attr_t *attr, size_t cpusetsize, const c
  */
 int pthread_attr_getaffinity_np(pthread_attr_t *attr, size_t cpusetsize, cpu_set_t *cpuset);
 
-/* TLS */
-int pthread_key_create(pthread_key_t *key, void (*destructor)(void*));
-int pthread_key_delete(pthread_key_t key);
-int pthread_setspecific(pthread_key_t key, const void *value);
-void *pthread_getspecific(pthread_key_t key);
-int pthread_getattr_np(pthread_t thread, pthread_attr_t * restrict attr); 	 	
-
 /** @} */
 
 /* Calling non-pthread calls this function to create pthred tcb w/o creating actual thread */
 int pthread_fake(pthread_t * restrict thread, const pthread_attr_t * restrict attr);
-int pthread_fake_destroy(pthread_t thread);
 
 UNIMPLEMENTED(pthread_attr_getdetachstate, int, (const pthread_attr_t * attr, int state))
 UNIMPLEMENTED(pthread_attr_setdetachstate, int, (const pthread_attr_t * attr, int state))

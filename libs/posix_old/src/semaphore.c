@@ -99,7 +99,7 @@ int sem_trywait(sem_t *__sem)
         return -1;    
     }
     
-    return qurt_sem_try_down(p_sem_obj);
+    return qurt_sem_trydown(p_sem_obj);
 }
 
 /*****************************************************************************

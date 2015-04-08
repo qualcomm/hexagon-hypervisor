@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <qurt.h>
 #include <sys/types.h>
 #include <common/time.h>
 #include <stdio.h>
@@ -11,19 +10,12 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
-#ifdef __QDSP6_ARCH__
-#include <q6protos.h>
-#else
-#include <hexagon_protos.h>
-#endif
+#include <hexagon_protos.h> /* Q6_R_ct0_R */
 
 #include <pthread.h>
 #include <mqueue.h>
-#include <fcntl.h>
 #include "pthread_internal.h"
 #include "mq_internal.h"
-
-#define ffs(x) (Q6_R_ct0_R(x)+1)
 
 /* debug variable */
 unsigned int mq_fd_err_cnt = 0;
@@ -64,11 +56,11 @@ mqd_t mq_open(const char *name, int oflag, ...)
         return (mqd_t) -1;
 
     /* check oflag arg */
-    switch ((oflag & POSIX_O_ACCMODE))
+    switch ((oflag & O_ACCMODE))
     {
-    case POSIX_O_RDONLY:
-    case POSIX_O_WRONLY:
-    case POSIX_O_RDWR:
+    case O_RDONLY:
+    case O_WRONLY:
+    case O_RDWR:
         break;
     default:
         return (mqd_t) -1;    /* EACCES; */
@@ -79,7 +71,7 @@ mqd_t mq_open(const char *name, int oflag, ...)
     if (IS_MQ_DESC_VALID(mq_desc)) /* found */
     {
         /* return the found mq descriptor */
-        if ((oflag & (POSIX_O_CREAT | POSIX_O_EXCL)) == (POSIX_O_CREAT | POSIX_O_EXCL))
+        if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
         {
             errno = EEXIST;
             return (mqd_t) -1;
@@ -92,7 +84,7 @@ mqd_t mq_open(const char *name, int oflag, ...)
     }
 
     /* not found an existing mq in the list */
-    if (!(oflag & POSIX_O_CREAT))
+    if (!(oflag & O_CREAT))
     {
         errno = ENOENT;
         return (mqd_t) -1;
@@ -105,10 +97,10 @@ mqd_t mq_open(const char *name, int oflag, ...)
     if (NULL == attr)
         attr = &attr_default;
 
-    /* if POSIX_O_NONBLOCK is passed in, save it to mq attr */
-    if (oflag & POSIX_O_NONBLOCK)
+    /* if O_NONBLOCK is passed in, save it to mq attr */
+    if (oflag & O_NONBLOCK)
     {
-        attr->mq_flags |= POSIX_O_NONBLOCK;
+        attr->mq_flags |= O_NONBLOCK;
     }
 
     /* make sure mq buffer will be 4 bytes aligned */
@@ -200,13 +192,13 @@ ssize_t mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len,
     size_t             msg_size_rcvd;
     int                priority;
     pthread_i          *ltcb;
-    sigevent           evp;
-    struct itimerspec  ivalue;
+//    sigevent           evp;
+//    struct itimerspec  ivalue;
     mq                 *mq_node;
     struct sched_param param;
     int                policy;
-    unsigned int       sig_recv;
-    timer_t            timerid;
+    unsigned int       sig_recv = NULL;
+//    timer_t            timerid;
     
     if (!IS_MQ_DESC_VALID(mqdes))
     {
@@ -221,7 +213,7 @@ ssize_t mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len,
         return -1;
     }
     
-    if (mq_node->mq_attr.mq_flags & POSIX_O_NONBLOCK) /* non-blocking mq if no msg */
+    if (mq_node->mq_attr.mq_flags & O_NONBLOCK) /* non-blocking mq if no msg */
     {
         /* if msg exists, we grab it and return */
         if (0 == mqlist_msg_get(mqdes, msg_ptr, msg_len, msg_prio, &msg_size_rcvd, 0, 0))
@@ -244,7 +236,7 @@ ssize_t mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len,
         }
     }
 
-    if (0 != _getltcb_self(&ltcb) || NULL == ltcb)
+    if (0 != _getltcb_self(&ltcb))
     {
         errno = EINVAL;
         return -1;
@@ -262,30 +254,30 @@ ssize_t mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len,
     if (abs_timeout)
 	{
         /* create and start timer */
-        evp.sigev_notify            = SIGEV_SIGNAL;
-        evp.sigev_signo             = SIGALRM;
-        evp.sigev_value.sival_int   = SIGALRM;
-        evp.sigev_notify_function   = 0;
-        evp.sigev_notify_attributes = 0;
-
-        if(0 != timer_create(0, &evp, &timerid))
-        {
-            errno = EFAULT;
-            return -1;
-        }
-
-        ivalue.it_value.tv_sec     = abs_timeout->tv_sec;
-        ivalue.it_value.tv_nsec    = abs_timeout->tv_nsec;
-        ivalue.it_interval.tv_sec  = 0;
-        ivalue.it_interval.tv_nsec = 0;
-
-        if(0 != timer_settime(timerid, 0, &ivalue, NULL))
-        {
-            errno = EFAULT;
-            return -1;
-        }
-
-        sig_recv = qurt_anysignal_wait(&ltcb->sigs, POSIX_MQ_NOTIF_MASK | POSIX_SIGALARM_MASK);
+//        evp.sigev_notify            = SIGEV_SIGNAL;
+//        evp.sigev_signo             = SIGALRM;
+//        evp.sigev_value.sival_int   = SIGALRM;
+//        evp.sigev_notify_function   = 0;
+//        evp.sigev_notify_attributes = 0;
+//
+//        if(0 != timer_create(0, &evp, &timerid))
+//        {
+//            errno = EFAULT;
+//            return -1;
+//        }
+//
+//        ivalue.it_value.tv_sec     = abs_timeout->tv_sec;
+//        ivalue.it_value.tv_nsec    = abs_timeout->tv_nsec;
+//        ivalue.it_interval.tv_sec  = 0;
+//        ivalue.it_interval.tv_nsec = 0;
+//
+//        if(0 != timer_settime(timerid, 0, &ivalue, NULL))
+//        {
+//            errno = EFAULT;
+//            return -1;
+//        }
+//
+//        sig_recv = qurt_anysignal_wait(&ltcb->sigs, POSIX_MQ_NOTIF_MASK | POSIX_SIGALARM_MASK);
     }
 	else
 	{
@@ -295,7 +287,8 @@ ssize_t mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len,
     if (POSIX_SIGALARM_MASK == sig_recv)
     {
         /* time out */
-        errno = (abs_timeout) ? ETIMEDOUT : EFAULT;
+	//  ECOMM or EINTR?
+        errno = (abs_timeout) ? ETIMEDOUT : EINTR;
         return -1;
     }
     else if (POSIX_MQ_NOTIF_MASK == sig_recv)
@@ -311,7 +304,7 @@ ssize_t mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len,
     else
     {
         //something wrong with QURT signal
-        errno = EFAULT;
+        errno = EINTR;
         return -1;
     }
 }
@@ -346,9 +339,9 @@ static int _pselect_remove_waiting(unsigned char* mqs, pthread_t thread)
         p_mq = mqlist[fd];
         if (p_mq)
         {
-            (void) qurt_rmutex_lock(p_mq->mq_lock);
+            (void) pthread_mutex_lock(p_mq->mq_lock);
             mqlist_remove_thread(p_mq, thread, 0, 0);
-            (void) qurt_rmutex_unlock(p_mq->mq_lock);
+            (void) pthread_mutex_unlock(p_mq->mq_lock);
         }
     }
     return 0;
@@ -386,7 +379,7 @@ int pselect(int nfds, fd_set *restrict readfds,
     /* init return fds and wait fds */
     FD_ZERO(&returnfds);
 
-    if (0 != _getltcb_self(&ltcb) || NULL == ltcb)
+    if (0 != _getltcb_self(&ltcb))
         return -1;
 
     thread = ltcb->pthread;
@@ -447,8 +440,6 @@ int pselect(int nfds, fd_set *restrict readfds,
     if (0 == ltcb->select_mask)
     {
         ltcb->select_mask = (fd_set*)malloc(sizeof(fd_set));
-        if (NULL == ltcb->select_mask)
-            return -1;
         FD_ZERO(ltcb->select_mask);
     }
 
@@ -617,11 +608,11 @@ int mq_getattr(mqd_t mqdes, struct mq_attr *mqstat)
         return -1;
     }
 
-    (void) qurt_rmutex_lock(mq_node->mq_lock);
+    (void) pthread_mutex_lock(mq_node->mq_lock);
 
-    (memcpy)(mqstat, &(mq_node->mq_attr), sizeof(struct mq_attr));
+    memcpy(mqstat, &(mq_node->mq_attr), sizeof(struct mq_attr));
 
-    (void) qurt_rmutex_unlock(mq_node->mq_lock);
+    (void) pthread_mutex_unlock(mq_node->mq_lock);
 
     return 0;
 }
@@ -638,14 +629,14 @@ int mq_setattr(mqd_t mqdes, const struct mq_attr *mqstat,
         return -1;
     }
 
-    (void) qurt_rmutex_lock(mq_node->mq_lock);
+    (void) pthread_mutex_lock(mq_node->mq_lock);
 
     if (omqstat)
     {
-        (memcpy)(omqstat, &(mq_node->mq_attr), sizeof(struct mq_attr));
+        memcpy(omqstat, &(mq_node->mq_attr), sizeof(struct mq_attr));
     }
 
-    if (mqstat->mq_flags != POSIX_O_NONBLOCK)
+    if (mqstat->mq_flags != O_NONBLOCK)
     {
         errno = EINVAL;
     }
@@ -655,7 +646,7 @@ int mq_setattr(mqd_t mqdes, const struct mq_attr *mqstat,
         ret                       = 0;
     }
 
-    (void) qurt_rmutex_unlock(mq_node->mq_lock);
+    (void) pthread_mutex_unlock(mq_node->mq_lock);
 
     return ret;
 }

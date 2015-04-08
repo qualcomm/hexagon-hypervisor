@@ -55,7 +55,7 @@ pthread_i * ltl_search(int qurtid)
     ltl * ltl_tmp_node;
 
     if (!qurtid)
-        qurtid = qurt_thread_get_id();
+        qurtid = qurt_thread_myid();
 
     if (0 != pthread_mutex_lock(&ltl_mutex))
         goto fail;
@@ -88,7 +88,7 @@ int ltl_delete(int qurtid)
     ltl * ltl_tmp_node = 0;
 
     if (!qurtid)
-        qurtid = qurt_thread_get_id();
+        qurtid = qurt_thread_myid();
 
     if (0 != pthread_mutex_lock(&ltl_mutex))
         goto fail;
@@ -129,13 +129,8 @@ int _getltcb(pthread_i **ltcb, pthread_t pthreadid)
 
     /* do not check NULL pointer since it is internal function */
 
-    *ltcb = NULL;
-    
     obj.raw = pthreadid;
-    if (pthread_id_is_valid(obj))
-    {
-        *ltcb = pthread_id_get_handle(obj);        
-    }
+    *ltcb = pthread_id_get_handle(obj);
     if (!*ltcb)
         return -1;
 
@@ -146,7 +141,7 @@ int _getltcb_self(pthread_i **ltcb)
 {   
     /* do not check NULL pointer since it is internal function */
 
-    *ltcb = (pthread_i*)qurt_tls_get_specific(pthread_tcb_key);
+    *ltcb = (pthread_i*)qurt_tls_getspecific(pthread_tcb_key);
     return 0;
 }
 
@@ -158,8 +153,6 @@ void _deinit_ltcb(pthread_t pthreadid)
         return;
 
     pthread_id_delete(pthreadid);
-
-    ltcb->magic = 0;
     
     if (ltcb->select_mask)
     {
@@ -167,14 +160,15 @@ void _deinit_ltcb(pthread_t pthreadid)
         ltcb->select_mask = 0;
     }
 
-    free(ltcb);
+    if (ltcb)
+        free(ltcb);
 }
 
 int * _geterrnoaddr(void)
 {
     pthread_i *ltcb;
     
-    ltcb = (pthread_i*)qurt_tls_get_specific(pthread_tcb_key);
+    ltcb = (pthread_i*)qurt_tls_getspecific(pthread_tcb_key);
     if (!ltcb)
         return NULL;
 
@@ -183,21 +177,13 @@ int * _geterrnoaddr(void)
 
 int _posix_init(void)
 {
-    qurt_tls_create_key (&pthread_tcb_key, NULL);
     pthread_id_table_init(&pthread_id_table, pthread_objs, PTHREAD_MAX_THREADS * 4 * 2);
     return 0;
 }
 
 /* this is the weak version of the function in env that the actual funciton is not available */
-void * __attribute__((weak)) rex_create_fake_tcb(void* sp, size_t siz, char* tname)
+void * __attribute__((weak)) rex_create_fake_tcb(void* sp, size_t siz)
 {
-    /* malloc something to just make the rest of code happy */
-    return (void*)malloc(1);
-}
-
-/* this is the weak version of the function in env that the actual funciton is not available */
-void __attribute__((weak)) rex_destroy_fake_tcb(void* rex_tcb)
-{
-    free(rex_tcb);
+    return (void*)1;
 }
 

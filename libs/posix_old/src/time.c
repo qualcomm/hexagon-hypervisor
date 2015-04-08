@@ -10,13 +10,6 @@
 #include <semaphore.h>
 #include "time_internal.h"
 #include "pthread_internal.h"
-#ifdef __QDSP6_ARCH__
-#include <q6protos.h>
-#else
-#include <hexagon_protos.h>
-#endif
-
-#define ffs(x) (Q6_R_ct0_R(x)+1)
 
 static sem_t timer_worker_sem;
 static int   timer_worker_sem_inited = 0;
@@ -24,13 +17,15 @@ static int   timer_worker_sem_inited = 0;
 /* Internal thread processing the msgq */
 static void * _timer_worker(void *parg)
 {
+
+#if (0)
     int           status = 0;
     pthread_i     * ltcb;
-    qurt_timer_type_t type;
+    qtimer_type_t type;
     unsigned int  timer_sigmask = 0;
     int           i;
     unsigned int  recv_mask;
-    unsigned int  blast_signo;
+    unsigned int  qurt_signo;
 
     /* wait for sem before move forward */
     if (0 != sem_wait(&timer_worker_sem))
@@ -59,23 +54,23 @@ static void * _timer_worker(void *parg)
     if (i == POSIX_MAX_TIMER_NUM)
         return 0;
 
-    if (EOK != qurt_timer_create(&timer->qurt_timer, &timer->qurt_timer_attr, &ltcb->sigs,
+    if (EOK != sclk_timer_create(&timer->qtimer, &timer->qtimer_attr, &ltcb->sigs,
                                  timer_sigmask))
         return 0;
 
     for (;;)
     {
-        recv_mask = blast_anysignal_wait(&ltcb->sigs, POSIX_TIMER_MASK);
+        recv_mask = qurt_anysignal_wait(&ltcb->sigs, POSIX_TIMER_MASK);
         if (recv_mask >= POSIX_TIMER_SIGNO_MIN_MASK || recv_mask <= POSIX_TIMER_SIGNO_MAX_MASK)
         {
-            blast_anysignal_clear(&ltcb->sigs, recv_mask);
-            blast_signo = ffs(recv_mask);
-            if (blast_signo < POSIX_TIMER_SIGNO_MIN || blast_signo > POSIX_TIMER_SIGNO_MAX)
+            qurt_anysignal_clear(&ltcb->sigs, recv_mask);
+            qurt_signo = ffs(recv_mask);
+            if (qurt_signo < POSIX_TIMER_SIGNO_MIN || qurt_signo > POSIX_TIMER_SIGNO_MAX)
             {
                 return 0;
             }
 
-            timer = ltcb->timers[blast_signo - POSIX_TIMER_SIGNO_MIN];
+            timer = ltcb->timers[qurt_signo - POSIX_TIMER_SIGNO_MIN];
 
             if (timer && timer->evp->sigev_notify_function)
                 /* invoke the callback function */
@@ -84,10 +79,10 @@ static void * _timer_worker(void *parg)
                 return 0;
 
             /* depending on the type of timer, either return or continue to receive */
-            qurt_timer_attr_get_type(&timer->qurt_timer_attr, &type);
-            if (QURT_TIMER_ONESHOT == type)
+            qtimer_attr_gettype(&timer->qtimer_attr, &type);
+            if (QTIMER_ONESHOT == type)
             {
-                ltcb->timers[blast_signo - POSIX_TIMER_SIGNO_MIN] = NULL;
+                ltcb->timers[qurt_signo - POSIX_TIMER_SIGNO_MIN] = NULL;
                 pthread_exit((void *) &status);
                 return 0;
             }
@@ -96,20 +91,21 @@ static void * _timer_worker(void *parg)
                 /* create the timer with reload time first time */
                 if (timer->need_reload)
                 {
-                    if (EOK != qurt_timer_delete(timer->qurt_timer))
+                    if (EOK != qtimer_delete(timer->qtimer))
                         return 0;
 
-                    qurt_timer_attr_set_duration(&timer->qurt_timer_attr, timer->reload_time);
+                    qtimer_attr_setduration(&timer->qtimer_attr, timer->reload_time);
                     timer->reload_time = 0;
                     timer->need_reload = 0; /* only reload once */
 
-                    if (EOK != qurt_timer_create(&timer->qurt_timer, &timer->qurt_timer_attr, &ltcb->sigs,
+                    if (EOK != sclk_timer_create(&timer->qtimer, &timer->qtimer_attr, &ltcb->sigs,
                                                  recv_mask))
                         return 0;
                 }
             }
         } //end of if
     }     //end of for loop
+#endif
 }
 
 int timer_create(clockid_t clockid, struct sigevent *restrict evp,
@@ -118,7 +114,7 @@ int timer_create(clockid_t clockid, struct sigevent *restrict evp,
     timer_i * timer;
 
     //unused param
-    //clockid = clockid;
+    clockid = clockid;
 
     if (NULL == timerid)
         return -1;
@@ -146,12 +142,14 @@ int timer_create(clockid_t clockid, struct sigevent *restrict evp,
     }
     else
     {
-        (memcpy)(timer->evp, evp, sizeof(sigevent));
+        memcpy(timer->evp, evp, sizeof(sigevent));
     }
 
     *timerid = timer;
     return 0;
 }
+
+#define EOK 0
 
 int timer_delete(timer_t timerid)
 {
@@ -160,9 +158,9 @@ int timer_delete(timer_t timerid)
     if (!timer)
         return -1;
 
-    if (timer->qurt_timer)
+    if (timer->qtimer)
     {
-        if (EOK != qurt_timer_delete(timer->qurt_timer))
+        if (EOK != qtimer_delete(timer->qtimer))
             return -1;
     }
 
@@ -181,20 +179,21 @@ int timer_delete(timer_t timerid)
 
 int timer_gettime(timer_t timerid, struct itimerspec *value)
 {
+#if (0)
     timer_i           * timer = (timer_i *) timerid;
-    qurt_timer_duration_t time;
+    qtimer_duration_t time;
 
     if (!timer)
         return -1;
 
-    if (timer->qurt_timer)
+    if (timer->qtimer)
     {
-        qurt_timer_attr_t attr;
+        qtimer_attr_t attr;
 
-        if (EOK != qurt_timer_get_attr(timer->qurt_timer, &attr))
+        if (EOK != qtimer_get_attr(timer->qtimer, &attr))
             return -1;
 
-        qurt_timer_attr_get_remaining(&attr, &time);
+        qtimer_attr_getremaining(&attr, &time);
 
         value->it_interval.tv_sec  = time / 1000000;
         value->it_interval.tv_nsec = (time % 1000000) * 1000;
@@ -202,20 +201,22 @@ int timer_gettime(timer_t timerid, struct itimerspec *value)
         return 0;
     }
     return -1;
+#endif
 }
 
 int timer_settime(timer_t timerid, int flags, const struct itimerspec *restrict value,
                   struct itimerspec *restrict ovalue)
 {
+#if (0)
     timer_i           * timer = (timer_i *) timerid;
-    qurt_timer_duration_t time_duration;
-    qurt_timer_type_t     type          = QURT_TIMER_ONESHOT;
+    qtimer_duration_t time_duration;
+    qtimer_type_t     type          = QTIMER_ONESHOT;
     unsigned int      timer_sigmask = 0;
     int               i;
 
     //unused param
-    //flags  = flags;
-    //ovalue = ovalue;
+    flags  = flags;
+    ovalue = ovalue;
 
     if (!timer || !value)
         return -1;
@@ -230,7 +231,7 @@ int timer_settime(timer_t timerid, int flags, const struct itimerspec *restrict 
     {
         timer->reload_time =
             (value->it_interval.tv_sec) * 1000000 + (value->it_interval.tv_nsec) / 1000;
-        type = QURT_TIMER_PERIODIC;
+        type = QTIMER_PERIODIC;
 
         /* need to reload the time value when the timer expires first time */
         if (time_duration != timer->reload_time)
@@ -241,9 +242,9 @@ int timer_settime(timer_t timerid, int flags, const struct itimerspec *restrict 
     /*lint +e647 Suspicious truncation*/
 
     /* setup timer attributes */
-    qurt_timer_attr_init(&timer->qurt_timer_attr);
-    qurt_timer_attr_set_type(&timer->qurt_timer_attr, type);
-    qurt_timer_attr_set_duration(&timer->qurt_timer_attr, time_duration);
+    qtimer_attr_init(&timer->qtimer_attr);
+    qtimer_attr_settype(&timer->qtimer_attr, type);
+    qtimer_attr_setduration(&timer->qtimer_attr, time_duration);
 
     /* is the timer handled by a separate thread ? */
     if (SIGEV_THREAD == timer->evp->sigev_notify)
@@ -287,7 +288,7 @@ int timer_settime(timer_t timerid, int flags, const struct itimerspec *restrict 
         if (i == POSIX_MAX_TIMER_NUM)
             return -1;
 
-        if (EOK != qurt_timer_create(&timer->qurt_timer, &timer->qurt_timer_attr, &ltcb->sigs,
+        if (EOK != sclk_timer_create(&timer->qtimer, &timer->qtimer_attr, &ltcb->sigs,
                                      timer_sigmask))
             return -1;
     }
@@ -298,6 +299,6 @@ int timer_settime(timer_t timerid, int flags, const struct itimerspec *restrict 
 
     /* not sure of what is to be done with ovalue */
     /* *ovalue = 0; */
-
+#endif
     return 0;
 }

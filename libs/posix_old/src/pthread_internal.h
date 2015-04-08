@@ -72,16 +72,14 @@ struct pthread_i
 
     pthread_attr_t    attr;
     qurt_anysignal_t sigs;
-    void              * sigaction_ptrs[SIGRTMAX + 1];
+    void              * sigaction_ptrs[SIGRTMAX];
 
     timer_i           *timers[POSIX_MAX_TIMER_NUM]; /* FIXME: dynamic malloc buffer to save memory ? */
     int               last_err;
     int               exitstatus;
-    qurt_sem_t       start_lock; /* to sync with parent to make sure this thread is ready to go */
+    qurt_sem_t       start_lock;
 
     fd_set            *select_mask;
-
-    void              *rex_tcb; /* to point to the faked REX TCB */
     //FIXME: add mutex in this struct
 };
 

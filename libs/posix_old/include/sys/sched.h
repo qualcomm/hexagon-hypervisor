@@ -33,7 +33,7 @@ struct sched_param
  */
 static inline int sched_yield(void)
 {
-   return 0;
+    qurt_yield(); return 0;
 }
 
 /** Get the maximum priority.

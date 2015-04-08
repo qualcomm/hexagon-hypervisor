@@ -3,13 +3,20 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <blast.h>
-//#include <qube.h>
+#include <qurt.h>
+#include <qurt_timer.h>
 #include <signal.h>
-#include <time.h>
-#include <errno.h>
+#include <common/time.h>
+#include <sys/errno.h>
 #include "time_internal.h"
 #include "pthread_internal.h"
+
+#ifdef __QDSP6_ARCH__
+#include <q6protos.h>
+#else
+#include <hexagon_protos.h>
+#endif
+#define ffs(x) (Q6_R_ct0_R(x)+1)
 
 int ffs_mask(register unsigned int value)
 {
@@ -34,14 +41,14 @@ int _handle_sigalarm(pthread_i *ltcb, unsigned int *msg)
         addr = &timer;
 
         /* set the reload time only once */
-        (void) qtimer_delete(timer->qtimer);
-        qtimer_attr_setduration(&timer->qtimer_attr, timer->reload_time);
+        (void) qurt_timer_delete(timer->qurt_timer);
+        qurt_timer_attr_set_duration(&timer->qurt_timer_attr, timer->reload_time);
         timer->reload_time = 0;
 
-        if (EOK != qmsgq_callback_init(&timer->qtimer_cb, ltcb->qmsgq_notif, SIGALRM, (void*) addr, MSG_SIZE))
+        if (EOK != qmsgq_callback_init(&timer->qurt_timer_cb, ltcb->qmsgq_notif, SIGALRM, (void*) addr, MSG_SIZE))
             return -1;
 
-        if (EOK != qtimer_create(&timer->qtimer, &timer->qtimer_attr, &timer->qtimer_cb))
+        if (EOK != qurt_timer_create(&timer->qurt_timer, &timer->qurt_timer_attr, &timer->qurt_timer_cb))
             return -1;
     }
 
@@ -69,123 +76,154 @@ int _sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
     return 0;
 }
 
-//  See if we get away with not fully supporting this.
+int return_sigwait(sigset_t *pending, const sigset_t *restrict set, int *restrict sig)
+{
+    int           lowest_sig_no = 0;
+
+    //reach this point if we have a pending signal, else error
+    lowest_sig_no = ffs(*pending & *set);
+
+    //clear this pending signal
+    (void) sigdelset(pending, lowest_sig_no);
+
+    //only report back the lowest occured signal
+    *sig = lowest_sig_no;
+    return 0;    
+}
 
 int sigwait(const sigset_t *restrict set, int *restrict sig)
 {
     pthread_i     *ltcb;
-    int           lowest_sig_no = 0;
-    unsigned int  recv_mask, blast_sigmask;
-//    unsigned int  blast_signo;
-//    int           posix_signo;
-//    timer_i       * timer;
-//    qtimer_type_t type;
-
+    unsigned int  recv_mask, qurt_sigmask;
+#ifdef CONFIG_QTIMERS
+    unsigned int  qurt_signo;
+    int           posix_signo;
+    timer_i       * timer;
+    qurt_timer_type_t type;
+#endif
+    int           wait_again = 1;
+    volatile sigset_t *sigpending;
     int           ret = _getltcb_self(&ltcb);
+
     if (ret != 0 || !ltcb || !set || !sig)
     {
         errno = EINVAL;
         return -1;
     }
 
-    if ((ltcb->sigpending & *set) == 0)
+    sigpending = &ltcb->sigpending;
+
+    if ((*sigpending & *set) == 0)
     {
         ltcb->sigwaiting = *set;
 
-        recv_mask     = blast_anysignal_wait(&ltcb->sigs, POSIX_SIGNAL_MASK | POSIX_TIMER_MASK);
-        blast_sigmask = ffs_mask(recv_mask);
+        /* check sigpending second time to avoid race condition */
+        if ((*sigpending & *set) != 0)
+        {
+            return return_sigwait(&ltcb->sigpending, set, sig);
+        }
+
+        while (wait_again)
+        {
+            wait_again = 0;
+        recv_mask     = qurt_anysignal_wait(&ltcb->sigs, POSIX_SIGNAL_MASK | POSIX_TIMER_MASK);
+        qurt_sigmask = ffs_mask(recv_mask);
 
         /* receive a normal signal */
-        if (POSIX_SIGNAL_MASK == blast_sigmask)
+        if (POSIX_SIGNAL_MASK == qurt_sigmask)
         {
-            blast_anysignal_clear(&ltcb->sigs, POSIX_SIGNAL_MASK);
+            qurt_anysignal_clear(&ltcb->sigs, POSIX_SIGNAL_MASK);
+                //received a empty signal, wait again
+                if ((*sigpending & *set) == 0)
+                { 
+                    wait_again = 1;
+                }
         }
+
         /* receive a timer expiration signal */
-        else if (blast_sigmask >= POSIX_TIMER_SIGNO_MIN_MASK || blast_sigmask <= POSIX_TIMER_SIGNO_MAX_MASK)
+        else if (qurt_sigmask >= POSIX_TIMER_SIGNO_MIN_MASK || qurt_sigmask <= POSIX_TIMER_SIGNO_MAX_MASK)
         {
-//            do /* to get all timer signals at blast level */
-//            {
-//                blast_anysignal_clear(&ltcb->sigs, blast_sigmask);
-//                blast_signo = ffs(recv_mask);
-//                if (blast_signo < POSIX_TIMER_SIGNO_MIN || blast_signo > POSIX_TIMER_SIGNO_MAX)
-//                {
-//                    errno = EINVAL;
-//                    return -1;
-//                }
-//
-//                /* get timer pointer */
-//                timer = ltcb->timers[blast_signo - POSIX_TIMER_SIGNO_MIN];
-//
-//                /* map to POSIX signo */
-//                if (NULL == timer)
-//                {
-//                    errno = EINVAL;
-//                    return -1;
-//                }
-//
-//                /* get the signo at posix level */
-//                posix_signo = timer->evp->sigev_signo;
-//
-//                /* add the pending timer signal at pthread mask */
-//                (void) sigaddset(&ltcb->sigpending, posix_signo);
-//
-//                qtimer_attr_gettype(&timer->qtimer_attr, &type);
-//                if (QTIMER_ONESHOT == type)
-//                {
-//                    /* clear the timer entry in ltcb timer list */
-//                    ltcb->timers[blast_signo - POSIX_TIMER_SIGNO_MIN] = NULL;
-//                }
-//                else if (QTIMER_PERIODIC == type)
-//                {
-//                    /* create the timer with reload time first time */
-//                    if (timer->need_reload)
-//                    {
-//                        if (EOK != qtimer_delete(timer->qtimer))
-//                        {
-//                            errno = EINVAL;
-//                            return -1;
-//                        }
-//
-//                        qtimer_attr_setduration(&timer->qtimer_attr, timer->reload_time);
-//                        timer->reload_time = 0;
-//                        timer->need_reload = 0; /* only reload once */
-//
-//                        if (EOK != sclk_timer_create(&timer->qtimer, &timer->qtimer_attr, &ltcb->sigs,
-//                                                     blast_sigmask))
-//                        {
-//                            errno = EINVAL;
-//                            return -1;
-//                        }
-//                    }
-//                }
-//                else /* invalid timer type */
-//                {
-//                    errno = EINVAL;
-//                    return -1;
-//                }
-//
-//                /* prepare to check next bit */
-//                recv_mask     = recv_mask & (~blast_sigmask);
-//                blast_sigmask = ffs_mask(recv_mask);
-//            } while (recv_mask);
+        #ifdef CONFIG_QTIMERS
+            do /* to get all timer signals at qurt level */
+            {
+                qurt_anysignal_clear(&ltcb->sigs, qurt_sigmask);
+                qurt_signo = ffs(recv_mask);
+                if (qurt_signo < POSIX_TIMER_SIGNO_MIN || qurt_signo > POSIX_TIMER_SIGNO_MAX)
+                {
+                    errno = EINVAL;
+                    return -1;
+                }
+
+                /* get timer pointer */
+                timer = ltcb->timers[qurt_signo - POSIX_TIMER_SIGNO_MIN];
+
+                /* map to POSIX signo */
+                if (NULL == timer)
+                {
+                    errno = EINVAL;
+                    return -1;
+                }
+
+                /* get the signo at posix level */
+                posix_signo = timer->evp->sigev_signo;
+
+                /* add the pending timer signal at pthread mask */
+                (void) sigaddset(&ltcb->sigpending, posix_signo);
+
+                qurt_timer_attr_get_type(&timer->qurt_timer_attr, &type);
+                if (QURT_TIMER_ONESHOT == type)
+                {
+                    /* clear the timer entry in ltcb timer list */
+                    ltcb->timers[qurt_signo - POSIX_TIMER_SIGNO_MIN] = NULL;
+                }
+                else if (QURT_TIMER_PERIODIC == type)
+                {
+                    /* create the timer with reload time first time */
+                    if (timer->need_reload)
+                    {
+                        if (EOK != qurt_timer_delete(timer->qurt_timer))
+                        {
+                            errno = EINVAL;
+                            return -1;
+                        }
+
+                        qurt_timer_attr_set_duration(&timer->qurt_timer_attr, timer->reload_time);
+                        timer->reload_time = 0;
+                        timer->need_reload = 0; /* only reload once */
+
+                        if (EOK != qurt_timer_create(&timer->qurt_timer, &timer->qurt_timer_attr, &ltcb->sigs,
+                                                     qurt_sigmask))
+                        {
+                            errno = EINVAL;
+                            return -1;
+                        }
+                    }
+                }
+                else /* invalid timer type */
+                {
+                    errno = EINVAL;
+                    return -1;
+                }
+
+                /* prepare to check next bit */
+                recv_mask     = recv_mask & (~qurt_sigmask);
+                qurt_sigmask = ffs_mask(recv_mask);
+            } while (recv_mask);
+        #else
+            errno = EINVAL;
+            return -1;
+        #endif
         }
-        /* recevied an unwanted BLAST signal */
+        /* recevied an unwanted QURT signal */
         else
         {
             errno = ENOSYS;
             return -1;
         }
     }
+    }
 
-    //reach this point if we have a pending signal, else error
-    lowest_sig_no = ffs(ltcb->sigpending & *set);
-
-    //clear this pending signal
-    (void) sigdelset(&ltcb->sigpending, lowest_sig_no);
-
-    //only report back the lowest occured signal
-    *sig = lowest_sig_no;
-    return 0;
+    return return_sigwait(&ltcb->sigpending, set, sig);
 }
 
 int sigsuspend(const sigset_t *sigmask)
@@ -194,7 +232,7 @@ int sigsuspend(const sigset_t *sigmask)
     pthread_i        *ltcb;
     int              sig = 0;
 
-    if (!sigmask || (0 != _getltcb_self(&ltcb)))
+    if (!sigmask || (0 != _getltcb_self(&ltcb)) || NULL == ltcb)
         return -1;
 
     if (0 != sigwait(sigmask, &sig))

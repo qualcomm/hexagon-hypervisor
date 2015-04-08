@@ -8,6 +8,7 @@
 
 #include <sys/types.h> /*ssize_t */
 #include <signal.h>
+#include <fcntl.h>
 #include <common/time.h>
 
 #define MQ_PRIO_MAX        255     /* max priority */
@@ -134,7 +135,7 @@ typedef struct fd_set
 
 /** Copies the file descriptor set.
  */
-#define FD_COPY(f, t)     (memcpy)(t, f, sizeof(*(f)))
+#define FD_COPY(f, t)     memcpy(t, f, sizeof(*(f)))
 
 /** Initializes the file descriptor set fdset to have zero bits for all file descriptors.
  */
@@ -180,8 +181,5 @@ int select(int nfds, fd_set *restrict readfds,
            struct timeval *restrict timeout);
 
 /** @} */
-
-/* this function is needed for test framework which needs to clean up memory when teardown */
-void _mq_teardown(void);
 
 #endif

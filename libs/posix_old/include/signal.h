@@ -7,6 +7,13 @@
 #define _SIGNAL_H_
 
 #include <sys/types.h>
+#include <hexagon_protos.h> /* Q6_R_ct0_R */
+
+/*this line will cause a warning in time.h:99: warning: 
+  "struct sigevent" declared inside parameter list */
+//#include <pthread.h> 
+
+#define ffs(x) (Q6_R_ct0_R(x)+1)
 
 /* POSIX signal bits */
 #define SIGALRM        1 /* Alarm clock */
@@ -87,7 +94,7 @@ struct sigaction
  * In POSIX standard, Signal can be used as 'interrupt', which means
  * an incoming signal will interrupt a running thread. After the
  * registered signal handler is executed, the thread will resume.
- * This behavior cannot be implemented w/o modifying L4 or BLAST kernel.
+ * This behavior cannot be implemented w/o modifying L4 or QURT kernel.
  * On the ohter hand, appliation need to be carefully written to avoid
  * problems caused by 'interrupting' signals.
  *

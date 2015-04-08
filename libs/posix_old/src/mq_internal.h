@@ -46,7 +46,7 @@ struct _mq
     char            *mq_name;      /* queue name */
     int             mq_refcount;   /* reference count */
     mqd_t           mq_desc;       /* mq descriptor */
-    qurt_mutex_t   *mq_lock;
+    pthread_mutex_t *mq_lock;       /* lock to be used while updating mq node */
     unsigned long   mq_mode;       /* queue permission */
     struct mq_attr  mq_attr;       /* attribute */
 

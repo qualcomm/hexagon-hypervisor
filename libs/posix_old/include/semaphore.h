@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef SEMAPHORE_H
-#define SEMAPHORE_H
+#ifndef __SEMAPHORE_H__
+#define __SEMAPHORE_H__
 
-#include <sys/types.h>     // Get all C sys types - includes POSIX specific
-#include <sys/errno.h>     // error values
+//#include <sys/types.h>     // Get all C sys types - includes POSIX specific
+#include <errno.h>     // error values
 
 /* sem_t definition */
 typedef unsigned int   sem_t;
@@ -16,6 +16,8 @@ typedef unsigned int   sem_t;
 /* constant definitions */
 #define SEM_FAILED       ((sem_t*) 0)
 #define SEM_VALUE_MAX    ((unsigned int) 30) // If need be increase this
+
+/* SUPPORTED API declarations */
 
 /** \details
  * POSIX standard comes with two kinds of semaphores: named and unnamed
@@ -76,5 +78,5 @@ int    sem_close(sem_t *__sem);
 int    sem_unlink(const char *__name);
 #endif
 
-#endif  /* SEMAPHORE_H */
+#endif
 

@@ -8,20 +8,25 @@
 
 #include <sys/types.h>
 #include <qurt.h>
-#include <qurt_timer.h> //for Qtimer on QURT
+//#include <qube.h>
+//#include <qtimer.h> //for Qtimer on QURT
 
 //#define SIM_TIMER_HACK 1
 
 typedef struct timer_i   timer_i;
 struct timer_i
 {
-    qurt_timer_t          qurt_timer;
-    qurt_timer_attr_t     qurt_timer_attr;
+
+#if (0)
+    qtimer_t          qtimer;
+    qtimer_attr_t     qtimer_attr;
     /* flag to decide to change reload time for periodic timer */
     int               need_reload;
-    qurt_timer_duration_t reload_time;
+    qtimer_duration_t reload_time;
     pthread_t         thread;
     struct sigevent   *evp;
+#endif
+
 };
 
 #endif //_TIME_INTERNAL_H_

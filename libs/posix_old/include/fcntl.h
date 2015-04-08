@@ -8,7 +8,6 @@
 
 #include <sys/types.h>
 
-#if 0
 /* These values are used for cmd in fcntl(). POSIX Table 6-1. */
 #define F_DUPFD       0 /* duplicate file descriptor */
 #define F_GETFD       1 /* get file descriptor flags */
@@ -28,24 +27,22 @@
 #define F_WRLCK       2 /* exclusive or write lock */
 #define F_UNLCK       3 /* unlock */
 
-#endif
-
 /* Oflag values for open(). POSIX Table 6-4. */
-#define POSIX_O_CREAT       0x100  /* creat file if it doesn't exist */
-#define POSIX_O_EXCL        0x200  /* exclusive use flag */
-#define POSIX_O_NOCTTY      0x400  /* do not assign a controlling terminal */
-#define POSIX_O_TRUNC       0x1000 /* truncate flag */
+#define O_CREAT       0x100  /* creat file if it doesn't exist */
+#define O_EXCL        0x200  /* exclusive use flag */
+#define O_NOCTTY      0x400  /* do not assign a controlling terminal */
+#define O_TRUNC       0x1000 /* truncate flag */
 
 /* File status flags for open() and fcntl(). POSIX Table 6-5. */
-#define POSIX_O_APPEND      0x2000 /* set append mode */
-#define POSIX_O_NONBLOCK    0x4000 /* no delay */
+#define O_APPEND      0x2000 /* set append mode */
+#define O_NONBLOCK    0x4000 /* no delay */
 
 /* File access modes for open() and fcntl(). POSIX Table 6-6. */
-#define POSIX_O_RDONLY      0 /* open(name, POSIX_O_RDONLY) opens read only */
-#define POSIX_O_WRONLY      1 /* open(name, POSIX_O_WRONLY) opens write only */
-#define POSIX_O_RDWR        2 /* open(name, POSIX_O_RDWR) opens read/write */
+#define O_RDONLY      0 /* open(name, O_RDONLY) opens read only */
+#define O_WRONLY      1 /* open(name, O_WRONLY) opens write only */
+#define O_RDWR        2 /* open(name, O_RDWR) opens read/write */
 
 /* Mask for use with file access modes. POSIX Table 6-7. */
-#define POSIX_O_ACCMODE     0x3 /* mask for file access modes */
+#define O_ACCMODE     0x3 /* mask for file access modes */
 
 #endif /* _FCNTL_H */

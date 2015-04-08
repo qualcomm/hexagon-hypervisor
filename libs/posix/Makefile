@@ -2,14 +2,14 @@ LIBNAME=posix
 
 OPTIMIZE := -O1
 
-CFLAGS =  -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../blast/include -g $(OPTIMIZE) -G0
-ASFLAGS = -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../blast/include 
+CFLAGS =  -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../qurt/include -g $(OPTIMIZE) -G0
+ASFLAGS = -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../qurt/include 
 
 export BLAST_LIB_INCLUDE=$(shell pwd)/include
 
 ASM_FILES = 
 #C_FILES = src/pthread.c src/pthread_internal.c src/signal.c src/semaphore.c src/mqueue.c src/mq_internal.c src/time.c
-C_FILES = src/pthread.c src/pthread_internal.c src/mqueue.c src/semaphore.c src/mq_internal.c src/signal.c
+C_FILES = src/pthread.c src/pthread_internal.c src/mqueue.c src/semaphore.c src/mq_internal.c src/signal.c src/time.c
 
 O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 

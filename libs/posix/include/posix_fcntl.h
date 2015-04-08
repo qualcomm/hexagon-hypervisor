@@ -31,6 +31,7 @@
 #endif
 
 /* Oflag values for open(). POSIX Table 6-4. */
+/* EJP: FIXME: we should include fcntl.h and define these as O_CREAT, etc for compatibility */
 #define POSIX_O_CREAT       0x100  /* creat file if it doesn't exist */
 #define POSIX_O_EXCL        0x200  /* exclusive use flag */
 #define POSIX_O_NOCTTY      0x400  /* do not assign a controlling terminal */

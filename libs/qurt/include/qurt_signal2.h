@@ -20,6 +20,8 @@
  Confidential and Proprietary - Qualcomm Technologies, Inc.
  ======================================================================*/
 
+#include <qurt_signal.h>
+
 #define QURT_SIGNAL_ATTR_WAIT_ANY 0x00000000
 #define QURT_SIGNAL_ATTR_WAIT_ALL 0x00000001
 
@@ -55,7 +57,7 @@ static inline unsigned int qurt_signal2_get(qurt_signal2_t *signal) { return qur
 
 static inline void qurt_signal2_clear(qurt_signal2_t *signal, unsigned int mask) { return qurt_signal_clear(signal,mask); }
 
-int qurt_signal2_wait_cancellable(qurt_signal2_t *signal,
+static inline int qurt_signal2_wait_cancellable(qurt_signal2_t *signal,
                                   unsigned int mask, 
                                   unsigned int attribute,
                                   unsigned int *p_returnmask) { return qurt_signal_wait_cancellable(signal,mask,attribute,p_returnmask); }

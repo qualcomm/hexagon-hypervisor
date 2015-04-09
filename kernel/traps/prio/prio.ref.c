@@ -5,6 +5,8 @@
 
 #include <prio.h>
 #include <runlist.h>
+#include <check_sanity.h>
+#include <hw.h>
 
 #if 0
 s32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
@@ -25,13 +27,10 @@ s32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
 #else
 s32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
 {
-	s32_t ret;
+	s32_t ret = me->base_prio;
 	if (prio > MAX_PRIO) return -1;
 	if ((me->vmblock != NULL) && (prio < me->vmblock->bestprio)) return -1;
-	H2K_runlist_remove(me);
-	ret = me->prio;
-	me->prio = prio;
-	H2K_runlist_push(me);
+	me->base_prio = prio;
 	return ret;
 }
 #endif
@@ -39,6 +38,6 @@ s32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
 u32_t H2K_prio_get(unsigned int threadid_in, H2K_thread_context *me)
 {
 	/* Return this, or base prio? */
-	return me->prio;
+	return me->base_prio;
 }
 

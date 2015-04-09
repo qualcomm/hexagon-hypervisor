@@ -32,7 +32,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
    Both non-recursive mutex lock/unlock and recursive
    mutex lock/unlock can be applied to this type.
  */
-typedef h2_rmutex_t qurt_mutex_t;
+typedef h2_mutex_t qurt_mutex_t;
 /** @} */ /* end_addtogroup mutex_types */
 
 /** @addtogroup mutex_const_macros
@@ -63,7 +63,7 @@ typedef h2_rmutex_t qurt_mutex_t;
   None.
   
  */
-static inline void qurt_mutex_init(qurt_mutex_t *lock) { return h2_rmutex_init(lock); }
+static inline void qurt_mutex_init(qurt_mutex_t *lock) { return h2_mutex_init(lock); }
 
 /**@ingroup func_qurt_mutex_destroy
    Destroys the specified mutex. 
@@ -111,7 +111,7 @@ static inline void qurt_mutex_destroy(qurt_mutex_t *lock) {}
    @dependencies
    None.  
  */
-static inline void qurt_mutex_lock(qurt_mutex_t *lock) { return h2_rmutex_lock(lock); }
+static inline void qurt_mutex_lock(qurt_mutex_t *lock) { return h2_mutex_lock(lock); }
 
 /**@ingroup func_qurt_mutex_unlock
   Unlocks the specified mutex.  \n
@@ -133,7 +133,7 @@ static inline void qurt_mutex_lock(qurt_mutex_t *lock) { return h2_rmutex_lock(l
    @dependencies
    None.  
  */
-static inline void qurt_mutex_unlock(qurt_mutex_t *lock) { return h2_rmutex_unlock(lock); }
+static inline void qurt_mutex_unlock(qurt_mutex_t *lock) { return h2_mutex_unlock(lock); }
 
 /**@ingroup func_qurt_mutex_try_lock
    Attempts to lock the specified mutex. 
@@ -157,7 +157,7 @@ static inline void qurt_mutex_unlock(qurt_mutex_t *lock) { return h2_rmutex_unlo
   @dependencies
   None.
  */
-static inline int qurt_mutex_try_lock(qurt_mutex_t *lock) { return h2_rmutex_trylock(lock); }
+static inline int qurt_mutex_try_lock(qurt_mutex_t *lock) { return h2_mutex_trylock(lock); }
 
 #endif /* QURT_MUTEX_H */
 

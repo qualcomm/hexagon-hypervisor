@@ -34,7 +34,7 @@ FUNC_START H2K_popup_int .text.int.popup .p2align 5
 	}
 	{
 		memd(HANDLERBASE+INTNO<<#3) = NEWPARAM_HANDLER
-		if (!p0.new) PRIO = memub(PARAM+#CONTEXT_prio)
+		if (!p0.new) NEWPRIO = memub(PARAM+#CONTEXT_prio)
 		p0 = cmp.eq(PARAM,#0) 
 		if (p0.new) jump:nt .Lnohandler
 		RUNLIST_PRIOS = add(H2K_GP,#KG_runlist_prios)
@@ -48,12 +48,12 @@ FUNC_START H2K_popup_int .text.int.popup .p2align 5
 	{
 		WAITMASK = clrbit(WAITMASK,HWTNUM)
 		PRIOMASK = clrbit(PRIOMASK,HWTNUM)
-		NEWPRIO = memub(PARAM+#CONTEXT_prio)
 		memw(RUNLIST+HWTNUM<<#2) = PARAM
+		memh(RUNLIST_PRIOS+HWTNUM<<#1) = NEWPRIO
 	}
 	{
 		memd(H2K_GP+#KG_lowprio_masks) = WAIT_PRIOMASKS
-		memh(RUNLIST_PRIOS+HWTNUM<<#1) = NEWPRIO
+		if (!p1.new) PRIO = memub(ME+#CONTEXT_prio)
 		p1 = cmp.eq(ME,#0)
 		if (p1.new) jump:t 1f
 		NEGONE = #-1

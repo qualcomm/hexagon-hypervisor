@@ -15,7 +15,7 @@
 	.global h2_cond_signal
 	.global h2_cond_broadcast
 	.global h2_cond_wait
-	.global h2_cond_wait_rmutex
+	//.global h2_cond_wait_rmutex
 
 /*
  * About the implementation of the condition variables:
@@ -134,6 +134,7 @@ h2_cond_wait:
 		jump h2_mutex_lock
 	}
 
+#if 0
 	/* 
 	 * Condition Wait for rmutex
 	 * - Read the condition variable
@@ -193,3 +194,4 @@ h2_cond_wait_rmutex:
 		jump h2_rmutex_lock
 	}
 
+#endif

@@ -68,7 +68,7 @@ Wait on a condition.  The rmutex will be freed before blocking and re-acquired b
 @returns None
 @dependencies None
 */
-void h2_cond_wait_rmutex(h2_cond_t *cond, h2_rmutex_t *mutex);
+static inline void h2_cond_wait_rmutex(h2_cond_t *cond, h2_rmutex_t *mutex) { h2_cond_wait(cond,mutex); }
 
 /** @} */
 

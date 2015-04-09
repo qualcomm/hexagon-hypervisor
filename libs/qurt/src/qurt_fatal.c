@@ -17,5 +17,6 @@ void qurt_assert_error(const char *filename, int lineno)
 {
 	qurt_printf("assertion fail @ %s:%d\n",filename,lineno);
 	qurt_exception_raise_fatal();
+	while (1) /* SPIN */;
 }
 

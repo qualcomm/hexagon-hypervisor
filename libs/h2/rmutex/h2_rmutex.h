@@ -14,49 +14,45 @@
 
 #include <h2_mutex.h>
 
-#define H2_RMUTEX_T_INIT { H2_MUTEX_T_INIT, 0, 0 }
+#define H2_RMUTEX_T_INIT { H2_PLAINMUTEX_T_INIT, H2_MUTEX_RECURSIVE, 0, 0 }
 
 /**
-@brief Recursive Mutex Structure.  Please do not use directly 
+@brief Mutex Structure.  Please do not use directly 
 */
-typedef struct {
-	h2_mutex_t mutex;
-	unsigned int depth;
-	unsigned int owner_id;
-} h2_rmutex_t;
+typedef h2_mutex_t h2_rmutex_t;
 
 /**
-Initialize a Recursive Mutex.  The mutex is initialized to be unheld.
+Initialize a Mutex.  The mutex is initialized to be unheld.
 @param[in] lock		Address of the Recursive Mutex
 @returns None
 @dependencies None
 */
 
-void h2_rmutex_init(h2_rmutex_t *lock);
+static inline void h2_rmutex_init(h2_mutex_t *lock) { h2_mutex_init_type(lock,H2_MUTEX_RECURSIVE); }
 
 /**
-Lock a Recursive Mutex.  If the lock is held by another thread, this will block.
+Lock a Mutex.  If the lock is held by another thread, this will block.
 @param[in] lock		Address of the Recursive Mutex
 @returns None for now, need to change to help POSIX
 @dependencies None
 */
-void h2_rmutex_lock(h2_rmutex_t *lock);
+static inline void h2_rmutex_lock(h2_mutex_t *lock) { h2_mutex_lock(lock); }
 
 /**
-Unlock a Recursive Mutex.  If the count of recursive locks is zero, a blocked thread will be woken.
+Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will be woken.
 @param[in] lock		Address of the Recursive Mutex
 @returns None for now, need to change to help POSIX
 @dependencies None
 */
-void h2_rmutex_unlock(h2_rmutex_t *lock);
+static inline void h2_rmutex_unlock(h2_mutex_t *lock) { h2_mutex_unlock(lock); }
 
 /**
-Try to lock a Recursive Mutex.  If the mutex was already held by another thread, return failure.
+Try to lock a Mutex.  If the mutex was already held by another thread, return failure.
 @param[in] lock		Address of the Recursive Mutex
 @returns 0 on success, nonzero otherwise
 @dependencies None
 */
-int h2_rmutex_trylock(h2_rmutex_t *lock);
+static inline int h2_rmutex_trylock(h2_mutex_t *lock) { return h2_mutex_trylock(lock); }
 
 /** @} */
 

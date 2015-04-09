@@ -4,20 +4,20 @@
  */
 
 /*
- * h2_mutex.S
+ * h2_plainmutex.S
  * 
  * This file contains the implementation for 
- * h2_mutex functionality 
+ * h2_plainmutex functionality 
  */
 
 #include "h2_trap_constants.h"
 
 	.text
-	.global h2_mutex_lock
-	.global h2_mutex_unlock
-	.global h2_mutex_trylock
+	.global h2_plainmutex_lock
+	.global h2_plainmutex_unlock
+	.global h2_plainmutex_trylock
 
-h2_mutex_lock:
+h2_plainmutex_lock:
 	{
 		allocframe(#8)
 	}
@@ -58,7 +58,7 @@ h2_mutex_lock:
 	}
 	jumpr r31
 
-h2_mutex_unlock:
+h2_plainmutex_unlock:
 	allocframe(#8)
 	{
 		memd(r29+#0) = r25:24
@@ -98,11 +98,11 @@ h2_mutex_unlock:
 	jumpr r31
 
 	/* 
-	 * h2_mutex_trylock
+	 * h2_plainmutex_trylock
 	 * If mutex is 0, change it to TID and return 0
 	 * Otherwise, return nonzero
 	 */
-h2_mutex_trylock:
+h2_plainmutex_trylock:
 	allocframe(#8)
 	{
 		memd(r29+#0) = r25:24

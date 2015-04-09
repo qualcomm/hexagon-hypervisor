@@ -16,7 +16,7 @@ typedef struct {
 
 static mutex_entry libc_mutexes[MAX_LIBC_MUTEXES];
 
-static h2_mutex_t bigmutex = 0;
+static h2_mutex_t bigmutex = H2_MUTEX_T_INIT;
 
 void sys_Mtxinit(void **mutex)
 {

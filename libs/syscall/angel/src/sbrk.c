@@ -18,7 +18,7 @@ extern char end;
 extern void *heapBase __attribute__((section(".data")));
 extern void *heapLimit __attribute__((section(".data")));
 
-static h2_mutex_t mylock = 0;
+static h2_mutex_t mylock = H2_MUTEX_T_INIT;
 
 static unsigned long long int *heap_base = NULL;
 static unsigned long long int *heap_start = NULL;

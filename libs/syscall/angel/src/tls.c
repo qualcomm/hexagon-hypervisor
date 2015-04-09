@@ -32,7 +32,7 @@ We really just need an __init section.
 */
 
 //static int tls_init_done = 0;
-h2_mutex_t tls_init_done=0;  //  this needs to change if the mutex type changes
+h2_mutex_t tls_init_done=H2_MUTEX_T_INIT;  //  this needs to change if the mutex type changes
 
 static void tlsinit()
 {

@@ -13,48 +13,48 @@
  * wrap the C library, but with a lock
  */
 
-static unsigned int memlock = 0;
+static h2_plainmutex_t memlock = H2_PLAINMUTEX_T_INIT;
 
 void *h2_malloc(unsigned int size)
 {
 	void *ret;
-	h2_mutex_lock(&memlock);
+	h2_plainmutex_lock(&memlock);
 	ret = malloc(size);
-	h2_mutex_unlock(&memlock);
+	h2_plainmutex_unlock(&memlock);
 	return ret;
 }
 
 void *h2_calloc(unsigned int elsize, unsigned int num)
 {
 	void *ret;
-	h2_mutex_lock(&memlock);
+	h2_plainmutex_lock(&memlock);
 	ret = calloc(elsize,num);
-	h2_mutex_unlock(&memlock);
+	h2_plainmutex_unlock(&memlock);
 	return ret;
 }
 
 void *h2_realloc(void *ptr, int newsize)
 {
 	void *ret;
-	h2_mutex_lock(&memlock);
+	h2_plainmutex_lock(&memlock);
 	ret = realloc(ptr,newsize);
-	h2_mutex_unlock(&memlock);
+	h2_plainmutex_unlock(&memlock);
 	return ret;
 }
 
 void *h2_memalign(size_t blocksize, size_t bytes)
 {
 	void *ret;
-	h2_mutex_lock(&memlock);
+	h2_plainmutex_lock(&memlock);
 	ret = memalign(blocksize,bytes);
-	h2_mutex_unlock(&memlock);
+	h2_plainmutex_unlock(&memlock);
 	return ret;
 }
 
 void h2_free(void *ptr) 
 {
-	h2_mutex_lock(&memlock);
+	h2_plainmutex_lock(&memlock);
 	free(ptr);
-	h2_mutex_unlock(&memlock);
+	h2_plainmutex_unlock(&memlock);
 }
 

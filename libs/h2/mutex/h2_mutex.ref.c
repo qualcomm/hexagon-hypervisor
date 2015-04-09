@@ -4,36 +4,26 @@
  */
 
 /*
- * h2_rmutex.c
+ * h2_mutex.c
  * 
  * This file contains the implementation for a recursive mutex
  */
 
 #include "h2.h"
 
-void h2_rmutex_init(h2_rmutex_t *lock)
-{
-	//h2_mutex_init(&lock->mutex);
-	//lock->depth = 0;
-	//lock->owner_id = 0;
-	//  This is a little contorted, but it allows us to use the same init define...
-	h2_rmutex_t temp = H2_RMUTEX_T_INIT;
-	*lock = temp;
-}
-
-void h2_rmutex_lock(h2_rmutex_t *lock)
+void h2_mutex_lock(h2_mutex_t *lock)
 {
 	unsigned int my_id = h2_thread_myid();
-	if (h2_mutex_trylock(&lock->mutex) == 0) {
+	if (h2_plainmutex_trylock(&lock->mutex) == 0) {
 		/* Trylock succeeded, set depth and owner */
 		lock->depth = 1;
 		lock->owner_id = my_id;
-	} else if (lock->owner_id == my_id) {
+	} else if ((lock->type != H2_MUTEX_PLAIN) && (lock->owner_id == my_id)) {
 		/* Trylock failed, but owner is me, so increment depth */
 		lock->depth++;
 	} else {
 		/* Block until mutex is freed */
-		h2_mutex_lock(&lock->mutex);
+		h2_plainmutex_lock(&lock->mutex);
 		/* Lock was freed, set depth and owner */
 		lock->depth = 1;
 		lock->owner_id = my_id;
@@ -42,12 +32,12 @@ void h2_rmutex_lock(h2_rmutex_t *lock)
 
 /* FIXME: check owner before decrementing depth?  return error? */
 
-void h2_rmutex_unlock(h2_rmutex_t *lock)
+void h2_mutex_unlock(h2_mutex_t *lock)
 {
 #ifdef PARANOID
 	unsigned int my_id = h2_thread_myid();
 	if (lock->owner_id != my_id) {
-	  printf("PANIC: h2_rmutex_unlock by %08x != owner %08x\n", my_id, lock->owner_id);
+	  printf("PANIC: h2_mutex_unlock by %08x != owner %08x\n", my_id, lock->owner_id);
 	  exit(1);
 	}
 #endif
@@ -56,19 +46,19 @@ void h2_rmutex_unlock(h2_rmutex_t *lock)
 	/* If lock no longer held, unlock mutex */
 	if (lock->depth == 0) {
 		lock->owner_id = 0;
-		h2_mutex_unlock(&lock->mutex);
+		h2_plainmutex_unlock(&lock->mutex);
 	}
 }
 
-int h2_rmutex_trylock(h2_rmutex_t *lock)
+int h2_mutex_trylock(h2_mutex_t *lock)
 {
 	unsigned int my_id = h2_thread_myid();
-	if (h2_mutex_trylock(&lock->mutex) == 0) {
+	if (h2_plainmutex_trylock(&lock->mutex) == 0) {
 		/* Trylock succeded, set depth and owner */ 
 		lock->depth = 1;
 		lock->owner_id = my_id;
 		return 0;
-	} else if (lock->owner_id == my_id) {
+	} else if ((lock->type != H2_MUTEX_PLAIN) && (lock->owner_id == my_id)) {
 		/* Trylock failed, but owner is me, so increment depth */
 		lock->depth++;
 		return 0;

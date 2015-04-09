@@ -6,53 +6,71 @@
 #ifndef H2_MUTEX_H
 #define H2_MUTEX_H 1
 
-/** @file h2_mutex.h
- @brief Mutexes allow at most one thread to hold the mutex at a time
+/** @file h2_rmutex.h
+ @brief Recursive Mutexes allow at most one thread to hold the mutex at a time, but allow a thread to lock the lock more than once.
 */
 /** @addtogroup h2 
 @{ */
 
-/** h2_mutex_t is a word */
-typedef unsigned int h2_mutex_t;
+#include <h2_plainmutex.h>
 
-/** H2_MUTEX_T_INIT is the value to initialize a mutex to */
-#define H2_MUTEX_T_INIT 0 
+enum {
+	H2_MUTEX_PLAIN = 0,
+	H2_MUTEX_RECURSIVE = 1,
+};
+
+#define H2_MUTEX_T_INIT { H2_PLAINMUTEX_T_INIT, H2_MUTEX_PLAIN, 0, 0 }
 
 /**
-Initialize a mutex.  The mutex is not held once initialized.
-@param[in] lock		Address of the mutex
+@brief Mutex Structure.  Please do not use directly 
+*/
+typedef struct {
+	h2_plainmutex_t mutex;
+	unsigned int type;
+	unsigned int depth;
+	unsigned int owner_id;
+} __attribute__((aligned(8))) h2_mutex_t;
+
+/**
+Initialize a Mutex.  The mutex is initialized to be unheld.
+@param[in] lock		Address of the Recursive Mutex
 @returns None
 @dependencies None
 */
-static inline void h2_mutex_init(h2_mutex_t *lock) { *lock = H2_MUTEX_T_INIT; }
+
+static inline void h2_mutex_init_type(h2_mutex_t *lock, unsigned int type)
+{
+	h2_mutex_t temp = H2_MUTEX_T_INIT;
+	temp.type = type;
+	*lock = temp;
+}
+
+static inline void h2_mutex_init(h2_mutex_t *lock) { h2_mutex_init_type(lock,H2_MUTEX_PLAIN); }
 
 /**
-Lock a mutex.  If the mutex is already held, it will block until the mutex can be locked.
-@param[in] lock		Address of the mutex
-@returns None, but should return success/fail for POSIX integration
+Lock a Mutex.  If the lock is held by another thread, this will block.
+@param[in] lock		Address of the Recursive Mutex
+@returns None for now, need to change to help POSIX
 @dependencies None
 */
-
 void h2_mutex_lock(h2_mutex_t *lock);
 
 /**
-Unlock a mutex.
-@param[in] lock		Address of the mutex
-@returns None, but should return success/fail for POSIX integration
+Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will be woken.
+@param[in] lock		Address of the Recursive Mutex
+@returns None for now, need to change to help POSIX
 @dependencies None
 */
-void h2_mutex_unlock(h2_mutex_t *lock);	/* unlock */
+void h2_mutex_unlock(h2_mutex_t *lock);
 
 /**
-Try to lock a mutex.  If the mutex is already held, return failure.
-@param[in] lock		Address of the mutex
-@returns 0 on success, nonzero value on failure.
+Try to lock a Mutex.  If the mutex was already held by another thread, return failure.
+@param[in] lock		Address of the Recursive Mutex
+@returns 0 on success, nonzero otherwise
 @dependencies None
 */
-
-int h2_mutex_trylock(h2_mutex_t *lock);	/* just try... 0 if successful, nonzero if not */
+int h2_mutex_trylock(h2_mutex_t *lock);
 
 /** @} */
 
 #endif
-

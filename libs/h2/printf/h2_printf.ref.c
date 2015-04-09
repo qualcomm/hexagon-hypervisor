@@ -9,16 +9,16 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-static h2_mutex_t printmutex = 0;
+static h2_plainmutex_t printmutex = H2_PLAINMUTEX_T_INIT;
 
 int h2_printf(const char *fmt, ...)
 {
 	int ret;
 	va_list args;
 	va_start(args,fmt);
-	h2_mutex_lock(&printmutex);
+	h2_plainmutex_lock(&printmutex);
 	ret = vprintf(fmt,args);
-	h2_mutex_unlock(&printmutex);
+	h2_plainmutex_unlock(&printmutex);
 	va_end(args);
 	return ret;
 }

@@ -610,7 +610,7 @@ int qurt_thread_join(unsigned int tid, int *status);
  */
 static inline int qurt_thread_get_priority (qurt_thread_t threadid)
 {
-	return h2_get_prio();// hopefully it's the calling thread! :-)
+	return h2_get_prio(threadid);// hopefully it's the calling thread! :-)
 }
 
 /**@ingroup func_qurt_thread_set_priority

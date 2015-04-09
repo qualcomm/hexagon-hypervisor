@@ -14,10 +14,11 @@
 
 /**
 Get the current base priority.
+@param[in] threadid	Thread ID for thread to get priority
 @returns Current priority
 @dependencies None
 */
-int h2_get_prio(void);
+int h2_get_prio(unsigned int threadid);
 
 /**
 Set the priority for a thread.

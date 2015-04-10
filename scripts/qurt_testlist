@@ -14,15 +14,7 @@
 ./qurt/test/testcases/q6_excep_5/app1/src
 ./qurt/test/testcases/q6_excep_6/app1/src
 ./qurt/test/testcases/q6_excep_fp/app1/src
-./qurt/test/testcases/q6_flushL2cache128/app1/src
-./qurt/test/testcases/q6_flushL2cache256/app1/src
-./qurt/test/testcases/q6_flushL2cache512/app1/src
-./qurt/test/testcases/q6_flushL2cache64/app1/src
-./qurt/test/testcases/q6_locklinesL2cache256/app1/src
-./qurt/test/testcases/q6_locklinesL2cachefull/app1/src
 ./qurt/test/testcases/q6_measure_pcycles/app1/src
-./qurt/test/testcases/q6_pc_1/app1/src
-./qurt/test/testcases/q6_pc_2/app1/src
 ./qurt/test/testcases/q6_tcxo_1/app1/src
 ./qurt/test/testcases/q6_wait_idle_override/app1/src
 ./qurt/test/testcases/q6memory_1/app1/src
@@ -180,42 +172,50 @@
 ./qurt/test/testcases/stackprotection_t1/app1/src
 ./qurt/test/testcases/stackprotection_t2/app1/src
 ./qurt/test/testcases/vma_t1/app1/src
+./qurt/test/testcases/qurt_memory_t1.profile/app1/src
 
 # Disabled
 
-# ./qurt/test/testcases/qthread_malloc/app1/src
-# ./qurt/test/testcases/qmemory_t5/app1/src
-# ./qurt/test/testcases/qmemory_t1.usedup/app1/src
-# ./qurt/test/testcases/qmemory_t1.phys_cont/app1/src
-# ./qurt/test/testcases/qmemory_tcm_t1/app1/src
-# ./qurt/test/testcases/qmemory_uncach_shared/app1/src
-# ./qurt/test/testcases/qmemory_t4/app1/src
-# ./qurt/test/testcases/qmemory_t1.usedup_all.3/app1/src
-# ./qurt/test/testcases/qmemory_t1/app1/src
-# ./qurt/test/testcases/qmemory_query/app1/src
-# ./qurt/test/testcases/qmemory_unit/app1/src
-# ./qurt/test/testcases/qmemory_t1.usedup_all/app1/src
-# ./qurt/test/testcases/qmemory_t1.usedup_all.2/app1/src
-# ./qurt/test/testcases/qmemory_t1.usedup_all.1/app1/src
-# ./qurt/test/testcases/qurt_profile_t1/app1/src
-# ./qurt/test/testcases/qurt_memory_t1.profile/app1/src
-# ./qurt/test/testcases/qthread_t1.profile/app1/src
-# ./qurt/test/testcases/qsignal.profile/app1/src
-# ./qurt/test/testcases/qurt_ipi_t1.profile/app1/src
-# ./qurt/test/testcases/qurt_profile_t2/app1/src
-# ./qurt/test/testcases/qmemory_t1.profile/app1/src
-# ./qurt/test/testcases/perf_4kb_table_walk/app1/src
-# ./qurt/test/testcases/qurt_island_excep_1/app1/src
-# ./qurt/test/testcases/qurt_island_excep_3/app1/src
-# ./qurt/test/testcases/qurt_island_apis/app1/src
-# ./qurt/test/testcases/qurt_island_excep_2/app1/src
-# ./qurt/test/testcases/qurt_island_footprint/app1/src
-# ./qurt/test/testcases/qdi_basic/app1/src
-# ./qurt/test/testcases/mp_usermalloc/app1
-# ./qurt/test/testcases/mp_usermalloc/app2
 # ./qurt/test/testcases/mp_qdi/app1
 # ./qurt/test/testcases/mp_qdi/app2
 # ./qurt/test/testcases/mp_qdi_prof/app1
 # ./qurt/test/testcases/mp_qdi_prof/app2
 # ./qurt/test/testcases/mp_qurt/app1/src
 # ./qurt/test/testcases/mp_qurt/app2/src
+# ./qurt/test/testcases/mp_usermalloc/app1
+# ./qurt/test/testcases/mp_usermalloc/app2
+# ./qurt/test/testcases/perf_4kb_table_walk/app1/src
+# ./qurt/test/testcases/q6_flushL2cache128/app1/src
+# ./qurt/test/testcases/q6_flushL2cache256/app1/src
+# ./qurt/test/testcases/q6_flushL2cache512/app1/src
+# ./qurt/test/testcases/q6_flushL2cache64/app1/src
+# ./qurt/test/testcases/q6_locklinesL2cache256/app1/src
+# ./qurt/test/testcases/q6_locklinesL2cachefull/app1/src
+# ./qurt/test/testcases/q6_pc_1/app1/src
+# ./qurt/test/testcases/q6_pc_2/app1/src
+# ./qurt/test/testcases/qdi_basic/app1/src
+# ./qurt/test/testcases/qmemory_query/app1/src
+# ./qurt/test/testcases/qmemory_t1.phys_cont/app1/src
+# ./qurt/test/testcases/qmemory_t1.profile/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup_all.1/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup_all.2/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup_all.3/app1/src
+# ./qurt/test/testcases/qmemory_t1.usedup_all/app1/src
+# ./qurt/test/testcases/qmemory_t1/app1/src
+# ./qurt/test/testcases/qmemory_t4/app1/src
+# ./qurt/test/testcases/qmemory_t5/app1/src
+# ./qurt/test/testcases/qmemory_tcm_t1/app1/src
+# ./qurt/test/testcases/qmemory_uncach_shared/app1/src
+# ./qurt/test/testcases/qmemory_unit/app1/src
+# ./qurt/test/testcases/qsignal.profile/app1/src
+# ./qurt/test/testcases/qthread_malloc/app1/src
+# ./qurt/test/testcases/qthread_t1.profile/app1/src
+# ./qurt/test/testcases/qurt_ipi_t1.profile/app1/src
+# ./qurt/test/testcases/qurt_island_apis/app1/src
+# ./qurt/test/testcases/qurt_island_excep_1/app1/src
+# ./qurt/test/testcases/qurt_island_excep_2/app1/src
+# ./qurt/test/testcases/qurt_island_excep_3/app1/src
+# ./qurt/test/testcases/qurt_island_footprint/app1/src
+# ./qurt/test/testcases/qurt_profile_t1/app1/src
+# ./qurt/test/testcases/qurt_profile_t2/app1/src

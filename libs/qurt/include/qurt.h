@@ -29,6 +29,8 @@ extern "C" {
 
 void qurt_init();
 
+#define CONFIG_QTIMERS 1
+
 #include "qurt_prelim.h"
 #include "qurt_consts.h"
 #include "qurt_consts_internal.h"

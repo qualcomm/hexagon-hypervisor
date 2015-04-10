@@ -193,6 +193,34 @@ void TH_check_priowait_running(int hthread, H2K_thread_context *thread)
 	if ((get_imask(thread->hthread)) == 0) FAIL("IMASK clear for hthread");
 }
 
+void TH_popup_try(H2K_thread_context *a, H2K_thread_context *b, int intno)
+{
+	TH_clear_popups();
+	TH_set_popup(intno,b);
+	TH_set_running(0,a);
+	TH_popup_int(intno,a,0,b);
+	TH_check_priowait_running(0,b);
+	TH_check_old(a);
+	TH_clear_ready(a);
+}
+
+void TH_popup_check_priorities(H2K_thread_context *a, H2K_thread_context *b)
+{
+	int i,j,k;
+	int oldprio = a->prio;
+	TH_clear_popups();
+	for (i = 0; i < MAX_PRIOS; i += 32) {
+		for (j = 0; j < MAX_PRIOS; j += 32) {
+			for (k = 0; k < MAX_INTERRUPTS; k += 32) {
+				a->prio = i;
+				b->prio = j;
+				TH_popup_try(a,b,k);
+			}
+		}
+	}
+	a->prio = b->prio = oldprio;
+}
+
 u32_t fakeint[0x200];
 
 int main() 
@@ -220,6 +248,8 @@ int main()
 #if ARCHV >= 4
 	if ((TH_call_popup_wait(31,&a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
 #endif
+
+	TH_popup_check_priorities(&a,&b);
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 #if ARCHV >= 4

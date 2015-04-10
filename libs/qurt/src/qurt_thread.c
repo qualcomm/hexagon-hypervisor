@@ -154,6 +154,7 @@ void qurt_thread_exit(int status)
 {
 	struct QURT_ugp_ptr *tmp;
 	tmp = find_thread(h2_thread_myid());
+	/* EJP: FIXME: call TLS destructors */
 	if (tmp) {
 		h2_mutex_lock(&tmp->join_lock);
 		tmp->join_state = QURT_JOIN_STATE_DONE;

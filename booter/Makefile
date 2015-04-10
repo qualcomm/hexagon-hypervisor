@@ -13,6 +13,8 @@ endif
 
 BOOTVM_PROG := booter
 
+BOOTVM_IMAGE_HEAP_SIZE := 0x40000
+
 CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 
@@ -32,7 +34,7 @@ hello: hello.o
 	${CC} $(LDFLAGS) $(CFLAGS)  -Wl,--section-start=.start=$(H2K_GUEST_START) -o hello hello.o
 
 $(BOOTVM_IMAGE): booter.o elf.o booter_event.o $(BOOTVM_IMAGE_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x20000 -Wl,--defsym=STACK_SIZE=0x1000 -o $@ booter.o elf.o booter_event.o $(BOOTVM_ENTRY_O)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=$(BOOTVM_IMAGE_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=0x1000 -o $@ booter.o elf.o booter_event.o $(BOOTVM_ENTRY_O)
 
 
 test: hello $(BOOTVM_PROG)

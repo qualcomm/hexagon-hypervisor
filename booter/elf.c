@@ -47,39 +47,99 @@ int elf_get_shdr(int fdesc, int i, Elf32_Shdr *shdr, const Elf32_Ehdr *ehdr)
 	return 0;
 }
 
-int elf_get_symbol(int fdesc, const char *name, const Elf32_Ehdr *ehdr)
-{
-	int i,n_el, ret = -1;
+#define SPECIALS_BUFSIZE 256
+
+int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf32_Ehdr *ehdr) {
+
+	int i, j, n_el, bytes, pos;
+	int ntomatch = nsyms;
 	Elf32_Shdr strhdr,symhdr;
 	Elf32_Sym sym;
-	char *strings = NULL;
+
+	char buf[SPECIALS_BUFSIZE];
+
 	for (i = 0; i < ehdr->e_shnum; i++) {
 		if (i == ehdr->e_shstrndx) continue;
-		if (elf_get_shdr(fdesc,i,&strhdr,ehdr) == -1) goto done;
+		if (elf_get_shdr(fdesc,i,&strhdr,ehdr) == -1) goto error;
 		if (strhdr.sh_type == SHT_STRTAB) break;
 	}
-	if (strhdr.sh_type != SHT_STRTAB) return -1;
-	if ((strings = malloc(strhdr.sh_size)) == NULL) goto done;
-	if (lseek(fdesc,strhdr.sh_offset,SEEK_SET) == -1) return -1;
-	if (read(fdesc,strings,strhdr.sh_size) != strhdr.sh_size) goto done;
+	if (strhdr.sh_type != SHT_STRTAB) goto error;
+	if ((pos = lseek(fdesc, strhdr.sh_offset, SEEK_SET)) == -1) goto error;
 
+	/* Find the symbols in the string table first */
+	while (ntomatch && (bytes = read(fdesc, buf, SPECIALS_BUFSIZE)) && bytes != -1) {
+		for ( i = 0; i < nsyms; i++) {
+			if (0 == strcmp(specials[i].name, buf)) {
+				/* got a match; temporarily store the offset in the array */
+				specials[i].addr = pos - strhdr.sh_offset;
+				ntomatch--;
+				break; // presumably we're looking for unique symbols
+			}
+		}
+		if ((pos = lseek(fdesc, pos + strlen(buf) + 1, SEEK_SET)) == -1) goto error;
+	}
+
+	/* Get the addresses from the symbol table */
 	for (i = 0; i < ehdr->e_shnum; i++) {
-		if (elf_get_shdr(fdesc,i,&symhdr,ehdr) == -1) goto done;
+		if (elf_get_shdr(fdesc,i,&symhdr,ehdr) == -1) goto error;
 		if (symhdr.sh_type == SHT_SYMTAB) break;
 	}
-	if (symhdr.sh_type != SHT_SYMTAB) goto done;
+	if (symhdr.sh_type != SHT_SYMTAB) goto error;
 
 	n_el = symhdr.sh_size / symhdr.sh_entsize;
-	if (lseek(fdesc,symhdr.sh_offset,SEEK_SET) == -1) return -1;
+	if (lseek(fdesc, symhdr.sh_offset,SEEK_SET) == -1) goto error;
+
+	ntomatch = nsyms;
 	for (i = 1; i < n_el; i++) {
-		if (read(fdesc,&sym,sizeof(sym)) != sizeof(sym)) goto done;
-		if (0==strcmp(name,strings+sym.st_name)) {
-			ret = sym.st_value;
-			break;
+		if (read(fdesc, &sym, sizeof(sym)) != sizeof(sym)) goto error;
+		for (j = 0; j < nsyms; j++) {
+			if (specials[j].addr == sym.st_name) { // match
+				specials[j].addr = sym.st_value; // replace with value
+				if (--ntomatch == 0) {
+					break;
+				}
+			}
 		}
 	}
-done:
-	if (strings) free(strings);
-	return ret;
+	return 0;
+
+ error:
+	return -1;
 }
+
+/* int elf_get_symbol(int fdesc, const char *name, const Elf32_Ehdr *ehdr) */
+/* { */
+/* 	int i,n_el, ret = -1; */
+/* 	Elf32_Shdr strhdr,symhdr; */
+/* 	Elf32_Sym sym; */
+/* 	char *strings = NULL; */
+/* 	for (i = 0; i < ehdr->e_shnum; i++) { */
+/* 		if (i == ehdr->e_shstrndx) continue; */
+/* 		if (elf_get_shdr(fdesc,i,&strhdr,ehdr) == -1) goto done; */
+/* 		if (strhdr.sh_type == SHT_STRTAB) break; */
+/* 	} */
+/* 	if (strhdr.sh_type != SHT_STRTAB) return -1; */
+/* 	if ((strings = malloc(strhdr.sh_size)) == NULL) goto done; */
+/* 	if (lseek(fdesc,strhdr.sh_offset,SEEK_SET) == -1) return -1; */
+/* 	if (read(fdesc,strings,strhdr.sh_size) != strhdr.sh_size) goto done; */
+
+/* 	for (i = 0; i < ehdr->e_shnum; i++) { */
+/* 		if (elf_get_shdr(fdesc,i,&symhdr,ehdr) == -1) goto done; */
+/* 		if (symhdr.sh_type == SHT_SYMTAB) break; */
+/* 	} */
+/* 	if (symhdr.sh_type != SHT_SYMTAB) goto done; */
+
+/* 	n_el = symhdr.sh_size / symhdr.sh_entsize; */
+/* 	if (lseek(fdesc,symhdr.sh_offset,SEEK_SET) == -1) return -1; */
+/* 	for (i = 1; i < n_el; i++) { */
+/* 		if (read(fdesc,&sym,sizeof(sym)) != sizeof(sym)) goto done; */
+/* 		if (0==strcmp(name,strings+sym.st_name)) { */
+/* 			ret = sym.st_value; */
+/* 			break; */
+/* 		} */
+/* 	} */
+/* done: */
+/* 	if (strings) free(strings); */
+/* 	return ret; */
+/* } */
 

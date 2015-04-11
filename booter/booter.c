@@ -65,6 +65,21 @@ static unsigned int error_exit = 1;
 #define ERRSTR_LEN 1024
 static char errstr[ERRSTR_LEN];
 
+#define FOREACH_sym(GEN) \
+  GEN(__guest_pmap__) \
+	GEN(__boot_cmdline__) \
+	GEN(__boot_net_phys_offset__)
+
+#define GEN_enum(NAME) SPECIAL ## NAME,
+enum {
+	FOREACH_sym(GEN_enum)
+};
+
+#define GEN_specials(NAME) {#NAME, -1},
+static special_symbols specials[] = {
+	FOREACH_sym(GEN_specials)
+};
+
 void error(char *str1, char *str2) {
 
 	int err = sys_errno();
@@ -125,7 +140,7 @@ static h2_guest_pmap_t *get_pmap(int fdesc, const Elf32_Ehdr *ehdr) {
 
 	int addr;
 
-	if ((addr = elf_get_symbol(fdesc, "__guest_pmap__", ehdr)) == -1) {
+	if ((addr = specials[SPECIAL__guest_pmap__].addr) == -1) {
 		printf("__guest_pmap__ not found.\n");
 		return 0;
 	} else {
@@ -139,7 +154,7 @@ static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr, 
 {
 	char *dst;
 	unsigned long addr;
-	if ((addr = (unsigned long)elf_get_symbol(fdesc,"__boot_cmdline__",ehdr)) == -1) {
+	if ((addr = specials[SPECIAL__boot_cmdline__].addr) == -1) {
 		printf("__boot_cmdline__ not found.\n");
 		return;
 	} else {
@@ -155,7 +170,7 @@ void set_net_phys_offset(int fdesc, const Elf32_Ehdr *ehdr, long offset) {
 
 	long *dst;
 	unsigned long addr;
-	if ((addr = (unsigned long)elf_get_symbol(fdesc,"__boot_net_phys_offset__",ehdr)) == -1) {
+	if ((addr = specials[SPECIAL__boot_net_phys_offset__].addr) == -1) {
 		printf("__boot_net_phys_offset__ not found.\n");
 		return;
 	} else {
@@ -261,6 +276,9 @@ int run_elf(char *elf, char *cmdline)
 		printf("Invalid ELF file: %s\n", elf);
 		return 1;
 	}
+
+	elf_get_specials(fdesc, specials, sizeof(specials)/sizeof(specials[0]), &ehdr);
+
 	for (i = 0; i < ehdr.e_phnum; i++) {
 		if (elf_get_phdr(fdesc,i,&phdr,&ehdr) < 0) continue;
 		if (phdr.p_memsz == 0) continue;

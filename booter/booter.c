@@ -66,7 +66,7 @@ static unsigned int error_exit = 1;
 static char errstr[ERRSTR_LEN];
 
 #define FOREACH_sym(GEN) \
-  GEN(__guest_pmap__) \
+	GEN(__guest_pmap__)		 \
 	GEN(__boot_cmdline__) \
 	GEN(__boot_net_phys_offset__)
 

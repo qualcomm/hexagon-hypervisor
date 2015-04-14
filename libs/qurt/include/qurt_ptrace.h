@@ -6,6 +6,8 @@
 #ifndef __SYS_PTRACE_H__
 #define __SYS_PTRACE_H__
 
+#include "qurt_prelim.h"
+
 enum __ptrace_request
 {
     /**

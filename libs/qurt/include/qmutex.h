@@ -80,7 +80,7 @@ static inline void qmutex_attr_settype(qmutex_attr_t *attr, qmutex_type_t type)
  *
  */
 static inline int qmutex_create(qmutex_t *mutex, qmutex_attr_t *attr) {
-	if ((*mutex = qurt_malloc(sizeof(qmutex_struct))) == NULL) {
+	if ((*mutex = (qmutex_t)qurt_malloc(sizeof(qmutex_struct))) == NULL) {
 		return QURT_EMEM;
 	}
 	(*mutex)->type = (attr == NULL) ? QMUTEX_LOCAL : attr->type;

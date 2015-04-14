@@ -229,7 +229,7 @@
 /* int qurtos_mem_fs_region_delete (unsigned int region_handle, int client_handle); */
 /* int qurtos_mem_fs_region_query (u32_t *region_handle, unsigned int addr, int client_handle); */
 int qurtos_sysclock_get_hw_ticks(unsigned long long *ticks);
-u64_t hw_timer_match_val(void);
+h2_u64_t hw_timer_match_val(void);
 void qurt_sysclock_init(void);
 /* unsigned qurtos_rand32(void); */
 /* unsigned qurtos_randrange(unsigned top); */

@@ -40,7 +40,7 @@ typedef union {
 		h2_anysignal_t *signal_ptr;
 		int signal_mask;
 	};
-	u64_t raw;
+	unsigned long long int raw;
 } qurt_interrupt_table_entry_t;
 
 qurt_interrupt_table_entry_t int_sigsets[MAX_SYS_INTERRUPTS] __attribute__((aligned(128)));

@@ -21,6 +21,7 @@
 
 #include <qurt_error.h>
 #include <qurt_types.h>
+#include "qurt_prelim.h"
 #include <h2_common_linear.h>
 //#include <qurt_util_macros.h>
 

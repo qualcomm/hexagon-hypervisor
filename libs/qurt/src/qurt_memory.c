@@ -163,7 +163,7 @@ int qurt_mem_pool_attach(char *name, qurt_mem_pool_t *pool)
 	return QURT_EINVALID;
 }
 
-static inline void qurt_mem_pool_init_pool(struct qurt_mem_pool_struct *tmp, const char *name, pa_t base, pa_t size)
+static inline void qurt_mem_pool_init_pool(struct qurt_mem_pool_struct *tmp, const char *name, unsigned int base, unsigned int size)
 {
 	strcpy(tmp->attr.name,name);
 	tmp->freelist = NULL;
@@ -172,7 +172,7 @@ static inline void qurt_mem_pool_init_pool(struct qurt_mem_pool_struct *tmp, con
 	qurt_pgfree(&tmp->freelist,base,size);
 }
 
-int qurt_mem_pool_create(char *name, pa_t base, pa_t size, qurt_mem_pool_t *pool)
+int qurt_mem_pool_create(char *name, unsigned int base, unsigned int size, qurt_mem_pool_t *pool)
 {
 	struct qurt_mem_pool_struct *tmp;
 	if ((tmp = qurt_malloc(sizeof(*tmp))) == NULL) return QURT_EMEM;
@@ -214,7 +214,7 @@ struct qurt_mem_region_struct *all_regions = NULL;
 int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem_pool_t pool, qurt_mem_region_attr_t *attr)
 {
 	unsigned long vpn = 0;
-	pa_t ppn = 0;
+	unsigned long ppn = 0;
 	struct qurt_mem_region_struct *tmp;
 	// Turn size into number of pages, rounding up.
 	size = (size + 0xFFF) >> 12;
@@ -396,9 +396,9 @@ void qurt_mapping_remove_vpn(unsigned int vpn)
 qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr)
 {
 	H2K_linear_fmt_t *tmp = find_mapping(vaddr>>12);
-	u64_t paddr;
+	unsigned long long int paddr;
 	if (tmp == NULL) return 0;
-	paddr = ((u64_t)(tmp->ppn)) << 12;
+	paddr = ((unsigned long long int)(tmp->ppn)) << 12;
 	paddr &= ((-1LL) << (12 + tmp->size*2));
 	paddr |= vaddr & ((1 << (12 + tmp->size*2))-1);
 	qurt_printf("pa lookup: vaddr=%x paddr=%llx\n",paddr);

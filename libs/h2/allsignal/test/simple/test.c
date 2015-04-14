@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <c_std.h>
+#include <h2_common_c_std.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -17,10 +17,10 @@
 h2_allsignal_t all_threads, all_done;
 int t0id,t1id;
 
-u64_t stack0[STACK_SIZE];
-u64_t stack1[STACK_SIZE];
+h2_u64_t stack0[STACK_SIZE];
+h2_u64_t stack1[STACK_SIZE];
 
-u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(u64_t)] __attribute__((aligned(32)));
+h2_u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(h2_u64_t)] __attribute__((aligned(32)));
 
 void FAIL(const char *str)
 {

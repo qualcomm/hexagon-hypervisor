@@ -22,6 +22,7 @@
  ======================================================================*/
 
 #include <h2.h>
+#include "qurt_prelim.h"
 
 static inline int qurt_futex_wait(void *lock, int val) { return h2_futex_wait(lock,val); }
 static inline int qurt_futex_wait_cancellable(void *lock, int val) { return qurt_futex_wait(lock,val); }

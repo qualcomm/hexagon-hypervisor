@@ -22,6 +22,8 @@
 /** This flag is a request to the OS to suspend the processes just before calling main() */
 #define SPAWNN_FLAG_SUSPEND_ON_STARTUP 0x1
 
+#include "qurt_prelim.h"
+
 /**
  * The qurt_spawn_args() function create and start a process from ELF file of given name. The slash symbols 
  * "/" or "\" will be ignored. Please do not include directory name in input. Additionally this function

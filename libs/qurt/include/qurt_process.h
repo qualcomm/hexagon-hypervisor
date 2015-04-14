@@ -20,6 +20,7 @@
  ======================================================================*/
 
 #define QURT_PROCESS_ATTR_NAME_MAXLEN QURT_MAX_NAME_LEN
+#include "qurt_prelim.h"
 
 /** @addtogroup process_types
 @{ */

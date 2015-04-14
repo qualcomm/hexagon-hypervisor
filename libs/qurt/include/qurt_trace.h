@@ -60,6 +60,8 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
 #define QURT_ETM_WRITE_BRKPT                2
 #define QURT_ETM_BRKPT_INVALIDATE           3
 
+#include "qurt_prelim.h"
+
 /** @} */ /* end_addtogroup etm_macros */
 /** @endcond */
 

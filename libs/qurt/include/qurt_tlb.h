@@ -52,9 +52,9 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
 
  */
 
-static inline u64_t qurt_tlb_from_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, unsigned int size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms)
+static inline h2_u64_t qurt_tlb_from_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, unsigned int size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms)
 {
-	u64_t entry;
+	h2_u64_t entry;
 	entry = 0xC0000000 | (vaddr >> 12);
 	entry <<= 32;
 	entry |= perms << 28;

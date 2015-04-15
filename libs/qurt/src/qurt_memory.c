@@ -87,6 +87,46 @@ static inline H2K_linear_fmt_t *find_mapping(unsigned int vpn);
 
 static inline unsigned int minu(unsigned int a, unsigned int b) { return (a <= b) ? a : b; }
 
+static inline struct qurt_mem_pool_struct *mem_pool_from_uint(qurt_mem_pool_t pool_int)
+{
+	union {
+		struct qurt_mem_pool_struct *p;
+		qurt_mem_pool_t i;
+	} x;
+	x.i = pool_int;
+	return x.p;
+}
+
+static inline qurt_mem_pool_t uint_from_mem_pool(struct qurt_mem_pool_struct *pool_ptr)
+{
+	union {
+		struct qurt_mem_pool_struct *p;
+		qurt_mem_pool_t i;
+	} x;
+	x.p = pool_ptr;
+	return x.i;
+}
+
+static inline struct qurt_mem_region_struct *mem_region_from_uint(qurt_mem_region_t region_int)
+{
+	union {
+		struct qurt_mem_region_struct *p;
+		qurt_mem_region_t i;
+	} x;
+	x.i = region_int;
+	return x.p;
+}
+
+static inline qurt_mem_region_t uint_from_mem_region(struct qurt_mem_region_struct *region_ptr)
+{
+	union {
+		struct qurt_mem_region_struct *p;
+		qurt_mem_region_t i;
+	} x;
+	x.p = region_ptr;
+	return x.i;
+}
+
 static void qurt_pprint_mappings()
 {
 	int i;
@@ -153,12 +193,12 @@ int qurt_mem_pool_attach(char *name, qurt_mem_pool_t *pool)
 	qurt_rmutex_lock(&mem_mutex);
 	for (tmp = all_pools; tmp != NULL; tmp = tmp->next) {
 		if (strcmp(tmp->attr.name,name) == 0) {
-			*pool = tmp;
+			*pool = uint_from_mem_pool(tmp);
 			qurt_rmutex_unlock(&mem_mutex);
 			return QURT_EOK;
 		}
 	}
-	*pool = NULL;
+	*pool = uint_from_mem_pool(NULL);
 	qurt_rmutex_unlock(&mem_mutex);
 	return QURT_EINVALID;
 }
@@ -181,7 +221,7 @@ int qurt_mem_pool_create(char *name, unsigned int base, unsigned int size, qurt_
 	tmp->next = all_pools;
 	all_pools = tmp;
 	qurt_rmutex_unlock(&mem_mutex);
-	*pool = tmp;
+	*pool = uint_from_mem_pool(tmp);
 	return QURT_EOK;
 }
 
@@ -211,15 +251,16 @@ int qurt_mem_pool_create(char *name, unsigned int base, unsigned int size, qurt_
 
 struct qurt_mem_region_struct *all_regions = NULL;
 
-int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem_pool_t pool, qurt_mem_region_attr_t *attr)
+int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem_pool_t pool_int, qurt_mem_region_attr_t *attr)
 {
 	unsigned long vpn = 0;
 	unsigned long ppn = 0;
 	struct qurt_mem_region_struct *tmp;
+	struct qurt_mem_pool_struct *pool = mem_pool_from_uint(pool_int);
 	// Turn size into number of pages, rounding up.
 	size = (size + 0xFFF) >> 12;
 	if (size == 0) return QURT_EVAL;
-	if ((tmp = qurt_malloc(sizeof(**region))) == NULL) {
+	if ((tmp = qurt_malloc(sizeof(*tmp))) == NULL) {
 		qurt_printf("OOM\n");
 		return QURT_EMEM;
 	}
@@ -238,8 +279,8 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 			qurt_printf("no free pa space. ppn=%x poolstart=%x poolsize=%x\n",attr->ppn,
 				pool->attr.ranges[0].start,pool->attr.ranges[0].size);
 			qurt_rmutex_unlock(&mem_mutex);
-			free(tmp);
-			*region = NULL;
+			qurt_free(tmp);
+			*region = uint_from_mem_region(NULL);
 			return QURT_EMEM;
 		};
 	}
@@ -248,7 +289,8 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 			/* Seriously? I don't believe the whole address space is full */
 			qurt_printf("no free va space\n");
 			qurt_pgfree(&pool->freelist,ppn,size);
-			*region = NULL;
+			qurt_free(tmp);
+			*region = uint_from_mem_region(NULL);
 			qurt_rmutex_unlock(&mem_mutex);
 			return QURT_EMEM;
 		};
@@ -265,13 +307,14 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 		transtab_add_region(tmp);
 	}
 	qurt_rmutex_unlock(&mem_mutex);
-	*region = tmp;
+	*region = uint_from_mem_region(tmp);
 	return QURT_EOK;
 }
 
-int qurt_mem_region_delete(qurt_mem_region_t region)
+int qurt_mem_region_delete(qurt_mem_region_t region_int)
 {
 	struct qurt_mem_region_struct **ptr;
+	struct qurt_mem_region_struct *region = mem_region_from_uint(region_int);
 	struct qurt_mem_pool_struct *ppool = region->ppool;
 	qurt_rmutex_lock(&mem_mutex);
 	if (region->attr.mapping_type != QURT_MEM_MAPPING_NONE) {
@@ -305,7 +348,7 @@ int qurt_mem_region_query_64_vpn(qurt_mem_region_t *region_handle, unsigned long
 	for (ptr = &all_regions; *ptr != NULL; ptr = &(*ptr)->next) {
 		tmp = *ptr;
 		if ((tmp->attr.vpn <= vpn) && ((tmp->attr.vpn + tmp->attr.size) > vpn)) {
-			*region_handle = tmp;
+			*region_handle = uint_from_mem_region(tmp);
 			qurt_rmutex_unlock(&mem_mutex);
 			return QURT_EOK;
 		}
@@ -322,7 +365,7 @@ int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long
 	for (ptr = &all_regions; *ptr != NULL; ptr = &(*ptr)->next) {
 		tmp = *ptr;
 		if ((tmp->attr.ppn <= ppn) && ((tmp->attr.ppn + tmp->attr.size) > ppn)) {
-			*region_handle = tmp;
+			*region_handle = uint_from_mem_region(tmp);
 			qurt_rmutex_unlock(&mem_mutex);
 			return QURT_EOK;
 		}
@@ -331,14 +374,16 @@ int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long
 	return QURT_EVAL;
 }
 
-int qurt_mem_pool_attr_get (qurt_mem_pool_t pool, qurt_mem_pool_attr_t *attr)
+int qurt_mem_pool_attr_get (qurt_mem_pool_t pool_int, qurt_mem_pool_attr_t *attr)
 {
+	struct qurt_mem_pool_struct *pool = mem_pool_from_uint(pool_int);
 	*attr = pool->attr;
 	return QURT_EOK;
 }
 
-int qurt_mem_region_attr_get(qurt_mem_region_t region, qurt_mem_region_attr_t *attr)
+int qurt_mem_region_attr_get(qurt_mem_region_t region_int, qurt_mem_region_attr_t *attr)
 {
+	struct qurt_mem_region_struct *region = mem_region_from_uint(region_int);
 	*attr = region->attr;
 	return QURT_EOK;
 }
@@ -409,6 +454,7 @@ void qurt_memory_init()
 {
 	H2K_linear_fmt_t entry;
 	int i;
+	qurt_rmutex_init(&mem_mutex);
 	entry.raw = 0;
 	entry.ppn = 0x01000;
 	entry.vpn = 0x01000;

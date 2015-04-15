@@ -36,9 +36,15 @@ struct qurt_freelist_node;
 typedef unsigned int qurt_addr_t;          /**< */
 typedef unsigned int qurt_paddr_t;         /**<  */ 
 typedef unsigned long long int qurt_paddr_64_t; /**<  */
-typedef struct qurt_mem_region_struct *qurt_mem_region_t;    /**< Memory regions are represented as objects of this type. */
+// typedef struct qurt_mem_region_struct *qurt_mem_region_t;    /**< Memory regions are represented as objects of this type. */
+// typedef struct qurt_mem_pool_struct *qurt_mem_pool_t;      /**< Memory pools are represented in QuRT as objects of this type.*/
+/* 
+ * EJP: qurt_mem_region_t and qurt_mem_pool_t need to be unsigned ints because modem sw/fw isn't 
+ * using the named types always.
+ */
+typedef unsigned int qurt_mem_region_t;    /**< Memory regions are represented as objects of this type. */
+typedef unsigned int qurt_mem_pool_t;      /**< Memory pools are represented in QuRT as objects of this type.*/
 typedef unsigned int qurt_mem_fs_region_t; /**<  */
-typedef struct qurt_mem_pool_struct *qurt_mem_pool_t;      /**< Memory pools are represented in QuRT as objects of this type.*/
 typedef unsigned int qurt_size_t;          /**< */
 
 /*

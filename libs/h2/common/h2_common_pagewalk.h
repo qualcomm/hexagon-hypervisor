@@ -6,16 +6,18 @@
 #ifndef H2_COMMON_PAGEWALK_H
 #define H2_COMMON_PAGEWALK_H 1
 
+#include "h2_common_c_std.h"
+
 typedef union {
-	u32_t raw;
+	h2_u32_t raw;
 	struct {
-		u32_t s:3;
-		u32_t rsvd:1;
-		u32_t t:1;
-		u32_t u:1;
-		u32_t ccc:3;
-		u32_t xwr:3;
-		u32_t ppn:20;
+		h2_u32_t s:3;
+		h2_u32_t rsvd:1;
+		h2_u32_t t:1;
+		h2_u32_t u:1;
+		h2_u32_t ccc:3;
+		h2_u32_t xwr:3;
+		h2_u32_t ppn:20;
 	};
 } H2K_pte_t;
 

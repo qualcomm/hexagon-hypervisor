@@ -39,7 +39,7 @@ typedef h2_mutex_t qurt_mutex_t;
 @{ */
 #define MUTEX_MAGIC 0xfe                             /**< */
 #define QURTK_FUTEX_FREE_MAGIC     0x1F   // 11111   /**< */
-#define QURT_MUTEX_INIT H2_MUTEX_INIT   /**< Suitable as an initializer for a
+#define QURT_MUTEX_INIT H2_MUTEX_T_INIT   /**< Suitable as an initializer for a
                                                                         variable of type qurt_mutex_t. */
 /** @} */ /* end_addtogroup mutex_const_macros */
 

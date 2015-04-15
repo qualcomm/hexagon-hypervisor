@@ -323,11 +323,6 @@ static inline int qurt_interrupt_raise(unsigned int interrupt_num)
 	return h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,interrupt_num+32,0);
 }
 
-static inline int rtos_set_interrupt(unsigned int interrupt_num) 
-{
-	return qurt_interrupt_raise(interrupt_num);
-}
-
 /**
   Check if the current function is called from the callback function of fastint or ISR
 
@@ -342,6 +337,8 @@ static inline int rtos_set_interrupt(unsigned int interrupt_num)
  */
 // EJP: fixme
 static inline int qurt_isr_subcall(void) { return QURT_EVAL; }
+
+extern void rtos_set_interrupt(int);
 
 #endif /* QURT_INT_H */
 

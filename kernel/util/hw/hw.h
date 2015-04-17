@@ -116,6 +116,18 @@ static inline void H2K_set_syscfg(u32_t val)
 	asm volatile (" syscfg = %0 // set syscfg" : : "r"(val));
 }
 
+static inline u32_t H2K_get_duck()
+{
+	u32_t ret;
+	asm volatile (" %0 = s62 // get duck" : "=r"(ret));
+	return ret;
+}
+
+static inline void H2K_set_duck(u32_t val)
+{
+	asm volatile (" s62 = %0 // set duck" : : "r"(val));
+}
+
 static inline u32_t H2K_get_chicken()
 {
 	u32_t ret;

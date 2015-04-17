@@ -103,6 +103,7 @@ void usage()
 	printf("  booter [options] --list <file1> <file2> ...\n");
 	printf("  booter [options] --listfile <listfile>\n");
 	printf("\nConfig options:\n");
+	printf("  --duck <int>\n\tSet the duck bits.\n");
 	printf("  --chicken <int>\n\tSet the chicken bits.\n");
 	printf("  --ccr <int>\n\tSet ccr.\n");
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
@@ -529,6 +530,17 @@ int main(int argc, char **argv)
 
 			regval = h2_info(INFO_SYSCFG);
 			printf("New value for syscfg: 0x%08x\n",regval);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0],"--duck")) {
+			if (argc < 2) die_usage();
+			regval = H2K_get_duck();
+			printf("Old value for duck: 0x%08x\n",regval);
+			regval = strtoul(argv[1],NULL,0);
+			H2K_set_duck(regval);
+			regval = H2K_get_duck();
+			printf("New value for duck: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 

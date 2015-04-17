@@ -171,7 +171,7 @@ unsigned long long qurt_sysclock_get_hw_ticks (void);
 extern int qurt_timer_base __attribute__((section(".data.QURT.FASTINT")));
 static inline unsigned long qurt_sysclock_get_hw_ticks_32 (void)
 {
-    return  (volatile unsigned long)(*((unsigned long *)((unsigned int)qurt_timer_base+0x1000)));  //QTMR_V1_CNTPCT_LO 
+    return  (*((volatile unsigned long *)((unsigned int)qurt_timer_base+0x1000)));  //QTMR_V1_CNTPCT_LO 
 }
 
 /**@ingroup func_qurt_sysclock_get_hw_ticks_16
@@ -196,8 +196,10 @@ static inline unsigned short qurt_sysclock_get_hw_ticks_16 (void)
 {
     unsigned long ticks;
 
-    ticks = (volatile unsigned long)(*((unsigned long *)((unsigned int)qurt_timer_base+0x1000))); //QTMR_V1_CNTPCT_LO 
-    __asm__ __volatile__ ( "%0 = lsr(%0, #16) \n" :"+r"(ticks));
+    // EJP: previous author did not understand how to interface with devices.
+    // ticks = (volatile unsigned long)(*((unsigned long *)((unsigned int)qurt_timer_base+0x1000))); //QTMR_V1_CNTPCT_LO 
+    // __asm__ __volatile__ ( "%0 = lsr(%0, #16) \n" :"+r"(ticks));
+    ticks = qurt_sysclock_get_hw_ticks_32()>>16;
     
     return (unsigned short)ticks; 
 }

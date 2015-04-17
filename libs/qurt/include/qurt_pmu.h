@@ -49,7 +49,8 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
   @dependencies
   None.
  */
-void qurt_pmu_set (int reg_id, unsigned int reg_value);
+/* EJP: FIXME: register constants probably don't match h2 */
+static inline void qurt_pmu_set (int reg_id, unsigned int reg_value) { h2_pmu_setreg(reg_id,reg_value); }
  
 /**@ingroup func_qurt_pmu_get
   Gets the PMU register.\n
@@ -74,7 +75,10 @@ void qurt_pmu_set (int reg_id, unsigned int reg_value);
   @dependencies
   None.
  */
-unsigned int  qurt_pmu_get (int red_id);
+static inline unsigned int  qurt_pmu_get (int red_id)
+{
+	return h2_pmu_getreg(red_id);
+}
  
 /**@ingroup func_qurt_pmu_enable
   Enables or disables the Hexagon processor performance monitor unit (PMU).
@@ -92,6 +96,6 @@ unsigned int  qurt_pmu_get (int red_id);
   @dependencies
   None.
  */
-void qurt_pmu_enable (int enable);
+static inline void qurt_pmu_enable (int enable) { h2_pmu_enable(h2_thread_myid()); }
 
 #endif /* QURT_PMU_H */

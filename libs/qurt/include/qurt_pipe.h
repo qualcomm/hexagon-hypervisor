@@ -24,6 +24,7 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
 
 =============================================================================*/
 
+#include <h2.h>
 #include <qurt_mutex.h>
 #include <qurt_sem.h>
 #include <qurt_error.h>

@@ -47,6 +47,10 @@ qurt_timetick_word_t hw_timer_curr_timetick (void) {
 	return ticktmp.pair;
 }
 
+unsigned long long int qurt_sysclock_get_hw_ticks() {
+	return hw_timer_curr_timetick();
+}
+
 qurt_timetick_word_t hw_timer_match_val (void) {
 
 	unsigned long tmphi;

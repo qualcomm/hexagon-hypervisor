@@ -72,7 +72,7 @@ unsigned int qurt_interrupt_register(int int_num, qurt_anysignal_t *int_signal, 
 {
 	qurt_interrupt_table_entry_t entry;
 	int_num += 32;
-	if (unlikely(int_num == RESCHED_INT)) {
+	if (int_num == RESCHED_INT) {
 		return 1;
 	}
 	entry.signal_ptr = int_signal;

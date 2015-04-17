@@ -21,6 +21,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
 =============================================================================*/
 
 #include <string.h>
+#include <h2.h>
 
 /*
   Bitmask configuration is for selecting DSP hardware threads. 

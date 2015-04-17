@@ -97,7 +97,7 @@ static inline qurt_pipe_data_t qurt_pipe_receive(qurt_pipe_t *pipe)
 	return h2_pipe_recv(pipe);
 }
 
-static inline int qurt_pipe_trysend(qurt_pipe_t *pipe, qurt_pipe_data_t data)
+static inline int qurt_pipe_try_send(qurt_pipe_t *pipe, qurt_pipe_data_t data)
 {
 	return h2_pipe_trysend(pipe,data);
 }

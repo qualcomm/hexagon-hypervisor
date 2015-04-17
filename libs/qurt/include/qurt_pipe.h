@@ -61,6 +61,16 @@ static inline void qurt_pipe_attr_set_buffer(qurt_pipe_attr_t *attr, qurt_pipe_d
 	attr->buffer = buffer;
 }
 
+static inline void qurt_pipe_attr_set_elements(qurt_pipe_attr_t *attr, unsigned int elements)
+{
+	attr->elements = elements;
+}
+
+static inline void qurt_pipe_attr_set_buffer_partition(qurt_pipe_attr_t *attr, unsigned char mem_partition)
+{
+	attr->mem_partition = mem_partition;
+}
+
 static inline int qurt_pipe_init(qurt_pipe_t *pipe, qurt_pipe_attr_t *attr)
 {
 	return (h2_pipe_create(pipe,attr->buffer,attr->elements) != NULL) ? QURT_EOK : QURT_EFAILED;

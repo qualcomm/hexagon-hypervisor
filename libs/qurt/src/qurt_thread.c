@@ -14,6 +14,8 @@
 static struct QURT_ugp_ptr *qurt_root = NULL;
 static h2_mutex_t qurt_root_mutex;
 
+unsigned int curr_futex_queue_used = 0; /* EJP: probably vestigal, but referenced by modem fw */
+
 #if 0
 #define DEBUG_PRINTF printf
 #else

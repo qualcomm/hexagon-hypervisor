@@ -61,6 +61,11 @@ int qurt_dummy(int intnum)
 	return 0;
 }
 
+int qurt_interrupt_raise_l1(unsigned int interrupt_num)
+{
+	return h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,interrupt_num,0);
+}
+
 #define io_read_32(base,offset)		(*(volatile unsigned long *) ((unsigned long) base + (unsigned long) offset))
 #define io_write_32(base,offset,data)	*(volatile unsigned long *) ((unsigned long) base + (unsigned long) offset) = data
 

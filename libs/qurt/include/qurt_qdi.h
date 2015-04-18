@@ -130,6 +130,8 @@ int qurt_qdi_qhi12(int,int,int,int,int,int,int,int,int,int,int,int);
   @dependencies
   None.
  */
+
+/* EJP: if it is equivalent, why is it not static inline? */
 int qurt_qdi_write(int handle, const void *buf, unsigned len);
 
 /**@ingroup driver_interface
@@ -150,6 +152,7 @@ int qurt_qdi_write(int handle, const void *buf, unsigned len);
   @dependencies
   None.
  */
+/* EJP: if it is equivalent, why is it not static inline? */
 int qurt_qdi_read(int handle, void *buf, unsigned len);
 
 /**@ingroup driver_interface

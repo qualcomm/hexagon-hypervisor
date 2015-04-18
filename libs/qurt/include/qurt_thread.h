@@ -22,6 +22,7 @@ Confidential and Proprietary - Qualcomm Technologies, Inc.
 
 #include <string.h>
 #include <h2.h>
+#include <qurt_consts.h>
 
 /*
   Bitmask configuration is for selecting DSP hardware threads. 
@@ -514,7 +515,10 @@ void qurt_thread_set_prefetch(unsigned int settings);
    @dependencies
    None.
  */
-void qurt_thread_set_coprocessor(unsigned int enable, unsigned int coproc_id);
+static inline void qurt_thread_set_coprocessor(unsigned int enable, unsigned int coproc_id)
+{
+	h2_hwconfig_extbits(coproc_id,enable);
+}
 
 /**@ingroup func_qurt_thread_get_timetest_id
    Gets the timetest identifier of the current thread.\n
@@ -649,7 +653,10 @@ static inline int qurt_thread_set_priority (qurt_thread_t threadid, unsigned sho
   @dependencies
   None.
  */
-unsigned int qurt_api_version(void);
+static inline unsigned int qurt_api_version(void)
+{
+	return QURT_API_VERSION;
+}
 
 #endif /* QURT_THREAD_H */
 

@@ -454,6 +454,7 @@ void qurt_memory_init()
 {
 	H2K_linear_fmt_t entry;
 	int i;
+	unsigned int blah;
 	qurt_rmutex_init(&mem_mutex);
 	entry.raw = 0;
 	entry.ppn = 0x01000;
@@ -461,7 +462,8 @@ void qurt_memory_init()
 	entry.size = SIZE_16M;
 	entry.xwru = URWX;
 	entry.cccc = L1WB_L2C;
-	qurt_mem_pool_create("vpool",0x80000,0xF8000,&vpool);
+	qurt_mem_pool_create("vpool",0x80000,0xF8000,&blah);
+	vpool = mem_pool_from_uint(blah);
 	/* FOR NOW... initialize some default stuff */
 	qurt_mem_pool_create("DEFAULT_PHYSPOOL",0x10000,0x40000,&qurt_mem_default_pool);
 	for (i = 0; i < 8; i++) {

@@ -1,5 +1,6 @@
 # Expected to work
 
+./qurt/test/testcases/qdi_basic/app1/src
 ./qurt/test/testcases/posix/test/src
 ./qurt/test/testcases/atomic_space_t/app1/src
 ./qurt/test/testcases/cxx_constructor/app1/src
@@ -193,7 +194,6 @@
 # ./qurt/test/testcases/q6_locklinesL2cachefull/app1/src
 # ./qurt/test/testcases/q6_pc_1/app1/src
 # ./qurt/test/testcases/q6_pc_2/app1/src
-# ./qurt/test/testcases/qdi_basic/app1/src
 # ./qurt/test/testcases/qmemory_query/app1/src
 # ./qurt/test/testcases/qmemory_t1.phys_cont/app1/src
 # ./qurt/test/testcases/qmemory_t1.profile/app1/src

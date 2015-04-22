@@ -182,14 +182,17 @@ void qurt_thread_get_name(char *name, unsigned char max_len)
 }
 
 extern int _posix_init();
+extern void qurt_qdi_local_client_init();
 /* Generic hook for all stuff that needs to be initialized */
 void qurt_init()
 {
 	static int initted = 0;
 	if (initted) return;
 	initted = 1;
+	h2_handle_errors(0);
 	qurt_memory_init();
 	qurt_timer_init();
+	qurt_qdi_local_client_init();
 	(void)_posix_init();
 }
 

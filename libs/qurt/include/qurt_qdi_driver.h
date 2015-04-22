@@ -21,6 +21,13 @@
  Confidential and Proprietary - Qualcomm Technologies, Inc.
  ======================================================================*/
 
+/*
+ * EJP: Let's redo this 
+ * Assumptions: only handle local QDI calls
+ * Since QDI objects have a single "invoke" routine, use that address as the handle returned by qdi_open (?)
+ * 
+ */
+
 #include "qurt_qdi.h"
 #include "qurt_qdi_constants.h"
 #include "qurt_qdi_imacros.h"
@@ -85,7 +92,7 @@ typedef void (*qurt_qdi_pfn_release_t)(struct qdiobj *);
 
 typedef struct qdiobj {
    qurt_qdi_pfn_invoke_t invoke;
-   int refcnt;
+   unsigned int refcnt;
    qurt_qdi_pfn_release_t release;
 } qurt_qdi_obj_t;
 
@@ -177,9 +184,9 @@ qurt_qdi_objref_release(qurt_qdi_obj_t *objptr)
       (*objptr->release)(objptr);
 }
 
-void qurt_qdi_safe_to_kill(void);      /* Mark the current thread as safe to be killed with no notification */
-void qurt_qdi_unsafe_to_kill(void);    /* Mark the current thread as unsafe to be killed with no notification */
-int qurt_qdi_marked_to_kill(void);     /* Poll the current thread for a kill notification (nonzero if thread is being killed) */
+static inline void qurt_qdi_safe_to_kill(void) {};      /* Mark the current thread as safe to be killed with no notification */
+static inline void qurt_qdi_unsafe_to_kill(void) {};    /* Mark the current thread as unsafe to be killed with no notification */
+static inline int qurt_qdi_marked_to_kill(void) { return 0; };     /* Poll the current thread for a kill notification (nonzero if thread is being killed) */
 
 /**@ingroup driver_support_functions
   Copies the contents of a user memory buffer into the current driver.
@@ -199,6 +206,7 @@ int qurt_qdi_marked_to_kill(void);     /* Poll the current thread for a kill not
   @dependencies
   None.
 */
+/* EJP: can change to memcpy? */
 static __inline int qurt_qdi_copy_from_user(int client_handle, void *dest, const void *src, unsigned len)
 {
    return qurt_qdi_handle_invoke(client_handle,
@@ -224,6 +232,7 @@ static __inline int qurt_qdi_copy_from_user(int client_handle, void *dest, const
   @dependencies
   None.
 */
+/* EJP: can change to memcpy? */
 static __inline int qurt_qdi_copy_to_user(int client_handle, void *dest, const void *src, unsigned len)
 {
    return qurt_qdi_handle_invoke(client_handle,

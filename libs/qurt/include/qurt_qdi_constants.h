@@ -185,13 +185,14 @@
 #define QDI_PERM_R              4
 #define QDI_PERM_RW             6
 
-#define QDI_HANDLE_LOCAL_CLIENT         3
-#define QDI_HANDLE_GENERIC              4
+// #define QDI_HANDLE_LOCAL_CLIENT         3
+extern unsigned int QDI_HANDLE_LOCAL_CLIENT;
+// #define QDI_HANDLE_GENERIC              4
+#define QDI_HANDLE_GENERIC QDI_HANDLE_LOCAL_CLIENT
 
-#define QDI_REFCNT_BASE   0x510000
-#define QDI_REFCNT_MAXED  0x51FFFD
-#define QDI_REFCNT_INIT   0x51FFFE
-#define QDI_REFCNT_PERM   0x51FFFF
+#define QDI_REFCNT_BASE   0x0
+#define QDI_REFCNT_PERM   0xFFFFFFFEU
+#define QDI_REFCNT_INIT   0xFFFFFFFFU
 
 /*
 ||  Flags used by process loaders.

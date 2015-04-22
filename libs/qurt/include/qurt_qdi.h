@@ -91,16 +91,16 @@
 // int qurt_qdi_handle_invoke();
 #define qurt_qdi_handle_invoke(h,m,...) \
    _QDMPASTE(_QDMHI,_QDMCNT(QDI_HANDLE_LOCAL_CLIENT,h,m,##__VA_ARGS__))(QDI_HANDLE_LOCAL_CLIENT,h,m,##__VA_ARGS__)
-#define _QDMHI3(a,b,c) qurt_qdi_qhi3(0,b,c)
-#define _QDMHI4(a,b,c,d) qurt_qdi_qhi4(0,b,c,(int)(d))
-#define _QDMHI5(a,b,c,d,e) qurt_qdi_qhi5(0,b,c,(int)(d),(int)(e))
-#define _QDMHI6(a,b,c,d,e,f) qurt_qdi_qhi6(0,b,c,(int)(d),(int)(e),(int)(f))
-#define _QDMHI7(a,b,c,d,e,f,g) qurt_qdi_qhi7(8,b,c,(int)(d),(int)(e),(int)(f),(int)(g))
-#define _QDMHI8(a,b,c,d,e,f,g,h) qurt_qdi_qhi8(8,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h))
-#define _QDMHI9(a,b,c,d,e,f,g,h,i) qurt_qdi_qhi9(16,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h),(int)(i))
-#define _QDMHI10(a,b,c,d,e,f,g,h,i,j) qurt_qdi_qhi10(16,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h),(int)(i),(int)(j))
-#define _QDMHI11(a,b,c,d,e,f,g,h,i,j,k) qurt_qdi_qhi11(24,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h),(int)(i),(int)(j),(int)(k))
-#define _QDMHI12(a,b,c,d,e,f,g,h,i,j,k,l) qurt_qdi_qhi12(24,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h),(int)(i),(int)(j),(int)(k),(int)(l))
+#define _QDMHI3(a,b,c) qurt_qdi_qhi3(QDI_HANDLE_LOCAL_CLIENT,b,c)
+#define _QDMHI4(a,b,c,d) qurt_qdi_qhi4(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d))
+#define _QDMHI5(a,b,c,d,e) qurt_qdi_qhi5(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d),(int)(e))
+#define _QDMHI6(a,b,c,d,e,f) qurt_qdi_qhi6(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d),(int)(e),(int)(f))
+#define _QDMHI7(a,b,c,d,e,f,g) qurt_qdi_qhi7(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d),(int)(e),(int)(f),(int)(g))
+#define _QDMHI8(a,b,c,d,e,f,g,h) qurt_qdi_qhi8(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h))
+#define _QDMHI9(a,b,c,d,e,f,g,h,i) qurt_qdi_qhi9(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h),(int)(i))
+#define _QDMHI10(a,b,c,d,e,f,g,h,i,j) qurt_qdi_qhi10(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h),(int)(i),(int)(j))
+#define _QDMHI11(a,b,c,d,e,f,g,h,i,j,k) qurt_qdi_qhi11(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h),(int)(i),(int)(j),(int)(k))
+#define _QDMHI12(a,b,c,d,e,f,g,h,i,j,k,l) qurt_qdi_qhi12(QDI_HANDLE_LOCAL_CLIENT,b,c,(int)(d),(int)(e),(int)(f),(int)(g),(int)(h),(int)(i),(int)(j),(int)(k),(int)(l))
 int qurt_qdi_qhi3(int,int,int);
 int qurt_qdi_qhi4(int,int,int,int);
 int qurt_qdi_qhi5(int,int,int,int,int);
@@ -132,7 +132,10 @@ int qurt_qdi_qhi12(int,int,int,int,int,int,int,int,int,int,int,int);
  */
 
 /* EJP: if it is equivalent, why is it not static inline? */
-int qurt_qdi_write(int handle, const void *buf, unsigned len);
+static inline int qurt_qdi_write(int handle, const void *buf, unsigned len) 
+{
+	return qurt_qdi_handle_invoke(handle,QDI_WRITE,handle,buf,len);
+}
 
 /**@ingroup driver_interface
   User-visible API to read data from a QDI handle. 
@@ -153,7 +156,10 @@ int qurt_qdi_write(int handle, const void *buf, unsigned len);
   None.
  */
 /* EJP: if it is equivalent, why is it not static inline? */
-int qurt_qdi_read(int handle, void *buf, unsigned len);
+static inline int qurt_qdi_read(int handle, void *buf, unsigned len)
+{
+	return qurt_qdi_handle_invoke(handle,QDI_READ,handle,buf,len);
+}
 
 /**@ingroup driver_interface
   Closes the specified driver, releasing any resources associated with the open driver.
@@ -174,6 +180,9 @@ int qurt_qdi_read(int handle, void *buf, unsigned len);
   @dependencies
   None.
  */
-int qurt_qdi_close(int handle);
+static inline int qurt_qdi_close(int handle)
+{
+	return qurt_qdi_handle_invoke(handle,QDI_CLOSE,handle);
+}
 
 #endif

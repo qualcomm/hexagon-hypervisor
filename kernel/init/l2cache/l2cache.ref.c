@@ -396,6 +396,66 @@ static u8_t l2_v56_9[] =
 		[0xf] = reserved
 	};
 
+static u8_t l2_v56_a[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s0,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v56_b[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s256,
+		[0x5] = reserved,
+		[0x6] = s256,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v56_c[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = s256,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
 static u8_t l2_v56_e[] =
 	{
 		[0x0] = s0,
@@ -470,9 +530,9 @@ static u8_t *uarches_v56[] =
 		[0x7] = l2_v56_7,
 		[0x8] = l2_v56_8,
 		[0x9] = l2_v56_9,
-		[0xa] = NULL,
-		[0xb] = NULL,
-		[0xc] = NULL,
+		[0xa] = l2_v56_a,
+		[0xb] = l2_v56_b,
+		[0xc] = l2_v56_c,
 		[0xd] = NULL,
 		[0xe] = l2_v56_e,
 		[0xf] = l2_v56_f

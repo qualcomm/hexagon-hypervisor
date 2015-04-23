@@ -101,9 +101,6 @@ unsigned int qurt_interrupt_deregister(int int_num)
 	return 0;
 }
 
-unsigned int QURT_MAX_HTHREADS __attribute__((section(".sdata"))) = 6;
-unsigned int QURTK_MAX_HTHREADS __attribute__((section(".sdata"))) = 6;
-
 void rtos_set_interrupt(int interrupt_num) 
 {
 	qurt_interrupt_raise(interrupt_num);

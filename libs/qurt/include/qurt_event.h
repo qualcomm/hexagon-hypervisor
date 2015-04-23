@@ -369,7 +369,8 @@ static inline unsigned int qurt_exception_wait2(qurt_sysevent_error_t * sys_err)
   @dependencies
   None.
 */
-int qurt_exception_raise_nonfatal (int error) __attribute__((noreturn));
+// static inline int qurt_exception_raise_nonfatal (int error) __attribute__((noreturn)) { R_UNSUPPORTED; }
+static inline int qurt_exception_raise_nonfatal (int error) { R_UNSUPPORTED; }
 
 /**@ingroup func_qurt_exception_raise_fatal
   Raises a fatal program exception in the QuRT system.
@@ -405,7 +406,8 @@ void qurt_exception_raise_fatal (void);
   @dependencies
   None.
 */
-void qurt_exception_shutdown_fatal(void) __attribute__((noreturn));
+// static inline void qurt_exception_shutdown_fatal(void) __attribute__((noreturn)) { R_UNSUPPORTED; }
+static inline void qurt_exception_shutdown_fatal(void) { UNSUPPORTED; }
 
 /**@ingroup func_qurt_exception_shutdown_fatal2 
   Performs the fatal shutdown procedure for handling a fatal program exception.

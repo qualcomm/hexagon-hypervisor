@@ -22,8 +22,7 @@
 	
 	 
 
-void qurt_profile_reset_idle_pcycles (void);
-	 
+static inline void qurt_profile_reset_idle_pcycles (void) {}
 
 static inline unsigned long long int qurt_profile_get_thread_pcycles(void)
 {

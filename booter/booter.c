@@ -546,6 +546,7 @@ void load_vm(unsigned int idx) {
 		}
 
 		get_pmap(idx, total_offset);
+		// if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 
 		/* Adjust guest_base and fences */
 		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {

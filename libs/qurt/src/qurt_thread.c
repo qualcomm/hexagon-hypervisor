@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 static struct QURT_ugp_ptr *qurt_root = NULL;
-static h2_mutex_t qurt_root_mutex;
+static h2_mutex_t qurt_root_mutex = H2_MUTEX_T_INIT;
 
 unsigned int curr_futex_queue_used = 0; /* EJP: probably vestigal, but referenced by modem fw */
 
@@ -122,6 +122,17 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 		add_thread(pUgp);
 	}
  	return (*thread_id == -1) ? QURT_EFATAL : QURT_EOK;
+}
+
+/* Have a thread become a qurt thread: put it in all the data structures and allocate ugp stuff */
+void qurt_thread_mainthread_become()
+{
+	static struct QURT_ugp_ptr main_ugp_storage;
+	struct QURT_ugp_ptr *pUgp = &main_ugp_storage;
+	memset (pUgp, 0, sizeof (struct QURT_ugp_ptr));
+	pUgp->utcb.thread_id = h2_thread_myid();
+	add_thread(pUgp);
+	qurt_thread_initial_setup(pUgp);
 }
 
 int qurt_thread_join(unsigned int threadid, int *status)

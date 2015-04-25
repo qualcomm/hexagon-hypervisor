@@ -162,10 +162,8 @@ static inline int qurt_sysenv_get_swap_spool1(qurt_sysenv_swap_pools_t *pools )
   @dependencies
   None.
 */
-static inline int qurt_sysenv_get_app_heap(qurt_sysenv_app_heap_t *aheap )
-{
-	R_UNSUPPORTED;
-}
+
+int qurt_sysenv_get_app_heap(qurt_sysenv_app_heap_t *aheap);
 
 /**@ingroup func_qurt_sysenv_get_hw_timer
   Gets the memory address of the hardware timer from the kernel.

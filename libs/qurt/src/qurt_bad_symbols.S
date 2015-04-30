@@ -62,5 +62,7 @@ BADSYM(qurt_tlb_entry_delete)
 BADSYM(qurt_tlb_entry_get)
 BADSYM(qurt_tlb_entry_query)
 BADSYM(qurt_tlb_entry_set)
+BADSYM(rflm_dtr_rx_adc_settings_low_pwr)
+BADSYM(rflm_dtr_rx_adc_settings_restore)
 	jump qurt_bad_symbol
 

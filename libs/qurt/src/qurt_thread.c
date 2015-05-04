@@ -199,6 +199,7 @@ void qurt_init()
 {
 	static int initted = 0;
 	if (initted) return;
+	qurt_printf("Hello, Qurt!\n");
 	initted = 1;
 	h2_handle_errors(0);
 	qurt_memory_init();

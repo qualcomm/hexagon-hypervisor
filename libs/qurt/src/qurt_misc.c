@@ -17,14 +17,12 @@ unsigned int image_vend = (unsigned int)(&end);
 int qurt_sysenv_get_app_heap(qurt_sysenv_app_heap_t *aheap )
 {
 	/* EJP: FIXME: put real values here from config? */
-	aheap->heap_base = ((unsigned int)image_vend);
+	aheap->heap_base = ((unsigned int)0x40000000);
 	aheap->heap_limit = aheap->heap_base + 0x800000;
 	return QURT_EOK;
 }
 
 /* If you want to cheat, I'll cheat too */
-
-unsigned long long int qurtos_mmap_table[1] = { 0ULL };
 
 void qurt_bad_symbol() {
 	UNSUPPORTED;

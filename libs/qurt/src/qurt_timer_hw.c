@@ -5,17 +5,17 @@
 
 #include <qurtos_internal.h>
 
-#define HW_COUNT_LO (0x1000/4)
-#define HW_COUNT_HI (0x1004/4)
-#define HW_MATCH_LO (0x1020/4)
-#define HW_MATCH_HI (0x1024/4)
-#define HW_ENABLE   (0x102C/4)
+#define HW_COUNT_LO (0x2000/4)
+#define HW_COUNT_HI (0x2004/4)
+#define HW_MATCH_LO (0x2020/4)
+#define HW_MATCH_HI (0x2024/4)
+#define HW_ENABLE   (0x202C/4)
 
 #define HW_CNTFRQ	(0x0000/4)
 #define HW_CNTSR	(0x0004/4)
 #define HW_CNTACR	(0x0040/4)
 
-#define QURT_TIMER_BASE 0xfe2b0000
+#define QURT_TIMER_BASE 0xec120000U
 
 #define TIME_FOREVER (~0ULL)
 

@@ -6,6 +6,7 @@
 #include "qurt.h"
 #include <h2_common_linear.h>
 #include <h2_common_pmap.h>
+#include <hexagon_protos.h>
 
 /*
  * EJP: try and make a qurt memory 
@@ -450,11 +451,19 @@ qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr)
 	return paddr;
 }
 
+void qurt_memory_pool_init()
+{
+	unsigned int blah;
+	qurt_mem_pool_create("vpool",0x80000,0xF8000,&blah);
+	vpool = mem_pool_from_uint(blah);
+	qurt_mem_pool_create("DEFAULT_PHYSPOOL",0x10000,0x40000,&qurt_mem_default_pool);
+}
+
 void qurt_memory_init()
 {
 	H2K_linear_fmt_t entry;
 	int i;
-	unsigned int blah;
+	if (linear_pages[0].raw != 0) return /* Already did early init! */
 	qurt_rmutex_init(&mem_mutex);
 	entry.raw = 0;
 	entry.ppn = 0x01000;
@@ -462,10 +471,7 @@ void qurt_memory_init()
 	entry.size = SIZE_16M;
 	entry.xwru = URWX;
 	entry.cccc = L1WB_L2C;
-	qurt_mem_pool_create("vpool",0x80000,0xF8000,&blah);
-	vpool = mem_pool_from_uint(blah);
 	/* FOR NOW... initialize some default stuff */
-	qurt_mem_pool_create("DEFAULT_PHYSPOOL",0x10000,0x40000,&qurt_mem_default_pool);
 	for (i = 0; i < 8; i++) {
 		qurt_mapping_create_linear(entry);
 		entry.ppn += 0x01000;
@@ -485,5 +491,34 @@ void qurt_memory_init()
 	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
 	qurt_printf("newmap done\n");
 	qurt_pprint_mappings();
+}
+
+static inline void qurt_memory_early_add_tlbfmt(unsigned long long int inval)
+{
+	int size;
+	H2K_linear_fmt_t entry;
+	size = Q6_R_ct0_P(inval);
+	inval = inval & (inval - 1); // clear least significant set bit
+	entry.raw = 0;
+	entry.vpn = inval >> 32;
+	entry.ppn = (inval & 0x00FFFFFF) >> 1;
+	entry.size = size;
+	entry.xwru = inval >> 28;
+	entry.cccc = inval >> 24;
+	qurt_mapping_create_linear(entry);
+}
+
+void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long int *tlbfmt_b)
+{
+	int i;
+	qurt_rmutex_init(&mem_mutex);
+	for (i = 0; tlbfmt_a[i] != 0; i++) {
+		qurt_memory_early_add_tlbfmt(tlbfmt_a[i]);
+	}
+	for (i = 0; tlbfmt_b[i] != 0; i++) {
+		qurt_memory_early_add_tlbfmt(tlbfmt_b[i]);
+	}
+	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
+	qurt_memory_pool_init(); // for now... 
 }
 

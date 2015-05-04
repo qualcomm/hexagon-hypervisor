@@ -4,6 +4,7 @@
  */
 
 #include <qurtos_internal.h>
+#include <qurt.h>
 
  /* NOTE:
  * -----
@@ -350,39 +351,23 @@ unsigned long long qurt_timer_IST_stack[IST_STACK_SIZE];
 
 void qurt_timer_IST_init (void)
 {
-	h2_thread_create(qurt_timer_IST, &qurt_timer_IST_stack[IST_STACK_SIZE - 1], 0, 0);
-
-/*     void *stack; */
-/*     struct qurtos_thread_info *info = &timerIST_thread_info; */
-/*     struct QURT_ugp_ptr *ugp = &timerIST_ugp_area;  */
-/*     QURT_utcb_t *current_utcb; */
-   
-/*     stack = qurtos_island_malloc(QURT_SCLK_STACK_SIZE); */
-/*     if (NULL == stack) */
-/*     { */
-/*         qurtos_printf("Memory allocation failed\n"); */
-/*         qurtos_assert(0); */
-/*     } */
-
-/*     qurt_thread_attr_init(&ugp->utcb.attr); */
-/*     qurt_thread_attr_set_name(&ugp->utcb.attr, "qtimerIST"); */
-/*     qurt_thread_attr_set_stack_size(&ugp->utcb.attr, QURT_SCLK_STACK_SIZE); */
-/*     qurt_thread_attr_set_stack_addr(&ugp->utcb.attr, stack); */
-/*     qurt_thread_attr_set_priority(&ugp->utcb.attr, (unsigned short)QURT_timerIST_priority); */
-/*     qurt_thread_attr_set_timetest_id (&ugp->utcb.attr, (unsigned short)(-3)); */
-/*     qurt_thread_attr_set_tcb_partition(&ugp->utcb.attr, QURT_timerIST_tcb_partition); */
-
-/*     qurt_get_my_utcb(current_utcb); */
-
-/*     ugp->utcb.qdi_info = current_utcb->qdi_info; */
-/*     ugp->utcb.asid = 0; */
-/*     ugp->utcb.entrypoint = qurt_timer_IST; */
-
-/*     qurt_thread_osam_setup(&ugp->utcb.attr); */
-
-/*     qurtos_thread_create(QDI_HANDLE_LOCAL_CLIENT, ugp, qurt_timer_IST, info); */
-
-/*    qurtos_printf ("QURT Timer IST started\n"); */
+	/* This needs to be a qurt thread so it gets UGP pointed at a place where it has TLS info */
+	// h2_thread_create(qurt_timer_IST, &qurt_timer_IST_stack[IST_STACK_SIZE - 1], 0, 0);
+	qurt_thread_attr_t attr;
+	qurt_thread_t tid;
+	int ret;
+	void *stack = &qurt_timer_IST_stack[IST_STACK_SIZE-1];
+	qurt_thread_attr_init (&attr);
+	qurt_thread_attr_set_name (&attr, "QTimerIST");
+	qurt_thread_attr_set_stack_size (&attr, 4096);
+	qurt_thread_attr_set_stack_addr (&attr, stack);
+	qurt_thread_attr_set_priority (&attr, 64);
+	ret = qurt_thread_create (&tid, &attr, qurt_timer_IST, (void *)0);
+	if (ret == -1) {
+		qurt_printf(" failed to create thread \n");
+		qurt_assert(0);
+	}
+	qurt_printf("QuRT Timer IST started\n");
 }
 
 void qurt_sysclock_init (void)

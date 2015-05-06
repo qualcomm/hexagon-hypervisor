@@ -121,6 +121,11 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 		pUgp->utcb.thread_id = *thread_id;
 		add_thread(pUgp);
 	}
+	qurt_printf("QURT: created thread <%s> id=%x stack=%x entry=%x\n",
+		attr->name,
+		*thread_id,
+		((unsigned int)attr->stack_addr+attr->stack_size) & -8,
+		entrypoint);
  	return (*thread_id == -1) ? QURT_EFATAL : QURT_EOK;
 }
 

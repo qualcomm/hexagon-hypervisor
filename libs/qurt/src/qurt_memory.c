@@ -312,6 +312,36 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 	return QURT_EOK;
 }
 
+static void qurt_memory_make_static_region(H2K_linear_fmt_t entry)
+{
+	struct qurt_mem_region_struct *tmp;
+	if ((tmp = qurt_malloc(sizeof(*tmp))) == NULL) {
+		qurt_printf("OOM\n");
+		exit(1);
+	}
+	qurt_mem_region_attr_init(&tmp->attr);
+	tmp->attr.cccc = entry.cccc;
+	tmp->attr.perms = entry.xwru >> 1;
+	tmp->attr.abits = entry.abits;
+	tmp->attr.vpn = entry.vpn;
+	tmp->attr.ppn = entry.ppn;
+	tmp->attr.size = 1<<(entry.size*2);
+	tmp->ppool = 0;
+	tmp->attr.mapping_type = QURT_MEM_MAPPING_VIRTUAL_FIXED; // no vpool free
+	qurt_rmutex_lock(&mem_mutex);
+	tmp->next = all_regions;
+	all_regions = tmp;
+	qurt_rmutex_unlock(&mem_mutex);
+}
+
+static void qurt_memory_make_static_regions()
+{
+	int i;
+	for (i = 0; linear_pages[i].raw != 0; i++) {
+		qurt_memory_make_static_region(linear_pages[i]);
+	}
+}
+
 int qurt_mem_region_delete(qurt_mem_region_t region_int)
 {
 	struct qurt_mem_region_struct **ptr;
@@ -322,12 +352,10 @@ int qurt_mem_region_delete(qurt_mem_region_t region_int)
 		transtab_remove_region(region);
 	}
 	if (region->attr.mapping_type != QURT_MEM_MAPPING_VIRTUAL_FIXED) {
-		if (vpool == NULL) qurt_printf("AAAK... null vpool\n");
-		qurt_pgfree(&vpool->freelist,region->attr.vpn,region->attr.size);
+		if (vpool != NULL) qurt_pgfree(&vpool->freelist,region->attr.vpn,region->attr.size);
 	}
 	if (region->attr.mapping_type != QURT_MEM_MAPPING_NONE) {
-		if (ppool == NULL) qurt_printf("AAAK... null ppool\n");
-		qurt_pgfree(&ppool->freelist,region->attr.ppn,region->attr.size);
+		if (ppool != NULL) qurt_pgfree(&ppool->freelist,region->attr.ppn,region->attr.size);
 	}
 	/* remove region from list */
 	for (ptr = &all_regions; *ptr != NULL; ptr = &(*ptr)->next) {
@@ -341,6 +369,19 @@ int qurt_mem_region_delete(qurt_mem_region_t region_int)
 	return QURT_EOK;
 }
 
+void qurt_pprint_regions()
+{
+	struct qurt_mem_region_struct *tmp;
+	for (tmp = all_regions; tmp != NULL; tmp = tmp->next) {
+		qurt_printf("MemRegion: [%x,%x) ppn=%x xwru=%x cccc=%x\n",
+			tmp->attr.vpn,
+			tmp->attr.vpn+tmp->attr.size,
+			tmp->attr.ppn,
+			tmp->attr.perms << 1,
+			tmp->attr.cccc);
+	}
+}
+
 int qurt_mem_region_query_64_vpn(qurt_mem_region_t *region_handle, unsigned long vpn)
 {
 	struct qurt_mem_region_struct **ptr;
@@ -351,10 +392,12 @@ int qurt_mem_region_query_64_vpn(qurt_mem_region_t *region_handle, unsigned long
 		if ((tmp->attr.vpn <= vpn) && ((tmp->attr.vpn + tmp->attr.size) > vpn)) {
 			*region_handle = uint_from_mem_region(tmp);
 			qurt_rmutex_unlock(&mem_mutex);
+			qurt_printf("EJPDBG: memory @ vpn %x found. ppn=%x",vpn,tmp->attr.ppn);
 			return QURT_EOK;
 		}
 	}
 	qurt_rmutex_unlock(&mem_mutex);
+	qurt_printf("EJPDBG: memory @ vpn %x not found",vpn);
 	return QURT_EVAL;
 }
 
@@ -368,10 +411,12 @@ int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long
 		if ((tmp->attr.ppn <= ppn) && ((tmp->attr.ppn + tmp->attr.size) > ppn)) {
 			*region_handle = uint_from_mem_region(tmp);
 			qurt_rmutex_unlock(&mem_mutex);
+			qurt_printf("EJPDBG: memory @ ppn %x found. vpn=%x",ppn,tmp->attr.vpn);
 			return QURT_EOK;
 		}
 	}
 	qurt_rmutex_unlock(&mem_mutex);
+	qurt_printf("EJPDBG: memory @ ppn %x not found",ppn);
 	return QURT_EVAL;
 }
 
@@ -451,20 +496,65 @@ qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr)
 	return paddr;
 }
 
-void qurt_memory_pool_init()
+struct phys_mem_pool_config {
+	char name[32];
+	struct range {
+		unsigned int start;
+		unsigned int size;
+	} ranges[16];
+};
+
+struct phys_mem_pool_config pool_configs[] __attribute__((weak)) = { { "DEFAULT_PHYSPOOL", { {0x10000,0x40000}, {0}}}, };
+//extern struct phys_mem_pool_config pool_configs[];
+
+// extern struct phys_mem_pool_config pool_configs[] __attribute__((weak));
+// #pragma weak pool_configs = default_config
+
+/* Put weak empty pool config here */
+
+static void qurt_memory_builtin_pools()
+{
+	int i;
+	unsigned int blah;
+	for (i = 0; pool_configs[i].name[0] != '\0'; i++) {
+#if 0
+		qurt_printf("pool <%s> (%x-%x)\n",
+			pool_configs[i].name,
+			pool_configs[i].ranges[0].start,
+			pool_configs[i].ranges[0].size);
+#endif
+		qurt_mem_pool_create(pool_configs[i].name,
+			pool_configs[i].ranges[0].start,
+			pool_configs[i].ranges[0].size>>12,
+			&blah);
+	}
+	if (qurt_mem_pool_attach("DEFAULT_PHYSPOOL",&qurt_mem_default_pool) != QURT_EOK) {
+		//qurt_printf("Can't find default physpool. Bad config?\n");
+		exit(1);
+	}
+}
+
+static void qurt_memory_pool_init()
 {
 	unsigned int blah;
-	qurt_mem_pool_create("vpool",0x80000,0xF8000,&blah);
+	qurt_mem_pool_create("vpool",0x80000,0x10000,&blah);
 	vpool = mem_pool_from_uint(blah);
-	qurt_mem_pool_create("DEFAULT_PHYSPOOL",0x10000,0x40000,&qurt_mem_default_pool);
+	qurt_memory_builtin_pools();
 }
 
 void qurt_memory_init()
 {
 	H2K_linear_fmt_t entry;
 	int i;
-	if (linear_pages[0].raw != 0) return /* Already did early init! */
+	if (linear_pages[0].raw != 0) { 
+		/* Already did early init! */
+		qurt_memory_make_static_regions();
+		qurt_pprint_regions();
+		return;
+	}
+#if 0
 	qurt_rmutex_init(&mem_mutex);
+	qurt_memory_pool_init();
 	entry.raw = 0;
 	entry.ppn = 0x01000;
 	entry.vpn = 0x01000;
@@ -477,7 +567,6 @@ void qurt_memory_init()
 		entry.ppn += 0x01000;
 		entry.vpn += 0x01000;
 	}
-
 	/* map device space for timer */
 	entry.ppn = 0xfe000;
 	entry.vpn = 0xfe000;
@@ -491,6 +580,8 @@ void qurt_memory_init()
 	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
 	qurt_printf("newmap done\n");
 	qurt_pprint_mappings();
+	qurt_memory_make_static_regions();
+#endif
 }
 
 static inline void qurt_memory_early_add_tlbfmt(unsigned long long int inval)
@@ -520,5 +611,7 @@ void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long
 	}
 	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
 	qurt_memory_pool_init(); // for now... 
+	qurt_pprint_mappings();
+	qurt_pprint_regions();
 }
 

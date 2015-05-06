@@ -348,28 +348,6 @@ static inline unsigned int qurt_exception_wait2(qurt_sysevent_error_t * sys_err)
 	return QURT_EFATAL;
 }
 
-/**@ingroup func_qurt_exception_raise_nonfatal
-  Raises a nonfatal program exception in the QuRT program system.
-
-  For more information on program exceptions see Section @xref{dox:exception_handling}.
-
-  This operation never returns -- the program exception handler is assumed to perform all
-  exception handling before terminating or reloading the QuRT program system.
-
-  @note1hang The C library function abort() calls this operation to indicate software
-             errors.
-
-  @param[in] error QuRT error result code (Section @xref{dox:error_results}).
-
-  @return
-  Integer -- Unused.
-
-  @dependencies
-  None.
-*/
-// static inline int qurt_exception_raise_nonfatal (int error) __attribute__((noreturn)) { R_UNSUPPORTED; }
-static inline int qurt_exception_raise_nonfatal (int error) { R_UNSUPPORTED; }
-
 /**@ingroup func_qurt_exception_raise_fatal
   Raises a fatal program exception in the QuRT system.
 
@@ -390,6 +368,33 @@ static inline int qurt_exception_raise_nonfatal (int error) { R_UNSUPPORTED; }
   None.
 */
 void qurt_exception_raise_fatal (void);
+
+/**@ingroup func_qurt_exception_raise_nonfatal
+  Raises a nonfatal program exception in the QuRT program system.
+
+  For more information on program exceptions see Section @xref{dox:exception_handling}.
+
+  This operation never returns -- the program exception handler is assumed to perform all
+  exception handling before terminating or reloading the QuRT program system.
+
+  @note1hang The C library function abort() calls this operation to indicate software
+             errors.
+
+  @param[in] error QuRT error result code (Section @xref{dox:error_results}).
+
+  @return
+  Integer -- Unused.
+
+  @dependencies
+  None.
+*/
+// static inline int qurt_exception_raise_nonfatal (int error) __attribute__((noreturn)) { R_UNSUPPORTED; }
+static inline int qurt_exception_raise_nonfatal (int error)
+{
+	//h2_printf("nonfatal exception from %p: %d. Calling fatal!\n",__builtin_return_address(0),error);
+	qurt_exception_raise_fatal();
+	return QURT_EOK;
+}
 
 /**@ingroup func_qurt_exception_shutdown_fatal 
   Performs the fatal shutdown procedure for handling a fatal program exception.
@@ -445,7 +450,8 @@ void qurt_exception_shutdown_fatal2(void);
 */
 static inline unsigned int qurt_exception_register_fatal_notification ( void(*entryfuncpoint)(void *), void *argp)
 {
-	R_UNSUPPORTED;
+	/* EJP: just lie and report success */
+	return QURT_EOK;
 }
 
 /**@ingroup func_qurt_exception_enable_fp_exceptions

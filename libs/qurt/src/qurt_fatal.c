@@ -8,7 +8,7 @@
 
 void qurt_exception_raise_fatal()
 {
-	qurt_printf("FATAL: EJP: just going to call exit here.\n");
+	qurt_printf("FATAL: from %p<%p<%p: EJP: just going to call exit here.\n",__builtin_return_address(0),__builtin_return_address(1),__builtin_return_address(2));
 	exit(1);
 	while (1) /* SPIN */;
 }

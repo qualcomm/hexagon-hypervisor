@@ -1,6 +1,6 @@
 LIBNAME=posix
 
-OPTIMIZE := -O1
+OPTIMIZE := -Os
 
 CFLAGS =  -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../qurt/include -g $(OPTIMIZE) -G0
 ASFLAGS = -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../qurt/include 

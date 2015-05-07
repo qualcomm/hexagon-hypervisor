@@ -1,0 +1,49 @@
+; Dalvik VM Awareness specific menu
+
+add
+
+menu
+(
+  popup "&Dalvik"
+  (
+    default
+    menuitem "Display &VMList (Full)"  "EXT.VMList 1"
+    menuitem "Display VMList (Fast)"   "EXT.VMList 0"
+    menuitem "Show VM Awareness &Info" "EXT.VMAInfo"
+    separator
+    popup "DVMA Maintenance..."
+    (
+        menuitem "DVMA Unload"    "EXT.DELETE dalvik"
+        menuitem "DVMA Load"      "EXT.LOAD dalvik/dalvik"
+        menuitem "DVMA Debug ON"  "EXT.DEBUG 1 dalvik"
+        menuitem "DVMA Debug OFF" "EXT.DEBUG 0 dalvik"
+        menuitem "Clear AREA"     "AREA.CLEAR"
+    )
+  )
+)
+
+menu "ext.vmv"
+(
+  default
+  menuitem "Show details"
+  (
+    local &magic
+    if run()
+      break
+    &magic=address.offset(track.address())
+    EXT.VMView &magic
+  )
+
+  menuitem "Load classes"
+  (
+    local &magic
+    if run()
+      break
+    &magic=address.offset(track.address())
+    EXT.VMClass &magic
+  )
+
+  menuitem "Show Stack Frame" "Frame /Task track.address()"
+)
+
+;eof

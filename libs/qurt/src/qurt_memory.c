@@ -523,6 +523,11 @@ static void qurt_memory_builtin_pools()
 			pool_configs[i].ranges[0].start,
 			pool_configs[i].ranges[0].size);
 #endif
+		if (0==strcmp(pool_configs[i].name,"DEFAULT_PHYSPOOL")) {
+			/* KLUDGE */
+			pool_configs[i].ranges[0].start = 0x8c800;
+			pool_configs[i].ranges[0].size =  0x00400 << 12;
+		}
 		qurt_mem_pool_create(pool_configs[i].name,
 			pool_configs[i].ranges[0].start,
 			pool_configs[i].ranges[0].size>>12,
@@ -537,10 +542,27 @@ static void qurt_memory_builtin_pools()
 static void qurt_memory_pool_init()
 {
 	unsigned int blah;
-	qurt_mem_pool_create("vpool",0x80000,0x10000,&blah);
+	qurt_mem_pool_create("vpool",0x40000,0x10000,&blah);
 	vpool = mem_pool_from_uint(blah);
 	qurt_memory_builtin_pools();
 }
+
+#if 0
+static void qurt_physpool_shrink()
+{
+	struct qurt_mem_pool_struct *physpool = mem_pool_from_uint(qurt_mem_default_pool);
+	unsigned int base = 0x8C800;
+	unsigned int size = 0x00400;
+	// easy button: eat the memory leak
+	physpool->freelist = NULL;
+	// kludge, just know where we should make the pool
+	physpool->attr.ranges[0].start = base;
+	physpool->attr.ranges[0].size = size;
+	qurt_pgfree(&tmp->freelist,
+}
+#else /* handled above */
+static inline void qurt_physpool_shrink() {}
+#endif
 
 void qurt_memory_init()
 {
@@ -548,6 +570,7 @@ void qurt_memory_init()
 	int i;
 	if (linear_pages[0].raw != 0) { 
 		/* Already did early init! */
+		qurt_physpool_shrink();
 		qurt_memory_make_static_regions();
 		qurt_pprint_regions();
 		return;

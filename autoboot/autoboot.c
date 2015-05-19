@@ -101,7 +101,8 @@ int main()
 	h2_sem_t sem;
 	h2_sem_init_val(&sem,0);
 	PRINTF("autoboot: H2 started\n");
-	h2_hwconfig_l2cache_size(3,1);//1==64KB,2==128KB,3==256KB,4==512KB
+	// EJP: 5/19/2015: L2 cache size reconfiguration is buggy, we lose data
+	// h2_hwconfig_l2cache_size(3,1);//1==64KB,2==128KB,3==256KB,4==512KB
 #if 0
 	// EJP: testing
 	extern unsigned int t32_test_load();

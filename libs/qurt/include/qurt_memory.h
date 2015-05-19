@@ -938,9 +938,14 @@ static inline int qurt_mem_map_static_query_64(qurt_addr_t *vaddr, qurt_paddr_64
 {
 	qurt_mem_region_t region;
 	qurt_mem_region_attr_t attrs;
+	qurt_paddr_64_t basepa;
+	qurt_addr_t va;
 	if ((qurt_mem_region_query_64(&region,QURT_EINVALID,paddr_64)) != QURT_EOK) return QURT_EVAL;
 	qurt_mem_region_attr_get(region,&attrs);
-	qurt_mem_region_attr_get_virtaddr(&attrs,vaddr);
+	qurt_mem_region_attr_get_virtaddr(&attrs,&va);
+	qurt_mem_region_attr_get_physaddr_64(&attrs,&basepa);
+	va += (paddr_64-basepa);
+	*vaddr = va;
 	return QURT_EOK;
 }
 

@@ -669,8 +669,8 @@ static u8_t *uarches_v60[] =
 
 static u8_t *uarches_v61[] =
 	{
-		[0x0] = l2_v61_0,
-		[0x1] = l2_v61_1,
+		[0x0] = l2_v61_0, // remove ?
+		[0x1] = l2_v61_1, // remove ?
 		[0x2] = NULL,
 		[0x3] = l2_v61_3,
 		[0x4] = NULL,

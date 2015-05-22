@@ -277,7 +277,7 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	TMP = HTID
 	STACK_SIZE = #KERNEL_STACK_SIZE
 	SP += mpyi(STACK_SIZE, TMP)
-	DATA = #0
+	r1:0 = #0
 	k0lock
 	jump H2K_switch
 FUNC_END H2K_handle_reset

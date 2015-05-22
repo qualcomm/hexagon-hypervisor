@@ -1012,19 +1012,8 @@ int qurt_mapping_create_linear(H2K_linear_fmt_t entry);
 /* EJP: make this static inline because we get a lot of constant parameters and hopefully
  * the compiler can optimize building the linear format 
  */
-static inline int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn, 
-	unsigned int size, unsigned int cache_attribs, unsigned int perm, unsigned int abits)
-{
-	H2K_linear_fmt_t tmp;
-	tmp.raw = 0;
-	tmp.ppn = ppn;
-	tmp.cccc = cache_attribs;
-	tmp.xwru = perm<<1;
-	tmp.vpn = vpn;
-	tmp.abits = abits;
-	tmp.size = (__builtin_ctz(size))>>1;
-	return qurt_mapping_create_linear(tmp);
-}
+int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn, 
+	unsigned int size, unsigned int cache_attribs, unsigned int perm, unsigned int abits);
 
 static inline int qurt_mapping_create_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size,
 			 qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)

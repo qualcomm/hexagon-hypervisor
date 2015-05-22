@@ -17,8 +17,8 @@ unsigned int image_vend = (unsigned int)(&end);
 int qurt_sysenv_get_app_heap(qurt_sysenv_app_heap_t *aheap )
 {
 	/* EJP: FIXME: put real values here from config? */
-	aheap->heap_base = ((unsigned int)0x8CC00000);
-	aheap->heap_limit = aheap->heap_base + 0x800000;
+	aheap->heap_base = ((unsigned int)0x8C000000);
+	aheap->heap_limit = aheap->heap_base + (0x800000);
 	return QURT_EOK;
 }
 

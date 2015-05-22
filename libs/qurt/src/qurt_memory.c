@@ -146,15 +146,20 @@ static inline void transtab_add_region(struct qurt_mem_region_struct *region)
 	unsigned int vpn;
 	unsigned int ppn;
 	unsigned int size;
+#if 0
 	unsigned int pgsize;
 	H2K_linear_fmt_t entry;
 	entry.raw = 0;
 	entry.cccc = region->attr.cccc;
 	entry.xwru = region->attr.perms << 1;
 	entry.abits = region->attr.abits;
+#endif
 	vpn = region->attr.vpn;
 	ppn = region->attr.ppn;
 	size = region->attr.size;
+	/* qurt_mapping_create_vpn now handles non-power-of-4 page sizes */
+	qurt_mapping_create_vpn(vpn,ppn,size,region->attr.cccc, region->attr.perms, region->attr.abits);
+#if 0
 	while (size) {
 		pgsize = minu(6,(__builtin_ctz(vpn|ppn)>>1));
 		pgsize = minu(pgsize,((31-__builtin_clz(size))>>1));
@@ -168,6 +173,7 @@ static inline void transtab_add_region(struct qurt_mem_region_struct *region)
 		size -= pgsize;
 	}
 	//qurt_pprint_mappings();
+#endif
 }
 
 static inline void transtab_remove_region(struct qurt_mem_region_struct *region)
@@ -250,7 +256,7 @@ int qurt_mem_pool_create(char *name, unsigned int base, unsigned int size, qurt_
  * PHYS_CONTIGUOUS which allows setting physical address
  */
 
-struct qurt_mem_region_struct *all_regions = NULL;
+static struct qurt_mem_region_struct *all_regions = NULL;
 
 int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem_pool_t pool_int, qurt_mem_region_attr_t *attr)
 {
@@ -460,6 +466,37 @@ int qurt_mapping_create_linear(H2K_linear_fmt_t entry)
 	return QURT_EOK;
 }
 
+/* EJP: TBD? make this static inline because we get a lot of constant parameters and hopefully
+ * the compiler can optimize building the linear format 
+ */
+int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn, 
+	unsigned int size, unsigned int cache_attribs, unsigned int perm, unsigned int abits)
+{
+	H2K_linear_fmt_t tmp;
+	unsigned int alignval;
+	unsigned int pgsize;
+	int ret;
+	tmp.raw = 0;
+	tmp.cccc = cache_attribs;
+	tmp.xwru = perm<<1;
+	tmp.abits = abits;
+	while (size) {
+		pgsize = minu(6,(__builtin_ctz(vpn|ppn)>>1));
+		pgsize = minu(pgsize,((31-__builtin_clz(size))>>1));
+		tmp.size = pgsize;
+		tmp.ppn = ppn;
+		tmp.vpn = vpn;
+
+		if ((ret=qurt_mapping_create_linear(tmp)) != QURT_EOK) return ret;
+
+		pgsize = 1<<(pgsize*2);
+		size -= pgsize;
+		vpn += pgsize;
+		ppn += pgsize;
+	}
+	return QURT_EOK;
+}
+
 static inline H2K_linear_fmt_t *find_mapping(unsigned int vpn)
 {
 	int i;
@@ -525,7 +562,7 @@ static void qurt_memory_builtin_pools()
 #endif
 		if (0==strcmp(pool_configs[i].name,"DEFAULT_PHYSPOOL")) {
 			/* KLUDGE */
-			pool_configs[i].ranges[0].start = 0x8c800;
+			pool_configs[i].ranges[0].start = 0x8d000;
 			pool_configs[i].ranges[0].size =  0x00400 << 12;
 		}
 		qurt_mem_pool_create(pool_configs[i].name,
@@ -634,7 +671,7 @@ void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long
 	}
 	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
 	qurt_memory_pool_init(); // for now... 
-	qurt_pprint_mappings();
-	qurt_pprint_regions();
+	//qurt_pprint_mappings();
+	//qurt_pprint_regions();
 }
 

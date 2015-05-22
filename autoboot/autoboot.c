@@ -58,7 +58,7 @@ unsigned long vm_setup(unsigned int num_cpus, short num_ints, u32_t trans, unsig
 	if (pt == H2K_ASID_TRANS_TYPE_OFFSET) {
 		/* Memory map:  0 ... Linux ... frame buffer ... H2 ... boot VM ... ucos */
 		//		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x0, FRAME_BUFFER);
-		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x01000000, 0xfe000000);
+		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x00000000, 0xff000000);
 		if (ret != vm) {
 			PRINTF("set fences ret %08x\n", (unsigned int)ret);
 			FAIL("SET_FENCES");

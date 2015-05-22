@@ -43,7 +43,7 @@
  *
  *
 int qurt_mem_pool_attach(char *name, qurt_mem_pool_t *pool);
-int qurt_mem_pool_create(char *name, unsigned base, unsigned size, qurt_mem_pool_t *pool);
+int qurt_mem_pool_ereate(char *name, unsigned base, unsigned size, qurt_mem_pool_t *pool);
 NEVER USED? int qurt_mem_pool_add_pages
 NEVER USED? int qurt_mem_pool_remove_pages
 
@@ -414,15 +414,17 @@ int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long
 	qurt_rmutex_lock(&mem_mutex);
 	for (ptr = &all_regions; *ptr != NULL; ptr = &(*ptr)->next) {
 		tmp = *ptr;
+		/* If the mapping type is QURT_MEM_MAPPING_NONE, we didn't allocate PA space so its not valid */
+		if (tmp->attr.mapping_type == QURT_MEM_MAPPING_NONE) continue;
 		if ((tmp->attr.ppn <= ppn) && ((tmp->attr.ppn + tmp->attr.size) > ppn)) {
 			*region_handle = uint_from_mem_region(tmp);
 			qurt_rmutex_unlock(&mem_mutex);
-			qurt_printf("EJPDBG: memory @ ppn %x found. vpn=%x",ppn,tmp->attr.vpn);
+			qurt_printf("EJPDBG: memory @ ppn %x found. vpn=%x\n",ppn,tmp->attr.vpn);
 			return QURT_EOK;
 		}
 	}
 	qurt_rmutex_unlock(&mem_mutex);
-	qurt_printf("EJPDBG: memory @ ppn %x not found",ppn);
+	qurt_printf("EJPDBG: memory @ ppn %x not found\n",ppn);
 	return QURT_EVAL;
 }
 

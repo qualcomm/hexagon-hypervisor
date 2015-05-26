@@ -19,73 +19,57 @@
  Copyright (c) 2013  by Qualcomm Technologies, Inc.  All Rights Reserved.
  Confidential and Proprietary - Qualcomm Technologies, Inc.
  ======================================================================*/
+#include <h2.h>
 
-#define QURT_SIGNAL_ATTR_WAIT_ANY 0x00000000
-#define QURT_SIGNAL_ATTR_WAIT_ALL 0x00000001
-
-#include <qurt_anysignal.h>
-#include <qurt_allsignal.h>
+#define QURT_SIGNAL_ATTR_WAIT_ANY H2_SIGNAL_WAIT_ANY
+#define QURT_SIGNAL_ATTR_WAIT_ALL H2_SIGNAL_WAIT_ALL
 
 /** @addtogroup signals_types
 @{ */
 /** qurt_signal type                                           
  */
-typedef struct {
-	union {
-		qurt_anysignal_t anysignal;
-		qurt_allsignal_t allsignal;
-	};
-	int type;
-} qurt_signal_t;
+typedef h2_signal_t qurt_signal_t;
 /** @} */ /* end_addtogroup signals_types */
 
  
 
-static inline void qurt_signal_init(qurt_signal_t *signal)
-{
-	signal->type = QURT_SIGNAL_ATTR_WAIT_ANY;
-	qurt_anysignal_init(&signal->anysignal);
-}
+static inline void qurt_signal_init(qurt_signal_t *signal) { h2_signal_init(signal); }
 
 static inline void qurt_signal_destroy(qurt_signal_t *signal) {}
 
-static inline unsigned int qurt_signal_wait(qurt_signal_t *signal, unsigned int mask, 
-                unsigned int attribute)
-{
-	signal->type = attribute;
-	if (attribute == QURT_SIGNAL_ATTR_WAIT_ANY) return qurt_anysignal_wait(&signal->anysignal,mask);
-	else {
-		qurt_allsignal_wait(&signal->allsignal,mask);
-		return signal->allsignal.signals_in;
-	}
-}
-
 static inline unsigned int qurt_signal_wait_any(qurt_signal_t *signal, unsigned int mask)
 {
-  return qurt_signal_wait(signal, mask, QURT_SIGNAL_ATTR_WAIT_ANY);
+	return h2_signal_wait_any(signal,mask);
 }
 
 static inline unsigned int qurt_signal_wait_all(qurt_signal_t *signal, unsigned int mask)
 {
-  return qurt_signal_wait(signal, mask, QURT_SIGNAL_ATTR_WAIT_ALL);
+	return h2_signal_wait_all(signal,mask);
+}
+
+static inline unsigned int qurt_signal_wait(qurt_signal_t *signal, unsigned int mask, 
+                unsigned int attribute)
+{
+	if (attribute == QURT_SIGNAL_ATTR_WAIT_ANY) {
+		return qurt_signal_wait_any(signal,mask);
+	} else {
+		return qurt_signal_wait_all(signal,mask);
+	}
 }
 
 static inline void qurt_signal_set(qurt_signal_t *signal, unsigned int mask)
 {
-	if (signal->type == QURT_SIGNAL_ATTR_WAIT_ANY) qurt_anysignal_set(&signal->anysignal,mask);
-	else qurt_allsignal_set(&signal->allsignal,mask);
+	h2_signal_set(signal,mask);
 }
 
 static inline unsigned int qurt_signal_get(qurt_signal_t *signal)
 {
-	if (signal->type == QURT_SIGNAL_ATTR_WAIT_ANY) return qurt_anysignal_get(&signal->anysignal);
-	else return qurt_allsignal_get(&signal->allsignal);
+	return h2_signal_get(signal);
 }
 
 static inline void qurt_signal_clear(qurt_signal_t *signal, unsigned int mask)
 {
-	if (signal->type == QURT_SIGNAL_ATTR_WAIT_ANY) qurt_anysignal_clear(&signal->anysignal,mask);
-	else qurt_allsignal_clear(&signal->allsignal,mask);
+	h2_signal_clear(signal,mask);
 }
 
 /**@ingroup func_qurt_signal_wait_cancellable    

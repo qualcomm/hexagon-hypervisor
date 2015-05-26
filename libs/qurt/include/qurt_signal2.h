@@ -22,9 +22,6 @@
 
 #include <qurt_signal.h>
 
-#define QURT_SIGNAL_ATTR_WAIT_ANY 0x00000000
-#define QURT_SIGNAL_ATTR_WAIT_ALL 0x00000001
-
 /** @addtogroup signals_types
 @{ */
 /** qurt_signal2 type                                           

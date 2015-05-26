@@ -13,6 +13,7 @@ extern "C" {
 #include "h2_alloc.h"
 #include "h2_context.h"
 #include "h2_error.h"
+#include "h2_signal.h"
 #include "h2_allsignal.h"
 #include "h2_anysignal.h"
 #include "h2_atomic.h"

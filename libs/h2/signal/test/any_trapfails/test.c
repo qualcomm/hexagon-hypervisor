@@ -137,7 +137,7 @@ int main()
 	/* This actually shouldn't trap... we could count traps and check... */
 	h2_signal_wait_any(&anysig, 0xffffffff);
 
-	//if (anysig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
+	if (anysig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
 	if (TH_n_traps != 0) FAIL("Called a trap unnecessarily");
 	h2_signal_clear(&anysig,0x8000);
 
@@ -145,7 +145,7 @@ int main()
 	TH_setup_futex_wait(2,return_n1,set_signals_return_0);
 	h2_signal_wait_any(&anysig, 0xffffffff);
 	
-	//if (anysig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
+	if (anysig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
 	if (TH_n_traps == 0) FAIL("Didn't trap");
 	if (TH_n_traps > 2) FAIL("Trapped too often");
 
@@ -157,7 +157,7 @@ int main()
 	TH_setup_futex_wait(3,return_0,set_signals_return_n1,return_0);
 	h2_signal_wait_any(&anysig, 0xffffffff);
 
-	//if (anysig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
+	if (anysig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
 	if (TH_n_traps < 1) FAIL("Didn't trap");
 	if (TH_n_traps > 3) FAIL("Trapped too often");
 

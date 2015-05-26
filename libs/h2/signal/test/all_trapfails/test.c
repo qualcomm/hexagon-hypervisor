@@ -57,10 +57,10 @@ s32_t return_0() { TH_n_traps++; return 0; }
 s32_t return_1() { TH_n_traps++; return 1; }
 s32_t return_n1() { TH_n_traps++; return -1; }
 
-s32_t clear_waiting_return_n1() { TH_n_traps++; TH_allsig->waiting=0; return -1; }
-s32_t set_waiting_return_n1() { TH_n_traps++; TH_allsig->waiting=0xffffffff; return -1; }
-s32_t clear_waiting_return_0() { TH_n_traps++; TH_allsig->waiting=0; return 0; }
-s32_t set_waiting_return_0() { TH_n_traps++; TH_allsig->waiting=0xffffffff; return 0; }
+s32_t clear_waiting_return_n1() { TH_n_traps++; TH_allsig->signals=0xffffffff; return -1; }
+s32_t set_waiting_return_n1() { TH_n_traps++; TH_allsig->signals=0; return -1; }
+s32_t clear_waiting_return_0() { TH_n_traps++; TH_allsig->signals=0xffffffff; return 0; }
+s32_t set_waiting_return_0() { TH_n_traps++; TH_allsig->signals=0; return 0; }
 
 /*********************** Implementations of everything in kernel futex **********************/
 
@@ -137,15 +137,15 @@ int main()
 	/* This actually shouldn't trap... we could count traps and check... */
 	h2_signal_wait_all(&allsig, 0x8000);
 
-	if (allsig.waiting != 0) FAIL("Should be waiting, but unblocked somehow.");
+	if (allsig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
 	if (TH_n_traps != 0) FAIL("Called a trap unnecessarily");
 	h2_signal_init(&allsig);
-
+	printf("blah\n");
 	/* return -1 on first call, clear waiting and return 0 on second. */
 	TH_setup_futex_wait(2,return_n1,clear_waiting_return_0);
 	h2_signal_wait_all(&allsig, 0xffffffff);
 	
-	if (allsig.waiting != 0) FAIL("Should be waiting, but unblocked somehow.");
+	if (allsig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
 	if (TH_n_traps == 0) FAIL("Didn't trap");
 	if (TH_n_traps > 2) FAIL("Trapped too often");
 
@@ -157,7 +157,7 @@ int main()
 	TH_setup_futex_wait(3,return_0,clear_waiting_return_n1,return_0);
 	h2_signal_wait_all(&allsig, 0xffffffff);
 
-	if (allsig.waiting != 0) FAIL("Should be waiting, but unblocked somehow.");
+	if (allsig.mask != 0) FAIL("Should be waiting, but unblocked somehow.");
 	if (TH_n_traps < 1) FAIL("Didn't trap");
 	if (TH_n_traps > 3) FAIL("Trapped too often");
 

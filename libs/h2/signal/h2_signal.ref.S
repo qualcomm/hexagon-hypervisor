@@ -9,7 +9,8 @@
 #define OFF_SIGS 0
 #define SIGNAL r0
 #define MASK r1
-#define TMP r2
+#define SIGVAL r2
+#define MASKVAL r3
 	.text
 
 	.global h2_signal_wait_any
@@ -21,11 +22,12 @@
 	 * return value is latest value of signals
 	 */
 h2_signal_wait_any:
-	TMP = memw(SIGNAL+#OFF_SIGS)
+	SIGVAL = memw(SIGNAL+#OFF_SIGS)
 	{
-		p0 = bitsclr(TMP,MASK)
-		if (!p0.new) r0 = TMP
+		p0 = bitsclr(SIGVAL,MASK)
+		if (!p0.new) r0 = SIGVAL
 		if (!p0.new) jumpr:nt r31
+		if (!p0.new) memw(SIGNAL+#OFF_MASK) = #0
 	}
 	{
 		allocframe(#8)
@@ -33,7 +35,7 @@ h2_signal_wait_any:
 	}
 	{
 		memd(r29+#0) = r1:0
-		r1 = TMP
+		r1 = SIGVAL
 	}
 	trap0(#H2_TRAP_FUTEX_WAIT)
 	{
@@ -52,25 +54,27 @@ h2_signal_wait_any:
 	 * return value is latest value of signals
 	 */
 h2_signal_wait_all:
-	TMP = memw(SIGNAL+#OFF_SIGS)
+	SIGVAL = memw(SIGNAL+#OFF_SIGS)
 	{
-		p0 = bitsset(TMP,MASK)
-		if (p0.new) r0 = TMP
+		p0 = bitsset(SIGVAL,MASK)
+		if (p0.new) r0 = SIGVAL
 		if (p0.new) jumpr:nt r31
+		if (p0.new) memw(SIGNAL+#OFF_MASK) = #0
 	}
 	{
 		allocframe(#8)
-		memw(SIGNAL+#OFF_MASK) = r1
+		MASKVAL = and(MASK,~SIGVAL)
 	}
 	{
 		memd(r29+#0) = r1:0
-		r1 = TMP
+		memw(SIGNAL+#OFF_MASK) = MASKVAL
+		r1 = SIGVAL
 	}
 	trap0(#H2_TRAP_FUTEX_WAIT)
 	{
 		r1:0 = memd(R29+#0)
 		deallocframe
-		jump h2_signal_wait_any
+		jump h2_signal_wait_all
 	}
 	.size h2_signal_wait_all,.-h2_signal_wait_all
 

@@ -28,7 +28,7 @@ void FAIL(const char *str)
 	puts(str);
 	exit(1);
 }
-
+h2_sem_t donesem;
 void thread0(int thread)
 {
 	int i;
@@ -36,12 +36,13 @@ void thread0(int thread)
 	/* FIXEM make this for loop a sleep */
 	for(i=0; i<1000000; i++) { asm volatile ("nop"); }
 	h2_signal_set(&all_threads, 0xfffffffc);
-	if((all_threads.waiting & 0x1) != 0x1) {
+	if((all_threads.mask & 0x1) != 0x1) {
 		//DEBUG
-		//printf("t0 waiting is 0x%08x\n", all_threads.waiting );
+		// printf("t0 waiting is 0x%08x\n", all_threads.mask );
 		FAIL("allsignal acknowledged the wrong signal!");
 	}
 	h2_signal_set(&all_threads, 1);
+	h2_sem_up(&donesem);
 	h2_thread_stop(0);
 }
 
@@ -52,14 +53,15 @@ void thread1(int thread)
 	/* FIXEM make this for loop a sleep */
 	for(i=0; i<1000000; i++) { asm volatile ("nop"); }
 	h2_signal_set(&all_threads, 0xfffffffc);
-	if((all_threads.waiting & 0x2) != 0x2) { 
+	if((all_threads.mask & 0x2) != 0x2) { 
 		//DEBUG
-		//printf("t1 waiting is 0x%08x\n", all_threads.waiting );
+		// printf("t1 waiting is 0x%08x\n", all_threads.mask );
 		FAIL("allsignal acknowledged the wrong signal!");
 	}
 	h2_signal_set(&all_threads, 0x2);
 	h2_signal_wait_all(&all_done, 0x80000000);
-	if(all_done.waiting != 0) { FAIL("allsignal didn't block while waiting"); }
+	if(all_done.mask != 0) { FAIL("allsignal didn't block while waiting"); }
+	h2_sem_up(&donesem);
 	h2_thread_stop(0);
 }
 
@@ -68,6 +70,7 @@ int main()
 //	h2_init(NULL);
 	printf("Hello, World!\n");
 
+	h2_sem_init_val(&donesem,0);
 	h2_signal_init(&all_done);
 	h2_signal_init(&all_threads);
 
@@ -77,10 +80,10 @@ int main()
 
 	printf("Waiting for threads...\n");
 	h2_signal_wait_all(&all_threads, 0x3);
-	if(all_threads.waiting != 0) { FAIL("allsignal didn't block while waiting"); }
-
+	if(all_threads.mask != 0) { printf("mask=%x\n",all_threads.mask); FAIL("allsignal didn't block while waiting mask"); }
 	h2_signal_set(&all_done, 0x80000000);
-
+	h2_sem_down(&donesem);
+	h2_sem_down(&donesem);
 	puts("TEST PASSED\n");
 	h2_thread_stop(0);
 	return 0;

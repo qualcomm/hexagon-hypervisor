@@ -133,8 +133,7 @@ static int qurt_qdi_local_open(const char *path, unsigned int flags, unsigned in
 	/* Search pathlist for matching driver */
 	struct qurt_qdi_namespace_struct *tmp;
 	qurt_rmutex_lock(&qurt_qdi_namespace_lock);
-	tmp = qdi_namespace;
-	while (tmp != NULL) {
+	for (tmp = qdi_namespace; tmp != NULL; tmp = tmp->next) {
 		if (strncmp(tmp->path,path,tmp->namelen + tmp->matchend) == 0) {
 			break;
 		}

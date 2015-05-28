@@ -17,6 +17,6 @@ enum __ptrace_request
 	PTRACE_EXT_IS_DEBUG_PERMITTED = 500
 };
 
-static inline long ptrace(enum __ptrace_request request, unsigned int pid, void*addr, void *data) { R_UNSUPPORTED; }
+static inline long ptrace(enum __ptrace_request request, unsigned int pid, void*addr, void *data) { if (request == PTRACE_EXT_IS_DEBUG_PERMITTED) return 0; else R_UNSUPPORTED; }
 
 #endif //__SYS_PTRACE_H__

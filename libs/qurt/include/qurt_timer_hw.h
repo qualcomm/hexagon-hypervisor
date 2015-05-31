@@ -24,7 +24,7 @@ typedef unsigned int                    hw_reg_type;
 -----------------------------------------------------------------------------*/
 typedef unsigned int                    hw_value_type;
 
-void hw_timer_init (qurt_timetick_word_t match);
+void hw_timer_init ();
 
 int hw_timer_isAlive ( void );
 

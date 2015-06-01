@@ -11,6 +11,8 @@
 #define MASK r1
 #define SIGVAL r2
 #define MASKVAL r3
+#define MASK_SIGVAL r3:2
+
 	.text
 
 	.global h2_signal_wait_any
@@ -22,19 +24,20 @@
 	 * return value is latest value of signals
 	 */
 h2_signal_wait_any:
-	SIGVAL = memw(SIGNAL+#OFF_SIGS)
+	MASK_SIGVAL = memw(SIGNAL+#OFF_SIGS)
 	{
 		p0 = bitsclr(SIGVAL,MASK)
-		if (!p0.new) r0 = SIGVAL
-		if (!p0.new) jumpr:nt r31
-		if (!p0.new) memw(SIGNAL+#OFF_MASK) = #0
+		if (!p0.new) MASKVAL = #0
+		if (p0.new) MASKVAL = MASK
+	}
+	memd_locked(SIGNAL,p1) = MASK_SIGVAL
+	{
+		if (!p1) jump h2_signal_wait_any
+		if (!p0) jumpr r31
 	}
 	{
 		allocframe(#8)
-		memw(SIGNAL+#OFF_MASK) = r1
-	}
-	{
-		memd(r29+#0) = r1:0
+		memd(r29+#-16) = r1:0
 		r1 = SIGVAL
 	}
 	trap0(#H2_TRAP_FUTEX_WAIT)
@@ -54,20 +57,20 @@ h2_signal_wait_any:
 	 * return value is latest value of signals
 	 */
 h2_signal_wait_all:
-	SIGVAL = memw(SIGNAL+#OFF_SIGS)
+	MASK_SIGVAL = memd_locked(SIGNAL)
 	{
 		p0 = bitsset(SIGVAL,MASK)
-		if (p0.new) r0 = SIGVAL
-		if (p0.new) jumpr:nt r31
-		if (p0.new) memw(SIGNAL+#OFF_MASK) = #0
+		if (p0.new) MASKVAL = #0
+		if (!p0.new) MASKVAL = and(MASK,~SIGVAL)
+	}
+	memd_locked(SIGNAL,p1) = MASK_SIGVAL
+	{
+		if (!p1) jump h2_signal_wait_all
+		if (p0) jumpr r31
 	}
 	{
 		allocframe(#8)
-		MASKVAL = and(MASK,~SIGVAL)
-	}
-	{
-		memd(r29+#0) = r1:0
-		memw(SIGNAL+#OFF_MASK) = MASKVAL
+		memd(r29+#-16) = r1:0
 		r1 = SIGVAL
 	}
 	trap0(#H2_TRAP_FUTEX_WAIT)
@@ -80,12 +83,12 @@ h2_signal_wait_all:
 
 	.global h2_signal_set
 h2_signal_set:
-	r3:2 = memd_locked(SIGNAL)
+	MASK_SIGVAL = memd_locked(SIGNAL)
 	{
-		r2 = or(r2,MASK)
-		p0 = bitsclr(r3,MASK)
+		SIGVAL = or(SIGVAL,MASK)
+		p0 = bitsclr(MASKVAL,MASK)
 	}
-	memd_locked(SIGNAL,p1) = r3:2
+	memd_locked(SIGNAL,p1) = MASK_SIGVAL
 	{
 		if (!p1) jump h2_signal_set
 	}
@@ -93,9 +96,9 @@ h2_signal_set:
 	{
 		if (p0) jumpr r31
 		if (p0) r0 = r2
-		r1 = #1
+		r1 = #99
 	}
-	/* Wake up a thread waiting on this signal */
+	/* Wake up some threads waiting on this signal */
 	trap0(#H2_TRAP_FUTEX_WAKE)
 	{
 		r0 = r2

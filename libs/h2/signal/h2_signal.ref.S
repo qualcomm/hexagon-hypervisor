@@ -24,7 +24,7 @@
 	 * return value is latest value of signals
 	 */
 h2_signal_wait_any:
-	MASK_SIGVAL = memw(SIGNAL+#OFF_SIGS)
+	MASK_SIGVAL = memd_locked(SIGNAL)
 	{
 		p0 = bitsclr(SIGVAL,MASK)
 		if (!p0.new) MASKVAL = #0
@@ -33,6 +33,8 @@ h2_signal_wait_any:
 	memd_locked(SIGNAL,p1) = MASK_SIGVAL
 	{
 		if (!p1) jump h2_signal_wait_any
+	}
+	{
 		if (!p0) jumpr r31
 	}
 	{
@@ -60,12 +62,16 @@ h2_signal_wait_all:
 	MASK_SIGVAL = memd_locked(SIGNAL)
 	{
 		p0 = bitsset(SIGVAL,MASK)
-		if (p0.new) MASKVAL = #0
-		if (!p0.new) MASKVAL = and(MASK,~SIGVAL)
+		MASKVAL = and(MASK,~SIGVAL)
+	}
+	{
+		if (p0) MASKVAL = #0
 	}
 	memd_locked(SIGNAL,p1) = MASK_SIGVAL
 	{
 		if (!p1) jump h2_signal_wait_all
+	}
+	{
 		if (p0) jumpr r31
 	}
 	{

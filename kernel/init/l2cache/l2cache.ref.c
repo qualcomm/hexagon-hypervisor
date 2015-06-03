@@ -621,7 +621,6 @@ static u8_t l2_v62_0[] =
 // so far there is one l2 tag size for each array size in v62
 #define l2_v62_1 (l2_v62_0)
 #define l2_v62_2 (l2_v62_0)
-#define l2_v62_3 (l2_v62_0)
 #define l2_v62_4 (l2_v62_0)
 #define l2_v62_6 (l2_v62_0)
 
@@ -694,7 +693,7 @@ static u8_t *uarches_v62[] =
 	{
 		[0x0] = l2_v62_0,
 		[0x1] = l2_v62_1,
-		[0x2] = NULL,
+		[0x2] = l2_v62_2,
 		[0x3] = NULL,
 		[0x4] = l2_v62_4,
 		[0x5] = NULL,

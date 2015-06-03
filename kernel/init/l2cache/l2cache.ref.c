@@ -606,11 +606,11 @@ static u8_t l2_v62_0[] =
 		[0x3] = reserved,
 		[0x4] = s512,
 		[0x5] = reserved,
-		[0x6] = reserved,
+		[0x6] = s256,
 		[0x7] = reserved,
-		[0x8] = reserved,
+		[0x8] = s256,
 		[0x9] = reserved,
-		[0xa] = s1024,
+		[0xa] = s512,
 		[0xb] = reserved,
 		[0xc] = reserved,
 		[0xd] = reserved,
@@ -620,6 +620,8 @@ static u8_t l2_v62_0[] =
 
 // so far there is one l2 tag size for each array size in v62
 #define l2_v62_1 (l2_v62_0)
+#define l2_v62_2 (l2_v62_0)
+#define l2_v62_3 (l2_v62_0)
 #define l2_v62_4 (l2_v62_0)
 #define l2_v62_6 (l2_v62_0)
 

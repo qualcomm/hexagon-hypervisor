@@ -191,7 +191,11 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, vmblock_init_op_t op,
 			offset.raw = arg1;
 
 			/* Make sure offset is aligned to a valid page size, and size field matches */
-			if ((i = Q6_R_ct0_R(offset.pages)) % 2 != 0 || offset.size > (i / 2)) return 0;
+			if (offset.size < SIZE_4K
+					|| offset.size > SIZE_16M
+					|| offset.pages % (0x1 << (2 * offset.size)) != 0) {
+				return 0;
+			}
 
 			vmblock->phys_offset = offset;
 			vmblock->pmap_type = arg2;

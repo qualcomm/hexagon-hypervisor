@@ -36,6 +36,7 @@ h2_signal_wait_any:
 	}
 	{
 		if (!p0) jumpr r31
+		if (!p0) r0 = SIGVAL
 	}
 	{
 		allocframe(#8)
@@ -73,6 +74,7 @@ h2_signal_wait_all:
 	}
 	{
 		if (p0) jumpr r31
+		if (!p0) r0 = SIGVAL
 	}
 	{
 		allocframe(#8)
@@ -101,13 +103,13 @@ h2_signal_set:
 	/* If we didn't contribute anything that was being waited on, return early */
 	{
 		if (p0) jumpr r31
-		if (p0) r0 = r2
+		if (p0) r0 = SIGVAL
 		r1 = #99
 	}
 	/* Wake up some threads waiting on this signal */
 	trap0(#H2_TRAP_FUTEX_WAKE)
 	{
-		r0 = r2
+		r0 = SIGVAL 
 		jumpr r31
 	}
 	.size h2_signal_set,.-h2_signal_set

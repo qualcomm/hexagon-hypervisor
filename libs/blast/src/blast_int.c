@@ -37,7 +37,7 @@ Only one signal per sigset
 
 typedef union {
 	struct {
-		h2_anysignal_t *signal_ptr;
+		qurt_signal_t *signal_ptr;
 		int signal_mask;
 	};
 	unsigned long long int raw;
@@ -52,7 +52,7 @@ static int qurt_int2signal(int intnum)
 	//  safe to call sigset from within fastint context
 	qurt_interrupt_table_entry_t entry;
 	entry.raw = int_sigsets[intnum].raw;
-	h2_anysignal_set(entry.signal_ptr, int_sigsets[intnum].signal_mask);
+	qurt_signal_set(entry.signal_ptr, int_sigsets[intnum].signal_mask);
 	return 1;
 }
 
@@ -73,7 +73,7 @@ void l2_controller_init(void)
 {
 }
 
-unsigned int qurt_interrupt_register(int int_num, qurt_anysignal_t *int_signal, int signal_mask)
+unsigned int qurt_interrupt_register(int int_num, qurt_signal_t *int_signal, int signal_mask)
 {
 	qurt_interrupt_table_entry_t entry;
 	int_num += 32;
@@ -83,7 +83,7 @@ unsigned int qurt_interrupt_register(int int_num, qurt_anysignal_t *int_signal, 
 	entry.signal_ptr = int_signal;
 	entry.signal_mask = signal_mask;
 	int_sigsets[int_num].raw = entry.raw;
-	qurt_anysignal_clear(int_sigsets[int_num].signal_ptr,
+	qurt_signal_clear(int_sigsets[int_num].signal_ptr,
 		int_sigsets[int_num].signal_mask);
 	h2_register_fastint(int_num,qurt_int2signal);
 	return QURT_EOK;
@@ -92,7 +92,7 @@ unsigned int qurt_interrupt_register(int int_num, qurt_anysignal_t *int_signal, 
 unsigned int qurt_interrupt_deregister(int int_num)
 {
 	int_num += 32;
-	h2_anysignal_set(int_sigsets[int_num].signal_ptr,SIG_INT_ABORT);
+	qurt_signal_set(int_sigsets[int_num].signal_ptr,SIG_INT_ABORT);
 	//  May need to make this atomic or use a lock or something
 	//h2_register_fastint(int_num,qurt_dummy);
 	h2_deregister_fastint(int_num);

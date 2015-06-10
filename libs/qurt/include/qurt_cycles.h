@@ -42,17 +42,17 @@ static inline unsigned long long int qurt_get_core_pcycles(void)
 
 static inline void qurt_profile_get_idle_pcycles (unsigned long long *pcycles)
 {
-	UNSUPPORTED;
+	*pcycles = 0;
 }
 
 static inline void qurt_profile_get_threadid_pcycles (int thread_id, unsigned long long  *pcycles)
 {
-	UNSUPPORTED;
+	*pcycles = 0;
 }
 
 static inline void qurt_profile_reset_threadid_pcycles (int thread_id)
 {
-	UNSUPPORTED;
+	/* DO NOTHING */
 }
 
 static inline void qurt_profile_enable (int enable) {}

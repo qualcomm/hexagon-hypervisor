@@ -194,7 +194,8 @@ void qurt_thread_get_name(char *name, unsigned char max_len)
 {
 	struct QURT_ugp_ptr *tmp;
 	tmp = find_thread(h2_thread_myid());
-	strlcpy(name,tmp->utcb.attr.name,max_len);
+	if (tmp) strlcpy(name,tmp->utcb.attr.name,max_len);
+	else strlcpy(name,"NOTFOUND?!",max_len);
 }
 
 extern int _posix_init();

@@ -143,6 +143,8 @@ void usage()
 	printf("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	printf("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
 	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
+	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
+	printf("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
 
 	printf("\nVM options:\n");
 	printf("  --ccr <int>\n\tSet ccr.\n");
@@ -155,9 +157,9 @@ void usage()
 	printf("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C (0xa == L1WB_L2CWB_AUX).\n");
 	printf("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
 	printf("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
-	printf("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default 0x01000000.\n");
-	printf("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default 0xff000000.\n");
-	printf("  --load_offset <int>\n\tOffset for loading ELF image.  Default (0x01000000 - <first_program_header_addr>).\n");
+	printf("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default lowest mapped physical page.\n");
+	printf("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default (end - fence_lo) + heap size + stack size.\n");
+	printf("  --load_offset <int>\n\tOffset for loading ELF image.  Default (guest_base - <first_program_header_addr>).\n");
 	printf("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf).  Default 0.\n");
 	printf("  --bestprio <int>\n\tBest allowed priority for a virtual CPU.  Default 0.\n");
 	printf("  --trapmask <int>\n\tBitmask of allowed trap0 numbers.  Default 0xffffffff (all allowed).\n");
@@ -167,7 +169,6 @@ void usage()
 	printf("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
 	printf("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 1.\n");
 	printf("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
-	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 }		
 
 #define GEN_specials(NAME) vm_params[idx].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx].specials[SPECIAL_ ## NAME].addr = -1;
@@ -194,7 +195,7 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].offset_pages = -1;
 	vm_params[idx].trans_type = -1;
 	vm_params[idx].fence_lo = ~0L;
-	/* vm_params[idx].fence_hi = H2K_GUEST_END; */
+	vm_params[idx].fence_hi = 0L;
 	vm_params[idx].load_offset = -1;
 	vm_params[idx].skip_load = 0;
 	vm_params[idx].bestprio = VM_BEST_PRIO;
@@ -237,7 +238,7 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].offset_pages = vm_params[idx].offset_pages;
 		vm_params[idx + num].trans_type = vm_params[idx].trans_type;
 		vm_params[idx + num].fence_lo = ~0L;
-		/* vm_params[idx + num].fence_hi = vm_params[idx].fence_hi; */
+		vm_params[idx + num].fence_hi = 0L;
 		vm_params[idx + num].load_offset = vm_params[idx].load_offset;
 		vm_params[idx + num].skip_load = vm_params[idx].skip_load;
 		vm_params[idx + num].bestprio = vm_params[idx].bestprio;
@@ -330,6 +331,8 @@ void load_vm(unsigned int idx) {
 	Elf32_Phdr phdr;
 	long phys_offset = -1;
 	int bytes_read;
+	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
+	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
 	unsigned long heap_size, stack_size, total_size, end, one_page;
 	unsigned long start = ~0L;
@@ -392,7 +395,7 @@ void load_vm(unsigned int idx) {
 		}
 		phdr.p_paddr += vm_params[idx].load_offset;
 
-		if (phdr.p_paddr < vm_params[idx].fence_lo) {
+		if (set_fence_lo && (phdr.p_paddr < vm_params[idx].fence_lo)) {
 			vm_params[idx].fence_lo = phdr.p_paddr;
 		}
 
@@ -462,9 +465,13 @@ void load_vm(unsigned int idx) {
 	printf("\ttotal_size 0x%08lx\n", total_size);
 	guest_base += total_size;
 
-	vm_params[idx].fence_lo &= HI_MASK(one_page);
+	if (set_fence_lo) {
+		vm_params[idx].fence_lo &= HI_MASK(one_page);
+	}
 	printf("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
-	vm_params[idx].fence_hi = vm_params[idx].fence_lo + total_size - one_page;
+	if (set_fence_hi) {
+		vm_params[idx].fence_hi = vm_params[idx].fence_lo + total_size - one_page;
+	}
 	printf("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
 }
 
@@ -858,6 +865,12 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--use_stlb")) {
 			if (argc < 2) die_usage();
 			use_stlb = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--guest_base")) {
+			if (argc < 2) die_usage();
+			guest_base = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

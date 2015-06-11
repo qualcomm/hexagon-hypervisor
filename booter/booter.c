@@ -289,7 +289,8 @@ void set_cmdline(unsigned int idx, long offset)
 	dst = (char *)(addr + offset);
 	dst[0] = 0;
 	for (i = 0; i < vm_params[idx].argc; i++) {
-		strcpy(dst, vm_params[idx].argv[i]);
+		strcat(dst, vm_params[idx].argv[i]);
+		strcat(dst, " ");
 	}
 
 	printf("\tcmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);

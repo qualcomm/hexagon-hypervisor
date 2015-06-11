@@ -27,58 +27,88 @@
 #define CHILD_INTERRUPT 14
 #define VM_BEST_PRIO 0
 
-/* Kernel config */
-static unsigned int use_stlb = 0;
-
-/* VM config */
-static unsigned int num_vcpus = 32;
-#ifdef HAVE_EXTENSIONS
-static unsigned int use_ext = 0;
-#endif
-static unsigned int num_shared_ints = 0;
-static unsigned int page_size = SIZE_16M;
-static unsigned int cccc = L1WB_L2C;
-static unsigned int xwru = URWX;
-static long offset_pages = -1;
-static int trans_type = -1;
-static unsigned int fence_lo = H2K_GUEST_START;
-static unsigned int fence_hi = H2K_GUEST_END;
-static long load_offset = -1;
-static unsigned int skip_load = 0;
-static unsigned int bestprio = VM_BEST_PRIO;
-static unsigned int trapmask = 0xffffffff;
-
-/* VM first CPU */
-static void *stack = (void *)(H2K_GUEST_END - 8);
-/* static void *stack = (void *)0x7ffffff0; */
-static unsigned int arg = 0;
-static unsigned int startprio = VM_BEST_PRIO;
-
-/* rebooting */
-static unsigned int boots = 1;
-static unsigned int expect_status = 0;
-
-/* exit on error */
-static unsigned int error_exit = 1;
+#define BUFSIZE 256
 
 /* Misc */
 #define ERRSTR_LEN 1024
-static char errstr[ERRSTR_LEN];
+char errstr[ERRSTR_LEN];
 
 #define FOREACH_sym(GEN) \
 	GEN(__guest_pmap__)		 \
 	GEN(__boot_cmdline__) \
-	GEN(__boot_net_phys_offset__)
+	GEN(__boot_net_phys_offset__) \
+	GEN(end) \
+	GEN(DEFAULT_HEAP_SIZE) \
+	GEN(DEFAULT_STACK_SIZE) \
+	GEN(HEAP_SIZE) \
+	GEN(STACK_SIZE)
 
-#define GEN_enum(NAME) SPECIAL ## NAME,
+#define GEN_enum(NAME) SPECIAL_ ## NAME,
 enum {
 	FOREACH_sym(GEN_enum)
+	SPECIAL_NUM_ENTRIES
 };
 
-#define GEN_specials(NAME) {#NAME, -1},
-static special_symbols specials[] = {
-	FOREACH_sym(GEN_specials)
-};
+#define LO_MASK(SIZ) ((SIZ)-1)
+#define HI_MASK(SIZ) (-(SIZ))
+
+#define ALIGN_UP(X,SIZ) (((X) + LO_MASK(SIZ)) & HI_MASK(SIZ))
+
+#define GUESS_HEAP_SIZE 0x4000000 /* 64MB */
+#define GUESS_STACK_SIZE 0x100000 /* 1MB */
+
+/* Globals */
+unsigned int use_stlb = 0;
+unsigned long guest_base = H2K_GUEST_START;
+
+typedef struct {
+	unsigned int id;
+
+	/* VM config */
+	unsigned int num_vcpus;
+#ifdef HAVE_EXTENSIONS
+	unsigned int use_ext;
+#endif
+	unsigned int num_shared_ints;
+	unsigned int ccr;
+
+	/* Translation options from cmdline */
+	unsigned int page_size;
+	unsigned int cccc;
+	unsigned int xwru;
+	long offset_pages;
+	int trans_type;
+
+	unsigned int fence_lo;
+	unsigned int fence_hi;
+	long load_offset;
+	unsigned int skip_load;
+	unsigned int bestprio;
+	unsigned int trapmask;
+
+	/* VM first CPU */
+	void *entry;
+	void *stack;
+	unsigned int arg;
+	unsigned int startprio;
+
+	/* rebooting */
+	unsigned int boots;
+	unsigned int expect_status;
+
+	/* exit on error */
+	unsigned int error_exit;
+
+	special_symbols specials[SPECIAL_NUM_ENTRIES];
+
+	/* From __guest_pmap__ */
+	h2_guest_pmap_t *pmap;
+
+	char **argv;
+	int argc;
+} vm_t;
+
+vm_t *vm_params = NULL;
 
 void error(char *str1, char *str2) {
 
@@ -99,13 +129,12 @@ void FAIL(const char *str)
 void usage()
 {
 	printf("Usage:\n");
-	printf("  booter [options] <file> <file_args>\n");
-	printf("  booter [options] --list <file1> <file2> ...\n");
-	printf("  booter [options] --listfile <listfile>\n");
-	printf("\nConfig options:\n");
+	printf("  booter [options] <executable> <args>\n");
+	printf("  booter [options] <executable> <args> [ --new_vm <instances> [vm options] <executable> <args> ...]\n");
+	printf("  booter [global options] --new_vm <instances> [vm options] <executable> <args> [--new_vm <instances> [vm options] <executable> <args> ...]\n");
+	printf("\nGlobal options:\n");
 	printf("  --duck <int>\n\tSet the duck bits.\n");
 	printf("  --chicken <int>\n\tSet the chicken bits.\n");
-	printf("  --ccr <int>\n\tSet ccr.\n");
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
 	printf("  --syscfg <int>\n\tSet syscfg.\n");
 	printf("  --syscfg_bit <name> <int>\n\tSet syscfg bit(s) not covered by other options.\n");
@@ -114,9 +143,13 @@ void usage()
 	printf("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	printf("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
 	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
+
 	printf("\nVM options:\n");
+	printf("  --ccr <int>\n\tSet ccr.\n");
 	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
+#ifdef HAVE_EXTENSIONS
 	printf("  --use_ext (0|1)\n\tSupport extended contexts.  Default 0.\n");
+#endif
 	printf("  --num_shared_ints <int>\n\tNumber of shared interrupts.  Default 0.\n");
 	printf("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
 	printf("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C (0xa == L1WB_L2CWB_AUX).\n");
@@ -137,111 +170,144 @@ void usage()
 	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 }		
 
-static h2_guest_pmap_t *get_pmap(int fdesc, const Elf32_Ehdr *ehdr) {
+#define GEN_specials(NAME) vm_params[idx].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx].specials[SPECIAL_ ## NAME].addr = -1;
 
-	int addr;
+void add_vm(unsigned int idx) {
 
-	if ((addr = specials[SPECIAL__guest_pmap__].addr) == -1) {
-		printf("__guest_pmap__ not found.\n");
-		return 0;
-	} else {
-		printf("__guest_pmap__ found @ 0x%08x\n",addr);
+	if (NULL == (vm_params = (vm_t *)(realloc((void *)vm_params, sizeof(vm_t) * (idx + 1))))) {
+		FAIL("realloc vm_params");
 	}
 
-	return (h2_guest_pmap_t *)addr;
+	vm_params[idx].num_vcpus = 32;
+	vm_params[idx].use_ext = 0;
+
+	vm_params[idx].num_vcpus = 32;
+#ifdef HAVE_EXTENSIONS
+	vm_params[idx].use_ext = 0;
+#endif
+	vm_params[idx].num_shared_ints = 0;
+	vm_params[idx].ccr = ~0L;
+
+	vm_params[idx].page_size = SIZE_16M;
+	vm_params[idx].cccc = L1WB_L2C;
+	vm_params[idx].xwru = URWX;
+	vm_params[idx].offset_pages = -1;
+	vm_params[idx].trans_type = -1;
+	vm_params[idx].fence_lo = ~0L;
+	/* vm_params[idx].fence_hi = H2K_GUEST_END; */
+	vm_params[idx].load_offset = -1;
+	vm_params[idx].skip_load = 0;
+	vm_params[idx].bestprio = VM_BEST_PRIO;
+	vm_params[idx].trapmask = 0xffffffff;
+	vm_params[idx].entry = NULL;
+	vm_params[idx].stack = NULL;
+	vm_params[idx].arg = 0;
+	vm_params[idx].startprio = VM_BEST_PRIO;
+	vm_params[idx].boots = 1;
+	vm_params[idx].expect_status = 0;
+	vm_params[idx].error_exit = 1;
+
+	FOREACH_sym(GEN_specials);
+
+	vm_params[idx].pmap = NULL;
+
+	vm_params[idx].argv = NULL;
+	vm_params[idx].argc = 0;
 }
 
-static void set_cmdline(const char *cmdline, int fdesc, const Elf32_Ehdr *ehdr, long offset)
+#undef GEN_specials
+#define GEN_specials(NAME) vm_params[idx + num].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx + num].specials[SPECIAL_ ## NAME].addr = -1;
+
+void clone_vm(unsigned int idx, unsigned int num) {
+
+	if (NULL == (vm_params = (vm_t *)(realloc((void *)vm_params, sizeof(vm_t) * (idx + 1 + num))))) {
+		FAIL("realloc vm_params");
+	}
+
+	while (num) {
+		vm_params[idx + num].num_vcpus = vm_params[idx].num_vcpus;
+#ifdef HAVE_EXTENSIONS
+		vm_params[idx + num].use_ext = vm_params[idx].use_ext;
+#endif
+		vm_params[idx + num].num_shared_ints = vm_params[idx].num_shared_ints;
+		vm_params[idx + num].ccr = ~0L;
+		vm_params[idx + num].page_size = vm_params[idx].page_size;
+		vm_params[idx + num].cccc = vm_params[idx].cccc;
+		vm_params[idx + num].xwru = vm_params[idx].xwru;
+		vm_params[idx + num].offset_pages = vm_params[idx].offset_pages;
+		vm_params[idx + num].trans_type = vm_params[idx].trans_type;
+		vm_params[idx + num].fence_lo = ~0L;
+		/* vm_params[idx + num].fence_hi = vm_params[idx].fence_hi; */
+		vm_params[idx + num].load_offset = vm_params[idx].load_offset;
+		vm_params[idx + num].skip_load = vm_params[idx].skip_load;
+		vm_params[idx + num].bestprio = vm_params[idx].bestprio;
+		vm_params[idx + num].trapmask = vm_params[idx].trapmask;
+		vm_params[idx + num].entry = NULL;
+		vm_params[idx + num].stack = NULL;
+		vm_params[idx + num].arg = vm_params[idx].arg;
+		vm_params[idx + num].startprio = vm_params[idx].startprio;
+		vm_params[idx + num].boots = vm_params[idx].boots;
+		vm_params[idx + num].expect_status = vm_params[idx].expect_status;
+		vm_params[idx + num].error_exit = vm_params[idx].error_exit;
+
+		FOREACH_sym(GEN_specials);
+
+		vm_params[idx + num].pmap = NULL;
+
+		vm_params[idx + num].argv = vm_params[idx].argv;
+		vm_params[idx + num].argc = vm_params[idx].argc;
+
+		num--;
+	}
+}
+
+void get_pmap(unsigned int idx, long offset) {
+
+	unsigned long addr;
+
+	if ((addr = vm_params[idx].specials[SPECIAL___guest_pmap__].addr) == -1) {
+		printf("\t__guest_pmap__ not found.\n");
+	} else {
+		printf("\t__guest_pmap__ found @ 0x%08lx\n",addr);
+
+		vm_params[idx].pmap = (h2_guest_pmap_t *)(addr + offset);
+	}
+}
+
+void set_cmdline(unsigned int idx, long offset)
 {
+	int i;
 	char *dst;
 	unsigned long addr;
-	if ((addr = specials[SPECIAL__boot_cmdline__].addr) == -1) {
-		printf("__boot_cmdline__ not found.\n");
+
+	if ((addr = vm_params[idx].specials[SPECIAL___boot_cmdline__].addr) == -1) {
+		printf("\t__boot_cmdline__ not found.\n");
 		return;
 	} else {
-		printf("__boot_cmdline__ found @ 0x%08x\n", (unsigned int)addr);
+		printf("\t__boot_cmdline__ found @ 0x%08x\n", (unsigned int)addr);
 	}
 	dst = (char *)(addr + offset);
 	dst[0] = 0;
-	strcpy(dst,cmdline);
-	printf("cmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);
+	for (i = 0; i < vm_params[idx].argc; i++) {
+		strcpy(dst, vm_params[idx].argv[i]);
+	}
+
+	printf("\tcmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);
 }
 
-void set_net_phys_offset(int fdesc, const Elf32_Ehdr *ehdr, long offset) {
+void set_net_phys_offset(unsigned int idx, long offset) {
 
 	long *dst;
 	unsigned long addr;
-	if ((addr = specials[SPECIAL__boot_net_phys_offset__].addr) == -1) {
-		printf("__boot_net_phys_offset__ not found.\n");
+	if ((addr = vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr) == -1) {
+		printf("\t__boot_net_phys_offset__ not found.\n");
 		return;
 	} else {
-		printf("__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
+		printf("\t__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
 	}
 	dst = (long *)(addr + offset);
 	*dst = offset;
-	printf("net phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
-}
-
-unsigned int spawn_vm(int fdesc, const Elf32_Ehdr *ehdr, long pages)
-{
-	unsigned long vm;
-	long ret;
-	int i;
-	h2_guest_pmap_t *pmap;
-	void *pc = (void *)ehdr->e_entry;
-	H2K_offset_t base;
-	int trans;
-
-	printf("pc %08lx\n", (unsigned long)pc);
-
-	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, CONFIG_CPUS(use_ext, num_vcpus), num_shared_ints);
-
-	base.size = page_size;
-	base.cccc = cccc;
-	base.xwru = xwru;
-	base.pages = (unsigned long)pages;
-
-	if (trans_type == -1) { // not set on cmdline, get from guest image
-		pmap = get_pmap(fdesc, ehdr);
-
-		if (pmap != NULL) { // found
-			trans = pmap->type;
-			base.raw = pmap->base.raw;
-		} else { // default
-			trans = H2K_ASID_TRANS_TYPE_OFFSET;
-		}
-	} else { // translation type forced; better only be offset for now
-		if (trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
-			printf("Are you really going to type page tables on the command line?\n");
-			exit(1);
-		}
-		trans = trans_type;
-	}
-
-	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)base.raw, trans);
-	if (ret != vm) FAIL("SET_PMAP_TYPE");
-
-	if (trans == H2K_ASID_TRANS_TYPE_OFFSET) {
-		ret = h2_config_vmblock_init(vm, SET_FENCES, fence_lo, fence_hi);
-		if (ret != vm) FAIL("SET_FENCES");
-	}
-
-	ret = h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, bestprio, trapmask);
-	if (ret != vm) FAIL("SET_PRIO_TRAPMASK");
-
-	/* set up interrupts */
-	for (i = 0; i < num_shared_ints + PERCPU_INTERRUPTS; i++) {
-		ret = h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, num_vcpus - 1));
-		if (ret != vm) FAIL("MAP_PHYS_INTR");
-	}
-
-	/* Stats Reset */
-	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
-	ret = h2_vmboot(pc, stack, arg, startprio, vm);
-	if (ret == -1) FAIL("vmboot");
-
-	printf("vm booted ID %lu\n", vm);
-	return vm;
+	printf("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
 }
 
 void dcclean_range(unsigned long start, long range)
@@ -256,121 +322,286 @@ void dcclean_range(unsigned long start, long range)
 	} while (range >= 0); 
 }
 
-extern void bootvm_vectors();
+void load_vm(unsigned int idx) {
 
-int run_elf(char *elf, char *cmdline)
-{
-	int ret, status, cpus, i;
-	unsigned long vm;
-	int fdesc;
+	int fdesc, i, ret;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
 	long phys_offset = -1;
 	int bytes_read;
 
+	unsigned long heap_size, stack_size, total_size, end, one_page;
+	unsigned long start = ~0L;
+
+	char *elf = vm_params[idx].argv[0];
+
+	printf("\n\nLoad VM index %d %s\n", idx, elf);
 	fdesc = open(elf,O_RDONLY);
 	if (fdesc == -1) {
-		error("Can't open file ", elf);
-		return 1;
+		error("\tCan't open file ", elf);
+		exit(1);
 	}
 	if (elf_get_ehdr(fdesc,&ehdr) < 0) {
-		printf("Invalid ELF file: %s\n", elf);
-		return 1;
+		printf("\tInvalid ELF file: %s\n", elf);
+		exit(1);
 	}
 
-	elf_get_specials(fdesc, specials, sizeof(specials)/sizeof(specials[0]), &ehdr);
+	elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr);
+
+	/* FIXME? It would be better to get the page size from the __guest_pmap__ if
+		 it exists (and if it is an offset mapping), but to read that we need to
+		 load first, and to load we need to align guest_base to the page size. It's
+		 sufficient to use a page size that is as least as big as the one in the
+		 __guest_pmap__; at most we waste some space. */
+	one_page = (1 << ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS));
+
+	vm_params[idx].entry = (void *)ehdr.e_entry;
+	printf("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
+	
+
+	/* Align the guest base up to the current guest's page size */
+	guest_base = ALIGN_UP(guest_base, one_page);
 
 	for (i = 0; i < ehdr.e_phnum; i++) {
-		if (elf_get_phdr(fdesc,i,&phdr,&ehdr) < 0) continue;
+		if (elf_get_phdr(fdesc, i, &phdr, &ehdr) < 0) continue;
 		if (phdr.p_memsz == 0) continue;
 		if (phdr.p_type != PT_LOAD) continue;
-		if (lseek(fdesc,phdr.p_offset,SEEK_SET) == -1) {
-			error("Can't lseek() in ", elf);
-			return 1;
+		if (lseek(fdesc, phdr.p_offset, SEEK_SET) == -1) {
+			error("\tCan't lseek() in ", elf);
+			exit(1);
 		}
 		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
+
+		if (phdr.p_vaddr < start) {
+			start = phdr.p_vaddr;
+		}
 
 		/* FIXME: Assuming first program header contains entry point and phys
 			 offset is identical for all segments*/
 		if (phys_offset == -1) { //unset
 			phys_offset = phdr.p_vaddr - phdr.p_paddr;
-			printf("phys_offset 0x%08lx\n", phys_offset);
+			printf("\tphys_offset 0x%08lx\n", phys_offset);
 		}
 		/* FIXME: Assuming prog headers in sorted order.  Override with --load_offset if needed */
-		if (load_offset == -1) {
-			load_offset = H2K_GUEST_START - phdr.p_paddr;
+		if (vm_params[idx].load_offset == -1) {
+			vm_params[idx].load_offset = guest_base - phdr.p_paddr;
 		}
-		if (offset_pages == -1) {
-			offset_pages = (phys_offset + load_offset) >> (page_size * 2);
+		if (vm_params[idx].offset_pages == -1) {
+			vm_params[idx].offset_pages = (phys_offset + vm_params[idx].load_offset) >> (vm_params[idx].page_size * 2);
 		}
-		phdr.p_paddr += load_offset;
+		phdr.p_paddr += vm_params[idx].load_offset;
 
-		if (!skip_load) {
-			printf("load VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
+		if (phdr.p_paddr < vm_params[idx].fence_lo) {
+			vm_params[idx].fence_lo = phdr.p_paddr;
+		}
+
+		if (!vm_params[idx].skip_load) {
+			printf("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
 			bytes_read = 0;
 			do {
 				bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
 			} while (ret > 0);
-			if (ret == -1) FAIL("read()");
+			if (ret == -1) {
+				error("\tCan't read() in ", elf);
+				exit(1);
+			}
 
 			memset((char *)phdr.p_paddr+phdr.p_filesz, 0, phdr.p_memsz-phdr.p_filesz);
 			/* Really, only need to clean out text sections */
 			dcclean_range(phdr.p_paddr, phdr.p_memsz);
 		}
 	}
-	printf("load_offset 0x%08lx\n", load_offset);
-	printf("offset_pages 0x%lx\n", offset_pages);
-
-	set_cmdline(cmdline, fdesc,&ehdr, phys_offset + load_offset);
-	set_net_phys_offset(fdesc,&ehdr, phys_offset + load_offset);
-	printf("\nBoot vm for %s\n", elf);
-	vm = spawn_vm(fdesc, &ehdr, offset_pages);
 	close(fdesc);
+	printf("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
+	printf("\toffset_pages 0x%lx\n", vm_params[idx].offset_pages);
+
+	set_cmdline(idx, phys_offset + vm_params[idx].load_offset);
+	set_net_phys_offset(idx, phys_offset + vm_params[idx].load_offset);
+	get_pmap(idx, phys_offset + vm_params[idx].load_offset);
+
+	/* Adjust guest_base and fences */
+	if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
+		FAIL("\tCan't find end symbol");
+	}
+	printf("\tend 0x%08lx\n", end);
+
+	heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
+	if (0 == heap_size || -1 == heap_size) {
+		if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr
+				|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr) {
+			heap_size = GUESS_HEAP_SIZE;
+			printf("\t** warning: heap size unknown, guessing 0x%08lx\n", heap_size);
+		} else {
+			heap_size = vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr;
+			printf("\theap_size 0x%08lx (DEFAULT_HEAP_SIZE)\n", heap_size);
+		}
+	} else {
+		printf("\theap_size 0x%08lx\n", heap_size);
+	}
+
+	stack_size = vm_params[idx].specials[SPECIAL_STACK_SIZE].addr;
+	if (0 == stack_size || -1 == stack_size) {
+		if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr
+				|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr) {
+			stack_size = GUESS_STACK_SIZE;
+			printf("\t** warning: stack size unknown, guessing 0x%08lx\n", stack_size);
+		} else {
+			stack_size = vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr;
+			printf("\tstack_size 0x%08lx (DEFAULT_STACK_SIZE)\n", stack_size);
+		}
+	} else {
+		printf("\tstack_size 0x%08lx\n", stack_size);
+	}
+
+	end += heap_size + stack_size;
+	vm_params[idx].stack = (void *)(end & -32);  // should be close to where crt0 puts the stack
+
+	end = ALIGN_UP(end, one_page);
+	total_size = ALIGN_UP((end - start), one_page);
+	printf("\ttotal_size 0x%08lx\n", total_size);
+	guest_base += total_size;
+
+	vm_params[idx].fence_lo &= HI_MASK(one_page);
+	printf("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
+	vm_params[idx].fence_hi = vm_params[idx].fence_lo + total_size - one_page;
+	printf("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
+}
+
+void config_vm(unsigned int idx) {
+
+	unsigned long vm;
+
+	H2K_offset_t base;
+	int trans, i;
 	
-	do {  // wait for all child VM cpus to vmstop
+
+	printf("\n\nConfig VM index %d\n", idx);
+
+	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, CONFIG_CPUS(vm_params[idx].use_ext, vm_params[idx].num_vcpus), vm_params[idx].num_shared_ints);
+
+	base.size = vm_params[idx].page_size;
+	base.cccc = vm_params[idx].cccc;
+	base.xwru = vm_params[idx].xwru;
+	base.pages = vm_params[idx].offset_pages;
+
+	if (-1 == vm_params[idx].trans_type) {  // not set on cmdline
+		if (NULL != vm_params[idx].pmap) {  // has __guest_pmap__
+			trans = vm_params[idx].pmap->type;
+		  base.raw = vm_params[idx].pmap->base.raw;
+		} else {  // default
+			trans = H2K_ASID_TRANS_TYPE_OFFSET;
+		}
+	} else {  // translation type forced; better only be offset for now
+		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
+			FAIL("\tAre you really going to type page tables on the command line?\n");
+		}
+		trans = vm_params[idx].trans_type;
+	}
+
+	if (h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)base.raw, trans) != vm) {
+		FAIL("\tSET_PMAP_TYPE");
+	}
+
+	if (trans == H2K_ASID_TRANS_TYPE_OFFSET) {
+		if (h2_config_vmblock_init(vm, SET_FENCES, vm_params[idx].fence_lo, vm_params[idx].fence_hi) != vm) {
+			FAIL("\tSET_FENCES");
+		}
+	}
+
+	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, vm_params[idx].bestprio, vm_params[idx].trapmask) != vm) {
+		FAIL("\tSET_PRIO_TRAPMASK");
+	}
+
+	/* set up interrupts */
+	for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
+		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
+			FAIL("\tMAP_PHYS_INTR");
+		}
+	}
+
+	vm_params[idx].id = vm;
+	printf("\tVM ID %lu\n", vm);
+}
+
+void boot_vm(unsigned int idx) {
+
+	unsigned int regval;
+
+	printf("\n\nBoot VM index %d, ID %d\n", idx, vm_params[idx].id);
+
+	if (~0L != vm_params[idx].ccr) {
+		regval = H2K_get_ccr();
+		printf("\told value for ccr: 0x%08x\n",regval);
+		H2K_set_ccr(vm_params[idx].ccr);
+		regval = H2K_get_ccr();
+		printf("\tnew value for ccr: 0x%08x\n",regval);
+	}
+
+	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
+		FAIL("\tfailed to boot vm\n");
+	}
+}
+
+void run(unsigned int idx) {
+	unsigned int i;
+	unsigned int status, cpus, done;
+	unsigned int vm;
+
+	for (i = 0 ; i <= idx; i++) {
+		load_vm(i);
+	}
+	for (i = 0 ; i <= idx; i++) {
+		config_vm(i);
+	}
+
+	/* Stats Reset */
+	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
+
+	for (i = 0 ; i <= idx; i++) {
+		boot_vm(i);
+	}
+
+	/* Wait for all VMs to stop or error */
+	do {
 		h2_vmtrap_setie(0);
 		printf("Waiting for child interrupt\n");
 		h2_vmtrap_wait();
 		h2_vmtrap_setie(1); // take the interrupt to clear it
-		status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-		printf("VM %lu status 0x%x\n", vm, status);
-		cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
-		printf("VM %lu Live CPUs: %d\n", vm, cpus);
 
-		if (error_exit && H2_THREAD_FATAL_ERROR == status) {
-			exit(1);
+		/* How's everyone doing? */
+		done = 1;
+		for (i = 0; i <= idx; i++) {
+			vm = vm_params[i].id;
+			status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
+			printf("VM %x status 0x%x\n", vm, status);
+			cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
+			printf("VM %x Live CPUs: %d\n", vm, cpus);
+
+			if (0 == cpus) {  // no more cpus running
+				if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
+					exit(1);
+				}
+				if (--vm_params[i].boots) {  // reboot
+					load_vm(i);
+					boot_vm(i);
+				} else {  // all done with this VM
+					h2_vmfree(vm);
+				}
+			} else {
+				done = 0; // someone's not done
+			}
+			if (vm_params[i].error_exit && H2_THREAD_FATAL_ERROR == status) {
+				exit(1);
+			}
 		}
-	} while (cpus != 0);
-	h2_vmfree(vm);
-
-	if (status != expect_status) { // unexpected status
-		return 1;
-	}
-
-	return 0;
+	} while (!done);
 }
 
-#define BUFSIZE 256
-
-static void strip(char *buf)
-{
-	int i;
-	for (i = strlen(buf)-1; i >= 0; i--) {
-		if (isspace(buf[i])) {
-			buf[i] = 0;
-		} else {
-			break;
-		}
-	}
-}
-
-static void die_usage()
+void die_usage()
 {
 	usage();
 	exit(1);
 }
-
-extern void bootvm__Interrupt(int);
 
 void print_infos() {
 	info_boot_flags_type boot_flags;
@@ -411,7 +642,6 @@ void print_infos() {
 	printf("\tL2VIC physical base: 0x%08x\n", h2_info(INFO_L2VIC_BASE));
 	printf("\tTimer physical base: 0x%08x\n", h2_info(INFO_TIMER_BASE));
 	printf("\tTimer interrupt: %d\n", h2_info(INFO_TIMER_INT));
-	printf("\nBoot VM info:\n");
 }
 
 void kernel_setup() {
@@ -454,7 +684,7 @@ typedef struct {
 	void (* handler)(unsigned int);
 } syscfg_field;
 
-static syscfg_field syscfg[] = {
+syscfg_field syscfg[] = {
 	{"BQ", SYSCFG_BQ_BIT, SYSCFG_BQ_LEN, H2K_set_syscfg},
 	{"DMT", SYSCFG_DMT_BIT, SYSCFG_DMT_LEN, H2K_set_syscfg},
 	{"L2WB", SYSCFG_L2WB_BIT, SYSCFG_L2WB_LEN, set_l2wb},
@@ -482,17 +712,20 @@ void set_syscfg_field(char *name, unsigned int val) {
 	FAIL("set_syscfg_field");
 }
 
+extern void bootvm_vectors();
+
+//extern void bootvm__Interrupt(int);
+
 int main(int argc, char **argv)
 {
-	int i, ret = 0;
-	FILE *f;
+	unsigned int vm_instances = 0;
+	unsigned int idx;
 
-	char buf[BUFSIZE];
-	char file[64];
 	unsigned int regval;
 	unsigned int kerror;
 
-	buf[0] = 0;
+	int finish = 0;
+
 	//Remove booter from cmdline
 	strncpy(errstr, argv[0], ERRSTR_LEN);
 	argc--;
@@ -519,15 +752,23 @@ int main(int argc, char **argv)
 		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
 	}
 
+	idx = 0;
+	add_vm(idx);  // So that --new_vm doesn't have to be given for a single VM
+
 	while (1) {
+
+		if (0 == argc) {
+			break;
+		}
+
+		/* Global options */
+
 		if (0 == strcmp(argv[0],"--syscfg")) {
 			if (argc < 2) die_usage();
 			regval = h2_info(INFO_SYSCFG);
 			printf("Old value for syscfg: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-
 			H2K_set_syscfg(regval);
-
 			regval = h2_info(INFO_SYSCFG);
 			printf("New value for syscfg: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
@@ -563,17 +804,6 @@ int main(int argc, char **argv)
 			H2K_set_rgdr(regval);
 			regval = H2K_get_rgdr();
 			printf("New value for rgdr: 0x%08x\n",regval);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0],"--ccr")) {
-			if (argc < 2) die_usage();
-			regval = H2K_get_ccr();
-			printf("Old value for ccr: 0x%08x\n",regval);
-			regval = strtoul(argv[1],NULL,0);
-			H2K_set_ccr(regval);
-			regval = H2K_get_ccr();
-			printf("New value for ccr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
@@ -624,122 +854,6 @@ int main(int argc, char **argv)
 			argc -= 3; argv += 3;
 			continue;
 
-		} else if (0 == strcmp(argv[0], "--num_vcpus")) {
-			if (argc < 2) die_usage();
-			num_vcpus = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-#ifdef HAVE_EXTENSIONS
-		} else if (0 == strcmp(argv[0], "--use_ext")) {
-			if (argc < 2) die_usage();
-			use_ext = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-#endif
-
-		} else if (0 == strcmp(argv[0], "--num_shared_ints")) {
-			if (argc < 2) die_usage();
-			num_shared_ints = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--page_size")) {
-			if (argc < 2) die_usage();
-			page_size = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--cccc")) {
-			if (argc < 2) die_usage();
-			cccc = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--offset_pages")) {
-			if (argc < 2) die_usage();
-			offset_pages = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--translation_type")) {
-			if (argc < 2) die_usage();
-			trans_type = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--fence_lo")) {
-			if (argc < 2) die_usage();
-			fence_lo = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--fence_hi")) {
-			if (argc < 2) die_usage();
-			fence_hi = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--load_offset")) {
-			if (argc < 2) die_usage();
-			load_offset = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--skip_load")) {
-			if (argc < 2) die_usage();
-			skip_load = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--bestprio")) {
-			if (argc < 2) die_usage();
-			bestprio = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--trapmask")) {
-			if (argc < 2) die_usage();
-			trapmask = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--stack")) {
-			if (argc < 2) die_usage();
-			stack = (void *)strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--arg")) {
-			if (argc < 2) die_usage();
-			arg = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--boots")) {
-			if (argc < 2) die_usage();
-			boots = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--expect_status")) {
-			if (argc < 2) die_usage();
-			expect_status = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--error_exit")) {
-			if (argc < 2) die_usage();
-			error_exit = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
-		} else if (0 == strcmp(argv[0], "--startprio")) {
-			if (argc < 2) die_usage();
-			startprio = strtoul(argv[1],NULL,0);
-			argc -= 2; argv += 2;
-			continue;
-
 		} else if (0 == strcmp(argv[0], "--use_stlb")) {
 			if (argc < 2) die_usage();
 			use_stlb = strtoul(argv[1],NULL,0);
@@ -749,45 +863,170 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--help")) {
 			usage();
 			exit(0);
+
+			/* Per-VM options */
+
+		} else if (0 == strcmp(argv[0],"--ccr")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].ccr = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
 			continue;
 
-		} else if (0 == strcmp(argv[0], "--list")) {
-			// shift '--list' off arg list
-			argc--;
-			argv++;
-			kernel_setup();
-			print_infos();
-			for (; argc > 0; argc--) {
-				run_elf(argv[argc - 1]," ");
-			}
-			return 0;
-		} else if (0 == strcmp(argv[0], "--listfile")) {
+		} else if (0 == strcmp(argv[0], "--num_vcpus")) {
 			if (argc < 2) die_usage();
-			if ((f = fopen(argv[1],"r")) == NULL) die_usage();
-			kernel_setup();
-			print_infos();
-			while (fgets(buf,BUFSIZE,f)) {
-				strip(buf);
-				if (sscanf(buf,"%s ",file) <= 0) {
-					continue;
-				}
-				run_elf(file,buf);
-			}
-			return 0;
+			vm_params[idx].num_vcpus = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+#ifdef HAVE_EXTENSIONS
+		} else if (0 == strcmp(argv[0], "--use_ext")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].use_ext = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+#endif
+
+		} else if (0 == strcmp(argv[0], "--num_shared_ints")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].num_shared_ints = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--page_size")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].page_size = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--cccc")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].cccc = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--offset_pages")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].offset_pages = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--translation_type")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].trans_type = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--fence_lo")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].fence_lo = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--fence_hi")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].fence_hi = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--load_offset")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].load_offset = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--skip_load")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].skip_load = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--bestprio")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].bestprio = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--trapmask")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].trapmask = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--stack")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].stack = (void *)strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--arg")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].arg = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--boots")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].boots = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--expect_status")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].expect_status = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--error_exit")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].error_exit = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--startprio")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].startprio = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else {
-			break;
+			while (argc) {
+				if (0 == strcmp(argv[0], "--new_vm")) {
+					if (argc < 2) { 
+						die_usage();
+					}
+					if (finish) {  // this --new_vm is ending opts for a previous one
+						clone_vm(idx, vm_instances);
+						idx += vm_instances + 1;
+						add_vm(idx);
+					}
+					vm_instances = strtoul(argv[1], NULL, 0) - 1;
+					argc -= 2; argv += 2;
+					break;  // to top of outer loop
+
+				} else {  // executable and its options
+					finish = 1;  // from now on --new_vm always finishes a previous one
+
+					if (0 == argc) {
+						die_usage();
+					}
+					if (0 == vm_params[idx].argc) {  // first arg
+						vm_params[idx].argv = argv;
+					}
+					vm_params[idx].argc++;
+
+					argc--;
+					argv++;
+				}
+			}
 		}
 	}
 
-	for (i = 0; i < argc; i++) {
-		strcat(buf,argv[i]);
-		strcat(buf," ");
-	}
+	clone_vm(idx, vm_instances);
+	idx += vm_instances;
 
 	kernel_setup();
 	print_infos();
-	while (boots-- && ret == 0) {
-		ret = run_elf(argv[0],buf);
-	}
-	return ret;
+	run(idx);
+
+	return 0;
 }

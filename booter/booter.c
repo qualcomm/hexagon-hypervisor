@@ -57,8 +57,11 @@ enum {
 #define GUESS_HEAP_SIZE 0x4000000 /* 64MB */
 #define GUESS_STACK_SIZE 0x100000 /* 1MB */
 
+#define FENCE_HI_MAX 0xfffff000
+
 /* Globals */
 unsigned int use_stlb = 0;
+unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
 
 typedef struct {
@@ -341,7 +344,7 @@ void load_vm(unsigned int idx) {
 
 	char *elf = vm_params[idx].argv[0];
 
-	printf("\n\nLoad VM index %d %s\n", idx, elf);
+	printf("\nLoad VM index %d %s\n", idx, elf);
 	fdesc = open(elf,O_RDONLY);
 	if (fdesc == -1) {
 		error("\tCan't open file ", elf);
@@ -472,7 +475,11 @@ void load_vm(unsigned int idx) {
 	}
 	printf("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
 	if (set_fence_hi) {
-		vm_params[idx].fence_hi = vm_params[idx].fence_lo + total_size - one_page;
+		if (tight_fence_hi) {
+			vm_params[idx].fence_hi = vm_params[idx].fence_lo + total_size - one_page;
+		} else {
+			vm_params[idx].fence_hi = FENCE_HI_MAX & HI_MASK(one_page);
+		}
 	}
 	printf("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
 }
@@ -485,7 +492,9 @@ void config_vm(unsigned int idx) {
 	int trans, i;
 	
 
-	printf("\n\nConfig VM index %d\n", idx);
+	printf("\nConfig VM index %d\n", idx);
+	printf("\tvirtual CPUs %d\n", vm_params[idx].num_vcpus);
+	printf("\tShared interrupts  %d\n", vm_params[idx].num_shared_ints);
 
 	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, CONFIG_CPUS(vm_params[idx].use_ext, vm_params[idx].num_vcpus), vm_params[idx].num_shared_ints);
 
@@ -537,7 +546,7 @@ void boot_vm(unsigned int idx) {
 
 	unsigned int regval;
 
-	printf("\n\nBoot VM index %d, ID %d\n", idx, vm_params[idx].id);
+	printf("\nBoot VM index %d, ID %d\n", idx, vm_params[idx].id);
 
 	if (~0L != vm_params[idx].ccr) {
 		regval = H2K_get_ccr();
@@ -574,7 +583,7 @@ void run(unsigned int idx) {
 
 	/* Wait for all VMs to stop or error */
 	do {
-		printf("Waiting for child interrupt\n");
+		printf("\nWaiting for child interrupt\n");
 		h2_sem_down(&child_done_sem);
 
 		/* How's everyone doing? */
@@ -1018,6 +1027,8 @@ int main(int argc, char **argv)
 					if (argc < 2) { 
 						die_usage();
 					}
+					tight_fence_hi = 1;  // multiple VMs, need to keep fences tight
+
 					if (finish) {  // this --new_vm is ending opts for a previous one
 						clone_vm(idx, vm_instances);
 						idx += vm_instances + 1;

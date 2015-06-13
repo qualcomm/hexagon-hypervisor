@@ -110,6 +110,8 @@ typedef struct {
 
 vm_t *vm_params = NULL;
 
+h2_sem_t child_done_sem;
+
 void error(char *str1, char *str2) {
 
 	int err = sys_errno();
@@ -203,7 +205,7 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].entry = NULL;
 	vm_params[idx].stack = NULL;
 	vm_params[idx].arg = 0;
-	vm_params[idx].startprio = VM_BEST_PRIO;
+	vm_params[idx].startprio = VM_BEST_PRIO + 1;
 	vm_params[idx].boots = 1;
 	vm_params[idx].expect_status = 0;
 	vm_params[idx].error_exit = 1;
@@ -552,7 +554,8 @@ void boot_vm(unsigned int idx) {
 
 void run(unsigned int idx) {
 	unsigned int i;
-	unsigned int status, cpus, done;
+	unsigned int status, done;
+	int cpus;
 	unsigned int vm;
 
 	for (i = 0 ; i <= idx; i++) {
@@ -571,15 +574,16 @@ void run(unsigned int idx) {
 
 	/* Wait for all VMs to stop or error */
 	do {
-		h2_vmtrap_setie(0);
 		printf("Waiting for child interrupt\n");
-		h2_vmtrap_wait();
-		h2_vmtrap_setie(1); // take the interrupt to clear it
+		h2_sem_down(&child_done_sem);
 
 		/* How's everyone doing? */
 		done = 1;
 		for (i = 0; i <= idx; i++) {
 			vm = vm_params[i].id;
+			if (~0 == vm) {  // skip
+				continue;
+			}
 			status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
 			printf("VM %x status 0x%x\n", vm, status);
 			cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
@@ -593,6 +597,7 @@ void run(unsigned int idx) {
 					load_vm(i);
 					boot_vm(i);
 				} else {  // all done with this VM
+					vm_params[i].id = ~0;  // mark non-existent
 					h2_vmfree(vm);
 				}
 			} else {
@@ -722,7 +727,11 @@ void set_syscfg_field(char *name, unsigned int val) {
 
 extern void bootvm_vectors();
 
-//extern void bootvm__Interrupt(int);
+void booter_isr(void) {
+	//	printf("Got child interrupt\n");
+	h2_sem_up(&child_done_sem);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+}
 
 int main(int argc, char **argv)
 {
@@ -754,11 +763,12 @@ int main(int argc, char **argv)
 
 	h2_vmtrap_setvec(bootvm_vectors);
 
-	//h2_handle_errors(0);
-	//h2_set_handler(7, bootvm__Interrupt);
+	h2_sem_init_val(&child_done_sem, 0);
+
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
 		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
 	}
+	h2_vmtrap_setie(1);
 
 	idx = 0;
 	add_vm(idx);  // So that --new_vm doesn't have to be given for a single VM

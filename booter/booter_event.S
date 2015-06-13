@@ -4,6 +4,8 @@
  */
 
 #include <h2_trap_constants.h>
+#include <h2_common_error.h>
+#include <h2_context_defs.h>
 
 	.text
 
@@ -30,13 +32,18 @@ bootvm__Trap0:
 
 .global bootvm__Interrupt
 bootvm__Interrupt:
-	r29 = add(r29, #-8)
-	memd(r29+#0) = r1:0
-
-	r0 = #1 // VMINTOP_GLOBEN
-	r1 = #14 // CHILD_INTERRUPT
-	trap1(#H2_VMTRAP_INTOP)
-
-	r1:0 = memd(r29+#0)
-	r29 = add(r29, #8)
+	{
+		allocframe(#H2_CONTEXT_SIZE-8)
+		memd(r29+#-16) = r29:28
+		call h2_context_save
+	}
+	{
+		r18 = r31
+		call booter_isr
+	}
+	callr r18  // restore
+	{
+		r29:28 = memd(r29+#H2_CONTEXT_SIZE-16)
+		r31:30 = memd(r29+#H2_CONTEXT_SIZE-8)
+	}
 	trap1(#H2_VMTRAP_RETURN)

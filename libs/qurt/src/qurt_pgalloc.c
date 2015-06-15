@@ -168,6 +168,15 @@ void qurt_pgfree(struct qurt_freelist_node **ptr,unsigned int addr,unsigned int 
 	*ptr = newnode;
 }
 
+void qurt_pgalloc_print_freelist(struct qurt_freelist_node *head)
+{
+	if (head == NULL) qurt_printf("END\n");
+	else {
+		qurt_printf("..base=%08x size=%08x\n",head->base,head->size);
+		qurt_pgalloc_print_freelist(head->next);
+	}
+}
+
 #ifdef DEBUG_BIST
 
 #include <stdio.h>
@@ -180,11 +189,7 @@ static void FAIL(const char *msg)
 
 static void print_freelist(struct qurt_freelist_node *head)
 {
-	if (head == NULL) qurt_printf("END\n");
-	else {
-		qurt_printf("..base=%08x size=%08x\n",head->base,head->size);
-		print_freelist(head->next);
-	}
+	qurt_pgalloc_print_freelist(head);
 }
 
 int main() {

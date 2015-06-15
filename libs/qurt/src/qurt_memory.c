@@ -283,8 +283,19 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 	qurt_rmutex_lock(&mem_mutex);
 	if (attr->mapping_type != QURT_MEM_MAPPING_NONE) {
 		if ((ppn = qurt_pgalloc(&pool->freelist,ppn,size,0)) == 0) {
-			qurt_printf("no free pa space. ppn=%x poolstart=%x poolsize=%x\n",attr->ppn,
-				pool->attr.ranges[0].start,pool->attr.ranges[0].size);
+			asm volatile (" nop ; brkpt; nop");
+			qurt_printf("region_create: no free pa space. ppn=%x (%x) size=%x poolstart=%x poolsize=%x type=%x\n",attr->ppn,ppn,
+				size,pool->attr.ranges[0].start,pool->attr.ranges[0].size,
+				attr->mapping_type);
+			qurt_pgalloc_print_freelist(pool->freelist);
+			qurt_printf("region_create: call stack=%x %x %x %x %x %x, id=%x\n",
+				__builtin_return_address(0),
+				__builtin_return_address(1),
+				__builtin_return_address(2),
+				__builtin_return_address(3),
+				__builtin_return_address(4),
+				__builtin_return_address(5),
+				h2_thread_myid());
 			qurt_rmutex_unlock(&mem_mutex);
 			qurt_free(tmp);
 			*region = uint_from_mem_region(NULL);
@@ -531,7 +542,7 @@ qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr)
 	paddr = ((unsigned long long int)(tmp->ppn)) << 12;
 	paddr &= ((-1LL) << (12 + tmp->size*2));
 	paddr |= vaddr & ((1 << (12 + tmp->size*2))-1);
-	qurt_printf("pa lookup: vaddr=%x paddr=%llx\n",paddr);
+	qurt_printf("pa lookup: vaddr=%x paddr=%llx\n",vaddr,paddr);
 	return paddr;
 }
 

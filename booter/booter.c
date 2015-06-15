@@ -208,7 +208,7 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].entry = NULL;
 	vm_params[idx].stack = NULL;
 	vm_params[idx].arg = 0;
-	vm_params[idx].startprio = VM_BEST_PRIO + 1;
+	vm_params[idx].startprio = VM_BEST_PRIO;
 	vm_params[idx].boots = 1;
 	vm_params[idx].expect_status = 0;
 	vm_params[idx].error_exit = 1;

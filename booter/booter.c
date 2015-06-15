@@ -123,11 +123,13 @@ void error(char *str1, char *str2) {
 	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr));
 	errno = err;
 	perror(errstr);
+
+	exit(1);
 }
 
-void FAIL(const char *str)
+void FAIL(const char *str1, const char *str2)
 {
-	printf("FAIL %s\n", str);
+	printf("FAIL %s %s\n", str1, str2);
 	exit(1);
 }
 
@@ -137,6 +139,7 @@ void usage()
 	printf("  booter [options] <executable> <args>\n");
 	printf("  booter [options] <executable> <args> [ --new_vm <instances> [vm options] <executable> <args> ...]\n");
 	printf("  booter [global options] --new_vm <instances> [vm options] <executable> <args> [--new_vm <instances> [vm options] <executable> <args> ...]\n");
+	printf("  booter --file <file name> [--file <file name> ...]\n");
 	printf("\nGlobal options:\n");
 	printf("  --duck <int>\n\tSet the duck bits.\n");
 	printf("  --chicken <int>\n\tSet the chicken bits.\n");
@@ -181,7 +184,7 @@ void usage()
 void add_vm(unsigned int idx) {
 
 	if (NULL == (vm_params = (vm_t *)(realloc((void *)vm_params, sizeof(vm_t) * (idx + 1))))) {
-		FAIL("realloc vm_params");
+		error("realloc vm_params", NULL);
 	}
 
 	vm_params[idx].num_vcpus = 32;
@@ -227,7 +230,7 @@ void add_vm(unsigned int idx) {
 void clone_vm(unsigned int idx, unsigned int num) {
 
 	if (NULL == (vm_params = (vm_t *)(realloc((void *)vm_params, sizeof(vm_t) * (idx + 1 + num))))) {
-		FAIL("realloc vm_params");
+		FAIL("realloc vm_params", NULL);
 	}
 
 	while (num) {
@@ -348,11 +351,9 @@ void load_vm(unsigned int idx) {
 	fdesc = open(elf,O_RDONLY);
 	if (fdesc == -1) {
 		error("\tCan't open file ", elf);
-		exit(1);
 	}
 	if (elf_get_ehdr(fdesc,&ehdr) < 0) {
-		printf("\tInvalid ELF file: %s\n", elf);
-		exit(1);
+		FAIL("\tInvalid ELF file: %s\n", elf);
 	}
 
 	elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr);
@@ -377,7 +378,6 @@ void load_vm(unsigned int idx) {
 		if (phdr.p_type != PT_LOAD) continue;
 		if (lseek(fdesc, phdr.p_offset, SEEK_SET) == -1) {
 			error("\tCan't lseek() in ", elf);
-			exit(1);
 		}
 		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 
@@ -412,7 +412,6 @@ void load_vm(unsigned int idx) {
 			} while (ret > 0);
 			if (ret == -1) {
 				error("\tCan't read() in ", elf);
-				exit(1);
 			}
 
 			memset((char *)phdr.p_paddr+phdr.p_filesz, 0, phdr.p_memsz-phdr.p_filesz);
@@ -430,7 +429,7 @@ void load_vm(unsigned int idx) {
 
 	/* Adjust guest_base and fences */
 	if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
-		FAIL("\tCan't find end symbol");
+		FAIL("\tCan't find end symbol", NULL);
 	}
 	printf("\tend 0x%08lx\n", end);
 
@@ -512,29 +511,29 @@ void config_vm(unsigned int idx) {
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
-			FAIL("\tAre you really going to type page tables on the command line?\n");
+			FAIL("\tAre you really going to type page tables on the command line?\n", NULL);
 		}
 		trans = vm_params[idx].trans_type;
 	}
 
 	if (h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)base.raw, trans) != vm) {
-		FAIL("\tSET_PMAP_TYPE");
+		FAIL("\tSET_PMAP_TYPE", NULL);
 	}
 
 	if (trans == H2K_ASID_TRANS_TYPE_OFFSET) {
 		if (h2_config_vmblock_init(vm, SET_FENCES, vm_params[idx].fence_lo, vm_params[idx].fence_hi) != vm) {
-			FAIL("\tSET_FENCES");
+			FAIL("\tSET_FENCES", NULL);
 		}
 	}
 
 	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, vm_params[idx].bestprio, vm_params[idx].trapmask) != vm) {
-		FAIL("\tSET_PRIO_TRAPMASK");
+		FAIL("\tSET_PRIO_TRAPMASK", NULL);
 	}
 
 	/* set up interrupts */
 	for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
 		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
-			FAIL("\tMAP_PHYS_INTR");
+			FAIL("\tMAP_PHYS_INTR", NULL);
 		}
 	}
 
@@ -557,7 +556,7 @@ void boot_vm(unsigned int idx) {
 	}
 
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
-		FAIL("\tfailed to boot vm\n");
+		FAIL("\tfailed to boot vm\n", NULL);
 	}
 }
 
@@ -594,13 +593,13 @@ void run(unsigned int idx) {
 				continue;
 			}
 			status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-			printf("VM %x status 0x%x\n", vm, status);
+			printf("VM %d status 0x%x\n", vm, status);
 			cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
-			printf("VM %x Live CPUs: %d\n", vm, cpus);
+			printf("VM %d Live CPUs: %d\n", vm, cpus);
 
 			if (0 == cpus) {  // no more cpus running
 				if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
-					exit(1);
+					FAIL("\tUnexpected exit status.", NULL);
 				}
 				if (--vm_params[i].boots) {  // reboot
 					load_vm(i);
@@ -670,7 +669,7 @@ void kernel_setup() {
 
 	if (use_stlb) {
 		if (h2_config_stlb_alloc() < 0) {
-			FAIL("STLB alloc");
+			FAIL("STLB alloc", NULL);
 		}
 	}
 }
@@ -681,7 +680,7 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 	unsigned int ret = h2_hwconfig_l2_set_reg(offset, val);
 
 	if (ret != old) {
-		FAIL("set_l2_reg mismatch.");
+		FAIL("set_l2_reg mismatch.", NULL);
 	}
 
 	printf("Set L2 reg at offset 0x%08x:\n", offset);
@@ -695,7 +694,7 @@ void set_l2wb (unsigned int val) {
 
 	// Leave L2CFG unchanged
 	if (h2_hwconfig_l2cache_size((old & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, val) == -1) {
-		FAIL("HWCONFIG_L2CACHE");
+		FAIL("HWCONFIG_L2CACHE", NULL);
 	}
 }
 
@@ -731,7 +730,7 @@ void set_syscfg_field(char *name, unsigned int val) {
 		i++;
 	}
 	printf("Unknown SYSCFG bit %s\n", name);
-	FAIL("set_syscfg_field");
+	FAIL("set_syscfg_field", NULL);
 }
 
 extern void bootvm_vectors();
@@ -742,51 +741,14 @@ void booter_isr(void) {
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
 }
 
-int main(int argc, char **argv)
-{
+unsigned int process_line(int argc, char **argv, unsigned int idx) {
+
 	unsigned int vm_instances = 0;
-	unsigned int idx;
 
 	unsigned int regval;
-	unsigned int kerror;
-
 	int finish = 0;
 
-	//Remove booter from cmdline
-	strncpy(errstr, argv[0], ERRSTR_LEN);
-	argc--;
-	argv++;
-
-	if (argc < 1) {
-		usage();
-		return 1;
-	}
-
-	// check for kernel boot errors
-	kerror = h2_info(INFO_ERROR);
-	if (kerror != KERROR_NONE) {
-		printf("\nKernel error: %s\n\n", kerror_msg[kerror]);
-		print_infos();
-		return 1;
-	}
-
-	h2_vmtrap_setvec(bootvm_vectors);
-
-	h2_sem_init_val(&child_done_sem, 0);
-
-	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
-		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
-	}
-	h2_vmtrap_setie(1);
-
-	idx = 0;
-	add_vm(idx);  // So that --new_vm doesn't have to be given for a single VM
-
-	while (1) {
-
-		if (0 == argc) {
-			break;
-		}
+	while (argc) {
 
 		/* Global options */
 
@@ -837,7 +799,7 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--l1dp")) {
 			if (argc < 2) die_usage();
 			if (h2_hwconfig_partition(HWCONFIG_PARTITION_D, strtoul(argv[1],NULL,0)) == -1) {
-				FAIL("HWCONFIG_PARTITION_D");
+				FAIL("HWCONFIG_PARTITION_D", NULL);
 			}
 			argc -= 2; argv += 2;
 			continue;
@@ -845,7 +807,7 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--l1ip")) {
 			if (argc < 2) die_usage();
 			if (h2_hwconfig_partition(HWCONFIG_PARTITION_I, strtoul(argv[1],NULL,0)) == -1) {
-				FAIL("HWCONFIG_PARTITION_I");
+				FAIL("HWCONFIG_PARTITION_I", NULL);
 			}
 			argc -= 2; argv += 2;
 			continue;
@@ -853,7 +815,7 @@ int main(int argc, char **argv)
 		} else if (0 == strcmp(argv[0], "--l2part")) {
 			if (argc < 2) die_usage();
 			if (h2_hwconfig_partition(HWCONFIG_PARTITION_L2, strtoul(argv[1],NULL,0)) == -1) {
-				FAIL("HWCONFIG_PARTITION_L2");
+				FAIL("HWCONFIG_PARTITION_L2", NULL);
 			}
 			argc -= 2; argv += 2;
 			continue;
@@ -864,7 +826,7 @@ int main(int argc, char **argv)
 			// Keep L2WB unchanged; use --syscfg_bit to modify that
 			regval = h2_info(INFO_SYSCFG);
 			if (h2_hwconfig_l2cache_size(strtoul(argv[1],NULL,0), (regval & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT) == -1) {
-				FAIL("HWCONFIG_L2CACHE");
+				FAIL("HWCONFIG_L2CACHE", NULL);
 			}
 			argc -= 2; argv += 2;
 			continue;
@@ -1059,9 +1021,167 @@ int main(int argc, char **argv)
 	clone_vm(idx, vm_instances);
 	idx += vm_instances;
 
+	return idx;
+}
+
+size_t getline(char **lineptr, size_t *n, FILE *stream) {
+
+	char *buf = NULL;
+	char *p = buf;
+	size_t size;
+	int c;
+
+	if (NULL == lineptr) {
+		return -1;
+	}
+	if (NULL == stream) {
+		return -1;
+	}
+	if (NULL == n) {
+		return -1;
+	}
+	buf = *lineptr;
+	size = *n;
+
+	c = fgetc(stream);
+	if (c == EOF) {
+		return -1;
+	}
+	if (NULL == buf) {
+		buf = malloc(128);
+		if (NULL == buf) {
+			return -1;
+		}
+		size = 128;
+	}
+	p = buf;
+	while(c != EOF) {
+		if ((p - buf) > (size - 1)) {
+			size = size + 128;
+			buf = realloc(buf, size);
+			if (NULL == buf) {
+				return -1;
+			}
+		}
+		*p++ = c;
+		if (c == '\n') {
+			break;
+		}
+		c = fgetc(stream);
+	}
+
+	*p++ = '\0';
+	*lineptr = buf;
+	*n = size;
+
+	return p - buf - 1;
+}
+
+int main(int argc, char **argv)
+{
+	unsigned int kerror;
+
+	char **cur_argv = NULL;
+	int cur_argc = 0;
+	FILE *fp;
+	char *line = NULL;
+	size_t line_size;
+	char *arg_ptr;
+	char *p;
+
+	int idx;
+
+	//Remove booter from cmdline
+	strncpy(errstr, argv[0], ERRSTR_LEN);
+	argc--;
+	argv++;
+
+	if (argc < 1) {
+		usage();
+		return 1;
+	}
+
+	// check for kernel boot errors
+	kerror = h2_info(INFO_ERROR);
+	if (kerror != KERROR_NONE) {
+		printf("\nKernel error: %s\n\n", kerror_msg[kerror]);
+		print_infos();
+		return 1;
+	}
+
 	kernel_setup();
 	print_infos();
-	run(idx);
+	h2_vmtrap_setvec(bootvm_vectors);
 
+	h2_sem_init_val(&child_done_sem, 0);
+
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT", NULL);
+	}
+	h2_vmtrap_setie(1);
+
+	/* Each file specifies a set of VMs to run concurrently */
+	while (argc) {
+		if (0 == strcmp(argv[0],"--file")) {
+			if (argc < 2) die_usage();
+			if (NULL == (fp = fopen(argv[1], "r"))) {
+				error("Can't open ", argv[1]);
+			}
+			argc -= 2;
+			argv += 2;
+
+			idx = -1;
+
+			/* Run VMs from each file concurrently */
+			while (-1 != getline(&line, &line_size, fp)) {
+				if ((p = strchr(line, '\n'))) {
+						*p = '\0';  // chop \n
+					}
+				arg_ptr = strtok(line, " ");
+				while (arg_ptr) {
+					if ('#' == *arg_ptr) {  // start of comment
+						break;
+					}
+					cur_argv = realloc(cur_argv, sizeof(char *) * ++cur_argc);
+					if (NULL == cur_argv) {
+						error("realloc cur_argv", NULL);
+					}
+					cur_argv[cur_argc - 1] = arg_ptr;
+					arg_ptr = strtok(NULL, " ");
+				}
+				if (!cur_argc) {  // empty line
+					goto next;
+				}
+					
+				if (++idx) {
+					tight_fence_hi = 1;
+				}
+				add_vm(idx);
+				idx = process_line(cur_argc, cur_argv, idx);
+
+			next:
+				/* NULL causes new malloc */
+				line = NULL;
+				cur_argv = NULL;
+				cur_argc = 0;
+			}
+			fclose(fp);
+
+			run(idx);
+			free(vm_params);
+			vm_params = NULL;  // malloc anew if more --files
+			tight_fence_hi = 0;
+			guest_base = H2K_GUEST_START;
+
+			h2_sem_init_val(&child_done_sem, 0);  // there may be leftover ups
+
+		} else {  // not reading from file
+			idx = 0;
+			add_vm(idx);
+			idx = process_line(argc, argv, idx);
+			run(idx);
+			return 0;
+		}
+	}
 	return 0;
 }

@@ -138,8 +138,8 @@ void usage()
 	printf("Usage:\n");
 	printf("  booter [options] <executable> <args>\n");
 	printf("  booter [options] <executable> <args> [ --new_vm <instances> [vm options] <executable> <args> ...]\n");
-	printf("  booter [global options] --new_vm <instances> [vm options] <executable> <args> [--new_vm <instances> [vm options] <executable> <args> ...]\n");
-	printf("  booter --file <file name> [--file <file name> ...]\n");
+	printf("  booter [global options] --new_vm <int> [vm options] <executable> <args> [--new_vm <int> [vm options] <executable> <args> ...]\n\tBoot new <instances> of guest VMs with given options.\n");
+	printf("  booter --file <path> [--file <path> ...]\n\tOptions from <path>, one guest VM per line.");
 	printf("\nGlobal options:\n");
 	printf("  --duck <int>\n\tSet the duck bits.\n");
 	printf("  --chicken <int>\n\tSet the chicken bits.\n");

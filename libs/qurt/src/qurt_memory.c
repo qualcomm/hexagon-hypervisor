@@ -283,7 +283,9 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 	qurt_rmutex_lock(&mem_mutex);
 	if (attr->mapping_type != QURT_MEM_MAPPING_NONE) {
 		if ((ppn = qurt_pgalloc(&pool->freelist,ppn,size,0)) == 0) {
-			asm volatile (" nop ; brkpt; nop");
+			if (h2_thread_myid() == 0x8051800) {
+				asm volatile (" nop ; brkpt; nop");
+			}
 			qurt_printf("region_create: no free pa space. ppn=%x (%x) size=%x poolstart=%x poolsize=%x type=%x\n",attr->ppn,ppn,
 				size,pool->attr.ranges[0].start,pool->attr.ranges[0].size,
 				attr->mapping_type);

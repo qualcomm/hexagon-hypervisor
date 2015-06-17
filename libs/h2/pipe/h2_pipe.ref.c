@@ -75,7 +75,9 @@ h2_pipe_t * h2_pipe_create(h2_pipe_t *pipe, h2_pipe_data_t *data, int data_eleme
 {
 	if (data_elements <= 0) return NULL;
 	if (pipe == NULL) return NULL;
-	if (data == NULL) return NULL;
+	if (data == NULL) {
+		if ((data = h2_malloc(sizeof(*data) * (data_elements+1))) == NULL) return NULL;
+	}
 	pipe->size = data_elements;
 	h2_sem_init_val(&pipe->howfull,0);
 	h2_sem_init_val(&pipe->howempty,data_elements);

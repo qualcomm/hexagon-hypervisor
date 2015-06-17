@@ -65,7 +65,8 @@ unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
 
 typedef struct {
-	unsigned int id;
+	unsigned int id;  // h2 VM id
+	int cloneof;      // index that was cloned
 
 	/* VM config */
 	unsigned int num_vcpus;
@@ -85,6 +86,10 @@ typedef struct {
 	unsigned int fence_lo;
 	unsigned int fence_hi;
 	long load_offset;
+	long phys_offset;
+	void * start_pa;
+	void * end_pa;
+
 	unsigned int skip_load;
 	unsigned int bestprio;
 	unsigned int trapmask;
@@ -187,6 +192,8 @@ void add_vm(unsigned int idx) {
 		error("realloc vm_params", NULL);
 	}
 
+	vm_params[idx].cloneof = -1;  // not a clone
+
 	vm_params[idx].num_vcpus = 32;
 	vm_params[idx].use_ext = 0;
 
@@ -205,6 +212,9 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].fence_lo = ~0L;
 	vm_params[idx].fence_hi = 0L;
 	vm_params[idx].load_offset = -1;
+	vm_params[idx].phys_offset = -1;
+	vm_params[idx].start_pa = NULL;
+	vm_params[idx].end_pa = NULL;
 	vm_params[idx].skip_load = 0;
 	vm_params[idx].bestprio = VM_BEST_PRIO;
 	vm_params[idx].trapmask = 0xffffffff;
@@ -225,7 +235,7 @@ void add_vm(unsigned int idx) {
 }
 
 #undef GEN_specials
-#define GEN_specials(NAME) vm_params[idx + num].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx + num].specials[SPECIAL_ ## NAME].addr = -1;
+#define GEN_specials(NAME) vm_params[idx + num].specials[SPECIAL_ ## NAME].name = #NAME; // vm_params[idx + num].specials[SPECIAL_ ## NAME].addr = vm_params[idx].specials[SPECIAL_ ## NAME].addr;
 
 void clone_vm(unsigned int idx, unsigned int num) {
 
@@ -234,6 +244,8 @@ void clone_vm(unsigned int idx, unsigned int num) {
 	}
 
 	while (num) {
+		vm_params[idx + num].cloneof = idx;
+
 		vm_params[idx + num].num_vcpus = vm_params[idx].num_vcpus;
 #ifdef HAVE_EXTENSIONS
 		vm_params[idx + num].use_ext = vm_params[idx].use_ext;
@@ -243,16 +255,19 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].page_size = vm_params[idx].page_size;
 		vm_params[idx + num].cccc = vm_params[idx].cccc;
 		vm_params[idx + num].xwru = vm_params[idx].xwru;
-		vm_params[idx + num].offset_pages = vm_params[idx].offset_pages;
+		//		vm_params[idx + num].offset_pages = vm_params[idx].offset_pages;
 		vm_params[idx + num].trans_type = vm_params[idx].trans_type;
-		vm_params[idx + num].fence_lo = ~0L;
-		vm_params[idx + num].fence_hi = 0L;
-		vm_params[idx + num].load_offset = vm_params[idx].load_offset;
+		//		vm_params[idx + num].fence_lo = ~0L;
+		//		vm_params[idx + num].fence_hi = 0L;
+		//		vm_params[idx + num].load_offset = vm_params[idx].load_offset;
+		//		vm_params[idx + num].phys_offset = vm_params[idx].phys_offset;
+		//		vm_params[idx + num].start_pa = NULL;
+		//		vm_params[idx + num].end_pa = NULL;
 		vm_params[idx + num].skip_load = vm_params[idx].skip_load;
 		vm_params[idx + num].bestprio = vm_params[idx].bestprio;
 		vm_params[idx + num].trapmask = vm_params[idx].trapmask;
-		vm_params[idx + num].entry = NULL;
-		vm_params[idx + num].stack = NULL;
+		//		vm_params[idx + num].entry = vm_params[idx].entry;
+		//		vm_params[idx + num].stack = vm_params[idx].stack;
 		vm_params[idx + num].arg = vm_params[idx].arg;
 		vm_params[idx + num].startprio = vm_params[idx].startprio;
 		vm_params[idx + num].boots = vm_params[idx].boots;
@@ -261,7 +276,7 @@ void clone_vm(unsigned int idx, unsigned int num) {
 
 		FOREACH_sym(GEN_specials);
 
-		vm_params[idx + num].pmap = NULL;
+		vm_params[idx + num].pmap = vm_params[idx].pmap;
 
 		vm_params[idx + num].argv = vm_params[idx].argv;
 		vm_params[idx + num].argc = vm_params[idx].argc;
@@ -281,6 +296,18 @@ void get_pmap(unsigned int idx, long offset) {
 
 		vm_params[idx].pmap = (h2_guest_pmap_t *)(addr + offset);
 	}
+}
+
+void dcclean_range(unsigned long start, long range)
+{
+	unsigned long p;
+	p = start & -32;
+	range += start-p;
+	do {
+		asm volatile (" dccleana(%0)\n" : :"r"(p));
+		p += 32;
+		range -= 32;
+	} while (range >= 0); 
 }
 
 void set_cmdline(unsigned int idx, long offset)
@@ -317,19 +344,8 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 	}
 	dst = (long *)(addr + offset);
 	*dst = offset;
-	printf("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
-}
 
-void dcclean_range(unsigned long start, long range)
-{
-	unsigned long p;
-	p = start & -32;
-	range += start-p;
-	do {
-		asm volatile (" dccleana(%0)\n" : :"r"(p));
-		p += 32;
-		range -= 32;
-	} while (range >= 0); 
+	printf("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
 }
 
 void load_vm(unsigned int idx) {
@@ -337,26 +353,18 @@ void load_vm(unsigned int idx) {
 	int fdesc, i, ret;
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
-	long phys_offset = -1;
 	int bytes_read;
+
 	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
 	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
-	unsigned long heap_size, stack_size, total_size, end, one_page;
+	unsigned long heap_size, stack_size, total_size, prev_size, end, one_page;
 	unsigned long start = ~0L;
+	int clone;
 
 	char *elf = vm_params[idx].argv[0];
 
 	printf("\nLoad VM index %d %s\n", idx, elf);
-	fdesc = open(elf,O_RDONLY);
-	if (fdesc == -1) {
-		error("\tCan't open file ", elf);
-	}
-	if (elf_get_ehdr(fdesc,&ehdr) < 0) {
-		FAIL("\tInvalid ELF file: %s\n", elf);
-	}
-
-	elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr);
 
 	/* FIXME? It would be better to get the page size from the __guest_pmap__ if
 		 it exists (and if it is an offset mapping), but to read that we need to
@@ -365,121 +373,161 @@ void load_vm(unsigned int idx) {
 		 __guest_pmap__; at most we waste some space. */
 	one_page = (1 << ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS));
 
-	vm_params[idx].entry = (void *)ehdr.e_entry;
-	printf("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
-	
-
 	/* Align the guest base up to the current guest's page size */
 	guest_base = ALIGN_UP(guest_base, one_page);
 
-	for (i = 0; i < ehdr.e_phnum; i++) {
-		if (elf_get_phdr(fdesc, i, &phdr, &ehdr) < 0) continue;
-		if (phdr.p_memsz == 0) continue;
-		if (phdr.p_type != PT_LOAD) continue;
-		if (lseek(fdesc, phdr.p_offset, SEEK_SET) == -1) {
-			error("\tCan't lseek() in ", elf);
-		}
-		if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
+	if (-1 != (clone = vm_params[idx].cloneof)) {
+		prev_size = (vm_params[clone].fence_hi - vm_params[clone].fence_lo + one_page) * (idx - clone);
 
-		if (phdr.p_vaddr < start) {
-			start = phdr.p_vaddr;
-		}
+		vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr = vm_params[clone].specials[SPECIAL___boot_net_phys_offset__].addr;
 
-		/* FIXME: Assuming first program header contains entry point and phys
-			 offset is identical for all segments*/
-		if (phys_offset == -1) { //unset
-			phys_offset = phdr.p_vaddr - phdr.p_paddr;
-			printf("\tphys_offset 0x%08lx\n", phys_offset);
-		}
-		/* FIXME: Assuming prog headers in sorted order.  Override with --load_offset if needed */
-		if (vm_params[idx].load_offset == -1) {
-			vm_params[idx].load_offset = guest_base - phdr.p_paddr;
-		}
-		if (vm_params[idx].offset_pages == -1) {
-			vm_params[idx].offset_pages = (phys_offset + vm_params[idx].load_offset) >> (vm_params[idx].page_size * 2);
-		}
-		phdr.p_paddr += vm_params[idx].load_offset;
+		vm_params[idx].entry = vm_params[clone].entry;
+		vm_params[idx].stack = vm_params[clone].stack;
+		vm_params[idx].phys_offset = vm_params[clone].phys_offset;
+		vm_params[idx].load_offset = vm_params[clone].load_offset + prev_size;
+		vm_params[idx].offset_pages = (vm_params[idx].phys_offset + vm_params[idx].load_offset) >> (vm_params[idx].page_size * 2);
+		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
+		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
-		if (set_fence_lo && (phdr.p_paddr < vm_params[idx].fence_lo)) {
-			vm_params[idx].fence_lo = phdr.p_paddr;
+		if (NULL != vm_params[clone].pmap) { 
+			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
-		if (!vm_params[idx].skip_load) {
-			printf("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
-			bytes_read = 0;
-			do {
-				bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
-			} while (ret > 0);
-			if (ret == -1) {
-				error("\tCan't read() in ", elf);
+		printf("\tCopying from VM index %d: 0x%08lx to 0x%08lx size 0x%08lx\n", clone, (unsigned long)(vm_params[clone].start_pa), (unsigned long)(vm_params[clone].start_pa + prev_size), (unsigned long)(vm_params[clone].end_pa - vm_params[clone].start_pa));
+		memcpy(vm_params[clone].start_pa + prev_size, vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
+		set_net_phys_offset(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		dcclean_range((unsigned long)vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
+
+		guest_base += prev_size;
+	} else {
+
+		fdesc = open(elf,O_RDONLY);
+		if (fdesc == -1) {
+			error("\tCan't open file ", elf);
+		}
+		if (elf_get_ehdr(fdesc,&ehdr) < 0) {
+			FAIL("\tInvalid ELF file: %s\n", elf);
+		}
+
+		elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr);
+
+		vm_params[idx].entry = (void *)ehdr.e_entry;
+	
+
+		for (i = 0; i < ehdr.e_phnum; i++) {
+			if (elf_get_phdr(fdesc, i, &phdr, &ehdr) < 0) continue;
+			if (phdr.p_memsz == 0) continue;
+			if (phdr.p_type != PT_LOAD) continue;
+			if (lseek(fdesc, phdr.p_offset, SEEK_SET) == -1) {
+				error("\tCan't lseek() in ", elf);
+			}
+			if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
+
+			if (phdr.p_vaddr < start) {
+				start = phdr.p_vaddr;
 			}
 
-			memset((char *)phdr.p_paddr+phdr.p_filesz, 0, phdr.p_memsz-phdr.p_filesz);
-			/* Really, only need to clean out text sections */
-			dcclean_range(phdr.p_paddr, phdr.p_memsz);
+			/* FIXME: Assuming first program header contains entry point and phys
+				 offset is identical for all segments*/
+			if (vm_params[idx].phys_offset == -1) { //unset
+				vm_params[idx].phys_offset = phdr.p_vaddr - phdr.p_paddr;
+			}
+			/* FIXME: Assuming prog headers in sorted order.  Override with --load_offset if needed */
+			if (vm_params[idx].load_offset == -1) {
+				vm_params[idx].load_offset = guest_base - phdr.p_paddr;
+			}
+			if (vm_params[idx].offset_pages == -1) {
+				vm_params[idx].offset_pages = (vm_params[idx].phys_offset + vm_params[idx].load_offset) >> (vm_params[idx].page_size * 2);
+			}
+			phdr.p_paddr += vm_params[idx].load_offset;
+
+			if (set_fence_lo && (phdr.p_paddr < vm_params[idx].fence_lo)) {
+				vm_params[idx].fence_lo = phdr.p_paddr;
+			}
+
+			if (!vm_params[idx].skip_load) {
+				printf("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
+				bytes_read = 0;
+				do {
+					bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
+				} while (ret > 0);
+				if (ret == -1) {
+					error("\tCan't read() in ", elf);
+				}
+
+				memset((char *)phdr.p_paddr+phdr.p_filesz, 0, phdr.p_memsz-phdr.p_filesz);
+				/* Really, only need to clean out text sections */
+				dcclean_range(phdr.p_paddr, phdr.p_memsz);
+			}
+		}
+		close(fdesc);
+
+		set_cmdline(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		set_net_phys_offset(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		get_pmap(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+
+		/* Adjust guest_base and fences */
+		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
+			FAIL("\tCan't find end symbol", NULL);
+		}
+		printf("\tend 0x%08lx\n", end);
+
+		vm_params[idx].start_pa = (void *)(start + vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		vm_params[idx].end_pa = (void *)(end + vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
+
+		heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
+		if (0 == heap_size || -1 == heap_size) {
+			if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr
+					|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr) {
+				heap_size = GUESS_HEAP_SIZE;
+				printf("\t** warning: heap size unknown, guessing 0x%08lx\n", heap_size);
+			} else {
+				heap_size = vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr;
+				printf("\theap_size 0x%08lx (DEFAULT_HEAP_SIZE)\n", heap_size);
+			}
+		} else {
+			printf("\theap_size 0x%08lx\n", heap_size);
+		}
+
+		stack_size = vm_params[idx].specials[SPECIAL_STACK_SIZE].addr;
+		if (0 == stack_size || -1 == stack_size) {
+			if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr
+					|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr) {
+				stack_size = GUESS_STACK_SIZE;
+				printf("\t** warning: stack size unknown, guessing 0x%08lx\n", stack_size);
+			} else {
+				stack_size = vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr;
+				printf("\tstack_size 0x%08lx (DEFAULT_STACK_SIZE)\n", stack_size);
+			}
+		} else {
+			printf("\tstack_size 0x%08lx\n", stack_size);
+		}
+
+		end += heap_size + stack_size;
+		vm_params[idx].stack = (void *)(end & -32);  // should be close to where crt0 puts the stack
+
+		end = ALIGN_UP(end, one_page);
+		total_size = ALIGN_UP((end - start), one_page);
+		printf("\ttotal_size 0x%08lx\n", total_size);
+		guest_base += total_size;
+
+		if (set_fence_lo) {
+			vm_params[idx].fence_lo &= HI_MASK(one_page);
+		}
+		if (set_fence_hi) {
+			if (tight_fence_hi) {
+				vm_params[idx].fence_hi = vm_params[idx].fence_lo + total_size - one_page;
+			} else {
+				vm_params[idx].fence_hi = FENCE_HI_MAX & HI_MASK(one_page);
+			}
 		}
 	}
-	close(fdesc);
+	printf("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
+	printf("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
 	printf("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
 	printf("\toffset_pages 0x%lx\n", vm_params[idx].offset_pages);
-
-	set_cmdline(idx, phys_offset + vm_params[idx].load_offset);
-	set_net_phys_offset(idx, phys_offset + vm_params[idx].load_offset);
-	get_pmap(idx, phys_offset + vm_params[idx].load_offset);
-
-	/* Adjust guest_base and fences */
-	if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
-		FAIL("\tCan't find end symbol", NULL);
-	}
-	printf("\tend 0x%08lx\n", end);
-
-	heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
-	if (0 == heap_size || -1 == heap_size) {
-		if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr
-				|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr) {
-			heap_size = GUESS_HEAP_SIZE;
-			printf("\t** warning: heap size unknown, guessing 0x%08lx\n", heap_size);
-		} else {
-			heap_size = vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr;
-			printf("\theap_size 0x%08lx (DEFAULT_HEAP_SIZE)\n", heap_size);
-		}
-	} else {
-		printf("\theap_size 0x%08lx\n", heap_size);
-	}
-
-	stack_size = vm_params[idx].specials[SPECIAL_STACK_SIZE].addr;
-	if (0 == stack_size || -1 == stack_size) {
-		if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr
-				|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr) {
-			stack_size = GUESS_STACK_SIZE;
-			printf("\t** warning: stack size unknown, guessing 0x%08lx\n", stack_size);
-		} else {
-			stack_size = vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr;
-			printf("\tstack_size 0x%08lx (DEFAULT_STACK_SIZE)\n", stack_size);
-		}
-	} else {
-		printf("\tstack_size 0x%08lx\n", stack_size);
-	}
-
-	end += heap_size + stack_size;
-	vm_params[idx].stack = (void *)(end & -32);  // should be close to where crt0 puts the stack
-
-	end = ALIGN_UP(end, one_page);
-	total_size = ALIGN_UP((end - start), one_page);
-	printf("\ttotal_size 0x%08lx\n", total_size);
-	guest_base += total_size;
-
-	if (set_fence_lo) {
-		vm_params[idx].fence_lo &= HI_MASK(one_page);
-	}
 	printf("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
-	if (set_fence_hi) {
-		if (tight_fence_hi) {
-			vm_params[idx].fence_hi = vm_params[idx].fence_lo + total_size - one_page;
-		} else {
-			vm_params[idx].fence_hi = FENCE_HI_MAX & HI_MASK(one_page);
-		}
-	}
 	printf("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
 }
 

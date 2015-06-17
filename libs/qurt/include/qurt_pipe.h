@@ -81,6 +81,10 @@ static inline int qurt_pipe_create(qurt_pipe_t **pipe, qurt_pipe_attr_t *attr)
 	if ((*pipe = (qurt_pipe_t *)malloc(sizeof(*pipe))) == NULL) {
 		return QURT_EFAILED; // ENOMEM
 	}
+	if ((attr->buffer = (qurt_pipe_data_t *)malloc(sizeof(qurt_pipe_data_t)*(1+attr->elements))) == NULL) {
+		free(*pipe);
+		return QURT_EFAILED;
+	}
 	return qurt_pipe_init(*pipe,attr);
 }
 

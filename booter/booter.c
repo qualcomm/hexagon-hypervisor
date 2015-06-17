@@ -650,6 +650,7 @@ void run(unsigned int idx) {
 					FAIL("\tUnexpected exit status.", NULL);
 				}
 				if (--vm_params[i].boots) {  // reboot
+					done = 0;
 					load_vm(i);
 					boot_vm(i);
 				} else {  // all done with this VM

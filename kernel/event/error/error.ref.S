@@ -68,21 +68,116 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 
 FUNC_END H2K_handle_error
 
+/*
+ * Crash!
+ * 
+ * This is an interesting place to be.  NMI could be from internal or external.
+ * 
+ * Serialization: k0lock and tlblock could have been interrupted, so might be bogus.
+ *  ... so what good trick could we do?
+ * We want to preserve as much state as possible, but we don't know much about the 
+ * registers... including, whether sgp0 has a thread context or something invalid
+ * because it might have been swapped and NMI'd in the middle of a context switch 
+ * 
+ * 0) Save registers as carefully as possible to crash area. will be reloaded by t32
+ * 1) Single thread mode
+ * 2) Save TLB entries
+ * 3) Clean caches
+ * 4) invoke SW routine.  reuse fastint context?
+ */
 FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
-
 #ifdef NMI_STOP
 	r1=##0xe0f0beef
 	stop(r0)
+#else
+	// Part 0: save off context. Kill cs1:0 registers, hopefully they're not important
+	c13:12 = r1:0 // CS1:0 registers
+	r0 = ##H2K_kg+KG_crash_contexts
+	r1 = htid
+	r0 += mpyi(r1,##CONTEXT_SIZE)
+	call H2K_context_save
+	// r0 and sgp0 are swapped
+	// H2K_kg in r28
+	// SP set up
+	// lc0/sa0 saved
+	// usr/p30 saved
+	// ccrssr saved
+	// stuff from thread_switch not saved... 
+	// r0/sgp0 swapped, context r0100 doesn't have the right values.
+	{
+		r3:2 = c13:12
+	}
+	{
+		memd(r7+#CONTEXT_r0100) = r3:2
+		memd(r7+#CONTEXT_r2322) = r23:22
+		r5:4 = c7:6	// m1:0
+	}
+	{
+		memd(r7+#CONTEXT_m1m0) = r5:4
+		memd(r7+#CONTEXT_r2120) = r21:20
+		r3:2 = c11:10
+	}
+	{
+		memd(r7+#CONTEXT_gpugp) = r3:2
+		memd(r7+#CONTEXT_r2524) = r25:24
+		r5:4 = g1:0
+	}
+	{
+		memd(r7+#CONTEXT_r2726) = r27:26
+		memd(r7+#CONTEXT_gssr_gelr) = r5:4
+		r3:2 = g3:2
+	}
+	{
+		memd(r7+#CONTEXT_gbadva_gosp) = r3:2
+		r1 = s1
+	}
+	{
+		r6 = ELR
+	}
+	{
+		memw(r7+#CONTEXT_elr) = r6
+		memd(r7+#CONTEXT_cs1cs0) = r1:0	// save sgp1:0 here
+	}
+	// EJP: do we want to save out global registers?
+	// Part 1: Single Thread Mode
+	// We will assume that all threads are getting NMI, so only thread 0 needs to continue.
+	// Wait until MODECTL settles down to just thread 0
+	r0 = HTID
+	{
+		p0 = cmp.eq(r0,#0)
+		if (!p0.new) jump:nt .Lstop
+	}
+.Lmodectl_wait:
+	r0 = modectl
+	{
+		p0 = cmp.eq(r0,#1)
+		if (!p0.new) jump:nt .Lmodectl_wait
+	}
+	r0 = syscfg
+	r0 = clrbit(r0,#4)		// clear GIE
+	syscfg = r0
+	// Part 2: save TLB entries
+	// This is easy, just save to its spot in kernel globals
+	r0 = add(H2K_GP,#KG_crash_tlb)
+	r1 = #0
+	loop0(1f,#MAX_TLB_ENTRIES);
+1:
+	r3:2 = tlbr(r1)
+	{
+		memd(r0++#8) = r3:2
+		r1 = add(r1,#1)
+	}:endloop0
+	// Part 3: Clean Caches
+	call H2K_cache_d_cleaninv
+	call H2K_cache_l2_cleaninv
+	syncht
+	// Part 4: Invoke SW routine
+	// EJP: FIXME: do this
+.Lstop:
+	stop(r0)
+	jump .Lstop
 #endif
 
-	crswap(r0,sgp)
-	memd(r0+#CONTEXT_r3130) = r31:30
-	call H2K_context_save
-	r0 = #-3
-	r1 = r7
-	r3:2 = #0
-	r4 = r9
-	jump H2K_fatal_thread
 FUNC_END H2K_handle_nmi
 
 FUNC_START H2K_handle_rsvd .text.vm.error .p2align 2

@@ -21,12 +21,12 @@
 #define IC_SETS (16*1024/32/8)
 #define IC_WAYS 8
 #elif ARCHV >= 5
-#define L2_SETS (256*1024/32/4)
 #define L2_WAYS 4
-#define DC_SETS (32*1024/32/8)
+#define L2_SETS (512*1024/32/L2_WAYS)
 #define DC_WAYS 8
-#define IC_SETS (32*1024/32/8)
+#define DC_SETS (32*1024/32/DC_WAYS)
 #define IC_WAYS 8
+#define IC_SETS (32*1024/32/IC_WAYS)
 #endif
 
 FUNC_START H2K_cache_l2_cleaninv .text.misc.cache .p2align 4
@@ -39,7 +39,7 @@ FUNC_START H2K_cache_l2_cleaninv .text.misc.cache .p2align 4
 1:
 	{
 		l2cleaninvidx(r0)
-		r0 = add(r0,#32)
+		r0 = add(r0,#0x100)	// set in bits N:8
 	}:endloop0
 	{
 		r0 = add(r0,#1)
@@ -56,7 +56,7 @@ FUNC_START H2K_cache_d_cleaninv .text.misc.cache .p2align 4
 1:
 	{
 		dccleaninvidx(r0)
-		r0 = add(r0,#32)
+		r0 = add(r0,#32)	// set in bits N:5
 	}:endloop0
 	{
 		r0 = add(r0,#1)

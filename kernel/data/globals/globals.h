@@ -95,15 +95,16 @@ typedef struct {
 	u32_t on_simulator;
 	u32_t phys_offset;
 	u32_t l2_tags;
+	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
+	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
+	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
+	H2K_thread_context crash_contexts[MAX_HTHREADS];
+	unsigned long long int crash_tlb[MAX_TLB_ENTRIES];
 	u32_t build_id;
 	info_boot_flags_type info_boot_flags;
 	info_stlb_type info_stlb;
 	kerror_type kernel_error;
 	u32_t hthreads;
-		
-	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
-	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
-	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");

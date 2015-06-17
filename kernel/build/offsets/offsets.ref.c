@@ -110,6 +110,8 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(phys_offset);
 	PRINT_KG_OFFSET(core_rev);
 	PRINT_KG_OFFSET(timer_intnum);
+	PRINT_KG_OFFSET(crash_contexts);
+	PRINT_KG_OFFSET(crash_tlb);
 #ifdef H2K_L2_CONTROL
 	PRINT_KG_OFFSET(l2_int_base);
 	PRINT_KG_OFFSET(l2_ack_base);

@@ -240,7 +240,7 @@ void add_vm(unsigned int idx) {
 void clone_vm(unsigned int idx, unsigned int num) {
 
 	if (NULL == (vm_params = (vm_t *)(realloc((void *)vm_params, sizeof(vm_t) * (idx + 1 + num))))) {
-		FAIL("realloc vm_params", NULL);
+		FAIL("realloc vm_params", "");
 	}
 
 	while (num) {
@@ -468,7 +468,7 @@ void load_vm(unsigned int idx) {
 
 		/* Adjust guest_base and fences */
 		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
-			FAIL("\tCan't find end symbol", NULL);
+			FAIL("\tCan't find end symbol", "");
 		}
 		printf("\tend 0x%08lx\n", end);
 
@@ -559,29 +559,29 @@ void config_vm(unsigned int idx) {
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
-			FAIL("\tAre you really going to type page tables on the command line?\n", NULL);
+			FAIL("\tAre you really going to type page tables on the command line?\n", "");
 		}
 		trans = vm_params[idx].trans_type;
 	}
 
 	if (h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)base.raw, trans) != vm) {
-		FAIL("\tSET_PMAP_TYPE", NULL);
+		FAIL("\tSET_PMAP_TYPE", "");
 	}
 
 	if (trans == H2K_ASID_TRANS_TYPE_OFFSET) {
 		if (h2_config_vmblock_init(vm, SET_FENCES, vm_params[idx].fence_lo, vm_params[idx].fence_hi) != vm) {
-			FAIL("\tSET_FENCES", NULL);
+			FAIL("\tSET_FENCES", "");
 		}
 	}
 
 	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, vm_params[idx].bestprio, vm_params[idx].trapmask) != vm) {
-		FAIL("\tSET_PRIO_TRAPMASK", NULL);
+		FAIL("\tSET_PRIO_TRAPMASK", "");
 	}
 
 	/* set up interrupts */
 	for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
 		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
-			FAIL("\tMAP_PHYS_INTR", NULL);
+			FAIL("\tMAP_PHYS_INTR", "");
 		}
 	}
 
@@ -604,7 +604,7 @@ void boot_vm(unsigned int idx) {
 	}
 
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
-		FAIL("\tfailed to boot vm\n", NULL);
+		FAIL("\tfailed to boot vm\n", "");
 	}
 }
 
@@ -647,7 +647,7 @@ void run(unsigned int idx) {
 
 			if (0 == cpus) {  // no more cpus running
 				if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
-					FAIL("\tUnexpected exit status.", NULL);
+					FAIL("\tUnexpected exit status.", "");
 				}
 				if (--vm_params[i].boots) {  // reboot
 					done = 0;
@@ -718,7 +718,7 @@ void kernel_setup() {
 
 	if (use_stlb) {
 		if (h2_config_stlb_alloc() < 0) {
-			FAIL("STLB alloc", NULL);
+			FAIL("STLB alloc", "");
 		}
 	}
 }
@@ -729,7 +729,7 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 	unsigned int ret = h2_hwconfig_l2_set_reg(offset, val);
 
 	if (ret != old) {
-		FAIL("set_l2_reg mismatch.", NULL);
+		FAIL("set_l2_reg mismatch.", "");
 	}
 
 	printf("Set L2 reg at offset 0x%08x:\n", offset);
@@ -743,7 +743,7 @@ void set_l2wb (unsigned int val) {
 
 	// Leave L2CFG unchanged
 	if (h2_hwconfig_l2cache_size((old & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, val) == -1) {
-		FAIL("HWCONFIG_L2CACHE", NULL);
+		FAIL("HWCONFIG_L2CACHE", "");
 	}
 }
 
@@ -779,7 +779,7 @@ void set_syscfg_field(char *name, unsigned int val) {
 		i++;
 	}
 	printf("Unknown SYSCFG bit %s\n", name);
-	FAIL("set_syscfg_field", NULL);
+	FAIL("set_syscfg_field", "");
 }
 
 extern void bootvm_vectors();
@@ -848,7 +848,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--l1dp")) {
 			if (argc < 2) die_usage();
 			if (h2_hwconfig_partition(HWCONFIG_PARTITION_D, strtoul(argv[1],NULL,0)) == -1) {
-				FAIL("HWCONFIG_PARTITION_D", NULL);
+				FAIL("HWCONFIG_PARTITION_D", "");
 			}
 			argc -= 2; argv += 2;
 			continue;
@@ -856,7 +856,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--l1ip")) {
 			if (argc < 2) die_usage();
 			if (h2_hwconfig_partition(HWCONFIG_PARTITION_I, strtoul(argv[1],NULL,0)) == -1) {
-				FAIL("HWCONFIG_PARTITION_I", NULL);
+				FAIL("HWCONFIG_PARTITION_I", "");
 			}
 			argc -= 2; argv += 2;
 			continue;
@@ -864,7 +864,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--l2part")) {
 			if (argc < 2) die_usage();
 			if (h2_hwconfig_partition(HWCONFIG_PARTITION_L2, strtoul(argv[1],NULL,0)) == -1) {
-				FAIL("HWCONFIG_PARTITION_L2", NULL);
+				FAIL("HWCONFIG_PARTITION_L2", "");
 			}
 			argc -= 2; argv += 2;
 			continue;
@@ -875,7 +875,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			// Keep L2WB unchanged; use --syscfg_bit to modify that
 			regval = h2_info(INFO_SYSCFG);
 			if (h2_hwconfig_l2cache_size(strtoul(argv[1],NULL,0), (regval & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT) == -1) {
-				FAIL("HWCONFIG_L2CACHE", NULL);
+				FAIL("HWCONFIG_L2CACHE", "");
 			}
 			argc -= 2; argv += 2;
 			continue;
@@ -1165,7 +1165,7 @@ int main(int argc, char **argv)
 	h2_sem_init_val(&child_done_sem, 0);
 
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
-		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT", NULL);
+		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT", "");
 	}
 	h2_vmtrap_setie(1);
 

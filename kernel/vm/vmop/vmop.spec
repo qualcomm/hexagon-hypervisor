@@ -68,7 +68,7 @@ H2K_vmop_status
 
 	:param unused0: Unused parameter
 	:param op: Status type requested
-	:param vm: Index of target virtual machine
+	:param vm: Index of target virtual machine; VMOP_STATUS_VMIDX_SELF to query self
 	:param me: Pointer to the current thread context
 	:returns: The requested status of the target VM, or -1 on error
 
@@ -81,7 +81,8 @@ Returns VM status according to the requested operation:
 * VMOP_STATUS_CPUS: Returns the number of running virtual CPUS
 
 The error value is returned if the target VM was not created by the calling VM
-or an illegal status operation was requested.
+or if the target is not the calling VM itself, or an illegal status operation
+was requested.
 
 
 H2K_vmop_free

@@ -101,6 +101,9 @@ void allow_finish()
 int main() 
 {
 	int i;
+
+	h2_handle_errors(0);  // creates timer interrupt handler
+
 	h2_sem_init_val(&donesem,0);
 	// Start a delat thread for each HW thread.
 	for(i=0; i<NUM_THREADS-1; i++) {
@@ -115,6 +118,10 @@ int main()
 	h2_sem_down(&donesem);
 	info("TEST PASSED\n");
 	done = 1;
+	while(h2_vmstatus(VMOP_STATUS_CPUS, VMOP_STATUS_VMIDX_SELF) > 1) {  // wait for other threads to exit
+		h2_millisleep(1);
+	}
+
 	h2_thread_stop(0);
 	return(0);
 }

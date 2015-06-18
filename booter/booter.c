@@ -195,9 +195,6 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].cloneof = -1;  // not a clone
 
 	vm_params[idx].num_vcpus = 32;
-	vm_params[idx].use_ext = 0;
-
-	vm_params[idx].num_vcpus = 32;
 #ifdef HAVE_EXTENSIONS
 	vm_params[idx].use_ext = 0;
 #endif

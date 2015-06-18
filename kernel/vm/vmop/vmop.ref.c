@@ -8,6 +8,7 @@
 #include <idtype.h>
 #include <alloc.h>
 #include <vmop.h>
+#include <hw.h>
 
 typedef s32_t (*vmop_ptr_t)(vmop_t, u32_t, u32_t, u32_t, u32_t, u32_t, H2K_thread_context *);
 
@@ -44,23 +45,34 @@ s32_t H2K_vmop_boot(vmop_t unused0, u32_t pc, u32_t sp, u32_t arg1, u32_t prio, 
 s32_t H2K_vmop_status(vmop_t unused0, u32_t op, u32_t vm, u32_t unused3, u32_t unused4, u32_t unused5, H2K_thread_context *me) {
 
 	H2K_vmblock_t *vmblock;
+	s32_t ret = -1;
 
-	/* Can only query child vm */
-	if (vm < H2K_ID_MAX_VMS && H2K_gp->vmblocks[vm] != NULL) { // ok
-		vmblock = H2K_gp->vmblocks[vm];
-		if (me != NULL && me->id.vmidx != vmblock->parent.vmidx) return -1;
+	if (NULL == me) return ret;
+	if (vm >= H2K_ID_MAX_VMS) return ret;
+
+	if (VMOP_STATUS_VMIDX_SELF == vm) {  // self
+		vmblock = me->vmblock;
 	} else {
-		return -1;
+		if (NULL == H2K_gp->vmblocks[vm]) return ret;
+		vmblock = H2K_gp->vmblocks[vm];
 	}
+	/* Can only query child vm or self */
+	if ( me->id.vmidx != vmblock->vmidx
+			 && me->id.vmidx != vmblock->parent.vmidx) return ret;
 
+	BKL_LOCK();
 	switch ((vmop_status_t)op) {
 	case VMOP_STATUS_STATUS:
-		return vmblock->status;
+		ret = vmblock->status;
+		break;
 	case VMOP_STATUS_CPUS:
-		return vmblock->num_cpus;
+		ret = vmblock->num_cpus;
+		break;
 	default:
-		return -1;
+		break;
 	}
+	BKL_UNLOCK();
+	return ret;
 }
 
 s32_t H2K_vmop_free(vmop_t unused0, u32_t vm, u32_t unused2, u32_t unused3, u32_t unused4, u32_t unused5, H2K_thread_context *me) {

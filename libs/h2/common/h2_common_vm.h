@@ -19,4 +19,6 @@ typedef enum {
 	VMOP_STATUS_MAX
 } vmop_status_t;
 
+# define VMOP_STATUS_VMIDX_SELF 0
+
 #endif

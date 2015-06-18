@@ -13,6 +13,12 @@ h2_get_pcycles:
 
 	.global h2_get_core_pcycles
 h2_get_core_pcycles:
+#if ARCHV < 60
 	trap0(#H2_TRAP_GET_PCYCLES)
 	jumpr r31
-
+#else
+	{
+		r1:0 = c15:14  \\ UPCYCLES
+		jumpr r31
+	}
+#endif

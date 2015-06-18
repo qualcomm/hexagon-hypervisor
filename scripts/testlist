@@ -44,7 +44,7 @@
 ./kernel/traps/config/test
 ./kernel/traps/hwconfig/test
 ./kernel/traps/pmu/test_h2
-./kernel/traps/pmu/test_standalone
+# ./kernel/traps/pmu/test_standalone  # out because of broken tools
 ./kernel/traps/prio/test
 ./kernel/traps/tid/test
 ./kernel/traps/time/test

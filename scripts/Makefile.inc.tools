@@ -48,7 +48,7 @@ ifeq (5, $(ARCHV))
 TOOLS_FLAVOR ?= default
 ARCH_FLAVOR ?= v5_stable
 else
-TOOLS_FLAVOR ?= g60_latest
+TOOLS_FLAVOR ?= g61_latest
 ARCH_FLAVOR ?= v60_latest
 endif
 endif

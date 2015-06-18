@@ -410,7 +410,7 @@ static inline int qurt_exception_raise_nonfatal (int error)
   None.
 */
 // static inline void qurt_exception_shutdown_fatal(void) __attribute__((noreturn)) { R_UNSUPPORTED; }
-static inline void qurt_exception_shutdown_fatal(void) { UNSUPPORTED; }
+void qurt_exception_shutdown_fatal(void);
 
 /**@ingroup func_qurt_exception_shutdown_fatal2 
   Performs the fatal shutdown procedure for handling a fatal program exception.
@@ -448,11 +448,7 @@ void qurt_exception_shutdown_fatal2(void);
   @dependencies
   None.
 */
-static inline unsigned int qurt_exception_register_fatal_notification ( void(*entryfuncpoint)(void *), void *argp)
-{
-	/* EJP: just lie and report success */
-	return QURT_EOK;
-}
+unsigned int qurt_exception_register_fatal_notification ( void(*entryfuncpoint)(void *), void *argp);
 
 /**@ingroup func_qurt_exception_enable_fp_exceptions
   Enables the specified floating point exceptions as QuRT program exceptions.

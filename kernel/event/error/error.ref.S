@@ -69,6 +69,39 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 FUNC_END H2K_handle_error
 
 /*
+ * User-specified crash.  Make the trap look like the NMI
+ */
+FUNC_START H2K_soft_nmi .text.vm.error .p2align 2
+	{
+		r31:30 = memd(r0+#CONTEXT_r3130)
+		r29:28 = memd(r0+#CONTEXT_r2928)
+	}
+	{
+		r17:16 = memd(r0+#CONTEXT_usrp30)
+		r9:8 = memd(r0+#CONTEXT_r0908)
+	}
+	{
+		p3:0 = r16
+		r19:18 = memd(r0+#CONTEXT_r1918)
+		r17:16 = memd(r0+#CONTEXT_r1716)
+	}
+	{
+		r15:14 = memd(r0+#CONTEXT_r1514)
+		r13:12 = memd(r0+#CONTEXT_r1312)
+	}
+	{
+		r11:10 = memd(r0+#CONTEXT_r1110)
+		r1:0 = memd(r0+#CONTEXT_r0100)
+	}
+	c13:12 = r1:0 // CS1:0 registers
+	r0 = htid
+	r1 = #-1
+	r1 = togglebit(r1,r0)
+	nmi(r1)
+	jump .Lhandle_nmi_soft_join
+FUNC_END H2K_soft_nmi
+
+/*
  * Crash!
  * 
  * This is an interesting place to be.  NMI could be from internal or external.
@@ -92,6 +125,7 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 #else
 	// Part 0: save off context. Kill cs1:0 registers, hopefully they're not important
 	c13:12 = r1:0 // CS1:0 registers
+.Lhandle_nmi_soft_join:
 	r0 = ##H2K_kg+KG_crash_contexts
 	r1 = htid
 	r0 += mpyi(r1,##CONTEXT_SIZE)
@@ -177,7 +211,6 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	stop(r0)
 	jump .Lstop
 #endif
-
 FUNC_END H2K_handle_nmi
 
 FUNC_START H2K_handle_rsvd .text.vm.error .p2align 2

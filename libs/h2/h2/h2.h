@@ -23,6 +23,7 @@ extern "C" {
 #include "h2_config.h"
 #include "h2_cycles.h"
 #include "h2_error.h"
+#include "h2_fatal.h"
 #include "h2_fastint.h"
 #include "h2_futex.h"
 #include "h2_hwconfig.h"

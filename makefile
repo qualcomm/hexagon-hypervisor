@@ -60,6 +60,8 @@ ucosclean:
 	$(MAKE) -C ucos clean
 
 opt:
+	echo PKW_VERSIONS $(PKW_VERSIONS)
+	pkw --which hexagon-gcc
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
@@ -69,6 +71,8 @@ opt:
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 
 ref:
+	echo PKW_VERSIONS $(PKW_VERSIONS)
+	pkw --which hexagon-gcc
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install

@@ -23,7 +23,7 @@ unsigned long long int h2_get_core_pcycles(void) {
 	unsigned long long int ret;
 
 #if ARCHV < 60
-	asm volatile (" trap0(#"H2_TRAP_GET_PCYCLES") \n"
+	asm volatile (" trap0(#"STR(H2_TRAP_GET_PCYCLES)") \n"
 								" %0 = r1:0 \n"
 								: "=r"(ret) : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
 #else

@@ -206,7 +206,16 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	call H2K_cache_l2_cleaninv
 	syncht
 	// Part 4: Invoke SW routine
-	// EJP: FIXME: do this
+	r1:0 = memd(H2K_GP+#KG_fatal_hook_and_arg)
+	r3:2 = memd(H2K_GP+#KG_fatal_hook_gp_ssr)
+	gp = r3
+	ssr = r2
+	r5 = ##H2K_fastint_contexts
+	r29 = add(r5,##FASTINT_CONTEXT_SIZE)
+	sgp0 = r5
+	isync
+	p0 = cmp.eq(r1,#0)
+	if (!p0) callr r1
 .Lstop:
 	stop(r0)
 	jump .Lstop

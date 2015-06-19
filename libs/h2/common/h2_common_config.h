@@ -11,6 +11,7 @@
 typedef enum {
 	CONFIG_VMBLOCK_INIT,
 	CONFIG_STLB_ALLOC,
+	CONFIG_FATAL_HOOK,
 	CONFIG_MAX
 } config_type_t;
 

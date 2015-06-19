@@ -9,8 +9,8 @@
 #include <max.h>
 #include <hexagon_protos.h>
 #include <thread.h>
-#include <hw.h>
 #include <globals.h>
+#include <hw.h>
 #include <vmipi.h>
 #include <timer.h>
 #include <idtype.h>
@@ -20,14 +20,14 @@
 /* FIXME: get these from allocator? */
 H2K_fastint_context H2K_fastint_contexts[MAX_HTHREADS];
 
-#define FASTINT_TRAPMASK 0x9 /* ANGEL | FUTEX_RESUME */
+#define FASTINT_TRAPMASK 0xb /* ANGEL | FUTEX_RESUME | THREAD_ID */
 
 void H2K_fastint();
 
 void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
 {
 	H2K_inthandler_t tmp;
-
+	int i;
 	if (fastint_handler == NULL) { /* deregister */
 		H2K_intcontrol_disable(whatint);
 		H2K_gp->inthandlers[whatint].raw = 0;
@@ -39,6 +39,9 @@ void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_th
 		H2K_intcontrol_enable(whatint);
 		H2K_gp->fastint_gp = (u32_t)(me->gp);
 		H2K_gp->fastint_ssr= (u32_t)(me->ssr & 0x00007F00); /* Set ASID field */
+		for (i = 0; i < MAX_HTHREADS; i++) {
+			H2K_fastint_contexts[i].context.vmblock = me->vmblock;
+		}
 	}
 }
 
@@ -132,6 +135,7 @@ void H2K_intconfig_init(u32_t ssbase)
 		H2K_thread_context_clear(tmp);
 		tmp->hthread = i;
 		tmp->trapmask = FASTINT_TRAPMASK;
+		tmp->id.raw = i;
 	}
 	H2K_intconfig_l2_init(ssbase);
 }

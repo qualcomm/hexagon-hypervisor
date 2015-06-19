@@ -49,10 +49,10 @@ typedef struct {
 		};
 	};
 	union {
-		u64_t unused_stlbptr;
+		u64_t syscfg_stlbptr;
 		struct {
 			H2K_mem_stlb_asid_info_t *stlbptr;
-			u32_t unused;
+			u32_t syscfg_val;
 		};
 	};
 	union {
@@ -81,6 +81,22 @@ typedef struct {
 	u32_t *hvx_power;
 	u32_t hvx_state;
 #endif
+
+	union {
+		u64_t fatal_hook_and_arg;
+		struct {
+			u32_t fatal_hook_arg;
+			u32_t fatal_hook;
+		};
+	};
+	union {
+		u64_t fatal_hook_gp_ssr;
+		struct {
+			u32_t fatal_hook_ssr;
+			u32_t fatal_hook_gp;
+		};
+	};
+
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
 	u32_t last_tlb_index;

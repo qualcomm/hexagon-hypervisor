@@ -66,6 +66,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 		syscfg &= ~SYSCFG_L2NWA;
 		syscfg &= ~SYSCFG_L2NRA;
 		H2K_set_syscfg(syscfg);
+		H2K_gp->syscfg_val = syscfg;
 		H2K_syncht();
 
 		/* Clean entire cache */
@@ -78,6 +79,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 		/* Set to 0 size */
 		syscfg &= ~SYSCFG_L2CFG;
 		H2K_set_syscfg(syscfg);
+		H2K_gp->syscfg_val = syscfg;
 		H2K_l2kill();
 		H2K_isync();
 		/* Update size, mode */
@@ -101,6 +103,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 
 	H2K_syncht();
 	H2K_set_syscfg(syscfg);
+	H2K_gp->syscfg_val = syscfg;
 	H2K_syncht();
 	H2K_stmode_end();
 	return 0;
@@ -115,6 +118,7 @@ u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache,
 	syscfg = H2K_get_syscfg();
 	syscfg = Q6_R_insert_RP(syscfg,configval,insertval);
 	H2K_set_syscfg(syscfg);
+	H2K_gp->syscfg_val = syscfg;
 	BKL_UNLOCK();
 	return 0;
 }
@@ -172,6 +176,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 	}
 	if (new != cur) {
 		H2K_set_syscfg(new);
+		H2K_gp->syscfg_val = syscfg;
 		H2K_isync();
 		cur = H2K_get_syscfg();
 		if (cur != new) {  // failed

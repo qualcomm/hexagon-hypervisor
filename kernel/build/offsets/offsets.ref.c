@@ -112,6 +112,9 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(timer_intnum);
 	PRINT_KG_OFFSET(crash_contexts);
 	PRINT_KG_OFFSET(crash_tlb);
+	PRINT_KG_OFFSET(syscfg_val);
+	PRINT_KG_OFFSET(fatal_hook_and_arg);
+	PRINT_KG_OFFSET(fatal_hook_gp_ssr);
 #ifdef H2K_L2_CONTROL
 	PRINT_KG_OFFSET(l2_int_base);
 	PRINT_KG_OFFSET(l2_ack_base);

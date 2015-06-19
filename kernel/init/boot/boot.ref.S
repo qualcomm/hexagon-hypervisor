@@ -56,10 +56,66 @@
 
 #define SP          r29
 
+/* EJP: TBD: save off syscfg val
+ * start other threads to try and get context
+ * Make sure other threads don't replicate work
+ */
+
 FUNC_START start .entry .p2align 12
+	r7 = PC
 	jump 1f
-	.space 0x40
+H2_BOOT_attempts:
+	.word 0
+.Lreset_crash:
+	r6 = add(PC,##H2K_kg@PCREL)
+	r1 = HTID
+	r4 = memw(r6+#KG_syscfg_val)
+	r4 = and(r4,#0xFFFFFFEE) // no interrupts, no MMU
+	syscfg = r4 // turn on caches just like they were
+	isync
+	r0 = add(r6,#KG_crash_contexts)
+	r0 += mpyi(r1,##CONTEXT_SIZE)
+	r2 = cs0
+	memd(r0+#CONTEXT_r3130) = r31:30
+	memd(r0+#CONTEXT_r2928) = r29:28
+	memd(r0+#CONTEXT_r2726) = r27:26
+	memd(r0+#CONTEXT_r2524) = r25:24
+	memd(r0+#CONTEXT_r2322) = r23:22
+	memd(r0+#CONTEXT_r2120) = r21:20
+	memd(r0+#CONTEXT_r1918) = r19:18
+	memd(r0+#CONTEXT_r1716) = r17:16
+	memw(r0+#CONTEXT_elr) = r2
+	H2K_GP = r6
+	r5:4 = s1:0
+	memd(r0+#CONTEXT_cs1cs0) = r5:4
+	r29 = add(PC,##H2K_stacks@PCREL)
+	r29 += mpyi(r1,#KERNEL_STACK_SIZE)
+	r0 = add(H2K_GP,#KG_crash_tlb)
+	loop0(9f,#MAX_TLB_ENTRIES)
+	r1 = #0
+9:
+	r3:2 = tlbr(r1)
+	{
+		memd(r0++#8) = r3:2
+		r1 = add(R1,#1)
+	}:endloop0
+	nop
+	/* EJP: insert here: start other threads, have them save off their own stuff, then stop */
+	call H2K_cache_d_cleaninv
+	call H2K_cache_l2_cleaninv
+	syncht
+	nop
+8:
+	stop(r0)
+	jump 8b
 1:
+	r0 = memw(r7+#4)
+	{
+		p0 = cmp.eq(r0,#0)
+		if (!p0.new) jump:nt .Lreset_crash
+		r0 = add(r0,#1)
+		memw(r7+#4) = r0.new
+	}
 	 /* FIXME: Read syscfg and set bits, don't zero, in case earlier boot code
 	has set it up */
 
@@ -251,6 +307,10 @@ FUNC_START start .entry .p2align 12
 	TLB_ENTRY = #0
 	DO_TLBW
 	isync
+
+	r0 = syscfg
+	r1 = add(PC,##H2K_kg@PCREL)
+	memw(r1+#KG_syscfg_val) = r0
 
 	SETCONST(SP, H2K_stacks)
 

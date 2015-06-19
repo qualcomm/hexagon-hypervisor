@@ -25,8 +25,8 @@ void PASS(const char *msg)
 int main()
 {
 	printf("Hello, World!\n");
-	h2_config_fatal_hook((unsigned int)PASS,(unsigned int)"PASS\n");
-	h2_fatal_crash();
+	//h2_config_fatal_hook((unsigned int)PASS,(unsigned int)"PASS\n");
+	h2_fatal_crash(~0);
 	FAIL("should never get here");
 	return 0;
 }

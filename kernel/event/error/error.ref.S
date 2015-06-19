@@ -69,37 +69,74 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 FUNC_END H2K_handle_error
 
 /*
- * User-specified crash.  Make the trap look like the NMI
+ * User-specified soft crash. r0 is how to crash, r1 is me.
  */
-FUNC_START H2K_soft_nmi .text.vm.error .p2align 2
+#define WORK r16
+#define ME r17
+#define ME_WORK r17:16
+FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	{
-		r31:30 = memd(r0+#CONTEXT_r3130)
-		r29:28 = memd(r0+#CONTEXT_r2928)
+		ME_WORK = r1:0
+		allocframe(#0)
+	{
+		p0 = tstbit(WORK,#0)
+		if (!p0.new) jump:nt 9f
 	}
 	{
-		r17:16 = memd(r0+#CONTEXT_usrp30)
-		r9:8 = memd(r0+#CONTEXT_r0908)
+		memw(H2K_GP+#KG_is_nmi_soft) = #1
 	}
+	k0lock
+	r2 = htid
+	r3 = #-1
+	r3 = togglebit(r3,r2)
+	nmi(r3)
+.Lfatal_crash_hard_join:
+.Lmodectl_wait:
+	r3 = #0
+	r2 = modectl
+	r1 = popcount(r3:2)
 	{
-		p3:0 = r16
-		r19:18 = memd(r0+#CONTEXT_r1918)
-		r17:16 = memd(r0+#CONTEXT_r1716)
+		p0 = cmp.eq(WORK,#1)
+		if (p0.new) jump:nt .Lmodectl_wait
 	}
+	r1 = syscfg
+	r1 = clrbit(r1,#4)		// clear GIE
+	syscfg = r1
+	// We should now be in "Single Thread Mode": only one thread active, and that's the one executing here
+	// Did we possibly nmi a thread holding a lock? We can fix it!
+	k0unlock
+	tlbunlock
+	// Bit 1: Save off TLB and flush caches
+9:
 	{
-		r15:14 = memd(r0+#CONTEXT_r1514)
-		r13:12 = memd(r0+#CONTEXT_r1312)
+		p0 = tstbit(WORK,#1)
+		if (!p0.new) jump:nt 9f
 	}
+	// Save off TLB
+	r3:2 = combine(#0,##H2K_kg+KG_crash_tlb)
+	loop0(1f,#MAX_TLB_ENTRIES)
+1:
+	r5:4 = tlbr(r3)
 	{
-		r11:10 = memd(r0+#CONTEXT_r1110)
-		r1:0 = memd(r0+#CONTEXT_r0100)
+		memd(r2++#8) = r5:4
+		r3 = add(r3,#1)
+	}:endloop0
+	nop
+	call H2K_cache_d_cleaninv
+	call H2K_cache_l2_cleaninv
+	syncht
+9:
+	// Bit 2: Die
+	{
+		p0 = tstbit(WORK,#2)
+		if (!p0.new) jump:nt 9f
 	}
-	c13:12 = r1:0 // CS1:0 registers
-	r0 = htid
-	r1 = #-1
-	r1 = togglebit(r1,r0)
-	nmi(r1)
-	jump .Lhandle_nmi_soft_join
-FUNC_END H2K_soft_nmi
+	nop
+	stop(r0)
+	nop
+9:
+	dealloc_return
+FUNC_END H2K_fatal_crash
 
 /*
  * Crash!
@@ -173,23 +210,25 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 		memd(r7+#CONTEXT_cs1cs0) = r1:0	// save sgp1:0 here
 	}
 	// EJP: do we want to save out global registers?
-	// Part 1: Single Thread Mode
-	// We will assume that all threads are getting NMI, so only thread 0 needs to continue.
-	// Wait until MODECTL settles down to just thread 0
+	// EJP: If we have a soft NMI, 
+	r0 = memw(##H2K_kg+KG_is_nmi_soft)
+	{
+		p0 = cmp.eq(r0,#0)
+		if (!p0.new) jump:t .Lstop
+	}
+	// Hard NMI, all threads are getting it.  Only T0 will continue
 	r0 = HTID
 	{
 		p0 = cmp.eq(r0,#0)
 		if (!p0.new) jump:nt .Lstop
 	}
-.Lmodectl_wait:
-	r0 = modectl
-	{
-		p0 = cmp.eq(r0,#1)
-		if (!p0.new) jump:nt .Lmodectl_wait
-	}
-	r0 = syscfg
-	r0 = clrbit(r0,#4)		// clear GIE
-	syscfg = r0
+	// Now we can join the common code for H2K_fatal_crash
+	// But we need to make sure that all steps are going to be taken.
+	ME_WORK = combine(#0,#-1)
+	jump .Lfatal_crash_hard_join
+	// All threads but one (unknown: which one...) should be getting NMI and shutting down.
+	// Wait for them here.
+
 	// Part 2: save TLB entries
 	// This is easy, just save to its spot in kernel globals
 	r0 = add(H2K_GP,#KG_crash_tlb)

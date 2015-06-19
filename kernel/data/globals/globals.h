@@ -64,6 +64,7 @@ typedef struct {
 			u32_t metal:16;
 		};
 	};
+	u32_t is_nmi_soft;
 
 #ifdef H2K_L2_CONTROL
 	union {

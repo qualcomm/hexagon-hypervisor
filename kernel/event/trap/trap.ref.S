@@ -157,8 +157,8 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_timer_trap // 22
 	}
 	{
-		r0 = r7
-		jump H2K_soft_nmi // 23
+		r1 = r7
+		jump H2K_fatal_crash // 23
 	}
 	{
 		r4 = r7

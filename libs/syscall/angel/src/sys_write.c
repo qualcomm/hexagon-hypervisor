@@ -9,6 +9,11 @@
 static char write_buf[WRITE_BUFSIZE] __attribute__((aligned(64))) = { 0 };
 static unsigned int write_buf_idx = 0;
 
+static inline dccleana(const char *addr)
+{
+	asm volatile (" dccleana(%0)" : : "r"(addr));
+}
+
 count_t sys_write(fd_t fd, const char *buffer, count_t count)
 {
 	struct { fd_t fd; const char *buf; count_t c; } x;
@@ -21,7 +26,9 @@ count_t sys_write(fd_t fd, const char *buffer, count_t count)
 	if (fd > 2) return -1;
 	if (write_buf_idx+count < WRITE_BUFSIZE) {
 		memcpy(write_buf+write_buf_idx,buffer,count);
+		dccleana(write_buf+write_buf_idx);
 		write_buf_idx += count;
+		dccleana(write_buf+write_buf_idx);
 		if (write_buf_idx == WRITE_BUFSIZE) write_buf_idx = 0;
 	} else {
 		int i;

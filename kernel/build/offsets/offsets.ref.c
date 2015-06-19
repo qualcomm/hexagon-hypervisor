@@ -115,6 +115,7 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(syscfg_val);
 	PRINT_KG_OFFSET(fatal_hook_and_arg);
 	PRINT_KG_OFFSET(fatal_hook_gp_ssr);
+	PRINT_KG_OFFSET(is_nmi_soft);
 #ifdef H2K_L2_CONTROL
 	PRINT_KG_OFFSET(l2_int_base);
 	PRINT_KG_OFFSET(l2_ack_base);

@@ -296,17 +296,19 @@ static inline int qurt_sysenv_get_process_name(qurt_sysenv_procname_t *pname )
   @dependencies
   None.
 */
+
+void qurt_exception_wait_ext (qurt_sysevent_error_t * sys_err);
 static inline unsigned int qurt_exception_wait (unsigned int *ip, unsigned int *sp,
                                   unsigned int *badva, unsigned int *cause)
 {
-	/* EJP: do not support exception events this way, so wait forever */
-	h2_sem_t sem;
-	h2_sem_init_val(&sem,0);
-	while (1) h2_sem_down(&sem);
-	return QURT_EFATAL;
+	qurt_sysevent_error_t err;
+	qurt_exception_wait_ext(&err);
+	*ip = err.fault_pc;
+	*sp = err.sp;
+	*badva = err.badva;
+	*cause = err.cause;
+	return err.thread_id;
 }
-
-unsigned int  qurt_exception_wait_ext (qurt_sysevent_error_t * sys_err); // should be inlined away
 
 /**@ingroup func_qurt_exception_wait2
   Registers the current thread as the QuRT program exception handler, and suspends the thread until a
@@ -389,12 +391,7 @@ void qurt_exception_raise_fatal (void);
   None.
 */
 // static inline int qurt_exception_raise_nonfatal (int error) __attribute__((noreturn)) { R_UNSUPPORTED; }
-static inline int qurt_exception_raise_nonfatal (int error)
-{
-	//h2_printf("nonfatal exception from %p: %d. Calling fatal!\n",__builtin_return_address(0),error);
-	qurt_exception_raise_fatal();
-	return QURT_EOK;
-}
+int qurt_exception_raise_nonfatal (int error);
 
 /**@ingroup func_qurt_exception_shutdown_fatal 
   Performs the fatal shutdown procedure for handling a fatal program exception.
@@ -510,6 +507,8 @@ static inline unsigned int qurt_exception_wait_pagefault (qurt_sysevent_pagefaul
 	while (1) h2_sem_down(&sem);
 	return QURT_EFATAL;
 }
+
+void qurt_exception_init();
 
 #endif /* QURT_EVENT_H */
 

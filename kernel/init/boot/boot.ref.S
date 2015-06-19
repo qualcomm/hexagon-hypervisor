@@ -109,12 +109,12 @@ H2_BOOT_attempts:
 	stop(r0)
 	jump 8b
 1:
-	r0 = memw(r7+#4)
+	r0 = memw(r7+#8)
 	{
 		p0 = cmp.eq(r0,#0)
 		if (!p0.new) jump:nt .Lreset_crash
 		r0 = add(r0,#1)
-		memw(r7+#4) = r0.new
+		memw(r7+#8) = r0.new
 	}
 	 /* FIXME: Read syscfg and set bits, don't zero, in case earlier boot code
 	has set it up */

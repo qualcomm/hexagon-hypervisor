@@ -212,5 +212,6 @@ void qurt_init()
 	qurt_timer_init();
 	qurt_qdi_local_client_init();
 	(void)_posix_init();
+	qurt_exception_init();
 }
 

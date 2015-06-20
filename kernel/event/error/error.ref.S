@@ -96,8 +96,8 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	r2 = modectl
 	r1 = popcount(r3:2)
 	{
-		p0 = cmp.eq(WORK,#1)
-		if (p0.new) jump:nt .Lmodectl_wait
+		p0 = cmp.eq(r1,#1)
+		if (!p0.new) jump:nt .Lmodectl_wait
 	}
 	r1 = syscfg
 	r1 = clrbit(r1,#4)		// clear GIE

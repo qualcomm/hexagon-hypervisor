@@ -22,6 +22,7 @@
 #include "qurt_consts.h"
 #include "qurt_thread.h"
 #include "qurt_prelim.h"
+#include "qurt_error.h"
 
 /*
  * System environment object type.

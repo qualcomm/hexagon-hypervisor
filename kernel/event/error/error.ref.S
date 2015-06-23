@@ -78,6 +78,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	{
 		ME_WORK = r1:0
 		allocframe(#0)
+	}
 	{
 		p0 = tstbit(WORK,#0)
 		if (!p0.new) jump:nt 9f

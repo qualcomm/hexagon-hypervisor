@@ -76,6 +76,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	r16 = r0		// save intno in r26 for L2 Control
 	ssr = r6
 	gp = r7
+	r0 = add(r0,#-32)
 
 	callr r3
 

@@ -50,6 +50,9 @@ static int qurt_int2signal(int intnum)
 {
 	//  maybe need to check if it's been registered first...
 	//  safe to call sigset from within fastint context
+	// we pre-subtract 32 in fast interrupt calling code, 
+	// so reapply here
+	intnum += 32;
 	qurt_interrupt_table_entry_t entry;
 	entry.raw = int_sigsets[intnum].raw;
 	qurt_signal_set(entry.signal_ptr, int_sigsets[intnum].signal_mask);

@@ -58,6 +58,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 		crswap(OTHER_SGP,sgp0)
 		OLD_SP_SAVE = TMP
 		TMP = TMP5	// move GP over
+		r0 = add(r0,#-32)
 	}
 	{
 		if (p3) jump 1f
@@ -89,9 +90,8 @@ H2K_fastint_return:
 	{
 		p0 = cmp.eq(r0,#0)		// if no ack, skip all
 		if (p0.new) jump:nt .Lno_ack
-		p1 = cmp.gtu(INT_SAVE,#31)		// if non-l2 interrupt, ciad
+		p1 = cmp.gt(INT_SAVE,#-1)		// if non-l2 interrupt, ciad
 		if (!p1.new) jump:nt .L1ack
-		INT_SAVE = add(INT_SAVE,#-32)
 	}
 	{
 		TMP = memw(##H2K_kg+KG_l2_ack_base)

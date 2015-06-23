@@ -176,7 +176,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 	}
 	if (new != cur) {
 		H2K_set_syscfg(new);
-		H2K_gp->syscfg_val = syscfg;
+		H2K_gp->syscfg_val = new;
 		H2K_isync();
 		cur = H2K_get_syscfg();
 		if (cur != new) {  // failed

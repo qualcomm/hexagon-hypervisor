@@ -29,6 +29,7 @@
 #define IC_SETS (32*1024/32/IC_WAYS)
 #endif
 
+#if 0
 FUNC_START H2K_cache_l2_cleaninv .text.misc.cache .p2align 4
 	r0 = #0
 	r1 = #L2_SETS
@@ -46,6 +47,23 @@ FUNC_START H2K_cache_l2_cleaninv .text.misc.cache .p2align 4
 	}:endloop1
 	jumpr r31
 FUNC_END H2K_cache_l2_cleaninv
+#else
+FUNC_START H2K_cache_l2_cleaninv .text.misc.cache .p2align 4
+	/* We want to compile V5 but we'll really execute on V56.  That has l2gcleaninv() */
+	// l2gcleaninv
+	.word 0xa820d800
+	nop
+	nop
+1:
+	r0 = syscfg
+	{
+		p0 = tstbit(r0,#31)
+		if (p0.new) jump:t 1b
+	}
+	syncht
+	jumpr r31
+FUNC_END H2K_cache_l2_cleaninv
+#endif
 
 FUNC_START H2K_cache_d_cleaninv .text.misc.cache .p2align 4
 	r0 = #0

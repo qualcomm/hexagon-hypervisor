@@ -9,7 +9,7 @@ export SHELL := /bin/bash
 ifeq (,${BUILD_DIR})
 
 ifneq (,${Q6VERSION})
-export ARCHV := $(subst v,,$(Q6VERSION))
+export ARCHV := $(patsubst 6%,60,$(subst v,,$(Q6VERSION)))
 else
 export ARCHV ?= 4
 endif

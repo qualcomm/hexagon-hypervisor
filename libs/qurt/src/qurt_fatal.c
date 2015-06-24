@@ -30,9 +30,9 @@ int qurt_exception_raise_nonfatal(int error)
 	qurt_sem_init_val(&response_sem,0);
 	my_err.thread_id = h2_thread_myid();
 	my_err.fault_pc = (unsigned int)__builtin_return_address(0);
-	my_err.sp = (unsigned int)(&my_err+1);
-	my_err.badva = error;
-	my_err.cause = error;
+	my_err.sp = (unsigned int)(&my_err);
+	my_err.badva = 0;
+	my_err.cause = QURT_EXCEPT_EXIT;
 	x.info = &my_err;
 	x.response = &response_sem;
 	qurt_printf("exception nonfatal: sending message %p\n",&my_err);

@@ -116,7 +116,9 @@ typedef struct {
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
 	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
 	H2K_thread_context crash_contexts[MAX_HTHREADS];
-	unsigned long long int crash_tlb[MAX_TLB_ENTRIES];
+	u64_t crash_tlb[MAX_TLB_ENTRIES];
+	u32_t crash_l2vic_enabled[MAX_INTERRUPTS/32];
+	u32_t crash_l2vic_pending[MAX_INTERRUPTS/32];
 	u32_t build_id;
 	info_boot_flags_type info_boot_flags;
 	info_stlb_type info_stlb;

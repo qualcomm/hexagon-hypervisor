@@ -113,7 +113,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		p0 = tstbit(WORK,#1)
 		if (!p0.new) jump:nt 9f
 	}
-	// Save off TLB
+	// Save off TLB. FIXME: could be done in C...
 	r3:2 = combine(#0,##H2K_kg+KG_crash_tlb)
 	loop0(1f,#MAX_TLB_ENTRIES)
 1:
@@ -123,6 +123,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		r3 = add(r3,#1)
 	}:endloop0
 	nop
+	call H2K_intconfig_l2vic_crash
 	call H2K_cache_d_cleaninv
 	call H2K_cache_l2_cleaninv
 	syncht
@@ -230,6 +231,7 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	// All threads but one (unknown: which one...) should be getting NMI and shutting down.
 	// Wait for them here.
 
+#if 0
 	// Part 2: save TLB entries
 	// This is easy, just save to its spot in kernel globals
 	r0 = add(H2K_GP,#KG_crash_tlb)
@@ -256,6 +258,7 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	isync
 	p0 = cmp.eq(r1,#0)
 	if (!p0) callr r1
+#endif
 .Lstop:
 	stop(r0)
 	jump .Lstop

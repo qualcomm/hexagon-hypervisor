@@ -43,7 +43,16 @@ typedef union {
 	unsigned long long int raw;
 } qurt_interrupt_table_entry_t;
 
-qurt_interrupt_table_entry_t int_sigsets[MAX_SYS_INTERRUPTS] __attribute__((aligned(128)));
+typedef union {
+	struct {
+		unsigned int count;
+		unsigned int globcount;
+	};
+	unsigned long long int raw;
+} qurt_interrupt_table_info_t;
+
+static qurt_interrupt_table_entry_t qurt_int_sigsets[MAX_SYS_INTERRUPTS] __attribute__((aligned(128)));
+static qurt_interrupt_table_info_t qurt_int_info[MAX_SYS_INTERRUPTS] __attribute__((aligned(128)));
 
 //  Fast interrupt handler
 static int qurt_int2signal(int intnum)
@@ -52,10 +61,13 @@ static int qurt_int2signal(int intnum)
 	//  safe to call sigset from within fastint context
 	// we pre-subtract 32 in fast interrupt calling code, 
 	// so reapply here
+	static unsigned int globalcount;
 	intnum += 32;
 	qurt_interrupt_table_entry_t entry;
-	entry.raw = int_sigsets[intnum].raw;
-	qurt_signal_set(entry.signal_ptr, int_sigsets[intnum].signal_mask);
+	entry.raw = qurt_int_sigsets[intnum].raw;
+	qurt_signal_set(entry.signal_ptr, qurt_int_sigsets[intnum].signal_mask);
+	qurt_int_info[intnum].count++;
+	qurt_int_info[intnum].globcount = globalcount++;
 	return 1;
 }
 
@@ -85,9 +97,10 @@ unsigned int qurt_interrupt_register(int int_num, qurt_signal_t *int_signal, int
 	}
 	entry.signal_ptr = int_signal;
 	entry.signal_mask = signal_mask;
-	int_sigsets[int_num].raw = entry.raw;
-	qurt_signal_clear(int_sigsets[int_num].signal_ptr,
-		int_sigsets[int_num].signal_mask);
+	qurt_int_sigsets[int_num].raw = entry.raw;
+	qurt_int_info[int_num].raw = 0ULL;
+	qurt_signal_clear(qurt_int_sigsets[int_num].signal_ptr,
+		qurt_int_sigsets[int_num].signal_mask);
 	h2_register_fastint(int_num,qurt_int2signal);
 	return QURT_EOK;
 }
@@ -95,12 +108,12 @@ unsigned int qurt_interrupt_register(int int_num, qurt_signal_t *int_signal, int
 unsigned int qurt_interrupt_deregister(int int_num)
 {
 	int_num += 32;
-	qurt_signal_set(int_sigsets[int_num].signal_ptr,SIG_INT_ABORT);
+	qurt_signal_set(qurt_int_sigsets[int_num].signal_ptr,SIG_INT_ABORT);
 	//  May need to make this atomic or use a lock or something
 	//h2_register_fastint(int_num,qurt_dummy);
 	h2_deregister_fastint(int_num);
 	//  wouldn't need to do this if code didn't check it in the first place
-	int_sigsets[int_num].signal_ptr = 0;  
+	qurt_int_sigsets[int_num].signal_ptr = 0;  
 	return 0;
 }
 

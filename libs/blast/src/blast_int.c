@@ -46,7 +46,7 @@ typedef union {
 typedef union {
 	struct {
 		unsigned int count;
-		unsigned int globcount;
+		unsigned int pcycle;
 	};
 	unsigned long long int raw;
 } qurt_interrupt_table_info_t;
@@ -61,14 +61,13 @@ static int qurt_int2signal(int intnum)
 	//  safe to call sigset from within fastint context
 	// we pre-subtract 32 in fast interrupt calling code, 
 	// so reapply here
-	static unsigned int globalcount;
 	intnum += 32;
 	qurt_interrupt_table_entry_t entry;
 	entry.raw = qurt_int_sigsets[intnum].raw;
 	qurt_signal_set(entry.signal_ptr, qurt_int_sigsets[intnum].signal_mask);
 	qurt_int_info[intnum].count++;
-	qurt_int_info[intnum].globcount = globalcount++;
-	return 1;
+	qurt_int_info[intnum].pcycle = (h2_get_core_pcycles()>>8);
+	return 0;
 }
 
 int qurt_dummy(int intnum)
@@ -122,3 +121,8 @@ void rtos_set_interrupt(int interrupt_num)
 	qurt_interrupt_raise(interrupt_num);
 }
 
+int qurt_interrupt_acknowledge(int int_num)
+{
+	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_ENABLE,int_num+32,0);
+	return QURT_EOK;
+}

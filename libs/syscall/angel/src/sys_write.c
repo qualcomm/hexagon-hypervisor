@@ -9,7 +9,7 @@
 static char write_buf[WRITE_BUFSIZE] __attribute__((aligned(64))) = { 0 };
 static unsigned int write_buf_idx = 0;
 
-static inline dccleana(const char *addr)
+static inline void dccleana(const char *addr)
 {
 	asm volatile (" dccleana(%0)" : : "r"(addr));
 }

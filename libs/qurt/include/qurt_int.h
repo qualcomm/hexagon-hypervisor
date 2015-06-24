@@ -133,9 +133,7 @@ unsigned int qurt_interrupt_register(int int_num, qurt_anysignal_t *int_signal, 
   @dependencies
   None.	
 */
-/* EJP: most important maybe fixme. Normal interrupts will ack themselves.  We could (should)? 
- * change this to match.  If so, we need to actually ack interrupt. */
-static inline int qurt_interrupt_acknowledge(int int_num) { return QURT_EOK; }
+int qurt_interrupt_acknowledge(int int_num);
 
 /**@ingroup func_qurt_interrupt_deregister
   Disables the specified interrupt and disassociate it from any QuRT signal object.

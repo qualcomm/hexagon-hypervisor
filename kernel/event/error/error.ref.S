@@ -168,6 +168,7 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	r0 = ##H2K_kg+KG_crash_contexts
 	r1 = htid
 	r0 += mpyi(r1,##CONTEXT_SIZE)
+	memd(r0+#CONTEXT_r3130) = r31:30
 	call H2K_context_save
 	// r0 and sgp0 are swapped
 	// H2K_kg in r28

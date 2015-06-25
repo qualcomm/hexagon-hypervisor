@@ -39,6 +39,7 @@ void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_th
 		H2K_intcontrol_enable(whatint);
 		H2K_gp->fastint_gp = (u32_t)(me->gp);
 		H2K_gp->fastint_ssr= (u32_t)(me->ssr & 0x00007F00); /* Set ASID field */
+		H2K_gp->fastint_ssr |= 0x01800000; /* Turn on CE etc */
 		for (i = 0; i < MAX_HTHREADS; i++) {
 			H2K_fastint_contexts[i].context.vmblock = me->vmblock;
 		}

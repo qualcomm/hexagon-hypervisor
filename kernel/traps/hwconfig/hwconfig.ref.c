@@ -322,4 +322,3 @@ u32_t H2K_trap_hwconfig_hwintop(u32_t unused, void *unusedptr, u32_t op_and_int,
 	}
 	return 0;
 }
-

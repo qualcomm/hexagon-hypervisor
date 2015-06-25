@@ -125,6 +125,7 @@
 #define TIMER_INT 34
 #else
 #define TIMER_INT 33
+#define TIMER_INT_CORE_V61 34
 #endif
 
 #define MAX_TRACE_LEVEL 0

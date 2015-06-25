@@ -34,7 +34,7 @@
 
 static inline void H2K_timer_hw_soft_raise()
 {
-	H2K_intcontrol_raise(TIMER_INT);
+	H2K_intcontrol_raise(H2K_gp->timer_intnum);
 }
 
 static inline ticks_t H2K_timer_hw_read_count()
@@ -85,7 +85,7 @@ static void H2K_timer_hw_init()
 	H2K_gp->time.last_pcycles = 0;
 	H2K_timer_hw_set_timeout(H2K_TIME_FOREVER);
 	H2K_gp->time.devptr[HW_ENABLE] = 1;
-        H2K_intcontrol_enable(TIMER_INT);
+        H2K_intcontrol_enable(H2K_gp->timer_intnum);
 }
 #endif
 
@@ -153,7 +153,7 @@ static void H2K_timer_hw_init()
 	H2K_gp->time.devptr[HW_CNTACR] = ~0;
 	H2K_gp->time.devptr[HW_CNTFRQ] = 19200000;
 	H2K_gp->time.devptr[HW_ENABLE] = 1;
-	H2K_intcontrol_enable(TIMER_INT);
+	H2K_intcontrol_enable(H2K_gp->timer_intnum);
 }
 
 #endif

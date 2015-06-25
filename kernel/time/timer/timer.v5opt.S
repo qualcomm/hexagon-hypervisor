@@ -26,6 +26,7 @@
 
 #ifndef NO_DEVICES
 
+// Does this really need to be in assembly? Could move to .all.c
 FUNC_START H2K_timer_hw_init  .text.time.timer  .falign
 #define DEVPTR r1
 #define DEVSLICE r0
@@ -33,10 +34,15 @@ FUNC_START H2K_timer_hw_init  .text.time.timer  .falign
 #define ALLFS r7:6
 #define MASK r3
 #define L2ACK r2
+#define TIMER_INTNUM r8
+#define L2OFF r9
+
+	TIMER_INTNUM = memw(H2K_GP+#KG_timer_intnum)
 	{
 		ZEROPAIR = #0
 		DEVPTR = memw(H2K_GP+#KG_time_devptr)
 		L2ACK = memw(H2K_GP+#KG_l2_ack_base)
+		TIMER_INTNUM = add(TIMER_INTNUM, #-32)
 	}
 	{
 		memd(H2K_GP+#KG_time_last_ticks) = ZEROPAIR
@@ -47,18 +53,21 @@ FUNC_START H2K_timer_hw_init  .text.time.timer  .falign
 		memw(DEVSLICE+#HW_MATCH_HI-HW_COUNT_LO) = #-1
 		memw(DEVSLICE+#HW_MATCH_LO-HW_COUNT_LO) = #-1
 		ALLFS = #-1
+		MASK = and(TIMER_INTNUM, #31)  // TIMER_INTNUM % 32
 	}
 	{
 		memw(DEVPTR+#HW_CNTSR) = #-1
 		memw(DEVPTR+#HW_CNTACR) = #-1
-		MASK = ##1<<((TIMER_INT-32) % 32)
+		MASK = lsl(#1, MASK)
+		L2OFF = lsr(TIMER_INTNUM, #5)  // TIMER_INTNUM / 32
 	}
 	{
 		memw(DEVPTR+#HW_CNTFRQ) = ##TIMERHW_TICK_REALFREQ
 		memw(DEVSLICE+#HW_ENABLE-HW_COUNT_LO) = #1
+		L2OFF = asl(L2OFF, #2)  // L2OFF *= 4
 	}
 	{
-		memw(L2ACK+#4*((TIMER_INT-32)/32)) = MASK
+		memw(L2ACK + L2OFF << #0) = MASK
 		memd(H2K_GP+#KG_time_next_ticks) = ALLFS
 		jumpr r31
 	}
@@ -68,6 +77,8 @@ FUNC_START H2K_timer_hw_init  .text.time.timer  .falign
 #undef ZEROPAIR
 #undef DEVPTR
 #undef DEVSLICE
+#undef TIMER_INTNUM
+#undef L2OFF
 FUNC_END H2K_timer_hw_init
 
 #endif
@@ -178,6 +189,8 @@ FUNC_START H2K_timer_int .text.time.timer
 #define ME r16
 #define DEVPTR r17
 #define DEVPTR_ME r17:16
+#define TIMER_INTNUM r18
+
 	{
 		allocframe(#16)
 		memd(r29+#-16) = r17:16
@@ -200,6 +213,7 @@ FUNC_START H2K_timer_int .text.time.timer
 		k0lock
 	}
 	{
+		TIMER_INTNUM = memw(H2K_GP+#KG_timer_intnum)
 		r2 = memw(r1)
 		// r5:4 = TICKS
 		call H2K_tree_bisect	// bisect(&timedout,&GP->time.timeouts,gp->time.timeouts,ticks)
@@ -212,6 +226,7 @@ FUNC_START H2K_timer_int .text.time.timer
 #define ROOT r5
 #define OLDROOT r4
 	{
+		TIMER_INTNUM = add(TIMER_INTNUM, #-32)
 		NEXTTICKS = #-1
 		ROOT = memw(H2K_GP+#KG_time_timeouts)
 		if (cmp.eq(ROOT.new,#0)) jump:t .Ltree_min_loop_done
@@ -249,24 +264,18 @@ FUNC_START H2K_timer_int .text.time.timer
 	{
 		k0unlock
 	}
-#if TIMER_INT < 32
-#error timer must be l2 interrupt
-#endif
 
 #define VICBASE r7
 #define L2VICWORD r6
 #define MASK r5
 	{
 		VICBASE = memw(H2K_GP+#KG_l2_ack_base)
-		L2VICWORD = #((TIMER_INT-32)>>5)
+		L2VICWORD = lsr(TIMER_INTNUM, #5)
 		r17:16 = memd(r29+#8)
+		MASK = and(TIMER_INTNUM, #0x1f)
 	}
 	{
-#if (1<<((TIMER_INT-32) & 0x1f)) < (1<<15)
-		MASK = #1<<((TIMER_INT - 32) & 0x1f)
-#else
-		MASK = ##1<<((TIMER_INT - 32) & 0x1f)
-#endif
+		MASK = lsl(#1, MASK)
 		memw(VICBASE+L2VICWORD<<#2) = MASK.new
 		deallocframe
 	}
@@ -279,6 +288,7 @@ FUNC_START H2K_timer_int .text.time.timer
 #undef ME
 #undef DEVPTR
 #undef DEVPTR_ME
+#undef TIMER_INTNUM
 FUNC_END H2K_timer_int
 
 FUNC_START H2K_timer_get_freq .text.time.timer 

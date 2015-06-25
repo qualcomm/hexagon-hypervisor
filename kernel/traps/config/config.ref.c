@@ -283,7 +283,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, vmblock_init_op_t op,
 		/* skip H2 interrupts instead of returning error */
 		if (! ((physint == RESCHED_INT)
 					 || (physint == VM_IPI_INT)
-					 || (physint == TIMER_INT)
+					 || (physint == H2K_gp->timer_intnum)
 #ifdef H2K_L2_CONTROL
 					 || (physint == L2_CORE_INTERRUPT)
 #endif

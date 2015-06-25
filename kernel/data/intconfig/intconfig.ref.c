@@ -215,7 +215,7 @@ void H2K_intconfig_init(u32_t ssbase)
 	}
 	H2K_gp->inthandlers[RESCHED_INT].handler = H2K_resched;
 	H2K_gp->inthandlers[VM_IPI_INT].handler = H2K_vm_ipi_do;
-	H2K_gp->inthandlers[TIMER_INT].handler = H2K_timer_int;
+	H2K_gp->inthandlers[H2K_gp->timer_intnum].handler = H2K_timer_int;
 	for (i = 0; i < MAX_HTHREADS; i++) {
 		tmp = &H2K_fastint_contexts[i].context;
 		H2K_thread_context_clear(tmp);

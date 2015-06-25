@@ -67,6 +67,7 @@ typedef struct {
 		};
 	};
 #endif
+	u32_t timer_intnum;
 #ifdef HAVE_EXTENSIONS
 	u32_t *hvx_clock;
 	u32_t *hvx_reset;

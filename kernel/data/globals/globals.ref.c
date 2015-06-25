@@ -58,4 +58,14 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.info_boot_flags.boot_have_hvx = 0;
 	}
 #endif
+
+#if ARCHV >= 60
+	if (H2K_kg.arch >= CORE_V61) {
+		H2K_kg.timer_intnum = TIMER_INT_CORE_V61;
+	} else {
+		H2K_kg.timer_intnum = TIMER_INT;
+	}
+#else
+		H2K_kg.timer_intnum = TIMER_INT;
+#endif	
 }

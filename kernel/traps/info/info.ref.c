@@ -76,7 +76,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return cfg_table(CFG_TABLE_SSBASE) + TIMER_OFFSET;
 
 	case INFO_TIMER_INT:
-		return TIMER_INT;
+		return H2K_gp->timer_intnum;
 
 	case INFO_ERROR:
 		return H2K_gp->kernel_error;

@@ -42,10 +42,13 @@ int main()
 {
 	int i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+
 #if ARCHV >= 4
 	H2K_gp->l2_int_base = TH_l2int_cfg;
 	H2K_gp->l2_ack_base = TH_l2int_cfg + 0x80;
 #endif
+	H2K_gp->timer_intnum = TIMER_INT;
+
 	a.gpugp = 0xF000000012345678ULL;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->inthandlers[i].handler = BAD;
@@ -70,7 +73,7 @@ int main()
 				FAIL("wrong ipi handler");
 		} else if (i == TIMER_INT) {
 			if (H2K_gp->inthandlers[i].handler != H2K_timer_int)
-				FAIL("wrong ipi handler");
+				FAIL("wrong timer int handler");
 		} else if (H2K_gp->inthandlers[i].handler != NULL) FAIL("uninitialized handler");
 
 		if (H2K_gp->inthandlers[i].param != NULL) FAIL("uninitialized fastint ptr");

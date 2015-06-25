@@ -91,6 +91,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	r3 = #-1
 	r3 = togglebit(r3,r2)
 	nmi(r3)
+	/* EJP: probably should put stuff from ME into my hthread's crash context here?? */
 .Lfatal_crash_hard_join:
 .Lmodectl_wait:
 	r3 = #0
@@ -108,10 +109,11 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	k0unlock
 	tlbunlock
 	// Bit 1: Save off TLB and flush caches
+	// EJP: for now, let's do this all the time.
 9:
 	{
 		p0 = tstbit(WORK,#1)
-		if (!p0.new) jump:nt 9f
+		//if (!p0.new) jump:nt 9f
 	}
 	// Save off TLB. FIXME: could be done in C...
 	r3:2 = combine(#0,##H2K_kg+KG_crash_tlb)
@@ -133,6 +135,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		p0 = tstbit(WORK,#2)
 		if (!p0.new) jump:nt 9f
 	}
+	syncht
 	nop
 	stop(r0)
 	nop

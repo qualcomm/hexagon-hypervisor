@@ -11,8 +11,6 @@ ULIMIT = ulimit -t 1300
 CLDFLAGS   := -moslib=h2 -lqdsp -lh2kernel -lh2
 COSIM =--cosim_file cosimcfg
 
-#If you are running outside hexframe.. sensible defaults
-ifeq (,${BUILD_DIR})
 Q6VERSION := v4
 CC     = hexagon-gcc
 ifneq (,${DEBUG})
@@ -24,10 +22,6 @@ CFLAGS += $(CCFLAGS) -m$(Q6VERSION)
 CFLAGS += -I$(Q6_RTOS_INSTALL)/include
 LDFLAGS += -m$(Q6VERSION) $(CLDFLAGS) -L$(Q6_RTOS_INSTALL)/lib
 SIMF = --timing --quiet
-else
-CFLAGS += $(CCFLAGS) -I$(Q6_RTOS_INSTALL)/include
-LDFLAGS += $(CLDFLAGS) -L$(Q6_RTOS_INSTALL)/lib
-endif
 
 PKW_H2:=$(subst Q6_RTOS_INSTALL=,,$(subst %,,$(shell PKW_h2=$(Q6VERSION)_latest pkw --env h2 --lang make|grep Q6_RTOS_INSTALL)))
 

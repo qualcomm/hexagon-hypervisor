@@ -5,9 +5,6 @@ MAKE_INC_TOOLS := 1
 
 export SHELL := /bin/bash
 
-#If you are running outside hexframe.. sensible defaults
-ifeq (,${BUILD_DIR})
-
 ifneq (,${Q6VERSION})
 export ARCHV := $(patsubst 6%,60,$(subst v,,$(Q6VERSION)))
 else
@@ -25,11 +22,6 @@ export LD := hexagon-gcc
 export COM_CFLAGS := -Werror
 export COM_LDFLAGS :=
 
-
-#hexframe likes duplication ATM Machine, PIN Number, Q6VERSION Version....
-else
-export ARCHV := $(subst v,,$(Q6VERSION))
-endif
 
 # These are the LPASS bases; assumed in scripts/timer_v*.cfg
 ifeq (4, $(ARCHV))

@@ -79,13 +79,16 @@ volatile unsigned int *t32_vm_entry_p = (volatile unsigned int *)0x8D4FFFFC;
 unsigned int vm_best_prio = 0;
 
 unsigned long boot_vm() {
-	unsigned int newvm = vm_setup(NUM_VCPUS, 
+	unsigned int bootaddr = *t32_vm_entry_p;
+	unsigned int newvm;
+	*t32_vm_entry_p = 0;
+	newvm = vm_setup(NUM_VCPUS, 
 		SHARED_INTS, 
 		0, 
 		0xFFFFFFFF,
 		H2K_ASID_TRANS_TYPE_OFFSET);
-	PRINTF("vm set up entry=%x\n",*t32_vm_entry_p);
-	if (h2_vmboot((void *)(*t32_vm_entry_p), (void *)0x20000000, *t32_vm_entry_p, vm_best_prio, newvm) == -1) FAIL("vmboot");
+	PRINTF("vm set up entry=%x\n",bootaddr);
+	if (h2_vmboot((void *)(*t32_vm_entry_p), (void *)0x20000000, bootaddr, vm_best_prio, newvm) == -1) FAIL("vmboot");
 	return newvm;
 }
 
@@ -95,22 +98,54 @@ void handle_child_int() {
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
 }
 
+#define SLEEP_NS (1000ULL*1000*1000) // 1 second
+
+static inline void set_timer()
+{
+	h2_vmtrap_timerop(H2K_TIMER_TRAP_DELTA_TIMEOUT, SLEEP_NS);
+}
+
+static inline void timer_int_enable()
+{
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT, 0);
+}
+
+h2_sem_t sleepsem;
+unsigned long long int interrupt_count;
+
+void timer_handler()
+{
+	interrupt_count++;
+	h2_sem_up(&sleepsem);
+}
+
+extern void vecsetup();
+
 int main()
 {
 	unsigned int new_vm;
-	h2_sem_t sem;
-	h2_sem_init_val(&sem,0);
+	h2_sem_init_val(&sleepsem,0);
 	PRINTF("autoboot: H2 started\n");
 	// EJP: 5/19/2015: L2 cache size reconfiguration is buggy, we lose data
-	// h2_hwconfig_l2cache_size(3,1);//1==64KB,2==128KB,3==256KB,4==512KB
+	h2_hwconfig_l2cache_size(3,1);//1==64KB,2==128KB,3==256KB,4==512KB
+	PRINTF("L2 cache resized to 256KB");
 #if 0
 	// EJP: testing
 	extern unsigned int t32_test_load();
 	t32_vm_entry = t32_test_load();
 	t32_vm_loaded_flag = 1;
 #endif
-	new_vm = boot_vm();
-	PRINTF("started vm %x\n",new_vm);
-	while (1) h2_sem_down(&sem);
+	h2_vmtrap_setie(1);
+	vecsetup();
+	do {
+		new_vm = boot_vm();
+		PRINTF("started vm %x\n",new_vm);
+		while (*t32_vm_entry_p == 0) {
+			timer_int_enable();
+			set_timer();
+			h2_sem_down(&sleepsem);
+			PRINTF("TICK\n");
+		}
+	} while (1);
 	return 0; // make gcc happy
 }

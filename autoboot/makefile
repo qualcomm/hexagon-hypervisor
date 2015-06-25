@@ -45,8 +45,8 @@ BOOT_OBJ = boot.o
 
 .PHONY: all clean sim
 
-$(BOOTVM_IMAGE): autoboot.o autoboot_event.o testload.o $(BOOTVM_IMAGE_DEPS) $(UCOS_BIN) $(UCOS_OBJ)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o $@ autoboot.o autoboot_event.o testload.o $(UCOS_OBJ) $(BOOTVM_ENTRY_O)
+$(BOOTVM_IMAGE): autoboot.o autoboot_event.o testload.o vectors.o $(BOOTVM_IMAGE_DEPS) $(UCOS_BIN) $(UCOS_OBJ)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o $@ autoboot.o autoboot_event.o testload.o vectors.o $(UCOS_OBJ) $(BOOTVM_ENTRY_O)
 
 clean:
 	rm -f *.o $(BOOVM_PROG) $(BOOTVM_CLEAN)

@@ -32,9 +32,12 @@
 #define L2_CHUNK 0x20000     // 128K
 #define L2_BIG_CHUNK 0x40000 // 256K
 
+#define CORE_V60 0x60
 #define CORE_V61 0x61
-#define CORE_V60A 0x0
-#define CORE_V61A 0x0
+#define CORE_V62 0x62
+
+#define CORE_V6_A 0x0
+#define CORE_V6_E 0x4
 
 #define TEMP_MAP_VA 0xff800000
 #define TEMP_MAP_PG_SIZE SIZE_4M

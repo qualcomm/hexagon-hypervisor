@@ -50,9 +50,9 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 
 #ifdef HAVE_EXTENSIONS
-	/* HVX present?  Only V60A, V61A. */
-	if (((H2K_kg.uarch) == CORE_V60A)
-			|| ((H2K_kg.uarch) == CORE_V61A)) {
+	/* HVX present?  V6[02][AE]. */
+	if (((CORE_V60 == H2K_kg.arch) || CORE_V62 == H2K_kg.arch)
+			&& ((CORE_V6_A == H2K_kg.uarch) || (CORE_V6_A == H2K_kg.uarch))) {
 		H2K_kg.info_boot_flags.boot_have_hvx = 1;
 	} else {
 		H2K_kg.info_boot_flags.boot_have_hvx = 0;

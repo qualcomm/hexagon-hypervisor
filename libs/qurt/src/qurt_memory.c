@@ -659,6 +659,34 @@ void qurt_memory_init()
 #endif
 }
 
+#if 1
+
+extern long long int __tcm_static_pa_load__ __attribute__((weak));
+extern long long int __tcm_static_pa_run__ __attribute__((weak));
+extern long long int __tcm_static_section_start__ __attribute__((weak));
+extern long long int __tcm_static_section_end__ __attribute__((weak));
+
+#define SYM_PGNO_RND(X) ((((unsigned long)(&X))+0x0fff) >> 12)
+#define SYM_PGNO(X) ((((unsigned long)(&X))) >> 12)
+
+static inline H2K_linear_fmt_t qurt_mapping_static_tcm_load(H2K_linear_fmt_t entry)
+{
+	unsigned long tcm_start_vpn = SYM_PGNO(__tcm_static_section_start__);
+	unsigned long tcm_end_vpn = SYM_PGNO_RND(__tcm_static_section_end__);
+	unsigned long tcm_ddr_ppn = SYM_PGNO(__tcm_static_pa_load__);
+	unsigned long tcm_tcm_ppn = SYM_PGNO(__tcm_static_pa_run__);
+	if (&__tcm_static_pa_load__ == NULL) return entry; // no symbols
+	if (entry.vpn < tcm_start_vpn) return entry; // not in range
+	if (entry.vpn >= tcm_end_vpn) return entry; // not in range
+	/* Before adding translation, copy into TCM */
+	unsigned long src_pa = (entry.vpn - tcm_start_vpn + tcm_ddr_ppn) << 12;
+	unsigned long dst_pa = (entry.vpn - tcm_start_vpn + tcm_tcm_ppn) << 12;
+	memcpy((void *)dst_pa,(void *)src_pa,1ULL << (12+(entry.size*2)));
+	entry.ppn = entry.vpn - tcm_start_vpn + tcm_tcm_ppn;
+	return entry;
+}
+#endif
+
 static inline void qurt_memory_early_add_tlbfmt(unsigned long long int inval)
 {
 	int size;
@@ -671,6 +699,7 @@ static inline void qurt_memory_early_add_tlbfmt(unsigned long long int inval)
 	entry.size = size;
 	entry.xwru = inval >> 28;
 	entry.cccc = inval >> 24;
+	entry = qurt_mapping_static_tcm_load(entry);
 	qurt_mapping_create_linear(entry);
 }
 

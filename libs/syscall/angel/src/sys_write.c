@@ -5,9 +5,9 @@
 
 #include "allsyscalls.h"
 
-#define WRITE_BUFSIZE (1024*256)
-static char write_buf[WRITE_BUFSIZE] __attribute__((aligned(64))) = { 0 };
-static unsigned int write_buf_idx = 0;
+extern char H2_ANGEL_write_buf[];
+extern unsigned int H2_ANGEL_write_buf_idx;
+extern const unsigned int H2_ANGEL_write_buf_size;
 
 static inline void dccleana(const char *addr)
 {
@@ -24,17 +24,17 @@ count_t sys_write(fd_t fd, const char *buffer, count_t count)
 	clean(&x,3);
 	ANGEL(SYS_WRITE,&x,0);
 	if (fd > 2) return -1;
-	if (write_buf_idx+count < WRITE_BUFSIZE) {
-		memcpy(write_buf+write_buf_idx,buffer,count);
-		dccleana(write_buf+write_buf_idx);
-		write_buf_idx += count;
-		dccleana(write_buf+write_buf_idx);
-		if (write_buf_idx == WRITE_BUFSIZE) write_buf_idx = 0;
+	if (H2_ANGEL_write_buf_idx+count < H2_ANGEL_write_buf_size) {
+		memcpy(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx,buffer,count);
+		dccleana(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx);
+		H2_ANGEL_write_buf_idx += count;
+		dccleana(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx);
+		if (H2_ANGEL_write_buf_idx == H2_ANGEL_write_buf_size) H2_ANGEL_write_buf_idx = 0;
 	} else {
 		int i;
 		for (i = 0; i < count; i++) {
-			write_buf[write_buf_idx++] = buffer[i];
-			if (write_buf_idx == WRITE_BUFSIZE) write_buf_idx = 0;
+			H2_ANGEL_write_buf[H2_ANGEL_write_buf_idx++] = buffer[i];
+			if (H2_ANGEL_write_buf_idx == H2_ANGEL_write_buf_size) H2_ANGEL_write_buf_idx = 0;
 		}
 	}
 	return count;

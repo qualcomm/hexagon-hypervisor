@@ -19,11 +19,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NUM_VCPUS 400
+int NUM_VCPUS = 400;
 #define SHARED_INTS 0
 
 #define CHILD_INTERRUPT 14
 #define VM_STATUS_REBOOT 3
+
+#define WRITE_BUFSIZE (1024)
+char H2_ANGEL_write_buf[WRITE_BUFSIZE] __attribute__((aligned(64))) = { 0 };
+unsigned int H2_ANGEL_write_buf_idx = 0;
+const unsigned int H2_ANGEL_write_buf_size = WRITE_BUFSIZE;
 
 #ifdef NO_PRINT
 #define PRINTF(format, args...)
@@ -88,7 +93,8 @@ unsigned long boot_vm() {
 		0xFFFFFFFF,
 		H2K_ASID_TRANS_TYPE_OFFSET);
 	PRINTF("vm set up entry=%x\n",bootaddr);
-	if (h2_vmboot((void *)(*t32_vm_entry_p), (void *)0x20000000, bootaddr, vm_best_prio, newvm) == -1) FAIL("vmboot");
+	if (h2_vmboot((void *)(bootaddr), (void *)0x20000000, bootaddr, vm_best_prio, newvm) == -1) FAIL("vmboot");
+	NUM_VCPUS = 16;
 	return newvm;
 }
 
@@ -128,7 +134,7 @@ int main()
 	PRINTF("autoboot: H2 started\n");
 	// EJP: 5/19/2015: L2 cache size reconfiguration is buggy, we lose data
 	h2_hwconfig_l2cache_size(3,1);//1==64KB,2==128KB,3==256KB,4==512KB
-	PRINTF("L2 cache resized to 256KB");
+	PRINTF("L2 cache resized to 256KB\n");
 #if 0
 	// EJP: testing
 	extern unsigned int t32_test_load();

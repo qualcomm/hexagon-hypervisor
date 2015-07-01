@@ -12,12 +12,14 @@
 
 int main() {
 
-	volatile int *p = 0;
+	//	volatile int *p = 0;
+	unsigned int x;
 
 	h2_handle_errors(0);
 
 	// do something bad
-	*p++;
+	//	*p++;
+	asm volatile ("%0 = ssr \n" : "=r"(x));
 
 	puts("TEST PASSED\n");
 	h2_thread_stop(0);

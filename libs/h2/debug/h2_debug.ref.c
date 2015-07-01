@@ -5,7 +5,8 @@
 
 #include <stdio.h>
 #include <h2.h>
-	
+#include <asm_offsets.h>
+
 #define PRINT_RPAIR(NAME0,NAME1) \
 	printf("r"#NAME0 ":\t0x%08x\tr" #NAME1 ":\t0x%08x\n", context->r##NAME0, context->r##NAME1);
 
@@ -14,14 +15,40 @@
 
 static h2_mutex_t debug_mutex;
 
+typedef union {
+	struct {
+		unsigned int word0;
+		unsigned int word1;
+	};
+	struct {
+		unsigned char byte0;
+		unsigned char byte1;
+		unsigned char byte2;
+		unsigned char byte3;
+	};
+	unsigned long long int raw;
+} val_t;
+
 void h2_debug_context_dump(h2_context_t *context)
 {
 	unsigned int *ptr;
 	unsigned int i;
+	val_t val;
+
+	unsigned int id = h2_thread_myid();
+	val.raw = h2_thread_state(id, CONTEXT_ccrssr);
 
 	h2_mutex_lock(&debug_mutex);
-	printf("DEBUG DUMP threadid = 0x%08x, core_pcycles = 0x%016llx\n", h2_thread_myid(), h2_get_core_pcycles());
+	printf("DEBUG DUMP threadid = 0x%08x, core_pcycles = 0x%016llx\n", id, h2_get_core_pcycles());
 	printf("Exception PC (g0) = 0x%08x, cause (g1 & 0xff) = 0x%02x\n\n", context->g0, context->g1 & 0xff);
+
+	/* Jam the cause in ssr value; ssr_cause has since been overwritten by trap calls  */
+	val.byte0 = context->g1 & 0xff;
+	printf("ccr: 0x%08x\tssr: 0x%08x\n", val.word1, val.word0);
+
+	val.raw = h2_thread_state(id, CONTEXT_status_prio_hthread_tid);
+	printf("prio: 0x%02x\ththread: 0x%02x\ttid: 0x%02x\n\n", val.byte2, val.byte1, val.byte0);
+
 	PRINT_RPAIR(31,30);
 	PRINT_RPAIR(29,28);
 	PRINT_RPAIR(27,26);

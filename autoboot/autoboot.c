@@ -20,6 +20,7 @@
 #include <string.h>
 
 int NUM_VCPUS = 400;
+unsigned int TRAPMASK = 0xFFFFFFFF;
 #define SHARED_INTS 0
 
 #define CHILD_INTERRUPT 14
@@ -90,11 +91,13 @@ unsigned long boot_vm() {
 	newvm = vm_setup(NUM_VCPUS, 
 		SHARED_INTS, 
 		0, 
-		0xFFFFFFFF,
+		TRAPMASK,
 		H2K_ASID_TRANS_TYPE_OFFSET);
 	PRINTF("vm set up entry=%x\n",bootaddr);
 	if (h2_vmboot((void *)(bootaddr), (void *)0x20000000, bootaddr, vm_best_prio, newvm) == -1) FAIL("vmboot");
-	NUM_VCPUS = 16;
+	/* Reset for Linux-y VM */
+	NUM_VCPUS = 8;
+	TRAPMASK = 0x1;
 	return newvm;
 }
 

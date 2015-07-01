@@ -154,7 +154,6 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	if (xe) {
 		H2K_hvx_poweron(); // make sure the lights are on
 	}
-
 #endif
 	return 0;
 }

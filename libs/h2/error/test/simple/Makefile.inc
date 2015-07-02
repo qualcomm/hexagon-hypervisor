@@ -2,6 +2,8 @@
 H2DIR=${UPDIR}../../../../..
 
 #  Everything else defined here
+
+BOOTER_ARGS := --expect_status 0xaaafa7a1
 include ${H2DIR}/scripts/Makefile.inc.test
 
 

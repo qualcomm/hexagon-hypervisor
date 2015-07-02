@@ -17,12 +17,18 @@ int main() {
 
 	h2_handle_errors(0);
 
+	/* Print this first since we don't get control back if the error is handled
+		 correctly. Will print FAIL if execution continues after error, which will
+		 override the pass signature */
+	puts("TEST PASSED\n");
+
 	// do something bad
 	//	*p++;
 	asm volatile ("%0 = ssr \n" : "=r"(x));
 
-	puts("TEST PASSED\n");
-	h2_thread_stop(0);
+	/* Shouldn't reach here */
+	puts("FAIL\n");
+	h2_thread_stop(1);
 	return 0;
 }
 

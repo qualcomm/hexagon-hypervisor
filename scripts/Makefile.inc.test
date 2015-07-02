@@ -350,7 +350,7 @@ test.log: ${EXEC}
 	echo PKW_VERSIONS $(PKW_VERSIONS) >> $@
 	echo PKW_arch $(PKW_arch) >> $@
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
-	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${EXEC} | tee -a $@; \
+	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee -a $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \
@@ -387,12 +387,12 @@ clean:
 
 #  Pretty much a binary yes/no if the test passed or failed.
 results.txt: test.log
-	@grep "TEST PASSED" test.log > $@; \
-	if [ $$? -eq 0 ]; then exit 0; fi; \
-	grep -A 1 "ERROR" test.log > $@; \
+	@grep -A 1 "ERROR" test.log > $@; \
 	if [ $$? -eq 0 ]; then exit 1; fi; \
 	grep -A 1 "FAIL" test.log > $@; \
 	if [ $$? -eq 0 ]; then exit 1; fi; \
+	grep "TEST PASSED" test.log > $@; \
+	if [ $$? -eq 0 ]; then exit 0; fi; \
 	if [ ! -s test.log ]; then \
 	  echo "FAIL - Test log empty" > $@; \
 	  exit 1; \

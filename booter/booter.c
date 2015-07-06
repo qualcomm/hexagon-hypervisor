@@ -23,6 +23,7 @@
 
 #include "elf.h"
 #include <hw.h>
+#include <syscall_defs.h>
 
 #define CHILD_INTERRUPT 14
 #define VM_BEST_PRIO 0
@@ -37,6 +38,10 @@ char errstr[ERRSTR_LEN];
 	GEN(__guest_pmap__)		 \
 	GEN(__boot_cmdline__) \
 	GEN(__boot_net_phys_offset__) \
+	GEN(__use_dir_prefix__) \
+	GEN(__use_file_suffix__) \
+	GEN(__dir_prefix__) \
+	GEN(__file_suffix__) \
 	GEN(end) \
 	GEN(DEFAULT_HEAP_SIZE) \
 	GEN(DEFAULT_STACK_SIZE) \
@@ -114,6 +119,11 @@ typedef struct {
 
 	char **argv;
 	int argc;
+
+	int use_dir_prefix;
+	int use_file_suffix;
+	char *dir_prefix;
+	char *file_suffix;
 } vm_t;
 
 vm_t *vm_params = NULL;
@@ -123,9 +133,9 @@ h2_sem_t child_done_sem;
 void error(char *str1, char *str2) {
 
 	int err = sys_errno();
-	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr));
-	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr));
-	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr));
+	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr) - 1);
 	errno = err;
 	perror(errstr);
 
@@ -182,6 +192,8 @@ void usage()
 	printf("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
 	printf("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 1.\n");
 	printf("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
+	printf("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
+	printf("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
 }		
 
 #define GEN_specials(NAME) vm_params[idx].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx].specials[SPECIAL_ ## NAME].addr = -1;
@@ -229,6 +241,11 @@ void add_vm(unsigned int idx) {
 
 	vm_params[idx].argv = NULL;
 	vm_params[idx].argc = 0;
+
+	vm_params[idx].use_dir_prefix = 0;
+	vm_params[idx].use_file_suffix = 0;
+	vm_params[idx].dir_prefix = "";
+	vm_params[idx].file_suffix = "";
 }
 
 #undef GEN_specials
@@ -278,6 +295,11 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].argv = vm_params[idx].argv;
 		vm_params[idx + num].argc = vm_params[idx].argc;
 
+		//		vm_params[idx + num].use_dir_prefix = vm_params[idx].use_dir_prefix;
+		//		vm_params[idx + num].use_file_suffix = vm_params[idx].use_file_suffix;
+		//		vm_params[idx + num].dir_prefix = vm_params[idx].dir_prefix;
+		//		vm_params[idx + num].file_suffix = vm_params[idx].file_suffix;
+
 		num--;
 	}
 }
@@ -295,8 +317,8 @@ void get_pmap(unsigned int idx, long offset) {
 	}
 }
 
-void dcclean_range(unsigned long start, long range)
-{
+void dcclean_range(unsigned long start, long range) {
+
 	unsigned long p;
 	p = start & -32;
 	range += start-p;
@@ -307,11 +329,12 @@ void dcclean_range(unsigned long start, long range)
 	} while (range >= 0); 
 }
 
-void set_cmdline(unsigned int idx, long offset)
-{
+void set_cmdline(unsigned int idx, long offset) {
+
 	int i;
 	char *dst;
 	unsigned long addr;
+	int len = 0;
 
 	if ((addr = vm_params[idx].specials[SPECIAL___boot_cmdline__].addr) == -1) {
 		printf("\t__boot_cmdline__ not found.\n");
@@ -322,11 +345,56 @@ void set_cmdline(unsigned int idx, long offset)
 	dst = (char *)(addr + offset);
 	dst[0] = 0;
 	for (i = 0; i < vm_params[idx].argc; i++) {
+		if ((len += strlen(vm_params[idx].argv[i])) >= SIZE__boot_cmdline__) {
+			FAIL("__boot_cmdline__: string too long; can't strcat ", vm_params[idx].argv[i]);
+		}
 		strcat(dst, vm_params[idx].argv[i]);
 		strcat(dst, " ");
 	}
 
 	printf("\tcmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);
+}
+
+void set_string(unsigned int idx, int sym, char *string, int maxlen, long offset) {
+
+	char *dst;
+	unsigned long addr;
+
+	if (NULL == string) return;
+
+	if (strlen(string) >= maxlen - 1) {
+		FAIL(vm_params[idx].specials[sym].name, ": string too long");
+	}
+
+	if ((addr = vm_params[idx].specials[sym].addr) == -1) {
+		printf("\t%s not found.\n", vm_params[idx].specials[sym].name);
+		return;
+	} else {
+		printf("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
+	}
+
+	dst = (char *)(addr + offset);
+	strcpy(dst, string);
+
+	printf("\t%s at 0x%08x set to <<%s>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, dst);
+}
+
+void set_var(unsigned int idx, int sym, int val, long offset) {
+
+	int *dst;
+	unsigned long addr;
+
+	if ((addr = vm_params[idx].specials[sym].addr) == -1) {
+		printf("\t%s not found.\n", vm_params[idx].specials[sym].name);
+		return;
+	} else {
+		printf("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
+	}
+
+	dst = (int *)(addr + offset);
+	*dst = val;
+
+	printf("\t%s at 0x%08x set to <<%d>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, *dst);
 }
 
 void set_net_phys_offset(unsigned int idx, long offset) {
@@ -358,6 +426,7 @@ void load_vm(unsigned int idx) {
 	unsigned long heap_size, stack_size, total_size, prev_size, end, one_page;
 	unsigned long start = ~0L;
 	int clone;
+	long total_offset;
 
 	char *elf = vm_params[idx].argv[0];
 
@@ -373,7 +442,7 @@ void load_vm(unsigned int idx) {
 	/* Align the guest base up to the current guest's page size */
 	guest_base = ALIGN_UP(guest_base, one_page);
 
-	if (-1 != (clone = vm_params[idx].cloneof)) {
+	if (-1 != (clone = vm_params[idx].cloneof)) {  // this is a clone of a VM already loaded
 		prev_size = (vm_params[clone].fence_hi - vm_params[clone].fence_lo + one_page) * (idx - clone);
 
 		vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr = vm_params[clone].specials[SPECIAL___boot_net_phys_offset__].addr;
@@ -382,7 +451,9 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].stack = vm_params[clone].stack;
 		vm_params[idx].phys_offset = vm_params[clone].phys_offset;
 		vm_params[idx].load_offset = vm_params[clone].load_offset + prev_size;
-		vm_params[idx].offset_pages = (vm_params[idx].phys_offset + vm_params[idx].load_offset) >> (vm_params[idx].page_size * 2);
+		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
+
+		vm_params[idx].offset_pages = (total_offset) >> (vm_params[idx].page_size * 2);
 		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
 		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
@@ -392,11 +463,11 @@ void load_vm(unsigned int idx) {
 
 		printf("\tCopying from VM index %d: 0x%08lx to 0x%08lx size 0x%08lx\n", clone, (unsigned long)(vm_params[clone].start_pa), (unsigned long)(vm_params[clone].start_pa + prev_size), (unsigned long)(vm_params[clone].end_pa - vm_params[clone].start_pa));
 		memcpy(vm_params[clone].start_pa + prev_size, vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
-		set_net_phys_offset(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		set_net_phys_offset(idx, total_offset);
 		dcclean_range((unsigned long)vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
 
 		guest_base += prev_size;
-	} else {
+	} else {  // this is not a clone
 
 		fdesc = open(elf,O_RDONLY);
 		if (fdesc == -1) {
@@ -433,8 +504,10 @@ void load_vm(unsigned int idx) {
 			if (vm_params[idx].load_offset == -1) {
 				vm_params[idx].load_offset = guest_base - phdr.p_paddr;
 			}
+			total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
+
 			if (vm_params[idx].offset_pages == -1) {
-				vm_params[idx].offset_pages = (vm_params[idx].phys_offset + vm_params[idx].load_offset) >> (vm_params[idx].page_size * 2);
+				vm_params[idx].offset_pages = (total_offset) >> (vm_params[idx].page_size * 2);
 			}
 			phdr.p_paddr += vm_params[idx].load_offset;
 
@@ -459,9 +532,19 @@ void load_vm(unsigned int idx) {
 		}
 		close(fdesc);
 
-		set_cmdline(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);
-		set_net_phys_offset(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);
-		get_pmap(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
+		set_cmdline(idx, total_offset);
+		set_net_phys_offset(idx, total_offset);
+		if (vm_params[idx].use_dir_prefix) {
+			set_var(idx, SPECIAL___use_dir_prefix__, 1, total_offset);
+			set_string(idx, SPECIAL___dir_prefix__, vm_params[idx].dir_prefix, SIZE__dir_prefix__, total_offset);
+		}
+		if (vm_params[idx].use_file_suffix) {
+			set_var(idx, SPECIAL___use_file_suffix__, 1, total_offset);
+			set_string(idx, SPECIAL___file_suffix__, vm_params[idx].file_suffix, SIZE__file_suffix__, total_offset);
+		}
+
+		get_pmap(idx, total_offset);
 
 		/* Adjust guest_base and fences */
 		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
@@ -469,8 +552,8 @@ void load_vm(unsigned int idx) {
 		}
 		printf("\tend 0x%08lx\n", end);
 
-		vm_params[idx].start_pa = (void *)(start + vm_params[idx].phys_offset + vm_params[idx].load_offset);
-		vm_params[idx].end_pa = (void *)(end + vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		vm_params[idx].start_pa = (void *)(start + total_offset);
+		vm_params[idx].end_pa = (void *)(end + total_offset);
 		dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
 
 		heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
@@ -519,7 +602,8 @@ void load_vm(unsigned int idx) {
 				vm_params[idx].fence_hi = FENCE_HI_MAX & HI_MASK(one_page);
 			}
 		}
-	}
+	}  // else not a clone
+
 	printf("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
 	printf("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
 	printf("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
@@ -1029,6 +1113,20 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--dir_prefix")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].dir_prefix = argv[1];
+			vm_params[idx].use_dir_prefix = 1;
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--file_suffix")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].file_suffix = argv[1];
+			vm_params[idx].use_file_suffix = 1;
+			argc -= 2; argv += 2;
+			continue;
+
 		} else {
 			while (argc) {
 				if (0 == strcmp(argv[0], "--new_vm")) {
@@ -1138,7 +1236,7 @@ int main(int argc, char **argv)
 	int idx;
 
 	//Remove booter from cmdline
-	strncpy(errstr, argv[0], ERRSTR_LEN);
+	strncpy(errstr, argv[0], ERRSTR_LEN - 1);
 	argc--;
 	argv++;
 

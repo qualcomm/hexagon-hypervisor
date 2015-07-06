@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <angel.h>
 #include <string.h>
+#include <syscall_defs.h>
 
 /* Dinkumware is all crazy. */
 
@@ -51,13 +52,19 @@ static const int modemap[] = {	/* convert open mode */
 	O_RDWR | O_CREAT | O_EXCL,
 };
 
+int __use_dir_prefix__ __attribute__((section(".data"))) = 0;
+int __use_file_suffix__ __attribute__((section(".data"))) = 0;
+char __dir_prefix__[SIZE__dir_prefix__] __attribute__((section(".data"))) = { 0 };
+char __file_suffix__[SIZE__file_suffix__] __attribute__((section(".data"))) = { 0 };
+
 fd_t sys_open(const char *name, t_mode_t mode)
 {
 	int i;
+	char string[SIZE__dir_prefix__];
 
 	struct { const char *name; int mode; int len; } x;
-	x.name = ANGEL_OFFSET_PTR(name);
-	x.len = strlen(name); x.mode = 0;
+
+	x.mode = 0;
 
 	mode &= (O_RDONLY
 		| O_WRONLY
@@ -73,7 +80,26 @@ fd_t sys_open(const char *name, t_mode_t mode)
 			break;
 		}
 	}
-	clean_str(name); clean(&x,3);
-	return ANGEL(SYS_OPEN,&x,0);
+
+	string[0] = '\0';
+	if (__use_dir_prefix__) {
+		if ('/' != *name) {  // relative path; prepend __dir_prefix__
+			strncpy(string, __dir_prefix__, SIZE__dir_prefix__ - 1);
+		}
+	}
+	strncat(string, name, SIZE__dir_prefix__ - strlen(string) - SIZE__file_suffix__ - 1);
+
+	if (__use_file_suffix__) {
+		/* Append suffix if write-only. FIXME: What to do in case of O_RDWR? */
+		if (mode & O_WRONLY) {
+			strncat(string, __file_suffix__, SIZE__dir_prefix__ - strlen(string) - SIZE__file_suffix__ - 1);
+		}
+	}
+
+	x.name = ANGEL_OFFSET_PTR(string);
+	x.len = strlen(string);
+
+	clean_str(string); clean(&x, 3);
+	return ANGEL(SYS_OPEN, &x, 0);
 }
 _STD_END

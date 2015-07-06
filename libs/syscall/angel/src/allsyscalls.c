@@ -6,6 +6,7 @@
 #include <angel.h>
 #include <string.h>
 #include <stdlib.h>
+#include <syscall_defs.h>
 
 #define ALIGN32_DOWN(X) ((X) & -32)
 #define ALIGN32_UP(X) (((X) + 31) & -32)
@@ -60,7 +61,7 @@ errno_t sys_stat(const char *name, void *buffer) {
 
 errno_t sys_ftell(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FTELL,&fd,0); DEBUG_PRINTF("sys_ftell: fd=%d ret=%d\n",fd,ret); return ret; }
 
-char __boot_cmdline__[256] __attribute__((section(".data"))) = { 0 };
+char __boot_cmdline__[SIZE__boot_cmdline__] __attribute__((section(".data"))) = { 0 };
 
 errno_t sys_get_cmdline(char *buffer, count_t count)
 {

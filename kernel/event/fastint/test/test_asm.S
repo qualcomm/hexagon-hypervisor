@@ -126,6 +126,88 @@ TH_fastint_call:
 	deallocframe
 	jumpr r31
 
+	.global TH_regcheck_fastint_call
+TH_regcheck_fastint_call:
+	allocframe(#64)
+
+	memd(r29+#0) = r21:20
+	memd(r29+#8) = r23:22
+	memd(r29+#16) = r25:24
+	memd(r29+#24) = r27:26
+	r7:6 = c3:2
+	memd(r29+#32) = r7:6
+	r7:6 = c7:6
+	memd(r29+#40) = r7:6
+	r7:6 = c13:12
+	memd(r29+#48) = r7:6
+	r7:6 = c11:10
+	memd(r29+#56) = r7:6
+	r21:20 = combine(#21,#20)
+	r23:22 = combine(#23,#22)
+	r25:24 = combine(#25,#24)
+	r27:26 = combine(#27,#26)
+
+#define REGCHECK(HI,LO) \
+	r7:6 = combine(# ## #(HI) << 8,# (LO)); c##HI:LO = r7:6
+
+	REGCHECK(3,2)
+	REGCHECK(13,12)
+	REGCHECK(7,6)
+	REGCHECK(11,10)
+#undef REGCHECK
+
+	call TH_fastint_call
+#define REGCHECK(HI,LO) \
+	r7:6 = combine(# ## # (HI)<<8,# (LO)); \
+	r5:4 = c##HI:LO; \
+	p0 = cmp.eq(r7:6,r5:4); \
+	if (!p0) jump .Lregcheck_fail
+
+	REGCHECK(3,2)
+	REGCHECK(7,6)
+	REGCHECK(13,12)
+	REGCHECK(11,10)
+#undef REGCHECK
+#define REGCHECK(HI,LO) \
+	r7:6 = combine(# (HI), # ## #(LO) ); \
+	p0 = cmp.eq(r7:6,r##HI:LO); \
+	if (!p0) jump .Lregcheck_fail
+
+	REGCHECK(27,26)
+	REGCHECK(25,24)
+	REGCHECK(23,22)
+	REGCHECK(21,20)
+
+	r7:6 = memd(r29+#56)
+	c11:10 = r7:6
+	r7:6 = memd(r29+#48)
+	c13:12 = r7:6
+	r7:6 = memd(r29+#40)
+	c7:6 = r7:6
+	r7:6 = memd(r29+#32)
+	c3:2 = r7:6
+	r27:26 = memd(r29+#24)
+	r25:24 = memd(r29+#16)
+	r23:22 = memd(r29+#8)
+	r21:20 = memd(r29+#0)
+
+	dealloc_return
+.Lregcheck_fail:
+
+	r7:6 = memd(r29+#56)
+	c11:10 = r7:6
+	r7:6 = memd(r29+#48)
+	c13:12 = r7:6
+	r7:6 = memd(r29+#40)
+	c7:6 = r7:6
+	r7:6 = memd(r29+#32)
+	c3:2 = r7:6
+	r27:26 = memd(r29+#24)
+	r25:24 = memd(r29+#16)
+	r23:22 = memd(r29+#8)
+	r21:20 = memd(r29+#0)
+	jump TH_regcheck_fail
+
 	.section .sdata,"aw"
 	.p2align 2
 oldvecs:	.word 0

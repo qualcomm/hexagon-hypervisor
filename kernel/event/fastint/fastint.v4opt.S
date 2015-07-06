@@ -119,12 +119,12 @@ H2K_fastint_return:
 	{
 		TMP54 = memd(TMP+#CONTEXT_cs1cs0)
 		TMP10 = memd(TMP+#CONTEXT_lc1sa1)
-		c3:2 = TMP10
+		c11:10 = TMP32
 	}
 	{
+		c3:2 = TMP10
 		TMP10 = memd(TMP+#CONTEXT_m1m0)
 		TMP = memw(TMP+#CONTEXT_elr)
-		c11:10 = TMP32
 	}
 	{
 		elr = TMP

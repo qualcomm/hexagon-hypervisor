@@ -33,10 +33,13 @@ static s64_t H2K_tlb_tlbquery(u32_t unused0, u32_t va, u64_t unused32, H2K_threa
 	return H2K_mem_tlb_probe(va,me->ssr_asid);
 }
 
-static s64_t H2K_tlb_tlballoc(u32_t unused0, u32_t unused1, u64_t entry, H2K_thread_context *me)
+static s64_t H2K_tlb_tlballoc(u32_t unused0, u32_t unused1, u64_t entry_in, H2K_thread_context *me)
 {
 	int idx,maskidx;
 	u64_t mask;
+	H2K_mem_tlbfmt_t entry;
+	entry.raw = entry_in;
+	entry.asid = me->ssr_asid;
 	H2K_mutex_lock_tlb();
 	mask = H2K_gp->pinned_tlb_mask;
 	maskidx = 63-Q6_R_cl1_P(mask);
@@ -48,7 +51,7 @@ static s64_t H2K_tlb_tlballoc(u32_t unused0, u32_t unused1, u64_t entry, H2K_thr
 	/* We may have to shrink replaceable section */
 	if (H2K_gp->last_tlb_index == idx) H2K_gp->last_tlb_index--;
 	H2K_gp->pinned_tlb_mask = mask | 1ULL<<maskidx;
-	H2K_mem_tlb_write(idx,entry);
+	H2K_mem_tlb_write(idx,entry.raw);
 	H2K_mutex_unlock_tlb();
 	return idx;
 }

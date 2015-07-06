@@ -55,9 +55,10 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
 static inline h2_u64_t qurt_tlb_from_entry(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, unsigned int size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perms)
 {
 	h2_u64_t entry;
-	entry = 0xC0000000 | (vaddr >> 12);
+	entry = 0x80000000 | (vaddr >> 12);
 	entry <<= 32;
 	entry |= ((h2_u64_t)perms) << 29;
+	entry |= (1) << 28; // U bit
 	entry |= cache_attribs << 24;
 	entry |= ((paddr_64 >> 11) & (0x00FFFFFF) & (-2 << (size*2)));
 	entry |= (1<<(size));

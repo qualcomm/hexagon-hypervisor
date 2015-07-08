@@ -32,6 +32,8 @@ extern "C" {
 /** @addtogroup memory_management_types
 @{ */
 
+#define QURT_MEM_INVALID (~0)
+
 extern qurt_mem_pool_t qurt_mem_default_pool; // <-- qurt_mem_pool_t is unsigned int  ... OR IS IT!?!??!!?! let's make it a pointer to a real pool.
 // qurt_mem_region_t is unsigned int also.
 
@@ -866,8 +868,10 @@ int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long
 static inline int qurt_mem_region_query_64(qurt_mem_region_t *region_handle, 
 	qurt_addr_t vaddr, qurt_paddr_64_t paddr)
 {
-	if (paddr != QURT_EINVALID) return qurt_mem_region_query_64_ppn(region_handle,paddr>>12);
-	if (vaddr != QURT_EINVALID) return qurt_mem_region_query_64_vpn(region_handle,((unsigned long)vaddr) >> 12);
+	if ((qurt_paddr_t)paddr != QURT_MEM_INVALID) 
+		return qurt_mem_region_query_64_ppn(region_handle,paddr>>12);
+	if (vaddr != QURT_MEM_INVALID)
+		return qurt_mem_region_query_64_vpn(region_handle,((unsigned long)vaddr) >> 12);
 	return QURT_EFATAL;
 }
 
@@ -940,7 +944,7 @@ static inline int qurt_mem_map_static_query_64(qurt_addr_t *vaddr, qurt_paddr_64
 	qurt_mem_region_attr_t attrs;
 	qurt_paddr_64_t basepa;
 	qurt_addr_t va;
-	if ((qurt_mem_region_query_64(&region,QURT_EINVALID,paddr_64)) != QURT_EOK) return QURT_EVAL;
+	if ((qurt_mem_region_query_64(&region,QURT_MEM_INVALID,paddr_64)) != QURT_EOK) return QURT_EVAL;
 	qurt_mem_region_attr_get(region,&attrs);
 	qurt_mem_region_attr_get_virtaddr(&attrs,&va);
 	qurt_mem_region_attr_get_physaddr_64(&attrs,&basepa);

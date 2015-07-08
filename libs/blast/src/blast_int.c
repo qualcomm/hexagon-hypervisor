@@ -126,3 +126,16 @@ int qurt_interrupt_acknowledge(int int_num)
 	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_ENABLE,int_num+32,0);
 	return QURT_EOK;
 }
+
+unsigned int qurt_fastint_register(int intno, int (*fn)(int))
+{
+	h2_register_fastint(intno+32,fn);
+	return QURT_EOK;
+}
+
+unsigned int qurt_fastint_deregister(int intno)
+{
+	h2_deregister_fastint(intno+32);
+	return QURT_EOK;
+}
+

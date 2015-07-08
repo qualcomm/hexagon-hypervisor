@@ -110,7 +110,7 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 		return QURT_EFATAL;
 	}
 	memset (pUgp, 0, sizeof (struct QURT_ugp_ptr));
-	/* That initializes join_lock, join_cond, join_refcount */
+	/* That initializes join_lock, join_cond, join_refcount, join_done */
 	pUgp->utcb.entrypoint = (void *)entrypoint;
 	pUgp->utcb.arg = arg;
 	pUgp->utcb.attr = *attr;
@@ -149,10 +149,6 @@ int qurt_thread_join(unsigned int threadid, int *status)
 	DEBUG_PRINTF("QURT JOIN: found ptr %x\n",ptr);
 	if (ptr == NULL) return 0;
 	h2_mutex_lock(&ptr->join_lock);
-	if (ptr->join_state != QURT_JOIN_STATE_RUNNING) {
-		DEBUG_PRINTF("QURT JOIN: thread not running\n");
-		return 0;
-	}
 	ptr->join_refcount++;
 	while (ptr->join_state == QURT_JOIN_STATE_RUNNING) {
 		DEBUG_PRINTF("QURT_JOIN: Waiting for thread %x to finish...\n",threadid);
@@ -160,9 +156,10 @@ int qurt_thread_join(unsigned int threadid, int *status)
 	}
 	ptr->join_refcount--;
 	tmp = ptr->join_refcount;
+	*status = ptr->status;
 	h2_mutex_unlock(&ptr->join_lock);
 	if (tmp == 0) {
-		remove_thread(ptr);
+		h2_sem_up(&ptr->join_done);
 	}
 	*status = ptr->status;
 	return 0;
@@ -184,9 +181,10 @@ void qurt_thread_exit(int status)
 		} else {
 			DEBUG_PRINTF("QURT THREAD: %x sees no waiters...\n",h2_thread_myid());
 			h2_mutex_unlock(&tmp->join_lock);
-			remove_thread(tmp);
 		}
 	}
+	h2_sem_down(&tmp->join_done);
+	remove_thread(tmp);
 	h2_thread_stop(0);
 }
 

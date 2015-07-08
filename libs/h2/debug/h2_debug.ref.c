@@ -86,6 +86,18 @@ void h2_debug_context_dump(h2_context_t *context)
 	h2_mutex_unlock(&debug_mutex);
 }
 
+static void (*h2_debug_context_handler)(h2_context_t *context) = h2_debug_context_dump;
+
+void h2_debug_context_handle(h2_context_t *context)
+{
+	h2_debug_context_handler(context);
+}
+
+void h2_debug_register_handler(void (*handler)(h2_context_t *context))
+{
+	h2_debug_context_handler = handler;
+}
+
 void h2_debug_mutex_init() {
 	h2_mutex_init(&debug_mutex);
 }

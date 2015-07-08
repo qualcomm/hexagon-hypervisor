@@ -38,7 +38,7 @@ h2_error_event:
 	}
 	{
 		r0 = r29
-		call h2_debug_context_dump
+		call h2_debug_context_handle
 	}
 	{
 		r0 = memw(##do_exit)

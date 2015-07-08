@@ -10,5 +10,6 @@
 
 void h2_debug_context_dump(h2_context_t *context);
 void h2_debug_mutex_init();
+void h2_debug_register_handler(void (*handler)(h2_context_t *context));
 
 #endif

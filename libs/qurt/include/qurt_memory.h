@@ -32,7 +32,7 @@ extern "C" {
 /** @addtogroup memory_management_types
 @{ */
 
-#define QURT_MEM_INVALID (~0)
+#define QURT_MEM_INVALID (~0U)
 
 extern qurt_mem_pool_t qurt_mem_default_pool; // <-- qurt_mem_pool_t is unsigned int  ... OR IS IT!?!??!!?! let's make it a pointer to a real pool.
 // qurt_mem_region_t is unsigned int also.

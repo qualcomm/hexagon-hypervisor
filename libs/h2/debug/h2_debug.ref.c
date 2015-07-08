@@ -95,7 +95,7 @@ void h2_debug_context_handle(h2_context_t *context)
 
 void h2_debug_register_handler(void (*handler)(h2_context_t *context))
 {
-	// h2_debug_context_handler = handler;
+	h2_debug_context_handler = handler;
 }
 
 void h2_debug_mutex_init() {

@@ -56,7 +56,7 @@ void qurt_exception_raise_fatal()
 {
 	qurt_printf("FATAL: from %p<%p<%p: STMODE\n",__builtin_return_address(0),__builtin_return_address(1),__builtin_return_address(2));
 	h2_fatal_crash(H2_FATAL_STMODE);
-	// if (qurt_tcm_dump != NULL) memcpy(qurt_tcm_dump,(void *)(TCM_MAPPED_ADDR),TCM_SAVE_SIZE);
+	if (qurt_tcm_dump != NULL) memcpy(qurt_tcm_dump,(void *)(TCM_MAPPED_ADDR),TCM_SAVE_SIZE);
 }
 
 void qurt_exception_shutdown_fatal()

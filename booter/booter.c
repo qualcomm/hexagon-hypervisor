@@ -165,7 +165,7 @@ void usage()
 	printf("  --l1ip [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 instruction cache partitioning (ARCHV <= 5).\n");
 	printf("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	printf("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
-	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
+	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register. Setting to -1 reads current value, doesn't set.\n");
 	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	printf("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
 
@@ -474,7 +474,7 @@ void load_vm(unsigned int idx) {
 			error("\tCan't open file ", elf);
 		}
 		if (elf_get_ehdr(fdesc,&ehdr) < 0) {
-			FAIL("\tInvalid ELF file: %s\n", elf);
+			FAIL("\tInvalid ELF file: ", elf);
 		}
 
 		elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr);
@@ -806,16 +806,22 @@ void kernel_setup() {
 
 void set_l2_reg(unsigned int offset, unsigned int val) {
 
-	unsigned int old = h2_hwconfig_l2_get_reg(offset);
-	unsigned int ret = h2_hwconfig_l2_set_reg(offset, val);
-
-	if (ret != old) {
-		FAIL("set_l2_reg mismatch.", "");
-	}
+	unsigned int old, ret;
 
 	printf("Set L2 reg at offset 0x%08x:\n", offset);
+
+	old = h2_hwconfig_l2_get_reg(offset);
 	printf("\tOld value:  0x%08x\n", old);
-	printf("\tNew value:  0x%08x\n", val);
+
+	if (val != -1) {
+		ret = h2_hwconfig_l2_set_reg(offset, val);
+
+		if (ret != old) {
+			FAIL("set_l2_reg mismatch.", "");
+		}
+
+		printf("\tNew value:  0x%08x\n", val);
+	}
 }
 
 /* Need to clean when clearing L2WB */

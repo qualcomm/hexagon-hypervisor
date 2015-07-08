@@ -69,6 +69,7 @@ struct QURT_ugp_ptr {
 	struct QURT_ugp_ptr *next;
 	h2_mutex_t join_lock;
 	h2_cond_t join_cond;
+	h2_sem_t join_done;
 	int join_refcount;
 	int status;
 	enum { QURT_JOIN_STATE_RUNNING, QURT_JOIN_STATE_DONE } join_state;

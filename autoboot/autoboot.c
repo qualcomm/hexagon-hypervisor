@@ -21,6 +21,7 @@
 
 int NUM_VCPUS = 400;
 unsigned int TRAPMASK = 0xFFFFFFFF;
+unsigned int PRIO = 0;
 #define SHARED_INTS 0
 
 #define CHILD_INTERRUPT 14
@@ -73,7 +74,7 @@ unsigned long vm_setup(unsigned int num_cpus, short num_ints, u32_t trans, unsig
 		}
 	}
 
-	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0, trapmask) != vm) {
+	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, PRIO, trapmask) != vm) {
 		FAIL("SET_PRIO_TRAPMASK");
 	}
 
@@ -81,8 +82,6 @@ unsigned long vm_setup(unsigned int num_cpus, short num_ints, u32_t trans, unsig
 }
 
 volatile unsigned int *t32_vm_entry_p = (volatile unsigned int *)0x8D4FFFFC;
-
-unsigned int vm_best_prio = 0;
 
 unsigned long boot_vm() {
 	unsigned int bootaddr = *t32_vm_entry_p;
@@ -94,10 +93,11 @@ unsigned long boot_vm() {
 		TRAPMASK,
 		H2K_ASID_TRANS_TYPE_OFFSET);
 	PRINTF("vm set up entry=%x\n",bootaddr);
-	if (h2_vmboot((void *)(bootaddr), (void *)0x20000000, bootaddr, vm_best_prio, newvm) == -1) FAIL("vmboot");
+	if (h2_vmboot((void *)(bootaddr), (void *)0x20000000, bootaddr, PRIO, newvm) == -1) FAIL("vmboot");
 	/* Reset for Linux-y VM */
 	NUM_VCPUS = 8;
 	TRAPMASK = 0x1;
+	PRIO = 252;
 	return newvm;
 }
 

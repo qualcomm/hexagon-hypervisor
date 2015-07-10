@@ -15,11 +15,8 @@ union error_msg_type {
 };
 
 #define PIPE_ELEMENTS 10
-#define TCM_SAVE_SIZE (512*1024) // KLUDGY
-#define TCM_MAPPED_ADDR 0x10000000
 static qurt_pipe_t error_pipe;
 static qurt_pipe_data_t error_pipe_buf[PIPE_ELEMENTS+1];
-extern unsigned char qurt_tcm_dump[] __attribute__((weak));
 
 typedef void (*error_callback_t)(void *arg);
 static error_callback_t error_callback = NULL;
@@ -56,7 +53,6 @@ void qurt_exception_raise_fatal()
 {
 	qurt_printf("FATAL: from %p<%p<%p: STMODE\n",__builtin_return_address(0),__builtin_return_address(1),__builtin_return_address(2));
 	h2_fatal_crash(H2_FATAL_STMODE);
-	// if (qurt_tcm_dump != NULL) memcpy(qurt_tcm_dump,(void *)(TCM_MAPPED_ADDR),TCM_SAVE_SIZE);
 }
 
 void qurt_exception_shutdown_fatal()

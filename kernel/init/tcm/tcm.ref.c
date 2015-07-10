@@ -11,13 +11,14 @@
 #include <physread.h>
 #include <tmpmap.h>
 #include <max.h>
+#include <tcm.h>
+#include <cfg_table.h>
 
 void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 
 #ifdef H2K_USE_TCM
 
 	u32_t l2 = H2K_gp->l2size;
-	u32_t cfg_base;
 	u32_t tcm_base;
 	u64_t *from, *rd;
 	u64_t *to;
@@ -37,9 +38,7 @@ void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 	}
 
 	if (l2size - (1 << l2_tags) * L2_TAG_CHUNK > (u32_t)&H2K_KERNEL_NPAGES * H2K_PAGESIZE) {  // room in TCM?
-		
-		asm volatile ( "%0 = cfgbase\n" : "=r" (cfg_base));
-		tcm_base = (H2K_mem_physread_word((cfg_base << CFG_TABLE_SHIFT) + CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT);
+		tcm_base = H2K_cfg_table(CFG_TABLE_L2TCM);
 
 		// remap
 		H2K_tmpmap_add_and_lock((pa_t)tcm_base, DEVICE_TYPE);
@@ -88,3 +87,31 @@ void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 #endif
 
 }
+
+static inline u32_t calc_tcm_size()
+{
+	u32_t l2cfg = (H2K_get_syscfg() & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS;
+	u32_t l2revsize = (H2K_gp->core_rev >> 12) & 0xF;
+	u32_t l2size = (128*1024) * l2revsize;
+	u32_t l2csize = (l2cfg == 0) ? 0 : (64*1024) << (l2cfg-1);
+	u32_t tcmsize = l2size - l2csize;
+	return tcmsize;
+}
+#define MAX_TCM_COPY_SIZE (512*1024)
+
+void H2K_tcm_crash_copy()
+{
+	u32_t bytes;
+	u32_t tcm_addr;
+	u32_t tcm_size;
+	int i;
+	u32_t *dst = (u32_t *)(0xFF070000); /* EJP: FIXME: we're not necessarily at the start of the page, and our pgsize isn't necessarily this big... */
+	tcm_addr = H2K_cfg_table(CFG_TABLE_L2TCM);
+	tcm_size = calc_tcm_size();
+	if (tcm_size > MAX_TCM_COPY_SIZE) tcm_size = MAX_TCM_COPY_SIZE;
+	for (i = 0; i < (tcm_size/8); i++) {
+		bytes = H2K_mem_physread_word(tcm_addr+(4*i));
+		dst[i] = bytes;
+	}
+}
+

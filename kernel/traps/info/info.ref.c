@@ -44,7 +44,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return H2K_gp->core_rev;
 
 	case INFO_SSBASE:
-		return cfg_table(CFG_TABLE_SSBASE);
+		return H2K_cfg_table(CFG_TABLE_SSBASE);
 
 	case INFO_TLB_FREE:
 		return H2K_gp->last_tlb_index + 1;
@@ -56,7 +56,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return H2K_LINK_ADDR - H2K_gp->phys_offset;
 
 	case INFO_TCM_BASE:
-		return cfg_table(CFG_TABLE_L2TCM);
+		return H2K_cfg_table(CFG_TABLE_L2TCM);
 
 	case INFO_L2MEM_SIZE:
 		return l2size;
@@ -71,10 +71,10 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return (u32_t)&H2K_KERNEL_NPAGES;
 
 	case INFO_L2VIC_BASE:
-		return cfg_table(CFG_TABLE_SSBASE) + L2VIC_OFFSET;
+		return H2K_cfg_table(CFG_TABLE_SSBASE) + L2VIC_OFFSET;
 
 	case INFO_TIMER_BASE:
-		return cfg_table(CFG_TABLE_SSBASE) + TIMER_OFFSET;
+		return H2K_cfg_table(CFG_TABLE_SSBASE) + TIMER_OFFSET;
 
 	case INFO_TIMER_INT:
 		return H2K_gp->timer_intnum;

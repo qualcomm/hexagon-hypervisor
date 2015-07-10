@@ -135,7 +135,7 @@ int main()
 	unsigned int new_vm;
 	h2_sem_init_val(&sleepsem,0);
 	PRINTF("autoboot: H2 started\n");
-	// EJP: 5/19/2015: L2 cache size reconfiguration is buggy, we lose data
+	h2_set_prio(h2_thread_myid(),250);
 	h2_hwconfig_l2cache_size(3,1);//1==64KB,2==128KB,3==256KB,4==512KB
 	PRINTF("L2 cache resized to 256KB\n");
 #if 0

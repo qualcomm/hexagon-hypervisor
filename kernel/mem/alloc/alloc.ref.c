@@ -12,6 +12,8 @@
 #define WORDS(X) (((X) + sizeof(H2K_mem_alloc_tag_t)) / sizeof(H2K_mem_alloc_tag_t))
 #define UNITS(X) (((X) + ALLOC_UNIT) / ALLOC_UNIT)
 
+/* EJP: move to kg? In theory this allows KG to be alloc'd, but in practice we
+ * use KG really early */
 static H2K_mem_alloc_tag_t *heap IN_SECTION(".data.core.globals");
 static u32_t heap_size IN_SECTION(".data.core.globals");
 static u32_t heap_lock IN_SECTION(".data.core.globals");

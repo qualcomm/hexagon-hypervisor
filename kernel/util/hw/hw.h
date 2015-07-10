@@ -167,6 +167,13 @@ static inline void H2K_set_chicken(u32_t val)
 	asm volatile (" s63 = %0 // set chicken" : : "r"(val));
 }
 
+static inline u32_t H2K_get_cfgbase()
+{
+	u32_t ret;
+	asm volatile (" %0 = cfgbase" : "=r"(ret));
+	return ret;
+}
+
 static inline u32_t H2K_get_rgdr()
 {
 	u32_t ret;

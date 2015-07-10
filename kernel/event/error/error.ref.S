@@ -126,6 +126,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	}:endloop0
 	nop
 	call H2K_intconfig_l2vic_crash
+	call H2K_tcm_crash_copy
 	call H2K_cache_d_cleaninv
 	call H2K_cache_l2_cleaninv
 	syncht
@@ -235,34 +236,6 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	// All threads but one (unknown: which one...) should be getting NMI and shutting down.
 	// Wait for them here.
 
-#if 0
-	// Part 2: save TLB entries
-	// This is easy, just save to its spot in kernel globals
-	r0 = add(H2K_GP,#KG_crash_tlb)
-	r1 = #0
-	loop0(1f,#MAX_TLB_ENTRIES);
-1:
-	r3:2 = tlbr(r1)
-	{
-		memd(r0++#8) = r3:2
-		r1 = add(r1,#1)
-	}:endloop0
-	// Part 3: Clean Caches
-	call H2K_cache_d_cleaninv
-	call H2K_cache_l2_cleaninv
-	syncht
-	// Part 4: Invoke SW routine
-	r1:0 = memd(H2K_GP+#KG_fatal_hook_and_arg)
-	r3:2 = memd(H2K_GP+#KG_fatal_hook_gp_ssr)
-	gp = r3
-	ssr = r2
-	r5 = ##H2K_fastint_contexts
-	r29 = add(r5,##FASTINT_CONTEXT_SIZE)
-	sgp0 = r5
-	isync
-	p0 = cmp.eq(r1,#0)
-	if (!p0) callr r1
-#endif
 .Lstop:
 	stop(r0)
 	jump .Lstop

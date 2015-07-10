@@ -93,6 +93,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 		/* Just leave WB mode */
 		/* Clean entire cache */
 #if ARCHV >= 60
+		/* EJP: FIXME: in ARCHV >= 60 H2K_cache_l2_cleaninv() should just be H2K_l2gclenainv() */
 		H2K_l2gcleaninv();
 #else
 		H2K_cache_l2_cleaninv();

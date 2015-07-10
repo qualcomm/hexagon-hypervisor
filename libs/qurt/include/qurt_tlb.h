@@ -181,7 +181,10 @@ static inline int qurt_tlb_entry_set (unsigned int entry_id, unsigned long long 
  **/
 static inline int qurt_tlb_entry_get (unsigned int entry_id, unsigned long long int *entry)
 {
-	*entry = (h2_tlb_read(entry_id) & 0xF80fffffffffffffULL);
+	unsigned long long int trapret;
+	trapret = h2_tlb_read(entry_id);
+	if (trapret == ~0ULL) return QURT_EFATAL;
+	*entry = (trapret & 0xF80fffffffffffffULL);
 	return QURT_EOK;
 }
 

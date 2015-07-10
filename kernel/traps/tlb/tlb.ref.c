@@ -14,6 +14,7 @@ typedef s64_t (*tlbopptr_t)(u32_t, u32_t, u64_t, H2K_thread_context *);
 
 static s64_t H2K_tlb_tlbread(u32_t unused0, u32_t idx, u64_t unused32, H2K_thread_context *me)
 {
+	if (idx >= H2K_gp->tlb_size) return ~0LL;
 	return H2K_mem_tlb_read(idx);
 }
 

@@ -57,7 +57,8 @@ void timer(int dummy)
 		for (j=0; j<1000; j++) {
 			asm volatile("nop;");
 		}
-		asm volatile("R0 = #1; swi(R0);":::"r0");
+		h2_nanosleep(100);
+		h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE, TEST_INT, 1);
 		puts("tick");
 	}
 	h2_thread_stop(0);  //  weird things happen without this here.
@@ -83,7 +84,7 @@ int main()
 
 //	h2_init(0);
 	h2_handle_errors(0);
-	h2_config_add_thread_storage(context_space,sizeof(context_space));
+	//h2_config_add_thread_storage(context_space,sizeof(context_space));
 	info("Starting\n");
 
 	h2_anysignal_init(&int_sig);

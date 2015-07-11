@@ -109,8 +109,8 @@ void H2K_tcm_crash_copy()
 	tcm_addr = H2K_cfg_table(CFG_TABLE_L2TCM);
 	tcm_size = calc_tcm_size();
 	if (tcm_size > MAX_TCM_COPY_SIZE) tcm_size = MAX_TCM_COPY_SIZE;
-	for (i = 0; i < (tcm_size/8); i++) {
-		bytes = H2K_mem_physread_word(tcm_addr+(4*i));
+	for (i = 0; i < (tcm_size/sizeof(bytes)); i++) {
+		bytes = H2K_mem_physread_word(tcm_addr+(i*sizeof(bytes)));
 		dst[i] = bytes;
 	}
 }

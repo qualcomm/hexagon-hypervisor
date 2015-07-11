@@ -57,7 +57,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	{
 		crswap(OTHER_SGP,sgp0)
 		OLD_SP_SAVE = TMP
-		TMP = TMP5	// move GP over
+		TMP4 = #0				// clear UGP during fastint
 		r0 = add(r0,#-32)
 	}
 	{
@@ -67,10 +67,10 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	{
 		memd(OTHER_SGP+#CONTEXT_cs1cs0) = TMP32
 		memd(OTHER_SGP+#CONTEXT_m1m0) = TMP10
-		TMP54 = c11:10				// GP:UGP
+		TMP32 = c11:10				// GP:UGP
 	}
 	{
-		memd(OTHER_SGP+#CONTEXT_gpugp) = TMP54
+		memd(OTHER_SGP+#CONTEXT_gpugp) = TMP32
 		TMP32 = c3:2				// lc1/sa1
 	}
 	{
@@ -81,7 +81,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 1:
 	{
 		if (!p3) memw(OTHER_SGP+#CONTEXT_elr) = TMP0
-		gp = TMP
+		c11:10 = TMP54			// Set up GP:UGP
 		INT_SAVE = r0			// NOTE: THIS IS R30 currently, don't dealloc!
 		callr INT_ARG
 	}

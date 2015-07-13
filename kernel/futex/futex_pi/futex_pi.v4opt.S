@@ -41,7 +41,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		allocframe(#16)
 		r19:18 = combine(r1,r0)
-		DEST = #1
+		DEST = #0
 	}
 	k0lock
 	{

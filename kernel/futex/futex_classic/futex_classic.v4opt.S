@@ -8,6 +8,7 @@
 #include <futex.h>
 #include <max.h>
 #include <safemem.h>
+#include <vmdefs.h>
 
 /* H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) */
 FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
@@ -17,16 +18,23 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 		r18 = r2
 		r19 = memub(r2+#CONTEXT_hthread)
 	}
-	k0lock
-	{
-		r1 = #SAFEMEM_R
-		r3:2 = combine(r2,r29)
-		call H2K_safemem_check_and_lock
-	}
-#define LOCKPTR r16
-#define LOCKVAL r17
 #define ME r18
 #define HTHREAD r19
+#define LOCKPTR r16
+#define LOCKVAL r17
+#define TMP r6
+	k0lock
+	{
+		TMP = memub(ME+#CONTEXT_vmstatus)
+		r1 = #SAFEMEM_R
+		r3:2 = combine(r2,r29)
+	}
+	{
+		p0 = tstbit(TMP,#H2K_VMSTATUS_VMWORK_BIT)
+		if (p0.new) jump:nt .Lwait_fail
+		call H2K_safemem_check_and_lock
+	}
+#undef TMP
 #define PA r2
 #define TMP r3
 #define ZEROPAIR r9:8
@@ -36,6 +44,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 #define RUNLIST r7
 #define RUNLIST_PRIOS r6
 #define HASH r10
+
 	.falign
 	{
 		p0 = cmp.eq(r0,#0)
@@ -72,8 +81,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 	.falign
 	{
 		deallocframe
-		r0 = ME
-		r1 = memub(ME+#CONTEXT_hthread)
+		r1:0 = combine(HTHREAD,ME)
 		jump H2K_dosched
 	}
 .Lwait_fail:

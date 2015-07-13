@@ -9,6 +9,7 @@
 #include <max.h>
 #include <idtype.h>
 #include <safemem.h>
+#include <vmdefs.h>
 
 /* s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me) */
 FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
@@ -40,12 +41,17 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		allocframe(#16)
 		r19:18 = combine(r1,r0)
-		DEST = #0
+		DEST = #1
 	}
 	k0lock
 	{
+		TMP = memub(ME+#CONTEXT_vmstatus)
 		r1 = #SAFEMEM_RW
 		r3:2 = combine(ME,r29)
+	}
+	{
+		p0 = tstbit(TMP,#H2K_VMSTATUS_VMWORK_BIT)
+		if (p0.new) jump:nt .Llpi_unlock_retfail
 		call H2K_safemem_check_and_lock
 	}
 	.falign

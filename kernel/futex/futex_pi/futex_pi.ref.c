@@ -17,6 +17,7 @@
 #include <safemem.h>
 #include <lowprio.h>
 #include <id.h>
+#include <vmwork.h>
 
 static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 {
@@ -71,8 +72,9 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 	} x;
 	pa_t pa;
 	BKL_LOCK();
-	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
+	if ((me->vmstatus & H2K_VMSTATUS_VMWORK) && (me->vmstatus & H2K_VMSTATUS_IE)) {
 		BKL_UNLOCK();
+		H2K_vm_do_work(me);
 		return -1;
 	}
 	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_RW,&pa,me)) {

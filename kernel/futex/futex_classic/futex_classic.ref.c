@@ -17,14 +17,16 @@
 #include <safemem.h>
 #include <lowprio.h>
 #include <id.h>
+#include <vmwork.h>
 
 s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 {
 	u32_t readval;
 	pa_t pa;
 	BKL_LOCK();
-	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
+	if ((me->vmstatus & H2K_VMSTATUS_VMWORK) && (me->vmstatus & H2K_VMSTATUS_IE)) {
 		BKL_UNLOCK();
+		H2K_vm_do_work(me);
 		return -1;
 	}
 	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_R,&pa,me)) {

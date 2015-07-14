@@ -23,15 +23,19 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 #define LOCKPTR r16
 #define LOCKVAL r17
 #define TMP r6
+#define MASK r7
 	k0lock
 	{
 		TMP = memub(ME+#CONTEXT_vmstatus)
 		r1 = #SAFEMEM_R
 		r3:2 = combine(r2,r29)
+		MASK = #H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_IE
 	}
 	{
-		p0 = tstbit(TMP,#H2K_VMSTATUS_VMWORK_BIT)
-		if (p0.new) jump:nt .Lwait_fail
+		p0 = bitsset(TMP,MASK)
+		if (p0.new) jump:nt .Lwait_fail_vmwork
+	}
+	{
 		call H2K_safemem_check_and_lock
 	}
 #undef TMP
@@ -86,6 +90,16 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 	}
 .Lwait_fail:
 	k0unlock
+	{
+		r0 = #-1
+		dealloc_return
+	}
+.Lwait_fail_vmwork:
+	k0unlock
+	{
+		r0 = ME
+		call H2K_vm_do_work
+	}
 	{
 		r0 = #-1
 		dealloc_return

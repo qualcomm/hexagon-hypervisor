@@ -41,7 +41,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		allocframe(#16)
 		r19:18 = combine(r1,r0)
-		DEST = #0
+		DEST = #H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_IE
 	}
 	k0lock
 	{
@@ -50,9 +50,12 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 		r3:2 = combine(ME,r29)
 	}
 	{
-		p0 = tstbit(TMP,#H2K_VMSTATUS_VMWORK_BIT)
-		if (p0.new) jump:nt .Llpi_unlock_retfail
+		p0 = bitsset(TMP,DEST)
+		if (p0.new) jump:nt .Llpi_unlock_retfail_vmwork
+	}
+	{
 		call H2K_safemem_check_and_lock
+		DEST = #0
 	}
 	.falign
 	{
@@ -289,6 +292,16 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	}
 .Llpi_unlock_retfail:
 	k0unlock
+	{
+		r0 = #-1
+		dealloc_return
+	}
+.Llpi_unlock_retfail_vmwork:
+	k0unlock
+	{
+		call H2K_vm_do_work
+		r0 = ME
+	}
 	{
 		r0 = #-1
 		dealloc_return

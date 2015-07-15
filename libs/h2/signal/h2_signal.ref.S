@@ -74,7 +74,7 @@ h2_signal_wait_all:
 	}
 	{
 		if (p0) jumpr r31
-		if (!p0) r0 = SIGVAL
+		if (p0) r0 = SIGVAL
 	}
 	{
 		allocframe(#8)

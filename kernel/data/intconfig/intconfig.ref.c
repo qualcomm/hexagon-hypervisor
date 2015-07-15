@@ -115,6 +115,9 @@ static void H2K_intconfig_l2_init(ssbase)
 
 	u32_t spi_irq, spi_word, tlmm_irq, tlmm_word;
 
+	//	u32_t hexagon_ipc_irq[4];   //  hardcoded number good, so good.  taste so rite.
+	//	u32_t hexagon_ipc_word[4];
+
 #if ARCHV >= 5
 	u32_t spmi_arb_periph_irq, spmi_arb_periph_word, spmi_arb_ee_irq, spmi_arb_ee_word;
 #endif
@@ -153,6 +156,18 @@ static void H2K_intconfig_l2_init(ssbase)
 #define LPASS_SPMI_ARB_PERIPH_WORD	(LPASS_SPMI_ARB_PERIPH_IRQ/32)
 #define LPASS_SPMI_ARB_EE_IRQ		49
 #define LPASS_SPMI_ARB_EE_WORD	(LPASS_SPMI_ARB_EE_IRQ/32)
+//#define LPASS_USB1_HS_IRQ	44
+#define LPASS_USB1_HS_IRQ	54
+#define LPASS_USB1_HS_WORD	(LPASS_USB1_HS_IRQ/32)
+
+#define LPASS_IPC_0_IRQ		18
+#define LPASS_IPC_0_WORD	(LPASS_IPC_0_IRQ/32)
+#define LPASS_IPC_1_IRQ		8
+#define LPASS_IPC_1_WORD	(LPASS_IPC_1_IRQ/32)
+#define LPASS_IPC_2_IRQ		33
+#define LPASS_IPC_2_WORD	(LPASS_IPC_2_IRQ/32)
+#define LPASS_IPC_3_IRQ		46
+#define LPASS_IPC_3_WORD	(LPASS_IPC_3_IRQ/32)
 
 	/* Ew ew ew */
 	if (ssbase == QDSP6SS_PRIV_BASE_MSS - QDSP6SS_PUB_PRIV_OFFSET) {
@@ -198,6 +213,14 @@ static void H2K_intconfig_l2_init(ssbase)
 		if (i == spmi_arb_ee_word) {
 			intbase[(0x280/4) + i] &= ~(1<<(spmi_arb_ee_irq % 32));
 		}
+
+		/* Ew ew ew, part deux */
+		if (ssbase != QDSP6SS_PRIV_BASE_MSS - QDSP6SS_PUB_PRIV_OFFSET) {
+			if (i == LPASS_USB1_HS_WORD) {
+				intbase[(0x280/4) + i] &= ~(1<<(LPASS_USB1_HS_IRQ % 32));
+			}
+		}
+
 #endif
 	}
 	ciad(0x80000000);				/* Enable L2 Interrupts */

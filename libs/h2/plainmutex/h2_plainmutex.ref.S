@@ -58,6 +58,7 @@ h2_plainmutex_lock:
 	}
 	jumpr r31
 
+/* EJP: ??? FUTEX_UNLOCK_PI probably checks W, and we don't actually write. Might be a problem for COW?. */
 h2_plainmutex_unlock:
 	allocframe(#8)
 	{
@@ -65,13 +66,13 @@ h2_plainmutex_unlock:
 		r24 = r0
 		call h2_thread_myid
 	}
+	r25 = r0
 2:
 	{
-		r25 = r0
 		r1 = memw_locked(r24)
 	}
 	{
-		p1 = cmp.eq(r1,r0)
+		p1 = cmp.eq(r1,r25)
 		if (!p1.new) jump:nt 1f
 		if (!p1.new) r0 = r24
 		r2 = #0
@@ -92,10 +93,13 @@ h2_plainmutex_unlock:
 1:
 	trap0(#H2_TRAP_FUTEX_UNLOCK_PI)
 	{
-		deallocframe
+		p0 = cmp.gt(r0,#-1)
+		if (!p0.new) jump:nt 2b
+	}
+	{
+		dealloc_return
 		r25:24 = memd(r29)
 	}
-	jumpr r31
 
 	/* 
 	 * h2_plainmutex_trylock

@@ -59,9 +59,22 @@ h2_sem_add:
 		if (p1) r1 = #1				// else wake 1
 		if (p0) r0 = r4
 	}
+	{
+		allocframe(#8)
+		memd(r29+#-16) = r17:16
+		r17:16 = r1:0
+	}
+.Ldo_trap:
 	trap0(#H2_TRAP_FUTEX_WAKE)
 	{
-		jumpr r31
+		p0 = cmp.gt(r0,#-1)
+		if (p0.new) r17:16 = memd(r29)
+		if (p0.new) dealloc_return:t
+	}
+	{
+		r1:0 = r17:16
+		r2 = memw(r16)				// put back in TLB
+		jump .Ldo_trap
 	}
 
 /* 
@@ -130,12 +143,13 @@ h2_sem_down:
 	if (!p2) jump 1b			// not atomic, try again
 2:
 	{				// OK, sleep.  r0=lock, r1=n_asleep:0
-		memd(r29+#-8) = r1:0
-		r29 = add(r29,#-8)
+		allocframe(#8)
+		memd(r29+#-16) = r1:0
 	}
 	trap0(#H2_TRAP_FUTEX_WAIT)
 	{
-		r1:0 = memd(r29++#8)
+		deallocframe
+		r1:0 = memd(r29)
 		r5.h = #1
 	}
 	{

@@ -51,6 +51,9 @@ h2_cond_broadcast:
 h2_cond_signal_n:
 	{
 		r5 = #1				// set up some constants
+		allocframe(#8)
+		memd(r29+#-16) = r17:16
+		r17:16 = r1:0
 	}
 1:
 	r2 = memw_locked(r0)
@@ -66,8 +69,18 @@ h2_cond_signal_n:
 	{
 		if (p1) jumpr r31			// if nobody waiting, leave
 	}
+.Ldo_trap:
 	trap0(#H2_TRAP_FUTEX_WAKE)
-	jumpr r31
+	{
+		p0 = cmp.gt(r0,#-1)
+		if (p0.new) r17:16 = memd(r29)
+		if (p0.new) dealloc_return:t
+	}
+	{
+		r1:0 = r17:16
+		r2 = memw(r16)
+		jump .Ldo_trap
+	}
 
 	/* 
 	 * Condition Wait

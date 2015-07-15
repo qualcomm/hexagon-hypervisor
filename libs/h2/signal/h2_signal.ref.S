@@ -107,10 +107,23 @@ h2_signal_set:
 		r1 = #99
 	}
 	/* Wake up some threads waiting on this signal */
+	{
+		allocframe(#8)
+		memd(r29+#-16) = r17:16
+		r17:16 = combine(r1,r0)
+	}
+.Ldo_trap:
 	trap0(#H2_TRAP_FUTEX_WAKE)
 	{
+		p0 = cmp.gt(r0,#-1)
+		if (!p0.new) r1:0 = r17:16
+		if (!p0.new) r3:2 = memd(r16)
+		if (!p0.new) jump:nt .Ldo_trap
+	}
+	{
+		r17:16 = memd(r29)
 		r0 = SIGVAL 
-		jumpr r31
+		dealloc_return
 	}
 	.size h2_signal_set,.-h2_signal_set
 

@@ -40,8 +40,8 @@ static void remove_thread(struct QURT_ugp_ptr *ptr)
 	if (ptr == tmp) qurt_root = ptr->next;
 	else while (tmp->next && (tmp->next != ptr)) tmp = tmp->next;
 	if (tmp->next) tmp->next = tmp->next->next;
-	free(ptr);
 	h2_mutex_unlock(&qurt_root_mutex);
+	free(ptr);
 }
 
 static void add_thread(struct QURT_ugp_ptr *ptr)

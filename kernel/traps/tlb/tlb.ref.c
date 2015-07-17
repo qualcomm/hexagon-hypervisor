@@ -50,7 +50,11 @@ static s64_t H2K_tlb_tlballoc(u32_t unused0, u32_t unused1, u64_t entry_in, H2K_
 		return -1;
 	}
 	/* We may have to shrink replaceable section */
-	if (H2K_gp->last_tlb_index == idx) H2K_gp->last_tlb_index--;
+	if (H2K_gp->last_tlb_index == idx) {
+		H2K_gp->last_tlb_index--;
+		/* Note that index for the next TLB entry might point to what we just made invalid */
+		if (H2K_gp->tlb_index == idx) H2K_gp->tlb_index = 0;
+	}
 	H2K_gp->pinned_tlb_mask = mask | 1ULL<<maskidx;
 	H2K_mem_tlb_write(idx,entry.raw);
 	H2K_mutex_unlock_tlb();

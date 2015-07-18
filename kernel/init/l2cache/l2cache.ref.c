@@ -550,7 +550,7 @@ arch_t arches[] =
 static u8_t l2_v60_0[] =
 	{
 		[0x0] = s0,
-		[0x1] = s128,
+		[0x1] = reserved,
 		[0x2] = s256,
 		[0x3] = reserved,
 		[0x4] = s512,
@@ -567,25 +567,24 @@ static u8_t l2_v60_0[] =
 		[0xf] = reserved
 	};
 
-// so far there is one l2 tag size for each array size in v60
 #define l2_v60_1 (l2_v60_0)
 #define l2_v60_2 (l2_v60_0)
+#define l2_v60_4 (l2_v60_0)
 #define l2_v60_5 (l2_v60_0)
-#define l2_v60_f (l2_v60_0)
 
-static u8_t l2_v61_0[] =
+static u8_t l2_v60_f[] =
 	{
 		[0x0] = s0,
 		[0x1] = reserved,
 		[0x2] = reserved,
 		[0x3] = reserved,
-		[0x4] = s512,
+		[0x4] = s256,
 		[0x5] = reserved,
 		[0x6] = reserved,
 		[0x7] = reserved,
 		[0x8] = reserved,
 		[0x9] = reserved,
-		[0xa] = s1024,
+		[0xa] = reserved,
 		[0xb] = reserved,
 		[0xc] = reserved,
 		[0xd] = reserved,
@@ -593,38 +592,7 @@ static u8_t l2_v61_0[] =
 		[0xf] = reserved
 	};
 
-// so far there is one l2 tag size for each array size in v61
-#define l2_v61_1 (l2_v61_0)
-#define l2_v61_3 (l2_v61_0)
-#define l2_v61_6 (l2_v61_0)  // BOGUS!
-
-static u8_t l2_v62_0[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = s512,
-		[0x5] = reserved,
-		[0x6] = s256,
-		[0x7] = reserved,
-		[0x8] = s256,
-		[0x9] = reserved,
-		[0xa] = s512,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
-
-// so far there is one l2 tag size for each array size in v62
-#define l2_v62_1 (l2_v62_0)
-#define l2_v62_2 (l2_v62_0)
-#define l2_v62_4 (l2_v62_0)
-#define l2_v62_6 (l2_v62_0)
-
-static u8_t l2_v65_1[] =
+static u8_t l2_v61_3[] =
 	{
 		[0x0] = s0,
 		[0x1] = reserved,
@@ -644,8 +612,97 @@ static u8_t l2_v65_1[] =
 		[0xf] = reserved
 	};
 
-// so far there is blah blah blah
-#define l2_v65_2 (l2_v65_1)
+static u8_t l2_v62_0[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s512,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+#define l2_v62_1 (l2_v62_0)
+
+static u8_t l2_v62_2[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s256,
+		[0x5] = reserved,
+		[0x6] = s256,
+		[0x7] = reserved,
+		[0x8] = s256,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+#define l2_v62_4 (l2_v62_0)
+#define l2_v62_6 (l2_v62_0)
+
+static u8_t l2_v65_0[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,
+		[0x5] = reserved,
+		[0x6] = s256,
+		[0x7] = reserved,
+		[0x8] = s256,
+		[0x9] = reserved,
+		[0xa] = s512,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v65_2[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s256,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = s256,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+#define l2_v65_1 (l2_v65_0)
+
+#define l2_v65_4 (l2_v65_0)
+#define l2_v65_5 (l2_v65_0)
+#define l2_v65_6 (l2_v65_0)
+#define l2_v65_7 (l2_v65_0)
 
 // uarch -> (array-size -> tag-size map)
 
@@ -655,7 +712,7 @@ static u8_t *uarches_v60[] =
 		[0x1] = l2_v60_1,
 		[0x2] = l2_v60_2,
 		[0x3] = NULL,
-		[0x4] = NULL,
+		[0x4] = l2_v60_4,
 		[0x5] = l2_v60_5,
 		[0x6] = NULL,
 		[0x7] = NULL,
@@ -671,13 +728,13 @@ static u8_t *uarches_v60[] =
 
 static u8_t *uarches_v61[] =
 	{
-		[0x0] = l2_v61_0, // remove ?
-		[0x1] = l2_v61_1, // remove ?
+		[0x0] = NULL,
+		[0x1] = NULL,
 		[0x2] = NULL,
 		[0x3] = l2_v61_3,
 		[0x4] = NULL,
 		[0x5] = NULL,
-		[0x6] = l2_v61_6, // BOGUS!
+		[0x6] = NULL,
 		[0x7] = NULL,
 		[0x8] = NULL,
 		[0x9] = NULL,
@@ -711,14 +768,14 @@ static u8_t *uarches_v62[] =
 
 static u8_t *uarches_v65[] =
 	{
-		[0x0] = NULL,
+		[0x0] = l2_v65_0,
 		[0x1] = l2_v65_1,
 		[0x2] = l2_v65_2,
 		[0x3] = NULL,
-		[0x4] = NULL,
-		[0x5] = NULL,
-		[0x6] = NULL,
-		[0x7] = NULL,
+		[0x4] = l2_v65_4,
+		[0x5] = l2_v65_5,
+		[0x6] = l2_v65_6,
+		[0x7] = l2_v65_7,
 		[0x8] = NULL,
 		[0x9] = NULL,
 		[0xa] = NULL,

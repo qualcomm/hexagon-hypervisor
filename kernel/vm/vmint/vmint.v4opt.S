@@ -31,8 +31,9 @@ FUNC_START H2K_vm_int_deliver_locked .text.vm.int .p2align 2 // deliver(vmblock,
 		PTMP = cmp.eq(STATUS,#STATUS_VMWAIT)
 		if (!PTMP.new) jump:t .Ltry_RUNNING
 		PIE = tstbit(VMSTATUS,#H2K_VMSTATUS_IE_BIT)
-		memw(THREAD+#CONTEXT_r00) = INTNO
 	}
+	memw(THREAD+#CONTEXT_r00) = INTNO
+
 #undef VMSTATUS
 #define PRIO r4
 .Lenqueue:

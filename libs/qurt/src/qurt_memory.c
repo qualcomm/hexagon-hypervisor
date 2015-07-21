@@ -70,7 +70,7 @@ struct qurt_mem_pool_struct {
 
 #define MAX_TRANSLATIONS 512
 
-static H2K_linear_fmt_t linear_pages[MAX_TRANSLATIONS] __attribute__((aligned(4096))) __attribute__((section(".data")));
+static H2K_linear_fmt_t linear_pages[MAX_TRANSLATIONS] __attribute__((aligned(4096))) __attribute__((section(".data.qurt.translations")));
 
 static qurt_mutex_t mem_mutex;
 
@@ -289,7 +289,7 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 			qurt_printf("region_create: no free pa space. ppn=%x (%x) size=%x poolstart=%x poolsize=%x type=%x\n",attr->ppn,ppn,
 				size,pool->attr.ranges[0].start,pool->attr.ranges[0].size,
 				attr->mapping_type);
-			qurt_pgalloc_print_freelist(pool->freelist);
+			// qurt_pgalloc_print_freelist(pool->freelist);
 			qurt_printf("region_create: call stack=%x %x %x %x %x %x, id=%x\n",
 				__builtin_return_address(0),
 				__builtin_return_address(1),
@@ -411,12 +411,12 @@ int qurt_mem_region_query_64_vpn(qurt_mem_region_t *region_handle, unsigned long
 		if ((tmp->attr.vpn <= vpn) && ((tmp->attr.vpn + tmp->attr.size) > vpn)) {
 			*region_handle = uint_from_mem_region(tmp);
 			qurt_rmutex_unlock(&mem_mutex);
-			qurt_printf("EJPDBG: memory @ vpn %x found. ppn=%x",vpn,tmp->attr.ppn);
+			//qurt_printf("EJPDBG: memory @ vpn %x found. ppn=%x",vpn,tmp->attr.ppn);
 			return QURT_EOK;
 		}
 	}
 	qurt_rmutex_unlock(&mem_mutex);
-	qurt_printf("EJPDBG: memory @ vpn %x not found",vpn);
+	//qurt_printf("EJPDBG: memory @ vpn %x not found",vpn);
 	return QURT_EVAL;
 }
 
@@ -432,12 +432,12 @@ int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long
 		if ((tmp->attr.ppn <= ppn) && ((tmp->attr.ppn + tmp->attr.size) > ppn)) {
 			*region_handle = uint_from_mem_region(tmp);
 			qurt_rmutex_unlock(&mem_mutex);
-			qurt_printf("EJPDBG: memory @ ppn %x found. vpn=%x\n",ppn,tmp->attr.vpn);
+			//qurt_printf("EJPDBG: memory @ ppn %x found. vpn=%x\n",ppn,tmp->attr.vpn);
 			return QURT_EOK;
 		}
 	}
 	qurt_rmutex_unlock(&mem_mutex);
-	qurt_printf("EJPDBG: memory @ ppn %x not found\n",ppn);
+	//qurt_printf("EJPDBG: memory @ ppn %x not found\n",ppn);
 	return QURT_EVAL;
 }
 
@@ -488,7 +488,6 @@ int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn,
 	unsigned int size, unsigned int cache_attribs, unsigned int perm, unsigned int abits)
 {
 	H2K_linear_fmt_t tmp;
-	unsigned int alignval;
 	unsigned int pgsize;
 	int ret;
 	tmp.raw = 0;
@@ -544,7 +543,7 @@ qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr)
 	paddr = ((unsigned long long int)(tmp->ppn)) << 12;
 	paddr &= ((-1LL) << (12 + tmp->size*2));
 	paddr |= vaddr & ((1 << (12 + tmp->size*2))-1);
-	qurt_printf("pa lookup: vaddr=%x paddr=%llx\n",vaddr,paddr);
+	//qurt_printf("pa lookup: vaddr=%x paddr=%llx\n",vaddr,paddr);
 	return paddr;
 }
 
@@ -618,8 +617,8 @@ static inline void qurt_physpool_shrink() {}
 
 void qurt_memory_init()
 {
-	H2K_linear_fmt_t entry;
-	int i;
+	// H2K_linear_fmt_t entry;
+	// int i;
 	if (linear_pages[0].raw != 0) { 
 		/* Already did early init! */
 		qurt_physpool_shrink();
@@ -683,6 +682,8 @@ static inline H2K_linear_fmt_t qurt_mapping_static_tcm_load(H2K_linear_fmt_t ent
 	unsigned long dst_pa = (entry.vpn - tcm_start_vpn + tcm_tcm_ppn) << 12;
 	memcpy((void *)dst_pa,(void *)src_pa,1ULL << (12+(entry.size*2)));
 	entry.ppn = entry.vpn - tcm_start_vpn + tcm_tcm_ppn;
+	/* EJP: FIXME: pin TLB entry? */
+	/* EJP: need to pin TLB entries after translation enabled so we get the right ASID */
 	return entry;
 }
 #endif
@@ -700,7 +701,174 @@ static inline void qurt_memory_early_add_tlbfmt(unsigned long long int inval)
 	entry.xwru = inval >> 28;
 	entry.cccc = inval >> 24;
 	entry = qurt_mapping_static_tcm_load(entry);
+	/* if (entry.size >= 4) FIXME: pin TLB entry */
 	qurt_mapping_create_linear(entry);
+}
+
+static int qurt_mem_compare_va(const void *va, const void *vb)
+{
+	const H2K_linear_fmt_t *a = va;
+	const H2K_linear_fmt_t *b = vb;
+	int avpn = a->vpn;
+	int bvpn = b->vpn;
+	/*
+	 * VA comparison
+	 * Invalid entries should always compare > valid entries.
+	 * Note that invalid entries are zero
+	 */
+	if (a->raw == 0) return (b->raw != 0);
+	if (b->raw == 0) return -1;
+	return avpn - bvpn;
+}
+
+static int qurt_mem_compare_size(const void *va, const void *vb)
+{
+	const H2K_linear_fmt_t *a = va;
+	const H2K_linear_fmt_t *b = vb;
+	int sizediff;
+	/*
+	 * VA comparison
+	 * Invalid entries should always compare > valid entries.
+	 * Note that invalid entries are zero
+	 */
+	if (a->raw == 0) return (b->raw != 0);
+	if (b->raw == 0) return -1;
+	sizediff = -(a->size - b->size);
+	if (sizediff != 0) return sizediff;
+	return a->vpn - b->vpn;
+}
+
+static inline int qurt_mem_coalesce_ok(H2K_linear_fmt_t base, H2K_linear_fmt_t test, unsigned int shift)
+{
+	unsigned int mask_hi = (~0) << shift;
+	unsigned int mask_lo = ((1 << shift)-1);
+	if ((base.vpn & mask_hi) != (test.vpn & mask_hi)) return 1;
+	if ((test.ppn & mask_lo) != (test.vpn & mask_lo)) return 0;
+	if (base.size != test.size) return 0;
+	if (base.cccc != test.cccc) return 0;
+	return 1;
+}
+
+static inline H2K_linear_fmt_t qurt_mem_do_coalesce(H2K_linear_fmt_t base, unsigned int idx, unsigned int shift)
+{
+	unsigned int mask_hi = (~0) << shift;
+	H2K_linear_fmt_t dest = linear_pages[idx];
+	if ((base.vpn & mask_hi) == (dest.vpn & mask_hi)) {
+		base.xwru |= dest.xwru;
+		linear_pages[idx].raw = 0;
+	}
+	return base;
+}
+
+static inline int qurt_mem_coalesce_count(
+	H2K_linear_fmt_t a,
+	H2K_linear_fmt_t b,
+	H2K_linear_fmt_t c,
+	H2K_linear_fmt_t d,
+	unsigned int shift)
+{
+	int count = 0;
+	unsigned int mask_hi = (~0) << shift;
+	count += ((a.vpn & mask_hi) == (b.vpn & mask_hi));
+	count += ((a.vpn & mask_hi) == (c.vpn & mask_hi));
+	count += ((a.vpn & mask_hi) == (d.vpn & mask_hi));
+	return count;
+}
+
+static inline int qurt_mem_coalesce_good_idea(
+	H2K_linear_fmt_t a,
+	H2K_linear_fmt_t b,
+	H2K_linear_fmt_t c,
+	H2K_linear_fmt_t d,
+	unsigned int size,
+	unsigned int shift)
+{
+	if ((qurt_mem_coalesce_count(a,b,c,d,shift) == 0) && (size > 3)) return 0;
+	if (size >= 6) return 0;
+	return 1;
+}
+
+int qurt_memory_translation_optimize_pass()
+{
+	int i;
+	H2K_linear_fmt_t a,b,c,d;
+	unsigned int shift;
+	unsigned int size;
+	// unsigned int mask_hi;
+	unsigned int mask_lo;
+	for (i = 0; (i < (MAX_TRANSLATIONS-3)) && (linear_pages[i].raw != 0); i++) {
+		a = linear_pages[i+0];
+		b = linear_pages[i+1];
+		c = linear_pages[i+2];
+		d = linear_pages[i+3];
+		size = a.size;				/* Current translation size */
+		shift = (size+1)*2;			/* Shift for new mask: one bigger */
+		// mask_hi = (~0) << shift;
+		mask_lo = (1<<shift) - 1;
+		if ((a.vpn & mask_lo) != 0) continue;	/* first one not aligned */
+		if ((a.ppn & mask_lo) != 0) continue;	/* first one not aligned */
+		if (!qurt_mem_coalesce_ok(a,b,shift)) continue;
+		if (!qurt_mem_coalesce_ok(a,c,shift)) continue;
+		if (!qurt_mem_coalesce_ok(a,d,shift)) continue;
+		if (qurt_mem_coalesce_good_idea(a,b,c,d,size,shift) == 0) continue;
+		/* Everything OK. Coalesce to bigger size. */
+		a = qurt_mem_do_coalesce(a,i+1,shift);
+		a = qurt_mem_do_coalesce(a,i+2,shift);
+		a = qurt_mem_do_coalesce(a,i+3,shift);
+		//qurt_printf("[[optimized entry %d]]\n",i);
+		a.size++;
+		linear_pages[i] = a;
+		return 1;
+	}
+	return 0;
+}
+
+static inline void qurt_memory_translation_optimize()
+{
+	int changed;
+	/* Find mappings that we can grow: lowest mapping aligned, next
+	 * mappings either missing or to the appropriately-larger PA range, same CCCC.
+	 * If different WRXU, or together. 
+	 * If we change something, start all over
+	 */
+	//qurt_printf(">> BEFORE\n");
+	//qurt_pprint_mappings();
+	do {
+		/* sort translations by VA */
+		qsort(	linear_pages,
+			MAX_TRANSLATIONS,
+			sizeof(H2K_linear_fmt_t),
+			qurt_mem_compare_va);
+		changed = qurt_memory_translation_optimize_pass();
+		//qurt_printf(">> OPTIMIZE PASS (changed=%d)\n",changed);
+		//qurt_pprint_mappings();
+	} while (changed != 0);
+	/* Now sort translations by size */
+	qsort(	linear_pages,
+		MAX_TRANSLATIONS,
+		sizeof(H2K_linear_fmt_t),
+		qurt_mem_compare_size);
+	//qurt_printf(">> FINAL\n");
+	//qurt_pprint_mappings();
+}
+
+void qurt_memory_translation_check()
+{
+	int i,j;
+	H2K_linear_fmt_t a;
+	H2K_linear_fmt_t b;
+	unsigned int mask;
+	for (i = 0; linear_pages[i].raw != 0; i++) {
+		a = linear_pages[i];
+		for (j = 0; linear_pages[j].raw != 0; j++) {
+			if (i == j) continue;
+			b = linear_pages[j];
+			mask = ((~0) << (a.size*2)) & ((~0) << (b.size*2));
+			if ((a.vpn & mask) == (b.vpn & mask)) {
+				qurt_printf("OOPS::: %d overlaps %d? 0x%016llx 0x%016llx\n",i,j,a.raw,b.raw);
+			}
+		}
+	}
 }
 
 void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long int *tlbfmt_b)
@@ -713,7 +881,10 @@ void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long
 	for (i = 0; tlbfmt_b[i] != 0; i++) {
 		qurt_memory_early_add_tlbfmt(tlbfmt_b[i]);
 	}
+	qurt_memory_translation_optimize();
+	qurt_memory_translation_check();
 	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
+	// qurt_memory_tlb_pin();
 	qurt_memory_pool_init(); // for now... 
 	//qurt_pprint_mappings();
 	//qurt_pprint_regions();

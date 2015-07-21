@@ -320,6 +320,7 @@ FUNC_START H2K_vm_shint_enable .text.vm.int .p2align 2 // s32 shint_clear(vmbloc
 	{
 		TMP = memw(VMBLOCK+#VMBLOCK_int_v2p)
 		if (cmp.eq(TMP.new,#0)) jump:nt 1f
+		INTNO = add(INTNO, #PERCPU_INTERRUPTS)
 	}
 	{
 		TMP = memuh(TMP+INTNO<<#1)
@@ -508,7 +509,7 @@ FUNC_START H2K_vm_shint_localen .text.vm.int .p2align 2 // s32 shint_localen(vmb
 #undef INTNO
 #undef ME
 #undef VMBLOCK
-FUNC_END H2K_vm_shint_localdis
+FUNC_END H2K_vm_shint_localen
 
 FUNC_START H2K_vm_shint_setaffinity .text.vm.int .p2align 2 // s32 setaff(vmblock,me,intno,info)
 #define VMBLOCK r0

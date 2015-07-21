@@ -703,6 +703,7 @@ static u8_t l2_v65_2[] =
 #define l2_v65_5 (l2_v65_0)
 #define l2_v65_6 (l2_v65_0)
 #define l2_v65_7 (l2_v65_0)
+#define l2_v65_8 (l2_v65_0)
 
 // uarch -> (array-size -> tag-size map)
 
@@ -776,7 +777,7 @@ static u8_t *uarches_v65[] =
 		[0x5] = l2_v65_5,
 		[0x6] = l2_v65_6,
 		[0x7] = l2_v65_7,
-		[0x8] = NULL,
+		[0x8] = l2_v65_8,
 		[0x9] = NULL,
 		[0xa] = NULL,
 		[0xb] = NULL,

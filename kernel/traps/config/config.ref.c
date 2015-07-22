@@ -123,6 +123,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, u32_t op, u32_t arg1,
 		vmblock->max_cpus = arg1;
 		vmblock->num_cpus = 0;
 		vmblock->num_ints = arg2;
+		vmblock->tlbidxmask = ~0;
 		if (me != NULL) {
 			vmblock->parent = me->id;
 		}
@@ -275,6 +276,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, u32_t op, u32_t arg1,
 
 		vmblock->bestprio = (u8_t)arg1;
 		vmblock->trapmask = (u32_t)arg2;
+		if (vmblock->bestprio > 200) vmblock->tlbidxmask = 0x0f;
 		return vmblock->vmidx;
 
 	case MAP_PHYS_INTR:

@@ -668,15 +668,21 @@ extern long long int __tcm_static_section_end__ __attribute__((weak));
 #define SYM_PGNO_RND(X) ((((unsigned long)(&X))+0x0fff) >> 12)
 #define SYM_PGNO(X) ((((unsigned long)(&X))) >> 12)
 
-static inline H2K_linear_fmt_t qurt_mapping_static_tcm_load(H2K_linear_fmt_t entry)
+static inline int vpn_in_tcm_range(unsigned long vpn)
 {
 	unsigned long tcm_start_vpn = SYM_PGNO(__tcm_static_section_start__);
 	unsigned long tcm_end_vpn = SYM_PGNO_RND(__tcm_static_section_end__);
+	return ((vpn >= tcm_start_vpn) && (vpn < tcm_end_vpn));
+}
+
+static inline H2K_linear_fmt_t qurt_mapping_static_tcm_load(H2K_linear_fmt_t entry)
+{
+	unsigned long tcm_start_vpn = SYM_PGNO(__tcm_static_section_start__);
+	//unsigned long tcm_end_vpn = SYM_PGNO_RND(__tcm_static_section_end__);
 	unsigned long tcm_ddr_ppn = SYM_PGNO(__tcm_static_pa_load__);
 	unsigned long tcm_tcm_ppn = SYM_PGNO(__tcm_static_pa_run__);
 	if (&__tcm_static_pa_load__ == NULL) return entry; // no symbols
-	if (entry.vpn < tcm_start_vpn) return entry; // not in range
-	if (entry.vpn >= tcm_end_vpn) return entry; // not in range
+	if (!vpn_in_tcm_range(entry.vpn)) return entry; // not in range
 	/* Before adding translation, copy into TCM */
 	unsigned long src_pa = (entry.vpn - tcm_start_vpn + tcm_ddr_ppn) << 12;
 	unsigned long dst_pa = (entry.vpn - tcm_start_vpn + tcm_tcm_ppn) << 12;
@@ -871,6 +877,29 @@ void qurt_memory_translation_check()
 	}
 }
 
+void qurt_memory_tlb_pin()
+{
+	int i;
+	qurt_addr_t vaddr;
+	qurt_paddr_64_t paddr;
+	qurt_size_t size;
+	qurt_mem_cache_mode_t cache_attribs;
+	qurt_perm_t perms;
+	unsigned int id;
+	for (i = 0; linear_pages[i].raw != 0; i++) {
+		if (!vpn_in_tcm_range(linear_pages[i].vpn) 
+			&& (linear_pages[i].size < 4)) continue;
+		vaddr = linear_pages[i].vpn;
+		vaddr <<= 12;
+		paddr = linear_pages[i].ppn;
+		paddr <<= 12;
+		size = 0x1000 << (linear_pages[i].size * 2);
+		cache_attribs = linear_pages[i].cccc;
+		perms = linear_pages[i].xwru >> 1;
+		qurt_tlb_entry_create_64(&id,vaddr,paddr,size,cache_attribs,perms,0);
+	}
+}
+
 void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long int *tlbfmt_b)
 {
 	int i;
@@ -881,10 +910,10 @@ void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long
 	for (i = 0; tlbfmt_b[i] != 0; i++) {
 		qurt_memory_early_add_tlbfmt(tlbfmt_b[i]);
 	}
-	qurt_memory_translation_optimize();
+	//qurt_memory_translation_optimize();
 	qurt_memory_translation_check();
 	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
-	// qurt_memory_tlb_pin();
+	qurt_memory_tlb_pin();
 	qurt_memory_pool_init(); // for now... 
 	//qurt_pprint_mappings();
 	//qurt_pprint_regions();

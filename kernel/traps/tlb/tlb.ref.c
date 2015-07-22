@@ -34,6 +34,16 @@ static s64_t H2K_tlb_tlbquery(u32_t unused0, u32_t va, u64_t unused32, H2K_threa
 	return H2K_mem_tlb_probe(va,me->ssr_asid);
 }
 
+static int H2K_tlb_invalidate_overlap(u64_t entry_in)
+{
+	int idx;
+	idx = H2K_mem_tlboc(entry_in);
+	if (idx == -1) return idx; /* Multi Hit */
+	if (idx < 0) return 0; /* No Overlap */
+	H2K_mem_tlb_write(idx,0); /* Single hit, Invalidate */
+	return 0;
+}
+
 static s64_t H2K_tlb_tlballoc(u32_t unused0, u32_t unused1, u64_t entry_in, H2K_thread_context *me)
 {
 	int idx,maskidx;
@@ -42,10 +52,14 @@ static s64_t H2K_tlb_tlballoc(u32_t unused0, u32_t unused1, u64_t entry_in, H2K_
 	entry.raw = entry_in;
 	entry.asid = me->ssr_asid;
 	H2K_mutex_lock_tlb();
+	if (H2K_tlb_invalidate_overlap(entry.raw) != 0) {
+		H2K_mutex_unlock_tlb();
+		return -1;
+	}
 	mask = H2K_gp->pinned_tlb_mask;
 	maskidx = 63-Q6_R_cl1_P(mask);
 	idx = maskidx + (H2K_gp->tlb_size - 64);
-	if (mask == ~0L) {
+	if (mask == ~0ULL) {
 		H2K_mutex_unlock_tlb();
 		return -1;
 	}

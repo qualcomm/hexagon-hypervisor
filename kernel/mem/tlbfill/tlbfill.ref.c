@@ -27,7 +27,7 @@ static inline u32_t H2K_mem_tlb_v3_user_check(H2K_thread_context *me)
 }
 #endif
 
-static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry) {
+static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_context *me) {
 
 	u32_t volatile *p_index = &H2K_gp->tlb_index;
 	u32_t index;
@@ -41,7 +41,7 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry) {
 	} else {
 		*p_index = 0;
 	}
-
+	index &= me->tlbidxmask;
 	H2K_mem_tlb_insert_index_unlock(entry, index);
 }
 
@@ -120,7 +120,7 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		if (H2K_mem_tlb_v3_user_check(me)) {
 			return;
 		}
-		H2K_mem_tlb_insert_unlock(entry);
+		H2K_mem_tlb_insert_unlock(entry,me);
 		return;
 	}
 
@@ -150,7 +150,7 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		}
 
 		H2K_mem_stlb_add(va,asid,entry,me);
-		H2K_mem_tlb_insert_unlock(entry);
+		H2K_mem_tlb_insert_unlock(entry,me);
 		return;
 	}
 	/* Unlock here in case thread is killed by pagefault */

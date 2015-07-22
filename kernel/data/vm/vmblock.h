@@ -68,6 +68,7 @@ typedef struct H2K_vmblock_struct {
 #endif
 
 	translation_type pmap_type;
+	u8_t tlbidxmask;
 	/* physical memory map, page table style */
 	union {
 		H2K_offset_t phys_offset;

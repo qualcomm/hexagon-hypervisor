@@ -105,7 +105,9 @@ void H2K_tcm_crash_copy()
 	u32_t tcm_addr;
 	u32_t tcm_size;
 	int i;
-	u32_t *dst = (u32_t *)(0xFF070000); /* EJP: FIXME: we're not necessarily at the start of the page, and our pgsize isn't necessarily this big... */
+	// Just in case we were using TCM crash area as STLB...
+	H2K_gp->stlbptr = NULL;
+	u32_t *dst = (u32_t *)(KERNEL_CRASH_TCM_ADDR); /* EJP: FIXME: we're not necessarily at the start of the page, and our pgsize isn't necessarily this big... */
 	tcm_addr = H2K_cfg_table(CFG_TABLE_L2TCM);
 	tcm_size = calc_tcm_size();
 	if (tcm_size > MAX_TCM_COPY_SIZE) tcm_size = MAX_TCM_COPY_SIZE;

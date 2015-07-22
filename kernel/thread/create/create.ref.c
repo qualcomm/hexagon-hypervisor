@@ -71,6 +71,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->r0100 = arg1;
 	tmp->ccr = H2K_get_ccr();
 	tmp->trapmask = trapmask;
+	tmp->tlbidxmask = vmblock->tlbidxmask;
 	tmp->continuation = H2K_interrupt_restore;
 	tmp->vmstatus = 0x0;            // all clear
 	tmp->gevb = guest_evb;

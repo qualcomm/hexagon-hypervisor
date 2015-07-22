@@ -46,6 +46,8 @@
 
 #define KERNEL_STACK_SIZE (8*31)
 
+#define KERNEL_CRASH_TCM_ADDR 0xFF070000
+
 #define MAX_PRIOS 256
 #define MAX_PRIO ((MAX_PRIOS) - 1)
 #define BEST_PRIO 0

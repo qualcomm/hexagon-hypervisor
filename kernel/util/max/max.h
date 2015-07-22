@@ -35,6 +35,7 @@
 #define CORE_V60 0x60
 #define CORE_V61 0x61
 #define CORE_V62 0x62
+#define CORE_V65 0x65
 
 #define CORE_V6_A 0x0
 #define CORE_V6_E 0x4

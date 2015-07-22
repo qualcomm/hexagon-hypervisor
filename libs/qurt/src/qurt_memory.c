@@ -694,6 +694,14 @@ static inline H2K_linear_fmt_t qurt_mapping_static_tcm_load(H2K_linear_fmt_t ent
 }
 #endif
 
+int qurt_mem_kludge_reject(unsigned long long int inval)
+{
+	int size = Q6_R_ct0_P(inval);
+	unsigned int vpn = (inval >> 32) & 0x000fffff;
+	if (((vpn & 0xFF000) == 0x8B000) && (size < 6)) return 1;
+	return 0;
+}
+
 static inline void qurt_memory_early_add_tlbfmt(unsigned long long int inval)
 {
 	int size;
@@ -905,9 +913,11 @@ void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long
 	int i;
 	qurt_rmutex_init(&mem_mutex);
 	for (i = 0; tlbfmt_a[i] != 0; i++) {
+		if (qurt_mem_kludge_reject(tlbfmt_a[i])) continue;
 		qurt_memory_early_add_tlbfmt(tlbfmt_a[i]);
 	}
 	for (i = 0; tlbfmt_b[i] != 0; i++) {
+		if (qurt_mem_kludge_reject(tlbfmt_b[i])) continue;
 		qurt_memory_early_add_tlbfmt(tlbfmt_b[i]);
 	}
 	//qurt_memory_translation_optimize();

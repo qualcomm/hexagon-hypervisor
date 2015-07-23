@@ -294,7 +294,7 @@ FUNC_START H2K_vm_shint_enable .text.vm.int .p2align 2 // s32 shint_clear(vmbloc
 #define L2WIDX_L2BIDX r15:14
 #define L2WIDX r15
 #define L2BIDX r14
-#define PHYSINT r16
+#define PHYSINT r13
 	{
 		WORDIDX_BITIDX = bitsplit(INTNO,#5)
 		NUM_INTS = memw(INFO+#INTINFO_num_ints)

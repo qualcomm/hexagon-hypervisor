@@ -294,6 +294,7 @@ FUNC_START H2K_vm_shint_enable .text.vm.int .p2align 2 // s32 shint_clear(vmbloc
 #define L2WIDX_L2BIDX r15:14
 #define L2WIDX r15
 #define L2BIDX r14
+#define PHYSINT r16
 	{
 		WORDIDX_BITIDX = bitsplit(INTNO,#5)
 		NUM_INTS = memw(INFO+#INTINFO_num_ints)
@@ -320,10 +321,10 @@ FUNC_START H2K_vm_shint_enable .text.vm.int .p2align 2 // s32 shint_clear(vmbloc
 	{
 		TMP = memw(VMBLOCK+#VMBLOCK_int_v2p)
 		if (cmp.eq(TMP.new,#0)) jump:nt 1f
-		INTNO = add(INTNO, #PERCPU_INTERRUPTS)
+		PHYSINT = add(INTNO, #PERCPU_INTERRUPTS)
 	}
 	{
-		TMP = memuh(TMP+INTNO<<#1)
+		TMP = memuh(TMP + PHYSINT << #1)
 		if (cmp.eq(TMP.new,#0)) jump:nt 1f
 	}
 	{

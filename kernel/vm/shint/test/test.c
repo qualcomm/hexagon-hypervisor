@@ -262,6 +262,9 @@ void TH_check_delivery(u32_t cpu, u32_t intno)
 	u32_t k;
 	u32_t saw_post = 0;
 	k = cpu;
+
+	//	printf("TH_check_delivery(%u, %u)\n", cpu, intno);
+
 	do {
 		if ((((TH_vmblock.enable[intno/32]) & 
 		     (TH_vmblock.percpu_mask[k][intno/32]) &
@@ -307,6 +310,9 @@ void TH_test_post(u32_t cpu, u32_t intno)
 void TH_check_enable_wakeup(u32_t intno)
 {
 	u32_t k;
+
+	//	printf("TH_check_enable_wakeup(%u)\n", intno);
+
 	for (k = 0; k < MAX_TEST_THREADS; k++) {
 		TH_threads[k].vmstatus = TH_vmstatus_setting;
 	}
@@ -318,6 +324,9 @@ void TH_check_enable_wakeup(u32_t intno)
 void TH_check_localen_wakeup(u32_t cpu, u32_t intno)
 {
 	u32_t k;
+
+	//	printf("TH_check_localen_wakeup(%u, %u)\n", cpu, intno);
+
 	for (k = 0; k < MAX_TEST_THREADS; k++) {
 		TH_threads[k].vmstatus = TH_vmstatus_setting;
 	}

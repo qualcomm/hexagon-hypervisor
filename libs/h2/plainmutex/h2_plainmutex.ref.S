@@ -10,14 +10,14 @@
  * h2_plainmutex functionality 
  */
 
+#include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
 
 	.text
-	.global h2_plainmutex_lock
 	.global h2_plainmutex_unlock
 	.global h2_plainmutex_trylock
 
-h2_plainmutex_lock:
+FUNC_START h2_plainmutex_lock .text.h2.plainmutex .p2align 5
 	{
 		allocframe(#8)
 	}
@@ -57,9 +57,10 @@ h2_plainmutex_lock:
 		r25:24 = memd(r29)
 	}
 	jumpr r31
+FUNC_END h2_plainmutex_lock
 
 /* EJP: ??? FUTEX_UNLOCK_PI probably checks W, and we don't actually write. Might be a problem for COW?. */
-h2_plainmutex_unlock:
+FUNC_START h2_plainmutex_unlock .text.h2.plainmutex .p2align 4
 	allocframe(#8)
 	{
 		memd(r29+#0) = r25:24
@@ -100,13 +101,14 @@ h2_plainmutex_unlock:
 		dealloc_return
 		r25:24 = memd(r29)
 	}
+FUNC_END h2_plainmutex_unlock
 
 	/* 
 	 * h2_plainmutex_trylock
 	 * If mutex is 0, change it to TID and return 0
 	 * Otherwise, return nonzero
 	 */
-h2_plainmutex_trylock:
+FUNC_START h2_plainmutex_trylock .text.h2.plainmutex .falign
 	allocframe(#8)
 	{
 		memd(r29+#0) = r25:24
@@ -133,4 +135,5 @@ h2_plainmutex_trylock:
 		r25:24 = memd(r29)
 	}
 	jumpr r31
+FUNC_END h2_plainmutex_trylock
 

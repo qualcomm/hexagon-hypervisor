@@ -9,12 +9,10 @@
  * This file contains the implementation for h2_sem functionality
  */
 
+#include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
 
 	.text
-	.global h2_sem_add
-	.global h2_sem_down
-	.global h2_sem_trydown
 
 /* 
  * New H2 semaphore:
@@ -39,7 +37,7 @@
  * Else, wake Everyone (assume: 30000 threads is everyone)! (Or K?)
  */
 
-h2_sem_add:
+FUNC_START h2_sem_add .text.h2.sem .p2align 5
 	r4 = #-0x8000
 1:
 	r2 = memw_locked(r0)
@@ -76,36 +74,7 @@ h2_sem_add:
 		r2 = memw(r16)				// put back in TLB
 		jump .Ldo_trap
 	}
-
-/* 
- * h2_sem_trydown(word *sem)
- * 
- * atomic: if sem > 0, decrement sem; return 0.
- * Else, return nonzero
- *
- */
-
-h2_sem_trydown:
-	r4 = #0
-1:
-	r2 = memw_locked(r0)
-	{
-		p0 = vcmph.gtu(r3:2,r5:4)
-		r3 = add(r2,#-1)
-		if (!p0.new) jump:nt 1f
-	}
-	memw_locked(r0,p2) = r3
-	{
-		if (p2) jumpr r31
-		if (p2) r0 = #0
-	}
-	if (!p2) jump 1b
-1:
-	// lock not available, return failure
-	{
-		r0 = #-1
-		jumpr r31
-	}
+FUNC_END h2_sem_add
 
 /*
  * h2_sem_down(word *sem)
@@ -121,7 +90,7 @@ h2_sem_trydown:
  * If sem <= 0, sem = -1, goto "wait_seq"
  */
 
-h2_sem_down:
+FUNC_START h2_sem_down .text.h2.sem .falign
 	r5:4 = combine(#1,#0)
 1:
 	r2 = memw_locked(r0)
@@ -167,4 +136,35 @@ h2_sem_down:
 	memw_locked(r0,p2) = r3
 	if (p2) jumpr r31			// atomic, return
 	jump 3b					// not atomic, try again
+FUNC_END h2_sem_down
 
+/* 
+ * h2_sem_trydown(word *sem)
+ * 
+ * atomic: if sem > 0, decrement sem; return 0.
+ * Else, return nonzero
+ *
+ */
+
+FUNC_START h2_sem_trydown .text.h2.sem .falign
+	r4 = #0
+1:
+	r2 = memw_locked(r0)
+	{
+		p0 = vcmph.gtu(r3:2,r5:4)
+		r3 = add(r2,#-1)
+		if (!p0.new) jump:nt 1f
+	}
+	memw_locked(r0,p2) = r3
+	{
+		if (p2) jumpr r31
+		if (p2) r0 = #0
+	}
+	if (!p2) jump 1b
+1:
+	// lock not available, return failure
+	{
+		r0 = #-1
+		jumpr r31
+	}
+FUNC_END h2_sem_trydown

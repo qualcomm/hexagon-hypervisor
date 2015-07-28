@@ -9,11 +9,9 @@
  * This file contains the implementation for h2_barrier functionality
  */
 
+#include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
 #include "h2_barrier_defs.h"
-
-	.text
-	.global h2_barrier_wait
 
 	/* barrier type
 	 * typedef union {
@@ -51,8 +49,7 @@
 	 *  + return H2_BARRIER_OTHER
 	 */
 
-	.p2align 4
-h2_barrier_wait:
+FUNC_START h2_barrier_wait .text.h2.barrier .p2align 4
 	{
 		r5 = memw(r0+#4)		// get reset value
 	}
@@ -118,4 +115,5 @@ h2_barrier_wait:
 		r0 = #H2_BARRIER_OTHER
 		jumpr r31
 	}
+FUNC_END h2_barrier_wait
 

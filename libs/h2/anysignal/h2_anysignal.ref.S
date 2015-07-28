@@ -3,21 +3,20 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
 
 #define WAITING 4
 #define SIGNALS 0
 	.text
 
-	.global h2_anysignal_wait
-	.p2align 5
 	/* 
 	 * h2_anysignal_wait(h2_signal_t *signal, unsigned int mask)
 	 * Wait for one of the signals specified in mask is set
 	 * If already set, return immediately, otherwise block
 	 * return value is latest value of signals
 	 */
-h2_anysignal_wait:
+FUNC_START h2_anysignal_wait .text.h2.anysignal .p2align 5
 	/* Check current value */
 	{
 		r4 = memw(r0+#SIGNALS)		// get SIGNALS
@@ -60,15 +59,15 @@ h2_anysignal_wait:
 		jumpr r31				// return
 		memw(r2+#WAITING) = r3
 	}
+FUNC_END h2_anysignal_wait
 
-	.global h2_anysignal_set
 	/* 
 	 * h2_anysignal_set(h2_signal_t *signal, unsigned int mask)
 	 * Set signals defined in mask
 	 * This may wakeup a waiting thread, check for bitsclear->!bitsclr condition
 	 * 
 	 */
-h2_anysignal_set:
+FUNC_START h2_anysignal_set .text.h2.anysignal .falign
 1:
 	{
 		r2 = memw_locked(r0)		// load old signals
@@ -105,6 +104,7 @@ h2_anysignal_set:
 		r0 = memw(r29)			// return value: old signals
 	}
 	jumpr r31
+FUNC_END h2_anysignal_set
 
 	.global h2_anysignal_clear
 	/* 
@@ -112,7 +112,7 @@ h2_anysignal_set:
 	 * clear bits out of signal
 	 * return old signal value
 	 */
-h2_anysignal_clear:
+FUNC_START h2_anysignal_clear .text.h2.signal .falign
 	r3 = not(r1)
 1:
 	r2 = memw_locked(r0)
@@ -123,4 +123,5 @@ h2_anysignal_clear:
 		r0 = r2
 		jumpr r31
 	}
+FUNC_END h2_anysignal_clear
 

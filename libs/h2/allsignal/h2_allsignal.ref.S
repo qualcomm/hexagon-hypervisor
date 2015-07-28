@@ -3,19 +3,19 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
 
 #define WAITING 0
 #define SIGNALS_IN 4
 	.text
 
-	.global h2_allsignal_wait
 	/* 
 	 * h2_signal_wait(h2_signal_t *signal, unsigned int mask)
 	 * if each bit set in mask has already been seen, clear from signals_in and return.
 	 * Else, set waiting mask with unseen bits in signal struct and sleep.
 	 */
-h2_allsignal_wait:
+FUNC_START h2_allsignal_wait .text.h2.allsignal .falign
 	/* Write wait mask */
 	{
 		r2 = memw_locked(r0)
@@ -79,15 +79,15 @@ h2_allsignal_wait:
 		r25:24 = memd(r29++#8)
 		jumpr r31
 	}
+FUNC_END h2_allsignal_wait
 
-	.global h2_allsignal_signal
 	/* 
 	 * h2_allsignal_signal(h2_signal_t *signal, unsigned int mask)
 	 * 
 	 * 
 	 * 
 	 */
-h2_allsignal_signal:
+FUNC_START h2_allsignal_signal .text.h2.allsignal .falign
 	{
 		r4 = not(r1)
 		r5 = add(r0,#SIGNALS_IN)
@@ -121,4 +121,5 @@ h2_allsignal_signal:
 	memw_locked(r5,p0) = r2
 	if (p0) jumpr r31				// nothing else to do
 	jump 1b						// not atomic, start all over 
+FUNC_END h2_allsignal_signal
 

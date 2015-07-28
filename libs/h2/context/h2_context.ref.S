@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-	.text
-	.global h2_context_save
-h2_context_save:
+#include "h2_common_asm_std.h"
+
+FUNC_START h2_context_save .text.h2.context .p2align 5
 	{
 		memd(r29+#168) = r27:26
 		memd(r29+#160) = r25:24
@@ -60,8 +60,8 @@ h2_context_save:
 		memd(r29+#0) = r13:12
 		callr r31
 	}
-
-context_restore:
+	.falign
+.Lcontext_restore:
 	{
 		r13:12 = memd(r29+#0)
 		r15:14 = memd(r29+#8)
@@ -116,4 +116,5 @@ context_restore:
 		r27:26 = memd(r29+#168)
 		jumpr r31
 	}
+FUNC_END h2_context_save
 

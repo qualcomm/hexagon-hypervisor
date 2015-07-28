@@ -3,21 +3,17 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
 
 	.text
-	.global h2_get_prio
-	.global h2_set_prio
-	.global h2_mask_prios_above
-h2_get_prio:
-	allocframe(#0)
+FUNC_START h2_get_prio .text.h2.prio .falign
 	trap0(#H2_TRAP_PRIO_GET)
-	deallocframe
 	jumpr r31
+FUNC_END h2_get_prio
 
-h2_set_prio:
-	allocframe(#0)
+FUNC_START h2_set_prio .text.h2.prio .falign
 	trap0(#H2_TRAP_PRIO_SET)
-	deallocframe
 	jumpr r31
+FUNC_END h2_set_prio
 

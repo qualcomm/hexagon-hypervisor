@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
 
 #define OFF_MASK 4
@@ -13,17 +14,13 @@
 #define MASKVAL r3
 #define MASK_SIGVAL r3:2
 
-	.text
-
-	.global h2_signal_wait_any
-	.p2align 5
 	/* 
 	 * h2_anysignal_wait(h2_signal_t *signal, unsigned int mask)
 	 * Wait for one of the signals specified in mask is set
 	 * If already set, return immediately, otherwise block
 	 * return value is latest value of signals
 	 */
-h2_signal_wait_any:
+FUNC_START h2_signal_wait_any .text.h2.signal .p2align 5
 	MASK_SIGVAL = memd_locked(SIGNAL)
 	{
 		p0 = bitsclr(SIGVAL,MASK)
@@ -49,17 +46,15 @@ h2_signal_wait_any:
 		deallocframe
 		jump h2_signal_wait_any
 	}
-	.size h2_signal_wait_any,.-h2_signal_wait_any
+FUNC_END h2_signal_wait_any
 
-	.global h2_signal_wait_all
-	.p2align 5
 	/* 
 	 * qurt_signal_wait_all(h2_signal_t *signal, unsigned int mask)
 	 * Wait for all of the signals specified in mask is set
 	 * If already set, return immediately, otherwise block
 	 * return value is latest value of signals
 	 */
-h2_signal_wait_all:
+FUNC_START h2_signal_wait_all .text.h2.signal .p2align 4
 	MASK_SIGVAL = memd_locked(SIGNAL)
 	{
 		p0 = bitsset(SIGVAL,MASK)
@@ -87,10 +82,9 @@ h2_signal_wait_all:
 		deallocframe
 		jump h2_signal_wait_all
 	}
-	.size h2_signal_wait_all,.-h2_signal_wait_all
+FUNC_END h2_signal_wait_all
 
-	.global h2_signal_set
-h2_signal_set:
+FUNC_START h2_signal_set .text.h2.signal .p2align 5
 	MASK_SIGVAL = memd_locked(SIGNAL)
 	{
 		SIGVAL = or(SIGVAL,MASK)
@@ -125,5 +119,5 @@ h2_signal_set:
 		r0 = SIGVAL 
 		dealloc_return
 	}
-	.size h2_signal_set,.-h2_signal_set
+FUNC_END h2_signal_set
 

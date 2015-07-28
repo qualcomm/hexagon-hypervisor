@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-        .text
-	.global h2_cache_dcclean_range
-        .global h2_cache_dccleaninv_range
-        .global h2_cache_icinv_range
+#include "h2_common_asm_std.h"
 
-	.p2align 5
-h2_cache_dcclean_range:
+        .text
+
+FUNC_START h2_cache_dcclean_range .text.h2.cache .p2align 4
         // number of 32-byte chunks, rounded up
 	{
 		p0 = cmp.eq(r1,#0)
@@ -29,9 +27,9 @@ h2_cache_dcclean_range:
 		r0 = add(r0,#32)
         }:endloop0
         jumpr r31
+FUNC_END h2_cache_dcclean_range
 
-	.p2align 5
-h2_cache_dccleaninv_range:
+FUNC_START h2_cache_dccleaninv_range .text.h2.cache .p2align 4
         // number of 32-byte chunks, rounded up
 	{
 		p0 = cmp.eq(r1,#0)
@@ -51,9 +49,9 @@ h2_cache_dccleaninv_range:
                 r0 = add(r0,#32)
         }:endloop0
         jumpr r31
+FUNC_END h2_cache_dccleaninv_range
 
-	.p2align 5
-h2_cache_icinv_range:
+FUNC_START h2_cache_icinv_range .text.h2.cache .p2align 4
         // number of 32-byte chunks, rounded up
 	{
 		p0 = cmp.eq(r1,#0)
@@ -73,4 +71,5 @@ h2_cache_icinv_range:
                 r0 = add(r0,#32)
         }:endloop0
         jumpr r31
+FUNC_END h2_cache_icinv_range
 

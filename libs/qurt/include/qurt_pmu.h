@@ -50,7 +50,16 @@ INITIALIZATION AND SEQUENCING REQUIREMENTS
   None.
  */
 /* EJP: FIXME: register constants probably don't match h2 */
-static inline void qurt_pmu_set (int reg_id, unsigned int reg_value) { h2_pmu_setreg(reg_id,reg_value); }
+static inline void qurt_pmu_set (int reg_id, unsigned int reg_value)
+{
+	h2_pmu_setreg(reg_id,reg_value);
+	if (reg_id == QURT_PMUEVTCFG) {
+		h2_pmu_setreg(QURT_PMUCNT0,0);
+		h2_pmu_setreg(QURT_PMUCNT1,0);
+		h2_pmu_setreg(QURT_PMUCNT2,0);
+		h2_pmu_setreg(QURT_PMUCNT3,0);
+	}
+}
  
 /**@ingroup func_qurt_pmu_get
   Gets the PMU register.\n

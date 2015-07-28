@@ -54,56 +54,56 @@ static inline int myabs(int x)
 
 void thread0(int thread)
 {
-	h2_pmu_setreg(PMUEVTCFG,0);
-	h2_pmu_setreg(PMUCNT0,0);
-	h2_pmu_setreg(PMUCNT1,0);
-	h2_pmu_setreg(PMUCNT2,0);
-	h2_pmu_setreg(PMUCNT3,0);
+	h2_pmu_setreg(H2_PMUEVTCFG,0);
+	h2_pmu_setreg(H2_PMUCNT0,0);
+	h2_pmu_setreg(H2_PMUCNT1,0);
+	h2_pmu_setreg(H2_PMUCNT2,0);
+	h2_pmu_setreg(H2_PMUCNT3,0);
 
-	h2_pmu_setreg(PMUEVTCFG,0x03030303);
+	h2_pmu_setreg(H2_PMUEVTCFG,0x03030303);
 	delay();
-	if (h2_pmu_getreg(PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/a");
-	if (h2_pmu_getreg(PMUCNT0) != 0) FAIL("unexpected pmu value/b");
-	if (h2_pmu_getreg(PMUCNT1) != 0) FAIL("unexpected pmu value/c");
-	if (h2_pmu_getreg(PMUCNT2) != 0) FAIL("unexpected pmu value/d");
-	if (h2_pmu_getreg(PMUCNT3) != 0) FAIL("unexpected pmu value/e");
+	if (h2_pmu_getreg(H2_PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/a");
+	if (h2_pmu_getreg(H2_PMUCNT0) != 0) FAIL("unexpected pmu value/b");
+	if (h2_pmu_getreg(H2_PMUCNT1) != 0) FAIL("unexpected pmu value/c");
+	if (h2_pmu_getreg(H2_PMUCNT2) != 0) FAIL("unexpected pmu value/d");
+	if (h2_pmu_getreg(H2_PMUCNT3) != 0) FAIL("unexpected pmu value/e");
 	puts("a.ok");
 
 	h2_pmu_enable(t1id);
 	delay();
-	if (h2_pmu_getreg(PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/f");
-	if (h2_pmu_getreg(PMUCNT0) != 0) FAIL("unexpected pmu value/g");
-	if (h2_pmu_getreg(PMUCNT1) != 0) FAIL("unexpected pmu value/h");
-	if (h2_pmu_getreg(PMUCNT2) != 0) FAIL("unexpected pmu value/i");
-	if (h2_pmu_getreg(PMUCNT3) != 0) FAIL("unexpected pmu value/j");
+	if (h2_pmu_getreg(H2_PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/f");
+	if (h2_pmu_getreg(H2_PMUCNT0) != 0) FAIL("unexpected pmu value/g");
+	if (h2_pmu_getreg(H2_PMUCNT1) != 0) FAIL("unexpected pmu value/h");
+	if (h2_pmu_getreg(H2_PMUCNT2) != 0) FAIL("unexpected pmu value/i");
+	if (h2_pmu_getreg(H2_PMUCNT3) != 0) FAIL("unexpected pmu value/j");
 	puts("b.ok");
 
 	h2_sem_up(&sem_call);
 	h2_sem_down(&sem_ret);
 	delay();
-	if (h2_pmu_getreg(PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/k");
+	if (h2_pmu_getreg(H2_PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/k");
 #ifdef SIMULATOR_PMU_SUPPORT
-	if (myabs(h2_pmu_getreg(PMUCNT0) - SPINS) > (SPINS/1024)) FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT1) - SPINS) > (SPINS/1024)) FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT2) - SPINS) > (SPINS/1024)) FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT3) - SPINS) > (SPINS/1024)) FAIL("Unexpected time");
+	if (myabs(h2_pmu_getreg(H2_PMUCNT0) - SPINS) > (SPINS/1024)) FAIL("Unexpected time");
+	if (myabs(h2_pmu_getreg(H2_PMUCNT1) - SPINS) > (SPINS/1024)) FAIL("Unexpected time");
+	if (myabs(h2_pmu_getreg(H2_PMUCNT2) - SPINS) > (SPINS/1024)) FAIL("Unexpected time");
+	if (myabs(h2_pmu_getreg(H2_PMUCNT3) - SPINS) > (SPINS/1024)) FAIL("Unexpected time");
 #endif
 	puts("c.ok");
 
-	h2_pmu_setreg(PMUCNT0,0);
-	h2_pmu_setreg(PMUCNT1,0);
-	h2_pmu_setreg(PMUCNT2,0);
-	h2_pmu_setreg(PMUCNT3,0);
+	h2_pmu_setreg(H2_PMUCNT0,0);
+	h2_pmu_setreg(H2_PMUCNT1,0);
+	h2_pmu_setreg(H2_PMUCNT2,0);
+	h2_pmu_setreg(H2_PMUCNT3,0);
 
 	h2_pmu_disable(t1id);
 	h2_sem_up(&sem_call);
 	h2_sem_down(&sem_ret);
 	delay();
-	if (h2_pmu_getreg(PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/l");
-	if (h2_pmu_getreg(PMUCNT0) != 0) FAIL("unexpected pmu value/m");
-	if (h2_pmu_getreg(PMUCNT1) != 0) FAIL("unexpected pmu value/n");
-	if (h2_pmu_getreg(PMUCNT2) != 0) FAIL("unexpected pmu value/o");
-	if (h2_pmu_getreg(PMUCNT3) != 0) FAIL("unexpected pmu value/p");
+	if (h2_pmu_getreg(H2_PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/l");
+	if (h2_pmu_getreg(H2_PMUCNT0) != 0) FAIL("unexpected pmu value/m");
+	if (h2_pmu_getreg(H2_PMUCNT1) != 0) FAIL("unexpected pmu value/n");
+	if (h2_pmu_getreg(H2_PMUCNT2) != 0) FAIL("unexpected pmu value/o");
+	if (h2_pmu_getreg(H2_PMUCNT3) != 0) FAIL("unexpected pmu value/p");
 	puts("d.ok");
 
 	h2_sem_add(&sem_call,2);
@@ -112,15 +112,15 @@ void thread0(int thread)
 	h2_sem_down(&sem_ret);
 	delay();
 
-	if (h2_pmu_getreg(PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/q");
+	if (h2_pmu_getreg(H2_PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/q");
 #ifdef SIMULATOR_PMU_SUPPORT
-	if (myabs(h2_pmu_getreg(PMUCNT0) - (SPINS * 99 / 100)) > (SPINS/50)) 
+	if (myabs(h2_pmu_getreg(H2_PMUCNT0) - (SPINS * 99 / 100)) > (SPINS/50)) 
 		FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT1) - (SPINS * 99 / 100)) > (SPINS/50)) 
+	if (myabs(h2_pmu_getreg(H2_PMUCNT1) - (SPINS * 99 / 100)) > (SPINS/50)) 
 		FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT2) - (SPINS * 99 / 100)) > (SPINS/50)) 
+	if (myabs(h2_pmu_getreg(H2_PMUCNT2) - (SPINS * 99 / 100)) > (SPINS/50)) 
 		FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT3) - (SPINS * 99 / 100)) > (SPINS/50)) 
+	if (myabs(h2_pmu_getreg(H2_PMUCNT3) - (SPINS * 99 / 100)) > (SPINS/50)) 
 		FAIL("Unexpected time");
 #endif
 	puts("e.ok");
@@ -128,12 +128,12 @@ void thread0(int thread)
 	h2_pmu_enable(t0id);
 	h2_sem_add(&sem_call,1);
 	delay();
-	if (h2_pmu_getreg(PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/q");
+	if (h2_pmu_getreg(H2_PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/q");
 #ifdef SIMULATOR_PMU_SUPPORT
-	if (myabs(h2_pmu_getreg(PMUCNT0) - SPINS*2) > (SPINS/1024)) FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT1) - SPINS*2) > (SPINS/1024)) FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT2) - SPINS*2) > (SPINS/1024)) FAIL("Unexpected time");
-	if (myabs(h2_pmu_getreg(PMUCNT3) - SPINS*2) > (SPINS/1024)) FAIL("Unexpected time");
+	if (myabs(h2_pmu_getreg(H2_PMUCNT0) - SPINS*2) > (SPINS/1024)) FAIL("Unexpected time");
+	if (myabs(h2_pmu_getreg(H2_PMUCNT1) - SPINS*2) > (SPINS/1024)) FAIL("Unexpected time");
+	if (myabs(h2_pmu_getreg(H2_PMUCNT2) - SPINS*2) > (SPINS/1024)) FAIL("Unexpected time");
+	if (myabs(h2_pmu_getreg(H2_PMUCNT3) - SPINS*2) > (SPINS/1024)) FAIL("Unexpected time");
 #endif
 	puts("f.ok");
 

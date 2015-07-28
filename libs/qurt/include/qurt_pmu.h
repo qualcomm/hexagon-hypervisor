@@ -96,6 +96,6 @@ static inline unsigned int  qurt_pmu_get (int red_id)
   @dependencies
   None.
  */
-static inline void qurt_pmu_enable (int enable) { h2_pmu_enable(h2_thread_myid()); }
+static inline void qurt_pmu_enable (int enable) { /* DO NOTHING */ }
 
 #endif /* QURT_PMU_H */

@@ -35,7 +35,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r5 = HTID
 #endif
 	r7:6 = combine(r5,r18)
-	r15 = PMUCFG
 	r0 = #3
 	r3:2 = r19:18
 	r10 = r5
@@ -242,12 +241,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r5:4 = add(r7:6,r5:4)
 	if (p1) memd(r11) = r5:4
 
-	memb(r1+#CONTEXT_hthread) = r10
-	r14 = memb(r1+#CONTEXT_pmu_on)
-	r11 = #1
-	r10 = r5
-	r15 = insert(r14,r11:10)
-	PMUCFG = r15
 	sgp0 = r1
 	r4 = memw(r1+#CONTEXT_status_prio_hthread_tid)
 #if (ARCHV <= 3)
@@ -275,8 +268,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = #H2K_TRACE_SWITCH
 	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 
-	r15 = clrbit(r15,r5)
-	PMUCFG = r15
 	r9 = memw(H2K_GP+#KG_wait_mask)
 	r8 = memw(H2K_GP+#KG_priomask)
 	r9 = setbit(r9,r5)

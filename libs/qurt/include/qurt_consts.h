@@ -6,6 +6,8 @@
 #ifndef QURT_CONSTS_H
 #define QURT_CONSTS_H
 
+#include <h2.h>
+
 /* Definitions of system events. System events will cause 
    a thread to be suspended and put into suspending_list.
    The system event number will be saved in CONTEXT::error::cause field
@@ -33,12 +35,12 @@
 /** 
  PMU  
 */
-#define QURT_PMUCNT0    0  /**< */
-#define QURT_PMUCNT1    1  /**< */
-#define QURT_PMUCNT2    2  /**< */
-#define QURT_PMUCNT3    3  /**< */
-#define QURT_PMUCFG     4  /**< */
-#define QURT_PMUEVTCFG  5  /**< */
+#define QURT_PMUCNT0    H2_PMUCNT0  /**< */
+#define QURT_PMUCNT1    H2_PMUCNT1  /**< */
+#define QURT_PMUCNT2    H2_PMUCNT2  /**< */
+#define QURT_PMUCNT3    H2_PMUCNT3  /**< */
+#define QURT_PMUCFG     H2_PMUCFG  /**< */
+#define QURT_PMUEVTCFG  H2_PMUEVTCFG  /**< */
 
 /* new since V55 */
 #define QURT_PMUCNT4    6  /**< */

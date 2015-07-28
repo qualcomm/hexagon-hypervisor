@@ -42,7 +42,10 @@ static inline unsigned long long int qurt_get_core_pcycles(void)
 
 static inline void qurt_profile_get_idle_pcycles (unsigned long long *pcycles)
 {
-	*pcycles = 0;
+	int i;
+	for (i = 0; i < 4; i++) {
+		pcycles[i] = h2_waitcycles(i);
+	}
 }
 
 static inline void qurt_profile_get_threadid_pcycles (int thread_id, unsigned long long  *pcycles)

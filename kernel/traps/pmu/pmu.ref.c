@@ -28,37 +28,14 @@ u32_t H2K_trap_pmuctrl(pmuop_type configtype, u32_t val1, u32_t val2, u32_t val3
 
 u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
 {
-	u32_t val;
-	H2K_id_t id;
-	H2K_thread_context *dest;
-	id.raw = vdest;
-
-	if (id.vmidx != me->id.vmidx) return -1;
-	if ((dest = H2K_id_to_context(id)) == NULL) return -1;
-	turnon = (turnon != 0);
-	if (dest->status == H2K_STATUS_DEAD) return -1;
-	BKL_LOCK();
-	H2K_atomic_insert(&dest->atomic_status_word,turnon,
-		member_size(H2K_thread_context, pmu_on) * 8,
-		(offsetof(H2K_thread_context, pmu_on)
-		 - offsetof(H2K_thread_context, atomic_status_word)) * 8);
-	if (dest->status == H2K_STATUS_RUNNING) {
-		val = H2K_get_pmucfg();
-		if (turnon) {
-			val = Q6_R_setbit_RR(val,dest->hthread);
-		} else {
-			val = Q6_R_clrbit_RR(val,dest->hthread);
-		}
-		H2K_set_pmucfg(val);
-	}
-	BKL_UNLOCK();
 	return 0;
 }
 
 u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
 {
 	switch ((s32_t)whichreg) {
-	case -1: H2K_set_pmuevtcfg(newval); return 0;
+	case 8: H2K_set_pmuevtcfg(newval); return 0;
+	case 10: H2K_set_pmucfg(newval); return 0;
 
 #ifdef COUNT_TLB_EVENTS
 	case -2: me->vmblock->tlbmissx_lo = newval;
@@ -82,7 +59,8 @@ u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t
 u32_t H2K_trap_pmuctrl_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
 {
 	switch ((s32_t)whichreg) {
-	case -1: return H2K_get_pmuevtcfg();
+	case 8: return H2K_get_pmuevtcfg();
+	case 10: return H2K_get_pmucfg();
 
 #ifdef COUNT_TLB_EVENTS
 	case -2: return me->vmblock->tlbmissx_lo;

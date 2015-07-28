@@ -65,7 +65,7 @@ void TH_check_dead()
 	if (H2K_get_pmucnt3() != 0xdead) FAIL("unexpected changed value");
 }
 
-#define CONST_pmuevtcfg 0xffffffff
+#define CONST_pmuevtcfg 8
 #define CONST_pmucnt0 0
 #define CONST_pmucnt1 1
 #define CONST_pmucnt2 2

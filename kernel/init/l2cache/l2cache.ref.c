@@ -809,6 +809,10 @@ u32_t H2K_l2cache_init() {
 	u8_t *ptr;
 	u32_t tag_size;
 
+	if (H2K_trap_hwconfig_setl2reg(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK, L2REGS_QOS_SCOREBOARD_WATERMARK_DEFAULT, NULL) == -1) {  // error
+		return 0;
+	}
+
 	while (arches[i].archv != arch) {
 		if (0 == arches[i].archv) {  // whoa
 			H2K_gp->kernel_error = KERROR_L2CACHE_INIT_ARCH;

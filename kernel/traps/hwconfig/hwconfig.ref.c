@@ -213,6 +213,7 @@ u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 	u32_t ret;
 
 	if (offset > L2REGS_MAX) {  // out of range
+		H2K_gp->kernel_error = KERROR_HWCONFIG_L2REG_RANGE;
 		return -1;
 	}
 
@@ -241,6 +242,7 @@ u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 	u32_t ret;
 
 	if (offset > L2REGS_MAX) {  // out of range
+		H2K_gp->kernel_error = KERROR_HWCONFIG_L2REG_RANGE;
 		return -1;
 	}
 

@@ -19,7 +19,7 @@
 #elif ARCHV == 5
 #define MAX_HTHREADS 6
 #elif ARCHV == 60
-#define MAX_HTHREADS 4
+#define MAX_HTHREADS 6
 #endif
 #endif
 

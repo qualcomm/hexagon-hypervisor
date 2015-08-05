@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <syscall_defs.h>
+#include <h2_error.h>
 
 #define ALIGN32_DOWN(X) ((X) & -32)
 #define ALIGN32_UP(X) (((X) + 31) & -32)
@@ -63,10 +64,19 @@ errno_t sys_ftell(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FTELL,&f
 
 char __boot_cmdline__[SIZE__boot_cmdline__] __attribute__((section(".data"))) = { 0 };
 
+void __attribute__ ((weak)) __h2_handle_errors_hook__(void) {
+	h2_handle_errors(0);
+}
+
 errno_t sys_get_cmdline(char *buffer, count_t count)
 {
 	errno_t ret;
 	struct { char *buf; count_t count; } x;
+
+	if (NULL != __h2_handle_errors_hook__) {
+		__h2_handle_errors_hook__();
+	}
+
 	if (__boot_cmdline__[0] != 0) {
 		strncpy(buffer,__boot_cmdline__,count);
 		buffer[count-1] = 0;

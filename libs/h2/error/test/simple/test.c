@@ -12,15 +12,9 @@
 
 int main() {
 
-	//	volatile int *p = 0;
 	unsigned int x;
 
-	h2_handle_errors(0);
-
-	/* Print this first since we don't get control back if the error is handled
-		 correctly. Will print FAIL if execution continues after error, which will
-		 override the pass signature */
-	puts("TEST PASSED\n");
+	//	h2_handle_errors(0) should be set by default
 
 	// do something bad
 	//	*p++;

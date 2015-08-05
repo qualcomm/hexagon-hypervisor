@@ -162,7 +162,7 @@ endif
 
 ifdef STANDALONE
 CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
-LDFLAGS += -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
+LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0 -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
 ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
 
 else # non-STANDALONE
@@ -274,6 +274,12 @@ check-fail:
 	      echo; \
 	      exit 1;\
 	   fi;\
+	   grep "status 0xaaafa7a1" $$SUBDIR/results.txt;\
+	   if [ $$? -eq 0 ]; then\
+	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
+	      echo; \
+	      exit 1;\
+	   fi;\
 	   grep "TEST PASSED" $$SUBDIR/results.txt;\
 	   if [ $$? -ne 0 ]; then\
 	      echo FAIL - No PASS detected in results.txt; \
@@ -302,6 +308,12 @@ check:
 	      echo FAIL - FAIL detected in results.txt; \
 	      echo; \
 	      continue;\
+	   fi;\
+	   grep "status 0xaaafa7a1" $$SUBDIR/results.txt;\
+	   if [ $$? -eq 0 ]; then\
+	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
+	      echo; \
+	      exit 1;\
 	   fi;\
 	   grep "TEST PASSED" $$SUBDIR/results.txt;\
 	   if [ $$? -ne 0 ]; then\
@@ -355,6 +367,7 @@ test.log: ${EXEC}
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \
 	fi;
+	$(POST_RUN)
 
 # Coverage stuff -- single testcase
 
@@ -390,6 +403,8 @@ results.txt: test.log
 	@grep -A 1 "ERROR" test.log > $@; \
 	if [ $$? -eq 0 ]; then exit 1; fi; \
 	grep -A 1 "FAIL" test.log > $@; \
+	if [ $$? -eq 0 ]; then exit 1; fi; \
+	grep -A 1 "status 0xaaafa7a1" test.log > $@; \
 	if [ $$? -eq 0 ]; then exit 1; fi; \
 	grep "TEST PASSED" test.log > $@; \
 	if [ $$? -eq 0 ]; then exit 0; fi; \

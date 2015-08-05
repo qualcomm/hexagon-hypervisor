@@ -27,7 +27,19 @@ errno_t sys_closedir(int dir) { return ANGEL(SYS_CLOSEDIR,dir,0); }
 
 errno_t sys_errno() { int x = 0; clean(&x,1); return ANGEL(SYS_ERRNO,&x,0); }
 
-void sys_exit(okay_t status) { clean(&status, 1); ANGEL(SYS_EXIT,&status,status); }
+void __attribute__ ((weak)) __h2_thread_stop_hook__(int status) {
+	h2_thread_stop(status);
+}
+
+void sys_exit(okay_t status) {
+
+	if (0 == status && NULL != __h2_thread_stop_hook__) {
+		__h2_thread_stop_hook__(status);
+	}
+
+	clean(&status, 1);
+	ANGEL(SYS_EXIT,&status,status);
+}
 
 errno_t sys_flen(fd_t fd) { errno_t ret; clean(&fd,1); ret = ANGEL(SYS_FLEN,&fd,0); DEBUG_PRINTF("sys_flen: fd=%d ret=%d\n",fd,ret); return ret; }
 

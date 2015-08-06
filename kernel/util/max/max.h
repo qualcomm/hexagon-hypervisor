@@ -163,12 +163,10 @@
 #define SSR_SS_BIT 30
 #endif
 
-#ifdef HAVE_EXTENSIONS
 #define SSR_XA_BITS 27
 #define SSR_XA_NBITS 3
 #define SSR_XA_BITS_MASK (((0x1 << (SSR_XA_NBITS)) - 1) << SSR_XA_BITS)
 #define SSR_XE_BIT 31
-#endif
 
 #if ARCHV <= 4
 #define BOOT_THREAD_USR 0x00000000

@@ -140,20 +140,17 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 }
 
 u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) {
-
-#ifdef HAVE_EXTENSIONS
-
-	/* FIXME: should check for allowed XA values here */
+	/* FIXME: should check for allowed XA values here (maybe?) */
+	/* EJP: Always allow XE/XA to be set if only for silver tests working also */
 	me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
 	me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+#ifdef HAVE_EXTENSIONS
 	if (xe) {
 		H2K_hvx_poweron(); // make sure the lights are on
 	}
 
-	return 0;
-#else
-	return -1;
 #endif
+	return 0;
 }
 
 u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {

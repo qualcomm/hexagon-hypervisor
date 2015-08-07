@@ -97,7 +97,7 @@ unsigned long boot_vm() {
 	/* Reset for Linux-y VM */
 	NUM_VCPUS = 8;
 	TRAPMASK = 0x1;
-	PRIO = 252;
+	PRIO = 255;
 	return newvm;
 }
 

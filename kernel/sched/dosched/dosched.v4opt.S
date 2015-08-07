@@ -153,6 +153,9 @@ FUNC_START H2K_dosched  .text.core.dosched  .p2align  3
 	}
 	{
 		memw(H2K_GP+#KG_priomask) = r3                  // H2K_gp->priomask = clrbit(H2K_gp->priomask,hthread)
+		p0 = cmp.eq(r15,#255)
+		if (p0.new) r1 = #0x7ff				// enable l2vic interrupt for worst priorities
+								// but NOT reschedule...
 	}
 	imask = r1                                      // set to high priority
 	.falign

@@ -68,7 +68,7 @@ struct qurt_mem_pool_struct {
 	qurt_mem_pool_attr_t attr;
 };
 
-#define MAX_TRANSLATIONS 512
+#define MAX_TRANSLATIONS 256
 
 static H2K_linear_fmt_t linear_pages[MAX_TRANSLATIONS] __attribute__((aligned(4096))) __attribute__((section(".data.qurt.translations")));
 

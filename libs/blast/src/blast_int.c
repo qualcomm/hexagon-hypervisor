@@ -33,7 +33,7 @@ Only one signal per sigset
 
 */
 
-#define MAX_SYS_INTERRUPTS 1024
+#define MAX_SYS_INTERRUPTS 256
 
 typedef union {
 	struct {
@@ -51,10 +51,11 @@ typedef union {
 	unsigned long long int raw;
 } qurt_interrupt_table_info_t;
 
-static qurt_interrupt_table_entry_t qurt_int_sigsets[MAX_SYS_INTERRUPTS] __attribute__((aligned(128)));
-static qurt_interrupt_table_info_t qurt_int_info[MAX_SYS_INTERRUPTS] __attribute__((aligned(128)));
+static qurt_interrupt_table_entry_t qurt_int_sigsets[MAX_SYS_INTERRUPTS] __attribute__((aligned(64)));
+static qurt_interrupt_table_info_t qurt_int_info[MAX_SYS_INTERRUPTS] __attribute__((aligned(64)));
 
 //  Fast interrupt handler
+static int qurt_int2signal(int intnum) __attribute__((section(".text.qurt.int")));
 static int qurt_int2signal(int intnum)
 {
 	//  maybe need to check if it's been registered first...

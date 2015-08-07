@@ -163,7 +163,7 @@ static inline int qurt_trace_changed(unsigned int prev_trace_marker, unsigned in
   @dependencies
   None.
 */
-static inline unsigned int qurt_etm_set_config(unsigned int type, unsigned int route, unsigned int filter) { R_UNSUPPORTED; }
+unsigned int qurt_etm_set_config(unsigned int type, unsigned int route, unsigned int filter);
 
 /**@ingroup func_qurt_etm_enable
   Enables or disables the ETM trace.
@@ -184,7 +184,7 @@ static inline unsigned int qurt_etm_set_config(unsigned int type, unsigned int r
   @dependencies
   None.
 */
-static inline unsigned int qurt_etm_enable(unsigned int enable_flag) { R_UNSUPPORTED; }
+unsigned int qurt_etm_enable(unsigned int enable_flag);
 
 /**@ingroup func_qurt_etm_testbus_set_config
   Set configuration data for Hexagon ETM testbus
@@ -200,7 +200,7 @@ static inline unsigned int qurt_etm_enable(unsigned int enable_flag) { R_UNSUPPO
   @dependencies
   None.
 */
-static inline unsigned int qurt_etm_testbus_set_config(unsigned int cfg_data) { R_UNSUPPORTED; }
+static inline unsigned int qurt_etm_testbus_set_config(unsigned int cfg_data) { return QURT_ETM_SETUP_OK; }
 
 /**@ingroup func_qurt_etm_set_breakpoint
   Set a break-point at the specified memory access.
@@ -234,7 +234,7 @@ static inline unsigned int qurt_etm_testbus_set_config(unsigned int cfg_data) { 
     None.
 */
  
-static inline unsigned int qurt_etm_set_breakpoint(unsigned int type, unsigned int address, unsigned int data, unsigned int mask) { R_UNSUPPORTED; }
+unsigned int qurt_etm_set_breakpoint(unsigned int type, unsigned int address, unsigned int data, unsigned int mask);
  
 
 /**@ingroup func_qurt_etm_set_breakarea
@@ -264,7 +264,7 @@ static inline unsigned int qurt_etm_set_breakpoint(unsigned int type, unsigned i
     None.
 */
  
-static inline unsigned int qurt_etm_set_breakarea(unsigned int type, unsigned int start_address, unsigned int end_address, unsigned int count) { R_UNSUPPORTED; }
+unsigned int qurt_etm_set_breakarea(unsigned int type, unsigned int start_address, unsigned int end_address, unsigned int count);
  
 
 #endif /* QURT_TRACE_H */

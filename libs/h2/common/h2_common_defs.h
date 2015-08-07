@@ -47,8 +47,8 @@
 #define SYSCFG_PM_BIT 9
 #define SYSCFG_PM_LEN 1
 #define SYSCFG_PM (((0x1 << SYSCFG_PM_LEN) - 1) << SYSCFG_PM_BIT)
-#define SYSCFG_TE_LEN
-#define SYSCFG_TE_BIT 10 1
+#define SYSCFG_TE_LEN 1
+#define SYSCFG_TE_BIT 10
 #define SYSCFG_TE (((0x1 << SYSCFG_TE_BIT) - 1) << SYSCFG_TE_BIT)
 #define SYSCFG_TL_BIT 11
 #define SYSCFG_TL_LEN 1

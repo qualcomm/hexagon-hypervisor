@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <tlbfmt.h>
 #include <tlbmisc.h>
+#include <hw.h>
 
 /*
  * This test checks the following functionality:
@@ -323,6 +324,9 @@ int main()
 	tlb_entry |= 0xfULL << 28;
 #endif
 	H2K_mem_tlb_write(tlb_index, tlb_entry);
+
+	info("%d hw threads\n", get_hthreads());
+
 	spawn_vm(vmmain);
 	h2_thread_stop(0);
 	return 0;

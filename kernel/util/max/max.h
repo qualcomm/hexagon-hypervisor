@@ -11,17 +11,7 @@
 #include <h2_common_pmap.h>
 #include <h2_common_defs.h>
 
-#ifndef MAX_HTHREADS
-#if ARCHV <= 3
-#define MAX_HTHREADS 6
-#elif ARCHV == 4
-#define MAX_HTHREADS 3
-#elif ARCHV == 5
-#define MAX_HTHREADS 6
-#elif ARCHV == 60
-#define MAX_HTHREADS 4
-#endif
-#endif
+#define MAX_HTHREADS 8
 
 //#define DO_EXT_SWITCH 1
 
@@ -39,6 +29,8 @@
 
 #define CORE_V6_A 0x0
 #define CORE_V6_E 0x4
+#define CORE_V6_J 0x7
+#define CORE_V6_K 0x8
 
 #define TEMP_MAP_VA 0xff800000
 #define TEMP_MAP_PG_SIZE SIZE_4M

@@ -54,7 +54,7 @@ int main()
 		H2K_gp->inthandlers[i].handler = BAD;
 		H2K_gp->inthandlers[i].param = BAD;
 	}
-	for (i = 0; i < MAX_HTHREADS; i++) {
+	for (i = 0; i < H2K_gp->hthreads; i++) {
 		H2K_fastint_contexts[i].context.r0100 = 0xdeadbeefcafebabeULL;
 		H2K_fastint_contexts[i].context.hthread = 0xf;
 		H2K_fastint_contexts[i].context.trapmask = 0xdead;
@@ -78,7 +78,7 @@ int main()
 
 		if (H2K_gp->inthandlers[i].param != NULL) FAIL("uninitialized fastint ptr");
 	}
-	for (i = 0; i < MAX_HTHREADS; i++) {
+	for (i = 0; i < H2K_gp->hthreads; i++) {
 		if (H2K_fastint_contexts[i].context.r0100) FAIL("Uninitialized fastint context");
 		if (H2K_fastint_contexts[i].context.hthread != i) FAIL("Uninitialized fastint context");
 		if (H2K_fastint_contexts[i].context.trapmask != TEST_FASTINT_TRAPMASK) FAIL("bad trapmask");

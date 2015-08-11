@@ -67,6 +67,21 @@ static inline u32_t iassignr(u32_t intno)
 	return ret;
 }
 
+static inline u32_t hthreads_mask()
+{
+	iassignw(0,-1);
+	return iassignr(0);
+}
+
+static inline u32_t get_hthreads()
+{
+#if ARCHV >= 5
+	return Q6_R_popcount_P(hthreads_mask());
+#elif ARCHV == 4
+	return 3;
+#endif
+}
+
 #endif
 
 static inline void resched_int()

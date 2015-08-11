@@ -6,6 +6,8 @@
 #include <asm_std.h>
 #include <max.h>
 
+// FIXME: get from allocator?
+
 DATA_START H2K_stack_area .data.core.stacks .p2align 5
 	.space KERNEL_STACK_SIZE
 	.global H2K_stacks

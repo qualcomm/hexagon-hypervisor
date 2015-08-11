@@ -30,7 +30,8 @@ MAX_PRIOS = 256  # must match max.h
 
 outfile = open('scenarios.h', 'w')
 random.seed(0)
-MAX_HTHREADS_possibilities = (3, 6, 8)
+MAX_HTHREADS_possibilities = (2, 3, 4, 6, 8)
+
 print >> outfile, '#if MAX_HTHREADS < %d' % min(MAX_HTHREADS_possibilities)
 print >> outfile, '#error MAX_HTHREADS must be at least %d for this test.' % min(MAX_HTHREADS_possibilities)
 print >> outfile, '#endif'
@@ -109,6 +110,7 @@ for MAX_HTHREADS in MAX_HTHREADS_possibilities:
 		print >> outfile, '\t 0x%x, // wait_mask' % wait_mask
 		print >> outfile, '\t 0x%x, // expected_priomask' % expected_priomask
 		print >> outfile, '\t %d, // should_resched' % should_resched
+		print >> outfile, '\t %d, // hthreads' % MAX_HTHREADS
 		print >> outfile, '\t},'
 	print >> outfile, '#endif'
 # We print one last scenario to terminate the array.

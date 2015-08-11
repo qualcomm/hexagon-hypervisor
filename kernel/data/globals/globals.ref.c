@@ -7,6 +7,7 @@
 #include <globals.h>
 #include <max.h>
 #include <symbols.h>
+#include <hw.h>
 
 H2K_kg_t H2K_kg;
 
@@ -68,6 +69,13 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.timer_intnum = TIMER_INT;
 	}
 #else
-		H2K_kg.timer_intnum = TIMER_INT;
-#endif	
+	H2K_kg.timer_intnum = TIMER_INT;
+#endif
+
+#ifndef NUM_HTHREADS
+
+	H2K_kg.hthreads = get_hthreads();
+#else
+	H2K_kg.hthreads = NUM_HTHREADS;
+#endif
 }

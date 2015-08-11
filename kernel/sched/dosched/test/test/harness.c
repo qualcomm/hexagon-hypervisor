@@ -311,6 +311,8 @@ int main()
 	int i,j;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
+	H2K_gp->hthreads = get_hthreads();
+
 	/* Set up some threads */
 	l.prio = MAX_PRIOS - 12;
 	l.hthread = 0;

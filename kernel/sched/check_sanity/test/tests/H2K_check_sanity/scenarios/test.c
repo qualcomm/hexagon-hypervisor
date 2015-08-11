@@ -34,6 +34,7 @@ struct scenario {
 	int wait_mask;
 	int expected_priomask;
 	int should_resched;
+	int hthreads;
 };
 
 static char *status_string[] = {
@@ -129,7 +130,7 @@ static void check(struct scenario *scenario)
 		if ((H2K_kg.priomask & scenario->expected_priomask) == 0) {
 			FAIL("priomask not set for worst priority thread", scenario);
 		}
-		for (i = 0; i < MAX_HTHREADS; i++) {
+		for (i = 0; i < H2K_kg.hthreads; i++) {
 			if (H2K_kg.priomask & 1 << i && get_imask(i) != 0) {
 				FAIL("failed to clear imask", scenario);
 			}
@@ -166,8 +167,11 @@ int main()
 	int i;
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+
+	H2K_gp->hthreads = get_hthreads();
+
 	H2K_clear_gie();
-	for (i = 0; i < num_scenarios; i++) {
+	for (i = 0; i < num_scenarios && scenarios[i].hthreads <= H2K_gp->hthreads; i++) {
 		setup(&scenarios[i]);
 		BKL_LOCK();
 		call(do_H2K_check_sanity, rand());

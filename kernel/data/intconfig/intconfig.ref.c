@@ -17,6 +17,7 @@
 #include <intcontrol.h>
 #include <passthru.h>
 
+/* FIXME: get these from allocator? */
 H2K_fastint_context H2K_fastint_contexts[MAX_HTHREADS];
 
 #define FASTINT_TRAPMASK 0x9 /* ANGEL | FUTEX_RESUME */
@@ -239,7 +240,7 @@ void H2K_intconfig_init(u32_t ssbase)
 	H2K_gp->inthandlers[RESCHED_INT].handler = H2K_resched;
 	H2K_gp->inthandlers[VM_IPI_INT].handler = H2K_vm_ipi_do;
 	H2K_gp->inthandlers[H2K_gp->timer_intnum].handler = H2K_timer_int;
-	for (i = 0; i < MAX_HTHREADS; i++) {
+	for (i = 0; i < H2K_gp->hthreads; i++) {
 		tmp = &H2K_fastint_contexts[i].context;
 		H2K_thread_context_clear(tmp);
 		tmp->hthread = i;

@@ -25,7 +25,7 @@ static inline u32_t H2K_runlist_worst_prio()
 	s32_t worst_prio = -1;
 	s32_t hthread = -1;
 	s32_t i;
-	for (i = 0; i < MAX_HTHREADS; i++) {
+	for (i = 0; i < H2K_gp->hthreads; i++) {
 		if (H2K_gp->runlist_prios[i] IS_WORSE_THAN worst_prio) {
 			worst_prio = H2K_gp->runlist_prios[i];
 			hthread = i;
@@ -39,7 +39,7 @@ static inline u32_t H2K_runlist_worst_prio_hthread()
 	s32_t worst_prio = -1;
 	s32_t hthread = -1;
 	s32_t i;
-	for (i = 0; i < MAX_HTHREADS; i++) {
+	for (i = 0; i < H2K_gp->hthreads; i++) {
 		if (H2K_gp->runlist_prios[i] IS_WORSE_THAN worst_prio) {
 			worst_prio = H2K_gp->runlist_prios[i];
 			hthread = i;

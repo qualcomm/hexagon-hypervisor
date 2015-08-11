@@ -121,7 +121,10 @@ int main()
 	u32_t i;
 	u32_t found_thread;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	for (i = 0; i < MAX_HTHREADS; i++) {
+
+	H2K_gp->hthreads = get_hthreads();
+
+	for (i = 0; i < H2K_gp->hthreads; i++) {
 		H2K_gp->runlist[i] = 0;
 	}
 	TH_init_seen = 0;
@@ -137,7 +140,7 @@ int main()
 	if (boot->continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");
 	if (boot->trapmask != 0xffffffffU) FAIL("boot thread trapmask");
 	found_thread = 0;
-	for (i = 0; i < MAX_HTHREADS; i++) {
+	for (i = 0; i < H2K_gp->hthreads; i++) {
 		if (H2K_gp->runlist[i] == boot) {
 			if (H2K_gp->runlist_prios[i] != 0) FAIL("Didn't push into runlist (0)");
 			found_thread = 1;

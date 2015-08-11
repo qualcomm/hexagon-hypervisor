@@ -11,7 +11,7 @@
 
 u64_t H2K_waitcycles_get(u32_t htid, H2K_thread_context *me)
 {
-	if (htid >= MAX_HTHREADS) return 0;
+	if (htid >= H2K_gp->hthreads) return 0;
 	if ((H2K_get_modectl() & (1 << (16 + htid))) == 0) return H2K_gp->waitcycles[htid];
 	return H2K_gp->waitcycles[htid] + H2K_pcycles_get(me) - H2K_gp->oncpu_wait[htid];
 }

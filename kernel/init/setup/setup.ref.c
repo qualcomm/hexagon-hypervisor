@@ -99,9 +99,10 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot_offset, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size)
 {
 	s32_t asid;
-	u32_t hthreads = (1<<MAX_HTHREADS)-1;
+	u32_t hthreads;
 
 	H2K_init_setup(phys_offset, ssbase, last_tlb_index, tlb_size);
+	hthreads  = (1 << H2K_gp->hthreads) - 1;
 
 	/* allocate first thread */
 	H2K_thread_context *boot = bootvm->free_threads;

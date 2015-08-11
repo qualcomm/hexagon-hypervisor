@@ -809,7 +809,21 @@ u32_t H2K_l2cache_init() {
 	u8_t *ptr;
 	u32_t tag_size;
 
-	if (H2K_trap_hwconfig_setl2reg(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK, L2REGS_QOS_SCOREBOARD_WATERMARK_DEFAULT, NULL) == -1) {  // error
+	// watermark lo = 24; watermark l2 = 24
+	if (H2K_trap_hwconfig_setl2reg
+			(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK,
+			 H2K_trap_hwconfig_getl2reg(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK, 0, NULL)
+			 | (24 << L2REGS_QOS_SCOREBOARD_WATERMARK_WM_LO_BITS)
+			 | (24 << L2REGS_QOS_SCOREBOARD_WATERMARK_WM_L2_BITS),
+			 NULL) == -1) {  // error
+		return 0;
+	}
+	// qos mode tl = 1
+	if (H2K_trap_hwconfig_setl2reg
+			(0, NULL, L2REGS_QOS_MODE,
+			 H2K_trap_hwconfig_getl2reg(0, NULL, L2REGS_QOS_MODE, 0, NULL)
+			 | (1 << L2REGS_QOS_MODE_TL_BIT),
+			 NULL) == -1) {  // error
 		return 0;
 	}
 

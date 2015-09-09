@@ -3,34 +3,29 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <h2_vm.h>
-#include <h2_atomic.h>
-#include <h2_cache.h>
-#include <h2_config.h>
-#include <h2_common_pmap.h>
-#include <h2_common_vmblock.h>
-#include <h2_sem.h>
-#include <h2_intwait.h>
-#include <h2_thread.h>
+#include <h2.h>
 #include <boot.h>
 #include <bootvm_entry.h>
 #include <hw.h>
+#include <stdio.h>
 
-#ifndef DEBUG
+#ifdef RTL
 #define ITERS 1
 #ifndef INTERRUPT_NUM
 #define INTERRUPT_NUM 32
 #endif
 #else
 #define ITERS 2
-#ifndef INTERRUPT_NUM
-#define INTERRUPT_NUM 30
+#define HAVE_TIMER
 #endif
+
+#ifdef HAVE_TIMER
+#define SLEEP (1000*1000*5)
 #endif
 
 #define PASSFAIL_VA 0x01000000
 
-#define STACK_SIZE 128
+#define STACK_SIZE 256
 #define TASKS 4
 #define PRIO 3
 
@@ -67,6 +62,10 @@ void vmmain(void *unused) {
 	int ret;
 	unsigned int *sigil = (void *)(PASSFAIL_VA);
 
+#ifndef RTL
+	h2_handle_errors(0);
+#endif
+
 	h2_sem_init_val(&done, 0);
 
 	for (j = 0; j < ITERS; j++) {
@@ -81,7 +80,11 @@ void vmmain(void *unused) {
 			} while (ret == -1);
 		}
 
+#ifdef HAVE_TIMER
+		h2_nanosleep(SLEEP);
+#else
 		h2_intwait(INTERRUPT_NUM);
+#endif
 		for (i = 0; i < TASKS; i++) {
 			h2_sem_up(&sems[i]);
 		}
@@ -89,21 +92,19 @@ void vmmain(void *unused) {
 		for (i = 0; i < TASKS; i++) {
 			h2_sem_down(&done);
 		}
-#ifdef DEBUG
+#ifndef RTL
 		*sigil = j + 1;
 #endif
 	}
 
 	*sigil = 0xe0f0beef;
 	h2_dccleana(sigil);
+#ifndef RTL
+	printf("TEST PASSED\n");
+	exit(0);
+#endif
 	h2_thread_stop(0);
 }
-
-#ifdef DEBUG
-void intr() {
-	swi(1 << INTERRUPT_NUM);
-}
-#endif
 
 int main() 
 {
@@ -115,18 +116,6 @@ int main()
 	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
 
 	h2_vmboot(vmmain, &main_thread_stack[STACK_SIZE - 1], 0, 0, vm);
-
-#ifdef DEBUG
-	int j;
-	volatile int i;
-	for (j = 0; j < ITERS; j++) {
-		i = 10000;
-		while (i--);
-		intr();
-		i = 100000;
-		while (i--);
-	}
-#endif
 
 	h2_thread_stop(0);
 	return 0;

@@ -2,8 +2,6 @@
 #  This behaves kind of like a SUBDIRS makefile.
 #  It is meant to be run from the top level ob directory.
 
-H2DIR=.
-
 SUBDIRS:=$(shell cat ./scripts/testlist | perl -p -e 's/^\s*\#.*//;')
 
 all:

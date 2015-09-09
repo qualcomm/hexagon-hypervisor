@@ -25,9 +25,18 @@ endif
 
 include scripts/Makefile.inc.tools
 
-ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(CURDIR)/install
+ifeq ($(H2DIR),)
+export H2DIR := $(CURDIR)
 endif
+
+ifeq ($(INSTALLPATH),)
+export INSTALLPATH := $(H2DIR)/install
+endif
+
+ifeq ($(KERNELPATH),)
+export KERNELPATH := $(H2DIR)/kernel
+endif
+
 
 OPT_JFLAG=-j 3
 REF_JFLAG=-j 3

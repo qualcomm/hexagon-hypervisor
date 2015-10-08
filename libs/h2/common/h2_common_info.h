@@ -11,6 +11,7 @@ typedef enum {
 	INFO_BOOT_FLAGS,  /**< Boot flags */
 	INFO_STLB,        /**< STLB configuration */
 	INFO_SYSCFG,      /**< SYSCFG register */
+	INFO_LIVELOCK,    /**< LIVELOCK register */
 	INFO_REV,         /**< REV register */
 	INFO_SSBASE,      /**< subsystem base from cfg_table */
 	INFO_TLB_FREE,    /**< Number of replaceable TLB entries */

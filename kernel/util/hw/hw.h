@@ -131,6 +131,18 @@ static inline void H2K_set_syscfg(u32_t val)
 	asm volatile (" syscfg = %0 // set syscfg" : : "r"(val));
 }
 
+static inline u32_t H2K_get_livelock()
+{
+	u32_t ret;
+	asm volatile (" %0 = s35 // get livelock" : "=r"(ret));
+	return ret;
+}
+
+static inline void H2K_set_livelock(u32_t val)
+{
+	asm volatile (" s35 = %0 // set livelock" : : "r"(val));
+}
+
 static inline u32_t H2K_get_duck()
 {
 	u32_t ret;

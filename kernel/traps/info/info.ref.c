@@ -13,7 +13,6 @@
 
 u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
-	u32_t val;
 	u32_t l2 = H2K_gp->l2size;
 	u32_t l2size;
 
@@ -36,8 +35,10 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return H2K_gp->info_stlb.raw;
 
 	case INFO_SYSCFG:
-		asm volatile ( "%0 = syscfg\n" : "=r" (val));
-		return val;
+		return H2K_get_syscfg();
+
+	case INFO_LIVELOCK:
+		return H2K_get_livelock();
 
 	case INFO_REV:
 		return H2K_gp->core_rev;

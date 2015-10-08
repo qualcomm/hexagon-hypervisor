@@ -160,6 +160,7 @@ void usage()
 	printf("  --chicken <int>\n\tSet the chicken bits.\n");
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
 	printf("  --syscfg <int>\n\tSet syscfg.\n");
+	printf("  --livelock <int>\n\tSet livelock.\n");
 	printf("  --syscfg_bit <name> <int>\n\tSet syscfg bit(s) not covered by other options.\n");
 	printf("  --l1dp [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 data cache partitioning (ARCHV <= 5).\n");
 	printf("  --l1ip [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 instruction cache partitioning (ARCHV <= 5).\n");
@@ -896,6 +897,17 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			H2K_set_syscfg(regval);
 			regval = h2_info(INFO_SYSCFG);
 			printf("New value for syscfg: 0x%08x\n",regval);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0],"--livelock")) {
+			if (argc < 2) die_usage();
+			regval = h2_info(INFO_LIVELOCK);
+			printf("Old value for livelock: 0x%08x\n",regval);
+			regval = strtoul(argv[1],NULL,0);
+			H2K_set_livelock(regval);
+			regval = h2_info(INFO_LIVELOCK);
+			printf("New value for livelock: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 

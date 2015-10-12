@@ -13,11 +13,13 @@ H2 infrastructure:
 * Even better interrupt mechanism
 * Power Collapse
 * Save/restore framelimit,framekey
+* Save/restore pktcount
 * Make sure extra PA bits are used as appropriate (e.g. futex)
 * Try and optimize context storage?
 * Kernel trace, or just continue to use ETM?
 * Switch to LLVM, get LLVM guys to make global reg work better
 * Continue to eliminate global data where possible
+* V6x PMU work (now w/ STID)
 Low: split bulk context storage from kernel info to split between DDR & TCM/L2locked
 
 VMM tasks:

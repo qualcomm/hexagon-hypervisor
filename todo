@@ -1,22 +1,28 @@
 
-H2 infrastructure:
+General:
 
-H0) Get H2 moved to near top of memory
-H1) Change Thread IDs to not be pointers, consider security ramifications of things
-** H2) Popup threads for interrupts / efficient, secure Wait for single Interrupt
-** H3) Futex safe pointer access
-H4) PI Futex considerations
-H5) Futex optimizations
-H6) Timeouts for blocking (see V0 below)
+* Move external guests out to other repositories
+* Possibly move all guests to other repositories, or at least other root directories
+* We should have the notion of a release / release branch
+
+H2 infrastructure:
+* Update documentation. Switch to doxygen or other in-file documentation scheme?
+* Go back over tests, get to ~100% unit test coverage
+* Refactor & optimize translation
+* Make sure all pa values are 36-bit clean
+* Even better interrupt mechanism
+* Power Collapse
+* Save/restore framelimit,framekey
+* Make sure extra PA bits are used as appropriate (e.g. futex)
+* Try and optimize context storage?
+* Kernel trace, or just continue to use ETM?
+* Switch to LLVM, get LLVM guys to make global reg work better
+* Continue to eliminate global data where possible
+Low: split bulk context storage from kernel info to split between DDR & TCM/L2locked
 
 VMM tasks:
 
-V0) Timer abstraction
-V1) Power Collapse
-V2) Secure Debug
-
-H2OS: 
-O0) H2OS bootup
-O1) H2OS page management
-O2) Memory management
+* Update VMM docs
+* Page tables w/ 36-bit+ PA, possibly multilevel?
+* Secure Debug
 

@@ -38,11 +38,10 @@ FUNC_START H2K_vm_cpuint_post .text.vm.int .p2align 2 // s32 post(vmblock,me,int
 #define INTNO r2
 #define INFO r3
 #define FN r4
+#define TMP r5
 #define ENABLED r7
 #define PENDING r6
-#define ENABLED_PENDING r7:6
 #define WADDR r8
-#define TMP r5
 #define MASK r10
 	{
 		OP_INDEX = #INTOP_INDEX_post
@@ -66,19 +65,21 @@ FUNC_START H2K_vm_cpuint_post_common .text.vm.int .p2align 2 // s32 post_common(
 
 	{
 		WADDR = add(ME,#CONTEXT_cpuint_enabled_pending)
+		ENABLED = #0
 	}
 1:
 	{
-		ENABLED_PENDING = memd_locked(WADDR)
+		PENDING = memw_locked(WADDR)
 		MASK = lsl(#1,INTNO)
 	}
 	{
 		p0 = tstbit(PENDING,INTNO)	// already set?
 		if (p0.new) jump:nt .Lret_zero
 		PENDING = or(PENDING,MASK)
+		ENABLED = combine(ENABLED.H,PENDING.H)
 	}
 	{
-		memd_locked(WADDR,p0) = ENABLED_PENDING
+		memw_locked(WADDR,p0) = PENDING
 		PENDING = and(PENDING,ENABLED)
 	}
 	{
@@ -124,13 +125,16 @@ FUNC_START H2K_vm_cpuint_clear .text.vm.int .p2align 2 // s32 clear(vmblock,me,i
 #define ME r1
 #define INTNO r2
 #define INFO r3
-#define TMP r5
+#define BITIDX r5
+#define TMP r6
 #define WADDR r7
 	{
 		OP_INDEX = #INTOP_INDEX_clear
 		WADDR = add(ME,#CONTEXT_cpuint_pending)
 		jump H2K_vm_cpuint_discommon
+		BITIDX = INTNO
 	}
+#undef BITIDX
 #undef TMP
 #undef WADDR
 #undef INFO
@@ -144,9 +148,8 @@ FUNC_START H2K_vm_cpuint_enable .text.vm.int .p2align 2 // s32 clear(vmblock,me,
 #define ME r1
 #define INTNO r2
 #define INFO r3
-#define ENABLED_PENDING r7:6
-#define ENABLED r7
-#define PENDING r6
+#define ENABLED_PENDING r6
+#define BITIDX r7
 #define WADDR r8
 #define TMP r9
 #define MASK r10
@@ -159,25 +162,26 @@ FUNC_START H2K_vm_cpuint_enable .text.vm.int .p2align 2 // s32 clear(vmblock,me,
 		p0 = cmp.gt(INTNO,#PERCPU_INTERRUPTS-1)
 		if (p0.new) jump:nt H2K_cpuint_chain
 		WADDR = add(ME,#CONTEXT_cpuint_enabled_pending)
+		BITIDX = add(INTNO,#16)
 	}
 1:
 	{
-		ENABLED_PENDING = memd_locked(WADDR)
-		MASK = lsl(#1,INTNO)
+		ENABLED_PENDING = memw_locked(WADDR)
+		MASK = lsl(#1,BITIDX)
 	}
 	{
-		ENABLED = or(ENABLED,MASK)
-		p0 = tstbit(ENABLED,INTNO)
+		ENABLED_PENDING = or(ENABLED_PENDING,MASK)
+		p0 = tstbit(ENABLED_PENDING,BITIDX)
 		if (p0.new) jump:nt .Lret_zero
 		L2ACK = memw(H2K_GP+#KG_l2_ack_base)
 	}
 	{
-		memd_locked(WADDR,p0) = ENABLED_PENDING
+		memw_locked(WADDR,p0) = ENABLED_PENDING
 	}
 	{
 		if (!p0) jump 1b
 		WADDR = add(ME,#CONTEXT_atomic_status_word)
-		PENDING = and(ENABLED,PENDING)
+		ENABLED_PENDING &= lsr(ENABLED_PENDING,#16)
 	}
 	{
 		TMP = memw(VMBLOCK+#VMBLOCK_int_v2p)
@@ -202,7 +206,7 @@ FUNC_START H2K_vm_cpuint_enable .text.vm.int .p2align 2 // s32 clear(vmblock,me,
 		TMP = memw_locked(WADDR)
 	}
 	{
-		p0 = cmp.gtu(PENDING,#0)
+		p0 = cmp.gtu(ENABLED_PENDING,#0)
 		p0 = tstbit(TMP,#H2K_VMSTATUS_VMWORK_BIT)
 		if (p0.new) jump:nt 9f
 		TMP = or(TMP,#1<<H2K_VMSTATUS_VMWORK_BIT)
@@ -218,9 +222,8 @@ FUNC_START H2K_vm_cpuint_enable .text.vm.int .p2align 2 // s32 clear(vmblock,me,
 #undef L2WIDX_L2BIDX
 #undef L2WIDX
 #undef L2BIDX
-#undef ENABLED
-#undef PENDING
 #undef ENABLED_PENDING
+#undef BITIDX
 #undef MASK
 #undef WADDR
 #undef TMP
@@ -235,6 +238,7 @@ FUNC_START H2K_vm_cpuint_discommon .text.vm.int .p2align 2 // s32 discommon !!SP
 #define ME r1
 #define INTNO r2
 #define INFO r3
+#define BITIDX r5
 #define WADDR r7 /* INPUT */
 #define TMP r6
 	{
@@ -243,13 +247,14 @@ FUNC_START H2K_vm_cpuint_discommon .text.vm.int .p2align 2 // s32 discommon !!SP
 	}
 1:
 	TMP = memw_locked(WADDR)
-	TMP = clrbit(TMP,INTNO)
+	TMP = clrbit(TMP,BITIDX)
 	memw_locked(WADDR,p1) = TMP
 	if (!p1) jump 1b
 	{
 		r0 = #0
 		jumpr r31
 	}
+#undef BITIDX
 #undef WADDR
 #undef TMP
 #undef INFO
@@ -263,12 +268,15 @@ FUNC_START H2K_vm_cpuint_disable .text.vm.int .p2align 2 // s32 clear(vmblock,me
 #define ME r1
 #define INTNO r2
 #define INFO r3
+#define BITIDX r5
 #define WADDR r7
 	{
 		OP_INDEX = #INTOP_INDEX_disable
-		WADDR = add(ME,#CONTEXT_cpuint_enabled)
+		WADDR = add(ME,#CONTEXT_cpuint_enabled_pending)
 		jump H2K_vm_cpuint_discommon
+		BITIDX = add(INTNO,#16)
 	}
+#undef BITIDX
 #undef WADDR
 #undef INFO
 #undef INTNO
@@ -317,30 +325,34 @@ FUNC_START H2K_vm_cpuint_get .text.vm.int .p2align 2 // s32_t get(vmblock,me,off
 #define OFFSET r2
 #define INFO r3
 #define BITIDX r5
-#define ENABLED_PENDING r7:6
-#define ENABLED r7
-#define PENDING r6
-#define DADDR r10
+#define ENABLED_PENDING r6
+#define MASK r7
+#define BITIDX_TMP r8
+#define WADDR r10
 	{
-		DADDR = add(ME,#CONTEXT_cpuint_enabled_pending)
+		WADDR = add(ME,#CONTEXT_cpuint_enabled_pending)
 	}
 1:
 	{
-		ENABLED_PENDING = memd_locked(DADDR)
+		BITIDX = memw_locked(WADDR)
 	}
 	{
-		BITIDX = and(ENABLED,PENDING)
+		ENABLED_PENDING = BITIDX
+		BITIDX &= lsr(BITIDX,#16)
 		if (cmp.eq(BITIDX.new,#0)) jump:nt .Lget_next
 	}
 	{
 		BITIDX = ct0(BITIDX)
 	}
 	{
-		ENABLED = togglebit(ENABLED,BITIDX)
-		PENDING = togglebit(PENDING,BITIDX)
+		ENABLED_PENDING = clrbit(ENABLED_PENDING,BITIDX)
+		BITIDX_TMP = add(BITIDX,#16)
 	}
 	{
-		memd_locked(DADDR,p0) = ENABLED_PENDING
+		ENABLED_PENDING = clrbit(ENABLED_PENDING,BITIDX_TMP)
+	}
+	{
+		memw_locked(WADDR,p0) = ENABLED_PENDING
 	}
 	{
 		if (!p0) jump 1b
@@ -355,11 +367,12 @@ FUNC_START H2K_vm_cpuint_get .text.vm.int .p2align 2 // s32_t get(vmblock,me,off
 		OFFSET = add(OFFSET,#2*PERCPU_INTERRUPTS)
 		jump H2K_cpuint_chain
 	}
-#undef DADDR
+#undef WADDR
 #undef PENDING
 #undef ENABLED
 #undef ENABLED_PENDING
 #undef BITIDX
+#undef BITIDX_TMP
 #undef INFO
 #undef OFFSET
 #undef ME
@@ -371,21 +384,19 @@ FUNC_START H2K_vm_cpuint_peek .text.vm.int .p2align 2 // s32_t peek(vmblock,me,o
 #define ME r1
 #define OFFSET r2
 #define INFO r3
-#define ENABLED_PENDING r7:6
-#define ENABLED r7
-#define PENDING r6
+#define ENABLED_PENDING r6
 	{
-		ENABLED_PENDING = memd(ME+#CONTEXT_cpuint_enabled_pending)
+		ENABLED_PENDING = memw(ME+#CONTEXT_cpuint_enabled_pending)
 	}
 	{
-		PENDING = and(ENABLED,PENDING)
-		if (cmp.eq(PENDING.new,#0)) jump:nt .Lpeek_next
+		ENABLED_PENDING &= lsr(ENABLED_PENDING,#16)
+		if (cmp.eq(ENABLED_PENDING.new,#0)) jump:nt .Lpeek_next
 	}
 	{
-		PENDING = ct0(PENDING)
+		ENABLED_PENDING = ct0(ENABLED_PENDING)
 	}
 	{
-		r0 = add(PENDING,OFFSET)
+		r0 = add(ENABLED_PENDING,OFFSET)
 		jumpr r31
 	}
 .Lpeek_next:
@@ -409,18 +420,18 @@ FUNC_START H2K_vm_cpuint_status .text.vm.int .p2align 2 // s32 status(vmblock,me
 #define ME r1
 #define INTNO r2
 #define INFO r3
-#define ENABLED_PENDING r7:6
-#define ENABLED r7
-#define PENDING r6
+#define ENABLED_PENDING r6
+#define BITIDX r7
 	{
 		OP_INDEX = #INTOP_INDEX_status
 		p0 = cmp.gt(INTNO,#PERCPU_INTERRUPTS-1)
 		if (p0.new) jump:nt H2K_cpuint_chain
-		ENABLED_PENDING = memd(ME+#CONTEXT_cpuint_enabled_pending)
+		ENABLED_PENDING = memw(ME+#CONTEXT_cpuint_enabled_pending)
+		BITIDX = add(INTNO,#16)
 	}
 	{
-		p1 = tstbit(ENABLED,INTNO)
-		p0 = tstbit(PENDING,INTNO)
+		p1 = tstbit(ENABLED_PENDING,BITIDX)
+		p0 = tstbit(ENABLED_PENDING,INTNO)
 		if (p0.new) r0 = #1
 		if (!p0.new) r0 = #0
 	}

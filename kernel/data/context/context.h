@@ -46,14 +46,14 @@ typedef struct _h2_thread_context
 			u8_t vmstatus;
 			u8_t base_prio;	// Does it need to be atomic?
 			u8_t unusedab;	// use for i/o byte?  Add read/write valid bits below?
-			u8_t pmu_on;	// Does it need to be atomic?  1 bit
+			u8_t pmu_on;	// Does it need to be atomic?  1 bit NOT NEEDED post v6x SMMU
 		};
 	};
 	// #16
 	union {
 		u64_t vmblock_id;
 		struct {
-			H2K_id_t id;
+			H2K_id_t id;				// lower bits unused? Maybe union with vmstatus?
 			struct H2K_vmblock_struct *vmblock;	// could look up from GP + high bits of id
 		};
 	};
@@ -74,11 +74,11 @@ typedef struct _h2_thread_context
 		};
 		H2K_treenode_t tree;
 	};
-	union {
-		u64_t cpuint_enabled_pending;
+	union {	// maybe change to 16 bits or even 8 bits?  Saves 1-1.5 words
+		u32_t cpuint_enabled_pending;
 		struct {
-			u32_t cpuint_pending;
-			u32_t cpuint_enabled;
+			u16_t cpuint_pending;
+			u16_t cpuint_enabled;
 		};
 	};
 	u64_t totalcycles;
@@ -220,7 +220,7 @@ typedef struct _h2_thread_context
 		};
 	};
 	u64_t cs1cs0;	// V4 regs
-	u64_t reserved_u64_3;
+	u64_t reserved_u64_3; // FRAMELIMIT / FRAMEKEY
 	// 288
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
 

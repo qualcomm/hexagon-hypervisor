@@ -105,7 +105,7 @@
 
 #endif
 
-#define PERCPU_INTERRUPTS 32
+#define PERCPU_INTERRUPTS 16
 
 #if ARCHV <= 3
 #define MAX_INTERRUPTS 32

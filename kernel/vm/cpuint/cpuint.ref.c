@@ -75,7 +75,7 @@ s32_t  H2K_vm_cpuint_enable(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	/* If already enabled, return */
 	if ((me->cpuint_enabled & bitmask) != 0) return 0;
 	/* Else, set bit atomically */
-	H2K_atomic_setbit(&me->cpuint_enabled,bitidx);
+	H2K_atomic_setbit(&me->cpuint_enabled_pending,bitidx+16);
 	if (vmblock->int_v2p != NULL && vmblock->int_v2p[intno]) { // mapped, re-enable phys
 		H2K_intcontrol_enable(vmblock->int_v2p[intno]);
 	}
@@ -94,7 +94,7 @@ s32_t  H2K_vm_cpuint_disable(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	/* If already disabled, return */
 	if ((me->cpuint_enabled & bitmask) == 0) return 0;
 	/* Else, clear bit atomically */
-	H2K_atomic_clrbit(&me->cpuint_enabled,bitidx);
+	H2K_atomic_clrbit(&me->cpuint_enabled_pending,bitidx+16);
 	return 0;
 }
 
@@ -107,7 +107,7 @@ s32_t H2K_vm_cpuint_get(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	if ((tmp = me->cpuint_enabled & me->cpuint_pending) != 0) {
 		bitidx = Q6_R_ct0_R(tmp);
 		if (H2K_atomic_clrbit(&me->cpuint_pending,bitidx) == 0) goto retry;
-		H2K_atomic_clrbit(&me->cpuint_enabled,bitidx);
+		H2K_atomic_clrbit(&me->cpuint_enabled_pending,bitidx+16);
 		return offset+bitidx;
 	} else {
 		info++;

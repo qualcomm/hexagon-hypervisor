@@ -18,7 +18,7 @@
  */
 
 #define MAX_TEST_THREADS 8
-#define MAX_TEST_INTERRUPTS 32
+#define MAX_TEST_INTERRUPTS 16
 
 #include <c_std.h>
 #include <stdio.h>
@@ -99,7 +99,7 @@ void TH_init_vmblock()
 	TH_vmblock.max_cpus = 1;
 	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
 	TH_vmblock.intinfo = info;
-	info[0].num_ints = 32;
+	info[0].num_ints = PERCPU_INTERRUPTS;
 	info[0].handlers = &H2K_vm_cpuint_ops;
 	info[1].num_ints = ~0;
 	info[1].handlers = &H2K_vm_TH_ops;
@@ -187,7 +187,7 @@ void TH_check_enable_wakeup(u32_t intno)
 
 void TH_test_clear(u32_t intno)
 {
-	a.cpuint_pending |= (1<<(intno%32));
+	a.cpuint_pending |= (1<<(intno%16));
 	H2K_vm_cpuint_clear(&TH_vmblock,&a,intno,info);
 	if ((a.cpuint_pending >> (intno)) & 1) FAIL("Didn't clear interrupt");
 }
@@ -237,6 +237,7 @@ void TH_test_nexts()
 
 void TH_test_interrupt_get(u32_t intno)
 {
+	u32_t ret;
 	/* Starts with globally disabled / not pending */
 	H2K_thread_context *me = &a;
 	me->vmstatus = 0;
@@ -257,7 +258,8 @@ void TH_test_interrupt_get(u32_t intno)
 	if (TH_expected_next.raw != 0) FAIL("didn't get next/c");
 	/* Enabled globally / pending */
 	a.cpuint_enabled |= (1<<(intno));
-	if (H2K_vm_cpuint_get(&TH_vmblock,me,0,info) != intno) {
+	if ((ret = H2K_vm_cpuint_get(&TH_vmblock,me,0,info)) != intno) {
+		//printf("enabed=%x pending=%x ret=%x expected=%x\n",a.cpuint_enabled,a.cpuint_pending,ret,intno);
 		FAIL("Didn't get expected interrupt");
 	}
 	if ((a.cpuint_enabled & (1<<(intno))) != 0) {
@@ -332,25 +334,25 @@ int main()
 	puts("d");
 
 	/* Further get testing */
-	a.cpuint_pending = 0xffffffff;
-	a.cpuint_enabled = 0xffffffff;
+	a.cpuint_pending = 0x0000ffff;
+	a.cpuint_enabled = 0x0000ffff;
 	if (H2K_vm_cpuint_peek(&TH_vmblock,&a,0,info) != 0) {
 		FAIL("Didn't get first valid interrupt/peek");
 	}
 	if (H2K_vm_cpuint_get(&TH_vmblock,&a,0,info) != 0) {
 		FAIL("Didn't get first valid interrupt/get");
 	}
-	if (a.cpuint_pending != 0xfffffffe) {
+	if (a.cpuint_pending != 0x0000fffe) {
 		FAIL("Didn't clear pending bit");
 	}
-	if (a.cpuint_enabled != 0xfffffffe) {
+	if (a.cpuint_enabled != 0x0000fffe) {
 		FAIL("Didn't clear enable bit");
 	}
 	if (H2K_vm_cpuint_peek(&TH_vmblock,&a,0,info) != 1) {
 		FAIL("Didn't get first valid interrupt/peek");
 	}
 	a.cpuint_pending = 0;
-	TH_vmblock.num_ints = 32;
+	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
 	TH_expected_next.peek = 1;
 	if (H2K_vm_cpuint_peek(&TH_vmblock,&a,0,info) != -1) {
 		FAIL("Found interrupt, but shouldn't have");

@@ -234,7 +234,7 @@ int main()
 	TH_vmblock.pending[0] = 1;
 	TH_vmblock.enable[0] = 1;
 	TH_vmblock.percpu_mask[0][0] = 1;
-	if (H2K_vm_check_interrupts(t0) != 32) FAIL("check interrupts peek failed");
+	if (H2K_vm_check_interrupts(t0) != PERCPU_INTERRUPTS) FAIL("check interrupts peek failed");
 
 	puts("G");
 	t0->cpuint_enabled = 0;
@@ -271,7 +271,7 @@ int main()
 	t0->cpuint_pending = 0;
 	TH_vmblock.pending[0] = 1;
 	TH_vmblock.enable[0] = 1;
-	if (H2K_vm_check_interrupts(t0) != 32) FAIL("check interrupts get failed");
+	if (H2K_vm_check_interrupts(t0) != PERCPU_INTERRUPTS) FAIL("check interrupts get failed");
 	if (TH_saw_event != 1) FAIL("Didn't see event");
 	if (TH_vmblock.pending[0] || TH_vmblock.enable[0]) {
 		printf("pending: %x enable: %x\n",TH_vmblock.pending[0],TH_vmblock.enable[0]);
@@ -450,7 +450,7 @@ int main()
 	}
 
 	t0->r00 = H2K_INTOP_GLOBEN;
-	t0->r01 = 32;
+	t0->r01 = PERCPU_INTERRUPTS;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("enable32 ret");
 	if (TH_vmblock.enable[0] != 1) {
@@ -459,7 +459,7 @@ int main()
 	}
 
 	t0->r00 = H2K_INTOP_GLOBEN;
-	t0->r01 = 33;
+	t0->r01 = PERCPU_INTERRUPTS+1;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("enable33 ret");
 	if (TH_vmblock.enable[0] != 3) FAIL("enable33 beh");
@@ -488,7 +488,7 @@ int main()
 	}
 
 	t0->r00 = H2K_INTOP_GLOBDIS;
-	t0->r01 = 32;
+	t0->r01 = PERCPU_INTERRUPTS;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("disable32 ret");
 	if (TH_vmblock.enable[0] != 2) {
@@ -497,7 +497,7 @@ int main()
 	}
 
 	t0->r00 = H2K_INTOP_GLOBDIS;
-	t0->r01 = 33;
+	t0->r01 = PERCPU_INTERRUPTS+1;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("disable33 ret");
 	if (TH_vmblock.enable[0] != 0) FAIL("disable33 beh");
@@ -527,7 +527,7 @@ int main()
 	}
 
 	t0->r00 = H2K_INTOP_LOCEN;
-	t0->r01 = 32;
+	t0->r01 = PERCPU_INTERRUPTS;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("enable32 ret");
 	if (TH_vmblock.percpu_mask[0][0] != 1) {
@@ -536,7 +536,7 @@ int main()
 	}
 
 	t0->r00 = H2K_INTOP_LOCEN;
-	t0->r01 = 33;
+	t0->r01 = PERCPU_INTERRUPTS+1;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("enable33 ret");
 	if (TH_vmblock.percpu_mask[0][0] != 3) FAIL("enable33 beh");
@@ -564,7 +564,7 @@ int main()
 	}
 
 	t0->r00 = H2K_INTOP_LOCDIS;
-	t0->r01 = 32;
+	t0->r01 = PERCPU_INTERRUPTS;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("disable32 ret");
 	if (TH_vmblock.percpu_mask[0][0] != 2) {
@@ -573,7 +573,7 @@ int main()
 	}
 
 	t0->r00 = H2K_INTOP_LOCDIS;
-	t0->r01 = 33;
+	t0->r01 = PERCPU_INTERRUPTS+1;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("disable33 ret");
 	if (TH_vmblock.percpu_mask[0][0] != 0) FAIL("disable33 beh");
@@ -591,9 +591,9 @@ int main()
 	if (t0->r00 != -1) FAIL("affinity ret on cpuint");
 
 	for (i = 0; i < TH_vmblock.max_cpus; i++) {
-		for (j = 32; j < TH_vmblock.num_ints; j++) {
-			int maskidx = (j-32)/32;
-			int bitidx = j%32;
+		for (j = PERCPU_INTERRUPTS; j < TH_vmblock.num_ints; j++) {
+			int maskidx = (j-PERCPU_INTERRUPTS)/32;
+			int bitidx = (j-PERCPU_INTERRUPTS)%32;
 			t0->r00 = H2K_INTOP_AFFINITY;
 			t0->r01 = j;
 			t0->r02 = i;
@@ -613,8 +613,8 @@ int main()
 	if (t0->r00 != -1) FAIL("affinity ret on oob int");
 
 	for (i = 0; i < TH_vmblock.max_cpus; i++) {
-		for (j = 32; j < TH_vmblock.num_ints; j++) {
-			int maskidx = (j-32)/32;
+		for (j = PERCPU_INTERRUPTS; j < TH_vmblock.num_ints; j++) {
+			int maskidx = (j-PERCPU_INTERRUPTS)/32;
 			TH_vmblock.percpu_mask[i][maskidx] = 0;
 		}
 	}
@@ -661,10 +661,10 @@ int main()
 	TH_vmblock.enable[0] = 1;
 	t0->r00 = H2K_INTOP_PEEK;
 	H2K_vmtrap_intop(t0);
-	if (t0->r00 != 32) FAIL("peek: 32 ret");
+	if (t0->r00 != PERCPU_INTERRUPTS) FAIL("peek: 32 ret");
 	t0->r00 = H2K_INTOP_GET;
 	H2K_vmtrap_intop(t0);
-	if (t0->r00 != 32) FAIL("get: 32 ret");
+	if (t0->r00 != PERCPU_INTERRUPTS) FAIL("get: 32 ret");
 	if ((TH_vmblock.pending[0] != 0) || (TH_vmblock.enable[0] != 0)) FAIL("get: 32 beh");
 	
 
@@ -673,23 +673,23 @@ int main()
 	TH_vmblock.enable[0] = 3;
 	t0->r00 = H2K_INTOP_PEEK;
 	H2K_vmtrap_intop(t0);
-	if (t0->r00 != 32) FAIL("peek: 32 ret");
+	if (t0->r00 != PERCPU_INTERRUPTS) FAIL("peek: 32 ret");
 	t0->r00 = H2K_INTOP_GET;
 	H2K_vmtrap_intop(t0);
-	if (t0->r00 != 32) FAIL("get: 32 ret");
+	if (t0->r00 != PERCPU_INTERRUPTS) FAIL("get: 32 ret");
 	t0->r00 = H2K_INTOP_PEEK;
 	H2K_vmtrap_intop(t0);
-	if (t0->r00 != 33) FAIL("peek: 33 ret");
+	if (t0->r00 != PERCPU_INTERRUPTS+1) FAIL("peek: 33 ret");
 	t0->r00 = H2K_INTOP_GET;
 	H2K_vmtrap_intop(t0);
-	if (t0->r00 != 33) FAIL("get: 33 ret");
+	if (t0->r00 != PERCPU_INTERRUPTS+1) FAIL("get: 33 ret");
 	if ((TH_vmblock.pending[0] != 0) || (TH_vmblock.enable[0] != 0)) FAIL("get: 32 beh");
 
 	/* STATUS */
 	puts("H");
 	t0->cpuint_pending = 0xAAAAAAAA;
 	t0->cpuint_enabled = 0xF0F0F0F0;
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < PERCPU_INTERRUPTS; i++) {
 		t0->r00 = H2K_INTOP_STATUS;
 		t0->r01 = i;
 		H2K_vmtrap_intop(t0);
@@ -699,7 +699,7 @@ int main()
 	TH_vmblock.pending[0] = 0xAAAAAAAA;
 	TH_vmblock.percpu_mask[0][0] = 0xCCCCCCCC;
 	TH_vmblock.enable[0] = 0xF0F0F0F0;
-	for (i = 32; i < 64; i++) {
+	for (i = PERCPU_INTERRUPTS; i < PERCPU_INTERRUPTS+32; i++) {
 		t0->r00 = H2K_INTOP_STATUS;
 		t0->r01 = i;
 		H2K_vmtrap_intop(t0);
@@ -746,7 +746,7 @@ int main()
 	puts("3");
 
 	t0->r00 = H2K_INTOP_POST;
-	t0->r01 = 32;
+	t0->r01 = PERCPU_INTERRUPTS;
 	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/32");
@@ -754,7 +754,7 @@ int main()
 	puts("4");
 
 	t0->r00 = H2K_INTOP_POST;
-	t0->r01 = 32;
+	t0->r01 = PERCPU_INTERRUPTS;
 	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/32/2");
@@ -762,7 +762,7 @@ int main()
 	puts("5");
 
 	t0->r00 = H2K_INTOP_POST;
-	t0->r01 = 33;
+	t0->r01 = PERCPU_INTERRUPTS+1;
 	t0->r02 = t0->id.raw;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad post status/33");
@@ -791,21 +791,21 @@ int main()
 	puts("9");
 
 	t0->r00 = H2K_INTOP_CLEAR;
-	t0->r01 = 32;
+	t0->r01 = PERCPU_INTERRUPTS;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad clear status/32");
 	if (TH_vmblock.pending[0] != 2) FAIL("Bad clear beh/32");
 	puts("a");
 
 	t0->r00 = H2K_INTOP_CLEAR;
-	t0->r01 = 32;
+	t0->r01 = PERCPU_INTERRUPTS;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad clear status/32/2");
 	if (TH_vmblock.pending[0] != 2) FAIL("Bad clear beh/32/2");
 	puts("b");
 
 	t0->r00 = H2K_INTOP_CLEAR;
-	t0->r01 = 33;
+	t0->r01 = PERCPU_INTERRUPTS+1;
 	H2K_vmtrap_intop(t0);
 	if (t0->r00 != 0) FAIL("Bad clear status/33");
 	if (TH_vmblock.pending[0] != 0) FAIL("Bad clear beh/33");

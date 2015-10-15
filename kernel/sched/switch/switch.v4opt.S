@@ -87,6 +87,14 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(SRC+#CONTEXT_gssr_gelr) = r1:0
+		r1:0 = c17:16
+	}
+	{
+		memd(SRC+#CONTEXT_framekey_framelimit) = r1:0
+		r1:0 = c19:18
+	}
+	{
+		memd(SRC+#CONTEXT_pktcount) = r1:0
 #ifdef DO_EXT_SWITCH
 
 // check if ext needs saving, and mark as saved
@@ -288,8 +296,16 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 
 	elr = r0
-	r21:20 = memd(DST+#CONTEXT_ccrssr)
-	s7:6 = r21:20
+	{
+		r21:20 = memd(DST+#CONTEXT_ccrssr)
+		r23:22 = memd(DST+#CONTEXT_pktcount)
+	}
+	{
+		s7:6 = r21:20
+		r21:20 = memd(DST+#CONTEXT_framekey_framelimit)
+	}
+	c19:18 = r23:22
+	c17:16 = r21:20
 
 	{
 		r21:20 = memd(DST+#CONTEXT_r2120)

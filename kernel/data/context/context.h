@@ -59,8 +59,8 @@ typedef struct _h2_thread_context
 	};
 	// 24
 	struct {
-		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.
 		u32_t trapmask;		// Alread in VMblock?  Maybe move it?  All threads in a VM have same trap mask?
+		u32_t elr;	// could be in zeroed area.
 	};
 	/* status, etc */
 	/* Context */
@@ -74,16 +74,20 @@ typedef struct _h2_thread_context
 		};
 		H2K_treenode_t tree;
 	};
-	union {	// maybe change to 16 bits or even 8 bits?  Saves 1-1.5 words
-		u32_t cpuint_enabled_pending;
-		struct {
-			u16_t cpuint_pending;
-			u16_t cpuint_enabled;
+	struct {
+		union {	// maybe change to 16 bits or even 8 bits?  Saves 1-1.5 words
+			u32_t cpuint_enabled_pending;
+			struct {
+				u16_t cpuint_pending;
+				u16_t cpuint_enabled;
+			};
 		};
+		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.
 	};
 	u64_t totalcycles;
 	// 64
-	struct {	// OK FOR DCZEROA
+	u64_t pktcount;
+	struct {
 		u32_t futex_ptr;		// Probably not needed if interrupted; only on trap; could be unioned below?
 		// needs to be pa_t, but is word aligned.  For 36 bits pa, can be 34 bits... 
 		void *continuation;		// probably can be 30 bits.  34 bits for futex_ptr plus 30 bits for continuation fits.
@@ -192,13 +196,6 @@ typedef struct _h2_thread_context
 	};
 	u64_t lc1sa1;	// OK FOR DCZEROA
 	u64_t m1m0;
-	union {
-		u64_t reserved_elr;		// OK to move to cleared area?
-		struct {
-			u32_t elr;
-			u32_t reserved_u32;
-		};
-	};
 	// 224
 	u64_t r2726;	// OK for dczeroa
 	u64_t r2524;
@@ -220,7 +217,13 @@ typedef struct _h2_thread_context
 		};
 	};
 	u64_t cs1cs0;	// V4 regs
-	u64_t reserved_u64_3; // FRAMELIMIT / FRAMEKEY
+	union {
+		u64_t framekey_framelimit;
+		struct {
+			u32_t framelimit;
+			u32_t framekey;
+		};
+	};
 	// 288
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
 

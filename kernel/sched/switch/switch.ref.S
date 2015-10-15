@@ -92,6 +92,13 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memw(r0+#CONTEXT_ccr) = r14
 #endif
 
+#if ARCHV >= 60
+	r21:20 = c19:18 // pktcount
+	r25:24 = c17:16 // framekey / framelimit
+	memd(r0+#CONTEXT_framekey_framelimit) = r25:24
+	memd(r0+#CONTEXT_pktcount) = r21:20
+#endif
+
 #ifdef DO_EXT_SWITCH
 
 	// check if ext needs saving, and mark as saved
@@ -107,7 +114,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	// cause exception on next ext access to restore
 	r14 = memw(r0 + #CONTEXT_ssr)
 	r14 = clrbit(r14, #SSR_XE_BIT)
-  memw(r0 + #CONTEXT_ssr) = r14
+	memw(r0 + #CONTEXT_ssr) = r14
 
 	if (!p1) jump .Lfrom_sleep  // no need to save
 
@@ -202,6 +209,13 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	cs1 = r21
 	g1:0 = r25:24
 	g3:2 = r27:26
+#endif
+
+#if ARCHV >= 60
+	r21:20 = memd(r1+#CONTEXT_pktcount)
+	r25:24 = memd(r1+#CONTEXT_framekey_framelimit)
+	c19:18 = r21:20
+	c17:16 = r25:24
 #endif
 
 	r14 = memw(r1+#CONTEXT_elr)

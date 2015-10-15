@@ -67,6 +67,8 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(id);
 	PRINT_CONTEXT_OFFSET(vmblock);
 	PRINT_CONTEXT_OFFSET(futex_ptr);
+	PRINT_CONTEXT_OFFSET(pktcount);
+	PRINT_CONTEXT_OFFSET(framekey_framelimit);
 	PRINT_CONTEXT_OFFSET(trapmask);
 	PRINT_CONTEXT_OFFSET(gevb);
 	PRINT_CONTEXT_OFFSET(ccr);

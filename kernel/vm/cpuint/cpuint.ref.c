@@ -33,7 +33,7 @@ s32_t  H2K_vm_cpuint_post_locked(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	u32_t intno, H2K_vm_int_opinfo_t *info)
 {
 	u32_t tmp;
-	H2K_atomic_setbit(&me->cpuint_pending,intno);
+	H2K_atomic_setbit(&me->cpuint_enabled_pending,intno);
 	H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
 	tmp = me->cpuint_pending & me->cpuint_enabled;
 	if (tmp == 0) return 0;
@@ -48,7 +48,7 @@ s32_t  H2K_vm_cpuint_post(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 {
 	u32_t tmp;
 	CHECK_FOR_CHAIN(post);
-	H2K_atomic_setbit(&me->cpuint_pending,intno);
+	H2K_atomic_setbit(&me->cpuint_enabled_pending,intno);
 	H2K_atomic_setbit(&me->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
 	tmp = me->cpuint_pending & me->cpuint_enabled;
 	if (tmp == 0) return 0;
@@ -62,7 +62,7 @@ s32_t  H2K_vm_cpuint_clear(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 {
 	u32_t bitidx   = intno;
 	CHECK_FOR_CHAIN(clear);
-	H2K_atomic_clrbit(&me->cpuint_pending,bitidx);
+	H2K_atomic_clrbit(&me->cpuint_enabled_pending,bitidx);
 	return 0;
 }
 

@@ -456,7 +456,7 @@ FUNC_START H2K_vm_int_intinfo_init .text.vm.int .p2align 2 // init(vmblock,num_s
 #define INFO r4
 	{
 		INFO = memw(VMBLOCK+#VMBLOCK_intinfo)
-		HANDLERS_NUM_INTS = combine(##H2K_vm_cpuint_ops,#32)
+		HANDLERS_NUM_INTS = combine(##H2K_vm_cpuint_ops,#PERCPU_INTERRUPTS)
 	}
 	{
 		memd(INFO++#8) = HANDLERS_NUM_INTS

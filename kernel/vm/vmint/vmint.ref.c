@@ -217,7 +217,7 @@ void H2K_vm_int_intinfo_init(H2K_vmblock_t *vmblock, u32_t num_ints)
 {
 	H2K_vm_int_opinfo_t *info = vmblock->intinfo;
 	/* CPU INTS */
-	info->num_ints = 32;
+	info->num_ints = PERCPU_INTERRUPTS;
 	info->handlers = &H2K_vm_cpuint_ops;
 	info++;
 	if (num_ints > 0) {

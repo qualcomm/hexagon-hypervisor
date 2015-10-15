@@ -106,7 +106,7 @@ s32_t H2K_vm_cpuint_get(H2K_vmblock_t *vmblock, H2K_thread_context *me,
 	retry:
 	if ((tmp = me->cpuint_enabled & me->cpuint_pending) != 0) {
 		bitidx = Q6_R_ct0_R(tmp);
-		if (H2K_atomic_clrbit(&me->cpuint_pending,bitidx) == 0) goto retry;
+		if (H2K_atomic_clrbit(&me->cpuint_enabled_pending,bitidx) == 0) goto retry;
 		H2K_atomic_clrbit(&me->cpuint_enabled_pending,bitidx+16);
 		return offset+bitidx;
 	} else {

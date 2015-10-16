@@ -687,8 +687,8 @@ int main()
 
 	/* STATUS */
 	puts("H");
-	t0->cpuint_pending = 0xAAAAAAAA;
-	t0->cpuint_enabled = 0xF0F0F0F0;
+	t0->cpuint_pending = 0x0000AAAA;
+	t0->cpuint_enabled = 0x0000F0F0;
 	for (i = 0; i < PERCPU_INTERRUPTS; i++) {
 		t0->r00 = H2K_INTOP_STATUS;
 		t0->r01 = i;

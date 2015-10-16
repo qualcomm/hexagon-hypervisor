@@ -87,11 +87,15 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(SRC+#CONTEXT_gssr_gelr) = r1:0
+#if ARCHV >= 60
 		r1:0 = c17:16
+#endif
 	}
 	{
 		memd(SRC+#CONTEXT_framekey_framelimit) = r1:0
+#if ARCHV >= 60
 		r1:0 = c19:18
+#endif
 	}
 	{
 		memd(SRC+#CONTEXT_pktcount) = r1:0
@@ -304,8 +308,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		s7:6 = r21:20
 		r21:20 = memd(DST+#CONTEXT_framekey_framelimit)
 	}
+#if ARCHV >= 60
 	c19:18 = r23:22
 	c17:16 = r21:20
+#endif
 
 	{
 		r21:20 = memd(DST+#CONTEXT_r2120)

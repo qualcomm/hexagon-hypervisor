@@ -19,13 +19,14 @@ H2 infrastructure:
 * Refactor vector context save/restore (?)  Maybe move to new module?
 * V6x PMU work (now w/ STID)
 * Low: split bulk context storage from kernel info to split between DDR & TCM/L2locked
-DONE ON THIS BRANCH: * Save/restore framelimit,framekey
-DONE ON THIS BRANCH: * Save/restore pktcount
-DONE ON THIS BRANCH: * Try and optimize context storage?
 
 VMM tasks:
 
 * Update VMM docs
 * Page tables w/ 36-bit+ PA, possibly multilevel?
 * Secure Debug
+
+DONE : * Save/restore framelimit,framekey
+DONE : * Save/restore pktcount
+DONE : * Try and optimize context storage? -- changed to 16 per-cpu interrupts
 

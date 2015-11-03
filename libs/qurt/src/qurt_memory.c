@@ -70,7 +70,7 @@ struct qurt_mem_pool_struct {
 
 #define MAX_TRANSLATIONS 256
 
-static H2K_linear_fmt_t linear_pages[MAX_TRANSLATIONS] __attribute__((aligned(4096))) __attribute__((section(".data.qurt.translations")));
+static H2K_linear_fmt_t linear_pages[MAX_TRANSLATIONS] __attribute__((aligned(2048))) __attribute__((section(".data.qurt.translations")));
 
 static qurt_mutex_t mem_mutex;
 
@@ -441,6 +441,16 @@ int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long
 	return QURT_EVAL;
 }
 
+int qurt_mem_region_query_64(qurt_mem_region_t *region_handle, 
+	qurt_addr_t vaddr, qurt_paddr_64_t paddr)
+{
+	if ((qurt_paddr_t)paddr != QURT_MEM_INVALID) 
+		return qurt_mem_region_query_64_ppn(region_handle,paddr>>12);
+	if (vaddr != QURT_MEM_INVALID)
+		return qurt_mem_region_query_64_vpn(region_handle,((unsigned long)vaddr) >> 12);
+	return QURT_EFATAL;
+}
+
 int qurt_mem_pool_attr_get (qurt_mem_pool_t pool_int, qurt_mem_pool_attr_t *attr)
 {
 	struct qurt_mem_pool_struct *pool = mem_pool_from_uint(pool_int);
@@ -452,6 +462,21 @@ int qurt_mem_region_attr_get(qurt_mem_region_t region_int, qurt_mem_region_attr_
 {
 	struct qurt_mem_region_struct *region = mem_region_from_uint(region_int);
 	*attr = region->attr;
+	return QURT_EOK;
+}
+
+int qurt_mem_map_static_query_64(qurt_addr_t *vaddr, qurt_paddr_64_t paddr_64, unsigned int page_size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)
+{
+	qurt_mem_region_t region;
+	qurt_mem_region_attr_t attrs;
+	qurt_paddr_64_t basepa;
+	qurt_addr_t va;
+	if ((qurt_mem_region_query_64(&region,QURT_MEM_INVALID,paddr_64)) != QURT_EOK) return QURT_EVAL;
+	qurt_mem_region_attr_get(region,&attrs);
+	qurt_mem_region_attr_get_virtaddr(&attrs,&va);
+	qurt_mem_region_attr_get_physaddr_64(&attrs,&basepa);
+	va += (paddr_64-basepa);
+	*vaddr = va;
 	return QURT_EOK;
 }
 
@@ -509,6 +534,16 @@ int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn,
 		ppn += pgsize;
 	}
 	return QURT_EOK;
+}
+
+int qurt_mapping_create_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size,
+			 qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)
+{
+	/* EJP: shouldn't it be caller's responsibility here? */
+	if (size & 0xFFF) return QURT_EMEM;
+	if (size == 0) return QURT_EMEM;
+	if (perm == 0) return QURT_EMEM;
+	return qurt_mapping_create_vpn(vaddr>>12,paddr_64>>12,size>>12,cache_attribs,perm,0);
 }
 
 static inline H2K_linear_fmt_t *find_mapping(unsigned int vpn)

@@ -53,7 +53,7 @@ Lock a Mutex.  If the lock is held by another thread, this will block.
 @returns None for now, need to change to help POSIX
 @dependencies None
 */
-void h2_mutex_lock(h2_mutex_t *lock);
+void h2_mutex_lock(h2_mutex_t *lock) H2_IN_SECTION(".text.h2.mutex");
 
 /**
 Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will be woken.
@@ -61,7 +61,7 @@ Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will 
 @returns None for now, need to change to help POSIX
 @dependencies None
 */
-void h2_mutex_unlock(h2_mutex_t *lock);
+void h2_mutex_unlock(h2_mutex_t *lock) H2_IN_SECTION(".text.h2.mutex");
 
 /**
 Try to lock a Mutex.  If the mutex was already held by another thread, return failure.
@@ -69,7 +69,7 @@ Try to lock a Mutex.  If the mutex was already held by another thread, return fa
 @returns 0 on success, nonzero otherwise
 @dependencies None
 */
-int h2_mutex_trylock(h2_mutex_t *lock);
+int h2_mutex_trylock(h2_mutex_t *lock) H2_IN_SECTION(".text.h2.mutex");
 
 /** @} */
 

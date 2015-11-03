@@ -65,27 +65,7 @@ extern qurt_mem_pool_t qurt_mem_default_pool; // <-- qurt_mem_pool_t is unsigned
   @dependencies
   None.
 */
-static inline int qurt_mem_cache_clean(qurt_addr_t addr, qurt_size_t size, qurt_mem_cache_op_t opcode, qurt_mem_cache_type_t type)
-{
-	if (type == QURT_MEM_ICACHE) {
-		switch (opcode) {
-			case QURT_MEM_CACHE_FLUSH: return QURT_EOK;
-			case QURT_MEM_CACHE_INVALIDATE: /* FALLTHROUGH h2_inv_icache_range(data,size); return QURT_EOK; */
-			case QURT_MEM_CACHE_FLUSH_INVALIDATE: h2_cache_icinv_range((void *)addr,size); return QURT_EOK;
-			default: return QURT_EVAL;
-		}
-	} else if (type == QURT_MEM_DCACHE) {
-		switch (opcode) {
-			case QURT_MEM_CACHE_FLUSH:
-				h2_cache_dcclean_range((void *)addr,size); return QURT_EOK;
-			case QURT_MEM_CACHE_INVALIDATE: /* FALLTHROUGH */
-			case QURT_MEM_CACHE_FLUSH_INVALIDATE:
-				h2_cache_dccleaninv_range((void *)addr,size); return QURT_EOK;
-			default: return QURT_EVAL;
-		}
-	}
-	return QURT_EVAL;
-}
+int qurt_mem_cache_clean(qurt_addr_t addr, qurt_size_t size, qurt_mem_cache_op_t opcode, qurt_mem_cache_type_t type);
 
 /**@ingroup func_qurt_mem_l2cache_line_lock 
   Performs an L2 cache line locking operation. This function locks selective lines in the L2 cache memory.
@@ -863,17 +843,7 @@ static inline void qurt_mem_region_attr_get_physaddr_64(qurt_mem_region_attr_t *
   @dependencies
   None.
  */
-int qurt_mem_region_query_64_vpn(qurt_mem_region_t *region_handle, unsigned long vpn);
-int qurt_mem_region_query_64_ppn(qurt_mem_region_t *region_handle, unsigned long ppn);
-static inline int qurt_mem_region_query_64(qurt_mem_region_t *region_handle, 
-	qurt_addr_t vaddr, qurt_paddr_64_t paddr)
-{
-	if ((qurt_paddr_t)paddr != QURT_MEM_INVALID) 
-		return qurt_mem_region_query_64_ppn(region_handle,paddr>>12);
-	if (vaddr != QURT_MEM_INVALID)
-		return qurt_mem_region_query_64_vpn(region_handle,((unsigned long)vaddr) >> 12);
-	return QURT_EFATAL;
-}
+int qurt_mem_region_query_64(qurt_mem_region_t *region_handle, qurt_addr_t vaddr, qurt_paddr_64_t paddr);
 
 /**@ingroup func_qurt_mem_region_query
   Queries a memory region. \n
@@ -938,20 +908,7 @@ static inline int qurt_mem_region_query(qurt_mem_region_t *region_handle, qurt_a
   @dependencies
   None.
  */
-static inline int qurt_mem_map_static_query_64(qurt_addr_t *vaddr, qurt_paddr_64_t paddr_64, unsigned int page_size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)
-{
-	qurt_mem_region_t region;
-	qurt_mem_region_attr_t attrs;
-	qurt_paddr_64_t basepa;
-	qurt_addr_t va;
-	if ((qurt_mem_region_query_64(&region,QURT_MEM_INVALID,paddr_64)) != QURT_EOK) return QURT_EVAL;
-	qurt_mem_region_attr_get(region,&attrs);
-	qurt_mem_region_attr_get_virtaddr(&attrs,&va);
-	qurt_mem_region_attr_get_physaddr_64(&attrs,&basepa);
-	va += (paddr_64-basepa);
-	*vaddr = va;
-	return QURT_EOK;
-}
+int qurt_mem_map_static_query_64(qurt_addr_t *vaddr, qurt_paddr_64_t paddr_64, unsigned int page_size, qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm);
 
 /**@ingroup func_qurt_mem_map_static_query
   Determines if a memory page is statically mapped.
@@ -1019,15 +976,8 @@ int qurt_mapping_create_linear(H2K_linear_fmt_t entry);
 int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn, 
 	unsigned int size, unsigned int cache_attribs, unsigned int perm, unsigned int abits);
 
-static inline int qurt_mapping_create_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size,
-			 qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm)
-{
-	/* EJP: shouldn't it be caller's responsibility here? */
-	if (size & 0xFFF) return QURT_EMEM;
-	if (size == 0) return QURT_EMEM;
-	if (perm == 0) return QURT_EMEM;
-	return qurt_mapping_create_vpn(vaddr>>12,paddr_64>>12,size>>12,cache_attribs,perm,0);
-}
+int qurt_mapping_create_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_size_t size,
+			 qurt_mem_cache_mode_t cache_attribs, qurt_perm_t perm);
 
 /**@ingroup func_qurt_mapping_create
   Creates a new memory mapping in the page table.

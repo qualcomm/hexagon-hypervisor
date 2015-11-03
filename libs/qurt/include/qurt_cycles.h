@@ -31,7 +31,7 @@ static inline unsigned long long int qurt_profile_get_thread_pcycles(void)
 
 static inline unsigned long long int qurt_profile_get_thread_tcycles(void) 
 { 
-        return qurt_profile_get_thread_pcycles()/3; 
+        return qurt_profile_get_thread_pcycles()>>1; 
 }
 	
 

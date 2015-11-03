@@ -44,6 +44,19 @@ static void remove_thread(struct QURT_ugp_ptr *ptr)
 	free(ptr);
 }
 
+void qurt_thread_attr_init (qurt_thread_attr_t *attr)
+{
+    attr->name[0] = 0;
+    attr->tcb_partition = QURT_THREAD_ATTR_TCB_PARTITION_DEFAULT;
+    attr->priority = QURT_THREAD_ATTR_PRIORITY_DEFAULT;
+    attr->asid = QURT_THREAD_ATTR_ASID_DEFAULT;
+    attr->affinity = QURT_THREAD_ATTR_AFFINITY_DEFAULT;
+    attr->bus_priority = QURT_THREAD_ATTR_BUS_PRIO_DEFAULT;
+    attr->timetest_id = QURT_THREAD_ATTR_TIMETEST_ID_DEFAULT;
+    attr->stack_size = 0;
+    attr->stack_addr = 0;
+}
+
 static void add_thread(struct QURT_ugp_ptr *ptr)
 {
 	h2_mutex_lock(&qurt_root_mutex);

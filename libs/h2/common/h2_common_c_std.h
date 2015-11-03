@@ -18,4 +18,8 @@ typedef signed long long int h2_s64_t;
 
 typedef unsigned long h2_pa_t;
 
+#ifndef H2_IN_SECTION
+#define H2_IN_SECTION(S) __attribute__((section(S)))
+#endif
+
 #endif

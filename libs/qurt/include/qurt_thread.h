@@ -131,19 +131,7 @@ typedef struct _qurt_thread_attr {
   @dependencies
   None.
 */
-static inline void qurt_thread_attr_init (qurt_thread_attr_t *attr)
-{
-
-    attr->name[0] = 0;
-    attr->tcb_partition = QURT_THREAD_ATTR_TCB_PARTITION_DEFAULT;
-    attr->priority = QURT_THREAD_ATTR_PRIORITY_DEFAULT;
-    attr->asid = QURT_THREAD_ATTR_ASID_DEFAULT;
-    attr->affinity = QURT_THREAD_ATTR_AFFINITY_DEFAULT;
-    attr->bus_priority = QURT_THREAD_ATTR_BUS_PRIO_DEFAULT;
-    attr->timetest_id = QURT_THREAD_ATTR_TIMETEST_ID_DEFAULT;
-    attr->stack_size = 0;
-    attr->stack_addr = 0;
-}
+void qurt_thread_attr_init (qurt_thread_attr_t *attr);
 
 /**@ingroup func_qurt_thread_attr_set_name
   Sets the thread name attribute.\n

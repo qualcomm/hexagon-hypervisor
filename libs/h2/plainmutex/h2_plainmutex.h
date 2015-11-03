@@ -6,6 +6,8 @@
 #ifndef H2_PLAINMUTEX_H
 #define H2_PLAINMUTEX_H 1
 
+#include <h2_common_c_std.h>
+
 /** @file h2_mutex.h
  @brief Mutexes allow at most one thread to hold the mutex at a time
 */

@@ -77,6 +77,7 @@ static inline int qurt_pipe_init(qurt_pipe_t *pipe, qurt_pipe_attr_t *attr)
 	return (h2_pipe_create(pipe,attr->buffer,attr->elements) != NULL) ? QURT_EOK : QURT_EFAILED;
 }
 
+/* EJP: FIXME code size: broken, don't inline malloc */
 static inline int qurt_pipe_create(qurt_pipe_t **pipe, qurt_pipe_attr_t *attr)
 {
 	if ((*pipe = (qurt_pipe_t *)malloc(sizeof(**pipe))) == NULL) {

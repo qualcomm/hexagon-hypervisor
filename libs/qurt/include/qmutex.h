@@ -77,16 +77,8 @@ static inline void qmutex_attr_settype(qmutex_attr_t *attr, qmutex_type_t type)
  * @return             EMEM:    Out of memory
  *
  * EJP: &*W@$$#@&( out variable?  OK, guess we'll malloc
- *
  */
-static inline int qmutex_create(qmutex_t *mutex, qmutex_attr_t *attr) {
-	if ((*mutex = (qmutex_t)qurt_malloc(sizeof(qmutex_struct))) == NULL) {
-		return QURT_EMEM;
-	}
-	(*mutex)->type = (attr == NULL) ? QMUTEX_LOCAL : attr->type;
-	qurt_pimutex_init(&(*mutex)->qurt_mutex);
-	return QURT_EOK;
-}
+int qmutex_create(qmutex_t *mutex, qmutex_attr_t *attr);
 
 /**
  * Deletes a mutex

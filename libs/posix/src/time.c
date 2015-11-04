@@ -30,7 +30,7 @@ static void * _timer_worker(void *parg)
     unsigned int  timer_sigmask = 0;
     int           i;
     unsigned int  recv_mask;
-    unsigned int  blast_signo;
+    unsigned int  qurt_signo;
 
     /* wait for sem before move forward */
     if (0 != sem_wait(&timer_worker_sem))
@@ -65,17 +65,17 @@ static void * _timer_worker(void *parg)
 
     for (;;)
     {
-        recv_mask = blast_anysignal_wait(&ltcb->sigs, POSIX_TIMER_MASK);
+        recv_mask = qurt_anysignal_wait(&ltcb->sigs, POSIX_TIMER_MASK);
         if (recv_mask >= POSIX_TIMER_SIGNO_MIN_MASK || recv_mask <= POSIX_TIMER_SIGNO_MAX_MASK)
         {
-            blast_anysignal_clear(&ltcb->sigs, recv_mask);
-            blast_signo = ffs(recv_mask);
-            if (blast_signo < POSIX_TIMER_SIGNO_MIN || blast_signo > POSIX_TIMER_SIGNO_MAX)
+            qurt_anysignal_clear(&ltcb->sigs, recv_mask);
+            qurt_signo = ffs(recv_mask);
+            if (qurt_signo < POSIX_TIMER_SIGNO_MIN || qurt_signo > POSIX_TIMER_SIGNO_MAX)
             {
                 return 0;
             }
 
-            timer = ltcb->timers[blast_signo - POSIX_TIMER_SIGNO_MIN];
+            timer = ltcb->timers[qurt_signo - POSIX_TIMER_SIGNO_MIN];
 
             if (timer && timer->evp->sigev_notify_function)
                 /* invoke the callback function */
@@ -87,7 +87,7 @@ static void * _timer_worker(void *parg)
             qurt_timer_attr_get_type(&timer->qurt_timer_attr, &type);
             if (QURT_TIMER_ONESHOT == type)
             {
-                ltcb->timers[blast_signo - POSIX_TIMER_SIGNO_MIN] = NULL;
+                ltcb->timers[qurt_signo - POSIX_TIMER_SIGNO_MIN] = NULL;
                 pthread_exit((void *) &status);
                 return 0;
             }

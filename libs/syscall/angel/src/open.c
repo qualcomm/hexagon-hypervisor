@@ -8,6 +8,7 @@
 #include <angel.h>
 #include <string.h>
 #include <syscall_defs.h>
+#include "allsyscalls.h"
 
 /* Dinkumware is all crazy. */
 

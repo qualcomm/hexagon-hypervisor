@@ -11,7 +11,7 @@
 #include <h2_common_pmap.h>
 #include <h2_common_defs.h>
 
-#define MAX_HTHREADS 8
+// now in common? #define MAX_HTHREADS 8
 
 //#define DO_EXT_SWITCH 1
 

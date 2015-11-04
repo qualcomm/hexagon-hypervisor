@@ -120,6 +120,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	boot->trapmask = bootvm->trapmask;
 	boot->continuation = H2K_interrupt_restore;
 	boot->vmstatus = 0x0;
+	boot->tlbidxmask = ~0;
 	asid = H2K_asid_table_inc((u32_t)bootvm->pmap, bootvm->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 	boot->ssr_asid = asid;
 	BKL_LOCK();

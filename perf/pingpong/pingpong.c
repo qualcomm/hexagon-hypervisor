@@ -49,8 +49,10 @@ static inline void my_thread_create(void *f, void *s, int ss, void *p, int prio)
 void ping(void *id) {
 	int i;
 	int myid = (int)id;
-	printf("Ping thread %d\n",myid);
+	qurt_sem_t deadlock;
 	qurt_sem_t *in, *out;
+	printf("Ping thread %d\n",myid);
+	qurt_sem_init_val(&deadlock,0);
 	in = &pingsem[myid];
 	if (myid == (MAX_THREADS-1)) out = &pingsem[0];
 	else out = &pingsem[myid+1];
@@ -63,7 +65,7 @@ void ping(void *id) {
 		qurt_sem_up(out);
 	}
 	if (myid == MAX_THREADS-1) qurt_sem_up(&tomain);
-	qurt_thread_stop();
+	while (1) qurt_sem_down(&deadlock);
 }
 
 char context_space[1024];
@@ -82,6 +84,6 @@ int main() {
 	qurt_sem_down(&tomain);
 	end = qurt_get_core_pcycles();
 	printf("TEST PASSED - %.0f\n", (float) (end - start) / (float) (ITERS*MAX_THREADS));
-	h2_thread_stop(0);
+	exit(0);
 	return 0;
 }

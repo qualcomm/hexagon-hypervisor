@@ -25,7 +25,7 @@ void FAIL(const char *str)
 H2K_thread_context a;
 // H2K_kg_t H2K_kg;
 
-#define TLBCONST 0x0102030400000000ULL
+#define TLBCONST 0x0001234500000000ULL
 
 static inline unsigned long long int TH_tlb_read(int index)
 {

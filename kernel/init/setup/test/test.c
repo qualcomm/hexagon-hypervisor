@@ -37,12 +37,15 @@ enum {
         kg_init,
         trace_init,
         timer_init,
-				mem_alloc_init,
-				tmpmap_init,
-				l2cache_init,
+	mem_alloc_init,
+	tmpmap_init,
+	l2cache_init,
         //thread_init,
         //asid_table_init,
         //mem_stlb_init,
+	tcm_copy,
+	hvx_init,
+	stlb_tcmcrash_init,
 	XX_LAST_HELPER
 };
 
@@ -88,7 +91,10 @@ HELPER_FUNC(tmpmap_init)
 HELPER_FUNC(l2cache_init)
 //HELPER_FUNC(thread_init)
 //HELPER_FUNC(asid_table_init)
+HELPER_FUNC(stlb_tcmcrash_init)
 //HELPER_FUNC(mem_stlb_init)
+HELPER_FUNC(tcm_copy)
+HELPER_FUNC(hvx_init)
 
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) { TH_init_seen |= 1<< kg_init; }
 
@@ -148,6 +154,6 @@ int main()
 	}
 	if (!found_thread) FAIL("Didn't push into runlist (1)");
 	puts("TEST PASSED\n");
-	return 0;
+	exit(0);
 }
 

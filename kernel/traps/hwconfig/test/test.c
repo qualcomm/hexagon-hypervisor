@@ -29,6 +29,9 @@ void H2K_cache_l2_cleaninv()
 {
 	TH_saw_l2_cleaninv = 1;
 }
+void H2K_cache_d_cleaninv() {}
+void H2K_cache_d_clean() {}
+void H2K_cache_i_inv() {}
 
 #if ARCHV < 56
 void TH_test_l2locka() {}

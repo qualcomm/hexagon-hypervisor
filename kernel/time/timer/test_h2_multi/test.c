@@ -18,7 +18,7 @@
 #define STACK_SIZE 256
 #define N_THREADS 12
 
-#define MAX_DELTA 200000
+#define MAX_DELTA 400000
 
 void FAIL(const char *str)
 {
@@ -66,7 +66,7 @@ void task(void *arg)
 		if (delta < 0) delta = -delta;
 		//printf("id=%p: start=%llx wakeup=%llx end=%llx\n",arg,start,wakeup,end);
 		if (delta > MAX_DELTA) {
-			printf("delta: %llx\n",delta);
+			printf("delta: %llu\n",delta);
 			FAIL("Delta too big");
 		}
 	};

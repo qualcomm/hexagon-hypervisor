@@ -106,9 +106,9 @@ size:
 t:
 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
-test:	qurt_test h2_test
+test:	h2_test
 	head -n -1 h2_report.html > report.html
-	tail -n +2 qurt_report.html >> report.html
+#	tail -n +2 qurt_report.html >> report.html
 
 h2_test: ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
@@ -131,9 +131,9 @@ qurt_test_single: ./qurt/test/testcases
 qurt_test_libs:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
 
-cov: qurt_test h2_cov
+cov: h2_cov
 	head -n -1 h2_report.html > report.html
-	tail -n +2 qurt_report.html >> report.html
+#	tail -n +2 qurt_report.html >> report.html
 
 h2_cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare

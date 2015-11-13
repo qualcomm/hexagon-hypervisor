@@ -206,13 +206,14 @@ FUNC_START H2K_vm_cpuint_enable .text.vm.int .p2align 2 // s32 clear(vmblock,me,
 		TMP = memw_locked(WADDR)
 	}
 	{
-		p0 = cmp.gtu(ENABLED_PENDING,#0)
-		p0 = tstbit(TMP,#H2K_VMSTATUS_VMWORK_BIT)
-		if (p0.new) jump:nt 9f
+		p0 = cmp.eq(ENABLED_PENDING,#0)
+		// p0 = tstbit(TMP,#H2K_VMSTATUS_VMWORK_BIT)
+		if (p0.new) jump:t 9f // if nothing enabled+pending, skip vmwork
 		TMP = or(TMP,#1<<H2K_VMSTATUS_VMWORK_BIT)
 	}
 	memw_locked(WADDR,p0) = TMP
 	if (!p0) jump 1b
+	.falign
 9:
 	{
 		r0 = #0

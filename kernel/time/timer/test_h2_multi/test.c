@@ -18,7 +18,7 @@
 #define STACK_SIZE 256
 #define N_THREADS 12
 
-#define MAX_DELTA 400000
+#define MAX_DELTA 200000
 
 void FAIL(const char *str)
 {

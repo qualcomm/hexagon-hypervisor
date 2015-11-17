@@ -108,8 +108,8 @@ void random_test()
 
 int main()
 {
-	int i;
 #if ARCHV > 4
+	int i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	printf("Hello!\n");
 	H2K_kg_init(0,0,125, 128);

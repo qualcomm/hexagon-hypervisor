@@ -88,7 +88,7 @@ H2K_fastint_return:
 	H2K_GP.l = #lo(H2K_kg)
 #if H2K_L2_CONTROL
 	/* EJP: this should be v4... */
-	p0 = cmp.gtu(r26,#31)
+	p0 = cmp.gtu(r16,#31)
 	p1 = cmp.eq(r0,#0)
 	r16 = add(r16,#-32)
 	if (!p0) jump 1f		// skip if l1 interrupt

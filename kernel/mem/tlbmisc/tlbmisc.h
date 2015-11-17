@@ -84,6 +84,14 @@ static inline int H2K_mem_tlboc(u64_t entry)
 	return ret;
 }
 
+#else
+
+static inline int H2K_mem_tlboc(u64_t entry)
+{
+	/* No HW tlboc, just return 0x8000000 */
+	return 0x80000000;
+}
+
 #endif
 
 #endif

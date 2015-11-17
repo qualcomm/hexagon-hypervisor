@@ -96,7 +96,23 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 .Lmodectl_wait:
 	r3 = #0
 	r2 = modectl
+#if ARCHV >= 5
 	r1 = popcount(r3:2)
+#else
+	r1 = #0
+	p0 = tstbit(r2,#0)
+	if (p0) r1 = add(r1,#1)
+	p0 = tstbit(r2,#1)
+	if (p0) r1 = add(r1,#1)
+	p0 = tstbit(r2,#2)
+	if (p0) r1 = add(r1,#1)
+	p0 = tstbit(r2,#3)
+	if (p0) r1 = add(r1,#1)
+	p0 = tstbit(r2,#4)
+	if (p0) r1 = add(r1,#1)
+	p0 = tstbit(r2,#5)
+	if (p0) r1 = add(r1,#1)
+#endif
 	{
 		p0 = cmp.eq(r1,#1)
 		if (!p0.new) jump:nt .Lmodectl_wait

@@ -128,6 +128,7 @@ static inline qurt_mem_region_t uint_from_mem_region(struct qurt_mem_region_stru
 	return x.i;
 }
 
+#if 0
 static void qurt_pprint_mappings()
 {
 	int i;
@@ -140,6 +141,7 @@ static void qurt_pprint_mappings()
 			i,entry.vpn,entry.ppn,entry.size,entry.cccc,entry.xwru);
 	}
 }
+#endif
 
 static inline void transtab_add_region(struct qurt_mem_region_struct *region)
 {

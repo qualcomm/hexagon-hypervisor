@@ -328,6 +328,9 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	{
 		r31 = memw(DST+#CONTEXT_continuation)
 		r1:0 = memd(DST+#CONTEXT_r0100)
+	}
+	{
+		r31 = and(r31,#-4)
 		jump H2K_check_sanity_unlock
 	}
 	.falign

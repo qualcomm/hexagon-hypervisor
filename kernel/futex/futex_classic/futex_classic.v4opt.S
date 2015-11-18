@@ -39,7 +39,11 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 		call H2K_safemem_check_and_lock
 	}
 #undef TMP
-#define PA r2
+#define LOCKPTR r16
+#define LOCKVAL r17
+#define ME r18
+#define HTHREAD r19
+#define HASH r2
 #define TMP r3
 #define ZEROPAIR r9:8
 #define ZERO_NEGONE r5:4
@@ -47,13 +51,14 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 #define NEGONE r4
 #define RUNLIST r7
 #define RUNLIST_PRIOS r6
-#define HASH r10
-
+#define PA r11:10
+#define PA_HI r11
+#define PA_LO r10
 	.falign
 	{
 		p0 = cmp.eq(r0,#0)
 		if (p0.new) jump:nt .Lwait_fail
-		PA = memw(r29)
+		PA = memd(r29)
 		if (!p0.new) TMP = memw(LOCKPTR)
 		ZEROPAIR = #0
 	}
@@ -62,24 +67,29 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 	{
 		p0 = cmp.eq(TMP,LOCKVAL)
 		if (!p0.new) jump:nt .Lwait_fail
-		memw(ME+#CONTEXT_futex_ptr) = PA
 		ZERO_NEGONE = combine(#0,#-1)
 		RING = add(H2K_GP,#KG_futexhash)
+		PA = lsr(PA,#2)
+	}
+	{
+		memw(ME+#CONTEXT_futex_ptr_hi) |= PA_HI
+		HASH = mpyi(PA_LO,##FUTEX_PRIME)
 	}
 	{
 		RUNLIST = add(H2K_GP,#KG_runlist)
 		RUNLIST_PRIOS = add(H2K_GP,#KG_runlist_prios)
-		HASH = mpyi(PA,##FUTEX_PRIME)
+		memd(ME+#CONTEXT_r0100) = ZEROPAIR
+		memw(ME+#CONTEXT_futex_ptr_lo) = PA_LO
 	}
 	{
-		memd(ME+#CONTEXT_r0100) = ZEROPAIR
-		memb(ME+#CONTEXT_status) = #STATUS_BLOCKED
 		r1 = ME
-		RING = tableidxw(HASH,#FUTEX_HASHBITS,#32-FUTEX_HASHBITS)
+		HASH ^= asl(PA_HI,#32-FUTEX_HASHBITS)
+		memb(ME+#CONTEXT_status) = #STATUS_BLOCKED
 	}
 	{
 		memw(RUNLIST+HTHREAD<<#2) = ZERO
 		memh(RUNLIST_PRIOS+HTHREAD<<#1) = NEGONE
+		RING = tableidxw(HASH,#FUTEX_HASHBITS,#32-FUTEX_HASHBITS)
 		call H2K_futex_hash_add_ring
 	}
 	.falign
@@ -109,6 +119,8 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 #undef ME
 #undef HTHREAD
 #undef PA
+#undef PA_LO
+#undef PA_HI
 #undef TMP
 #undef RING
 #undef ZEROPAIR
@@ -124,12 +136,15 @@ FUNC_END H2K_futex_wait
 FUNC_START H2K_futex_resume .text.core.futex .falign
 #define ME r19
 #define N_TO_WAKE r18
-#define PA r17
+#define PA_LO_SAV r17
 #define RING r16
+#define PA r11:10
+#define PA_LO r10
+#define PA_HI r11
 #define HASH r5
 #define TMP r4
 	{
-		allocframe(#8)
+		allocframe(#16)
 		r19:18 = combine(r2,r1)
 		p0 = cmp.eq(r1,#0)
 		if (p0.new) jump:nt .Lresume_null
@@ -137,21 +152,28 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 	{
 		r1 = #SAFEMEM_R
 		r3:2 = combine(r2,r29)
-		memw(r29+#4) = N_TO_WAKE
+		memw(r29+#12) = N_TO_WAKE
 		call H2K_safemem_check_and_lock
 	}
 	tlbunlock
 	{
 		p0 = cmp.eq(r0,#0)
 		if (p0.new) jump:nt .Lresume_bad
-		PA = memw(r29)
+		PA = memd(r29)
 	}
 	{
-		HASH = mpyi(PA,##FUTEX_PRIME)
+		PA = lsr(PA,#2)
+	}
+	{
+		HASH = mpyi(PA_LO,##FUTEX_PRIME)
 		RING = add(H2K_GP,#KG_futexhash)
 	}
 	{
+		HASH ^= asl(PA_HI,#32-FUTEX_HASHBITS)
+	}
+	{
 		RING = tableidxw(HASH,#FUTEX_HASHBITS,#32-FUTEX_HASHBITS)
+		PA_LO_SAV = PA_LO
 	}
 	k0lock
 	{
@@ -165,7 +187,7 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 	.falign
 .Lresume_next:
 	{
-		r1:0 = combine(RING,PA)
+		r1:0 = combine(RING,PA_LO_SAV)
 		r2 = r29
 		call H2K_futex_hash_remove_one
 	}
@@ -176,7 +198,7 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 		if (p0.new) jump:t .Lresume_next
 	}
 	{
-		r0 = memw(r29+#4)			// orig n_to_wake
+		r0 = memw(r29+#12)			// orig n_to_wake
 		p0 = cmp.eq(r0,#0)
 		if (!p0.new) N_TO_WAKE = add(N_TO_WAKE,#1)	// adjust woken count
 	}
@@ -200,6 +222,8 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 #undef ME
 #undef N_TO_WAKE
 #undef PA
+#undef PA_LO
+#undef PA_HI
 #undef RING
 #undef HASH
 #undef TMP

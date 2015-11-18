@@ -87,10 +87,20 @@ typedef struct _h2_thread_context
 	u64_t totalcycles;
 	// 64
 	u64_t pktcount;
-	struct {
-		u32_t futex_ptr;		// Probably not needed if interrupted; only on trap; could be unioned below?
-		// needs to be pa_t, but is word aligned.  For 36 bits pa, can be 34 bits... 
-		void *continuation;		// probably can be 30 bits.  34 bits for futex_ptr plus 30 bits for continuation fits.
+	union {
+		struct {
+			u32_t futex_ptr_lo;		// Probably not needed if interrupted; only on trap; could be unioned below?
+			// needs to be pa_t, but is word aligned.  For 36 bits pa, can be 34 bits... 
+			union {
+				u32_t futex_ptr_hi;		// only low 2 bits
+				void *continuation;		// only high 30 bits
+			};
+		};
+		struct {
+			u64_t futex_ptr:34;		// only low 34 bits
+			u64_t continuation_bits:30;
+		};
+		u64_t futex_ptr_64;
 	};
 	union {
 		u64_t ccrssr;

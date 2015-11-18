@@ -71,7 +71,8 @@ typedef union {
 			struct {
 				u32_t vpn:20;
 				u32_t asid:7;
-				u32_t unused:3;
+				u32_t abits:2;
+				u32_t pa35:1;
 				u32_t global:1;
 				u32_t valid:1;
 			};
@@ -93,6 +94,7 @@ static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
 {
 	pa_t ret;
 	ret = entry.ppd;
+	ret |= entry.pa35 << 24;
 	ret &= ret - 1;	/* Clear least significant set bit */
 	ret <<= 11;
 	return ret;

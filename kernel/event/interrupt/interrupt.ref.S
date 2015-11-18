@@ -250,6 +250,7 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	/* OK, get continuation and jump to it.  Restore r1:0 */
 	ME = sgp0
 	r31 = memw(ME+#CONTEXT_continuation)
+	r31 = and(r31,#-4)
 	r1:0 = memd(ME+#CONTEXT_r0100)
 	jumpr r31
 FUNC_END H2K_interrupted_preempt

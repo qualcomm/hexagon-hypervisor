@@ -20,6 +20,7 @@ u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc) {
 
 	entry.raw = 0;
 	entry.ppd = ((pa & TEMP_MAP_PG_MASK ) >> (PAGE_BITS - 1)) | (1 << TEMP_MAP_PG_SIZE);
+	entry.pa35 = (pa >> 35) & 1;
 	entry.cccc = cccc;
 	entry.xwru = 0;  // only monitor access
 	entry.vpn = (TEMP_MAP_VA >> PAGE_BITS);

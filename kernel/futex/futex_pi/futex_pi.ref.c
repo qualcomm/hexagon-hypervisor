@@ -81,6 +81,7 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 		BKL_UNLOCK();
 		return -1;
 	}
+	pa >>= 2;
 	H2K_atomic_setbit(lock,0);
 	x.val = *lock;
 	if (x.val == 0x1) {
@@ -121,6 +122,7 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 		BKL_UNLOCK();
 		return -1;
 	}
+	pa >>= 2;
 	hashval = HASHVAL(pa);
 	ring = &H2K_gp->futexhash[hashval];
 	pos = *ring;

@@ -254,6 +254,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	call H2K_vm_do_work
 	r1:0 = memd(r17+#CONTEXT_r0100)
 	r31 = memw(r17+#CONTEXT_continuation)
+	r31 = and(r31,#-4)				// ignore LSBs
 	jump H2K_check_sanity_unlock
 
 .Lto_sleep:

@@ -170,6 +170,9 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		r1:0 = memd(ME+#CONTEXT_r0100)
 	}
 	{
+		r31 = and(r31,#-4)
+	}
+	{
 		jumpr r31
 	}
 1:						// We were idle, go back to sleep

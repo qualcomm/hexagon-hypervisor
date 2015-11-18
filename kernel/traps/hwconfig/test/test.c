@@ -34,12 +34,13 @@ void H2K_cache_d_clean() {}
 void H2K_cache_i_inv() {}
 
 #if ARCHV < 56
-void TH_test_l2locka() {}
+void TH_test_l2locka(int unused) {}
 #else
 
 int H2K_safemem_check_and_lock(void *addr, int type, pa_t *pa, H2K_thread_context *me)
 {
-	if (pa) *pa = (pa_t)addr;
+	unsigned long addr_i = (unsigned long)addr;
+	if (pa) *pa = (pa_t)addr_i;
 	return 1;
 }
 

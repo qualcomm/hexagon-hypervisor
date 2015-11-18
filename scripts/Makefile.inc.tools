@@ -13,12 +13,12 @@ endif
 
 #export SIMF := --timing
 
-export CC := hexagon-gcc
+export CC := hexagon-clang
 export AR := hexagon-ar
 export RANLIB := hexagon-ranlib
 
 export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
-export LD := hexagon-gcc
+export LD := hexagon-clang
 
 export COM_CFLAGS := -Werror
 export COM_LDFLAGS :=
@@ -41,7 +41,7 @@ ifeq (5, $(ARCHV))
 TOOLS_FLAVOR ?= default
 ARCH_FLAVOR ?= v5_stable
 else
-TOOLS_FLAVOR ?= g61_latest
+TOOLS_FLAVOR ?= 7.4.01
 ARCH_FLAVOR ?= v60_latest
 endif
 endif
@@ -55,12 +55,17 @@ export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR) arch=$(ARCH_FLAVOR)
 export RUN_DEVSIM := $(DEVSIM) $(DEVSIM_EXTRA) --quiet --magic_angel --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(DEVICE_CONFIG)
 
 export RUN_TOOLSIM := hexagon-sim --simulated_returnval --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
+#export RUN_TOOLSIM := hexagon-sim 
 
 export TOOLARCH := $(ARCHV)
+ifeq (60, $(TOOLARCH))
+export TOOLARCH := 61
+endif
 
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
 #export TOOLARCH := 5
-export RUN := $(RUN_DEVSIM)
+#export RUN := $(RUN_DEVSIM)
+export RUN := $(RUN_TOOLSIM)
 else
 #export TOOLARCH := $(ARCHV)
 export RUN := $(RUN_TOOLSIM)

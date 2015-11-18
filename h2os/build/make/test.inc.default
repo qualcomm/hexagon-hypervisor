@@ -40,9 +40,9 @@ endif
 
 ARCH=qdsp6
 SIM=${ARCH}-sim
-CC=${ARCH}-gcc
-AS=${ARCH}-as
-LD=${ARCH}-ld
+CC=${ARCH}-clang
+AS=${ARCH}-clang
+LD=${ARCH}-clang
 AR=${ARCH}-ar
 OBJDUMP=${ARCH}-objdump
 GMON_MERGE=${ARCH}-gmon-merge

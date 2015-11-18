@@ -50,8 +50,8 @@ include $(H2DIR)/scripts/Makefile.inc.constants
 ARCH=hexagon
 
 
-CC=${ARCH}-gcc
-AS=${ARCH}-as
+CC=${ARCH}-clang
+AS=${ARCH}-clang
 LD=${ARCH}-ld
 AR=${ARCH}-ar
 OBJDUMP=${ARCH}-objdump

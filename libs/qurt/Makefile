@@ -1,6 +1,6 @@
 
 
-CC = hexagon-gcc -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include
+CC = hexagon-clang -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include
 AR = hexagon-ar
 
 OPTIMIZE := -O2

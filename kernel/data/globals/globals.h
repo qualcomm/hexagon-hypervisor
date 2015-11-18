@@ -137,8 +137,8 @@ register H2K_kg_t * const H2K_gp asm (GLOBAL_REG_STR);
 #define PURITY __attribute__((const))
 static inline H2K_kg_t PURITY *H2K_gp_llvm()
 {
-	H2K_kg_t *ret;
-	asm ( " %0 = " GLOBAL_REG_STR : "=r"(ret));
+	register H2K_kg_t *ret __asm__("r28");
+	__asm__ (" /* Fool the compiler */ " : "=r"(ret));
 	return ret;
 }
 #define H2K_gp H2K_gp_llvm()

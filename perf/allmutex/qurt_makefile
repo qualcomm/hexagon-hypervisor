@@ -67,7 +67,7 @@ LIB_DINKUMWARE_ROOT := "$(Q6_TOOLS_ROOT)"/dinkumware/lib/$(Q6VERSION)
 LIB_DSP_ROOT := "$(Q6_TOOLS_ROOT)"/qc/lib/$(Q6VERSION)
 endif
 
-CC := "$(Q6_TOOLS_ROOT)"/gnu/bin/hexagon-gcc
+CC := "$(Q6_TOOLS_ROOT)"/gnu/bin/hexagon-clang
 LD := "$(Q6_TOOLS_ROOT)"/gnu/bin/hexagon-ld
 SIM := "$(Q6_TOOLS_ROOT)"/qc/bin/hexagon-sim
 OBJDUMP := "$(Q6_TOOLS_ROOT)"/gnu/bin/hexagon-objdump

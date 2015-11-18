@@ -756,6 +756,7 @@ static inline void qurt_memory_early_add_tlbfmt(unsigned long long int inval)
 	qurt_mapping_create_linear(entry);
 }
 
+#if 0
 static int qurt_mem_compare_va(const void *va, const void *vb)
 {
 	const H2K_linear_fmt_t *a = va;
@@ -902,6 +903,7 @@ static inline void qurt_memory_translation_optimize()
 	//qurt_printf(">> FINAL\n");
 	//qurt_pprint_mappings();
 }
+#endif
 
 void qurt_memory_translation_check()
 {

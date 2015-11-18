@@ -73,7 +73,7 @@ qurtclean:
 
 opt:
 	echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which hexagon-gcc
+	pkw --which hexagon-clang
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
@@ -84,7 +84,7 @@ opt:
 
 ref:
 	echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which hexagon-gcc
+	pkw --which hexagon-clang
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install

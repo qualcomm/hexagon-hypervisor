@@ -9,7 +9,6 @@ SECTIONS
 /* Start EBI memory. */
   .interp         :
                      { *(.interp) }
-  .note.gnu.build-id :  { *(.note.gnu.build-id) }
   .hash           :  { *(.hash) }
   .gnu.hash       :  { *(.gnu.hash) }
   .dynsym         :  { *(.dynsym) }
@@ -286,5 +285,5 @@ SECTIONS
   .debug_pubtypes 0 :  { *(.debug_pubtypes) }
   .debug_ranges   0 :  { *(.debug_ranges) }
   .gnu.attributes 0 :  { KEEP (*(.gnu.attributes)) }
-  /DISCARD/       :  { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) }
+  /DISCARD/       :  { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) *(.note.gnu.build-id) }
 }

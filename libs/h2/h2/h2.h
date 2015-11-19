@@ -42,7 +42,7 @@ extern "C" {
 #include "h2_thread.h"
 #include "h2_tlb.h"
 #include "h2_vmtraps.h"
-/* hexagon_protos.h frustrates things for modem: #include "h2_vecaccess.h" */
+#include "h2_vecaccess.h"
 #include "h2_vm.h"
 #include "h2_vmtraps.h"
 #include "h2_waitcycles.h"

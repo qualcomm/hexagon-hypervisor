@@ -128,6 +128,10 @@ extern "C" {
 #define blast_get_tcycles                       qurt_profile_get_thread_tcycles
 #define blast_power_control                     qurt_power_control
 #define blast_thread_join        qurt_thread_join
+
+int blast_thread_create(void *pc, void *stack, void *arg, 
+												unsigned int prio, unsigned int asid, unsigned int hw_bitmask);
+
 #define blast_arch_version        qurt_arch_version
 #define blast_arch_version_t        qurt_arch_version_t
 #define blast_app_heap_obj_t        qurt_app_heap_obj_t

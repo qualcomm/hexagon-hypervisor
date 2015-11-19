@@ -142,6 +142,22 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
  	return (*thread_id == -1) ? QURT_EFATAL : QURT_EOK;
 }
 
+int blast_thread_create(void *pc, void *stack, void *arg, 
+												unsigned int prio, unsigned int asid, unsigned int hw_bitmask) {
+
+	qurt_thread_attr_t *attr;
+	qurt_thread_t id;  // should be ok not to malloc
+
+	if ((attr = (qurt_thread_attr_t *)qurt_malloc (sizeof (qurt_thread_attr_t))) == NULL) {
+		return QURT_EFATAL;
+	}
+	memset (attr, 0, sizeof (qurt_thread_attr_t));
+	attr->priority = prio;
+	attr->stack_addr = stack;
+
+	return qurt_thread_create(&id, attr, pc, arg);
+}
+
 /* Have a thread become a qurt thread: put it in all the data structures and allocate ugp stuff */
 void qurt_thread_mainthread_become()
 {

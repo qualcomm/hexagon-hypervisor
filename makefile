@@ -1,5 +1,3 @@
-export NULL_ANGEL_TRAP = 1
-
 ifeq ($(TARGET), 8960)
 ARCHV := 4
 H2K_KERNEL_PGSIZE ?= 3

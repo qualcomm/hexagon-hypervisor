@@ -10,9 +10,11 @@
 
 /* POSIX signal bits */
 #define SIGALRM        1 /* Alarm clock */
+#define SIGINT         2
 #define POSIX_MSG      7 /* POSIX msg type used in Qube API */
 #define POSIX_NOTIF    8 /* POSIX msg type used in Qube API */
 #define SIGKILL        9 /* kill (cannot be caught or ignored) */
+#define SIGTERM        15
 
 #define SIGRTMIN       10
 #define SIGRTMAX       32
@@ -33,6 +35,13 @@
 #define SIG_BLOCK       1 /* block specified signal set */
 #define SIG_UNBLOCK     2 /* unblock specified signal set */
 #define SIG_SETMASK     3 /* set specified signal set */
+
+		/* SIGNAL RETURN VALUES */
+#define SIG_DFL	((_CSTD _Sigfun *)0)
+#define SIG_ERR	((_CSTD _Sigfun *)-1)
+#define SIG_IGN	((_CSTD _Sigfun *)1)
+
+typedef void _Sigfun(int);
 
 typedef unsigned long int   sigset_t;
 

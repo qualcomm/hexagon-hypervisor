@@ -6,10 +6,12 @@
 #include "allsyscalls.h"
 #include <h2.h>
 
-void __attribute__ ((weak)) __h2_thread_stop_hook__(int status)
+void __h2_default_thread_stop_hook__(int status)
 {
 	h2_thread_stop(status);
 }
+
+void __h2_thread_stop_hook__(int status) __attribute__ ((weak,alias("__h2_default_thread_stop_hook__")));
 
 void sys_exit(okay_t status)
 {

@@ -54,7 +54,7 @@ CC=${ARCH}-clang
 AS=${ARCH}-clang
 LD=${ARCH}-ld
 AR=${ARCH}-ar
-OBJDUMP=${ARCH}-objdump
+OBJDUMP=${ARCH}-llvm-objdump
 GMON_MERGE=${ARCH}-gmon-merge
 COV=${ARCH}-cov
 PYTHON=python
@@ -147,7 +147,7 @@ OPTIMIZE := -O1
 
 KERNEL_INCLUDES := -I ${H2DIR}/kernel/include -I ${H2DIR}/libs/h2/common
 
-LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR)
+LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=start
 
 ifdef BOOT
 BOOTER=${H2DIR}/install/bin/booter
@@ -156,7 +156,7 @@ LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
 CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g
 ifndef STANDALONE
-LDFLAGS += -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0 -Wl,--defsym=__h2_thread_stop_hook__=0 -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 endif
 endif
 

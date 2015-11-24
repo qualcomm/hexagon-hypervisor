@@ -416,5 +416,7 @@ static inline void H2K_l2unlock()
 	asm volatile (" l2gunlock " : : : "memory");
 }
 
+void H2K_start_threads(unsigned int mask);
+
 #endif
 

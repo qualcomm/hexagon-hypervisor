@@ -124,7 +124,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	asid = H2K_asid_table_inc((u32_t)bootvm->pmap, bootvm->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 	boot->ssr_asid = asid;
 	BKL_LOCK();
-	asm volatile( "start(%0) \n" :: "r"(hthreads));
+	H2K_start_threads(hthreads);
 	H2K_runlist_push(boot);
 	H2K_init_complete = 1;
 	H2K_mutex_unlock_tlb();

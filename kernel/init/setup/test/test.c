@@ -59,6 +59,10 @@ void H2K_interrupt_restore()
 {
 }
 
+void H2K_start_threads(unsigned int mask)
+{
+}
+
 H2K_thread_context a;
 H2K_vmblock_t vmb;  // so we don't have to call the allocator
 

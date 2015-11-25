@@ -64,11 +64,12 @@ endif
 
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
 #export TOOLARCH := 5
-#export RUN := $(RUN_DEVSIM)
-export RUN := $(RUN_TOOLSIM)
+export RUN := $(RUN_DEVSIM)
+#export RUN := $(RUN_TOOLSIM)
 else
 #export TOOLARCH := $(ARCHV)
 export RUN := $(RUN_TOOLSIM)
+#export RUN := $(RUN_DEVSIM)
 endif
 
 export SIM := $(RUN)

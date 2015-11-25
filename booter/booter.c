@@ -619,7 +619,7 @@ void config_vm(unsigned int idx) {
 	unsigned long vm;
 
 	H2K_offset_t base;
-	int trans, i;
+	int trans;
 	
 
 	printf("\nConfig VM index %d\n", idx);
@@ -661,12 +661,20 @@ void config_vm(unsigned int idx) {
 		FAIL("\tSET_PRIO_TRAPMASK", "");
 	}
 
+#if 0
+	do {
+	FIXME: in the future, we can map physical interrupts to guest with a command line option
+	This was confusing things like the virtual timer interrupt.
+	(Using if 0 here just to annoy Bryan.)
 	/* set up interrupts */
-	for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
-		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
-			FAIL("\tMAP_PHYS_INTR", "");
+		int i;	/* can move up to top and strike this block after reenabling maybe */
+		for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
+			if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
+				FAIL("\tMAP_PHYS_INTR", "");
+			}
 		}
-	}
+	} while (0);
+#endif
 
 	vm_params[idx].id = vm;
 	printf("\tVM ID %lu\n", vm);

@@ -34,11 +34,11 @@ export SUBSYSTEM_BASE_TOOLSIM := 0xfe28
 endif
 
 ifeq (4, $(ARCHV))
-TOOLS_FLAVOR ?= default
+TOOLS_FLAVOR ?= 7.4.01
 ARCH_FLAVOR ?= v4_stable
 else
 ifeq (5, $(ARCHV))
-TOOLS_FLAVOR ?= default
+TOOLS_FLAVOR ?= 7.4.01
 ARCH_FLAVOR ?= v5_stable
 else
 TOOLS_FLAVOR ?= 7.4.01

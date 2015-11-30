@@ -11,10 +11,8 @@ H2 infrastructure:
 * Refactor & optimize translation
 * Even better interrupt mechanism
 * Power Collapse
-* Make sure all pa values are 36-bit clean
-* Make sure extra PA bits are used as appropriate (e.g. futex; everywhere we use pa_t)
+* Test 36 bit PA bits more
 * Kernel trace, or just continue to use ETM?
-* Switch to LLVM, get LLVM guys to make global reg work better
 * Continue to eliminate global data where possible
 * Refactor vector context save/restore (?)  Maybe move to new module?
 * V6x PMU work (now w/ STID)
@@ -26,6 +24,9 @@ VMM tasks:
 * Page tables w/ 36-bit+ PA, possibly multilevel?
 * Secure Debug
 
+DONE : * Switch to LLVM, get LLVM guys to make global reg work better
+DONE : * (I think) Make sure all pa values are 36-bit clean
+DONE : * (I think) Make sure extra PA bits are used as appropriate (e.g. futex; everywhere we use pa_t)
 DONE : * Save/restore framelimit,framekey
 DONE : * Save/restore pktcount
 DONE : * Try and optimize context storage? -- changed to 16 per-cpu interrupts

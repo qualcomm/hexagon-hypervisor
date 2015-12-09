@@ -113,7 +113,7 @@ arch_t arches[] =
 		{0x0, NULL}
 	};
 
-#elif ARCHV == 5
+#else
 static u8_t l2_v5_0[] =
 	{
 		[0x0] = s0,
@@ -538,15 +538,6 @@ static u8_t *uarches_v56[] =
 		[0xf] = l2_v56_f
 	};
 
-arch_t arches[] =
-	{
-		{0x05, uarches_v5},
-		{0x55, uarches_v55},
-		{0x56, uarches_v56},
-		{0x0, NULL}
-	};
-
-#elif ARCHV >= 60
 static u8_t l2_v60_0[] =
 	{
 		[0x0] = s0,
@@ -848,6 +839,9 @@ static u8_t *uarches_v65[] =
 
 static arch_t arches[] =
 	{
+		{0x05, uarches_v5},
+		{0x55, uarches_v55},
+		{0x56, uarches_v56},
 		{0x60, uarches_v60},
 		{0x61, uarches_v61},
 		{0x62, uarches_v62},

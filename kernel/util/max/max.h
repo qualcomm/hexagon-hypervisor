@@ -22,6 +22,8 @@
 #define L2_CHUNK 0x20000     // 128K
 #define L2_BIG_CHUNK 0x40000 // 256K
 
+#define CORE_V4  0x04
+#define CORE_V5  0x05
 #define CORE_V60 0x60
 #define CORE_V61 0x61
 #define CORE_V62 0x62
@@ -121,14 +123,11 @@
 
 #define RESCHED_INT 1
 #define VM_IPI_INT 0
-#if ARCHV <= 4
-#define TIMER_INT 50
-#elif ARCHV == 5
-#define TIMER_INT 34
-#else
-#define TIMER_INT 33
+
+#define TIMER_INT_CORE_V4 50
+#define TIMER_INT_CORE_V5 34
+#define TIMER_INT_CORE_V60 33
 #define TIMER_INT_CORE_V61 34
-#endif
 
 #define MAX_TRACE_LEVEL 0
 #define DEFAULT_TRACE_ENTRIES 16

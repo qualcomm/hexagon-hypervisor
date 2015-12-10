@@ -14,9 +14,13 @@ endif
 #export SIMF := --timing
 
 export CC := hexagon-clang
+export AS := hexagon-clang
 export AR := hexagon-ar
 export RANLIB := hexagon-ranlib
-export COV := hexagon-llvm-cov
+export COV := hexagon-coverage
+export OBJDUMP := hexagon-llvm-objdump
+export GMON_MERGE := hexagon-gmon-merge
+
 
 export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
 export LD := hexagon-clang
@@ -37,6 +41,7 @@ endif
 ifeq (4, $(ARCHV))
 TOOLS_FLAVOR ?= default
 ARCH_FLAVOR ?= v4_stable
+export COV := hexagon-llvm-cov
 else
 ifeq (5, $(ARCHV))
 TOOLS_FLAVOR ?= 7.3.06

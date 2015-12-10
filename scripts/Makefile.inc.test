@@ -42,21 +42,10 @@ endif
 
 
 include $(H2DIR)/scripts/Makefile.inc.config
-
 include $(H2DIR)/scripts/Makefile.inc.version
-
 include $(H2DIR)/scripts/Makefile.inc.constants
+include $(H2DIR)/scripts/Makefile.inc.tools
 
-ARCH=hexagon
-
-
-CC=${ARCH}-clang
-AS=${ARCH}-clang
-LD=${ARCH}-ld
-AR=${ARCH}-ar
-OBJDUMP=${ARCH}-llvm-objdump
-GMON_MERGE=${ARCH}-gmon-merge
-COV=${ARCH}-cov
 PYTHON=python
 
 BUSPENALTY=
@@ -357,7 +346,7 @@ endif
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
 ${EXEC}: ${OBJS} constants
-	# How's this for an ugly hack?
+# How's this for an ugly hack?
 	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_handle_errors_hook__.*is defined in both linker script and input file.*//'; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi

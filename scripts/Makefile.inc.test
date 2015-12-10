@@ -403,7 +403,7 @@ ${COVFILE}: ${DUMP} try_gmon_out ignore_fns
 		${COV} -F -d ${DUMP} -o cov.txt gmon.out; \
 		if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi; \
 	else \
-		find . -maxdepth 1 -name 'gmon-0x????????.out' | perl -ne 'chomp; $$f = $$_; s/^\.\/gmon-//; s/.out$$//; system("hexagon-cov -F -d test.objdump -o cov-$$_.txt $$f")'; \
+		find . -maxdepth 1 -name 'gmon-0x????????.out' | perl -ne 'chomp; $$f = $$_; s/^\.\/gmon-//; s/.out$$//; system("$(COV) -F -d test.objdump -o cov-$$_.txt $$f")'; \
 		find . -name 'cov-0x*.txt' | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --dir $(H2DIR) > $@; \
 	fi; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi

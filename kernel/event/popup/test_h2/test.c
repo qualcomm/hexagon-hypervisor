@@ -47,13 +47,6 @@ void delay()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-static inline int myabs(int x)
-{
-	if (x < 0) {
-		return -x; 
-	} else return x;
-}
-
 #define INTERRUPT_T0 12
 #define INTERRUPT_T1 13
 

@@ -146,7 +146,7 @@ h2_cov:
 
 check-fail test-check cov-check:
 	$(MAKE) -f scripts/Makefile.coverage check-fail
-	$(MAKE) -C ucos check
+#	$(MAKE) -C ucos check
 
 check:
 	$(MAKE) -f scripts/Makefile.coverage check

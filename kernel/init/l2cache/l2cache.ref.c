@@ -22,98 +22,8 @@ enum {
 
 // array size -> tag size
 
-#if ARCHV == 4
+///// v5
 
-// v4 doesn't have split l2/uarch nybbles
-static u8_t l2_v4_0[] =
-	{
-		[0x0] = s512,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = reserved,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
-
-static u8_t l2_v4_1[] =
-	{
-		[0x0] = s256,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = reserved,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
-
-static u8_t l2_v4_2[] =
-	{
-		[0x0] = s128,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = reserved,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
-
-#define l2_v4_3 (l2_v4_2)
-
-static u8_t *uarches_v4[] =
-	{
-		[0x0] = l2_v4_0,
-		[0x1] = l2_v4_1,
-		[0x2] = l2_v4_2,
-		[0x3] = l2_v4_3,
-		[0x4] = NULL,
-		[0x5] = NULL,
-		[0x6] = NULL,
-		[0x7] = NULL,
-		[0x8] = NULL,
-		[0x9] = NULL,
-		[0xa] = NULL,
-		[0xb] = NULL,
-		[0xc] = NULL,
-		[0xd] = NULL,
-		[0xe] = NULL,
-		[0xf] = NULL
-	};
-
-arch_t arches[] =
-	{
-		{0x04, uarches_v4},
-		{0x0, NULL}
-	};
-
-#elif ARCHV == 5
 static u8_t l2_v5_0[] =
 	{
 		[0x0] = s0,
@@ -153,6 +63,8 @@ static u8_t l2_v5_1[] =
 		[0xe] = reserved,
 		[0xf] = reserved
 	};
+
+///// v55
 
 static u8_t l2_v55_0[] =
 	{
@@ -253,6 +165,8 @@ static u8_t l2_v55_f[] =
 		[0xe] = reserved,
 		[0xf] = reserved
 	};
+
+///// v56
 
 static u8_t l2_v56_0[] =
 	{
@@ -478,75 +392,8 @@ static u8_t l2_v56_e[] =
 
 #define l2_v56_f (l2_v56_e)
 
-static u8_t *uarches_v5[] =
-	{
-		[0x0] = l2_v5_0,
-		[0x1] = l2_v5_1,
-		[0x2] = NULL,
-		[0x3] = NULL,
-		[0x4] = NULL,
-		[0x5] = NULL,
-		[0x6] = NULL,
-		[0x7] = NULL,
-		[0x8] = NULL,
-		[0x9] = NULL,
-		[0xa] = NULL,
-		[0xb] = NULL,
-		[0xc] = NULL,
-		[0xd] = NULL,
-		[0xe] = NULL,
-		[0xf] = NULL
-	};
+///// v60
 
-static u8_t *uarches_v55[] =
-	{
-		[0x0] = l2_v55_0,
-		[0x1] = l2_v55_1,
-		[0x2] = l2_v55_2,
-		[0x3] = l2_v55_3,
-		[0x4] = NULL,
-		[0x5] = NULL,
-		[0x6] = NULL,
-		[0x7] = NULL,
-		[0x8] = NULL,
-		[0x9] = NULL,
-		[0xa] = NULL,
-		[0xb] = NULL,
-		[0xc] = NULL,
-		[0xd] = NULL,
-		[0xe] = NULL,
-		[0xf] = l2_v55_f
-	};
-
-static u8_t *uarches_v56[] =
-	{
-		[0x0] = l2_v56_0,
-		[0x1] = l2_v56_1,
-		[0x2] = NULL,
-		[0x3] = l2_v56_3,
-		[0x4] = NULL,
-		[0x5] = l2_v56_5,
-		[0x6] = l2_v56_6,
-		[0x7] = l2_v56_7,
-		[0x8] = l2_v56_8,
-		[0x9] = l2_v56_9,
-		[0xa] = l2_v56_a,
-		[0xb] = l2_v56_b,
-		[0xc] = l2_v56_c,
-		[0xd] = NULL,
-		[0xe] = l2_v56_e,
-		[0xf] = l2_v56_f
-	};
-
-arch_t arches[] =
-	{
-		{0x05, uarches_v5},
-		{0x55, uarches_v55},
-		{0x56, uarches_v56},
-		{0x0, NULL}
-	};
-
-#elif ARCHV >= 60
 static u8_t l2_v60_0[] =
 	{
 		[0x0] = s0,
@@ -624,7 +471,7 @@ static u8_t l2_v62_0[] =
 		[0x7] = reserved,
 		[0x8] = reserved,
 		[0x9] = reserved,
-		[0xa] = s512,
+		[0xa] = reserved,
 		[0xb] = reserved,
 		[0xc] = reserved,
 		[0xd] = reserved,
@@ -632,19 +479,17 @@ static u8_t l2_v62_0[] =
 		[0xf] = reserved
 	};
 
-#define l2_v62_1 (l2_v62_0)
-
-static u8_t l2_v62_2[] =
+static u8_t l2_v62_1[] =
 	{
 		[0x0] = s0,
 		[0x1] = reserved,
 		[0x2] = reserved,
 		[0x3] = reserved,
-		[0x4] = s256,
+		[0x4] = s512,
 		[0x5] = reserved,
-		[0x6] = s256,
+		[0x6] = reserved,
 		[0x7] = reserved,
-		[0x8] = s256,
+		[0x8] = s1024,
 		[0x9] = reserved,
 		[0xa] = reserved,
 		[0xb] = reserved,
@@ -654,8 +499,105 @@ static u8_t l2_v62_2[] =
 		[0xf] = reserved
 	};
 
-#define l2_v62_4 (l2_v62_0)
-#define l2_v62_6 (l2_v62_0)
+static u8_t l2_v62_2[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,
+		[0x5] = reserved,
+		[0x6] = s512,
+		[0x7] = reserved,
+		[0x8] = s512,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v62_4[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = s512,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v62_6[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s512,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v62_7[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s512,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v62_8[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s1024,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
 
 static u8_t l2_v65_0[] =
 	{
@@ -665,11 +607,31 @@ static u8_t l2_v65_0[] =
 		[0x3] = reserved,
 		[0x4] = s512,
 		[0x5] = reserved,
-		[0x6] = s256,
+		[0x6] = reserved,
 		[0x7] = reserved,
-		[0x8] = s256,
+		[0x8] = reserved,
 		[0x9] = reserved,
-		[0xa] = s512,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v65_1[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = reserved,
 		[0xb] = reserved,
 		[0xc] = reserved,
 		[0xd] = reserved,
@@ -683,11 +645,11 @@ static u8_t l2_v65_2[] =
 		[0x1] = reserved,
 		[0x2] = reserved,
 		[0x3] = reserved,
-		[0x4] = s256,
+		[0x4] = s512,
 		[0x5] = reserved,
 		[0x6] = reserved,
 		[0x7] = reserved,
-		[0x8] = s256,
+		[0x8] = reserved,
 		[0x9] = reserved,
 		[0xa] = reserved,
 		[0xb] = reserved,
@@ -697,15 +659,127 @@ static u8_t l2_v65_2[] =
 		[0xf] = reserved
 	};
 
-#define l2_v65_1 (l2_v65_0)
+static u8_t l2_v65_6[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s512,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
 
-#define l2_v65_4 (l2_v65_0)
-#define l2_v65_5 (l2_v65_0)
-#define l2_v65_6 (l2_v65_0)
-#define l2_v65_7 (l2_v65_0)
-#define l2_v65_8 (l2_v65_0)
+static u8_t l2_v65_7[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s512,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
+static u8_t l2_v65_8[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s1024,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
 
 // uarch -> (array-size -> tag-size map)
+
+static u8_t *uarches_v5[] =
+	{
+		[0x0] = l2_v5_0,
+		[0x1] = l2_v5_1,
+		[0x2] = NULL,
+		[0x3] = NULL,
+		[0x4] = NULL,
+		[0x5] = NULL,
+		[0x6] = NULL,
+		[0x7] = NULL,
+		[0x8] = NULL,
+		[0x9] = NULL,
+		[0xa] = NULL,
+		[0xb] = NULL,
+		[0xc] = NULL,
+		[0xd] = NULL,
+		[0xe] = NULL,
+		[0xf] = NULL
+	};
+
+static u8_t *uarches_v55[] =
+	{
+		[0x0] = l2_v55_0,
+		[0x1] = l2_v55_1,
+		[0x2] = l2_v55_2,
+		[0x3] = l2_v55_3,
+		[0x4] = NULL,
+		[0x5] = NULL,
+		[0x6] = NULL,
+		[0x7] = NULL,
+		[0x8] = NULL,
+		[0x9] = NULL,
+		[0xa] = NULL,
+		[0xb] = NULL,
+		[0xc] = NULL,
+		[0xd] = NULL,
+		[0xe] = NULL,
+		[0xf] = l2_v55_f
+	};
+
+static u8_t *uarches_v56[] =
+	{
+		[0x0] = l2_v56_0,
+		[0x1] = l2_v56_1,
+		[0x2] = NULL,
+		[0x3] = l2_v56_3,
+		[0x4] = NULL,
+		[0x5] = l2_v56_5,
+		[0x6] = l2_v56_6,
+		[0x7] = l2_v56_7,
+		[0x8] = l2_v56_8,
+		[0x9] = l2_v56_9,
+		[0xa] = l2_v56_a,
+		[0xb] = l2_v56_b,
+		[0xc] = l2_v56_c,
+		[0xd] = NULL,
+		[0xe] = l2_v56_e,
+		[0xf] = l2_v56_f
+	};
 
 static u8_t *uarches_v60[] =
 	{
@@ -773,8 +847,8 @@ static u8_t *uarches_v65[] =
 		[0x1] = l2_v65_1,
 		[0x2] = l2_v65_2,
 		[0x3] = NULL,
-		[0x4] = l2_v65_4,
-		[0x5] = l2_v65_5,
+		[0x4] = NULL,
+		[0x5] = NULL,
 		[0x6] = l2_v65_6,
 		[0x7] = l2_v65_7,
 		[0x8] = l2_v65_8,
@@ -789,16 +863,15 @@ static u8_t *uarches_v65[] =
 
 static arch_t arches[] =
 	{
+		{0x05, uarches_v5},
+		{0x55, uarches_v55},
+		{0x56, uarches_v56},
 		{0x60, uarches_v60},
 		{0x61, uarches_v61},
 		{0x62, uarches_v62},
 		{0x65, uarches_v65},
 		{0x0, NULL}
 	};
-
-#endif
-		
-		
 
 u32_t H2K_l2cache_init() {
 

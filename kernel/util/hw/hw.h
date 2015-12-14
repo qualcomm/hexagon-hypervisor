@@ -272,10 +272,16 @@ u64_t ret;
 }
 
 static inline u64_t H2K_get_timer_reg() {
+
+	/* Not called on ARCHV < 61, but doesn't compile -mv5 */
+#if ARCHV >= 60
 	u64_t ret;
 
 	asm volatile ( " %0 = s57:56 // READ TIMER \n" : "=r"(ret));
 	return ret;
+#else
+	return 0;
+#endif
 }
 
 static inline void H2K_clear_ipend(u32_t hthread_mask)

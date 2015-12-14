@@ -45,13 +45,6 @@ void delay()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-static inline int myabs(int x)
-{
-	if (x < 0) {
-		return -x; 
-	} else return x;
-}
-
 void thread0(int thread)
 {
 	h2_pmu_setreg(H2_PMUEVTCFG,0);

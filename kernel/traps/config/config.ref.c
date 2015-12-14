@@ -15,6 +15,7 @@
 #include <translate.h>
 #include <alloc.h>
 #include <stlb.h>
+#include <h2_common_timer_defs.h>
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -297,7 +298,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, u32_t op, u32_t arg1,
 		/* skip H2 interrupts instead of returning error */
 		if (! ((physint == RESCHED_INT)
 					 || (physint == VM_IPI_INT)
-					 || (physint == H2K_gp->timer_intnum)
+					 || (physint == H2K_TIME_GUESTINT)
 #ifdef H2K_L2_CONTROL
 					 || (physint == L2_CORE_INTERRUPT)
 #endif

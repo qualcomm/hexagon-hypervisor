@@ -15,7 +15,7 @@
 #include <translate.h>
 #include <alloc.h>
 #include <stlb.h>
-#include <h2_common_timer_defs.h>
+#include <h2_common_defs.h>
 
 #ifdef DEBUG
 #include <stdio.h>

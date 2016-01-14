@@ -23,9 +23,10 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 	qurt_thread_attr_set_stack_addr(&qurt_attr, attr->stackaddr);
 	qurt_thread_attr_set_priority(&qurt_attr, attr->sched.sched_priority);
 	qurt_thread_attr_set_timetest_id(&qurt_attr, attr->sched.sched_priority);
-	if ((tid = qurt_thread_create(&tid,&qurt_attr,start_routine,arg)) == QURT_EFATAL) {
+	if (qurt_thread_create(&tid,&qurt_attr,start_routine,arg) != 0) {
 		return EAGAIN;
 	};
+	*thread = tid;
 	return 0;
 }
 

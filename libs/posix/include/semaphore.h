@@ -18,7 +18,7 @@ struct timespec;
 
 #define SEM_VALUE_MAX 0x7fff
 
-static inline int sem_init(sem_t *sem, int pshared, unsigned int value) { sem->value.raw = (value & SEM_VALUE_MAX); return 0; }
+static inline int sem_init(sem_t *sem, int pshared, unsigned int value) { qurt_sem_init_val(sem,value & SEM_VALUE_MAX); return 0; }
 static inline int sem_destroy(sem_t *sem) { return 0; }
 static inline int sem_wait(sem_t *sem) { qurt_sem_down(sem); return 0; }
 static inline int sem_timedwait(sem_t *sem, const struct timespec *abstime) { return qurt_sem_try_down(sem); }

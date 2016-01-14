@@ -178,7 +178,7 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 	dup_tls(pUgp);
 	/* That initializes join_lock, join_cond, join_refcount, join_done */
 
-	*thread_id = h2_thread_create((void *)qurt_trampoline, (unsigned int *)(((unsigned int)attr->stack_addr + attr->stack_size) & (-8)), (void *)pUgp, attr->priority);
+	*thread_id = h2_thread_create((void *)qurt_trampoline, (unsigned int *)(((unsigned int)stackaddr + stacksize) & (-8)), (void *)pUgp, attr->priority);
 
 	if (-1 != *thread_id) {
 		pUgp->utcb.thread_id = *thread_id;

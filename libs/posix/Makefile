@@ -22,3 +22,9 @@ clean:
 libposix.a: $(O_FILES)
 	$(AR) cru $@ $(O_FILES)
 
+pthread_test: pthread_test.c
+	hexagon-clang -mv5 -moslib=h2 -I../../install/include -L../../install/lib -Wl,--defsym='tdata_start=ADDR(".tdata")' -Wl,--defsym='tdata_end=ADDR(".tdata")+SIZEOF(".tdata")' -Wl,--defsym='tbss_start=ADDR(".tbss")' -Wl,--defsym='tbss_end=ADDR(".tbss")+SIZEOF(".tbss")' -Wl,--section-start=.start=0x01000000 -o pthread_test pthread_test.c
+
+pthread_test_run: pthread_test
+	hexagon-sim -- ../../install/bin/booter pthread_test
+

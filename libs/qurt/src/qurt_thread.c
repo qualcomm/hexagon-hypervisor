@@ -22,6 +22,37 @@ unsigned int curr_futex_queue_used = 0; /* EJP: probably vestigal, but reference
 #define DEBUG_PRINTF(...) /* nothing */
 #endif
 
+unsigned int __thread dummy_1 = 1;
+unsigned int __thread dummy_0;
+
+#define MAX_TLS_DWORDS 32
+
+extern char tdata_start;
+extern char tdata_end;
+extern char tbss_start;
+extern char tbss_end;
+
+static inline int size_of_tls()
+{
+	// qurt_printf("tdata=%p..%p tbss=%p..%p\n",&tdata_start,&tdata_end,&tbss_start,&tbss_end);
+	return (&tbss_end - &tdata_start);
+}
+
+static inline void dup_tls(void *ugp)
+{
+	// qurt_printf("ugp=%p size_of_tls=%d\n",ugp,size_of_tls());
+	unsigned char *tls_end_ptr = ugp;
+	unsigned char *tls_start_ptr = tls_end_ptr - size_of_tls();
+	memcpy(tls_start_ptr,&tdata_start,&tdata_end-&tdata_start);
+}
+
+static inline void qurt_tls_check()
+{
+	if (size_of_tls() > MAX_TLS_DWORDS) {
+		qurt_printf("TLS size too big: %d > %d!\n",size_of_tls(),MAX_TLS_DWORDS);
+	}
+}
+
 static struct QURT_ugp_ptr *find_thread(int threadid)
 {
 	struct QURT_ugp_ptr *tmp;
@@ -35,13 +66,16 @@ static struct QURT_ugp_ptr *find_thread(int threadid)
 static void remove_thread(struct QURT_ugp_ptr *ptr)
 {
 	struct QURT_ugp_ptr *tmp;
+	unsigned char *alloc_ptr;
 	h2_mutex_lock(&qurt_root_mutex);
 	tmp = qurt_root;
 	if (ptr == tmp) qurt_root = ptr->next;
 	else while (tmp->next && (tmp->next != ptr)) tmp = tmp->next;
 	if (tmp->next) tmp->next = tmp->next->next;
 	h2_mutex_unlock(&qurt_root_mutex);
-	free(ptr);
+	alloc_ptr = (unsigned char *)ptr;
+	alloc_ptr -= size_of_tls();
+	free(alloc_ptr);
 }
 
 void qurt_thread_attr_init (qurt_thread_attr_t *attr)
@@ -89,17 +123,17 @@ static inline void qurt_thread_initial_setup (struct QURT_ugp_ptr *pUgp)
 /* from qurt_thread.c */
 void qurt_trampoline (void *arg)
 {
-   struct QURT_ugp_ptr *pUgp;
+	struct QURT_ugp_ptr *pUgp;
 
-   pUgp = (struct QURT_ugp_ptr *)arg;
+	pUgp = (struct QURT_ugp_ptr *)arg;
 
-   /* Initialize UGP and UTCB variables */
-   qurt_thread_initial_setup (pUgp);
+	/* Initialize UGP and UTCB variables */
+	qurt_thread_initial_setup (pUgp);
 
-   /* Enter thread entry */
-   pUgp->utcb.entrypoint (pUgp->utcb.arg);
-   printf("QURT TRAMPOLINE: Death of thread %x\n",h2_thread_myid());
-   qurt_thread_exit(0);
+	/* Enter thread entry */
+	pUgp->utcb.entrypoint (pUgp->utcb.arg);
+	printf("QURT TRAMPOLINE: Death of thread %x\n",h2_thread_myid());
+	qurt_thread_exit(0);
 }
 
 /* FIXME: hackage */
@@ -115,24 +149,43 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 	 * drop the hw_bitmask on the floor
 	 * might as well fudge the priority too
 	 */
-
+	/* EJP: Also find TLS regions, allocate and duplicate them here. */
+	unsigned char *alloc_tmp;
 	struct QURT_ugp_ptr *pUgp;
+	unsigned char *stackaddr;
+	unsigned int stacksize;
 
 	/* from qurt_thread.c */
-	if ((pUgp = (struct QURT_ugp_ptr *)qurt_malloc (sizeof (struct QURT_ugp_ptr))) == NULL) {
+	if ((alloc_tmp = qurt_calloc (1,size_of_tls() + sizeof (struct QURT_ugp_ptr))) == NULL) {
 		return QURT_EFATAL;
 	}
-	memset (pUgp, 0, sizeof (struct QURT_ugp_ptr));
-	/* That initializes join_lock, join_cond, join_refcount, join_done */
+	pUgp = (struct QURT_ugp_ptr *)(alloc_tmp + size_of_tls());
+
+	stackaddr = attr->stack_addr;
+	stacksize = attr->stack_size;
 	pUgp->utcb.entrypoint = (void *)entrypoint;
 	pUgp->utcb.arg = arg;
 	pUgp->utcb.attr = *attr;
+	if (stackaddr == NULL) {
+		stacksize = stacksize & -8;
+		if ((stackaddr = malloc(stacksize)) == NULL) {
+			free(alloc_tmp);
+			return QURT_EFATAL; // or maybe ENOMEM? But not in ERRORS list
+		};
+		pUgp->stack_self_allocated = 1;
+		pUgp->utcb.attr.stack_addr = stackaddr;
+	}
+	dup_tls(pUgp);
+	/* That initializes join_lock, join_cond, join_refcount, join_done */
 
 	*thread_id = h2_thread_create((void *)qurt_trampoline, (unsigned int *)(((unsigned int)attr->stack_addr + attr->stack_size) & (-8)), (void *)pUgp, attr->priority);
 
 	if (-1 != *thread_id) {
 		pUgp->utcb.thread_id = *thread_id;
 		add_thread(pUgp);
+	} else {
+		if (pUgp->stack_self_allocated) free(stackaddr);
+		free(alloc_tmp);
 	}
 	/* qurt_printf("QURT: created thread <%s> id=%x stack=%x entry=%x\n", */
 	/* 	attr->name, */
@@ -160,11 +213,19 @@ int blast_thread_create(void *pc, void *stack, void *arg,
 }
 
 /* Have a thread become a qurt thread: put it in all the data structures and allocate ugp stuff */
+/*
+ * EJP: note that we shouldn't malloc here, because we might call this before malloc is OK.
+ * But... somehow we need to allocate storage for TLS and copy over the TLS data.
+ */
 void qurt_thread_mainthread_become()
 {
-	static struct QURT_ugp_ptr main_ugp_storage;
-	struct QURT_ugp_ptr *pUgp = &main_ugp_storage;
-	memset (pUgp, 0, sizeof (struct QURT_ugp_ptr));
+	static struct {
+		unsigned long long int tls_data_area[MAX_TLS_DWORDS];
+		struct QURT_ugp_ptr main_ugp_storage;
+	} x;
+	memset (&x, 0, sizeof(x));
+	struct QURT_ugp_ptr *pUgp = &x.main_ugp_storage;
+	dup_tls(pUgp);
 	pUgp->utcb.thread_id = h2_thread_myid();
 	add_thread(pUgp);
 	qurt_thread_initial_setup(pUgp);
@@ -195,6 +256,20 @@ int qurt_thread_join(unsigned int threadid, int *status)
 	return 0;
 }
 
+/*
+ * This is unnecessarily complex maybe?
+ * In POSIX it is only allowed for one thread to join. So we could eliminate
+ * the reference counts.
+ */
+ /*
+ * EJP: FIXME: need to possibly free our own stack.  That's an interesting trick,
+ * I'm not entirely sure how we would do that.  I think the right answer is to:
+ * have a small static stack
+ * acquire a mutex for it
+ * Switch to that stack
+ * Free the thread stack
+ * Have an atomic function that can release the mutex and trap to h2 thread stop.
+ */
 void qurt_thread_exit(int status)
 {
 	struct QURT_ugp_ptr *tmp;
@@ -241,5 +316,6 @@ void qurt_init()
 	qurt_qdi_local_client_init();
 	(void)_posix_init();
 	qurt_exception_init();
+	qurt_tls_check();
 }
 

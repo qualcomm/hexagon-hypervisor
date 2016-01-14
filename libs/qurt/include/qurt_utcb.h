@@ -47,8 +47,8 @@ typedef struct QURT_utcb
 	int   qurt_qdi_localhandle_max;      /* Offset 96, max handle which dispatches locally */
 	} qdi_info __attribute__((aligned(8)));
 
-	short asid;
 	short pid;
+	char asid;
 
 	/* Thread attributes */
 	qurt_thread_attr_t attr;
@@ -73,6 +73,7 @@ struct QURT_ugp_ptr {
 	int join_refcount;
 	int status;
 	enum { QURT_JOIN_STATE_RUNNING, QURT_JOIN_STATE_DONE } join_state;
+	char stack_self_allocated;
 
 	/* Maybe some extra stuff for TLS? */
 	void *tls[QURT_MAX_TLS];

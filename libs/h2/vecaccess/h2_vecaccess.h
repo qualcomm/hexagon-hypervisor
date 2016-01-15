@@ -71,7 +71,7 @@ Initialize the Vector Access type.
 @dependencies None
 */
 
-static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, h2_vecaccess_request_t req) {
+static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, unsigned int req) {
 
 	int ret;
 

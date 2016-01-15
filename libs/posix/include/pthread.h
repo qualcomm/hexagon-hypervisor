@@ -17,6 +17,8 @@ extern "C" {
 /* #include <h2.h> */
 #include <qurt.h>
 #include <errno.h>
+#include <sched.h>
+#include <posix_time.h> /* for struct timespec, since dinkumware time.h doesn't have it */
 
 #define PTHREAD_DEFAULT_STACKSIZE 1024
 #define PTHREAD_PROCESS_SHARED 0
@@ -24,10 +26,6 @@ extern "C" {
 
 static inline int pthread_h2_unsup() { return ENOTSUP; }
 static inline int pthread_h2_inval() { return EINVAL; }
-
-struct sched_param { 
-	int sched_priority;
-};
 
 /* PTHREAD */
 typedef struct {
@@ -146,6 +144,17 @@ static inline int pthread_cond_destroy(pthread_cond_t *cond) { return 0; }
 static inline int pthread_cond_broadcast(pthread_cond_t *cond) { qurt_cond_broadcast(cond); return 0; }
 static inline int pthread_cond_signal(pthread_cond_t *cond) { qurt_cond_signal(cond); return 0; }
 static inline int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex) { qurt_cond_wait(cond,mutex); return 0; }
+static inline int pthread_cond_timedwait(pthread_cond_t *cond, 
+	pthread_mutex_t *mutex, 
+	const struct timespec *abstime)
+{ 
+	/* EJP: FIXME: for now, just ignore the timeout.
+	 * We should be able to fix this, we can request a new timer event and that will cause the futex to fail.
+	 * Then we can check the time and if we haven't waited long enough we wait again.
+	 * But we don't have the guest timer infrastructure just yet, so defer for now.
+	 */
+	return pthread_cond_wait(cond,mutex);
+}
 
 /* BARRIER */
 
@@ -162,7 +171,12 @@ static inline int pthread_barrierattr_destroy(pthread_barrierattr_t *attr) { ret
 static inline int pthread_barrierattr_setpshared(pthread_barrierattr_t *attr, int pshared) { return 0; }
 static inline int pthread_barrierattr_getpshared(pthread_barrierattr_t *attr, int *pshared) { *pshared = PTHREAD_PROCESS_SHARED; return 0; }
 
-static inline int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t *attr, unsigned count) { return qurt_barrier_init(barrier,count); }
+static inline int pthread_barrier_init(pthread_barrier_t *barrier, 
+	const pthread_barrierattr_t *attr, 
+	unsigned count) 
+{
+	return qurt_barrier_init(barrier,count);
+}
 static inline int pthread_barrier_destroy(pthread_barrier_t *barrier) { return 0; }
 static inline int pthread_barrier_wait(pthread_barrier_t *barrier) { return qurt_barrier_wait(barrier); }
 

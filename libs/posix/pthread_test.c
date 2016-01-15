@@ -22,6 +22,7 @@ void *pthread_test(void *arg)
 
 int main() {
 	pthread_t child = 0xdeadbeef;
+	struct timespec mytime;
 	qurt_init();
 	sem_init(&sem,0,0);
 	pthread_mutex_lock(&lock);
@@ -30,5 +31,11 @@ int main() {
 	}
 	printf("started child, should be %x\n",child);
 	pthread_mutex_unlock(&lock);
+	do { 
+		clock_gettime(CLOCK_MONOTONIC,&mytime);
+		pthread_mutex_lock(&lock);
+		printf("clock: sec=%ld nsec=%ld\n",mytime.tv_sec,mytime.tv_nsec);
+		pthread_mutex_unlock(&lock);
+	} while (mytime.tv_sec < 1);
 	sem_wait(&sem);
 }

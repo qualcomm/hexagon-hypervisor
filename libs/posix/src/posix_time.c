@@ -4,8 +4,16 @@
  */
 
 #include <h2.h>
-#include <posix_time.h>
+#include <time.h>
 #include <errno.h>
+
+int nanosleep(const struct timespec *req, struct timespec *rem)
+{
+/* EJP: for now, lie about nanosleep.
+ * We can actually nanosleep, see h2_nanosleep, but it might not be conformant and we have to simulate with timer.
+ */
+	return 0;
+}
 
 int clock_gettime(clockid_t clock_id, struct timespec *tp)
 {
@@ -13,8 +21,12 @@ int clock_gettime(clockid_t clock_id, struct timespec *tp)
 	unsigned int nsec;
 	unsigned int sec;
 	switch (clock_id) {
-	case CLOCK_MONOTONIC: cycles = h2_get_core_pcycles(); break;
-	case CLOCK_THREAD_CPUTIME_ID: cycles = h2_get_pcycles(); break;
+	case CLOCK_REALTIME:
+	case CLOCK_MONOTONIC:
+		cycles = h2_get_core_pcycles(); break;
+	case CLOCK_THREAD_CPUTIME_ID:
+	case CLOCK_PROCESS_CPUTIME_ID:
+		cycles = h2_get_pcycles(); break;
 	default: return EINVAL;
 	}
 	/* Assume approximately 1GHz. */

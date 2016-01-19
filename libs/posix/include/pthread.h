@@ -18,7 +18,7 @@ extern "C" {
 #include <qurt.h>
 #include <errno.h>
 #include <sched.h>
-#include <posix_time.h> /* for struct timespec, since dinkumware time.h doesn't have it */
+#include <time.h>
 
 #define PTHREAD_DEFAULT_STACKSIZE 1024
 #define PTHREAD_PROCESS_SHARED 0

@@ -1,6 +1,6 @@
 
 
-CC = hexagon-clang -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../qurt/include
+CC = hexagon-clang -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../qurt/include -D_PROVIDE_POSIX_TIME_DECLS=1
 AR = hexagon-ar
 
 OPTIMIZE := -O2

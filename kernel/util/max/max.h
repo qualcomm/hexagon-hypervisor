@@ -138,7 +138,6 @@
 #define STLB_SHIFT 16		// optimize for 64KB pages
 #define STLB_ENTRIES (STLB_MAX_SETS * STLB_MAX_WAYS * STLB_MULT)
 
-#define PAGE_BITS 12 /* Minimum page size: 4K */
 #define PAGE_SIZE (0x1 << PAGE_BITS)
 #define H2K_PAGESIZE (1 << ((PAGE_BITS) + ((H2K_KERNEL_PGSIZE) * 2)))
 

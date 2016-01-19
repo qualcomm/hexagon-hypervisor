@@ -12,6 +12,8 @@
 #define HAVE_EXTENSIONS 1
 #endif
 
+#define PAGE_BITS 12 /* Minimum page size: 4K */
+
 #define SYSCFG_M_BIT 0
 #define SYSCFG_M_LEN 1
 #define SYSCFG_M (((0x1 << SYSCFG_M_LEN) - 1) << SYSCFG_M_BIT)

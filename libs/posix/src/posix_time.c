@@ -14,6 +14,8 @@ int nanosleep(const struct timespec *req, struct timespec *rem)
  */
 	return 0;
 }
+/* BMC: lie about sleep for now as well */
+unsigned sleep(unsigned seconds) {return 0;}
 
 int clock_gettime(clockid_t clock_id, struct timespec *tp)
 {

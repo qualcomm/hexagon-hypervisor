@@ -138,7 +138,7 @@ static inline u32_t H2K_atomic_add_mask(u32_t *word, u32_t val, u32_t mask) {
 			 "   %1 = and(%1, %5)\n"
 			 "   %0 = or(%0, %1)\n"
 			 "   memw_locked(%4, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t), "=&r"(x),"+m"(*word)
 			 : "r"(val),"r"(word), "r"(mask)
 			 : "p0");
@@ -158,7 +158,7 @@ static inline u32_t H2K_atomic_max_mask(u32_t *word, u32_t val, u32_t mask) {
 
 			 "   %0 = or(%0, %1)\n"
 			 "   memw_locked(%4, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t), "=&r"(x),"+m"(*word)
 			 : "r"(val),"r"(word), "r"(mask)
 			 : "p0");

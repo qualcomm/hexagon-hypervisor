@@ -126,7 +126,7 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 void H2K_asid_table_dec(u32_t asid)
 {
 	H2K_atomic_add_mask((u32_t *)&H2K_mem_asid_table[asid].fields,
-											(-1 << H2K_ASID_ENTRY_COUNT_POS) & (0xffff << H2K_ASID_ENTRY_COUNT_POS),
+											((~0u) << H2K_ASID_ENTRY_COUNT_POS) & (0xffff << H2K_ASID_ENTRY_COUNT_POS),
 											0xffff << H2K_ASID_ENTRY_COUNT_POS);
 }
 

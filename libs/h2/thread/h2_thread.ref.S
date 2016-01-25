@@ -15,14 +15,6 @@
 
 /* call trap if ugp == 0, else return ugp[0] */
 FUNC_START h2_thread_myid .text.h2.thread .p2align 4
-	r1 = ugp
-	{
-		p0 = cmp.eq(r1,#0)
-		if (p0.new) jump:nt 1f
-		if (!p0.new) r0 = memw(r1)
-	}
-	jumpr r31
-1:
 	trap0(#H2_TRAP_THREAD_ID)
 	jumpr r31
 FUNC_END h2_thread_myid

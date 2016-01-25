@@ -14,15 +14,10 @@
 
 #include <h2_mutex.h>
 #include <h2_rmutex.h>
+#include <pthread.h>
 
 /** @brief Condition type definition.  Please do not access directly. */
-typedef union {
-	unsigned int raw;
-	struct {
-		unsigned short count;
-		unsigned short n_waiting;
-	};
-} h2_cond_t;
+typedef pthread_cond_t h2_cond_t;
 
 /**
 Initialize a condition variable.  
@@ -31,7 +26,7 @@ Initialize a condition variable.
 @dependencies None
 */
 
-static inline void h2_cond_init(h2_cond_t *cond) { cond->raw = 0; };
+static inline void h2_cond_init(h2_cond_t *cond) { pthread_cond_init(cond,NULL); };
 
 /**
 Signal to one thread that a condition has changed.
@@ -40,7 +35,7 @@ Signal to one thread that a condition has changed.
 @dependencies None
 */
 
-void h2_cond_signal(h2_cond_t *cond);
+static inline void h2_cond_signal(h2_cond_t *cond) { pthread_cond_signal(cond); };
 
 /**
 Signal to all threads that a condition has changed.
@@ -49,7 +44,7 @@ Signal to all threads that a condition has changed.
 @dependencies None
 */
 
-void h2_cond_broadcast(h2_cond_t *cond);
+static inline void h2_cond_broadcast(h2_cond_t *cond) { pthread_cond_broadcast(cond); };
 
 /**
 Wait on a condition.  The mutex will be freed before blocking and re-acquired before returning.
@@ -59,7 +54,7 @@ Wait on a condition.  The mutex will be freed before blocking and re-acquired be
 @dependencies None
 */
 
-void h2_cond_wait(h2_cond_t *cond, h2_mutex_t *mutex);
+static inline void h2_cond_wait(h2_cond_t *cond, h2_mutex_t *mutex) { pthread_cond_wait(cond,mutex); };
 
 /**
 Wait on a condition.  The rmutex will be freed before blocking and re-acquired before returning.

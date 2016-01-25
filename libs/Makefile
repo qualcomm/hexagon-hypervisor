@@ -42,11 +42,11 @@ tmp:
 $(H2_LIB): tmp
 	+${MAKE} -C $(H2_DIR) $(IMPL); cp $@ tmp/
 
-$(H2_COMPAT_LIB): tmp $(H2_LIB)
-	+${MAKE} -C $(H2_COMPAT_DIR) $(IMPL); cp $@ tmp/
-
 $(POSIX_LIB): tmp $(H2_LIB) qurt/libqurt.a
 	+${MAKE} -C posix $(IMPL); cp $@ tmp/;
+
+$(H2_COMPAT_LIB): tmp $(H2_LIB) $(POSIX_LIB)
+	+${MAKE} -C $(H2_COMPAT_DIR) $(IMPL); cp $@ tmp/
 
 qurt/libqurt.a: tmp $(H2_LIB)
 	+${MAKE_LIB};

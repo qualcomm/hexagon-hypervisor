@@ -4,7 +4,7 @@
  */
 
 #include <h2_printf.h>
-#include <h2_mutex.h>
+#include <h2_plainmutex.h>
 #include <h2_thread.h>
 #include <stdarg.h>
 #include <stdio.h>

@@ -4,7 +4,7 @@
  */
 
 #include <h2_alloc.h>
-#include <h2_mutex.h>
+#include <h2_plainmutex.h>
 #include <stdlib.h>
 
 /*

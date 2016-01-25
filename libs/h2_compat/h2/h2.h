@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 #include <h2if.h>
+#include "h2_plainmutex.h"
 #include "h2_alloc.h"
 #include "h2_context.h"
 #include "h2_error.h"
@@ -29,7 +30,6 @@ extern "C" {
 #include "h2_prefetch.h"
 #include "h2_printf.h"
 #include "h2_sem.h"
-#include "h2_plainmutex.h"
 #include "h2_rmutex.h"
 #include "h2_vecaccess.h"
 #include "h2_debug.h"

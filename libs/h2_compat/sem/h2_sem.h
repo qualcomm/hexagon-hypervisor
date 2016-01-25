@@ -16,16 +16,9 @@
 /**
 @brief Definition of the semaphore type.  Please do not use directly.
 */
-typedef union {
-	unsigned int volatile raw;
-	struct {
-		unsigned short volatile val;
-		unsigned short volatile n_waiting;
-	};
-} h2_sem_t;
 
-/*  Sets the 'raw' value  */
-#define H2_SEM_T_INIT { 1 }
+#include <semaphore.h>
+typedef sem_t h2_sem_t;
 
 /**
 Initialize a semaphore.  The semaphore is initialized to 1.
@@ -34,7 +27,7 @@ Initialize a semaphore.  The semaphore is initialized to 1.
 @dependencies None
 */
 
-static inline void h2_sem_init(h2_sem_t *sem) { h2_sem_t temp = H2_SEM_T_INIT; *sem = temp; };
+static inline void h2_sem_init(h2_sem_t *sem) { sem_init(sem,1,1); }
 
 /**
 Initialize a semaphore with a specific value.
@@ -43,7 +36,7 @@ Initialize a semaphore with a specific value.
 @returns None
 @dependencies None
 */
-static inline void h2_sem_init_val(h2_sem_t *sem, unsigned short val) { sem->raw = val; };
+static inline void h2_sem_init_val(h2_sem_t *sem, unsigned short val) { sem_init(sem,1,val); };
 
 /**
 Add to a semaphore.  If threads are blocked, they will be woken up.
@@ -52,7 +45,7 @@ Add to a semaphore.  If threads are blocked, they will be woken up.
 @returns Arbitrary value
 @dependencies None
 */
-int h2_sem_add(h2_sem_t *sem, unsigned int amt);
+static inline int h2_sem_add(h2_sem_t *sem, unsigned int amt) { return sem_add_np(sem,amt); }
 
 /**
 Add one to a semaphore.
@@ -60,7 +53,7 @@ Add one to a semaphore.
 @returns Arbitrary value
 @dependencies None
 */
-static inline int h2_sem_up(h2_sem_t *sem) { return h2_sem_add(sem,1); };
+static inline int h2_sem_up(h2_sem_t *sem) { return sem_post(sem); };
 
 /**
 Decrement a semaphore.  If the semaphore is zero, block until it is positive.
@@ -68,7 +61,7 @@ Decrement a semaphore.  If the semaphore is zero, block until it is positive.
 @returns Arbitrary value
 @dependencies None
 */
-int h2_sem_down(h2_sem_t *sem);
+static inline int h2_sem_down(h2_sem_t *sem) { return sem_wait(sem); };
 
 /**
 Attempt to decrement a semaphore.  If unsuccessful, return failure.
@@ -76,7 +69,7 @@ Attempt to decrement a semaphore.  If unsuccessful, return failure.
 @returns 0 on success, nonzero otherwise
 @dependencies None
 */
-int h2_sem_trydown(h2_sem_t *sem);
+static inline int h2_sem_trydown(h2_sem_t *sem) { return sem_trywait(sem); }
 
 /** @} */
 

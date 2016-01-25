@@ -12,24 +12,19 @@
 /** @addtogroup h2 
 @{ */
 
-#include <h2_plainmutex.h>
+#include <pthread.h>
 
 enum {
-	H2_MUTEX_PLAIN = 0,
-	H2_MUTEX_RECURSIVE = 1,
+	H2_MUTEX_PLAIN = PTHREAD_MUTEX_NORMAL,
+	H2_MUTEX_RECURSIVE = PTHREAD_MUTEX_RECURSIVE,
 };
 
-#define H2_MUTEX_T_INIT { H2_PLAINMUTEX_T_INIT, H2_MUTEX_PLAIN, 0, 0 }
+#define H2_MUTEX_T_INIT PTHREAD_MUTEX_INITIALIZER
 
 /**
 @brief Mutex Structure.  Please do not use directly 
 */
-typedef struct {
-	h2_plainmutex_t mutex;
-	unsigned int type;
-	unsigned int depth;
-	unsigned int owner_id;
-} __attribute__((aligned(8))) h2_mutex_t;
+typedef pthread_mutex_t h2_mutex_t;
 
 /**
 Initialize a Mutex.  The mutex is initialized to be unheld.
@@ -53,7 +48,7 @@ Lock a Mutex.  If the lock is held by another thread, this will block.
 @returns None for now, need to change to help POSIX
 @dependencies None
 */
-void h2_mutex_lock(h2_mutex_t *lock) H2_IN_SECTION(".text.h2.mutex");
+static inline void h2_mutex_lock(h2_mutex_t *lock) { pthread_mutex_lock(lock); }
 
 /**
 Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will be woken.
@@ -61,7 +56,7 @@ Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will 
 @returns None for now, need to change to help POSIX
 @dependencies None
 */
-void h2_mutex_unlock(h2_mutex_t *lock) H2_IN_SECTION(".text.h2.mutex");
+static inline void h2_mutex_unlock(h2_mutex_t *lock) { pthread_mutex_unlock(lock); }
 
 /**
 Try to lock a Mutex.  If the mutex was already held by another thread, return failure.
@@ -69,7 +64,7 @@ Try to lock a Mutex.  If the mutex was already held by another thread, return fa
 @returns 0 on success, nonzero otherwise
 @dependencies None
 */
-int h2_mutex_trylock(h2_mutex_t *lock) H2_IN_SECTION(".text.h2.mutex");
+static inline int h2_mutex_trylock(h2_mutex_t *lock) { return pthread_mutex_trylock(lock); }
 
 /** @} */
 

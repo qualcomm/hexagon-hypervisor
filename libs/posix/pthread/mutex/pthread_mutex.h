@@ -49,7 +49,7 @@ static inline int pthread_mutex_destroy(pthread_mutex_t *mutex) { return 0; }
 static inline int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 {
 	pthread_mutex_t default_mutex = PTHREAD_MUTEX_INITIALIZER;
-	default_mutex.type = attr->type;
+	if (attr) default_mutex.type = attr->type;
 	*mutex = default_mutex;
 	return 0;
 }

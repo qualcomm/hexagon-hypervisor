@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 #include <time.h> // dinkumware time.h, if we change c libraries we probably need to nuke this
-#include <h2.h>
+#include <h2if.h>
 
 struct timespec {
 	time_t tv_sec;

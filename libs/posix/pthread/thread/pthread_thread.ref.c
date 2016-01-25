@@ -5,7 +5,7 @@
 
 #include <pthread.h>
 #include <pthread_internal_misc.h>
-#include <h2.h>
+#include <h2if.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -216,10 +216,13 @@ static void do_pthread_init()
 	elftls_size = ((((&tbss_end-&tbss_start) + (&tdata_end - &tdata_start))+7) & -8);
 	elftls_start = &tdata_start;
 	elftls_end = elftls_start + elftls_size;
-	if (elftls_size > MAX_ELFTLS_SIZE) /* FIXME: FATAL ERROR @ BOOT */;
+	if (elftls_size > MAX_ELFTLS_SIZE) {
+		/* FIXME: FATAL ERROR @ BOOT */;
+	}
 	pthread_mainthread_setup();
 }
 
+__attribute__((constructor(0)))
 void pthread_init()
 {
 	static pthread_once_t init_once = PTHREAD_ONCE_INIT;

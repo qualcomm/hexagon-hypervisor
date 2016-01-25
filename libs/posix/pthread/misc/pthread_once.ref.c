@@ -4,7 +4,7 @@
  */
 
 #include <pthread.h>
-#include <h2.h>
+#include <h2if.h>
 
 int pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 {

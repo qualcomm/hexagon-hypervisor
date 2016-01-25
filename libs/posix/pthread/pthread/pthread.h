@@ -14,7 +14,7 @@ extern "C" {
  * But other environments should point to here for primitives.
  */
 
-#include <h2.h>
+#include <h2if.h>
 #include <errno.h>
 #include <sched.h>
 

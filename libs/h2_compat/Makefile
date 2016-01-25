@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -g
+CFLAGS := -Iinclude -I../h2/include -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -89,11 +89,11 @@ ifeq ($(ARCHV),60)
 OPT_OFILES := $(OPT_V60_OFILES)
 endif
 
-build/ref/libh2.a: $(REF_OFILES)
+build/ref/libh2_compat.a: $(REF_OFILES)
 	mkdir -p $(dir $@); \
 	$(AR) cru $@ $(sort $(REF_OFILES))
 
-build/opt_v$(ARCHV)/libh2.a: $(OPT_V$(ARCHV)_OFILES)
+build/opt_v$(ARCHV)/libh2_compat.a: $(OPT_V$(ARCHV)_OFILES)
 	echo $(OPT_V$(ARCHV)_OFILES); \
 	mkdir -p $(dir $@); \
 	$(AR) cru $@ $(sort $(OPT_V$(ARCHV)_OFILES))
@@ -117,8 +117,8 @@ dummy:
 
 includes: $(DEST_HFILES)
 
-ref: build/ref/libh2.a
+ref: build/ref/libh2_compat.a
 
-opt: build/opt_v$(ARCHV)/libh2.a
+opt: build/opt_v$(ARCHV)/libh2_compat.a
 
 

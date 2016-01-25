@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#include <h2.h>
+#include <h2if.h>
 
 struct sched_param { 
 	int sched_priority;

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <h2.h>
+#include <h2if.h>
 #include <posix_time.h>
 #include <errno.h>
 

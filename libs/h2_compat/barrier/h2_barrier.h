@@ -16,15 +16,7 @@
 #include <h2_mutex.h>
 
 /** @brief Barrier type definition.  Please do not access directly. */
-typedef union {
-	struct {
-		unsigned short threads_left;
-		unsigned short version;
-		unsigned short threads_total;
-		unsigned short spin_cycles;
-	};
-	unsigned long long int raw;
-} h2_barrier_t;
+typedef pthread_barrier_t h2_barrier_t;
 
 /**
 Initialize a barrier.  No threads are waiting on the barrier.  The barrier is
@@ -37,10 +29,7 @@ configured to wait for threads_total threads to arrive.
 
 static inline int h2_barrier_init_spin(h2_barrier_t *barrier, unsigned short threads_total, unsigned short spin_cycles)
 {
-	barrier->raw = 0;
-	barrier->threads_left = barrier->threads_total = threads_total;
-	barrier->spin_cycles = spin_cycles;
-	return 0;
+	return pthread_barrier_init_spin_np(barrier,threads_total,spin_cycles);
 }
 
 static inline int h2_barrier_init(h2_barrier_t *barrier, unsigned short threads_total)
@@ -55,7 +44,7 @@ Wait at a barrier.  When the configured number of threads have arrived at the ba
 @dependencies None
 */
 
-int h2_barrier_wait(h2_barrier_t *barrier);
+static inline int h2_barrier_wait(h2_barrier_t *barrier) { return pthread_barrier_wait(barrier); };
 
 /** @} */
 

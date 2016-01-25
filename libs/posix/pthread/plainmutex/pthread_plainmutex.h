@@ -13,7 +13,7 @@ typedef unsigned int pthread_plainmutex_t;
 
 #define PTHREAD_PLAINMUTEX_INITIALIZER_NP 0 
 
-static inline void pthread_plainmutex_init_np(h2_plainmutex_t *lock) { *lock = PTHREAD_PLAINMUTEX_INITIALIZER_NP; }
+static inline void pthread_plainmutex_init_np(pthread_plainmutex_t *lock) { *lock = PTHREAD_PLAINMUTEX_INITIALIZER_NP; }
 
 int pthread_plainmutex_lock_id_canfail_np(pthread_plainmutex_t *lock, pthread_t id);
 static inline int pthread_plainmutex_lock_id_np(pthread_plainmutex_t *lock, pthread_t id)

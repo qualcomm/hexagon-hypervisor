@@ -12,19 +12,19 @@ static pthread_tls_destructor_t pthread_tls_dtors[PTHREAD_KEYS_MAX];
 unsigned long long int pthread_tls_key_valid = 0ULL;
 pthread_plainmutex_t mutex = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
 
-static inline void ***get_pthread_tls_ptr()
+static inline const void ***get_pthread_tls_ptr()
 {
 	unsigned long ugp_val;
 	asm volatile (" %0 = ugp " : "=r"(ugp_val) );
-	return (void ***)(ugp_val + 4);
+	return (const void ***)(ugp_val + 4);
 }
 
-static inline void **get_pthread_tls()
+static inline const void **get_pthread_tls()
 {
 	return *(get_pthread_tls_ptr());
 }
 
-static inline void set_pthread_tls(void **x)
+static inline void set_pthread_tls(const void **x)
 {
 	*(get_pthread_tls_ptr()) = x;
 }
@@ -58,14 +58,14 @@ int pthread_key_delete(pthread_key_t key)
 
 void *pthread_getspecific(pthread_key_t key)
 {
-	void **pthread_tls_ptr = get_pthread_tls();
+	const void **pthread_tls_ptr = get_pthread_tls();
 	if (pthread_tls_ptr == NULL) return NULL;
-	return pthread_tls_ptr[key];
+	return (void *)pthread_tls_ptr[key];
 }
 
-int pthread_setspecific(pthread_key_t key, void *value)
+int pthread_setspecific(pthread_key_t key, const void *value)
 {
-	void **pthread_tls_ptr = get_pthread_tls();
+	const void **pthread_tls_ptr = get_pthread_tls();
 	if (pthread_tls_ptr == NULL) {
 		if ((pthread_tls_ptr = calloc(PTHREAD_KEYS_MAX,sizeof(*pthread_tls_ptr))) == NULL) {
 			return ENOMEM;
@@ -81,7 +81,7 @@ void pthread_tls_teardown()
 {
 	int i,j;
 	void *old;
-	void **pthread_tls_ptr = get_pthread_tls();
+	const void **pthread_tls_ptr = get_pthread_tls();
 	if (pthread_tls_ptr == NULL) return;					/* No TLS data at all */
 	for (j = 0; j < PTHREAD_DESTRUCTOR_ITERATIONS; j++) {
 		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
@@ -89,7 +89,7 @@ void pthread_tls_teardown()
 			if ((pthread_tls_key_valid >> i) == 0) break;		/* Nothing in the future */
 			if (((pthread_tls_key_valid >> i) & 1) == 0) continue;	/* Nothing at this location */
 			if (pthread_tls_dtors[i] == NULL) continue;		/* No destructor */
-			old = pthread_tls_ptr[i];
+			old = (void *)pthread_tls_ptr[i];
 			pthread_tls_ptr[i] = NULL;
 			pthread_tls_dtors[i](old);
 		}

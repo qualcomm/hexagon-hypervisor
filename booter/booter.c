@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <max.h>
+//#include <max.h>
 #include <h2.h>
 #include <stdio.h>
 #include <errno.h>
@@ -22,7 +22,8 @@
 #include <unistd.h>
 
 #include "elf.h"
-#include <hw.h>
+#include "../kernel/include/max.h"
+#include "../kernel/include/hw.h"
 #include <syscall_defs.h>
 
 #define CHILD_INTERRUPT 14

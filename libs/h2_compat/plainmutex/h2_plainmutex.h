@@ -52,7 +52,7 @@ Try to lock a mutex.  If the mutex is already held, return failure.
 @dependencies None
 */
 
-int h2_plainmutex_trylock(h2_plainmutex_t *lock) { return pthread_plainmutex_trylock_np(lock); }	/* just try... 0 if successful, nonzero if not */
+static inline int h2_plainmutex_trylock(h2_plainmutex_t *lock) { return pthread_plainmutex_trylock_np(lock); }	/* just try... 0 if successful, nonzero if not */
 
 /** @} */
 

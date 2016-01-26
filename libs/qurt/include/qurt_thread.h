@@ -83,7 +83,7 @@ typedef enum {
 } qurt_cache_partition_t;
 
 /** Thread ID type */
-typedef unsigned int qurt_thread_t;
+typedef pthread_t qurt_thread_t;
 
 /** Thread attributes */
 typedef struct _qurt_thread_attr {
@@ -93,13 +93,10 @@ typedef struct _qurt_thread_attr {
                                        on chip memory (i.e. TCM). */
     unsigned char  affinity;      /**< Hardware bitmask indicating the threads it
                                        can run on. */
-    unsigned short priority;      /**< Thread priority. */
     unsigned char  asid;          /**< Address space ID. */
     unsigned char  bus_priority;  /**< internal bus priority. */
     unsigned short timetest_id;   /**< Timetest ID. */
-    unsigned int   stack_size;    /**< Thread stack size. */
-    void *stack_addr;             /**< Stack address base, the range of the stack is
-                                       (stack_addr, stack_addr+stack_size-1). */
+    pthread_attr_t pthread_attrs;	/* Other attributes in pthread attrs */
     /** @endcond */
 } qurt_thread_attr_t;
 
@@ -202,7 +199,7 @@ static inline void qurt_thread_attr_set_tcb_partition (qurt_thread_attr_t *attr,
 */
 static inline void qurt_thread_attr_set_priority (qurt_thread_attr_t *attr, unsigned short priority)
 {
-	attr->priority = priority;
+	attr->pthread_attrs.sched.sched_priority = priority;
 }
 
 /**@ingroup func_qurt_thread_attr_set_affinity
@@ -286,7 +283,7 @@ static inline void qurt_thread_attr_set_timetest_id (qurt_thread_attr_t *attr, u
 
 static inline void qurt_thread_attr_set_stack_size (qurt_thread_attr_t *attr, unsigned int stack_size)
 {
-	attr->stack_size = stack_size;
+	attr->pthread_attrs.stacksize = stack_size;
 }
 
 /**@ingroup func_qurt_thread_attr_set_stack_addr
@@ -316,7 +313,7 @@ static inline void qurt_thread_attr_set_stack_size (qurt_thread_attr_t *attr, un
 */
 static inline void qurt_thread_attr_set_stack_addr (qurt_thread_attr_t *attr, void *stack_addr)
 {
-	attr->stack_addr = stack_addr;
+	attr->pthread_attrs.stackaddr = stack_addr;
 }
 
 /**@ingroup func_qurt_thread_attr_set_bus_priority
@@ -415,7 +412,7 @@ int qurt_thread_resume(unsigned int thread_id);
    None.
  */
 static inline qurt_thread_t qurt_thread_get_id (void) {
-	return h2_thread_myid();
+	return pthread_self();
 }
 
 /**@ingroup func_qurt_thread_get_l2cache_partition

@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 #include <time.h> // dinkumware time.h, if we change c libraries we probably need to nuke this
+#include <sys/types.h> // dinkumware time.h, if we change c libraries we probably need to nuke this
 #include <h2if.h>
 
 struct timespec {
@@ -22,11 +23,11 @@ struct timespec {
  */
 static inline int nanosleep(const struct timespec *req, struct timespec *rem) { return 0; }
 
-typedef enum {
+enum {
 	CLOCK_MONOTONIC,
 	CLOCK_THREAD_CPUTIME_ID,
 	CLOCK_INVALID
-} clockid_t;
+};
 
 #define CLOCK_REALTIME CLOCK_MONOTONIC
 #define CLOCK_MONOTINC_RAW CLOCK_MONOTONIC

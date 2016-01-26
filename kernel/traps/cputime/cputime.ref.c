@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <time.h>
+#include <cputime.h>
 #include <globals.h>
 #include <hw.h>
 

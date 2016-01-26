@@ -13,7 +13,7 @@ typedef int pthread_key_t;
 #define PTHREAD_DESTRUCTOR_ITERATIONS 2
 
 void *pthread_getspecific(pthread_key_t key);
-int pthread_setspecific(pthread_key_t key, void *value);
+int pthread_setspecific(pthread_key_t key, const void *value);
 int pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
 int pthread_key_delete(pthread_key_t key);
 

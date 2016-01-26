@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef H2K_TIME_H
-#define H2K_TIME_H 1
+#ifndef H2K_CPUTIME_H
+#define H2K_CPUTIME_H 1
 
 #include <c_std.h>
 #include <context.h>

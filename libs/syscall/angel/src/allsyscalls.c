@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <syscall_defs.h>
-#include <h2_error.h>
 #include <h2_thread.h>
 
 #define ALIGN32_DOWN(X) ((X) & -32)

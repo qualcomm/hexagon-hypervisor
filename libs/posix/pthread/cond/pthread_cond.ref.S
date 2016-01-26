@@ -137,7 +137,7 @@ FUNC_START pthread_cond_wait .text.pthread.cond .falign
 	}
 	{
 		CONDPTR_MUTEXPTR_SAV = combine(CONDPTR,MUTEXPTR)
-		r0 = r1
+		r0 = MUTEXPTR
 		call pthread_mutex_unlock
 	}
 1:

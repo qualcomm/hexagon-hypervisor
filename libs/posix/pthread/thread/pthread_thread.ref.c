@@ -24,6 +24,7 @@ struct pthread_tcb {
 	void *retval;
 	pthread_sem_t joined;
 	pthread_sem_t waiters;
+	pthread_sem_t exiting;
 	pthread_attr_t attrs;
 };
 
@@ -86,16 +87,18 @@ static struct pthread_tcb *pthread_thread_find_id(pthread_t id)
  * Then we only need to free one thing.
  */
 
+static void *old_freeptr = NULL;
+static void *old_stack_freeptr = NULL;
+static pthread_plainmutex_t pthread_exit_lock = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
+
 void __attribute__((noreturn)) pthread_exit(void *retval)
 {
 	char *freeptr;
 	struct pthread_tcb *self = pthread_self_ptr();
-	static void *old_freeptr = NULL;
-	static void *old_stack_freeptr = NULL;
-	static pthread_plainmutex_t pthread_exit_lock = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
+	/* EJP: FIXME? Maybe? If we wake up someone joining us, does that mean that our stack should be available? */
+	self->retval = retval;
+	pthread_sem_post_np(&self->waiters);
 	if (!self->attrs.detached) {
-		self->retval = retval;
-		pthread_sem_post_np(&self->waiters);
 		pthread_sem_wait_np(&self->joined);
 	}
 	if (self->attrs.extra_dtor) self->attrs.extra_dtor(self->attrs.extra);
@@ -108,6 +111,7 @@ void __attribute__((noreturn)) pthread_exit(void *retval)
 	if (old_stack_freeptr) free(old_stack_freeptr);
 	old_freeptr = freeptr;
 	old_stack_freeptr = self->stack_free;
+	pthread_sem_post_np(&self->exiting);
 	pthread_safe_death(&pthread_exit_lock,pthread_self());
 }
 
@@ -138,7 +142,10 @@ int pthread_join(pthread_t thread, void **retval)
 	if (dest->attrs.detached) return EINVAL;
 	pthread_sem_wait_np(&dest->waiters);
 	*retval = dest->retval;
-	pthread_sem_post_np(&dest->joined);
+	pthread_sem_post_np(&dest->joined);	/* Let thread know we've read values */
+	pthread_sem_wait_np(&dest->exiting);	/* Wait for thread to be ready to die */
+	pthread_plainmutex_lock_np(&pthread_exit_lock);	/* acquire and release to ensure serialization */
+	pthread_plainmutex_unlock_np(&pthread_exit_lock);
 	return 0;
 }
 
@@ -148,6 +155,7 @@ static struct pthread_tcb *pthread_create_common(struct pthread_tcb *dst)
 	/* init semaphores */
 	pthread_sem_init_np(&dst->joined,0,0);
 	pthread_sem_init_np(&dst->waiters,0,0);
+	pthread_sem_init_np(&dst->exiting,0,0);
 	/* Copy ELF TLS area */
 	elftls_area = (unsigned char *)dst;
 	elftls_area -= elftls_size;

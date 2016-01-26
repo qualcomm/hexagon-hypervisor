@@ -94,7 +94,6 @@ static void qurt_thread_destructor(void *extra)
 	qurt_free(extra);
 }
 
-/* FIXME: hackage */
 int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void (*entrypoint) (void *), void *arg)
 {
 	/*
@@ -108,8 +107,6 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 	int pt_ret;
 	pthread_t child;
 	struct QURT_ugp_ptr *pUgp;
-
-	
 
 	/* from qurt_thread.c */
 	if ((pUgp = qurt_calloc(1,sizeof(struct QURT_ugp_ptr))) == NULL) {
@@ -125,6 +122,7 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 	return (pt_ret == 0) ? QURT_EOK : QURT_EFATAL;
 }
 
+/* EJP: fixme: probably remove */
 int blast_thread_create(void *pc, void *stack, void *arg, 
 	unsigned int prio, unsigned int asid, unsigned int hw_bitmask) {
 
@@ -148,6 +146,7 @@ static struct QURT_ugp_ptr main_qurttcb_storage;
 void qurt_thread_mainthread_become()
 {
 	struct QURT_ugp_ptr *pUgp = &main_qurttcb_storage;
+	strlcpy(pUgp->utcb.attr.name,"main",QURT_THREAD_ATTR_NAME_MAXLEN);
 	pUgp->utcb.thread_id = h2_thread_myid();
 	/* FIXME: fill in name and all that stuff? */
 	add_thread(pUgp);
@@ -160,7 +159,7 @@ int qurt_thread_join(unsigned int threadid, int *status)
 	if ((pt_ret = pthread_join((pthread_t)threadid,&pt_status)) == 0) {
 		*status = (int)((long)pt_status);
 	}
-	return pt_ret;
+	return (pt_ret == 0) ? QURT_EOK : QURT_ENOTHREAD;
 }
 
 /*

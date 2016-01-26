@@ -6,8 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <context.h>
-#include <max.h>
 #include <h2.h>
 //#include <globals.h>
 
@@ -21,10 +19,8 @@
 h2_sem_t sem_a,sem_b,sem_c,sem_done;
 int t0id,t1id;
 
-u64_t stack0[STACK_SIZE];
-u64_t stack1[STACK_SIZE];
-
-u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(u64_t)] __attribute__((aligned(32)));
+unsigned long long int stack0[STACK_SIZE];
+unsigned long long int stack1[STACK_SIZE];
 
 void FAIL(const char *str)
 {

@@ -54,7 +54,7 @@ FUNC_START h2_error_event .text.h2.error .falign
 	}
 	{
 		r0 = ##H2_THREAD_FATAL_ERROR
-		call h2_thread_stop
+		call h2_thread_stop_trap
 	}
 .Ltrap_exit:
 	{
@@ -64,7 +64,7 @@ FUNC_START h2_error_event .text.h2.error .falign
 	// normally shouldn't reach here
 	{
 		r0 = ##H2_THREAD_FATAL_ERROR
-		call h2_thread_stop
+		call h2_thread_stop_trap
 	}
 FUNC_END h2_error_event
 

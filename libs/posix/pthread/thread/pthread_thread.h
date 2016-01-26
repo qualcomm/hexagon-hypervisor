@@ -61,7 +61,10 @@ static inline int pthread_attr_setextra_np(pthread_attr_t *attr,
 	attr->extra_dtor = destructor;
 	return 0;
 }
-
+enum {
+	PTHREAD_CREATE_JOINABLE = 0,
+	PTHREAD_CREATE_DETACHED = 1,
+};
 static inline int pthread_attr_getdetachstate(pthread_attr_t *attr, int *ds) { *ds = attr->detached; return 0; }
 static inline int pthread_attr_setdetachstate(pthread_attr_t *attr, int ds) { attr->detached = ds; return 0; }
 static inline int pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *p) { *p = attr->sched; return 0; }

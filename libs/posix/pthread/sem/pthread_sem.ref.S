@@ -157,7 +157,7 @@ FUNC_START pthread_sem_wait_np .text.pthread.sem .falign
 		if (p0.new) jump:nt .Ldo_block		// still not valid, go to sleep again
 		SEMPTR = SEMPTR_SAV
 	}
-	memw_locked(SEMPTR_SAV,p0) = SEMVAL
+	memw_locked(SEMPTR_SAV,p0) = SEMVAL_NEW
 	{
 		r0 = mux(p0,#0,SEMPTR_SAV)
 		if (p0) SEMPTR_SAV = memw(r29)
@@ -192,7 +192,7 @@ FUNC_START pthread_sem_trywait_np .text.pthread.sem .falign
 		SEMVAL_NEW = add(SEMVAL,#-1)
 		if (p0.new) jump:nt 1f
 	}
-	memw_locked(SEMPTR,p0) = SEMVAL
+	memw_locked(SEMPTR,p0) = SEMVAL_NEW
 	{
 		if (p0) jumpr r31
 		if (p0) r0 = #0

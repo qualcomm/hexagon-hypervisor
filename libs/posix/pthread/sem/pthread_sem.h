@@ -28,7 +28,7 @@ typedef union {
 static inline int pthread_sem_init_np(pthread_sem_t *sem, int pshared, unsigned int value)
 {
 	if (value > PTHREAD_SEM_VALUE_MAX_NP) value = PTHREAD_SEM_VALUE_MAX_NP;
-	sem->raw = (value & PTHREAD_SEM_VALUE_MAX_NP);
+	sem->raw = value;
 	return 0;
 }
 static inline int pthread_sem_destroy_np(pthread_sem_t *sem) { return 0; }

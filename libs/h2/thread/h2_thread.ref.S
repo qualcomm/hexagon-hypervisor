@@ -19,12 +19,12 @@ FUNC_START h2_thread_myid .text.h2.thread .p2align 4
 	jumpr r31
 FUNC_END h2_thread_myid
 
-FUNC_START h2_thread_create .text.h2.thread .p2align 2
+FUNC_START h2_thread_create_trap .text.h2.thread .p2align 2
 	trap0(#H2_TRAP_THREAD_CREATE)
 	jumpr r31
 FUNC_END h2_thread_create
 
-FUNC_START h2_thread_stop .text.h2.thread .p2align 2
+FUNC_START h2_thread_stop_trap .text.h2.thread .p2align 2
 	trap0(#H2_TRAP_THREAD_STOP)
 	jumpr r31
 FUNC_END h2_thread_stop

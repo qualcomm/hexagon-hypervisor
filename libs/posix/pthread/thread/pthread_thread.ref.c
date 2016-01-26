@@ -27,16 +27,15 @@ struct pthread_tcb {
 	pthread_attr_t attrs;
 };
 
-extern char tdata_start;
-extern char tdata_end;
-extern char tbss_start;
-extern char tbss_end;
+char dummy;
+static char tdata_start __attribute__((weakref("dummy")));
+static char tdata_end __attribute__((weakref("dummy")));
+static char tbss_start __attribute__((weakref("dummy")));
+static char tbss_end __attribute__((weakref("dummy")));
 
 static char *elftls_start;
 static char *elftls_end;
 static unsigned int elftls_size;
-
-__thread unsigned int __pthread_thread_dummy = 1;
 
 static struct pthread_tcb *pthread_root = NULL;
 static pthread_plainmutex_t pthread_tcb_mutex = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
@@ -189,7 +188,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 	if (self_stack) dest->attrs.stackaddr = self_stack;
 	dest->start_arg = arg;
 	dest->start_routine = start_routine;
-	if ((*thread = h2_thread_create(pthread_trampoline,(stackaddr+stacksize), dest, attr->sched.sched_priority)) == -1) {
+	if ((*thread = h2_thread_create_trap(pthread_trampoline,(stackaddr+stacksize), dest, attr->sched.sched_priority)) == -1) {
 		/* If error, Handle thread creation error */
 		if (self_stack) free(self_stack);
 		free(tmpptr);

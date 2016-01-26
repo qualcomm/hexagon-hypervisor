@@ -6,17 +6,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <context.h>
-#include <max.h>
 #include <h2.h>
 //#include <globals.h>
-#include <futex.h>
 #include <stdarg.h>
 
 #define SPINS (1024*1024)
 #define STACK_SIZE 128
 
 #define ITERS 100
+
+typedef unsigned int u32_t;
+typedef int s32_t;
+
+typedef unsigned long long int H2K_thread_context;
 
 /********
  * What's going on here?
@@ -126,7 +128,6 @@ h2_sem_t sem;
 
 int main()
 {
-	h2_init(NULL);
 
 	h2_sem_init_val(&sem,1);
 	TH_word = (void *)(&sem);

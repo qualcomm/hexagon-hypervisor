@@ -5,13 +5,13 @@
 SUBDIRS:=$(shell cat ./scripts/testlist | perl -p -e 's/^\s*\#.*//;')
 
 all:
-	@$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
+	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
 
 tst:
-	@$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=tst
+	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=tst
 
 clean:
-	@$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=clean
+	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=clean
 
 $(SUBDIRS)::
 	cd $@;\

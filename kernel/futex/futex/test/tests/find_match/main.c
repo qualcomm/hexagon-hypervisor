@@ -23,7 +23,7 @@
  * - no threads are woken if nr = 0 or no threads ready
  */
 
-#define NUM_DUMMY_THREADS 1024
+#define NUM_DUMMY_THREADS 500
 #define THREAD_STACK_SIZE 256
 #define NUM_GOOD_THREADS 4
 #define MAIN_THREADS 1
@@ -58,8 +58,7 @@ volatile unsigned int thread_info[NUM_GOOD_THREADS];
 
 void FAIL(const char *str)
 {
-	h2_printf(str);
-	while (1);
+	puts(str);
 	exit(1);
 }
 
@@ -107,7 +106,6 @@ void test_thread(unsigned int goodid)
 		thread_info[goodid]++;
 	}
 }
-
 void vmmain(void *unused)
 {
 	unsigned int i;
@@ -174,46 +172,10 @@ void vmmain(void *unused)
 	exit(0);
 }
 
-void spawn_vm(void *pc)
-{
-	unsigned long vm;
-
-	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,1);
-	h2_config_vmblock_init(vm,SET_PMAP_TYPE,0,0);
-	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
-	printf("initted\n");
-	h2_vmboot(pc,&main_thread_stack[THREAD_STACK_SIZE-1],0,0,vm);
-	printf("vm booted\n");
-}
-
 int main() 
 {
-	u32_t asid;
-	h2_init(0x0);
-
-	/* set URWX in monitor TLB entry permissions, to allow futex access */
-	/* not really necessary to find our asid since the TLB entry will be global
-		 anyway, but... */
-	asm volatile (
-	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n" 
-	: "=r"(asid));
-
-	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
-	if (tlb_index == 0x80000000) {
-		FAIL("Can't find monitor TLB entry");
-	}
-	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-#if ARCHV <= 3
-	tlb_entry |= 0x7ULL << 29;
-#else
-	tlb_entry |= 0xfULL << 28;
-#endif
-	H2K_mem_tlb_write(tlb_index, tlb_entry);
-
 	info("main() starting\n");
-	spawn_vm(vmmain);
-	h2_thread_stop(0);
+	vmmain(NULL);
 	return 0;
 }
 

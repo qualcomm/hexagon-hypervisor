@@ -91,7 +91,6 @@ int main()
 	printf("%lld locks/trylocks/unlocks, approx %d cycles per pair\n",count,avg);
 	printf("Done!\n");
 	printf("TEST PASSED avg=%d\n",avg);
-	h2_thread_stop(0);
 	return 0;
 }
 

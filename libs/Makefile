@@ -19,7 +19,7 @@ POSIX_DIR=posix/
 ifeq (ref,$(IMPL))
 H2_LIB=$(H2_DIR)build/ref/libh2.a
 H2_COMPAT_LIB=$(H2_COMPAT_DIR)build/ref/libh2_compat.a
-POSIX_LIB=$(H2_DIR)build/ref/libposix.a
+POSIX_LIB=$(POSIX_DIR)build/ref/libposix.a
 else
 IMPL=opt
 H2_LIB=$(H2_DIR)build/opt_v$(ARCHV)/libh2.a

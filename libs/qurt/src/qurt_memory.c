@@ -292,13 +292,10 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 				size,pool->attr.ranges[0].start,pool->attr.ranges[0].size,
 				attr->mapping_type);
 			// qurt_pgalloc_print_freelist(pool->freelist);
-			qurt_printf("region_create: call stack=%x %x %x %x %x %x, id=%x\n",
+			qurt_printf("region_create: call stack=%x %x %x, id=%x\n",
 				__builtin_return_address(0),
 				__builtin_return_address(1),
 				__builtin_return_address(2),
-				__builtin_return_address(3),
-				__builtin_return_address(4),
-				__builtin_return_address(5),
 				h2_thread_myid());
 			qurt_rmutex_unlock(&mem_mutex);
 			qurt_free(tmp);
@@ -592,7 +589,7 @@ struct phys_mem_pool_config {
 	} ranges[16];
 };
 
-struct phys_mem_pool_config pool_configs[] __attribute__((weak)) = { { "DEFAULT_PHYSPOOL", { {0x10000,0x40000}, {0}}}, };
+struct phys_mem_pool_config pool_configs[] __attribute__((weak)) = { { "DEFAULT_PHYSPOOL", { {0x10000,0xF0000000}, {0}}}, { "", { { 0x0, 0x0}, {0x0}}}};
 //extern struct phys_mem_pool_config pool_configs[];
 
 // extern struct phys_mem_pool_config pool_configs[] __attribute__((weak));
@@ -610,12 +607,12 @@ static void qurt_memory_builtin_pools()
 			pool_configs[i].name,
 			pool_configs[i].ranges[0].start,
 			pool_configs[i].ranges[0].size);
-#endif
 		if (0==strcmp(pool_configs[i].name,"DEFAULT_PHYSPOOL")) {
 			/* KLUDGE */
 			pool_configs[i].ranges[0].start = 0x8d000;
 			pool_configs[i].ranges[0].size =  0x00400 << 12;
 		}
+#endif
 		qurt_mem_pool_create(pool_configs[i].name,
 			pool_configs[i].ranges[0].start,
 			pool_configs[i].ranges[0].size>>12,
@@ -662,7 +659,11 @@ void qurt_memory_init()
 		qurt_memory_make_static_regions();
 		qurt_pprint_regions();
 		return;
+	} else {
+		/* probably a standalone test, should fill out linear_pages and turn on... */
+		qurt_rmutex_init(&mem_mutex);
 	}
+	if (vpool == NULL) qurt_memory_pool_init();
 #if 0
 	qurt_rmutex_init(&mem_mutex);
 	qurt_memory_pool_init();

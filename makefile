@@ -43,7 +43,7 @@ TEST_JFLAG=-j 8
 
 include scripts/Makefile.inc.config
 
-all: ref #doc gtags
+all: ref doc gtags
 
 distclean: clean docclean gtagsclean
 

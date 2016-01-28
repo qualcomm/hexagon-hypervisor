@@ -69,7 +69,7 @@ FUNC_START pthread_plainmutex_unlock_id_canfail_np .text.pthread.plainmutex .p2a
 		jump pthread_plainmutex_unlock_id_canfail_np
 	}
 1:
-	/* lock nonzero, lock in kernel */
+	/* lock nonzero, unlock in kernel */
 	trap0(#H2_TRAP_FUTEX_UNLOCK_PI)
 	jumpr r31
 #undef LOCK

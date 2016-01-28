@@ -60,7 +60,7 @@ void task(void *arg)
 		if (h2_time_set_timeout(wakeup) == 0) {
 			FAIL("timeout in past");
 		}
-		if (abs((wakeup_real = h2_time_get_timeout()) - wakeup) > 100) {
+		if (llabs((wakeup_real = h2_time_get_timeout()) - wakeup) > 100) {
 			h2_printf("wakeup=%llx wakeup_real=%llx\n",wakeup,wakeup_real);
 		}
 		if ((ret = h2_futex_wait(&i,i)) != 0) {

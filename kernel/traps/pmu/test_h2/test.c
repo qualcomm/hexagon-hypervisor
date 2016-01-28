@@ -45,12 +45,14 @@ void delay()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
+#ifdef SIMULATOR_PMU_SUPPORT
 static inline int myabs(int x)
 {
 	if (x < 0) {
 		return -x; 
 	} else return x;
 }
+#endif
 
 void thread0(int thread)
 {
@@ -151,8 +153,11 @@ void thread1(int thread)
 	h2_thread_stop(0);
 }
 
-void vmmain()
+int main(int argc, char **argv)
 {
+	h2_sem_init_val(&sem_call,0);
+	h2_sem_init_val(&sem_ret,0);
+	h2_sem_init_val(&sem_done,0);
 
 	t1id = h2_thread_create(thread1,&stack1[STACK_SIZE],0,2);
 	t0id = h2_thread_create(thread0,&stack0[STACK_SIZE],0,2);
@@ -161,53 +166,3 @@ void vmmain()
 	puts("TEST PASSED\n");
 	exit(0);
 }
-
-#define NUM_TOTAL_THREADS 4
-
-unsigned long long int main_thread_stack[STACK_SIZE];
-
-void spawn_vm(void *pc)
-{
-	unsigned long vm;
-
-	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,0);
-	h2_config_vmblock_init(vm,SET_PMAP_TYPE,0,0);
-	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
-	printf("initted\n");
-	h2_vmboot(pc,&main_thread_stack[STACK_SIZE-1],0,0,vm);
-	printf("vm booted\n");
-}
-
-int main() 
-{
-	u32_t asid;
-
-	h2_init(NULL);
-	h2_sem_init_val(&sem_call,0);
-	h2_sem_init_val(&sem_ret,0);
-	h2_sem_init_val(&sem_done,0);
-
-	/* set URWX in monitor TLB entry permissions, to allow futex access */
-	/* not really necessary to find our asid since the TLB entry will be global
-		 anyway, but... */
-	asm volatile (
-	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n" 
-	: "=r"(asid));
-
-	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
-	if (tlb_index == 0x80000000) {
-		FAIL("Can't find monitor TLB entry");
-	}
-	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-#if ARCHV <= 3
-	tlb_entry |= 0x7ULL << 29;
-#else
-	tlb_entry |= 0xfULL << 28;
-#endif
-	H2K_mem_tlb_write(tlb_index, tlb_entry);
-	spawn_vm(vmmain);
-	h2_thread_stop(0);
-	return 0;
-}
-

@@ -23,7 +23,7 @@ h2_sem_t startsem,donesem;
 
 unsigned long long int stacks[N_WORKERS][STACKSIZE];
 
-static inline unsigned int myrand(unsigned int mod, unsigned long long int *lfsrp)
+unsigned int myrand(unsigned int mod, unsigned long long int *lfsrp)
 {
 	unsigned long long int data = *lfsrp;
 	data = Q6_P_lfs_PP(data,POLYNOMIAL);

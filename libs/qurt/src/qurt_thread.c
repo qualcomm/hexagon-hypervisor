@@ -122,6 +122,7 @@ int qurt_thread_create(qurt_thread_t *thread_id, qurt_thread_attr_t *attr, void 
 	return (pt_ret == 0) ? QURT_EOK : QURT_EFATAL;
 }
 
+#define BLAST_STACK_SIZE (1024*1024)
 /* EJP: fixme: probably remove */
 int blast_thread_create(void *pc, void *stack, void *arg, 
 	unsigned int prio, unsigned int asid, unsigned int hw_bitmask) {
@@ -131,7 +132,8 @@ int blast_thread_create(void *pc, void *stack, void *arg,
 
 	qurt_thread_attr_init(&attr);
 	qurt_thread_attr_set_priority(&attr,prio);
-	qurt_thread_attr_set_stack_addr(&attr,stack);	/* FIXME: is that right? */
+	qurt_thread_attr_set_stack_addr(&attr,(unsigned char *)stack-BLAST_STACK_SIZE);	/* FIXME: is that right? */
+	qurt_thread_attr_set_stack_size(&attr,BLAST_STACK_SIZE);	/* FIXME: is that right? */
 
 	qurt_thread_create(&id, &attr, pc, arg);
 	return id;

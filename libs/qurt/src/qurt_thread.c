@@ -206,11 +206,13 @@ static void do_qurt_init()
 }
 
 /* Generic hook for all stuff that needs to be initialized */
+void pthread_init();
 __attribute__((constructor(1)))
 void qurt_init()
 {
 	/* FIXME: pthread_once */
 	static pthread_once_t qurt_init_once = PTHREAD_ONCE_INIT;
+	pthread_init();	/* because linker ctor order is backwards */
 	pthread_once(&qurt_init_once,do_qurt_init);
 }
 

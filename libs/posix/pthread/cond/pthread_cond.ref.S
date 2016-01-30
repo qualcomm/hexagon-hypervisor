@@ -172,7 +172,7 @@ FUNC_START pthread_cond_wait .text.pthread.cond .falign
 	{
 		deallocframe
 		CONDPTR_MUTEXPTR_SAV = memd(r29+#0)
-		r0 = MUTEXPTR
+		r0 = MUTEXPTR_SAV
 		jump pthread_mutex_lock			// will return required 0
 	}
 FUNC_END pthread_cond_wait

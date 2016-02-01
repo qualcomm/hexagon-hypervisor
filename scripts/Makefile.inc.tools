@@ -15,8 +15,13 @@ endif
 
 export CC := hexagon-clang
 export CXX := hexagon-clang++
+export AS := hexagon-clang
 export AR := hexagon-ar
 export RANLIB := hexagon-ranlib
+export COV := hexagon-coverage
+export OBJDUMP := hexagon-llvm-objdump
+export GMON_MERGE := hexagon-gmon-merge
+
 
 export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
 export LD := hexagon-clang
@@ -35,14 +40,15 @@ export SUBSYSTEM_BASE_TOOLSIM := 0xfe28
 endif
 
 ifeq (4, $(ARCHV))
-TOOLS_FLAVOR ?= 7.4.01
+TOOLS_FLAVOR ?= default
 ARCH_FLAVOR ?= v4_stable
+export COV := hexagon-llvm-cov
 else
 ifeq (5, $(ARCHV))
-TOOLS_FLAVOR ?= 7.4.01
+TOOLS_FLAVOR ?= 7.3.06
 ARCH_FLAVOR ?= v5_stable
 else
-TOOLS_FLAVOR ?= 7.4.01
+TOOLS_FLAVOR ?= 7.3.06
 ARCH_FLAVOR ?= v60_latest
 endif
 endif

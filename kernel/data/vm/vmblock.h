@@ -14,39 +14,11 @@
 #include <max.h>
 #include <asid_types.h>
 #include <h2_common_vmblock.h>
+#include <h2_common_defs.h>
 
 /* Version supported */
 
 #define H2K_VM_VERSION 0x00000800
-
-/* How does this work?  */
-
-/* Trigger interrupt: 
- * * set in pending
- * * look up cpu (TBD: array, or check first enabled?)
- * * look up context
- * * mark thread w/ interrupt vmwork
- * * If ready, try to int/wakeup dest
- */
-
-/* Get interrupt:
- * * For each wordsize, ctz(pending & my_enables)
- * * Find lowest interrupt, clear from pending, my_enables
- */
-
-/* Int Ack:
- * Set in my_enables 
- */
-
-/* TBD:
- * Configure call?
- * Supporting BLAST-like schedulers?
- * Supporting priority?
- * Eliminate iteration?
- * Supporting multiple listeners?
- */
-
-#define H2K_VM_CHILDINT 14
 
 #define H2K_VMBLOCK_ALIGN 32
 #define H2K_VMBLOCK_V2P_INVALID 0x0

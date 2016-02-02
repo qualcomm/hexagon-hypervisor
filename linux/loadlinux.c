@@ -6,6 +6,7 @@
 #include <context.h>
 #include <linear.h>
 #include <h2_common_pmap.h>
+#include <h2_common_defs.h>
 #include <cpuint.h>
 #include <shint.h>
 #include <max.h>
@@ -30,7 +31,6 @@
 #define UCOS_VM_PRIO 1
 
 #define VM_STATUS_REBOOT 3
-#define CHILD_INTERRUPT 14
 
 H2K_offset_t linux_offset = {{
 	.size = SIZE_4M,
@@ -214,7 +214,7 @@ volatile unsigned int *ss_pub_base = (void *) 0x28800000;
 #define GFMUX_CTL (0x30 >> 2)
 
 void handle_child_int() {
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
 }
 
 int main(int argc, char *argv[]) {
@@ -230,8 +230,8 @@ int main(int argc, char *argv[]) {
 	PRINTF("loadlinux: H2 started\n");
 
 	h2_vmtrap_setvec(bootvm_vectors);
-	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
-		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT");
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, H2K_VM_CHILDINT");
 	}
 
 #ifndef NO_STLB

@@ -6,7 +6,7 @@
 #include <asm_std.h>
 #include <asm_offsets.h>
 #include <max.h>
-#include <h2_common_timer_defs.h>
+#include <h2_common_defs.h>
 
 #define TIMERHW_TICK_REALFREQ 19200000
 #define TIMERHW_NSEC_PER_TICK 52

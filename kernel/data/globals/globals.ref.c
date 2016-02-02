@@ -63,15 +63,20 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	}
 #endif
 
-#if ARCHV >= 60
-	if (H2K_kg.arch >= CORE_V61) {
+	switch(H2K_kg.arch) {
+	case CORE_V4:
+		H2K_kg.timer_intnum = TIMER_INT_CORE_V4;
+		break;
+	case CORE_V5:
+		H2K_kg.timer_intnum = TIMER_INT_CORE_V5;
+		break;
+	case CORE_V61:
 		H2K_kg.timer_intnum = TIMER_INT_CORE_V61;
-	} else {
-		H2K_kg.timer_intnum = TIMER_INT;
+		break;
+	default:
+		H2K_kg.timer_intnum = TIMER_INT_CORE_V60;
+		break;
 	}
-#else
-	H2K_kg.timer_intnum = TIMER_INT;
-#endif
 
 #ifndef NUM_HTHREADS
 

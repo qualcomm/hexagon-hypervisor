@@ -654,7 +654,7 @@ void config_vm(unsigned int idx) {
 			trans = vm_params[idx].pmap->type;
 		  base.raw = vm_params[idx].pmap->base.raw;
 			printf("\tGuest pmap type %s\n", trans_name[trans]);
-			printf("\tGuest pmap base 0x%08xw\n", base.raw);
+			printf("\tGuest pmap base 0x%08x\n", base.raw);
 		} else {  // default
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
 			printf("\tTranslation type offset\n");

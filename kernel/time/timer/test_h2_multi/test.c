@@ -45,13 +45,6 @@ static inline u64_t random_delta(u64_t seed) {
 	return (((u32_t)seed * 2654435769U) >> RANDOM_SHIFT) + RANDOM_BASE;
 }
 
-static inline s64_t myabs(s64_t x)
-{
-	if (x < 0) {
-		return -x; 
-	} else return x;
-}
-
 void task(void *arg)
 {
 	s64_t start, wakeup, wakeup_real, end, delta;

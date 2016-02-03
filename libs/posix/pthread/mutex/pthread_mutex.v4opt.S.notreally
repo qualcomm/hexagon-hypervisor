@@ -1,7 +1,3 @@
-/*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
 
 /*
  * pthread_mutex.S
@@ -242,4 +238,5 @@ FUNC_START pthread_mutex_trylock .text.pthread.mutex .p2align 5
 #undef TID_SAV
 #undef TID_LOCK_SAV
 FUNC_END pthread_plainmutex_trylock_id_np
+
 

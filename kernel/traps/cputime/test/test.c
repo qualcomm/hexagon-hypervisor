@@ -18,7 +18,7 @@
 #define SPINS (1024*1024)
 #define STACK_SIZE 128
 
-#define SMALL_DELTA 128ULL
+#define SMALL_DELTA 256ULL
 
 h2_sem_t sem_call,sem_ret,sem_done,sem_start;
 

@@ -25,7 +25,7 @@ typedef unsigned int pthread_t;
 
 static inline int pthread_attr_init(pthread_attr_t *attr)
 {
-	const pthread_attr_t mydefault = { PTHREAD_DEFAULT_STACKSIZE, NULL, { 100 } };
+	const pthread_attr_t mydefault = { PTHREAD_DEFAULT_STACKSIZE, NULL, { 100 }, 0, 0, 0, 0};
 	*attr = mydefault;
 	return 0;
 }

@@ -15,7 +15,7 @@ BOOTVM_PROG := booter
 
 BOOTVM_IMAGE_HEAP_SIZE := 0x10000
 
-CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include 
+CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -D_PROVIDE_POSIX_TIME_DECLS=1
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 
 include $(H2DIR)/scripts/Makefile.inc.config

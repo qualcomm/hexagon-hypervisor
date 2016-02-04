@@ -6,6 +6,7 @@
 #ifndef PTHREAD_COND_H
 #define PTHREAD_COND_H 1
 /* COND */
+#include <time.h>
 
 typedef struct {
 	int unused;
@@ -31,8 +32,6 @@ static inline int pthread_cond_destroy(pthread_cond_t *cond) { return 0; }
 int pthread_cond_broadcast(pthread_cond_t *cond);
 int pthread_cond_signal(pthread_cond_t *cond);
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
-
-struct timespec;
 
 static inline int pthread_cond_timedwait(pthread_cond_t *cond, 
 	pthread_mutex_t *mutex, 

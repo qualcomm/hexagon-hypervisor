@@ -12,6 +12,11 @@
 /** @addtogroup h2 
 @{ */
 
+#include <h2_trap_constants.h>
+
+#define QUOTE(X) #X
+#define STR(X) QUOTE(X)
+
 /**
 Get run time in pcycles
 @returns The number of pcycles that have elapsed while the thread has been scheduled.
@@ -44,7 +49,21 @@ Get total core pcycles
 @Hexagon v60 and later read 
 @dependencies None
 */
-unsigned long long int h2_get_core_pcycles(void);
+
+static inline unsigned long long int h2_get_core_pcycles(void) {
+
+	unsigned long long int ret;
+
+#if ARCHV < 60
+	asm volatile (" trap0(#"STR(H2_TRAP_GET_PCYCLES)") \n"
+								" %0 = r1:0 \n"
+								: "=r"(ret) : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
+#else
+	asm volatile ( " %0 = c15:14 // READ UPCYCLES \n" : "=r"(ret));
+#endif
+
+	return ret;
+}
 
 #if 0
 static inline void h2_profile_enable(int enable) { return; }

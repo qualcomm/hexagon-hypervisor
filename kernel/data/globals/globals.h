@@ -76,12 +76,10 @@ typedef struct {
 	};
 #endif
 	u32_t timer_intnum;
-#ifdef HAVE_EXTENSIONS
 	u32_t *hvx_clock;
 	u32_t *hvx_reset;
 	u32_t *hvx_power;
 	u32_t hvx_state;
-#endif
 
 	union {
 		u64_t fatal_hook_and_arg;

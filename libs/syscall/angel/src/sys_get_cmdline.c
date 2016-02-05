@@ -4,24 +4,13 @@
  */
 
 #include "allsyscalls.h"
-#include "h2_error.h"
 
 char __boot_cmdline__[256] __attribute__((section(".data"))) = { 0 };
-
-void __h2_default_handle_errors_hook__(void)
-{
-	h2_handle_errors(0);
-}
-
-void __h2_handle_errors_hook__(void) __attribute__ ((weak,alias("__h2_default_handle_errors_hook__")));
 
 errno_t sys_get_cmdline(char *buffer, count_t count)
 {
 	errno_t ret;
 	struct { char *buf; count_t count; } x;
-	if (NULL != __h2_handle_errors_hook__) {
-		__h2_handle_errors_hook__();
-	}
 	if (__boot_cmdline__[0] != 0) {
 		strncpy(buffer,__boot_cmdline__,count);
 		buffer[count-1] = 0;

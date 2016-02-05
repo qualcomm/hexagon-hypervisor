@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <h2.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <stddef.h>
 
@@ -18,7 +18,7 @@ extern char end;
 extern void *heapBase __attribute__((section(".data")));
 extern void *heapLimit __attribute__((section(".data")));
 
-static h2_mutex_t mylock = H2_MUTEX_T_INIT;
+static pthread_mutex_t mylock = PTHREAD_MUTEX_INITIALIZER;
 
 static unsigned long long int *heap_base = NULL;
 static unsigned long long int *heap_start = NULL;
@@ -26,7 +26,7 @@ static unsigned long long int *heap_start = NULL;
 void *sys_sbrk(ptrdiff_t more)
 {
 	unsigned long long int *old_base, *new_base;
-	h2_mutex_lock(&mylock);
+	pthread_mutex_lock(&mylock);
 	if (heap_base == NULL) {
 		if (((unsigned int)(heapBase)) >= ((unsigned int)(&end))) {
 			heap_start = heap_base = (void *)(ALIGN_UP((unsigned int)heapBase,CHUNK_SIZE));
@@ -42,12 +42,12 @@ void *sys_sbrk(ptrdiff_t more)
 		}
 		//		if (heapLimit && ((unsigned int)(new_base) >= ((unsigned int)(heap_start) + heapLimit))) {
 		if (heapLimit && ((unsigned int)(new_base) >= ((unsigned int)(heap_start) + (heapLimit - heapBase)))) {
-			h2_mutex_unlock(&mylock);
+			pthread_mutex_unlock(&mylock);
 			return (void *)(-1);
 		}
 		heap_base = new_base;
 	}
-	h2_mutex_unlock(&mylock);
+	pthread_mutex_unlock(&mylock);
 	((unsigned int *)(old_base))[0] = more;
 	((unsigned int *)(old_base))[1] = more;
 	return old_base;

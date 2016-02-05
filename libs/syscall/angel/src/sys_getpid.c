@@ -4,7 +4,7 @@
  */
 
 #include "allsyscalls.h"
-#include <h2.h>
+#include <pthread.h>
 
-int sys_getpid() { return h2_thread_myid(); }
+int sys_getpid() { return pthread_self(); }
 

@@ -55,35 +55,19 @@ typedef struct QURT_utcb
 
 } QURT_utcb_t;
 
-struct QURT_tls_reserve {
-   unsigned int tls_bitmask[QURT_MAX_TLS_INDEX];
-   void (*destructor [QURT_MAX_TLS]) (void *);
-};
-
 /* EJP: What a horrible name for this. */
 struct QURT_ugp_ptr {
 	/* Define QURT_UTCB here */
 	QURT_utcb_t utcb;
-
 	/* STUFF to manage UTCB / joining */
 	struct QURT_ugp_ptr *next;
-	h2_mutex_t join_lock;
-	h2_cond_t join_cond;
-	h2_sem_t join_done;
-	int join_refcount;
-	int status;
-	enum { QURT_JOIN_STATE_RUNNING, QURT_JOIN_STATE_DONE } join_state;
-	char stack_self_allocated;
-
-	/* Maybe some extra stuff for TLS? */
-	void *tls[QURT_MAX_TLS];
 };
 
 /**
  * Get Qurt UTCB pointer
  *
  */
-#define qurt_get_my_utcb(pUgp)        __asm__ __volatile__ ( " %0 = ugp " :"=r"(pUgp) ) ; 
+// probably don't want that #define qurt_get_my_utcb(pUgp)        __asm__ __volatile__ ( " %0 = ugp " :"=r"(pUgp) ) ; 
 
 void qurt_thread_set_ugp(void *);
 

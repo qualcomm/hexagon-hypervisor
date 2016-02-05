@@ -48,7 +48,7 @@
 # ./kernel/traps/pmu/test_standalone  # out because of broken tools
 ./kernel/traps/prio/test
 ./kernel/traps/tid/test
-./kernel/traps/time/test
+./kernel/traps/cputime/test
 ./kernel/traps/tlb/test
 ./kernel/traps/waitcycles/test
 ./kernel/time/timer/test_standalone
@@ -74,18 +74,18 @@
 ./kernel/vm/vmmap/test
 ./kernel/vm/vmcache/test
 
-./libs/h2/alloc/test
-./libs/h2/allsignal/test/simple
-./libs/h2/allsignal/test/trapfails
-./libs/h2/anysignal/test/simple
-./libs/h2/anysignal/test/trapfails
-./libs/h2/error/test/simple
-./libs/h2/sem/test/simple
-./libs/h2/sleep/test
-./libs/h2/vmtraps/test/test_ie
-./libs/h2/vmtraps/test/test_pcycles
-./libs/h2/vmtraps/test/test_return
-./libs/h2/vmtraps/test/test_yield
+#./libs/h2/alloc/test
+#./libs/h2/allsignal/test/simple
+#./libs/h2/allsignal/test/trapfails
+#./libs/h2/anysignal/test/simple
+#./libs/h2/anysignal/test/trapfails
+#./libs/h2/error/test/simple
+#./libs/h2/sem/test/simple
+#./libs/h2/sleep/test
+#./libs/h2/vmtraps/test/test_ie
+#./libs/h2/vmtraps/test/test_pcycles
+#./libs/h2/vmtraps/test/test_return
+#./libs/h2/vmtraps/test/test_yield
 
 ./perf/setie
 ./perf/myid

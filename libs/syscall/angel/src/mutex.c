@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <h2.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <assert.h>
 
 typedef struct {
-	h2_rmutex_t mutex;
+	pthread_mutex_t mutex;
 	unsigned int used;
 } mutex_entry;
 
@@ -16,45 +16,49 @@ typedef struct {
 
 static mutex_entry libc_mutexes[MAX_LIBC_MUTEXES];
 
-static h2_mutex_t bigmutex = H2_MUTEX_T_INIT;
-
+static pthread_plainmutex_t bigmutex = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
+extern void pthread_init();
 void sys_Mtxinit(void **mutex)
 {
 	int i;
 	*mutex = NULL;
-	h2_mutex_lock(&bigmutex);
+	pthread_init();
+	pthread_mutexattr_t attr;
+	pthread_mutexattr_init(&attr);
+	pthread_mutexattr_settype(&attr,PTHREAD_MUTEX_RECURSIVE);
+	pthread_plainmutex_lock_np(&bigmutex);
 	for (i = 0; i < MAX_LIBC_MUTEXES; i++) {
 		if (libc_mutexes[i].used == 0) {
-			h2_rmutex_init(&libc_mutexes[i].mutex);
+			pthread_mutex_init(&libc_mutexes[i].mutex,&attr);
 			libc_mutexes[i].used = 1;
 			*mutex = &libc_mutexes[i].mutex;
 			break;
 		}
 	}
-	h2_mutex_unlock(&bigmutex);
+	pthread_plainmutex_unlock_np(&bigmutex);
 	//	assert(*mutex != NULL);
 }
 
 void sys_Mtxdst(void **mutex)
 {
 	int i;
-	h2_mutex_lock(&bigmutex);
+	pthread_plainmutex_lock_np(&bigmutex);
 	for (i = 0; i < MAX_LIBC_MUTEXES; i++) {
 		if (*mutex == &libc_mutexes[i].mutex) {
 			libc_mutexes[i].used = 0;
 			break;
 		}
 	}
-	h2_mutex_unlock(&bigmutex);
+	pthread_plainmutex_unlock_np(&bigmutex);
 }
 
 void sys_Mtxlock(void **mutex)
 {
-	h2_rmutex_lock(*mutex);
+	pthread_mutex_lock(*mutex);
 }
 
 void sys_Mtxunlock(void **mutex)
 {
-	h2_rmutex_unlock(*mutex);
+	pthread_mutex_unlock(*mutex);
 }
 

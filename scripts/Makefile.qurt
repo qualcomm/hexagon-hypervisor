@@ -15,16 +15,16 @@ QURT_TEST_LIBS_L := $(foreach libdir, $(QURT_TEST_LIBDIRS), -l $(libdir))
 SUBDIRS := $(shell cat ./scripts/qurt_testlist | perl -p -e 's/^\s*\#.*//;')
 
 all:
-	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=all
+	$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=all
 
 tst: qurt_test_libs
-	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=tst
+	$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=tst
 
 tst_single: qurt_test_libs
-	@$(MAKE) -f scripts/Makefile.qurt $(TEST) TARG=tst
+	$(MAKE) -f scripts/Makefile.qurt $(TEST) TARG=tst
 
 clean:
-	@$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=clean
+	$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=clean
 
 qurt_test_libs: $(QURT_TEST_LIBS)
 

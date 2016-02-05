@@ -14,18 +14,24 @@ SOS_DIR=sos/
 SOS_LIB=sos/build/ref/libsos.a
 
 H2_DIR=h2/
+H2_COMPAT_DIR=h2_compat/
+POSIX_DIR=posix/
 ifeq (ref,$(IMPL))
 H2_LIB=$(H2_DIR)build/ref/libh2.a
+H2_COMPAT_LIB=$(H2_COMPAT_DIR)build/ref/libh2_compat.a
+POSIX_LIB=$(POSIX_DIR)build/ref/libposix.a
 else
 IMPL=opt
 H2_LIB=$(H2_DIR)build/opt_v$(ARCHV)/libh2.a
+H2_COMPAT_LIB=$(H2_COMPAT_DIR)build/opt_v$(ARCHV)/libh2_compat.a
+POSIX_LIB=$(POSIX_DIR)build/opt_v$(ARCHV)/libposix.a
 endif
 
 #MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a 
-MOST_LIBS= syscall/angel/libangel.a qurt/libqurt.a posix/libposix.a
+MOST_LIBS= syscall/angel/libangel.a qurt/libqurt.a 
 
-ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(MOST_LIBS)
-LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(SOS_DIR))
+ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
+LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(SOS_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR))
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 
@@ -36,13 +42,16 @@ tmp:
 $(H2_LIB): tmp
 	+${MAKE} -C $(H2_DIR) $(IMPL); cp $@ tmp/
 
-posix/libposix.a: tmp $(H2_LIB) qurt/libqurt.a
+$(POSIX_LIB): tmp $(H2_LIB)
+	+${MAKE} -C posix $(IMPL); cp $@ tmp/;
+
+$(H2_COMPAT_LIB): tmp $(H2_LIB) $(POSIX_LIB)
+	+${MAKE} -C $(H2_COMPAT_DIR) $(IMPL); cp $@ tmp/
+
+qurt/libqurt.a: tmp $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
 	+${MAKE_LIB};
 
-qurt/libqurt.a: tmp $(H2_LIB)
-	+${MAKE_LIB};
-
-syscall/angel/libangel.a: tmp $(H2_LIB)
+syscall/angel/libangel.a: tmp $(H2_LIB) $(POSIX_LIB)
 	+${MAKE_LIB};
 
 $(SOS_LIB): tmp $(H2_LIB)

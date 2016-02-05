@@ -5,7 +5,6 @@
 
 #include <h2.h>
 #include <qurt.h>
-#include <max.h>
 #include "atomic_ops.h"
 #include <hexagon_protos.h>
 
@@ -92,9 +91,6 @@ unsigned int qurt_interrupt_register(int int_num, qurt_signal_t *int_signal, int
 {
 	qurt_interrupt_table_entry_t entry;
 	int_num += 32;
-	if (int_num == RESCHED_INT) {
-		return 1;
-	}
 	entry.signal_ptr = int_signal;
 	entry.signal_mask = signal_mask;
 	qurt_int_sigsets[int_num].raw = entry.raw;

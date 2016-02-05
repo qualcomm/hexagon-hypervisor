@@ -12,7 +12,7 @@
 #include <stop.h>
 #include <yield.h>
 #include <asid.h>
-#include <time.h>
+#include <cputime.h>
 #include <stlb.h>
 #include <tlbmisc.h>
 #include <globals.h>

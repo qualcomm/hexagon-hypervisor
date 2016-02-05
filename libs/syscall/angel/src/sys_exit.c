@@ -4,11 +4,11 @@
  */
 
 #include "allsyscalls.h"
-#include <h2.h>
+#include <pthread.h>
 
 void __h2_default_thread_stop_hook__(int status)
 {
-	h2_thread_stop(status);
+	pthread_exit((void *)status);
 }
 
 void __h2_thread_stop_hook__(int status) __attribute__ ((weak,alias("__h2_default_thread_stop_hook__")));

@@ -23,7 +23,7 @@ Create a thread.
 @returns ID of the created thread, or odd value on failure.
 @dependencies None
 */
-int h2_thread_create(void *pc, void *stack, void *arg, unsigned int prio);
+int h2_thread_create_trap(void *pc, void *stack, void *arg, unsigned int prio);
 
 /**
 Terminate the current thread with the given status.
@@ -31,7 +31,7 @@ Terminate the current thread with the given status.
 @returns None; Does not return.
 @dependencies None
 */
-void h2_thread_stop(int status);
+void h2_thread_stop_trap(int status);
 
 /**
 Obtain the ID of the calling thread

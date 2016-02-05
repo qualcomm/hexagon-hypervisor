@@ -16,7 +16,6 @@ void worker_thread(void *param)
 	h2_sem_up(&sema);
 	h2_sem_down(&semb);
 	h2_sem_up(&sema);
-	h2_thread_stop(0);
 }
 
 int main(int argc, char **argv)
@@ -36,7 +35,6 @@ int main(int argc, char **argv)
 	h2_sem_down(&sema);
 	printf("Wahoo!\n");
 
-	h2_thread_stop(0);
 	return 0;
 }
 

@@ -3,6 +3,21 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+/*
+ * EJP: README NOW! 
+ * 
+ * With pthreads becoming the canonical interface, this kind of test
+ * where we don't boot up normally and where a spawned guest shares 
+ * an address space is quite ... tricky ... to make right.
+ * 
+ * Note that we call h2_thread_create_trap and h2_thread_stop_trap directly
+ * here, this means that threads are created directly with a trap, 
+ * without normal pthreads interaction, which means that mutexes and things 
+ * probably won't work right.
+ *
+ * Tread carefully!
+ */
+
 #include <h2.h>
 #include <boot.h>
 #include <bootvm_entry.h>
@@ -54,13 +69,15 @@ void task (void *tnum) {
 	}
 
 	h2_sem_up(&done);
-	h2_thread_stop(0);
+	h2_thread_stop_trap(0);
 }
 
+unsigned long main_ugp;
 void vmmain(void *unused) {
 	int i, j;
 	int ret;
 	unsigned int *sigil = (void *)(PASSFAIL_VA);
+	asm volatile (" ugp = %0 " : :"r"(main_ugp));
 
 #ifndef RTL
 	h2_handle_errors(0);
@@ -76,7 +93,7 @@ void vmmain(void *unused) {
 			do {
 				/* may fail on subsequent iterations if previous tasks haven't finished
 				 stopping yet, so keep trying */				
-				ret = h2_thread_create(task, &stacks[i][STACK_SIZE - 1], (void *)i, PRIO);
+				ret = h2_thread_create_trap(task, &stacks[i][STACK_SIZE - 1], (void *)i, PRIO);
 			} while (ret == -1);
 		}
 
@@ -103,12 +120,15 @@ void vmmain(void *unused) {
 	printf("TEST PASSED\n");
 	exit(0);
 #endif
-	h2_thread_stop(0);
+	h2_thread_stop_trap(0);
 }
 
 int main() 
 {
 	unsigned long vm;
+	unsigned long tmp;
+	asm volatile (" %0 = ugp " : "=r"(tmp));
+	main_ugp = tmp;
 
 	vm = h2_config_vmblock_init(0,SET_CPUS_INTS, TASKS + 1, 0);
 	h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
@@ -117,6 +137,6 @@ int main()
 
 	h2_vmboot(vmmain, &main_thread_stack[STACK_SIZE - 1], 0, 0, vm);
 
-	h2_thread_stop(0);
+	h2_thread_stop_trap(0);
 	return 0;
 }

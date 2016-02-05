@@ -6,7 +6,7 @@
 #include <c_std.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <cputime.h>
 #include <context.h>
 #include <max.h>
 #include <h2.h>

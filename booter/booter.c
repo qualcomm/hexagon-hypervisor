@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <max.h>
+//#include <max.h>
 #include <h2.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <errno.h>
 #include <angel.h>
@@ -22,7 +23,8 @@
 #include <unistd.h>
 
 #include "elf.h"
-#include <hw.h>
+#include "../kernel/include/max.h"
+#include "../kernel/include/hw.h"
 #include <syscall_defs.h>
 
 #define CHILD_INTERRUPT 14
@@ -1248,6 +1250,8 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
 	return p - buf - 1;
 }
 
+extern void pthread_init();
+
 int main(int argc, char **argv)
 {
 	unsigned int kerror;
@@ -1263,6 +1267,7 @@ int main(int argc, char **argv)
 	int idx;
 
 	//Remove booter from cmdline
+	pthread_init();
 	strncpy(errstr, argv[0], ERRSTR_LEN - 1);
 	argc--;
 	argv++;

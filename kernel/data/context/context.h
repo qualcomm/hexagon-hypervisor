@@ -22,6 +22,12 @@ enum {
 	H2K_STATUS_INTBLOCKED,
 };
 
+/*
+ * 64 bytes per thread of context that must stay present seems reasonable.
+ * 224-256 bytes per thread of context that can be put in DDR
+ * @ 100 threads, 6400 bytes in, seems reasonable
+ */
+
 typedef struct _h2_thread_context
 {
 	/* Kernel Variables */
@@ -32,7 +38,7 @@ typedef struct _h2_thread_context
 	/* Other info */
 	union {
 		struct {
-			u8_t tid;
+			u8_t tid;			// STID
 			u8_t hthread;			// could be < 8 bits
 			u8_t prio;
 			u8_t status;			// could be < 8 bits, combined with vmstatus?
@@ -47,6 +53,7 @@ typedef struct _h2_thread_context
 			u8_t base_prio;	// Does it need to be atomic?
 			u8_t tlbidxmask;	// mask tlbidx
 			u8_t pmu_on;	// Does it need to be atomic?  1 bit NOT NEEDED post v6x SMMU
+					// island mode?
 		};
 	};
 	// #16
@@ -62,10 +69,6 @@ typedef struct _h2_thread_context
 		u32_t trapmask;		// Alread in VMblock?  Maybe move it?  All threads in a VM have same trap mask?
 		u32_t elr;	// could be in zeroed area.
 	};
-	/* status, etc */
-	/* Context */
-	/* Context required for OS calls... callee save + ugp/gp/etc */
-	/* Need to add per-cpu interrupts in here */
 	// 32
 	union {
 		struct {
@@ -74,6 +77,7 @@ typedef struct _h2_thread_context
 		};
 		H2K_treenode_t tree;
 	};
+	// 48
 	struct {
 		union {	// maybe change to 16 bits or even 8 bits?  Saves 1-1.5 words
 			u32_t cpuint_enabled_pending;
@@ -82,12 +86,12 @@ typedef struct _h2_thread_context
 				u16_t cpuint_enabled;
 			};
 		};
-		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.
+		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.  Can move to DDR, don't zero though
 	};
-	u64_t totalcycles;
+	u64_t totalcycles;		// can move to ddr, don't zero though
 	// 64
 	u64_t pktcount;
-	union {
+	union {	// need to keep in TCM if split
 		struct {
 			u32_t futex_ptr_lo;		// Probably not needed if interrupted; only on trap; could be unioned below?
 			// needs to be pa_t, but is word aligned.  For 36 bits pa, can be 34 bits... 

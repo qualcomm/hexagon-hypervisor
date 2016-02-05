@@ -13,7 +13,7 @@
  * EJP: hash table aligned to it's size, so we 
  * should be able to use tableidx on the product 
  */
-#define HASHVAL(X) ((Q6_R_extractu_RII((((unsigned int)(X)) * FUTEX_PRIME),FUTEX_HASHBITS,32-FUTEX_HASHBITS)) ^ ((unsigned int)((X) >> 32)))
+#define FUTEX_HASHVAL(X) ((Q6_R_extractu_RII((((unsigned int)(X)) * FUTEX_PRIME),FUTEX_HASHBITS,32-FUTEX_HASHBITS)) ^ ((unsigned int)((X) >> 32)))
 
 void H2K_futex_hash_add_ring(H2K_thread_context **ring, H2K_thread_context *me) IN_SECTION(".text.core.futex");
 H2K_thread_context *H2K_futex_hash_remove_one(u32_t locklo, H2K_thread_context **ring, H2K_thread_context **pos) IN_SECTION(".text.core.futex");

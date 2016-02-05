@@ -9,14 +9,17 @@ H2 infrastructure:
 * Update documentation. Switch to doxygen or other in-file documentation scheme?
 * Go back over tests, get to ~100% unit test coverage
 * Refactor & optimize translation
-* Even better interrupt mechanism
+* Even better interrupt mechanism -- interrupts delivered to pool of waiting threads
 * Power Collapse
+* Island mode
 * Test 36 bit PA bits more
 * Kernel trace, or just continue to use ETM?
 * Continue to eliminate global data where possible
 * Refactor vector context save/restore (?)  Maybe move to new module?
 * V6x PMU work (now w/ STID)
 * Low: split bulk context storage from kernel info to split between DDR & TCM/L2locked
+* optimize, get code size down.  Code size + data size < 24KB.
+* Better page table format, better storage efficiency but faster than linear.
 
 VMM tasks:
 

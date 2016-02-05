@@ -8,52 +8,7 @@
 
 #include <c_std.h>
 #include <hexagon_protos.h>
-
-#if ARCHV <= 3
-typedef union {
-	u64_t raw;
-	struct {
-		union {
-			u32_t low;
-			struct {
-				u32_t ppn:20;
-				u32_t size:4;
-				u32_t part:2;
-				u32_t ccc:3;
-				u32_t xwr:3;
-			};
-		};
-		union {
-			u32_t high;
-			struct {
-				u32_t vpn:20;
-				u32_t asid:5;
-				u32_t guestonly:1;
-				u32_t unused:2;
-				u32_t global:1;
-				u32_t valid:1;
-				u32_t unused2:2;
-			};
-		};
-	};
-} H2K_mem_tlbfmt_t;
-
-static inline u32_t H2K_mem_tlbfmt_get_perms(H2K_mem_tlbfmt_t entry)
-{
-	return (entry.xwr << 1) | (entry.guestonly == 0);
-}
-
-static inline u32_t H2K_mem_tlbfmt_get_size(H2K_mem_tlbfmt_t entry)
-{
-	return entry.size;
-}
-
-static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
-{
-	return entry.ppn<<12;
-}
-
-#else
+#include <translate.h>
 
 typedef union {
 	u64_t raw;
@@ -100,7 +55,26 @@ static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
 	return ret;
 }
 
-#endif
+static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans, u32_t va, u32_t asid)
+{
+	H2K_mem_tlbfmt_t ret = { .raw = 0 };
+	u32_t tlbsize;
+	u32_t ppd;
+	if (((trans.xwru) & -2) == 0) return ret;
+	ret.vpn = va >> 12;
+	ret.asid = asid;
+	ret.valid = 1;
+	ret.global = 0;
+	ret.pa35 = (trans.pn >> (35-PAGE_BITS)) & 1;
+	ret.abits = trans.abits;
+	ret.xwru = trans.xwru;
+	tlbsize = trans.size >> 1;
+	if (tlbsize > 6) tlbsize = 6;
+	ppd = trans.pn;
+	ppd &= -(1<<tlbsize);
+	ret.ppd = (ppd << 1) | (1<<tlbsize);
+	return ret;
+}
 
 #endif
 

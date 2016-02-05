@@ -39,7 +39,7 @@ typedef struct H2K_vmblock_struct {
 	H2K_ext_context *ext_contexts;
 #endif
 
-	translation_type pmap_type;
+	H2K_asid_entry_t guestmap;
 	u8_t tlbidxmask;
 	/* physical memory map, page table style */
 	union {

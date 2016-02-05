@@ -102,17 +102,16 @@ HELPER_FUNC(hvx_init)
 
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) { TH_init_seen |= 1<< kg_init; }
 
-extern H2K_vmblock_t *bootvm;
-
 H2K_thread_context *boot;
 
 /* We need to use a longjmp at the end, because H2K_switch is defined as
  * noreturn */
 void H2K_switch(void *from, void *to)
 {
+	H2K_thread_context *expected = &H2K_kg.vmblocks[1]->contexts[MAX_BOOT_CONTEXTS - 1];
 	if (from != NULL) FAIL("Unexpected switch call");
-	printf("from=%p to=%p context=%p\n",from,to,&bootvm->contexts[MAX_BOOT_CONTEXTS - 1]);
-	if (to != &bootvm->contexts[MAX_BOOT_CONTEXTS - 1]) FAIL("switch to non-boot thread");
+	printf("from=%p to=%p context=%p\n",from,to,expected);
+	if (to != expected) FAIL("switch to non-boot thread");
 	boot = to;
 	TH_switch_seen = 1;
 	longjmp(env,1);

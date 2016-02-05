@@ -50,7 +50,7 @@ u64_t *H2K_mem_alloc_get(u32_t size)
 
 void H2K_dosched(H2K_thread_context *me, u32_t hwtnum)
 {
-	if (me != TH_me) FAIL("Me passed incorrectly");
+	if (me != NULL) FAIL("Once a thread is stopped, don't switch context out");
 	if (hwtnum != get_hwtnum()) FAIL("hwtnum incorrect");
 	TH_saw_dosched = 1;
 	checker_kernel_locked();

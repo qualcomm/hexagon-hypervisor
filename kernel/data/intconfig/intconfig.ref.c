@@ -123,12 +123,14 @@ static inline void H2K_intconfig_l2_init(u32_t ssbase) {}
 
 void H2K_intconfig_l2vic_crash()
 {
+#ifdef CRASH_L2VIC_STATUS
 	int i;
 	volatile unsigned int *intbase = H2K_gp->l2_int_base;
 	for (i = 0; i < MAX_L2_INTERRUPTS/32; i++) {
 		H2K_gp->crash_l2vic_enabled[i] = intbase[(0x100/4) + i];
 		H2K_gp->crash_l2vic_pending[i] = intbase[(0x500/4) + i];
 	}
+#endif
 }
 
 void H2K_intconfig_init(u32_t ssbase)

@@ -12,6 +12,8 @@
 #include <futex.h>
 #include <vm.h>
 #include <stlb.h>
+#include <asid_types.h>
+#include <spinlock.h>
 #include <timeinfo.h>
 #include <h2_common_info.h>
 #include <h2_common_kerror.h>
@@ -101,27 +103,30 @@ typedef struct {
 	u32_t last_tlb_index;
 	u32_t tlb_size;
 	u64_t pinned_tlb_mask;
+	H2K_spinlock_t asid_spinlock;
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];
 	u64_t waitcycles[MAX_HTHREADS];
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
-	u32_t on_simulator;
 	u32_t phys_offset;
 	u32_t l2_tags;
-	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
-	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
-	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
-	H2K_thread_context crash_contexts[MAX_HTHREADS];
-	u64_t crash_tlb[MAX_TLB_ENTRIES];
-	u32_t crash_l2vic_enabled[MAX_INTERRUPTS/32];
-	u32_t crash_l2vic_pending[MAX_INTERRUPTS/32];
 	u32_t build_id;
 	info_boot_flags_type info_boot_flags;
 	info_stlb_type info_stlb;
 	kerror_type kernel_error;
 	u32_t hthreads;
+	u64_t crash_tlb[MAX_TLB_ENTRIES];
+#ifdef CRASH_L2VIC_STATUS
+	u32_t crash_l2vic_enabled[MAX_INTERRUPTS/32];
+	u32_t crash_l2vic_pending[MAX_INTERRUPTS/32];
+#endif
+	H2K_thread_context crash_contexts[MAX_HTHREADS];
+	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
+	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
+	H2K_asid_entry_t asid_table[MAX_ASIDS] __attribute__((aligned(MAX_ASIDS*sizeof(H2K_asid_entry_t))));
+	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");

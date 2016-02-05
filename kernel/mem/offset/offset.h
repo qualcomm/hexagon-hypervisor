@@ -3,14 +3,12 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef H2K_VM_H
-#define H2K_VM_H 1
+#ifndef H2K_OFFSET_H
+#define H2K_OFFSET_H 1
 
-#include<asid_types.h>
-#include <vmblock.h>
 #include <translate.h>
+#include <asid_types.h>
 
-void H2K_vmblock_clear(H2K_vmblock_t *vmblock) IN_SECTION(".text.data.vm");
+H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t info);
 
 #endif
-

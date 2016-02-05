@@ -13,6 +13,7 @@
 #include <tlbfmt.h>
 #include <asid.h>
 #include <ctype.h>
+#include <translate.h>
 
 void FAIL(const char *str)
 {
@@ -23,6 +24,19 @@ void FAIL(const char *str)
 
 H2K_thread_context a;
 
+H2K_asid_entry_t info = {
+	.ptb = 0,
+	.fields = {
+		.count = 1,
+		.vmid = 2,
+		.type = H2K_ASID_TRANS_TYPE_LINEAR,
+		.log_maxhops = 2,
+		.extra = 0,
+	},
+};
+
+H2K_vmblock_t myvmblock;
+
 #define ENTRIES_MAX 32
 H2K_linear_fmt_t lin[ENTRIES_MAX];
 
@@ -31,6 +45,7 @@ static inline H2K_linear_fmt_t gen_entry(u32_t pn)
 	H2K_linear_fmt_t ret;
 	ret.raw = 0;
 	ret.xwru = 0xf;
+	ret.cccc = 0x7;
 	ret.ppn = ret.vpn = pn;
 	return ret;
 }
@@ -67,32 +82,27 @@ void make_list(const char *fmt)
 		if (fmt[i] == '\0') break;
 	}
 	a.ssr_asid = 0;
-	H2K_mem_asid_table[0].ptb = (u32_t)(lin);
-	H2K_mem_asid_table[0].fields.count = 1;
+	info.ptb = (u32_t)(lin);
 }
 
 void check_good(const char *good)
 {
 	int i;
-	H2K_mem_tlbfmt_t tmp,check;
 	u32_t badva;
+	H2K_translation_t trans;
+	H2K_translation_t check;
 	for (i = 0; good[i] != '\0'; i++) {
 		badva = (0xa + good[i] - 'a') << 28;
 		check.raw = 0;
-#if ARCHV <= 3
-		check.xwr = 0x7;
-		check.valid = 1;
-		check.ppn = check.vpn = (badva >> 12);
-#else
-		check.valid = 1;
+		check.size = 0;
 		check.xwru = 0xf;
-		check.ppd = badva >> 11 | 1;
-		check.vpn = (badva >> 12);
-#endif
-		tmp = H2K_mem_get_linear(badva,&a);
-		if (tmp.raw != check.raw) {
+		check.cccc = 0x7;
+		check.pn = badva >> 12;
+		trans = H2K_translate_default(badva);
+		trans = H2K_linear_translate(trans,info);
+		if (trans.raw != check.raw) {
 			printf("%s(%c)\n",good,good[i]);
-			printf("%llx vs %llx\n",tmp.raw,check.raw);
+			printf("%016llx vs %016llx\n",trans.raw,check.raw);
 			FAIL("good string failed");
 		}
 	}
@@ -102,10 +112,12 @@ void check_bad(const char *bad)
 {
 	int i;
 	u32_t badva;
+	H2K_translation_t trans;
 	for (i = 0; bad[i] != '\0'; i++) {
 		badva = (0xa + bad[i] - 'a') << 28;
-		if (H2K_mem_get_linear(badva,&a).raw != 0) {
-			printf("%s(%c)\n",bad,bad[i]);
+		trans = H2K_translate_default(badva);
+		if ((trans=H2K_linear_translate(trans,info)).raw != 0) {
+			printf("%s(%c): %016llx\n",bad,bad[i],trans.raw);
 			FAIL("Bad string failed");
 		}
 	}
@@ -114,6 +126,8 @@ void check_bad(const char *bad)
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	H2K_gp->vmblocks[2] = &myvmblock;
+	myvmblock.guestmap.raw = 0;
 	make_list(""); check_good(""); check_bad("abcdef");
 	make_list("a0b"); check_good("a"); check_bad("bcdef");
 	make_list("a!0b"); check_good("ab"); check_bad("cdef");
@@ -122,7 +136,7 @@ int main()
 	make_list("a!bc"); check_good("ac"); check_bad("bdef");
 	make_list("a!0!0bc"); check_good("abc"); check_bad("def");
 	make_list("af!0!00bc"); check_good("af"); check_bad("bcde");
-	make_list("af!0!00bc"); H2K_mem_asid_table[0].ptb += 8; check_good("f"); check_bad("abcde");
+	make_list("af!0!00bc"); info.ptb += 8; check_good("f"); check_bad("abcde");
 	puts("TEST PASSED");
 	return 0;
 }

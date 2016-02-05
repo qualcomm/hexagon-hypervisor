@@ -8,6 +8,7 @@
 #include <max.h>
 #include <symbols.h>
 #include <hw.h>
+#include <bzero.h>
 
 H2K_kg_t H2K_kg;
 
@@ -17,19 +18,12 @@ extern u64_t H2K_stacks;
 extern void _end();
 
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) {
-	int i;
-	u64_t *x;
 	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
-
-	x = (u64_t *)&H2K_kg;
-	for (i = 0; i < sizeof(H2K_kg)/sizeof(*x); i++) {
-		x[i] = 0;
-	}
+	H2K_bzero(&H2K_kg,sizeof(H2K_kg));
 
 	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
 
 	H2K_kg.phys_offset = phys_offset;
-	H2K_kg.tlb_index = 0;
 	H2K_kg.last_tlb_index = last_tlb_index;
 	H2K_kg.tlb_size = tlb_size;
 	H2K_kg.pinned_tlb_mask = (~0ULL) << ((last_tlb_index+1) & 0x3F);
@@ -40,12 +34,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.l2_int_base = (void *)(l2vic_base + 0x000);
 	H2K_kg.l2_ack_base = (void *)(l2vic_base + 0x200);
 #endif
-
-	if (*(int *)((unsigned long)_end + 8) == 0x1f1f1f1f) {
-		H2K_kg.on_simulator = 1;
-	} else {
-		H2K_kg.on_simulator = 0;
-	}
 
 	H2K_kg.stlbptr = NULL;
 	H2K_kg.build_id = H2K_GIT_COMMIT;
@@ -79,7 +67,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	}
 
 #ifndef NUM_HTHREADS
-
 	H2K_kg.hthreads = get_hthreads();
 #else
 	H2K_kg.hthreads = NUM_HTHREADS;

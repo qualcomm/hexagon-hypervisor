@@ -12,7 +12,7 @@
 void H2K_futex_cancel(H2K_thread_context *dest)
 {
 	u32_t hashval;
-	hashval = HASHVAL(dest->futex_ptr);
+	hashval = FUTEX_HASHVAL(dest->futex_ptr);
 	H2K_ring_remove(&H2K_gp->futexhash[hashval],dest);
 	dest->r00 = -1;
 }

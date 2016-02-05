@@ -6,21 +6,43 @@
 #ifndef H2K_TRANSLATE_H
 #define H2K_TRANSLATE_H 1
 
-#include <vmblock.h>
+#include <max.h>
+#include <asid_types.h>
 
 typedef union {
 	u64_t raw;
 	struct {
-		u32_t addr;
-		struct {
-			u32_t size:4;
-			u32_t cccc:4;
-			u32_t xwru:4;
-			u32_t valid:1;
-		};
+		u32_t pn;
+		u8_t size;
+		u8_t xwru;
+		u8_t cccc;
+		u8_t abits;
 	};
 } H2K_translation_t;
 
-H2K_translation_t H2K_translate(u32_t addr, H2K_vmblock_t *vmblock) IN_SECTION(".text.mem.translate");
+static inline H2K_translation_t H2K_translate_default(pa_t va)
+{
+	H2K_translation_t trans = {
+		.pn = va >> PAGE_BITS,
+		.size = 32 - PAGE_BITS,
+		.xwru = 0xf,
+		.cccc = 0xFF,
+		.abits = 0,
+	};
+	return trans;
+}
+
+H2K_translation_t H2K_translate(H2K_translation_t in, H2K_asid_entry_t info) IN_SECTION(".text.mem.translate");
+
+static inline pa_t H2K_translate_addr(pa_t addr_in, H2K_asid_entry_t info)
+{
+	H2K_translation_t translation = H2K_translate_default(addr_in);
+	pa_t ret;
+	translation = H2K_translate(translation, info);
+	ret = translation.pn;
+	ret <<= 12;
+	ret |= addr_in & ((1<<PAGE_BITS)-1);
+	return ret;
+}
 
 #endif

@@ -17,7 +17,6 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 	if (in.size > 2*offset.size) in.size = 2*offset.size;
 	in.xwru &= offset.xwru;
 	if (in.cccc > 0xF) in.cccc = offset.cccc;
-	/* EJP: FIXME: check bounds or something */
 	if (info.fields.extra) {
 		vmblock = H2K_gp->vmblocks[info.fields.extra];
 		if ((in.pn < vmblock->fence_lo) || (in.pn > vmblock->fence_hi)) {
@@ -26,7 +25,7 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 		}
 	}
 	vmblock = H2K_gp->vmblocks[info.fields.vmid];
-	if (vmblock == NULL) return in; /* Should always be filled out... but just in case... */
+	if (vmblock == NULL) return in; /* FIXME: Should always be filled out... but just in case... */
 	if (vmblock->guestmap.raw) return H2K_translate(in,vmblock->guestmap);
 	else return in;
 }

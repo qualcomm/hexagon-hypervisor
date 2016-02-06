@@ -22,11 +22,22 @@ static inline u32_t log2_greater(u32_t x)
 
 /*
  * EJP: FIXME: is +1 any worse than NEXTIDX?
- * EJP: FIXME: reduce maxhops storage?  If we eliminate, we'll have to search the whole table.
- * Note: can't move location since index == ASID
- * Mayb maxhops could be maxhops*4 or log(maxhops) or something.
+ * EJP: reduced maxhops storage. Now keep log2 greater than actual maxhops.
+ * Note: can't move location since index == ASID.  So I don't know how to shrink maxhops easily.
+ * 
+ * We could possibly go through and recalculate all maxhops by finding the most remote entry
+ * that has the same hash.
  */
-static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb, u32_t vmidx)
+
+/*
+ * We match if it's the same PTB, in the same guest, with the same translation type.
+ */
+static inline int H2K_asid_match(H2K_asid_entry_t a, u32_t ptb, u32_t vmidx, u32_t type)
+{
+	return ((a.ptb == ptb) && (a.fields.vmid == vmidx) && (a.fields.type == type));
+}
+
+static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb, u32_t vmidx, u32_t type)
 {
 	u32_t i = 0;
 	u32_t idx,chain;
@@ -38,8 +49,9 @@ static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb, u32_t vmidx)
 	/* Search circularly */
 	maxhops = 1<<H2K_gp->asid_table[idx].fields.log_maxhops;
 	do {
-		if ((H2K_gp->asid_table[idx].ptb == ptb) && (H2K_gp->asid_table[idx].fields.vmid == vmidx))
+		if (H2K_asid_match(H2K_gp->asid_table[idx],ptb,vmidx,type)) {
 			return H2K_gp->asid_table+idx;
+		}
 		idx = NEXTIDX(idx,chain);
 	} while ((++i) <= maxhops);
 	/* Not found? Return NULL */
@@ -76,7 +88,7 @@ s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_fla
 	s32_t asid;
 	u32_t vmidx = vmblock->vmidx;
 	H2K_spinlock_lock(&H2K_gp->asid_spinlock);
-	if ((tmp = H2K_asid_table_search(ptb,vmidx)) != NULL) {
+	if ((tmp = H2K_asid_table_search(ptb,vmidx,type)) != NULL) {
 		tmp->fields.count++;
 		asid = tmp - H2K_gp->asid_table;
 		if (flag) {

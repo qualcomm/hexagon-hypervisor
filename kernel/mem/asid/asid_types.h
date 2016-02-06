@@ -44,14 +44,12 @@ typedef	union {
 } H2K_asid_entry_fields_t;
 
 /*
- * EJP: FIXME: need to point to next level of translation somehow
- * EJP: FIXME: need to distinguish between two guests with same ptb address.
- * EJP: FIXME: PTB should be physical for speed?
- * EJP: FIXME: >32-bit PA space safe
+ * EJP: FIXED: need to point to next level of translation somehow. Now have VMID
+ * EJP: FIXME?: rename vmid to vmidx for consistency
+ * EJP: FIXED: need to distinguish between two guests with same ptb address, or different types @ same PTB.
+ * EJP: FIXME: PTB should be physical for speed? Sometimes yes, sometimes no.  Let walker decide, need extra setup func.
+ * EJP: FIXME: >32-bit PA space safe.  Currently can only register 32bit ptb.  Probably need to support extra field, match with it, and plumb through.
  * ... and somehow still fit in a 64 bit entry? going to 16 bytes would be +1KB data size.
- * 12 bytes could fit walker ptr (no transtype), baseaddr, count+maxhops+guest id
- * But 12 bytes stinks because we would need multiply and divide for indexing (at least in current C).
- * maybe just cram in 64 bits somehow... count to 15 bits, maxhops to 7 bits, transtype to 2-3 bits, ...
  *
  * 32 bits for "PTB"
  * 8 bits for "extra" (could be less, extra PA bits or VA size or ... ) ?

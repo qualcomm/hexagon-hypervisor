@@ -50,19 +50,16 @@ Get total core pcycles
 @dependencies None
 */
 
+extern unsigned long long int h2_get_core_pcycles_trap(void);
+
 static inline unsigned long long int h2_get_core_pcycles(void) {
-
-	unsigned long long int ret;
-
 #if ARCHV < 60
-	asm volatile (" trap0(#"STR(H2_TRAP_GET_PCYCLES)") \n"
-								" %0 = r1:0 \n"
-								: "=r"(ret) : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
+	return h2_get_core_pcycles_trap();
 #else
+	unsigned long long int ret;
 	asm volatile ( " %0 = c15:14 // READ UPCYCLES \n" : "=r"(ret));
-#endif
-
 	return ret;
+#endif
 }
 
 #if 0

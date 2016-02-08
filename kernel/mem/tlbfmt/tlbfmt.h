@@ -68,6 +68,7 @@ static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans
 	ret.pa35 = (trans.pn >> (35-PAGE_BITS)) & 1;
 	ret.abits = trans.abits;
 	ret.xwru = trans.xwru;
+	ret.cccc = trans.cccc;
 	tlbsize = trans.size >> 1;
 	if (tlbsize > 6) tlbsize = 6;
 	ppd = trans.pn;

@@ -24,7 +24,7 @@ static inline H2K_translation_t H2K_translate_default(pa_t va)
 {
 	H2K_translation_t trans = {
 		.pn = va >> PAGE_BITS,
-		.size = 32 - PAGE_BITS,
+		.size = (32 - PAGE_BITS)/2,
 		.xwru = 0xf,
 		.cccc = 0xFF,
 		.abits = 0,

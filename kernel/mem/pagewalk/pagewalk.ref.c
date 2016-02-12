@@ -16,11 +16,11 @@
 
 static inline H2K_translation_t H2K_pagewalk_update_translation(H2K_translation_t in, H2K_pte_t pte)
 {
-	u32_t size = 2*pte.s;
+	u32_t size = pte.s;
 	in.size = min(in.size,size);
 	/* Carefully update pn since later translation might be < current size */
-	in.pn &= (1<<size)-1;
-	in.pn |= pte.ppn & (-1<<size);
+	in.pn &= (1<<(size*2))-1;
+	in.pn |= pte.ppn & (-1<<(size*2));
 	in.xwru &= (pte.xwr << 1) | pte.u;
 	if (in.cccc > 0xF) in.cccc = pte.ccc;
 	return in;
@@ -39,7 +39,7 @@ static inline H2K_pte_t H2K_mem_pagewalk_l2(H2K_translation_t in, u32_t l2addr, 
 	if (vmblock->guestmap.raw) {
 		tmp = H2K_translate_default(l2_paddr);
 		tmp = H2K_translate(tmp,vmblock->guestmap);
-		if (tmp.raw == 0) {
+		if ((tmp.xwru & 2) == 0) {
 			pte.raw = 0;
 			return pte;
 		}
@@ -64,6 +64,7 @@ static inline H2K_pte_t H2K_mem_pagewalk_l1(H2K_translation_t in, H2K_asid_entry
 	if (vmblock->guestmap.raw) {
 		tmp.pn = gpn;
 		tmp = H2K_translate(tmp,vmblock->guestmap);
+		if ((tmp.xwru & 2) == 0) goto fail;
 		ppn = tmp.pn;
 	} else {
 		ppn = gpn;
@@ -71,11 +72,11 @@ static inline H2K_pte_t H2K_mem_pagewalk_l1(H2K_translation_t in, H2K_asid_entry
 	pte.raw = H2K_mem_physread_word((ppn << PAGE_BITS)| ((in.pn>>8) & 0xffc));
 	size = pte.s;
 	if (size <= 4) return H2K_mem_pagewalk_l2(in,pte.raw & -16, 5-size, size, vmblock);
-	if (size == 7) {
-		pte.raw = 0;
-		return pte;
-	}
+	if (size == 7) goto fail;
 	/* REFINE PPN, PERMS */
+	return pte;
+fail:
+	pte.raw = 0;
 	return pte;
 }
 

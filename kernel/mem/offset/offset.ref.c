@@ -14,7 +14,7 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 	H2K_offset_t offset;
 	offset.raw = info.ptb;
 	in.pn += offset.pages;
-	if (in.size > 2*offset.size) in.size = 2*offset.size;
+	if (in.size > offset.size) in.size = offset.size;
 	in.xwru &= offset.xwru;
 	if (in.cccc > 0xF) in.cccc = offset.cccc;
 	if (info.fields.extra) {

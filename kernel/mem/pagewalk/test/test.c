@@ -21,6 +21,24 @@ void FAIL(const char *str)
 	exit(1);
 }
 
+int TH_translate_idx = 0;
+int TH_expected_translates = 0;
+long TH_expected_translate_pn[4];
+u32_t TH_final_pn;
+
+H2K_translation_t H2K_translate(H2K_translation_t in, H2K_asid_entry_t info)
+{
+	if (TH_translate_idx >= TH_expected_translates) FAIL("too many translates");
+	if (info.raw != 0xdeadbeefcafebabeULL) FAIL("bad info arg");
+	if (TH_translate_idx != TH_expected_translates-1) {
+		if (TH_expected_translate_pn[TH_translate_idx] != in.pn) FAIL("translate bad pn");
+	} else {
+		TH_final_pn = in.pn;
+	}
+	TH_translate_idx++;
+	return in;
+}
+
 H2K_thread_context a;
 H2K_vmblock_t myvmblock;
 H2K_asid_entry_t info = {
@@ -36,11 +54,19 @@ H2K_asid_entry_t info = {
 
 u32_t l1pt[1024] __attribute__((aligned(4096)));
 
-u32_t l2pt_1MB[4] __attribute__((aligned(16)));
-u32_t l2pt_256KB[16] __attribute__((aligned(64)));
-u32_t l2pt_64KB[64] __attribute__((aligned(256)));
-u32_t l2pt_16KB[256] __attribute__((aligned(1024)));
+u32_t l2pt_1MB[4] __attribute__((aligned(4096)));
+u32_t l2pt_256KB[16] __attribute__((aligned(4096)));
+u32_t l2pt_64KB[64] __attribute__((aligned(4096)));
+u32_t l2pt_16KB[256] __attribute__((aligned(4096)));
 u32_t l2pt_4KB[1024] __attribute__((aligned(4096)));
+
+long l2addrs[] = {
+	(long)l2pt_4KB,
+	(long)l2pt_16KB,
+	(long)l2pt_64KB,
+	(long)l2pt_256KB,
+	(long)l2pt_1MB,
+};
 
 #define L1_16MB  0x00000006
 #define L1_4MB   0x00000005
@@ -121,10 +147,10 @@ static inline H2K_pte_t pte_from_trans(H2K_translation_t trans)
 {
 	H2K_pte_t pte;
 	pte.raw = 0;
-	pte.s = trans.size >> 1;
+	pte.s = trans.size;
 	pte.xwr = trans.xwru >> 1;
 	pte.u = trans.xwru & 1;
-	pte.ppn = trans.pn & (-1 << trans.size);
+	pte.ppn = trans.pn & (-1 << (trans.size*2));
 	pte.ccc = trans.cccc;
 	return pte;
 }
@@ -200,9 +226,37 @@ void test_all_pages()
 	H2K_translation_t trans;
 	for (i = 0; i < 32*1024; i++) {
 	        addr = i<<12;
+		TH_expected_translates = 0;
 		trans = H2K_translate_default(addr);
 		trans = H2K_pagewalk_translate(trans,info);
 		check_result(trans,addr,&a);
+	}
+}
+
+void test_all_pages_stage2()
+{
+	u32_t i;
+	u32_t addr;
+	u32_t pgsize;
+	H2K_translation_t trans;
+	myvmblock.guestmap.raw = 0xdeadbeefcafebabeULL;
+	TH_expected_translate_pn[0] = ((long)l1pt) >> 12;
+	for (i = 0; i < 32*1024; i++) {
+	        addr = i<<12;
+		TH_translate_idx = 0;
+		TH_expected_translates = 3;
+		pgsize = (addr >> 23) & 7;
+		if (pgsize == 7) pgsize = 6;
+		if (pgsize >= 5) {
+			TH_expected_translates = 2;
+		} else {
+			TH_expected_translate_pn[1] = l2addrs[pgsize] >> 12;
+		};
+		trans = H2K_translate_default(addr);
+		trans = H2K_pagewalk_translate(trans,info);
+		check_result(trans,addr,&a);
+		if (TH_final_pn != trans.pn) FAIL("bad final translate");
+		if (TH_expected_translates-1 > TH_translate_idx) FAIL("not enough translates");
 	}
 }
 
@@ -219,6 +273,7 @@ int main()
 	test_all_firstpage();
 	puts("So far, so good...");
 	test_all_pages();
+	test_all_pages_stage2();
 	puts("TEST PASSED");
 	return 0;
 }

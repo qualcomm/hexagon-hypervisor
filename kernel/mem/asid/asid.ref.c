@@ -82,7 +82,7 @@ static inline H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
 	return H2K_gp->asid_table+idx;
 }
 
-s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
+s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, u32_t extra, H2K_vmblock_t *vmblock)
 {
 	H2K_asid_entry_t *tmp;
 	s32_t asid;
@@ -100,7 +100,7 @@ s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_fla
 		tmp->fields.type = type;
 		tmp->fields.vmid = vmidx;
 		tmp->fields.count = 1;
-		tmp->fields.extra = 0;
+		tmp->fields.extra = extra;
 		asid = tmp - H2K_gp->asid_table;
 		H2K_mem_tlb_invalidate_asid(asid);
 		H2K_mem_stlb_invalidate_asid(asid);
@@ -111,11 +111,11 @@ s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_fla
 	return asid;
 }
 
-s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
+s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, u32_t extra, H2K_vmblock_t *vmblock)
 {
 	if (type >= H2K_ASID_TRANS_TYPE_XXX_LAST) return -1;
 	/* EJP: optimize me: could have translation-specific opportunity to pre-translate for first lookup */
-	return H2K_do_asid_table_inc(ptb,type,flag,vmblock);
+	return H2K_do_asid_table_inc(ptb,type,flag,extra,vmblock);
 }
 
 void H2K_asid_table_dec(u32_t asid)

@@ -37,7 +37,7 @@ FUNC_START h2_vmtrap_clrmap .text.h2.vmtrap .p2align 2
 	jumpr r31
 FUNC_END h2_vmtrap_clrmap
 
-FUNC_START h2_vmtrap_newmap .text.h2.vmtrap .p2align 2
+FUNC_START h2_vmtrap_newmap_extra .text.h2.vmtrap .p2align 2
 	trap1(#H2_VMTRAP_NEWMAP)
 	jumpr r31
 FUNC_END h2_vmtrap_newmap

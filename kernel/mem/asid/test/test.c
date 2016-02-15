@@ -55,25 +55,25 @@ void check_max()
 	H2K_asid_table_init();
 
 	for (i = 0; i < MAX_ASIDS; i++) {
-		if ((tmp = H2K_asid_table_inc((u32_t)(&bases[i]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, &vmblock)) < 0) {
+		if ((tmp = H2K_asid_table_inc((u32_t)(&bases[i]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, 0, &vmblock)) < 0) {
 			FAIL("Couldn't alloc max ASIDs");
 		}
 		bases[i] = tmp;
 		print_max_hops(i+1);
 	}
 
-	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, &vmblock) >= 0) {
+	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, 0, &vmblock) >= 0) {
 		FAIL("Didn't fail max ASIDs+1");
 	}
 
 	for (i = 0; i < MAX_ASIDS; i++) {
-		if ((tmp = H2K_asid_table_inc((u32_t)(&bases[i]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, &vmblock)) < 0) {
+		if ((tmp = H2K_asid_table_inc((u32_t)(&bases[i]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, 0, &vmblock)) < 0) {
 			FAIL("Couldn't inc max ASIDs");
 		}
 		bases[i] = tmp;
 	}
 
-	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, &vmblock) >= 0) {
+	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, 0, &vmblock) >= 0) {
 		FAIL("Didn't fail max ASIDs+1");
 	}
 
@@ -87,7 +87,7 @@ void check_max()
 
 	H2K_asid_table_dec(bases[0]);
 
-	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, &vmblock) >= 0) {
+	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, 0, &vmblock) >= 0) {
 		FAIL("Didn't fail max ASIDs+1 after decrement");
 	}
 
@@ -99,7 +99,7 @@ void check_max()
 	}
 	if (entry.fields.count != 0) FAIL("Didn't update counts correctly / dec");
 
-	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, &vmblock) < 0) {
+	if (H2K_asid_table_inc((u32_t)(&bases[MAX_ASIDS]), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, 0, &vmblock) < 0) {
 		FAIL("couldn't alloc asid after freeing");
 	}
 	print_max_hops(MAX_ASIDS);

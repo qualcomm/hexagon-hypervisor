@@ -124,7 +124,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	boot->continuation = H2K_interrupt_restore;
 	boot->vmstatus = 0x0;
 	boot->tlbidxmask = ~0;
-	asid = H2K_asid_table_inc(boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, H2K_ASID_TLB_INVALIDATE_FALSE, bootvm);
+	asid = H2K_asid_table_inc(boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, H2K_ASID_TLB_INVALIDATE_FALSE, 0, bootvm);
 	boot->ssr_asid = asid;
 	BKL_LOCK();
 	H2K_start_threads(hthreads);

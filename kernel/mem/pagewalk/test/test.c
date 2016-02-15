@@ -274,6 +274,7 @@ int main()
 	puts("So far, so good...");
 	test_all_pages();
 	test_all_pages_stage2();
+	/* FIXME: test fails from translate during walk / last translate */
 	puts("TEST PASSED");
 	return 0;
 }

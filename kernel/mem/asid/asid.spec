@@ -100,6 +100,7 @@ H2K_asid_table_inc
 	:param ptb: Address of the translation base
 	:param type: Type of translation
 	:param flag: Invalidate TLB entries for this ASID
+	:param extra: Extra translation info
 	:param vmblock: pointer to vmblock of guest
 
 Description

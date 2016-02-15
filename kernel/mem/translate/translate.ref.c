@@ -7,6 +7,7 @@
 #include <linear.h>
 #include <offset.h>
 #include <pagewalk.h>
+#include <varadix.h>
 
 /* 
  * EJP: consider: having H2K_xxxx_transate also take vmblock and lookup
@@ -26,8 +27,12 @@ static const translation_funcptr H2K_translate_funcs[H2K_ASID_TRANS_TYPE_XXX_LAS
 	[H2K_ASID_TRANS_TYPE_LINEAR] = H2K_linear_translate,
         [H2K_ASID_TRANS_TYPE_TABLE] = H2K_pagewalk_translate,
         [H2K_ASID_TRANS_TYPE_OFFSET] = H2K_offset_translate,
+        [H2K_ASID_TRANS_TYPE_VARADIX] = H2K_varadix_translate,
 };
 
+/*
+ * EJP: FIXME: optimization: maybe this is a good place for caching / memoization?
+ */
 H2K_translation_t H2K_translate(H2K_translation_t in, H2K_asid_entry_t info)
 {
 	return H2K_translate_funcs[info.fields.type](in,info);

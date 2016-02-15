@@ -32,6 +32,13 @@ static inline H2K_translation_t H2K_translate_default(pa_t va)
 	return trans;
 }
 
+static inline H2K_translation_t H2K_translate_bad()
+{
+	H2K_translation_t bad;
+	bad.raw = 0ULL;
+	return bad;
+}
+
 H2K_translation_t H2K_translate(H2K_translation_t in, H2K_asid_entry_t info) IN_SECTION(".text.mem.translate");
 
 static inline pa_t H2K_translate_addr(pa_t addr_in, H2K_asid_entry_t info)

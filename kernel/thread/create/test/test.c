@@ -117,7 +117,7 @@ int main()
 	c = &TH_vm.contexts[2];
 	d = &TH_vm.contexts[3];
 
-	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, vmblock);
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, 0, vmblock);
 
 	a->gp = 0x12340000;
 	b->gp = c->gp = d->gp = 0x0;
@@ -175,7 +175,7 @@ int main()
 	vm.pmap_type = H2K_ASID_TRANS_TYPE_TABLE;
 
 	/* so we can check if properly decremented */
-	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, vmblock);
+	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, 0, vmblock);
 
 	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
 	/* asid count should have gone to 2 and then back to 1 */

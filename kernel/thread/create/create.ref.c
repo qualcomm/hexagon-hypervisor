@@ -28,6 +28,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	u32_t bestprio;
 	u32_t trapmask;
 	u32_t ptb;
+	u32_t extra;
 	translation_type type;
 	s32_t asid;
 	void *guest_evb;
@@ -46,10 +47,12 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 		guest_evb = NULL;
 		type = H2K_ASID_TRANS_TYPE_OFFSET;
 		ptb = identity_offset.raw;
+		extra = 0;
 	} else { // inherit
 		guest_evb = me->gevb;
 		ptb = H2K_gp->asid_table[me->ssr_asid].ptb;
 		type = H2K_gp->asid_table[me->ssr_asid].fields.type;
+		extra = H2K_gp->asid_table[me->ssr_asid].fields.extra;
 	}
 
 	if (prio > MAX_PRIO) return -1;        // bad prio
@@ -79,7 +82,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->vmstatus = 0x0;            // all clear
 	tmp->gevb = guest_evb;
 
-	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE, vmblock);
+	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE, extra, vmblock);
 
 	if (asid == -1) { 						// can't allocate asid
 		vmblock->free_threads = tmp; // return to free list

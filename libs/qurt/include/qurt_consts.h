@@ -180,7 +180,9 @@
 
 #define QURT_MAX_NAME_LEN   64
 
-#define MAX_POOL_RANGES     16
+//#define MAX_POOL_RANGES     16
+#define MAX_POOL_RANGES     4
+#define MAX_POOL_NAME_LEN   24
 //#define MAX_TLB_ENTRIES     128 
 
 /*

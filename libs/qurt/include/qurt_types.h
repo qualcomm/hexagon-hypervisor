@@ -206,7 +206,7 @@ typedef struct {
 /** Definition of the user physical memory pool. */
 typedef struct {
     /** @cond */
-    char name[32];
+    char name[MAX_POOL_NAME_LEN];
     struct ranges{
         unsigned int start;
         unsigned int size;

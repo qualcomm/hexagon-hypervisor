@@ -17,7 +17,7 @@ typedef struct {
 
 // L2 tag sizes
 enum {
-	s0 = 0, s64 = 1, s128 = 2, s256 = 3, s512 = 4, s1024 = 5, s2048 = 6, reserved = 7
+	s0 = 0, s64 = 1, s128 = 2, s256 = 3, s512 = 4, s1024 = 5, reserved = 7
 };
 
 // array size -> tag size
@@ -573,7 +573,7 @@ static u8_t l2_v62_7[] =
 		[0x9] = reserved,
 		[0xa] = reserved,
 		[0xb] = reserved,
-		[0xc] = s2048,
+		[0xc] = s1024,
 		[0xd] = reserved,
 		[0xe] = reserved,
 		[0xf] = reserved
@@ -653,7 +653,7 @@ static u8_t l2_v65_2[] =
 		[0x9] = reserved,
 		[0xa] = reserved,
 		[0xb] = reserved,
-		[0xc] = s2048,
+		[0xc] = s1024,
 		[0xd] = reserved,
 		[0xe] = reserved,
 		[0xf] = reserved

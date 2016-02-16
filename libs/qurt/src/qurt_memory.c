@@ -694,8 +694,8 @@ void qurt_memory_init()
 	qurt_pprint_mappings();
 	qurt_memory_make_static_regions();
 #endif
-	printf("qurt memory init: sizeof(mempool node): %d\n",sizeof(struct qurt_mem_pool_struct));
-	printf("qurt memory init: sizeof(region node): %d\n",sizeof(struct qurt_mem_region_struct));
+	//qurt_printf("qurt memory init: sizeof(mempool node): %d\n",sizeof(struct qurt_mem_pool_struct));
+	//qurt_printf("qurt memory init: sizeof(region node): %d\n",sizeof(struct qurt_mem_region_struct));
 }
 
 #if 1

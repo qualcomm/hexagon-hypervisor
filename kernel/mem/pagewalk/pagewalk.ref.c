@@ -55,18 +55,16 @@ static inline H2K_pte_t H2K_mem_pagewalk_l1(H2K_translation_t in, H2K_asid_entry
 	H2K_pte_t pte;
 	u32_t size;
 	u32_t baseaddr = info.ptb;
-	H2K_translation_t tmp;
+	H2K_translation_t tmp = H2K_translate_default(baseaddr);
 	/* check that effective addr is in bounds of VM */
 	/* FIXME: or, translate at ptb registration time! */
-	pa_t gpn = baseaddr >> PAGE_BITS;
 	pa_t ppn;
 	if (vmblock->guestmap.raw) {
-		tmp.pn = gpn;
 		tmp = H2K_translate(tmp,vmblock->guestmap);
 		if ((tmp.xwru & 2) == 0) goto fail;
 		ppn = tmp.pn;
 	} else {
-		ppn = gpn;
+		ppn = tmp.pn;
 	}
 	pte.raw = H2K_mem_physread_word((ppn << PAGE_BITS)| ((in.pn>>8) & 0xffc));
 	size = pte.s;

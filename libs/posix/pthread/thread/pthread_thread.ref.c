@@ -148,7 +148,7 @@ int pthread_join(pthread_t thread, void **retval)
 	if ((dest = pthread_thread_find_id(thread)) == NULL) return ESRCH;
 	if (dest->attrs.detached) return EINVAL;
 	pthread_sem_wait_np(&dest->waiters);
-	*retval = dest->retval;
+	if (retval) *retval = dest->retval;
 	pthread_sem_post_np(&dest->joined);	/* Let thread know we've read values */
 	pthread_sem_wait_np(&dest->exiting);	/* Wait for thread to be ready to die */
 	pthread_sem_post_np(&dest->ack);	/* Wait for thread to be ready to die */

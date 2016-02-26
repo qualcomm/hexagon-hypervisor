@@ -53,15 +53,24 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 
 	int i, j, n_el, bytes, pos;
 	int ntomatch = nsyms;
-	Elf32_Shdr strhdr,symhdr;
+	Elf32_Shdr strhdr, symhdr, 
+		shstr;  // section-header string table section header :()
 	Elf32_Sym sym;
+	int shstrtab_offset;
+	char *shstrtab;
 
 	char buf[SPECIALS_BUFSIZE];
+
+	if (SHN_UNDEF == ehdr->e_shstrndx) goto error;
+	if (-1 == elf_get_shdr(fdesc, ehdr->e_shstrndx, &shstr, ehdr)) goto error;
+	shstrtab_offset = shstr.sh_offset;
+	shstrtab = (char *)ehdr + shstrtab_offset;
 
 	for (i = 0; i < ehdr->e_shnum; i++) {
 		if (i == ehdr->e_shstrndx) continue;
 		if (elf_get_shdr(fdesc,i,&strhdr,ehdr) == -1) goto error;
-		if (strhdr.sh_type == SHT_STRTAB) break;
+		if (strhdr.sh_type != SHT_STRTAB) continue;
+		if (0 == strcmp(shstrtab + strhdr.sh_name, ".strtab")) break;
 	}
 	if (strhdr.sh_type != SHT_STRTAB) goto error;
 	if ((pos = lseek(fdesc, strhdr.sh_offset, SEEK_SET)) == -1) goto error;
@@ -106,40 +115,3 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
  error:
 	return -1;
 }
-
-/* int elf_get_symbol(int fdesc, const char *name, const Elf32_Ehdr *ehdr) */
-/* { */
-/* 	int i,n_el, ret = -1; */
-/* 	Elf32_Shdr strhdr,symhdr; */
-/* 	Elf32_Sym sym; */
-/* 	char *strings = NULL; */
-/* 	for (i = 0; i < ehdr->e_shnum; i++) { */
-/* 		if (i == ehdr->e_shstrndx) continue; */
-/* 		if (elf_get_shdr(fdesc,i,&strhdr,ehdr) == -1) goto done; */
-/* 		if (strhdr.sh_type == SHT_STRTAB) break; */
-/* 	} */
-/* 	if (strhdr.sh_type != SHT_STRTAB) return -1; */
-/* 	if ((strings = malloc(strhdr.sh_size)) == NULL) goto done; */
-/* 	if (lseek(fdesc,strhdr.sh_offset,SEEK_SET) == -1) return -1; */
-/* 	if (read(fdesc,strings,strhdr.sh_size) != strhdr.sh_size) goto done; */
-
-/* 	for (i = 0; i < ehdr->e_shnum; i++) { */
-/* 		if (elf_get_shdr(fdesc,i,&symhdr,ehdr) == -1) goto done; */
-/* 		if (symhdr.sh_type == SHT_SYMTAB) break; */
-/* 	} */
-/* 	if (symhdr.sh_type != SHT_SYMTAB) goto done; */
-
-/* 	n_el = symhdr.sh_size / symhdr.sh_entsize; */
-/* 	if (lseek(fdesc,symhdr.sh_offset,SEEK_SET) == -1) return -1; */
-/* 	for (i = 1; i < n_el; i++) { */
-/* 		if (read(fdesc,&sym,sizeof(sym)) != sizeof(sym)) goto done; */
-/* 		if (0==strcmp(name,strings+sym.st_name)) { */
-/* 			ret = sym.st_value; */
-/* 			break; */
-/* 		} */
-/* 	} */
-/* done: */
-/* 	if (strings) free(strings); */
-/* 	return ret; */
-/* } */
-

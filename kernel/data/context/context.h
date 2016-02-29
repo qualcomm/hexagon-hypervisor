@@ -28,6 +28,22 @@ enum {
  * @ 100 threads, 6400 bytes in, seems reasonable
  */
 
+/* If we're active, on a trap we want to save off r19-r16, r29:28, r31:30, continuation, ccrssr
+ * ... maybe that fits in the first 64 bytes.
+ * If we go to 5 cache lines, we'd want trap context in the first cache line, context_save context in first two lines,
+ * and switch in the rest.  
+ * ... so ...
+ * r31-r28, r19-r16, ccrssr, continuation, + 5 words from full ctx save
+ * r0-r15 lc0sa0 usr_preds [~20 words]
+ * rest of regs in switch
+ *
+ * I'm really concerned about having two separate locations.  Everywhere we have me->xxx it will be me->bulk->xxx.
+ * We can keep bulk pointer in SGP1, but then we won't have KSP there.  Unless we have some register storage in
+ * the first 64 bytes, we don't have a place to put the bulk pointer.  And it's another pointer load.
+ * r0100 may *have* to go there, because interrupts can abort blocking.  I guess that might solve the storage problem...
+ * though not in a great way.
+ */
+
 typedef struct _h2_thread_context
 {
 	/* Kernel Variables */
@@ -60,14 +76,14 @@ typedef struct _h2_thread_context
 	union {
 		u64_t vmblock_id;
 		struct {
-			H2K_id_t id;				// lower bits unused? Maybe union with vmstatus?
-			struct H2K_vmblock_struct *vmblock;	// could look up from GP + high bits of id
+			H2K_id_t id;				// lower bits unused? Maybe union with vmstatus? extra futex pa bits?
+			struct H2K_vmblock_struct *vmblock;	// could look up from GP + high bits of id. Not used so much. --> futex_ptr
 		};
 	};
 	// 24
 	struct {
 		u32_t trapmask;		// Alread in VMblock?  Maybe move it?  All threads in a VM have same trap mask?
-		u32_t elr;	// could be in zeroed area.
+		u32_t elr;	// could be in zeroed area. --> bulk storage ptr
 	};
 	// 32
 	union {
@@ -91,7 +107,7 @@ typedef struct _h2_thread_context
 	u64_t totalcycles;		// can move to ddr, don't zero though
 	// 64
 	u64_t pktcount;
-	union {	// need to keep in TCM if split
+	union {	// need to keep futex ptr in TCM if split
 		struct {
 			u32_t futex_ptr_lo;		// Probably not needed if interrupted; only on trap; could be unioned below?
 			// needs to be pa_t, but is word aligned.  For 36 bits pa, can be 34 bits... 

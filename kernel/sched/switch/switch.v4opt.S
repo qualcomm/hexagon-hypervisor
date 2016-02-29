@@ -297,7 +297,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	elr = r0
 	{
-		r21:20 = memd(DST+#CONTEXT_ccrssr)
+		r21:20 = memd(DST+#CONTEXT_ccrssr)	// fixme: will restore later?
 		r23:22 = memd(DST+#CONTEXT_pktcount)
 	}
 	{
@@ -327,7 +327,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		r31 = memw(DST+#CONTEXT_continuation)
-		r1:0 = memd(DST+#CONTEXT_r0100)
+		r1:0 = memd(DST+#CONTEXT_r0100)		// for return val from blocking traps
 	}
 	{
 		r31 = and(r31,#-4)

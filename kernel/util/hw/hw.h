@@ -330,14 +330,6 @@ static inline void H2K_mutex_unlock_tlb()
 }
 
 #if (ARCHV <= 3)
-#define H2K_TLB_ATOMIC_START H2K_mutex_lock_tlb()
-#define H2K_TLB_ATOMIC_END H2K_mutex_unlock_tlb()
-#else
-#define H2K_TLB_ATOMIC_START
-#define H2K_TLB_ATOMIC_END
-#endif
-
-#if (ARCHV <= 3)
 static inline void H2K_gregs_save(H2K_thread_context *me) { }
 static inline void H2K_gregs_restore(H2K_thread_context *me) { }
 #else

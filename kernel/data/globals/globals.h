@@ -101,6 +101,7 @@ typedef struct {
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
 	u32_t last_tlb_index;
+	u32_t tmpmap_lock;
 	u32_t tlb_size;
 	u64_t pinned_tlb_mask;
 	H2K_spinlock_t asid_spinlock;

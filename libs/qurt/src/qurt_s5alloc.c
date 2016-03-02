@@ -102,7 +102,7 @@ int qurt_s5_feed(qurt_s5id_t id, void *mem, unsigned int memsize)
 	stream = &streams[id];
 	elsize = stream->elementsize;
 	memptr = mem;
-	while (memsize > elsize) {
+	while (memsize >= elsize) {
 		qurt_s5_free(id,memptr);
 		memptr += elsize;
 		memsize -= elsize;

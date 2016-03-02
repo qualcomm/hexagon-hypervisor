@@ -200,7 +200,7 @@ static void qurt_pprint_mappings()
 }
 #endif
 
-extern long long __tcm_static_vapa_offset__;
+extern long long __tcm_static_vapa_offset__ __attribute__((weak));
 
 static inline void *tcm_p2v(unsigned long pa)
 {

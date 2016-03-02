@@ -22,6 +22,11 @@
 
 #define cas(x,y,z) h2_atomic_compare_swap32(x,(atomic_u32_t)y,(atomic_u32_t)z)
 
+#ifdef DEBUG_BIST
+#define pthread_plainmutex_lock_np(...) /* NOTHING */
+#define pthread_plainmutex_unlock_np(...) /* NOTHING */
+#endif
+
 struct s5_stream_info {
 	union {
 		struct {
@@ -71,15 +76,16 @@ void *qurt_s5_alloc(qurt_s5id_t id)
 	struct s5_stream_info *stream;
 	struct s5_element *cur;
 	stream = &streams[id];
-	do {
-		cur = (struct s5_element *)stream->headaddr;
-		if (cur == NULL) {
+	while (1) {
+		/* If no memory, ask for more memory */
+		if ((cur = (struct s5_element *)stream->headaddr) == NULL) {
 			qurt_s5_morepages(stream,id);
-			if (stream->headaddr == 0) return NULL;
-			continue;
+			/* If still no memory, out of memory */
+			if ((cur = (struct s5_element *)stream->headaddr) == NULL) return NULL;
 		}
-	} while (cas(&stream->headaddr,cur,cur->next) != (atomic_u32_t)cur);
-	return cur;
+		/* If we can cas pop the head, we're done.  Otherwise, try again */
+		if (cas(&stream->headaddr,cur,cur->next) == (atomic_u32_t)cur) return cur;
+	}
 }
 
 int qurt_s5_free(qurt_s5id_t id, void *mem)
@@ -110,3 +116,85 @@ int qurt_s5_feed(qurt_s5id_t id, void *mem, unsigned int memsize)
 	return 0;
 }
 
+#ifdef DEBUG_BIST
+
+#include <stdio.h>
+
+static void FAIL(const char *msg)
+{
+	printf("oops: %s\n",msg);
+	exit(1);
+}
+
+static unsigned int s5_count_elements(qurt_s5id_t id)
+{
+	unsigned int count = 0;
+	struct s5_stream_info *stream;
+	struct s5_element *ptr;
+	stream = &streams[id];
+	for (ptr = (struct s5_element *)stream->headaddr; ptr != NULL; ptr = ptr->next) count++;
+	return count;
+}
+
+static void s5_dump()
+{
+	int i;
+	for (i = 0; i < MAX_STREAMS; i++) {
+		printf("stream %d: elementsize=%4d head=%08x items=%d\n",
+			i,streams[i].elementsize,streams[i].headaddr,s5_count_elements(i));
+	}
+}
+
+char data[1024];
+qurt_s5id_t a,b,c;
+
+int TH_seen_nomore_data = 0;
+void TH_nomore_data(void *opaque, qurt_s5id_t id, unsigned int elementsize)
+{
+	puts("nomore!");
+	if ((long)opaque != (long)0xdeadbeef) FAIL("nomore: opaque");
+	if (id != b) FAIL("nomore: id");
+	if (elementsize != 16) FAIL("nomore: elementsize");
+	TH_seen_nomore_data = 1;
+}
+
+int TH_seen_more_data = 0;
+void TH_more_data(void *opaque, qurt_s5id_t id, unsigned int elementsize)
+{
+	static int once = 1;
+	puts("more!");
+	if ((long)opaque != (long)0xcafebabe) FAIL("nomore: opaque");
+	if (id != c) FAIL("nomore: id");
+	if (elementsize != 32) FAIL("nomore: elementsize");
+	if (once) qurt_s5_feed(id,data+128,32);
+	once = 0;
+}
+
+int main()
+{
+	s5_dump();
+	if ((a = qurt_s5_create(8,NULL,NULL)) < 0) FAIL("create/a");
+	if ((b = qurt_s5_create(16,TH_nomore_data,(void *)0xdeadbeef)) < 0) FAIL("create/b");
+	if ((c = qurt_s5_create(32,TH_more_data,(void *)0xcafebabe)) < 0) FAIL("create/c");
+	printf("streams alloc'd\n");
+	s5_dump();
+	if (qurt_s5_alloc(a)) FAIL("empty/a");
+	if (qurt_s5_alloc(b)) FAIL("empty/b");
+	qurt_s5_feed(a,data,8);
+	qurt_s5_feed(b,data+16,16);
+	qurt_s5_feed(c,data+32,32);
+	printf("streams fed\n");
+	s5_dump();
+	if (qurt_s5_alloc(a) != (void *)(data+0)) FAIL("alloc1/a");
+	if (qurt_s5_alloc(b) != (void *)(data+16)) FAIL("alloc1/b");
+	if (qurt_s5_alloc(c) != (void *)(data+32)) FAIL("alloc1/c");
+	printf("streams empty\n");
+	s5_dump();
+	if (qurt_s5_alloc(a)) FAIL("empty2/a");
+	if (qurt_s5_alloc(b)) FAIL("empty2/b");
+	if (!TH_seen_nomore_data) FAIL("empty2/b/nomore call");
+	if (qurt_s5_alloc(c) != (void *)(data+128)) FAIL("more data");
+	if (qurt_s5_alloc(c)) FAIL("empty2/c");
+	puts("PASS");
+}
+#endif

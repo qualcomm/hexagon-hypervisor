@@ -816,10 +816,11 @@ static inline void qurt_mapping_static_tcm_load(unsigned int offset)
 	unsigned long tcm_static_vaddr_start = (long)(&__tcm_static_section_start__);
 	unsigned long tcm_static_vaddr_end = (long)(&__tcm_static_section_end__);
 	unsigned long tcm_static_size = tcm_static_vaddr_end - tcm_static_vaddr_start;
-
+	if (tcm_static_size == 0) return;
 	memcpy(tcm_dst_data,tcm_src_data,tcm_static_size);
 }
 
+#if 0
 int qurt_mem_kludge_reject(unsigned long long int inval)
 {
 	int size = Q6_R_ct0_P(inval);
@@ -827,6 +828,7 @@ int qurt_mem_kludge_reject(unsigned long long int inval)
 	if (((vpn & 0xFF000) == 0x8B000) && (size < 6)) return 1;
 	return 0;
 }
+#endif
 
 /*
  * Here's how I think we'll need to boot up

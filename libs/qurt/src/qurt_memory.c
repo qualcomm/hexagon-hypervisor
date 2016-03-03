@@ -907,13 +907,29 @@ void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long
 	 */
 	qurt_mapping_static_tcm_load(offset);
 	/* OK, everything should be where it needs to go... now actually turn on real translation */
-	root_entry = tcm_v2p(table_root);
+	root_entry = tcm_v2p(table_root) >> 2;
 	root_entry |= (1<<(ROOT_ENTRY_BITS-1));
 	qurt_pprint_table();
 	h2_vmtrap_newmap_extra((void *)root_entry,H2K_ASID_TRANS_TYPE_VARADIX,H2K_ASID_TLB_INVALIDATE_FALSE,20);
 	// qurt_memory_tlb_pin();	// maybe?
 	//qurt_pprint_mappings();
 	//qurt_pprint_regions();
+}
+
+#ifdef QURTMEM_DEBUG
+static inline void try_pool_alloc()
+{
+	qurt_mem_pool_t ppool;
+	qurt_mem_region_t region;
+	qurt_mem_region_attr_t attr;
+	unsigned int addr;
+	qurt_mem_pool_attach("DEFAULT_PHYSPOOL",&ppool);
+	qurt_mem_region_attr_init(&attr);
+	qurt_mem_region_create(&region,4096*64,ppool,&attr);
+	qurt_mem_region_attr_get(region,&attr);
+	qurt_mem_region_attr_get_virtaddr(&attr,&addr);
+	qurt_printf("va=%x\n",addr);
+	qurt_pprint_table();
 }
 
 void qurt_mem_tester(unsigned long long int *tlbfmt_a)
@@ -934,7 +950,12 @@ void qurt_mem_tester(unsigned long long int *tlbfmt_a)
 		qurt_printf("find_mapping: vpn=%x entry @ %p = %x\n",vpn,entryptr,
 			(entryptr==NULL) ? 0xdeadbeefU : *entryptr);
 	}
+	qurt_memory_pool_init();
+	qurt_mapping_create_64(0x60000000,0x50000000ULL,0x01000000,0x7,0xf);
+	qurt_pprint_table();
+	try_pool_alloc();
 }
+#endif
 
 void qurt_memory_init()
 {

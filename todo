@@ -19,7 +19,10 @@ H2 infrastructure:
 * V6x PMU work (now w/ STID)
 * Low: split bulk context storage from kernel info to split between DDR & TCM/L2locked
 * optimize, get code size down.  Code size + data size < 24KB.
-* Better page table format, better storage efficiency but faster than linear.
+* Optimize trap: minimal context save/restore
+* Optimize walker
+* Be able to compile out shints
+* Optimize context layout: context save and switch in-sequence filling cache lines
 
 VMM tasks:
 
@@ -33,4 +36,5 @@ DONE : * (I think) Make sure extra PA bits are used as appropriate (e.g. futex; 
 DONE : * Save/restore framelimit,framekey
 DONE : * Save/restore pktcount
 DONE : * Try and optimize context storage? -- changed to 16 per-cpu interrupts
+DONE : Better page table format, better storage efficiency but faster than linear.
 

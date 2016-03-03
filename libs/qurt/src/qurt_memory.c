@@ -37,6 +37,12 @@
  */
 
 /*
+ * 
+ * FIXME: FIXME: FIXME: need to factor out page table management from qurt memory api
+ * 
+ */
+
+/*
  * qurt_mem_pool_t and qurt_mem_region_t ... change to pointers to structs...
  *
  * I think we have to support this, they use it for HLOS giving memory to modem?

@@ -45,6 +45,8 @@ s32_t H2K_prio_set() { return 9; }
 s32_t H2K_prio_get() { return 10; }
 s32_t H2K_popup_wait() { return 11; }
 s32_t H2K_sched_yield() { return 12; }
+s32_t H2K_intpool_configure() { return 14; }
+s32_t H2K_intpool_wait() { return 15; }
 s32_t H2K_pcycles_get() { return 16; }
 s32_t H2K_tid_set() { return 18; }
 s32_t H2K_tid_get() { return 19; }
@@ -78,7 +80,7 @@ void user_mode();
 u64_t guest_stack[128] __attribute__((aligned(128*8)));
 
 s32_t testvals[] = {
-	 0, 1, 2, 3, 4, 5, 6, 1, 8, 9,10,11,12, 1, 1, 1,
+	 0, 1, 2, 3, 4, 5, 6, 1, 8, 9,10,11,12, 1,14,15,
 	16, 1,18,19,20,21,22,23,24,25,26,27,28,29,30,31
 };
 

@@ -28,6 +28,7 @@ H2 infrastructure:
 	But, not much need to accept L1 interrupts.  Will simplify interrupt paths.
 	Can map vic and then do tests from booter
 * Flatten config / hwconfig for code size (& perf), also yields more args for subcalls
+* Once simulators update, add intpool test_h2 to testlist
 
 VMM tasks:
 

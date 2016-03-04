@@ -98,7 +98,7 @@ void TH_clear_intpool()
  */
 void TH_set_intpool(int i, H2K_thread_context *thread)
 {
-	H2K_intpool_configure(i,thread);
+	H2K_intpool_configure(i,1,thread);
 	H2K_ring_append(&thread->vmblock->intpool,thread);
 }
 

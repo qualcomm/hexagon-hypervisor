@@ -42,13 +42,8 @@ void H2K_vmtrap_clrmap(H2K_thread_context *me)
 		return;
 	}
 
-	if (count < 0x80000000) {
-		H2K_mem_stlb_invalidate_va(va, count, me->ssr_asid, me);
-		H2K_mem_tlb_invalidate_va(va, count, me->ssr_asid, me);
-	} else {  // really big range; just blow away the whole asid
-		H2K_mem_stlb_invalidate_asid(me->ssr_asid);
-		H2K_mem_tlb_invalidate_asid(me->ssr_asid);
-	}
+	H2K_mem_stlb_invalidate_va(va, count, me->ssr_asid, me);
+	H2K_mem_tlb_invalidate_va(va, count, me->ssr_asid, me);
 }
 
 /* 11 */

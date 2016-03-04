@@ -16,7 +16,8 @@
 
 void H2K_mem_tlb_invalidate_asid(u32_t asid) {
 
-	/* Don't need the tmpmap_lock here because the tmp mapping has global bit set and tlbinvasid supposedly leaves global entries alone */
+	/* Don't need the tmpmap_lock here because the tmp mapping has global bit set
+		 and tlbinvasid supposedly leaves global entries alone */
 	asid <<=  (32 - PAGE_BITS);
 	H2K_mutex_lock_tlb();
 	asm volatile

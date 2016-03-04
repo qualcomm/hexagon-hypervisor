@@ -74,44 +74,9 @@ static void H2K_intconfig_l2_init(ssbase)
 	int i;
 	volatile unsigned int *intbase = H2K_gp->l2_int_base;
 
-	/* EJP: FIXME: hard coded values from qurt_config for 8909.  Need to put in api, I guess? */
-	const unsigned int l2_edgevals[] = {
-		0xf8ffe3f3L,
-		0x1f8fd1ffL,
-		0xee3fd21fL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0x1ff87c0L,
-		0x5fc33e00L,
-		0xffffffb7L,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL,
-		0xffffffffL};
-
 	for (i = 0; i < ((MAX_INTERRUPTS-32)/32); i++) {
 		intbase[(0x100/4) + i] = 0x0; 			/* DISABLED */
-		intbase[(0x280/4) + i] = l2_edgevals[i];	/* EDGE/level TRIGGERED */
+		intbase[(0x280/4) + i] = ~0x0;			/* EDGE/level TRIGGERED */
 		intbase[(0x300/4) + i] = 0x0;			/* Rising Edge / Level High */
 		intbase[(0x400/4) + i] = 0xFFFFFFFF;		/* Interrupt Clear */
 	}

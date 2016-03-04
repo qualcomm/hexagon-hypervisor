@@ -150,6 +150,7 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(tlbmissx);
 	PRINT_VMBLOCK_OFFSET(tlbmissrw);
 #endif
+	fprintf(outfile, "#define VMBLOCK_TOTALSIZE %d\n",sizeof(H2K_vmblock_t));
 
 	PRINT_STLB_OFFSET(valids);
 	PRINT_STLB_OFFSET(pagesize);

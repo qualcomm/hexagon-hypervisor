@@ -64,6 +64,7 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 }
 
 /* NOTE: must be called with bkl held */
+/* Can this be joined with H2K_intpool_cancel? */
 void H2K_popup_cancel(H2K_thread_context *dest)
 {
 	u32_t intnum = dest->r00;

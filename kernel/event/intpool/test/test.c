@@ -10,9 +10,10 @@
 #include <lowprio.h>
 #include <context.h>
 #include <hw.h>
-#include <popup.h>
+#include <intpool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <checker_kernel_locked.h>
 #include <checker_runlist.h>
 #include <checker_ready.h>
@@ -32,6 +33,8 @@ u32_t TB_saw_dosched = 0;
 
 jmp_buf env;
 static H2K_thread_context a,b,c;
+
+static H2K_vmblock_t vm;
 
 #if 0
 void H2K_dosched(H2K_thread_context *in, int hthread)
@@ -80,9 +83,9 @@ void H2K_switch(H2K_thread_context *old, H2K_thread_context *new)
 }
 
 /* 
- * Clear out all registered popups
+ * Clear out all registered intpool
  */
-void TH_clear_popups()
+void TH_clear_intpool()
 {
 	int i;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
@@ -91,13 +94,12 @@ void TH_clear_popups()
 }
 
 /*
- * Configure interrupt i to popup thread 
+ * Configure interrupt i to intpool thread 
  */
-void TH_set_popup(int i, H2K_thread_context *thread)
+void TH_set_intpool(int i, H2K_thread_context *thread)
 {
-	if (i >= MAX_INTERRUPTS) FAIL("Harness called invalid interrupt");
-	H2K_gp->inthandlers[i].handler = H2K_popup_int;
-	H2K_gp->inthandlers[i].param = thread;
+	H2K_intpool_configure(i,1,thread);
+	H2K_ring_append(&thread->vmblock->intpool,thread);
 }
 
 /*
@@ -105,10 +107,10 @@ void TH_set_popup(int i, H2K_thread_context *thread)
  * Return status, or zero if returned from H2K_dosched() or H2K_switch() 
  * via setjmp/longjmp
  */
-int TH_call_popup_wait(int i, H2K_thread_context *current)
+int TH_call_intpool_wait(int i, H2K_thread_context *current)
 {
 	if (setjmp(env) == 0) {
-		return H2K_popup_wait(i,current);
+		return H2K_intpool_wait(i,current);
 	}
 	return 0;
 }
@@ -118,8 +120,8 @@ int TH_call_popup_wait(int i, H2K_thread_context *current)
  */
 void TH_check_waiting(int i, H2K_thread_context *thread)
 {
-	if (H2K_gp->inthandlers[i].handler != H2K_popup_int) FAIL("Wrong handler");
-	if (H2K_gp->inthandlers[i].param != thread) FAIL("Wrong thread");
+	//if (H2K_gp->inthandlers[i].handler != H2K_intpool_int) FAIL("Wrong handler");
+	//if (H2K_gp->inthandlers[i].param != thread) FAIL("Wrong thread");
 	if (thread->status != H2K_STATUS_INTBLOCKED) FAIL("Wrong status");
 	if (H2K_gp->runlist[thread->hthread] == thread) FAIL("Thread still scheduled");
 }
@@ -154,30 +156,22 @@ void TH_clear_ready(H2K_thread_context *thread)
 	H2K_ready_set_prio(thread->prio);
 }
 
-/*
- * Generate a popup int call, running thread interrupted on hardware thread hthread, dest context new
- * Note that we setjmp before calling H2K_popup_int, and expect it to longjmp back to us from switch/sched
- */
-
-void TH_popup_int(int i, H2K_thread_context *interrupted, int hthread, H2K_thread_context *new)
+void TH_intpool_int(int i, H2K_thread_context *interrupted, int hthread, H2K_vmblock_t *vmblock)
 {
 	TH_saw_dosched = TH_saw_switch = 0;
 	TH_switch_old = TH_switch_new = NULL;
-	TH_set_popup(i,new);
+	H2K_thread_context *old_intpool = vmblock->intpool;
 	if (setjmp(env) == 0) {
-		H2K_popup_int(i,interrupted,hthread,new);
-		if (new != NULL) FAIL("Expected thread, but popup_int didn't call switch");
+		H2K_intpool_int(i,interrupted,hthread,vmblock);
+		if (old_intpool != NULL) FAIL("Expected thread, but intpool_int didn't call switch");
 	} else {
 		if (TH_saw_dosched != 0) FAIL("saw dosched");
 		if (TH_saw_switch == 0) FAIL("didn't see switch");
 		if (TH_switch_old != interrupted) FAIL("Didn't switch from old thread");
-		if (TH_switch_new != new) FAIL("Didn't switch to new thread");
+		if (TH_switch_new != old_intpool) FAIL("Didn't switch to new thread");
 	}
 }
 
-/*
- * setup a hardware thread as idle
- */
 void TH_set_idle(int hthread)
 {
 	H2K_gp->wait_mask = 1<<hthread;
@@ -186,9 +180,6 @@ void TH_set_idle(int hthread)
 	lowprio_imask(hthread);
 }
 
-/*
- * Set up a thread as currently running 
- */
 void TH_set_running(int hthread, H2K_thread_context *thread)
 {
 	H2K_gp->wait_mask &= ~(1<<hthread);
@@ -197,44 +188,38 @@ void TH_set_running(int hthread, H2K_thread_context *thread)
 	lowprio_imask(hthread);
 }
 
-/*
- * Check priority mask and what thread is running.
- */
 void TH_check_priowait_running(int hthread, H2K_thread_context *thread)
 {
 	if ((1<<(hthread)) & H2K_gp->wait_mask) FAIL("wait_mask still set");
 	if ((1<<(hthread)) & H2K_gp->priomask) FAIL("priomask still set");
-	if ((get_imask(thread->hthread)) == 0) FAIL("IMASK clear for hthread");
+	if ((get_imask(thread->hthread)) == 0) {
+		printf("ht=%x tht=%x imask=%x\n",hthread, thread->hthread, get_imask(thread->hthread));
+		FAIL("IMASK clear for hthread");
+	}
 }
 
-/*
- * Try to popup from running thread a to new thread b
- */
-void TH_popup_try(H2K_thread_context *a, H2K_thread_context *b, int intno)
+void TH_intpool_try(H2K_thread_context *a, H2K_thread_context *b, int intno)
 {
-	TH_clear_popups();
-	TH_set_popup(intno,b);
+	TH_clear_intpool();
+	TH_set_intpool(intno,b);
 	TH_set_running(0,a);
-	TH_popup_int(intno,a,0,b);
+	TH_intpool_int(intno,a,0,b->vmblock);
 	TH_check_priowait_running(0,b);
 	TH_check_old(a);
 	TH_clear_ready(a);
 }
 
-/*
- * For each group of priorities, try to popup from running a to popup b @ int k
- */
-void TH_popup_check_priorities(H2K_thread_context *a, H2K_thread_context *b)
+void TH_intpool_check_priorities(H2K_thread_context *a, H2K_thread_context *b)
 {
 	int i,j,k;
 	int oldprio = a->prio;
-	TH_clear_popups();
+	TH_clear_intpool();
 	for (i = 0; i < MAX_PRIOS; i += 32) {
 		for (j = 0; j < MAX_PRIOS; j += 32) {
 			for (k = 0; k < MAX_INTERRUPTS; k += 32) {
 				a->prio = i;
 				b->prio = j;
-				TH_popup_try(a,b,k);
+				TH_intpool_try(a,b,k);
 			}
 		}
 	}
@@ -243,10 +228,18 @@ void TH_popup_check_priorities(H2K_thread_context *a, H2K_thread_context *b)
 
 u32_t fakeint[0x200];
 
+void TH_set_intpool_pending(H2K_thread_context *a, u32_t intno)
+{
+	a->vmblock->intpool_pending[intno/32] |= (1<<(intno & 0x1f));
+	a->vmblock->intpool_anypending = 1;
+}
+
 int main() 
 {
 	int i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+
+	H2K_vmblock_t *vmblock = &vm;
 
 #if ARCHV >= 4
 	H2K_gp->l2_int_base = fakeint;
@@ -256,64 +249,115 @@ int main()
 	H2K_runlist_init();
 	H2K_lowprio_init();
 	a.prio = b.prio = c.prio = MAX_PRIOS - 30;
+	a.vmblock = b.vmblock = c.vmblock = vmblock;
 
 	/* First, test wait */
 	a.hthread = 0;
 	b.hthread = 0;
 
+#if 0
 	/* Check bad cases */
-	if ((TH_call_popup_wait(-1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
-	if ((TH_call_popup_wait(MAX_INTERRUPTS,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
-	if ((TH_call_popup_wait(MAX_INTERRUPTS+1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
+	if ((TH_call_intpool_wait(-1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
+	if ((TH_call_intpool_wait(MAX_INTERRUPTS,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
+	if ((TH_call_intpool_wait(MAX_INTERRUPTS+1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 #if ARCHV >= 4
-	if ((TH_call_popup_wait(31,&a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
+	if ((TH_call_intpool_wait(31,&a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
+#endif
 #endif
 
-	TH_popup_check_priorities(&a,&b);
+	TH_intpool_check_priorities(&a,&b);
 
+	/* 
+	 * For each interrupt, try to wait for the interrupt
+	 */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 #if ARCHV >= 4
 		if (i == 31) continue;
 #endif
 		H2K_runlist_push(&a);
-		TH_clear_popups();
-		if (TH_call_popup_wait(i,&a) != 0) {
+		TH_clear_intpool();
+		if (TH_call_intpool_wait(i,&a) != 0) {
 			FAIL("Couldn't wait");
 		}
 		TH_check_waiting(i,&a);
 		H2K_runlist_push(&b);
-		if (TH_call_popup_wait(i,&b) == 0) {
-			FAIL("Set popup for int twice");
+		if (TH_call_intpool_wait(i,&b) != 0) {
+			FAIL("Couldn't set second thread");
 		}
-		TH_clear_popups();
-		TH_check_running(i,&b);
-		H2K_runlist_remove(&b);
+		TH_clear_intpool();
+		//TH_check_running(i,&b);
+		//H2K_runlist_remove(&b);
 	}
 
+	/*
+	 * For each interrupt, try to deliver an interrupt for either idle or running a task
+	 */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 #if ARCHV >= 4
 		if (i == 31) continue;
 #endif
-		TH_clear_popups();
+		/* Interrupt from idle */
+		TH_clear_intpool();
+		TH_set_intpool(i,&b);
 		TH_set_idle(0);
-		TH_popup_int(i,NULL,0,NULL);
-		TH_set_running(0,&a);
-		TH_popup_int(i,&a,0,NULL);
-
-		TH_clear_popups();
-		TH_set_popup(i,&b);
-		TH_set_idle(0);
-		TH_popup_int(i,NULL,0,&b);
+		TH_intpool_int(i,NULL,0,vmblock);
 		TH_check_priowait_running(0,&b);
+		//printf("i=%d a\n",i);
 
-		TH_clear_popups();
-		TH_set_popup(i,&b);
+		/* Interrupt from running */
+		TH_clear_intpool();
+		TH_set_intpool(i,&b);
 		TH_set_running(0,&a);
-		TH_popup_int(i,&a,0,&b);
+		TH_intpool_int(i,&a,0,vmblock);
 		TH_check_priowait_running(0,&b);
 		TH_check_old(&a);
 		TH_clear_ready(&a);
+		//printf("i=%d b\n",i);
+
+		/* If we add two interrupt handlers to intpool, can we get both? */
+		TH_clear_intpool();
+		TH_set_intpool(i,&b);
+		TH_set_intpool(i,&c);
+		TH_set_running(0,&a);
+		TH_set_idle(1);
+		TH_intpool_int(i,&a,0,vmblock);
+		TH_check_priowait_running(0,&b);
+		TH_check_old(&a);
+		TH_clear_ready(&a);
+		TH_intpool_int(i,NULL,1,vmblock);
+		TH_check_priowait_running(1,&c);
+		//printf("i=%d c\n",i);
 	}
+	/*
+ 	 * Set up pending interrupts, and make sure we get them immediately
+	 */
+	if (setjmp(env) != 0) FAIL("unexpected switch/sched");
+
+	for (i = 0; i < MAX_INTERRUPTS; i++) {
+		TH_set_intpool_pending(&a,i);
+		TH_saw_switch = TH_saw_dosched = 0;
+		if (i != H2K_intpool_wait(i,&a)) FAIL("pending intpool wait");
+		if (TH_saw_switch || TH_saw_dosched) FAIL("called switch or dosched");
+		if (vmblock->intpool_pending[i/32] & (1<<(i&0x1f))) FAIL("didn't clear bit");
+		//printf("i=%d pending\n",i);
+	}
+
+	/*
+	 * for simplicity, use pending interrupts like above
+	 * But check that we ack or don't ack depending on arg
+	 */
+	memset(fakeint,0,sizeof(fakeint));
+	for (i = 32; i < MAX_INTERRUPTS; i++) {
+		TH_set_intpool_pending(&a,i);
+		TH_saw_switch = TH_saw_dosched = 0;
+		if (i != H2K_intpool_wait(-1,&a)) FAIL("pending intpool wait");
+		if (TH_saw_switch || TH_saw_dosched) FAIL("called switch or dosched");
+		if (fakeint[i/32+0x200/sizeof(u32_t)-1] & (1<<(i&0x1f))) FAIL("acked");
+		TH_set_intpool_pending(&a,i);
+		if (i != H2K_intpool_wait(i,&a)) FAIL("pending intpool wait");
+		if ((fakeint[i/32+0x200/sizeof(u32_t)-1] & (1<<(i&0x1f))) == 0) FAIL("not acked");
+	}
+
 	puts("TEST PASSED\n");
 	return 0;
 }

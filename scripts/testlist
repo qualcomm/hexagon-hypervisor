@@ -11,6 +11,8 @@
 ./kernel/event/trap/test
 ./kernel/event/vectors/test
 ./kernel/event/preempt/test
+./kernel/event/intpool/test
+#./kernel/event/intpool/test_h2
 ./kernel/event/popup/test
 ./kernel/event/popup/test_h2
 ./kernel/event/passthru/test

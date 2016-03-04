@@ -26,8 +26,8 @@
 #define H2_TRAP_INTWAIT 11
 #define H2_TRAP_YIELD 12
 //#define H2_UNUSED 13
-//#define H2_UNUSED 14
-//#define H2_UNUSED 15
+#define H2_INTPOOL_CONFIG 14
+#define H2_INTPOOL_WAIT 15
 #define H2_TRAP_GET_PCYCLES 16
 //#define H2_UNUSED 17
 #define H2_TRAP_SET_TID 18

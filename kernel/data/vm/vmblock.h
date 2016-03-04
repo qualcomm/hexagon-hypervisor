@@ -70,6 +70,10 @@ typedef struct H2K_vmblock_struct {
 	u32_t num_cpus;
 	u32_t bestprio; 	/* best allowed priority */
 
+	H2K_thread_context *intpool;
+	unsigned int intpool_anypending;
+	u32_t intpool_pending[MAX_INTERRUPTS/32];
+
 	/* Linked List of free threads in this VM */
 	H2K_thread_context *free_threads;
 	/* Pointer to thread context storage */

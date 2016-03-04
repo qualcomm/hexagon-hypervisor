@@ -8,8 +8,7 @@ General:
 H2 infrastructure:
 * Update documentation. Switch to doxygen or other in-file documentation scheme?
 * Go back over tests, get to ~100% unit test coverage
-* Refactor & optimize translation
-* Even better interrupt mechanism -- interrupts delivered to pool of waiting threads
+* optimize translation
 * Power Collapse
 * Island mode
 * Test 36 bit PA bits more
@@ -23,6 +22,12 @@ H2 infrastructure:
 * Optimize walker
 * Be able to compile out shints
 * Optimize context layout: context save and switch in-sequence filling cache lines
+* Optimization idea: remove continuation as a funcptr, there are only a few types of continuations.
+* Remove ability to utilize L1 interrupts generally? 
+	Lots of test changes, requires devsim to do int tests.
+	But, not much need to accept L1 interrupts.  Will simplify interrupt paths.
+	Can map vic and then do tests from booter
+* Flatten config / hwconfig for code size (& perf), also yields more args for subcalls
 
 VMM tasks:
 
@@ -37,4 +42,6 @@ DONE : * Save/restore framelimit,framekey
 DONE : * Save/restore pktcount
 DONE : * Try and optimize context storage? -- changed to 16 per-cpu interrupts
 DONE : Better page table format, better storage efficiency but faster than linear.
+DONE : * Refactor translation
+DONE : * Even better interrupt mechanism -- interrupts delivered to pool of waiting threads
 

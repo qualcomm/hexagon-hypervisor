@@ -112,8 +112,12 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(phys_offset);
 	PRINT_KG_OFFSET(core_rev);
 	PRINT_KG_OFFSET(timer_intnum);
+
+#ifdef CRASH_DEBUG
 	PRINT_KG_OFFSET(crash_contexts);
 	PRINT_KG_OFFSET(crash_tlb);
+#endif
+
 	PRINT_KG_OFFSET(syscfg_val);
 	PRINT_KG_OFFSET(fatal_hook_and_arg);
 	PRINT_KG_OFFSET(fatal_hook_gp_ssr);

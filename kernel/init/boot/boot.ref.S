@@ -62,6 +62,8 @@
  */
 
 FUNC_START start .entry .p2align 12
+
+#ifdef CRASH_DEBUG
 	r7 = PC
 	jump 1f
 H2_BOOT_attempts:
@@ -116,6 +118,8 @@ H2_BOOT_attempts:
 		r0 = add(r0,#1)
 		memw(r7+#8) = r0.new
 	}
+#endif
+
 	 /* FIXME: Read syscfg and set bits, don't zero, in case earlier boot code
 	has set it up */
 

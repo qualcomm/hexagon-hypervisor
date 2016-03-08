@@ -118,12 +118,14 @@ typedef struct {
 	info_stlb_type info_stlb;
 	kerror_type kernel_error;
 	u32_t hthreads;
+
+#ifdef CRASH_DEBUG
 	u64_t crash_tlb[MAX_TLB_ENTRIES];
-#ifdef CRASH_L2VIC_STATUS
 	u32_t crash_l2vic_enabled[MAX_INTERRUPTS/32];
 	u32_t crash_l2vic_pending[MAX_INTERRUPTS/32];
-#endif
 	H2K_thread_context crash_contexts[MAX_HTHREADS];
+#endif
+
 	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
 	H2K_asid_entry_t asid_table[MAX_ASIDS] __attribute__((aligned(MAX_ASIDS*sizeof(H2K_asid_entry_t))));

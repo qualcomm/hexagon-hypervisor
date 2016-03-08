@@ -41,10 +41,12 @@ s32_t H2K_mem_stlb_alloc() {
 	return H2K_mem_stlb_init((void *)info,bulk);
 }
 
+#ifdef CRASH_DEBUG
 void H2K_stlb_tcmcrash_init()
 {
 	u32_t start_addr = KERNEL_CRASH_TCM_ADDR;
 	u32_t bulk_addr = start_addr + (sizeof(H2K_mem_stlb_asid_info_t)*MAX_ASIDS);
 	H2K_mem_stlb_init((void *)start_addr,(void *)bulk_addr);
 }
+#endif
 

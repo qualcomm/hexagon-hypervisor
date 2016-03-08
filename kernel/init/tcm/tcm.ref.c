@@ -88,6 +88,7 @@ void H2K_tcm_copy(u32_t l2_tags, u32_t last_tlb_index) {
 
 }
 
+#ifdef CRASH_DEBUG
 static inline u32_t calc_tcm_size()
 {
 	u32_t l2cfg = (H2K_get_syscfg() & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS;
@@ -116,4 +117,5 @@ void H2K_tcm_crash_copy()
 		dst[i] = bytes;
 	}
 }
+#endif
 

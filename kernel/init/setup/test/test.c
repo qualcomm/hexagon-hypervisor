@@ -45,7 +45,11 @@ enum {
         //mem_stlb_init,
 	tcm_copy,
 	hvx_init,
+
+#ifdef CRASH_DEBUG
 	stlb_tcmcrash_init,
+#endif
+
 	XX_LAST_HELPER
 };
 
@@ -95,7 +99,11 @@ HELPER_FUNC(tmpmap_init)
 HELPER_FUNC(l2cache_init)
 //HELPER_FUNC(thread_init)
 //HELPER_FUNC(asid_table_init)
+
+#ifdef CRASH_DEBUG
 HELPER_FUNC(stlb_tcmcrash_init)
+#endif
+
 //HELPER_FUNC(mem_stlb_init)
 HELPER_FUNC(tcm_copy)
 HELPER_FUNC(hvx_init)

@@ -91,7 +91,11 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t phys_o
 	H2K_intconfig_init(ssbase);
 	H2K_thread_init();
 	H2K_asid_table_init();
+
+#ifdef CRASH_DEBUG
 	H2K_stlb_tcmcrash_init();
+#endif
+
 	H2K_timer_init(devpage_priv_offset);
 	H2K_hvx_init(devpage_pub_offset);
 	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);

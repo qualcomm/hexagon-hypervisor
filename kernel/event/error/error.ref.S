@@ -131,6 +131,8 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		p0 = tstbit(WORK,#1)
 		//if (!p0.new) jump:nt 9f
 	}
+
+#ifdef CRASH_DEBUG
 	// Save off TLB. FIXME: could be done in C...
 	r3:2 = combine(#0,##H2K_kg+KG_crash_tlb)
 	loop0(1f,#MAX_TLB_ENTRIES)
@@ -141,8 +143,11 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		r3 = add(r3,#1)
 	}:endloop0
 	nop
+
 	call H2K_intconfig_l2vic_crash
 	call H2K_tcm_crash_copy
+#endif
+
 	call H2K_cache_d_cleaninv
 	call H2K_cache_l2_cleaninv
 	syncht
@@ -182,6 +187,8 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	r1=##0xe0f0beef
 	stop(r0)
 #else
+
+#ifdef CRASH_DEBUG
 	// Part 0: save off context. Kill cs1:0 registers, hopefully they're not important
 	c13:12 = r1:0 // CS1:0 registers
 .Lhandle_nmi_soft_join:
@@ -255,6 +262,18 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 .Lstop:
 	stop(r0)
 	jump .Lstop
+
+#else
+crswap(r0,sgp)
+memd(r0+#CONTEXT_r3130) = r31:30
+call H2K_context_save
+r0 = #-3
+r1 = r7
+r3:2 = #0
+r4 = r9
+jump H2K_fatal_thread
+#endif
+
 #endif
 FUNC_END H2K_handle_nmi
 

@@ -163,7 +163,7 @@ FUNC_START pthread_cond_wait .text.pthread.cond .falign
 		if (p1.new) jump:nt 2b			// count didn't change, temporary fail? block again
 		if (p1.new) r1:0 = combine(CONDPTR_SAV,CONDVAL)
 	}
-	memw_locked(CONDPTR,p0) = CONDVAL		// write new value
+	memw_locked(CONDPTR_SAV,p0) = CONDVAL		// write new value
 	if (!p0) jump 1b				// not atomic, try again
 8:							// lock and return
 	{
@@ -172,7 +172,7 @@ FUNC_START pthread_cond_wait .text.pthread.cond .falign
 	{
 		deallocframe
 		CONDPTR_MUTEXPTR_SAV = memd(r29+#0)
-		r0 = MUTEXPTR
+		r0 = MUTEXPTR_SAV
 		jump pthread_mutex_lock			// will return required 0
 	}
 FUNC_END pthread_cond_wait

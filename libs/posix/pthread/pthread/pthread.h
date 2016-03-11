@@ -14,6 +14,8 @@ extern "C" {
  * But other environments should point to here for primitives.
  */
 
+#define _PROVIDE_POSIX_TIME_DECLS 1
+
 #include <h2if.h>
 #include <errno.h>
 #include <sched.h>

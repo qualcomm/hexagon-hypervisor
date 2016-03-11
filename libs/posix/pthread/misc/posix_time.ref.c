@@ -12,10 +12,24 @@ int nanosleep(const struct timespec *req, struct timespec *rem)
 /* EJP: for now, lie about nanosleep.
  * We can actually nanosleep, see h2_nanosleep, but it might not be conformant and we have to simulate with timer.
  */
+	unsigned long long int now = h2_get_core_pcycles();
+	unsigned long long int delta;
+	unsigned long long int later;
+	delta = req->tv_sec;
+	delta <<= 30;
+	delta |= req->tv_nsec;
+	later = now + delta;
+	while (h2_get_core_pcycles() < later) /* SPIN */;
 	return 0;
 }
 /* BMC: lie about sleep for now as well */
-unsigned sleep(unsigned seconds) {return 0;}
+unsigned sleep(unsigned seconds)
+{
+	struct timespec sleeptime;
+	sleeptime.tv_nsec = 0;
+	sleeptime.tv_sec = seconds;
+	return nanosleep(&sleeptime,NULL);
+}
 
 int clock_gettime(clockid_t clock_id, struct timespec *tp)
 {

@@ -5,5 +5,5 @@
 
 #include "allsyscalls.h"
 
-count_t sys_time() { return ANGEL(SYS_TIME,0,0); }
+count_t sys_time() { return (h2_get_core_pcycles() >> 30); }
 

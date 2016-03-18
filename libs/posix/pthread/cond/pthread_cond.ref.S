@@ -161,7 +161,7 @@ FUNC_START pthread_cond_wait .text.pthread.cond .falign
 		CONDVAL = sub(CONDVAL,ADDVAL_SAV)	// bump threads waiting
 		p1 = cmph.eq(CONDVAL,CONDVAL_SAV)	// we care about lowest halfword
 		if (p1.new) jump:nt 2b			// count didn't change, temporary fail? block again
-		if (p1.new) r1:0 = combine(CONDPTR_SAV,CONDVAL)
+		if (p1.new) r1:0 = combine(CONDVAL,CONDPTR_SAV)
 	}
 	memw_locked(CONDPTR_SAV,p0) = CONDVAL		// write new value
 	if (!p0) jump 1b				// not atomic, try again

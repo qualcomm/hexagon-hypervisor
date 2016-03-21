@@ -7,6 +7,8 @@
 #define PTHREAD_COND_H 1
 /* COND */
 #include <time.h>
+#include <pthread_misc.h>
+#include <stdio.h>
 
 typedef struct {
 	int unused;
@@ -53,7 +55,7 @@ static inline int pthread_cond_timedwait(pthread_cond_t *cond,
 	timeout <<= 30;
 	timeout |= abstime->tv_nsec;
 	pthread_mutex_unlock(mutex);
-	while (h2_get_core_pcycles() < timeout) {
+	while (h2_get_elapsed_nanos() < timeout) {
 		if (basecount != *vcount) {
 			ret = 0;
 			break;

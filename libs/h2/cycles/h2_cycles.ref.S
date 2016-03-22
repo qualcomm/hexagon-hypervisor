@@ -15,5 +15,5 @@ FUNC_END h2_get_pcycles
 FUNC_START h2_get_core_pcycles_trap .text.h2.cycles .p2align 3
 	trap0(#H2_TRAP_GET_PCYCLES)
 	jumpr r31
-FUNC_END h2_get_core_pcycles
+FUNC_END h2_get_core_pcycles_trap
 

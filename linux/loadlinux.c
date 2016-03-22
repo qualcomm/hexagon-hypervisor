@@ -26,7 +26,8 @@
 
 #define TOTAL_INTS 288
 
-#define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
+//#define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
+#define SHARED_INTS (TOTAL_INTS + 32)
 #define VCPU_STACK_SIZE 1024
 #define LINUX_VM_PRIO 3
 #define UCOS_VM_PRIO 1
@@ -110,7 +111,7 @@ void setup_ints(unsigned long vm, char num_cpus) {
 #endif
 
 	for (i = (0 + INTERRUPT_SHIFT); i < TOTAL_INTS; i++) {
-		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i-INTERRUPT_SHIFT, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
+		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i + 32 - INTERRUPT_SHIFT, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
 				FAIL("MAP_PHYS_INTR");
 		}
 	}
@@ -285,7 +286,6 @@ int main(int argc, char *argv[]) {
 		return 1;
 #endif
 	}
-	print_infos();
 
 	h2_vmtrap_setvec(bootvm_vectors);
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0) < 0) {
@@ -297,6 +297,8 @@ int main(int argc, char *argv[]) {
 		FAIL("STLB alloc");
 	}
 #endif
+
+	print_infos();
 
 	boot_ucos();
 

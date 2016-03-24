@@ -28,7 +28,8 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 	r17:16 = r1:0
 	
 	r0 = #0x20
-	r1 = #L1WB_L2C
+	r1 = #0x0
+	r2 = #L1WB_L2C
 	call H2K_tmpmap_add_and_lock
 	r6 = r0  // va of mailbox base
 	r1:0 = r17:16

@@ -20,7 +20,7 @@ int nanosleep(const struct timespec *req, struct timespec *rem)
 	delta <<= 30;
 	delta |= req->tv_nsec;
 	later = now + delta;
-	while (h2_get_elapsed_nanos() < later) /* SPIN */;
+	while (h2_get_elapsed_nanos() < later) h2_yield(); /* SPIN */
 	return 0;
 }
 /* BMC: lie about sleep for now as well */

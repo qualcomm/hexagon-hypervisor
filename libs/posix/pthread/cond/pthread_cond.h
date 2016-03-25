@@ -60,6 +60,7 @@ static inline int pthread_cond_timedwait(pthread_cond_t *cond,
 			ret = 0;
 			break;
 		}
+		h2_yield();
 	}
 	pthread_mutex_lock(mutex);
 	return ret;

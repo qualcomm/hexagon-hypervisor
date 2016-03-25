@@ -11,7 +11,7 @@
  */
 
 #include <h2_sem.h>
-#include <c_std.h>
+#include <h2_common_c_std.h>
 
 void *h2_malloc(unsigned int size);
 void *h2_calloc(unsigned int elsize, unsigned int num);

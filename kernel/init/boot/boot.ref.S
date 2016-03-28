@@ -140,10 +140,15 @@ H2_BOOT_attempts:
 
 	SETCONST(H2K_GP,H2K_kg)
 
-#if ARCHV == 4
+	p0 = cmp.eq(REV_ARCH, #CORE_V4)
+	if (!p0) jump .Lv5
 	TMP = ##0x00002004
 	s63 = TMP
-#elif ARCHV == 5
+	jump .Lchicken_out
+
+.Lv5:
+	p0 = cmp.eq(REV_ARCH, #CORE_V5)
+	if (!p0) jump .Lv60
 	TMP = #0     /* (New chickenbits) */
 	TMP = setbit(TMP,#2);	//  AXI L1 Snoop something
 	TMP = setbit(TMP,#27);	//  force store
@@ -152,7 +157,11 @@ H2_BOOT_attempts:
 	TMP = #0
 	TMP = setbit(TMP,#22);	//  fix for address calculation corruption
 	s62 = TMP
-#endif
+	//	jump .Lchicken_out
+
+.Lv60:
+
+.Lchicken_out:
 
 	/* Set up rising edge triggered */
 	TMP = #-1

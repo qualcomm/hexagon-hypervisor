@@ -73,7 +73,7 @@ qurtclean:
 
 opt:
 	echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which hexagon-clang
+	pkw --which $(CC)
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
@@ -84,7 +84,7 @@ opt:
 
 ref:
 	echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which hexagon-clang
+	pkw --which $(CC)
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
@@ -111,8 +111,8 @@ test:	h2_test
 h2_test: ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
-	#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
-	#[ `fgrep -c -i warning: test.out` -eq 0 ]
+#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
+	[ `fgrep -c -i warning: test.out` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 
 qurt_test: ./qurt/test/testcases
@@ -129,7 +129,9 @@ qurt_test_single: ./qurt/test/testcases
 qurt_test_libs:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
 
-cov: h2_cov
+# coverage is broken
+# cov: h2_cov
+cov: h2_test
 	head -n -1 h2_report.html > report.html
 #	tail -n +2 qurt_report.html >> report.html
 
@@ -144,7 +146,7 @@ h2_cov:
 
 check-fail test-check cov-check:
 	$(MAKE) -f scripts/Makefile.coverage check-fail
-	$(MAKE) -C ucos check
+#	$(MAKE) -C ucos check
 
 check:
 	$(MAKE) -f scripts/Makefile.coverage check

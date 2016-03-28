@@ -27,7 +27,6 @@
 #include "../kernel/include/hw.h"
 #include <syscall_defs.h>
 
-#define CHILD_INTERRUPT 14
 #define VM_BEST_PRIO 0
 
 #define BUFSIZE 256
@@ -890,7 +889,7 @@ extern void bootvm_vectors();
 void booter_isr(void) {
 	//	BOOTER_PRINTF("Got child interrupt\n");
 	h2_sem_up(&child_done_sem);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
 }
 
 unsigned int process_line(int argc, char **argv, unsigned int idx) {
@@ -1303,8 +1302,8 @@ int main(int argc, char **argv)
 
 	h2_sem_init_val(&child_done_sem, 0);
 
-	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
-		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT", "");
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, H2K_VM_CHILDINT", "");
 	}
 	h2_vmtrap_setie(1);
 

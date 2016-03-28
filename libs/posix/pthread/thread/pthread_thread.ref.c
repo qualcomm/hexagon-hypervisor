@@ -142,6 +142,16 @@ static void pthread_trampoline(void *arg)
 	pthread_exit(ret);
 }
 
+int pthread_detach(pthread_t thread)
+{
+	struct pthread_tcb *dest;
+	if ((dest = pthread_thread_find_id(thread)) == NULL) return ESRCH;
+	if (dest->attrs.detached) return EINVAL;
+	dest->attrs.detached = 1;
+	pthread_sem_post_np(&dest->joined);
+	return 0;
+}
+
 int pthread_join(pthread_t thread, void **retval)
 {
 	struct pthread_tcb *dest;

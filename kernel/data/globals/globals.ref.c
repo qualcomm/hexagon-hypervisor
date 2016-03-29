@@ -66,9 +66,16 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		break;
 	}
 
-#ifndef NUM_HTHREADS
-	H2K_kg.hthreads = get_hthreads();
-#else
+#ifdef NUM_HTHREADS
 	H2K_kg.hthreads = NUM_HTHREADS;
+#else
+	H2K_kg.hthreads = get_hthreads();
 #endif
+
+#ifdef HTHREADS_MASK
+	H2K_kg.hthreads_mask = HTHREADS_MASK;
+#else
+	H2K_kg.hthreads_mask = (1 << H2K_kg.hthreads) - 1;
+#endif
+
 }

@@ -819,6 +819,7 @@ void print_infos() {
 	printf("\tL2VIC physical base: 0x%08x\n", h2_info(INFO_L2VIC_BASE));
 	printf("\tTimer physical base: 0x%08x\n", h2_info(INFO_TIMER_BASE));
 	printf("\tTimer interrupt: %d\n", h2_info(INFO_TIMER_INT));
+	printf("\tRunning HW threads mask: 0x%08x\n", h2_info(INFO_HTHREADS));
 }
 
 void kernel_setup() {

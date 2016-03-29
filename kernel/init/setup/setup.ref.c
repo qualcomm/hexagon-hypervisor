@@ -99,10 +99,8 @@ IN_SECTION(".text.init.setup") void H2K_init_setup(u32_t phys_offset, u32_t ssba
 IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot_offset, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size)
 {
 	s32_t asid;
-	u32_t hthreads;
 
 	H2K_init_setup(phys_offset, ssbase, last_tlb_index, tlb_size);
-	hthreads  = (1 << H2K_gp->hthreads) - 1;
 
 	/* allocate first thread */
 	H2K_thread_context *boot = bootvm->free_threads;
@@ -122,7 +120,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	asid = H2K_asid_table_inc((u32_t)bootvm->pmap, bootvm->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 	boot->ssr_asid = asid;
 	BKL_LOCK();
-	asm volatile( "start(%0) \n" :: "r"(hthreads));
+	asm volatile( "start(%0) \n" :: "r"(H2K_gp->hthreads_mask));
 	H2K_runlist_push(boot);
 	H2K_init_complete = 1;
 	H2K_mutex_unlock_tlb();

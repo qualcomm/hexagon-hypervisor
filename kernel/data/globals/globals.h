@@ -92,6 +92,7 @@ typedef struct {
 	info_stlb_type info_stlb;
 	kerror_type kernel_error;
 	u32_t hthreads;
+	u32_t hthreads_mask;
 		
 	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));

@@ -32,13 +32,26 @@ static inline int pthread_attr_init(pthread_attr_t *attr)
 
 static inline int pthread_attr_destroy(pthread_attr_t *attr)
 {
+	(void)attr;
 	return 0;
 }
 
-static inline int pthread_attr_getschedpolicy(pthread_attr_t *attr, int *policy) { return ENOTSUP; }
-static inline int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy) { return ENOTSUP; }
-static inline int pthread_attr_getinheritsched(pthread_attr_t *attr, int *is) { return ENOTSUP; }
-static inline int pthread_attr_setinheritsched(pthread_attr_t *attr, int is) { return ENOTSUP; }
+static inline int pthread_attr_getschedpolicy(pthread_attr_t *attr, int *policy) {
+	(void)attr; (void)policy;
+	return ENOTSUP;
+}
+static inline int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy) {
+	(void)attr; (void) policy;
+	return ENOTSUP;
+}
+static inline int pthread_attr_getinheritsched(pthread_attr_t *attr, int *is) {
+	(void)attr; (void)is;
+	return ENOTSUP;
+}
+static inline int pthread_attr_setinheritsched(pthread_attr_t *attr, int is) {
+	(void)attr; (void)is;
+	return ENOTSUP;
+}
 
 static inline int pthread_attr_getextra_np(pthread_attr_t *attr, 
 	void **extra, 
@@ -96,7 +109,10 @@ int pthread_detach(pthread_t thread);
 void pthread_exit(void *retval) __attribute__((noreturn));
 
 static inline int pthread_equal(pthread_t t1, pthread_t t2) { return t1 == t2; }
-static inline int pthread_cancel(pthread_t thread) { return ENOTSUP; }
+static inline int pthread_cancel(pthread_t thread) {
+	(void)thread;
+	return ENOTSUP;
+}
 static inline int pthread_yield(void) { h2_yield(); return 0; }
 int pthread_join(pthread_t thread, void **retval);
 

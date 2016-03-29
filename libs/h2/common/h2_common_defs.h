@@ -8,6 +8,10 @@
 #ifndef H2_COMMON_DEFS_H
 #define H2_COMMON_DEFS_H 1
 
+#ifndef ARCHV
+#define ARCHV 0
+#endif
+
 #if ARCHV >= 60
 #define HAVE_EXTENSIONS 1
 #endif

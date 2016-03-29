@@ -13,7 +13,7 @@ typedef unsigned int pthread_once_t;
 typedef unsigned int sigset_t;
 
 int pthread_once(pthread_once_t *once_control, void (*init_routine)(void));
-static inline int pthread_getconcurrency(int new_level) { return 0; }
+static inline int pthread_getconcurrency(int new_level) { (void)new_level; return 0; }
 static inline int pthread_setconcurrency(void) { return 0; }
 int pthread_kill(pthread_t threawd, int sig);
 int pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset);

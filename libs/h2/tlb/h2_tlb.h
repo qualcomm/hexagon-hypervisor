@@ -36,7 +36,7 @@ Read TLB entry
 
 static inline unsigned long long int h2_tlb_read(unsigned int index)
 {
-	return h2_tlb_trap(TLBOP_TLBREAD, index, 0);
+	return (unsigned long long)h2_tlb_trap(TLBOP_TLBREAD, index, 0);
 }
 
 /**
@@ -58,7 +58,7 @@ Search for TLB entry
 
 static inline int h2_tlb_query(unsigned long va)
 {
-	return h2_tlb_trap(TLBOP_TLBQUERY, va, 0);
+	return (int)h2_tlb_trap(TLBOP_TLBQUERY, va, 0);
 }
 
 /**
@@ -69,7 +69,7 @@ Allocate TLB entry
 
 static inline int h2_tlb_alloc(unsigned long long int entry)
 {
-	return h2_tlb_trap(TLBOP_TLBALLOC, 0, entry);
+	return (int)h2_tlb_trap(TLBOP_TLBALLOC, 0, entry);
 }
 
 /**
@@ -80,7 +80,7 @@ Free TLB entry
 
 static inline int h2_tlb_free(int index)
 {
-	return h2_tlb_trap(TLBOP_TLBFREE, index, 0);
+	return (int)h2_tlb_trap(TLBOP_TLBFREE, (unsigned int)index, 0);
 }
 
 #endif

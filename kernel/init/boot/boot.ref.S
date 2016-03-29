@@ -62,10 +62,13 @@
  */
 
 FUNC_START start .entry .p2align 12
+	jump 1f
+	.space 0x40
+1:
 
 #ifdef CRASH_DEBUG
 	r7 = PC
-	jump 1f
+	jump 3f
 H2_BOOT_attempts:
 	.word 0
 .Lreset_crash:
@@ -110,7 +113,7 @@ H2_BOOT_attempts:
 8:
 	stop(r0)
 	jump 8b
-1:
+3:
 	r0 = memw(r7+#8)
 	{
 		p0 = cmp.eq(r0,#0)
@@ -143,6 +146,10 @@ H2_BOOT_attempts:
 	gp = TMP
 
 	SETCONST(H2K_GP,H2K_kg)
+
+	REVID = rev
+	REV_ARCH = and(REVID, #0xff)         // arch version
+	REV_UARCH = extractu(REVID, #4, #8)  // uarch version
 
 	p0 = cmp.eq(REV_ARCH, #CORE_V4)
 	if (!p0) jump .Lv5
@@ -182,9 +189,6 @@ H2_BOOT_attempts:
 	SETCONST(LINK_ADDR, H2K_LINK_ADDR)
 	BOOT_OFFSET = sub(LINK_ADDR, PHYS_ADDR)
 	SETCONST(NPAGES, H2K_KERNEL_NPAGES)
-	REVID = rev
-	REV_ARCH = and(REVID, #0xff)         // arch version
-	REV_UARCH = extractu(REVID, #4, #8)  // uarch version
 	L2_SIZE = extractu (REVID, #4, #12)  // L2 mem size
 
 	// Read cfg_table

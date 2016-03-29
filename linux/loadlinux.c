@@ -111,7 +111,7 @@ void setup_ints(unsigned long vm, char num_cpus) {
 #endif
 
 	for (i = (0 + INTERRUPT_SHIFT); i < TOTAL_INTS; i++) {
-		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i + 32 - INTERRUPT_SHIFT, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
+		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i - INTERRUPT_SHIFT, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
 				FAIL("MAP_PHYS_INTR");
 		}
 	}
@@ -259,6 +259,7 @@ void print_infos() {
 	printf("\tL2VIC physical base: 0x%08x\n", h2_info(INFO_L2VIC_BASE));
 	printf("\tTimer physical base: 0x%08x\n", h2_info(INFO_TIMER_BASE));
 	printf("\tTimer interrupt: %d\n", h2_info(INFO_TIMER_INT));
+	printf("\tRunning HW threads mask: 0x%08x\n", h2_info(INFO_HTHREADS));
 #endif
 }
 

@@ -63,7 +63,7 @@ FUNC_START pthread_barrier_wait .text.pthread.barrier .p2align 4
 #define BARRIER r3:2
 #define BARRIER_LO r2
 #define BARRIER_HI r3
-#define NEW_BARRIER_LO r6
+#define NEW_BARRIER_LO r8
 #define BARRIER_LO_SAV r17
 #define BARRIER_PTR_SAV r16
 #define BARRIER_LO_PTR_SAV r17:16

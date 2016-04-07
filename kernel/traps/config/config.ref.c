@@ -178,6 +178,7 @@ static u32_t H2K_config_vmblock_init_pmap_type(H2K_vmblock_t *vmblock, u32_t vm,
 
 		vmblock->guestmap.ptb = offset.raw;
 		vmblock->guestmap.fields.type = arg2;
+		vmblock->guestmap.fields.vmid = vmblock->parent.vmidx;
 		vmblock->fence_lo = 0;
 		vmblock->fence_hi = -1; // uninitialized, denies all mem  EJP: FIXME: is that true? Is it signed?
 		return vmblock->vmidx;
@@ -191,7 +192,7 @@ static u32_t H2K_config_vmblock_init_pmap_type(H2K_vmblock_t *vmblock, u32_t vm,
 	} else {
 		/* EJP: FIXME: this seems broken */
 		vmblock->guestmap.fields.type = arg2;
-		vmblock->guestmap.fields.vmid = vmblock->vmidx;
+		vmblock->guestmap.fields.vmid = vmblock->parent.vmidx;
 		vmblock->guestmap.ptb = arg1;
 	}
 	return vmblock->vmidx;

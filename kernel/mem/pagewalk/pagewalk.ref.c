@@ -13,67 +13,77 @@
 #include <asid.h>
 #include <pagewalk.h>
 
-#if ARCHV <= 3
-
-static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_t badva)
+static inline H2K_translation_t H2K_pagewalk_update_translation(H2K_translation_t in, H2K_pte_t pte)
 {
-	H2K_mem_tlbfmt_t ret;
-	ret.raw = 0;
-	if ((pte.xwr) == 0) return ret;
-	ret.ppn = pte.ppn;
-	ret.ccc = pte.ccc;
-	ret.xwr = (pte.xwr);
-	ret.guestonly = ~(pte.u);
-	ret.asid = asid;
-	ret.size = pte.s;
-	ret.vpn = badva >> PAGE_BITS;
-	ret.valid = 1;
-	return ret;
+	u32_t size = pte.s;
+	in.size = min(in.size,size);
+	/* Carefully update pn since later translation might be < current size */
+	in.pn &= (1<<(size*2))-1;
+	in.pn |= pte.ppn & (-1<<(size*2));
+	in.xwru &= (pte.xwr << 1) | pte.u;
+	if (in.cccc > 0xF) in.cccc = pte.ccc;
+	return in;
 }
 
-#else
-
-static inline H2K_mem_tlbfmt_t H2K_pte_to_tlbfmt(H2K_pte_t pte, u32_t asid, u32_t badva)
-{
-	H2K_mem_tlbfmt_t ret;
-	ret.raw = 0;
-	if ((pte.xwr) == 0) return ret;
-	ret.ppd = ((pte.ppn<<1) | (1<<pte.s)) & (~((1<<pte.s)-1));
-	ret.cccc = pte.ccc;
-	ret.xwru = (pte.xwr<<1) | pte.u;
-	ret.vpn = badva >> PAGE_BITS;
-	ret.asid = asid;
-	ret.valid = 1;
-	return ret;
-}
-
-#endif
-
-H2K_pte_t H2K_mem_pagewalk_l1(u32_t va, u32_t baseaddr, H2K_vmblock_t *vmblock)
+/* This is rather complex */
+/* For L1 page, look up PTB | ((va >> 22) << 2) */
+/* For L2 page, we need bits (12+2*size) .. 22. */
+/* We insert these (10-2*size) bits into PA starting at bit 2 */ 
+static inline H2K_pte_t H2K_mem_pagewalk_l2(H2K_translation_t in, u32_t l2addr, u32_t tablesize, u32_t pagesize, H2K_vmblock_t *vmblock)
 {
 	H2K_pte_t pte;
-	u32_t size;
-	/* FIXME: check that effective addr is in bounds of VM */
-	pte.raw = H2K_mem_physread_word((u64_t)baseaddr | ((va>>20) & 0xffc));
-	size = pte.s;
-	if (size <= 4) return H2K_mem_pagewalk_l2(va, pte.raw & -16, 5-size, size, vmblock);
-	if (size == 7) pte.raw = 0;
+	H2K_translation_t tmp;
+	pa_t l2_paddr = l2addr;
+	l2_paddr = Q6_P_insert_PP(l2_paddr,(in.pn >> (2*pagesize)),Q6_P_combine_RR(tablesize*2,2));
+	if (vmblock->guestmap.raw) {
+		tmp = H2K_translate_default(l2_paddr);
+		tmp = H2K_translate(tmp,vmblock->guestmap);
+		if ((tmp.xwru & 2) == 0) {
+			pte.raw = 0;
+			return pte;
+		}
+		l2_paddr = Q6_P_insert_PII(l2_paddr,tmp.pn,24,12);
+	}
+	pte.raw = H2K_mem_physread_word(l2_paddr);
+	/* Ignore L2 page size field & overwrite */
+	pte.s = pagesize;
 	return pte;
 }
 
-H2K_pte_t H2K_mem_pagewalk(u32_t badva, H2K_thread_context *me)
-{
-	u32_t baseaddr;
-	baseaddr = (H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb);
-	return H2K_mem_pagewalk_l1(badva, baseaddr, me->vmblock);
-}
-
-H2K_mem_tlbfmt_t H2K_mem_get_pagetable(u32_t badva, H2K_thread_context *me)
+static inline H2K_pte_t H2K_mem_pagewalk_l1(H2K_translation_t in, H2K_asid_entry_t info, H2K_vmblock_t *vmblock)
 {
 	H2K_pte_t pte;
-	H2K_mem_tlbfmt_t ret;
-	pte = H2K_mem_pagewalk(badva,me);
-	ret = H2K_pte_to_tlbfmt(pte,me->ssr_asid,badva);
-	return ret;
+	u32_t size;
+	u32_t baseaddr = info.ptb;
+	H2K_translation_t tmp = H2K_translate_default(baseaddr);
+	/* check that effective addr is in bounds of VM */
+	/* FIXME: or, translate at ptb registration time! */
+	pa_t ppn;
+	if (vmblock->guestmap.raw) {
+		tmp = H2K_translate(tmp,vmblock->guestmap);
+		if ((tmp.xwru & 2) == 0) goto fail;
+		ppn = tmp.pn;
+	} else {
+		ppn = tmp.pn;
+	}
+	pte.raw = H2K_mem_physread_word((ppn << PAGE_BITS)| ((in.pn>>8) & 0xffc));
+	size = pte.s;
+	if (size <= 4) return H2K_mem_pagewalk_l2(in,pte.raw & -16, 5-size, size, vmblock);
+	if (size == 7) goto fail;
+	/* REFINE PPN, PERMS */
+	return pte;
+fail:
+	pte.raw = 0;
+	return pte;
+}
+
+H2K_translation_t H2K_pagewalk_translate(H2K_translation_t in, H2K_asid_entry_t info)
+{
+	H2K_pte_t pte;
+	H2K_vmblock_t *vmblock = H2K_gp->vmblocks[info.fields.vmid];
+	pte = H2K_mem_pagewalk_l1(in,info,vmblock);
+	in = H2K_pagewalk_update_translation(in,pte);
+	if (vmblock->guestmap.raw) return H2K_translate(in, vmblock->guestmap);
+	else return in;
 }
 

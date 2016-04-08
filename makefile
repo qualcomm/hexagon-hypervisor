@@ -1,4 +1,3 @@
-
 ifeq ($(TARGET), 8960)
 ARCHV := 4
 H2K_KERNEL_PGSIZE ?= 3
@@ -48,7 +47,7 @@ all: ref doc gtags
 
 distclean: clean docclean gtagsclean
 
-clean: covclean ucosclean booterclean docclean
+clean: covclean ucosclean booterclean docclean qurtclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
@@ -61,16 +60,20 @@ docclean:
 	$(MAKE) -C libs/docs/dox clean
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
-testclean covclean: ucosclean
+testclean covclean: ucosclean qurtclean
 	$(MAKE) -f scripts/Makefile.coverage clean && \
 	$(MAKE) -f scripts/Makefile.coverage clean_top
 
 ucosclean:
 	$(MAKE) -C ucos clean
 
+qurtclean:
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) clean
+	$(MAKE) -f scripts/Makefile.qurt clean_top
+
 opt:
 	echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which hexagon-gcc
+	pkw --which $(CC)
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
@@ -82,7 +85,7 @@ opt:
 
 ref:
 	echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which hexagon-gcc
+	pkw --which $(CC)
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
@@ -103,29 +106,53 @@ size:
 t:
 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
-test: ucosclean
+test:	h2_test
+	head -n -1 h2_report.html > report.html
+#	tail -n +2 qurt_report.html >> report.html
+
+h2_test: ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
-	$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
+#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
 	[ `fgrep -c -i warning: test.out` -eq 0 ]
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 
-cov:
+qurt_test: ./qurt/test/testcases
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee test.out
+#	[ `fgrep -c -i warning: test.out` -eq 0 ]
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_report.html
+
+qurt_test_single: ./qurt/test/testcases
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee test.out
+	[ `fgrep -c -i warning: test.out` -eq 0 ]
+
+qurt_test_libs:
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
+
+# coverage is broken
+# cov: h2_cov
+cov: h2_test
+	head -n -1 h2_report.html > report.html
+#	tail -n +2 qurt_report.html >> report.html
+
+h2_cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
-	$(MAKE) -C ucos sim 2>&1 | tee make.log
+#	$(MAKE) -C ucos sim 2>&1 | tee make.log
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 
 .PHONY: check-fail test-check cov-check cov_fns
 
 check-fail test-check cov-check:
 	$(MAKE) -f scripts/Makefile.coverage check-fail
-	$(MAKE) -C ucos check
+#	$(MAKE) -C ucos check
 
 check:
 	$(MAKE) -f scripts/Makefile.coverage check
-	$(MAKE) -C ucos check
+#	$(MAKE) -C ucos check
 
 doc:
 	$(MAKE) -C libs/docs/dox
@@ -138,8 +165,8 @@ compat:
 .PHONY: gtags gtagsclean
 
 gtags:
-	find booter examples kernel libs linux perf scripts stake tst ucos -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
-	htags -afhnosTxv --show-position
+	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
+#	htags -afhnosTxv --show-position
 
 gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML

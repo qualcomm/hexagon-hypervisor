@@ -25,10 +25,11 @@ int main()
 	u32_t i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	for (i = 0; i < MAX_PRIOS; i++) {
-		a.prio = i;
-		if (H2K_prio_get(&a) != i) FAIL("prio_get");
+		a.base_prio = i;
+		if (H2K_prio_get(0,&a) != i) FAIL("prio_get");
 	}
-	if (H2K_prio_set(&a,4,&a) != -1) FAIL("prio_set");
+	if (H2K_prio_set(&a,999,&a) != -1) FAIL("prio_set");
+	// FIXME: probably should actually test real prio set behavior?
 	puts("TEST PASSED\n");
 	return 0;
 }

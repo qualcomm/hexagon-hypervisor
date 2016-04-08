@@ -12,100 +12,65 @@
 #include <physread.h>
 #include <globals.h>
 
-#if ARCHV <= 3
-
-static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear(H2K_linear_fmt_t linear, u32_t asid)
+static inline H2K_translation_t H2K_linear_translate_update(H2K_translation_t in, H2K_linear_fmt_t entry)
 {
-	H2K_mem_tlbfmt_t ret;
-	u32_t xwru;
-	ret.raw = 0;
-	ret.ppn = linear.ppn;
-	ret.ccc = linear.cccc;
-	xwru = linear.xwru;
-	ret.vpn = linear.vpn;
-	ret.size = linear.size;
-	ret.xwr = (xwru >> 1);
-	ret.guestonly = ~(xwru & 1);
-	ret.asid = asid;
-	ret.valid = 1;
-	return ret;
+	in.size = min(in.size,entry.size);
+	in.pn = entry.ppn;
+	if (in.cccc > 0xF) in.cccc = entry.cccc;
+	in.xwru &= entry.xwru;
+	return in;
 }
 
-#else
-
-static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear(H2K_linear_fmt_t linear, u32_t asid)
+H2K_translation_t H2K_linear_translate(H2K_translation_t in, H2K_asid_entry_t info)
 {
-	H2K_mem_tlbfmt_t ret;
-	u32_t size = linear.size;
-	u32_t mask = (0xFFFFFFFF) << (size*2);
-	ret.raw = 0;
-	ret.cccc = linear.cccc;
-	ret.ppd = ((linear.ppn & mask) << 1) | (1<<size);
-	ret.vpn = linear.vpn;
-	ret.xwru = linear.xwru;
-	ret.asid = asid;
-	ret.valid = 1;
-	return ret;
-}
-
-#endif
-
-H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list, H2K_vmblock_t *vmblock) {
-
-	H2K_linear_fmt_t tmp;
-	H2K_translation_t phys_translation;
-	u32_t tvpn;
+	u32_t list = info.ptb;	/* FIXME: use extra info to allow extra bits? */
+	u32_t list_ppn,list_gpn;
+	u32_t last_gpn = ~0UL;
+	u32_t badvpn;
+	u32_t evpn;
 	u32_t mask;
-	u32_t badvpn = badva >> PAGE_BITS; /* PAGEBITS or something */
-
-	tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
-	while (tmp.raw) {
-		if (tmp.chain) {
-			/* Pointer to next set of translations */
-			list = tmp.low;
-			if ((list & 0xff000000) == 0xff000000) { // FIXME: remove this once guests no longer in monitor space
-				list -= H2K_gp->phys_offset;
-			} else if (vmblock != NULL) {
-				phys_translation =	H2K_vm_translate(list, vmblock);
-				if (!phys_translation.valid) {
-					tmp.raw = 0;
-					return tmp;
-				}
-				list = phys_translation.addr;
+	pa_t list_pa;
+	H2K_linear_fmt_t entry;
+	H2K_vmblock_t *vmblock = H2K_gp->vmblocks[info.fields.vmid];
+	H2K_translation_t tmp = H2K_translate_default(0);
+	badvpn = in.pn;
+	do {
+		list_gpn = list >> PAGE_BITS;
+		if (list_gpn != last_gpn) {
+			/* Walked over a page boundary, retranslate entries */
+			last_gpn = list_gpn;
+			if (vmblock->guestmap.raw) {
+				tmp.pn = list_gpn;
+				tmp = H2K_translate(tmp,vmblock->guestmap);
+				list_ppn = tmp.pn;
+				if ((tmp.xwru & 0x2) == 0) break;	/* NO R PERMISSION */
+			} else {
+				list_ppn = list_gpn;
 			}
-			tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
+			list_pa = list_ppn;
+			list_pa <<= PAGE_BITS;
+			list_pa |= (list & ((1<<PAGE_BITS)-1));
+		}
+		entry.raw = H2K_mem_physread_dword(list_pa);
+		if (entry.raw == 0) break;
+		if (entry.chain) {
+			list = entry.low & -8;
+			list_pa &= (list_pa & -(1<<PAGE_BITS));
+			list_pa |= list & ((1<<PAGE_BITS)-1);
 			continue;
 		}
-		tvpn = tmp.vpn;
-		mask = 0xffffffff << (tmp.size*2);
-		if ((tvpn & mask) == (badvpn & mask)) {
-			/* match */
-			return tmp;
+		evpn = entry.vpn;
+		mask = ~0UL << entry.size*2;
+		if ((evpn & mask) == (badvpn & mask)) {
+			/* REFINE PPN, PERMS */
+			in = H2K_linear_translate_update(in,entry);
+			if (vmblock->guestmap.raw) return H2K_translate(in,vmblock->guestmap);
+			return in;
 		}
-		list += sizeof(H2K_linear_fmt_t);
-		/* FIXME: check that new list addr is in bounds of VM */
-		tmp = (H2K_linear_fmt_t)H2K_mem_physread_dword((u64_t)list);
-	}
-	tmp.raw = 0;
-	return tmp;
+		list += 8;
+		list_pa += 8;
+	} while (1);
+	in.raw = 0;
+	return in;
 }
 
-H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
-{
-	H2K_linear_fmt_t tmp;
-	u32_t list;
-	H2K_mem_tlbfmt_t ret;
-
-	ret.raw = 0;
-
-	list = H2K_mem_asid_table[me->ssr_asid & (MAX_ASIDS-1)].ptb;
-	if (list == 0) {
-		return ret;
-	}
-
-	tmp = H2K_mem_lookup_linear(badva, list, me->vmblock);
-	if (tmp.raw) {
-		return H2K_mem_tlbfmt_from_linear(tmp,me->ssr_asid);
-	}
-	return ret;
-}

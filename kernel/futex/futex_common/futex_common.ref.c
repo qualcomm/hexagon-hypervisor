@@ -43,7 +43,7 @@ void H2K_futex_hash_add_ring(H2K_thread_context **ring, H2K_thread_context *me)
  * Thus we avoid re-iterating over the first elements in the ring
  */
 
-H2K_thread_context *H2K_futex_hash_remove_one(pa_t lock, H2K_thread_context **ring, H2K_thread_context **pos)
+H2K_thread_context *H2K_futex_hash_remove_one(u32_t locklo, H2K_thread_context **ring, H2K_thread_context **pos)
 {
 	H2K_thread_context *tmp;
 	H2K_thread_context *cur;
@@ -51,7 +51,7 @@ H2K_thread_context *H2K_futex_hash_remove_one(pa_t lock, H2K_thread_context **ri
 	cur = *pos;
 	if (start == NULL) return NULL;
 	while (1) {
-		if (cur->futex_ptr == lock) {
+		if (cur->futex_ptr_lo == locklo) {
 			tmp = cur->next;
 			H2K_ring_remove(ring,cur);
 			H2K_ready_append(cur);

@@ -8,9 +8,12 @@
 
 #include <h2_common_defs.h>
 
+/* EJP: FIXME maybe? can flatten config type + vmblock op to reduce ops... */
+
 typedef enum {
 	CONFIG_VMBLOCK_INIT,
 	CONFIG_STLB_ALLOC,
+	CONFIG_FATAL_HOOK,
 	CONFIG_MAX
 } config_type_t;
 
@@ -20,7 +23,7 @@ typedef enum {
 	SET_PRIO_TRAPMASK,
 	SET_CPUS_INTS,
 	MAP_PHYS_INTR,
-	NUM_OPS
+	NUM_OPS		/* EJP: FIXME: probably bad to have in the namespace globally.... */
 } vmblock_init_op_t;
 
 #define MAP_PHYS_INTR_CPU_BITS 16

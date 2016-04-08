@@ -58,6 +58,11 @@ static inline int h2_config_stlb_alloc() {
 	return h2_config_trap(CONFIG_STLB_ALLOC, 0, 0, 0, 0);
 }
 
+static inline int h2_config_fatal_hook(unsigned int funcaddr, unsigned int arg)
+{
+	return h2_config_trap(CONFIG_FATAL_HOOK,funcaddr,arg,0,0);
+}
+
 /** @} */
 
 #endif

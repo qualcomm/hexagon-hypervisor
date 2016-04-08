@@ -32,9 +32,25 @@ static H2K_thread_context a,b,c;
 u32_t TH_saw_dosched = 0;
 H2K_thread_context *TH_me = NULL;
 
+void H2K_mem_alloc_release(u32_t *unused)
+{
+}
+
+void H2K_mem_alloc_free(u32_t *ptr)
+{
+	return H2K_mem_alloc_release(ptr);
+}
+
+void H2K_mem_alloc_init();
+
+u64_t *H2K_mem_alloc_get(u32_t size)
+{
+	return malloc(size);
+}
+
 void H2K_dosched(H2K_thread_context *me, u32_t hwtnum)
 {
-	if (me != TH_me) FAIL("Me passed incorrectly");
+	if (me != NULL) FAIL("Once a thread is stopped, don't switch context out");
 	if (hwtnum != get_hwtnum()) FAIL("hwtnum incorrect");
 	TH_saw_dosched = 1;
 	checker_kernel_locked();
@@ -69,6 +85,7 @@ int main()
 	a.vmblock = vmblock;
 	b.vmblock = vmblock;
 	c.vmblock = vmblock;
+	//puts("C");
 	vmblock->free_threads = NULL;
 	if (vmblock->free_threads != NULL) FAIL("free threads not clear");
 	H2K_runlist_push(&a);
@@ -78,14 +95,20 @@ int main()
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
+	//puts("D");
 	TH_thread_stop(TH_me);
+	//puts("E");
 
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
+	//puts("f");
 	if (a.prev != 0) FAIL("thread not cleared");
+	//puts("g");
 	if (vmblock->free_threads != &a) FAIL("free thread list incorrect");
+	//puts("h");
 	if (a.next != 0) FAIL("Free thread list incorrect");
+	//puts("i");
 	if (H2K_gp->runlist[a.hthread] == &a) FAIL("Thread not removed from runlist");
-
+	//puts("B");
 	TH_saw_dosched = 0;
 	TH_me = &b;
 	b.prev = &b;
@@ -97,7 +120,7 @@ int main()
 	if (H2K_gp->runlist[b.hthread] == &b) FAIL("Thread not removed from runlist");
 	if (H2K_gp->runlist[a.hthread] != NULL) FAIL("Unexpected runlist");
 	if (H2K_gp->runlist[b.hthread] != NULL) FAIL("Unexpected runlist");
-
+	puts("A");
 	H2K_runlist_init();
 	H2K_lowprio_init();
 	H2K_readylist_init();

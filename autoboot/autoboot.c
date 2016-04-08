@@ -1,0 +1,160 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include <context.h>
+#include <linear.h>
+#include <h2_common_pmap.h>
+#include <cpuint.h>
+#include <shint.h>
+#include <max.h>
+
+#include <h2.h>
+#include <h2_vm.h>
+#include <h2_config.h>
+#include <h2_vmtraps.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int NUM_VCPUS = 400;
+unsigned int TRAPMASK = 0xFFFFFFFF;
+unsigned int PRIO = 0;
+#define SHARED_INTS 0
+
+#define CHILD_INTERRUPT 14
+#define VM_STATUS_REBOOT 3
+
+#define WRITE_BUFSIZE (1024)
+char H2_ANGEL_write_buf[WRITE_BUFSIZE] __attribute__((aligned(64))) = { 0 };
+unsigned int H2_ANGEL_write_buf_idx = 0;
+const unsigned int H2_ANGEL_write_buf_size = WRITE_BUFSIZE;
+
+#ifdef NO_PRINT
+#define PRINTF(format, args...)
+#else
+#define PRINTF(format, args...) printf (format , ##args)
+#endif
+
+void FAIL(const char *str)
+{
+	PRINTF("t32boot: FAIL %s\n", str);
+	exit(1);
+}
+
+unsigned long vm_setup(unsigned int num_cpus, short num_ints, u32_t trans, unsigned long trapmask, translation_type pt) {
+
+	unsigned long vm, ret;
+	H2K_offset_t base;
+	base.size = 6;
+	base.cccc = 7;
+	base.xwru = 0xf;
+	base.pages = 0;
+
+	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, num_cpus, num_ints);
+	if (vm == 0) FAIL("SET_CPUS_INTS");
+
+	ret = h2_config_vmblock_init(vm, SET_PMAP_TYPE, base.raw, pt);
+	if (ret != vm) {
+		PRINTF("ret %08x\n", (unsigned int)ret);
+		FAIL("SET_PMAP_TYPE");
+	}
+
+	if (pt == H2K_ASID_TRANS_TYPE_OFFSET) {
+		/* Memory map:  0 ... Linux ... frame buffer ... H2 ... boot VM ... ucos */
+		//		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x0, FRAME_BUFFER);
+		ret = h2_config_vmblock_init(vm, SET_FENCES, 0x00000000, 0xff000000);
+		if (ret != vm) {
+			PRINTF("set fences ret %08x\n", (unsigned int)ret);
+			FAIL("SET_FENCES");
+		} else {
+			PRINTF("set fences ok\n");
+		}
+	}
+
+	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, PRIO, trapmask) != vm) {
+		FAIL("SET_PRIO_TRAPMASK");
+	}
+
+	return vm;
+}
+
+volatile unsigned int *t32_vm_entry_p = (volatile unsigned int *)0x8D4FFFFC;
+
+unsigned long boot_vm() {
+	unsigned int bootaddr = *t32_vm_entry_p;
+	unsigned int newvm;
+	*t32_vm_entry_p = 0;
+	newvm = vm_setup(NUM_VCPUS, 
+		SHARED_INTS, 
+		0, 
+		TRAPMASK,
+		H2K_ASID_TRANS_TYPE_OFFSET);
+	PRINTF("vm set up entry=%x\n",bootaddr);
+	if (h2_vmboot((void *)(bootaddr), (void *)0x20000000, bootaddr, PRIO, newvm) == -1) FAIL("vmboot");
+	/* Reset for Linux-y VM */
+	NUM_VCPUS = 8;
+	TRAPMASK = 0x1;
+	PRIO = 255;
+	return newvm;
+}
+
+extern void bootvm_vectors();
+
+void handle_child_int() {
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+}
+
+#define SLEEP_NS (1000ULL*1000*1000) // 1 second
+
+static inline void set_timer()
+{
+	h2_vmtrap_timerop(H2K_TIMER_TRAP_DELTA_TIMEOUT, SLEEP_NS);
+}
+
+static inline void timer_int_enable()
+{
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT, 0);
+}
+
+h2_sem_t sleepsem;
+unsigned long long int interrupt_count;
+
+void timer_handler()
+{
+	interrupt_count++;
+	h2_sem_up(&sleepsem);
+}
+
+extern void vecsetup();
+
+int main()
+{
+	unsigned int new_vm;
+	h2_sem_init_val(&sleepsem,0);
+	PRINTF("autoboot: H2 started\n");
+	h2_set_prio(h2_thread_myid(),250);
+	h2_hwconfig_l2cache_size(3,1);//1==64KB,2==128KB,3==256KB,4==512KB
+	PRINTF("L2 cache resized to 256KB\n");
+#if 0
+	// EJP: testing
+	extern unsigned int t32_test_load();
+	t32_vm_entry = t32_test_load();
+	t32_vm_loaded_flag = 1;
+#endif
+	h2_vmtrap_setie(1);
+	vecsetup();
+	do {
+		new_vm = boot_vm();
+		PRINTF("started vm %x\n",new_vm);
+		while (*t32_vm_entry_p == 0) {
+			timer_int_enable();
+			set_timer();
+			h2_sem_down(&sleepsem);
+			PRINTF("TICK\n");
+		}
+	} while (1);
+	return 0; // make gcc happy
+}

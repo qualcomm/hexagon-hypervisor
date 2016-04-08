@@ -6,7 +6,7 @@
 #include <c_std.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <cputime.h>
 #include <context.h>
 #include <max.h>
 #include <h2.h>
@@ -31,6 +31,7 @@ volatile int saw_interrupt = 0;
 
 extern u64_t h2_time_get_time();
 extern u64_t h2_time_set_timeout(u64_t timeout);
+extern u64_t h2_time_get_timeout();
 extern void set_vectors();
 
 u64_t stacks[STACK_SIZE*N_THREADS];
@@ -46,7 +47,7 @@ static inline u64_t random_delta(u64_t seed) {
 
 void task(void *arg)
 {
-	s64_t start, wakeup, end, delta;
+	s64_t start, wakeup, wakeup_real, end, delta;
 	int i,ret;
 	set_vectors();
 	printf("Task started. id=%p\n",arg);
@@ -54,19 +55,24 @@ void task(void *arg)
 		h2_vmtrap_setie(1);
 		h2_vmtrap_intop(H2K_INTOP_GLOBEN,12,0);
 		start = h2_time_get_time();
+		//h2_printf("start=%llx\n",start);
 		wakeup = start + random_delta(start);
 		if (h2_time_set_timeout(wakeup) == 0) {
 			FAIL("timeout in past");
 		}
-		if ((ret = h2_futex_wait(&i,i)) >= 0) {
+		if (llabs((wakeup_real = h2_time_get_timeout()) - wakeup) > 100) {
+			h2_printf("wakeup=%llx wakeup_real=%llx\n",wakeup,wakeup_real);
+		}
+		if ((ret = h2_futex_wait(&i,i)) != 0) {
 			/* EJP: FIXME: is this when a thread does vmwork after vmwait? */
+			//h2_printf("t=%p id=%x futex wait: %x\n",arg,h2_thread_myid(),ret);
 		}
 		end = h2_time_get_time();
 		delta = end - wakeup;
 		if (delta < 0) delta = -delta;
 		//printf("id=%p: start=%llx wakeup=%llx end=%llx\n",arg,start,wakeup,end);
 		if (delta > MAX_DELTA) {
-			printf("delta: %llx\n",delta);
+			printf("delta: %llu\n",delta);
 			FAIL("Delta too big");
 		}
 	};

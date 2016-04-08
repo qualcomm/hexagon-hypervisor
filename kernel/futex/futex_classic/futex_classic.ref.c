@@ -17,16 +17,23 @@
 #include <safemem.h>
 #include <lowprio.h>
 #include <id.h>
+#include <vmwork.h>
 
 s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 {
 	u32_t readval;
 	pa_t pa;
 	BKL_LOCK();
+	if ((me->vmstatus & H2K_VMSTATUS_VMWORK) && (me->vmstatus & H2K_VMSTATUS_IE)) {
+		BKL_UNLOCK();
+		H2K_vm_do_work(me);
+		return -1;
+	}
 	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_R,&pa,me)) {
 		BKL_UNLOCK();
 		return -1;
 	}
+	pa >>= 2;
 	readval = *lock;
 	H2K_safemem_unlock();
 	if (readval != val) {
@@ -38,7 +45,7 @@ s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 	H2K_runlist_remove(me);
 	me->r0100 = 0;
 	me->status = H2K_STATUS_BLOCKED;
-	H2K_futex_hash_add_ring(&H2K_gp->futexhash[HASHVAL(pa)],me);
+	H2K_futex_hash_add_ring(&H2K_gp->futexhash[FUTEX_HASHVAL(pa)],me);
 	H2K_dosched(me,me->hthread);
 	/* Unreachable */
 	return 0;
@@ -61,7 +68,8 @@ s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 	/* Need to do the read, but only because we need the PA */
 	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_R,&pa,me)) return -1;
 	H2K_safemem_unlock();
-	hashval = HASHVAL(pa);
+	pa >>= 2;
+	hashval = FUTEX_HASHVAL(pa);
 
 	BKL_LOCK();
 

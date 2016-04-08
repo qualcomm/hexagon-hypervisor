@@ -41,12 +41,12 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	{
 		CONTEXT_SIZE_VAL = #FASTINT_CONTEXT_SIZE
 		p3 = cmp.eq(r1,#0)
-		SSR_VAL = ##0x01c80000
+		TMP54 = memd(H2K_GP+#KG_fastint_gp_ssr)
 	}
 	{
 		TMP = r29
 		r29 = add(##H2K_fastint_contexts+FASTINT_CONTEXT_SIZE,mpyi(r2,CONTEXT_SIZE_VAL))
-		ssr = SSR_VAL  // AXOK (if changing bits other than IE, EX, UM)
+		ssr = TMP4  // AXOK (if changing bits other than IE, EX, UM)
 	}
 	{
 		allocframe(#8)
@@ -57,19 +57,20 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 	{
 		crswap(OTHER_SGP,sgp0)
 		OLD_SP_SAVE = TMP
+		TMP4 = #0				// clear UGP during fastint
+		r0 = add(r0,#-32)
 	}
 	{
-		TMP = memw(H2K_GP+#KG_fastint_gp)
 		if (p3) jump 1f
 		TMP32 = c13:12				// cs1:cs0
 	}
 	{
 		memd(OTHER_SGP+#CONTEXT_cs1cs0) = TMP32
 		memd(OTHER_SGP+#CONTEXT_m1m0) = TMP10
-		TMP54 = c11:10				// GP:UGP
+		TMP32 = c11:10				// GP:UGP
 	}
 	{
-		memd(OTHER_SGP+#CONTEXT_gpugp) = TMP54
+		memd(OTHER_SGP+#CONTEXT_gpugp) = TMP32
 		TMP32 = c3:2				// lc1/sa1
 	}
 	{
@@ -80,7 +81,7 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 1:
 	{
 		if (!p3) memw(OTHER_SGP+#CONTEXT_elr) = TMP0
-		gp = TMP
+		c11:10 = TMP54			// Set up GP:UGP
 		INT_SAVE = r0			// NOTE: THIS IS R30 currently, don't dealloc!
 		callr INT_ARG
 	}
@@ -89,9 +90,8 @@ H2K_fastint_return:
 	{
 		p0 = cmp.eq(r0,#0)		// if no ack, skip all
 		if (p0.new) jump:nt .Lno_ack
-		p1 = cmp.gtu(INT_SAVE,#31)		// if non-l2 interrupt, ciad
+		p1 = cmp.gt(INT_SAVE,#-1)		// if non-l2 interrupt, ciad
 		if (!p1.new) jump:nt .L1ack
-		INT_SAVE = add(INT_SAVE,#-32)
 	}
 	{
 		TMP = memw(##H2K_kg+KG_l2_ack_base)
@@ -119,12 +119,12 @@ H2K_fastint_return:
 	{
 		TMP54 = memd(TMP+#CONTEXT_cs1cs0)
 		TMP10 = memd(TMP+#CONTEXT_lc1sa1)
-		c3:2 = TMP10
+		c11:10 = TMP32
 	}
 	{
+		c3:2 = TMP10
 		TMP10 = memd(TMP+#CONTEXT_m1m0)
 		TMP = memw(TMP+#CONTEXT_elr)
-		c11:10 = TMP32
 	}
 	{
 		elr = TMP

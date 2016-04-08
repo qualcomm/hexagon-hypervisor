@@ -30,12 +30,18 @@ void FAIL(const char *str)
 	exit(1);
 }
 
+void TH_regcheck_fail()
+{
+	FAIL("regcheck");
+}
+
 unsigned int ackbuf[MAX_INTERRUPTS/32] __attribute__((aligned(2*MAX_INTERRUPTS/8)));
 
 //void TH_call_fastint_check(u32_t intno);
 void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2, void *param);
 
 void TH_fastint_call(u32_t intno, H2K_thread_context *me, u32_t hthread, void *param);
+void TH_regcheck_fastint_call(u32_t intno, H2K_thread_context *me, u32_t hthread, void *param);
 
 void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 {
@@ -48,7 +54,7 @@ int TH_good_interrupt(u32_t intno)
 {
 	u32_t sp_check;
 	u32_t sgp_check;
-	if (intno != TH_intno) FAIL("Unexpected interrupt");
+	if (intno != (TH_intno - 32)) FAIL("Unexpected interrupt");
 	asm ( " %0 = r29 " : "=r"(sp_check));
 	if ((u32_t)(sp_check - ((u32_t)(&H2K_fastint_contexts[0]))) > ((u32_t)FASTINT_CONTEXT_SIZE)) {
 		FAIL("Not fastint context sp");
@@ -68,7 +74,7 @@ int TH_good_interrupt_ackl2(u32_t intno)
 {
 	u32_t sp_check;
 	u32_t sgp_check;
-	if (intno != TH_intno) FAIL("Unexpected interrupt");
+	if (intno != (TH_intno - 32)) FAIL("Unexpected interrupt");
 	asm ( " %0 = r29 " : "=r"(sp_check));
 	if ((u32_t)(sp_check - ((u32_t)(&H2K_fastint_contexts[0]))) > ((u32_t)FASTINT_CONTEXT_SIZE)) {
 		FAIL("Not fastint context sp");
@@ -110,7 +116,12 @@ void TH_setup_fastinthandlers_ack(u32_t interrupt)
 
 void TH_fastint_wrapper(u32_t interrupt, H2K_thread_context *dest, u32_t hthread, void *param)
 {
-	TH_fastint_call(interrupt,dest,0,param);
+	if (dest != NULL) {
+		TH_regcheck_fastint_call(interrupt,dest,0,param);
+		//TH_fastint_call(interrupt,dest,0,param);
+	} else {
+		TH_fastint_call(interrupt,dest,0,param);
+	}
 	longjmp(env2,1);
 }
 

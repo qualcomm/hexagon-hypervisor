@@ -9,7 +9,6 @@ SECTIONS
 /* Start EBI memory. */
   .interp         :
                      { *(.interp) }
-  .note.gnu.build-id :  { *(.note.gnu.build-id) }
   .hash           :  { *(.hash) }
   .gnu.hash       :  { *(.gnu.hash) }
   .dynsym         :  { *(.dynsym) }
@@ -46,7 +45,11 @@ SECTIONS
 /* Code starts. */
   . = ALIGN (DEFINED (TEXTALIGN) ? (TEXTALIGN * 1K) : CONSTANT (MAXPAGESIZE));
   .bootvm : AT(0xyyyyyyyy) { KEEP(*(.bootvm)) }
-  .entry : AT(0xxxxxxxxx) { KEEP(*(.entry)) }
+  PROVIDE(__ENTRY_SECTION_PA = 0xxxxxxxxx);
+  .entry : AT(__ENTRY_SECTION_PA) { 
+    PROVIDE(__ENTRY_SECTION_START = .);
+    KEEP(*(.entry)) 
+  }
   .start          :
   {
     KEEP (*(.start))
@@ -58,7 +61,7 @@ SECTIONS
   .plt            :  { *(.plt) }
   .iplt           :  { *(.iplt) }
   . = ALIGN (. + CONSTANT (COMMONPAGESIZE), CONSTANT (COMMONPAGESIZE));
-  .text           :
+  .text           : AT(__ENTRY_SECTION_PA + (.-__ENTRY_SECTION_START)) 
   {
     *(.text.unlikely .text.*_unlikely)
     *(.text.hot .text.hot.* .gnu.linkonce.t.hot.*)
@@ -75,7 +78,7 @@ SECTIONS
   PROVIDE (etext = .);
 /* Constants start. */
   . = ALIGN (. + CONSTANT (COMMONPAGESIZE), CONSTANT (COMMONPAGESIZE));
-  .rodata         :
+  .rodata         : AT(__ENTRY_SECTION_PA + (.-__ENTRY_SECTION_START)) 
         {
           *(.rodata.hot .rodata.hot.* .gnu.linkonce.r.hot.*)
           *(.rodata .rodata.* .gnu.linkonce.r.*)
@@ -89,6 +92,14 @@ SECTIONS
      the same address within the page on the next page up.  */
   . = ALIGN (CONSTANT (MAXPAGESIZE)) - ((CONSTANT (MAXPAGESIZE) - .) & (CONSTANT (MAXPAGESIZE) - 1)); . = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE));
   . = ALIGN (DEFINED (DATAALIGN) ? (DATAALIGN * 1K) : CONSTANT (MAXPAGESIZE));
+  /* DATA!!! */
+  .data           : AT(__ENTRY_SECTION_PA + (.-__ENTRY_SECTION_START)) 
+  {
+    *(.data.hot .data.hot.* .gnu.linkonce.d.hot.*)
+    *(.data .data.* .gnu.linkonce.d.*)
+    SORT(CONSTRUCTORS)
+  }
+  .data1          :  { *(.data1) }
   /* Exception handling  */
   .eh_frame       :  ONLY_IF_RW { KEEP (*(.eh_frame)) }
   .gcc_except_table   :  ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) }
@@ -150,13 +161,7 @@ SECTIONS
   .got            :  { *(.got) *(.igot) }
   . = DATA_SEGMENT_RELRO_END (16, .);
   .got.plt        :  { *(.got.plt)  *(.igot.plt) }
-  .data           :
-  {
-    *(.data.hot .data.hot.* .gnu.linkonce.d.hot.*)
-    *(.data .data.* .gnu.linkonce.d.*)
-    SORT(CONSTRUCTORS)
-  }
-  .data1          :  { *(.data1) }
+
   _edata = .; PROVIDE (edata = .);
   . = ALIGN (64);
   __bss_start = .;
@@ -286,5 +291,5 @@ SECTIONS
   .debug_pubtypes 0 :  { *(.debug_pubtypes) }
   .debug_ranges   0 :  { *(.debug_ranges) }
   .gnu.attributes 0 :  { KEEP (*(.gnu.attributes)) }
-  /DISCARD/       :  { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) }
+  /DISCARD/       :  { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) *(.note.gnu.build-id) }
 }

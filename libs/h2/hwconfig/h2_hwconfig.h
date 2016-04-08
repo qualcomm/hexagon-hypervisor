@@ -154,6 +154,17 @@ static inline int h2_hwconfig_unlock()
 	return h2_hwconfig_trap(HWCONFIG_L2UNLOCK, NULL, 0, 0);
 }
 
+/**
+Control interrupt hardware directly
+@returns 0 on success, nonzero value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_hwintop(unsigned int op, unsigned int intno, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_HWINTOP, NULL, (op << 16) | intno, val);
+}
+
 #endif
 
 /** @} */

@@ -17,6 +17,7 @@
 #include <safemem.h>
 #include <lowprio.h>
 #include <id.h>
+#include <vmwork.h>
 
 static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 {
@@ -32,9 +33,9 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		 */ 
 		dest->prio = prio;
 		if (dest->next == dest) /* Only thing in the list */ return;
-		hashval = HASHVAL(dest->futex_ptr);
+		hashval = FUTEX_HASHVAL(dest->futex_ptr);
 		H2K_ring_remove(&H2K_gp->futexhash[hashval],dest);
-		H2K_futex_hash_add_ring(&H2K_gp->futexhash[HASHVAL(dest->futex_ptr)],dest);
+		H2K_futex_hash_add_ring(&H2K_gp->futexhash[FUTEX_HASHVAL(dest->futex_ptr)],dest);
 	} else if (dest->status == H2K_STATUS_READY) {
 		H2K_ready_remove(dest);
 		dest->prio = prio;
@@ -71,10 +72,16 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 	} x;
 	pa_t pa;
 	BKL_LOCK();
+	if ((me->vmstatus & H2K_VMSTATUS_VMWORK) && (me->vmstatus & H2K_VMSTATUS_IE)) {
+		BKL_UNLOCK();
+		H2K_vm_do_work(me);
+		return -1;
+	}
 	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_RW,&pa,me)) {
 		BKL_UNLOCK();
 		return -1;
 	}
+	pa >>= 2;
 	H2K_atomic_setbit(lock,0);
 	x.val = *lock;
 	if (x.val == 0x1) {
@@ -94,7 +101,7 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 	H2K_runlist_remove(me);
 	me->r0100 = 0;
 	me->status = H2K_STATUS_BLOCKED;
-	H2K_futex_hash_add_ring(&H2K_gp->futexhash[HASHVAL(pa)],me);
+	H2K_futex_hash_add_ring(&H2K_gp->futexhash[FUTEX_HASHVAL(pa)],me);
 	/* Optimization: set continuation to some kind of check thing */
 	H2K_dosched(me,me->hthread);
 	/* Unreachable */
@@ -115,7 +122,8 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 		BKL_UNLOCK();
 		return -1;
 	}
-	hashval = HASHVAL(pa);
+	pa >>= 2;
+	hashval = FUTEX_HASHVAL(pa);
 	ring = &H2K_gp->futexhash[hashval];
 	pos = *ring;
 	ret = H2K_futex_hash_remove_one(pa,ring,&pos);

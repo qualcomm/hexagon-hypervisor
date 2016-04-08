@@ -1,0 +1,110 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#ifndef QURT_PMU_H
+#define QURT_PMU_H
+/**
+  @file qurt_pmu.h 
+  @brief  Prototypes of pipe interface API.  
+	 A pipe or message queue will block if too full (send) or empty (receive).
+	 Unless a nonblocking option is used, all datagrams are 64 bits.
+
+EXTERNAL FUNCTIONS
+   None.
+
+INITIALIZATION AND SEQUENCING REQUIREMENTS
+   None.
+
+ Copyright (c) 2013  by Qualcomm Technologies, Inc.  All Rights Reserved.
+ Confidential and Proprietary - Qualcomm Technologies, Inc.
+
+=============================================================================*/
+
+/**@ingroup func_qurt_pmu_set
+  Sets the value of the specified PMU register.
+
+  @note1hang Setting PMUEVTCFG automatically clears the PMU registers PMUCNT0
+             through PMUCNT3.
+ 
+  @param[in] reg_id   PMU register. Values: \n
+              - QURT_PMUCNT0 register \n
+              - QURT_PMUCNT1 register \n
+              - QURT_PMUCNT2 register \n
+              - QURT_PMUCNT3 register \n
+              - QURT_PMUCFG  register \n
+              - QURT_PMUEVTCFG register \n
+              - QURT_PMUCNT4 register \n
+              - QURT_PMUCNT5 register \n
+              - QURT_PMUCNT6 register \n
+              - QURT_PMUCNT7 register \n
+              - QURT_PMUEVTCFG1 register @tablebulletend             
+ 
+  @param[in] reg_value  Register value.
+ 
+  @return
+  None.
+   
+  @dependencies
+  None.
+ */
+/* EJP: FIXME: register constants probably don't match h2 */
+static inline void qurt_pmu_set (int reg_id, unsigned int reg_value)
+{
+	h2_pmu_setreg(reg_id,reg_value);
+	if (reg_id == QURT_PMUEVTCFG) {
+		h2_pmu_setreg(QURT_PMUCNT0,0);
+		h2_pmu_setreg(QURT_PMUCNT1,0);
+		h2_pmu_setreg(QURT_PMUCNT2,0);
+		h2_pmu_setreg(QURT_PMUCNT3,0);
+	}
+}
+ 
+/**@ingroup func_qurt_pmu_get
+  Gets the PMU register.\n
+  Returns the current value of the specified PMU register.
+
+  @param[in] red_id   PMU register. Values: \n
+              - QURT_PMUCNT0 register \n
+              - QURT_PMUCNT1 register \n
+              - QURT_PMUCNT2 register \n
+              - QURT_PMUCNT3 register \n
+              - QURT_PMUCFG  register \n
+              - QURT_PMUEVTCFG register \n
+              - QURT_PMUCNT4 register \n
+              - QURT_PMUCNT5 register \n
+              - QURT_PMUCNT6 register \n
+              - QURT_PMUCNT7 register \n
+              - QURT_PMUEVTCFG1 register @tablebulletend           
+ 
+  @return
+   Integer -- Current value of the specified PMU register.
+
+  @dependencies
+  None.
+ */
+static inline unsigned int  qurt_pmu_get (int red_id)
+{
+	return h2_pmu_getreg(red_id);
+}
+ 
+/**@ingroup func_qurt_pmu_enable
+  Enables or disables the Hexagon processor performance monitor unit (PMU).
+  Profiling is disabled by default. \n
+  @note1hang Enabling profiling does not automatically reset the count registers -- this must
+            be done explicitly before starting event counting.
+ 
+  @param[in] enable Performance monitor. Values: \n
+                    - 0 -- Disable performance monitor \n
+                    - 1 -- Enable performance monitor @tablebulletend
+ 
+  @return 
+  None.
+
+  @dependencies
+  None.
+ */
+static inline void qurt_pmu_enable (int enable) { /* DO NOTHING */ }
+
+#endif /* QURT_PMU_H */

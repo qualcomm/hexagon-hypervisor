@@ -1,0 +1,127 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include "h2_common_asm_std.h"
+#include "h2_trap_constants.h"
+
+#define WAITING 4
+#define SIGNALS 0
+	.text
+
+	/* 
+	 * h2_anysignal_wait(h2_signal_t *signal, unsigned int mask)
+	 * Wait for one of the signals specified in mask is set
+	 * If already set, return immediately, otherwise block
+	 * return value is latest value of signals
+	 */
+FUNC_START h2_anysignal_wait .text.h2.anysignal .p2align 5
+	/* Check current value */
+	{
+		r4 = memw(r0+#SIGNALS)		// get SIGNALS
+		memw(r0+#WAITING) = r1		// set WAITING
+		r2 = r0				// Prepare for abort-to-end clear of waiting bits
+		r3 = #0				// Prepare for abort-to-end clear of waiting bits
+	}
+	{
+		p0 = bitsclr(r4,r1)		// Are all WAITING bits clear in SIGNALS?
+		if (!p0.new) r0 = r4		// No, return val is new signals
+		if (!p0.new) jump:nt 9f		// no, return
+	}
+	/* All WAITING bits are clear, which means we need to block */
+	{
+		allocframe(#8)
+		r1 = r4
+	}
+	{
+		memd(r29) = r25:24
+		r25:24 = combine(r1,r0)
+	}
+1:
+	trap0(#H2_TRAP_FUTEX_WAIT)
+	r1:0 = memd(r24+#0)
+	{
+		p0 = bitsclr(r0,r1)		// are all WAITING bits clear in SIGNALS?
+		if (p0.new) r1:0 = combine(r0,r24)
+		if (p0.new) jump:nt 1b		// got spurrious wakeup, go back to sleep
+		r2 = r24
+	}
+	{
+		// One of the signals has been set, newest signals in r0 (return val)
+		// restore ABI stuff and return
+		r25:24 = memd(r29)		// restore callee save regs
+		deallocframe			// restore stack frame
+		r3 = #0
+	}
+9:
+	{
+		jumpr r31				// return
+		memw(r2+#WAITING) = r3
+	}
+FUNC_END h2_anysignal_wait
+
+	/* 
+	 * h2_anysignal_set(h2_signal_t *signal, unsigned int mask)
+	 * Set signals defined in mask
+	 * This may wakeup a waiting thread, check for bitsclear->!bitsclr condition
+	 * 
+	 */
+FUNC_START h2_anysignal_set .text.h2.anysignal .falign
+1:
+	{
+		r2 = memw_locked(r0)		// load old signals
+	}
+	{
+		r4 = or(r2,r1)			// OR in new signals
+		r3 = memw(r0+#WAITING)
+	}
+	{
+		memw_locked(r0,p0) = r4		// save new signals
+	}
+	{
+		p1 = bitsclr(r4,r3)		// new value has matching signal?
+		p2 = cmp.eq(r3,#0)		// are we waiting on anything?
+	}
+	{
+		if (!p0) jump 1b		// not atomic, try again
+		p1 = or(p1,p2)			// If all bits still clear, or nothing waiting
+	}
+	{
+		if (p1) jumpr r31		// Still not matching, no wakeup
+		if (p1) r0 = r2			// set old signals as return val
+	}
+	{
+		allocframe(#8)
+		r1 = #1				// wake up 1 thread??
+	}
+	{
+		memw(r29) = r2			// return value: old signals
+	}
+	trap0(#H2_TRAP_FUTEX_WAKE)
+	{
+		deallocframe
+		r0 = memw(r29)			// return value: old signals
+	}
+	jumpr r31
+FUNC_END h2_anysignal_set
+
+	.global h2_anysignal_clear
+	/* 
+	 * unsigned int h2_anysignal_clear(h2_allsignal_t *signal, unsigned int mask)
+	 * clear bits out of signal
+	 * return old signal value
+	 */
+FUNC_START h2_anysignal_clear .text.h2.signal .falign
+	r3 = not(r1)
+1:
+	r2 = memw_locked(r0)
+	r4 = and(r3,r2)
+	memw_locked(r0,p0) = r4
+	if (!p0) jump 1b
+	{
+		r0 = r2
+		jumpr r31
+	}
+FUNC_END h2_anysignal_clear
+

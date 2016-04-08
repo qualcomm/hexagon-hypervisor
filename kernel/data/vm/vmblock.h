@@ -14,39 +14,11 @@
 #include <max.h>
 #include <asid_types.h>
 #include <h2_common_vmblock.h>
+#include <h2_common_defs.h>
 
 /* Version supported */
 
 #define H2K_VM_VERSION 0x00000800
-
-/* How does this work?  */
-
-/* Trigger interrupt: 
- * * set in pending
- * * look up cpu (TBD: array, or check first enabled?)
- * * look up context
- * * mark thread w/ interrupt vmwork
- * * If ready, try to int/wakeup dest
- */
-
-/* Get interrupt:
- * * For each wordsize, ctz(pending & my_enables)
- * * Find lowest interrupt, clear from pending, my_enables
- */
-
-/* Int Ack:
- * Set in my_enables 
- */
-
-/* TBD:
- * Configure call?
- * Supporting BLAST-like schedulers?
- * Supporting priority?
- * Eliminate iteration?
- * Supporting multiple listeners?
- */
-
-#define H2K_VM_CHILDINT 14
 
 #define H2K_VMBLOCK_ALIGN 32
 #define H2K_VMBLOCK_V2P_INVALID 0x0
@@ -67,7 +39,8 @@ typedef struct H2K_vmblock_struct {
 	H2K_ext_context *ext_contexts;
 #endif
 
-	translation_type pmap_type;
+	H2K_asid_entry_t guestmap;
+	u8_t tlbidxmask;
 	/* physical memory map, page table style */
 	union {
 		H2K_offset_t phys_offset;
@@ -96,6 +69,10 @@ typedef struct H2K_vmblock_struct {
 	u32_t max_cpus;
 	u32_t num_cpus;
 	u32_t bestprio; 	/* best allowed priority */
+
+	H2K_thread_context *intpool;
+	unsigned int intpool_anypending;
+	u32_t intpool_pending[MAX_INTERRUPTS/32];
 
 	/* Linked List of free threads in this VM */
 	H2K_thread_context *free_threads;

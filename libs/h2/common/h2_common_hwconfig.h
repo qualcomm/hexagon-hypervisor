@@ -19,6 +19,7 @@ typedef enum {
 	HWCONFIG_SETL2REG,
 	HWCONFIG_L2LOCKA,
 	HWCONFIG_L2UNLOCK,
+	HWCONFIG_HWINTOP,
 	HWCONFIG_MAX
 } hwconfig_type_t;
 
@@ -47,6 +48,16 @@ enum {
 	HWCONFIG_PARTITION_AUX_HALF,	/**< Select Half and Half partition */
 	HWCONFIG_PARTITION_AUX_QUARTER,	/**< Select 1/4 and 3/4 partition */
 	HWCONFIG_PARTITION_AUX_EIGHTH	/**< Select 1/8 and 7/8 partition */
+};
+
+/** 
+Constants for choosing a hardware interrupt operation
+*/
+enum {
+	HWCONFIG_HWINTOP_ENABLE,
+	HWCONFIG_HWINTOP_DISABLE,
+	HWCONFIG_HWINTOP_RAISE,
+	HWCONFIG_HWINTOP_XXX_LAST
 };
 
 #endif

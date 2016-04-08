@@ -37,12 +37,19 @@ enum {
         kg_init,
         trace_init,
         timer_init,
-				mem_alloc_init,
-				tmpmap_init,
-				l2cache_init,
+	mem_alloc_init,
+	tmpmap_init,
+	l2cache_init,
         //thread_init,
         //asid_table_init,
         //mem_stlb_init,
+	tcm_copy,
+	hvx_init,
+
+#ifdef CRASH_DEBUG
+	stlb_tcmcrash_init,
+#endif
+
 	XX_LAST_HELPER
 };
 
@@ -53,6 +60,10 @@ void H2K_traptab()
 u64_t H2K_stacks;
 
 void H2K_interrupt_restore()
+{
+}
+
+void H2K_start_threads(unsigned int mask)
 {
 }
 
@@ -88,11 +99,16 @@ HELPER_FUNC(tmpmap_init)
 HELPER_FUNC(l2cache_init)
 //HELPER_FUNC(thread_init)
 //HELPER_FUNC(asid_table_init)
+
+#ifdef CRASH_DEBUG
+HELPER_FUNC(stlb_tcmcrash_init)
+#endif
+
 //HELPER_FUNC(mem_stlb_init)
+HELPER_FUNC(tcm_copy)
+HELPER_FUNC(hvx_init)
 
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) { TH_init_seen |= 1<< kg_init; }
-
-extern H2K_vmblock_t *bootvm;
 
 H2K_thread_context *boot;
 
@@ -100,9 +116,10 @@ H2K_thread_context *boot;
  * noreturn */
 void H2K_switch(void *from, void *to)
 {
+	H2K_thread_context *expected = &H2K_kg.vmblocks[1]->contexts[MAX_BOOT_CONTEXTS - 1];
 	if (from != NULL) FAIL("Unexpected switch call");
-	printf("from=%p to=%p context=%p\n",from,to,&bootvm->contexts[MAX_BOOT_CONTEXTS - 1]);
-	if (to != &bootvm->contexts[MAX_BOOT_CONTEXTS - 1]) FAIL("switch to non-boot thread");
+	printf("from=%p to=%p context=%p\n",from,to,expected);
+	if (to != expected) FAIL("switch to non-boot thread");
 	boot = to;
 	TH_switch_seen = 1;
 	longjmp(env,1);
@@ -148,6 +165,6 @@ int main()
 	}
 	if (!found_thread) FAIL("Didn't push into runlist (1)");
 	puts("TEST PASSED\n");
-	return 0;
+	exit(0);
 }
 

@@ -167,6 +167,13 @@ static inline void H2K_set_chicken(u32_t val)
 	asm volatile (" s63 = %0 // set chicken" : : "r"(val));
 }
 
+static inline u32_t H2K_get_cfgbase()
+{
+	u32_t ret;
+	asm volatile (" %0 = cfgbase" : "=r"(ret));
+	return ret;
+}
+
 static inline u32_t H2K_get_rgdr()
 {
 	u32_t ret;
@@ -265,10 +272,16 @@ u64_t ret;
 }
 
 static inline u64_t H2K_get_timer_reg() {
+
+	/* Not called on ARCHV < 61, but doesn't compile -mv5 */
+#if ARCHV >= 60
 	u64_t ret;
 
 	asm volatile ( " %0 = s57:56 // READ TIMER \n" : "=r"(ret));
 	return ret;
+#else
+	return 0;
+#endif
 }
 
 static inline void H2K_clear_ipend(u32_t hthread_mask)
@@ -317,14 +330,6 @@ static inline void H2K_mutex_unlock_tlb()
 }
 
 #if (ARCHV <= 3)
-#define H2K_TLB_ATOMIC_START H2K_mutex_lock_tlb()
-#define H2K_TLB_ATOMIC_END H2K_mutex_unlock_tlb()
-#else
-#define H2K_TLB_ATOMIC_START
-#define H2K_TLB_ATOMIC_END
-#endif
-
-#if (ARCHV <= 3)
 static inline void H2K_gregs_save(H2K_thread_context *me) { }
 static inline void H2K_gregs_restore(H2K_thread_context *me) { }
 #else
@@ -366,10 +371,15 @@ static inline void H2K_set_##REG(u32_t val) \
 
 MAKE_SETGET(pmucfg)
 MAKE_SETGET(pmuevtcfg)
+MAKE_SETGET(pmuevtcfg1)
 MAKE_SETGET(pmucnt0)
 MAKE_SETGET(pmucnt1)
 MAKE_SETGET(pmucnt2)
 MAKE_SETGET(pmucnt3)
+MAKE_SETGET(pmucnt4)
+MAKE_SETGET(pmucnt5)
+MAKE_SETGET(pmucnt6)
+MAKE_SETGET(pmucnt7)
 MAKE_SETGET(elr)
 MAKE_SETGET(gp)
 
@@ -403,6 +413,8 @@ static inline void H2K_l2unlock()
 {
 	asm volatile (" l2gunlock " : : : "memory");
 }
+
+void H2K_start_threads(unsigned int mask);
 
 #endif
 

@@ -66,7 +66,9 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(totalcycles);
 	PRINT_CONTEXT_OFFSET(id);
 	PRINT_CONTEXT_OFFSET(vmblock);
-	PRINT_CONTEXT_OFFSET(futex_ptr);
+	PRINT_CONTEXT_OFFSET(futex_ptr_64);
+	PRINT_CONTEXT_OFFSET(futex_ptr_lo);
+	PRINT_CONTEXT_OFFSET(futex_ptr_hi);
 	PRINT_CONTEXT_OFFSET(pktcount);
 	PRINT_CONTEXT_OFFSET(framekey_framelimit);
 	PRINT_CONTEXT_OFFSET(trapmask);
@@ -95,6 +97,7 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(oncpu_wait);
 	PRINT_KG_OFFSET(waitcycles);
 	PRINT_KG_OFFSET(fastint_gp);
+	PRINT_KG_OFFSET(fastint_gp_ssr);
 	PRINT_KG_OFFSET(runlist);
 	PRINT_KG_OFFSET(runlist_prios);
 	PRINT_KG_OFFSET(ready);
@@ -109,6 +112,16 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(phys_offset);
 	PRINT_KG_OFFSET(core_rev);
 	PRINT_KG_OFFSET(timer_intnum);
+
+#ifdef CRASH_DEBUG
+	PRINT_KG_OFFSET(crash_contexts);
+	PRINT_KG_OFFSET(crash_tlb);
+#endif
+
+	PRINT_KG_OFFSET(syscfg_val);
+	PRINT_KG_OFFSET(fatal_hook_and_arg);
+	PRINT_KG_OFFSET(fatal_hook_gp_ssr);
+	PRINT_KG_OFFSET(is_nmi_soft);
 #ifdef H2K_L2_CONTROL
 	PRINT_KG_OFFSET(l2_int_base);
 	PRINT_KG_OFFSET(l2_ack_base);
@@ -141,6 +154,7 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(tlbmissx);
 	PRINT_VMBLOCK_OFFSET(tlbmissrw);
 #endif
+	fprintf(outfile, "#define VMBLOCK_TOTALSIZE %d\n",sizeof(H2K_vmblock_t));
 
 	PRINT_STLB_OFFSET(valids);
 	PRINT_STLB_OFFSET(pagesize);

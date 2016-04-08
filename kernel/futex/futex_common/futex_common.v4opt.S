@@ -72,7 +72,7 @@ FUNC_START H2K_futex_hash_add_ring  .text.core.futex  .p2align  5
 #undef RINGPTR
 FUNC_END H2K_futex_hash_add_ring
 
-// H2K_futex_hash_remove_one(pa_t lock, H2K_thread_context **ring, H2K_thread_context **pos)
+// H2K_futex_hash_remove_one(u32_t locklo, H2K_thread_context **ring, H2K_thread_context **pos)
 FUNC_START H2K_futex_hash_remove_one  .text.core.futex  .p2align  5
 #define LOCK r0
 #define RINGPTR r1
@@ -99,20 +99,24 @@ FUNC_START H2K_futex_hash_remove_one  .text.core.futex  .p2align  5
 	{
 		p0 = cmp.eq(START,#0)
 		if (p0.new) jump:nt .Lrm_bad
-		if (!p0.new) CURLOCK = memw(CUR+#CONTEXT_futex_ptr)
+		if (!p0.new) CURLOCK = memw(CUR+#CONTEXT_futex_ptr_lo)
 		if (!p0.new) NEXT = memw(CUR+#CONTEXT_next)
 	}
 	.falign
 .Lrm_again:
 	{
-		CURLOCK = memw(CUR+#CONTEXT_futex_ptr)
-		NEXT = memw(CUR+#CONTEXT_next)
-	}
-	{
 		p0 = !cmp.eq(NEXT,START)			// if we're not back to start
 		p0 = !cmp.eq(CURLOCK,LOCK)			// and we're not at the lock
-		if (p0.new) jump:t .Lrm_again			// repeat
-		if (p0.new) CUR = NEXT
+	}
+	{
+		if (p0) CURLOCK = memw(NEXT+#CONTEXT_futex_ptr_lo) // then get the next lock
+		if (p0) NEXT = memw(NEXT+#CONTEXT_next)		// and the next thread
+		if (p0) CUR = NEXT				// Save the cur ptr 
+#if __HEXAGON_ARCH__ >= 60
+		if (p0) jump:t .Lrm_again
+#else
+		if (p0) jump .Lrm_again				// and repeat
+#endif
 	}
 	{
 		p1 = cmp.eq(CURLOCK,LOCK)			// Did we find the lock?

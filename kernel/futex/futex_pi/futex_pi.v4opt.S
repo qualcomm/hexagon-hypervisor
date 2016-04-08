@@ -9,25 +9,27 @@
 #include <max.h>
 #include <idtype.h>
 #include <safemem.h>
+#include <vmdefs.h>
 
 /* s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me) */
 FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
+#define ME_LOCK r19:18
 #define ME r19
 #define LOCK r18
-#define PA r17
+#define PA_LO_SAV r17
 #define DEST r16
 
 // important for cmp+branch
-#define PREV r7
-#define NEXT r6
-#define PREV_NEXT r7:6
-#define TMP r5
+#define PA r7:6
+#define PA_HI r7
+#define PA_LO r6
 
+#define TMP r5
 #define DESTPRIO r4
 #define DESTSTATUS r3
 #define DEST_HTHREAD r2
 
-#define ZEROPAIR r15:14
+#define TMPPAIR r15:14
 #define ZERO_NEGONE r13:12
 #define ZERO r13
 #define NEGONE r12
@@ -39,22 +41,37 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 
 	{
 		allocframe(#16)
-		r19:18 = combine(r1,r0)
-		DEST = #0
+		ME_LOCK = combine(r1,r0)
+		DEST = #H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_IE
 	}
 	k0lock
 	{
+		TMP = memub(ME+#CONTEXT_vmstatus)
 		r1 = #SAFEMEM_RW
 		r3:2 = combine(ME,r29)
+	}
+	{
+		p0 = bitsset(TMP,DEST)
+		if (p0.new) jump:nt .Llpi_unlock_retfail_vmwork
+	}
+	{
+		PA_LO_SAV = memw(ME+#CONTEXT_continuation)		// read out continuation ptr
 		call H2K_safemem_check_and_lock
+		DEST = #0
 	}
 	.falign
 	{
 		p0 = cmp.eq(r0,#0)
 		if (p0.new) jump:nt .Llpi_unlock_retfail
-		PA = memw(r29)
+		PA = combine(PA_LO_SAV,#0)				// get continuation ptr ready for OR
+		TMPPAIR = memd(r29)					// read PA from safemem
 		MYID = memw(ME+#CONTEXT_id)
 	}
+	{
+		PA |= lsr(TMPPAIR,#2)					// make PA + continuation
+	}
+#undef TMPPAIR
+#define ZEROPAIR r15:14
 	.falign
 1:
 	{
@@ -78,7 +95,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 		if (!p2) jump 1b
 		p1 = and(p2,p0)
 		if (p1.new) memw(LOCK) = MYID
-		memw(ME+#CONTEXT_futex_ptr) = PA
+		memd(ME+#CONTEXT_futex_ptr_64) = PA		// EJP: This is safe since we also have continuation
 	}
 	tlbunlock
 #undef LOCK
@@ -153,20 +170,32 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 #undef DESTSTATUS
 #undef DEST_HTHREAD
 #undef RUNLIST_PRIOS
+#define DESTPA r15:14
+#define DESTPA_HI r15
+#define DESTPA_LO r14
 #define HASH r3
-#define DESTPA r2
 #define RING r0
+#undef PA
+#undef PA_HI
+#undef PA_LO
+#define PREV r7
+#define NEXT r6
+#define PREV_NEXT r7:6
 	.falign
 .Lraise_blocked:
 	{
 		PREV_NEXT = memd(DEST+#CONTEXT_next)
-		DESTPA = memw(DEST+#CONTEXT_futex_ptr)
+		DESTPA = memd(DEST+#CONTEXT_futex_ptr_64)
 		RING = add(H2K_GP,#KG_futexhash)
 	}
 	{
 		p0 = cmp.eq(NEXT,DEST)
 		if (p0.new) jump:nt .Lraise_done
-		HASH=mpyi(DESTPA,##FUTEX_PRIME)
+		HASH=mpyi(DESTPA_LO,##FUTEX_PRIME)
+		DESTPA_HI = and(DESTPA_HI,#3)
+	}
+	{
+		HASH ^= asl(DESTPA_HI,#32-FUTEX_HASHBITS)
 	}
 	{
 		RING=tableidxw(HASH,#FUTEX_HASHBITS,#32-FUTEX_HASHBITS)
@@ -189,6 +218,8 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	}
 #undef HASH
 #undef DESTPA
+#undef DESTPA_LO
+#undef DESTPA_HI
 #undef RING
 
 	.falign
@@ -257,9 +288,18 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 .Lraise_done:
 #define FUTEXRING r0
 #define HASH r1
+#define PA r15:14
+#define PA_HI r15
+#define PA_LO r14
+	/* EJP: maybe we can keep HASH around along with PA_LO_SAV? */
+	PA = memd(ME+#CONTEXT_futex_ptr_64)			// reload PA from context
 	{
-		HASH = mpyi(PA,##FUTEX_PRIME)
+		HASH = mpyi(PA_LO,##FUTEX_PRIME)
 		FUTEXRING = add(H2K_GP,#KG_futexhash)
+		PA_HI = and(PA_HI,#3)
+	}
+	{
+		HASH ^= asl(PA_HI,#32-FUTEX_HASHBITS)
 	}
 	{
 		r1 = ME
@@ -287,8 +327,21 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 		r0 = #-1
 		dealloc_return
 	}
+.Llpi_unlock_retfail_vmwork:
+	k0unlock
+	{
+		call H2K_vm_do_work
+		r0 = ME
+	}
+	{
+		r0 = #-1
+		dealloc_return
+	}
 #undef ME
+#undef ME_LOCK
 #undef PA
+#undef PA_HI
+#undef PA_LO
 #undef DEST
 #undef PREV
 #undef NEXT
@@ -300,10 +353,14 @@ FUNC_END H2K_futex_lock_pi
 
 /* s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me) */
 FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
+#define ME_LOCK r19:18
 #define ME r19
 #define LOCK r18
-#define PA r17
+#define PA_LO_SAV r17
 #define HTHREAD r16
+#define PA r9:8
+#define PA_HI r9
+#define PA_LO r8
 #define BASEPRIO r7
 #define RUNLIST_PRIOS r6
 #define RING r5
@@ -311,7 +368,7 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 #define TMP r3
 	{
 		allocframe(#8)
-		r19:18 = combine(r1,r0)
+		ME_LOCK = combine(r1,r0)
 	}
 	k0lock
 	{
@@ -322,12 +379,21 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 	{
 		p0 = cmp.eq(r0,#0)
 		if (p0.new) jump:nt .Llpi_unlock_retfail
-		PA = memw(r29)
+		PA = memd(r29)
 		RING = add(H2K_GP,#KG_futexhash)
 	}
+	/* EJP: maybe resched a bit? */
 	{
-		HASH = mpyi(PA,##FUTEX_PRIME)
+		PA = lsr(PA,#2)
+	}
+	{
+		HASH = mpyi(PA_LO,##FUTEX_PRIME)
 		HTHREAD = memub(ME+#CONTEXT_hthread)
+		PA_HI = and(PA_HI,#3)
+	}
+	{
+		HASH ^= asl(PA_HI,#32-FUTEX_HASHBITS)
+		PA_LO_SAV = PA_LO
 	}
 	{
 		RING = tableidxw(HASH,#FUTEX_HASHBITS,#32-FUTEX_HASHBITS)
@@ -336,7 +402,7 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 	{
 		TMP = memw(RING)
 		memw(r29) = TMP.new
-		r1:0 = combine(RING,PA)
+		r1:0 = combine(RING,PA_LO_SAV)
 		call H2K_futex_hash_remove_one
 	}
 	{

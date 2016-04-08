@@ -52,37 +52,6 @@ void test_ptr_rok(void *ptr)
 	if (h2_futex_wake(ptr,1) > 0) FAIL("Wake woke thread?");
 }
 
-#if ARCHV <= 3
-static H2K_mem_tlbfmt_t make_entry(u32_t va, u32_t pa, u32_t size, u32_t perms, u32_t asid)
-{
-	H2K_mem_tlbfmt_t ret;
-	ret.raw = 0;
-	ret.xwr = perms >> 1;
-	ret.guestonly = ~(perms & 1);
-	ret.asid = asid;
-	ret.size = size;
-	ret.ppn = pa >> 12;
-	ret.vpn = va >> 12;
-	ret.valid = 1;
-	return ret;
-}
-#else
-static H2K_mem_tlbfmt_t make_entry(u32_t va, u32_t pa, u32_t size, u32_t perms, u32_t asid)
-{
-	H2K_mem_tlbfmt_t ret;
-	ret.raw = 0;
-	pa >>= (12+size);
-	pa = 1 + (pa << 1);
-	pa <<= size;
-	ret.ppd = pa;
-	ret.vpn = va >> 12;
-	ret.xwru = perms;
-	ret.asid = asid;
-	ret.valid = 1;
-	return ret;
-}
-#endif
-
 unsigned long long int context_space[512];
 
 #define THREAD_STACK_SIZE 512
@@ -95,16 +64,53 @@ void worker_thread(void *param)
 {
 	h2_sem_t *my_sema = (void *)(PERMS(7) | (u32_t)(&sema));
 	h2_sem_t *my_semb = (void *)(PERMS(7) | (u32_t)(&semb));
+	printf("worker thread: my_sema=%p my_semb=%p\n",my_sema,my_semb);
 	while (1) {
 		h2_sem_up(my_sema);
 		h2_sem_down(my_semb);
 	}
 }
 
-int vmmain()
+#define TRANS_ENTRY(VPN,PPN,SIZE,CCCC,PERMS) \
+	( (((unsigned long long int)((SIZE) & 0xF)) << (32+20)) \
+	| (((unsigned long long int)((VPN) & 0xFFFFF)) << (32)) \
+	| (((unsigned long long int)((PERMS) & 0xF)) << (28)) \
+	| (((unsigned long long int)((CCCC) & 0xF)) << (24)) \
+	| (((unsigned long long int)((PPN) & 0xFFFFFF)) << (0)))
+
+unsigned long long int transtab[] = {
+	TRANS_ENTRY(0x01000,0x001000,6,0x7,0xf),
+	TRANS_ENTRY(0x02000,0x002000,6,0x7,0xf),
+	TRANS_ENTRY(0x03000,0x003000,6,0x7,0xf),
+	TRANS_ENTRY(0x04000,0x004000,6,0x7,0xf),
+	TRANS_ENTRY(0x05000,0x005000,6,0x7,0xf),
+	TRANS_ENTRY(0x06000,0x006000,6,0x7,0xf),
+	TRANS_ENTRY(0x90000,0x001000,6,0x7,0x0),
+	TRANS_ENTRY(0x91000,0x001000,6,0x7,0x1),
+	TRANS_ENTRY(0x92000,0x001000,6,0x7,0x2),
+	TRANS_ENTRY(0x93000,0x001000,6,0x7,0x3),
+	TRANS_ENTRY(0x94000,0x001000,6,0x7,0x4),
+	TRANS_ENTRY(0x95000,0x001000,6,0x7,0x5),
+	TRANS_ENTRY(0x96000,0x001000,6,0x7,0x6),
+	TRANS_ENTRY(0x97000,0x001000,6,0x7,0x7),
+	TRANS_ENTRY(0x98000,0x001000,6,0x7,0x8),
+	TRANS_ENTRY(0x99000,0x001000,6,0x7,0x9),
+	TRANS_ENTRY(0x9a000,0x001000,6,0x7,0xa),
+	TRANS_ENTRY(0x9b000,0x001000,6,0x7,0xb),
+	TRANS_ENTRY(0x9c000,0x001000,6,0x7,0xc),
+	TRANS_ENTRY(0x9d000,0x001000,6,0x7,0xd),
+	TRANS_ENTRY(0x9e000,0x001000,6,0x7,0xe),
+	TRANS_ENTRY(0x9f000,0x001000,6,0x7,0xf),
+	0,
+};
+
+int main(int argc, char **argv)
 {
 	int i;
 	printf("VM Main\n");
+	h2_handle_errors(1);
+	h2_vmtrap_newmap(transtab,H2K_ASID_TRANS_TYPE_LINEAR,0);
+	puts("mapped\n");
 	h2_sem_init_val(&sema,0);
 	h2_sem_init_val(&semb,0);
 	if (h2_thread_create(worker_thread, &stack_space[THREAD_STACK_SIZE], 0, 4) == -1) {
@@ -118,58 +124,5 @@ int vmmain()
 	h2_sem_down(&sema);
 	puts("TEST PASSED");
 	exit(0);
-}
-
-void spawn_vm(void *pc)
-{
-	unsigned long vm;
-
-	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,0);
-	h2_config_vmblock_init(vm,SET_PMAP_TYPE,0,0);
-	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
-	printf("initted\n");
-	h2_vmboot(pc,&main_thread_stack[THREAD_STACK_SIZE-1],0,0,vm);
-	printf("vm booted\n");
-}
-
-int main() 
-{
-	int i;
-	u32_t asid;
-	H2K_mem_tlbfmt_t trans;
-	h2_init(0);
-
-	asm volatile (
-	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n" 
-	: "=r"(asid));
-
-	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
-	if (tlb_index == 0x80000000) {
-		FAIL("Can't find monitor TLB entry");
-	}
-	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-#if ARCHV <= 3
-	tlb_entry |= 0x7ULL << 29;
-#else
-	tlb_entry |= 0xfULL << 28;
-#endif
-	H2K_mem_tlb_write(tlb_index, tlb_entry);
-
-	/* Note that I start out in monitor mode, so just go screw with the TLB directly */
-	/* Generate all permissions */
-	for (i = 0; i < 16; i++) {
-		trans = make_entry(0x90000000 + (i << 24),0x0,6,i,asid);
-		H2K_mem_tlb_write(32+i,trans.raw);
-#if ARCHV <= 3
-		if (i & 1) {
-			trans = make_entry(0x90000000 + (i << 24),0x0,6,i & -2,asid);
-			H2K_mem_tlb_write(48+i,trans.raw);
-		}
-#endif
-	}
-	spawn_vm(vmmain);
-	h2_thread_stop(0);
-	return 0;
 }
 

@@ -42,21 +42,10 @@ endif
 
 
 include $(H2DIR)/scripts/Makefile.inc.config
-
 include $(H2DIR)/scripts/Makefile.inc.version
-
 include $(H2DIR)/scripts/Makefile.inc.constants
+include $(H2DIR)/scripts/Makefile.inc.tools
 
-ARCH=hexagon
-
-
-CC=${ARCH}-gcc
-AS=${ARCH}-as
-LD=${ARCH}-ld
-AR=${ARCH}-ar
-OBJDUMP=${ARCH}-objdump
-GMON_MERGE=${ARCH}-gmon-merge
-COV=${ARCH}-cov
 PYTHON=python
 
 BUSPENALTY=
@@ -68,7 +57,7 @@ TIMING ?= --timing
 
 BUSPENALTY ?= --buspenalty 50
 
-ULIMIT ?= 60
+ULIMIT ?= 180
 
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
@@ -89,10 +78,10 @@ endif
 #  should 'make libs' before you run.
 ################################################################################
 
-LIBH2_DIR=${H2DIR}/install/lib
+LIBH2_DIR=${INSTALLPATH}/lib
 LIBH2=${LIBH2_DIR}/libh2.a
 
-LIBH2KERNEL_DIR=${H2DIR}/install/lib
+LIBH2KERNEL_DIR=${INSTALLPATH}/lib
 LIBH2KERNEL=${LIBH2KERNEL_DIR}/libh2kernel.a
 LIBH2CHECK=${H2DIR}/kernel/libh2check.a
 
@@ -101,21 +90,21 @@ LIBH2CHECK=${H2DIR}/kernel/libh2check.a
 #TOOLPATH=/pkg/qct/software/hexagon/releases/tools/1.2/gnu/bin
 #COVPATH=/pkg/qct/software/hexagon/releases/tools/1.2/examples/utils/bin
 
-${LIBH2KERNEL}: ${H2DIR}/install
+${LIBH2KERNEL}: ${INSTALLPATH}
 
 #check is always in ref/
-${LIBH2CHECK}: ${H2DIR}/install
+${LIBH2CHECK}: ${INSTALLPATH}
 	+cd ${H2DIR}/kernel;\
 	$(MAKE) check DEBUG=0 ARCHV=${ARCHV};\
-	cp build/ref/libh2check.a ../install/lib
+	cp build/ref/libh2check.a ${INSTALLPATH}/lib
 
-${LIBH2}:  ${H2DIR}/install
+${LIBH2}:  ${INSTALLPATH}
 
-${H2DIR}/install:
+${INSTALLPATH}:
 	cd ${H2DIR};\
 	+$(MAKE) ${MODEL} ARCHV=${ARCHV}
 
-${BOOTER}: ${H2DIR}/install
+${BOOTER}: ${INSTALLPATH}
 
 
 # (_8^(|)  d'oh!
@@ -129,7 +118,7 @@ clean_libs:
 	rm -rf install; $(MAKE) clean
 
 clean_top:
-	rm -Rf test.cov_fns cov.txt report.html make.log
+	rm -Rf test.cov_fns cov.txt report.html qurt_report.html make.log
 
 
 ################################################################################
@@ -147,36 +136,36 @@ OPTIMIZE := -O1
 
 KERNEL_INCLUDES := -I ${H2DIR}/kernel/include -I ${H2DIR}/libs/h2/common
 
-LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR)
+LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=start
 
 ifdef BOOT
-BOOTER=${H2DIR}/install/bin/booter
+BOOTER=${INSTALLPATH}/bin/booter
 CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -g
 LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
 CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g
 ifndef STANDALONE
-LDFLAGS += -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0 -Wl,--defsym=__h2_thread_stop_hook__=0 -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
 endif
 endif
 
 ifdef STANDALONE
 CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
-LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0 -Wl,--defsym=__h2_thread_stop_hook__=0 -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
+LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0 -Wl,--defsym=__h2_thread_stop_hook__=0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
 ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
 
 else # non-STANDALONE
 OSLIB=-moslib=h2
 
 ifdef BOOT # use booter
-LDFLAGS +=${OSLIB} -L ${H2DIR}/install/lib
+LDFLAGS +=${OSLIB} -L ${INSTALLPATH}/lib
 
 else # run in place of booter
-LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${H2DIR}/install/lib
+LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
 endif # BOOT
 
-CFLAGS += -I ${H2DIR}/install/include
-ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${H2DIR}/install/include
+CFLAGS += -I ${INSTALLPATH}/include
+ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${INSTALLPATH}/include
 endif #STANDALONE
 LDFLAGS+= -mv${TOOLARCH}
 #  Turn on call() support for assertion checking
@@ -251,6 +240,12 @@ report.html:
 	   cat $$SUBDIR/make.log >> make.log;\
 	done;\
 	echo "</table></body></html>" >> report.html;
+
+qurt_report.html: report.html
+	mv report.html qurt_report.html
+
+h2_report.html: report.html
+	mv report.html h2_report.html
 
 .PHONY: check
 
@@ -351,8 +346,10 @@ endif
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
 ${EXEC}: ${OBJS} constants
-	${CC} -o $@ ${OBJS} ${LDFLAGS}; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
+# How's this for an ugly hack?
+	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_handle_errors_hook__.*is defined in both linker script and input file.*//'; \
+	CODE=$${PIPESTATUS[0]}; \
+	if [ "$$CODE" -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
 ignore_fns: ${OBJS}
 	${H2DIR}/scripts/gen_ignore_fns.pl ${OBJS} > $@
@@ -364,8 +361,16 @@ test.log: ${EXEC}
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
 	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee -a $@; \
 	CODE=$${PIPESTATUS[0]}; \
+	echo exit status == $$CODE; \
 	if [ "$$CODE" -eq 137 ]; then \
 	   echo -e "\nERROR: ${TEST}: probably ulimit" >> $@; \
+	fi; \
+	if [ "$$QURT_TEST" != "" ]; then \
+		if [ "$$CODE" -ne 0 ]; then \
+			echo "FAIL" >> $@; \
+		else \
+			echo "TEST PASSED" >> $@; \
+		fi; \
 	fi;
 	$(POST_RUN)
 
@@ -387,7 +392,7 @@ ${COVFILE}: ${DUMP} try_gmon_out ignore_fns
 		${COV} -F -d ${DUMP} -o cov.txt gmon.out; \
 		if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi; \
 	else \
-		find . -maxdepth 1 -name 'gmon-0x????????.out' | perl -ne 'chomp; $$f = $$_; s/^\.\/gmon-//; s/.out$$//; system("hexagon-cov -F -d test.objdump -o cov-$$_.txt $$f")'; \
+		find . -maxdepth 1 -name 'gmon-0x????????.out' | perl -ne 'chomp; $$f = $$_; s/^\.\/gmon-//; s/.out$$//; system("$(COV) -F -d test.objdump -o cov-$$_.txt $$f")'; \
 		find . -name 'cov-0x*.txt' | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --dir $(H2DIR) > $@; \
 	fi; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi

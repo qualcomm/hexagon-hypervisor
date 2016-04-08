@@ -6,7 +6,7 @@
 #ifndef H2K_FUTEX_H
 #define H2K_FUTEX_H 1
 
-#define FUTEX_HASHBITS 5
+#define FUTEX_HASHBITS 6
 #define FUTEX_HASHSIZE (1<<FUTEX_HASHBITS)
 
 #ifdef ASM

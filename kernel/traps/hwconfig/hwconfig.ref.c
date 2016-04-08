@@ -13,6 +13,7 @@
 #include <cache.h>
 #include <hexagon_protos.h>
 #include <physread.h>
+#include <intcontrol.h>
 #include <tmpmap.h>
 #include <hvx.h>
 #include <safemem.h>
@@ -30,6 +31,7 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_setl2reg,
 	H2K_trap_hwconfig_l2locka,
 	H2K_trap_hwconfig_l2unlock,
+	H2K_trap_hwconfig_hwintop,
 };
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
@@ -64,6 +66,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 		syscfg &= ~SYSCFG_L2NWA;
 		syscfg &= ~SYSCFG_L2NRA;
 		H2K_set_syscfg(syscfg);
+		H2K_gp->syscfg_val = syscfg;
 		H2K_syncht();
 
 		/* Clean entire cache */
@@ -76,6 +79,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 		/* Set to 0 size */
 		syscfg &= ~SYSCFG_L2CFG;
 		H2K_set_syscfg(syscfg);
+		H2K_gp->syscfg_val = syscfg;
 		H2K_l2kill();
 		H2K_isync();
 		/* Update size, mode */
@@ -89,6 +93,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 		/* Just leave WB mode */
 		/* Clean entire cache */
 #if ARCHV >= 60
+		/* EJP: FIXME: in ARCHV >= 60 H2K_cache_l2_cleaninv() should just be H2K_l2gclenainv() */
 		H2K_l2gcleaninv();
 #else
 		H2K_cache_l2_cleaninv();
@@ -99,6 +104,7 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 
 	H2K_syncht();
 	H2K_set_syscfg(syscfg);
+	H2K_gp->syscfg_val = syscfg;
 	H2K_syncht();
 	H2K_stmode_end();
 	return 0;
@@ -113,6 +119,7 @@ u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache,
 	syscfg = H2K_get_syscfg();
 	syscfg = Q6_R_insert_RP(syscfg,configval,insertval);
 	H2K_set_syscfg(syscfg);
+	H2K_gp->syscfg_val = syscfg;
 	BKL_UNLOCK();
 	return 0;
 }
@@ -148,7 +155,6 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	if (xe) {
 		H2K_hvx_poweron(); // make sure the lights are on
 	}
-
 #endif
 	return 0;
 }
@@ -170,6 +176,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 	}
 	if (new != cur) {
 		H2K_set_syscfg(new);
+		H2K_gp->syscfg_val = new;
 		H2K_isync();
 		cur = H2K_get_syscfg();
 		if (cur != new) {  // failed
@@ -294,6 +301,7 @@ fail:
 u32_t H2K_trap_hwconfig_l2unlock(u32_t unused, void *addr, u32_t len, u32_t unused3, H2K_thread_context *me)
 {
 #if ARCHV >= 56
+	/* EJP: for small ones, just unlock a range? Indicate all with addr=NULL? */
 	H2K_l2unlock();
 	return 0;
 #else
@@ -301,3 +309,16 @@ u32_t H2K_trap_hwconfig_l2unlock(u32_t unused, void *addr, u32_t len, u32_t unus
 #endif
 }
 
+u32_t H2K_trap_hwconfig_hwintop(u32_t unused, void *unusedptr, u32_t op_and_int, u32_t val, H2K_thread_context *me)
+{
+	u32_t op = op_and_int >> 16;
+	u32_t intno = op_and_int & 0xFFFF;
+	if (intno >= MAX_INTERRUPTS) return 1;
+	if (op >= HWCONFIG_HWINTOP_XXX_LAST) return 1;
+	switch (op) {
+	case HWCONFIG_HWINTOP_ENABLE: H2K_intcontrol_enable(intno); break;
+	case HWCONFIG_HWINTOP_DISABLE: H2K_intcontrol_disable(intno); break;
+	case HWCONFIG_HWINTOP_RAISE: H2K_intcontrol_raise(intno); break;
+	}
+	return 0;
+}

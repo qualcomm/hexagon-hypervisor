@@ -11,6 +11,8 @@
 ./kernel/event/trap/test
 ./kernel/event/vectors/test
 ./kernel/event/preempt/test
+./kernel/event/intpool/test
+#./kernel/event/intpool/test_h2
 ./kernel/event/popup/test
 ./kernel/event/popup/test_h2
 ./kernel/event/passthru/test
@@ -25,6 +27,7 @@
 ./kernel/mem/safemem/test
 ./kernel/mem/stlb/test
 ./kernel/mem/tlbmiss/test
+./kernel/mem/varadix/test
 ./kernel/power/apcr/test_multi
 ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios
 ./kernel/sched/dosched/test/test
@@ -48,7 +51,8 @@
 # ./kernel/traps/pmu/test_standalone  # out because of broken tools
 ./kernel/traps/prio/test
 ./kernel/traps/tid/test
-./kernel/traps/time/test
+./kernel/traps/cputime/test
+./kernel/traps/tlb/test
 ./kernel/traps/waitcycles/test
 ./kernel/time/timer/test_standalone
 ./kernel/time/timer/test_h2
@@ -73,18 +77,18 @@
 ./kernel/vm/vmmap/test
 ./kernel/vm/vmcache/test
 
-./libs/h2/alloc/test
-./libs/h2/allsignal/test/simple
-./libs/h2/allsignal/test/trapfails
-./libs/h2/anysignal/test/simple
-./libs/h2/anysignal/test/trapfails
-./libs/h2/error/test/simple
-./libs/h2/sem/test/simple
-./libs/h2/sleep/test
-./libs/h2/vmtraps/test/test_ie
-./libs/h2/vmtraps/test/test_pcycles
-./libs/h2/vmtraps/test/test_return
-./libs/h2/vmtraps/test/test_yield
+#./libs/h2/alloc/test
+#./libs/h2/allsignal/test/simple
+#./libs/h2/allsignal/test/trapfails
+#./libs/h2/anysignal/test/simple
+#./libs/h2/anysignal/test/trapfails
+#./libs/h2/error/test/simple
+#./libs/h2/sem/test/simple
+#./libs/h2/sleep/test
+#./libs/h2/vmtraps/test/test_ie
+#./libs/h2/vmtraps/test/test_pcycles
+#./libs/h2/vmtraps/test/test_return
+#./libs/h2/vmtraps/test/test_yield
 
 ./perf/setie
 ./perf/myid

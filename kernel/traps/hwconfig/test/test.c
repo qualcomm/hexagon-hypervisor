@@ -29,14 +29,18 @@ void H2K_cache_l2_cleaninv()
 {
 	TH_saw_l2_cleaninv = 1;
 }
+void H2K_cache_d_cleaninv() {}
+void H2K_cache_d_clean() {}
+void H2K_cache_i_inv() {}
 
 #if ARCHV < 56
-void TH_test_l2locka() {}
+void TH_test_l2locka(int unused) {}
 #else
 
 int H2K_safemem_check_and_lock(void *addr, int type, pa_t *pa, H2K_thread_context *me)
 {
-	if (pa) *pa = (pa_t)addr;
+	unsigned long addr_i = (unsigned long)addr;
+	if (pa) *pa = (pa_t)addr_i;
 	return 1;
 }
 
@@ -130,10 +134,11 @@ int main()
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,1,0,&a);
-#if ARCHV < 60
-	// FIXME: Find a way to check the inline l2gcleaninv
-	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache 1");
-#endif
+	/* Removed assuming we only build kernel ARCHV=60 now */
+	/* #if ARCHV < 60 */
+	/* 	// FIXME: Find a way to check the inline l2gcleaninv */
+	/* 	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache 1"); */
+	/* #endif */
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
@@ -161,10 +166,11 @@ int main()
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,3,1,&a);
-#if ARCHV < 60
-	// FIXME: Find a way to check the inline l2gcleaninv
-	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache 2");
-#endif
+	/* Removed assuming we only build kernel ARCHV=60 now */
+	/* #if ARCHV < 60 */
+	/* 	// FIXME: Find a way to check the inline l2gcleaninv */
+	/* 	if (!TH_saw_l2_cleaninv) FAIL("Should have cleaned cache 2"); */
+	/* #endif */
 	syscfg = H2K_get_syscfg();
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;

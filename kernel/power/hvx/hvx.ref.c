@@ -11,13 +11,9 @@
 #include <hw.h>
 
 void H2K_hvx_poweron(void) {
-
 #ifdef HAVE_EXTENSIONS
-
 	volatile u32_t delay = 500;
-
 	BKL_LOCK();
-
 	if (H2K_gp->hvx_state == H2K_HVX_STATE_ON) {  // already on
 		BKL_UNLOCK();
 		return;
@@ -32,7 +28,7 @@ void H2K_hvx_poweron(void) {
 	} else {
 		*((u32_t volatile *)(H2K_gp->hvx_power)) = QDSP6SS_CP_PWR_CTL_CLAMP_IO_ON_V60;
 	}
-	while (--delay);  // spec says wait for 1(TBD?) microsecond
+	while (--delay) asm volatile ("nop");  // spec says wait for 1(TBD?) microsecond
 	if (H2K_gp->arch >= CORE_V62) {
 		*((u32_t volatile *)(H2K_gp->hvx_power)) = QDSP6SS_CP_PWR_CTL_CLAMP_IO_OFF_V62;
 	} else {
@@ -68,7 +64,7 @@ void H2K_hvx_poweroff(void) {
 	} else {
 		*((u32_t volatile *)(H2K_gp->hvx_power)) = QDSP6SS_CP_PWR_CTL_CLAMP_IO_ON_V60;
 	}
-	while (--delay);  // spec says wait for 1(TBD?) microsecond
+	while (--delay) asm volatile ("nop");  // spec says wait for 1(TBD?) microsecond
 	if (H2K_gp->arch >= CORE_V62) {
 		*((u32_t volatile *)(H2K_gp->hvx_power)) = QDSP6SS_CP_PWR_CTL_POWER_OFF_V62;
 	} else {

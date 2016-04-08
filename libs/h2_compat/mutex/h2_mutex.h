@@ -1,0 +1,71 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#ifndef H2_MUTEX_H
+#define H2_MUTEX_H 1
+
+/** @file h2_rmutex.h
+ @brief Recursive Mutexes allow at most one thread to hold the mutex at a time, but allow a thread to lock the lock more than once.
+*/
+/** @addtogroup h2 
+@{ */
+
+#include <pthread.h>
+
+enum {
+	H2_MUTEX_PLAIN = PTHREAD_MUTEX_NORMAL,
+	H2_MUTEX_RECURSIVE = PTHREAD_MUTEX_RECURSIVE,
+};
+
+#define H2_MUTEX_T_INIT PTHREAD_MUTEX_INITIALIZER
+
+/**
+@brief Mutex Structure.  Please do not use directly 
+*/
+typedef pthread_mutex_t h2_mutex_t;
+
+/**
+Initialize a Mutex.  The mutex is initialized to be unheld.
+@param[in] lock		Address of the Recursive Mutex
+@returns None
+@dependencies None
+*/
+
+static inline void h2_mutex_init_type(h2_mutex_t *lock, unsigned int type)
+{
+	h2_mutex_t temp = H2_MUTEX_T_INIT;
+	temp.type = type;
+	*lock = temp;
+}
+
+static inline void h2_mutex_init(h2_mutex_t *lock) { h2_mutex_init_type(lock,H2_MUTEX_PLAIN); }
+
+/**
+Lock a Mutex.  If the lock is held by another thread, this will block.
+@param[in] lock		Address of the Recursive Mutex
+@returns None for now, need to change to help POSIX
+@dependencies None
+*/
+static inline void h2_mutex_lock(h2_mutex_t *lock) { pthread_mutex_lock(lock); }
+
+/**
+Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will be woken.
+@param[in] lock		Address of the Recursive Mutex
+@returns None for now, need to change to help POSIX
+@dependencies None
+*/
+static inline void h2_mutex_unlock(h2_mutex_t *lock) { pthread_mutex_unlock(lock); }
+
+/**
+Try to lock a Mutex.  If the mutex was already held by another thread, return failure.
+@param[in] lock		Address of the Recursive Mutex
+@returns 0 on success, nonzero otherwise
+@dependencies None
+*/
+static inline int h2_mutex_trylock(h2_mutex_t *lock) { return pthread_mutex_trylock(lock); }
+
+/** @} */
+
+#endif

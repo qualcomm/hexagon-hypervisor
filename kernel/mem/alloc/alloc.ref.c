@@ -12,6 +12,8 @@
 #define WORDS(X) (((X) + sizeof(H2K_mem_alloc_tag_t)) / sizeof(H2K_mem_alloc_tag_t))
 #define UNITS(X) (((X) + ALLOC_UNIT) / ALLOC_UNIT)
 
+/* EJP: move to kg? In theory this allows KG to be alloc'd, but in practice we
+ * use KG really early */
 static H2K_mem_alloc_tag_t *heap IN_SECTION(".data.core.globals");
 static u32_t heap_size IN_SECTION(".data.core.globals");
 static u32_t heap_lock IN_SECTION(".data.core.globals");
@@ -89,26 +91,12 @@ H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 	return ret;
 }
 
-/* Called from H2K_thread_stop() with BKL held */
-void H2K_mem_alloc_release(u32_t *ptr) {
-	
-	H2K_mem_alloc_tag_t *tag = (H2K_mem_alloc_tag_t *)ptr - 1;
-
-	/* Need spinlock here in case an adjacent block is being freed concurrently,
-		 which will modify the tag for this block */
-	H2K_spinlock_lock(&heap_lock);
-	tag->released = 1;
-	H2K_spinlock_unlock(&heap_lock);
-}
-
-H2K_mem_alloc_tag_t *H2K_mem_alloc_free(u32_t *ptr) {
-
+H2K_mem_alloc_tag_t *H2K_mem_alloc_free(void *vptr) {
+	u32_t *ptr = vptr;
 	H2K_mem_alloc_tag_t *ret;
-
 	H2K_spinlock_lock(&heap_lock);
 	ret = H2K_mem_alloc_free_spinlocked(ptr);
 	H2K_spinlock_unlock(&heap_lock);
-
 	return ret;
 }
 

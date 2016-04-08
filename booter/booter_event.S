@@ -24,8 +24,6 @@ bootvm_vectors:
 bootvm__Reset:
 bootvm__MachineCheck:
 bootvm__Rsvd:
-bootvm__Rsvd:
-bootvm__Rsvd:
 bootvm__Error:
 bootvm__Trap0:
 	jump h2_error_event

@@ -40,10 +40,15 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 	k0lock
 
 .Llocked:
-	r7 = htid
+	r2 = htid
 	r8 = #1
 	memd(r6+#0) = r1:0
-	memw(r6+#8) = r7
+	memw(r6+#8) = r2
+	{
+		p0 = cmp.eq(r0,#0x18)	// is it exit?
+		if (p0.new) memw(r6+#8) = r1  // if so, we should have kept around r2 but this is probably OK
+		if (p0.new) r2 = r1
+	}
 	dccleaninva(r6)
 	r5:4 = memd(r6+#0)
 	p0 = cmp.eq(r5:4,r1:0)

@@ -7,6 +7,7 @@
 
 void H2K_readylist_init(void) 
 {
+	/* EJP: FIXME: global_init already zeroes. */
 	u32_t i;
 	for (i = 0; i < MAX_PRIOS; i++) {
 		H2K_gp->ready[i] = NULL;

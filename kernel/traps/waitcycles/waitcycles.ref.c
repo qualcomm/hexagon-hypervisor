@@ -5,7 +5,7 @@
 
 #include <max.h>
 #include <globals.h>
-#include <time.h>
+#include <cputime.h>
 #include <hw.h>
 #include <waitcycles.h>
 

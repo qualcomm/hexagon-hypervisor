@@ -56,10 +56,73 @@
 
 #define SP          r29
 
+/* EJP: TBD: save off syscfg val
+ * start other threads to try and get context
+ * Make sure other threads don't replicate work
+ */
+
 FUNC_START start .entry .p2align 12
 	jump 1f
 	.space 0x40
 1:
+
+#ifdef CRASH_DEBUG
+	r7 = PC
+	jump 3f
+H2_BOOT_attempts:
+	.word 0
+.Lreset_crash:
+	r6 = add(PC,##H2K_kg@PCREL)
+	r1 = HTID
+	r4 = memw(r6+#KG_syscfg_val)
+	r4 = and(r4,#0xFFFFFFEE) // no interrupts, no MMU
+	syscfg = r4 // turn on caches just like they were
+	isync
+	r0 = add(r6,#KG_crash_contexts)
+	r0 += mpyi(r1,##CONTEXT_SIZE)
+	r2 = cs0
+	memd(r0+#CONTEXT_r3130) = r31:30
+	memd(r0+#CONTEXT_r2928) = r29:28
+	memd(r0+#CONTEXT_r2726) = r27:26
+	memd(r0+#CONTEXT_r2524) = r25:24
+	memd(r0+#CONTEXT_r2322) = r23:22
+	memd(r0+#CONTEXT_r2120) = r21:20
+	memd(r0+#CONTEXT_r1918) = r19:18
+	memd(r0+#CONTEXT_r1716) = r17:16
+	memw(r0+#CONTEXT_elr) = r2
+	H2K_GP = r6
+	r5:4 = s1:0
+	memd(r0+#CONTEXT_cs1cs0) = r5:4
+	r29 = add(PC,##H2K_stacks@PCREL)
+	r29 += mpyi(r1,#KERNEL_STACK_SIZE)
+	r0 = add(H2K_GP,#KG_crash_tlb)
+	loop0(9f,#MAX_TLB_ENTRIES)
+	r1 = #0
+9:
+	r3:2 = tlbr(r1)
+	{
+		memd(r0++#8) = r3:2
+		r1 = add(R1,#1)
+	}:endloop0
+	nop
+	/* EJP: insert here: start other threads, have them save off their own stuff, then stop */
+	call H2K_cache_d_cleaninv
+	call H2K_cache_l2_cleaninv
+	syncht
+	nop
+8:
+	stop(r0)
+	jump 8b
+3:
+	r0 = memw(r7+#8)
+	{
+		p0 = cmp.eq(r0,#0)
+		if (!p0.new) jump:nt .Lreset_crash
+		r0 = add(r0,#1)
+		memw(r7+#8) = r0.new
+	}
+#endif
+
 	 /* FIXME: Read syscfg and set bits, don't zero, in case earlier boot code
 	has set it up */
 
@@ -84,10 +147,19 @@ FUNC_START start .entry .p2align 12
 
 	SETCONST(H2K_GP,H2K_kg)
 
-#if ARCHV == 4
+	REVID = rev
+	REV_ARCH = and(REVID, #0xff)         // arch version
+	REV_UARCH = extractu(REVID, #4, #8)  // uarch version
+
+	p0 = cmp.eq(REV_ARCH, #CORE_V4)
+	if (!p0) jump .Lv5
 	TMP = ##0x00002004
 	s63 = TMP
-#elif ARCHV == 5
+	jump .Lchicken_out
+
+.Lv5:
+	p0 = cmp.eq(REV_ARCH, #CORE_V5)
+	if (!p0) jump .Lv60
 	TMP = #0     /* (New chickenbits) */
 	TMP = setbit(TMP,#2);	//  AXI L1 Snoop something
 	TMP = setbit(TMP,#27);	//  force store
@@ -96,7 +168,11 @@ FUNC_START start .entry .p2align 12
 	TMP = #0
 	TMP = setbit(TMP,#22);	//  fix for address calculation corruption
 	s62 = TMP
-#endif
+	//	jump .Lchicken_out
+
+.Lv60:
+
+.Lchicken_out:
 
 	/* Set up rising edge triggered */
 	TMP = #-1
@@ -113,9 +189,6 @@ FUNC_START start .entry .p2align 12
 	SETCONST(LINK_ADDR, H2K_LINK_ADDR)
 	BOOT_OFFSET = sub(LINK_ADDR, PHYS_ADDR)
 	SETCONST(NPAGES, H2K_KERNEL_NPAGES)
-	REVID = rev
-	REV_ARCH = and(REVID, #0xff)         // arch version
-	REV_UARCH = extractu(REVID, #4, #8)  // uarch version
 	L2_SIZE = extractu (REVID, #4, #12)  // L2 mem size
 
 	// Read cfg_table
@@ -252,6 +325,10 @@ FUNC_START start .entry .p2align 12
 	DO_TLBW
 	isync
 
+	r0 = syscfg
+	r1 = add(PC,##H2K_kg@PCREL)
+	memw(r1+#KG_syscfg_val) = r0
+
 	SETCONST(SP, H2K_stacks)
 
 	r0 = sub(LINK_ADDR, PHYS_ADDR)  // phys_offset
@@ -277,7 +354,7 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	TMP = HTID
 	STACK_SIZE = #KERNEL_STACK_SIZE
 	SP += mpyi(STACK_SIZE, TMP)
-	DATA = #0
+	r1:0 = #0
 	k0lock
 	jump H2K_switch
 FUNC_END H2K_handle_reset

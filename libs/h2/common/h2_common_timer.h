@@ -6,7 +6,7 @@
 #ifndef H2_COMMON_TIMER_H
 #define H2_COMMON_TIMER_H 1
 
-#include <h2_common_timer_defs.h>
+#include <h2_common_defs.h>
 
 typedef enum {
 	H2K_TIMER_TRAP_GET_FREQ,

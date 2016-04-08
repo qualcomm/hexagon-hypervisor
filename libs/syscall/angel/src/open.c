@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <h2.h>
 #include <stdlib.h>
 #include <angel.h>
 #include <string.h>
 #include <syscall_defs.h>
+#include "allsyscalls.h"
 
 /* Dinkumware is all crazy. */
 

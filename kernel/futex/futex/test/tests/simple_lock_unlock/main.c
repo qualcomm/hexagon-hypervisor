@@ -119,12 +119,23 @@ void consumer_thread(int prio)
 	h2_thread_stop(0);
 }
 
-void vmmain(void *unused)
+int main(int argc, char **argv)
 {
 	unsigned int next_tnum;
 	unsigned int timeout=0;
 
 	printf("VM Main\n");
+
+	srand(TEST_SEED);
+	dummy_thread_lock = rand() % (LOCK_SLOTS);
+	futex_pages[dummy_thread_lock] = 0;
+	do {
+		test_lock = rand() % (LOCK_SLOTS);
+	} while (test_lock == dummy_thread_lock);
+	futex_pages[test_lock] = 0;
+
+	info("test_lock = %d\n",test_lock);
+	info("dummy_thread_lock = %d\n",dummy_thread_lock);
 
 	/*  Check that the futex should fail first  */
 
@@ -146,7 +157,7 @@ void vmmain(void *unused)
 			info("Could not create thread\n");
 		}
 	}
-
+	puts("Dummy threads created");
 	/*  "two for flinching"  */
 	if (h2_futex_wake(&futex_pages[test_lock],1) != 0) {
 		error("futex_wake returned n_woken with empty queues\n");
@@ -165,6 +176,7 @@ void vmmain(void *unused)
 		rand() % 31) == -1) {
 		info("Could not create consumer thread\n");
 	}
+	puts("High Prio threads created");
 
 	/*  Low prio thread  */
 	debug("next_tnum = %d\n",next_tnum);
@@ -198,64 +210,4 @@ void vmmain(void *unused)
 
 	info("TEST PASSED\n");
 	exit(0);
-}
-
-unsigned long long int main_thread_stack[THREAD_STACK_SIZE];
-
-void spawn_vm(void *pc)
-{
-	unsigned long vm;
-
-	vm = h2_config_vmblock_init(0,SET_CPUS_INTS,NUM_TOTAL_THREADS,0);
-	h2_config_vmblock_init(vm,SET_PMAP_TYPE,0,0);
-	h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, 0x0, 0xffffffff);
-	printf("initted\n");
-	h2_vmboot(pc,&main_thread_stack[THREAD_STACK_SIZE-1],0,0,vm);
-	printf("vm booted\n");
-}
-
-int main() 
-{
-	u32_t asid;
-
-	h2_init(0x0);
-
-	info("main() starting\n");
-
-	srand(TEST_SEED);
-
-	/*  pick a random lock to use for the dummies  */
-	dummy_thread_lock = rand() % (LOCK_SLOTS);
-	futex_pages[dummy_thread_lock] = 0;
-
-	do {
-		test_lock = rand() % (LOCK_SLOTS);
-	} while (test_lock == dummy_thread_lock);
-
-	futex_pages[test_lock] = 0;
-
-	info("test_lock = %d\n",test_lock);
-	info("dummy_thread_lock = %d\n",dummy_thread_lock);
-
-	/* set URWX in monitor TLB entry permissions, to allow futex access */
-	/* not really necessary to find our asid since the TLB entry will be global
-		 anyway, but... */
-	asm volatile (
-	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n" 
-	: "=r"(asid));
-	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
-	if (tlb_index == 0x80000000) {
-		FAIL("Can't find monitor TLB entry");
-	}
-	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-#if ARCHV <= 3
-	tlb_entry |= 0x7ULL << 29;
-#else
-	tlb_entry |= 0xfULL << 28;
-#endif
-	H2K_mem_tlb_write(tlb_index, tlb_entry);
-	spawn_vm(vmmain);
-	h2_thread_stop(0);
-	return 0;
 }

@@ -23,13 +23,13 @@ h2_sem_t startsem,donesem;
 
 unsigned long long int stacks[N_WORKERS][STACKSIZE];
 
-static inline unsigned int myrand(unsigned int mod, unsigned long long int *lfsrp)
-{
-	unsigned long long int data = *lfsrp;
-	data = Q6_P_lfs_PP(data,POLYNOMIAL);
-	*lfsrp = data;
-	return data % mod;
-}
+/* static inline unsigned int myrand(unsigned int mod, unsigned long long int *lfsrp) */
+/* { */
+/* 	unsigned long long int data = *lfsrp; */
+/* 	data = Q6_P_lfs_PP(data,POLYNOMIAL); */
+/* 	*lfsrp = data; */
+/* 	return data % mod; */
+/* } */
 
 void FAIL(const char *msg)
 {
@@ -91,7 +91,6 @@ int main()
 	printf("%lld locks/trylocks/unlocks, approx %d cycles per pair\n",count,avg);
 	printf("Done!\n");
 	printf("TEST PASSED avg=%d\n",avg);
-	h2_thread_stop(0);
 	return 0;
 }
 

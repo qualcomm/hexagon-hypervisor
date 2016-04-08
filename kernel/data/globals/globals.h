@@ -12,6 +12,8 @@
 #include <futex.h>
 #include <vm.h>
 #include <stlb.h>
+#include <asid_types.h>
+#include <spinlock.h>
 #include <timeinfo.h>
 #include <h2_common_info.h>
 #include <h2_common_kerror.h>
@@ -35,10 +37,10 @@ typedef struct {
 		};
 	};
 	union {
-		u64_t fastint_gp_stlbptr;
+		u64_t fastint_gp_ssr;
 		struct {
+			u32_t fastint_ssr;
 			u32_t fastint_gp;
-			H2K_mem_stlb_asid_info_t *stlbptr;
 		};
 	};
 	union {
@@ -46,6 +48,13 @@ typedef struct {
 		struct {
 			void *traptab_addr;
 			void *stacks_addr;
+		};
+	};
+	union {
+		u64_t syscfg_stlbptr;
+		struct {
+			H2K_mem_stlb_asid_info_t *stlbptr;
+			u32_t syscfg_val;
 		};
 	};
 	union {
@@ -57,6 +66,7 @@ typedef struct {
 			u32_t metal:16;
 		};
 	};
+	u32_t is_nmi_soft;
 
 #ifdef H2K_L2_CONTROL
 	union {
@@ -68,23 +78,39 @@ typedef struct {
 	};
 #endif
 	u32_t timer_intnum;
-#ifdef HAVE_EXTENSIONS
 	u32_t *hvx_clock;
 	u32_t *hvx_reset;
 	u32_t *hvx_power;
 	u32_t hvx_state;
-#endif
+
+	union {
+		u64_t fatal_hook_and_arg;
+		struct {
+			u32_t fatal_hook_arg;
+			u32_t fatal_hook;
+		};
+	};
+	union {
+		u64_t fatal_hook_gp_ssr;
+		struct {
+			u32_t fatal_hook_ssr;
+			u32_t fatal_hook_gp;
+		};
+	};
+
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
 	u32_t last_tlb_index;
+	u32_t tmpmap_lock;
 	u32_t tlb_size;
+	u64_t pinned_tlb_mask;
+	H2K_spinlock_t asid_spinlock;
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];
 	u64_t waitcycles[MAX_HTHREADS];
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
-	u32_t on_simulator;
 	u32_t phys_offset;
 	u32_t l2_tags;
 	u32_t build_id;
@@ -93,9 +119,17 @@ typedef struct {
 	kerror_type kernel_error;
 	u32_t hthreads;
 	u32_t hthreads_mask;
+
+#ifdef CRASH_DEBUG
+	u64_t crash_tlb[MAX_TLB_ENTRIES];
+	u32_t crash_l2vic_enabled[MAX_INTERRUPTS/32];
+	u32_t crash_l2vic_pending[MAX_INTERRUPTS/32];
+	H2K_thread_context crash_contexts[MAX_HTHREADS];
+#endif
 		
 	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
 	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
+	H2K_asid_entry_t asid_table[MAX_ASIDS] __attribute__((aligned(MAX_ASIDS*sizeof(H2K_asid_entry_t))));
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 } H2K_kg_t;
 
@@ -110,8 +144,8 @@ register H2K_kg_t * const H2K_gp asm (GLOBAL_REG_STR);
 #define PURITY __attribute__((const))
 static inline H2K_kg_t PURITY *H2K_gp_llvm()
 {
-	H2K_kg_t *ret;
-	asm ( " %0 = " GLOBAL_REG_STR : "=r"(ret));
+	register H2K_kg_t *ret __asm__("r28");
+	__asm__ (" /* Fool the compiler */ " : "=r"(ret));
 	return ret;
 }
 #define H2K_gp H2K_gp_llvm()

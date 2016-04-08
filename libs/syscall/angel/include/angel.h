@@ -128,6 +128,7 @@ void sys_write0(const char *);
 #define DEBUG_PRINTF(...) /* nothing */
 #endif
 
+#if 0
 static inline void clean(const void *vx,int words)
 {
 	const int *x = vx;
@@ -157,6 +158,8 @@ static inline void clean_str(const char *x)
 	}
 	asm volatile (" syncht ");
 }
+
+#endif
 
 #endif
 

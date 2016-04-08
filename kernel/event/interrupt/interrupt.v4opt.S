@@ -102,13 +102,15 @@ H2K_interrupt_restore:
 	/* Registers set up, call specified handler */
 	{
 		ciad(CIADVAL)
+		p0 = cmp.eq(INTINFO_FN,#0)	// really, we shouldn't get NULL interrupt handlers, but if we do...
 	}
 	{
 		r3:2 = combine(INTINFO_VAL,HTNUM)
 		r1:0 = combine(ME,INTNO)
 		memw(ME+#CONTEXT_continuation) = r31
-		jumpr INTINFO_FN
+		if (!p0) jumpr INTINFO_FN
 	}
+	jumpr r31
 
 FUNC_END H2K_handle_int
 
@@ -166,6 +168,9 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	{
 		r31 = memw(ME+#CONTEXT_continuation)
 		r1:0 = memd(ME+#CONTEXT_r0100)
+	}
+	{
+		r31 = and(r31,#-4)
 	}
 	{
 		jumpr r31

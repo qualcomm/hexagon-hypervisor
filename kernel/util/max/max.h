@@ -11,7 +11,7 @@
 #include <h2_common_pmap.h>
 #include <h2_common_defs.h>
 
-#define MAX_HTHREADS 8
+// now in common? #define MAX_HTHREADS 8
 
 //#define DO_EXT_SWITCH 1
 
@@ -22,6 +22,8 @@
 #define L2_CHUNK 0x20000     // 128K
 #define L2_BIG_CHUNK 0x40000 // 256K
 
+#define CORE_V4  0x04
+#define CORE_V5  0x05
 #define CORE_V60 0x60
 #define CORE_V61 0x61
 #define CORE_V62 0x62
@@ -45,6 +47,10 @@
 #define MAX_THREADS 16
 
 #define KERNEL_STACK_SIZE (8*31)
+
+#ifdef CRASH_DEBUG
+#define KERNEL_CRASH_TCM_ADDR 0xFF070000
+#endif
 
 #define MAX_PRIOS 256
 #define MAX_PRIO ((MAX_PRIOS) - 1)
@@ -83,26 +89,6 @@
 
 #define L2VIC_OFFSET 0x10000
 #define TIMER_OFFSET 0x20000
-
-#ifdef HAVE_EXTENSIONS
-#define QDSP6SS_CP_CLK_CTL 0x000000fc
-#define QDSP6SS_CP_CLK_CTL_DISABLE      0x00000000
-#define QDSP6SS_CP_CLK_CTL_ENABLE       0x00000001
-
-#define QDSP6SS_CP_RESET   0x000000f8
-#define QDSP6SS_CP_RESET_ASSERT         0x00000001
-#define QDSP6SS_CP_RESET_DEASSERT       0x00000000
-
-#define QDSP6SS_CP_PWR_CTL 0x000000f0
-#define QDSP6SS_CP_PWR_CTL_CLAMP_IO_ON_V60  0x011fffff
-#define QDSP6SS_CP_PWR_CTL_CLAMP_IO_OFF_V60 0x010fffff
-#define QDSP6SS_CP_PWR_CTL_POWER_OFF_V60    0x001fffff
-
-#define QDSP6SS_CP_PWR_CTL_CLAMP_IO_ON_V62  0x00000003
-#define QDSP6SS_CP_PWR_CTL_CLAMP_IO_OFF_V62 0x00000002
-#define QDSP6SS_CP_PWR_CTL_POWER_OFF_V62    0x00000001
-#endif
-
 #endif
 
 #define PERCPU_INTERRUPTS 16
@@ -119,14 +105,11 @@
 
 #define RESCHED_INT 1
 #define VM_IPI_INT 0
-#if ARCHV <= 4
-#define TIMER_INT 50
-#elif ARCHV == 5
-#define TIMER_INT 34
-#else
-#define TIMER_INT 33
+
+#define TIMER_INT_CORE_V4 50
+#define TIMER_INT_CORE_V5 34
+#define TIMER_INT_CORE_V60 33
 #define TIMER_INT_CORE_V61 34
-#endif
 
 #define MAX_TRACE_LEVEL 0
 #define DEFAULT_TRACE_ENTRIES 16

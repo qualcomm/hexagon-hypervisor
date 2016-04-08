@@ -147,12 +147,15 @@ FUNC_START H2K_dosched  .text.core.dosched  .p2align  3
 	.falign
 .H2K_dosched_threads_waiting_or_high_prio:
 	{
-		if (!p1) jump .H2K_dosched_runlist_push         // if(H2K_gp->priomask &(1<<hthread) ==0) continue
+		// if (!p1) jump .H2K_dosched_runlist_push         // if(H2K_gp->priomask &(1<<hthread) ==0) continue
 		r3 = and(r2,~r3)                                // clrbit(H2K_gp->priomask,hthread)
 		r1 = #-1                                        // to set high priority
 	}
 	{
 		memw(H2K_GP+#KG_priomask) = r3                  // H2K_gp->priomask = clrbit(H2K_gp->priomask,hthread)
+		p0 = cmp.eq(r15,#255)
+		if (p0.new) r1 = #0x000				// enable l2vic interrupt for all priorities
+								// including reschedule ...
 	}
 	imask = r1                                      // set to high priority
 	.falign

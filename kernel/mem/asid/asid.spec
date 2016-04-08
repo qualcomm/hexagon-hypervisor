@@ -100,6 +100,7 @@ H2K_asid_table_inc
 	:param ptb: Address of the translation base
 	:param type: Type of translation
 	:param flag: Invalidate TLB entries for this ASID
+	:param extra: Extra translation info
 	:param vmblock: pointer to vmblock of guest
 
 Description
@@ -146,34 +147,5 @@ Description
 ~~~~~~~~~~~
 
 This routine decrements the reference count for the ASID specified.
-
-
-H2K_asid_table_invalidate
--------------------------
-
-.. cfunction:: s32_t H2K_asid_table_invalidate(u32_t ptb)
-
-	:param ptb: Address of the translation base
-
-Description
-~~~~~~~~~~~
-FIXME: unused/unneeded
-
-This routine searches for an ASID that has been used for the specified 
-translations, and assures that no cached translations remain valid for 
-the specified PTB.
-
-This routine must be called before modifying memory at "ptb" to be a new
-set of pagetables.
-
-Returns -1 if the asid is still in use.
-
-Functionality
-~~~~~~~~~~~~~
-
-We search the ASID table for PTB.  If found, and the reference count is not
-zero, the call was erroneous, and we return -1.  Otherwise, we invalidate the
-TLB and STLB for the asid.  We then set the PTB field in the ASID table to
-zero.
 
 

@@ -115,12 +115,12 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_id	// 13
 	}
 	{
-		r0 = sgp0
-		jump H2K_thread_id // 14
+		r2 = sgp0
+		jump H2K_intpool_configure // 14	// EJP: FIXME: uncommon, put in config or hwconfig
 	}
 	{
-		r0 = sgp0
-		jump H2K_thread_id // 15
+		r1 = sgp0
+		jump H2K_intpool_wait // 15
 	}
 	{
 		r0 = sgp0
@@ -151,12 +151,12 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_timer_trap // 22
 	}
 	{
-		r0 = sgp0
-		jump H2K_thread_id // 23
+		r1 = sgp0
+		jump H2K_fatal_crash // 23
 	}
 	{
-		r0 = sgp0
-		jump H2K_thread_id // 24
+		r4 = sgp0
+		jump H2K_tlb_tlbop // 24
 	}
 	{
 		r2 = sgp0

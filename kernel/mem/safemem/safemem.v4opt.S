@@ -25,6 +25,12 @@ FUNC_START H2K_safemem_check_and_lock  .text.core.futex  .p2align  5
 #define SIZE r10
 #define WIDTH r11
 #define WIDTHSIZE r11:10
+#define JUNK_PPN r13:12
+#define PPN r12
+#define JUNK r13
+#define DSTPAIR r15:14
+#define DSTPAIR_LO r14
+#define DSTPAIR_HI r15
 	{
 		p0 = bitsclr(VA,#3)
 		if (!p0.new) jump:nt .Lbad
@@ -41,6 +47,7 @@ FUNC_START H2K_safemem_check_and_lock  .text.core.futex  .p2align  5
 	{
 		TMPPAIR = lsr(TMPPAIR,#12)		// get ASID:VPN
 		PERMS = sub(PERMS_IN,PERMS)		// LSB User Mode
+		DSTPAIR = combine(#0,VA)
 	}
 	{
 		IDX = TLBP(TMPPAIR_LO)
@@ -55,21 +62,24 @@ FUNC_START H2K_safemem_check_and_lock  .text.core.futex  .p2align  5
 		SIZE = ct0(TMPPAIR_LO)
 	}
 #undef IDX
-#define PPN r5
+#define PA35 r5
 	{
 		TLBPERMS = and(TLBPERMS,PERMS)
 		if (!cmp.eq(TLBPERMS.new,PERMS)) jump:nt .Lbad_locked
 		SIZE = add(#1,asl(SIZE,#1))		// 2*SIZE+1
+		PA35 = extractu(TMPPAIR_HI,#1,#29)
 	}
 	{
+		DSTPAIR_HI = insert(PA35,#1,#35-32)	// insert PA35
 		PPN = lsr(TMPPAIR_LO,SIZE)
 		SIZE = add(SIZE,#(12-1))		// 2*size+12
-		WIDTH = sub(#21,SIZE)			// 20-2*size
-		TMPPAIR_HI = VA
+		WIDTH = sub(#24,SIZE)			// 23-2*size
 	}
 	{
-		TMPPAIR_HI = insert(PPN,WIDTHSIZE)
-		memw(PA_RET) = TMPPAIR_HI.NEW
+		DSTPAIR = insert(JUNK_PPN,WIDTHSIZE)
+	}
+	{
+		memd(PA_RET) = DSTPAIR
 		r0 = #1
 		jumpr r31
 	}

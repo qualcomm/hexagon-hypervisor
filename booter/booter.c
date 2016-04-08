@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <max.h>
+//#include <max.h>
 #include <h2.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <errno.h>
 #include <angel.h>
@@ -22,10 +23,10 @@
 #include <unistd.h>
 
 #include "elf.h"
-#include <hw.h>
+#include "../kernel/include/max.h"
+#include "../kernel/include/hw.h"
 #include <syscall_defs.h>
 
-#define CHILD_INTERRUPT 14
 #define VM_BEST_PRIO 0
 
 #define BUFSIZE 256
@@ -563,6 +564,7 @@ void load_vm(unsigned int idx) {
 		}
 
 		get_pmap(idx, total_offset);
+		// if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 
 		/* Adjust guest_base and fences */
 		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
@@ -635,7 +637,7 @@ void config_vm(unsigned int idx) {
 	unsigned long vm;
 
 	H2K_offset_t base;
-	int trans, i;
+	int trans;
 	
 
 	printf("\nConfig VM index %d\n", idx);
@@ -685,12 +687,20 @@ void config_vm(unsigned int idx) {
 		FAIL("\tSET_PRIO_TRAPMASK", "");
 	}
 
+#if 0
+	do {
+	FIXME: in the future, we can map physical interrupts to guest with a command line option
+	This was confusing things like the virtual timer interrupt.
+	(Using if 0 here just to annoy Bryan.)
 	/* set up interrupts */
-	for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
-		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
-			FAIL("\tMAP_PHYS_INTR", "");
+		int i;	/* can move up to top and strike this block after reenabling maybe */
+		for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
+			if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
+				FAIL("\tMAP_PHYS_INTR", "");
+			}
 		}
-	}
+	} while (0);
+#endif
 
 	vm_params[idx].id = vm;
 	printf("\tVM ID %lu\n", vm);
@@ -901,7 +911,7 @@ extern void bootvm_vectors();
 void booter_isr(void) {
 	//	printf("Got child interrupt\n");
 	h2_sem_up(&child_done_sem);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
 }
 
 unsigned int process_line(int argc, char **argv, unsigned int idx) {
@@ -1265,6 +1275,8 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
 	return p - buf - 1;
 }
 
+extern void pthread_init();
+
 int main(int argc, char **argv)
 {
 	unsigned int kerror;
@@ -1280,6 +1292,7 @@ int main(int argc, char **argv)
 	int idx;
 
 	//Remove booter from cmdline
+	pthread_init();
 	strncpy(errstr, argv[0], ERRSTR_LEN - 1);
 	argc--;
 	argv++;
@@ -1303,8 +1316,8 @@ int main(int argc, char **argv)
 
 	h2_sem_init_val(&child_done_sem, 0);
 
-	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, CHILD_INTERRUPT, 0) < 0) {
-		FAIL("H2K_INTOP_GLOBEN, CHILD_INTERRUPT", "");
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, H2K_VM_CHILDINT", "");
 	}
 	h2_vmtrap_setie(1);
 

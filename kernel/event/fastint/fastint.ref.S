@@ -65,18 +65,20 @@ FUNC_START H2K_fastint .text.core.fastint .p2align 5
 #if ARCHV <= 3
 	r19 = brev(r19)
 #endif
-	r6 = memw(H2K_GP+#KG_fastint_gp)
+	r7:6 = memd(H2K_GP+#KG_fastint_gp_ssr)
 
 	// r4 = fastint_functions
 	// r5 = mask for ciad
-	// r6 = gp
+	// r7 = gp
+	// r6 = ssr
 
-	r11.h = #0x01c0
-	r11.l = #0x0
 	r11 = setbit(r11, #SSR_GUEST_BIT)
 	r16 = r0		// save intno in r26 for L2 Control
-	ssr = r11
-	gp = r6
+	ssr = r6
+	gp = r7
+	r6 = #0
+	ugp = r6		// clear UGP so we don't mistake the fastint for a real thread
+	r0 = add(r0,#-32)
 
 	callr r3
 
@@ -86,7 +88,7 @@ H2K_fastint_return:
 	H2K_GP.l = #lo(H2K_kg)
 #if H2K_L2_CONTROL
 	/* EJP: this should be v4... */
-	p0 = cmp.gtu(r26,#31)
+	p0 = cmp.gtu(r16,#31)
 	p1 = cmp.eq(r0,#0)
 	r16 = add(r16,#-32)
 	if (!p0) jump 1f		// skip if l1 interrupt

@@ -1,0 +1,91 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include <h2_common_c_std.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <context.h>
+#include <max.h>
+#include <h2.h>
+//#include <globals.h>
+
+#define STACK_SIZE 128
+
+h2_signal_t all_threads, all_done;
+int t0id,t1id;
+
+h2_u64_t stack0[STACK_SIZE];
+h2_u64_t stack1[STACK_SIZE];
+
+h2_u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(h2_u64_t)] __attribute__((aligned(32)));
+
+void FAIL(const char *str)
+{
+	puts("FAIL");
+	puts(str);
+	exit(1);
+}
+h2_sem_t donesem;
+void thread0(int thread)
+{
+	int i;
+	h2_printf("thread0 delay\n");
+	/* FIXEM make this for loop a sleep */
+	for(i=0; i<1000000; i++) { asm volatile ("nop"); }
+	h2_signal_set(&all_threads, 0xfffffffc);
+	if((all_threads.mask & 0x1) != 0x1) {
+		//DEBUG
+		// printf("t0 waiting is 0x%08x\n", all_threads.mask );
+		FAIL("allsignal acknowledged the wrong signal!");
+	}
+	h2_signal_set(&all_threads, 1);
+	h2_sem_up(&donesem);
+	h2_thread_stop(0);
+}
+
+void thread1(int thread)
+{
+	int i;
+	h2_printf("thread1 delay\n");
+	/* FIXEM make this for loop a sleep */
+	for(i=0; i<1000000; i++) { asm volatile ("nop"); }
+	h2_signal_set(&all_threads, 0xfffffffc);
+	if((all_threads.mask & 0x2) != 0x2) { 
+		//DEBUG
+		// printf("t1 waiting is 0x%08x\n", all_threads.mask );
+		FAIL("allsignal acknowledged the wrong signal!");
+	}
+	h2_signal_set(&all_threads, 0x2);
+	h2_signal_wait_all(&all_done, 0x80000000);
+	if(all_done.mask != 0) { FAIL("allsignal didn't block while waiting"); }
+	h2_sem_up(&donesem);
+	h2_thread_stop(0);
+}
+
+int main()
+{
+//	h2_init(NULL);
+	printf("Hello, World!\n");
+
+	h2_sem_init_val(&donesem,0);
+	h2_signal_init(&all_done);
+	h2_signal_init(&all_threads);
+
+	printf("creating threads...\n");
+	t1id = h2_thread_create(thread1,&stack1[STACK_SIZE],0,2);
+	t0id = h2_thread_create(thread0,&stack0[STACK_SIZE],0,2);
+
+	printf("Waiting for threads...\n");
+	h2_signal_wait_all(&all_threads, 0x3);
+	if(all_threads.mask != 0) { printf("mask=%x\n",all_threads.mask); FAIL("allsignal didn't block while waiting mask"); }
+	h2_signal_set(&all_done, 0x80000000);
+	h2_sem_down(&donesem);
+	h2_sem_down(&donesem);
+	puts("TEST PASSED\n");
+	h2_thread_stop(0);
+	return 0;
+}
+

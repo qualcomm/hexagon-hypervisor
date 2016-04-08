@@ -117,16 +117,16 @@ int main()
 
 	/* SET_PMAP_TYPE */
 	H2K_asid_table_init();
-	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, 0, vmblock);
 	if (asid < 0) FAIL("H2K_asid_table_inc");
 	a.ssr_asid = asid;
-	DPRINTF("ASID %d  ptb %08x\n\n", a.ssr_asid, H2K_mem_asid_table[a.ssr_asid].ptb);
+	DPRINTF("ASID %d  ptb %08x\n\n", a.ssr_asid, H2K_gp->asid_table[a.ssr_asid].ptb);
 	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PMAP_TYPE, 0, 0, &a);
 	if (ret == 0) FAIL("Unexpected error 3");
 
-	DPRINTF("pmap %08x  type %d\n", vmblock->pmap, vmblock->pmap_type);
-	if (vmblock->pmap != 0xfeedf00f) FAIL("Wrong ptb");
-	if (vmblock->pmap_type != H2K_mem_asid_table[a.ssr_asid].fields.transtype) FAIL("Wrong pmap type");
+	DPRINTF("pmap %08x  type %d\n", vmblock->guestmap.ptb, vmblock->guestmap.fields.type);
+	if (vmblock->guestmap.ptb != 0xfeedf00f) FAIL("Wrong ptb");
+	if (vmblock->guestmap.fields.type != H2K_gp->asid_table[a.ssr_asid].fields.type) FAIL("Wrong pmap type");
 
 	DPRINTF("SET_PRIO_TRAPMASK\n\n");
 	/* SET_PRIO_TRAPMASK bad prio */

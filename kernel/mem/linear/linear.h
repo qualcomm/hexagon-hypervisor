@@ -13,24 +13,7 @@
 #include <translate.h>
 #include <h2_common_linear.h>
 
-H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list, H2K_vmblock_t *vmblock) IN_SECTION(".text.mem.linear");
-
-H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me) IN_SECTION(".text.mem.linear");
-
-static inline H2K_translation_t H2K_mem_translate_linear(H2K_linear_fmt_t entry, u32_t va) {
-
-	u32_t page_offset_mask = (PAGE_SIZE << (entry.size * 2)) - 1;
-	H2K_translation_t ret;
-
-	ret.raw = 0;
-	ret.addr = (va & page_offset_mask) | (entry.ppn << PAGE_BITS);
-	ret.size = entry.size;
-	ret.cccc = entry.cccc;
-	ret.xwru = entry.xwru;
-	ret.valid = 1;
-
-	return ret;
-}
+H2K_translation_t H2K_linear_translate(H2K_translation_t in, H2K_asid_entry_t info) IN_SECTION(".text.mem.linear");
 
 #endif
 

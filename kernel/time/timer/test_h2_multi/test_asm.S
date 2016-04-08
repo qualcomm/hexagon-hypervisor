@@ -52,6 +52,14 @@ h2_time_set_timeout:
 	deallocframe
 	jumpr r31
 
+	.global h2_time_get_timeout
+h2_time_get_timeout:
+	allocframe(#0)
+	r0 = #3
+	trap0(#22)
+	deallocframe
+	jumpr r31
+
 	.global set_vectors
 set_vectors:
 	r0 = ##TH_vectors

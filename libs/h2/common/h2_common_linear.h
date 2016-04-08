@@ -6,29 +6,30 @@
 #ifndef H2_COMMON_LINEAR_H
 #define H2_COMMON_LINEAR_H 1
 
-#include "c_std.h"
+#include "h2_common_c_std.h"
 
 typedef union {
 	struct {
 		union {
-			u32_t low;
+			h2_u32_t low;
 			struct {
-				u32_t ppn:24;
-				u32_t cccc:4;
-				u32_t xwru:4;
+				h2_u32_t ppn:24;
+				h2_u32_t cccc:4;
+				h2_u32_t xwru:4;
 			};
 		};
 		union {
-			u32_t high;
+			h2_u32_t high;
 			struct {
-				u32_t vpn:20;
-				u32_t size:4;
-				u32_t unused:7;
-				u32_t chain:1;
+				h2_u32_t vpn:20;
+				h2_u32_t size:4;
+				h2_u32_t abits:2;
+				h2_u32_t unused:5;
+				h2_u32_t chain:1;
 			};
 		};
 	};
-	u64_t raw;
+	h2_u64_t raw;
 } H2K_linear_fmt_t;
 
 #endif

@@ -14,6 +14,18 @@
 
 #define PAGE_BITS 12 /* Minimum page size: 4K */
 
+#ifndef MAX_HTHREADS
+#if ARCHV <= 3
+#define MAX_HTHREADS 6
+#elif ARCHV == 4
+#define MAX_HTHREADS 3
+#elif ARCHV == 5
+#define MAX_HTHREADS 4
+#elif ARCHV == 60
+#define MAX_HTHREADS 4
+#endif
+#endif
+
 #define SYSCFG_M_BIT 0
 #define SYSCFG_M_LEN 1
 #define SYSCFG_M (((0x1 << SYSCFG_M_LEN) - 1) << SYSCFG_M_BIT)
@@ -104,5 +116,8 @@
 #define SYSCFG_L2PART_BITS 29
 #define SYSCFG_L2PART_LEN 2
 #define SYSCFG_L2PART (((0x1 << SYSCFG_L2PART_LEN) - 1) << SYSCFG_L2PART_BIT)
+
+#define H2K_TIME_GUESTINT 12
+#define H2K_VM_CHILDINT 14
 
 #endif

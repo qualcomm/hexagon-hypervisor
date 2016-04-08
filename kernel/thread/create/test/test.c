@@ -104,7 +104,6 @@ int main()
 	H2K_thread_context *c;
 	H2K_thread_context *d;
 	u32_t asid;
-	u32_t asid_pmap;
 	H2K_vmblock_t *vmblock = &TH_vm.vm;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_runlist_init();
@@ -118,7 +117,7 @@ int main()
 	c = &TH_vm.contexts[2];
 	d = &TH_vm.contexts[3];
 
-	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
+	asid = H2K_asid_table_inc(0xfeedf00f, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, 0, vmblock);
 
 	a->gp = 0x12340000;
 	b->gp = c->gp = d->gp = 0x0;
@@ -130,9 +129,6 @@ int main()
 	vmblock->phys_offset.cccc = 7;
 	vmblock->phys_offset.xwru = 0xf;
 	vmblock->phys_offset.pages = 0;
-	vmblock->pmap_type = H2K_ASID_TRANS_TYPE_OFFSET;
-
-	asid_pmap = H2K_asid_table_inc((u32_t)vmblock,vmblock->pmap_type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
 
 	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,vmblock,a)
 		!= 0xffffffff) FAIL("Created thread w/o storage");
@@ -162,11 +158,9 @@ int main()
 	if ((b->elr) != ((u32_t)test_thread)) FAIL("Incorrect return address");
 	if (b->gp != a->gp) FAIL("Incorrect inheritance of GP");
 	if (b->vmblock != vmblock) FAIL("vmblock is non-NULL");
-	if (b->ssr_asid != asid_pmap) FAIL("wrong asid/pmap");
 
 	TH_saw_check_sanity = 0;
 	vmblock->pmap = 0x12345678;
-	vmblock->pmap_type = -1;
 	if (H2K_thread_create(((u32_t)test_thread), (u32_t)&stack,0xdeadbeef,2,vmblock,a) 
 		!= (c->id.raw)) FAIL("Failed to create expected thread");
 	if (c->ssr_asid != a->ssr_asid) FAIL("wrong asid");
@@ -181,7 +175,7 @@ int main()
 	vm.pmap_type = H2K_ASID_TRANS_TYPE_TABLE;
 
 	/* so we can check if properly decremented */
-	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
+	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, 0, vmblock);
 
 	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
 	/* asid count should have gone to 2 and then back to 1 */

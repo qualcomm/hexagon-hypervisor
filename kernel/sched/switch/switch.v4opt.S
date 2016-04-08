@@ -229,10 +229,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	.falign
 .Lfrom_sleep:
 	{
-		PMUVAL = PMUCFG
 		p0 = cmp.eq(DST,#0)
 		if (p0.new) jump:nt .Lto_sleep
-		if (!p0.new) PMU_ON = memub(DST+#CONTEXT_pmu_on)
 		if (!p0.new) VMSTATUS = memub(DST+#CONTEXT_vmstatus)
 	}
 	/* Load rest-of-context for new thread and trace */
@@ -282,13 +280,11 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	{
 		memd(KG_CPUSTART+HTNUM<<#3) = NOW
 		TIDVAL = memw(DST+#CONTEXT_status_prio_hthread_tid)
-		r1:0 = combine(#1,HTNUM)
 		c7:6 = r25:24				// m1m0
 	}
 	{
 		r21:20 = memd(DST+#CONTEXT_gpugp)
 		r0 = memw(DST+#CONTEXT_elr)
-		PMUVAL = insert(PMU_ON,r1:0)
 		START = sub(NOW,START)			// pcycles - oncpu wait
 	}
 		STID = TIDVAL
@@ -301,7 +297,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	elr = r0
 	{
-		r21:20 = memd(DST+#CONTEXT_ccrssr)
+		r21:20 = memd(DST+#CONTEXT_ccrssr)	// fixme: will restore later?
 		r23:22 = memd(DST+#CONTEXT_pktcount)
 	}
 	{
@@ -323,8 +319,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r25:24 = memd(DST+#CONTEXT_r2524)
 		r27:26 = memd(DST+#CONTEXT_r2726)
 	}
-
-	PMUCFG = PMUVAL
 	{
 		if (P_FROMWAIT) memd(KG_WAITCYCLES+HTNUM<<#3) = r3:2  // waitcycles
 		memb(DST+#CONTEXT_hthread) = HTNUM
@@ -333,7 +327,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		r31 = memw(DST+#CONTEXT_continuation)
-		r1:0 = memd(DST+#CONTEXT_r0100)
+		r1:0 = memd(DST+#CONTEXT_r0100)		// for return val from blocking traps
+	}
+	{
+		r31 = and(r31,#-4)
 		jump H2K_check_sanity_unlock
 	}
 	.falign
@@ -347,7 +344,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	{
 		memd(KG_CPUWAIT+HTNUM<<#3) = NOW       // oncpu wait
 		r0 = lsl(#1,HTNUM)
-		PMUVAL = PMUCFG
 	}
 	{
 		memw(H2K_GP+#KG_wait_mask) |= r0
@@ -357,11 +353,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	STID = r2
 	{
 		memw(H2K_GP+#KG_priomask) |= r0
-		PMUVAL = clrbit(PMUVAL,HTNUM)
-	}
-	{
 		r0 = ##0x00040000 // insert(r5,#3,#16)
-		PMUCFG = PMUVAL
 	}
 	k0unlock
 		IMASK = r3

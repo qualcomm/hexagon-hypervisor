@@ -1,8 +1,8 @@
 ###############################################################################
 
 EXEC   := intsig_test
-LD      = hexagon-gcc
-AS      = hexagon-gcc
+LD      = hexagon-clang
+AS      = hexagon-clang
 RUN     = hexagon-sim
 RM      = rm -f
 SIZE_TOOL = /prj/dsp/qdsp6/arch/scripts/section_size.py
@@ -12,7 +12,7 @@ CLDFLAGS   := -moslib=h2 -lqdsp -lh2kernel -lh2
 COSIM =--cosim_file cosimcfg
 
 Q6VERSION := v4
-CC     = hexagon-gcc
+CC     = hexagon-clang
 ifneq (,${DEBUG})
 CFLAGS += -O0 -g -DDEBUG
 else

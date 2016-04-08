@@ -75,6 +75,25 @@ static inline void H2K_mem_tlb_write(u32_t index, u64_t entry)
 	: "r"(index),"r"(entry) : "memory");
 }
 
+#if ARCHV >= 5
+
+static inline int H2K_mem_tlboc(u64_t entry)
+{
+	int ret;
+	asm volatile(" %0 = tlboc(%1) " : "=r"(ret) : "r"(entry));
+	return ret;
+}
+
+#else
+
+static inline int H2K_mem_tlboc(u64_t entry)
+{
+	/* No HW tlboc, just return 0x8000000 */
+	return 0x80000000;
+}
+
+#endif
+
 #endif
 
 void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) IN_SECTION(".text.mem.tlb");

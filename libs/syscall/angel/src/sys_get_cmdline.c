@@ -17,7 +17,7 @@ errno_t sys_get_cmdline(char *buffer, count_t count)
 	errno_t ret;
 	struct { char *buf; count_t count; } x;
 
-	if (0xfffffff0 != __h2_handle_errors_hook__) {
+	if ((void (*)(void))0xfffffff0 != __h2_handle_errors_hook__) {
 		__h2_handle_errors_hook__();
 	}
 

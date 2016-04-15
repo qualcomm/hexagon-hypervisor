@@ -1,6 +1,6 @@
 
 
-CC = hexagon-clang -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../posix/include -I../h2_compat/include 
+CC = hexagon-clang -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../posix/include -I../h2_compat/include 
 AR = hexagon-ar
 
 OPTIMIZE := -O2

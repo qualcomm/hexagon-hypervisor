@@ -22,4 +22,6 @@ typedef unsigned long h2_pa_t;
 #define H2_IN_SECTION(S) __attribute__((section(S)))
 #endif
 
+#define H2_ALIGN_UP(X, SIZ) (((X) + ((SIZ) - 1)) & (-(SIZ)))
+
 #endif

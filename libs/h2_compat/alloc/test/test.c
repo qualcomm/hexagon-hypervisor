@@ -33,22 +33,26 @@ int main()
 	}
 
 	tcm = (void *)h2_info(INFO_TCM_BASE);
+	info("tcm == 0x%p\n", tcm);
 
 	h2_galloc_init(&alloc0, (unsigned int)tcm, 1000, &alloc1);
 	h2_galloc_init(&alloc1, (unsigned int)tcm + 1000, 2000, NULL);
 
-	ptr = h2_galloc(&alloc0, 100, 0);
+	ptr = h2_galloc(&alloc0, 100, 1, 0);
 	if (ptr != tcm) {
+		info("0x%p\n", ptr);
 		error("galloc 1\n");
 	}
 
-	ptr = h2_galloc(&alloc0, 901, 0);
+	ptr = h2_galloc(&alloc0, 901, 8, 0);
 	if (NULL != ptr) {
+		info("0x%p\n", ptr);
 		error("galloc 2\n");
 	}
 	
-	ptr = h2_galloc(&alloc0, 901, 1);
-	if ((unsigned int)ptr != (unsigned int)tcm + 1000) {
+	ptr = h2_galloc(&alloc0, 901, 64, 1);
+	if ((unsigned int)ptr != (unsigned int)tcm + 1024) {
+		info("0x%p\n", ptr);
 		error("galloc 3\n");
 	}
 
@@ -65,8 +69,9 @@ int main()
 		error("galloc 6\n");
 	}
 
-	ptr = h2_galloc(&alloc0, 3000, 1);
+	ptr = h2_galloc(&alloc0, 3000, 256, 1);
 	if (NULL != ptr) {
+		info("0x%p\n", ptr);
 		error("galloc 7\n");
 	}
 

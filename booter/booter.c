@@ -72,10 +72,7 @@ enum {
 	SPECIAL_NUM_ENTRIES
 };
 
-#define LO_MASK(SIZ) ((SIZ)-1)
 #define HI_MASK(SIZ) (-(SIZ))
-
-#define ALIGN_UP(X,SIZ) (((X) + LO_MASK(SIZ)) & HI_MASK(SIZ))
 
 #define GUESS_HEAP_SIZE 0x4000000 /* 64MB */
 #define GUESS_STACK_SIZE 0x100000 /* 1MB */
@@ -459,7 +456,7 @@ void load_vm(unsigned int idx) {
 	one_page = (1 << ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS));
 
 	/* Align the guest base up to the current guest's page size */
-	guest_base = ALIGN_UP(guest_base, one_page);
+	guest_base = H2_ALIGN_UP(guest_base, one_page);
 
 	if (-1 != (clone = vm_params[idx].cloneof)) {  // this is a clone of a VM already loaded
 		prev_size = (vm_params[clone].fence_hi - vm_params[clone].fence_lo + one_page) * (idx - clone);
@@ -607,8 +604,8 @@ void load_vm(unsigned int idx) {
 		end += heap_size + stack_size;
 		vm_params[idx].stack = (void *)(end & -32);  // should be close to where crt0 puts the stack
 
-		end = ALIGN_UP(end, one_page);
-		total_size = ALIGN_UP((end - start), one_page);
+		end = H2_ALIGN_UP(end, one_page);
+		total_size = H2_ALIGN_UP((end - start), one_page);
 		printf("\ttotal_size 0x%08lx\n", total_size);
 		guest_base += total_size;
 

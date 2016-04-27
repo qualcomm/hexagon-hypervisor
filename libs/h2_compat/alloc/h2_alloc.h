@@ -10,7 +10,7 @@
  * @brief malloc / free / etc functions wrap the C library, but with a lock
  */
 
-#include <h2_sem.h>
+#include <h2_plainmutex.h>
 #include <h2_common_c_std.h>
 
 void *h2_malloc(unsigned int size);
@@ -23,7 +23,7 @@ void h2_free(void *ptr);
 @brief Generic allocator. No direct access.
 */
 typedef struct h2_galloc {
-	h2_sem_t sem;
+	h2_plainmutex_t lock;
 	unsigned int base;
 	unsigned int size;
 	unsigned int cur;
@@ -46,7 +46,7 @@ static inline void h2_galloc_init(h2_galloc_t *alloc, unsigned int base, unsigne
 	alloc->cur = base;
 	alloc->next = next;
 
-	h2_sem_init_val(&alloc->sem, 1);
+	h2_plainmutex_init(&alloc->lock);
 }
 
 /**
@@ -66,31 +66,13 @@ static inline void h2_galloc_reset(h2_galloc_t *alloc, int chain) {
 /**
 Allocate memory; optionally try chained allocators if preceding ones fail.
 @param[in] alloc  Address of allocator
-@param[in] size  Size in bytes to allocate
+@param[in] size   Size in bytes to allocate
+@param[in] align  Minimum alignment (byte address)
 @param[in] chain  Flag: Try all allocators in chain
 @returns  Pointer to allocated memory. NULL on failure.
 @dependencies None
 */
-static inline void *h2_galloc(h2_galloc_t *alloc, unsigned int size, int chain) {
-
-	void *ret = NULL;
-
-	do {
-		h2_sem_down(&alloc->sem);
-
-		if (alloc->cur + size <= alloc->base + alloc->size) {
-			ret = (void *)alloc->cur;
-			alloc->cur += size;
-			h2_sem_up(&alloc->sem);
-			break;
-		} else {
-			h2_sem_up(&alloc->sem);
-			alloc = alloc->next;
-		}
-	} while (chain && alloc);
-
-	return ret;
-}
+void *h2_galloc(h2_galloc_t *alloc, unsigned int size, unsigned int align, int chain);
 
 #endif
 

@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -I../h2/include -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall 
+CFLAGS := -Iinclude -I../h2/include -G0 $(OPTIMIZE) -mv$(ARCHV) -DARCHV=$(ARCHV) -Wall 
 
 ifdef DEBUG
 CFLAGS += -DDEBUG

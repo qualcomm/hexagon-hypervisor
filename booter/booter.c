@@ -47,7 +47,13 @@ char errstr[ERRSTR_LEN];
 	GEN(DEFAULT_HEAP_SIZE) \
 	GEN(DEFAULT_STACK_SIZE) \
 	GEN(HEAP_SIZE) \
-	GEN(STACK_SIZE)
+	GEN(STACK_SIZE) \
+	GEN(__clade_region_high_pd0_start__) \
+	GEN(__clade_comp_pd0_start__) \
+	GEN(__clade_exception_high_pd0_start__) \
+	GEN(__clade_exception_high_pd0_end__) \
+	GEN(__clade_exception_low_small_pd0_start__) \
+	GEN(__clade_exception_low_large_pd0_start__)
 
 #define GEN_enum(NAME) SPECIAL_ ## NAME,
 enum {
@@ -778,9 +784,12 @@ void print_infos() {
 	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
 	printf("\tH2 kernel in TCM: ");
 	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
-	printf("\tTCM base: 0x%08x\n", h2_info(INFO_TCM_BASE));
+	printf("\tTCM (adjusted) base: 0x%08x\n", h2_info(INFO_TCM_BASE));
+	printf("\tTCM (remaining) size: %dK\n", h2_info(INFO_TCM_SIZE) / 1024);
 	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
-	printf("\tTCM size: %dK\n", h2_info(INFO_TCM_SIZE) / 1024);
+	printf("\tL2 cache size: %dK\n", h2_info(INFO_L2TAG_SIZE) / 1024);
+	printf("\tL2 register base: 0x%08x\n", h2_info(INFO_L2CFG_BASE));
+	printf("\tCLADE register base: 0x%08x\n", h2_info(INFO_CLADE_BASE));
 
 	printf("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
 	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));

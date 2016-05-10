@@ -18,6 +18,8 @@
 #include <h2_common_error.h>
 #include <h2_common_defs.h>
 #include <h2_kerror.h>
+#include <h2_alloc.h>
+#include <h2_common_linear.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -35,25 +37,26 @@
 #define ERRSTR_LEN 1024
 char errstr[ERRSTR_LEN];
 
-#define FOREACH_sym(GEN) \
-	GEN(__guest_pmap__)		 \
-	GEN(__boot_cmdline__) \
-	GEN(__boot_net_phys_offset__) \
-	GEN(__use_dir_prefix__) \
-	GEN(__use_file_suffix__) \
-	GEN(__dir_prefix__) \
-	GEN(__file_suffix__) \
-	GEN(end) \
-	GEN(DEFAULT_HEAP_SIZE) \
-	GEN(DEFAULT_STACK_SIZE) \
-	GEN(HEAP_SIZE) \
-	GEN(STACK_SIZE) \
-	GEN(__clade_region_high_pd0_start__) \
-	GEN(__clade_comp_pd0_start__) \
-	GEN(__clade_exception_high_pd0_start__) \
-	GEN(__clade_exception_high_pd0_end__) \
-	GEN(__clade_exception_low_small_pd0_start__) \
-	GEN(__clade_exception_low_large_pd0_start__)
+#define FOREACH_sym(GEN)												\
+	GEN(__guest_pmap__)														\
+	GEN(__boot_cmdline__)													\
+	GEN(__boot_net_phys_offset__)									\
+	GEN(__use_dir_prefix__)												\
+	GEN(__use_file_suffix__)											\
+	GEN(__dir_prefix__)														\
+	GEN(__file_suffix__)													\
+	GEN(end)																			\
+	GEN(DEFAULT_HEAP_SIZE)												\
+	GEN(DEFAULT_STACK_SIZE)												\
+	GEN(HEAP_SIZE)																\
+	GEN(STACK_SIZE)																\
+	GEN(__clade_region_high_pd0_start__)					\
+	GEN(__clade_comp_pd0_start__)									\
+	GEN(__clade_exception_high_pd0_start__)				\
+	GEN(__clade_exception_high_pd0_end__)					\
+	GEN(__clade_exception_low_small_pd0_start__)	\
+	GEN(__clade_exception_low_large_pd0_start__)  \
+	GEN(__clade_dict_pd0_start__)
 
 #define GEN_enum(NAME) SPECIAL_ ## NAME,
 enum {
@@ -72,6 +75,12 @@ enum {
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
+h2_sem_t child_done_sem;
+int tcm_base;
+int tcm_size;
+h2_galloc_t tcm_alloc;
+int clade_base;
+int pd_num = 0;
 
 typedef struct {
 	unsigned int id;  // h2 VM id
@@ -96,8 +105,11 @@ typedef struct {
 	unsigned int fence_hi;
 	long load_offset;
 	long phys_offset;
-	void * start_pa;
-	void * end_pa;
+	unsigned long long start_pa;
+	unsigned long long end_pa;
+	unsigned long start_va;
+	unsigned long end_va;
+	unsigned int pages;
 
 	unsigned int skip_load;
 	unsigned int bestprio;
@@ -116,6 +128,10 @@ typedef struct {
 	/* exit on error */
 	unsigned int error_exit;
 
+	/* clade */
+	int clade_pd;
+	unsigned int clade_ex_hi;
+
 	special_symbols specials[SPECIAL_NUM_ENTRIES];
 
 	/* From __guest_pmap__ */
@@ -131,8 +147,6 @@ typedef struct {
 } vm_t;
 
 vm_t *vm_params = NULL;
-
-h2_sem_t child_done_sem;
 
 void error(char *str1, char *str2) {
 
@@ -227,8 +241,8 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].fence_hi = 0L;
 	vm_params[idx].load_offset = -1;
 	vm_params[idx].phys_offset = -1;
-	vm_params[idx].start_pa = NULL;
-	vm_params[idx].end_pa = NULL;
+	vm_params[idx].start_pa = 0ULL;
+	vm_params[idx].end_pa = 0ULL;
 	vm_params[idx].skip_load = 0;
 	vm_params[idx].bestprio = VM_BEST_PRIO;
 	vm_params[idx].trapmask = 0xffffffff;
@@ -239,6 +253,8 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].boots = 1;
 	vm_params[idx].expect_status = 0;
 	vm_params[idx].error_exit = 1;
+	vm_params[idx].clade_pd = -1;
+	vm_params[idx].clade_ex_hi = CLADE_INVALID_ADDRESS;
 
 	FOREACH_sym(GEN_specials);
 
@@ -280,8 +296,8 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		//		vm_params[idx + num].fence_hi = 0L;
 		//		vm_params[idx + num].load_offset = vm_params[idx].load_offset;
 		//		vm_params[idx + num].phys_offset = vm_params[idx].phys_offset;
-		//		vm_params[idx + num].start_pa = NULL;
-		//		vm_params[idx + num].end_pa = NULL;
+		//		vm_params[idx + num].start_pa = 0ULL;
+		//		vm_params[idx + num].end_pa = 0ULL;
 		vm_params[idx + num].skip_load = vm_params[idx].skip_load;
 		vm_params[idx + num].bestprio = vm_params[idx].bestprio;
 		vm_params[idx + num].trapmask = vm_params[idx].trapmask;
@@ -292,6 +308,8 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].boots = vm_params[idx].boots;
 		vm_params[idx + num].expect_status = vm_params[idx].expect_status;
 		vm_params[idx + num].error_exit = vm_params[idx].error_exit;
+		vm_params[idx + num].clade_pd = -1;
+		vm_params[idx + num].clade_ex_hi = CLADE_INVALID_ADDRESS;
 
 		FOREACH_sym(GEN_specials);
 
@@ -418,6 +436,144 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 	printf("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
 }
 
+void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages) {
+	h2_guest_pmap_t *pmap = vm_params[idx].pmap;
+	H2K_linear_fmt_t *base;
+	int end = 0;
+	int i;
+
+	if (NULL != pmap) {
+		if (pmap->type != H2K_ASID_TRANS_TYPE_LINEAR) {
+			FAIL("add_linear_trans to existing non-linear pmap", "");
+		}
+	} else {
+		if (NULL == (pmap = vm_params[idx].pmap = (h2_guest_pmap_t *)malloc(sizeof(h2_guest_pmap_t)))) {
+			error("malloc pmap", NULL);
+		}
+		pmap->type = H2K_ASID_TRANS_TYPE_LINEAR;
+		pmap->base.raw = 0;
+	}
+
+	base = (H2K_linear_fmt_t *)(pmap->base.raw);
+	while (0ULL != base[end].raw) {
+		end++;
+	}
+
+	if (NULL == (pmap->base.raw = (h2_u32_t)realloc((void *)(pmap->base.raw), sizeof(H2K_linear_fmt_t) * (end + npages + 1)))) {
+		error("realloc pmap->base", NULL);
+	}
+	base = (H2K_linear_fmt_t *)(pmap->base.raw);
+
+	/* append translations */
+	va >>= H2K_KERNEL_ADDRBITS;
+	pa >>= H2K_KERNEL_ADDRBITS;
+		
+	for (i = 0; i < npages; i++) {
+		base[end + i].raw = 0ULL;
+		base[end + i].ppn = pa;
+		base[end + i].cccc = L1WB_L2C;
+		base[end + i].xwru = URWX;
+		base[end + i].vpn = va;
+		base[end + i].size = page_size;
+
+		va += 1 << (page_size * 2);
+		pa += 1 << (page_size * 2);
+	}
+	base[end + i].raw = 0LL;  // end marker
+}
+
+void clade_setup(unsigned int idx, long offset) {
+
+	unsigned long region_hi, comp, ex_lo_small, ex_lo_large, ex_hi_start, ex_hi_end, ex_hi_size, dict_start;
+
+	/* Skip if any clade symbols are missing */
+	if ((region_hi = vm_params[idx].specials[SPECIAL___clade_region_high_pd0_start__].addr) == -1) {
+		printf("\t__clade_region_high_pd0_start__ not found.\n");
+		return;
+	} else {
+		printf("\t__clade_region_high_pd0_start__ found @ 0x%08x\n", (unsigned int)region_hi);
+	}
+
+	if ((comp = vm_params[idx].specials[SPECIAL___clade_comp_pd0_start__].addr) == -1) {
+		printf("\t__clade_comp_pd0_start__ not found.\n");
+		return;
+	} else {
+		printf("\t__clade_comp_pd0_start__ found @ 0x%08x\n", (unsigned int)comp);
+	}
+
+	if ((ex_lo_small = vm_params[idx].specials[SPECIAL___clade_exception_low_small_pd0_start__].addr) == -1) {
+		printf("\t__clade_exception_low_small_pd0_start__ not found.\n");
+		return;
+	} else {
+		printf("\t__clade_exception_low_small_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_small);
+	}
+
+	if ((ex_lo_large = vm_params[idx].specials[SPECIAL___clade_exception_low_large_pd0_start__].addr) == -1) {
+		printf("\t__clade_exception_low_large_pd0_start__ not found.\n");
+		return;
+	} else {
+		printf("\t__clade_exception_low_large_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_large);
+	}
+
+	if ((ex_hi_start = vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_start__].addr) == -1) {
+		printf("\t__clade_exception_high_pd0_start__ not found.\n");
+		return;
+	} else {
+		printf("\t__clade_exception_high_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_hi_start);
+	}
+
+	if ((ex_hi_end = vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_end__].addr) == -1) {
+		printf("\t__clade_exception_high_pd0_end__ not found.\n");
+		return;
+	} else {
+		printf("\t__clade_exception_high_pd0_end__ found @ 0x%08x\n", (unsigned int)ex_hi_end);
+	}
+
+	if ((dict_start = vm_params[idx].specials[SPECIAL___clade_dict_pd0_start__].addr) == -1) {
+		printf("\t__clade_dict_pd0_start__ not found.\n");
+		return;
+	} else {
+		printf("\t__clade_dict_pd0_start__ found @ 0x%08x\n", (unsigned int)dict_start);
+	}
+
+	/* Allocate a clade pd */
+	vm_params[idx].clade_pd = pd_num++;
+	if (pd_num > CLADE_NUM_PDS) {
+		FAIL("\tOut of CLADE pds", "");
+	}
+
+	/* Copy dictionaries */
+	if (0 == vm_params[idx].clade_pd) {  // only copy dicts for first pd; any others had better be identical to these
+		memcpy((void *)clade_base + CLADE_DICT_OFFSET, (void *)dict_start, CLADE_DICT_LEN * CLADE_NUM_DICTS);
+	}
+
+	/* Copy high-prio exception data to TCM */
+	ex_hi_size = ex_hi_end - ex_hi_start;
+	if (ex_hi_size) {
+		if (NULL == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4, 0))) {
+			error("galloc ex_hi", NULL);
+		}
+		memcpy((void *)(vm_params[idx].clade_ex_hi), (void *)ex_hi_start + offset, ex_hi_size);
+	} else {
+		vm_params[idx].clade_ex_hi = ex_hi_start;  // should never be referenced, but point it at something kind of meaningful
+	}
+
+	/* g->p translations for program */
+	add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages);
+
+	/* g->p translations for clade region */
+	add_linear_trans(idx, region_hi, region_hi + CLADE_REGION_LEN * vm_params[idx].clade_pd, SIZE_16M, CLADE_REGION_LEN / 0x01000000);
+
+	/* Set up clade regs */
+	h2_hwconfig_clade_set_reg(CLADE_REG_REGION, region_hi);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_COMP, comp + offset);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_HI, vm_params[idx].clade_ex_hi);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_LO_SMALL, ex_lo_small + offset);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_LO_LARGE, ex_lo_large + offset);
+
+	H2K_set_syscfg(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
+}
+
 void load_vm(unsigned int idx) {
 
 	int fdesc, i, ret;
@@ -451,6 +607,13 @@ void load_vm(unsigned int idx) {
 		prev_size = (vm_params[clone].fence_hi - vm_params[clone].fence_lo + one_page) * (idx - clone);
 
 		vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr = vm_params[clone].specials[SPECIAL___boot_net_phys_offset__].addr;
+		vm_params[idx].specials[SPECIAL___clade_region_high_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_region_high_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_comp_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_comp_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_exception_low_small_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_exception_low_small_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_exception_low_large_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_exception_low_large_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_exception_high_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_end__].addr = vm_params[clone].specials[SPECIAL___clade_exception_high_pd0_end__].addr;
+		vm_params[idx].specials[SPECIAL___clade_dict_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_dict_pd0_start__].addr;
 
 		vm_params[idx].entry = vm_params[clone].entry;
 		vm_params[idx].stack = vm_params[clone].stack;
@@ -466,10 +629,16 @@ void load_vm(unsigned int idx) {
 			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
-		printf("\tCopying from VM index %d: 0x%08lx to 0x%08lx size 0x%08lx\n", clone, (unsigned long)(vm_params[clone].start_pa), (unsigned long)(vm_params[clone].start_pa + prev_size), (unsigned long)(vm_params[clone].end_pa - vm_params[clone].start_pa));
-		memcpy(vm_params[clone].start_pa + prev_size, vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
+		printf("\tCopying from VM index %d: 0x%016llx to 0x%016llx size 0x%016llx\n", clone, vm_params[clone].start_pa, vm_params[clone].start_pa + prev_size, vm_params[clone].end_pa - vm_params[clone].start_pa);
+		memcpy((void *)(vm_params[clone].start_pa) + prev_size, (void *)(vm_params[clone].start_pa), vm_params[clone].end_pa - vm_params[clone].start_pa);
 		set_net_phys_offset(idx, total_offset);
 		dcclean_range((unsigned long)vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
+
+		vm_params[idx].start_pa = vm_params[clone].start_pa + prev_size;
+		vm_params[idx].end_pa = vm_params[clone].end_pa + prev_size;
+		vm_params[idx].start_va = vm_params[clone].start_va;
+		vm_params[idx].end_va = vm_params[clone].end_va;
+		vm_params[idx].pages = vm_params[clone].pages;
 
 		guest_base += prev_size;
 	} else {  // this is not a clone
@@ -558,8 +727,8 @@ void load_vm(unsigned int idx) {
 		}
 		printf("\tend 0x%08lx\n", end);
 
-		vm_params[idx].start_pa = (void *)(start + total_offset);
-		vm_params[idx].end_pa = (void *)(end + total_offset);
+		vm_params[idx].start_pa = start + total_offset;
+		vm_params[idx].end_pa = end + total_offset;
 		dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
 
 		heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
@@ -594,7 +763,12 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].stack = (void *)(end & -32);  // should be close to where crt0 puts the stack
 
 		end = H2_ALIGN_UP(end, one_page);
+		vm_params[idx].start_va = start;
+		vm_params[idx].end_va = end;
+
 		total_size = H2_ALIGN_UP((end - start), one_page);
+		vm_params[idx].pages = H2_ALIGN_UP((end - start), one_page) / total_size;
+
 		printf("\ttotal_size 0x%08lx\n", total_size);
 		guest_base += total_size;
 
@@ -609,6 +783,8 @@ void load_vm(unsigned int idx) {
 			}
 		}
 	}  // else not a clone
+
+	clade_setup(idx, total_offset);
 
 	printf("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
 	printf("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
@@ -640,7 +816,7 @@ void config_vm(unsigned int idx) {
 	if (-1 == vm_params[idx].trans_type) {  // not set on cmdline
 		if (NULL != vm_params[idx].pmap) {  // has __guest_pmap__
 			trans = vm_params[idx].pmap->type;
-		  base.raw = vm_params[idx].pmap->base.raw;
+			base.raw = vm_params[idx].pmap->base.raw;
 		} else {  // default
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
 		}
@@ -668,10 +844,10 @@ void config_vm(unsigned int idx) {
 #if 0
 	do {
 	FIXME: in the future, we can map physical interrupts to guest with a command line option
-	This was confusing things like the virtual timer interrupt.
-	(Using if 0 here just to annoy Bryan.)
-	/* set up interrupts */
-		int i;	/* can move up to top and strike this block after reenabling maybe */
+			This was confusing things like the virtual timer interrupt.
+			(Using if 0 here just to annoy Bryan.)
+			/* set up interrupts */
+			int i;	/* can move up to top and strike this block after reenabling maybe */
 		for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
 			if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
 				FAIL("\tMAP_PHYS_INTR", "");
@@ -760,6 +936,10 @@ void run(unsigned int idx) {
 			}
 		}
 	} while (!done);
+
+	H2K_set_syscfg(h2_info(INFO_SYSCFG) & ~SYSCFG_CLADEN);  // disable clade
+	pd_num = 0;  // reset
+	h2_galloc_reset(&tcm_alloc, 0);
 }
 
 void die_usage()
@@ -784,12 +964,12 @@ void print_infos() {
 	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
 	printf("\tH2 kernel in TCM: ");
 	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
-	printf("\tTCM (adjusted) base: 0x%08x\n", h2_info(INFO_TCM_BASE));
-	printf("\tTCM (remaining) size: %dK\n", h2_info(INFO_TCM_SIZE) / 1024);
+	printf("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
+	printf("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
 	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
 	printf("\tL2 cache size: %dK\n", h2_info(INFO_L2TAG_SIZE) / 1024);
 	printf("\tL2 register base: 0x%08x\n", h2_info(INFO_L2CFG_BASE));
-	printf("\tCLADE register base: 0x%08x\n", h2_info(INFO_CLADE_BASE));
+	printf("\tCLADE register base: 0x%08x\n", clade_base);
 
 	printf("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
 	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
@@ -862,6 +1042,7 @@ typedef struct {
 syscfg_field syscfg[] = {
 	{"BQ", SYSCFG_BQ_BIT, SYSCFG_BQ_LEN, H2K_set_syscfg},
 	{"DMT", SYSCFG_DMT_BIT, SYSCFG_DMT_LEN, H2K_set_syscfg},
+	{"CLADEN", SYSCFG_CLADEN_BIT, SYSCFG_CLADEN_LEN, H2K_set_syscfg},
 	{"L2WB", SYSCFG_L2WB_BIT, SYSCFG_L2WB_LEN, set_l2wb},
 	{NULL, 0, 0}
 };
@@ -1291,6 +1472,11 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	tcm_base = (unsigned int)h2_info(INFO_TCM_BASE);
+	tcm_size = h2_info(INFO_TCM_SIZE);
+	clade_base = h2_info(INFO_CLADE_BASE);
+	h2_galloc_init(&tcm_alloc, (unsigned int)tcm_base, (unsigned int)tcm_size, NULL);
+
 	kernel_setup();
 	print_infos();
 	h2_vmtrap_setvec(bootvm_vectors);
@@ -1317,8 +1503,8 @@ int main(int argc, char **argv)
 			/* Run VMs from each file concurrently */
 			while (-1 != getline(&line, &line_size, fp)) {
 				if ((p = strchr(line, '\n'))) {
-						*p = '\0';  // chop \n
-					}
+					*p = '\0';  // chop \n
+				}
 				arg_ptr = strtok(line, " ");
 				while (arg_ptr) {
 					if ('#' == *arg_ptr) {  // start of comment

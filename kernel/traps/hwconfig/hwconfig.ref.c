@@ -30,11 +30,25 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_extpower,
 	H2K_trap_hwconfig_getl2reg,
 	H2K_trap_hwconfig_setl2reg,
-	H2K_trap_hwconfig_getcladereg,
-	H2K_trap_hwconfig_setcladereg,
 	H2K_trap_hwconfig_l2locka,
 	H2K_trap_hwconfig_l2unlock,
 	H2K_trap_hwconfig_hwintop,
+	H2K_trap_hwconfig_getcladereg,
+	H2K_trap_hwconfig_setcladereg
+};
+
+typedef struct {
+	u32_t regbit:5;
+	u32_t addrbit:5;
+	u32_t unused:22;
+} clade_reg_t;
+
+static const clade_reg_t clade_regs[] = {
+	{ 0, 29},  // region
+	{12, 16},  // comp
+	{ 8, 12},  // ex_hi
+	{ 0,  0},  // ex_lo_small
+	{ 8, 12}   // ex_lo_large
 };
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
@@ -227,8 +241,7 @@ static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
 	return ret;
 }
 
-u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me)
-{
+u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
 	if (offset > L2REGS_MAX) {  // out of range
 		H2K_gp->kernel_error = KERROR_HWCONFIG_L2REG_RANGE;
 		return -1;
@@ -237,14 +250,18 @@ u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 	return getxreg(CFG_TABLE_L2REGS, offset);
 }
 
-u32_t H2K_trap_hwconfig_getcladereg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me)
-{
+u32_t H2K_trap_hwconfig_getcladereg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
+	u32_t val;
+	u32_t idx = (0 == offset ? 0 : ((offset % CLADE_REG_PD_CHUNK) / 4) + 1);
+
 	if (offset > CLADEREGS_MAX) {  // out of range
 		H2K_gp->kernel_error = KERROR_HWCONFIG_CLADEREG_RANGE;
 		return -1;
 	}
 
-	return getxreg(CFG_TABLE_CLADEREGS, offset);
+	val = getxreg(CFG_TABLE_CLADEREGS, offset);
+
+	return val << (clade_regs[idx].addrbit - clade_regs[idx].regbit);
 }
 
 static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
@@ -265,8 +282,7 @@ static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
 	return ret;
 }
 
-u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me)
-{
+u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
 	if (offset > L2REGS_MAX) {  // out of range
 		H2K_gp->kernel_error = KERROR_HWCONFIG_L2REG_RANGE;
 		return -1;
@@ -275,14 +291,17 @@ u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 	return setxreg(CFG_TABLE_L2REGS, offset, val);
 }
 
-u32_t H2K_trap_hwconfig_setcladereg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me)
-{
+u32_t H2K_trap_hwconfig_setcladereg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
+	u32_t idx = (0 == offset ? 0 : ((offset % CLADE_REG_PD_CHUNK) / 4) + 1);
+	u32_t ret;
+
 	if (offset > CLADEREGS_MAX) {  // out of range
 		H2K_gp->kernel_error = KERROR_HWCONFIG_CLADEREG_RANGE;
 		return -1;
 	}
 
-	return setxreg(CFG_TABLE_CLADEREGS, offset, val);
+	ret = setxreg(CFG_TABLE_CLADEREGS, offset, val >> (clade_regs[idx].addrbit - clade_regs[idx].regbit));
+	return ret << (clade_regs[idx].addrbit - clade_regs[idx].regbit);
 }
 
 u32_t H2K_trap_hwconfig_l2locka(u32_t unused, void *addr, u32_t len, u32_t unused3, H2K_thread_context *me)

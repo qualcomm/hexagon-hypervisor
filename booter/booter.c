@@ -136,6 +136,7 @@ typedef struct {
 
 	/* From __guest_pmap__ */
 	h2_guest_pmap_t *pmap;
+	int pmap_added;
 
 	char **argv;
 	int argc;
@@ -259,6 +260,7 @@ void add_vm(unsigned int idx) {
 	FOREACH_sym(GEN_specials);
 
 	vm_params[idx].pmap = NULL;
+	vm_params[idx].pmap_added = 0;
 
 	vm_params[idx].argv = NULL;
 	vm_params[idx].argc = 0;
@@ -314,6 +316,7 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		FOREACH_sym(GEN_specials);
 
 		vm_params[idx + num].pmap = vm_params[idx].pmap;
+		vm_params[idx + num].pmap_added = 0;
 
 		vm_params[idx + num].argv = vm_params[idx].argv;
 		vm_params[idx + num].argc = vm_params[idx].argc;
@@ -443,8 +446,8 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	int i;
 
 	if (NULL != pmap) {
-		if (pmap->type != H2K_ASID_TRANS_TYPE_LINEAR) {
-			FAIL("add_linear_trans to existing non-linear pmap", "");
+		if (!vm_params[idx].pmap_added) {
+			FAIL("add_linear_trans to existing pmap", "");
 		}
 
 		base = (H2K_linear_fmt_t *)(pmap->base.raw);
@@ -457,6 +460,7 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 		}
 		pmap->type = H2K_ASID_TRANS_TYPE_LINEAR;
 		pmap->base.raw = 0;
+		vm_params[idx].pmap_added = 1;
 	}
 
 	if (NULL == (pmap->base.raw = (h2_u32_t)realloc((void *)(pmap->base.raw), sizeof(H2K_linear_fmt_t) * (end + npages + 1)))) {
@@ -546,6 +550,30 @@ void clade_setup(unsigned int idx, long offset) {
 		FAIL("\tOut of CLADE pds", "");
 	}
 
+	/* Copy high-prio exception data to TCM */
+	ex_hi_size = ex_hi_end - ex_hi_start;
+	if (ex_hi_size) {
+		if (NULL == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4096, 0))) {
+			error("galloc ex_hi", NULL);
+		}
+		//		printf("memcpy(0x%08x, 0x%08lx, 0x%08lx\n", vm_params[idx].clade_ex_hi, ex_hi_start + offset, ex_hi_size);
+		memcpy((void *)(vm_params[idx].clade_ex_hi), (void *)ex_hi_start + offset, ex_hi_size);
+	} else {
+		vm_params[idx].clade_ex_hi = ex_hi_start + offset;  // should never be referenced, but point it at something kind of meaningful
+	}
+
+	/* g->p translations for program */
+	add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages);
+
+	/* g->p translations for clade region */
+	add_linear_trans(idx, region_hi, region_hi + CLADE_REGION_LEN * vm_params[idx].clade_pd, SIZE_16M, CLADE_REGION_LEN / 0x01000000);
+
+	/* Set up clade regs */
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_COMP, comp + offset);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_HI, vm_params[idx].clade_ex_hi);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_LO_SMALL, ex_lo_small + offset);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_LO_LARGE, ex_lo_large + offset);
+
 	/* Copy dictionaries */
 	if (0 == vm_params[idx].clade_pd) {  // only copy dicts for first pd; any others had better be identical to these
 
@@ -556,33 +584,10 @@ void clade_setup(unsigned int idx, long offset) {
 		for (i = 0; i < CLADE_DICT_LEN * CLADE_NUM_DICTS; i += 4, from++, to++) {
 			asm volatile (" %0 = memw(%1); memw(%2) = %0 \n" : "=&r"(tmp) : "r"(from), "r"(to) : "memory");
 		}
+
+		h2_hwconfig_clade_set_reg(CLADE_REG_REGION, region_hi);
+		H2K_set_syscfg(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
 	}
-
-	/* Copy high-prio exception data to TCM */
-	ex_hi_size = ex_hi_end - ex_hi_start;
-	if (ex_hi_size) {
-		if (NULL == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4, 0))) {
-			error("galloc ex_hi", NULL);
-		}
-		memcpy((void *)(vm_params[idx].clade_ex_hi), (void *)ex_hi_start + offset, ex_hi_size);
-	} else {
-		vm_params[idx].clade_ex_hi = ex_hi_start;  // should never be referenced, but point it at something kind of meaningful
-	}
-
-	/* g->p translations for program */
-	add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages);
-
-	/* g->p translations for clade region */
-	add_linear_trans(idx, region_hi, region_hi + CLADE_REGION_LEN * vm_params[idx].clade_pd, SIZE_16M, CLADE_REGION_LEN / 0x01000000);
-
-	/* Set up clade regs */
-	h2_hwconfig_clade_set_reg(CLADE_REG_REGION, region_hi);
-	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_COMP, comp + offset);
-	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_HI, vm_params[idx].clade_ex_hi);
-	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_LO_SMALL, ex_lo_small + offset);
-	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_LO_LARGE, ex_lo_large + offset);
-
-	H2K_set_syscfg(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
 }
 
 void load_vm(unsigned int idx) {
@@ -637,7 +642,7 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
 		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
-		if (NULL != vm_params[clone].pmap) { 
+		if (NULL != vm_params[clone].pmap && !vm_params[clone].pmap_added) { 
 			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
@@ -802,8 +807,13 @@ void load_vm(unsigned int idx) {
 	printf("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
 	printf("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
 	printf("\toffset_pages 0x%lx\n", vm_params[idx].offset_pages);
-	printf("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
-	printf("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
+
+	if (vm_params[idx].pmap_added) {
+		printf("\tguest translations added\n");
+	} else {
+		printf("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
+		printf("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
+	}
 }
 
 void config_vm(unsigned int idx) {

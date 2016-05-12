@@ -220,4 +220,4 @@
 
 #define L2REGS_MAX L2REGS_QOS_DANGER_3
 
-#define CLADEREGS_MAX                     0x1c
+#define CLADEREGS_MAX                    ((CLADE_REG_PD_CHUNK * CLADE_NUM_PDS) + 0x1c)

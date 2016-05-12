@@ -446,17 +446,17 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 		if (pmap->type != H2K_ASID_TRANS_TYPE_LINEAR) {
 			FAIL("add_linear_trans to existing non-linear pmap", "");
 		}
+
+		base = (H2K_linear_fmt_t *)(pmap->base.raw);
+		while (0ULL != base[end].raw) {
+			end++;
+		}
 	} else {
 		if (NULL == (pmap = vm_params[idx].pmap = (h2_guest_pmap_t *)malloc(sizeof(h2_guest_pmap_t)))) {
 			error("malloc pmap", NULL);
 		}
 		pmap->type = H2K_ASID_TRANS_TYPE_LINEAR;
 		pmap->base.raw = 0;
-	}
-
-	base = (H2K_linear_fmt_t *)(pmap->base.raw);
-	while (0ULL != base[end].raw) {
-		end++;
 	}
 
 	if (NULL == (pmap->base.raw = (h2_u32_t)realloc((void *)(pmap->base.raw), sizeof(H2K_linear_fmt_t) * (end + npages + 1)))) {
@@ -469,6 +469,7 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	pa >>= H2K_KERNEL_ADDRBITS;
 		
 	for (i = 0; i < npages; i++) {
+		//		printf("trans 0x%08lx -> 0x%09llx\n", va << H2K_KERNEL_ADDRBITS, pa << H2K_KERNEL_ADDRBITS);
 		base[end + i].raw = 0ULL;
 		base[end + i].ppn = pa;
 		base[end + i].cccc = L1WB_L2C;
@@ -485,6 +486,9 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 void clade_setup(unsigned int idx, long offset) {
 
 	unsigned long region_hi, comp, ex_lo_small, ex_lo_large, ex_hi_start, ex_hi_end, ex_hi_size, dict_start;
+	h2_u32_t *from, *to;
+	h2_u32_t tmp;
+	int i;
 
 	/* Skip if any clade symbols are missing */
 	if ((region_hi = vm_params[idx].specials[SPECIAL___clade_region_high_pd0_start__].addr) == -1) {
@@ -544,7 +548,14 @@ void clade_setup(unsigned int idx, long offset) {
 
 	/* Copy dictionaries */
 	if (0 == vm_params[idx].clade_pd) {  // only copy dicts for first pd; any others had better be identical to these
-		memcpy((void *)clade_base + CLADE_DICT_OFFSET, (void *)dict_start, CLADE_DICT_LEN * CLADE_NUM_DICTS);
+
+		/* Can't memcpy here; need to force word accesses */
+		from = (h2_u32_t *)dict_start;
+		to = (h2_u32_t *)(clade_base + CLADE_DICT_OFFSET);
+
+		for (i = 0; i < CLADE_DICT_LEN * CLADE_NUM_DICTS; i += 4, from++, to++) {
+			asm volatile (" %0 = memw(%1); memw(%2) = %0 \n" : "=&r"(tmp) : "r"(from), "r"(to) : "memory");
+		}
 	}
 
 	/* Copy high-prio exception data to TCM */
@@ -584,7 +595,7 @@ void load_vm(unsigned int idx) {
 	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
 	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
-	unsigned long heap_size, stack_size, total_size, prev_size, end, one_page;
+	unsigned long heap_size, stack_size, total_size, prev_size, end, one_page, page_shift;
 	unsigned long start = ~0L;
 	int clone;
 	long total_offset;
@@ -598,7 +609,8 @@ void load_vm(unsigned int idx) {
 		 load first, and to load we need to align guest_base to the page size. It's
 		 sufficient to use a page size that is as least as big as the one in the
 		 __guest_pmap__; at most we waste some space. */
-	one_page = (1 << ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS));
+	page_shift = ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS);
+	one_page = 1 << page_shift;
 
 	/* Align the guest base up to the current guest's page size */
 	guest_base = H2_ALIGN_UP(guest_base, one_page);
@@ -629,7 +641,7 @@ void load_vm(unsigned int idx) {
 			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
-		printf("\tCopying from VM index %d: 0x%016llx to 0x%016llx size 0x%016llx\n", clone, vm_params[clone].start_pa, vm_params[clone].start_pa + prev_size, vm_params[clone].end_pa - vm_params[clone].start_pa);
+		printf("\tCopying from VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", clone, vm_params[clone].start_pa, vm_params[clone].start_pa + prev_size, vm_params[clone].end_pa - vm_params[clone].start_pa);
 		memcpy((void *)(vm_params[clone].start_pa) + prev_size, (void *)(vm_params[clone].start_pa), vm_params[clone].end_pa - vm_params[clone].start_pa);
 		set_net_phys_offset(idx, total_offset);
 		dcclean_range((unsigned long)vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
@@ -767,7 +779,7 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].end_va = end;
 
 		total_size = H2_ALIGN_UP((end - start), one_page);
-		vm_params[idx].pages = H2_ALIGN_UP((end - start), one_page) / total_size;
+		vm_params[idx].pages = total_size >> page_shift;
 
 		printf("\ttotal_size 0x%08lx\n", total_size);
 		guest_base += total_size;

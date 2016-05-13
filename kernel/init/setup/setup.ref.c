@@ -82,7 +82,8 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t phys_o
 
 	H2K_kg_init(phys_offset, devpage_priv_offset, last_tlb_index, tlb_size);		/* Kernel Globals first! */
 	H2K_tmpmap_init();
-	H2K_tcm_copy(H2K_l2cache_init(), last_tlb_index);
+	H2K_l2cache_init();
+	H2K_tcm_copy(last_tlb_index);
 	H2K_trace_init();
 	H2K_runlist_init();
 	H2K_readylist_init();

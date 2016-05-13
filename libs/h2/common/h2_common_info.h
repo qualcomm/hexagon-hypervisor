@@ -27,6 +27,9 @@ typedef enum {
 	INFO_TIMER_INT,   /**< Timer interrupt number */
 	INFO_ERROR,       /**< Kernel error */
 	INFO_HTHREADS,    /**< Running hw threads mask */
+	INFO_L2TAG_SIZE,  /**< L2 cache tag size */
+	INFO_L2CFG_BASE,  /**< L2 regs base */
+	INFO_CLADE_BASE,  /**< CLADE regs base */
 	INFO_MAX
 } info_type;
 

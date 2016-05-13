@@ -897,7 +897,6 @@ u32_t H2K_l2cache_init() {
 
 	u32_t arch = H2K_gp->arch;
 	u32_t uarch = H2K_gp->uarch;
-	u32_t l2 = H2K_gp->l2size;
 	u32_t i = 0;
 	u8_t *ptr;
 	u32_t tag_size;
@@ -934,7 +933,7 @@ u32_t H2K_l2cache_init() {
 		return 0;
 	}
 
-	tag_size = ptr[l2];
+	tag_size = ptr[H2K_gp->l2arr];
 	if (reserved == tag_size) {
 		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_SIZE;
 		return 0;
@@ -944,6 +943,6 @@ u32_t H2K_l2cache_init() {
 		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_CONFIG;
 		return 0;
 	}
-	H2K_gp->l2_tags = tag_size;
+	H2K_gp->l2tags = tag_size;
 	return tag_size;
 }

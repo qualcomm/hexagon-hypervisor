@@ -189,6 +189,7 @@
 #define CFG_TABLE_L2TCM 0x0
 #define CFG_TABLE_SSBASE 0x8
 #define CFG_TABLE_L2REGS 0x10
+#define CFG_TABLE_CLADEREGS 0x24
 
 #define L2REGS_QOS_MODE                  0x100
 #define L2REGS_QOS_MODE_TL_BIT                      7
@@ -217,3 +218,5 @@
 #define L2REGS_QOS_DANGER_3             0x4000
 
 #define L2REGS_MAX L2REGS_QOS_DANGER_3
+
+#define CLADEREGS_MAX                    ((CLADE_REG_PD_CHUNK * CLADE_NUM_PDS) + 0x1c)

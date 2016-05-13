@@ -13,16 +13,6 @@
 
 u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
-	u32_t l2 = H2K_gp->l2size;
-	u32_t l2size;
-
-	if (l2 > CORE_REV_L2_CHUNK_SWITCH) {
-		l2size = (CORE_REV_L2_CHUNK_SWITCH * L2_CHUNK)
-			+ ((l2 - CORE_REV_L2_CHUNK_SWITCH) * L2_BIG_CHUNK);
-	} else {
-		l2size = l2 * L2_CHUNK;
-	}
-
 	switch(op) {
 
 	case INFO_BUILD_ID:
@@ -56,13 +46,13 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return H2K_LINK_ADDR - H2K_gp->phys_offset;
 
 	case INFO_TCM_BASE:
-		return H2K_cfg_table(CFG_TABLE_L2TCM);
+		return H2K_gp->tcm_base;
 
 	case INFO_L2MEM_SIZE:
-		return l2size;
+		return H2K_gp->l2size;
 
 	case INFO_TCM_SIZE:
-		return l2size - (H2K_gp->l2_tags > 0 ? (1 << H2K_gp->l2_tags) * L2_TAG_CHUNK : 0);
+		return H2K_gp->tcm_size;
 
 	case INFO_H2K_PGSIZE:
 		return H2K_PAGESIZE;
@@ -84,6 +74,15 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 	case INFO_HTHREADS:
 		return H2K_gp->hthreads_mask;
+
+	case INFO_L2TAG_SIZE:
+		return (H2K_gp->l2tags > 0 ? (1 << H2K_gp->l2tags) * L2_TAG_CHUNK : 0);
+
+	case INFO_L2CFG_BASE:
+		return H2K_cfg_table(CFG_TABLE_L2REGS);
+
+	case INFO_CLADE_BASE:
+		return H2K_cfg_table(CFG_TABLE_CLADEREGS);
 
 	default:
 		return -1;

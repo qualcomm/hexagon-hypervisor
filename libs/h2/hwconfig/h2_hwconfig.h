@@ -55,6 +55,31 @@ static inline int h2_hwconfig_l2_set_reg(unsigned int offset, unsigned int val)
 }
 
 /**
+Get CLADE register.
+@param[in] offset  Offset from CLADE register base
+@returns register value or -1 on failure
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_clade_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETCLADEREG, NULL, offset, 0);
+}
+
+/**
+Set CLADE register.
+@param[in] offset  Offset from CLADE register base
+@param[in] val  Value to write
+@returns previous register value or -1 on failure
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_clade_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETCLADEREG, NULL, offset, val);
+}
+
+/**
 Configure the L2 cache size.
 @param[in] sizeval	Size to configure the L2 cache
 @param[in] use_wb	1 enables write-back mode in the L2, 0 disables write-back mode

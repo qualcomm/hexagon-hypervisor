@@ -62,7 +62,7 @@ typedef struct {
 		struct {
 			u32_t arch:8;
 			u32_t uarch:4;
-			u32_t l2size:4;
+			u32_t l2arr:4;
 			u32_t metal:16;
 		};
 	};
@@ -112,13 +112,16 @@ typedef struct {
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
 	u32_t phys_offset;
-	u32_t l2_tags;
 	u32_t build_id;
 	info_boot_flags_type info_boot_flags;
 	info_stlb_type info_stlb;
 	kerror_type kernel_error;
 	u32_t hthreads;
 	u32_t hthreads_mask;
+	u32_t tcm_base; // FIXME: pa_t ?
+	u32_t tcm_size;
+	u32_t l2size;
+	u32_t l2tags;
 
 #ifdef CRASH_DEBUG
 	u64_t crash_tlb[MAX_TLB_ENTRIES];

@@ -17,6 +17,7 @@
 #include <tmpmap.h>
 #include <hvx.h>
 #include <safemem.h>
+#include <cfg_table.h>
 
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
@@ -32,6 +33,22 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_l2locka,
 	H2K_trap_hwconfig_l2unlock,
 	H2K_trap_hwconfig_hwintop,
+	H2K_trap_hwconfig_getcladereg,
+	H2K_trap_hwconfig_setcladereg
+};
+
+typedef struct {
+	u32_t regbit:5;
+	u32_t addrbit:5;
+	u32_t unused:22;
+} clade_reg_t;
+
+static const clade_reg_t clade_regs[] = {
+	{ 0, 29},  // region
+	{12, 16},  // comp
+	{ 8, 12},  // ex_hi
+	{ 0,  0},  // ex_lo_small
+	{ 8, 12}   // ex_lo_large
 };
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
@@ -208,28 +225,15 @@ u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t
 #endif
 }
 
-u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me)
-{
+static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
 	u32_t va;
-	u32_t cfg;
-	u32_t l2_cfg_base;
+	pa_t base;
 	u32_t volatile *reg;
 	u32_t ret;
 
-	if (offset > L2REGS_MAX) {  // out of range
-		H2K_gp->kernel_error = KERROR_HWCONFIG_L2REG_RANGE;
-		return -1;
-	}
+	base = H2K_cfg_table(cfg_offset);
 
-	asm volatile
-		(
-		 " %0 = cfgbase \n"
-		 : "=r" (cfg)
-		 );
-
-	l2_cfg_base = H2K_mem_physread_word((cfg << 16) + CFG_TABLE_L2REGS) << 16;
-
-	va = H2K_tmpmap_add_and_lock(l2_cfg_base, UNCACHED);
+	va = H2K_tmpmap_add_and_lock(base, UNCACHED);
 	reg = (u32_t *) (va + offset);
 	ret = *reg;
 	H2K_tmpmap_remove_and_unlock();
@@ -237,28 +241,38 @@ u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 	return ret;
 }
 
-u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me)
-{
-	u32_t va;
-	u32_t cfg;
-	u32_t l2_cfg_base;
-	u32_t volatile *reg;
-	u32_t ret;
-
+u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
 	if (offset > L2REGS_MAX) {  // out of range
 		H2K_gp->kernel_error = KERROR_HWCONFIG_L2REG_RANGE;
 		return -1;
 	}
 
-	asm volatile
-		(
-		 " %0 = cfgbase \n"
-		 : "=r" (cfg)
-		 );
+	return getxreg(CFG_TABLE_L2REGS, offset);
+}
 
-	l2_cfg_base = H2K_mem_physread_word((cfg << 16) + CFG_TABLE_L2REGS) << 16;
+u32_t H2K_trap_hwconfig_getcladereg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
+	u32_t val;
+	u32_t idx = (0 == offset ? 0 : ((offset % CLADE_REG_PD_CHUNK) / 4) + 1);
 
-	va = H2K_tmpmap_add_and_lock(l2_cfg_base, UNCACHED);
+	if (offset > CLADEREGS_MAX) {  // out of range
+		H2K_gp->kernel_error = KERROR_HWCONFIG_CLADEREG_RANGE;
+		return -1;
+	}
+
+	val = getxreg(CFG_TABLE_CLADEREGS, offset);
+
+	return val << (clade_regs[idx].addrbit - clade_regs[idx].regbit);
+}
+
+static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
+	u32_t va;
+	pa_t base;
+	u32_t volatile *reg;
+	u32_t ret;
+
+	base = H2K_cfg_table(cfg_offset);
+
+	va = H2K_tmpmap_add_and_lock(base, UNCACHED);
 	reg = (u32_t *) (va + offset);
 	ret = *reg;
 	*reg = val;
@@ -266,6 +280,28 @@ u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 	H2K_tmpmap_remove_and_unlock();
 
 	return ret;
+}
+
+u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
+	if (offset > L2REGS_MAX) {  // out of range
+		H2K_gp->kernel_error = KERROR_HWCONFIG_L2REG_RANGE;
+		return -1;
+	}
+
+	return setxreg(CFG_TABLE_L2REGS, offset, val);
+}
+
+u32_t H2K_trap_hwconfig_setcladereg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
+	u32_t idx = (0 == offset ? 0 : ((offset % CLADE_REG_PD_CHUNK) / 4) + 1);
+	u32_t ret;
+
+	if (offset > CLADEREGS_MAX) {  // out of range
+		H2K_gp->kernel_error = KERROR_HWCONFIG_CLADEREG_RANGE;
+		return -1;
+	}
+
+	ret = setxreg(CFG_TABLE_CLADEREGS, offset, val >> (clade_regs[idx].addrbit - clade_regs[idx].regbit));
+	return ret << (clade_regs[idx].addrbit - clade_regs[idx].regbit);
 }
 
 u32_t H2K_trap_hwconfig_l2locka(u32_t unused, void *addr, u32_t len, u32_t unused3, H2K_thread_context *me)

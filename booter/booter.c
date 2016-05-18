@@ -98,6 +98,7 @@ int tcm_size;
 h2_galloc_t tcm_alloc;
 int clade_base;
 int pd_num = 0;
+unsigned long clade_region = 0;
 
 typedef struct {
 	unsigned int id;  // h2 VM id
@@ -514,49 +515,52 @@ void clade_setup(unsigned int idx, long offset) {
 	/* Skip if any clade symbols are missing */
 	if ((region_hi = vm_params[idx].specials[SPECIAL___clade_region_high_pd0_start__].addr) == -1) {
 		printf("\t__clade_region_high_pd0_start__ not found.\n");
-		return;
+		goto no_clade;
 	} else {
 		printf("\t__clade_region_high_pd0_start__ found @ 0x%08x\n", (unsigned int)region_hi);
+	}
+	if (0 == region_hi) {  // unused weak symbol
+		goto no_clade;
 	}
 
 	if ((comp = vm_params[idx].specials[SPECIAL___clade_comp_pd0_start__].addr) == -1) {
 		printf("\t__clade_comp_pd0_start__ not found.\n");
-		return;
+		goto no_clade;
 	} else {
 		printf("\t__clade_comp_pd0_start__ found @ 0x%08x\n", (unsigned int)comp);
 	}
 
 	if ((ex_lo_small = vm_params[idx].specials[SPECIAL___clade_exception_low_small_pd0_start__].addr) == -1) {
 		printf("\t__clade_exception_low_small_pd0_start__ not found.\n");
-		return;
+		goto no_clade;
 	} else {
 		printf("\t__clade_exception_low_small_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_small);
 	}
 
 	if ((ex_lo_large = vm_params[idx].specials[SPECIAL___clade_exception_low_large_pd0_start__].addr) == -1) {
 		printf("\t__clade_exception_low_large_pd0_start__ not found.\n");
-		return;
+		goto no_clade;
 	} else {
 		printf("\t__clade_exception_low_large_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_large);
 	}
 
 	if ((ex_hi_start = vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_start__].addr) == -1) {
 		printf("\t__clade_exception_high_pd0_start__ not found.\n");
-		return;
+		goto no_clade;
 	} else {
 		printf("\t__clade_exception_high_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_hi_start);
 	}
 
 	if ((ex_hi_end = vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_end__].addr) == -1) {
 		printf("\t__clade_exception_high_pd0_end__ not found.\n");
-		return;
+		goto no_clade;
 	} else {
 		printf("\t__clade_exception_high_pd0_end__ found @ 0x%08x\n", (unsigned int)ex_hi_end);
 	}
 
 	if ((dict_start = vm_params[idx].specials[SPECIAL___clade_dict_pd0_start__].addr) == -1) {
 		printf("\t__clade_dict_pd0_start__ not found.\n");
-		return;
+		goto no_clade;
 	} else {
 		printf("\t__clade_dict_pd0_start__ found @ 0x%08x\n", (unsigned int)dict_start);
 	}
@@ -603,8 +607,15 @@ void clade_setup(unsigned int idx, long offset) {
 		}
 
 		h2_hwconfig_clade_set_reg(CLADE_REG_REGION, region_hi);
+		clade_region = region_hi;
 		H2K_set_syscfg(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
+	} else if (region_hi != clade_region) {  // has to be identical for all concurrent clade guests
+			FAIL("\t CLADE region address mismatch", "");
 	}
+	printf("\tCLADE enabled\n");
+	return;
+ no_clade:
+	printf("\tCLADE not enabled\n");
 }
 
 void load_vm(unsigned int idx) {
@@ -624,7 +635,8 @@ void load_vm(unsigned int idx) {
 
 	char *elf = vm_params[idx].argv[0];
 
-	printf("\nLoad VM index %d %s\n", idx, elf);
+	printf("\n");  // FIXME: prepending \n to string results in an empty line in the output lately. Weird.
+	printf("Load VM index %d %s\n", idx, elf);
 
 	/* FIXME? It would be better to get the page size from the __guest_pmap__ if
 		 it exists (and if it is an offset mapping), but to read that we need to

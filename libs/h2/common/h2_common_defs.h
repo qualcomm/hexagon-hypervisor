@@ -12,6 +12,8 @@
 #define HAVE_EXTENSIONS 1
 #endif
 
+#define DO_PROFILE 1
+
 #ifndef MAX_HTHREADS
 #if ARCHV <= 3
 #define MAX_HTHREADS 6
@@ -20,7 +22,7 @@
 #elif ARCHV == 5
 #define MAX_HTHREADS 4
 #elif ARCHV == 60
-#define MAX_HTHREADS 4
+#define MAX_HTHREADS 6
 #endif
 #endif
 

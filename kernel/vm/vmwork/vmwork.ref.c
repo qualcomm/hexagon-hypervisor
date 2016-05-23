@@ -10,6 +10,8 @@
 #include <stop.h>
 #include <context.h>
 #include <atomic.h>
+#include <sample.h>
+#include <h2_common_defs.h>
 
 s32_t H2K_vm_do_work(H2K_thread_context *me)
 {
@@ -17,7 +19,7 @@ s32_t H2K_vm_do_work(H2K_thread_context *me)
 		/* This thread must die */
 		H2K_thread_stop(0xd1eed1ee, me);
 	}
-	
+
 	if (!(me->vmstatus & H2K_VMSTATUS_VMWORK)) return -1;
 
        /* Need to leave vmwork bit set if interrupts are disabled in case we go to

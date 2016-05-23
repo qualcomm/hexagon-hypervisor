@@ -134,7 +134,11 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 	}
 	{
 		r0 = r7
-		jump H2K_thread_id // 17
+#ifdef DO_PROFILE
+		jump H2K_sample_start // 17
+#else
+		jump H2K_thread_id
+#endif
 	}
 	{
 		r1 = r7

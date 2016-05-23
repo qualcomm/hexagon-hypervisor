@@ -29,7 +29,11 @@
 #define H2_INTPOOL_CONFIG 14
 #define H2_INTPOOL_WAIT 15
 #define H2_TRAP_GET_PCYCLES 16
+#ifdef DO_PROFILE
+#define H2_TRAP_SAMPLE 17
+#else
 //#define H2_UNUSED 17
+#endif
 #define H2_TRAP_SET_TID 18
 #define H2_TRAP_GET_TID 19
 #define H2_TRAP_FUTEX_LOCK_PI 20

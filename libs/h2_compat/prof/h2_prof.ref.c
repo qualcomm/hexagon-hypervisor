@@ -16,7 +16,7 @@ unsigned int h2_prof_sample(unsigned long long int **res) {
 	}
 
 	asm volatile
-		(" trap0(#17)\n"
+		(" trap0(#13)\n"
 		 " %0 = r0\n"
 		 " %1 = r3:2\n"
 		 " %2 = r5:4\n"

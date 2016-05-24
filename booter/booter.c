@@ -951,10 +951,10 @@ void run(unsigned int idx) {
 	}
 
 	/* Wait for all VMs to stop or error */
-	do {
-		printf("\n");
-		printf("booter: Waiting for interrupts\n");
+	printf("\n");
+	printf("booter: Waiting for interrupts\n");
 
+	do {
 		if (sample_usecs) {
 			h2_vmtrap_timerop(H2K_TIMER_TRAP_DELTA_TIMEOUT, 1000 * sample_usecs);
 		}

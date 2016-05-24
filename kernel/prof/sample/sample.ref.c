@@ -10,6 +10,8 @@
 #include <atomic.h>
 #include <vmipi.h>
 #include <hw.h>
+#include <interrupt.h>
+#include <switch.h>
 
 void H2K_sample(u32_t hthread, H2K_thread_context *me) {
 
@@ -63,8 +65,13 @@ u32_t H2K_sample_start(H2K_thread_context *me) {
 			}
 		}
 	}
-
 	H2K_spinlock_unlock(&H2K_gp->prof_sample_lock);
+
+	me->continuation = H2K_interrupt_restore;
+	me->r0100 = H2K_gp->hthreads_mask & ~(1 << me->hthread);
+	H2K_switch(me, me);
+
+	/* not reached */
 	return H2K_gp->hthreads_mask & ~(1 << me->hthread);
 }
 

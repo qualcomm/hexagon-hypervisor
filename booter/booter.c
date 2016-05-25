@@ -969,6 +969,9 @@ void run(unsigned int idx) {
 					printf("Sample -- hthread: %d  ID: 0x%08x  ELR: 0x%08x\n", i, (unsigned int)(res[i] >> 32), (unsigned int)(res[i] & 0xffffffff));
 				}
 			}
+			if (hthreads_mask) {
+				h2_free(res);
+			}
 		}
 
 		if (sigval & WAKE_CHILD) {

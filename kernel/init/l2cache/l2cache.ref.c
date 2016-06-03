@@ -861,8 +861,12 @@ static u8_t *uarches_v65[] =
 		[0xf] = NULL,
 	};
 
+// small core. FIXME
+#define uarches_v1 uarches_v65
+
 static arch_t arches[] =
 	{
+		{0x01, uarches_v1},  // small core. FIXME
 		{0x05, uarches_v5},
 		{0x55, uarches_v55},
 		{0x56, uarches_v56},

@@ -28,7 +28,7 @@ POSIX_LIB=$(POSIX_DIR)build/opt_v$(ARCHV)/libposix.a
 endif
 
 #MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a 
-MOST_LIBS= syscall/angel/libangel.a qurt/libqurt.a 
+MOST_LIBS= syscall/angel/libangel.a
 
 ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
 LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(SOS_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR))

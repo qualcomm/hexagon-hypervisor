@@ -71,7 +71,7 @@ void thread0(int thread)
 	if (h2_pmu_getreg(H2_PMUCNT3) != 0) FAIL("unexpected pmu value/e");
 	puts("a.ok");
 
-	h2_pmu_enable(t1id);
+	//	h2_pmu_enable(t1id);  // REMOVED
 	delay();
 	if (h2_pmu_getreg(H2_PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/f");
 	if (h2_pmu_getreg(H2_PMUCNT0) != 0) FAIL("unexpected pmu value/g");
@@ -97,7 +97,7 @@ void thread0(int thread)
 	h2_pmu_setreg(H2_PMUCNT2,0);
 	h2_pmu_setreg(H2_PMUCNT3,0);
 
-	h2_pmu_disable(t1id);
+	//	h2_pmu_disable(t1id);  // REMOVED
 	h2_sem_up(&sem_call);
 	h2_sem_down(&sem_ret);
 	delay();
@@ -110,7 +110,7 @@ void thread0(int thread)
 
 	h2_sem_add(&sem_call,2);
 	delay();
-	h2_pmu_enable(t1id);
+	//	h2_pmu_enable(t1id);  // REMOVED
 	h2_sem_down(&sem_ret);
 	delay();
 
@@ -127,7 +127,7 @@ void thread0(int thread)
 #endif
 	puts("e.ok");
 
-	h2_pmu_enable(t0id);
+	//	h2_pmu_enable(t0id);  // REMOVED
 	h2_sem_add(&sem_call,1);
 	delay();
 	if (h2_pmu_getreg(H2_PMUEVTCFG) != 0x03030303) FAIL("unexpected pmu value/q");

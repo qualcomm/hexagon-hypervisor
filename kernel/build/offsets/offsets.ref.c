@@ -31,7 +31,6 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(hthread);
 	PRINT_CONTEXT_OFFSET(status);
 	PRINT_CONTEXT_OFFSET(vmstatus);
-	PRINT_CONTEXT_OFFSET(pmu_on);
 	PRINT_CONTEXT_OFFSET(tid);
 	PRINT_CONTEXT_OFFSET(status_prio_hthread_tid);
 	PRINT_CONTEXT_OFFSET(prio);

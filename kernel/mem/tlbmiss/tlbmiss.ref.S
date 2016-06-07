@@ -38,9 +38,6 @@ FUNC_START H2K_handle_tlbmissx .text.mem.tlbmiss .p2align 2
 	/* r7 = me, r8 = ssr, r9 = htid */
 
 #ifdef COUNT_TLB_EVENTS
-//	r10 = memub(r7 + #CONTEXT_pmu_on)
-//	p0 = cmp.eq(r10, #0)
-//	if (p0) jump 3f
 	// atomically increment me->vmblock->tlbmissx
 	r10 = memw(r7 + #CONTEXT_vmblock)
 	r10 = add(r10, #VMBLOCK_tlbmissx)
@@ -71,9 +68,6 @@ FUNC_START H2K_handle_tlbmissrw .text.mem.tlbmiss .p2align 2
 	/* r7 = me, r8 = ssr, r9 = htid */
 
 #ifdef COUNT_TLB_EVENTS
-//	r10 = memub(r7 + #CONTEXT_pmu_on)
-//	p0 = cmp.eq(r10, #0)
-//	if (p0) jump 5f
 	// atomically increment me->vmblock->tlbmissrw
 	r10 = memw(r7 + #CONTEXT_vmblock)
 	r10 = add(r10, #VMBLOCK_tlbmissrw)

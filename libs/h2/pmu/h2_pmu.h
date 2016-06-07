@@ -65,25 +65,27 @@ static inline int h2_pmu_getreg(int reg)
 }
 
 /**
-Enable PMU monitoring for a thread
+REMOVED: Enable PMU monitoring for a thread
 @param[in] threadid		ID of a thread to enable performance monitoring
 @returns 0 on success, nonzero otherwise 
 */
 
 static inline int h2_pmu_enable(int threadid)
 {
-	return h2_pmuctrl_trap(PMUCTRL_THREADSET, threadid, 1, 0);
+	return -1;
+	//return h2_pmuctrl_trap(PMUCTRL_THREADSET, threadid, 1, 0);
 }
 
 /**
-Disable PMU monitoring for a thread
+REMOVED: Disable PMU monitoring for a thread
 @param[in] threadid		ID of a thread to enable performance monitoring
 @returns 0 on success, nonzero otherwise 
 */
 
 static inline int h2_pmu_disable(int threadid)
 {
-	return h2_pmuctrl_trap(PMUCTRL_THREADSET, threadid, 0, 0);
+	return -1;
+	// return h2_pmuctrl_trap(PMUCTRL_THREADSET, threadid, 0, 0);
 }
 
 /** @} */

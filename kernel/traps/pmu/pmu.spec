@@ -35,8 +35,8 @@ We look up which configuration routine in H2K_pmuctrltab, and jump to the
 appropriate routine.
 
 
-H2K_trap_pmuctrl_threadset
-----------------------------
+REMOVED: H2K_trap_pmuctrl_threadset
+-----------------------------------
 
 .. cfunction:: u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
 

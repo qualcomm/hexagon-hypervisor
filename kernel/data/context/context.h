@@ -68,7 +68,7 @@ typedef struct _h2_thread_context
 			u8_t vmstatus;
 			u8_t base_prio;	// Does it need to be atomic?
 			u8_t tlbidxmask;	// mask tlbidx
-			u8_t pmu_on;	// Does it need to be atomic?  1 bit NOT NEEDED post v6x SMMU
+			u8_t unused;
 					// island mode?
 		};
 	};

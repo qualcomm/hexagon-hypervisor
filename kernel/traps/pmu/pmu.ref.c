@@ -26,9 +26,10 @@ u32_t H2K_trap_pmuctrl(pmuop_type configtype, u32_t val1, u32_t val2, u32_t val3
 	return H2K_pmuctrltab[configtype](0,val1,val2,val3,me);
 }
 
+// FIXME: remove
 u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
 {
-	return 0;
+	return -1;
 }
 
 u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)

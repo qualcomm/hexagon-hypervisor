@@ -19,6 +19,10 @@ extern void _end();
 
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) {
 	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
+#ifdef HAVE_EXTENSIONS
+	u32_t have_hvx;
+#endif
+
 	H2K_bzero(&H2K_kg,sizeof(H2K_kg));
 
 	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
@@ -40,15 +44,54 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 
 #ifdef HAVE_EXTENSIONS
-	/* HVX present?  V6[02][AE]. */
-	if ((CORE_V60 == H2K_kg.arch
-			 || CORE_V62 == H2K_kg.arch
-			 || CORE_V65 == H2K_kg.arch)
-			&& ((CORE_V6_A == H2K_kg.uarch) || (CORE_V6_A == H2K_kg.uarch))) {
-		H2K_kg.info_boot_flags.boot_have_hvx = 1;
-	} else {
-		H2K_kg.info_boot_flags.boot_have_hvx = 0;
+	/* HVX present? */
+	switch(H2K_kg.arch) {
+	case CORE_V60:
+		switch(H2K_kg.uarch) {
+		case CORE_V6_A:
+		case CORE_V6_E:
+			have_hvx = 1;
+			break;
+		default:
+			have_hvx = 0;
+		}
+		break;
+	case CORE_V61:
+		have_hvx = 0;
+		break;
+	case CORE_V62:
+		switch(H2K_kg.uarch) {
+		case CORE_V6_A:
+		case CORE_V6_E:
+			have_hvx = 1;
+			break;
+		default:
+			have_hvx = 0;
+		}
+		break;
+	case CORE_V65:
+		switch(H2K_kg.uarch) {
+		case CORE_V6_A:
+			have_hvx = 1;
+			break;
+		default:
+			have_hvx = 0;
+		}
+		break;
+	case CORE_V66:
+		switch(H2K_kg.uarch) {
+		case CORE_V6_A:
+			have_hvx = 1;
+			break;
+		default:
+			have_hvx = 0;
+		}
+		break;
+	default:
+		have_hvx = 0;
 	}
+
+	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
 #endif
 
 #ifdef DO_PROFILE

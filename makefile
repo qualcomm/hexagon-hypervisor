@@ -21,6 +21,14 @@ export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
 #export USE_TCM ?= 1
 endif
 
+ifeq ($(TARGET), zebu_v65)
+ARCHV := 65
+H2K_KERNEL_PGSIZE ?= 3
+H2K_ALLOC_HEAP_SIZE ?= 0xb000
+export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
+#export USE_TCM ?= 1
+endif
+
 
 include scripts/Makefile.inc.tools
 

@@ -21,7 +21,7 @@
 #define MAX_HTHREADS 3
 #elif ARCHV == 5
 #define MAX_HTHREADS 4
-#elif ARCHV == 60
+#elif ARCHV >= 60
 #define MAX_HTHREADS 6
 #endif
 #endif

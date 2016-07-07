@@ -48,8 +48,13 @@ ifeq (5, $(ARCHV))
 TOOLS_FLAVOR ?= 7.3.06
 ARCH_FLAVOR ?= v5_stable
 else
+ifeq (60, $(ARCHV))
 TOOLS_FLAVOR ?= 7.3.06
 ARCH_FLAVOR ?= v60_latest
+else
+TOOLS_FLAVOR ?= 7.3.06
+ARCH_FLAVOR ?= v65_latest
+endif
 endif
 endif
 
@@ -67,6 +72,10 @@ export RUN_TOOLSIM := hexagon-sim --simulated_returnval --subsystem_base $(SUBSY
 export TOOLARCH := $(ARCHV)
 ifeq (60, $(TOOLARCH))
 export TOOLARCH := 61
+else
+ifeq (65, $(TOOLARCH))
+export TOOLARCH := 61
+endif
 endif
 
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))

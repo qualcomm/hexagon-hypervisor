@@ -182,5 +182,9 @@ cov_fns:
 	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
 	$(MAKE) clean opt ARCHV=v60 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
+	$(MAKE) clean ref ARCHV=v65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
+	$(MAKE) clean opt ARCHV=v65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
 
 

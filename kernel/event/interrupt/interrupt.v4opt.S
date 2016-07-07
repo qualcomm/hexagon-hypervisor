@@ -66,7 +66,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 		VIDVAL = VID
 	}
 	{
-		ISL2INT = cmp.eq(INTNO,#31)
+		ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 		if (ISL2INT.new) INTNO = add(VIDVAL,#32)
 		TRACEDATAHI = #H2K_TRACE_INTERRUPT
 	}
@@ -129,7 +129,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		VIDVAL = VID			// vector ID if L2 interrupt
 	}
 	{
-		ISL2INT = cmp.eq(INTNO,#31)		// L2 interrupt?
+		ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)		// L2 interrupt?
 		if (ISL2INT.new) INTNO = add(VIDVAL,#32)	// Yes, use VID + offset
 		ME = sgp0			// scheduled task or garbage
 	}

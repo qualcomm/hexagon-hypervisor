@@ -99,7 +99,11 @@
 
 #else
 #define H2K_L2_CONTROL 1
+#if ARCHV >= 65
+#define L2_CORE_INTERRUPT 2
+#else
 #define L2_CORE_INTERRUPT 31
+#endif
 #define MAX_L2_INTERRUPTS 480
 #define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
 #endif
@@ -155,6 +159,7 @@
 //FIXME
 #define BOOT_THREAD_USR 0x00056000
 #else
+#define BOOT_THREAD_USR 0x00056000
 #endif
 
 #define BOOT_THREAD_SSR (0x01c60000 | (1<<SSR_GUEST_BIT))

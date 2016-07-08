@@ -76,7 +76,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	}
 	{
 		BUFADDR = addasl(BUFADDR,OLDIDX,#3)
-		CIADVAL = mux(ISL2INT,##0x80000000,#0)
+		CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 		trace(TRACEDATAHI)
 	}
 	{
@@ -148,7 +148,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		if (!ISPREEMPT) ELRTMP = #-1
 	}
 	{
-		CIADVAL = mux(ISL2INT,##0x80000000,#0)	// Value to CIAD if L2 interrupt
+		CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)	// Value to CIAD if L2 interrupt
 		trace(TRACEDATAHI)
 	}
 	{

@@ -24,7 +24,7 @@ static inline void siad(u32_t mask)
 
 static inline void swi(u32_t mask)
 {
-	asm (" swi(%0) // clear IAD " : : "r"(mask));
+	asm (" swi(%0) // SWI " : : "r"(mask));
 }
 
 static inline void H2K_hw_trace(u32_t val)
@@ -230,8 +230,25 @@ static inline u32_t H2K_get_modectl()
 static inline u32_t H2K_get_ipend()
 {
 	u32_t ret;
+#if ARCHV < 65
 	asm volatile ("%0 = ipend;":"=r" (ret));
 	return(ret);
+#else
+	asm volatile ("%0 = ipendad;":"=r" (ret));
+	return(ret & 0xff);
+#endif
+}
+
+static inline u32_t H2K_get_iad()
+{
+	u32_t ret;
+#if ARCHV < 65
+	asm volatile ("%0 = iad;":"=r" (ret));
+	return(ret);
+#else
+	asm volatile ("%0 = ipendad;":"=r" (ret));
+	return((ret >> 16) & 0xff);
+#endif
 }
 
 static inline u32_t H2K_get_tid_reg()

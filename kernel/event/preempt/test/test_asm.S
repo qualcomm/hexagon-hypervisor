@@ -89,8 +89,10 @@ TH_prepare:
 	evb = r1
 
 	r1 = #-1
+#if ARCHV < 65
 	iel = r1
 	iahl = r1
+#endif
 	cswi(r1)
 	ciad(r1)
 

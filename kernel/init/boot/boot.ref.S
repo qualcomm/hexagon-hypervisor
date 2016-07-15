@@ -179,8 +179,10 @@ H2_BOOT_attempts:
 	/* Set imask to -1, since we are not lowest priority at boot */
  	/* (other idle threads) */
 	imask = TMP
+#if ARCHV < 65
 	iel = TMP
 	iahl = TMP
+#endif
 	cswi(TMP)
 	ciad(TMP)
 

@@ -94,6 +94,12 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
 #endif
 
+#ifdef DO_PROFILE
+	H2K_kg.info_boot_flags.boot_have_sample = 1;
+#else
+	H2K_kg.info_boot_flags.boot_have_sample = 0;
+#endif
+
 	switch(H2K_kg.arch) {
 	case CORE_V4:
 		H2K_kg.timer_intnum = TIMER_INT_CORE_V4;

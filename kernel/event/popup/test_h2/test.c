@@ -47,8 +47,8 @@ void delay()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-#define INTERRUPT_T0 12
-#define INTERRUPT_T1 13
+#define INTERRUPT_T0 6
+#define INTERRUPT_T1 7
 
 static volatile int counter0;
 static volatile int counter1;
@@ -141,19 +141,19 @@ void vmmain(void *unused)
 	gen_int(0);
 	delay();
 
-	if (counter0 != 1) FAIL("Bad counter0: should be 1\n");
+	if (counter0 != 1) FAIL("Bad counter0: should be 1 1\n");
 	if (counter1 != 0) FAIL("Bad counter1: should be 0\n");
 
 	gen_int(1);
 	delay();
 
-	if (counter0 != 1) FAIL("Bad counter0: should be 1\n");
+	if (counter0 != 1) FAIL("Bad counter0: should be 1 2\n");
 	if (counter1 != 1) FAIL("Bad counter1: should be 1\n");
 
 	gen_int(0);
 	delay();
 
-	if (counter0 != 1) FAIL("Bad counter0: should be 1\n");
+	if (counter0 != 1) FAIL("Bad counter0: should be 1 3\n");
 	if (counter1 != 1) FAIL("Bad counter1: should be 1\n");
 
 	h2_sem_up(&sem0);

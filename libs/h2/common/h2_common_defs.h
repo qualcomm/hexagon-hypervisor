@@ -14,6 +14,8 @@
 
 #define PAGE_BITS 12 /* Minimum page size: 4K */
 
+#define DO_PROFILE 1
+
 #ifndef MAX_HTHREADS
 #if ARCHV <= 3
 #define MAX_HTHREADS 6
@@ -21,7 +23,7 @@
 #define MAX_HTHREADS 3
 #elif ARCHV == 5
 #define MAX_HTHREADS 4
-#elif ARCHV == 60
+#elif ARCHV >= 60
 #define MAX_HTHREADS 6
 #endif
 #endif

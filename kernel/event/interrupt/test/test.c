@@ -254,14 +254,17 @@ int main()
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		/* For each interrupt, try to do the interrupt */
 #if ARCHV >= 4
-		if (i == 31) continue;
+		if (i == L2_CORE_INTERRUPT) continue;
 #endif
 		printf("i=%d\n",i);
 		fill_srcdata(i);
 		a.continuation = TH_continuation_fail;
+		printf("try interrupt\n");
 		TH_try_interrupt(&a,i);
+		printf("try interrupt NULL thread\n");
 		TH_try_interrupt(NULL,i);
 		a.continuation = TH_continuation;
+		printf("try interrupt preempt\n");
 		TH_try_preempt_interrupt(&a,i);
 		/* Test the case where we were checking for 
 		 * another interrupt before return */
@@ -270,8 +273,10 @@ int main()
 		//if (TH_fastint_check != 0) FAIL("Didn't jump to fastint check");
 	}
 	a.continuation = TH_continuation_fail;
+	printf("try interrupt 0\n");
 	TH_try_interrupt(&a,0);
 	a.continuation = TH_continuation;
+	printf("try interrupt 0 preempt\n");
 	TH_try_preempt_interrupt(&a,0);
 	puts("TEST PASSED\n");
 	return 0;

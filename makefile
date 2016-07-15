@@ -21,6 +21,14 @@ export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
 #export USE_TCM ?= 1
 endif
 
+ifeq ($(TARGET), zebu_v65)
+ARCHV := 65
+H2K_KERNEL_PGSIZE ?= 3
+H2K_ALLOC_HEAP_SIZE ?= 0xb000
+export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
+#export USE_TCM ?= 1
+endif
+
 
 include scripts/Makefile.inc.tools
 
@@ -183,6 +191,10 @@ cov_fns:
 	$(MAKE) clean ref ARCHV=v60 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
 	$(MAKE) clean opt ARCHV=v60 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
+	$(MAKE) clean ref ARCHV=v65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
+	$(MAKE) clean opt ARCHV=v65 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
 
 

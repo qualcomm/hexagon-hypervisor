@@ -63,7 +63,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	INTNO = and(SSRVAL,#0x1f)
 
 #if ARCHV >= 4
-	ISL2INT = cmp.eq(INTNO,#31)
+	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 
 #if ARCHV == 4
@@ -92,7 +92,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 #endif
 
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
-	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
 #endif
 
@@ -164,10 +164,10 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 #endif
 
 #if ARCHV >= 4
-	ISL2INT = cmp.eq(INTNO,#31)
+	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
-	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
 #endif
 	r1 = #0		// thread context == NULL
@@ -216,10 +216,10 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	SSRVAL = ssr
 	INTNO = and(SSRVAL,#0x1f)
 #if ARCHV >= 4
-	ISL2INT = cmp.eq(INTNO,#31)
+	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
-	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
 #endif
 	H2K_GP.h = #hi(H2K_kg)

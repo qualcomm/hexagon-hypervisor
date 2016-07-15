@@ -48,13 +48,13 @@
 ./kernel/traps/config/test
 ./kernel/traps/hwconfig/test
 ./kernel/traps/pmu/test_h2
-# ./kernel/traps/pmu/test_standalone  # out because of broken tools
+#./kernel/traps/pmu/test_standalone
 ./kernel/traps/prio/test
 ./kernel/traps/tid/test
 ./kernel/traps/cputime/test
 ./kernel/traps/tlb/test
 ./kernel/traps/waitcycles/test
-./kernel/time/timer/test_standalone
+# ./kernel/time/timer/test_standalone # out for ARCHV > 60 because can't set timer regs
 ./kernel/time/timer/test_h2
 ./kernel/time/timer/test_h2_multi
 ./kernel/util/atomic/test

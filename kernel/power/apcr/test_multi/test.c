@@ -27,7 +27,7 @@
 #ifdef RTL
 #define ITERS 1
 #ifndef INTERRUPT_NUM
-#define INTERRUPT_NUM 32
+#define INTERRUPT_NUM 2
 #endif
 #else
 #define ITERS 2

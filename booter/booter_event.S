@@ -37,6 +37,7 @@ bootvm__Interrupt:
 	}
 	{
 		r18 = r31
+		r0 = g1
 		call booter_isr
 	}
 	callr r18  // restore

@@ -5,6 +5,7 @@
 
 #include <asm_std.h>
 #include <asm_offsets.h>
+#include <max.h>
 
 /*
  * TH_do_interrupt sets up and calls the interrupt.
@@ -28,7 +29,7 @@ TH_do_interrupt:
 #if ARCHV >= 4
 	p0 = cmp.gtu(r2,#31)
 	if (!p0) jump 1f
-	r5 = #31
+	r5 = #L2_CORE_INTERRUPT
 	r4 = insert(r5,#5,#0)
 	ssr = r4
 	r4 = add(r2,#-32)
@@ -99,7 +100,7 @@ TH_do_preempt:
 #if ARCHV >= 4
 	p0 = cmp.gtu(r2,#31)
 	if (!p0) jump 1f
-	r5 = #31
+	r5 = #L2_CORE_INTERRUPT
 	r4 = insert(r5,#5,#0)
 	ssr = r4
 	r4 = add(r2,#-32)

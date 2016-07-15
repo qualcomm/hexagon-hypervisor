@@ -15,6 +15,7 @@
 #include <thread.h>
 #include <setjmp.h>
 #include <globals.h>
+#include <sample.h>
 
 jmp_buf env;
 
@@ -29,20 +30,21 @@ u32_t TH_init_seen;
 u32_t TH_switch_seen;
 
 enum {
-        runlist_init = 0,
-        readylist_init,
-        lowprio_init,
-        futex_init,
-        intconfig_init,
-        kg_init,
-        trace_init,
-        timer_init,
+	runlist_init = 0,
+	readylist_init,
+	lowprio_init,
+	futex_init,
+	intconfig_init,
+	kg_init,
+	trace_init,
+	timer_init,
 	mem_alloc_init,
 	tmpmap_init,
 	l2cache_init,
-        //thread_init,
-        //asid_table_init,
-        //mem_stlb_init,
+	sample_init,
+	//thread_init,
+	//asid_table_init,
+	//mem_stlb_init,
 	tcm_copy,
 	hvx_init,
 
@@ -97,6 +99,7 @@ HELPER_FUNC(timer_init)
 HELPER_FUNC(mem_alloc_init)
 HELPER_FUNC(tmpmap_init)
 HELPER_FUNC(l2cache_init)
+HELPER_FUNC(sample_init)
 //HELPER_FUNC(thread_init)
 //HELPER_FUNC(asid_table_init)
 

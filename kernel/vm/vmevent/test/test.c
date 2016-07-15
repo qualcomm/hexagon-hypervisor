@@ -31,6 +31,8 @@ void H2K_fatal_thread()
 	FAIL("Saw fatal");
 }
 
+void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread) {}
+
 H2K_kg_t H2K_kg;
 
 int main()

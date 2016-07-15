@@ -3,19 +3,20 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <h2_cache.h>
-#include <h2_intwait.h>
-#include <h2_thread.h>
+#include <h2.h>
+/* #include <h2_cache.h> */
+/* #include <h2_intwait.h> */
+/* #include <h2_thread.h> */
 
 #ifndef DEBUG
 #define ITERS 1
 #ifndef INTERRUPT_NUM
-#define INTERRUPT_NUM 32
+#define INTERRUPT_NUM 2
 #endif
 #else
 #define ITERS 2
 #ifndef INTERRUPT_NUM
-#define INTERRUPT_NUM 30
+#define INTERRUPT_NUM 5
 #endif
 #endif
 
@@ -35,7 +36,7 @@ int main()
 	}
 	*sigil = 0xe0f0beef;
 	h2_dccleana(sigil);
-	h2_thread_stop(0);
+	h2_thread_stop_trap(0);
 	return 0;
 }
 

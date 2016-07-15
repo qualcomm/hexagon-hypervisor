@@ -20,6 +20,8 @@
 #include <h2_kerror.h>
 #include <h2_alloc.h>
 #include <h2_common_linear.h>
+#include <h2_sleep.h>
+#include <h2_prof.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -88,17 +90,23 @@ enum {
 
 #define FENCE_HI_MAX 0xfffff000
 
+#define WAKE_TIMER 0x1
+#define WAKE_CHILD 0x2
+
 /* Globals */
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
-h2_sem_t child_done_sem;
+h2_anysignal_t wake_sig;
 int tcm_base;
 int tcm_size;
 h2_galloc_t tcm_alloc;
 int clade_base;
 int pd_num = 0;
 unsigned long clade_region = 0;
+unsigned int sample_usecs = 0;
+info_boot_flags_type boot_flags;
+info_stlb_type  stlb_info;
 
 typedef struct {
 	unsigned int id;  // h2 VM id
@@ -192,7 +200,8 @@ void usage()
 	printf("  booter [options] <executable> <args> [ --new_vm <instances> [vm options] <executable> <args> ...]\n");
 	printf("  booter [global options] --new_vm <int> [vm options] <executable> <args> [--new_vm <int> [vm options] <executable> <args> ...]\n\tBoot new <instances> of guest VMs with given options.\n");
 	printf("  booter --file <path> [--file <path> ...]\n\tOptions from <path>, one guest VM per line.");
-	printf("\nGlobal options:\n");
+	printf("\n");
+	printf("Global options:\n");
 	printf("  --duck <int>\n\tSet the duck bits.\n");
 	printf("  --chicken <int>\n\tSet the chicken bits.\n");
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
@@ -206,8 +215,10 @@ void usage()
 	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register. Setting to -1 reads current value, doesn't set.\n");
 	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	printf("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
+	printf("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
 
-	printf("\nVM options:\n");
+	printf("\n");
+	printf("VM options:\n");
 	printf("  --ccr <int>\n\tSet ccr.\n");
 	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
 #ifdef HAVE_EXTENSIONS
@@ -853,9 +864,11 @@ void config_vm(unsigned int idx) {
 	int trans;
 	
 
-	printf("\nConfig VM index %d\n", idx);
-	printf("\tvirtual CPUs %d\n", vm_params[idx].num_vcpus);
+	printf("\n");
+	printf("Config VM index %d\n", idx);
+	printf("\tVirtual CPUs %d\n", vm_params[idx].num_vcpus);
 	printf("\tShared interrupts  %d\n", vm_params[idx].num_shared_ints);
+	printf("\tPriority  %d\n", vm_params[idx].startprio);
 
 	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, CONFIG_CPUS(vm_params[idx].use_ext, vm_params[idx].num_vcpus), vm_params[idx].num_shared_ints);
 
@@ -923,7 +936,8 @@ void boot_vm(unsigned int idx) {
 
 	unsigned int regval;
 
-	printf("\nBoot VM index %d, ID %d\n", idx, vm_params[idx].id);
+	printf("\n");
+	printf("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
 
 	if (~0L != vm_params[idx].ccr) {
 		regval = H2K_get_ccr();
@@ -943,6 +957,9 @@ void run(unsigned int idx) {
 	unsigned int status, done;
 	int cpus;
 	unsigned int vm;
+	unsigned long long int *res;
+	unsigned int sigval;
+	unsigned int hthreads_mask;
 
 	for (i = 0 ; i <= idx; i++) {
 		load_vm(i);
@@ -959,39 +976,62 @@ void run(unsigned int idx) {
 	}
 
 	/* Wait for all VMs to stop or error */
+	printf("\n");
+	printf("booter: Waiting for interrupts\n");
+
 	do {
-		printf("\nWaiting for child interrupt\n");
-		h2_sem_down(&child_done_sem);
+		if (sample_usecs) {
+			h2_vmtrap_timerop(H2K_TIMER_TRAP_DELTA_TIMEOUT, 1000 * sample_usecs);
+		}
+		sigval = h2_anysignal_wait(&wake_sig, WAKE_CHILD | WAKE_TIMER);
 
-		/* How's everyone doing? */
-		done = 1;
-		for (i = 0; i <= idx; i++) {
-			vm = vm_params[i].id;
-			if (~0 == vm) {  // skip
-				continue;
-			}
-			status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-			printf("VM %d status 0x%x\n", vm, status);
-			cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
-			printf("VM %d Live CPUs: %d\n", vm, cpus);
+		if (sigval & WAKE_TIMER) {
+			h2_anysignal_clear(&wake_sig, WAKE_TIMER);
+			hthreads_mask = h2_prof_sample(&res);
 
-			if (0 == cpus) {  // no more cpus running
-				if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
-					FAIL("\tUnexpected exit status.", "");
+			for (i = 0; i < MAX_HTHREADS; i++) {
+				if (hthreads_mask & (1 << i)) {
+					printf("Sample -- hthread: %d  ID: 0x%08x  ELR: 0x%08x\n", i, (unsigned int)(res[i] >> 32), (unsigned int)(res[i] & 0xffffffff));
 				}
-				if (--vm_params[i].boots) {  // reboot
-					done = 0;
-					load_vm(i);
-					boot_vm(i);
-				} else {  // all done with this VM
-					vm_params[i].id = ~0;  // mark non-existent
-					h2_vmfree(vm);
-				}
-			} else {
-				done = 0; // someone's not done
 			}
-			if (vm_params[i].error_exit && H2_THREAD_FATAL_ERROR == status) {
-				exit(1);
+			if (hthreads_mask) {
+				h2_free(res);
+			}
+		}
+
+		if (sigval & WAKE_CHILD) {
+			h2_anysignal_clear(&wake_sig, WAKE_CHILD);
+
+			/* How's everyone doing? */
+			done = 1;
+			for (i = 0; i <= idx; i++) {
+				vm = vm_params[i].id;
+				if (~0 == vm) {  // skip
+					continue;
+				}
+				status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
+				printf("VM %d status 0x%x\n", vm, status);
+				cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
+				printf("VM %d Live CPUs: %d\n", vm, cpus);
+
+				if (0 == cpus) {  // no more cpus running
+					if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
+						FAIL("\tUnexpected exit status.", "");
+					}
+					if (--vm_params[i].boots) {  // reboot
+						done = 0;
+						load_vm(i);
+						boot_vm(i);
+					} else {  // all done with this VM
+						vm_params[i].id = ~0;  // mark non-existent
+						h2_vmfree(vm);
+					}
+				} else {
+					done = 0; // someone's not done
+				}
+				if (vm_params[i].error_exit && H2_THREAD_FATAL_ERROR == status) {
+					exit(1);
+				}
 			}
 		}
 	} while (!done);
@@ -1008,14 +1048,11 @@ void die_usage()
 }
 
 void print_infos() {
-	info_boot_flags_type boot_flags;
-	info_stlb_type  stlb_info;
-
-	boot_flags.raw = h2_info(INFO_BOOT_FLAGS);
-	stlb_info.raw = h2_info(INFO_STLB);
 
 	printf("H2/core info:\n");
 	printf("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
+	printf("\tGuest PC sampling available: ");
+	printf((boot_flags.boot_have_sample ? "true\n" : "false\n"));
 	printf("\tHVX present: ");
 	printf((boot_flags.boot_have_hvx ? "true\n" : "false\n"));
 	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
@@ -1129,10 +1166,19 @@ void set_syscfg_field(char *name, unsigned int val) {
 
 extern void bootvm_vectors();
 
-void booter_isr(void) {
-	//	printf("Got child interrupt\n");
-	h2_sem_up(&child_done_sem);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
+void booter_isr(unsigned int gssr) {
+
+	if ((gssr & 0xff) == H2K_VM_CHILDINT) {
+		//		printf("Got child interrupt\n");
+		h2_anysignal_set(&wake_sig, WAKE_CHILD);
+		h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
+	}
+	if ((gssr & 0xff) == H2K_TIME_GUESTINT) {
+		//		printf("Got timer interrupt\n");
+		h2_anysignal_set(&wake_sig, WAKE_TIMER);
+		h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT, 0);
+	}
+
 }
 
 unsigned int process_line(int argc, char **argv, unsigned int idx) {
@@ -1257,6 +1303,15 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--guest_base")) {
 			if (argc < 2) die_usage();
 			guest_base = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--sample")) {
+			if (argc < 2) die_usage();
+			if (!boot_flags.boot_have_sample) {
+				FAIL("Guest PC sampling not supported by kernel", "");
+			}
+			sample_usecs = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 
@@ -1526,10 +1581,14 @@ int main(int argc, char **argv)
 	// check for kernel boot errors
 	kerror = h2_info(INFO_ERROR);
 	if (kerror != KERROR_NONE) {
-		printf("\nKernel error: %s\n\n", kerror_msg[kerror]);
+		printf("\n");
+		printf("Kernel error: %s\n\n", kerror_msg[kerror]);
 		print_infos();
 		return 1;
 	}
+
+	boot_flags.raw = h2_info(INFO_BOOT_FLAGS);
+	stlb_info.raw = h2_info(INFO_STLB);
 
 	tcm_base = (unsigned int)h2_info(INFO_TCM_BASE);
 	tcm_size = h2_info(INFO_TCM_SIZE);
@@ -1540,10 +1599,13 @@ int main(int argc, char **argv)
 	print_infos();
 	h2_vmtrap_setvec(bootvm_vectors);
 
-	h2_sem_init_val(&child_done_sem, 0);
+	h2_anysignal_init(&wake_sig);
 
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0) < 0) {
 		FAIL("H2K_INTOP_GLOBEN, H2K_VM_CHILDINT", "");
+	}
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT", "");
 	}
 	h2_vmtrap_setie(1);
 
@@ -1600,7 +1662,7 @@ int main(int argc, char **argv)
 			tight_fence_hi = 0;
 			guest_base = H2K_GUEST_START;
 
-			h2_sem_init_val(&child_done_sem, 0);  // there may be leftover ups
+			h2_anysignal_init(&wake_sig);  // could be leftovers
 
 		} else {  // not reading from file
 			idx = 0;

@@ -101,13 +101,18 @@ typedef struct {
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
 	u32_t last_tlb_index;
-	u32_t tmpmap_lock;
+	H2K_spinlock_t tmpmap_lock;
 	u32_t tlb_size;
 	u64_t pinned_tlb_mask;
 	H2K_spinlock_t asid_spinlock;
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];
 	u64_t waitcycles[MAX_HTHREADS];
+#ifdef DO_PROFILE
+	u64_t prof_sample[MAX_HTHREADS];
+	u32_t prof_sample_pending;
+	H2K_spinlock_t prof_sample_lock;
+#endif
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];

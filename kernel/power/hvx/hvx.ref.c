@@ -13,7 +13,6 @@
 void H2K_hvx_poweron(void) {
 #ifdef HAVE_EXTENSIONS
 	volatile u32_t delay;
-	u32_t val;
 
 	BKL_LOCK();
 	if (H2K_gp->hvx_state == H2K_HVX_STATE_ON) {  // already on
@@ -44,6 +43,8 @@ void H2K_hvx_poweron(void) {
 #else
 
 	// v65
+	u32_t val;
+
 	/* From HPG 4.8.9 */
 
 	*((u32_t volatile *)(H2K_gp->hvx_clock)) = QDSP6SS_CP_CLK_CTL_DISABLE;

@@ -81,6 +81,14 @@ typedef struct {
 	u32_t *hvx_clock;
 	u32_t *hvx_reset;
 	u32_t *hvx_power;
+#if ARCHV >= 65
+	u32_t *hvx_bhs_status;
+	u32_t *hvx_bhs_cfg;
+	u32_t *hvx_bhs_cmd;
+	u32_t *hvx_cpmem_cfg;
+	u32_t *hvx_cpmem_cmd;
+	u32_t *hvx_cpmem_status;
+#endif
 	u32_t hvx_state;
 
 	union {

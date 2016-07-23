@@ -57,8 +57,8 @@ void H2K_hvx_poweron(void) {
 	delay = 1000;
 	while ((delay--) &&
 				 !((*((u32_t volatile *)(H2K_gp->hvx_bhs_status))) & (0x1 << QDSP6SS_CP_BHS_STATUS_BHS_ON_BIT))) asm volatile ("nop");
-	*((u32_t volatile *)(H2K_gp->hvx_power)) &= (((u32_t)(~0x1)) << QDSP6SS_CP_PWR_CTL_CLAMP_IO_BIT);
-	*((u32_t volatile *)(H2K_gp->hvx_power)) &= (((u32_t)(~0x1)) << QDSP6SS_CP_PWR_CTL_CLAMP_QMC_MEM_BIT);
+	*((u32_t volatile *)(H2K_gp->hvx_power)) &= ~(((u32_t)(0x1)) << QDSP6SS_CP_PWR_CTL_CLAMP_IO_BIT);
+	*((u32_t volatile *)(H2K_gp->hvx_power)) &= ~(((u32_t)(0x1)) << QDSP6SS_CP_PWR_CTL_CLAMP_QMC_MEM_BIT);
 	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg)) = QDSP6SS_CPMEM_CFG_VTCM_POWER_ON;
 	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) |= (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_NRET_N_BIT);
 	delay = 1000;

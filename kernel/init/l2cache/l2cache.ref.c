@@ -699,6 +699,26 @@ static u8_t l2_v65_7[] =
 		[0xf] = reserved
 	};
 
+static u8_t l2_v65_8[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = s1024,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
 static u8_t l2_v66_0[] =
 	{
 		[0x0] = s0,
@@ -931,7 +951,7 @@ static u8_t *uarches_v65[] =
 		[0x5] = NULL,
 		[0x6] = l2_v65_6,
 		[0x7] = l2_v65_7,
-		[0x8] = NULL,
+		[0x8] = l2_v65_8,
 		[0x9] = NULL,
 		[0xa] = NULL,
 		[0xb] = NULL,

@@ -77,6 +77,9 @@ enum {
 #define WAKE_CHILD 0x2
 
 /* Globals */
+#ifdef HAVE_EXTENSIONS
+unsigned int ext_power = 1;
+#endif
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
@@ -196,6 +199,7 @@ void usage()
 	printf("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	printf("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
 	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register. Setting to -1 reads current value, doesn't set.\n");
+	printf("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
 	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	printf("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
 	printf("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
@@ -1071,6 +1075,11 @@ void kernel_setup() {
 			FAIL("STLB alloc", "");
 		}
 	}
+	if (ext_power) {
+		if (h2_hwconfig_extpower(1) < 0) {
+			FAIL("extpower", "");
+		}
+	}
 }
 
 void set_l2_reg(unsigned int offset, unsigned int val) {
@@ -1267,6 +1276,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			if (argc < 3) die_usage();
 			set_l2_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
 			argc -= 3; argv += 3;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--ext_power")) {
+			if (argc < 2) die_usage();
+			ext_power = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0], "--use_stlb")) {

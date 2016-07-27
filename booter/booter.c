@@ -199,7 +199,9 @@ void usage()
 	printf("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	printf("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
 	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register. Setting to -1 reads current value, doesn't set.\n");
+#ifdef HAVE_EXTENSIONS
 	printf("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
+#endif
 	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	printf("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
 	printf("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
@@ -1280,11 +1282,13 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 3; argv += 3;
 			continue;
 
+#ifdef HAVE_EXTENSIONS
 		} else if (0 == strcmp(argv[0], "--ext_power")) {
 			if (argc < 2) die_usage();
 			ext_power = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
+#endif
 
 		} else if (0 == strcmp(argv[0], "--use_stlb")) {
 			if (argc < 2) die_usage();

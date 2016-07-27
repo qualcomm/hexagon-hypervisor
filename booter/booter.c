@@ -1100,11 +1100,13 @@ void kernel_setup() {
 			FAIL("STLB alloc", "");
 		}
 	}
-	if (ext_power) {
+#if HAVE_EXTENSIONS
+	if (ext_power && boot_flags.boot_have_hvx) {
 		if (h2_hwconfig_extpower(1) < 0) {
 			FAIL("extpower", "");
 		}
 	}
+#endif
 }
 
 void set_l2_reg(unsigned int offset, unsigned int val) {

@@ -52,7 +52,8 @@ ifeq (60, $(ARCHV))
 TOOLS_FLAVOR ?= 7.3.06
 ARCH_FLAVOR ?= v60_latest
 else
-TOOLS_FLAVOR ?= 8.1-internal-latest
+#TOOLS_FLAVOR ?= 8.1-internal-latest
+TOOLS_FLAVOR ?= 8.1-internal-toolset-2679
 ARCH_FLAVOR ?= v65_latest
 endif
 endif

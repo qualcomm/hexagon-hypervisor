@@ -41,19 +41,24 @@ endif
 
 ifeq (4, $(ARCHV))
 TOOLS_FLAVOR ?= default
+TOOLS_FLAVOR_KERNEL ?= default
 ARCH_FLAVOR ?= v4_stable
 export COV := hexagon-llvm-cov
 else
 ifeq (5, $(ARCHV))
 TOOLS_FLAVOR ?= 7.3.06
+TOOLS_FLAVOR_KERNEL ?= 7.3.06
 ARCH_FLAVOR ?= v5_stable
 else
 ifeq (60, $(ARCHV))
 TOOLS_FLAVOR ?= 7.3.06
+TOOLS_FLAVOR_KERNEL ?= 7.3.06
 ARCH_FLAVOR ?= v60_latest
 else
 #TOOLS_FLAVOR ?= 8.1-internal-latest
-TOOLS_FLAVOR ?= 8.1-internal-toolset-2679
+TOOLS_FLAVOR ?= v65_stable
+TOOLS_FLAVOR_KERNEL ?= 8.1-earlyaccess-latest
+#TOOLS_FLAVOR_KERNEL ?= 8.1-internal-latest
 ARCH_FLAVOR ?= v65_latest
 endif
 endif

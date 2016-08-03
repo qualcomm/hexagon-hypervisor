@@ -19,6 +19,9 @@ default-target: all
 
 include $(H2DIR)/scripts/Makefile.inc.tools
 
+export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
+
+
 ifeq ($(MODEL),)
    MODEL = ref
    MODELSTR = ${MODEL}

@@ -132,10 +132,33 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	asid = H2K_asid_table_inc(boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, H2K_ASID_TLB_INVALIDATE_FALSE, 0, bootvm);
 	boot->ssr_asid = asid;
 	BKL_LOCK();
+
+#ifdef HTHREADS_MASK
+
+#ifdef NUM_HTHREADS
+#error "Can't define both NUM_HTHREADS and HTHREADS_MASK."
+#endif
+
+	H2K_gp->hthreads_mask = HTHREADS_MASK;
 	H2K_start_threads(H2K_gp->hthreads_mask);
+	H2K_gp->hthreads = get_hthreads();
+
+#else
+
+#ifdef NUM_HTHREADS
+	H2K_gp->hthreads = NUM_HTHREADS;
+	H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
+	H2K_start_threads(H2K_gp->hthreads_mask);
+#else
+	H2K_start_threads(~0);  // start all
+	H2K_gp->hthreads = get_hthreads();
+	H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
+#endif
+
+#endif
+
 	H2K_runlist_push(boot);
 	H2K_init_complete = 1;
 	H2K_mutex_unlock_tlb();
 	H2K_switch(NULL,boot);
 }
-

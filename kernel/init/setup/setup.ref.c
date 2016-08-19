@@ -135,6 +135,10 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 
 #ifdef HTHREADS_MASK
 
+#if (HTHREADS_MASK >> MAX_HTHREADS)
+#error "(HTHREADS_MASK >> MAX_HTHREADS) > 0."
+#endif
+
 #ifdef NUM_HTHREADS
 #error "Can't define both NUM_HTHREADS and HTHREADS_MASK."
 #endif
@@ -146,11 +150,16 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 #else
 
 #ifdef NUM_HTHREADS
+
+#if (NUM_HTHREADS > MAX_HTHREADS)
+#error "NUM_HTHREADS > MAX_HTHREADS."
+#endif
+
 	H2K_gp->hthreads = NUM_HTHREADS;
 	H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
 	H2K_start_threads(H2K_gp->hthreads_mask);
 #else
-	H2K_start_threads(~0);  // start all
+	H2K_start_threads((~0) & ((1 << MAX_HTHREADS) - 1));  // start all
 	H2K_gp->hthreads = get_hthreads();
 	H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
 #endif

@@ -45,8 +45,6 @@
 #define TLB_ENTRY_GLOBAL_BIT 62
 #define TLB_ENTRY_VALID_BIT 63
 
-#define MAX_THREADS 16
-
 #define KERNEL_STACK_SIZE (8*31)
 
 #ifdef CRASH_DEBUG

@@ -140,7 +140,7 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 	{
 		p0 = cmp.gtu(INTNO,#MAX_INTERRUPTS-1)
 		if (p0.new) jump:nt 9f
-		p1 = cmp.eq(INTNO,#31)
+		p1 = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 		if (p1.new) jump:nt 9f
 		HWTNUM = memub(ME+#CONTEXT_hthread)
 	}

@@ -265,15 +265,13 @@ int main()
 	if ((TH_call_popup_wait(-1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 	if ((TH_call_popup_wait(MAX_INTERRUPTS,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 	if ((TH_call_popup_wait(MAX_INTERRUPTS+1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
-#if ARCHV >= 4
-	if ((TH_call_popup_wait(31,&a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
-#endif
+	if ((TH_call_popup_wait(L2_CORE_INTERRUPT, &a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
 
 	TH_popup_check_priorities(&a,&b);
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 #if ARCHV >= 4
-		if (i == 31) continue;
+		if (L2_CORE_INTERRUPT == i) continue;
 #endif
 		H2K_runlist_push(&a);
 		TH_clear_popups();

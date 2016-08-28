@@ -220,9 +220,15 @@ void H2K_intconfig_init(u32_t ssbase)
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->inthandlers[i].raw = 0;
 	}
+	H2K_gp->inthandlers[RESCHED_INT].param = (void *)1; // mark interrupt taken
 	H2K_gp->inthandlers[RESCHED_INT].handler = H2K_resched;
+
+	H2K_gp->inthandlers[VM_IPI_INT].param = (void *)1;
 	H2K_gp->inthandlers[VM_IPI_INT].handler = H2K_vm_ipi_do;
+
+	H2K_gp->inthandlers[H2K_gp->timer_intnum].param = (void *)1;
 	H2K_gp->inthandlers[H2K_gp->timer_intnum].handler = H2K_timer_int;
+
 	for (i = 0; i < H2K_gp->hthreads; i++) {
 		tmp = &H2K_fastint_contexts[i].context;
 		H2K_thread_context_clear(tmp);

@@ -94,9 +94,14 @@ int main()
 		} else if (i == timer_int) {
 			if (H2K_gp->inthandlers[i].handler != H2K_timer_int)
 				FAIL("wrong timer int handler");
-		} else if (H2K_gp->inthandlers[i].handler != NULL) FAIL("uninitialized handler");
-
-		if (H2K_gp->inthandlers[i].param != NULL) FAIL("uninitialized fastint ptr");
+		} else {
+			if (H2K_gp->inthandlers[i].handler != NULL) {
+				FAIL("uninitialized handler");
+			}
+			if (H2K_gp->inthandlers[i].param != NULL) {
+				FAIL("uninitialized param");
+			}
+		}
 	}
 	for (i = 0; i < H2K_gp->hthreads; i++) {
 		if (H2K_fastint_contexts[i].context.r0100) FAIL("Uninitialized fastint context");

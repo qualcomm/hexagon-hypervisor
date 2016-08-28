@@ -45,10 +45,10 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 {
 	int hthread = me->hthread;
 	if (intnum >= MAX_INTERRUPTS) return -1;
-#if ARCHV >= 4
+
 	/* Can't change L2 interrupt vector */
-	if (intnum == 31) return -1;
-#endif
+	if (intnum == L2_CORE_INTERRUPT) return -1;
+
 	BKL_LOCK(&H2K_bkl);
 	if (H2K_gp->inthandlers[intnum].param != NULL) {
 		BKL_UNLOCK(&H2K_bkl);

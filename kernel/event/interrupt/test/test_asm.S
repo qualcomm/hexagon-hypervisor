@@ -27,7 +27,7 @@ TH_do_interrupt:
 	r4 = insert(r2,#5,#0)
 	ssr = r4
 #if ARCHV >= 4
-	p0 = cmp.gtu(r2,#31)
+	p0 = cmp.geu(r2, #L2_INTERRUPT_START)
 	if (!p0) jump 1f
 	r5 = #L2_CORE_INTERRUPT
 	r4 = insert(r5,#5,#0)
@@ -98,7 +98,7 @@ TH_do_preempt:
 	r4 = insert(r2,#5,#0)
 	ssr = r4
 #if ARCHV >= 4
-	p0 = cmp.gtu(r2,#31)
+	p0 = cmp.geu(r2, #L2_INTERRUPT_START)
 	if (!p0) jump 1f
 	r5 = #L2_CORE_INTERRUPT
 	r4 = insert(r5,#5,#0)

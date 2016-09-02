@@ -149,6 +149,8 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	}
 	{
 		CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)	// Value to CIAD if L2 interrupt
+#undef ISL2INT
+		p0 = cmp.eq(INTINFO_FN, #0)	// really, we shouldn't get NULL interrupt handlers, but if we do...
 		trace(TRACEDATAHI)
 	}
 	{
@@ -157,7 +159,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	}
 	elr = ELRTMP
 	{
-		callr INTINFO_FN
+		if (!p0) callr INTINFO_FN
 		r1:0 = combine(ME,INTNO)
 		r3:2 = combine(INTINFO_VAL,HTNUM)
 	}

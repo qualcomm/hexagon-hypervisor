@@ -799,6 +799,26 @@ static u8_t l2_v66_2[] =
 		[0xf] = reserved
 	};
 
+static u8_t l2_v66_5[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
 static u8_t l2_v66_6[] =
 	{
 		[0x0] = s0,
@@ -818,26 +838,6 @@ static u8_t l2_v66_6[] =
 		[0xe] = reserved,
 		[0xf] = reserved
 	};
-
-/* static u8_t l2_v65_8[] = */
-/* 	{ */
-/* 		[0x0] = s0, */
-/* 		[0x1] = reserved, */
-/* 		[0x2] = reserved, */
-/* 		[0x3] = reserved, */
-/* 		[0x4] = reserved, */
-/* 		[0x5] = reserved, */
-/* 		[0x6] = reserved, */
-/* 		[0x7] = reserved, */
-/* 		[0x8] = reserved, */
-/* 		[0x9] = reserved, */
-/* 		[0xa] = s1024, */
-/* 		[0xb] = reserved, */
-/* 		[0xc] = reserved, */
-/* 		[0xd] = reserved, */
-/* 		[0xe] = reserved, */
-/* 		[0xf] = reserved */
-/* 	}; */
 
 // uarch -> (array-size -> tag-size map)
 
@@ -988,7 +988,7 @@ static u8_t *uarches_v66[] =
 		[0x2] = l2_v66_2,
 		[0x3] = NULL,
 		[0x4] = NULL,
-		[0x5] = NULL,
+		[0x5] = l2_v66_5,
 		[0x6] = l2_v66_6,
 		[0x7] = NULL,
 		[0x8] = NULL,

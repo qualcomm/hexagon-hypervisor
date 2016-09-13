@@ -188,11 +188,21 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	vmem(r21+#0) = v3
 #endif
 
+// fall through
+
+	r20 = #H2K_TRACE_SWITCH
+	jump 1f
+
 .Lfrom_sleep:
+	r20 = #H2K_TRACE_SWITCH_FROM_SLEEP
+
+1:
+
 	if (r1 == #0) jump:nt .Lto_sleep
 	r27:26 = combine(r10,r18)
-	r20 = #H2K_TRACE_SWITCH
+
 	r14 = memw(r1+#CONTEXT_id)
+	r14 = lsr(r14, #2)  // assuming #define H2K_ID_VINT_BITS 10
 	r14 = insert(r20,#8,#0)
 	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 	memd(r8) = r19:18
@@ -266,8 +276,20 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r5 = HTID
 #endif
 	r27:26 = combine(r5,r18)
-	r14 = #H2K_TRACE_SWITCH
-	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
+
+//	r14 = #H2K_TRACE_SWITCH
+//	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
+
+		r14 = #H2K_TRACE_SWITCH_TO_SLEEP
+		r15 = #0
+		p0 = cmp.eq(r0, #0)
+		if (p0) jump 2f
+		r15 = memw(r0 + #CONTEXT_id)  // ID we're switching *from*
+2:
+		r15 = lsr(r15, #2)  // assuming #define H2K_ID_VINT_BITS 10
+		r15 = insert(r14, #8, #0)
+		trace(r15)
+		//ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 
 	r9 = memw(H2K_GP+#KG_wait_mask)
 	r8 = memw(H2K_GP+#KG_priomask)

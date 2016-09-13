@@ -9,6 +9,7 @@
 #include <vmdefs.h>
 #include <idtype.h>
 #include <trace_asm_macro.h>
+#include <trace_constants.h>
 
 /*
  * We are switching from thread in r0 to thread in r1
@@ -226,8 +227,27 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	} // end of packet at #ifdef DO_EXT_SWITCH
 #endif
 
+// fall through
+
+#define OLDIDX r0
+#define NEWIDX r1
+#define IDXADDR r31
+#define TRACE r2
+#define DATA r3
+#define ENTRIES r5
+#define BUFADDR r4
+#define ENTRIES_BUFADDR r5:4
+
+	{
+		TRACE = #H2K_TRACE_SWITCH
+		jump 2f
+	}
+
 	.falign
 .Lfrom_sleep:
+	TRACE = #H2K_TRACE_SWITCH_FROM_SLEEP
+
+2:
 	{
 		p0 = cmp.eq(DST,#0)
 		if (p0.new) jump:nt .Lto_sleep
@@ -236,33 +256,27 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	/* Load rest-of-context for new thread and trace */
 	/* r0-r5 are available */
 	/* r20-27 are available now, will be loaded later */
-#define OLDIDX r0
-#define NEWIDX r1
-#define IDXADDR r31
-#define DATAHI r3
-#define DATALO r2
-#define DATA r3:2
-#define ENTRIES r5
-#define BUFADDR r4
-#define ENTRIES_BUFADDR r5:4
+
 	{
 		sgp0 = DST
+		DATA = memw(DST+#CONTEXT_id)		// lets already fill this with switch id
 	}
-1:
 	{
-		DATAHI = memw(DST+#CONTEXT_id)		// lets already fill this with switch id
+		DATA = lsr(DATA, #2)  // assuming #define H2K_ID_VINT_BITS 10
 		r21:20 = memd(DST+#CONTEXT_lc1sa1)
+	}
+	{
+		DATA = insert(TRACE, #8, #0)
 	}
 	{
 		P_VMWORK = tstbit(VMSTATUS,#H2K_VMSTATUS_VMWORK_BIT)
 		KG_WAITCYCLES = add(H2K_GP,#KG_waitcycles)
-		trace(DATAHI)
+		trace(DATA)
 	}
 #undef OLDIDX
 #undef NEWIDX
 #undef IDXADDR
-#undef DATAHI
-#undef DATALO
+#undef TRACE
 #undef DATA
 #undef ENTRIES
 #undef BUFADDR
@@ -333,29 +347,44 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r31 = and(r31,#-4)
 		jump H2K_check_sanity_unlock
 	}
+
+#define TRACE r4
+#define DATA r5
 	.falign
 .Lto_sleep:
 	/* Don't care as much about register values here, certainly not r0-r5 and r20-27 */
 	{
-		r1:0 = combine(HTNUM,NOW_LO)
-		r31 = #0
+		// r1:0 = combine(HTNUM,NOW_LO)
+		p0 = cmp.eq(SRC, #0)
+		TRACE = #H2K_TRACE_SWITCH_TO_SLEEP
+		DATA = #0
+		if (p0.new) jump:nt 2f
 	}
-	ASM_INLINE_TRACE(r31,r1:0,r1,r0,r3:2,r3,r2,p0,r5,r4,r20,,)
 	{
+		DATA = memw(SRC + #CONTEXT_id)  // ID we're switching *from*
+	}
+
+2:
+	{
+		DATA = lsr(DATA, #2)  // assuming #define H2K_ID_VINT_BITS 10
 		memd(KG_CPUWAIT+HTNUM<<#3) = NOW       // oncpu wait
 		r0 = lsl(#1,HTNUM)
 	}
 	{
+		DATA = insert(TRACE, #8, #0)
 		memw(H2K_GP+#KG_wait_mask) |= r0
 		r3:2 = combine(#0,#-1)
 	}
-	SGP0 = DST
+	trace(DATA)
+#undef TRACE
+#undef DATA
 	STID = r2
+	SGP0 = DST
 	{
 		memw(H2K_GP+#KG_priomask) |= r0
 		r0 = ##0x00040000 // insert(r5,#3,#16)
 	}
-	k0unlock
+		k0unlock
 		IMASK = r3
 	{
 		ssr = r0

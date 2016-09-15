@@ -12,19 +12,8 @@
 #include <tmpmap.h>
 #include <max.h>
 #include <tcm.h>
-#include <cfg_table.h>
 
 void H2K_tcm_copy(u32_t last_tlb_index) {
-
-	if (H2K_gp->l2arr > CORE_REV_L2_CHUNK_SWITCH) {
-		H2K_gp->l2size = (CORE_REV_L2_CHUNK_SWITCH * L2_CHUNK)
-			+ ((H2K_gp->l2arr - CORE_REV_L2_CHUNK_SWITCH) * L2_BIG_CHUNK);
-	} else {
-		H2K_gp->l2size = H2K_gp->l2arr * L2_CHUNK;
-	}
-
-	H2K_gp->tcm_base = H2K_cfg_table(CFG_TABLE_L2TCM);
-	H2K_gp->tcm_size = H2K_gp->l2size - (H2K_gp->l2tags > 0 ? (1 << H2K_gp->l2tags) * L2_TAG_CHUNK : 0);
 
 #ifdef H2K_USE_TCM
 

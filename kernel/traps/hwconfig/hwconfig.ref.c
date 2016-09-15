@@ -124,6 +124,10 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 	H2K_gp->syscfg_val = syscfg;
 	H2K_syncht();
 	H2K_stmode_end();
+
+	H2K_gp->l2tags = size;
+	H2K_gp->tcm_size = H2K_gp->l2size - (H2K_gp->l2tags > 0 ? (1 << H2K_gp->l2tags) * L2_TAG_CHUNK : 0);
+
 	return 0;
 }
 

@@ -1044,6 +1044,13 @@ u32_t H2K_l2cache_init() {
 		return 0;
 	}
 
+	if (H2K_gp->l2arr > CORE_REV_L2_CHUNK_SWITCH) {
+		H2K_gp->l2size = (CORE_REV_L2_CHUNK_SWITCH * L2_CHUNK)
+			+ ((H2K_gp->l2arr - CORE_REV_L2_CHUNK_SWITCH) * L2_BIG_CHUNK);
+	} else {
+		H2K_gp->l2size = H2K_gp->l2arr * L2_CHUNK;
+	}
+
 	if (H2K_trap_hwconfig_l2cache(0, NULL, tag_size, 1, NULL) == -1) {  // error
 		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_CONFIG;
 		return 0;

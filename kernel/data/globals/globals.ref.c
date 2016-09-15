@@ -9,6 +9,7 @@
 #include <symbols.h>
 #include <hw.h>
 #include <bzero.h>
+#include <cfg_table.h>
 
 H2K_kg_t H2K_kg;
 
@@ -114,4 +115,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.timer_intnum = TIMER_INT_CORE_V60;
 		break;
 	}
+
+	H2K_kg.tcm_base = H2K_cfg_table(CFG_TABLE_L2TCM);
+
 }

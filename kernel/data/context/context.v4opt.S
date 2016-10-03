@@ -138,18 +138,18 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	{
 		v31 = vmem(r14+#0)
 // predicates
-	 	v29 = vsplatw(r15)		// 0x01010101
+	 	v29 = vsplat(r15)		// 0x01010101
 	}
 	{
 		v30 = vand(v31, v29)
 		v1 = vmem(r11++#1)
 	}
 	{
-		q0 = vcmpb.equ(v30, v29)
+		q0 = vcmp.eq(v30.b, v29.b)
 		v2 = vmem(r11++#1)
 	}
 	{
-		v29 = vaslw(v29, r16) // 0x02020202
+		v29.w = vasl(v29.w, r16) // 0x02020202
 		v3 = vmem(r11++#1)
 	}
 	{
@@ -157,11 +157,11 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		v4 = vmem(r11++#1)
 	}
 	{
-		q1 = vcmpb.equ(v30, v29)
+		q1 = vcmp.eq(v30.b, v29.b)
 		v5 = vmem(r11++#1)
 	}
 	{
-		v29 = vaslw(v29, r16) // 0x04040404
+		v29.w = vasl(v29.w, r16) // 0x04040404
 		v6 = vmem(r11++#1)
 	}
 	{
@@ -169,11 +169,11 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		v7 = vmem(r11++#1)
 	}
 	{
-		q2 = vcmpb.equ(v30, v29)
+		q2 = vcmp.eq(v30.b, v29.b)
 		v8 = vmem(r11++#1)
 	}
 	{
-		v29 = vaslw(v29, r16) // 0x08080808
+		v29.w = vasl(v29.w, r16) // 0x08080808
 		v9 = vmem(r11++#1)
 	}
 	{
@@ -181,7 +181,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		v10 = vmem(r11++#1)
 	}
 	{
-		q3 = vcmpb.equ(v30, v29)
+		q3 = vcmp.eq(v30.b, v29.b)
 		v11 = vmem(r11++#1)
 	}
 	{

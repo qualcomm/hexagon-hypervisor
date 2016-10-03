@@ -148,7 +148,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	 	r20 = #0x00000000
 	}
 	{
-		v0 = vsplatw(r20)
+		v0 = vsplat(r20)
 		vmem(r21++#1) = v1
 	}
 	{
@@ -156,7 +156,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v2
 	}
 	{
-		v1 = vsplatw(r20)
+		v1 = vsplat(r20)
 		vmem(r21++#1) = v3
 	}
 	{
@@ -168,7 +168,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v5
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x02020202
+		v1.w = vasl(v1.w, r20) // 0x02020202
 		vmem(r21++#1) = v6
 	}
 	{
@@ -180,7 +180,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v8
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x04040404
+		v1.w = vasl(v1.w, r20) // 0x04040404
 		vmem(r21++#1) = v9
 	}
 	{
@@ -192,7 +192,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v11
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x08080808
+		v1.w = vasl(v1.w, r20) // 0x08080808
 		vmem(r21++#1) = v12
 	}
 	{

@@ -10,6 +10,7 @@
 
 #if ARCHV >= 60
 #define HAVE_EXTENSIONS 1
+#define DO_EXT_SWITCH 1
 #endif
 
 #define DO_PROFILE 1

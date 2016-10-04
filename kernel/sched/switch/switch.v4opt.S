@@ -133,7 +133,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	{
 		r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
 		r23 = setbit(r23, #SSR_XE_BIT)
-		if (!p1) jump .Lfrom_sleep  // no need to save
+		if (!p1) jump .Lskip_ext_save  // no need to save
 	}
 
 // save; cpuid is ext_context index
@@ -223,6 +223,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 // save predicates
 	vmem(r21+#0) = v3
+
+.Lskip_ext_save:
 #else
 	} // end of packet at #ifdef DO_EXT_SWITCH
 #endif

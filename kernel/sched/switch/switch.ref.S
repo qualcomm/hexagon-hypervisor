@@ -166,22 +166,22 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	// predicates
 	r20 = #0x00000000
-	v0 = vsplatw(r20)
+	v0 = vsplat(r20)
 
 	r20 = ##0x01010101
-	v1 = vsplatw(r20)
+	v1 = vsplat(r20)
 	v3 = vmux(q0, v1, v0)
 
 	r20 = #1
-	v1 = vaslw(v1, r20) // 0x02020202
+	v1.w = vasl(v1.w, r20) // 0x02020202
 	v2 = vmux(q1, v1, v0)
 	v3 = vor(v3, v2)
 
-	v1 = vaslw(v1, r20) // 0x04040404
+	v1.w = vasl(v1.w, r20) // 0x04040404
 	v2 = vmux(q2, v1, v0)
 	v3 = vor(v3, v2)
 
-	v1 = vaslw(v1, r20) // 0x08080808
+	v1.w = vasl(v1.w, r20) // 0x08080808
 	v2 = vmux(q3, v1, v0)
 	v3 = vor(v3, v2)
 

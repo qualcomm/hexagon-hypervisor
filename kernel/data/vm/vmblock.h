@@ -83,8 +83,15 @@ typedef struct H2K_vmblock_struct {
 		u32_t flags;
 		struct {
 #ifdef HAVE_EXTENSIONS
-			u32_t use_ext:1;
+			u32_t use_ext:1;  // guest wants kernel ext switch
+
+#ifdef DO_EXT_SWITCH
+			u32_t do_ext:1;   // ext context switch active
+			u32_t flags_unused:30;
+#else
 			u32_t flags_unused:31;
+#endif
+
 #else
 			u32_t flags_unused:32;
 #endif

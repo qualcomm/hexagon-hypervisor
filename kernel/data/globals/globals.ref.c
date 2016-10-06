@@ -93,6 +93,8 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	}
 
 	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
+	H2K_kg.info_boot_flags.boot_ext_ok = (!(H2K_kg.syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= EXT_HVX_CONTEXTS);
+
 #endif
 
 #ifdef DO_PROFILE

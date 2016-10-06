@@ -18,6 +18,7 @@
 #include <hvx.h>
 #include <safemem.h>
 #include <cfg_table.h>
+#include <atomic.h>
 
 typedef u32_t (*configptr_t)(u32_t, void *, u32_t, u32_t, H2K_thread_context *);
 
@@ -170,8 +171,18 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) {
 	/* FIXME: should check for allowed XA values here (maybe?) */
 	/* EJP: Always allow XE/XA to be set if only for silver tests working also */
-	me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
-	me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+
+	if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + EXT_HVX_CONTEXTS)  // not in HVX range
+#ifdef DO_EXT_SWITCH
+			|| (!me->vmblock->do_ext)
+#else
+			|| 1
+#endif
+			) {
+		me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
+		me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+	}
+	/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
 #ifdef HAVE_EXTENSIONS
 	if (xe) {
 		H2K_hvx_poweron(); // make sure the lights are on
@@ -197,9 +208,26 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 	}
 	if (new != cur) {
 		H2K_set_syscfg(new);
-		H2K_gp->syscfg_val = new;
 		H2K_isync();
 		cur = H2K_get_syscfg();
+		H2K_gp->syscfg_val = cur;
+
+#ifdef DO_EXT_SWITCH
+		H2K_gp->info_boot_flags.boot_ext_ok = (!(H2K_kg.syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= EXT_HVX_CONTEXTS);
+		if (H2K_gp->info_boot_flags.boot_ext_ok) {
+			if (me->vmblock->use_ext) {
+				me->vmblock->do_ext = 1;
+				/* FIXME: Assign XA value more intelligently */
+				me->ssr = Q6_R_insert_RII(me->ssr, get_hwtnum(), SSR_XA_NBITS, SSR_XA_BITS);
+				H2K_hvx_poweron();
+			}
+		} else {
+			me->vmblock->do_ext = 0;
+			/* Forget about live HVX regs when enabling long vectors */
+			H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
+		}
+#endif
+
 		if (cur != new) {  // failed
 			BKL_UNLOCK();
 			return -1;

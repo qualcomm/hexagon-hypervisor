@@ -94,7 +94,12 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->ssr_um = 1;
 	tmp->ssr_asid = asid;
 #ifdef HAVE_EXTENSIONS
-	tmp->ssr_xa = 0; // no ext active
+	if (me->vmblock->do_ext) {
+	/* FIXME: Assign XA value more intelligently */
+		tmp->ssr_xa = get_hwtnum();
+	} else {
+		tmp->ssr_xa = EXT_NO_EXT;
+	}
 	tmp->ssr_xe = 0; // ext disabled to cause exception
 #endif
 

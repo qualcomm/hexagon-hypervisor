@@ -35,10 +35,15 @@ typedef enum {
 
 typedef union {
 	struct {
-		unsigned long boot_use_tcm:1;  /**< Hypervisor in TCM? */
-		unsigned long boot_have_hvx:1;
-		unsigned long boot_have_sample:1;
+		unsigned long boot_use_tcm:1;     /**< Hypervisor in TCM? */
+		unsigned long boot_have_hvx:1;    /**< Core has HVX? */
+		unsigned long boot_have_sample:1; /**< PC sampling enabled ? */
+#ifdef DO_EXT_SWITCH
+		unsigned long boot_ext_ok:1;      /**< Kernel can switch extended contexts? */
+		unsigned long boot_unused:28;
+#else
 		unsigned long boot_unused:29;
+#endif
 	};
 	unsigned long raw;
 } info_boot_flags_type;

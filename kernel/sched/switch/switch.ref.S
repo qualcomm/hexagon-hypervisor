@@ -115,7 +115,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = clrbit(r14, #SSR_XE_BIT)
 	memw(r0 + #CONTEXT_ssr) = r14
 
-	if (!p1) jump .Lfrom_sleep  // no need to save
+	if (!p1) jump .Lskip_ext_save  // no need to save
 
 	// save; cpuid is ext_context index
 	r14 = memw(r0 + #CONTEXT_id)
@@ -186,6 +186,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	v3 = vor(v3, v2)
 
 	vmem(r21+#0) = v3
+
+.Lskip_ext_save
 #endif
 
 // fall through

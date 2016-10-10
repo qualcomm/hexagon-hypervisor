@@ -191,13 +191,18 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	}
 	{
 		r13 = setbit(r13, #SSR_XE_BIT)
+		// FIXME: pick hvx context dynamically
+		r12 = htid
 		v13 = vmem(r11++#1)
 	}
 	{
-		memw(r3 + #CONTEXT_ssr) = r13
+		r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
 		v14 = vmem(r11++#1)
 	}
-	v15 = vmem(r11++#1)
+	{
+		memw(r3 + #CONTEXT_ssr) = r13
+		v15 = vmem(r11++#1)
+	}
 	v16 = vmem(r11++#1)
 	v17 = vmem(r11++#1)
 	v18 = vmem(r11++#1)

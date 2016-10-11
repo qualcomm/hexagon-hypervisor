@@ -123,14 +123,18 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	}
 	{
 		r10 = lsr(r10, #H2K_ID_VINT_BITS) // index
-		r16 = #1
 		r13 = setbit(r13, #SSR_XE_BIT)
 	}
 	{
-		r11 += mpyu(r12.l, r10.l)  // my ext context
+		// FIXME: pick hvx context dynamically
+		r9 = htid
 		r15 = ##0x01010101
-		ssr = r13
 	}
+	{
+		r13 = insert(r9, #SSR_XA_NBITS, #SSR_XA_BITS)
+		r11 += mpyu(r12.l, r10.l)  // my ext context
+	}
+	ssr = r13
 	{
 	 	r14 = add(r11, #(32 * 32))
 		v0 = vmem(r11++#1)
@@ -141,6 +145,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	 	v29 = vsplat(r15)		// 0x01010101
 	}
 	{
+		r16 = #1
 		v30 = vand(v31, v29)
 		v1 = vmem(r11++#1)
 	}

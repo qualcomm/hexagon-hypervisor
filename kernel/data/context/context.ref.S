@@ -145,6 +145,10 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 
 	r13 = ssr
 	r13 = setbit(r13, #SSR_XE_BIT)
+
+	// FIXME: pick hvx context dynamically
+	r12 = htid
+	r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
 	ssr = r13
 
 	// predicates

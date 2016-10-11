@@ -187,7 +187,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	vmem(r21+#0) = v3
 
-.Lskip_ext_save
+.Lskip_ext_save:
 #endif
 
 // fall through

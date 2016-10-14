@@ -191,7 +191,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	}
 	{
 // enable ext
-	 	r13 = memw(r3 + #CONTEXT_ssr)
+		r13 = memw(r3 + #CONTEXT_ssr)
 		v12 = vmem(r11++#1)
 	}
 	{

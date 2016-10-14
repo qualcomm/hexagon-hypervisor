@@ -30,8 +30,8 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	// else XE == 0, so maybe restore ext context
 	r0 = memw(r7 + #CONTEXT_vmblock)
 	r10 = memw(r0 + #VMBLOCK_flags)
-	p0 = tstbit(r10, #H2K_VMBLOCK_FLAGS_DO_EXT_BIT)
-	if (!p0) jump 1f  // VM doing ext switch?
+	p0 = tstbit(r10, #H2K_VMBLOCK_FLAGS_DO_EXT_BIT)  // VM doing ext switch?
+	if (!p0) jump 1f
 
 	jump H2K_ext_context_restore // continues to H2K_context_restore_return
 #endif

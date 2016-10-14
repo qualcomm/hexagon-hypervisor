@@ -106,18 +106,27 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	 	r13 = add(SRC, ##CONTEXT_atomic_status_word)
 	}
 1:
+	// FIXME? Maybe savext bit isn't needed at all and we can just check ssr:xe?
 	r14 = memw_locked(r13)
 	{ p1 = tstbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)  // ext regs live?
 		r14 = clrbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)
 	}
 	memw_locked(r13, p0) = r14
-	if (!p0) jump 1b
+	{
+		if (!p0) jump 1b
+		r24 = memw(SRC + #CONTEXT_vmblock)
+	}
+	{
+		if (!p1) jump .Lskip_ext_save  // no need to save
+		r13 = memw(r24 + #VMBLOCK_flags)
+		r15 = memw(SRC + #CONTEXT_ssr)
+	}
 
 	// cause exception on next ext access to restore
 	{
-		r15 = memw(SRC + #CONTEXT_ssr)
 		r14 = memw(SRC + #CONTEXT_id)
 		r20 = ##H2K_ID_CPUIDX_MASK
+		p0 = tstbit(r13, #H2K_VMBLOCK_FLAGS_DO_EXT_BIT)  // VM doing ext switch?
 	}
 	{
 		r15 = clrbit(r15, #SSR_XE_BIT)
@@ -125,15 +134,14 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r22 = ##EXT_CONTEXT_SIZE
 	}
 	{
-	  memw(SRC + #CONTEXT_ssr) = r15
 		r14 = lsr(r14, #H2K_ID_VINT_BITS)  // index
-		r20 = memw(SRC + #CONTEXT_vmblock)
 		r23 = ssr
+		if (!p0) jump .Lskip_ext_save  // no need to save
 	}
 	{
-		r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
+	  memw(SRC + #CONTEXT_ssr) = r15
+		r21 = memw(r24 + #VMBLOCK_ext_contexts)  // start of ext contexts
 		r23 = setbit(r23, #SSR_XE_BIT)
-		if (!p1) jump .Lskip_ext_save  // no need to save
 	}
 
 // save; cpuid is ext_context index

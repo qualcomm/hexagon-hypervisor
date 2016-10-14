@@ -115,6 +115,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	{
 		if (!p0) jump 1b
 		r24 = memw(SRC + #CONTEXT_vmblock)
+		r23 = ssr
 	}
 	{
 		if (!p1) jump .Lskip_ext_save  // no need to save
@@ -135,7 +136,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		r14 = lsr(r14, #H2K_ID_VINT_BITS)  // index
-		r23 = ssr
 		if (!p0) jump .Lskip_ext_save  // no need to save
 	}
 	{

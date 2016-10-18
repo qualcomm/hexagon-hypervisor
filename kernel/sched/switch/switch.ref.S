@@ -135,6 +135,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r23 = ssr
 	r23 = setbit(r23, #SSR_XE_BIT)
 	ssr = r23
+	isync
 
 	vmem(r21++#1) = v0
 	vmem(r21++#1) = v1

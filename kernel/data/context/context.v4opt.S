@@ -130,11 +130,13 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		r9 = htid
 		r15 = ##0x01010101
 	}
+	r9 = add(r9, #EXT_HVX_XA_START)
 	{
 		r13 = insert(r9, #SSR_XA_NBITS, #SSR_XA_BITS)
 		r11 += mpyu(r12.l, r10.l)  // my ext context
 	}
 	ssr = r13
+	isync
 	{
 	 	r14 = add(r11, #(32 * 32))
 		v0 = vmem(r11++#1)
@@ -201,14 +203,17 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		v13 = vmem(r11++#1)
 	}
 	{
-		r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
+		r12 = add(r12, #EXT_HVX_XA_START)
 		v14 = vmem(r11++#1)
 	}
 	{
-		memw(r3 + #CONTEXT_ssr) = r13
+		r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
 		v15 = vmem(r11++#1)
 	}
-	v16 = vmem(r11++#1)
+	{
+		memw(r3 + #CONTEXT_ssr) = r13
+		v16 = vmem(r11++#1)
+	}
 	v17 = vmem(r11++#1)
 	v18 = vmem(r11++#1)
 	v19 = vmem(r11++#1)

@@ -148,8 +148,10 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 
 	// FIXME: pick hvx context dynamically
 	r12 = htid
+	r12 = add(r12, #EXT_HVX_XA_START)
 	r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
 	ssr = r13
+	isync
 
 	// predicates
 	r14 = add(r11, #(32 * 32))
@@ -220,6 +222,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 
 	// FIXME: pick hvx context dynamically
 	r12 = htid
+	r12 = add(r12, #EXT_HVX_XA_START)
 	r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
 	memw(r3 + #CONTEXT_ssr) = r13
 

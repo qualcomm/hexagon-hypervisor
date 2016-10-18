@@ -174,9 +174,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 
 	if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + EXT_HVX_CONTEXTS)  // not in HVX range
 #ifdef DO_EXT_SWITCH
-			|| (!me->vmblock->do_ext)
-#else
-			|| 1
+			|| (!(me->vmblock->do_ext))
 #endif
 			) {
 		me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);

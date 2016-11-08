@@ -120,14 +120,10 @@ OPT_OFILES := $(OPT_V65_OFILES)
 endif
 
 build/ref/libh2kernel.a: $(REF_OFILES)
-	@echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which $(CC)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(REF_OFILES))
 
 build/opt_v$(ARCHV)/libh2kernel.a: $(OPT_V$(ARCHV)_OFILES)
-	@echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which $(CC)
 	@echo $(OPT_V$(ARCHV)_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(OPT_V$(ARCHV)_OFILES))
@@ -160,7 +156,7 @@ includes: $(DEST_HFILES)
 
 ref: build/ref/libh2kernel.a
 
-ref_install: ref
+ref_install: info ref
 	mkdir -p $(INSTALLPATH)/lib
 	mkdir -p $(INSTALLPATH)/include
 	cp build/ref/libh2kernel.a $(INSTALLPATH)/lib
@@ -170,7 +166,7 @@ opt: build/opt_v$(ARCHV)/libh2kernel.a
 
 .PHONY: info
 info :
-	echo PKW_VERSIONS $(PKW_VERSIONS)
+	@echo Kernel PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 
 opt_install: info opt

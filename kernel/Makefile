@@ -120,10 +120,14 @@ OPT_OFILES := $(OPT_V65_OFILES)
 endif
 
 build/ref/libh2kernel.a: $(REF_OFILES)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
+	pkw --which $(CC)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(REF_OFILES))
 
 build/opt_v$(ARCHV)/libh2kernel.a: $(OPT_V$(ARCHV)_OFILES)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
+	pkw --which $(CC)
 	@echo $(OPT_V$(ARCHV)_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(OPT_V$(ARCHV)_OFILES))

@@ -80,7 +80,7 @@ qurtclean:
 	$(MAKE) -f scripts/Makefile.qurt clean_top
 
 opt:
-	echo PKW_VERSIONS $(PKW_VERSIONS)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
@@ -91,7 +91,7 @@ opt:
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 
 ref:
-	echo PKW_VERSIONS $(PKW_VERSIONS)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \

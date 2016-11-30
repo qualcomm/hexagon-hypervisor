@@ -179,6 +179,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 			) {
 		me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
 		me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+		H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
 	}
 	/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
 #ifdef HAVE_EXTENSIONS

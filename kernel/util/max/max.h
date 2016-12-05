@@ -31,9 +31,9 @@
 #define CORE_V66 0x66
 
 #define CORE_V6_A 0x0
-#define CORE_V6_E 0x4
+#define CORE_V6_G 0x4
 #define CORE_V6_J 0x7
-#define CORE_V6_K 0x8
+#define CORE_V6_E 0x8
 
 #define TEMP_MAP_VA 0xff800000
 #define TEMP_MAP_PG_SIZE SIZE_4M

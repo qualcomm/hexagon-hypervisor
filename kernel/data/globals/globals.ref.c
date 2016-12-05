@@ -73,6 +73,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	case CORE_V65:
 		switch(H2K_kg.uarch) {
 		case CORE_V6_A:
+		case CORE_V6_G:
 			have_hvx = 1;
 			break;
 		default:
@@ -82,6 +83,8 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	case CORE_V66:
 		switch(H2K_kg.uarch) {
 		case CORE_V6_A:
+		case CORE_V6_E:
+		case CORE_V6_G:
 			have_hvx = 1;
 			break;
 		default:

@@ -87,6 +87,12 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_HVX_VLENGTH:
 		return H2K_gp->hvx_vlength;
 
+	case INFO_HVX_CONTEXTS:
+		return EXT_HVX_CONTEXTS; // FIXME
+
+	case INFO_HVX_SWITCH:
+		return me->vmblock->do_ext;
+
 	default:
 		return -1;
 	}

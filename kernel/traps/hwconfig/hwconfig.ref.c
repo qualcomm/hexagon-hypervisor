@@ -200,7 +200,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 
 	BKL_LOCK();
 	cur = H2K_get_syscfg();
-	if (vlength >= V2X_LENGTH) {  // turn on long vectors
+	if (vlength > Q6_R_ct0_R(H2K_gp->hvx_vlength)) {  // turn on long vectors
 		new = cur | SYSCFG_V2X;
 	} else {
 		new = cur & ~SYSCFG_V2X;

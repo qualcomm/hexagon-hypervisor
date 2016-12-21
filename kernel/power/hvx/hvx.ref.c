@@ -14,6 +14,10 @@ void H2K_hvx_poweron(void) {
 #ifdef HAVE_EXTENSIONS
 	volatile u32_t delay;
 
+	if (!H2K_gp->info_boot_flags.boot_have_hvx) {
+		return;
+	}
+
 	BKL_LOCK();
 	if (H2K_gp->hvx_state == H2K_HVX_STATE_ON) {  // already on
 		BKL_UNLOCK();
@@ -82,6 +86,10 @@ void H2K_hvx_poweron(void) {
 void H2K_hvx_poweroff(void) {
 
 #ifdef HAVE_EXTENSIONS
+
+	if (!H2K_gp->info_boot_flags.boot_have_hvx) {
+		return;
+	}
 
 	BKL_LOCK();
 

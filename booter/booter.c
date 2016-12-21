@@ -1036,6 +1036,7 @@ void print_infos() {
 	printf((boot_flags.boot_have_sample ? "true\n" : "false\n"));
 	printf("\tHVX present: ");
 	printf((boot_flags.boot_have_hvx ? "true\n" : "false\n"));
+	printf("\t\tHVX native vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
 	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	printf("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
 	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));

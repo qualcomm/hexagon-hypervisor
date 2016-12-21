@@ -84,6 +84,9 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_CLADE_BASE:
 		return H2K_cfg_table(CFG_TABLE_CLADEREGS);
 
+	case INFO_HVX_VLENGTH:
+		return H2K_gp->hvx_vlength;
+
 	default:
 		return -1;
 	}

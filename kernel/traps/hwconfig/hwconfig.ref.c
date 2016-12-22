@@ -212,7 +212,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 		H2K_gp->syscfg_val = cur;
 
 #ifdef DO_EXT_SWITCH
-		H2K_gp->info_boot_flags.boot_ext_ok = ((!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= EXT_HVX_CONTEXTS));
+		H2K_gp->info_boot_flags.boot_ext_ok = H2K_gp->info_boot_flags.boot_have_hvx && (!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= EXT_HVX_CONTEXTS);
 		if (H2K_gp->info_boot_flags.boot_ext_ok) {
 			if (me->vmblock->use_ext) {
 				me->vmblock->do_ext = 1;

@@ -1124,6 +1124,22 @@ u32_t H2K_l2cache_init() {
 		return 0;
 	}
 
+	if (62 <= H2K_gp->arch) {
+		if (H2K_trap_hwconfig_setl2reg
+				(0, NULL,
+				 L2REGS_COPROC_EGY_CFG, L2REGS_COPROC_EGY_CFG_DEFAULT_V62,
+				 NULL) == -1) {  // error
+			return 0;
+		}
+
+		if (H2K_trap_hwconfig_setl2reg
+				(0, NULL,
+				 L2REGS_COPROC_EGY_WEIGHTS, L2REGS_COPROC_EGY_WEIGHTS_DEFAULT_V62,
+				 NULL) == -1) {  // error
+			return 0;
+		}
+	}
+
 	while (arches[i].archv != arch) {
 		if (0 == arches[i].archv) {  // whoa
 			H2K_gp->kernel_error = KERROR_L2CACHE_INIT_ARCH;

@@ -1066,6 +1066,7 @@ void print_infos() {
 	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
 	printf("\tH2 kernel in TCM: ");
 	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
+	printf("\tcfgbase: 0x%08x\n", h2_info(INFO_CFGBASE));
 	printf("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
 	printf("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
 	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);

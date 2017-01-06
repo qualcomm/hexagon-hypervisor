@@ -145,7 +145,13 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 
 	r13 = ssr
 	r13 = setbit(r13, #SSR_XE_BIT)
+
+	// FIXME: pick hvx context dynamically
+	r12 = htid
+	r12 = add(r12, #EXT_HVX_XA_START)
+	r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
 	ssr = r13
+	isync
 
 	// predicates
 	r14 = add(r11, #(32 * 32))
@@ -153,21 +159,21 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	r12 = #1
 	r13 = ##0x01010101
 
-	v1 = vsplatw(r13)
+	v1 = vsplat(r13)
 	v2 = vand(v3, v1)
-	q0 = vcmpb.equ(v2, v1)
+	q0 = vcmp.eq(v2.b, v1.b)
 
-	v1 = vaslw(v1, r12) // 0x02020202
+	v1.w = vasl(v1.w, r12) // 0x02020202
 	v2 = vand(v3, v1)
-	q1 = vcmpb.equ(v2, v1)
+	q1 = vcmp.eq(v2.b, v1.b)
 
-	v1 = vaslw(v1, r12) // 0x04040404
+	v1.w = vasl(v1.w, r12) // 0x04040404
 	v2 = vand(v3, v1)
-	q2 = vcmpb.equ(v2, v1)
+	q2 = vcmp.eq(v2.b, v1.b)
 
-	v1 = vaslw(v1, r12) // 0x08080808
+	v1.w = vasl(v1.w, r12) // 0x08080808
 	v2 = vand(v3, v1)
-	q3 = vcmpb.equ(v2, v1)
+	q3 = vcmp.eq(v2.b, v1.b)
 
 	v0 = vmem(r11++#1)
 	v1 = vmem(r11++#1)
@@ -213,6 +219,11 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	// enable ext
 	r13 = memw(r3 + #CONTEXT_ssr)
 	r13 = setbit(r13, #SSR_XE_BIT)
+
+	// FIXME: pick hvx context dynamically
+	r12 = htid
+	r12 = add(r12, #EXT_HVX_XA_START)
+	r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
 	memw(r3 + #CONTEXT_ssr) = r13
 
 	jump H2K_context_restore_return

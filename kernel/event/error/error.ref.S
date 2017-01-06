@@ -25,10 +25,13 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 #ifdef DO_EXT_SWITCH
 	p0 = cmp.eq(r1, #0x16)  // XE exception?
 	if (!p0) jump 1f
+	p0 = tstbit(r8, #SSR_XE_BIT)  // coprocessor error?
+	if (p0) jump 1f
+	// else XE == 0, so maybe restore ext context
 	r0 = memw(r7 + #CONTEXT_vmblock)
 	r10 = memw(r0 + #VMBLOCK_flags)
-	p0 = tstbit(r10, #0)
-	if (!p0) jump 1f  // VM using ext?
+	p0 = tstbit(r10, #H2K_VMBLOCK_FLAGS_DO_EXT_BIT)  // VM doing ext switch?
+	if (!p0) jump 1f
 
 	jump H2K_ext_context_restore // continues to H2K_context_restore_return
 #endif

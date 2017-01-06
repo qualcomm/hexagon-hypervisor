@@ -74,6 +74,7 @@ Initialize the Vector Access type.
 static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, unsigned int req) {
 
 	int ret;
+	unsigned long native_vlength = h2_info(INFO_HVX_VLENGTH);
 
 	/* Block be default if init fails */
 	h2_sem_init_val(&vacc->sem, 0);
@@ -99,7 +100,7 @@ static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, unsigned int req
 		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_128)) <0) return ret;
 		vacc->ext = H2_VECACCESS_EXT_HVX;
 		vacc->length = H2_VECACCESS_VLENGTH_128;
-		h2_sem_init_val(&vacc->sem, H2_VECACCESS_NUM_HVX_CONTEXTS / 2);
+		h2_sem_init_val(&vacc->sem, H2_VECACCESS_NUM_HVX_CONTEXTS / (128 / native_vlength));
 		break;
 
 	default:

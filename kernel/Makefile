@@ -42,7 +42,7 @@ endif
 
 CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT)
 
-CFLAGS += $(H2K_EXTRA_CFLAGS)
+CFLAGS += $(KERNEL_CFLAGS) $(H2K_EXTRA_CFLAGS)
 
 SRC_HFILES := 
 DEST_HFILES := 
@@ -156,7 +156,7 @@ includes: $(DEST_HFILES)
 
 ref: build/ref/libh2kernel.a
 
-ref_install: ref
+ref_install: info ref
 	mkdir -p $(INSTALLPATH)/lib
 	mkdir -p $(INSTALLPATH)/include
 	cp build/ref/libh2kernel.a $(INSTALLPATH)/lib
@@ -166,7 +166,7 @@ opt: build/opt_v$(ARCHV)/libh2kernel.a
 
 .PHONY: info
 info :
-	echo PKW_VERSIONS $(PKW_VERSIONS)
+	@echo Kernel PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 
 opt_install: info opt

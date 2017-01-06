@@ -103,6 +103,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	// check if ext needs saving, and mark as saved
 	r13 = add(r0, ##CONTEXT_atomic_status_word)
 1:
+	// FIXME? Maybe savext bit isn't needed at all and we can just check ssr:xe?
 	r14 = memw_locked(r13)
 	{ p1 = tstbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)  // ext regs live?
 		r14 = clrbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)
@@ -110,12 +111,17 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memw_locked(r13, p0) = r14
 	if (!p0) jump 1b
 
+	if (!p1) jump .Lskip_ext_save  // no need to save
+
+	r13 = memw(r0 + #CONTEXT_vmblock)
+	r14 = memw(r13 + #VMBLOCK_flags)
+	p0 = tstbit(r14, #H2K_VMBLOCK_FLAGS_DO_EXT_BIT)  // VM doing ext switch?
+	if(!p0) jump .Lskip_ext_save
+
 	// cause exception on next ext access to restore
 	r14 = memw(r0 + #CONTEXT_ssr)
 	r14 = clrbit(r14, #SSR_XE_BIT)
 	memw(r0 + #CONTEXT_ssr) = r14
-
-	if (!p1) jump .Lfrom_sleep  // no need to save
 
 	// save; cpuid is ext_context index
 	r14 = memw(r0 + #CONTEXT_id)
@@ -123,13 +129,13 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = and(r14, r20)
 	r14 = lsr(r14, #H2K_ID_VINT_BITS)  // index
 	r22 = ##EXT_CONTEXT_SIZE
-	r20 = memw(r0 + #CONTEXT_vmblock)
-	r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
+	r21 = memw(r13 + #VMBLOCK_ext_contexts)  // start of ext contexts
 	r21 += mpyu(r22.l, r14.l)  // my ext context
 
 	r23 = ssr
 	r23 = setbit(r23, #SSR_XE_BIT)
 	ssr = r23
+	isync
 
 	vmem(r21++#1) = v0
 	vmem(r21++#1) = v1
@@ -166,26 +172,28 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	// predicates
 	r20 = #0x00000000
-	v0 = vsplatw(r20)
+	v0 = vsplat(r20)
 
 	r20 = ##0x01010101
-	v1 = vsplatw(r20)
+	v1 = vsplat(r20)
 	v3 = vmux(q0, v1, v0)
 
 	r20 = #1
-	v1 = vaslw(v1, r20) // 0x02020202
+	v1.w = vasl(v1.w, r20) // 0x02020202
 	v2 = vmux(q1, v1, v0)
 	v3 = vor(v3, v2)
 
-	v1 = vaslw(v1, r20) // 0x04040404
+	v1.w = vasl(v1.w, r20) // 0x04040404
 	v2 = vmux(q2, v1, v0)
 	v3 = vor(v3, v2)
 
-	v1 = vaslw(v1, r20) // 0x08080808
+	v1.w = vasl(v1.w, r20) // 0x08080808
 	v2 = vmux(q3, v1, v0)
 	v3 = vor(v3, v2)
 
 	vmem(r21+#0) = v3
+
+.Lskip_ext_save:
 #endif
 
 // fall through

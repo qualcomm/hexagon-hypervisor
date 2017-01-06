@@ -17,6 +17,9 @@
 #include <stlb.h>
 #include <h2_common_defs.h>
 #include <bzero.h>
+#ifdef DO_EXT_SWITCH
+#include <hvx.h>
+#endif
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -118,7 +121,7 @@ static u32_t H2K_config_vmblock_init_cpus_ints(H2K_vmblock_t *vmblock, u32_t vm,
 
 #ifdef HAVE_EXTENSIONS
 	/* maybe initialize extended contexts */
-	if (use_ext) {
+	if (use_ext && H2K_gp->info_boot_flags.boot_have_hvx) {
 		vmblock->use_ext = 1;
 #ifdef DO_EXT_SWITCH
 		vmblock->ext_contexts = ext_contexts = (H2K_ext_context *)ptrtmp;
@@ -126,6 +129,11 @@ static u32_t H2K_config_vmblock_init_cpus_ints(H2K_vmblock_t *vmblock, u32_t vm,
 			H2K_ext_context_clear(&ext_contexts[i]);
 		}
 		ptrtmp += vmblock->max_cpus * sizeof(H2K_ext_context);
+
+		if (H2K_gp->info_boot_flags.boot_ext_ok) { // V2X currently off; can do ext switch
+			vmblock->do_ext = 1;
+			H2K_hvx_poweron();
+		}
 #endif
 	}
 #endif

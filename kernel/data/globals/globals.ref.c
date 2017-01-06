@@ -96,6 +96,20 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	}
 
 	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
+
+	if (have_hvx) {
+		if (H2K_kg.uarch == CORE_V6_G) {
+			H2K_kg.hvx_vlength = 128;
+		} else {
+			H2K_kg.hvx_vlength = 64;
+		}
+	} else {
+		H2K_kg.hvx_vlength = 0;
+	}
+
+	H2K_kg.info_boot_flags.boot_ext_ok = have_hvx && (!(H2K_kg.syscfg_val & SYSCFG_V2X))
+		&& (H2K_kg.hthreads <= EXT_HVX_CONTEXTS);
+
 #endif
 
 #ifdef DO_PROFILE

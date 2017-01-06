@@ -31,15 +31,19 @@ typedef enum {
 	INFO_L2CFG_BASE,  /**< L2 regs base */
 	INFO_CLADE_BASE,  /**< CLADE regs base */
 	INFO_CFGBASE,     /**< cfgbase register */
+	INFO_HVX_VLENGTH, /**< HVX native (no v2x) vector length, in bytes */
+	INFO_HVX_CONTEXTS,/**< Number of HVX contexts (no v2x) */
+	INFO_HVX_SWITCH,  /**< HVX context switch in kernel active */
 	INFO_MAX
 } info_type;
 
 typedef union {
 	struct {
-		unsigned long boot_use_tcm:1;  /**< Hypervisor in TCM? */
-		unsigned long boot_have_hvx:1;
-		unsigned long boot_have_sample:1;
-		unsigned long boot_unused:29;
+		unsigned long boot_use_tcm:1;     /**< Hypervisor in TCM? */
+		unsigned long boot_have_hvx:1;    /**< Core has HVX? */
+		unsigned long boot_have_sample:1; /**< PC sampling enabled ? */
+		unsigned long boot_ext_ok:1;      /**< Kernel can switch extended contexts? */
+		unsigned long boot_unused:28;
 	};
 	unsigned long raw;
 } info_boot_flags_type;

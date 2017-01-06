@@ -106,18 +106,28 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	 	r13 = add(SRC, ##CONTEXT_atomic_status_word)
 	}
 1:
+	// FIXME? Maybe savext bit isn't needed at all and we can just check ssr:xe?
 	r14 = memw_locked(r13)
 	{ p1 = tstbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)  // ext regs live?
 		r14 = clrbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)
 	}
 	memw_locked(r13, p0) = r14
-	if (!p0) jump 1b
+	{
+		if (!p0) jump 1b
+		r24 = memw(SRC + #CONTEXT_vmblock)
+		r23 = ssr
+	}
+	{
+		if (!p1) jump .Lskip_ext_save  // no need to save
+		r13 = memw(r24 + #VMBLOCK_flags)
+		r15 = memw(SRC + #CONTEXT_ssr)
+	}
 
 	// cause exception on next ext access to restore
 	{
-		r15 = memw(SRC + #CONTEXT_ssr)
 		r14 = memw(SRC + #CONTEXT_id)
 		r20 = ##H2K_ID_CPUIDX_MASK
+		p0 = tstbit(r13, #H2K_VMBLOCK_FLAGS_DO_EXT_BIT)  // VM doing ext switch?
 	}
 	{
 		r15 = clrbit(r15, #SSR_XE_BIT)
@@ -125,15 +135,13 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r22 = ##EXT_CONTEXT_SIZE
 	}
 	{
-	  memw(SRC + #CONTEXT_ssr) = r15
 		r14 = lsr(r14, #H2K_ID_VINT_BITS)  // index
-		r20 = memw(SRC + #CONTEXT_vmblock)
-		r23 = ssr
+		if (!p0) jump .Lskip_ext_save  // no need to save
 	}
 	{
-		r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
+	  memw(SRC + #CONTEXT_ssr) = r15
+		r21 = memw(r24 + #VMBLOCK_ext_contexts)  // start of ext contexts
 		r23 = setbit(r23, #SSR_XE_BIT)
-		if (!p1) jump .Lfrom_sleep  // no need to save
 	}
 
 // save; cpuid is ext_context index
@@ -148,7 +156,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	 	r20 = #0x00000000
 	}
 	{
-		v0 = vsplatw(r20)
+		v0 = vsplat(r20)
 		vmem(r21++#1) = v1
 	}
 	{
@@ -156,7 +164,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v2
 	}
 	{
-		v1 = vsplatw(r20)
+		v1 = vsplat(r20)
 		vmem(r21++#1) = v3
 	}
 	{
@@ -168,7 +176,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v5
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x02020202
+		v1.w = vasl(v1.w, r20) // 0x02020202
 		vmem(r21++#1) = v6
 	}
 	{
@@ -180,7 +188,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v8
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x04040404
+		v1.w = vasl(v1.w, r20) // 0x04040404
 		vmem(r21++#1) = v9
 	}
 	{
@@ -192,7 +200,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v11
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x08080808
+		v1.w = vasl(v1.w, r20) // 0x08080808
 		vmem(r21++#1) = v12
 	}
 	{
@@ -223,6 +231,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 // save predicates
 	vmem(r21+#0) = v3
+
+.Lskip_ext_save:
 #else
 	} // end of packet at #ifdef DO_EXT_SWITCH
 #endif

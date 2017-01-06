@@ -10,6 +10,7 @@
 
 #if ARCHV >= 60
 #define HAVE_EXTENSIONS 1
+#define DO_EXT_SWITCH 1
 #endif
 
 #define PAGE_BITS 12 /* Minimum page size: 4K */
@@ -139,5 +140,9 @@
 
 #define H2K_TIME_GUESTINT 12
 #define H2K_VM_CHILDINT 14
+
+#define EXT_HVX_XA_START 4
+#define EXT_HVX_CONTEXTS 4
+#define EXT_NO_EXT 0
 
 #endif

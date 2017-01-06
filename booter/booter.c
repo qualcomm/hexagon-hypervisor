@@ -1059,8 +1059,13 @@ void print_infos() {
 	printf("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
 	printf("\tGuest PC sampling available: ");
 	printf((boot_flags.boot_have_sample ? "true\n" : "false\n"));
-	printf("\tHVX present: ");
-	printf((boot_flags.boot_have_hvx ? "true\n" : "false\n"));
+	printf("\tHVX:\n");
+	printf("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
+	if (boot_flags.boot_have_hvx) {
+		printf("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
+		printf("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_HVX_CONTEXTS));
+		printf("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
+	}
 	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	printf("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
 	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));

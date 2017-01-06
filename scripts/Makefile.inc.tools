@@ -58,6 +58,7 @@ else
 #TOOLS_FLAVOR ?= 8.1-internal-latest
 TOOLS_FLAVOR ?= v65_stable
 TOOLS_FLAVOR_KERNEL ?= 8.1-earlyaccess-latest
+KERNEL_CFLAGS += -mhvx
 #TOOLS_FLAVOR_KERNEL ?= 8.1-internal-latest
 ARCH_FLAVOR ?= v65_latest
 endif

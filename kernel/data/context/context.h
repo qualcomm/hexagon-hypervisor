@@ -257,9 +257,10 @@ typedef struct _h2_thread_context
 	// 288
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
 
+/* Big enough for 128-byte contexts. FIXME: size this space dynamically */
 typedef struct {
-	u32_t vregs[32][8];
-	u32_t qregs[8];
+	u32_t vregs[32][32];
+	u32_t qregs[32];
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_ext_context;
 
 typedef struct {

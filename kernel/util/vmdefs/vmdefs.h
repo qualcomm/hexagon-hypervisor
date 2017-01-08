@@ -34,13 +34,11 @@
 #define H2K_VMSTATUS_KILL	(0x01 << (H2K_VMSTATUS_KILL_BIT))
 
 #define H2K_VMBLOCK_FLAGS_USE_EXT_BIT 0
-#ifdef DO_EXT_SWITCH
 #define H2K_VMBLOCK_FLAGS_DO_EXT_BIT 1
 
 /* extended registers are live */
 #define H2K_VMSTATUS_SAVEXT_BIT     6
 #define H2K_VMSTATUS_SAVEXT		(0x01 << (H2K_VMSTATUS_SAVEXT_BIT))
-#endif
 
 #define H2K_VMSTATUS_IE_BIT     7
 #define H2K_VMSTATUS_IE		(0x01 << (H2K_VMSTATUS_IE_BIT))

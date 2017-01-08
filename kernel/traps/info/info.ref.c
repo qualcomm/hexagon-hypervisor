@@ -94,7 +94,11 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return EXT_HVX_CONTEXTS; // FIXME
 
 	case INFO_HVX_SWITCH:
+#ifdef DO_EXT_SWITCH
 		return me->vmblock->do_ext;
+#else
+		return 0;
+#endif
 
 	default:
 		return -1;

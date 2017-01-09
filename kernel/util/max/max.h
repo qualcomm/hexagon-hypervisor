@@ -187,7 +187,6 @@
 #define STLB_SHIFT 16		// optimize for 64KB pages
 #define STLB_ENTRIES (STLB_MAX_SETS * STLB_MAX_WAYS * STLB_MULT)
 
-#define PAGE_BITS 12 /* Minimum page size: 4K */
 #define PAGE_SIZE (0x1 << PAGE_BITS)
 #define H2K_PAGESIZE (1 << ((PAGE_BITS) + ((H2K_KERNEL_PGSIZE) * 2)))
 
@@ -258,6 +257,11 @@
 #define CFG_TABLE_SSBASE 0x8
 #define CFG_TABLE_L2REGS 0x10
 #define CFG_TABLE_CLADEREGS 0x24
+
+#define L2REGS_COPROC_EGY_CFG             0x28
+#define L2REGS_COPROC_EGY_CFG_DEFAULT_V62 0xc3e03ff5
+#define L2REGS_COPROC_EGY_WEIGHTS         0x2c
+#define L2REGS_COPROC_EGY_WEIGHTS_DEFAULT_V62 0xa61686e0
 
 #define L2REGS_QOS_MODE                  0x100
 #define L2REGS_QOS_MODE_TL_BIT                      7

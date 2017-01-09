@@ -13,6 +13,8 @@
 #define DO_EXT_SWITCH 1
 #endif
 
+#define PAGE_BITS 12 /* Minimum page size: 4K */
+
 #define DO_PROFILE 1
 
 #ifndef MAX_HTHREADS

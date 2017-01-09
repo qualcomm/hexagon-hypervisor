@@ -39,6 +39,23 @@
 #define ERRSTR_LEN 1024
 char errstr[ERRSTR_LEN];
 
+char *trans_name[] = {
+	"linear",
+	"table",
+	"invalid",
+	"offset"
+};
+
+char *pagesize_name[] = {
+	"4KB",
+	"16KB",
+	"64KB",
+	"256KB",
+	"1MB",
+	"4MB",
+	"16MB"
+};
+
 #define FOREACH_sym(GEN)												\
 	GEN(__guest_pmap__)														\
 	GEN(__boot_cmdline__)													\
@@ -667,7 +684,7 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].load_offset = vm_params[clone].load_offset + prev_size;
 		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
-		vm_params[idx].offset_pages = (total_offset) >> (vm_params[idx].page_size * 2);
+		vm_params[idx].offset_pages = total_offset >> PAGE_BITS;
 		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
 		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
@@ -727,7 +744,7 @@ void load_vm(unsigned int idx) {
 			total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 			if (vm_params[idx].offset_pages == -1) {
-				vm_params[idx].offset_pages = (total_offset) >> (vm_params[idx].page_size * 2);
+				vm_params[idx].offset_pages = total_offset >> PAGE_BITS;
 			}
 			phdr.p_paddr += vm_params[idx].load_offset;
 
@@ -869,9 +886,15 @@ void config_vm(unsigned int idx) {
 	if (-1 == vm_params[idx].trans_type) {  // not set on cmdline
 		if (NULL != vm_params[idx].pmap) {  // has __guest_pmap__
 			trans = vm_params[idx].pmap->type;
-			base.raw = vm_params[idx].pmap->base.raw;
+		  base.raw = vm_params[idx].pmap->base.raw;
+			printf("\tGuest pmap type %s\n", trans_name[trans]);
+			printf("\tGuest pmap base 0x%08x\n", base.raw);
 		} else {  // default
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
+			printf("\tTranslation type offset\n");
+			printf("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
+			printf("\t\tCCCC 0x%1x\n", base.cccc);
+			printf("\t\tXWRU 0x%1x\n", base.xwru);
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
@@ -890,6 +913,8 @@ void config_vm(unsigned int idx) {
 		}
 	}
 
+	printf("\tPriority %d\n", vm_params[idx].bestprio);
+	printf("\tTrapmask 0x%08x\n", vm_params[idx].trapmask);
 	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, vm_params[idx].bestprio, vm_params[idx].trapmask) != vm) {
 		FAIL("\tSET_PRIO_TRAPMASK", "");
 	}
@@ -1046,6 +1071,7 @@ void print_infos() {
 	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
 	printf("\tH2 kernel in TCM: ");
 	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
+	printf("\tcfgbase: 0x%08x\n", h2_info(INFO_CFGBASE));
 	printf("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
 	printf("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
 	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);

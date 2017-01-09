@@ -519,6 +519,26 @@ static u8_t l2_v62_2[] =
 		[0xf] = reserved
 	};
 
+static u8_t l2_v62_3[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = reserved,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = s1024,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
 static u8_t l2_v62_4[] =
 	{
 		[0x0] = s0,
@@ -573,7 +593,7 @@ static u8_t l2_v62_7[] =
 		[0x9] = reserved,
 		[0xa] = s512,
 		[0xb] = reserved,
-		[0xc] = reserved,
+		[0xc] = s1024,
 		[0xd] = reserved,
 		[0xe] = reserved,
 		[0xf] = reserved
@@ -609,7 +629,7 @@ static u8_t l2_v65_0[] =
 		[0x5] = reserved,
 		[0x6] = reserved,
 		[0x7] = reserved,
-		[0x8] = s512,
+		[0x8] = s1024,
 		[0x9] = reserved,
 		[0xa] = reserved,
 		[0xb] = reserved,
@@ -629,9 +649,9 @@ static u8_t l2_v65_1[] =
 		[0x5] = reserved,
 		[0x6] = reserved,
 		[0x7] = reserved,
-		[0x8] = s1024,
+		[0x8] = s512,
 		[0x9] = reserved,
-		[0xa] = reserved,
+		[0xa] = s512,
 		[0xb] = reserved,
 		[0xc] = reserved,
 		[0xd] = reserved,
@@ -645,7 +665,7 @@ static u8_t l2_v65_2[] =
 		[0x1] = reserved,
 		[0x2] = reserved,
 		[0x3] = reserved,
-		[0x4] = s512,
+		[0x4] = reserved,
 		[0x5] = reserved,
 		[0x6] = reserved,
 		[0x7] = reserved,
@@ -653,7 +673,7 @@ static u8_t l2_v65_2[] =
 		[0x9] = reserved,
 		[0xa] = reserved,
 		[0xb] = reserved,
-		[0xc] = reserved,
+		[0xc] = s512,
 		[0xd] = reserved,
 		[0xe] = reserved,
 		[0xf] = reserved
@@ -879,6 +899,26 @@ static u8_t l2_v66_7[] =
 		[0xf] = reserved
 	};
 
+static u8_t l2_v66_8[] =
+	{
+		[0x0] = s0,
+		[0x1] = reserved,
+		[0x2] = reserved,
+		[0x3] = reserved,
+		[0x4] = s512,
+		[0x5] = reserved,
+		[0x6] = reserved,
+		[0x7] = reserved,
+		[0x8] = reserved,
+		[0x9] = reserved,
+		[0xa] = reserved,
+		[0xb] = reserved,
+		[0xc] = reserved,
+		[0xd] = reserved,
+		[0xe] = reserved,
+		[0xf] = reserved
+	};
+
 // uarch -> (array-size -> tag-size map)
 
 static u8_t *uarches_v5[] =
@@ -986,7 +1026,7 @@ static u8_t *uarches_v62[] =
 		[0x0] = l2_v62_0,
 		[0x1] = l2_v62_1,
 		[0x2] = l2_v62_2,
-		[0x3] = NULL,
+		[0x3] = l2_v62_3,
 		[0x4] = l2_v62_4,
 		[0x5] = NULL,
 		[0x6] = l2_v62_6,
@@ -1031,7 +1071,7 @@ static u8_t *uarches_v66[] =
 		[0x5] = l2_v66_5,
 		[0x6] = l2_v66_6,
 		[0x7] = l2_v66_7,
-		[0x8] = NULL,
+		[0x8] = l2_v66_8,
 		[0x9] = NULL,
 		[0xa] = NULL,
 		[0xb] = NULL,
@@ -1065,6 +1105,23 @@ u32_t H2K_l2cache_init() {
 	u32_t i = 0;
 	u8_t *ptr;
 	u32_t tag_size;
+
+	/* FIXME: Disabled because of angel bug (?) on zebu: Unknown SWI code 0x0 */
+	/* if (62 <= H2K_gp->arch) { */
+	/* 	if (H2K_trap_hwconfig_setl2reg */
+	/* 			(0, NULL, */
+	/* 			 L2REGS_COPROC_EGY_CFG, L2REGS_COPROC_EGY_CFG_DEFAULT_V62, */
+	/* 			 NULL) == -1) {  // error */
+	/* 		return 0; */
+	/* 	} */
+
+	/* 	if (H2K_trap_hwconfig_setl2reg */
+	/* 			(0, NULL, */
+	/* 			 L2REGS_COPROC_EGY_WEIGHTS, L2REGS_COPROC_EGY_WEIGHTS_DEFAULT_V62, */
+	/* 			 NULL) == -1) {  // error */
+	/* 		return 0; */
+	/* 	} */
+	/* } */
 
 	// watermark lo = 24; watermark l2 = 24
 	if (H2K_trap_hwconfig_setl2reg

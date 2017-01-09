@@ -223,7 +223,7 @@ typedef struct elf_header_struct {
 	Elf32_Half e_phnum;
 	Elf32_Half e_shentsize;
 	Elf32_Half e_shnum;
-	Elf32_Half e_shstrndx;
+	Elf32_Half e_shstrndx;  // index of 'section-header string table' section header
 } Elf32_Ehdr;
 
 typedef struct elf_section_struct {

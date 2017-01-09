@@ -30,6 +30,7 @@ typedef enum {
 	INFO_L2TAG_SIZE,  /**< L2 cache tag size */
 	INFO_L2CFG_BASE,  /**< L2 regs base */
 	INFO_CLADE_BASE,  /**< CLADE regs base */
+	INFO_CFGBASE,     /**< cfgbase register */
 	INFO_HVX_VLENGTH, /**< HVX native (no v2x) vector length, in bytes */
 	INFO_HVX_CONTEXTS,/**< Number of HVX contexts (no v2x) */
 	INFO_HVX_SWITCH,  /**< HVX context switch in kernel active */

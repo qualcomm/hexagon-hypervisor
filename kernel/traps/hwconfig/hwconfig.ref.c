@@ -276,6 +276,7 @@ u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 		return -1;
 	}
 
+	/* FIXME: This could return -1 */
 	return getxreg(CFG_TABLE_L2REGS, offset);
 }
 
@@ -288,6 +289,7 @@ u32_t H2K_trap_hwconfig_getcladereg(u32_t unused, void *unusedp, u32_t offset, u
 		return -1;
 	}
 
+	/* FIXME: This could return -1 */
 	val = getxreg(CFG_TABLE_CLADEREGS, offset);
 
 	return val << (clade_regs[idx].addrbit - clade_regs[idx].regbit);
@@ -317,6 +319,7 @@ u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_
 		return -1;
 	}
 
+	/* FIXME: This could return -1 */
 	return setxreg(CFG_TABLE_L2REGS, offset, val);
 }
 
@@ -329,6 +332,7 @@ u32_t H2K_trap_hwconfig_setcladereg(u32_t unused, void *unusedp, u32_t offset, u
 		return -1;
 	}
 
+	/* FIXME: This could return -1 */
 	ret = setxreg(CFG_TABLE_CLADEREGS, offset, val >> (clade_regs[idx].addrbit - clade_regs[idx].regbit));
 	return ret << (clade_regs[idx].addrbit - clade_regs[idx].regbit);
 }

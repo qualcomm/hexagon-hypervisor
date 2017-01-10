@@ -1106,40 +1106,35 @@ u32_t H2K_l2cache_init() {
 	u8_t *ptr;
 	u32_t tag_size;
 
-	/* FIXME: Disabled because of angel bug (?) on zebu: Unknown SWI code 0x0 */
-	/* if (62 <= H2K_gp->arch) { */
-	/* 	if (H2K_trap_hwconfig_setl2reg */
-	/* 			(0, NULL, */
-	/* 			 L2REGS_COPROC_EGY_CFG, L2REGS_COPROC_EGY_CFG_DEFAULT_V62, */
-	/* 			 NULL) == -1) {  // error */
-	/* 		return 0; */
-	/* 	} */
+	/* FIXME: Not checking return values here because some registers have boot
+		 default == -1 ! */
+	if (62 <= H2K_gp->arch) {
+		H2K_trap_hwconfig_setl2reg
+			(0, NULL,
+			 L2REGS_COPROC_EGY_CFG, L2REGS_COPROC_EGY_CFG_DEFAULT_V62,
+			 NULL);
 
-	/* 	if (H2K_trap_hwconfig_setl2reg */
-	/* 			(0, NULL, */
-	/* 			 L2REGS_COPROC_EGY_WEIGHTS, L2REGS_COPROC_EGY_WEIGHTS_DEFAULT_V62, */
-	/* 			 NULL) == -1) {  // error */
-	/* 		return 0; */
-	/* 	} */
-	/* } */
+		H2K_trap_hwconfig_setl2reg
+			(0, NULL,
+			 L2REGS_COPROC_EGY_WEIGHTS, L2REGS_COPROC_EGY_WEIGHTS_DEFAULT_V62,
+			 NULL);
+
+	}
 
 	// watermark lo = 24; watermark l2 = 24
-	if (H2K_trap_hwconfig_setl2reg
-			(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK,
-			 H2K_trap_hwconfig_getl2reg(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK, 0, NULL)
-			 | (24 << L2REGS_QOS_SCOREBOARD_WATERMARK_WM_LO_BITS)
-			 | (24 << L2REGS_QOS_SCOREBOARD_WATERMARK_WM_L2_BITS),
-			 NULL) == -1) {  // error
-		return 0;
-	}
+	H2K_trap_hwconfig_setl2reg
+		(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK,
+		 H2K_trap_hwconfig_getl2reg(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK, 0, NULL)
+		 | (24 << L2REGS_QOS_SCOREBOARD_WATERMARK_WM_LO_BITS)
+		 | (24 << L2REGS_QOS_SCOREBOARD_WATERMARK_WM_L2_BITS),
+		 NULL);
+
 	// qos mode tl = 1
-	if (H2K_trap_hwconfig_setl2reg
-			(0, NULL, L2REGS_QOS_MODE,
-			 H2K_trap_hwconfig_getl2reg(0, NULL, L2REGS_QOS_MODE, 0, NULL)
-			 | (1 << L2REGS_QOS_MODE_TL_BIT),
-			 NULL) == -1) {  // error
-		return 0;
-	}
+	H2K_trap_hwconfig_setl2reg
+		(0, NULL, L2REGS_QOS_MODE,
+		 H2K_trap_hwconfig_getl2reg(0, NULL, L2REGS_QOS_MODE, 0, NULL)
+		 | (1 << L2REGS_QOS_MODE_TL_BIT),
+		 NULL);
 
 	while (arches[i].archv != arch) {
 		if (0 == arches[i].archv) {  // whoa

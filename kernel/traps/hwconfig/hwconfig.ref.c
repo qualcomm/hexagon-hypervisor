@@ -260,7 +260,7 @@ static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
 	u32_t volatile *reg;
 	u32_t ret;
 
-	base = H2K_cfg_table(cfg_offset);
+	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
 
 	va = H2K_tmpmap_add_and_lock(base, UNCACHED);
 	reg = (u32_t *) (va + offset);
@@ -301,7 +301,7 @@ static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
 	u32_t volatile *reg;
 	u32_t ret;
 
-	base = H2K_cfg_table(cfg_offset);
+	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
 
 	va = H2K_tmpmap_add_and_lock(base, UNCACHED);
 	reg = (u32_t *) (va + offset);

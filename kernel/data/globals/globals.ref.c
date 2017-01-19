@@ -133,6 +133,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		break;
 	}
 
-	H2K_kg.tcm_base = H2K_cfg_table(CFG_TABLE_L2TCM);
+	H2K_kg.tcm_base = H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT;
 
 }

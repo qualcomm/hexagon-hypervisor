@@ -14,7 +14,7 @@
 static inline u32_t H2K_cfg_table(u32_t entry) {
 	u32_t cfgbase;
 	cfgbase = H2K_get_cfgbase();
-	return (H2K_mem_physread_word((cfgbase << CFG_TABLE_SHIFT) + entry) << CFG_TABLE_SHIFT);
+	return H2K_mem_physread_word((cfgbase << CFG_TABLE_SHIFT) + entry);
 }
 
 #endif

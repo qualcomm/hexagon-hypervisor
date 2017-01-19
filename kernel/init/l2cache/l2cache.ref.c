@@ -9,6 +9,7 @@
 #include <globals.h>
 #include <hw.h>
 #include <h2_common_kerror.h>
+#include <cfg_table.h>
 
 typedef struct {
 	u32_t archv;
@@ -739,185 +740,185 @@ static u8_t l2_v65_8[] =
 		[0xf] = reserved
 	};
 
-static u8_t l2_v66_0[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = s512,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = s1024,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_0[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = reserved, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = s512, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = s1024, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = reserved, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = reserved, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
-static u8_t l2_v66_1[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = s512,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = s512,
-		[0x9] = reserved,
-		[0xa] = s512,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_1[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = reserved, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = s512, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = s512, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = s512, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = reserved, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
-static u8_t l2_v66_2[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = reserved,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = s1024,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_2[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = reserved, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = reserved, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = reserved, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = reserved, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = s1024, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
-static u8_t l2_v66_3[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = s256,
-		[0x3] = reserved,
-		[0x4] = reserved,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_3[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = s256, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = reserved, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = reserved, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = reserved, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = reserved, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
-static u8_t l2_v66_4[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = reserved,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = s1024,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_4[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = reserved, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = reserved, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = s1024, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = reserved, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = reserved, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
-static u8_t l2_v66_5[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = s512,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_5[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = reserved, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = s512, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = reserved, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = reserved, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = reserved, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
-static u8_t l2_v66_6[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = reserved,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = s512,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_6[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = reserved, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = reserved, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = reserved, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = s512, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = reserved, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
-static u8_t l2_v66_7[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = s512,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = s512,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_7[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = reserved, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = s512, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = reserved, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = s512, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = reserved, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
-static u8_t l2_v66_8[] =
-	{
-		[0x0] = s0,
-		[0x1] = reserved,
-		[0x2] = reserved,
-		[0x3] = reserved,
-		[0x4] = s512,
-		[0x5] = reserved,
-		[0x6] = reserved,
-		[0x7] = reserved,
-		[0x8] = reserved,
-		[0x9] = reserved,
-		[0xa] = reserved,
-		[0xb] = reserved,
-		[0xc] = reserved,
-		[0xd] = reserved,
-		[0xe] = reserved,
-		[0xf] = reserved
-	};
+/* static u8_t l2_v66_8[] = */
+/* 	{ */
+/* 		[0x0] = s0, */
+/* 		[0x1] = reserved, */
+/* 		[0x2] = reserved, */
+/* 		[0x3] = reserved, */
+/* 		[0x4] = s512, */
+/* 		[0x5] = reserved, */
+/* 		[0x6] = reserved, */
+/* 		[0x7] = reserved, */
+/* 		[0x8] = reserved, */
+/* 		[0x9] = reserved, */
+/* 		[0xa] = reserved, */
+/* 		[0xb] = reserved, */
+/* 		[0xc] = reserved, */
+/* 		[0xd] = reserved, */
+/* 		[0xe] = reserved, */
+/* 		[0xf] = reserved */
+/* 	}; */
 
 // uarch -> (array-size -> tag-size map)
 
@@ -1061,25 +1062,25 @@ static u8_t *uarches_v65[] =
 		[0xf] = NULL,
 	};
 
-static u8_t *uarches_v66[] =
-	{
-		[0x0] = l2_v66_0,
-		[0x1] = l2_v66_1,
-		[0x2] = l2_v66_2,
-		[0x3] = l2_v66_3,
-		[0x4] = l2_v66_4,
-		[0x5] = l2_v66_5,
-		[0x6] = l2_v66_6,
-		[0x7] = l2_v66_7,
-		[0x8] = l2_v66_8,
-		[0x9] = NULL,
-		[0xa] = NULL,
-		[0xb] = NULL,
-		[0xc] = NULL,
-		[0xd] = NULL,
-		[0xe] = NULL,
-		[0xf] = NULL,
-	};
+/* static u8_t *uarches_v66[] = */
+/* 	{ */
+/* 		[0x0] = l2_v66_0, */
+/* 		[0x1] = l2_v66_1, */
+/* 		[0x2] = l2_v66_2, */
+/* 		[0x3] = l2_v66_3, */
+/* 		[0x4] = l2_v66_4, */
+/* 		[0x5] = l2_v66_5, */
+/* 		[0x6] = l2_v66_6, */
+/* 		[0x7] = l2_v66_7, */
+/* 		[0x8] = l2_v66_8, */
+/* 		[0x9] = NULL, */
+/* 		[0xa] = NULL, */
+/* 		[0xb] = NULL, */
+/* 		[0xc] = NULL, */
+/* 		[0xd] = NULL, */
+/* 		[0xe] = NULL, */
+/* 		[0xf] = NULL, */
+/* 	}; */
 
 // small core. FIXME
 #define uarches_v1 uarches_v65
@@ -1094,7 +1095,7 @@ static arch_t arches[] =
 		{0x61, uarches_v61},
 		{0x62, uarches_v62},
 		{0x65, uarches_v65},
-		{0x66, uarches_v66},
+		/* {0x66, uarches_v66}, */
 		{0x0, NULL}
 	};
 
@@ -1136,31 +1137,37 @@ u32_t H2K_l2cache_init() {
 		 | (1 << L2REGS_QOS_MODE_TL_BIT),
 		 NULL);
 
-	while (arches[i].archv != arch) {
-		if (0 == arches[i].archv) {  // whoa
-			H2K_gp->kernel_error = KERROR_L2CACHE_INIT_ARCH;
+	if (65 < arch) {  // use cfg_table, yay
+		tag_size = Q6_R_ct0_R(H2K_cfg_table(CFG_TABLE_L2TAG_SIZE)) - 5;
+		H2K_gp->l2size = H2K_cfg_table(CFG_TABLE_L2ARRAY_SIZE) * 1024;
+
+	} else {  // use built-in tables
+		while (arches[i].archv != arch) {
+			if (0 == arches[i].archv) {  // whoa
+				H2K_gp->kernel_error = KERROR_L2CACHE_INIT_ARCH;
+				return 0;
+			}
+			i++;
+		}
+		ptr = (arches[i].ua)[uarch];
+
+		if (NULL == ptr) {  // no table
+			H2K_gp->kernel_error = KERROR_L2CACHE_INIT_UARCH;
 			return 0;
 		}
-		i++;
-	}
-	ptr = (arches[i].ua)[uarch];
 
-	if (NULL == ptr) {  // no table
-		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_UARCH;
-		return 0;
-	}
+		tag_size = ptr[H2K_gp->l2arr];
+		if (reserved == tag_size) {
+			H2K_gp->kernel_error = KERROR_L2CACHE_INIT_SIZE;
+			return 0;
+		}
 
-	tag_size = ptr[H2K_gp->l2arr];
-	if (reserved == tag_size) {
-		H2K_gp->kernel_error = KERROR_L2CACHE_INIT_SIZE;
-		return 0;
-	}
-
-	if (H2K_gp->l2arr > CORE_REV_L2_CHUNK_SWITCH) {
-		H2K_gp->l2size = (CORE_REV_L2_CHUNK_SWITCH * L2_CHUNK)
-			+ ((H2K_gp->l2arr - CORE_REV_L2_CHUNK_SWITCH) * L2_BIG_CHUNK);
-	} else {
-		H2K_gp->l2size = H2K_gp->l2arr * L2_CHUNK;
+		if (H2K_gp->l2arr > CORE_REV_L2_CHUNK_SWITCH) {
+			H2K_gp->l2size = (CORE_REV_L2_CHUNK_SWITCH * L2_CHUNK)
+				+ ((H2K_gp->l2arr - CORE_REV_L2_CHUNK_SWITCH) * L2_BIG_CHUNK);
+		} else {
+			H2K_gp->l2size = H2K_gp->l2arr * L2_CHUNK;
+		}
 	}
 
 	if (H2K_trap_hwconfig_l2cache(0, NULL, tag_size, 1, NULL) == -1) {  // error

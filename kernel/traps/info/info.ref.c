@@ -34,7 +34,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return H2K_gp->core_rev;
 
 	case INFO_SSBASE:
-		return H2K_cfg_table(CFG_TABLE_SSBASE);
+		return H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT;
 
 	case INFO_TLB_FREE:
 		return H2K_gp->last_tlb_index + 1;
@@ -61,10 +61,10 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return (u32_t)&H2K_KERNEL_NPAGES;
 
 	case INFO_L2VIC_BASE:
-		return H2K_cfg_table(CFG_TABLE_SSBASE) + L2VIC_OFFSET;
+		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + L2VIC_OFFSET;
 
 	case INFO_TIMER_BASE:
-		return H2K_cfg_table(CFG_TABLE_SSBASE) + TIMER_OFFSET;
+		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + TIMER_OFFSET;
 
 	case INFO_TIMER_INT:
 		return H2K_gp->timer_intnum;
@@ -79,10 +79,10 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return (H2K_gp->l2tags > 0 ? (1 << H2K_gp->l2tags) * L2_TAG_CHUNK : 0);
 
 	case INFO_L2CFG_BASE:
-		return H2K_cfg_table(CFG_TABLE_L2REGS);
+		return H2K_cfg_table(CFG_TABLE_L2REGS) << CFG_TABLE_SHIFT;
 
 	case INFO_CLADE_BASE:
-		return H2K_cfg_table(CFG_TABLE_CLADEREGS);
+		return H2K_cfg_table(CFG_TABLE_CLADEREGS) << CFG_TABLE_SHIFT;
 
 	case INFO_CFGBASE:
 		return H2K_get_cfgbase();

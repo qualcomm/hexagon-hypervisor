@@ -90,7 +90,8 @@ typedef struct {
 	u32_t *hvx_cpmem_status;
 #endif
 	u32_t hvx_state;
-	u32_t hvx_vlength;  // native vector length
+	u32_t hvx_vlength;   // native vector length
+	u32_t hvx_contexts;  // # of native length
 
 	union {
 		u64_t fatal_hook_and_arg;

@@ -1065,6 +1065,10 @@ void print_infos() {
 		printf("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
 		printf("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_HVX_CONTEXTS));
 		printf("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
+#if ARCHV >= 65
+		printf("\t\tVTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
+		printf("\t\tVTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
+#endif
 	}
 	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	printf("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);

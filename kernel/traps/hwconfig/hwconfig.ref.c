@@ -172,7 +172,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	/* FIXME: should check for allowed XA values here (maybe?) */
 	/* EJP: Always allow XE/XA to be set if only for silver tests working also */
 
-	if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + EXT_HVX_CONTEXTS)  // not in HVX range
+	if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + H2K_gp->hvx_contexts)  // not in HVX range
 #ifdef DO_EXT_SWITCH
 			|| (!(me->vmblock->do_ext))
 #endif
@@ -212,7 +212,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 		H2K_gp->syscfg_val = cur;
 
 #ifdef DO_EXT_SWITCH
-		H2K_gp->info_boot_flags.boot_ext_ok = H2K_gp->info_boot_flags.boot_have_hvx && (!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= EXT_HVX_CONTEXTS);
+		H2K_gp->info_boot_flags.boot_ext_ok = H2K_gp->info_boot_flags.boot_have_hvx && (!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= H2K_gp->hvx_contexts);
 		if (H2K_gp->info_boot_flags.boot_ext_ok) {
 			if (me->vmblock->use_ext) {
 				me->vmblock->do_ext = 1;

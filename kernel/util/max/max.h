@@ -31,9 +31,16 @@
 #define CORE_V66 0x66
 
 #define CORE_V6_A 0x0
-#define CORE_V6_G 0x4
-#define CORE_V6_J 0x7
+#define CORE_V6_B 0x1
+#define CORE_V6_C 0x3
+#define CORE_V6_D 0x7
 #define CORE_V6_E 0x8
+#define CORE_V6_G 0x4
+#define CORE_V6_H 0x6
+#define CORE_V6_J 0x7
+#define CORE_V6_P 0x8
+#define CORE_V6_S 0x2
+#define CORE_V6_U 0x5
 
 #define TEMP_MAP_VA 0xff800000
 #define TEMP_MAP_PG_SIZE SIZE_4M
@@ -265,7 +272,12 @@
 #define CFG_TABLE_VTCM_SIZE 0x3c
 #define CFG_TABLE_L2TAG_SIZE 0x40
 #define CFG_TABLE_L2ARRAY_SIZE 0x44
-#define CFG_TABLE_HTHREAD_MASK 0x48
+#define CFG_TABLE_HTHREADS_MASK 0x48
+
+#define CFG_TABLE_COPROC_TYPE_HVX 1
+#define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
+#define EXT_HVX_VTCM_OFFSET 0x200000
+#define EXT_HVX_VTCM_SIZE 256
 
 #define L2REGS_COPROC_EGY_CFG             0x28
 #define L2REGS_COPROC_EGY_CFG_DEFAULT_V62 0xc3e03ff5

@@ -145,7 +145,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 #endif
 
 	H2K_gp->hthreads_mask = HTHREADS_MASK;
-	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask)
+	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 	H2K_start_threads(H2K_gp->hthreads_mask);
 
 #else

@@ -46,55 +46,48 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 
 #ifdef HAVE_EXTENSIONS
 	/* HVX present? */
-	switch(H2K_kg.arch) {
-	case CORE_V60:
-		switch(H2K_kg.uarch) {
-		case CORE_V6_A:
-		case CORE_V6_E:
-			have_hvx = 1;
+	if (0x65 < H2K_kg.arch) {
+		have_hvx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) == CFG_TABLE_COPROC_TYPE_HVX);
+		H2K_kg.hvx_contexts = (have_hvx ? H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS) : 0);
+	} else {
+		switch(H2K_kg.arch) {
+		case CORE_V60:
+			switch(H2K_kg.uarch) {
+			case CORE_V6_A:
+			case CORE_V6_E:
+				have_hvx = 1;
+				break;
+			default:
+				have_hvx = 0;
+			}
+			break;
+		case CORE_V61:
+			have_hvx = 0;
+			break;
+		case CORE_V62:
+			switch(H2K_kg.uarch) {
+			case CORE_V6_A:
+			case CORE_V6_E:
+				have_hvx = 1;
+				break;
+			default:
+				have_hvx = 0;
+			}
+			break;
+		case CORE_V65:
+			switch(H2K_kg.uarch) {
+			case CORE_V6_A:
+				have_hvx = 1;
+				break;
+			default:
+				have_hvx = 0;
+			}
 			break;
 		default:
 			have_hvx = 0;
 		}
-		break;
-	case CORE_V61:
-		have_hvx = 0;
-		break;
-	case CORE_V62:
-		switch(H2K_kg.uarch) {
-		case CORE_V6_A:
-		case CORE_V6_E:
-			have_hvx = 1;
-			break;
-		default:
-			have_hvx = 0;
-		}
-		break;
-	case CORE_V65:
-		switch(H2K_kg.uarch) {
-		case CORE_V6_A:
-		case CORE_V6_G:
-			have_hvx = 1;
-			break;
-		default:
-			have_hvx = 0;
-		}
-		break;
-	case CORE_V66:
-		switch(H2K_kg.uarch) {
-		case CORE_V6_A:
-		case CORE_V6_E:
-		case CORE_V6_G:
-			have_hvx = 1;
-			break;
-		default:
-			have_hvx = 0;
-		}
-		break;
-	default:
-		have_hvx = 0;
+		H2K_kg.hvx_contexts = EXT_HVX_CONTEXTS;
 	}
-
 	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
 
 	if (have_hvx) {
@@ -108,7 +101,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	}
 
 	H2K_kg.info_boot_flags.boot_ext_ok = have_hvx && (!(H2K_kg.syscfg_val & SYSCFG_V2X))
-		&& (H2K_kg.hthreads <= EXT_HVX_CONTEXTS);
+		&& (H2K_kg.hthreads <= H2K_kg.hvx_contexts);
 
 #endif
 

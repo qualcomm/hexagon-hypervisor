@@ -31,6 +31,7 @@
 #include <l2cache.h>
 #include <tcm.h>
 #include <sample.h>
+#include <cfg_table.h>
 
 void H2K_interrupt_restore();
 
@@ -144,8 +145,8 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 #endif
 
 	H2K_gp->hthreads_mask = HTHREADS_MASK;
+	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask)
 	H2K_start_threads(H2K_gp->hthreads_mask);
-	H2K_gp->hthreads = get_hthreads();
 
 #else
 
@@ -154,14 +155,41 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 #if (NUM_HTHREADS > MAX_HTHREADS)
 #error "NUM_HTHREADS > MAX_HTHREADS."
 #endif
+	u32_t i = 0;
+	u32_t nthreads = 0;
+	u32_t new_mask = 0;
 
 	H2K_gp->hthreads = NUM_HTHREADS;
-	H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
+
+	if (0x65 < H2K_gp->arch) {  // hthreads_mask in cfg_table
+		H2K_gp->hthreads_mask = H2K_cfg_table(CFG_TABLE_HTHREADS_MASK);
+
+		if (Q6_R_popcount_P(H2K_gp->hthreads_mask) < NUM_HTHREADS) {
+			H2K_gp->kernel_error = KERROR_SETUP_NUM_HTHREADS;
+		} else {
+			while (nthreads < NUM_HTHREADS) {
+				if (H2K_gp->hthreads_mask & (1 << i)) {
+					new_mask |= (1 << i);
+					nthreads++;
+				}
+				i++;
+			}
+			H2K_gp->hthreads_mask = new_mask;
+		}
+	} else {
+		H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
+	}
 	H2K_start_threads(H2K_gp->hthreads_mask);
 #else
 	H2K_start_threads((~0) & ((1 << MAX_HTHREADS) - 1));  // start all
-	H2K_gp->hthreads = get_hthreads();
-	H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
+
+	if (0x65 < H2K_gp->arch) {  // hthreads_mask in cfg_table
+		H2K_gp->hthreads_mask = H2K_cfg_table(CFG_TABLE_HTHREADS_MASK);
+		H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
+	} else {
+		H2K_gp->hthreads = get_hthreads();
+		H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
+	}
 #endif
 
 #endif

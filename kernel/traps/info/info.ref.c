@@ -91,12 +91,32 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return H2K_gp->hvx_vlength;
 
 	case INFO_HVX_CONTEXTS:
-		return EXT_HVX_CONTEXTS; // FIXME
+		return H2K_gp->hvx_contexts;
 
 	case INFO_HVX_SWITCH:
 #ifdef DO_EXT_SWITCH
 		return me->vmblock->do_ext;
 #else
+		return 0;
+#endif
+
+#if ARCHV >= 65
+	case INFO_VTCM_BASE:
+		if (0x65 < H2K_gp->arch) {
+			return H2K_cfg_table(CFG_TABLE_VTCM_BASE) << CFG_TABLE_SHIFT;
+
+		} else if (0 < H2K_gp->hvx_contexts && 0x65 == H2K_gp->arch) {
+			return H2K_gp->tcm_base + EXT_HVX_VTCM_OFFSET;
+		}
+		return 0;
+
+	case INFO_VTCM_SIZE:
+		if (0x65 < H2K_gp->arch) {
+			return H2K_cfg_table(CFG_TABLE_VTCM_SIZE);
+
+		} else if (0 < H2K_gp->hvx_contexts && 0x65 == H2K_gp->arch) {
+			return EXT_HVX_VTCM_SIZE;
+		}
 		return 0;
 #endif
 

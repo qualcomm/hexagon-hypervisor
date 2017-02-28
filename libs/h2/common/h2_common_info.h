@@ -34,10 +34,8 @@ typedef enum {
 	INFO_HVX_VLENGTH, /**< HVX native (no v2x) vector length, in bytes */
 	INFO_HVX_CONTEXTS,/**< Number of HVX contexts (no v2x) */
 	INFO_HVX_SWITCH,  /**< HVX context switch in kernel active */
-#if ARCHV >= 65
 	INFO_VTCM_BASE,   /**< VTCM base address */
 	INFO_VTCM_SIZE,   /**< VTCM size */
-#endif
 	INFO_MAX
 } info_type;
 

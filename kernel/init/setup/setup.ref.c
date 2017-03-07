@@ -144,30 +144,32 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 #error "Can't define both NUM_HTHREADS and HTHREADS_MASK."
 #endif
 
-	H2K_gp->hthreads_mask = HTHREADS_MASK;
+	H2K_start_threads(HTHREADS_MASK | 0x1); // thread 0 stays on
+	H2K_isync();
+
+	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
+	H2K_gp->hthreads_mask &= 0xffff;
 	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
-	H2K_start_threads(H2K_gp->hthreads_mask);
 
 #else
 
 #ifdef NUM_HTHREADS
 
-#if (NUM_HTHREADS > MAX_HTHREADS)
-#error "NUM_HTHREADS > MAX_HTHREADS."
+#if (0 >= NUM_HTHREADS || NUM_HTHREADS > MAX_HTHREADS)
+#error "Bad NUM_HTHREADS."
 #endif
 	u32_t i = 0;
 	u32_t nthreads = 0;
+	u32_t requested = NUM_HTHREADS;
 	u32_t new_mask = 0;
-
-	H2K_gp->hthreads = NUM_HTHREADS;
 
 	if (0x65 < H2K_gp->arch) {  // hthreads_mask in cfg_table
 		H2K_gp->hthreads_mask = H2K_cfg_table(CFG_TABLE_HTHREADS_MASK);
 
-		if (Q6_R_popcount_P(H2K_gp->hthreads_mask) < NUM_HTHREADS) {
-			H2K_gp->kernel_error = KERROR_SETUP_NUM_HTHREADS;
+		if (Q6_R_popcount_P(H2K_gp->hthreads_mask) < requested) {
+			requested = Q6_R_popcount_P(H2K_gp->hthreads_mask;
 		} else {
-			while (nthreads < NUM_HTHREADS) {
+			while (nthreads < requested) {
 				if (H2K_gp->hthreads_mask & (1 << i)) {
 					new_mask |= (1 << i);
 					nthreads++;
@@ -176,20 +178,20 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 			}
 			H2K_gp->hthreads_mask = new_mask;
 		}
-	} else {
+	} else {  // thread numbers are contiguous for ARCHV <= 65
 		H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
 	}
 	H2K_start_threads(H2K_gp->hthreads_mask);
-#else
-	H2K_start_threads((~0) & ((1 << MAX_HTHREADS) - 1));  // start all
+	H2K_isync();
+	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
+	H2K_gp->hthreads_mask &= 0xffff;
+	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 
-	if (0x65 < H2K_gp->arch) {  // hthreads_mask in cfg_table
-		H2K_gp->hthreads_mask = H2K_cfg_table(CFG_TABLE_HTHREADS_MASK);
-		H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
-	} else {
-		H2K_gp->hthreads = get_hthreads();
-		H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
-	}
+#else
+	/* boot VM will start the rest */
+	H2K_gp->hthreads = 1;
+	H2K_gp->hthreads_mask = 0x1;
+
 #endif
 
 #endif

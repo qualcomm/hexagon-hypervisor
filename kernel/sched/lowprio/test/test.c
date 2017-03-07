@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <globals.h>
+#include <hwconfig.h>
 
 void FAIL(const char *x)
 {
@@ -46,9 +47,14 @@ int main()
 	for (i = 0; i < 1000; i++) {
 		h2_init();
 	}
+
 	a.prio = b.prio = 2;
 	a.hthread = b.hthread = 1;
 	if ((get_imask(1) & 1) != 0) FAIL("T1 should be idle at boot");
+
+	// FIXME: why does the test fail without this?
+	H2K_trap_hwconfig_hwthreads_mask(0, NULL, -1, 0, NULL);  // start all hw threads
+
 	H2K_runlist_push(&a);
 	raise();
 	if ((get_imask(1) & 1) != 0) FAIL("should not have raised if idle");

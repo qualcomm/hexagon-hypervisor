@@ -197,6 +197,8 @@ int main()
 	h2_init(NULL);
 	pthread_init();
 
+	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
+
 	/* set URWX in monitor TLB entry permissions, to allow futex access */
 	/* not really necessary to find our asid since the TLB entry will be global
 		 anyway, but... */

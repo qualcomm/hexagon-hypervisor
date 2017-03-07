@@ -110,6 +110,8 @@ unsigned long clade_region = 0;
 unsigned int sample_usecs = 0;
 info_boot_flags_type boot_flags;
 info_stlb_type  stlb_info;
+int hwt_mask = -1;
+int hwt_num = -1;
 
 typedef struct {
 	unsigned int id;  // h2 VM id
@@ -222,6 +224,8 @@ void usage()
 	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	printf("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
 	printf("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
+	printf("  --hwt_mask <int>\n\tMask of hardware threads to start. Default -1 (all).\n");
+	printf("  --hwt_num <int>\n\tNumber of hardware threads to start. Default -1 (all).\n");
 
 	printf("\n");
 	printf("VM options:\n");
@@ -1107,6 +1111,19 @@ void print_infos() {
 
 void kernel_setup() {
 
+	if (hwt_num != -1) {
+		if (hwt_mask != -1) {
+			FAIL("Can't set both hwt_mask and hwt_num", "");
+		}
+		if (h2_hwconfig_hwthreads_num(hwt_num) < 0) {
+			FAIL("hwthreads_num", "");
+		}
+	} else {
+		if (h2_hwconfig_hwthreads_mask(hwt_mask) < 0) {
+			FAIL("hwthreads_mask", "");
+		}
+	}
+
 	if (use_stlb) {
 		if (h2_config_stlb_alloc() < 0) {
 			FAIL("STLB alloc", "");
@@ -1346,7 +1363,21 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--hwt_mask")) {
+			if (argc < 2) die_usage();
+			hwt_mask = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--hwt_num")) {
+			if (argc < 2) die_usage();
+			hwt_num = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0], "--help")) {
+			kernel_setup();
+			print_infos();
 			usage();
 			exit(0);
 
@@ -1626,8 +1657,6 @@ int main(int argc, char **argv)
 	clade_base = h2_info(INFO_CLADE_BASE);
 	h2_galloc_init(&tcm_alloc, (unsigned int)tcm_base, (unsigned int)tcm_size, NULL);
 
-	kernel_setup();
-	print_infos();
 	h2_vmtrap_setvec(bootvm_vectors);
 
 	h2_anysignal_init(&wake_sig);
@@ -1687,6 +1716,8 @@ int main(int argc, char **argv)
 			}
 			fclose(fp);
 
+			kernel_setup();
+			print_infos();
 			run(idx);
 			free(vm_params);
 			vm_params = NULL;  // malloc anew if more --files
@@ -1699,6 +1730,9 @@ int main(int argc, char **argv)
 			idx = 0;
 			add_vm(idx);
 			idx = process_line(argc, argv, idx);
+
+			kernel_setup();
+			print_infos();
 			run(idx);
 			return 0;
 		}

@@ -62,6 +62,8 @@ int main()
 
 	h2_init(NULL);
 
+	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
+
 	start_time = get_pcycles();
 	wait(420000);
 	total_time = get_pcycles() - start_time;

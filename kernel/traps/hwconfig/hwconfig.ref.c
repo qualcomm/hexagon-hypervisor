@@ -35,7 +35,9 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_l2unlock,
 	H2K_trap_hwconfig_hwintop,
 	H2K_trap_hwconfig_getcladereg,
-	H2K_trap_hwconfig_setcladereg
+	H2K_trap_hwconfig_setcladereg,
+	H2K_trap_hwconfig_hwthreads_num,
+	H2K_trap_hwconfig_hwthreads_mask
 };
 
 typedef struct {
@@ -378,7 +380,7 @@ u32_t H2K_trap_hwconfig_l2unlock(u32_t unused, void *addr, u32_t len, u32_t unus
 #endif
 }
 
-u32_t H2K_trap_hwconfig_hwintop(u32_t unused, void *unusedptr, u32_t op_and_int, u32_t val, H2K_thread_context *me)
+u32_t H2K_trap_hwconfig_hwintop(u32_t unused, void *unusedp, u32_t op_and_int, u32_t val, H2K_thread_context *me)
 {
 	u32_t op = op_and_int >> 16;
 	u32_t intno = op_and_int & 0xFFFF;
@@ -390,4 +392,53 @@ u32_t H2K_trap_hwconfig_hwintop(u32_t unused, void *unusedptr, u32_t op_and_int,
 	case HWCONFIG_HWINTOP_RAISE: H2K_intcontrol_raise(intno); break;
 	}
 	return 0;
+}
+
+u32_t H2K_trap_hwconfig_hwthreads_mask(u32_t unused, void *unusedp, u32_t mask, u32_t unused3, H2K_thread_context *me) {
+
+	mask |= 0x1;  // thread 0 stays on
+	H2K_start_threads(mask);
+	H2K_isync();
+
+	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
+	H2K_gp->hthreads_mask &= 0xffff;
+	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
+
+	return H2K_gp->hthreads_mask;
+}
+
+u32_t H2K_trap_hwconfig_hwthreads_num(u32_t unused, void *unusedp, u32_t num, u32_t unused3, H2K_thread_context *me) {
+
+	u32_t i = 0;
+	u32_t nthreads = 0;
+	u32_t new_mask = 0;
+
+	/* if (0 >= num || num > MAX_HTHREADS) { */
+	/* 	return -1; */
+	/* } */
+
+	if (0x65 < H2K_gp->arch) {  // hthreads_mask in cfg_table
+		H2K_gp->hthreads_mask = H2K_cfg_table(CFG_TABLE_HTHREADS_MASK);
+
+		if (Q6_R_popcount_P(H2K_gp->hthreads_mask) < num) {
+			num = Q6_R_popcount_P(H2K_gp->hthreads_mask);
+		}
+		while (nthreads < num) {
+			if (H2K_gp->hthreads_mask & (1 << i)) {
+				new_mask |= (1 << i);
+				nthreads++;
+			}
+			i++;
+		}
+		H2K_gp->hthreads_mask = new_mask;
+	} else {  // thread numbers are contiguous for ARCHV <= 65
+		H2K_gp->hthreads_mask = (1 << num) - 1;
+	}
+	H2K_start_threads(H2K_gp->hthreads_mask);
+	H2K_isync();
+	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
+	H2K_gp->hthreads_mask &= 0xffff;
+	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
+
+	return H2K_gp->hthreads;
 }

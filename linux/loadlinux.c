@@ -293,6 +293,8 @@ int main(int argc, char *argv[]) {
 		FAIL("H2K_INTOP_GLOBEN, H2K_VM_CHILDINT");
 	}
 
+	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
+
 #ifndef NO_STLB
 	if (h2_config_stlb_alloc() < 0) {
 		FAIL("STLB alloc");

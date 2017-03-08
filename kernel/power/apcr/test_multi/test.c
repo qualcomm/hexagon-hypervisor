@@ -130,6 +130,8 @@ int main()
 	asm volatile (" %0 = ugp " : "=r"(tmp));
 	main_ugp = tmp;
 
+	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
+
 	vm = h2_config_vmblock_init(0,SET_CPUS_INTS, TASKS + 1, 0);
 	h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);
 	h2_config_vmblock_init(vm, SET_FENCES, (unsigned long)__bootvm_entry_point, 0xffffffff & BOOT_TLB_PAGE_MASK);

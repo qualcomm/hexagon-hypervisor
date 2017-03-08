@@ -190,6 +190,30 @@ static inline int h2_hwconfig_hwintop(unsigned int op, unsigned int intno, unsig
 	return h2_hwconfig_trap(HWCONFIG_HWINTOP, NULL, (op << 16) | intno, val);
 }
 
+/**
+Start hardware threads with mask (-1 to start all)
+@param[in] Mask of thread numbers to start
+@returns mask of threads started on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_hwthreads_mask(unsigned int mask) {
+
+	return h2_hwconfig_trap(HWCONFIG_HWTHREADS_MASK, NULL, mask, 0);
+}
+
+/**
+Start number of hardware threads
+@param[in] Number of threads to start
+@returns number of threads started on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_hwthreads_num(unsigned int num) {
+
+	return h2_hwconfig_trap(HWCONFIG_HWTHREADS_NUM, NULL, num, 0);
+}
+
 #endif
 
 /** @} */

@@ -718,7 +718,9 @@ void load_vm(unsigned int idx) {
 			FAIL("\tInvalid ELF file: ", elf);
 		}
 
-		elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr);
+		if (0 > elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr)) {
+			FAIL("\tCan't get special symbols", "");
+		}
 
 		vm_params[idx].entry = (void *)ehdr.e_entry;
 	

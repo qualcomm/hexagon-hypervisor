@@ -49,17 +49,20 @@ int elf_get_shdr(int fdesc, int i, Elf32_Shdr *shdr, const Elf32_Ehdr *ehdr)
 
 #define SPECIALS_BUFSIZE 256
 
+/* FIXME: Need this for problem with low-alignment angel sysread() on zebu, on some cores  */
+#define SPECIALS_ALIGN 32
+
 int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf32_Ehdr *ehdr) {
 
 	int i, j, n_el, bytes, pos;
 	int ntomatch = nsyms;
 	Elf32_Shdr strhdr, symhdr, 
 		shstr;  // section-header string table section header :()
-	Elf32_Sym sym;
+	Elf32_Sym sym __attribute__((aligned(SPECIALS_ALIGN))) ;
 	int shstrtab_offset;
 	char *shstrtab;
 
-	char buf[SPECIALS_BUFSIZE];
+	char buf[SPECIALS_BUFSIZE] __attribute__((aligned(SPECIALS_ALIGN))) ;
 
 	if (SHN_UNDEF == ehdr->e_shstrndx) goto error;
 	if (-1 == elf_get_shdr(fdesc, ehdr->e_shstrndx, &shstr, ehdr)) goto error;
@@ -98,9 +101,10 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	n_el = symhdr.sh_size / symhdr.sh_entsize;
 	if (lseek(fdesc, symhdr.sh_offset,SEEK_SET) == -1) goto error;
 
-	ntomatch = nsyms;
+	ntomatch = nsyms - ntomatch; // subtract # not found in string table
 	for (i = 1; i < n_el; i++) {
 		if (read(fdesc, &sym, sizeof(sym)) != sizeof(sym)) goto error;
+
 		for (j = 0; j < nsyms; j++) {
 			if (specials[j].addr == sym.st_name) { // match
 				specials[j].addr = sym.st_value; // replace with value
@@ -110,6 +114,8 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 			}
 		}
 	}
+	if (0 != ntomatch) goto error;
+
 	return 0;
 
  error:

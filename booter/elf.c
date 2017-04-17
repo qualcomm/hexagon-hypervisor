@@ -102,7 +102,7 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	if (lseek(fdesc, symhdr.sh_offset,SEEK_SET) == -1) goto error;
 
 	ntomatch = nsyms - ntomatch; // subtract # not found in string table
-	for (i = 1; i < n_el; i++) {
+	for (i = 1; i <= n_el; i++) {
 		if (read(fdesc, &sym, sizeof(sym)) != sizeof(sym)) goto error;
 
 		for (j = 0; j < nsyms; j++) {

@@ -1122,6 +1122,7 @@ u32_t H2K_l2cache_init() {
 
 	/* } */
 
+#ifndef NO_DEVICES
 	// watermark lo = 24; watermark l2 = 24
 	H2K_trap_hwconfig_setl2reg
 		(0, NULL, L2REGS_QOS_SCOREBOARD_WATERMARK,
@@ -1136,6 +1137,7 @@ u32_t H2K_l2cache_init() {
 		 H2K_trap_hwconfig_getl2reg(0, NULL, L2REGS_QOS_MODE, 0, NULL)
 		 | (1 << L2REGS_QOS_MODE_TL_BIT),
 		 NULL);
+#endif
 
 	if (0x65 < arch) {  // use cfg_table, yay
 		tag_size = Q6_R_ct0_R(H2K_cfg_table(CFG_TABLE_L2TAG_SIZE)) - 5;

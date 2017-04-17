@@ -50,7 +50,9 @@ int elf_get_shdr(int fdesc, int i, Elf32_Shdr *shdr, const Elf32_Ehdr *ehdr)
 #define SPECIALS_BUFSIZE 256
 
 /* FIXME: Need this for problem with low-alignment angel sysread() on zebu, on some cores  */
+#ifndef SPECIALS_ALIGN
 #define SPECIALS_ALIGN 32
+#endif
 
 int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf32_Ehdr *ehdr) {
 

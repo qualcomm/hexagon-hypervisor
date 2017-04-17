@@ -11,6 +11,7 @@
 #include <hw.h>
 
 void H2K_hvx_poweron(void) {
+#ifndef NO_DEVICES
 #ifdef HAVE_EXTENSIONS
 	volatile u32_t delay;
 
@@ -81,10 +82,11 @@ void H2K_hvx_poweron(void) {
 	H2K_gp->hvx_state = H2K_HVX_STATE_ON;
 	BKL_UNLOCK();
 #endif
+#endif
 }
 
 void H2K_hvx_poweroff(void) {
-
+#ifndef NO_DEVICES
 #ifdef HAVE_EXTENSIONS
 
 	if (!H2K_gp->info_boot_flags.boot_have_hvx) {
@@ -125,5 +127,6 @@ void H2K_hvx_poweroff(void) {
 	H2K_gp->hvx_state = H2K_HVX_STATE_OFF;
 
 	BKL_UNLOCK();
+#endif
 #endif
 }

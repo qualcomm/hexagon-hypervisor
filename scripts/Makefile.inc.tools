@@ -21,6 +21,7 @@ export RANLIB := hexagon-ranlib
 export COV := hexagon-coverage
 export OBJDUMP := hexagon-llvm-objdump
 export GMON_MERGE := hexagon-gmon-merge
+export DOXYGEN := doxygen
 
 
 export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py

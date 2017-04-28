@@ -9,7 +9,7 @@ ASM_REF_CODE(Bootup code is difficult to write in C)
 H2_init
 -------
 
-.. cfunction:: void h2_init()
+.. c:function:: void h2_init()
 
 This function starts the kernel, if it has not been started already.
 
@@ -26,7 +26,7 @@ Together these should pull in the remainder of required files.
 start
 -----
 
-.. cfunction:: start()
+.. c:function:: start()
 
 This routine boots the machine.
 
@@ -37,19 +37,19 @@ We assume that the machine is entirely off.
 
 We initialize caches and the TLB, and set up the stack pointer.
 
-Finally, we call :cfunc:`H2K_thread_boot()`.
+Finally, we call :c:func:`H2K_thread_boot()`.
 
 H2K_handle_reset
 ----------------
 
-.. cfunction:: H2K_handle_reset()
+.. c:function:: H2K_handle_reset()
 
 This routine boots a new processor, or after a soft reset
 
 Functionality
 ~~~~~~~~~~~~~
 
-We set up kernel stack pointer, and then call :cfunc:`H2K_switch()` with both
+We set up kernel stack pointer, and then call :c:func:`H2K_switch()` with both
 arguments set to NULL.
 
 

@@ -7,7 +7,7 @@
 H2K_intconfig_init
 ------------------
 
-.. cfunction:: void H2K_intconfig_init()
+.. c:function:: void H2K_intconfig_init()
 
 Description
 ~~~~~~~~~~~
@@ -18,7 +18,7 @@ Functionality
 ~~~~~~~~~~~~~
 
 All handler pointers are initialized to NULL.  The fastint mask is initialized 
-to zeros.  The handler for reschedule is initialized to :cfunc:`H2K_resched()`.
+to zeros.  The handler for reschedule is initialized to :c:func:`H2K_resched()`.
 
 Next, we initialize all fastint contexts to zeros.  We then update the hthread
 fields to the correct hardware thread that will be using the fastint context, 
@@ -30,7 +30,7 @@ handler.
 H2K_register_fastint
 --------------------
 
-.. cfunction:: void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
+.. c:function:: void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
 
 	:param whatint: which interrupt to register
 	:param fastint_handler: Address of the fast interrupt handler
@@ -54,7 +54,7 @@ We set the entries in the inthandlers array to NULL.
 H2K_register_passthru
 ---------------------
 
-.. cfunction:: void H2K_register_passthru(u32_t phys_int, H2K_id_t id, u32_t virt_int)
+.. c:function:: void H2K_register_passthru(u32_t phys_int, H2K_id_t id, u32_t virt_int)
 
 	:param phys_int: Physical interrupt number
 	:param id: Virtual CPU ID to receive interrupt (value 0 reserved)

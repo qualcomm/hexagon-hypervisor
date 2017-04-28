@@ -1,13 +1,13 @@
 
 :mod:`thread_state` -- Read thread context
-====================================
+==========================================
 
 .. module:: thread_state
 
 H2K_thread_state
--------------
+----------------
 
-.. cfunction:: u64_t H2K_thread_state(H2K_id_t id, u32_t offset, H2K_thread_context *me)
+.. c:function:: u64_t H2K_thread_state(H2K_id_t id, u32_t offset, H2K_thread_context *me)
 
 	:param id: Thread to query
 	:param offset: Offset to read in context

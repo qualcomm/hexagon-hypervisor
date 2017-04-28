@@ -48,31 +48,31 @@ result in many duplicated pages for larger pages.
 H2K_mem_stlb_asid_info_t
 ------------------------
 
-.. ctype:: H2K_mem_stlb_asid_t
+.. c:type:: H2K_mem_stlb_asid_t
 
 	stlb information for asid
 
-	.. cmember:: u64_t valids[STLB_MAX_SETS/64] 
+	.. c:member:: u64_t valids[STLB_MAX_SETS/64] 
 
 		Array of valid bits for this stlb
 
-	.. cmember:: u32_t pagesize 
+	.. c:member:: u32_t pagesize 
 
 		Pagesize in this stlb
 
-	.. cmember:: u32_t waymask
+	.. c:member:: u32_t waymask
 
 	        Which ways may be replaced for QoS (FIXME)
 
-	.. cmember:: H2K_mem_tlbfmt_t *baseaddr
+	.. c:member:: H2K_mem_tlbfmt_t *baseaddr
 
 	        Pointer to available memory
 
 
 H2K_mem_stlb_alloc
------------------
+------------------
 
-.. cfunction:: void H2K_mem_stlb_alloc()
+.. c:function:: void H2K_mem_stlb_alloc()
 
 Description
 ~~~~~~~~~~~
@@ -82,7 +82,7 @@ This function allocates and initilizes the stlb information.
 H2K_mem_stlb_lookup
 -------------------
 
-.. cfunction:: H2K_mem_tlbfmt_t H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *me)
+.. c:function:: H2K_mem_tlbfmt_t H2K_mem_stlb_lookup(u32_t va, u32_t asid, H2K_thread_context *me)
 
 	:param va: virtual address to look up
 	:param asid: address space to look up
@@ -111,7 +111,7 @@ If no translation is found, we return zero.
 H2K_mem_stlb_add
 ----------------
 
-.. cfunction:: void H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
+.. c:function:: void H2K_mem_stlb_add(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
 
 	:param va: virtual address to look up
 	:param asid: address space to look up
@@ -135,7 +135,7 @@ with "entry".
 H2K_mem_stlb_invalidate_va
 --------------------------
 
-.. cfunction:: void H2K_mem_stlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
+.. c:function:: void H2K_mem_stlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
 
 	:param va: virtual address to look up
 	:param asid: address space to look up
@@ -149,13 +149,13 @@ This function looks for a translation in the STLB.  If one is found, it is clear
 Behavior
 ~~~~~~~~
 
-The same lookup behavior as :cfunc:`H2K_mem_stlb_lookup()` is used, but if a match is 
+The same lookup behavior as :c:func:`H2K_mem_stlb_lookup()` is used, but if a match is 
 found, we clear the translation instead of returning the value.
 
 H2K_mem_stlb_invalidate_asid
 ----------------------------
 
-.. cfunction:: void H2K_mem_stlb_invalidate_asid(u32_t asid)
+.. c:function:: void H2K_mem_stlb_invalidate_asid(u32_t asid)
 
 	:param asid: address space to invalidate
 
@@ -195,18 +195,18 @@ Important Cases
 Harness
 ~~~~~~~
 
-.. cfunction:: void TH_mem_stlb_init() 
+.. c:function:: void TH_mem_stlb_init() 
 
 This function initializes the H2K_mem_stlb_asid_infos
 pointer to a local array H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS].
 Each of these structures had its baseaddr pointer set throuought an array of H2K_mem_tlbfmt_t
 entires in TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS].  The entries are randomized.
 
-.. cfunction:: void TH_compare_tlbfmt(H2K_mem_tlbfmt_t original, H2K_mem_tlbfmt_t test)
+.. c:function:: void TH_compare_tlbfmt(H2K_mem_tlbfmt_t original, H2K_mem_tlbfmt_t test)
 
 This tests for equality between entries and FAILS if they differ.
 
-.. cfunction:: void TH_tlbfmt_iszero(H2K_mem_tlbfmt_t test)
+.. c:function:: void TH_tlbfmt_iszero(H2K_mem_tlbfmt_t test)
 
 This tests checks for an empty tlbfmt entry.
 

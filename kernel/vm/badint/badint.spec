@@ -6,7 +6,7 @@
 H2K_vm_badint_func
 ------------------
 
-.. cfunction:: s32_t H2K_vm_badint_func(H2K_vmblock_t *vmblock, H2K_thread_context *dest, u32_t intno, H2K_vm_intopinfo_t *info)
+.. c:function:: s32_t H2K_vm_badint_func(H2K_vmblock_t *vmblock, H2K_thread_context *dest, u32_t intno, H2K_vm_intopinfo_t *info)
 
 	:param vmblock: Pointer to the VM Block (unused)
 	:param me: Pointer to the thread context (unused)

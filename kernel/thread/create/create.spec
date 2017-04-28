@@ -7,7 +7,7 @@
 H2K_thread_create
 -----------------
 
-.. cfunction:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me)
+.. c:function:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me)
 
 	:param pc: The PC that the new thread should start at
 	:param sp: The SP that the new thread should start with
@@ -20,7 +20,7 @@ H2K_thread_create
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_thread_create()` function creates a new thread.  The calling
+The :c:func:`H2K_thread_create()` function creates a new thread.  The calling
 thread specifies attributes for the thread, and the new thread is created with
 those attributes.
 
@@ -72,12 +72,12 @@ If vmblock is non-NULL, these actions are added:
 * The vmblock pointer of the new thread is inherited from the caller.
 
 
-We then add the new thread to the readylist, and call :cfunc:`H2K_check_sanity_unlock()`
+We then add the new thread to the readylist, and call :c:func:`H2K_check_sanity_unlock()`
 before returning.
 
 For security, we need to assure that no values are in registers incorrectly.
 We accomplish this by clearing the thread context during initialization and 
-at :cfunc:`H2K_thread_stop()` time.  This allows for faster :cfunc:`H2K_thread_create()` calls.
+at :c:func:`H2K_thread_stop()` time.  This allows for faster :c:func:`H2K_thread_create()` calls.
 
 
 
@@ -113,9 +113,9 @@ Harness
 
 We link directly with the create object file, and also the readylist object file.
 
-We define :cfunc:`H2K_check_sanity_unlock()` to set a flag indicating that the function was called.
+We define :c:func:`H2K_check_sanity_unlock()` to set a flag indicating that the function was called.
 
-The test harness will call :cfunc:`H2K_thread_create()` with various inputs and check to make sure
+The test harness will call :c:func:`H2K_thread_create()` with various inputs and check to make sure
 that the appropriate action was taken:
 
 * Check appropriate input arguments, return -1 if obviously erroneous

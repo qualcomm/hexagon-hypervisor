@@ -40,35 +40,35 @@ translations around for several address spaces.
 H2K_asid_table
 --------------
 
-.. ctype:: H2K_asid_entry_t
+.. c:type:: H2K_asid_entry_t
 
 	Entry for the ASID table
 
-	.. cmember:: u32_t ptb
+	.. c:member:: u32_t ptb
 
 		Base physical address for translation tables
 
-	.. cmember:: u16_t count
+	.. c:member:: u16_t count
 
 		Reference count for the address space
 
-	.. cmember:: u8_t maxhops
+	.. c:member:: u8_t maxhops
 
 		Maximum number of hops from collisions at this bin.  When we add
 		a new entry to the table, we set maxhops to the maximum of the old
 		value and the new number of hops that was required to insert the entry.
 
-        .. cmember:: translation_type transtype
+        .. c:member:: translation_type transtype
 
 	        Type of translation for this address space
 
-.. cvar:: H2K_asid_entry_t H2K_asid_table[MAX_ASIDS]
+.. c:var:: H2K_asid_entry_t H2K_asid_table[MAX_ASIDS]
 
 
 H2K_asid_table_search
 ---------------------
 
-.. cfunction:: static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb)
+.. c:function:: static inline H2K_asid_entry_t *H2K_asid_table_search(u32_t ptb)
 
 Description
 ~~~~~~~~~~~
@@ -81,7 +81,7 @@ not found.
 H2K_asid_table_eviction
 -----------------------
 
-.. cfunction:: H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
+.. c:function:: H2K_asid_entry_t *H2K_asid_table_eviction(u32_t ptb)
 
 Description
 ~~~~~~~~~~~
@@ -95,7 +95,7 @@ Updates maxhops in the bucket hashed to.
 H2K_asid_table_inc
 ------------------
 
-.. cfunction:: s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
+.. c:function:: s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
 
 	:param ptb: Address of the translation base
 	:param type: Type of translation
@@ -138,7 +138,7 @@ reference count of zero) and use that.
 H2K_asid_table_dec
 ------------------
 
-.. cfunction:: void H2K_asid_table_dec(u32_t asid)
+.. c:function:: void H2K_asid_table_dec(u32_t asid)
 
 	:param asid: Address space to decrement reference count for
 

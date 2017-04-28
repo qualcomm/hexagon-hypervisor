@@ -7,7 +7,7 @@
 H2K_hvx_poweron
 ---------------
 
-.. cfunction:: void H2K_hvx_poweron(void)
+.. c:function:: void H2K_hvx_poweron(void)
 
 Description
 ~~~~~~~~~~~
@@ -23,7 +23,7 @@ Check and set HVX power state bit atomically.  If power was off, execute the pow
 H2K_hvx_poweroff
 ----------------
 
-.. cfunction:: void H2K_hvx_poweroff(void)
+.. c:function:: void H2K_hvx_poweroff(void)
 
 Description
 ~~~~~~~~~~~

@@ -4,7 +4,7 @@
 
 .. module:: fatal
 
-.. cfunction:: void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
+.. c:function:: void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 	:param error_id: Unique ID of the error that happened
 	:param me: Context of the currently-scheduled thread
@@ -15,7 +15,7 @@
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_fatal_kernel()` handles a fatal kernel error.  The kernel will attempt to
+:c:func:`H2K_fatal_kernel()` handles a fatal kernel error.  The kernel will attempt to
 halt execution completely.
 
 Functionality
@@ -26,7 +26,7 @@ First, we log the error.  Then we spin forever or something?
 H2K_fatal_thread
 ----------------
 
-.. cfunction:: void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
+.. c:function:: void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 	:param error_id: Unique ID of the error that happened
 	:param me: Context of the currently-scheduled thread
@@ -37,7 +37,7 @@ H2K_fatal_thread
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_fatal_thread()` handles a fatal thread error.  A fatal thread error is an error
+:c:func:`H2K_fatal_thread()` handles a fatal thread error.  A fatal thread error is an error
 from a thread that the thread cannot handle.  For example, if the thread event vector
 is NULL, the thread is incapable of recovering from an error.  
 
@@ -47,6 +47,6 @@ will be logged.
 Functionality
 ~~~~~~~~~~~~~
 
-We log the error, and then sibcall to :cfunc:`H2K_thread_stop()`.
+We log the error, and then sibcall to :c:func:`H2K_thread_stop()`.
 
 

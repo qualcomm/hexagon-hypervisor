@@ -9,7 +9,7 @@
 H2K_atomic_setbit
 -----------------
 
-.. cfunction:: static inline H2K_atomic_setbit(u32_t *word, u32_t bit)
+.. c:function:: static inline H2K_atomic_setbit(u32_t *word, u32_t bit)
 
 Description
 ~~~~~~~~~~~
@@ -26,7 +26,7 @@ works even if other threads are attempting to modify the same word in memory.
 H2K_atomic_clrbit
 -----------------
 
-.. cfunction:: static inline H2K_atomic_clrbit(u32_t *word, u32_t bit)
+.. c:function:: static inline H2K_atomic_clrbit(u32_t *word, u32_t bit)
 
 Description
 ~~~~~~~~~~~

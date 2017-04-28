@@ -48,7 +48,7 @@ gating is enabled.
 H2K_trace
 ---------
 
-.. cfunction:: void H2K_trace(s8_t id, u8_t hwtnum, u8_t tid, u16_t pcyclelo)
+.. c:function:: void H2K_trace(s8_t id, u8_t hwtnum, u8_t tid, u16_t pcyclelo)
 
 	:param id: Message ID.  See Message ID Format below.
 	:param hwtnum: Hardware thread number

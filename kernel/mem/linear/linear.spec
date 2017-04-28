@@ -16,7 +16,7 @@ The values must terminate with a value zero.
 H2K_mem_get_linear
 ------------------
 
-.. cfunction:: H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
+.. c:function:: H2K_mem_tlbfmt_t H2K_mem_get_linear(u32_t badva, H2K_thread_context *me)
 
 	:param badva: Virtual Address to translate
 	:param me: Context of the current thread
@@ -24,7 +24,7 @@ H2K_mem_get_linear
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_mem_get_linear()` function searches a linear list of
+The :c:func:`H2K_mem_get_linear()` function searches a linear list of
 translations for a match for the virtual address "badva".  If such a
 translation is found, it is converted to the native TLB format and returned.
 Otherwise, we return all zeros.
@@ -44,7 +44,7 @@ searched the entire list, and so return zero.
 H2K_mem_translate_linear
 ------------------------
 
-.. cfunction:: static inline H2K_translation_t H2K_mem_translate_linear(H2K_linear_fmt_t entry, u32_t va)
+.. c:function:: static inline H2K_translation_t H2K_mem_translate_linear(H2K_linear_fmt_t entry, u32_t va)
 
 	:param entry: Entry from linear translation list
 	:param va: Address to translate
@@ -65,7 +65,7 @@ return struct.
 H2K_mem_lookup_linear
 ---------------------
 
-.. cfunction:: H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list, H2K_vmblock_t *vmblock)
+.. c:function:: H2K_linear_fmt_t H2K_mem_lookup_linear(u32_t badva, u32_t list, H2K_vmblock_t *vmblock)
 
 	:param badva: Address to translate
 	:param list: Start address of linear translation list

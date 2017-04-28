@@ -6,7 +6,7 @@
 H2K_translate
 -------------
 
-.. cfunction:: H2K_translation_t H2K_translate(u32_t addr, H2K_vmblock_t *vmblock)
+.. c:function:: H2K_translation_t H2K_translate(u32_t addr, H2K_vmblock_t *vmblock)
 
 	:param addr: Address to translate
 	:param vmblock: vmblock pointer

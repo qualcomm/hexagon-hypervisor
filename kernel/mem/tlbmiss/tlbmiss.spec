@@ -8,7 +8,7 @@
 H2K_handle_tlbmissx
 -------------------
 
-.. cfunction:: void H2K_handle_tlbmissx(void)
+.. c:function:: void H2K_handle_tlbmissx(void)
 
 
 Description
@@ -25,12 +25,12 @@ Functionality
 * If second-page instruction miss, bad virtual address is ELR+16
 * If normal instruction miss, bad virtual address is ELR
 * Once bad virtual address has been calculated, jump to appropriate
-  location in :cfunc:`H2K_handle_tlbmissrw()`
+  location in :c:func:`H2K_handle_tlbmissrw()`
 
 H2K_handle_tlbmissrw
 --------------------
 
-.. cfunction:: void H2K_handle_tlbmissrw(void)
+.. c:function:: void H2K_handle_tlbmissrw(void)
 
 
 Description
@@ -47,8 +47,8 @@ First, we do the tlbmissrw-specific code:
 
 Next, we do code that is common to both RW and X misses:
 * Save off additional registers
-* Set up kernel stack and :cdata:`H2K_gp`
-* Call TLB Fill routine: :cfunc:`H2K_mem_tlb_fill()`
+* Set up kernel stack and :c:data:`H2K_gp`
+* Call TLB Fill routine: :c:func:`H2K_mem_tlb_fill()`
 * Restore registers
 * Return, unlocking TLB
 

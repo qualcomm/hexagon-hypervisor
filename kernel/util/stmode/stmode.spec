@@ -12,7 +12,7 @@ core reconfiguration services.
 H2K_stmode_begin
 ----------------
 
-.. cfunction:: s32_t H2K_stmode_begin()
+.. c:function:: s32_t H2K_stmode_begin()
 
 	:returns: 0 on success, nonzero on failure
 
@@ -37,7 +37,7 @@ Otherwise, we reenable interrupts globally, free the BKL, and return failure.
 H2K_stmode_end
 --------------
 
-.. cfunction:: void H2K_stmode_end()
+.. c:function:: void H2K_stmode_end()
 
 
 Description

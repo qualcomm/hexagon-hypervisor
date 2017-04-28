@@ -14,7 +14,7 @@ Binary Search trees support O(log(n)) insertion, removal, searching.
 H2K_tree_add
 ------------
 
-.. cfunction:: void H2K_tree_add(treenode **root, treenode *node)
+.. c:function:: void H2K_tree_add(treenode **root, treenode *node)
 
 	:param tree: Pointer to the tree root
 	:param node: Node to add to the tree
@@ -22,7 +22,7 @@ H2K_tree_add
 H2K_tree_remove
 ---------------
 
-.. cfunction:: void H2K_tree_remove(treenode **root, treenode *node)
+.. c:function:: void H2K_tree_remove(treenode **root, treenode *node)
 
 	:param tree: Pointer to the tree root
 	:param node: Node to remove from the tree
@@ -30,7 +30,7 @@ H2K_tree_remove
 H2K_tree_find
 -------------
 
-.. cfunction:: treenode *H2K_tree_find(treenode **root, treekey key)
+.. c:function:: treenode *H2K_tree_find(treenode **root, treekey key)
 
 	:param tree: Pointer to the tree root
 	:param key: Value to search for
@@ -39,7 +39,7 @@ H2K_tree_find
 H2K_tree_bisect
 ---------------
 
-.. cfunction:: void H2K_tree_bisect(treenode **le_tree, treenode **gt_tree, treenode *root, treekey key)
+.. c:function:: void H2K_tree_bisect(treenode **le_tree, treenode **gt_tree, treenode *root, treekey key)
 
 	:param le_tree: Tree holding output nodes less than or equal to key
 	:param gt_tree: Tree holding output nodes greater than key
@@ -49,7 +49,7 @@ H2K_tree_bisect
 H2K_tree_destructive_iterate
 ----------------------------
 
-.. cfunction:: void H2K_tree_destructive_iterate(treenode *root, void (*func)(treenode *))
+.. c:function:: void H2K_tree_destructive_iterate(treenode *root, void (*func)(treenode *))
 
 	:param root: Tree root node
 	:param func: Function to call for each tree node

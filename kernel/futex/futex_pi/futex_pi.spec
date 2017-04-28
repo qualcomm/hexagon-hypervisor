@@ -5,7 +5,7 @@
 H2K_futex_lock_pi
 -----------------
 
-.. cfunction:: u32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
+.. c:function:: u32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 
 	:param lock: A user-specified pointer to a word in memory containing the mutex
 	:param me: pointer to the current thread
@@ -34,7 +34,7 @@ holding thread.  We set the least significant bit of the lock.
 H2K_futex_unlock_pi
 -------------------
 
-.. cfunction:: s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
+.. c:function:: s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 
 	:param lock: A user-specified pointer to a word in memory containing the mutex
 	:param me: pointer to the current thread

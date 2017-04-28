@@ -9,7 +9,7 @@ ASM_REF_CODE(Switch involves special registers and sleep, and cannot be written 
 H2K_switch
 ----------
 
-.. cfunction:: void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
+.. c:function:: void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 
 	:param from: the context of the currently running thread (or NULL)
 	:param to: the context of the new thread to run (or NULL)
@@ -17,7 +17,7 @@ H2K_switch
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_switch()` switches to a new thread that has been chosen to be scheduled.
+:c:func:`H2K_switch()` switches to a new thread that has been chosen to be scheduled.
 If the new thread is NULL, we will go to wait mode.
 
 .. fixme InputAssert::
@@ -41,7 +41,7 @@ If ``to`` is NULL, we go to wait mode:
 	2. Load the STID register.
 	3. Clear the PMU bit for the current hardware thread.
 	4. Save the current pcycles as the thread wait time.
-	5. Jump to :cfunc:`H2K_wait_forever()`.
+	5. Jump to :c:func:`H2K_wait_forever()`.
 
 Otherwise, we set SGP to the new thread context, set the current hthread 
 in the new thread context, save the current pcycles as the thread start time,
@@ -50,8 +50,8 @@ register, load the saved r1:0 (which contain a return value from the blocking
 function), and set or clear the PMU bit for the current hardware thread, depending 
 on whether it is enabled for the software thread.  
 
-Finally, we jump to :cfunc:`H2K_check_sanity_unlock()`.
-:cfunc:`H2K_check_sanity_unlock()` will return to the continuation.
+Finally, we jump to :c:func:`H2K_check_sanity_unlock()`.
+:c:func:`H2K_check_sanity_unlock()` will return to the continuation.
 
 
 
@@ -67,7 +67,7 @@ Samples
 * Input: from, which may be NULL
 * Input: to, which may be NULL
 
-* Flow: If to is non-NULL, we should arrive at :cfunc:`H2K_check_sanity_unlock()` with the return address 
+* Flow: If to is non-NULL, we should arrive at :c:func:`H2K_check_sanity_unlock()` with the return address 
     set to the continuation value in "to"
 * Ouptut: If to is NULL, we should unlock the kernel lock, 
 * Flow: if to is NULL, we should jump to H2K_wait_forever

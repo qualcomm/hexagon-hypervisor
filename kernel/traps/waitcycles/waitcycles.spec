@@ -6,7 +6,7 @@
 H2K_waitcycles_get
 ------------------
 
-.. cfunction:: u64_t  H2K_waitcycles_get(u32_t htid, H2K_thread_context *me)
+.. c:function:: u64_t  H2K_waitcycles_get(u32_t htid, H2K_thread_context *me)
 
 	:param htid: the hardware thread of interest
 	:param me: pointer to the context for the current thread

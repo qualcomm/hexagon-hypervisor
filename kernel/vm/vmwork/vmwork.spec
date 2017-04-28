@@ -8,7 +8,7 @@
 H2K_vm_do_work
 --------------
 
-.. cfunction:: s32_t H2K_vm_do_work(H2K_thread_context *me)
+.. c:function:: s32_t H2K_vm_do_work(H2K_thread_context *me)
 
 	:param me: Pointer to the current thread context
 
@@ -31,6 +31,6 @@ There are only a few reasons why a VCPU would have deferred work:
 
 We check for these scenarios and handle them appropriately.
 
-Interrupts are checked by the :cfunc:`H2K_vm_check_interrupts()` 
+Interrupts are checked by the :c:func:`H2K_vm_check_interrupts()` 
 function.
 

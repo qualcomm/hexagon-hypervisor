@@ -33,25 +33,25 @@ thread, and find the minimum by inspecting each value.
 H2K_runlist_init
 ----------------
 
-.. cfunction:: void H2K_runlist_init()
+.. c:function:: void H2K_runlist_init()
 
 Description
 ~~~~~~~~~~~
 
-Initializes the :cdata:`H2K_kg.runlist` and :cdata:`H2K_kg.runlist_prios`
+Initializes the :c:data:`H2K_kg.runlist` and :c:data:`H2K_kg.runlist_prios`
 structures.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Set all elements of :cdata:`H2K_kg.runlist` to NULL, set all elements of
-:cdata:`H2K_kg.runlist_prios` to -1.
+Set all elements of :c:data:`H2K_kg.runlist` to NULL, set all elements of
+:c:data:`H2K_kg.runlist_prios` to -1.
 
 
 H2K_runlist_push
 ----------------
 
-.. cfunction:: static inline void H2K_runlist_push(H2K_thread_context *newthread)
+.. c:function:: static inline void H2K_runlist_push(H2K_thread_context *newthread)
 
 	:param newthread: Thread to add to the runlist
 
@@ -70,7 +70,7 @@ priority to runlist_prios.
 H2K_runlist_worst_prio
 ----------------------
 
-.. cfunction:: static inline u32_t H2K_runlist_worst_prio()
+.. c:function:: static inline u32_t H2K_runlist_worst_prio()
 
 	:returns: the priority of the worst priority running thread.  Returns
 		MAX_PRIOS or higher if no threads are in the runlist.
@@ -91,7 +91,7 @@ and return its priority.
 H2K_runlist_worst_prio_hthread
 ------------------------------
 
-.. cfunction:: static inline u32_t H2K_runlist_worst_prio_hthread()
+.. c:function:: static inline u32_t H2K_runlist_worst_prio_hthread()
 
 	:returns: the hardware thread number of the worst priority running thread.
                 Returns -1 if no threads are in the runlist.
@@ -112,7 +112,7 @@ and return its priority.
 H2K_runlist_remove
 ------------------
 
-.. cfunction:: static inline void H2K_runlist_remove(H2K_thread_context *thread)
+.. c:function:: static inline void H2K_runlist_remove(H2K_thread_context *thread)
 
 	:param thread: the thread to remove from the runlist
 

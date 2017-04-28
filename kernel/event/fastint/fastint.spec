@@ -10,7 +10,7 @@ ASM_REF_CODE(fastint requires special register changes difficult in C)
 H2K_fastint
 -----------
 
-.. cfunction:: H2K_fastint(u32_t intno, H2K_thread_context *me, u32_t hthread)
+.. c:function:: H2K_fastint(u32_t intno, H2K_thread_context *me, u32_t hthread)
 
 	:param intno: Interrupt number
 	:param me: Context for the current thread
@@ -24,7 +24,7 @@ This function calls a fast interrupt
 Functionality
 ~~~~~~~~~~~~~
 
-The :cfunc:`H2K_fastint()` routine sets up the environment for a fast interrupt handler, and
+The :c:func:`H2K_fastint()` routine sets up the environment for a fast interrupt handler, and
 then calls the fast interrupt handler.
 
 When the fast interrupt handler returns, we clear the IAD bit for the fast interrupt.

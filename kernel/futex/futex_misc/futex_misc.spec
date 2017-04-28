@@ -7,12 +7,12 @@
 H2K_futex_init
 --------------
 
-.. cfunction:: void H2K_futex_init(void)
+.. c:function:: void H2K_futex_init(void)
 
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_futex_init()` initializes the futex data structures.
+:c:func:`H2K_futex_init()` initializes the futex data structures.
 
 Functionality
 ~~~~~~~~~~~~~

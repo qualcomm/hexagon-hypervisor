@@ -11,7 +11,7 @@ This unit contains code to interface with the interrupt control hardware.
 H2K_intcontrol_enable
 ---------------------
 
-.. cfunction:: void H2K_intcontrol_enable(u32_t intno)
+.. c:function:: void H2K_intcontrol_enable(u32_t intno)
 
 	:param intno: the interrupt to enable
 
@@ -19,7 +19,7 @@ H2K_intcontrol_enable
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_intcontrol_enable()` enables an interrupt at the hardware interrupt controller.
+:c:func:`H2K_intcontrol_enable()` enables an interrupt at the hardware interrupt controller.
 
 INPUT_ASSERT((intno < MAX_INTERRUPTS) && ((ARCHV <= 3) || (intno != 31)))
 
@@ -34,14 +34,14 @@ for L2 interrupts.  For V3, and for L1 interrupts, we do a CIAD of the appropria
 
 H2K_intcontrol_disable
 ----------------------
-.. cfunction:: void H2K_intcontrol_disable(u32_t intno)
+.. c:function:: void H2K_intcontrol_disable(u32_t intno)
 
 	:param intno: the interrupt to enable
 
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_intcontrol_disable()` disables  an interrupt at the hardware interrupt controller.
+:c:func:`H2K_intcontrol_disable()` disables  an interrupt at the hardware interrupt controller.
 
 INPUT_ASSERT((intno < MAX_INTERRUPTS) && ((ARCHV <= 3) || (intno != 31)))
 

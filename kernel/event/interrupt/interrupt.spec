@@ -9,7 +9,7 @@ ASM_REF_CODE(Interrupt context save/restore not possible in C)
 H2K_handle_int
 --------------
 
-.. cfunction:: H2K_handle_int()
+.. c:function:: H2K_handle_int()
 
 Description
 ~~~~~~~~~~~
@@ -53,7 +53,7 @@ the appropriate location.
 H2K_int_context_restore
 -----------------------
 
-.. cfunction:: H2K_int_context_restore()
+.. c:function:: H2K_int_context_restore()
 
 Description
 ~~~~~~~~~~~
@@ -70,7 +70,7 @@ The int_context_restore routine restores registers from the thread context and r
 H2K_interrupted_waitmode
 ------------------------
 
-.. cfunction:: H2K_interrupted_waitmode()
+.. c:function:: H2K_interrupted_waitmode()
 
 Description
 ~~~~~~~~~~~
@@ -88,7 +88,7 @@ We set up the stack pointer and call the correct function.
 H2K_interrupted_preempt
 -----------------------
 
-.. cfunction:: H2K_interrupted_preempt()
+.. c:function:: H2K_interrupted_preempt()
 
 Description
 ~~~~~~~~~~~
@@ -107,7 +107,7 @@ H2K_interrupted_waitmode_or_preempt
 -----------------------------------
 
 
-:cfunc:`H2K_interrupted_preempt()` and :cfunc:`H2K_interrupted_waitmode()` have very 
+:c:func:`H2K_interrupted_preempt()` and :c:func:`H2K_interrupted_waitmode()` have very 
 similar behavior.  It may be beneficial to combine these routines into a single one
 for lower code size.
 
@@ -152,24 +152,24 @@ We will link only with the interrupt object file.
 
 The harness will have a helper function:
 
-.. cfunction:: void TH_do_interrupt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
+.. c:function:: void TH_do_interrupt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
 
 This function will load the appropriate registers from the src thread context, set
-SGP to the storage pointed to by `dest`, and call :cfunc:`H2K_handle_int()` with the
+SGP to the storage pointed to by `dest`, and call :c:func:`H2K_handle_int()` with the
 correct SSR CAUSE code for the interrupt corresponding to num having happened.
 
 For non-NULL SGP value tests, the approriate entry in H2K_inthandlers will point to a second helper function:
 
-.. cfunction::  void TH_do_preempt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
+.. c:function::  void TH_do_preempt(H2K_thread_context *src, H2K_thread_context *dest, u32_t num)
 
 This function will set R28 to point to the kernel globals, R0 to the storage
-pointed to by `dest`, set SGP to 0x1, and call :cfunc:`H2K_handle_int()` with
+pointed to by `dest`, set SGP to 0x1, and call :c:func:`H2K_handle_int()` with
 the correct SSR CAUSE code for the interrupt corresponding to num having
 happened.
 
 This simulates the scenario where the interrupt happened from the preemption point.
 
-.. cfunction::  void TH_check_interrupt(H2K_thread_context *src, H2K_thread_context *dest)
+.. c:function::  void TH_check_interrupt(H2K_thread_context *src, H2K_thread_context *dest)
 
 This function will check to make sure that the appropriate registers from `src` and `dest`
 are equal, to check that the context was saved correctly.  It will also check to make 

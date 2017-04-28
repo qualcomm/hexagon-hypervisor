@@ -7,7 +7,7 @@
 H2K_vmtrap_cachectl
 -------------------
 
-.. cfunction:: void H2K_vmtrap_cachectl(H2K_thread_context *me)
+.. c:function:: void H2K_vmtrap_cachectl(H2K_thread_context *me)
 
 	:param me: Pointer to the current thread context
 

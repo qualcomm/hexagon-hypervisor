@@ -7,7 +7,7 @@
 H2K_trap_hwconfig
 -----------------
 
-.. cfunction:: u32_t H2K_trap_hwconfig(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_hwconfig(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 
 	:param configtype: Configuration operation to do
 	:param ptr: Operation-dependent pointer value
@@ -34,7 +34,7 @@ appropriate routine.
 H2K_trap_hwconfig_l2cache_size
 ------------------------------
 
-.. cfunction:: u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t use_wb, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t use_wb, H2K_thread_context *me)
 
 	:param unused: Unused parameter
 	:param unusedp: Unused parameter
@@ -76,7 +76,7 @@ H2K_trap_hwconfig_partitions
 ----------------------------
 
 
-.. cfunction:: u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)
 
 	:param unused: Unused parameter
 	:param unusedp: Unused parameter
@@ -106,7 +106,7 @@ H2K_trap_hwconfig_prefetch
 --------------------------
 
 
-.. cfunction:: u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)
 
 	:param unused: Unused parameter
 	:param unusedp: Unused parameter
@@ -133,7 +133,7 @@ configval parameters, as appropriate for the architecture.
 H2K_trap_hwconfig_extbits
 -------------------------
 
-.. cfunction:: u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me)
 
 	:param unused: Unused parameter
 	:param unusedp: Unused parameter
@@ -156,7 +156,7 @@ Set SSR:XA and SSR:XE in the current thread context to the given values.
 H2K_trap_hwconfig_vlength
 -------------------------
 
-.. cfunction:: u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused parameter
 	:param unusedp: Unused parameter
@@ -177,9 +177,9 @@ If vlength is at least the double-vector-length threshold (7), set V2X bit in SY
 
 
 H2K_trap_hwconfig_extpower
--------------------------
+--------------------------
 
-.. cfunction:: u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t unused3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused parameter
 	:param unusedp: Unused parameter
@@ -196,4 +196,4 @@ Set extension power state to the requested value.
 Functionality
 ~~~~~~~~~~~~~
 
-Currently specific to HVX.  Call :cfunc:`H2K_hvx_poweron()` if state is non-zero, else call :cfunc:`H2K_hvx_poweroff()`.
+Currently specific to HVX.  Call :c:func:`H2K_hvx_poweron()` if state is non-zero, else call :c:func:`H2K_hvx_poweroff()`.

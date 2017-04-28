@@ -7,7 +7,7 @@
 H2K_mem_get_pagetable
 ---------------------------
 
-.. cfunction:: H2K_mem_tlbfmt_t H2K_mem_get_pagetable(u32_t badva, H2K_thread_context *me)
+.. c:function:: H2K_mem_tlbfmt_t H2K_mem_get_pagetable(u32_t badva, H2K_thread_context *me)
 
 	:param badva: Virtual Address to translate
 	:param me: Context of the current thread
@@ -16,7 +16,7 @@ H2K_mem_get_pagetable
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_mem_get_pagetable()` function walks the page tables, finding
+The :c:func:`H2K_mem_get_pagetable()` function walks the page tables, finding
 an entry corresponding to the virtual address.  If no such valid translation exists,
 we return all zeros; an invalid TLB entry.
 
@@ -33,7 +33,7 @@ The page tables are located at me->gptb.
 H2K_mem_pagewalk
 ----------------
 
-.. cfunction:: H2K_pte_t H2K_mem_pagewalk(u32_t badva, H2K_thread_context *me)
+.. c:function:: H2K_pte_t H2K_mem_pagewalk(u32_t badva, H2K_thread_context *me)
 
 	:param badva: Virtual Address to translate
 	:param me: Context of the current thread
@@ -42,7 +42,7 @@ H2K_mem_pagewalk
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_mem_pagewalk()` function walks the page tables, finding
+The :c:func:`H2K_mem_pagewalk()` function walks the page tables, finding
 an entry corresponding to the virtual address.  If no such valid translation exists,
 we return all zeros.
 
@@ -52,13 +52,13 @@ permissions.
 Functionality
 ~~~~~~~~~~~~~
 
-Look up the page-table base in the ASID table.  Call :cfunc:`H2K_mem_pagewalk_l1()`.
+Look up the page-table base in the ASID table.  Call :c:func:`H2K_mem_pagewalk_l1()`.
 
 
 H2K_mem_translate_pagetable
 ---------------------------
 
-.. cfunction:: static inline H2K_translation_t H2K_mem_translate_pagetable(H2K_pte_t entry, u32_t va)
+.. c:function:: static inline H2K_translation_t H2K_mem_translate_pagetable(H2K_pte_t entry, u32_t va)
 
 	:param entry: Page table entry
 	:param va: Address to translate
@@ -79,7 +79,7 @@ return struct.
 H2K_mem_pagewalk_l1
 -------------------
 
-.. cfunction:: H2K_pte_t H2K_mem_pagewalk_l1(u32_t va, u32_t baseaddr, H2K_vmblock_t *vmblock)
+.. c:function:: H2K_pte_t H2K_mem_pagewalk_l1(u32_t va, u32_t baseaddr, H2K_vmblock_t *vmblock)
 
 	:param va: Address to translate
 	:param baseaddr: Page table base address
@@ -93,13 +93,13 @@ Return the page-table entry for the given address.
 Functionality
 ~~~~~~~~~~~~~
 
-Calculate the physical address of the entry and read.  For a level-2 entry, call :cfunc:`H2K_mem_pagewalk_l2()`.
+Calculate the physical address of the entry and read.  For a level-2 entry, call :c:func:`H2K_mem_pagewalk_l2()`.
 
 
 H2K_mem_pagewalk_l2
 -------------------
 
-.. cfunction:: static inline H2K_pte_t H2K_mem_pagewalk_l2(u32_t va, u32_t l2addr, u32_t tablesize, u32_t pagesize, H2K_vmblock_t *vmblock)
+.. c:function:: static inline H2K_pte_t H2K_mem_pagewalk_l2(u32_t va, u32_t l2addr, u32_t tablesize, u32_t pagesize, H2K_vmblock_t *vmblock)
 
 	:param va: Address to translate
 	:param l2addr: Guest address of level-2 page table

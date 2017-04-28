@@ -6,7 +6,7 @@
 H2K_dosched
 -----------
 
-.. cfunction:: void H2K_dosched(H2K_thread_context *me, u32_t hthread)
+.. c:function:: void H2K_dosched(H2K_thread_context *me, u32_t hthread)
 
 	:param me: the context of the currently running thread
 	:param hthread: the hardware thread number
@@ -14,7 +14,7 @@ H2K_dosched
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_dosched()` schedules the highest priority ready thread for execution, or goes to
+:c:func:`H2K_dosched()` schedules the highest priority ready thread for execution, or goes to
 sleep if there is no ready thread.
 
 INPUT_ASSERT(kernel_locked)
@@ -55,12 +55,12 @@ lowprio thread.  If we were also marked as the lowprio hthread, we make ourselve
 	1. If the waitmask is zero, we should "notify" the new lowprio hthread.
 
 It is essential that we make ourselves non-lowprio here if appropriate, however it is NOT
-essential that we find a lowprio hthread at this point.  :cfunc:`H2K_check_sanity()` will find a lowprio
+essential that we find a lowprio hthread at this point.  :c:func:`H2K_check_sanity()` will find a lowprio
 hthread if priomask is zero.
 
 Finally, we set the new thread's hthread and add the new thread to the runlist
-via :cfunc:`H2K_runlist_push()`, and then switch to the thread by jumping to
-:cfunc:`H2K_switch()`, which does not return.
+via :c:func:`H2K_runlist_push()`, and then switch to the thread by jumping to
+:c:func:`H2K_switch()`, which does not return.
 
 Testing
 -------
@@ -98,14 +98,14 @@ Cross of these options
 Harness
 ~~~~~~~
 
-In all cases, :cfunc:`H2K_switch()` should be called.  
+In all cases, :c:func:`H2K_switch()` should be called.  
 
-We define :cfunc:`H2K_switch()` in the test harness.  This is a dummy function which sets
-a flag indicating that the function was called.  :cfunc:`H2K_switch()` should not return,
+We define :c:func:`H2K_switch()` in the test harness.  This is a dummy function which sets
+a flag indicating that the function was called.  :c:func:`H2K_switch()` should not return,
 so we use setjmp/longjump to return to the function where dosched was called.
 
-We link with the whole kernel lib.  However, :cfunc:`H2K_switch()` will be already resolved, and
-so will not be linked in.  We will not be in the real kernel environment; :cfunc:`H2K_dosched()`
+We link with the whole kernel lib.  However, :c:func:`H2K_switch()` will be already resolved, and
+so will not be linked in.  We will not be in the real kernel environment; :c:func:`H2K_dosched()`
 will be called directly.
 
 

@@ -8,7 +8,7 @@
 H2K_intpool_int
 ---------------
 
-.. cfunction:: H2K_intpool_int(u32_t intno, H2K_thread_context *me, u32_t hthread, H2K_vmblock_t *vmblock)
+.. c:function:: H2K_intpool_int(u32_t intno, H2K_thread_context *me, u32_t hthread, H2K_vmblock_t *vmblock)
 
 	:param intno: Interrupt number
 	:param me: Context for the current thread
@@ -23,7 +23,7 @@ This function attempts to schedule a thread to handle an interrupt in an efficie
 Functionality
 ~~~~~~~~~~~~~
 
-The :cfunc:`H2K_inpool_int()` attempts to schedule a thread to handle an interrupt in an efficient way.
+The :c:func:`H2K_inpool_int()` attempts to schedule a thread to handle an interrupt in an efficient way.
 
 First, acquire the BKL.
 
@@ -38,7 +38,7 @@ We clear the low-priority status of the current thread, change our IMASK
 appropriately, and place the woken thread directly into the runlist and switch
 to it.  This is speculative; the woken thread may not be higher priority than 
 the interrupted thread.  However we expect this to be likely, and if it is incorrect
-it will be remedied by :cfunc:`H2K_check_sanity()`.
+it will be remedied by :c:func:`H2K_check_sanity()`.
 
 Note that we do not re-enable the interrupt at this time.  The interrupt is only
 re-enabled when a thread explicitly calls to enable the interrupt, or waits with 
@@ -51,7 +51,7 @@ Note that this functionality is very similar to H2K_popup_int
 H2K_intpool_int
 ---------------
 
-.. cfunction:: H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
+.. c:function:: H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 
 	:param int_ack_num: Interrupt to enable, or -1 for no interrupt
 	:param me: Context for the current thread

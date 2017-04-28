@@ -8,7 +8,7 @@
 H2K_mem_pagefault
 -----------------
 
-.. cfunction:: void H2K_mem_pagefault(u32_t va, H2K_thread_context *me)
+.. c:function:: void H2K_mem_pagefault(u32_t va, H2K_thread_context *me)
 
 Description
 ~~~~~~~~~~~

@@ -10,14 +10,14 @@
 H2K_mem_physread_word
 ---------------------
 
-.. cfunction:: u32_t H2K_mem_physread_word(u64_t pa)
+.. c:function:: u32_t H2K_mem_physread_word(u64_t pa)
 
 	:param pa: Physical address 
 
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_mem_physread_word()` function reads a word at a chosen physical
+The :c:func:`H2K_mem_physread_word()` function reads a word at a chosen physical
 address.  It is assumed to be L1 and L2 cacheable.  
 
 Functionality
@@ -37,14 +37,14 @@ Tested cases
 H2K_mem_physread_dword
 ----------------------
 
-.. cfunction:: u64_t H2K_mem_physread_dword(u64_t pa)
+.. c:function:: u64_t H2K_mem_physread_dword(u64_t pa)
 
 	:param pa: Physical address 
 
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_mem_physread_dword()` function reads a doubleword at a chosen
+The :c:func:`H2K_mem_physread_dword()` function reads a doubleword at a chosen
 physical address.  It is assumed to be L1 and L2 cacheable.  
 
 Functionality

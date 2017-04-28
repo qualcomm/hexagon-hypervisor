@@ -6,7 +6,7 @@
 H2K_vmblock_clear
 -----------------
 
-.. cfunction:: void H2K_vmblock_clear(H2K_vmblock_t *vmblock)
+.. c:function:: void H2K_vmblock_clear(H2K_vmblock_t *vmblock)
 
 	:param vmblock: Pointer to vmblock to clear
 
@@ -24,7 +24,7 @@ Indeed.
 H2K_vm_translate
 ----------------
 
-.. cfunction:: H2K_translation_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock)
+.. c:function:: H2K_translation_t H2K_vm_translate(u32_t addr, H2K_vmblock_t *vmblock)
 
 	:param addr:  Address to translate
 	:param vmblock: Pointer to vmblock
@@ -42,13 +42,13 @@ address based on the offset descriptor (offset pages, page size).  Return result
 if the translated address falls within the fence parameters of the
 vmblock.  Else return a translation with the invalid bit set.
 
-For other translation types call :cfunc:`H2K_translate()` to handle the translation.
+For other translation types call :c:func:`H2K_translate()` to handle the translation.
 
 
 H2K_vm_get_offset
 -----------------
 
-.. cfunction:: static inline H2K_mem_tlbfmt_t H2K_vm_get_offset(u32_t addr, H2K_thread_context *me)
+.. c:function:: static inline H2K_mem_tlbfmt_t H2K_vm_get_offset(u32_t addr, H2K_thread_context *me)
 
 	:param addr: Missed address
 	:param me: Pointer to current thread context

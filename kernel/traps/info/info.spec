@@ -6,7 +6,7 @@
 H2K_info
 --------
 
-.. cfunction:: void H2K_info(u32_t op, H2K_thread_context *me)
+.. c:function:: void H2K_info(u32_t op, H2K_thread_context *me)
 
 	:param op: Configuration query
 	:param me: Pointer to the context for the current thread

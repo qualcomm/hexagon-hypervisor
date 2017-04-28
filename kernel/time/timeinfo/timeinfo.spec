@@ -12,31 +12,31 @@ H2K_timeinfo_t
 Description
 ~~~~~~~~~~~
 
-.. ctype:: H2K_timeinfo_t
+.. c:type:: H2K_timeinfo_t
 
 	Time Information Block
 
-	.. cmember:: H2K_spinlock_t lock
+	.. c:member:: H2K_spinlock_t lock
 
 		spinlock for atomic accesses to the time information
 
-	.. cmember:: H2K_treenode_t *timeouts
+	.. c:member:: H2K_treenode_t *timeouts
 
 		Tree of all threads requesting a timeout
 
-	.. cmember:: u64_t last_ticks
+	.. c:member:: u64_t last_ticks
 
 		Last update in ticks
 
-	.. cmember:: u64_t last_pcycles
+	.. c:member:: u64_t last_pcycles
 
 		Processor Cycle Count of the last time update
 
-	.. cmember:: u64_t next_ticks
+	.. c:member:: u64_t next_ticks
 
 		Hardware counter information for the next interrupt
 
-	.. cmember:: volatile u32_t *devptr
+	.. c:member:: volatile u32_t *devptr
 
 		Pointer to the hardware timer device
 

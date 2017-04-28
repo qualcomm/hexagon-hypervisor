@@ -31,7 +31,7 @@ the corresponding list.
 H2K_ready_init
 --------------
 
-.. cfunction:: void H2K_ready_init()
+.. c:function:: void H2K_ready_init()
 
 Description
 ~~~~~~~~~~~
@@ -47,7 +47,7 @@ Set all elements of H2K_kg.ready to NULL, and set H2K_kg.ready_valids to zero.
 H2K_ready_best_prio
 -------------------
 
-.. cfunction:: static inline u32_t H2K_ready_best_prio()
+.. c:function:: static inline u32_t H2K_ready_best_prio()
 
 	:returns: the priority corresponding to the ready thread with the best priority.
 		Returns a value of MAX_PRIOS or higher if no threads are ready.
@@ -65,7 +65,7 @@ Count Trailing Zeros of H2K_kg.ready_valids.
 H2K_ready_any_valid
 -------------------
 
-.. cfunction:: static inline u32_t H2K_ready_any_valid()
+.. c:function:: static inline u32_t H2K_ready_any_valid()
 
 	:returns: whether any threads are ready.
 
@@ -75,14 +75,14 @@ Description
 Functionality
 ~~~~~~~~~~~~~
 
-Tests whether :cfunc:`H2K_ready_best_prio()` returns MAX_PRIOS or higher.
+Tests whether :c:func:`H2K_ready_best_prio()` returns MAX_PRIOS or higher.
 
 
 
 H2K_ready_prio_valid
 --------------------
 
-.. cfunction:: static inline u32_t H2K_ready_prio_valid(u32_t prio)
+.. c:function:: static inline u32_t H2K_ready_prio_valid(u32_t prio)
 
 	:param prio: the priority to check
 	:returns: whether a thread at the given priority is ready.
@@ -102,7 +102,7 @@ Check the bit in ready_valids corresponding to the priority.
 H2K_ready_set_prio
 ------------------
 
-.. cfunction:: static inline void H2K_ready_set_prio(u32_t prio)
+.. c:function:: static inline void H2K_ready_set_prio(u32_t prio)
 
 	:param prio: the priority to set
 
@@ -121,7 +121,7 @@ Set the bit in ready_valids corresponding to the priority.
 H2K_ready_clear_prio
 --------------------
 
-.. cfunction:: static inline void H2K_ready_clear_prio(u32_t prio)
+.. c:function:: static inline void H2K_ready_clear_prio(u32_t prio)
 
 	:param prio: the priority to clear
 
@@ -140,7 +140,7 @@ Clear the bit in ready_valids corresponding to the priority.
 H2K_ready_append
 ----------------
 
-.. cfunction:: static inline void H2K_ready_append(H2K_thread_context *thread)
+.. c:function:: static inline void H2K_ready_append(H2K_thread_context *thread)
 
 	:param thread: the thread to add
 
@@ -152,16 +152,16 @@ Appends the thread to the ready list.
 Functionality
 ~~~~~~~~~~~~~
 
-We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_append()`
+We get the priority from the thread context.  Next, we call :c:func:`H2K_ring_append()`
 on the H2K_kg.ready ring at the thread's priority.  Finally, we call
-:cfunc:`H2K_ready_set_prio()` with the thread's priority.
+:c:func:`H2K_ready_set_prio()` with the thread's priority.
 
 
 
 H2K_ready_insert
 ----------------
 
-.. cfunction:: static inline void H2K_ready_insert(H2K_thread_context *thread)
+.. c:function:: static inline void H2K_ready_insert(H2K_thread_context *thread)
 
 	:param thread: the thread to add
 
@@ -173,16 +173,16 @@ Inserts the thread to the ready list.
 Functionality
 ~~~~~~~~~~~~~
 
-We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_insert()`
+We get the priority from the thread context.  Next, we call :c:func:`H2K_ring_insert()`
 on the H2K_kg.ready ring at the thread's priority.  Finally, we call
-:cfunc:`H2K_ready_set_prio()` with the thread's priority.
+:c:func:`H2K_ready_set_prio()` with the thread's priority.
 
 
 
 H2K_ready_remove
 ----------------
 
-.. cfunction:: static inline void H2K_ready_remove(H2K_thread_context *thread)
+.. c:function:: static inline void H2K_ready_remove(H2K_thread_context *thread)
 
 	:param thread: the thread to remove
 
@@ -194,16 +194,16 @@ Removes the thread from the ready list.
 Functionality
 ~~~~~~~~~~~~~
 
-We get the priority from the thread context.  Next, we call :cfunc:`H2K_ring_remove()`
+We get the priority from the thread context.  Next, we call :c:func:`H2K_ring_remove()`
 on the H2K_kg.ready ring at the thread's priority.  Finally, if there are no
-more elements in the ring, we call :cfunc:`H2K_ready_clear_prio()` with the
+more elements in the ring, we call :c:func:`H2K_ready_clear_prio()` with the
 thread's priority.
 
 
 H2K_ready_getbest
 -----------------
 
-.. cfunction:: static inline H2K_thread_context *H2K_ready_getbest()
+.. c:function:: static inline H2K_thread_context *H2K_ready_getbest()
 
 	:returns: the best priority ready thread, which has been removed from
 		the ready list.  Or, if no threads are ready, returns NULL.
@@ -216,13 +216,13 @@ Removes the best priority thread from the ready list.
 Functionality
 ~~~~~~~~~~~~~
 
-If there are no ready threads (!:cfunc:`H2K_ready_any_valid()`), we return NULL.
+If there are no ready threads (!:c:func:`H2K_ready_any_valid()`), we return NULL.
 
-We call :cfunc:`H2K_ready_best_prio()` to obtain the priority of the best priority ready thread.
+We call :c:func:`H2K_ready_best_prio()` to obtain the priority of the best priority ready thread.
 
 We then get the thread pointed to by the H2K_kg.ready pointer at the correct priority.
 
-This thread is removed from the ready list by calling :cfunc:`H2K_ready_remove()`, and returned.
+This thread is removed from the ready list by calling :c:func:`H2K_ready_remove()`, and returned.
 
 
 

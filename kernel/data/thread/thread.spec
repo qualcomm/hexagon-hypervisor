@@ -9,7 +9,7 @@ This module contains the data structures for threads.
 H2K_thread_context_clear
 ------------------------
 
-.. cfunction:: void H2K_thread_context_clear(H2K_thread_context *thread)
+.. c:function:: void H2K_thread_context_clear(H2K_thread_context *thread)
 
 	:param thread: pointer to a thread context
 
@@ -26,7 +26,7 @@ Sets every bit in the thread context to zero.
 H2K_thread_init
 ---------------
 
-.. cfunction:: void H2K_thread_init(void)
+.. c:function:: void H2K_thread_init(void)
 
 Description
 ~~~~~~~~~~~
@@ -36,5 +36,5 @@ Initializes thread-related data structures.
 Functionality
 ~~~~~~~~~~~~~
 
-Clears out the H2K_boot_context by calling :cfunc:`H2K_thread_context_clear()`.
+Clears out the H2K_boot_context by calling :c:func:`H2K_thread_context_clear()`.
 

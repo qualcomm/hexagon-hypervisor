@@ -8,7 +8,7 @@
 H2K_cputime_get
 ---------------
 
-.. cfunction:: u64_t H2K_cputime_get(H2K_thread_context *me)
+.. c:function:: u64_t H2K_cputime_get(H2K_thread_context *me)
 
 	:param me: Pointer to the thread context of the currently-executing thread
 	:returns: Current total time the thread has been scheduled, in processor cycles.
@@ -28,7 +28,7 @@ count and me->oncpu_start.
 H2K_pcycles_get
 ---------------
 
-.. cfunction:: u64_t H2K_pcycles_get(H2K_thread_context *me)
+.. c:function:: u64_t H2K_pcycles_get(H2K_thread_context *me)
 
 
 	:param me: Pointer to the thread context of the currently-executing thread
@@ -69,10 +69,10 @@ H2 is started in the normal method.
 
 We spawn two threads.
 
-The first thread checks that subsequent calls to :cfunc:`H2K_pcycles_get()` have similar
+The first thread checks that subsequent calls to :c:func:`H2K_pcycles_get()` have similar
 increasing values.
 
-We then check that subsequent calls to :cfunc:`H2K_cputime_get()` have similar increasing
+We then check that subsequent calls to :c:func:`H2K_cputime_get()` have similar increasing
 values.
 
 We check to make sure that after spinning for a large number of cycles, that 

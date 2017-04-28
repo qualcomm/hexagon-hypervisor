@@ -6,7 +6,7 @@
 H2K_check_sanity
 ----------------
 
-.. cfunction:: u64_t H2K_check_sanity(const u64_t returnval)
+.. c:function:: u64_t H2K_check_sanity(const u64_t returnval)
 
 	:param returnval: value to be returned
 	:returns: the value that was passed in at `returnval`
@@ -25,7 +25,7 @@ reasons.  One example of this is whether or not the worst priority running
 thread is better or equal to the best priority ready thread.  For example, to
 support multiple wakeup, we place all woken threads into the ready data
 structure.  The newly ready threads may be higher priority than all running
-threads.  We use :cfunc:`H2K_check_sanity()` to detect this situation and take corrective
+threads.  We use :c:func:`H2K_check_sanity()` to detect this situation and take corrective
 action.
 
 This function must return the input argument.  This facilitates use during 
@@ -59,7 +59,7 @@ Finally, we check the scheduler mask.
 H2K_check_sanity_unlock
 -----------------------
 
-.. cfunction:: u64_t H2K_check_sanity_unlock(const u64_t returnval)
+.. c:function:: u64_t H2K_check_sanity_unlock(const u64_t returnval)
 
 	:param returnval: value to be returned
 	:returns: the value that was passed in at `returnval`
@@ -67,7 +67,7 @@ H2K_check_sanity_unlock
 Description
 ~~~~~~~~~~~
    
-This function performs the same checks as :cfunc:`H2K_check_sanity()`, and additionally
+This function performs the same checks as :c:func:`H2K_check_sanity()`, and additionally
 unlocks the kernel.  This facilitates its use as a sibling call, as
 check_sanity and unlock are common in the system call return process.
    
@@ -87,7 +87,7 @@ during the system call return process.
 Functionality
 ~~~~~~~~~~~~~
    
-Implement the functionality of :cfunc:`H2K_check_sanity()`.
+Implement the functionality of :c:func:`H2K_check_sanity()`.
    
 Unlock the BKL.
    

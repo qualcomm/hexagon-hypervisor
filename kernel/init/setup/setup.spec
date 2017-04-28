@@ -7,7 +7,7 @@
 H2K_init_setup
 --------------
 
-.. cfunction:: void H2K_init_setup()
+.. c:function:: void H2K_init_setup()
 
 Description
 ~~~~~~~~~~~
@@ -17,22 +17,22 @@ Sets up the kernel at boot time.
 Functionality
 ~~~~~~~~~~~~~
 
-The :cfunc:`H2K_init_setup()` function initializes kernel state at boot time.
+The :c:func:`H2K_init_setup()` function initializes kernel state at boot time.
 
 This function calls other initialization functions:
 
-* :cfunc:`H2K_ready_init()`
-* :cfunc:`H2K_runlist_init()`
-* :cfunc:`H2K_lowprio_init()`
-* :cfunc:`H2K_futex_init()`
-* :cfunc:`H2K_intconfig_init()`
-* :cfunc:`H2K_thread_init()`
+* :c:func:`H2K_ready_init()`
+* :c:func:`H2K_runlist_init()`
+* :c:func:`H2K_lowprio_init()`
+* :c:func:`H2K_futex_init()`
+* :c:func:`H2K_intconfig_init()`
+* :c:func:`H2K_thread_init()`
 
 
 H2K_thread_boot
 ---------------
 
-.. cfunction:: void H2K_thread_boot()
+.. c:function:: void H2K_thread_boot()
 
 Initializes the core and sets up the boot thread.  This function is jumped to
 by the boot code.
@@ -40,11 +40,11 @@ by the boot code.
 Functionality
 ~~~~~~~~~~~~~
 
-First, we call :cfunc:`H2K_init_setup()` to intialize the kernel data structures.
+First, we call :c:func:`H2K_init_setup()` to intialize the kernel data structures.
 
 Next, we set up the boot thread context.  Specifically:
 * ELR should point to qdsp6_pre_main
-* Continuation should point to :cfunc:`H2K_interrupt_restore()`
+* Continuation should point to :c:func:`H2K_interrupt_restore()`
 * Trapmask should be initialized to all 1's.
 
 Once we have set up the boot thread context and placed it into the runlist, we
@@ -59,7 +59,7 @@ Samples
 ~~~~~~~
 
 * Init routines must be called
-* We must call :cfunc:`H2K_switch()` to boot thread
+* We must call :c:func:`H2K_switch()` to boot thread
 * Boot thread fields should be set correctly
 
 Important Cases
@@ -71,7 +71,7 @@ Harness
 ~~~~~~~
 
 Standalone application which defines all the initialization functions,
-as well as :cfunc:`H2K_switch()`.
+as well as :c:func:`H2K_switch()`.
 
 
 

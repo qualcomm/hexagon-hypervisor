@@ -10,7 +10,7 @@ check assumtions.
 checker_kernel_locked
 ---------------------
 
-.. cfunction:: void checker_kernel_locked()
+.. c:function:: void checker_kernel_locked()
 
 Description
 ~~~~~~~~~~~
@@ -21,7 +21,7 @@ If the kernel is locked, return.  Otherwise, trigger an assertion.
 checker_ready
 -------------
 
-.. cfunction:: void checker_ready()
+.. c:function:: void checker_ready()
 
 Description
 ~~~~~~~~~~~
@@ -32,7 +32,7 @@ Checks the ready queue for sanity
 checker_ring
 ------------
 
-.. cfunction:: s32_t checker_ring(H2K_ringnode_t **x)
+.. c:function:: s32_t checker_ring(H2K_ringnode_t **x)
 
            :param x: Pointer to the ring.
            :returns: 0 on success, nonzero on failure
@@ -46,7 +46,7 @@ If the specified ring looks sane, return.  Otherwise, trigger an assertion.
 checker_ready
 -------------
 
-.. cfunction:: s32_t checker_ready()
+.. c:function:: s32_t checker_ready()
 
            :returns: 0 on success, nonzero on failure
 

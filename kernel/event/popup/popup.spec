@@ -8,7 +8,7 @@
 H2K_popup_int
 -------------
 
-.. cfunction:: H2K_popup_int(u32_t intno, H2K_thread_context *me, u32_t hthread)
+.. c:function:: H2K_popup_int(u32_t intno, H2K_thread_context *me, u32_t hthread)
 
 	:param intno: Interrupt number
 	:param me: Context for the current thread
@@ -22,7 +22,7 @@ This function schedules a thread that is waiting for an interrupt.
 Functionality
 ~~~~~~~~~~~~~
 
-The :cfunc:`H2K_popup_int()` schedules a thread that is waiting for an interrupt.
+The :c:func:`H2K_popup_int()` schedules a thread that is waiting for an interrupt.
 
 First, acquire the BKL.
 
@@ -35,7 +35,7 @@ We clear the low-priority status of the current thread, change our IMASK
 appropriately, and place the woken thread directly into the runlist and switch
 to it.  This is speculative; the woken thread may not be higher priority than 
 the interrupted thread.  However we expect this to be likely, and if it is incorrect
-it will be remedied by :cfunc:`H2K_check_sanity()`.
+it will be remedied by :c:func:`H2K_check_sanity()`.
 
 Note that we do not re-enable the interrupt at this time.  The interrupt is only
 re-enabled when the thread blocks waiting for another interrupt.  By keeping the 
@@ -45,7 +45,7 @@ interrupt disabled, we allow it to pend while the popup thread executes.
 H2K_popup_int
 -------------
 
-.. cfunction:: H2K_popup_wait(u32_t intno, H2K_thread_context *me)
+.. c:function:: H2K_popup_wait(u32_t intno, H2K_thread_context *me)
 
 	:param intno: Interrupt number
 	:param me: Context for the current thread

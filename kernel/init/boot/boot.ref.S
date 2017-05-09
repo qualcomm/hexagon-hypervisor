@@ -333,6 +333,10 @@ H2_BOOT_attempts:
 
 	SETCONST(SP, H2K_stacks)
 
+	// make sure these are initialized
+	FP = #0
+	LR = #0
+
 	r0 = sub(LINK_ADDR, PHYS_ADDR)  // phys_offset
 	r1 = BOOT_OFFSET
 	r2 = SS_BASE

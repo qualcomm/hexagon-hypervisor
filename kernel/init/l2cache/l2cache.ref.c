@@ -1140,7 +1140,8 @@ u32_t H2K_l2cache_init() {
 #endif
 
 	if (0x65 < arch) {  // use cfg_table, yay
-		tag_size = Q6_R_ct0_R(H2K_cfg_table(CFG_TABLE_L2TAG_SIZE)) - 5;
+		tag_size = Q6_R_ct0_R(H2K_cfg_table(CFG_TABLE_L2TAG_SIZE));
+		tag_size = (32 == tag_size ? 0 : tag_size - 5);
 		H2K_gp->l2size = H2K_cfg_table(CFG_TABLE_L2ARRAY_SIZE) * 1024;
 
 	} else {  // use built-in tables

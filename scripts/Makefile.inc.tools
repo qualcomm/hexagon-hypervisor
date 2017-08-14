@@ -66,6 +66,12 @@ endif
 endif
 endif
 
+ifdef TINY_CORE
+TOOLS_FLAVOR := v66_latest
+TOOLS_FLAVOR_KERNEL := v66_latest
+ARCH_FLAVOR := v66t_latest
+endif
+
 DEVSIM ?= devsim
 
 DEVICE_CONFIG ?= $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
@@ -81,6 +87,11 @@ export TOOLARCH := $(ARCHV)
 export KERNEL_TOOLARCH := $(ARCHV)
 ifeq (60, $(TOOLARCH))
 export KERNEL_TOOLARCH := 61
+endif
+
+ifdef TINY_CORE
+export TOOLARCH := 66t
+export KERNEL_TOOLARCH := 66t
 endif
 
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))

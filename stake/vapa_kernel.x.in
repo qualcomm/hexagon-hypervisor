@@ -45,9 +45,9 @@ SECTIONS
 /* Code starts. */
   . = ALIGN (DEFINED (TEXTALIGN) ? (TEXTALIGN * 1K) : CONSTANT (MAXPAGESIZE));
   .bootvm : AT(0xyyyyyyyy) { KEEP(*(.bootvm)) }
-  PROVIDE(__ENTRY_SECTION_PA = 0xxxxxxxxx);
+  HIDDEN(__ENTRY_SECTION_PA = 0xxxxxxxxx);
   .entry : AT(__ENTRY_SECTION_PA) { 
-    PROVIDE(__ENTRY_SECTION_START = .);
+    HIDDEN(__ENTRY_SECTION_START = .);
     KEEP(*(.entry)) 
   }
   .start          :

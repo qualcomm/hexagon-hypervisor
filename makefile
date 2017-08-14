@@ -173,7 +173,7 @@ compat:
 .PHONY: gtags gtagsclean
 
 gtags:
-	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
+	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
 #	htags -afhnosTxv --show-position
 
 gtagsclean:

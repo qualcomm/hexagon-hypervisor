@@ -23,6 +23,7 @@ Initialize a barrier.  No threads are waiting on the barrier.  The barrier is
 configured to wait for threads_total threads to arrive.
 @param[in] barrier	Address of the barrier to initialize
 @param[in] threads_total	Number of threads to wait on at the barrier
+@param[in] spin_cycles  Number of cycles to spin before blocking.
 @returns Zero on success, nonzero otherwise.
 @dependencies None
 */

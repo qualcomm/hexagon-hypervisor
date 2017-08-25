@@ -278,6 +278,7 @@
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_OFFSET 0x200000
 #define EXT_HVX_VTCM_SIZE 256
+#define EXT_HVX_MAX_VLENGTH 128  // bytes
 
 #define L2REGS_COPROC_EGY_CFG             0x28
 #define L2REGS_COPROC_EGY_CFG_DEFAULT_V62 0xc3e03ff5

@@ -138,7 +138,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	ssr = r13
 	isync
 	{
-	 	r14 = add(r11, #(32 * 32))
+	 	r14 = add(r11, #(32 * EXT_HVX_MAX_VLENGTH))
 		v0 = vmem(r11++#1)
 	}
 	{

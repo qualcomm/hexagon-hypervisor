@@ -154,7 +154,7 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	isync
 
 	// predicates
-	r14 = add(r11, #(32 * 32))
+	r14 = add(r11, #(32 * EXT_HVX_MAX_VLENGTH))
 	v3 = vmem(r14+#0)
 	r12 = #1
 	r13 = ##0x01010101

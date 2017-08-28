@@ -57,7 +57,7 @@ TOOLS_FLAVOR_KERNEL ?= 8.1.01
 ARCH_FLAVOR ?= v60_latest
 else
 #TOOLS_FLAVOR ?= 8.1-internal-latest
-TOOLS_FLAVOR ?= v65_stable
+TOOLS_FLAVOR ?= 8.1.03
 TOOLS_FLAVOR_KERNEL ?= 8.1.03
 KERNEL_CFLAGS += -mhvx
 #TOOLS_FLAVOR_KERNEL ?= 8.1-internal-latest

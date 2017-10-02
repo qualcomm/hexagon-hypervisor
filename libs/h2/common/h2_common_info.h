@@ -36,6 +36,9 @@ typedef enum {
 	INFO_HVX_SWITCH,  /**< HVX context switch in kernel active */
 	INFO_VTCM_BASE,   /**< VTCM base address */
 	INFO_VTCM_SIZE,   /**< VTCM size */
+	INFO_ECC_BASE,    /**< ECC base */
+	INFO_L2_LINE_SZ,  /**< L2 cache line size */
+	INFO_AUDIO_EXT,   /**< Audio extension type */
 	INFO_MAX
 } info_type;
 

@@ -273,6 +273,9 @@
 #define CFG_TABLE_L2TAG_SIZE 0x40
 #define CFG_TABLE_L2ARRAY_SIZE 0x44
 #define CFG_TABLE_HTHREADS_MASK 0x48
+#define CFG_TABLE_ECC_BASE 0x4c
+#define CFG_TABLE_L2_LINE_SZ 0x50
+#define CFG_TABLE_AUDIO_EXT 0x54
 
 #define CFG_TABLE_COPROC_TYPE_HVX 1
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table

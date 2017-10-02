@@ -1086,9 +1086,13 @@ void print_infos() {
 	printf("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
 	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
 	printf("\tL2 cache size: %dK\n", h2_info(INFO_L2TAG_SIZE) / 1024);
+	printf("\tL2 line size: %d\n", h2_info(INFO_L2_LINE_SZ));
 	printf("\tL2 register base: 0x%08x\n", h2_info(INFO_L2CFG_BASE));
 	printf("\tCLADE register base: 0x%08x\n", clade_base);
-
+#if ARCHV >= 65
+	printf("\tECC register base: 0x%08x\n", h2_info(INFO_ECC_BASE));
+	printf("\tAudio extension: %d\n", h2_info(INFO_AUDIO_EXT));
+#endif
 	printf("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
 	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
 	printf("\tSTLB:\n");

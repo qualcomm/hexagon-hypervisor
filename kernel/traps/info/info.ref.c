@@ -118,6 +118,27 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 			return EXT_HVX_VTCM_SIZE;
 		}
 		return 0;
+
+	case INFO_ECC_BASE:
+		if (0x65 < H2K_gp->arch) {
+			return H2K_cfg_table(CFG_TABLE_ECC_BASE) << CFG_TABLE_SHIFT;
+		} else {
+			return 0;
+		}
+
+	case INFO_L2_LINE_SZ:
+		if (0x65 < H2K_gp->arch) {
+			return H2K_cfg_table(CFG_TABLE_L2_LINE_SZ);
+		} else {
+			return 64;
+		}
+
+	case INFO_AUDIO_EXT:
+		if (0x65 < H2K_gp->arch) {
+			return H2K_cfg_table(CFG_TABLE_AUDIO_EXT);
+		} else {
+			return 0;
+		}
 #endif
 
 	default:

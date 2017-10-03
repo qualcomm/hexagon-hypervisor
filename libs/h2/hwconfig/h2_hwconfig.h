@@ -214,6 +214,18 @@ static inline int h2_hwconfig_hwthreads_num(unsigned int num) {
 	return h2_hwconfig_trap(HWCONFIG_HWTHREADS_NUM, NULL, num, 0);
 }
 
+/**
+Enable/Disable memory ECC
+@param[in] ecc_enable 1 == enable, 0 == disable
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_ecc(unsigned int ecc_enable) {
+
+	return h2_hwconfig_trap(HWCONFIG_ECC, NULL, ecc_enable, 0);
+}
+
 #endif
 
 /** @} */

@@ -67,8 +67,8 @@ endif
 endif
 
 ifdef TINY_CORE
-TOOLS_FLAVOR := v66_latest
-TOOLS_FLAVOR_KERNEL := v66_latest
+TOOLS_FLAVOR := v66_stable
+TOOLS_FLAVOR_KERNEL := v66_stable
 ARCH_FLAVOR := v66t_latest
 endif
 

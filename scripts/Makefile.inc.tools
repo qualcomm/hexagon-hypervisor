@@ -59,7 +59,9 @@ else
 #TOOLS_FLAVOR ?= 8.1-internal-latest
 TOOLS_FLAVOR ?= 8.1.03
 TOOLS_FLAVOR_KERNEL ?= 8.1.03
+ifndef TINY_CORE
 KERNEL_CFLAGS += -mhvx
+endif
 #TOOLS_FLAVOR_KERNEL ?= 8.1-internal-latest
 ARCH_FLAVOR ?= v65_latest
 endif

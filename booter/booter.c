@@ -112,6 +112,7 @@ info_boot_flags_type boot_flags;
 info_stlb_type  stlb_info;
 int hwt_mask = -1;
 int hwt_num = -1;
+int ecc_enable = -1;
 
 typedef struct {
 	unsigned int id;  // h2 VM id
@@ -226,6 +227,7 @@ void usage()
 	printf("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
 	printf("  --hwt_mask <int>\n\tMask of hardware threads to start. Default -1 (all).\n");
 	printf("  --hwt_num <int>\n\tNumber of hardware threads to start. Default -1 (all).\n");
+	printf("  --ecc_enable (0|1)\n\tEnable/disable ECC for all applicable memories.  Default 0.\n");
 
 	printf("\n");
 	printf("VM options:\n");
@@ -1135,6 +1137,13 @@ void kernel_setup() {
 			FAIL("STLB alloc", "");
 		}
 	}
+
+	if (ecc_enable != -1) {
+		if (h2_hwconfig_ecc(ecc_enable) < 0) {
+			FAIL("ECC enable", "");
+		}
+	}
+
 #if HAVE_EXTENSIONS
 	if (ext_power && boot_flags.boot_have_hvx) {
 		if (h2_hwconfig_extpower(1) < 0) {
@@ -1378,6 +1387,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--hwt_num")) {
 			if (argc < 2) die_usage();
 			hwt_num = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--ecc_enable")) {
+			if (argc < 2) die_usage();
+			ecc_enable = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

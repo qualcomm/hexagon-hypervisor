@@ -137,6 +137,7 @@ typedef struct {
 	u32_t tcm_size;
 	u32_t l2size;
 	u32_t l2tags;
+	u32_t ecc_enable;
 
 #ifdef CRASH_DEBUG
 	u64_t crash_tlb[MAX_TLB_ENTRIES];

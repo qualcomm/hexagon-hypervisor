@@ -143,10 +143,10 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 
 		/* ECC */
 		if (ecc_enable != H2K_gp->ecc_enable) {
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, (ecc_enable ? 0xa : 0x5));
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, (ecc_enable ? 0xa : 0x5));
+			//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));  // l1i
+			//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));  // l1d
+			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, (ecc_enable ? 0xa : 0x5));  // l2
+			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, (ecc_enable ? 0xa : 0x5));  // vtcm
 		}
 
 	} else if (use_wb && !cur_wb) {

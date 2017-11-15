@@ -36,6 +36,8 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 	jump H2K_ext_context_restore // continues to H2K_context_restore_return
 #endif
 
+.global H2K_error_nonxe
+H2K_error_nonxe:
 1:
 	r0 = badva
 	// r1 = cause

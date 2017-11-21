@@ -37,9 +37,13 @@ void H2K_interrupt_restore();
 
 u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
 
+#ifndef BOOT_CCCC
+#define BOOT_CCCC L1WB_L2C
+#endif
+
 static const H2K_offset_t boot_offset = {{
 		.size = BOOT_TLB_PGSIZE, // same as kernel
-		.cccc = L1WB_L2C,
+		.cccc = BOOT_CCCC,
 		.xwru = URWX,
 		.pages = 0
 	}};

@@ -12,6 +12,7 @@
 #include <max.h>
 
 #define H2K_CONTEXT_ALIGN 32
+#define H2K_EXTCONTEXT_ALIGN EXT_HVX_MAX_VLENGTH
 
 enum {
 	H2K_STATUS_DEAD = 0,
@@ -261,7 +262,7 @@ typedef struct _h2_thread_context
 typedef struct {
 	u32_t vregs[32 * EXT_HVX_MAX_VLENGTH / 4];
 	u32_t qregs[32];
-} __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_ext_context;
+} __attribute__((aligned(H2K_EXTCONTEXT_ALIGN))) H2K_ext_context;
 
 typedef struct {
 	H2K_thread_context context;

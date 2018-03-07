@@ -140,6 +140,10 @@ typedef struct {
 	u32_t l2tags;
 	u32_t ecc_enable;
 
+	H2K_spinlock_t log_lock;
+	char *logbuf;
+	u32_t logbuf_pos;  // first free byte
+
 #ifdef CRASH_DEBUG
 	u64_t crash_tlb[MAX_TLB_ENTRIES];
 	u32_t crash_l2vic_enabled[MAX_INTERRUPTS/32];

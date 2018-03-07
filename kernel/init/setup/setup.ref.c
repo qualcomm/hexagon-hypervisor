@@ -32,6 +32,7 @@
 #include <tcm.h>
 #include <sample.h>
 #include <cfg_table.h>
+#include <log.h>
 
 void H2K_interrupt_restore();
 
@@ -107,6 +108,10 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t phys_o
 	H2K_hvx_init(devpage_pub_offset);
 	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);
 	H2K_sample_init();
+#ifdef H2K_LOGBUF
+	H2K_log_init();
+#endif
+	H2K_log("Booting\n");
 	return H2K_init_setup_bootvm(phys_offset);
 }
 

@@ -10,8 +10,11 @@
 #include <physread.h>
 #include <symbols.h>
 #include <cfg_table.h>
+#include <log.h>
 
 u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
+
+	H2K_log("Info trap\n");
 
 	switch(op) {
 

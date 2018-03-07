@@ -19,20 +19,20 @@ FUNC_END H2K_trap_angel
 FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 
 	// if we're loaded at 0, no need to tmpmap; k0lock instead
-	r19 = memw(H2K_GP + #KG_phys_offset)
-	p0 = cmp.eq(r19, ##H2K_LINK_ADDR)
+	r13 = memw(H2K_GP + #KG_phys_offset)
+	p0 = cmp.eq(r13, ##H2K_LINK_ADDR)
 	if (p0) jump .Lat0
 				
 	// save regs clobbered by calls
-	r18 = r31
-	r17:16 = r1:0
+	r12 = r31
+	r11:10 = r1:0
 	
 	r0 = #0x20
 	r1 = #0x0
 	r2 = #L1WB_L2C
 	call H2K_tmpmap_add_and_lock
 	r6 = r0  // va of mailbox base
-	r1:0 = r17:16
+	r1:0 = r11:10
 	jump .Llocked
 
 .Lat0:
@@ -63,19 +63,19 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 	{ nop }:endloop0
 	r8 = memw(r6+#12)
 	dccleaninva(r6)
-	r17:16 = memd(r6+#0)
+	r11:10 = memd(r6+#0)
 
-	p0 = cmp.eq(r19, ##H2K_LINK_ADDR)  // did we tmpmap?
+	p0 = cmp.eq(r13, ##H2K_LINK_ADDR)  // did we tmpmap?
 	if (p0) jump .Lno_tmpmap
 	call H2K_tmpmap_remove_and_unlock
-	r31 = r18  // restore
+	r31 = r12  // restore
 	jump .Lunlocked
 
 .Lno_tmpmap:
 	k0unlock
 
 .Lunlocked:
-	r1:0 = r17:16
+	r1:0 = r11:10
 	jumpr r31
 9:
 	r5 = #0x1c

@@ -53,5 +53,6 @@
 /* #define SYS_EXECVE      0x204 */
 
 u32_t H2K_trap_angel(u32_t op, void *buf, u32_t arg);
+static inline void H2K_angel_init(void) {	H2K_spinlock_init(&H2K_gp->logbuf_lock);}
 
 #endif

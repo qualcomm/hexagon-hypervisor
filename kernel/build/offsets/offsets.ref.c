@@ -126,6 +126,8 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(l2_ack_base);
 	PRINT_KG_OFFSET(l2_intinfo);
 #endif
+	PRINT_KG_OFFSET(angel_lock);
+
 	PRINT_KG_SUBSTRUCT_OFFSET(time,next_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_pcycles);

@@ -10,9 +10,10 @@
 
 #define H2K_log(S) H2K_log_string(S)
 
-char *H2K_log_init(void) IN_SECTION(".text.util.log");
 u32_t H2K_fd_write(u32_t fd, const u8_t *buf, u32_t len) IN_SECTION(".text.util.log");
 u32_t H2K_log_string(const char *string) IN_SECTION(".text.util.log");
+char *H2K_logbuf_alloc(u32_t count) IN_SECTION(".text.util.log");
+char *H2K_log_init(void) IN_SECTION(".text.util.log");
 
 #else
 

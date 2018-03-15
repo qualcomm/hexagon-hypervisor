@@ -46,6 +46,9 @@ static void logbuf_wrap() {
 }
 
 s32_t H2K_fd_write(u32_t fd, const u8_t *buf, u32_t len) {
+
+	if (!H2K_gp->log_enable) return 0;
+
 	struct req { u32_t fd; u8_t *buf; u32_t c; } x;
 	s32_t ret;
 	u32_t bytes_left = len;  // left to write
@@ -70,32 +73,42 @@ s32_t H2K_fd_write(u32_t fd, const u8_t *buf, u32_t len) {
 	return len;
 }
 
-u32_t H2K_log_string(const char *string) {
+char *H2K_logbuf_alloc(u32_t count) {
 
-	u32_t count = 0;
-	u32_t len = strlen(string);
-	s32_t ret;
+	char *ret;
 
-	H2K_spinlock_lock(&H2K_gp->log_lock);
+	H2K_spinlock_lock(&H2K_gp->logbuf_lock);
 
-	if (len > logbuf_space()) {
+	if (count > logbuf_space()) {
 		logbuf_wrap();
 	}
-	count = strcpy(H2K_gp->logbuf + H2K_gp->logbuf_pos, string);
+	ret = H2K_gp->logbuf + H2K_gp->logbuf_pos;
 	H2K_gp->logbuf_pos += count;
 
+	H2K_spinlock_unlock(&H2K_gp->logbuf_lock);
+	return ret;
+}
+
+/* No lock here; assumes logbuf doesn't wrap while we're still printing out the
+	 string */
+u32_t H2K_log_string(const char *string) {
+
+	if (!H2K_gp->logbuf_enable) return 0;
+
+	u32_t count;
+	s32_t ret;
+	u32_t len = strlen(string);
+	char *logbuf_ptr = H2K_logbuf_alloc(len + 1);
+
+	count = strcpy(logbuf_ptr, string);
+
 	ret = H2K_fd_write(1, (const u8_t *)"H2K: ", 5);
-	if (ret < 0) goto error;
+	if (ret < 0) return ret;
 
 	ret = H2K_fd_write(1, (const u8_t *)string, len);
-	if (ret < 0) goto error;
+	if (ret < 0) return ret;
 
-	H2K_spinlock_unlock(&H2K_gp->log_lock);
 	return count;
-
- error:
-	H2K_spinlock_unlock(&H2K_gp->log_lock);
-	return ret;
 }
 
 char *H2K_log_init() {
@@ -104,10 +117,11 @@ char *H2K_log_init() {
 		return NULL;
 	}
 	H2K_bzero(H2K_gp->logbuf, LOGBUF_SIZE);
-	
 	H2K_gp->logbuf_pos = 0;
+	H2K_gp->logbuf_enable = 1;
+	H2K_gp->log_enable = 1;
 
-	H2K_spinlock_init(&H2K_gp->log_lock);
+	H2K_spinlock_init(&H2K_gp->logbuf_lock);
 
 	return H2K_gp->logbuf;
 }

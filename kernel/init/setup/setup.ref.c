@@ -113,7 +113,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t phys_o
 #ifdef H2K_LOGBUF
 	H2K_log_init();
 #endif
-	H2K_log("Booting\n");
+	H2K_log_string("Booting\n");
 	return H2K_init_setup_bootvm(phys_offset);
 }
 

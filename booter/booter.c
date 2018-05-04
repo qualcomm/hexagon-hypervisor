@@ -596,9 +596,9 @@ void clade_setup(unsigned int idx, long offset) {
 
 	/* Copy high-prio exception data to TCM */
 	ex_hi_size = ex_hi_end - ex_hi_start;
-	if (ex_hi_size) {
+	if (ex_hi_size && tcm_size) {
 		if (NULL == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4096, 0))) {
-			error("galloc ex_hi", NULL);
+			FAIL("\tgalloc ex_hi", "");
 		}
 		//		printf("memcpy(0x%08x, 0x%08lx, 0x%08lx\n", vm_params[idx].clade_ex_hi, ex_hi_start + offset, ex_hi_size);
 		memcpy((void *)(vm_params[idx].clade_ex_hi), (void *)ex_hi_start + offset, ex_hi_size);
@@ -633,7 +633,7 @@ void clade_setup(unsigned int idx, long offset) {
 		clade_region = region_hi;
 		H2K_set_syscfg(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
 	} else if (region_hi != clade_region) {  // has to be identical for all concurrent clade guests
-			FAIL("\t CLADE region address mismatch", "");
+			FAIL("\tCLADE region address mismatch", "");
 	}
 	printf("\tCLADE enabled\n");
 	return;

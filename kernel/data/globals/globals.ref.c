@@ -91,10 +91,14 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
 
 	if (have_hvx) {
-		if (H2K_kg.uarch == CORE_V6_G) {
-			H2K_kg.hvx_vlength = 128;
+		if (0x67 < H2K_kg.arch) {
+			H2K_kg.hvx_vlength = H2K_cfg_table(CFG_TABLE_COPROC_VLENGTH);
 		} else {
-			H2K_kg.hvx_vlength = 64;
+			if (H2K_kg.uarch == CORE_V6_G) {
+				H2K_kg.hvx_vlength = 128;
+			} else {
+				H2K_kg.hvx_vlength = 64;
+			}
 		}
 	} else {
 		H2K_kg.hvx_vlength = 0;

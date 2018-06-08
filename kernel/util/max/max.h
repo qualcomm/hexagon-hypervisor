@@ -276,6 +276,14 @@
 #define CFG_TABLE_ECC_BASE 0x4c
 #define CFG_TABLE_L2_LINE_SZ 0x50
 #define CFG_TABLE_AUDIO_EXT 0x54
+#define CFG_TABLE_L2ITCM_SZ 0x58
+#define CFG_TABLE_L2ITCM_BASE 0x5c
+#define CFG_TABLE_CLADE2REGS 0x60
+#define CFG_TABLE_DTM_VERSION 0x64
+#define CFG_TABLE_HMX_SPATIAL_SIZE 0x68
+#define CFG_TABLE_COPROC_VLENGTH 0x6c
+#define CFG_TABLE_CORE_ID 0x70
+#define CFG_TABLE_NCORES 0x74
 
 #define CFG_TABLE_COPROC_TYPE_HVX 1
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table

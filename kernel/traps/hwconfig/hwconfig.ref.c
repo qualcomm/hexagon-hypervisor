@@ -38,7 +38,8 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_setcladereg,
 	H2K_trap_hwconfig_hwthreads_num,
 	H2K_trap_hwconfig_hwthreads_mask,
-	H2K_trap_hwconfig_ecc
+	H2K_trap_hwconfig_ecc,
+	H2K_trap_hwconfig_hmxbits
 };
 
 typedef struct {
@@ -225,6 +226,15 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	}
 #endif
 	return 0;
+}
+
+u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t unused3, H2K_thread_context *me) {
+
+	if (0 < H2K_gp->hmx_units) {  // exists
+		me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
+		return 0;
+	}
+	return -1;
 }
 
 u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) {

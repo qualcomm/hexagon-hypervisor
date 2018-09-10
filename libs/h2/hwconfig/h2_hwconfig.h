@@ -119,6 +119,18 @@ static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int pre
 }
 
 /**
+Set XE2 bit.
+@param[in] xe2 XE2 value
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_hmxbits(unsigned int xe2)
+{
+	return h2_hwconfig_trap(HWCONFIG_HMXBITS, NULL, xe2, 0);
+}
+
+/**
 Set XA, XE bits.
 @param[in] xa XA value
 @param[in] xe XE value

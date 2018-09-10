@@ -104,6 +104,8 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.hvx_vlength = 0;
 	}
 
+	H2K_kg.hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_SIZE) != 0);  // exists?
+
 	H2K_kg.info_boot_flags.boot_ext_ok = have_hvx && (!(H2K_kg.syscfg_val & SYSCFG_V2X))
 		&& (H2K_kg.hthreads <= H2K_kg.hvx_contexts);
 

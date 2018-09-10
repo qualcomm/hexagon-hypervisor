@@ -215,6 +215,8 @@
 #define SSR_XA_BITS_MASK (((0x1 << (SSR_XA_NBITS)) - 1) << SSR_XA_BITS)
 #define SSR_XE_BIT 31
 
+#define SSR_XE2_BIT 26
+
 #if ARCHV <= 4
 #define BOOT_THREAD_USR 0x00000000
 #elif ARCHV == 5
@@ -284,6 +286,9 @@
 #define CFG_TABLE_COPROC_VLENGTH 0x6c
 #define CFG_TABLE_CORE_ID 0x70
 #define CFG_TABLE_NCORES 0x74
+#define CFG_TABLE_HMX_SIZE 0x78
+#define CFG_TABLE_HMX_DEPTH 0x7c
+#define CFG_TABLE_VX_PRESENT 0x80
 
 #define CFG_TABLE_COPROC_TYPE_HVX 1
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table

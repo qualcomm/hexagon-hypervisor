@@ -39,6 +39,7 @@
 #define CORE_V6_H 0x6
 #define CORE_V6_J 0x7
 #define CORE_V6_P 0x8
+#define CORE_V6_Q 0xf
 #define CORE_V6_S 0x2
 #define CORE_V6_U 0x5
 

@@ -26,7 +26,7 @@ typedef struct {
 
 /**
 Initialize the MX Access type.
-@param[in] mxaccacc  Address of the MX Access structure
+@param[in] mxacc  Address of the MX Access structure
 @returns 0 on success; -1 on error
 @dependencies None
 */
@@ -36,7 +36,6 @@ static inline int h2_mxaccess_init(h2_mxaccess_state_t *mxacc) {
 	int ret;
 
 	h2_sem_init_val(&mxacc->sem, 1);
-	mxacc->active = 0;
 	return 0;
 }
 

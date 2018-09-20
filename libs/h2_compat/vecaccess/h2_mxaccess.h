@@ -33,8 +33,6 @@ Initialize the MX Access type.
 
 static inline int h2_mxaccess_init(h2_mxaccess_state_t *mxacc) {
 
-	int ret;
-
 	h2_sem_init_val(&mxacc->sem, 1);
 	return 0;
 }

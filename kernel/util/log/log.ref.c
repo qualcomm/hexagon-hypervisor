@@ -157,6 +157,8 @@ u32_t num(u64_t n, u32_t base, u32_t width, u32_t neg) {
 
 s32_t H2K_log_print(const char *fmt, ...) {
 
+	H2K_spinlock_lock(&H2K_gp->logbuf_lock);
+
 	va_list args;
 	u32_t start = H2K_gp->logbuf_pos;
 	u32_t width;
@@ -167,9 +169,11 @@ s32_t H2K_log_print(const char *fmt, ...) {
 	u32_t longlong = 0;
 
 	/* if either is enabled we need logbuf to hold the output */
-	if (!H2K_gp->logbuf_enable || !H2K_gp->log_enable) return 0;
+	if (!H2K_gp->logbuf_enable && !H2K_gp->log_enable) {
+		H2K_spinlock_unlock(&H2K_gp->logbuf_lock);
+		return 0;
+	}
 
-	H2K_spinlock_lock(&H2K_gp->logbuf_lock);
 	va_start(args, fmt);
 
 	while (*fmt != '\0') {
@@ -253,7 +257,7 @@ s32_t H2K_log_print(const char *fmt, ...) {
 			if (ret < 0) goto out;
 			ret = H2K_write(1, (const u8_t *)(H2K_gp->logbuf), len - (LOGBUF_SIZE - start - 1));
 			if (ret < 0) goto out;
-		} else {			
+		} else {
 			ret = H2K_write(1, (const u8_t *)(H2K_gp->logbuf + start), len);
 			if (ret < 0) goto out;
 		}

@@ -71,7 +71,7 @@ void H2K_ready_remove_TB(H2K_thread_context *thread)
 
 H2K_thread_context *H2K_ready_getbest_TB()
 {
-	return H2K_ready_getbest();
+	return H2K_ready_getbest(0);
 }
 
 int main() 

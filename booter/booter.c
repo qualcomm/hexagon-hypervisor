@@ -113,6 +113,9 @@ info_stlb_type  stlb_info;
 int hwt_mask = -1;
 int hwt_num = -1;
 int ecc_enable = -1;
+#ifdef CLUSTER_SCHED_HACK
+int cluster_sched = 0;
+#endif
 
 typedef struct {
 	unsigned int id;  // h2 VM id
@@ -255,6 +258,9 @@ void usage()
 	printf("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	printf("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	printf("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
+#ifdef CLUSTER_SCHED_HACK
+	printf("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 0.\n");
+#endif
 }		
 
 #define GEN_specials(NAME) vm_params[idx].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx].specials[SPECIAL_ ## NAME].addr = -1;
@@ -1151,6 +1157,14 @@ void kernel_setup() {
 		}
 	}
 #endif
+
+#ifdef CLUSTER_SCHED_HACK
+	if (cluster_sched) {
+		if (h2_config_cluster_sched(1) < 0) {
+			FAIL("Cluster sched", "");
+		}
+	}
+#endif	
 }
 
 void set_l2_reg(unsigned int offset, unsigned int val) {
@@ -1395,6 +1409,14 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			ecc_enable = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
+
+#ifdef CLUSTER_SCHED_HACK
+		} else if (0 == strcmp(argv[0], "--cluster_sched")) {
+			if (argc < 2) die_usage();
+			cluster_sched = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+#endif
 
 		} else if (0 == strcmp(argv[0], "--help")) {
 			kernel_setup();

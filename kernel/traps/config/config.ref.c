@@ -31,6 +31,9 @@ static const configptr_t H2K_configtab[CONFIG_MAX] IN_SECTION(".data.config.conf
 	H2K_trap_config_vmblock_init,
 	H2K_trap_config_stlb_alloc,
 	H2K_trap_config_fatal_hook,
+#ifdef CLUSTER_SCHED_HACK
+	H2K_trap_config_cluster_sched,
+#endif
 };
 
 u32_t H2K_trap_config(config_type_t configtype, u32_t val1, u32_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
@@ -269,7 +272,7 @@ typedef u32_t (*H2K_config_vmblock_init_helper_t)(
 	u32_t arg2,
 	H2K_thread_context *me);
 
-static const H2K_config_vmblock_init_helper_t H2K_config_vmblock_init_helpers[NUM_OPS] = {
+static const H2K_config_vmblock_init_helper_t H2K_config_vmblock_init_helpers[VMBLOCK_INIT_OPS_MAX] = {
 	[SET_PMAP_TYPE] = H2K_config_vmblock_init_pmap_type,
 	[SET_FENCES] = H2K_config_vmblock_init_set_fences,
 	[SET_PRIO_TRAPMASK] = H2K_config_vmblock_init_prio_trapmask,
@@ -285,7 +288,7 @@ u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, u32_t op, u32_t arg1,
 	H2K_vmblock_t *vmblock = NULL;
 
 	/* Get vmblock initialized by previous SET_CPUS_INTS */
-	if (op >= NUM_OPS) return 0;
+	if (op >= VMBLOCK_INIT_OPS_MAX) return 0;
 	if (op != SET_CPUS_INTS) {
 		if (vm >= H2K_ID_MAX_VMS) return 0;
 		else if ((vmblock = H2K_gp->vmblocks[vm]) == NULL) return 0; /* NO SUCH VM */
@@ -300,3 +303,11 @@ u32_t H2K_trap_config_stlb_alloc(u32_t unused, u32_t sets, u32_t unused2, u32_t 
 
 	return H2K_mem_stlb_alloc();
 }
+
+#ifdef CLUSTER_SCHED_HACK
+u32_t H2K_trap_config_cluster_sched(u32_t unused, u32_t enable, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) {
+
+	H2K_gp->cluster_sched = enable;
+	return 0;
+}
+#endif

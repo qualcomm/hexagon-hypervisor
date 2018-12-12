@@ -91,6 +91,10 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	H2K_thread_context *ret = head;
 
 #ifdef CLUSTER_SCHED_HACK
+	if (!H2K_gp->cluster_sched) {
+		return ret;
+	}
+
 	u32_t hthread_xe = ((H2K_get_ssr() & SSR_XE_BIT_MASK) != 0);
 	u32_t cluster = H2K_hthread_cluster(hthread);
 
@@ -114,8 +118,10 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	if (NULL == ret) {  // didn't find anything to schedule
 		H2K_log("\tDidn't find a thread to schedule\n");
 
-		/* If we are returing NULL, then we must have gone through the above loop, and therefore
-			 hthread_xe must be false, so we don't need the code below */
+		/* If we are returing NULL, then we must have gone through the above loop,
+			 and therefore hthread_xe must be false, so we don't need the code
+			 below */
+
 		/* if (hthread_xe) { */
 		/* 	H2K_gp->xe_set[cluster]--; */
 		/* 	H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK); */
@@ -145,6 +151,10 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 	prio = H2K_ready_best_prio();
 	if (prio >= MAX_PRIOS) {  // !H2K_ready_any_valid(), go to sleep
 #ifdef CLUSTER_SCHED_HACK
+		if (!H2K_gp->cluster_sched) {
+			return NULL;
+		}
+
 		u32_t hthread_xe = ((H2K_get_ssr() & SSR_XE_BIT_MASK) != 0);
 		u32_t cluster = H2K_hthread_cluster(hthread);
 

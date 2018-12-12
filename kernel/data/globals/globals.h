@@ -95,8 +95,9 @@ typedef struct {
 	u32_t hmx_units;
 
 #ifdef CLUSTER_SCHED_HACK
-	u32_t xe_set[2];  // count of hw threads that have ssr:xe set in each cluster
-	u32_t cluster_hthreads;
+	u32_t xe_set[2];         // count of hw threads that have ssr:xe set in each cluster
+	u32_t cluster_hthreads;  // hardware threads per cluster
+	u32_t cluster_sched;     // do cluster scheduling?
 #endif
 
 	union {

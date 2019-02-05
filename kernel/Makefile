@@ -40,7 +40,7 @@ ifdef NO_DEVICES
 CFLAGS += -DNO_DEVICES
 endif
 
-ifndef NO_LOGBUF
+ifdef LOGBUF
 CFLAGS += -DH2K_LOGBUF
 endif
 

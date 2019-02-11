@@ -92,7 +92,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 
 	if (have_hvx) {
 		if (0x67 < H2K_kg.arch) {
-			H2K_kg.hvx_vlength = H2K_cfg_table(CFG_TABLE_COPROC_VLENGTH);
+			H2K_kg.hvx_vlength = 0x1 << H2K_cfg_table(CFG_TABLE_COPROC_VLENGTH);
 		} else {
 			if ((H2K_kg.uarch == CORE_V6_G) || (H2K_kg.uarch == CORE_V6_Q)) {
 				H2K_kg.hvx_vlength = 128;

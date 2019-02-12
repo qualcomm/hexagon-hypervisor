@@ -19,7 +19,8 @@ $builds = {
 			      "opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
 		  cov => ["ref -fno-inline", "opt -fno-inline"],
 		  docs => "opt",
-		  release => ["opt","opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
+		  release => ["opt","opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP",
+			      "ref","ref H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
 		  branch => ["master", "stable", "multicore"],
 		 },
 	   "66t" => {

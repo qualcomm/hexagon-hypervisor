@@ -51,6 +51,9 @@
 #define PHYSINT_WORDS(ints) ((ints + PHYS_PER_WORD - 1) / PHYS_PER_WORD)
 #define PHYSINT_SPACE(ints) ROUND(PHYSINT_WORDS(ints) * BYTES_PER_WORD)
 
+// dma regs
+#define DMA_REG_SPACE(cpus) ROUND(cpus * DMA_REGS * BYTES_PER_WORD)
+
 #define VMBLOCK_SIZE_BASE(cpus, ints)						\
 	(VMBLOCK_SPACE +															\
 	 CONTEXT_SPACE(cpus) +												\
@@ -59,7 +62,8 @@
 	 MASK_SPACE(cpus, ints) +											\
 	 PENDING_SPACE(ints) +												\
 	 ENABLE_SPACE(ints) +													\
-	 PHYSINT_SPACE(ints + PERCPU_INTERRUPTS))
+	 PHYSINT_SPACE(ints + PERCPU_INTERRUPTS) +    \
+	 DMA_REG_SPACE(cpus))
 
 #ifdef DO_EXT_SWITCH
 #define VMBLOCK_SIZE(cpus, ints, ext)			 \

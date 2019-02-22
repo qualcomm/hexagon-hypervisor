@@ -127,6 +127,10 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(l2_intinfo);
 #endif
 	PRINT_KG_OFFSET(angel_lock);
+	PRINT_KG_OFFSET(info_boot_flags);
+#if ARCHV >= 65
+	PRINT_KG_OFFSET(dma_version);
+#endif
 
 	PRINT_KG_SUBSTRUCT_OFFSET(time,next_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_ticks);
@@ -146,6 +150,7 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(max_cpus);
 	PRINT_VMBLOCK_OFFSET(num_cpus);
 	PRINT_VMBLOCK_OFFSET(contexts);
+	PRINT_VMBLOCK_OFFSET(dmaregs);
 #ifdef DO_EXT_SWITCH
 	PRINT_VMBLOCK_OFFSET(ext_contexts);
 #endif

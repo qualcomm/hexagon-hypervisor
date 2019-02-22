@@ -98,6 +98,16 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r0+#CONTEXT_pktcount) = r21:20
 #endif
 
+#if ARCHV >= 65
+	r20 = add(H2K_GP, ##KG_dma_version)
+	r21 = memw(r20)
+	p0 = cmp.eq(r21, #0) // have dma?
+	if (p0) jump 3f
+	r13 = memw(r0 + #CONTEXT_vmblock)
+	r14 = memw(r13 + #VMBLOCK_dmaregs)
+	r15 = 
+	r14 += 
+
 #ifdef DO_EXT_SWITCH
 
 	// check if ext needs saving, and mark as saved

@@ -1078,6 +1078,12 @@ void print_infos() {
 		printf("\t\tVTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
 #endif
 	}
+#if ARCHV >= 65
+	printf("\tHMX present: ");
+	printf((boot_flags.boot_have_hmx ? "true\n" : "false\n"));
+	printf("\tUser-mode DMA present: ");
+	printf((boot_flags.boot_have_dma ? "true\n" : "false\n"));
+#endif
 	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	printf("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
 	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));

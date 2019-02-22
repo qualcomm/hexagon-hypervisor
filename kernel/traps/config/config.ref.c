@@ -119,6 +119,11 @@ static u32_t H2K_config_vmblock_init_cpus_ints(H2K_vmblock_t *vmblock, u32_t vm,
 	}
 	ptrtmp += vmblock->max_cpus * sizeof(H2K_thread_context);
 
+#if ARCHV >= 65
+	vmblock->dmaregs = (u32_t *)ptrtmp;
+	ptrtmp += DMA_REG_SPACE(vmblock->max_cpus);
+#endif
+
 #ifdef HAVE_EXTENSIONS
 	/* maybe initialize extended contexts */
 	if (use_ext && H2K_gp->info_boot_flags.boot_have_hvx) {

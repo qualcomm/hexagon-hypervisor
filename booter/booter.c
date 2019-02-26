@@ -1078,7 +1078,7 @@ void print_infos() {
 		printf("\t\tVTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
 #endif
 	}
-#if ARCHV >= 65
+#if ARCHV >= 68
 	printf("\tHMX present: ");
 	printf((boot_flags.boot_have_hmx ? "true\n" : "false\n"));
 	printf("\tUser-mode DMA present: ");

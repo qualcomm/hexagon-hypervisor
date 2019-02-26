@@ -341,5 +341,3 @@
 #define CLADEREGS_MAX                    ((CLADE_REG_PD_CHUNK * CLADE_NUM_PDS) + 0x1c)
 
 #define LOGBUF_SIZE (32 * 1024)  // bytes
-
-#define DMA_REGS 1

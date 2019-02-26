@@ -256,6 +256,10 @@ typedef struct _h2_thread_context
 		};
 	};
 	// 288
+#if ARCHV >= 68
+	u32_t dm0;
+	// 292
+#endif
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
 
 /* Big enough for 128-byte contexts. FIXME: size this space dynamically */

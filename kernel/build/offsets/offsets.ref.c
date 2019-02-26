@@ -83,6 +83,9 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(tree);
 	PRINT_CONTEXT_OFFSET(rightleft);
 	PRINT_CONTEXT_OFFSET(timeout);
+#if ARCHV >= 68
+	PRINT_CONTEXT_OFFSET(dm0);
+#endif
 	fprintf(outfile, "#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
 #ifdef DO_EXT_SWITCH
 	fprintf(outfile, "#define EXT_CONTEXT_SIZE %d\n",sizeof(H2K_ext_context));
@@ -128,9 +131,7 @@ int main(int argc, char **argv)
 #endif
 	PRINT_KG_OFFSET(angel_lock);
 	PRINT_KG_OFFSET(info_boot_flags);
-#if ARCHV >= 65
 	PRINT_KG_OFFSET(dma_version);
-#endif
 
 	PRINT_KG_SUBSTRUCT_OFFSET(time,next_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_ticks);
@@ -150,7 +151,6 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(max_cpus);
 	PRINT_VMBLOCK_OFFSET(num_cpus);
 	PRINT_VMBLOCK_OFFSET(contexts);
-	PRINT_VMBLOCK_OFFSET(dmaregs);
 #ifdef DO_EXT_SWITCH
 	PRINT_VMBLOCK_OFFSET(ext_contexts);
 #endif

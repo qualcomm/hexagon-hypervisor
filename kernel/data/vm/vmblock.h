@@ -35,10 +35,6 @@ typedef struct H2K_vmblock_struct {
 	u32_t trapmask;  	/* allowed traps */
 	H2K_spinlock_t lock;
 
-#if ARCHV >= 65
-	u32_t *dmaregs;
-#endif
-
 #ifdef DO_EXT_SWITCH
 	H2K_ext_context *ext_contexts;
 #endif

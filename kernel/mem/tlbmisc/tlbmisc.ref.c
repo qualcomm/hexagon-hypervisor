@@ -28,6 +28,12 @@ void H2K_mem_tlb_invalidate_asid(u32_t asid) {
 		 );
 	H2K_isync();
 	H2K_mutex_unlock_tlb();
+
+#if ARCHV >= 68
+	if (H2K_gp->dma_version > 0) {  // have dma
+		H2K_dmtlbsynch();
+	}
+#endif
 }
 
 void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me)
@@ -44,4 +50,10 @@ void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_con
 	}
 	H2K_mutex_unlock_tlb();
 	H2K_spinlock_unlock(&H2K_gp->tmpmap_lock);
+
+#if ARCHV >= 68
+	if (H2K_gp->dma_version > 0) {  // have dma
+		H2K_dmtlbsynch();
+	}
+#endif
 }

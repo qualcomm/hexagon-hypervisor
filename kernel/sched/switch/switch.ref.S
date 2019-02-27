@@ -99,13 +99,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #endif
 
 #if ARCHV >= 68
-	r20 = add(H2K_GP, ##KG_dma_version)
-	r21 = memw(r20)
-	p0 = cmp.eq(r21, #0) // have dma?
-	if (p0) jump 3f
 	r14 = dmpause
 	memw(r0 + #CONTEXT_dm0) = r14
-3:
 #endif
 
 #ifdef DO_EXT_SWITCH
@@ -226,13 +221,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r8) = r19:18
 
 #if ARCHV >= 68
-	r20 = add(H2K_GP, ##KG_dma_version)
-	r21 = memw(r20)
-	p0 = cmp.eq(r21, #0) // have dma?
-	if (p0) jump 4f
 	r14 = memw(r1 + #CONTEXT_dm0)
 	dmresume(r14)
-4:
 #endif
 
 #if ARCHV >= 4

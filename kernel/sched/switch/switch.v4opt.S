@@ -35,6 +35,7 @@
 #define DST r17
 #define NOW r19:18
 #define NOW_LO r18
+#define DM0 r26
 
 FUNC_START H2K_switch .text.core.switch .p2align 5
 /* EJP: seems like trace is commented out... maybe need to add trace... */
@@ -100,6 +101,12 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(SRC+#CONTEXT_pktcount) = r1:0
+	}
+#if	ARCHV >= 68
+		DM0 = dmpause
+		memw(SRC + #CONTEXT_dm0) = DM0
+#endif
+	{
 #ifdef DO_EXT_SWITCH
 
 // check if ext needs saving, and mark as saved
@@ -277,7 +284,13 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		DATA = insert(TRACE, #8, #0)
+#if ARCHV >= 68
+		DM0 = memw(DST + #CONTEXT_dm0)
+#endif
 	}
+#if ARCHV >= 68
+	dmresume(DM0)
+#endif
 	{
 		P_VMWORK = tstbit(VMSTATUS,#H2K_VMSTATUS_VMWORK_BIT)
 		KG_WAITCYCLES = add(H2K_GP,#KG_waitcycles)
@@ -291,6 +304,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #undef ENTRIES
 #undef BUFADDR
 #undef ENTRIES_BUFADDR
+
 	{
 		r23:22 = memd(DST+#CONTEXT_cs1cs0)
 		r25:24 = memd(DST+#CONTEXT_m1m0)

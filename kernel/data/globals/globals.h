@@ -94,6 +94,12 @@ typedef struct {
 	u32_t hvx_contexts;  // # of native length
 	u32_t hmx_units;
 
+#ifdef CLUSTER_SCHED_HACK
+	u32_t xe_set[2];         // count of hw threads that have ssr:xe set in each cluster
+	u32_t cluster_hthreads;  // hardware threads per cluster
+	u32_t cluster_sched;     // do cluster scheduling?
+#endif
+
 	union {
 		u64_t fatal_hook_and_arg;
 		struct {
@@ -139,6 +145,13 @@ typedef struct {
 	u32_t l2size;
 	u32_t l2tags;
 	u32_t ecc_enable;
+
+	H2K_spinlock_t logbuf_lock;
+	char *logbuf;
+	u32_t logbuf_pos;  // first free byte
+	u32_t logbuf_enable;
+	u32_t log_enable;
+	H2K_spinlock_t angel_lock;
 
 #ifdef CRASH_DEBUG
 	u64_t crash_tlb[MAX_TLB_ENTRIES];

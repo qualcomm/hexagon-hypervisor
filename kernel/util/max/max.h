@@ -215,6 +215,9 @@
 #define SSR_XA_NBITS 3
 #define SSR_XA_BITS_MASK (((0x1 << (SSR_XA_NBITS)) - 1) << SSR_XA_BITS)
 #define SSR_XE_BIT 31
+#define SSR_XE_BIT_MASK (0x1 << SSR_XE_BIT)
+
+#define SSR_XE2_BIT 26
 
 #define SSR_XE2_BIT 26
 
@@ -296,6 +299,7 @@
 #define EXT_HVX_VTCM_OFFSET 0x200000
 #define EXT_HVX_VTCM_SIZE 256
 #define EXT_HVX_MAX_VLENGTH 128  // bytes
+#define MAX_HVX_PER_CLUSTER 2
 
 #define ECCREGS_PROT_ENABLE_0 0x0
 #define ECCREGS_PROT_ENABLE_1 0x100
@@ -336,3 +340,5 @@
 #define L2REGS_MAX L2REGS_QOS_DANGER_3
 
 #define CLADEREGS_MAX                    ((CLADE_REG_PD_CHUNK * CLADE_NUM_PDS) + 0x1c)
+
+#define LOGBUF_SIZE (32 * 1024)  // bytes

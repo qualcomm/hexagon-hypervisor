@@ -9,6 +9,7 @@
 #include <max.h>
 #include <hexagon_protos.h>
 #include <context.h>
+#include <globals.h>
 
 static inline void ciad(u32_t mask)
 {
@@ -112,11 +113,16 @@ static inline void lowprio_imask(u32_t hthread)
 
 #endif
 
-static inline u32_t get_ssr()
+static inline u32_t H2K_get_ssr()
 {
 	u32_t ret;
-	asm volatile (" %0 = ssr // get SSR" : "=r"(ret));
+	asm volatile (" %0 = ssr // get ssr" : "=r"(ret));
 	return ret;
+}
+
+static inline void H2K_set_ssr(u32_t val)
+{
+	asm volatile (" ssr = %0 // set ssr" : : "r"(val));
 }
 
 static inline u32_t H2K_get_syscfg()
@@ -309,7 +315,7 @@ static inline void H2K_clear_ipend(u32_t hthread_mask)
 #if (ARCHV <= 3)
 static inline u32_t get_hwtnum()
 {
-	return Q6_R_extractu_RII(get_ssr(),3,19);
+	return Q6_R_extractu_RII(H2K_get_ssr(),3,19);
 }
 #else
 static inline u32_t get_hwtnum()
@@ -432,6 +438,12 @@ static inline void H2K_l2unlock()
 }
 
 void H2K_start_threads(unsigned int mask);
+
+#ifdef CLUSTER_SCHED_HACK
+static inline u32_t H2K_hthread_cluster(u32_t hthread) {
+	return (hthread >= H2K_gp->cluster_hthreads ? 1 : 0);
+}
+#endif
 
 #endif
 

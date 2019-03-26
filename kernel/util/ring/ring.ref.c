@@ -10,6 +10,14 @@
 #include <ring.h>
 #include <c_std.h>
 
+H2K_ringnode_t *H2K_ring_next_real(H2K_ringnode_t *ring, H2K_ringnode_t *node) {
+	if (node->next == ring) {
+		return NULL;
+	} else {
+		return node->next;
+	}
+}
+
 void H2K_ring_remove_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
 {
 	node->prev->next = node->next;

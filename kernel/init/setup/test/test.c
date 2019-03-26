@@ -38,8 +38,8 @@ enum {
 	kg_init,
 	trace_init,
 	timer_init,
-	mem_alloc_init,
-	tmpmap_init,
+	//	mem_alloc_init,
+	//	tmpmap_init,
 	l2cache_init,
 	sample_init,
 	//thread_init,
@@ -96,8 +96,8 @@ HELPER_FUNC(futex_init)
 void H2K_intconfig_init(u32_t ssbase) { TH_init_seen |= 1<< intconfig_init; }
 HELPER_FUNC(trace_init)
 HELPER_FUNC(timer_init)
-HELPER_FUNC(mem_alloc_init)
-HELPER_FUNC(tmpmap_init)
+//HELPER_FUNC(mem_alloc_init)
+//HELPER_FUNC(tmpmap_init)
 HELPER_FUNC(l2cache_init)
 HELPER_FUNC(sample_init)
 //HELPER_FUNC(thread_init)
@@ -141,6 +141,8 @@ int main()
 	u32_t i;
 	u32_t found_thread;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+
+	H2K_gp->logbuf_enable = 0;
 
 	H2K_gp->hthreads = get_hthreads();
 

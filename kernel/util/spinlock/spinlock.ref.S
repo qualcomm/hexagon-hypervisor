@@ -33,7 +33,6 @@ FUNC_START H2K_spinlock_trylock .text.util.spinlock .p2align 5
 	}
 FUNC_END H2K_spinlock_trylock
 
-#if 0
 FUNC_START H2K_spinlock_unlock .text.util.spinlock .p2align 5
 	r1 = #0
 	memw(r0) = r1
@@ -42,5 +41,4 @@ FUNC_START H2K_spinlock_unlock .text.util.spinlock .p2align 5
 		jumpr r31
 	}
 FUNC_END H2K_spinlock_unlock
-#endif
 

@@ -8,6 +8,8 @@
 #ifndef H2_COMMON_DEFS_H
 #define H2_COMMON_DEFS_H 1
 
+#define CLUSTER_SCHED_HACK 1
+
 #if ((ARCHV >= 60) && !TINY_CORE)
 #define HAVE_EXTENSIONS 1
 #define DO_EXT_SWITCH 1

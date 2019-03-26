@@ -11,6 +11,8 @@
 #include <hexagon_protos.h>
 #include <max.h>
 #include <globals.h>
+#include <hw.h>
+#include <log.h>
 
 /* Get the best ready priority */
 static inline u32_t H2K_ready_best_prio()
@@ -83,15 +85,92 @@ static inline void H2K_ready_remove(H2K_thread_context *thread)
 	if (H2K_gp->ready[prio] == NULL) H2K_ready_clear_prio(prio);
 }
 
+/* Return head of ready list at prio */
+static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
+	H2K_thread_context *head = H2K_gp->ready[prio];
+	H2K_thread_context *ret = head;
+
+#ifdef CLUSTER_SCHED_HACK
+	if (!H2K_gp->cluster_sched) {
+		return ret;
+	}
+
+	u32_t hthread_xe = ((H2K_get_ssr() & SSR_XE_BIT_MASK) != 0);
+	u32_t cluster = H2K_hthread_cluster(hthread);
+
+	H2K_log("hthread %d  cluster %d  xe_set %d\n", hthread, cluster, H2K_gp->xe_set[cluster]);
+
+	/* Skip threads that have xe set if that would increase the total xe threads
+		 per cluster beyond the limit */
+	if (!hthread_xe	&& (H2K_gp->xe_set[cluster] == MAX_HVX_PER_CLUSTER)) {
+		while ((ret != NULL) && (ret->ssr & SSR_XE_BIT_MASK)) {  // xe set in new thread
+			H2K_log("\tSkipping hvx thread in H2K_ready_head\n");
+			ret = (H2K_thread_context *)H2K_ring_next(head, ret);  // try the next one
+		}
+	}
+	/* FIXME: Check next lower priority if we don't find a non-xe thread here?
+		 Probably not, since scheduling a lower-priority thread will cause check_sanity
+		 to raise the resched interrupt immediately, and we'll be right back here */
+
+	/* This is dicey to say the least. No guarantee that the resched interrupt
+		 will go to the other cluster. In fact, if all the hw threads on the other
+		 cluster are busy, then we won't make any progress. */
+	if (NULL == ret) {  // didn't find anything to schedule
+		H2K_log("\tDidn't find a thread to schedule\n");
+
+		/* If we are returing NULL, then we must have gone through the above loop,
+			 and therefore hthread_xe must be false, so we don't need the code
+			 below */
+
+		/* if (hthread_xe) { */
+		/* 	H2K_gp->xe_set[cluster]--; */
+		/* 	H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK); */
+		/* } */
+		resched_int();    // try to get another thread to pick up what we skipped
+	} else {
+		if (!hthread_xe && (ret->ssr & SSR_XE_BIT_MASK)) {  // new hthread with xe set
+			H2K_gp->xe_set[cluster]++;
+			H2K_log("\tNow xe_set++ == %d\n", H2K_gp->xe_set[cluster]);
+		}
+		if (hthread_xe && !(ret->ssr & SSR_XE_BIT_MASK)) {
+			H2K_gp->xe_set[cluster]--;
+			H2K_log("\tNow xe_set-- == %d\n", H2K_gp->xe_set[cluster]);
+		}
+	}
+#endif
+
+	return ret;
+}
+
 /* Remove and return the best thread */
-static inline H2K_thread_context *H2K_ready_getbest()
+/* me == thread being switched out */
+static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 {
 	H2K_thread_context *ret;
 	u32_t prio;
-	if (!H2K_ready_any_valid()) return NULL;
 	prio = H2K_ready_best_prio();
-	ret = H2K_gp->ready[prio];
-	H2K_ready_remove(ret);
+	if (prio >= MAX_PRIOS) {  // !H2K_ready_any_valid(), go to sleep
+#ifdef CLUSTER_SCHED_HACK
+		if (!H2K_gp->cluster_sched) {
+			return NULL;
+		}
+
+		u32_t hthread_xe = ((H2K_get_ssr() & SSR_XE_BIT_MASK) != 0);
+		u32_t cluster = H2K_hthread_cluster(hthread);
+
+		if (hthread_xe) {
+			H2K_gp->xe_set[cluster]--;
+			H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK);
+			H2K_log("getbest: hthread %d  cluster %d  xe_set-- == %d\n", hthread, cluster, H2K_gp->xe_set[cluster]);
+		}
+#endif
+		return NULL;
+	}
+
+	ret = H2K_ready_head(prio, hthread);
+	if (ret != NULL) {
+		H2K_ready_remove(ret);
+	}
 	return ret;
 }
 

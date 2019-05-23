@@ -39,6 +39,9 @@ u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(u64_t)] __attribute__((aligne
 #elif ARCHV == 5
 #define PCYCLES_PER_TCYCLE 3
 #define OVERHEAD 1536
+#elif ARCHV >= 68
+#define PCYCLES_PER_TCYCLE 3
+#define OVERHEAD 1536
 #elif ARCHV >= 60
 #define PCYCLES_PER_TCYCLE 2
 #define OVERHEAD 1536

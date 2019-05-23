@@ -74,6 +74,7 @@ TOOLS_FLAVOR ?= v68_latest
 TOOLS_FLAVOR_KERNEL ?= v68_latest
 ARCH_FLAVOR ?= v68_latest
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B
+DEVSIM := archsim
 endif
 endif
 endif

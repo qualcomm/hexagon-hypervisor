@@ -1,6 +1,6 @@
 EXEC = test.elf
 OBJS += test.o
-OBJS += $(BOOTVM_ENTRY_O)
+#OBJS += $(BOOTVM_ENTRY_O)
 include Makefile.inc
 
 
@@ -38,7 +38,7 @@ $(BOOTVM_IMAGE): test.o $(CRT0_O) $(BOOTVM_IMAGE_DEPS)
 
 # This bit of stupidity is needed to suppress warnings about changing the
 # recipe for test.elf
-#$(EXEC) : private CC = true
+$(EXEC) : private CC = true
 test.log: move
 test.objdump: move
 

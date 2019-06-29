@@ -98,11 +98,11 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	u32_t hthread_xe = ((H2K_get_ssr() & SSR_XE_BIT_MASK) != 0);
 	u32_t cluster = H2K_hthread_cluster(hthread);
 
-	H2K_log("hthread %d  cluster %d  xe_set %d\n", hthread, cluster, H2K_gp->xe_set[cluster]);
+	H2K_log("hthread %d  cluster %d  xe_set 0x%08x\n", hthread, cluster, H2K_gp->xe_set[cluster]);
 
 	/* Skip threads that have xe set if that would increase the total xe threads
 		 per cluster beyond the limit */
-	if (!hthread_xe	&& (H2K_gp->xe_set[cluster] == MAX_HVX_PER_CLUSTER)) {
+	if (!hthread_xe	&& (XE_SET_COUNT(cluster) == MAX_HVX_PER_CLUSTER)) {
 		while ((ret != NULL) && (ret->ssr & SSR_XE_BIT_MASK)) {  // xe set in new thread
 			H2K_log("\tSkipping hvx thread in H2K_ready_head\n");
 			ret = (H2K_thread_context *)H2K_ring_next(head, ret);  // try the next one
@@ -123,18 +123,18 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			 below */
 
 		/* if (hthread_xe) { */
-		/* 	H2K_gp->xe_set[cluster]--; */
+		/* 	XE_SET_CLR(cluster, hthread); */
 		/* 	H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK); */
 		/* } */
 		resched_int();    // try to get another thread to pick up what we skipped
 	} else {
 		if (!hthread_xe && (ret->ssr & SSR_XE_BIT_MASK)) {  // new hthread with xe set
-			H2K_gp->xe_set[cluster]++;
-			H2K_log("\tNow xe_set++ == %d\n", H2K_gp->xe_set[cluster]);
+			XE_SET_SET(cluster, hthread);
+			H2K_log("\tNow set xe_set to  0x%08x\n", H2K_gp->xe_set[cluster]);
 		}
 		if (hthread_xe && !(ret->ssr & SSR_XE_BIT_MASK)) {
-			H2K_gp->xe_set[cluster]--;
-			H2K_log("\tNow xe_set-- == %d\n", H2K_gp->xe_set[cluster]);
+			XE_SET_CLR(cluster, hthread);
+			H2K_log("\tNow clear xe_set to 0x%08x\n", H2K_gp->xe_set[cluster]);
 		}
 	}
 #endif
@@ -159,9 +159,9 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 		u32_t cluster = H2K_hthread_cluster(hthread);
 
 		if (hthread_xe) {
-			H2K_gp->xe_set[cluster]--;
+			XE_SET_CLR(cluster, hthread);
 			H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK);
-			H2K_log("getbest: hthread %d  cluster %d  xe_set-- == %d\n", hthread, cluster, H2K_gp->xe_set[cluster]);
+			H2K_log("getbest: hthread %d  cluster %d  xe_set 0x%08x\n", hthread, cluster, H2K_gp->xe_set[cluster]);
 		}
 #endif
 		return NULL;

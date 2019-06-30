@@ -59,7 +59,7 @@
 	 MASK_SPACE(cpus, ints) +											\
 	 PENDING_SPACE(ints) +												\
 	 ENABLE_SPACE(ints) +													\
-	 PHYSINT_SPACE(ints + PERCPU_INTERRUPTS))
+	 PHYSINT_SPACE(ints + PERCPU_INTERRUPTS))			\
 
 #ifdef DO_EXT_SWITCH
 #define VMBLOCK_SIZE(cpus, ints, ext)			 \

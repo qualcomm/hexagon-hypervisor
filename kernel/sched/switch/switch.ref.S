@@ -98,6 +98,11 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r0+#CONTEXT_pktcount) = r21:20
 #endif
 
+#if ARCHV >= 68
+	r14 = dmpause
+	memw(r0 + #CONTEXT_dm0) = r14
+#endif
+
 #ifdef DO_EXT_SWITCH
 
 	// check if ext needs saving, and mark as saved
@@ -214,6 +219,11 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = insert(r20,#8,#0)
 	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 	memd(r8) = r19:18
+
+#if ARCHV >= 68
+	r14 = memw(r1 + #CONTEXT_dm0)
+	dmresume(r14)
+#endif
 
 #if ARCHV >= 4
 	r15:14 = memd(r1+#CONTEXT_ccrssr)

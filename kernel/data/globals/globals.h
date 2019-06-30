@@ -148,6 +148,7 @@ typedef struct {
 	u32_t l2size;
 	u32_t l2tags;
 	u32_t ecc_enable;
+	u32_t dma_version;
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf;

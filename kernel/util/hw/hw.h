@@ -437,6 +437,14 @@ static inline void H2K_l2unlock()
 	asm volatile (" l2gunlock " : : : "memory");
 }
 
+#if ARCHV >= 68
+static inline u32_t H2K_dmtlbsynch() {
+	u32_t ret;
+	asm volatile ("%0 = dmtlbsynch;":"=r" (ret));
+	return(ret);
+}
+#endif
+
 void H2K_start_threads(unsigned int mask);
 
 #ifdef CLUSTER_SCHED_HACK

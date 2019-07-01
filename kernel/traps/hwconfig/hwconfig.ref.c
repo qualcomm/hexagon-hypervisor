@@ -525,7 +525,7 @@ u32_t H2K_trap_hwconfig_getdmacfg(u32_t unused, void *unusedp, u32_t index, u32_
 
 #if ARCHV >= 68
 	if (H2K_gp->dma_version) {
-		ret = Q6_R_dmcfgrd_R(index);
+		ret = H2K_dmcfgrd(index);
 	}
 #endif
 	return ret;
@@ -535,7 +535,7 @@ u32_t H2K_trap_hwconfig_setdmacfg(u32_t unused, void *unusedp, u32_t index, u32_
 
 #if ARCHV >= 68
 	if (H2K_gp->dma_version) {
-		Q6_dmcfgwr_RR(index, data);
+		H2K_dmcfgwr(index, data);
 		return 0;
 	}
 #endif

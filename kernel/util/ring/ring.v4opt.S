@@ -31,7 +31,7 @@ FUNC_START H2K_ring_next_real .text.core.ring  .p2align  3
 	}
 
 // H2K_ring_remove_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
-FUNC_START H2K_ring_remove_real .falign
+FUNC_START H2K_ring_remove_real .text.core.ring .falign
 	{
 		r4 = memw(r0)
 		r3:2 = memd(r1) // prev:next

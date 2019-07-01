@@ -48,7 +48,9 @@ typedef union {
 		unsigned long boot_have_hvx:1;    /**< Core has HVX? */
 		unsigned long boot_have_sample:1; /**< PC sampling enabled ? */
 		unsigned long boot_ext_ok:1;      /**< Kernel can switch extended contexts? */
-		unsigned long boot_unused:28;
+		unsigned long boot_have_dma:1;    /**< Core has user-mode DMA? */
+		unsigned long boot_have_hmx:1;    /**< Core has HMX? */
+		unsigned long boot_unused:26;
 	};
 	unsigned long raw;
 } info_boot_flags_type;

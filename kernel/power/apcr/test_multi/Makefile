@@ -1,5 +1,6 @@
 EXEC = test.elf
 OBJS += test.o
+#OBJS += $(BOOTVM_ENTRY_O)
 include Makefile.inc
 
 
@@ -25,7 +26,7 @@ EXTRA_CFLAGS += -DDEBUG
 endif
 
 CFLAGS := $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include $(EXTRA_CFLAGS)
-LDFLAGS = $(NOSTARTFILES) -L$(INSTALLPATH)/lib -moslib=h2
+LDFLAGS = $(NOSTARTFILES) -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 all: $(BOOTVM_PROG)
 

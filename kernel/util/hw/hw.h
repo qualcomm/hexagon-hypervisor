@@ -437,6 +437,25 @@ static inline void H2K_l2unlock()
 	asm volatile (" l2gunlock " : : : "memory");
 }
 
+#if ARCHV >= 68
+static inline u32_t H2K_dmtlbsynch() {
+	u32_t ret;
+	asm volatile ("%0 = dmtlbsynch;":"=r" (ret));
+	return(ret);
+}
+
+static inline u32_t H2K_dmcfgrd(u32_t index) {
+	u32_t ret;
+	asm volatile ("%0 = dmcfgrd(%1);" : "=r" (ret) : "r" (index));
+	return(ret);
+}
+
+static inline void H2K_dmcfgwr(u32_t index, u32_t data) {
+
+	asm volatile ("dmcfgwr(%0, %1);" : : "r" (index), "r" (data));
+}
+#endif
+
 void H2K_start_threads(unsigned int mask);
 
 #ifdef CLUSTER_SCHED_HACK

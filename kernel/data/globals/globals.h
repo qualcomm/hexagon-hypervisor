@@ -95,7 +95,10 @@ typedef struct {
 	u32_t hmx_units;
 
 #ifdef CLUSTER_SCHED_HACK
-	u32_t xe_set[2];         // count of hw threads that have ssr:xe set in each cluster
+#define XE_SET_SET(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] |= (0x1 << HTHREAD))
+#define XE_SET_CLR(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] &= ~(0x1 << HTHREAD))
+#define XE_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe_set[CLUSTER]))
+	u32_t xe_set[2];         // bitmap of hw threads that have ssr:xe set in each cluster
 	u32_t cluster_hthreads;  // hardware threads per cluster
 	u32_t cluster_sched;     // do cluster scheduling?
 #endif
@@ -145,6 +148,7 @@ typedef struct {
 	u32_t l2size;
 	u32_t l2tags;
 	u32_t ecc_enable;
+	u32_t dma_version;
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf;

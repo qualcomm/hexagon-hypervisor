@@ -60,7 +60,7 @@ TIMING ?= --timing
 
 BUSPENALTY ?= --buspenalty 50
 
-ULIMIT ?= 180
+ULIMIT ?= 300
 
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
@@ -172,7 +172,7 @@ endif # BOOT
 CFLAGS += -I ${INSTALLPATH}/include
 ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${INSTALLPATH}/include
 endif #STANDALONE
-LDFLAGS+= -mv${TOOLARCH}
+LDFLAGS+= -mv${TOOLARCH} -Qunused-arguments
 #  Turn on call() support for assertion checking
 #CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.

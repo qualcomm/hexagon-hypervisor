@@ -56,24 +56,28 @@ TOOLS_FLAVOR ?= 8.1.01
 TOOLS_FLAVOR_KERNEL ?= 8.1.01
 ARCH_FLAVOR ?= v60_latest
 else
-#TOOLS_FLAVOR ?= 8.1-internal-latest
+ifeq (65, $(ARCHV))
 TOOLS_FLAVOR ?= 8.1.03
 TOOLS_FLAVOR_KERNEL ?= 8.1.03
-ifdef TINY_CORE
-KERNEL_CFLAGS += -DTINY_CORE
-else
-KERNEL_CFLAGS += -mhvx
-endif
-#TOOLS_FLAVOR_KERNEL ?= 8.1-internal-latest
 ARCH_FLAVOR ?= v65_latest
-endif
-endif
-endif
-
 ifdef TINY_CORE
 TOOLS_FLAVOR := v66_stable
 TOOLS_FLAVOR_KERNEL := v66_stable
 ARCH_FLAVOR := v66t_latest
+KERNEL_CFLAGS += -DTINY_CORE
+else
+KERNEL_CFLAGS += -mhvx
+endif
+
+else # latest
+TOOLS_FLAVOR ?= v68_stable
+TOOLS_FLAVOR_KERNEL ?= v68_stable
+ARCH_FLAVOR ?= v68_latest
+KERNEL_CFLAGS += -mhvx -mhvx-length=128B
+DEVSIM := archsim
+endif
+endif
+endif
 endif
 
 DEVSIM ?= devsim

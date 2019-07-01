@@ -204,7 +204,7 @@ static inline int h2_hwconfig_hwintop(unsigned int op, unsigned int intno, unsig
 
 /**
 Start hardware threads with mask (-1 to start all)
-@param[in] Mask of thread numbers to start
+@param[in] mask Mask of thread numbers to start
 @returns mask of threads started on success, negative value on error
 @dependencies None
 */
@@ -216,7 +216,7 @@ static inline int h2_hwconfig_hwthreads_mask(unsigned int mask) {
 
 /**
 Start number of hardware threads
-@param[in] Number of threads to start
+@param[in] num Number of threads to start
 @returns number of threads started on success, negative value on error
 @dependencies None
 */
@@ -236,6 +236,29 @@ Enable/Disable memory ECC
 static inline int h2_hwconfig_ecc(unsigned int ecc_enable) {
 
 	return h2_hwconfig_trap(HWCONFIG_ECC, NULL, ecc_enable, 0);
+}
+
+/**
+Read DMA configuration register
+@param[in] index  Index of register to read
+@returns Register value on success, negative value on error
+@dependencies none
+*/
+static inline int h2_hwconfig_dma_getcfg(unsigned int index) {
+
+	return h2_hwconfig_trap(HWCONFIG_GETDMACFG, NULL, index, 0);
+}
+
+/**
+Write DMA configuration register
+@param[in] index  Index of register to write
+@param[in] data  Data value to write
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+static inline int h2_hwconfig_dma_setcfg(unsigned int index, unsigned int data) {
+
+	return h2_hwconfig_trap(HWCONFIG_SETDMACFG, NULL, index, data);
 }
 
 #endif

@@ -1,0 +1,50 @@
+This list is for the H2 kernel as hypervisor for a single (Linux) guest only.
+There's a much longer list for H2 to replace qurt, although it can run most qurt user code now.
+
+
+Must do for productization:
+
+- Merge any needed kernel changes from modem branch (it's mostly lib stuff).
+
+- Get coverage working again (broken by switch to LLVM).
+
+- Reach 100% coverage for kernel code (add tests).
+
+- Review code for security holes, especially trap arguments out of range and
+bogosity in translations supplied by guest.
+
+- Review/fix all FIXMEs (151 in kernel).
+
+- Support v65 system architecture (guest interrupts; multiple l2vics, PMU).
+
+- Remove l2 interrupt setup mess from kernel; give the guest an interface to
+request phys int config.
+
+- Move clock setup from Linux to H2; give guest a way to request clock speeds.
+
+- Update kernel internals docs (sphinx :\ ) and HVM spec.
+
+- Ensure all code is 36-bit PA clean.
+
+
+Should do (for our sanity and reputation):
+
+- (Better) kernel trace.
+
+- DEBUG build with more stuff: printh2k etc.
+
+- Guest debug support (T32).
+
+- Debug H2 kernel from privileged guest.
+
+- Optimization of whatever is important to customers: trap/interrupt latency,
+code size, guest in TCM, ...
+
+
+Good to have:
+
+- Guest interface for TCM/VTCM/HVX allocation.
+
+- Support power collapse and island mode (Lots of work. Does Linux need this?)
+
+- Optimize the virtual cache-maintenance ops. 

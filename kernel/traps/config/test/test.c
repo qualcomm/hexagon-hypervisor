@@ -97,7 +97,11 @@ int main()
 	if (vmblock->num_ints != OK_INTS) FAIL("Bad num_ints");
 
 	if (vmblock->contexts != (H2K_thread_context *)(void *)((char *)vmblock + sizeof(H2K_vmblock_t))) FAIL("Bad cpu_contexts base");
+#if ARCHV >= 68
+	if (vmblock->intinfo != (H2K_vm_int_opinfo_t *)(void *)((char *)(vmblock->contexts) + OK_CPUS*320)) FAIL("Bad intinfo base ARCHV >= 68");
+#else
 	if (vmblock->intinfo != (H2K_vm_int_opinfo_t *)(void *)((char *)(vmblock->contexts) + OK_CPUS*288)) FAIL("Bad intinfo base");
+#endif
 	if (vmblock->percpu_mask !=  (bitmask_t **)(void *)((char *)(vmblock->intinfo) + 3*8)) FAIL ("Bad percpu_mask base");
 
 	for (i = 0; i < OK_CPUS; i++) {

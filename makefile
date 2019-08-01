@@ -170,11 +170,13 @@ doc:
 compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
-.PHONY: gtags gtagsclean
+.PHONY: gtags gtagsclean htags
 
 gtags:
 	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
-#	htags -afhnosTxv --show-position
+
+htags: gtags
+	htags -ahnosTxvF --show-position --auto-completion --tree-view=filetree
 
 gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML

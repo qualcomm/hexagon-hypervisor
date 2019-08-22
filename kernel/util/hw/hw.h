@@ -90,6 +90,11 @@ static inline void resched_int()
 	asm(" swi(%0) // wake up & resched" : : "r"(RESCHED_INT_INTMASK));
 }
 
+static inline void cluster_resched_int()
+{
+	asm(" swi(%0) // cluster resched" : : "r"(CLUSTER_RESCHED_INT_INTMASK));
+}
+
 #if (ARCHV <= 2)
 static inline void highprio_imask(u32_t hthread)
 {

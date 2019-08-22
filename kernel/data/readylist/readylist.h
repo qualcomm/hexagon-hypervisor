@@ -13,6 +13,7 @@
 #include <globals.h>
 #include <hw.h>
 #include <log.h>
+#include <runlist.h>
 
 /* Get the best ready priority */
 static inline u32_t H2K_ready_best_prio()
@@ -97,6 +98,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 
 	u32_t hthread_xe = ((H2K_get_ssr() & SSR_XE_BIT_MASK) != 0);
 	u32_t cluster = H2K_hthread_cluster(hthread);
+	u32_t hthreads;  // hw threads in other cluster to interrupt
 
 	H2K_log("hthread %d  cluster %d  xe_set 0x%08x\n", hthread, cluster, H2K_gp->xe_set[cluster]);
 
@@ -108,15 +110,10 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			ret = (H2K_thread_context *)H2K_ring_next(head, ret);  // try the next one
 		}
 	}
-	/* FIXME: Check next lower priority if we don't find a non-xe thread here?
-		 Probably not, since scheduling a lower-priority thread will cause check_sanity
-		 to raise the resched interrupt immediately, and we'll be right back here */
 
-	/* This is dicey to say the least. No guarantee that the resched interrupt
-		 will go to the other cluster. In fact, if all the hw threads on the other
-		 cluster are busy, then we won't make any progress. */
 	if (NULL == ret) {  // didn't find anything to schedule
 		H2K_log("\tDidn't find a thread to schedule\n");
+		H2K_log("\tOther cluster xe_set 0x%08x\n", H2K_gp->xe_set[1 - cluster]);
 
 		/* If we are returing NULL, then we must have gone through the above loop,
 			 and therefore hthread_xe must be false, so we don't need the code
@@ -126,7 +123,17 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 		/* 	XE_SET_CLR(cluster, hthread); */
 		/* 	H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK); */
 		/* } */
-		resched_int();    // try to get another thread to pick up what we skipped
+
+		/* Try to interrupt a thread of equal or lower priority on the other cluster that doesn't have xe set */
+		hthreads = (~H2K_gp->xe_set[1 - cluster])
+			& H2K_gp->cluster_mask[1 - cluster]; // threads with xe not set, in other cluster
+		hthreads = H2K_runlist_prio_hthreads(hthreads, prio);
+
+		if (hthreads) {  // any eligible
+			H2K_log("\tSignal threadmask 0x%08x\n", hthreads);
+			iassignw(CLUSTER_RESCHED_INT, ~hthreads);  // steer the interrupt
+			cluster_resched_int();    // try to get another thread to pick up what we skipped
+		}
 	} else {
 		if (!hthread_xe && (ret->ssr & SSR_XE_BIT_MASK)) {  // new hthread with xe set
 			XE_SET_SET(cluster, hthread);

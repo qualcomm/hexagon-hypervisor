@@ -16,7 +16,7 @@
 void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 {
 	H2K_thread_context *new;
-	new = H2K_ready_getbest();
+	new = H2K_ready_getbest(hthread);
 	if (new == NULL) {
 		/* GO TO SLEEP */
 		H2K_raise_lowprio();

@@ -6,7 +6,7 @@
 H2K_vm_cpuint_post
 ------------------
 
-.. cfunction:: s32_t H2K_vm_cpuint_post(H2K_vmblock_t *vmblock, H2K_thread_context *dest, u32_t intno, H2K_vm_int_opinfo *info)
+.. c:function:: s32_t H2K_vm_cpuint_post(H2K_vmblock_t *vmblock, H2K_thread_context *dest, u32_t intno, H2K_vm_int_opinfo *info)
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param dest: destination cpu for interrupt posting
@@ -33,7 +33,7 @@ we try and deliver the interrupt to the virtual CPU.
 H2K_vm_cpuint_enable
 --------------------
 
-.. cfunction:: s32_t H2K_vm_cpuint_enable(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
+.. c:function:: s32_t H2K_vm_cpuint_enable(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param me: CPU for per-cpu interrupt
@@ -53,13 +53,13 @@ Functionality
 
 Set the enable mask for intno.  If this virtual interrupt is mapped to a
 physical interrupt in the vmblock, re-enable the physical interrupt via
-:cfunc:`H2K_intcontrol_enable()`.  If the interrupt is pending, try to deliver.
+:c:func:`H2K_intcontrol_enable()`.  If the interrupt is pending, try to deliver.
 
 
 H2K_vm_cpuint_disable
 ---------------------
 
-.. cfunction:: s32_t H2K_vm_cpuint_disable(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
+.. c:function:: s32_t H2K_vm_cpuint_disable(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param me: CPU for per-cpu interrupt
@@ -83,7 +83,7 @@ Atomically clear the enable bit for interrupt intno.
 H2K_vm_cpuint_localunmask
 -------------------------
 
-.. cfunction:: s32_t H2K_vm_cpuint_localunmask(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
+.. c:function:: s32_t H2K_vm_cpuint_localunmask(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param me: Specified virtual CPU
@@ -109,7 +109,7 @@ Otherwise, return -1
 H2K_vm_cpuint_localmask
 -----------------------
 
-.. cfunction:: s32_t H2K_vm_cpuint_localmask(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
+.. c:function:: s32_t H2K_vm_cpuint_localmask(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param me: destination cpu for interrupt posting
@@ -134,7 +134,7 @@ Otherwise, return -1
 H2K_vm_cpuint_setaffinity
 -------------------------
 
-.. cfunction:: void H2K_vm_cpuint_setaffinity(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
+.. c:function:: void H2K_vm_cpuint_setaffinity(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info)
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param me: destination cpu
@@ -162,7 +162,7 @@ Otherwise, return -1
 H2K_vm_cpuint_get
 -----------------
 
-.. cfunction:: s32_t H2K_vm_cpuint_get(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t offset, H2K_vm_int_opinfo_t *info)
+.. c:function:: s32_t H2K_vm_cpuint_get(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t offset, H2K_vm_int_opinfo_t *info)
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param dest: destination cpu for interrupt posting
@@ -187,7 +187,7 @@ is found, call the next handler.
 H2K_vm_cpuint_peek
 ------------------
 
-.. cfunction:: s32_t H2K_vm_cpuint_get(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t offset, H2K_vm_int_opinfo_t *info)
+.. c:function:: s32_t H2K_vm_cpuint_get(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t offset, H2K_vm_int_opinfo_t *info)
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param offset: Offset of these interrupts
@@ -211,7 +211,7 @@ no interrupt is found, call the next handler.
 H2K_vm_cpuint_status
 --------------------
 
-.. cfunction:: s32_t H2K_vm_cpuint_status(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");
+.. c:function:: s32_t H2K_vm_cpuint_status(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno, H2K_vm_int_opinfo_t *info) IN_SECTION(".text.vm.int");
 
 	:param vmblock: Pointer to the VM Memory Block
 	:param dest: destination cpu for interrupt posting

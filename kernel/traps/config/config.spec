@@ -10,7 +10,7 @@ This module contains the runtime kernel configuration routines.
 H2K_trap_config
 ---------------
 
-.. cfunction:: u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 
 	:param configtype: Configuration operation to do
 	:param ptr: Operation-dependent pointer value
@@ -37,7 +37,7 @@ appropriate routine.
 H2K_trap_config_setfatal
 ------------------------
 
-.. cfunction:: u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me)
 
 
 	:param unused: Unused parameter
@@ -61,7 +61,7 @@ Set H2K_fatal_kernel_handler to handler.
 H2K_trap_config_vmblock_init
 ----------------------------
 
-.. cfunction:: u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
 
 	:param unused: Unused parameter
 	:param ptr: Actually a u32_t containing the VM ID

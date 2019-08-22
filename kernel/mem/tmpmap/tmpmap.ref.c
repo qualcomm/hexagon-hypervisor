@@ -10,8 +10,6 @@
 #include <tlbinsert.h>
 #include <tlbmisc.h>
 
-static u32_t tmpmap_lock IN_SECTION(".data.core.globals");
-
 /* Return va of pa */
 u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc) {
 
@@ -29,11 +27,12 @@ u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc) {
 	entry.valid = 1;
 
 	/* Hold this lock until the caller calls H2K_tmpmap_remove_and_unlock() */
-	H2K_spinlock_lock(&tmpmap_lock);
+	H2K_spinlock_lock(&H2K_gp->tmpmap_lock);
 
 	/* Lock TLB and allocate the last entry */
 	H2K_mutex_lock_tlb();
 	index = H2K_gp->last_tlb_index--;
+	if (H2K_gp->tlb_index >= index) H2K_gp->tlb_index = 0;
 	H2K_mem_tlb_insert_index_unlock(entry, index);  // and invalidate what's there
 	return TEMP_MAP_VA | (pa & TEMP_MAP_OFF_MASK);
 }
@@ -43,10 +42,10 @@ void H2K_tmpmap_remove_and_unlock() {
 	H2K_mutex_lock_tlb();
 	H2K_mem_tlb_write(++(H2K_gp->last_tlb_index), 0);  // invalidate tmpmap
 	H2K_mutex_unlock_tlb();
-	H2K_spinlock_unlock(&tmpmap_lock);
+	H2K_spinlock_unlock(&H2K_gp->tmpmap_lock);
 }
 
 void H2K_tmpmap_init() {
 
-	H2K_spinlock_init(&tmpmap_lock);
+	H2K_spinlock_init(&H2K_gp->tmpmap_lock);
 }

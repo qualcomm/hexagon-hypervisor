@@ -21,7 +21,7 @@ SYMS := ./syms.pl
 
 CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2 -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L$(INSTALLPATH)/lib
 
-CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS)
+CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS) -Qunused-arguments
 
 SCRIPTS = $(CONSTS) $(SYMS) vapa_bootvm.x vapa_kernel.x.in
 SRCFILES = bootvm_entry.S bootvm.S min_crt0.S

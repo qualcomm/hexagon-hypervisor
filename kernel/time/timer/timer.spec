@@ -9,7 +9,7 @@ Timer Management
 H2K_timer_int
 -------------
 
-.. cfunction:: void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
+.. c:function:: void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 
 	:param unused: Unused parameter
 	:param me: pointer to the thread that was interrupted
@@ -30,7 +30,7 @@ Reprogram the timer device for the next expiry.
 H2K_timer_trap
 --------------
 
-.. cfunction:: u64_t H2K_timer_trap(u32_t traptype, u64_t arg, H2K_thread_context *me)
+.. c:function:: u64_t H2K_timer_trap(u32_t traptype, u64_t arg, H2K_thread_context *me)
 
 	:param traptype: Which trap to do
 	:param arg: For setting a timeout, the "nsec" absolute time of the timeout
@@ -59,7 +59,7 @@ We use a look up table of pointers to handler functions, described below.
 H2K_vmtrap_timer
 ----------------
 
-.. cfunction:: void H2K_vmtrap_timer(H2K_thread_context *me)
+.. c:function:: void H2K_vmtrap_timer(H2K_thread_context *me)
 
 	:param me: Pointer to the current context
 
@@ -72,13 +72,13 @@ Handles timer operations
 Functionality
 ~~~~~~~~~~~~~
 
-Calls :cfunc:`H2K_timer_trap()` using r00 for the traptype and r0302 as the arg.
+Calls :c:func:`H2K_timer_trap()` using r00 for the traptype and r0302 as the arg.
 
 
 H2K_timer_get_freq
 ~~~~~~~~~~~~~~~~~~
 
-.. cfunction:: u64_t H2K_timer_get_freq(u32_t unused, u64_t unused2, H2K_thread_context *me)
+.. c:function:: u64_t H2K_timer_get_freq(u32_t unused, u64_t unused2, H2K_thread_context *me)
 
 	:param unused: not used
 	:param unused2: not used
@@ -94,7 +94,7 @@ this can be used to compensate if nsecs are not exactly nanoseconds.
 H2K_timer_get_resolution
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. cfunction:: u64_t H2K_timer_get_resolution(u32_t unused, u64_t unused2, H2K_thread_context *me)
+.. c:function:: u64_t H2K_timer_get_resolution(u32_t unused, u64_t unused2, H2K_thread_context *me)
 
 	:param unused: not used
 	:param unused2: not used
@@ -110,14 +110,14 @@ Note that this does not describe any guarantee of when the timer expiry will be 
 with respect to the time, however expiration accuracy better than the
 granularity is impossible.
 
-Additionally, it will be observed that calls to :cfunc:`H2K_timer_get_time()` are always
+Additionally, it will be observed that calls to :c:func:`H2K_timer_get_time()` are always
 a multiple of the granularity.
 
 
 H2K_timer_get_time
 ~~~~~~~~~~~~~~~~~~
 
-.. cfunction:: u64_t H2K_timer_get_time(u32_t unused, u64_t unused2, H2K_thread_context *me)
+.. c:function:: u64_t H2K_timer_get_time(u32_t unused, u64_t unused2, H2K_thread_context *me)
 
 	:param unused: not used
 	:param unused2: not used
@@ -133,7 +133,7 @@ Returns the number of nsecs since boot
 H2K_timer_get_roughtime
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. cfunction:: u64_t H2K_timer_get_roughtime(u32_t unused, u64_t unused2, H2K_thread_context *me)
+.. c:function:: u64_t H2K_timer_get_roughtime(u32_t unused, u64_t unused2, H2K_thread_context *me)
 
 	:param unused: not used
 	:param unused2: not used
@@ -151,7 +151,7 @@ useful if the timer hardware is extremely slow.
 H2K_timer_get_timeout
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. cfunction:: u64_t H2K_timer_get_timeout(u32_t unused, u64_t unused2, H2K_thread_context *me)
+.. c:function:: u64_t H2K_timer_get_timeout(u32_t unused, u64_t unused2, H2K_thread_context *me)
 
 	:param unused: not used
 	:param unused2: not used
@@ -167,7 +167,7 @@ If no timeout is active, returns 0.  Otherwise, returns the time of the next tim
 H2K_timer_set_timeout
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. cfunction:: u64_t H2K_timer_set_timeout(u32_t unused, u64_t timeout, H2K_thread_context *me)
+.. c:function:: u64_t H2K_timer_set_timeout(u32_t unused, u64_t timeout, H2K_thread_context *me)
 
 	:param unused: not used
 	:param timeout: Requested time for timeout
@@ -200,7 +200,7 @@ H2K_timer_init
 ~~~~~~~~~~~~~~
 
 
-.. cfunction:: void H2K_timer_init()
+.. c:function:: void H2K_timer_init()
 
 Description
 ~~~~~~~~~~~

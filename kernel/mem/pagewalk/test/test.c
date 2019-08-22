@@ -21,15 +21,52 @@ void FAIL(const char *str)
 	exit(1);
 }
 
+int TH_translate_idx = 0;
+int TH_expected_translates = 0;
+long TH_expected_translate_pn[4];
+u32_t TH_final_pn;
+
+H2K_translation_t H2K_translate(H2K_translation_t in, H2K_asid_entry_t info)
+{
+	if (TH_translate_idx >= TH_expected_translates) FAIL("too many translates");
+	if (info.raw != 0xdeadbeefcafebabeULL) FAIL("bad info arg");
+	if (TH_translate_idx != TH_expected_translates-1) {
+		if (TH_expected_translate_pn[TH_translate_idx] != in.pn) FAIL("translate bad pn");
+	} else {
+		TH_final_pn = in.pn;
+	}
+	TH_translate_idx++;
+	return in;
+}
+
 H2K_thread_context a;
+H2K_vmblock_t myvmblock;
+H2K_asid_entry_t info = {
+	.ptb = 0,
+	.fields = {
+		.count = 1,
+		.vmid = 2,
+		.type = H2K_ASID_TRANS_TYPE_LINEAR,
+		.log_maxhops = 2,
+		.extra = 0,
+	},
+};
 
 u32_t l1pt[1024] __attribute__((aligned(4096)));
 
-u32_t l2pt_1MB[4] __attribute__((aligned(16)));
-u32_t l2pt_256KB[16] __attribute__((aligned(64)));
-u32_t l2pt_64KB[64] __attribute__((aligned(256)));
-u32_t l2pt_16KB[256] __attribute__((aligned(1024)));
+u32_t l2pt_1MB[4] __attribute__((aligned(4096)));
+u32_t l2pt_256KB[16] __attribute__((aligned(4096)));
+u32_t l2pt_64KB[64] __attribute__((aligned(4096)));
+u32_t l2pt_16KB[256] __attribute__((aligned(4096)));
 u32_t l2pt_4KB[1024] __attribute__((aligned(4096)));
+
+long l2addrs[] = {
+	(long)l2pt_4KB,
+	(long)l2pt_16KB,
+	(long)l2pt_64KB,
+	(long)l2pt_256KB,
+	(long)l2pt_1MB,
+};
 
 #define L1_16MB  0x00000006
 #define L1_4MB   0x00000005
@@ -50,6 +87,7 @@ static inline unsigned int pte_bits(unsigned int i)
 	u32_t ret;
 	ret = ((i & 0x0ff)<<4);	/* XWR / CC / UT bits */
 	ret |= ((i & 0xff0) << 20);
+	ret &= 0xffffffe7;
 	return ret;
 }
 
@@ -101,18 +139,31 @@ void setup()
 			default: break;
 		}
 	}
-	/* OK, set up ASID table... */
-	H2K_asid_table_init();
 	H2K_thread_context_clear(&a);
-	a.ssr_asid = H2K_asid_table_inc(((u32_t)l1pt), H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
+	info.ptb = (u32_t)l1pt;
+}
+
+static inline H2K_pte_t pte_from_trans(H2K_translation_t trans)
+{
+	H2K_pte_t pte;
+	pte.raw = 0;
+	pte.s = trans.size;
+	pte.xwr = trans.xwru >> 1;
+	pte.u = trans.xwru & 1;
+	pte.ppn = trans.pn & (-1 << (trans.size*2));
+	pte.ccc = trans.cccc;
+	return pte;
 }
 
 void test_all_firstpage()
 {
 	u32_t i;
+	H2K_translation_t trans;
 	H2K_pte_t result;
 	for (i = 0; i < 4096; i++) {
-		result = H2K_mem_pagewalk(i,&a);
+		trans = H2K_translate_default(i);
+		trans = H2K_pagewalk_translate(trans,info);
+		result = pte_from_trans(trans);
 		if (result.raw != l2pt_4KB[0]) {
 			printf("i: %d result.raw: 0x%08x l2pt_4KB[0]: 0x%08x\n",i,result.raw,l2pt_4KB[0]);
 			FAIL("firstpage addr: wrong translation");
@@ -120,53 +171,12 @@ void test_all_firstpage()
 	}
 }
 
-#define CHECK(A,OP,B) if (!((A) OP (B))) FAIL(#A #OP #B);
-#if ARCHV <= 3
-void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
-{
-	H2K_mem_tlbfmt_t tlb = H2K_mem_get_pagetable(addr,t);
-	if (((expectval >> 5) & 7) == 0) {
-		CHECK(tlb.raw,==,0);
-		return;
-	}
-	CHECK(tlb.ppn>>12,==,((expectval >> 4)& 0xff));
-	CHECK(tlb.size,==,tlb.size);
-	CHECK(tlb.vpn,==,addr>>12);
-	if (tlb.asid != t->ssr_asid) {
-		printf("tlbasid: %x ssrasid: %x\n",tlb.asid,t->ssr_asid);
-	}
-	CHECK(tlb.asid,==,t->ssr_asid);
-	CHECK(tlb.ccc,==,(expectval >> 2) & 0x7);
-	CHECK(tlb.xwr,==,(expectval >> 5) & 0x7);
-	CHECK(tlb.global,==,0);
-}
-#else
-void check_tlbfmt(u32_t addr, u32_t size, u32_t expectval, H2K_thread_context *t)
-{
-	H2K_mem_tlbfmt_t tlb = H2K_mem_get_pagetable(addr,t);
-	if (((expectval >> 5) & 7) == 0) {
-		CHECK(tlb.raw,==,0);
-		return;
-	}
-#if 0
-	printf("tlb: 0x%016llx tlb.ppd>>1: 0x%016llx expectval: 0x%08x\n",
-		(u64_t)tlb.raw,(u64_t)tlb.ppd>>1,expectval);
-#endif
-	CHECK(tlb.ppd>>13,==,((expectval >> 4)& 0xff));
-	CHECK(tlb.vpn,==,addr>>12);
-	CHECK(tlb.asid,==,t->ssr_asid);
-	CHECK(tlb.cccc,==,(expectval >> 2) & 0x7);
-	CHECK(tlb.xwru>>1,==,(expectval >> 5) & 0x7);
-	CHECK(tlb.xwru&1,==,(expectval >>1) & 1);
-	CHECK(tlb.global,==,0);
-}
-#endif
-
-void check_result(H2K_pte_t pte, u32_t addr, H2K_thread_context *thread)
+void check_result(H2K_translation_t trans, u32_t addr, H2K_thread_context *thread)
 {
 	u32_t l1_idx = addr >> 22;
 	u32_t l2_idx = (addr >> 12) & 0x03ff;
 	u32_t size = (l1_idx >> 1) & 0x7;
+	H2K_pte_t pte = pte_from_trans(trans);
 	switch (size) {
 		case 7:
 			size = 6;
@@ -199,6 +209,7 @@ void check_result(H2K_pte_t pte, u32_t addr, H2K_thread_context *thread)
 		case 1:
 			if ((pte.s) != 1) FAIL("16K xlat fail: size");
 			l2_idx >>= 2*1;
+			if ((pte.raw) != (pte_bits(l2_idx) | 1)) printf("addr: %08x trans: %016llx pte: %08x expected: %08x\n",addr,trans.raw,pte.raw,pte_bits(l2_idx)|1);
 			if ((pte.raw) != (pte_bits(l2_idx) | 1)) FAIL("val fail/16K");
 			break;
 		case 0:
@@ -206,18 +217,46 @@ void check_result(H2K_pte_t pte, u32_t addr, H2K_thread_context *thread)
 			if ((pte.raw) != (pte_bits(l2_idx) | 0)) FAIL("val fail/4K");
 			break;
 	}
-	check_tlbfmt(addr,size,l2_idx,thread);
 }
 
 void test_all_pages()
 {
 	u32_t i;
 	u32_t addr;
-	H2K_pte_t result;
+	H2K_translation_t trans;
 	for (i = 0; i < 32*1024; i++) {
 	        addr = i<<12;
-		result = H2K_mem_pagewalk(addr,&a);
-		check_result(result,addr,&a);
+		TH_expected_translates = 0;
+		trans = H2K_translate_default(addr);
+		trans = H2K_pagewalk_translate(trans,info);
+		check_result(trans,addr,&a);
+	}
+}
+
+void test_all_pages_stage2()
+{
+	u32_t i;
+	u32_t addr;
+	u32_t pgsize;
+	H2K_translation_t trans;
+	myvmblock.guestmap.raw = 0xdeadbeefcafebabeULL;
+	TH_expected_translate_pn[0] = ((long)l1pt) >> 12;
+	for (i = 0; i < 32*1024; i++) {
+	        addr = i<<12;
+		TH_translate_idx = 0;
+		TH_expected_translates = 3;
+		pgsize = (addr >> 23) & 7;
+		if (pgsize == 7) pgsize = 6;
+		if (pgsize >= 5) {
+			TH_expected_translates = 2;
+		} else {
+			TH_expected_translate_pn[1] = l2addrs[pgsize] >> 12;
+		};
+		trans = H2K_translate_default(addr);
+		trans = H2K_pagewalk_translate(trans,info);
+		check_result(trans,addr,&a);
+		if (TH_final_pn != trans.pn) FAIL("bad final translate");
+		if (TH_expected_translates-1 > TH_translate_idx) FAIL("not enough translates");
 	}
 }
 
@@ -227,11 +266,15 @@ int main()
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	H2K_gp->phys_offset = 0;
+	H2K_gp->vmblocks[2] = &myvmblock;
+	myvmblock.guestmap.raw = 0;
 	
 	setup();
 	test_all_firstpage();
 	puts("So far, so good...");
 	test_all_pages();
+	test_all_pages_stage2();
+	/* FIXME: test fails from translate during walk / last translate */
 	puts("TEST PASSED");
 	return 0;
 }

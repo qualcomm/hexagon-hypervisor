@@ -154,6 +154,11 @@ void TH_clear_ready(H2K_thread_context *thread)
 	H2K_ready_set_prio(thread->prio);
 }
 
+/*
+ * Generate a popup int call, running thread interrupted on hardware thread hthread, dest context new
+ * Note that we setjmp before calling H2K_popup_int, and expect it to longjmp back to us from switch/sched
+ */
+
 void TH_popup_int(int i, H2K_thread_context *interrupted, int hthread, H2K_thread_context *new)
 {
 	TH_saw_dosched = TH_saw_switch = 0;
@@ -170,6 +175,9 @@ void TH_popup_int(int i, H2K_thread_context *interrupted, int hthread, H2K_threa
 	}
 }
 
+/*
+ * setup a hardware thread as idle
+ */
 void TH_set_idle(int hthread)
 {
 	H2K_gp->wait_mask = 1<<hthread;
@@ -178,6 +186,9 @@ void TH_set_idle(int hthread)
 	lowprio_imask(hthread);
 }
 
+/*
+ * Set up a thread as currently running 
+ */
 void TH_set_running(int hthread, H2K_thread_context *thread)
 {
 	H2K_gp->wait_mask &= ~(1<<hthread);
@@ -186,6 +197,9 @@ void TH_set_running(int hthread, H2K_thread_context *thread)
 	lowprio_imask(hthread);
 }
 
+/*
+ * Check priority mask and what thread is running.
+ */
 void TH_check_priowait_running(int hthread, H2K_thread_context *thread)
 {
 	if ((1<<(hthread)) & H2K_gp->wait_mask) FAIL("wait_mask still set");
@@ -193,6 +207,9 @@ void TH_check_priowait_running(int hthread, H2K_thread_context *thread)
 	if ((get_imask(thread->hthread)) == 0) FAIL("IMASK clear for hthread");
 }
 
+/*
+ * Try to popup from running thread a to new thread b
+ */
 void TH_popup_try(H2K_thread_context *a, H2K_thread_context *b, int intno)
 {
 	TH_clear_popups();
@@ -204,6 +221,9 @@ void TH_popup_try(H2K_thread_context *a, H2K_thread_context *b, int intno)
 	TH_clear_ready(a);
 }
 
+/*
+ * For each group of priorities, try to popup from running a to popup b @ int k
+ */
 void TH_popup_check_priorities(H2K_thread_context *a, H2K_thread_context *b)
 {
 	int i,j,k;
@@ -245,15 +265,13 @@ int main()
 	if ((TH_call_popup_wait(-1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 	if ((TH_call_popup_wait(MAX_INTERRUPTS,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 	if ((TH_call_popup_wait(MAX_INTERRUPTS+1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
-#if ARCHV >= 4
-	if ((TH_call_popup_wait(31,&a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
-#endif
+	if ((TH_call_popup_wait(L2_CORE_INTERRUPT, &a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
 
 	TH_popup_check_priorities(&a,&b);
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 #if ARCHV >= 4
-		if (i == 31) continue;
+		if (L2_CORE_INTERRUPT == i) continue;
 #endif
 		H2K_runlist_push(&a);
 		TH_clear_popups();

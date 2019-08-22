@@ -6,10 +6,21 @@
 #ifndef H2K_CACHE_H
 #define H2K_CACHE_H 1
 
+#include <hw.h>
+
 void H2K_cache_l2_cleaninv() IN_SECTION(".text.misc.cache");
 void H2K_cache_d_cleaninv() IN_SECTION(".text.misc.cache");
 void H2K_cache_d_clean() IN_SECTION(".text.misc.cache");
 void H2K_cache_i_inv() IN_SECTION(".text.misc.cache");
+
+static inline void H2K_dccleana_range(void *ptr, u32_t bytes) {
+	u32_t i;
+
+	for (i = 0; i < bytes; i++) {
+		H2K_dccleana(ptr + i);
+	}
+	H2K_syncht();
+}
 
 #endif
 

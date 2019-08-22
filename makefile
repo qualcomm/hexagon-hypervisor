@@ -21,6 +21,14 @@ export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
 #export USE_TCM ?= 1
 endif
 
+ifeq ($(TARGET), zebu_v65)
+ARCHV := 65
+H2K_KERNEL_PGSIZE ?= 3
+H2K_ALLOC_HEAP_SIZE ?= 0xb000
+export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
+#export USE_TCM ?= 1
+endif
+
 
 include scripts/Makefile.inc.tools
 
@@ -72,24 +80,26 @@ qurtclean:
 	$(MAKE) -f scripts/Makefile.qurt clean_top
 
 opt:
-	echo PKW_VERSIONS $(PKW_VERSIONS)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 
 ref:
-	echo PKW_VERSIONS $(PKW_VERSIONS)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 
@@ -160,11 +170,13 @@ doc:
 compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
-.PHONY: gtags gtagsclean
+.PHONY: gtags gtagsclean htags
 
 gtags:
-	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path libs/h2/include -prune -o -type f -print | gtags -I -w -v -f -
-#	htags -afhnosTxv --show-position
+	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
+
+htags: gtags
+	htags -ahnosTxvF --show-position --auto-completion --tree-view=filetree
 
 gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML
@@ -181,6 +193,14 @@ cov_fns:
 	$(MAKE) clean ref ARCHV=v60 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
 	$(MAKE) clean opt ARCHV=v60 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
+	$(MAKE) clean ref ARCHV=v65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
+	$(MAKE) clean opt ARCHV=v65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
+	$(MAKE) clean ref ARCHV=v68 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
+	$(MAKE) clean opt ARCHV=v68 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
 
 

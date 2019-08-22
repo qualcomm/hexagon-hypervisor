@@ -5,11 +5,13 @@ H2DIR ?= ..
 
 include ../scripts/Makefile.inc.tools
 
+export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
+
 include ../scripts/Makefile.inc.config
 
 include ../scripts/Makefile.inc.version
 
-CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
+CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
 
 CFLAGS += -Werror -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_GUEST_END=$(H2K_GUEST_END)
 
@@ -25,6 +27,11 @@ ifdef HTHREADS
 CFLAGS += -DNUM_HTHREADS=$(HTHREADS)
 endif
 
+ifdef HTHREADS_MASK
+CFLAGS += -DHTHREADS_MASK=$(HTHREADS_MASK)
+endif
+
+
 ifeq ($(USE_TCM), 1)
 CFLAGS += -DH2K_USE_TCM
 endif
@@ -33,9 +40,13 @@ ifdef NO_DEVICES
 CFLAGS += -DNO_DEVICES
 endif
 
+ifdef LOGBUF
+CFLAGS += -DH2K_LOGBUF
+endif
+
 CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT)
 
-CFLAGS += $(H2K_EXTRA_CFLAGS)
+CFLAGS += $(KERNEL_CFLAGS) $(H2K_EXTRA_CFLAGS)
 
 SRC_HFILES := 
 DEST_HFILES := 
@@ -69,6 +80,14 @@ OPT_V60_CFILES :=
 OPT_V60_SFILES := 
 OPT_V60_OFILES := 
 
+OPT_V65_CFILES := 
+OPT_V65_SFILES := 
+OPT_V65_OFILES := 
+
+OPT_V68_CFILES := 
+OPT_V68_SFILES := 
+OPT_V68_OFILES := 
+
 BUILD_DIR := .
 
 MKINCLUDES := $(shell find . -name make.inc)
@@ -84,7 +103,7 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
-ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES)
+ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES)
 
 $(ALL_OFILES): $(DEST_HFILES)
 
@@ -102,6 +121,14 @@ endif
 
 ifeq ($(ARCHV),60)
 OPT_OFILES := $(OPT_V60_OFILES)
+endif
+
+ifeq ($(ARCHV),65)
+OPT_OFILES := $(OPT_V65_OFILES)
+endif
+
+ifeq ($(ARCHV),68)
+OPT_OFILES := $(OPT_V68_OFILES)
 endif
 
 build/ref/libh2kernel.a: $(REF_OFILES)
@@ -141,7 +168,7 @@ includes: $(DEST_HFILES)
 
 ref: build/ref/libh2kernel.a
 
-ref_install: ref
+ref_install: info ref
 	mkdir -p $(INSTALLPATH)/lib
 	mkdir -p $(INSTALLPATH)/include
 	cp build/ref/libh2kernel.a $(INSTALLPATH)/lib
@@ -149,7 +176,12 @@ ref_install: ref
 
 opt: build/opt_v$(ARCHV)/libh2kernel.a
 
-opt_install: opt
+.PHONY: info
+info :
+	@echo Kernel PKW_VERSIONS $(PKW_VERSIONS)
+	pkw --which $(CC)
+
+opt_install: info opt
 	mkdir -p $(INSTALLPATH)/lib
 	mkdir -p $(INSTALLPATH)/include
 	cp build/opt_v$(ARCHV)/libh2kernel.a $(INSTALLPATH)/lib

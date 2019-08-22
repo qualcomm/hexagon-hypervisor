@@ -63,7 +63,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	INTNO = and(SSRVAL,#0x1f)
 
 #if ARCHV >= 4
-	ISL2INT = cmp.eq(INTNO,#31)
+	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 
 #if ARCHV == 4
@@ -92,7 +92,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 #endif
 
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
-	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
 #endif
 
@@ -125,7 +125,8 @@ H2K_interrupt_restore:
 	memw(ME+#CONTEXT_continuation) = r31
 	r3:2 = combine(INTINFO_VAL,HTNUM)
 	r1:0 = combine(ME,INTNO)
-	jumpr INTINFO_FN
+	p0 = cmp.eq(INTINFO_FN,#0)	// really, we shouldn't get NULL interrupt handlers, but if we do...
+	if (!p0) jumpr INTINFO_FN
 
 	.global H2K_interrupt_restore
 FUNC_END H2K_handle_int
@@ -164,10 +165,10 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 #endif
 
 #if ARCHV >= 4
-	ISL2INT = cmp.eq(INTNO,#31)
+	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
-	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
 #endif
 	r1 = #0		// thread context == NULL
@@ -177,7 +178,8 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	/* Registers set up, call specified handler */
 	r3:2 = combine(INTINFO_VAL,HTNUM)
 	r1:0 = combine(#0,INTNO)
-	callr INTINFO_FN
+	p0 = cmp.eq(INTINFO_FN,#0)	// really, we shouldn't get NULL interrupt handlers, but if we do...
+	if (!p0) callr INTINFO_FN
 	r1:0 = #0
 	k0lock
 	jump H2K_switch
@@ -216,10 +218,10 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	SSRVAL = ssr
 	INTNO = and(SSRVAL,#0x1f)
 #if ARCHV >= 4
-	ISL2INT = cmp.eq(INTNO,#31)
+	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
-	CIADVAL = mux(ISL2INT,##0x80000000,#0)
+	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
 #endif
 	H2K_GP.h = #hi(H2K_kg)
@@ -246,7 +248,8 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	/* Registers set up, call specified handler */
 	r3:2 = combine(INTINFO_VAL,HTNUM)
 	r1:0 = combine(ME,INTNO)
-	callr INTINFO_FN
+	p0 = cmp.eq(INTINFO_FN,#0)	// really, we shouldn't get NULL interrupt handlers, but if we do...
+	if (!p0) callr INTINFO_FN
 	/* OK, get continuation and jump to it.  Restore r1:0 */
 	ME = sgp0
 	r31 = memw(ME+#CONTEXT_continuation)

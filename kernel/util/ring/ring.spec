@@ -28,11 +28,11 @@ Optimization Note
 ~~~~~~~~~~~~~~~~~
 
 Optimized ring functions will only clobber r0-r5, with the exception of the
-fused :cfunc:`H2K_ring_remove_append()`, which will additionally clobber r6 and r7.
+fused :c:func:`H2K_ring_remove_append()`, which will additionally clobber r6 and r7.
 
 H2K_ring_remove
 ---------------
-.. cfunction:: void H2K_ring_remove(void *ring, void *node);
+.. c:function:: void H2K_ring_remove(void *ring, void *node);
 
 	:param ring: Actually `H2K_ringnode_t **ring`, a pointer to the ring holding node
 	:param node: The node in the ring to remove.
@@ -40,10 +40,10 @@ H2K_ring_remove
 Description
 ~~~~~~~~~~~
 
-The :cfunc:`H2K_ring_remove()` function removes "node" from "ring".  
+The :c:func:`H2K_ring_remove()` function removes "node" from "ring".  
 
 By calling the function, you guarantee that "node" is a current member of
-"ring".  The :cfunc:`H2K_ring_remove()` function does not check this.
+"ring".  The :c:func:`H2K_ring_remove()` function does not check this.
 
 Functionality
 ~~~~~~~~~~~~~
@@ -59,12 +59,12 @@ because the ring is now empty.  Otherwise, we point ``ring`` to ``node->next``.
 H2K_ring_insert
 ---------------
 
-.. cfunction:: H2K_ring_insert(void *ring, void *node)
+.. c:function:: H2K_ring_insert(void *ring, void *node)
 
 	:param ring: A pointer to the ring to add the node to.
 	:param node: The node to be added
 
-The :cfunc:`H2K_ring_insert()` function adds ``node`` to ``ring``, as the node pointed to by
+The :c:func:`H2K_ring_insert()` function adds ``node`` to ``ring``, as the node pointed to by
 ``ring``.
 
 Functionality
@@ -82,12 +82,12 @@ We then set ``*ring`` to ``node``.
 H2K_ring_append
 ---------------
 
-.. cfunction:: H2K_ring_append(void *ring, void *node)
+.. c:function:: H2K_ring_append(void *ring, void *node)
 
 	:param ring: A pointer to the ring to add the node to.
 	:param node: The node to be added
 
-The :cfunc:`H2K_ring_append()` function adds ``node`` to ``ring``, as the node previous to the
+The :c:func:`H2K_ring_append()` function adds ``node`` to ``ring``, as the node previous to the
 node pointed to by ``ring``.
 
 Functionality
@@ -104,21 +104,21 @@ to ``*ring``, ``node->prev`` to `*ring->prev``, and then set
 H2K_ring_remove_append
 ----------------------
 
-.. cfunction:: H2K_ring_remove_append(void *fromring, void *toring, void *node)
+.. c:function:: H2K_ring_remove_append(void *fromring, void *toring, void *node)
 
 	:param fromring: A pointer to the ring to remove the node from.
 	:param toring: A pointer to the ring to add the node to.
 	:param node: The node to be moved
 
-The :cfunc:`H2K_ring_remove_append()` function removes ``node`` from ``fromring`` and adds it to
+The :c:func:`H2K_ring_remove_append()` function removes ``node`` from ``fromring`` and adds it to
 ``toring``, as the node previous to the node pointed to by ``toring``.
 
 Functionality
 ~~~~~~~~~~~~~
 
 This function removes ``node`` from ``fromring`` in the same manner
-as :cfunc:`H2K_ring_remove()`, and then adds ``node`` to ``toring`` in the same 
-manner as :cfunc:`H2K_ring_append()`.
+as :c:func:`H2K_ring_remove()`, and then adds ``node`` to ``toring`` in the same 
+manner as :c:func:`H2K_ring_append()`.
 
 
 

@@ -16,15 +16,15 @@ allocation unduly slow.  We reduce overhead since we have no external free
 list, reduce code size somewhat, and marginally speed up the allocate/free
 bookkeeping.
 
-# .. ctype:: H2K_mem_alloc_block_t
+# .. c:type:: H2K_mem_alloc_block_t
 
 #   Allocation return value
 
-# 	.. cmember:: u32_t ptr
+# 	.. c:member:: u32_t ptr
 
 #     Pointer to 32-byte-aligned allocated region
 
-# 	.. cmember:: u32_t size
+# 	.. c:member:: u32_t size
 
 # 	  Actual size of allocated region, in bytes
 
@@ -32,7 +32,7 @@ bookkeeping.
 H2K_mem_alloc_get
 -----------------
 
-.. cfunction:: H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request)
+.. c:function:: H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request)
 
 	 :param request: Size of requested block, in bytes
 
@@ -56,7 +56,7 @@ remainders are >=32 or 0.
 H2K_mem_alloc_free
 ------------------
 
-.. cfunction:: u32_t H2K_mem_alloc_free(u32_t *ptr)
+.. c:function:: u32_t H2K_mem_alloc_free(u32_t *ptr)
 
 	 :param ptr: Pointer to region to be freed
 
@@ -74,7 +74,7 @@ Merge with any adjacent free regions.
 H2K_mem_alloc_release
 ---------------------
 
-.. cfunction:: void H2K_mem_alloc_release(u32_t *ptr)
+.. c:function:: void H2K_mem_alloc_release(u32_t *ptr)
 
 	 :param ptr: Pointer to region to be released
 
@@ -97,7 +97,7 @@ before it enters H2K_switch(), which reads from the block before unlocking.
 H2K_mem_alloc_init
 ------------------
 
-.. cfunction:: void H2K_mem_alloc_init()
+.. c:function:: void H2K_mem_alloc_init()
 
 Description
 ~~~~~~~~~~~

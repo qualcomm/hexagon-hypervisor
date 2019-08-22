@@ -7,7 +7,7 @@
 H2K_vm_do_ipi
 -------------
 
-.. cfunction:: void H2K_vm_do_ipi(H2K_thread_context *);
+.. c:function:: void H2K_vm_do_ipi(H2K_thread_context *);
 
 Description
 ~~~~~~~~~~~
@@ -18,7 +18,7 @@ if ipi mask non-zero, setimask for ipi interrupt with ~ipimask and reraise
 H2K_vm_ipi_send
 ---------------
 
-.. cfunction:: void H2K_vm_ipi_send(H2K_thread_context *);
+.. c:function:: void H2K_vm_ipi_send(H2K_thread_context *);
 
 Description
 ~~~~~~~~~~~
@@ -29,11 +29,11 @@ setimask for ipi interrupt with ~ipimask and raise
 H2K_vm_ipi_send_withlock
 ------------------------
 
-.. cfunction:: void H2K_vm_ipi_send_withlock(H2K_thread_context *);
+.. c:function:: void H2K_vm_ipi_send_withlock(H2K_thread_context *);
 
 Description
 ~~~~~~~~~~~
 
-Same as :cfunc:`H2K_vm_ipi_send()`, but while holding the BKL.  BKL is still held on return.
+Same as :c:func:`H2K_vm_ipi_send()`, but while holding the BKL.  BKL is still held on return.
 
 

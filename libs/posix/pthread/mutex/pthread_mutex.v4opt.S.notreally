@@ -1,0 +1,242 @@
+
+/*
+ * pthread_mutex.S
+ * 
+ * This file contains the optimized implementation for 
+ * pthread_mutex functionality 
+ */
+
+#include "h2_common_asm_std.h"
+#include "h2_trap_constants.h"
+#include "pthread_mutex.h"
+
+FUNC_START pthread_mutex_lock .text.pthread.mutex .p2align 5
+#define LOCK r0
+#define MYTID r1
+#define TMP r2
+#define TYPE r3
+#define TYPE_TMP r3:2
+#define UGPVAL r5
+#define DEPTH r6
+#define OWNER r7
+#define OWNER_DEPTH r7:6
+#define LOCK_SAV r16
+#define TID_SAV r17
+#define TID_LOCK_SAV r17:16
+	{
+		UGPVAL = ugp
+	}
+	{
+		MYTID = memw(UGPVAL+#0)
+	}
+.Llock_atomic_retry:
+	{
+		TYPE_TMP = memd_locked(LOCK)
+	}
+	{
+		p0 = cmp.eq(TMP,#0)
+		if (!p0.new) jump:nt .Llocked_already
+		if (!p0.new) OWNER_DEPTH = memd(LOCK+#OWNER_ID_DEPTH_OFFSET)
+		if (p0) TMP = MYTID
+	}
+	{
+		memd_locked(LOCK,p0) = TYPE_TMP
+		OWNER_DEPTH = combine(MYTID,#1)
+	}
+	{
+		if (p0) memd(LOCK+#OWNER_ID_DEPTH_OFFSET) = OWNER_DEPTH
+		if (p0) r0 = #0
+		if (p0) jumpr r31
+	}
+	jump .Llock_atomic_retry
+	.falign
+.Llocked_already:
+	{
+		p0 = cmp.eq(OWNER,MYTID)
+		p0 = cmp.eq(TYPE,#PTHREAD_MUTEX_RECURSIVE)
+		if (!p0.new) jump:nt .Llock_block
+		if (p0.new) DEPTH = add(DEPTH,#1)
+	}
+	/* Recursive call, I'm already owner */
+	{
+		memw(LOCK+#DEPTH_OFFSET) = DEPTH
+		r0 = #0
+		jumpr r31
+	}
+	.falign
+.Llock_block:
+	/* Lock nonzero, lock in kernel */
+	{
+		allocframe(#8)
+		memd(r29+#-16) = TID_LOCK_SAV
+		TID_LOCK_SAV = combine(MYTID,LOCK)
+	}
+.Llock_trap_retry:
+	trap0(#H2_TRAP_FUTEX_LOCK_PI)
+	{
+		p0 = cmp.eq(r0,#0)
+		if (!p0.new) jump:nt .Llock_trap_retry
+		if (!p0.new) TMP = memw(LOCK_SAV)	// load back into TLB
+		if (!p0.new) LOCK = LOCK_SAV
+		OWNER_DEPTH = combine(TID_SAV,#1)
+	}
+	{
+		memd(LOCK_SAV+#OWNER_ID_DEPTH_OFFSET) = OWNER_DEPTH
+		TID_LOCK_SAV = memd(r29+#0)
+	}
+	{
+		r0 = #0
+		dealloc_return
+	}
+#undef LOCK
+#undef TMP
+#undef TYPE
+#undef TYPE_TMP
+#undef UGPVAL
+#undef DEPTH
+#undef TID
+#undef TID_DEPTH
+#undef LOCK_SAV
+#undef TID_SAV
+#undef TID_LOCK_SAV
+FUNC_END pthread_mutex_lock
+
+/* 
+ * EJP: ??? FUTEX_UNLOCK_PI probably checks W, and we don't actually write. Might be a problem for COW?.
+ * Possibly: FUTEX_UNLOCK_PI could generate the write fault on tlb hit but no w?
+ */
+FUNC_START pthread_mutex_unlock .text.pthread .p2align 4
+#define LOCK r0
+#define UGPVAL r1
+#define DEPTH r2
+#define TID r3
+#define TID_DEPTH r3:2
+#define ZERO r4
+#define TMP r5
+#define LOCK_SAV r16
+	{
+		TID_DEPTH = memd(LOCK+#OWNER_ID_DEPTH_OFFSET)
+#ifdef PARANOID
+#error fixme: panic code / pthread errorcheck check
+#endif
+	}
+	{
+		p0 = cmp.eq(DEPTH,#1)
+		if (!p0.new) jumpr:nt r31
+		if (!p0.new) r0 = #0
+		memw(LOCK+#DEPTH_OFFSET) -= #1
+	}
+	/* Do unlock */
+.Ldo_unlock:
+	{
+		TMP = memw_locked(LOCK)
+	}
+	{
+		memw(LOCK+#OWNER_ID_OFFSET) = #0
+		p0 = cmp.eq(TMP,TID)
+		if (!p0.new) jump:nt .Lunlock_trap
+		ZERO = #0
+	}
+	{
+		memw_locked(LOCK,p0) = ZERO
+	}
+	{
+		if (p0) r0 = #0
+		if (p0) jumpr r31
+	}
+	{
+		jump .Ldo_unlock
+	}
+.Lunlock_trap:
+	{
+		allocframe(#8)
+		memw(r29+#-16) = LOCK_SAV
+		LOCK_SAV = LOCK
+	}
+.Lunlock_trap_retry:
+	/* lock nonzero, lock in kernel */
+	trap0(#H2_TRAP_FUTEX_UNLOCK_PI)
+	{
+		p0 = cmp.eq(r0,#0)
+		if (!p0.new) jump:nt .Lunlock_trap_retry
+		if (!p0.new) LOCK = LOCK_SAV
+		if (!p0.new) TMP = memw(LOCK_SAV) // reload to TLB
+	}
+	{
+		LOCK_SAV = memw(r29+#0)
+		r0 = #0
+		dealloc_return
+	}
+#undef LOCK
+#undef UGPVAL
+#undef DEPTH
+#undef ZERO
+#undef TID
+#undef TID_DEPTH
+#undef TMP
+#undef LOCK_SAV
+FUNC_END pthread_mutex_unlock
+
+FUNC_START pthread_mutex_trylock .text.pthread.mutex .p2align 5
+#define LOCK r0
+#define MYTID r1
+#define TMP r2
+#define TYPE r3
+#define TYPE_TMP r3:2
+#define UGPVAL r5
+#define DEPTH r6
+#define OWNER r7
+#define OWNER_DEPTH r7:6
+	{
+		UGPVAL = ugp
+	}
+	{
+		MYTID = memw(UGPVAL+#0)
+	}
+.Ltrylock_atomic_retry:
+	{
+		TYPE_TMP = memd_locked(LOCK)
+	}
+	{
+		p0 = cmp.eq(TMP,#0)
+		if (!p0.new) jump:nt .Ltrylocked_already
+		if (!p0.new) OWNER_DEPTH = memd(LOCK+#OWNER_ID_DEPTH_OFFSET)
+		if (p0.new) TMP = MYTID
+	}
+	{
+		memd_locked(LOCK,p0) = TYPE_TMP
+		OWNER_DEPTH = combine(MYTID,#1)
+	}
+	{
+		if (p0) r0 = #0
+		if (p0) memd(LOCK+#OWNER_ID_DEPTH_OFFSET) = OWNER_DEPTH
+		if (p0) jumpr r31
+	}
+	jump .Ltrylock_atomic_retry
+	.falign
+.Ltrylocked_already:
+	{
+		p0 = cmp.eq(OWNER,MYTID)
+		p0 = cmp.eq(TYPE,#PTHREAD_MUTEX_RECURSIVE)
+		if (p0.new) DEPTH = add(DEPTH,#1)
+	}
+	{
+		if (p0) memw(LOCK+#DEPTH_OFFSET) = DEPTH
+		r0 = mux(p0,#0,#-1) // FIXME: EBUSY
+		jumpr r31
+	}
+#undef LOCK
+#undef MYTID
+#undef TMP
+#undef TYPE
+#undef TYPE_TMP
+#undef UGPVAL
+#undef DEPTH
+#undef OWNER
+#undef OWNER_DEPTH
+#undef LOCK_SAV
+#undef TID_SAV
+#undef TID_LOCK_SAV
+FUNC_END pthread_plainmutex_trylock_id_np
+
+

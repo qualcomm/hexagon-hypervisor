@@ -31,7 +31,10 @@ void H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_co
 void H2K_mem_stlb_invalidate_asid(u32_t asid) IN_SECTION(".text.mem.stlb");
 s32_t H2K_mem_stlb_alloc() IN_SECTION(".text.init.stlb");
 s32_t H2K_mem_stlb_init(H2K_mem_stlb_asid_info_t *asid_info, void *bulk) IN_SECTION(".text.init.stlb");
+
+#ifdef CRASH_DEBUG
 void H2K_stlb_tcmcrash_init() IN_SECTION(".text.init.stlb");
+#endif
 
 #endif
 

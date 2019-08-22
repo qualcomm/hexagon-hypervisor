@@ -18,6 +18,10 @@
 #include <h2_common_error.h>
 #include <h2_common_defs.h>
 #include <h2_kerror.h>
+#include <h2_alloc.h>
+#include <h2_common_linear.h>
+#include <h2_sleep.h>
+#include <h2_prof.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -35,19 +39,43 @@
 #define ERRSTR_LEN 1024
 char errstr[ERRSTR_LEN];
 
-#define FOREACH_sym(GEN) \
-	GEN(__guest_pmap__)		 \
-	GEN(__boot_cmdline__) \
-	GEN(__boot_net_phys_offset__) \
-	GEN(__use_dir_prefix__) \
-	GEN(__use_file_suffix__) \
-	GEN(__dir_prefix__) \
-	GEN(__file_suffix__) \
-	GEN(end) \
-	GEN(DEFAULT_HEAP_SIZE) \
-	GEN(DEFAULT_STACK_SIZE) \
-	GEN(HEAP_SIZE) \
-	GEN(STACK_SIZE)
+char *trans_name[] = {
+	"linear",
+	"table",
+	"invalid",
+	"offset"
+};
+
+char *pagesize_name[] = {
+	"4KB",
+	"16KB",
+	"64KB",
+	"256KB",
+	"1MB",
+	"4MB",
+	"16MB"
+};
+
+#define FOREACH_sym(GEN)												\
+	GEN(__guest_pmap__)														\
+	GEN(__boot_cmdline__)													\
+	GEN(__boot_net_phys_offset__)									\
+	GEN(__use_dir_prefix__)												\
+	GEN(__use_file_suffix__)											\
+	GEN(__dir_prefix__)														\
+	GEN(__file_suffix__)													\
+	GEN(end)																			\
+	GEN(DEFAULT_HEAP_SIZE)												\
+	GEN(DEFAULT_STACK_SIZE)												\
+	GEN(HEAP_SIZE)																\
+	GEN(STACK_SIZE)																\
+	GEN(__clade_region_high_pd0_start__)					\
+	GEN(__clade_comp_pd0_start__)									\
+	GEN(__clade_exception_high_pd0_start__)				\
+	GEN(__clade_exception_high_pd0_end__)					\
+	GEN(__clade_exception_low_small_pd0_start__)	\
+	GEN(__clade_exception_low_large_pd0_start__)  \
+	GEN(__clade_dict_pd0_start__)
 
 #define GEN_enum(NAME) SPECIAL_ ## NAME,
 enum {
@@ -55,21 +83,40 @@ enum {
 	SPECIAL_NUM_ENTRIES
 };
 
-#define LO_MASK(SIZ) ((SIZ)-1)
 #define HI_MASK(SIZ) (-(SIZ))
-
-#define ALIGN_UP(X,SIZ) (((X) + LO_MASK(SIZ)) & HI_MASK(SIZ))
 
 #define GUESS_HEAP_SIZE 0x4000000 /* 64MB */
 #define GUESS_STACK_SIZE 0x100000 /* 1MB */
 
 #define FENCE_HI_MAX 0xfffff000
 
+#define WAKE_TIMER 0x1
+#define WAKE_CHILD 0x2
+
 /* Globals */
+#ifdef HAVE_EXTENSIONS
+unsigned int ext_power = 1;
+#endif
 unsigned int silent = 0;
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
+h2_anysignal_t wake_sig;
+int tcm_base;
+int tcm_size;
+h2_galloc_t tcm_alloc;
+int clade_base;
+int pd_num = 0;
+unsigned long clade_region = 0;
+unsigned int sample_usecs = 0;
+info_boot_flags_type boot_flags;
+info_stlb_type  stlb_info;
+int hwt_mask = -1;
+int hwt_num = -1;
+int ecc_enable = -1;
+#ifdef CLUSTER_SCHED_HACK
+int cluster_sched = 0;
+#endif
 
 #define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
 
@@ -96,8 +143,11 @@ typedef struct {
 	unsigned int fence_hi;
 	long load_offset;
 	long phys_offset;
-	void * start_pa;
-	void * end_pa;
+	unsigned long long start_pa;
+	unsigned long long end_pa;
+	unsigned long start_va;
+	unsigned long end_va;
+	unsigned int pages;
 
 	unsigned int skip_load;
 	unsigned int bestprio;
@@ -116,10 +166,15 @@ typedef struct {
 	/* exit on error */
 	unsigned int error_exit;
 
+	/* clade */
+	int clade_pd;
+	unsigned int clade_ex_hi;
+
 	special_symbols specials[SPECIAL_NUM_ENTRIES];
 
 	/* From __guest_pmap__ */
 	h2_guest_pmap_t *pmap;
+	int pmap_added;
 
 	char **argv;
 	int argc;
@@ -131,8 +186,6 @@ typedef struct {
 } vm_t;
 
 vm_t *vm_params = NULL;
-
-h2_sem_t child_done_sem;
 
 void error(char *str1, char *str2) {
 
@@ -159,8 +212,8 @@ void usage()
 	BOOTER_PRINTF("  booter [options] <executable> <args> [ --new_vm <instances> [vm options] <executable> <args> ...]\n");
 	BOOTER_PRINTF("  booter [global options] --new_vm <int> [vm options] <executable> <args> [--new_vm <int> [vm options] <executable> <args> ...]\n\tBoot new <instances> of guest VMs with given options.\n");
 	BOOTER_PRINTF("  booter --file <path> [--file <path> ...]\n\tOptions from <path>, one guest VM per line.");
-	BOOTER_PRINTF("\nGlobal options:\n");
-	BOOTER_PRINTF("  --quiet\n\tSTFU!\n");
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("Global options:\n");
 	BOOTER_PRINTF("  --duck <int>\n\tSet the duck bits.\n");
 	BOOTER_PRINTF("  --chicken <int>\n\tSet the chicken bits.\n");
 	BOOTER_PRINTF("  --rgdr <int>\n\tSet rgdr.\n");
@@ -172,10 +225,18 @@ void usage()
 	BOOTER_PRINTF("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	BOOTER_PRINTF("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
 	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register. Setting to -1 reads current value, doesn't set.\n");
+#ifdef HAVE_EXTENSIONS
+	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
+#endif
 	BOOTER_PRINTF("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	BOOTER_PRINTF("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
+	BOOTER_PRINTF("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
+	BOOTER_PRINTF("  --hwt_mask <int>\n\tMask of hardware threads to start. Default -1 (all).\n");
+	BOOTER_PRINTF("  --hwt_num <int>\n\tNumber of hardware threads to start. Default -1 (all).\n");
+	BOOTER_PRINTF("  --ecc_enable (0|1)\n\tEnable/disable ECC for all applicable memories.  Default 0.\n");
 
-	BOOTER_PRINTF("\nVM options:\n");
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("VM options:\n");
 	BOOTER_PRINTF("  --ccr <int>\n\tSet ccr.\n");
 	BOOTER_PRINTF("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
 #ifdef HAVE_EXTENSIONS
@@ -200,6 +261,9 @@ void usage()
 	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
+#ifdef CLUSTER_SCHED_HACK
+	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 0.\n");
+#endif
 }		
 
 #define GEN_specials(NAME) vm_params[idx].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx].specials[SPECIAL_ ## NAME].addr = -1;
@@ -228,8 +292,8 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].fence_hi = 0L;
 	vm_params[idx].load_offset = -1;
 	vm_params[idx].phys_offset = -1;
-	vm_params[idx].start_pa = NULL;
-	vm_params[idx].end_pa = NULL;
+	vm_params[idx].start_pa = 0ULL;
+	vm_params[idx].end_pa = 0ULL;
 	vm_params[idx].skip_load = 0;
 	vm_params[idx].bestprio = VM_BEST_PRIO;
 	vm_params[idx].trapmask = 0xffffffff;
@@ -240,10 +304,13 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].boots = 1;
 	vm_params[idx].expect_status = 0;
 	vm_params[idx].error_exit = 1;
+	vm_params[idx].clade_pd = -1;
+	vm_params[idx].clade_ex_hi = CLADE_INVALID_ADDRESS;
 
 	FOREACH_sym(GEN_specials);
 
 	vm_params[idx].pmap = NULL;
+	vm_params[idx].pmap_added = 0;
 
 	vm_params[idx].argv = NULL;
 	vm_params[idx].argc = 0;
@@ -281,8 +348,8 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		//		vm_params[idx + num].fence_hi = 0L;
 		//		vm_params[idx + num].load_offset = vm_params[idx].load_offset;
 		//		vm_params[idx + num].phys_offset = vm_params[idx].phys_offset;
-		//		vm_params[idx + num].start_pa = NULL;
-		//		vm_params[idx + num].end_pa = NULL;
+		//		vm_params[idx + num].start_pa = 0ULL;
+		//		vm_params[idx + num].end_pa = 0ULL;
 		vm_params[idx + num].skip_load = vm_params[idx].skip_load;
 		vm_params[idx + num].bestprio = vm_params[idx].bestprio;
 		vm_params[idx + num].trapmask = vm_params[idx].trapmask;
@@ -293,10 +360,13 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].boots = vm_params[idx].boots;
 		vm_params[idx + num].expect_status = vm_params[idx].expect_status;
 		vm_params[idx + num].error_exit = vm_params[idx].error_exit;
+		vm_params[idx + num].clade_pd = -1;
+		vm_params[idx + num].clade_ex_hi = CLADE_INVALID_ADDRESS;
 
 		FOREACH_sym(GEN_specials);
 
 		vm_params[idx + num].pmap = vm_params[idx].pmap;
+		vm_params[idx + num].pmap_added = 0;
 
 		vm_params[idx + num].argv = vm_params[idx].argv;
 		vm_params[idx + num].argc = vm_params[idx].argc;
@@ -419,6 +489,167 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
 }
 
+void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages) {
+	h2_guest_pmap_t *pmap = vm_params[idx].pmap;
+	H2K_linear_fmt_t *base;
+	int end = 0;
+	int i;
+
+	if (NULL != pmap) {
+		if (!vm_params[idx].pmap_added) {
+			FAIL("add_linear_trans to existing pmap", "");
+		}
+
+		base = (H2K_linear_fmt_t *)(pmap->base.raw);
+		while (0ULL != base[end].raw) {
+			end++;
+		}
+	} else {
+		if (NULL == (pmap = vm_params[idx].pmap = (h2_guest_pmap_t *)malloc(sizeof(h2_guest_pmap_t)))) {
+			error("malloc pmap", NULL);
+		}
+		pmap->type = H2K_ASID_TRANS_TYPE_LINEAR;
+		pmap->base.raw = 0;
+		vm_params[idx].pmap_added = 1;
+	}
+
+	if (NULL == (pmap->base.raw = (h2_u32_t)realloc((void *)(pmap->base.raw), sizeof(H2K_linear_fmt_t) * (end + npages + 1)))) {
+		error("realloc pmap->base", NULL);
+	}
+	base = (H2K_linear_fmt_t *)(pmap->base.raw);
+
+	/* append translations */
+	va >>= H2K_KERNEL_ADDRBITS;
+	pa >>= H2K_KERNEL_ADDRBITS;
+		
+	for (i = 0; i < npages; i++) {
+		//		BOOTER_PRINTF("trans 0x%08lx -> 0x%09llx\n", va << H2K_KERNEL_ADDRBITS, pa << H2K_KERNEL_ADDRBITS);
+		base[end + i].raw = 0ULL;
+		base[end + i].ppn = pa;
+		base[end + i].cccc = L1WB_L2C;
+		base[end + i].xwru = URWX;
+		base[end + i].vpn = va;
+		base[end + i].size = page_size;
+
+		va += 1 << (page_size * 2);
+		pa += 1 << (page_size * 2);
+	}
+	base[end + i].raw = 0LL;  // end marker
+}
+
+void clade_setup(unsigned int idx, long offset) {
+
+	unsigned long region_hi, comp, ex_lo_small, ex_lo_large, ex_hi_start, ex_hi_end, ex_hi_size, dict_start;
+	h2_u32_t *from, *to;
+	h2_u32_t tmp;
+	int i;
+
+	/* Skip if any clade symbols are missing */
+	if ((region_hi = vm_params[idx].specials[SPECIAL___clade_region_high_pd0_start__].addr) == -1) {
+		BOOTER_PRINTF("\t__clade_region_high_pd0_start__ not found.\n");
+		goto no_clade;
+	} else {
+		BOOTER_PRINTF("\t__clade_region_high_pd0_start__ found @ 0x%08x\n", (unsigned int)region_hi);
+	}
+	if (0 == region_hi) {  // unused weak symbol
+		goto no_clade;
+	}
+
+	if ((comp = vm_params[idx].specials[SPECIAL___clade_comp_pd0_start__].addr) == -1) {
+		BOOTER_PRINTF("\t__clade_comp_pd0_start__ not found.\n");
+		goto no_clade;
+	} else {
+		BOOTER_PRINTF("\t__clade_comp_pd0_start__ found @ 0x%08x\n", (unsigned int)comp);
+	}
+
+	if ((ex_lo_small = vm_params[idx].specials[SPECIAL___clade_exception_low_small_pd0_start__].addr) == -1) {
+		BOOTER_PRINTF("\t__clade_exception_low_small_pd0_start__ not found.\n");
+		goto no_clade;
+	} else {
+		BOOTER_PRINTF("\t__clade_exception_low_small_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_small);
+	}
+
+	if ((ex_lo_large = vm_params[idx].specials[SPECIAL___clade_exception_low_large_pd0_start__].addr) == -1) {
+		BOOTER_PRINTF("\t__clade_exception_low_large_pd0_start__ not found.\n");
+		goto no_clade;
+	} else {
+		BOOTER_PRINTF("\t__clade_exception_low_large_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_large);
+	}
+
+	if ((ex_hi_start = vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_start__].addr) == -1) {
+		BOOTER_PRINTF("\t__clade_exception_high_pd0_start__ not found.\n");
+		goto no_clade;
+	} else {
+		BOOTER_PRINTF("\t__clade_exception_high_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_hi_start);
+	}
+
+	if ((ex_hi_end = vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_end__].addr) == -1) {
+		BOOTER_PRINTF("\t__clade_exception_high_pd0_end__ not found.\n");
+		goto no_clade;
+	} else {
+		BOOTER_PRINTF("\t__clade_exception_high_pd0_end__ found @ 0x%08x\n", (unsigned int)ex_hi_end);
+	}
+
+	if ((dict_start = vm_params[idx].specials[SPECIAL___clade_dict_pd0_start__].addr) == -1) {
+		BOOTER_PRINTF("\t__clade_dict_pd0_start__ not found.\n");
+		goto no_clade;
+	} else {
+		BOOTER_PRINTF("\t__clade_dict_pd0_start__ found @ 0x%08x\n", (unsigned int)dict_start);
+	}
+
+	/* Allocate a clade pd */
+	vm_params[idx].clade_pd = pd_num++;
+	if (pd_num > CLADE_NUM_PDS) {
+		FAIL("\tOut of CLADE pds", "");
+	}
+
+	/* Copy high-prio exception data to TCM */
+	ex_hi_size = ex_hi_end - ex_hi_start;
+	if (ex_hi_size && tcm_size) {
+		if (NULL == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4096, 0))) {
+			FAIL("\tgalloc ex_hi", "");
+		}
+		//		BOOTER_PRINTF("memcpy(0x%08x, 0x%08lx, 0x%08lx\n", vm_params[idx].clade_ex_hi, ex_hi_start + offset, ex_hi_size);
+		memcpy((void *)(vm_params[idx].clade_ex_hi), (void *)ex_hi_start + offset, ex_hi_size);
+	} else {
+		vm_params[idx].clade_ex_hi = ex_hi_start + offset;  // should never be referenced, but point it at something kind of meaningful
+	}
+
+	/* g->p translations for program */
+	add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages);
+
+	/* g->p translations for clade region */
+	add_linear_trans(idx, region_hi, region_hi + CLADE_REGION_LEN * vm_params[idx].clade_pd, SIZE_16M, CLADE_REGION_LEN / 0x01000000);
+
+	/* Set up clade regs */
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_COMP, comp + offset);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_HI, vm_params[idx].clade_ex_hi);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_LO_SMALL, ex_lo_small + offset);
+	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_EX_LO_LARGE, ex_lo_large + offset);
+
+	/* Copy dictionaries */
+	if (0 == vm_params[idx].clade_pd) {  // only copy dicts for first pd; any others had better be identical to these
+
+		/* Can't memcpy here; need to force word accesses */
+		from = (h2_u32_t *)dict_start;
+		to = (h2_u32_t *)(clade_base + CLADE_DICT_OFFSET);
+
+		for (i = 0; i < CLADE_DICT_LEN * CLADE_NUM_DICTS; i += 4, from++, to++) {
+			asm volatile (" %0 = memw(%1); memw(%2) = %0 \n" : "=&r"(tmp) : "r"(from), "r"(to) : "memory");
+		}
+
+		h2_hwconfig_clade_set_reg(CLADE_REG_REGION, region_hi);
+		clade_region = region_hi;
+		H2K_set_syscfg(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
+	} else if (region_hi != clade_region) {  // has to be identical for all concurrent clade guests
+			FAIL("\tCLADE region address mismatch", "");
+	}
+	BOOTER_PRINTF("\tCLADE enabled\n");
+	return;
+ no_clade:
+	BOOTER_PRINTF("\tCLADE not enabled\n");
+}
+
 void load_vm(unsigned int idx) {
 
 	int fdesc, i, ret;
@@ -429,29 +660,38 @@ void load_vm(unsigned int idx) {
 	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
 	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
-	unsigned long heap_size, stack_size, total_size, prev_size, end, one_page;
+	unsigned long heap_size, stack_size, total_size, prev_size, end, one_page, page_shift;
 	unsigned long start = ~0L;
 	int clone;
 	long total_offset;
 
 	char *elf = vm_params[idx].argv[0];
 
-	BOOTER_PRINTF("\nLoad VM index %d %s\n", idx, elf);
+	BOOTER_PRINTF("\n");  // FIXME: prepending \n to string results in an empty line in the output lately. Weird.
+	BOOTER_PRINTF("Load VM index %d %s\n", idx, elf);
 
 	/* FIXME? It would be better to get the page size from the __guest_pmap__ if
 		 it exists (and if it is an offset mapping), but to read that we need to
 		 load first, and to load we need to align guest_base to the page size. It's
 		 sufficient to use a page size that is as least as big as the one in the
 		 __guest_pmap__; at most we waste some space. */
-	one_page = (1 << ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS));
+	page_shift = ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS);
+	one_page = 1 << page_shift;
 
 	/* Align the guest base up to the current guest's page size */
-	guest_base = ALIGN_UP(guest_base, one_page);
+	guest_base = H2_ALIGN_UP(guest_base, one_page);
 
 	if (-1 != (clone = vm_params[idx].cloneof)) {  // this is a clone of a VM already loaded
 		prev_size = (vm_params[clone].fence_hi - vm_params[clone].fence_lo + one_page) * (idx - clone);
 
 		vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr = vm_params[clone].specials[SPECIAL___boot_net_phys_offset__].addr;
+		vm_params[idx].specials[SPECIAL___clade_region_high_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_region_high_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_comp_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_comp_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_exception_low_small_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_exception_low_small_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_exception_low_large_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_exception_low_large_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_exception_high_pd0_start__].addr;
+		vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_end__].addr = vm_params[clone].specials[SPECIAL___clade_exception_high_pd0_end__].addr;
+		vm_params[idx].specials[SPECIAL___clade_dict_pd0_start__].addr = vm_params[clone].specials[SPECIAL___clade_dict_pd0_start__].addr;
 
 		vm_params[idx].entry = vm_params[clone].entry;
 		vm_params[idx].stack = vm_params[clone].stack;
@@ -459,18 +699,24 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].load_offset = vm_params[clone].load_offset + prev_size;
 		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
-		vm_params[idx].offset_pages = (total_offset) >> (vm_params[idx].page_size * 2);
+		vm_params[idx].offset_pages = total_offset >> PAGE_BITS;
 		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
 		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
-		if (NULL != vm_params[clone].pmap) { 
+		if (NULL != vm_params[clone].pmap && !vm_params[clone].pmap_added) { 
 			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
-		BOOTER_PRINTF("\tCopying from VM index %d: 0x%08lx to 0x%08lx size 0x%08lx\n", clone, (unsigned long)(vm_params[clone].start_pa), (unsigned long)(vm_params[clone].start_pa + prev_size), (unsigned long)(vm_params[clone].end_pa - vm_params[clone].start_pa));
-		memcpy(vm_params[clone].start_pa + prev_size, vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
+		BOOTER_PRINTF("\tCopying from VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", clone, vm_params[clone].start_pa, vm_params[clone].start_pa + prev_size, vm_params[clone].end_pa - vm_params[clone].start_pa);
+		memcpy((void *)(vm_params[clone].start_pa) + prev_size, (void *)(vm_params[clone].start_pa), vm_params[clone].end_pa - vm_params[clone].start_pa);
 		set_net_phys_offset(idx, total_offset);
 		dcclean_range((unsigned long)vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
+
+		vm_params[idx].start_pa = vm_params[clone].start_pa + prev_size;
+		vm_params[idx].end_pa = vm_params[clone].end_pa + prev_size;
+		vm_params[idx].start_va = vm_params[clone].start_va;
+		vm_params[idx].end_va = vm_params[clone].end_va;
+		vm_params[idx].pages = vm_params[clone].pages;
 
 		guest_base += prev_size;
 	} else {  // this is not a clone
@@ -483,7 +729,9 @@ void load_vm(unsigned int idx) {
 			FAIL("\tInvalid ELF file: ", elf);
 		}
 
-		elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr);
+		if (0 > elf_get_specials(fdesc, vm_params[idx].specials, sizeof(vm_params[idx].specials)/sizeof(vm_params[idx].specials[0]), &ehdr)) {
+			FAIL("\tCan't get special symbols", "");
+		}
 
 		vm_params[idx].entry = (void *)ehdr.e_entry;
 	
@@ -513,7 +761,7 @@ void load_vm(unsigned int idx) {
 			total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 			if (vm_params[idx].offset_pages == -1) {
-				vm_params[idx].offset_pages = (total_offset) >> (vm_params[idx].page_size * 2);
+				vm_params[idx].offset_pages = total_offset >> PAGE_BITS;
 			}
 			phdr.p_paddr += vm_params[idx].load_offset;
 
@@ -559,8 +807,8 @@ void load_vm(unsigned int idx) {
 		}
 		BOOTER_PRINTF("\tend 0x%08lx\n", end);
 
-		vm_params[idx].start_pa = (void *)(start + total_offset);
-		vm_params[idx].end_pa = (void *)(end + total_offset);
+		vm_params[idx].start_pa = start + total_offset;
+		vm_params[idx].end_pa = end + total_offset;
 		dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
 
 		heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
@@ -594,8 +842,13 @@ void load_vm(unsigned int idx) {
 		end += heap_size + stack_size;
 		vm_params[idx].stack = (void *)(end & -32);  // should be close to where crt0 puts the stack
 
-		end = ALIGN_UP(end, one_page);
-		total_size = ALIGN_UP((end - start), one_page);
+		end = H2_ALIGN_UP(end, one_page);
+		vm_params[idx].start_va = start;
+		vm_params[idx].end_va = end;
+
+		total_size = H2_ALIGN_UP((end - start), one_page);
+		vm_params[idx].pages = total_size >> page_shift;
+
 		BOOTER_PRINTF("\ttotal_size 0x%08lx\n", total_size);
 		guest_base += total_size;
 
@@ -611,12 +864,19 @@ void load_vm(unsigned int idx) {
 		}
 	}  // else not a clone
 
+	clade_setup(idx, total_offset);
+
 	BOOTER_PRINTF("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
 	BOOTER_PRINTF("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
 	BOOTER_PRINTF("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
 	BOOTER_PRINTF("\toffset_pages 0x%lx\n", vm_params[idx].offset_pages);
-	BOOTER_PRINTF("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
-	BOOTER_PRINTF("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
+
+	if (vm_params[idx].pmap_added) {
+		BOOTER_PRINTF("\tguest translations added\n");
+	} else {
+		BOOTER_PRINTF("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
+		BOOTER_PRINTF("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
+	}
 }
 
 void config_vm(unsigned int idx) {
@@ -627,9 +887,11 @@ void config_vm(unsigned int idx) {
 	int trans;
 	
 
-	BOOTER_PRINTF("\nConfig VM index %d\n", idx);
-	BOOTER_PRINTF("\tvirtual CPUs %d\n", vm_params[idx].num_vcpus);
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("Config VM index %d\n", idx);
+	BOOTER_PRINTF("\tVirtual CPUs %d\n", vm_params[idx].num_vcpus);
 	BOOTER_PRINTF("\tShared interrupts  %d\n", vm_params[idx].num_shared_ints);
+	BOOTER_PRINTF("\tPriority  %d\n", vm_params[idx].startprio);
 
 	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, CONFIG_CPUS(vm_params[idx].use_ext, vm_params[idx].num_vcpus), vm_params[idx].num_shared_ints);
 
@@ -642,8 +904,14 @@ void config_vm(unsigned int idx) {
 		if (NULL != vm_params[idx].pmap) {  // has __guest_pmap__
 			trans = vm_params[idx].pmap->type;
 		  base.raw = vm_params[idx].pmap->base.raw;
+			BOOTER_PRINTF("\tGuest pmap type %s\n", trans_name[trans]);
+			BOOTER_PRINTF("\tGuest pmap base 0x%08x\n", base.raw);
 		} else {  // default
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
+			BOOTER_PRINTF("\tTranslation type offset\n");
+			BOOTER_PRINTF("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
+			BOOTER_PRINTF("\t\tCCCC 0x%1x\n", base.cccc);
+			BOOTER_PRINTF("\t\tXWRU 0x%1x\n", base.xwru);
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
@@ -662,6 +930,8 @@ void config_vm(unsigned int idx) {
 		}
 	}
 
+	BOOTER_PRINTF("\tPriority %d\n", vm_params[idx].bestprio);
+	BOOTER_PRINTF("\tTrapmask 0x%08x\n", vm_params[idx].trapmask);
 	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, vm_params[idx].bestprio, vm_params[idx].trapmask) != vm) {
 		FAIL("\tSET_PRIO_TRAPMASK", "");
 	}
@@ -669,10 +939,10 @@ void config_vm(unsigned int idx) {
 #if 0
 	do {
 	FIXME: in the future, we can map physical interrupts to guest with a command line option
-	This was confusing things like the virtual timer interrupt.
-	(Using if 0 here just to annoy Bryan.)
-	/* set up interrupts */
-		int i;	/* can move up to top and strike this block after reenabling maybe */
+			This was confusing things like the virtual timer interrupt.
+			(Using if 0 here just to annoy Bryan.)
+			/* set up interrupts */
+			int i;	/* can move up to top and strike this block after reenabling maybe */
 		for (i = 0; i < vm_params[idx].num_shared_ints + PERCPU_INTERRUPTS; i++) {
 			if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, vm_params[idx].num_vcpus - 1)) != vm) {
 				FAIL("\tMAP_PHYS_INTR", "");
@@ -689,7 +959,8 @@ void boot_vm(unsigned int idx) {
 
 	unsigned int regval;
 
-	BOOTER_PRINTF("\nBoot VM index %d, ID %d\n", idx, vm_params[idx].id);
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
 
 	if (~0L != vm_params[idx].ccr) {
 		regval = H2K_get_ccr();
@@ -709,6 +980,9 @@ void run(unsigned int idx) {
 	unsigned int status, done;
 	int cpus;
 	unsigned int vm;
+	unsigned long long int *res;
+	unsigned int sigval;
+	unsigned int hthreads_mask;
 
 	for (i = 0 ; i <= idx; i++) {
 		load_vm(i);
@@ -725,42 +999,69 @@ void run(unsigned int idx) {
 	}
 
 	/* Wait for all VMs to stop or error */
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("booter: Waiting for interrupts\n");
+
 	do {
-		BOOTER_PRINTF("\nWaiting for child interrupt\n");
-		h2_sem_down(&child_done_sem);
+		if (sample_usecs) {
+			h2_vmtrap_timerop(H2K_TIMER_TRAP_DELTA_TIMEOUT, 1000 * sample_usecs);
+		}
+		sigval = h2_anysignal_wait(&wake_sig, WAKE_CHILD | WAKE_TIMER);
 
-		/* How's everyone doing? */
-		done = 1;
-		for (i = 0; i <= idx; i++) {
-			vm = vm_params[i].id;
-			if (~0 == vm) {  // skip
-				continue;
-			}
-			status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-			BOOTER_PRINTF("VM %d status 0x%x\n", vm, status);
-			cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
-			BOOTER_PRINTF("VM %d Live CPUs: %d\n", vm, cpus);
+		if (sigval & WAKE_TIMER) {
+			h2_anysignal_clear(&wake_sig, WAKE_TIMER);
+			hthreads_mask = h2_prof_sample(&res);
 
-			if (0 == cpus) {  // no more cpus running
-				if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
-					FAIL("\tUnexpected exit status.", "");
+			for (i = 0; i < MAX_HTHREADS; i++) {
+				if (hthreads_mask & (1 << i)) {
+					BOOTER_PRINTF("Sample -- hthread: %d  ID: 0x%08x  ELR: 0x%08x\n", i, (unsigned int)(res[i] >> 32), (unsigned int)(res[i] & 0xffffffff));
 				}
-				if (--vm_params[i].boots) {  // reboot
-					done = 0;
-					load_vm(i);
-					boot_vm(i);
-				} else {  // all done with this VM
-					vm_params[i].id = ~0;  // mark non-existent
-					h2_vmfree(vm);
-				}
-			} else {
-				done = 0; // someone's not done
 			}
-			if (vm_params[i].error_exit && H2_THREAD_FATAL_ERROR == status) {
-				exit(1);
+			if (hthreads_mask) {
+				h2_free(res);
+			}
+		}
+
+		if (sigval & WAKE_CHILD) {
+			h2_anysignal_clear(&wake_sig, WAKE_CHILD);
+
+			/* How's everyone doing? */
+			done = 1;
+			for (i = 0; i <= idx; i++) {
+				vm = vm_params[i].id;
+				if (~0 == vm) {  // skip
+					continue;
+				}
+				status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
+				BOOTER_PRINTF("VM %d status 0x%x\n", vm, status);
+				cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
+				BOOTER_PRINTF("VM %d Live CPUs: %d\n", vm, cpus);
+
+				if (0 == cpus) {  // no more cpus running
+					if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
+						FAIL("\tUnexpected exit status.", "");
+					}
+					if (--vm_params[i].boots) {  // reboot
+						done = 0;
+						load_vm(i);
+						boot_vm(i);
+					} else {  // all done with this VM
+						vm_params[i].id = ~0;  // mark non-existent
+						h2_vmfree(vm);
+					}
+				} else {
+					done = 0; // someone's not done
+				}
+				if (vm_params[i].error_exit && H2_THREAD_FATAL_ERROR == status) {
+					exit(1);
+				}
 			}
 		}
 	} while (!done);
+
+	H2K_set_syscfg(h2_info(INFO_SYSCFG) & ~SYSCFG_CLADEN);  // disable clade
+	pd_num = 0;  // reset
+	h2_galloc_reset(&tcm_alloc, 0);
 }
 
 void die_usage()
@@ -770,25 +1071,45 @@ void die_usage()
 }
 
 void print_infos() {
-	info_boot_flags_type boot_flags;
-	info_stlb_type  stlb_info;
-
-	boot_flags.raw = h2_info(INFO_BOOT_FLAGS);
-	stlb_info.raw = h2_info(INFO_STLB);
 
 	BOOTER_PRINTF("H2/core info:\n");
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
-	BOOTER_PRINTF("\tHVX present: ");
-	BOOTER_PRINTF((boot_flags.boot_have_hvx ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tGuest PC sampling available: ");
+	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tHVX:\n");
+	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
+	if (boot_flags.boot_have_hvx) {
+		BOOTER_PRINTF("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
+		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_HVX_CONTEXTS));
+		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
+#if ARCHV >= 65
+		BOOTER_PRINTF("\t\tVTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
+		BOOTER_PRINTF("\t\tVTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
+#endif
+	}
+#if ARCHV >= 68
+	BOOTER_PRINTF("\tHMX present: ");
+	BOOTER_PRINTF((boot_flags.boot_have_hmx ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tUser-mode DMA present: ");
+	BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
+#endif
 	BOOTER_PRINTF("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	BOOTER_PRINTF("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
 	BOOTER_PRINTF("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
 	BOOTER_PRINTF("\tH2 kernel in TCM: ");
 	BOOTER_PRINTF((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
-	BOOTER_PRINTF("\tTCM base: 0x%08x\n", h2_info(INFO_TCM_BASE));
+	BOOTER_PRINTF("\tcfgbase: 0x%08x\n", h2_info(INFO_CFGBASE));
+	BOOTER_PRINTF("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
+	BOOTER_PRINTF("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
 	BOOTER_PRINTF("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
-	BOOTER_PRINTF("\tTCM size: %dK\n", h2_info(INFO_TCM_SIZE) / 1024);
-
+	BOOTER_PRINTF("\tL2 cache size: %dK\n", h2_info(INFO_L2TAG_SIZE) / 1024);
+	BOOTER_PRINTF("\tL2 line size: %d\n", h2_info(INFO_L2_LINE_SZ));
+	BOOTER_PRINTF("\tL2 register base: 0x%08x\n", h2_info(INFO_L2CFG_BASE));
+	BOOTER_PRINTF("\tCLADE register base: 0x%08x\n", clade_base);
+#if ARCHV >= 65
+	BOOTER_PRINTF("\tECC register base: 0x%08x\n", h2_info(INFO_ECC_BASE));
+	BOOTER_PRINTF("\tAudio extension: %d\n", h2_info(INFO_AUDIO_EXT));
+#endif
 	BOOTER_PRINTF("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
 	BOOTER_PRINTF("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
 	BOOTER_PRINTF("\tSTLB:\n");
@@ -808,15 +1129,51 @@ void print_infos() {
 	BOOTER_PRINTF("\tL2VIC physical base: 0x%08x\n", h2_info(INFO_L2VIC_BASE));
 	BOOTER_PRINTF("\tTimer physical base: 0x%08x\n", h2_info(INFO_TIMER_BASE));
 	BOOTER_PRINTF("\tTimer interrupt: %d\n", h2_info(INFO_TIMER_INT));
+	BOOTER_PRINTF("\tRunning HW threads mask: 0x%08x\n", h2_info(INFO_HTHREADS));
 }
 
 void kernel_setup() {
+
+	if (hwt_num != -1) {
+		if (hwt_mask != -1) {
+			FAIL("Can't set both hwt_mask and hwt_num", "");
+		}
+		if (h2_hwconfig_hwthreads_num(hwt_num) < 0) {
+			FAIL("hwthreads_num", "");
+		}
+	} else {
+		if (h2_hwconfig_hwthreads_mask(hwt_mask) < 0) {
+			FAIL("hwthreads_mask", "");
+		}
+	}
 
 	if (use_stlb) {
 		if (h2_config_stlb_alloc() < 0) {
 			FAIL("STLB alloc", "");
 		}
 	}
+
+	if (ecc_enable != -1) {
+		if (h2_hwconfig_ecc(ecc_enable) < 0) {
+			FAIL("ECC enable", "");
+		}
+	}
+
+#if HAVE_EXTENSIONS
+	if (ext_power && boot_flags.boot_have_hvx) {
+		if (h2_hwconfig_extpower(1) < 0) {
+			FAIL("extpower", "");
+		}
+	}
+#endif
+
+#ifdef CLUSTER_SCHED_HACK
+	if (cluster_sched) {
+		if (h2_config_cluster_sched(1) < 0) {
+			FAIL("Cluster sched", "");
+		}
+	}
+#endif	
 }
 
 void set_l2_reg(unsigned int offset, unsigned int val) {
@@ -859,6 +1216,7 @@ typedef struct {
 syscfg_field syscfg[] = {
 	{"BQ", SYSCFG_BQ_BIT, SYSCFG_BQ_LEN, H2K_set_syscfg},
 	{"DMT", SYSCFG_DMT_BIT, SYSCFG_DMT_LEN, H2K_set_syscfg},
+	{"CLADEN", SYSCFG_CLADEN_BIT, SYSCFG_CLADEN_LEN, H2K_set_syscfg},
 	{"L2WB", SYSCFG_L2WB_BIT, SYSCFG_L2WB_LEN, set_l2wb},
 	{NULL, 0, 0}
 };
@@ -886,10 +1244,19 @@ void set_syscfg_field(char *name, unsigned int val) {
 
 extern void bootvm_vectors();
 
-void booter_isr(void) {
-	//	BOOTER_PRINTF("Got child interrupt\n");
-	h2_sem_up(&child_done_sem);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
+void booter_isr(unsigned int gssr) {
+
+	if ((gssr & 0xff) == H2K_VM_CHILDINT) {
+		//		BOOTER_PRINTF("Got child interrupt\n");
+		h2_anysignal_set(&wake_sig, WAKE_CHILD);
+		h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
+	}
+	if ((gssr & 0xff) == H2K_TIME_GUESTINT) {
+		//		BOOTER_PRINTF("Got timer interrupt\n");
+		h2_anysignal_set(&wake_sig, WAKE_TIMER);
+		h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT, 0);
+	}
+
 }
 
 unsigned int process_line(int argc, char **argv, unsigned int idx) {
@@ -1008,6 +1375,14 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 3; argv += 3;
 			continue;
 
+#ifdef HAVE_EXTENSIONS
+		} else if (0 == strcmp(argv[0], "--ext_power")) {
+			if (argc < 2) die_usage();
+			ext_power = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+#endif
+
 		} else if (0 == strcmp(argv[0], "--use_stlb")) {
 			if (argc < 2) die_usage();
 			use_stlb = strtoul(argv[1],NULL,0);
@@ -1020,7 +1395,44 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--sample")) {
+			if (argc < 2) die_usage();
+			if (!boot_flags.boot_have_sample) {
+				FAIL("Guest PC sampling not supported by kernel", "");
+			}
+			sample_usecs = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--hwt_mask")) {
+			if (argc < 2) die_usage();
+			hwt_mask = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--hwt_num")) {
+			if (argc < 2) die_usage();
+			hwt_num = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--ecc_enable")) {
+			if (argc < 2) die_usage();
+			ecc_enable = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+#ifdef CLUSTER_SCHED_HACK
+		} else if (0 == strcmp(argv[0], "--cluster_sched")) {
+			if (argc < 2) die_usage();
+			cluster_sched = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+#endif
+
 		} else if (0 == strcmp(argv[0], "--help")) {
+			kernel_setup();
+			print_infos();
 			usage();
 			exit(0);
 
@@ -1291,19 +1703,29 @@ int main(int argc, char **argv)
 	// check for kernel boot errors
 	kerror = h2_info(INFO_ERROR);
 	if (kerror != KERROR_NONE) {
-		BOOTER_PRINTF("\nKernel error: %s\n\n", kerror_msg[kerror]);
+		BOOTER_PRINTF("\n");
+		BOOTER_PRINTF("Kernel error: %s\n\n", kerror_msg[kerror]);
 		print_infos();
 		return 1;
 	}
 
-	kernel_setup();
-	print_infos();
+	boot_flags.raw = h2_info(INFO_BOOT_FLAGS);
+	stlb_info.raw = h2_info(INFO_STLB);
+
+	tcm_base = (unsigned int)h2_info(INFO_TCM_BASE);
+	tcm_size = h2_info(INFO_TCM_SIZE);
+	clade_base = h2_info(INFO_CLADE_BASE);
+	h2_galloc_init(&tcm_alloc, (unsigned int)tcm_base, (unsigned int)tcm_size, NULL);
+
 	h2_vmtrap_setvec(bootvm_vectors);
 
-	h2_sem_init_val(&child_done_sem, 0);
+	h2_anysignal_init(&wake_sig);
 
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0) < 0) {
 		FAIL("H2K_INTOP_GLOBEN, H2K_VM_CHILDINT", "");
+	}
+	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT, 0) < 0) {
+		FAIL("H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT", "");
 	}
 	h2_vmtrap_setie(1);
 
@@ -1322,8 +1744,8 @@ int main(int argc, char **argv)
 			/* Run VMs from each file concurrently */
 			while (-1 != getline(&line, &line_size, fp)) {
 				if ((p = strchr(line, '\n'))) {
-						*p = '\0';  // chop \n
-					}
+					*p = '\0';  // chop \n
+				}
 				arg_ptr = strtok(line, " ");
 				while (arg_ptr) {
 					if ('#' == *arg_ptr) {  // start of comment
@@ -1354,18 +1776,23 @@ int main(int argc, char **argv)
 			}
 			fclose(fp);
 
+			kernel_setup();
+			print_infos();
 			run(idx);
 			free(vm_params);
 			vm_params = NULL;  // malloc anew if more --files
 			tight_fence_hi = 0;
 			guest_base = H2K_GUEST_START;
 
-			h2_sem_init_val(&child_done_sem, 0);  // there may be leftover ups
+			h2_anysignal_init(&wake_sig);  // could be leftovers
 
 		} else {  // not reading from file
 			idx = 0;
 			add_vm(idx);
 			idx = process_line(argc, argv, idx);
+
+			kernel_setup();
+			print_infos();
 			run(idx);
 			return 0;
 		}

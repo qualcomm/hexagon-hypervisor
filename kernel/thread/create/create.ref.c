@@ -28,25 +28,31 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	u32_t bestprio;
 	u32_t trapmask;
 	u32_t ptb;
+	u32_t extra;
 	translation_type type;
 	s32_t asid;
 	void *guest_evb;
+	H2K_offset_t identity_offset = {
+		.pages = 0,
+		.cccc = 7,
+		.size = 6,
+		.xwru = 0xf,
+	};
 
 	bestprio = vmblock->bestprio;
 	trapmask = vmblock->trapmask;
 
 	if (vmblock->num_cpus == 0) { // starting first cpu
+		/* FIXME: create new offset translation w/ offset=0 as our translation type */
 		guest_evb = NULL;
-		type = vmblock->pmap_type;
-		if (type == H2K_ASID_TRANS_TYPE_OFFSET) { // use vmblock as "ptb"
-			ptb = (u32_t)vmblock;
-		} else {
-			ptb = vmblock->pmap; 				/* initial page tables == pmap */
-		}
+		type = H2K_ASID_TRANS_TYPE_OFFSET;
+		ptb = identity_offset.raw;
+		extra = 0;
 	} else { // inherit
 		guest_evb = me->gevb;
-		ptb = H2K_mem_asid_table[me->ssr_asid].ptb;
-		type = H2K_mem_asid_table[me->ssr_asid].fields.transtype;
+		ptb = H2K_gp->asid_table[me->ssr_asid].ptb;
+		type = H2K_gp->asid_table[me->ssr_asid].fields.type;
+		extra = H2K_gp->asid_table[me->ssr_asid].fields.extra;
 	}
 
 	if (prio > MAX_PRIO) return -1;        // bad prio
@@ -76,7 +82,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->vmstatus = 0x0;            // all clear
 	tmp->gevb = guest_evb;
 
-	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE, NULL);
+	asid = H2K_asid_table_inc(ptb, type, H2K_ASID_TLB_INVALIDATE_FALSE, extra, vmblock);
 
 	if (asid == -1) { 						// can't allocate asid
 		vmblock->free_threads = tmp; // return to free list
@@ -88,8 +94,8 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->ssr_um = 1;
 	tmp->ssr_asid = asid;
 #ifdef HAVE_EXTENSIONS
-  tmp->ssr_xa = 0; // no ext active
-  tmp->ssr_xe = 0; // ext disabled to cause exception
+	tmp->ssr_xa = EXT_NO_EXT;
+	tmp->ssr_xe = 0; // ext disabled to cause exception
 #endif
 
 	vmblock->num_cpus++;

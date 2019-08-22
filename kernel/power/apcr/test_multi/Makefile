@@ -1,5 +1,6 @@
 EXEC = test.elf
 OBJS += test.o
+#OBJS += $(BOOTVM_ENTRY_O)
 include Makefile.inc
 
 
@@ -12,7 +13,6 @@ endif
 # endif
 
 H2K_KERNEL_PGSIZE := 2
-H2K_ALLOC_HEAP_SIZE := 0x1000
 
 BOOTVM_PROG := .test.elf
 
@@ -25,8 +25,8 @@ else
 EXTRA_CFLAGS += -DDEBUG
 endif
 
-CFLAGS := $(NOSTARTFILES) $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include $(EXTRA_CFLAGS)
-LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
+CFLAGS := $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include $(EXTRA_CFLAGS)
+LDFLAGS = $(NOSTARTFILES) -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 all: $(BOOTVM_PROG)
 

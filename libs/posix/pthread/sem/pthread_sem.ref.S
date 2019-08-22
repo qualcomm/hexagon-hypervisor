@@ -45,9 +45,9 @@ FUNC_START pthread_sem_add_np .text.pthread.sem .p2align 5
 #define SEMPTR r0
 #define AMOUNT r1
 #define SEMPTR_AMOUNT r1:0
-#define MASK r4
 #define SEMVAL r2
 #define SEMVAL_NEW r3
+#define MASK r4
 #define MAXSEMVAL r5
 #define TMP r6
 #define SEMPTR_AMOUNT_SAV r17:16
@@ -146,6 +146,7 @@ FUNC_START pthread_sem_wait_np .text.pthread.sem .falign
 	}
 .Ldo_block:
 	trap0(#H2_TRAP_FUTEX_WAIT)
+.Ldo_block_atomic:
 	{
 		SEMVAL = memw_locked(SEMPTR_SAV)
 		ADDVAL = ##0x00010001
@@ -159,12 +160,12 @@ FUNC_START pthread_sem_wait_np .text.pthread.sem .falign
 	}
 	memw_locked(SEMPTR_SAV,p0) = SEMVAL_NEW
 	{
-		r0 = mux(p0,#0,SEMPTR_SAV)
+		if (p0) r0 = #0
 		if (p0) SEMPTR_SAV = memw(r29)
 		if (p0) dealloc_return
 	}
 	{
-		jump .Ldo_block
+		jump .Ldo_block_atomic
 	}
 #undef SEMPTR
 #undef SEMVAL

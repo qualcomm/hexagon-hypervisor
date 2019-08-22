@@ -14,6 +14,8 @@
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_setl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getcladereg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setcladereg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t use_wb, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
@@ -23,6 +25,12 @@ u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t
 u32_t H2K_trap_hwconfig_l2locka(u32_t unused, void *addr, u32_t len, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_l2unlock(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_hwintop(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_hwthreads_mask(u32_t unused, void *unusedp, u32_t mask, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_hwthreads_num(u32_t unused, void *unusedp, u32_t num, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_ecc(u32_t unused, void *unusedp, u32_t ecc_enable, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getdmacfg(u32_t unused, void *unusedp, u32_t index, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setdmacfg(u32_t unused, void *unusedp, u32_t index, u32_t data, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 
 #endif
 

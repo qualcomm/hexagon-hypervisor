@@ -25,14 +25,19 @@ FUNC_START H2K_handle_error .text.vm.error .p2align 2
 #ifdef DO_EXT_SWITCH
 	p0 = cmp.eq(r1, #0x16)  // XE exception?
 	if (!p0) jump 1f
+	p0 = tstbit(r8, #SSR_XE_BIT)  // coprocessor error?
+	if (p0) jump 1f
+	// else XE == 0, so maybe restore ext context
 	r0 = memw(r7 + #CONTEXT_vmblock)
 	r10 = memw(r0 + #VMBLOCK_flags)
-	p0 = tstbit(r10, #0)
-	if (!p0) jump 1f  // VM using ext?
+	p0 = tstbit(r10, #H2K_VMBLOCK_FLAGS_DO_EXT_BIT)  // VM doing ext switch?
+	if (!p0) jump 1f
 
 	jump H2K_ext_context_restore // continues to H2K_context_restore_return
 #endif
 
+.global H2K_error_nonxe
+H2K_error_nonxe:
 1:
 	r0 = badva
 	// r1 = cause
@@ -131,6 +136,8 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		p0 = tstbit(WORK,#1)
 		//if (!p0.new) jump:nt 9f
 	}
+
+#ifdef CRASH_DEBUG
 	// Save off TLB. FIXME: could be done in C...
 	r3:2 = combine(#0,##H2K_kg+KG_crash_tlb)
 	loop0(1f,#MAX_TLB_ENTRIES)
@@ -141,8 +148,11 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		r3 = add(r3,#1)
 	}:endloop0
 	nop
+
 	call H2K_intconfig_l2vic_crash
 	call H2K_tcm_crash_copy
+#endif
+
 	call H2K_cache_d_cleaninv
 	call H2K_cache_l2_cleaninv
 	syncht
@@ -182,6 +192,8 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 	r1=##0xe0f0beef
 	stop(r0)
 #else
+
+#ifdef CRASH_DEBUG
 	// Part 0: save off context. Kill cs1:0 registers, hopefully they're not important
 	c13:12 = r1:0 // CS1:0 registers
 .Lhandle_nmi_soft_join:
@@ -255,6 +267,18 @@ FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 .Lstop:
 	stop(r0)
 	jump .Lstop
+
+#else
+crswap(r0,sgp)
+memd(r0+#CONTEXT_r3130) = r31:30
+call H2K_context_save
+r0 = #-3
+r1 = r7
+r3:2 = #0
+r4 = r9
+jump H2K_fatal_thread
+#endif
+
 #endif
 FUNC_END H2K_handle_nmi
 

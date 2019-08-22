@@ -47,8 +47,8 @@ void delay()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-#define INTERRUPT_T0 12
-#define INTERRUPT_T1 13
+#define INTERRUPT_T0 6
+#define INTERRUPT_T1 7
 
 static volatile int counter0;
 static volatile int counter1;
@@ -67,28 +67,28 @@ h2_sem_t startsem;
 
 void thread0(int thread)
 {
-	printf("T0 started\n");
+	// printf("T0 started\n");
 	h2_sem_up(&startsem);
 	while (1) {
 		h2_intwait(INTERRUPT_T0);
 		counter0++;
-		printf("T0\n");
+		// printf("T0\n");
 		h2_sem_down(&sem0);
 	}
-	h2_thread_stop(0);
+	h2_thread_stop_trap(0);
 }
 
 void thread1(int thread)
 {
-	printf("T1 started\n");
+	// printf("T1 started\n");
 	h2_sem_up(&startsem);
 	while (1) {
 		h2_intwait(INTERRUPT_T1);
 		counter1++;
-		printf("T1\n");
+		// printf("T1\n");
 		h2_sem_down(&sem1);
 	}
-	h2_thread_stop(0);
+	h2_thread_stop_trap(0);
 }
 
 volatile int int_num;
@@ -115,6 +115,10 @@ void hw_gen_int(int which)
 
 void vmmain(void *unused)
 {
+	static unsigned int blargh[2] __attribute__((aligned(8)));
+	blargh[0] = h2_thread_myid();
+	blargh[1] = 0;
+	asm volatile (" ugp = %0 " : :"r"(blargh) : "memory");
 	counter0 = counter1 = 0;
 
 	h2_sem_init_val(&sem0,0);
@@ -123,8 +127,8 @@ void vmmain(void *unused)
 	h2_sem_init_val(&int_done,0);
 	h2_sem_init_val(&startsem,0);
 
-	t1id = h2_thread_create(thread1,&stack1[STACK_SIZE],0,2);
-	t0id = h2_thread_create(thread0,&stack0[STACK_SIZE],0,2);
+	t1id = h2_thread_create_trap(thread1,&stack1[STACK_SIZE],0,2);
+	t0id = h2_thread_create_trap(thread0,&stack0[STACK_SIZE],0,2);
 
 	h2_sem_down(&startsem);
 	h2_sem_down(&startsem);
@@ -137,19 +141,19 @@ void vmmain(void *unused)
 	gen_int(0);
 	delay();
 
-	if (counter0 != 1) FAIL("Bad counter0: should be 1\n");
+	if (counter0 != 1) FAIL("Bad counter0: should be 1 1\n");
 	if (counter1 != 0) FAIL("Bad counter1: should be 0\n");
 
 	gen_int(1);
 	delay();
 
-	if (counter0 != 1) FAIL("Bad counter0: should be 1\n");
+	if (counter0 != 1) FAIL("Bad counter0: should be 1 2\n");
 	if (counter1 != 1) FAIL("Bad counter1: should be 1\n");
 
 	gen_int(0);
 	delay();
 
-	if (counter0 != 1) FAIL("Bad counter0: should be 1\n");
+	if (counter0 != 1) FAIL("Bad counter0: should be 1 3\n");
 	if (counter1 != 1) FAIL("Bad counter1: should be 1\n");
 
 	h2_sem_up(&sem0);
@@ -185,11 +189,15 @@ void spawn_vm(void *pc)
 	printf("vm booted\n");
 }
 
+int pthread_init();
 int main() 
 {
 	u32_t asid;
 
 	h2_init(NULL);
+	pthread_init();
+
+	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
 
 	/* set URWX in monitor TLB entry permissions, to allow futex access */
 	/* not really necessary to find our asid since the TLB entry will be global

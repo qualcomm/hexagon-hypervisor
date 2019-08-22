@@ -45,13 +45,6 @@ static inline u64_t random_delta(u64_t seed) {
 	return (((u32_t)seed * 2654435769U) >> RANDOM_SHIFT) + RANDOM_BASE;
 }
 
-static inline s64_t myabs(s64_t x)
-{
-	if (x < 0) {
-		return -x; 
-	} else return x;
-}
-
 void task(void *arg)
 {
 	s64_t start, wakeup, wakeup_real, end, delta;
@@ -67,7 +60,7 @@ void task(void *arg)
 		if (h2_time_set_timeout(wakeup) == 0) {
 			FAIL("timeout in past");
 		}
-		if (myabs((wakeup_real = h2_time_get_timeout()) - wakeup) > 100) {
+		if (llabs((wakeup_real = h2_time_get_timeout()) - wakeup) > 100) {
 			h2_printf("wakeup=%llx wakeup_real=%llx\n",wakeup,wakeup_real);
 		}
 		if ((ret = h2_futex_wait(&i,i)) != 0) {

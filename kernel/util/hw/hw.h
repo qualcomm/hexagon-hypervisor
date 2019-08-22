@@ -9,6 +9,7 @@
 #include <max.h>
 #include <hexagon_protos.h>
 #include <context.h>
+#include <globals.h>
 
 static inline void ciad(u32_t mask)
 {
@@ -24,7 +25,7 @@ static inline void siad(u32_t mask)
 
 static inline void swi(u32_t mask)
 {
-	asm (" swi(%0) // clear IAD " : : "r"(mask));
+	asm (" swi(%0) // SWI " : : "r"(mask));
 }
 
 static inline void H2K_hw_trace(u32_t val)
@@ -112,11 +113,16 @@ static inline void lowprio_imask(u32_t hthread)
 
 #endif
 
-static inline u32_t get_ssr()
+static inline u32_t H2K_get_ssr()
 {
 	u32_t ret;
-	asm volatile (" %0 = ssr // get SSR" : "=r"(ret));
+	asm volatile (" %0 = ssr // get ssr" : "=r"(ret));
 	return ret;
+}
+
+static inline void H2K_set_ssr(u32_t val)
+{
+	asm volatile (" ssr = %0 // set ssr" : : "r"(val));
 }
 
 static inline u32_t H2K_get_syscfg()
@@ -230,8 +236,25 @@ static inline u32_t H2K_get_modectl()
 static inline u32_t H2K_get_ipend()
 {
 	u32_t ret;
+#if ARCHV < 65
 	asm volatile ("%0 = ipend;":"=r" (ret));
 	return(ret);
+#else
+	asm volatile ("%0 = ipendad;":"=r" (ret));
+	return(ret & 0xff);
+#endif
+}
+
+static inline u32_t H2K_get_iad()
+{
+	u32_t ret;
+#if ARCHV < 65
+	asm volatile ("%0 = iad;":"=r" (ret));
+	return(ret);
+#else
+	asm volatile ("%0 = ipendad;":"=r" (ret));
+	return((ret >> 16) & 0xff);
+#endif
 }
 
 static inline u32_t H2K_get_tid_reg()
@@ -292,7 +315,7 @@ static inline void H2K_clear_ipend(u32_t hthread_mask)
 #if (ARCHV <= 3)
 static inline u32_t get_hwtnum()
 {
-	return Q6_R_extractu_RII(get_ssr(),3,19);
+	return Q6_R_extractu_RII(H2K_get_ssr(),3,19);
 }
 #else
 static inline u32_t get_hwtnum()
@@ -328,14 +351,6 @@ static inline void H2K_mutex_unlock_tlb()
 {
 	asm volatile (" tlbunlock" : : : "memory");
 }
-
-#if (ARCHV <= 3)
-#define H2K_TLB_ATOMIC_START H2K_mutex_lock_tlb()
-#define H2K_TLB_ATOMIC_END H2K_mutex_unlock_tlb()
-#else
-#define H2K_TLB_ATOMIC_START
-#define H2K_TLB_ATOMIC_END
-#endif
 
 #if (ARCHV <= 3)
 static inline void H2K_gregs_save(H2K_thread_context *me) { }
@@ -422,7 +437,32 @@ static inline void H2K_l2unlock()
 	asm volatile (" l2gunlock " : : : "memory");
 }
 
+#if ARCHV >= 68
+static inline u32_t H2K_dmtlbsynch() {
+	u32_t ret;
+	asm volatile ("%0 = dmtlbsynch;":"=r" (ret));
+	return(ret);
+}
+
+static inline u32_t H2K_dmcfgrd(u32_t index) {
+	u32_t ret;
+	asm volatile ("%0 = dmcfgrd(%1);" : "=r" (ret) : "r" (index));
+	return(ret);
+}
+
+static inline void H2K_dmcfgwr(u32_t index, u32_t data) {
+
+	asm volatile ("dmcfgwr(%0, %1);" : : "r" (index), "r" (data));
+}
+#endif
+
 void H2K_start_threads(unsigned int mask);
+
+#ifdef CLUSTER_SCHED_HACK
+static inline u32_t H2K_hthread_cluster(u32_t hthread) {
+	return (hthread >= H2K_gp->cluster_hthreads ? 1 : 0);
+}
+#endif
 
 #endif
 

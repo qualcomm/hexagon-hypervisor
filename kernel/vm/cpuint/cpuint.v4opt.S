@@ -82,10 +82,9 @@ FUNC_START H2K_vm_cpuint_post_common .text.vm.int .p2align 2 // s32 post_common(
 		memw_locked(WADDR,p0) = PENDING
 		PENDING = and(PENDING,ENABLED)
 	}
-	{
-		if (!p0) jump 1b
-		WADDR = add(ME,#CONTEXT_atomic_status_word)
-	}
+	if (!p0) jump 1b
+
+	WADDR = add(ME,#CONTEXT_atomic_status_word)
 1:
 	{
 		TMP = memw_locked(WADDR)
@@ -178,8 +177,8 @@ FUNC_START H2K_vm_cpuint_enable .text.vm.int .p2align 2 // s32 clear(vmblock,me,
 	{
 		memw_locked(WADDR,p0) = ENABLED_PENDING
 	}
+	if (!p0) jump 1b
 	{
-		if (!p0) jump 1b
 		WADDR = add(ME,#CONTEXT_atomic_status_word)
 		ENABLED_PENDING &= lsr(ENABLED_PENDING,#16)
 	}

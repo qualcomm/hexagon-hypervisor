@@ -968,11 +968,6 @@ static inline int qurt_mem_map_static_query(qurt_addr_t *vaddr, qurt_addr_t padd
   None.
 */
 
-int qurt_mapping_create_linear(H2K_linear_fmt_t entry);
-
-/* EJP: make this static inline because we get a lot of constant parameters and hopefully
- * the compiler can optimize building the linear format 
- */
 int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn, 
 	unsigned int size, unsigned int cache_attribs, unsigned int perm, unsigned int abits);
 

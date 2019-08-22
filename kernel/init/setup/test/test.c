@@ -15,6 +15,7 @@
 #include <thread.h>
 #include <setjmp.h>
 #include <globals.h>
+#include <sample.h>
 
 jmp_buf env;
 
@@ -29,23 +30,28 @@ u32_t TH_init_seen;
 u32_t TH_switch_seen;
 
 enum {
-        runlist_init = 0,
-        readylist_init,
-        lowprio_init,
-        futex_init,
-        intconfig_init,
-        kg_init,
-        trace_init,
-        timer_init,
-	mem_alloc_init,
-	tmpmap_init,
+	runlist_init = 0,
+	readylist_init,
+	lowprio_init,
+	futex_init,
+	intconfig_init,
+	kg_init,
+	trace_init,
+	timer_init,
+	//	mem_alloc_init,
+	//	tmpmap_init,
 	l2cache_init,
-        //thread_init,
-        //asid_table_init,
-        //mem_stlb_init,
+	sample_init,
+	//thread_init,
+	//asid_table_init,
+	//mem_stlb_init,
 	tcm_copy,
 	hvx_init,
+
+#ifdef CRASH_DEBUG
 	stlb_tcmcrash_init,
+#endif
+
 	XX_LAST_HELPER
 };
 
@@ -90,19 +96,22 @@ HELPER_FUNC(futex_init)
 void H2K_intconfig_init(u32_t ssbase) { TH_init_seen |= 1<< intconfig_init; }
 HELPER_FUNC(trace_init)
 HELPER_FUNC(timer_init)
-HELPER_FUNC(mem_alloc_init)
-HELPER_FUNC(tmpmap_init)
+//HELPER_FUNC(mem_alloc_init)
+//HELPER_FUNC(tmpmap_init)
 HELPER_FUNC(l2cache_init)
+HELPER_FUNC(sample_init)
 //HELPER_FUNC(thread_init)
 //HELPER_FUNC(asid_table_init)
+
+#ifdef CRASH_DEBUG
 HELPER_FUNC(stlb_tcmcrash_init)
+#endif
+
 //HELPER_FUNC(mem_stlb_init)
 HELPER_FUNC(tcm_copy)
 HELPER_FUNC(hvx_init)
 
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) { TH_init_seen |= 1<< kg_init; }
-
-extern H2K_vmblock_t *bootvm;
 
 H2K_thread_context *boot;
 
@@ -110,9 +119,10 @@ H2K_thread_context *boot;
  * noreturn */
 void H2K_switch(void *from, void *to)
 {
+	H2K_thread_context *expected = &H2K_kg.vmblocks[1]->contexts[MAX_BOOT_CONTEXTS - 1];
 	if (from != NULL) FAIL("Unexpected switch call");
-	printf("from=%p to=%p context=%p\n",from,to,&bootvm->contexts[MAX_BOOT_CONTEXTS - 1]);
-	if (to != &bootvm->contexts[MAX_BOOT_CONTEXTS - 1]) FAIL("switch to non-boot thread");
+	printf("from=%p to=%p context=%p\n",from,to,expected);
+	if (to != expected) FAIL("switch to non-boot thread");
 	boot = to;
 	TH_switch_seen = 1;
 	longjmp(env,1);
@@ -131,6 +141,8 @@ int main()
 	u32_t i;
 	u32_t found_thread;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+
+	H2K_gp->logbuf_enable = 0;
 
 	H2K_gp->hthreads = get_hthreads();
 

@@ -16,8 +16,8 @@
 
 /**
 Get info.
-@param[in] type  Requested configuration parameter; one of:  build ID, boot flags, STLB configuration, SYSCFG register, REV register, subsystem base address.
-@returns Paremeter value or -1 on unknown request.
+@param[in] type  Requested configuration parameter; see h2_common_info.h
+@returns Parameter value or -1 on unknown request.
 @dependencies None
 */
 int h2_info(info_type type);

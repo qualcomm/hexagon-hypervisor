@@ -40,88 +40,88 @@ clear instructions will not clobber values that should be maintained.
 Description
 ~~~~~~~~~~~
 
-.. ctype:: H2K_thread_context
+.. c:type:: H2K_thread_context
 
 	Thread Context Storage and Control Block
 
-	.. cmember:: H2K_thread_context *next
+	.. c:member:: H2K_thread_context *next
 
 		Pointer to the next thread context in a list or ring
 
-	.. cmember:: H2K_thread_context *prev
+	.. c:member:: H2K_thread_context *prev
 
 		Pointer to the previous thread context in a ring
 
-	.. cmember:: u8_t prio
+	.. c:member:: u8_t prio
 
 		Current priority of the thread
 
-	.. cmember:: u8_t base_prio
+	.. c:member:: u8_t base_prio
 
 		Priority of the thread to be restored after inherited priority is finished
 
-	.. cmember:: u8_t hthread
+	.. c:member:: u8_t hthread
 
 		If the thread is running, this is the hardware thread it is scheduled on.
 
-	.. cmember:: u8_t status
+	.. c:member:: u8_t status
 
 		Current status of the thread (DEAD, RUNNING, READY, or BLOCKED).
 
-	.. cmember:: u8_t vmstatus
+	.. c:member:: u8_t vmstatus
 
 		Current Virtual Machine status of the thread (OK, NEEDS_WORK).
 
-	.. cmember:: u8_t tid
+	.. c:member:: u8_t tid
 
 		Software Thread ID value
 
-	.. cmember:: void *gevb
+	.. c:member:: void *gevb
 
 		Guest Event Vector Base, used as a base address for errors, VM exceptions, VM
 		interrupts, and other events.
 
-	.. cmember:: u32_t trapmask
+	.. c:member:: u32_t trapmask
 
 		Mask of which traps are valid for this thread to execute.
 
-	.. cmember:: u32_t gbadva
+	.. c:member:: u32_t gbadva
 
 		Guest Bad Virtual Address Register
 
-	.. cmember:: u32_t gelr
+	.. c:member:: u32_t gelr
 
 		Guest Event Link Register
 
-	.. cmember:: u32_t gosp
+	.. c:member:: u32_t gosp
 
 		Guest Other Stack Pointer register
 
-	.. cmember:: u32_t gssr
+	.. c:member:: u32_t gssr
 
 		Guest System Status Register
 
-	.. cmember:: u64_t totalcycles
+	.. c:member:: u64_t totalcycles
 
 		Total accumulated cycle count for this thread.
 
-	.. cmember:: u32_t futex_ptr
+	.. c:member:: u32_t futex_ptr
 
 		Address the thread is currently blocked on.
 
-	.. cmember:: void *continuation
+	.. c:member:: void *continuation
 
 		Code location that will correctly return from the kernel to the thread
 
-	.. cmember:: u64_t ccrssr
+	.. c:member:: u64_t ccrssr
 
 		System Status Register and Cache Control Register for the thread
 
-	.. cmember:: u34_t elr
+	.. c:member:: u34_t elr
 
 		Event Link Register for the thread
 
-	.. cmember:: u64_t **other_register_storage**
+	.. c:member:: u64_t **other_register_storage**
 
 		Other register storage for user general purpose and control registers
 
@@ -133,13 +133,13 @@ A fastint context contains a normal thread context, and additionally has extra
 padding on the end for use for the fast interrupt stack.
 
 
-.. ctype:: H2K_fastint_context
+.. c:type:: H2K_fastint_context
 
-	.. cmember:: H2K_thread_context context
+	.. c:member:: H2K_thread_context context
 
 		Normal thread context
 
-	.. cmember:: u64_t **stack_XXX**
+	.. c:member:: u64_t **stack_XXX**
 
 		Area to use as a Fast Interrupt stack
 
@@ -147,7 +147,7 @@ padding on the end for use for the fast interrupt stack.
 H2K_context_save
 ----------------
 
-.. cfunction:: H2K_context_save()
+.. c:function:: H2K_context_save()
 
 Description
 ~~~~~~~~~~~
@@ -159,7 +159,7 @@ Since it is callable, it assumes that r31 and r30 have already been saved, and
 r31 holds the return address.  Additionally, since the caller had to save r31
 and r30, it assumes that r0 and SGP are swapped.
 
-When we return, r31 holds the value of :cfunc:`H2K_context_restore_return()`.
+When we return, r31 holds the value of :c:func:`H2K_context_restore_return()`.
 Additionally, r7 holds the current context pointer, r8 holds the SSR, r9 holds
 the HTID, r28 holds the KGP, and r29 holds the correct stack pointer. R0 through
 r6 are unchanged from the caller.
@@ -178,7 +178,7 @@ H2K_context_restore_return
 --------------------------
 
 
-.. cfunction:: H2K_context_restore_return()
+.. c:function:: H2K_context_restore_return()
 
 Description
 ~~~~~~~~~~~
@@ -197,8 +197,8 @@ Testing
 -------
 
 For each set of data in the thread context that needs to be saved and restored,
-save it with :cfunc:`H2K_context_save()`, check that it was placed in the right 
-place, and then restore it with :cfunc:`H2K_context_restore_return()` and make
+save it with :c:func:`H2K_context_save()`, check that it was placed in the right 
+place, and then restore it with :c:func:`H2K_context_restore_return()` and make
 sure it was reloaded correctly.
 
 

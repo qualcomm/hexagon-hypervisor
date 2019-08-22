@@ -7,7 +7,7 @@
 H2K_trap_angel
 --------------
 
-.. cfunction:: u64_t H2K_trap_angel(u32_t r0, u32_t r1)
+.. c:function:: u64_t H2K_trap_angel(u32_t r0, u32_t r1)
 
 	:param r0: Which angel trap
 	:param r1: Information for the angel call

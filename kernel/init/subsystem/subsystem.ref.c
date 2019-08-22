@@ -19,7 +19,15 @@ void H2K_hvx_init(u32_t devpage_offset) {
 
 	H2K_gp->hvx_clock = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_CLK_CTL);
 	H2K_gp->hvx_reset = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_RESET);
-	H2K_gp->hvx_power = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_PWR_CTL);
+	H2K_gp->hvx_power = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_PWR_CTL); 
+#if ARCHV >= 65
+	H2K_gp->hvx_bhs_status = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_STATUS); 
+	H2K_gp->hvx_bhs_cfg = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_CFG); 
+	H2K_gp->hvx_bhs_cmd = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_CMD); 
+	H2K_gp->hvx_cpmem_cfg = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_CFG); 
+	H2K_gp->hvx_cpmem_cmd = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_CMD); 
+	H2K_gp->hvx_cpmem_status = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_STATUS); 
+#endif
 	H2K_gp->hvx_state = H2K_HVX_STATE_OFF;
 
 #endif

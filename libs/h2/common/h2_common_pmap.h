@@ -52,8 +52,8 @@
 
 #define MEMORY_MAP(VPN,PERM,CFIELD,PGSIZE,PPN) \
 	{ .raw = \
-		(((u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \
-		(u32_t)(((PPN)) | ((CFIELD) << 24) | ((PERM) << 28))) \
+		(((h2_u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \
+		(h2_u32_t)(((PPN)) | ((CFIELD) << 24) | ((PERM) << 28))) \
 	 },
 
 #endif

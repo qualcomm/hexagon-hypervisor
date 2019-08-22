@@ -22,7 +22,7 @@ int pthread_mutex_lock(pthread_mutex_t *lock)
 		lock->depth = 1;
 		lock->owner_id = my_id;
 		return 0;
-	} else if ((lock->type != PTHREAD_MUTEX_NORMAL) && (lock->owner_id == my_id)) {
+	} else if ((lock->type == PTHREAD_MUTEX_RECURSIVE) && (lock->owner_id == my_id)) {
 		/* Trylock failed, but owner is me, so increment depth */
 		/* Should not get a race here because in unlock we clear owner_id before unlocking */
 		lock->depth++;

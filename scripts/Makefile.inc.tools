@@ -14,12 +14,14 @@ endif
 #export SIMF := --timing
 
 export CC := hexagon-clang
+export CXX := hexagon-clang++
 export AS := hexagon-clang
 export AR := hexagon-ar
 export RANLIB := hexagon-ranlib
 export COV := hexagon-coverage
 export OBJDUMP := hexagon-llvm-objdump
 export GMON_MERGE := hexagon-gmon-merge
+export DOXYGEN := doxygen
 
 
 export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
@@ -40,15 +42,41 @@ endif
 
 ifeq (4, $(ARCHV))
 TOOLS_FLAVOR ?= default
+TOOLS_FLAVOR_KERNEL ?= default
 ARCH_FLAVOR ?= v4_stable
 export COV := hexagon-llvm-cov
 else
 ifeq (5, $(ARCHV))
 TOOLS_FLAVOR ?= 7.3.06
+TOOLS_FLAVOR_KERNEL ?= 7.3.06
 ARCH_FLAVOR ?= v5_stable
 else
-TOOLS_FLAVOR ?= 7.3.06
+ifeq (60, $(ARCHV))
+TOOLS_FLAVOR ?= 8.1.01
+TOOLS_FLAVOR_KERNEL ?= 8.1.01
 ARCH_FLAVOR ?= v60_latest
+else
+ifeq (65, $(ARCHV))
+TOOLS_FLAVOR ?= 8.1.03
+TOOLS_FLAVOR_KERNEL ?= 8.1.03
+ARCH_FLAVOR ?= v65_latest
+ifdef TINY_CORE
+TOOLS_FLAVOR := v66_stable
+TOOLS_FLAVOR_KERNEL := v66_stable
+ARCH_FLAVOR := v66t_latest
+KERNEL_CFLAGS += -DTINY_CORE
+else
+KERNEL_CFLAGS += -mhvx
+endif
+
+else # latest
+TOOLS_FLAVOR ?= v68_stable
+TOOLS_FLAVOR_KERNEL ?= v68_stable
+ARCH_FLAVOR ?= v68_latest
+KERNEL_CFLAGS += -mhvx -mhvx-length=128B
+DEVSIM := archsim
+endif
+endif
 endif
 endif
 
@@ -58,24 +86,26 @@ DEVICE_CONFIG ?= $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
 
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR) arch=$(ARCH_FLAVOR)
 
-export RUN_DEVSIM := $(DEVSIM) $(DEVSIM_EXTRA) --quiet --magic_angel --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(DEVICE_CONFIG)
+export RUN_DEVSIM := $(DEVSIM) $(DEVSIM_EXTRA) --quiet $(MAGIC_ANGEL) --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(DEVICE_CONFIG)
 
 export RUN_TOOLSIM := hexagon-sim --simulated_returnval --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
 #export RUN_TOOLSIM := hexagon-sim 
 
 export TOOLARCH := $(ARCHV)
+export KERNEL_TOOLARCH := $(ARCHV)
 ifeq (60, $(TOOLARCH))
-export TOOLARCH := 61
+export KERNEL_TOOLARCH := 61
+endif
+
+ifdef TINY_CORE
+export TOOLARCH := 66t
+export KERNEL_TOOLARCH := 66t
 endif
 
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
-#export TOOLARCH := 5
 export RUN := $(RUN_DEVSIM)
-#export RUN := $(RUN_TOOLSIM)
 else
-#export TOOLARCH := $(ARCHV)
 export RUN := $(RUN_TOOLSIM)
-#export RUN := $(RUN_DEVSIM)
 endif
 
 export SIM := $(RUN)

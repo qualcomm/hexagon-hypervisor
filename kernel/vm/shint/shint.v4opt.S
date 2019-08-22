@@ -220,6 +220,7 @@ FUNC_START H2K_vm_shint_post .text.vm.int .p2align 2 // s32 shint_post(vmblock,m
 #define TMP r9
 #define MASK r10
 #define ENABLE r11
+#define ENABLEVAL r12
 	{
 		WORDIDX_BITIDX = bitsplit(INTNO,#5)
 		NUM_INTS = memw(INFO+#INTINFO_num_ints)
@@ -245,13 +246,14 @@ FUNC_START H2K_vm_shint_post .text.vm.int .p2align 2 // s32 shint_post(vmblock,m
 	memw_locked(WADDR,p1) = TMP
 	{
 		if (!p1) jump 1b
-		ENABLE = memw(ENABLE+WORDIDX<<#2)
+		ENABLEVAL = memw(ENABLE+WORDIDX<<#2)
 	}
 	{
-		p0 = tstbit(ENABLE,BITIDX)
+		p0 = tstbit(ENABLEVAL, BITIDX)
 		if (!p0.new) jump:t .Lret_zero
 	}
 	jump H2K_vm_shint_deliver
+#undef ENABLEVAL
 #undef ENABLE
 #undef MASK
 #undef TMP

@@ -31,7 +31,6 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(hthread);
 	PRINT_CONTEXT_OFFSET(status);
 	PRINT_CONTEXT_OFFSET(vmstatus);
-	PRINT_CONTEXT_OFFSET(pmu_on);
 	PRINT_CONTEXT_OFFSET(tid);
 	PRINT_CONTEXT_OFFSET(status_prio_hthread_tid);
 	PRINT_CONTEXT_OFFSET(prio);
@@ -84,6 +83,9 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(tree);
 	PRINT_CONTEXT_OFFSET(rightleft);
 	PRINT_CONTEXT_OFFSET(timeout);
+#if ARCHV >= 68
+	PRINT_CONTEXT_OFFSET(dm0);
+#endif
 	fprintf(outfile, "#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
 #ifdef DO_EXT_SWITCH
 	fprintf(outfile, "#define EXT_CONTEXT_SIZE %d\n",sizeof(H2K_ext_context));
@@ -112,8 +114,12 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(phys_offset);
 	PRINT_KG_OFFSET(core_rev);
 	PRINT_KG_OFFSET(timer_intnum);
+
+#ifdef CRASH_DEBUG
 	PRINT_KG_OFFSET(crash_contexts);
 	PRINT_KG_OFFSET(crash_tlb);
+#endif
+
 	PRINT_KG_OFFSET(syscfg_val);
 	PRINT_KG_OFFSET(fatal_hook_and_arg);
 	PRINT_KG_OFFSET(fatal_hook_gp_ssr);
@@ -123,6 +129,10 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(l2_ack_base);
 	PRINT_KG_OFFSET(l2_intinfo);
 #endif
+	PRINT_KG_OFFSET(angel_lock);
+	PRINT_KG_OFFSET(info_boot_flags);
+	PRINT_KG_OFFSET(dma_version);
+
 	PRINT_KG_SUBSTRUCT_OFFSET(time,next_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_pcycles);
@@ -150,6 +160,7 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(tlbmissx);
 	PRINT_VMBLOCK_OFFSET(tlbmissrw);
 #endif
+	fprintf(outfile, "#define VMBLOCK_TOTALSIZE %d\n",sizeof(H2K_vmblock_t));
 
 	PRINT_STLB_OFFSET(valids);
 	PRINT_STLB_OFFSET(pagesize);

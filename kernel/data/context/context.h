@@ -12,6 +12,7 @@
 #include <max.h>
 
 #define H2K_CONTEXT_ALIGN 32
+#define H2K_EXTCONTEXT_ALIGN EXT_HVX_MAX_VLENGTH
 
 enum {
 	H2K_STATUS_DEAD = 0,
@@ -21,6 +22,28 @@ enum {
 	H2K_STATUS_VMWAIT,
 	H2K_STATUS_INTBLOCKED,
 };
+
+/*
+ * 64 bytes per thread of context that must stay present seems reasonable.
+ * 224-256 bytes per thread of context that can be put in DDR
+ * @ 100 threads, 6400 bytes in, seems reasonable
+ */
+
+/* If we're active, on a trap we want to save off r19-r16, r29:28, r31:30, continuation, ccrssr
+ * ... maybe that fits in the first 64 bytes.
+ * If we go to 5 cache lines, we'd want trap context in the first cache line, context_save context in first two lines,
+ * and switch in the rest.  
+ * ... so ...
+ * r31-r28, r19-r16, ccrssr, continuation, + 5 words from full ctx save
+ * r0-r15 lc0sa0 usr_preds [~20 words]
+ * rest of regs in switch
+ *
+ * I'm really concerned about having two separate locations.  Everywhere we have me->xxx it will be me->bulk->xxx.
+ * We can keep bulk pointer in SGP1, but then we won't have KSP there.  Unless we have some register storage in
+ * the first 64 bytes, we don't have a place to put the bulk pointer.  And it's another pointer load.
+ * r0100 may *have* to go there, because interrupts can abort blocking.  I guess that might solve the storage problem...
+ * though not in a great way.
+ */
 
 typedef struct _h2_thread_context
 {
@@ -32,7 +55,7 @@ typedef struct _h2_thread_context
 	/* Other info */
 	union {
 		struct {
-			u8_t tid;
+			u8_t tid;			// STID
 			u8_t hthread;			// could be < 8 bits
 			u8_t prio;
 			u8_t status;			// could be < 8 bits, combined with vmstatus?
@@ -46,26 +69,23 @@ typedef struct _h2_thread_context
 			u8_t vmstatus;
 			u8_t base_prio;	// Does it need to be atomic?
 			u8_t tlbidxmask;	// mask tlbidx
-			u8_t pmu_on;	// Does it need to be atomic?  1 bit NOT NEEDED post v6x SMMU
+			u8_t unused;
+					// island mode?
 		};
 	};
 	// #16
 	union {
 		u64_t vmblock_id;
 		struct {
-			H2K_id_t id;				// lower bits unused? Maybe union with vmstatus?
-			struct H2K_vmblock_struct *vmblock;	// could look up from GP + high bits of id
+			H2K_id_t id;				// lower bits unused? Maybe union with vmstatus? extra futex pa bits?
+			struct H2K_vmblock_struct *vmblock;	// could look up from GP + high bits of id. Not used so much. --> futex_ptr
 		};
 	};
 	// 24
 	struct {
 		u32_t trapmask;		// Alread in VMblock?  Maybe move it?  All threads in a VM have same trap mask?
-		u32_t elr;	// could be in zeroed area.
+		u32_t elr;	// could be in zeroed area. --> bulk storage ptr
 	};
-	/* status, etc */
-	/* Context */
-	/* Context required for OS calls... callee save + ugp/gp/etc */
-	/* Need to add per-cpu interrupts in here */
 	// 32
 	union {
 		struct {
@@ -74,6 +94,7 @@ typedef struct _h2_thread_context
 		};
 		H2K_treenode_t tree;
 	};
+	// 48
 	struct {
 		union {	// maybe change to 16 bits or even 8 bits?  Saves 1-1.5 words
 			u32_t cpuint_enabled_pending;
@@ -82,12 +103,12 @@ typedef struct _h2_thread_context
 				u16_t cpuint_enabled;
 			};
 		};
-		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.
+		void *gevb;		// isn't necessarily the same for all CPUs in a guest.  Also, we want it quickly.  Can move to DDR, don't zero though
 	};
-	u64_t totalcycles;
+	u64_t totalcycles;		// can move to ddr, don't zero though
 	// 64
 	u64_t pktcount;
-	union {
+	union {	// need to keep futex ptr in TCM if split
 		struct {
 			u32_t futex_ptr_lo;		// Probably not needed if interrupted; only on trap; could be unioned below?
 			// needs to be pa_t, but is word aligned.  For 36 bits pa, can be 34 bits... 
@@ -235,12 +256,17 @@ typedef struct _h2_thread_context
 		};
 	};
 	// 288
+#if ARCHV >= 68
+	u32_t dm0;
+	// 292
+#endif
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
 
+/* Big enough for 128-byte contexts. FIXME: size this space dynamically */
 typedef struct {
-	u32_t vregs[32][8];
-	u32_t qregs[8];
-} __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_ext_context;
+	u32_t vregs[32 * EXT_HVX_MAX_VLENGTH / 4];
+	u32_t qregs[32];
+} __attribute__((aligned(H2K_EXTCONTEXT_ALIGN))) H2K_ext_context;
 
 typedef struct {
 	H2K_thread_context context;

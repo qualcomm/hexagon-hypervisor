@@ -8,6 +8,8 @@
 #include <max.h>
 #include <symbols.h>
 #include <hw.h>
+#include <bzero.h>
+#include <cfg_table.h>
 
 H2K_kg_t H2K_kg;
 
@@ -17,19 +19,16 @@ extern u64_t H2K_stacks;
 extern void _end();
 
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) {
-	int i;
-	u64_t *x;
 	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
+#ifdef HAVE_EXTENSIONS
+	u32_t have_hvx;
+#endif
 
-	x = (u64_t *)&H2K_kg;
-	for (i = 0; i < sizeof(H2K_kg)/sizeof(*x); i++) {
-		x[i] = 0;
-	}
+	H2K_bzero(&H2K_kg,sizeof(H2K_kg));
 
 	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
 
 	H2K_kg.phys_offset = phys_offset;
-	H2K_kg.tlb_index = 0;
 	H2K_kg.last_tlb_index = last_tlb_index;
 	H2K_kg.tlb_size = tlb_size;
 	H2K_kg.pinned_tlb_mask = (~0ULL) << ((last_tlb_index+1) & 0x3F);
@@ -41,26 +40,94 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.l2_ack_base = (void *)(l2vic_base + 0x200);
 #endif
 
-	if (*(int *)((unsigned long)_end + 8) == 0x1f1f1f1f) {
-		H2K_kg.on_simulator = 1;
-	} else {
-		H2K_kg.on_simulator = 0;
-	}
-
 	H2K_kg.stlbptr = NULL;
 	H2K_kg.build_id = H2K_GIT_COMMIT;
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 
 #ifdef HAVE_EXTENSIONS
-	/* HVX present?  V6[02][AE]. */
-	if ((CORE_V60 == H2K_kg.arch
-			 || CORE_V62 == H2K_kg.arch
-			 || CORE_V65 == H2K_kg.arch)
-			&& ((CORE_V6_A == H2K_kg.uarch) || (CORE_V6_A == H2K_kg.uarch))) {
-		H2K_kg.info_boot_flags.boot_have_hvx = 1;
+	/* HVX present? */
+	if (0x65 < H2K_kg.arch) {
+		have_hvx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) == CFG_TABLE_COPROC_TYPE_HVX);
+		H2K_kg.hvx_contexts = (have_hvx ? H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS) : 0);
+#ifdef CLUSTER_SCHED_HACK
+		H2K_kg.cluster_hthreads = (Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
+#endif	 
 	} else {
-		H2K_kg.info_boot_flags.boot_have_hvx = 0;
+		switch(H2K_kg.arch) {
+		case CORE_V60:
+			switch(H2K_kg.uarch) {
+			case CORE_V6_A:
+			case CORE_V6_E:
+				have_hvx = 1;
+				break;
+			default:
+				have_hvx = 0;
+			}
+			break;
+		case CORE_V61:
+			have_hvx = 0;
+			break;
+		case CORE_V62:
+			switch(H2K_kg.uarch) {
+			case CORE_V6_A:
+			case CORE_V6_E:
+				have_hvx = 1;
+				break;
+			default:
+				have_hvx = 0;
+			}
+			break;
+		case CORE_V65:
+			switch(H2K_kg.uarch) {
+			case CORE_V6_A:
+				have_hvx = 1;
+				break;
+			default:
+				have_hvx = 0;
+			}
+			break;
+		default:
+			have_hvx = 0;
+		}
+		H2K_kg.hvx_contexts = EXT_HVX_CONTEXTS;
 	}
+	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
+
+	if (have_hvx) {
+		if (0x67 < H2K_kg.arch) {
+			H2K_kg.hvx_vlength = 0x1 << H2K_cfg_table(CFG_TABLE_COPROC_VLENGTH);
+		} else {
+			if ((H2K_kg.uarch == CORE_V6_G) || (H2K_kg.uarch == CORE_V6_Q)) {
+				H2K_kg.hvx_vlength = 128;
+			} else {
+				H2K_kg.hvx_vlength = 64;
+			}
+		}
+	} else {
+		H2K_kg.hvx_vlength = 0;
+	}
+
+	if (0x67 < H2K_kg.arch) {
+		H2K_kg.hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_SIZE) != 0);  // exists?
+		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_kg.hmx_units > 0);
+		H2K_kg.dma_version = H2K_cfg_table(CFG_TABLE_DMA_VERSION);
+		H2K_kg.info_boot_flags.boot_have_dma = (H2K_kg.dma_version > 0);
+	} else {
+		H2K_kg.hmx_units = 0;
+		H2K_kg.info_boot_flags.boot_have_hmx = 0;
+		H2K_kg.dma_version = 0;
+		H2K_kg.info_boot_flags.boot_have_dma = 0;
+	}
+
+	H2K_kg.info_boot_flags.boot_ext_ok = have_hvx && (!(H2K_kg.syscfg_val & SYSCFG_V2X))
+		&& (H2K_kg.hthreads <= H2K_kg.hvx_contexts);
+
+#endif
+
+#ifdef DO_PROFILE
+	H2K_kg.info_boot_flags.boot_have_sample = 1;
+#else
+	H2K_kg.info_boot_flags.boot_have_sample = 0;
 #endif
 
 	switch(H2K_kg.arch) {
@@ -78,10 +145,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		break;
 	}
 
-#ifndef NUM_HTHREADS
+	H2K_kg.tcm_base = H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT;
 
-	H2K_kg.hthreads = get_hthreads();
-#else
-	H2K_kg.hthreads = NUM_HTHREADS;
-#endif
 }

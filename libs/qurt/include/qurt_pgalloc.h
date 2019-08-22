@@ -22,4 +22,6 @@ unsigned int qurt_pgalloc(struct qurt_freelist_node **ptr,unsigned int addr,unsi
  */
 void qurt_pgfree(struct qurt_freelist_node **ptr,unsigned int addr,unsigned int size);
 
+void qurt_pgalloc_init();
+
 #endif

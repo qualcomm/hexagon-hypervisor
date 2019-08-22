@@ -2,7 +2,7 @@
 #  This behaves kind of like a SUBDIRS makefile.
 #  It is meant to be run from the top level ob directory.
 
-SUBDIRS:=$(shell cat ./scripts/testlist | perl -p -e 's/^\s*\#.*//;')
+SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/^\s*\#.*//;')
 
 all:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all

@@ -20,8 +20,18 @@
 	 * Assumes ring aligned
 	 */
 
+//H2K_ringnode_t *H2K_ring_next_real(H2K_ringnode_t *ring, H2K_ringnode_t *node)
+FUNC_START H2K_ring_next_real .text.core.ring  .p2align  3
+	r2 = memw(r1)  // node->next
+	{
+		p0 = cmp.eq(r2, r0)  // node->next == ring
+		if (p0.new) r0 = #0  // return NULL
+		if (!p0.new) r0 = r2 // return node->next
+		jumpr r31
+	}
+
 // H2K_ring_remove_real(H2K_ringnode_t **ring, H2K_ringnode_t *node)
-FUNC_START H2K_ring_remove_real  .text.core.ring  .p2align  3
+FUNC_START H2K_ring_remove_real .text.core.ring .falign
 	{
 		r4 = memw(r0)
 		r3:2 = memd(r1) // prev:next

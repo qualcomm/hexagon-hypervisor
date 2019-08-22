@@ -51,7 +51,7 @@ $(H2_COMPAT_LIB): tmp $(H2_LIB) $(POSIX_LIB)
 qurt/libqurt.a: tmp $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
 	+${MAKE_LIB};
 
-syscall/angel/libangel.a: tmp $(H2_LIB) $(POSIX_LIB)
+syscall/angel/libangel.a: tmp $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
 	+${MAKE_LIB};
 
 $(SOS_LIB): tmp $(H2_LIB)

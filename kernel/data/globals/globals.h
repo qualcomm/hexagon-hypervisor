@@ -12,6 +12,8 @@
 #include <futex.h>
 #include <vm.h>
 #include <stlb.h>
+#include <asid_types.h>
+#include <spinlock.h>
 #include <timeinfo.h>
 #include <h2_common_info.h>
 #include <h2_common_kerror.h>
@@ -60,7 +62,7 @@ typedef struct {
 		struct {
 			u32_t arch:8;
 			u32_t uarch:4;
-			u32_t l2size:4;
+			u32_t l2arr:4;
 			u32_t metal:16;
 		};
 	};
@@ -76,11 +78,29 @@ typedef struct {
 	};
 #endif
 	u32_t timer_intnum;
-#ifdef HAVE_EXTENSIONS
 	u32_t *hvx_clock;
 	u32_t *hvx_reset;
 	u32_t *hvx_power;
+#if ARCHV >= 65
+	u32_t *hvx_bhs_status;
+	u32_t *hvx_bhs_cfg;
+	u32_t *hvx_bhs_cmd;
+	u32_t *hvx_cpmem_cfg;
+	u32_t *hvx_cpmem_cmd;
+	u32_t *hvx_cpmem_status;
+#endif
 	u32_t hvx_state;
+	u32_t hvx_vlength;   // native vector length
+	u32_t hvx_contexts;  // # of native length
+	u32_t hmx_units;
+
+#ifdef CLUSTER_SCHED_HACK
+#define XE_SET_SET(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] |= (0x1 << HTHREAD))
+#define XE_SET_CLR(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] &= ~(0x1 << HTHREAD))
+#define XE_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe_set[CLUSTER]))
+	u32_t xe_set[2];         // bitmap of hw threads that have ssr:xe set in each cluster
+	u32_t cluster_hthreads;  // hardware threads per cluster
+	u32_t cluster_sched;     // do cluster scheduling?
 #endif
 
 	union {
@@ -101,29 +121,53 @@ typedef struct {
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
 	u32_t last_tlb_index;
+	H2K_spinlock_t tmpmap_lock;
 	u32_t tlb_size;
 	u64_t pinned_tlb_mask;
+	H2K_spinlock_t asid_spinlock;
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];
 	u64_t waitcycles[MAX_HTHREADS];
+#ifdef DO_PROFILE
+	u64_t prof_sample[MAX_HTHREADS];
+	u32_t prof_sample_pending;
+	H2K_spinlock_t prof_sample_lock;
+#endif
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
-	u32_t on_simulator;
 	u32_t phys_offset;
-	u32_t l2_tags;
-	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
-	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
-	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
-	H2K_thread_context crash_contexts[MAX_HTHREADS];
-	u64_t crash_tlb[MAX_TLB_ENTRIES];
-	u32_t crash_l2vic_enabled[MAX_INTERRUPTS/32];
-	u32_t crash_l2vic_pending[MAX_INTERRUPTS/32];
 	u32_t build_id;
 	info_boot_flags_type info_boot_flags;
 	info_stlb_type info_stlb;
 	kerror_type kernel_error;
 	u32_t hthreads;
+	u32_t hthreads_mask;
+	u32_t tcm_base; // FIXME: pa_t ?
+	u32_t tcm_size;
+	u32_t l2size;
+	u32_t l2tags;
+	u32_t ecc_enable;
+	u32_t dma_version;
+
+	H2K_spinlock_t logbuf_lock;
+	char *logbuf;
+	u32_t logbuf_pos;  // first free byte
+	u32_t logbuf_enable;
+	u32_t log_enable;
+	H2K_spinlock_t angel_lock;
+
+#ifdef CRASH_DEBUG
+	u64_t crash_tlb[MAX_TLB_ENTRIES];
+	u32_t crash_l2vic_enabled[MAX_INTERRUPTS/32];
+	u32_t crash_l2vic_pending[MAX_INTERRUPTS/32];
+	H2K_thread_context crash_contexts[MAX_HTHREADS];
+#endif
+		
+	H2K_inthandler_t inthandlers[MAX_INTERRUPTS] __attribute__((aligned(32)));
+	H2K_thread_context *futexhash[FUTEX_HASHSIZE] __attribute__((aligned(FUTEX_HASHSIZE * sizeof(void *))));
+	H2K_asid_entry_t asid_table[MAX_ASIDS] __attribute__((aligned(MAX_ASIDS*sizeof(H2K_asid_entry_t))));
+	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");

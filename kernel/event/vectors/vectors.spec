@@ -9,7 +9,7 @@ ASM_REF_CODE(Vectors cannot be written in C)
 H2K_event_vectors
 -----------------
 
-.. cfunction:: H2K_event_vectors()
+.. c:function:: H2K_event_vectors()
 
 Description
 ~~~~~~~~~~~
@@ -65,7 +65,7 @@ Important cases
 14. Invalid input.
 15. Invalid input.
 
-16-48 should jump to :cfunc:`H2K_handle_int()`.
+16-48 should jump to :c:func:`H2K_handle_int()`.
 
 Harness
 ~~~~~~~

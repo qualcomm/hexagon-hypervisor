@@ -12,11 +12,8 @@ FUNC_START h2_get_pcycles .text.h2.cycles .p2align 3
 	jumpr r31
 FUNC_END h2_get_pcycles
 
-FUNC_START h2_get_core_pcycles .text.h2.cycles .p2align 3
-	//trap0(#H2_TRAP_GET_PCYCLES)
-	//r1:0 = c15:14
-	// FIXME: when assembler guys allow it, use real instruction
-	.word 0x680ec000		// seriously, assembler guys...
+FUNC_START h2_get_core_pcycles_trap .text.h2.cycles .p2align 3
+	trap0(#H2_TRAP_GET_PCYCLES)
 	jumpr r31
-FUNC_END h2_get_core_pcycles
+FUNC_END h2_get_core_pcycles_trap
 

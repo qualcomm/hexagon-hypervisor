@@ -24,6 +24,7 @@ extern "C" {
 #include "h2_vm.h"
 #include "h2_waitcycles.h"
 #include "h2_atomic.h"
+#include "h2_intpool.h"
 
 #ifdef __cplusplus
 } /* closing brace for extern "C" */

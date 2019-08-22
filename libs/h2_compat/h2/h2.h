@@ -32,6 +32,7 @@ extern "C" {
 #include "h2_sem.h"
 #include "h2_rmutex.h"
 #include "h2_vecaccess.h"
+#include "h2_mxaccess.h"
 #include "h2_debug.h"
 #include "h2_sleep.h"
 #include "h2_thread_compat.h"

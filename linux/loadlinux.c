@@ -15,6 +15,7 @@
 #include <h2_vm.h>
 #include <h2_config.h>
 #include <h2_vmtraps.h>
+#include <h2_kerror.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +26,8 @@
 
 #define TOTAL_INTS 288
 
-#define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
+//#define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
+#define SHARED_INTS (TOTAL_INTS + 32)
 #define VCPU_STACK_SIZE 1024
 #define LINUX_VM_PRIO 3
 #define UCOS_VM_PRIO 1
@@ -109,7 +111,7 @@ void setup_ints(unsigned long vm, char num_cpus) {
 #endif
 
 	for (i = (0 + INTERRUPT_SHIFT); i < TOTAL_INTS; i++) {
-		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i-INTERRUPT_SHIFT, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
+		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i - INTERRUPT_SHIFT, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
 				FAIL("MAP_PHYS_INTR");
 		}
 	}
@@ -217,11 +219,56 @@ void handle_child_int() {
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
 }
 
+void print_infos() {
+#ifndef NO_PRINT
+	info_boot_flags_type boot_flags;
+	info_stlb_type  stlb_info;
+
+	boot_flags.raw = h2_info(INFO_BOOT_FLAGS);
+	stlb_info.raw = h2_info(INFO_STLB);
+
+	printf("H2/core info:\n");
+	printf("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
+	printf("\tHVX present: ");
+	printf((boot_flags.boot_have_hvx ? "true\n" : "false\n"));
+	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
+	printf("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
+	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
+	printf("\tH2 kernel in TCM: ");
+	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
+	printf("\tTCM base: 0x%08x\n", h2_info(INFO_TCM_BASE));
+	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
+	printf("\tTCM size: %dK\n", h2_info(INFO_TCM_SIZE) / 1024);
+
+	printf("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
+	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
+	printf("\tSTLB:\n");
+	printf("\t\tEnabled: ");
+	if (stlb_info.stlb_enabled) {
+		printf("true\n");
+		printf("\t\tSets per ASID: %d\n", 1 << stlb_info.stlb_max_sets_log2);
+		printf("\t\tWays: %d\n", stlb_info.stlb_max_ways);
+		printf("\t\tSize: %d\n", stlb_info.stlb_size);
+		printf("\t\tEntries: %dK\n", ((1 << stlb_info.stlb_max_sets_log2) * stlb_info.stlb_max_ways * stlb_info.stlb_size) / 1024);
+	} else {
+		printf("false\n");
+	}
+	printf("\tsyscfg: 0x%08x\n", h2_info(INFO_SYSCFG));
+	printf("\trev: 0x%08x\n", h2_info(INFO_REV));
+	printf("\tSubsystem base: 0x%08x\n", h2_info(INFO_SSBASE));
+	printf("\tL2VIC physical base: 0x%08x\n", h2_info(INFO_L2VIC_BASE));
+	printf("\tTimer physical base: 0x%08x\n", h2_info(INFO_TIMER_BASE));
+	printf("\tTimer interrupt: %d\n", h2_info(INFO_TIMER_INT));
+	printf("\tRunning HW threads mask: 0x%08x\n", h2_info(INFO_HTHREADS));
+#endif
+}
+
 int main(int argc, char *argv[]) {
 
 	char fname[256] = "vmlinux.bin";
 	unsigned long linux_vm;
 	int status, cpus;
+	unsigned int kerror;
 
 	if (argc > 1) {
 		sscanf(argv[1], "%s", fname);
@@ -229,16 +276,32 @@ int main(int argc, char *argv[]) {
 
 	PRINTF("loadlinux: H2 started\n");
 
+	// check for kernel boot errors
+	kerror = h2_info(INFO_ERROR);
+	if (kerror != KERROR_NONE) {
+		PRINTF("\nKernel error: %s\n\n", kerror_msg[kerror]);
+		print_infos();
+#ifdef NO_PRINT
+		while (1);
+#else
+		return 1;
+#endif
+	}
+
 	h2_vmtrap_setvec(bootvm_vectors);
 	if (h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0) < 0) {
 		FAIL("H2K_INTOP_GLOBEN, H2K_VM_CHILDINT");
 	}
+
+	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
 
 #ifndef NO_STLB
 	if (h2_config_stlb_alloc() < 0) {
 		FAIL("STLB alloc");
 	}
 #endif
+
+	print_infos();
 
 	boot_ucos();
 

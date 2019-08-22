@@ -33,6 +33,7 @@
  * Returns the address allocated.
  */
 #include <qurt.h>
+#include "qurt_s5alloc.h"
 
 #ifdef DEBUG_BIST
 #define qurt_malloc malloc
@@ -46,6 +47,8 @@
 #define fatal qurt_exception_raise_fatal
 #endif
 
+/* create stream or use 16-byte stream shared w/ qurt mem? */
+
 static inline unsigned int log2_rounddown(unsigned int x)
 {
 	return (31-__builtin_clz(x|1));
@@ -56,6 +59,25 @@ struct qurt_freelist_node {
 	unsigned int base;
 	unsigned int size;
 };
+
+qurt_s5id_t freelist_s5;
+
+static unsigned int freelist_storage[3*128];
+
+void more_freelist_storage(void *data, qurt_s5id_t s5id, unsigned int elementsize)
+{
+	void *tmp;
+	if ((tmp = qurt_malloc(elementsize*128)) == NULL) return;
+	qurt_s5_feed(freelist_s5,tmp,elementsize*128);
+}
+
+void qurt_pgalloc_init()
+{
+	if ((freelist_s5 = qurt_s5_create(sizeof(struct qurt_freelist_node),more_freelist_storage,NULL)) < 0) {
+		fatal();
+	}
+	qurt_s5_feed(freelist_s5,freelist_storage,sizeof(freelist_storage));
+}
 
 static unsigned int rechunk(struct qurt_freelist_node **ptr,unsigned int addr,unsigned int size,unsigned int alignhint)
 {
@@ -94,7 +116,7 @@ static unsigned int rechunk(struct qurt_freelist_node **ptr,unsigned int addr,un
 		if (left == NULL) right = tmp;
 		else {
 			/* Two nodes */
-			if ((right = qurt_malloc(sizeof(*right))) == NULL) fatal();
+			if ((right = qurt_s5_alloc(freelist_s5)) == NULL) fatal();
 			right->next = left->next;
 			left->next = right;
 		}
@@ -104,7 +126,7 @@ static unsigned int rechunk(struct qurt_freelist_node **ptr,unsigned int addr,un
 	if ((left == NULL) && (right == NULL)) {
 		/* zero nodes */
 		*ptr = tmp->next;
-		qurt_free(tmp);
+		qurt_s5_free(freelist_s5,tmp);
 	}
 	return addr;
 }
@@ -133,7 +155,7 @@ void try_coalesce(struct qurt_freelist_node *left)
 	if ((left->base+left->size) == (right->base)) {
 		left->size += right->size;
 		left->next = right->next;
-		qurt_free(right);
+		qurt_s5_free(freelist_s5,right);
 	}
 }
 
@@ -161,7 +183,7 @@ void qurt_pgfree(struct qurt_freelist_node **ptr,unsigned int addr,unsigned int 
 		break;
 	}
 	/* Need to make a new node, possibly because we're at the end. */
-	if ((newnode = qurt_malloc(sizeof(*newnode))) == NULL) fatal();
+	if ((newnode = qurt_s5_alloc(freelist_s5)) == NULL) fatal();
 	newnode->base = addr;
 	newnode->size = size;
 	newnode->next = *ptr;

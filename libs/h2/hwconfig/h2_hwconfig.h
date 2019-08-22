@@ -55,6 +55,31 @@ static inline int h2_hwconfig_l2_set_reg(unsigned int offset, unsigned int val)
 }
 
 /**
+Get CLADE register.
+@param[in] offset  Offset from CLADE register base
+@returns register value or -1 on failure
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_clade_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETCLADEREG, NULL, offset, 0);
+}
+
+/**
+Set CLADE register.
+@param[in] offset  Offset from CLADE register base
+@param[in] val  Value to write
+@returns previous register value or -1 on failure
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_clade_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETCLADEREG, NULL, offset, val);
+}
+
+/**
 Configure the L2 cache size.
 @param[in] sizeval	Size to configure the L2 cache
 @param[in] use_wb	1 enables write-back mode in the L2, 0 disables write-back mode
@@ -91,6 +116,18 @@ Configure prefetch.
 static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int prefetch_cfg)
 {
 	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, prefetch_cfg);
+}
+
+/**
+Set XE2 bit.
+@param[in] xe2 XE2 value
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_hmxbits(unsigned int xe2)
+{
+	return h2_hwconfig_trap(HWCONFIG_HMXBITS, NULL, xe2, 0);
 }
 
 /**
@@ -163,6 +200,65 @@ Control interrupt hardware directly
 static inline int h2_hwconfig_hwintop(unsigned int op, unsigned int intno, unsigned int val)
 {
 	return h2_hwconfig_trap(HWCONFIG_HWINTOP, NULL, (op << 16) | intno, val);
+}
+
+/**
+Start hardware threads with mask (-1 to start all)
+@param[in] mask Mask of thread numbers to start
+@returns mask of threads started on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_hwthreads_mask(unsigned int mask) {
+
+	return h2_hwconfig_trap(HWCONFIG_HWTHREADS_MASK, NULL, mask, 0);
+}
+
+/**
+Start number of hardware threads
+@param[in] num Number of threads to start
+@returns number of threads started on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_hwthreads_num(unsigned int num) {
+
+	return h2_hwconfig_trap(HWCONFIG_HWTHREADS_NUM, NULL, num, 0);
+}
+
+/**
+Enable/Disable memory ECC
+@param[in] ecc_enable 1 == enable, 0 == disable
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_ecc(unsigned int ecc_enable) {
+
+	return h2_hwconfig_trap(HWCONFIG_ECC, NULL, ecc_enable, 0);
+}
+
+/**
+Read DMA configuration register
+@param[in] index  Index of register to read
+@returns Register value on success, negative value on error
+@dependencies none
+*/
+static inline int h2_hwconfig_dma_getcfg(unsigned int index) {
+
+	return h2_hwconfig_trap(HWCONFIG_GETDMACFG, NULL, index, 0);
+}
+
+/**
+Write DMA configuration register
+@param[in] index  Index of register to write
+@param[in] data  Data value to write
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+static inline int h2_hwconfig_dma_setcfg(unsigned int index, unsigned int data) {
+
+	return h2_hwconfig_trap(HWCONFIG_SETDMACFG, NULL, index, data);
 }
 
 #endif

@@ -79,7 +79,7 @@ u32_t TH_expected_table_dec = 0;
 u32_t TH_saw_table_inc = 0;
 u32_t TH_saw_table_dec = 0;
 
-s32_t H2K_asid_table_inc(u32_t newptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
+s32_t H2K_asid_table_inc(u32_t newptb, translation_type type, tlb_invalidate_flag flag, u32_t extra, H2K_vmblock_t *vmblock)
 {
 	if (TH_expected_table_inc == 0) FAIL("Unexpected inc");
 	TH_expected_table_inc = 0;

@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#ifndef H2K_ALLOC_H
+#define H2K_ALLOC_H 1
+
 #include <c_std.h>
 
 /* Return size to make testing easier */
@@ -24,7 +27,8 @@ typedef union {
 } H2K_mem_alloc_tag_t;
 
 H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request);
-H2K_mem_alloc_tag_t *H2K_mem_alloc_free(u32_t *ptr);
-void H2K_mem_alloc_release(u32_t *ptr);
+static inline void *H2K_mem_alloc(u32_t request) { return H2K_mem_alloc_get(request).ptr; }
+H2K_mem_alloc_tag_t *H2K_mem_alloc_free(void *ptr);
 void H2K_mem_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size);
 
+#endif

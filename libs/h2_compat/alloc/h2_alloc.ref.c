@@ -58,3 +58,25 @@ void h2_free(void *ptr)
 	h2_plainmutex_unlock(&memlock);
 }
 
+void *h2_galloc(h2_galloc_t *alloc, unsigned int size, unsigned int align, int chain) {
+
+	unsigned int addr;
+	void *ret = NULL;
+
+	do {
+		h2_plainmutex_lock(&alloc->lock);
+		addr = H2_ALIGN_UP(alloc->cur, align);
+
+		if (addr + size <= alloc->base + alloc->size) {
+			ret = (void *)addr;
+			alloc->cur = addr + size;
+			h2_plainmutex_unlock(&alloc->lock);
+			break;
+		} else {
+			h2_plainmutex_unlock(&alloc->lock);
+			alloc = alloc->next;
+		}
+	} while (chain && alloc);
+
+	return ret;
+}

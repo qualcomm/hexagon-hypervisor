@@ -245,6 +245,7 @@ void pthread_mainthread_setup()
 {
 	struct pthread_tcb *self = &mainthread_static_storage.main_tcb;
 	self->id = h2_thread_myid();
+	self->attrs.detached = 1;
 	pthread_create_common(self);
 	pthread_special_setup(self);
 	pthread_tcb_add(self);

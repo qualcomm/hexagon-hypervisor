@@ -19,6 +19,9 @@ default-target: all
 
 include $(H2DIR)/scripts/Makefile.inc.tools
 
+export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
+
+
 ifeq ($(MODEL),)
    MODEL = ref
    MODELSTR = ${MODEL}
@@ -57,7 +60,7 @@ TIMING ?= --timing
 
 BUSPENALTY ?= --buspenalty 50
 
-ULIMIT ?= 180
+ULIMIT ?= 300
 
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
@@ -145,13 +148,15 @@ LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
 CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g
 ifndef STANDALONE
-LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0 -Wl,--defsym=__h2_thread_stop_hook__=0 -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+
+# 0xfffffff0 means don't call the hook
+LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
 endif
 endif
 
 ifdef STANDALONE
 CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
-LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0 -Wl,--defsym=__h2_thread_stop_hook__=0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
+LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
 ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
 
 else # non-STANDALONE
@@ -167,7 +172,7 @@ endif # BOOT
 CFLAGS += -I ${INSTALLPATH}/include
 ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${INSTALLPATH}/include
 endif #STANDALONE
-LDFLAGS+= -mv${TOOLARCH}
+LDFLAGS+= -mv${TOOLARCH} -Qunused-arguments
 #  Turn on call() support for assertion checking
 #CFLAGS += -DDEBUG
 #  Optimization level needs to match whatever the kernel is compiled with.

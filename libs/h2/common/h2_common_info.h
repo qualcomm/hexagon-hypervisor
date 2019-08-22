@@ -26,14 +26,31 @@ typedef enum {
 	INFO_TIMER_BASE,  /**< Timer physical address */
 	INFO_TIMER_INT,   /**< Timer interrupt number */
 	INFO_ERROR,       /**< Kernel error */
+	INFO_HTHREADS,    /**< Running hw threads mask */
+	INFO_L2TAG_SIZE,  /**< L2 cache tag size */
+	INFO_L2CFG_BASE,  /**< L2 regs base */
+	INFO_CLADE_BASE,  /**< CLADE regs base */
+	INFO_CFGBASE,     /**< cfgbase register */
+	INFO_HVX_VLENGTH, /**< HVX native (no v2x) vector length, in bytes */
+	INFO_HVX_CONTEXTS,/**< Number of HVX contexts (no v2x) */
+	INFO_HVX_SWITCH,  /**< HVX context switch in kernel active */
+	INFO_VTCM_BASE,   /**< VTCM base address */
+	INFO_VTCM_SIZE,   /**< VTCM size */
+	INFO_ECC_BASE,    /**< ECC base */
+	INFO_L2_LINE_SZ,  /**< L2 cache line size */
+	INFO_AUDIO_EXT,   /**< Audio extension type */
 	INFO_MAX
 } info_type;
 
 typedef union {
 	struct {
-		unsigned long boot_use_tcm:1;  /**< Hypervisor in TCM? */
-		unsigned long boot_have_hvx:1;
-		unsigned long boot_unused:30;
+		unsigned long boot_use_tcm:1;     /**< Hypervisor in TCM? */
+		unsigned long boot_have_hvx:1;    /**< Core has HVX? */
+		unsigned long boot_have_sample:1; /**< PC sampling enabled ? */
+		unsigned long boot_ext_ok:1;      /**< Kernel can switch extended contexts? */
+		unsigned long boot_have_dma:1;    /**< Core has user-mode DMA? */
+		unsigned long boot_have_hmx:1;    /**< Core has HMX? */
+		unsigned long boot_unused:26;
 	};
 	unsigned long raw;
 } info_boot_flags_type;

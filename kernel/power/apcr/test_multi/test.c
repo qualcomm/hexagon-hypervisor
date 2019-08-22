@@ -27,7 +27,7 @@
 #ifdef RTL
 #define ITERS 1
 #ifndef INTERRUPT_NUM
-#define INTERRUPT_NUM 32
+#define INTERRUPT_NUM 2
 #endif
 #else
 #define ITERS 2
@@ -129,6 +129,8 @@ int main()
 	unsigned long tmp;
 	asm volatile (" %0 = ugp " : "=r"(tmp));
 	main_ugp = tmp;
+
+	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
 
 	vm = h2_config_vmblock_init(0,SET_CPUS_INTS, TASKS + 1, 0);
 	h2_config_vmblock_init(vm, SET_PMAP_TYPE, (unsigned int)offset.raw, H2K_ASID_TRANS_TYPE_OFFSET);

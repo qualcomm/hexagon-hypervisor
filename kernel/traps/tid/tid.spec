@@ -6,7 +6,7 @@
 H2K_tid_set
 -----------
 
-.. cfunction:: void H2K_tid_set(u32_t tid, H2K_thread_context *me)
+.. c:function:: void H2K_tid_set(u32_t tid, H2K_thread_context *me)
 
 	:param tid: the new TID value for the current thread
 	:param me: Pointer to the context for the current thread
@@ -25,7 +25,7 @@ We set the TID value in ``me->tid``, and also put it in the TID register.
 H2K_tid_get
 -----------
 
-.. cfunction:: u32_t H2K_tid_get(H2K_thread_context *me)
+.. c:function:: u32_t H2K_tid_get(H2K_thread_context *me)
 
 	:param me: pointer to the context for the current thread
 	:returns: the chosen TID

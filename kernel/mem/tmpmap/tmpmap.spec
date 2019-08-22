@@ -1,12 +1,12 @@
 :mod:`tmpmap` -- Add/remove temporary translation
-========================================
+=================================================
 
 .. module:: tmpmap
 
 H2K_tmpmap_add_and_lock
 -----------------------
 
-.. cfunction:: u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc)
+.. c:function:: u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc)
 
 	:param pa:  physical address to map
 	:param cccc:  cacheability attributes
@@ -25,7 +25,7 @@ Acquire tmpmap_lock; lock TLB; free up a TLB entry by decrementing last_tlb_inde
 H2K_tmpmap_remove_and_unlock
 ----------------------------
 
-.. cfunction:: void H2K_tmpmap_remove_and_unlock()
+.. c:function:: void H2K_tmpmap_remove_and_unlock()
 
 Description
 ~~~~~~~~~~~
@@ -42,7 +42,7 @@ Lock TLB; invalidate temporary entry; increment last_tlb_index; unlock TLB; rele
 H2K_tmpmap_init
 ---------------
 
-.. cfunction:: void H2K_tmpmap_init()
+.. c:function:: void H2K_tmpmap_init()
 
 Description
 ~~~~~~~~~~~

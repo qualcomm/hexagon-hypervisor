@@ -66,7 +66,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 		VIDVAL = VID
 	}
 	{
-		ISL2INT = cmp.eq(INTNO,#31)
+		ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 		if (ISL2INT.new) INTNO = add(VIDVAL,#32)
 		TRACEDATAHI = #H2K_TRACE_INTERRUPT
 	}
@@ -76,7 +76,7 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	}
 	{
 		BUFADDR = addasl(BUFADDR,OLDIDX,#3)
-		CIADVAL = mux(ISL2INT,##0x80000000,#0)
+		CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 		trace(TRACEDATAHI)
 	}
 	{
@@ -129,7 +129,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		VIDVAL = VID			// vector ID if L2 interrupt
 	}
 	{
-		ISL2INT = cmp.eq(INTNO,#31)		// L2 interrupt?
+		ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)		// L2 interrupt?
 		if (ISL2INT.new) INTNO = add(VIDVAL,#32)	// Yes, use VID + offset
 		ME = sgp0			// scheduled task or garbage
 	}
@@ -148,7 +148,9 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		if (!ISPREEMPT) ELRTMP = #-1
 	}
 	{
-		CIADVAL = mux(ISL2INT,##0x80000000,#0)	// Value to CIAD if L2 interrupt
+		CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)	// Value to CIAD if L2 interrupt
+#undef ISL2INT
+		p0 = cmp.eq(INTINFO_FN, #0)	// really, we shouldn't get NULL interrupt handlers, but if we do...
 		trace(TRACEDATAHI)
 	}
 	{
@@ -157,7 +159,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 	}
 	elr = ELRTMP
 	{
-		callr INTINFO_FN
+		if (!p0) callr INTINFO_FN
 		r1:0 = combine(ME,INTNO)
 		r3:2 = combine(INTINFO_VAL,HTNUM)
 	}

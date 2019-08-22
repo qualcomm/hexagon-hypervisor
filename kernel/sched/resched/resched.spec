@@ -7,7 +7,7 @@
 H2K_resched
 -----------
 
-.. cfunction:: void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hthread)
+.. c:function:: void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hthread)
 
 	:param unused: unused
 	:param me: A pointer to the currently running thread's context (NULL if idle thread was interrupted)
@@ -16,7 +16,7 @@ H2K_resched
 Description
 ~~~~~~~~~~~
 
-:cfunc:`H2K_resched()` handles a rescheduling interrupt 
+:c:func:`H2K_resched()` handles a rescheduling interrupt 
 
 Functionality
 ~~~~~~~~~~~~~
@@ -29,7 +29,7 @@ If the current thread is NULL, WAIT mode was interrupted, so we clear the wait
 mask bit.  Otherwise, we remove the currently running thread, and append it to
 the ready queue.
 
-We then call :cfunc:`H2K_dosched()`.
+We then call :c:func:`H2K_dosched()`.
 
 
 Testing

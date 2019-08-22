@@ -123,33 +123,40 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	}
 	{
 		r10 = lsr(r10, #H2K_ID_VINT_BITS) // index
-		r16 = #1
 		r13 = setbit(r13, #SSR_XE_BIT)
 	}
 	{
-		r11 += mpyu(r12.l, r10.l)  // my ext context
+		// FIXME: pick hvx context dynamically
+		r9 = htid
 		r15 = ##0x01010101
-		ssr = r13
 	}
+	r9 = add(r9, #EXT_HVX_XA_START)
 	{
-	 	r14 = add(r11, #(32 * 32))
+		r13 = insert(r9, #SSR_XA_NBITS, #SSR_XA_BITS)
+		r11 += mpyu(r12.l, r10.l)  // my ext context
+	}
+	ssr = r13
+	isync
+	{
+	 	r14 = add(r11, #(32 * EXT_HVX_MAX_VLENGTH))
 		v0 = vmem(r11++#1)
 	}
 	{
 		v31 = vmem(r14+#0)
 // predicates
-	 	v29 = vsplatw(r15)		// 0x01010101
+	 	v29 = vsplat(r15)		// 0x01010101
 	}
 	{
+		r16 = #1
 		v30 = vand(v31, v29)
 		v1 = vmem(r11++#1)
 	}
 	{
-		q0 = vcmpb.equ(v30, v29)
+		q0 = vcmp.eq(v30.b, v29.b)
 		v2 = vmem(r11++#1)
 	}
 	{
-		v29 = vaslw(v29, r16) // 0x02020202
+		v29.w = vasl(v29.w, r16) // 0x02020202
 		v3 = vmem(r11++#1)
 	}
 	{
@@ -157,11 +164,11 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		v4 = vmem(r11++#1)
 	}
 	{
-		q1 = vcmpb.equ(v30, v29)
+		q1 = vcmp.eq(v30.b, v29.b)
 		v5 = vmem(r11++#1)
 	}
 	{
-		v29 = vaslw(v29, r16) // 0x04040404
+		v29.w = vasl(v29.w, r16) // 0x04040404
 		v6 = vmem(r11++#1)
 	}
 	{
@@ -169,11 +176,11 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		v7 = vmem(r11++#1)
 	}
 	{
-		q2 = vcmpb.equ(v30, v29)
+		q2 = vcmp.eq(v30.b, v29.b)
 		v8 = vmem(r11++#1)
 	}
 	{
-		v29 = vaslw(v29, r16) // 0x08080808
+		v29.w = vasl(v29.w, r16) // 0x08080808
 		v9 = vmem(r11++#1)
 	}
 	{
@@ -181,24 +188,32 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 		v10 = vmem(r11++#1)
 	}
 	{
-		q3 = vcmpb.equ(v30, v29)
+		q3 = vcmp.eq(v30.b, v29.b)
 		v11 = vmem(r11++#1)
 	}
 	{
 // enable ext
-	 	r13 = memw(r3 + #CONTEXT_ssr)
+		r13 = memw(r3 + #CONTEXT_ssr)
 		v12 = vmem(r11++#1)
 	}
 	{
 		r13 = setbit(r13, #SSR_XE_BIT)
+		// FIXME: pick hvx context dynamically
+		r12 = htid
 		v13 = vmem(r11++#1)
 	}
 	{
-		memw(r3 + #CONTEXT_ssr) = r13
+		r12 = add(r12, #EXT_HVX_XA_START)
 		v14 = vmem(r11++#1)
 	}
-	v15 = vmem(r11++#1)
-	v16 = vmem(r11++#1)
+	{
+		r13 = insert(r12, #SSR_XA_NBITS, #SSR_XA_BITS)
+		v15 = vmem(r11++#1)
+	}
+	{
+		memw(r3 + #CONTEXT_ssr) = r13
+		v16 = vmem(r11++#1)
+	}
 	v17 = vmem(r11++#1)
 	v18 = vmem(r11++#1)
 	v19 = vmem(r11++#1)

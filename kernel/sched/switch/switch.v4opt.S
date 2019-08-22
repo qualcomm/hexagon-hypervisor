@@ -9,6 +9,7 @@
 #include <vmdefs.h>
 #include <idtype.h>
 #include <trace_asm_macro.h>
+#include <trace_constants.h>
 
 /*
  * We are switching from thread in r0 to thread in r1
@@ -34,6 +35,7 @@
 #define DST r17
 #define NOW r19:18
 #define NOW_LO r18
+#define DM0 r26
 
 FUNC_START H2K_switch .text.core.switch .p2align 5
 /* EJP: seems like trace is commented out... maybe need to add trace... */
@@ -99,24 +101,40 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(SRC+#CONTEXT_pktcount) = r1:0
+	}
+#if	ARCHV >= 68
+		DM0 = dmpause
+		memw(SRC + #CONTEXT_dm0) = DM0
+#endif
+	{
 #ifdef DO_EXT_SWITCH
 
 // check if ext needs saving, and mark as saved
 	 	r13 = add(SRC, ##CONTEXT_atomic_status_word)
 	}
 1:
+	// FIXME? Maybe savext bit isn't needed at all and we can just check ssr:xe?
 	r14 = memw_locked(r13)
 	{ p1 = tstbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)  // ext regs live?
 		r14 = clrbit(r14, #H2K_VMSTATUS_SAVEXT_BIT)
 	}
 	memw_locked(r13, p0) = r14
-	if (!p0) jump 1b
+	{
+		if (!p0) jump 1b
+		r24 = memw(SRC + #CONTEXT_vmblock)
+		r23 = ssr
+	}
+	{
+		if (!p1) jump .Lskip_ext_save  // no need to save
+		r13 = memw(r24 + #VMBLOCK_flags)
+		r15 = memw(SRC + #CONTEXT_ssr)
+	}
 
 	// cause exception on next ext access to restore
 	{
-		r15 = memw(SRC + #CONTEXT_ssr)
 		r14 = memw(SRC + #CONTEXT_id)
 		r20 = ##H2K_ID_CPUIDX_MASK
+		p0 = tstbit(r13, #H2K_VMBLOCK_FLAGS_DO_EXT_BIT)  // VM doing ext switch?
 	}
 	{
 		r15 = clrbit(r15, #SSR_XE_BIT)
@@ -124,15 +142,13 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r22 = ##EXT_CONTEXT_SIZE
 	}
 	{
-	  memw(SRC + #CONTEXT_ssr) = r15
 		r14 = lsr(r14, #H2K_ID_VINT_BITS)  // index
-		r20 = memw(SRC + #CONTEXT_vmblock)
-		r23 = ssr
+		if (!p0) jump .Lskip_ext_save  // no need to save
 	}
 	{
-		r21 = memw(r20 + #VMBLOCK_ext_contexts)  // start of ext contexts
+	  memw(SRC + #CONTEXT_ssr) = r15
+		r21 = memw(r24 + #VMBLOCK_ext_contexts)  // start of ext contexts
 		r23 = setbit(r23, #SSR_XE_BIT)
-		if (!p1) jump .Lfrom_sleep  // no need to save
 	}
 
 // save; cpuid is ext_context index
@@ -147,7 +163,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	 	r20 = #0x00000000
 	}
 	{
-		v0 = vsplatw(r20)
+		v0 = vsplat(r20)
 		vmem(r21++#1) = v1
 	}
 	{
@@ -155,7 +171,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v2
 	}
 	{
-		v1 = vsplatw(r20)
+		v1 = vsplat(r20)
 		vmem(r21++#1) = v3
 	}
 	{
@@ -167,7 +183,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v5
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x02020202
+		v1.w = vasl(v1.w, r20) // 0x02020202
 		vmem(r21++#1) = v6
 	}
 	{
@@ -179,7 +195,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v8
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x04040404
+		v1.w = vasl(v1.w, r20) // 0x04040404
 		vmem(r21++#1) = v9
 	}
 	{
@@ -191,7 +207,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		vmem(r21++#1) = v11
 	}
 	{
-		v1 = vaslw(v1, r20) // 0x08080808
+		v1.w = vasl(v1.w, r20) // 0x08080808
 		vmem(r21++#1) = v12
 	}
 	{
@@ -222,12 +238,33 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 // save predicates
 	vmem(r21+#0) = v3
+
+.Lskip_ext_save:
 #else
 	} // end of packet at #ifdef DO_EXT_SWITCH
 #endif
 
+// fall through
+
+#define OLDIDX r0
+#define NEWIDX r1
+#define IDXADDR r31
+#define TRACE r2
+#define DATA r3
+#define ENTRIES r5
+#define BUFADDR r4
+#define ENTRIES_BUFADDR r5:4
+
+	{
+		TRACE = #H2K_TRACE_SWITCH
+		jump 2f
+	}
+
 	.falign
 .Lfrom_sleep:
+	TRACE = #H2K_TRACE_SWITCH_FROM_SLEEP
+
+2:
 	{
 		p0 = cmp.eq(DST,#0)
 		if (p0.new) jump:nt .Lto_sleep
@@ -236,37 +273,38 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	/* Load rest-of-context for new thread and trace */
 	/* r0-r5 are available */
 	/* r20-27 are available now, will be loaded later */
-#define OLDIDX r0
-#define NEWIDX r1
-#define IDXADDR r31
-#define DATAHI r3
-#define DATALO r2
-#define DATA r3:2
-#define ENTRIES r5
-#define BUFADDR r4
-#define ENTRIES_BUFADDR r5:4
+
 	{
 		sgp0 = DST
+		DATA = memw(DST+#CONTEXT_id)		// lets already fill this with switch id
 	}
-1:
 	{
-		DATAHI = memw(DST+#CONTEXT_id)		// lets already fill this with switch id
+		DATA = lsr(DATA, #2)  // assuming #define H2K_ID_VINT_BITS 10
 		r21:20 = memd(DST+#CONTEXT_lc1sa1)
 	}
 	{
+		DATA = insert(TRACE, #8, #0)
+#if ARCHV >= 68
+		DM0 = memw(DST + #CONTEXT_dm0)
+#endif
+	}
+#if ARCHV >= 68
+	dmresume(DM0)
+#endif
+	{
 		P_VMWORK = tstbit(VMSTATUS,#H2K_VMSTATUS_VMWORK_BIT)
 		KG_WAITCYCLES = add(H2K_GP,#KG_waitcycles)
-		trace(DATAHI)
+		trace(DATA)
 	}
 #undef OLDIDX
 #undef NEWIDX
 #undef IDXADDR
-#undef DATAHI
-#undef DATALO
+#undef TRACE
 #undef DATA
 #undef ENTRIES
 #undef BUFADDR
 #undef ENTRIES_BUFADDR
+
 	{
 		r23:22 = memd(DST+#CONTEXT_cs1cs0)
 		r25:24 = memd(DST+#CONTEXT_m1m0)
@@ -297,7 +335,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	elr = r0
 	{
-		r21:20 = memd(DST+#CONTEXT_ccrssr)
+		r21:20 = memd(DST+#CONTEXT_ccrssr)	// fixme: will restore later?
 		r23:22 = memd(DST+#CONTEXT_pktcount)
 	}
 	{
@@ -327,35 +365,50 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		r31 = memw(DST+#CONTEXT_continuation)
-		r1:0 = memd(DST+#CONTEXT_r0100)
+		r1:0 = memd(DST+#CONTEXT_r0100)		// for return val from blocking traps
 	}
 	{
 		r31 = and(r31,#-4)
 		jump H2K_check_sanity_unlock
 	}
+
+#define TRACE r4
+#define DATA r5
 	.falign
 .Lto_sleep:
 	/* Don't care as much about register values here, certainly not r0-r5 and r20-27 */
 	{
-		r1:0 = combine(HTNUM,NOW_LO)
-		r31 = #0
+		// r1:0 = combine(HTNUM,NOW_LO)
+		p0 = cmp.eq(SRC, #0)
+		TRACE = #H2K_TRACE_SWITCH_TO_SLEEP
+		DATA = #0
+		if (p0.new) jump:nt 2f
 	}
-	ASM_INLINE_TRACE(r31,r1:0,r1,r0,r3:2,r3,r2,p0,r5,r4,r20,,)
 	{
+		DATA = memw(SRC + #CONTEXT_id)  // ID we're switching *from*
+	}
+
+2:
+	{
+		DATA = lsr(DATA, #2)  // assuming #define H2K_ID_VINT_BITS 10
 		memd(KG_CPUWAIT+HTNUM<<#3) = NOW       // oncpu wait
 		r0 = lsl(#1,HTNUM)
 	}
 	{
+		DATA = insert(TRACE, #8, #0)
 		memw(H2K_GP+#KG_wait_mask) |= r0
 		r3:2 = combine(#0,#-1)
 	}
-	SGP0 = DST
+	trace(DATA)
+#undef TRACE
+#undef DATA
 	STID = r2
+	SGP0 = DST
 	{
 		memw(H2K_GP+#KG_priomask) |= r0
 		r0 = ##0x00040000 // insert(r5,#3,#16)
 	}
-	k0unlock
+		k0unlock
 		IMASK = r3
 	{
 		ssr = r0

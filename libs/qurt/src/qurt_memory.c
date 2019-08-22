@@ -4,9 +4,9 @@
  */
 
 #include "qurt.h"
-#include <h2_common_linear.h>
 #include <h2_common_pmap.h>
 #include <hexagon_protos.h>
+#include "qurt_s5alloc.h"
 
 /*
  * EJP: try and make a qurt memory 
@@ -37,6 +37,12 @@
  */
 
 /*
+ * 
+ * FIXME: FIXME: FIXME: need to factor out page table management from qurt memory api
+ * 
+ */
+
+/*
  * qurt_mem_pool_t and qurt_mem_region_t ... change to pointers to structs...
  *
  * I think we have to support this, they use it for HLOS giving memory to modem?
@@ -62,31 +68,89 @@ TBD later: int qurt_mapping_reclaim(qurt_addr_t vaddr, qurt_size_t vsize, qurt_m
  *
  */
 
+/*
+ * EJP: What are the things we allocate?
+ * qurt_mem_pool structures (64 bytes)  --> 64 byte chip
+ * qurt_mem_region structure (28 bytes)	--> 32 byte chip
+ * in pgalloc: freelist_node (12 bytes) --> 16 byte chip
+ * tables: let's say radix-4 (16 bytes)	--> 16 byte chip
+ * 
+ * We need to start with some mem pools, but after initial slab we're probably OK
+ * If pgalloc needs malloc, we certainly will need to call pgalloc to get new space for a new slab.
+ * We probably will need to be able to create a table to get new space for a new slab.
+ * We might need to create a mem_region for the new space for the new slab (needs to be mapped in VA space)
+ *
+ * This means that we will need several spare 16 byte chips and probably at least one spare 32 byte chip always 
+ * available so we can allocate the things we need to allocate more allocatable allocations.
+ *
+ * So either we need an allocator that can manage "emergency rations" or we need an allocator that maintains
+ * the count of free items and allocates more slabs when it gets below a low water mark.
+ * 
+ * Well... what about this? instead of having emergency ration chips, have emergency ration pages.
+ * We can always carry around a free page, and if we have allocation issues, we can allocate slabs from the 
+ * ration page, and immediately allocate a new ration page before returning to our regularly scheduled allocations.
+ * Ration pages can be split between 16/32/64-byte slabs.
+ *
+ * The ration page can probably bootstrap the whole memory allocator.
+ *
+ * Since every ration page (except the first one...) was allocated from qurt_mem_region_create, if it frees we 
+ * shouldn't need to do anything special, just find the region and return the page.
+ *
+ * Maybe even better than (or in addition to) emergency ration pages is emergency ration slabs 
+ */
+
+qurt_s5id_t mem_pool_s5;
+qurt_s5id_t mem_region_s5;
+qurt_s5id_t pagetable_s5;
+
+/* 64 bytes */
 struct qurt_mem_pool_struct {
 	struct qurt_mem_pool_struct *next;
 	struct qurt_freelist_node *freelist;
 	qurt_mem_pool_attr_t attr;
 };
 
-#define MAX_TRANSLATIONS 256
-
-static H2K_linear_fmt_t linear_pages[MAX_TRANSLATIONS] __attribute__((aligned(2048))) __attribute__((section(".data.qurt.translations")));
+static struct qurt_mem_pool_struct pool_storage[16];
 
 static qurt_mutex_t mem_mutex;
 
+/* 32 bytes */
 struct qurt_mem_region_struct {
 	struct qurt_mem_region_struct *next;
 	struct qurt_mem_pool_struct *ppool;
 	qurt_mem_region_attr_t attr;
 };
 
+static struct qurt_mem_region_struct region_storage[256];
+
 static struct qurt_mem_pool_struct *vpool = NULL;
 static struct qurt_mem_pool_struct *all_pools = NULL;
 qurt_mem_pool_t qurt_mem_default_pool;
 
-static inline H2K_linear_fmt_t *find_mapping(unsigned int vpn);
+/* 2048 + bytes in TCM for slab storage */
+/* Actually, we'll need lots of 16-byte table entries.  Allocate 16KB total, 15 64-byte and the rest 16-byte */
+/* 64 bytes in TCM For root table */
+/* Or we can have a 256-entry root table and 15KB for the rest. */
+/*
+ * It would be simpler and more efficient to just have a gazillion 16 byte blocks in a list than create a lot 
+ * of 16-byte slabs if we never need to free the page for something else.
+ */
+#define ROOT_ENTRY_BITS 8
+#define ROOT_ENTRY_SIZE (1<<ROOT_ENTRY_BITS)
+#define TABLE_STORAGE_SIZE (15*1024)
+#define IN_TCM __attribute__((section(".data.qurt.translations")))
+static unsigned int table_root[ROOT_ENTRY_SIZE] IN_TCM __attribute__((aligned(4*ROOT_ENTRY_SIZE)));
+static unsigned char table_storage[TABLE_STORAGE_SIZE] IN_TCM __attribute__((aligned(4*ROOT_ENTRY_SIZE)));
+
+static inline unsigned int *find_mapping(unsigned int vpn);
 
 static inline unsigned int minu(unsigned int a, unsigned int b) { return (a <= b) ? a : b; }
+
+static inline void mem_fatal(const char *msg)
+{
+	qurt_printf("%s\n",msg);
+	exit(1);
+}
 
 static inline struct qurt_mem_pool_struct *mem_pool_from_uint(qurt_mem_pool_t pool_int)
 {
@@ -132,10 +196,9 @@ static inline qurt_mem_region_t uint_from_mem_region(struct qurt_mem_region_stru
 static void qurt_pprint_mappings()
 {
 	int i;
-	H2K_linear_fmt_t entry;
+	/* FIXME for tables... should implement for debug */
 	qurt_printf("Memory Mappings:\n");
 	for (i = 0; i < MAX_TRANSLATIONS; i++) {
-		entry = linear_pages[i];
 		if (entry.xwru == 0) continue;
 		qurt_printf("%03d: va=%05x000 pa=%06x000 size=%x cccc=%d xwru=%x\n",
 			i,entry.vpn,entry.ppn,entry.size,entry.cccc,entry.xwru);
@@ -143,53 +206,117 @@ static void qurt_pprint_mappings()
 }
 #endif
 
+extern long long __tcm_static_vapa_offset__ __attribute__((weak));
+
+static inline void *tcm_p2v(unsigned long pa)
+{
+	unsigned long offset = (unsigned long)(&__tcm_static_vapa_offset__);
+	return (void *)(pa - offset);
+}
+
+static inline unsigned long tcm_v2p(void *ptr)
+{
+	unsigned long addr = (unsigned long)ptr;
+	unsigned long offset = (unsigned long)(&__tcm_static_vapa_offset__);
+	return addr + offset;
+}
+
+static inline unsigned int table_size(unsigned int entry)
+{
+	return Q6_R_ct0_R(entry)+1;
+}
+
+static inline unsigned int terminal_size(unsigned int entry)
+{
+	return Q6_R_ct0_R(entry);
+}
+
+static inline unsigned int *table_addr(unsigned int entry)
+{
+	return tcm_p2v((entry & (entry-1)) << 2);
+}
+
+static inline int is_tableptr(unsigned int entry, unsigned int startbit)
+{
+	return Q6_R_ct0_R(entry) < startbit;
+}
+
+static inline int is_terminal(unsigned int entry, unsigned int startbit)
+{
+	return Q6_R_ct0_R(entry) == startbit;
+}
+
+static inline int is_invalid(unsigned int entry, unsigned int startbit)
+{
+	return Q6_R_ct0_R(entry) > startbit;
+}
+
+static void qurt_pprint_table_walk(unsigned int vpn,
+	unsigned int bitsleft,
+	unsigned int *tablebase,
+	unsigned int tablebits,
+	unsigned int indent_level)
+{
+	int i;
+	char *type;
+	unsigned int tvpn;
+	unsigned int entry;
+	unsigned int startbit = bitsleft - tablebits;
+	unsigned int *tableaddr;
+	unsigned int tablesize;
+	for (i = 0; i < (1<<tablebits); i++) {
+		tvpn = vpn | (i << startbit);
+		entry = tablebase[i];
+		                                 type = "INVAL";
+		if (is_tableptr(entry,startbit)) type = "TABLE";
+		if (is_terminal(entry,startbit)) type = "ENTRY";
+		qurt_printf("%*sidx=%03d startbit=%02d vpn=%08x type=%s size=0x%08x entry=0x%08x tableaddr=0x%08x/ppn=0x%08x\n",
+			indent_level,"",
+			i,
+			startbit,
+			tvpn,
+			type,
+			1<<startbit,
+			entry,
+			(entry & (entry-1)) << 2,
+			((entry & (entry-1)) >> 1) & 0x003fffff);
+		if (is_tableptr(entry,startbit)) {
+			tableaddr = table_addr(entry);
+			tablesize = table_size(entry);
+			qurt_pprint_table_walk(tvpn,startbit,tableaddr,tablesize,indent_level+4);
+		}
+	}
+}
+
+static void qurt_pprint_table()
+{
+	qurt_pprint_table_walk(0,20,table_root,ROOT_ENTRY_BITS,0);
+}
+
 static inline void transtab_add_region(struct qurt_mem_region_struct *region)
 {
 	unsigned int vpn;
 	unsigned int ppn;
 	unsigned int size;
-#if 0
-	unsigned int pgsize;
-	H2K_linear_fmt_t entry;
-	entry.raw = 0;
-	entry.cccc = region->attr.cccc;
-	entry.xwru = region->attr.perms << 1;
-	entry.abits = region->attr.abits;
-#endif
 	vpn = region->attr.vpn;
 	ppn = region->attr.ppn;
 	size = region->attr.size;
 	/* qurt_mapping_create_vpn now handles non-power-of-4 page sizes */
 	qurt_mapping_create_vpn(vpn,ppn,size,region->attr.cccc, region->attr.perms, region->attr.abits);
-#if 0
-	while (size) {
-		pgsize = minu(6,(__builtin_ctz(vpn|ppn)>>1));
-		pgsize = minu(pgsize,((31-__builtin_clz(size))>>1));
-		entry.size = pgsize;
-		entry.vpn = vpn;
-		entry.ppn = ppn;
-		qurt_mapping_create_linear(entry);
-		pgsize = 1<<(pgsize * 2);
-		vpn += pgsize;
-		ppn += pgsize;
-		size -= pgsize;
-	}
-	//qurt_pprint_mappings();
-#endif
 }
 
 static inline void transtab_remove_region(struct qurt_mem_region_struct *region)
 {
 	unsigned int vpn = region->attr.vpn;
 	unsigned int cursize;
+	unsigned int *entryptr;
 	int size = region->attr.size;
-	H2K_linear_fmt_t empty;
-	H2K_linear_fmt_t *tmp;
-	empty.raw = 1;
 	while (size > 0) {
-		if ((tmp = find_mapping(vpn)) == NULL) continue;
-		cursize = 1<<(tmp->size*2);
-		*tmp = empty;
+		if ((entryptr = find_mapping(vpn)) == NULL) {
+			mem_fatal("translated region not in page tables");
+		}
+		cursize = terminal_size(*entryptr);
+		*entryptr = 0;
 		h2_vmtrap_clrmap((void *)(vpn << 12));
 		size -= cursize;
 		vpn += cursize;
@@ -221,10 +348,15 @@ static inline void qurt_mem_pool_init_pool(struct qurt_mem_pool_struct *tmp, con
 	qurt_pgfree(&tmp->freelist,base,size);
 }
 
+static inline struct qurt_mem_pool_struct *qurt_mem_alloc_pool()
+{
+	return qurt_s5_alloc(mem_pool_s5);
+}
+
 int qurt_mem_pool_create(char *name, unsigned int base, unsigned int size, qurt_mem_pool_t *pool)
 {
 	struct qurt_mem_pool_struct *tmp;
-	if ((tmp = qurt_malloc(sizeof(*tmp))) == NULL) return QURT_EMEM;
+	if ((tmp = qurt_mem_alloc_pool()) == NULL) return QURT_EMEM;
 	qurt_mem_pool_init_pool(tmp,name,base,size);
 	qurt_rmutex_lock(&mem_mutex);
 	tmp->next = all_pools;
@@ -260,6 +392,11 @@ int qurt_mem_pool_create(char *name, unsigned int base, unsigned int size, qurt_
 
 static struct qurt_mem_region_struct *all_regions = NULL;
 
+static inline struct qurt_mem_region_struct *qurt_mem_alloc_region()
+{
+	return qurt_s5_alloc(mem_region_s5);
+}
+
 int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem_pool_t pool_int, qurt_mem_region_attr_t *attr)
 {
 	unsigned long vpn = 0;
@@ -269,7 +406,7 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 	// Turn size into number of pages, rounding up.
 	size = (size + 0xFFF) >> 12;
 	if (size == 0) return QURT_EVAL;
-	if ((tmp = qurt_malloc(sizeof(*tmp))) == NULL) {
+	if ((tmp = qurt_mem_alloc_region()) == NULL) {
 		qurt_printf("OOM\n");
 		return QURT_EMEM;
 	}
@@ -330,34 +467,26 @@ int qurt_mem_region_create(qurt_mem_region_t *region, qurt_size_t size, qurt_mem
 	return QURT_EOK;
 }
 
-static void qurt_memory_make_static_region(H2K_linear_fmt_t entry)
+static void qurt_memory_make_static_region(unsigned int vpn, unsigned int entry, unsigned int size)
 {
 	struct qurt_mem_region_struct *tmp;
-	if ((tmp = qurt_malloc(sizeof(*tmp))) == NULL) {
-		qurt_printf("OOM\n");
-		exit(1);
+	if ((tmp = qurt_mem_alloc_region()) == NULL) {
+		mem_fatal("OOM");
 	}
 	qurt_mem_region_attr_init(&tmp->attr);
-	tmp->attr.cccc = entry.cccc;
-	tmp->attr.perms = entry.xwru >> 1;
-	tmp->attr.abits = entry.abits;
-	tmp->attr.vpn = entry.vpn;
-	tmp->attr.ppn = entry.ppn;
-	tmp->attr.size = 1<<(entry.size*2);
+	tmp->attr.cccc = (entry >> 24) & 0xF;
+	tmp->attr.perms = ((entry >> 28) & 0xF) >> 1;
+	tmp->attr.abits = 0;
+	tmp->attr.vpn = vpn;
+	tmp->attr.ppn = ((entry >> 1) & 0x3fffff);
+	tmp->attr.ppn &= (tmp->attr.ppn-1);
+	tmp->attr.size = size;
 	tmp->ppool = 0;
 	tmp->attr.mapping_type = QURT_MEM_MAPPING_VIRTUAL_FIXED; // no vpool free
 	qurt_rmutex_lock(&mem_mutex);
 	tmp->next = all_regions;
 	all_regions = tmp;
 	qurt_rmutex_unlock(&mem_mutex);
-}
-
-static void qurt_memory_make_static_regions()
-{
-	int i;
-	for (i = 0; linear_pages[i].raw != 0; i++) {
-		qurt_memory_make_static_region(linear_pages[i]);
-	}
 }
 
 int qurt_mem_region_delete(qurt_mem_region_t region_int)
@@ -479,55 +608,94 @@ int qurt_mem_map_static_query_64(qurt_addr_t *vaddr, qurt_paddr_64_t paddr_64, u
 	return QURT_EOK;
 }
 
-static inline H2K_linear_fmt_t *find_empty_entry()
-{
-	int i;
-	H2K_linear_fmt_t *tmp;
-	for (i = 0; i < MAX_TRANSLATIONS; i++) {
-		tmp = &linear_pages[i];
-		if (tmp->xwru == 0) return tmp;
-	}
-	return NULL;
-}
-
-int qurt_mapping_create_linear(H2K_linear_fmt_t entry)
-{
-	H2K_linear_fmt_t *tmp;
-	qurt_rmutex_lock(&mem_mutex);
-	tmp = find_empty_entry();
-	if (tmp == NULL) {
-		qurt_rmutex_unlock(&mem_mutex);
-		return QURT_EMEM;
-	}
-	*tmp = entry;
-	qurt_rmutex_unlock(&mem_mutex);
-	//qurt_pprint_mappings();
-	return QURT_EOK;
-}
-
-/* EJP: TBD? make this static inline because we get a lot of constant parameters and hopefully
- * the compiler can optimize building the linear format 
+/*
+ * How do we want to arrange our tables?
+ * By policy, 4 translated bits for the first two levels, then 2 bits per level
+ * Note that adding an entry for a small page may require allocating up to 6 16-byte tables
+ * and 1 64-byte table.
+ * 20 16 12 10  8  6  4  2
+ *  4  4  2  2  2  2  2  2
+ * Or, this works pretty well too (at the expense of ~300 bytes)
+ * 20 12 10  8  6  4  2
+ *  8  2  2  2  2  2  2
  */
+static inline unsigned int policy_tablebits(unsigned int startbit)
+{
+	return 2;
+}
+
+static inline unsigned int *qurt_mem_alloc_new_table()
+{
+	unsigned long long int *llptr;
+	llptr = qurt_s5_alloc(pagetable_s5);
+	llptr[0] = 0;
+	llptr[1] = 0;
+	return (unsigned int *)llptr;
+}
+
+static inline unsigned int alloc_table(unsigned int tablebits)
+{
+	unsigned int *table = qurt_mem_alloc_new_table();
+	unsigned long tableaddr = tcm_v2p(table);
+	tableaddr >>= 2;
+	tableaddr |= 1<<(tablebits-1);
+	return tableaddr;
+}
+
+static inline int qurt_mapping_create_varadix_walk(
+	unsigned int vpn,
+	unsigned int pte,
+	unsigned int size,
+	unsigned int bitsleft,
+	unsigned int *tablebase,
+	unsigned int tablebits)
+{
+	unsigned int startbit = bitsleft-tablebits;
+	unsigned int this_idx = (vpn >> startbit) & ((1<<tablebits)-1);
+	unsigned int entry = tablebase[this_idx];
+	unsigned int *tableaddr;
+	unsigned int tablesize;
+	if (is_terminal(entry,startbit)) return QURT_EMEM;
+	if (startbit == size) {
+		tablebase[this_idx] = pte;
+		return QURT_EOK;
+	} else {
+		if (is_invalid(entry,startbit)) {
+			tablebase[this_idx] = entry = alloc_table(policy_tablebits(startbit));
+		}
+		tableaddr = table_addr(entry);
+		tablesize = table_size(entry);	// or could get from policy...
+		return qurt_mapping_create_varadix_walk(vpn,pte,size,startbit,tableaddr,tablesize);
+	}
+}
+
+int qurt_mapping_create_varadix(unsigned int vpn, unsigned int pte, unsigned int size)
+{
+	int ret;
+	qurt_rmutex_lock(&mem_mutex);
+	ret = qurt_mapping_create_varadix_walk(vpn,pte,size,20,table_root,ROOT_ENTRY_BITS);
+	qurt_rmutex_unlock(&mem_mutex);
+	return ret;
+}
+
+/* XXX: FIXME: create new table entry and insert into table */
 int qurt_mapping_create_vpn(unsigned int vpn,unsigned int ppn, 
 	unsigned int size, unsigned int cache_attribs, unsigned int perm, unsigned int abits)
 {
-	H2K_linear_fmt_t tmp;
 	unsigned int pgsize;
 	int ret;
-	tmp.raw = 0;
-	tmp.cccc = cache_attribs;
-	tmp.xwru = perm<<1;
-	tmp.abits = abits;
+	unsigned int tmp;
+	tmp = cache_attribs << 24;
+	tmp |= (perm<<1) << 28;
 	while (size) {
-		pgsize = minu(6,(__builtin_ctz(vpn|ppn)>>1));
-		pgsize = minu(pgsize,((31-__builtin_clz(size))>>1));
-		tmp.size = pgsize;
-		tmp.ppn = ppn;
-		tmp.vpn = vpn;
+		pgsize = minu(12,(__builtin_ctz(vpn|ppn)));
+		pgsize = minu(pgsize,((31-__builtin_clz(size))));
+		pgsize &= ~1;	// even page sizes only
+		tmp = (((ppn & 0x3fffff) >> pgsize) << (pgsize+1)) | (1<<pgsize);
 
-		if ((ret=qurt_mapping_create_linear(tmp)) != QURT_EOK) return ret;
+		if ((ret=qurt_mapping_create_varadix(vpn,tmp,pgsize)) != QURT_EOK) return ret;
 
-		pgsize = 1<<(pgsize*2);
+		pgsize = 1<<pgsize;
 		size -= pgsize;
 		vpn += pgsize;
 		ppn += pgsize;
@@ -545,48 +713,53 @@ int qurt_mapping_create_64(qurt_addr_t vaddr, qurt_paddr_64_t paddr_64, qurt_siz
 	return qurt_mapping_create_vpn(vaddr>>12,paddr_64>>12,size>>12,cache_attribs,perm,0);
 }
 
-static inline H2K_linear_fmt_t *find_mapping(unsigned int vpn)
+static inline unsigned int *find_mapping_walk(unsigned int vpn, unsigned int bitsleft, 
+	unsigned int *tablebase, unsigned int tablebits)
 {
-	int i;
-	H2K_linear_fmt_t *tmp;
-	unsigned int mask;
-	for (i = 0; i < MAX_TRANSLATIONS; i++) {
-		tmp = &linear_pages[i];
-		mask = 0xFFFFFFFFU << (tmp->size*2);
-		if (tmp->raw == 0) return NULL;
-		if ((tmp->xwru != 0) && ((vpn & mask) == (tmp->vpn & mask))) return tmp;
-	}
-	return NULL;
+	unsigned int startbit = bitsleft-tablebits;
+	unsigned int this_idx = (vpn >> startbit) & ((1<<tablebits)-1);
+	unsigned int entry = tablebase[this_idx];
+	if (is_terminal(entry,startbit)) return &tablebase[this_idx];
+	if (is_invalid(entry,startbit)) return NULL;
+	return find_mapping_walk(vpn,startbit,table_addr(entry),table_size(entry));
+}
+
+static inline unsigned int *find_mapping(unsigned int vpn)
+{
+	return find_mapping_walk(vpn,20,table_root,ROOT_ENTRY_BITS);
 }
 
 void qurt_mapping_remove_vpn(unsigned int vpn)
 {
-	H2K_linear_fmt_t *tmp = find_mapping(vpn);
-	H2K_linear_fmt_t empty;
-	empty.raw = 1;
+	unsigned int *tmp = find_mapping(vpn);
 	if (tmp == NULL) return;
-	*tmp = empty;
+	*tmp = 0;
 	h2_vmtrap_clrmap((void *)(vpn << 12));
 }
 
 qurt_paddr_64_t qurt_lookup_physaddr_64 (qurt_addr_t vaddr)
 {
-	H2K_linear_fmt_t *tmp = find_mapping(vaddr>>12);
+	unsigned int *tmp = find_mapping(vaddr>>12);
+	unsigned int ppn;
 	unsigned long long int paddr;
+	unsigned int size;
 	if (tmp == NULL) return 0;
-	paddr = ((unsigned long long int)(tmp->ppn)) << 12;
-	paddr &= ((-1LL) << (12 + tmp->size*2));
-	paddr |= vaddr & ((1 << (12 + tmp->size*2))-1);
+	size = Q6_R_ct0_R(*tmp);
+	ppn = (*tmp >> 1) & 0x3fffff;
+	ppn &= ppn - 1;
+	paddr = ppn >> size;
+	paddr <<= size;
+	paddr |= vaddr & ((1<<(12+size))-1);
 	//qurt_printf("pa lookup: vaddr=%x paddr=%llx\n",vaddr,paddr);
 	return paddr;
 }
 
 struct phys_mem_pool_config {
-	char name[32];
+	char name[MAX_POOL_NAME_LEN];
 	struct range {
 		unsigned int start;
 		unsigned int size;
-	} ranges[16];
+	} ranges[MAX_POOL_RANGES];
 };
 
 struct phys_mem_pool_config pool_configs[] __attribute__((weak)) = { { "DEFAULT_PHYSPOOL", { {0x10000,0xF0000000}, {0}}}, { "", { { 0x0, 0x0}, {0x0}}}};
@@ -619,8 +792,7 @@ static void qurt_memory_builtin_pools()
 			&blah);
 	}
 	if (qurt_mem_pool_attach("DEFAULT_PHYSPOOL",&qurt_mem_default_pool) != QURT_EOK) {
-		//qurt_printf("Can't find default physpool. Bad config?\n");
-		exit(1);
+		mem_fatal("no physpool");
 	}
 }
 
@@ -632,72 +804,6 @@ static void qurt_memory_pool_init()
 	qurt_memory_builtin_pools();
 }
 
-#if 0
-static void qurt_physpool_shrink()
-{
-	struct qurt_mem_pool_struct *physpool = mem_pool_from_uint(qurt_mem_default_pool);
-	unsigned int base = 0x8C800;
-	unsigned int size = 0x00400;
-	// easy button: eat the memory leak
-	physpool->freelist = NULL;
-	// kludge, just know where we should make the pool
-	physpool->attr.ranges[0].start = base;
-	physpool->attr.ranges[0].size = size;
-	qurt_pgfree(&tmp->freelist,
-}
-#else /* handled above */
-static inline void qurt_physpool_shrink() {}
-#endif
-
-void qurt_memory_init()
-{
-	// H2K_linear_fmt_t entry;
-	// int i;
-	if (linear_pages[0].raw != 0) { 
-		/* Already did early init! */
-		qurt_physpool_shrink();
-		qurt_memory_make_static_regions();
-		qurt_pprint_regions();
-		return;
-	} else {
-		/* probably a standalone test, should fill out linear_pages and turn on... */
-		qurt_rmutex_init(&mem_mutex);
-	}
-	if (vpool == NULL) qurt_memory_pool_init();
-#if 0
-	qurt_rmutex_init(&mem_mutex);
-	qurt_memory_pool_init();
-	entry.raw = 0;
-	entry.ppn = 0x01000;
-	entry.vpn = 0x01000;
-	entry.size = SIZE_16M;
-	entry.xwru = URWX;
-	entry.cccc = L1WB_L2C;
-	/* FOR NOW... initialize some default stuff */
-	for (i = 0; i < 8; i++) {
-		qurt_mapping_create_linear(entry);
-		entry.ppn += 0x01000;
-		entry.vpn += 0x01000;
-	}
-	/* map device space for timer */
-	entry.ppn = 0xfe000;
-	entry.vpn = 0xfe000;
-	entry.size = SIZE_16M;
-	entry.xwru = URWX;
-	entry.cccc = DEVICE_TYPE;
-	qurt_mapping_create_linear(entry);
-
-	qurt_mem_pool_attach("DEFAULT_PHYSPOOL",&qurt_mem_default_pool);
-	qurt_pprint_mappings();
-	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
-	qurt_printf("newmap done\n");
-	qurt_pprint_mappings();
-	qurt_memory_make_static_regions();
-#endif
-}
-
-#if 1
-
 extern long long int __tcm_static_pa_load__ __attribute__((weak));
 extern long long int __tcm_static_pa_run__ __attribute__((weak));
 extern long long int __tcm_static_section_start__ __attribute__((weak));
@@ -706,32 +812,21 @@ extern long long int __tcm_static_section_end__ __attribute__((weak));
 #define SYM_PGNO_RND(X) ((((unsigned long)(&X))+0x0fff) >> 12)
 #define SYM_PGNO(X) ((((unsigned long)(&X))) >> 12)
 
-static inline int vpn_in_tcm_range(unsigned long vpn)
+/* EJP: FIXME: can we just copy the whole __tcm_static__ area instead of the parts that are mapped? */
+static inline void qurt_mapping_static_tcm_load(unsigned int offset)
 {
-	unsigned long tcm_start_vpn = SYM_PGNO(__tcm_static_section_start__);
-	unsigned long tcm_end_vpn = SYM_PGNO_RND(__tcm_static_section_end__);
-	return ((vpn >= tcm_start_vpn) && (vpn < tcm_end_vpn));
+	unsigned long tcm_src_data_addr = (long)(&__tcm_static_pa_load__);
+	unsigned long tcm_dst_data_addr = (long)(&__tcm_static_pa_run__) + offset;
+	void *tcm_src_data = (void *)tcm_src_data_addr;
+	void *tcm_dst_data = (void *)tcm_dst_data_addr;
+	unsigned long tcm_static_vaddr_start = (long)(&__tcm_static_section_start__);
+	unsigned long tcm_static_vaddr_end = (long)(&__tcm_static_section_end__);
+	unsigned long tcm_static_size = tcm_static_vaddr_end - tcm_static_vaddr_start;
+	if (tcm_static_size == 0) return;
+	memcpy(tcm_dst_data,tcm_src_data,tcm_static_size);
 }
 
-static inline H2K_linear_fmt_t qurt_mapping_static_tcm_load(H2K_linear_fmt_t entry)
-{
-	unsigned long tcm_start_vpn = SYM_PGNO(__tcm_static_section_start__);
-	//unsigned long tcm_end_vpn = SYM_PGNO_RND(__tcm_static_section_end__);
-	unsigned long tcm_ddr_ppn = SYM_PGNO(__tcm_static_pa_load__);
-	unsigned long tcm_tcm_ppn = SYM_PGNO(__tcm_static_pa_run__);
-	if (&__tcm_static_pa_load__ == NULL) return entry; // no symbols
-	if (!vpn_in_tcm_range(entry.vpn)) return entry; // not in range
-	/* Before adding translation, copy into TCM */
-	unsigned long src_pa = (entry.vpn - tcm_start_vpn + tcm_ddr_ppn) << 12;
-	unsigned long dst_pa = (entry.vpn - tcm_start_vpn + tcm_tcm_ppn) << 12;
-	memcpy((void *)dst_pa,(void *)src_pa,1ULL << (12+(entry.size*2)));
-	entry.ppn = entry.vpn - tcm_start_vpn + tcm_tcm_ppn;
-	/* EJP: FIXME: pin TLB entry? */
-	/* EJP: need to pin TLB entries after translation enabled so we get the right ASID */
-	return entry;
-}
-#endif
-
+#if 0
 int qurt_mem_kludge_reject(unsigned long long int inval)
 {
 	int size = Q6_R_ct0_P(inval);
@@ -739,233 +834,139 @@ int qurt_mem_kludge_reject(unsigned long long int inval)
 	if (((vpn & 0xFF000) == 0x8B000) && (size < 6)) return 1;
 	return 0;
 }
+#endif
 
-static inline void qurt_memory_early_add_tlbfmt(unsigned long long int inval)
+/*
+ * Here's how I think we'll need to boot up
+ * VA=PA+offset to get started (probably before we even get here)
+ * Initialize slabs
+ * Create page tables based on where things should be eventually
+ * Copy TCM to where it belongs
+ * Enable new mappings
+ * I think we'll want to have all page table allocations as static tcm area... 
+ * that way we can compute the pa from the va.  It's kind of ugly but oh well, welcome to qurt land.
+ */
+
+static inline void qurt_memory_init_early_varadix_from_tlb(unsigned long long int inval)
 {
-	int size;
-	H2K_linear_fmt_t entry;
-	size = Q6_R_ct0_P(inval);
-	inval = inval & (inval - 1); // clear least significant set bit
-	entry.raw = 0;
-	entry.vpn = inval >> 32;
-	entry.ppn = (inval & 0x00FFFFFF) >> 1;
-	entry.size = size;
-	entry.xwru = inval >> 28;
-	entry.cccc = inval >> 24;
-	entry = qurt_mapping_static_tcm_load(entry);
-	/* if (entry.size >= 4) FIXME: pin TLB entry */
-	qurt_mapping_create_linear(entry);
+	unsigned int vpn = (inval >> 32) & 0x000FFFFF;
+	unsigned int ppn = (inval >> 1) & 0x003FFFFF;
+	unsigned int size = 2*Q6_R_ct0_P(inval);
+	unsigned int xwru = (inval >> 28) & 0xf;
+	unsigned int cccc = (inval >> 24) & 0xf;
+	unsigned int entry = (((ppn >> (size-0)))<<(size+1)) | (1<<size);
+	entry |= xwru << 28;
+	entry |= cccc << 24;
+	qurt_mapping_create_varadix(vpn,entry,size);
+	qurt_memory_make_static_region(vpn,entry,size);
 }
 
-#if 0
-static int qurt_mem_compare_va(const void *va, const void *vb)
+static void more_mem_fatal(void *opaque, qurt_s5id_t s5id, unsigned int elementsize)
 {
-	const H2K_linear_fmt_t *a = va;
-	const H2K_linear_fmt_t *b = vb;
-	int avpn = a->vpn;
-	int bvpn = b->vpn;
-	/*
-	 * VA comparison
-	 * Invalid entries should always compare > valid entries.
-	 * Note that invalid entries are zero
-	 */
-	if (a->raw == 0) return (b->raw != 0);
-	if (b->raw == 0) return -1;
-	return avpn - bvpn;
+	mem_fatal("out of memory on pagetable or mempool s5");
 }
 
-static int qurt_mem_compare_size(const void *va, const void *vb)
+static void more_region_storage(void *opaque, qurt_s5id_t s5id, unsigned int elementsize)
 {
-	const H2K_linear_fmt_t *a = va;
-	const H2K_linear_fmt_t *b = vb;
-	int sizediff;
-	/*
-	 * VA comparison
-	 * Invalid entries should always compare > valid entries.
-	 * Note that invalid entries are zero
-	 */
-	if (a->raw == 0) return (b->raw != 0);
-	if (b->raw == 0) return -1;
-	sizediff = -(a->size - b->size);
-	if (sizediff != 0) return sizediff;
-	return a->vpn - b->vpn;
+	void *tmp;
+	if ((tmp = malloc(elementsize*64)) == NULL) return;
+	qurt_s5_feed(s5id,tmp,elementsize*64);
 }
 
-static inline int qurt_mem_coalesce_ok(H2K_linear_fmt_t base, H2K_linear_fmt_t test, unsigned int shift)
+static inline void qurt_memory_init_early_setup_s5mem()
 {
-	unsigned int mask_hi = (~0) << shift;
-	unsigned int mask_lo = ((1 << shift)-1);
-	if ((base.vpn & mask_hi) != (test.vpn & mask_hi)) return 1;
-	if ((test.ppn & mask_lo) != (test.vpn & mask_lo)) return 0;
-	if (base.size != test.size) return 0;
-	if (base.cccc != test.cccc) return 0;
-	return 1;
-}
-
-static inline H2K_linear_fmt_t qurt_mem_do_coalesce(H2K_linear_fmt_t base, unsigned int idx, unsigned int shift)
-{
-	unsigned int mask_hi = (~0) << shift;
-	H2K_linear_fmt_t dest = linear_pages[idx];
-	if ((base.vpn & mask_hi) == (dest.vpn & mask_hi)) {
-		base.xwru |= dest.xwru;
-		linear_pages[idx].raw = 0;
+	/* Create stream in TCM for page tables.  feed table storage. Panic for moremem. */
+	if ((pagetable_s5 = qurt_s5_create(16,more_mem_fatal,NULL)) < 0) {
+		mem_fatal("s5_create");
 	}
-	return base;
+	qurt_s5_feed(pagetable_s5,table_storage,sizeof(table_storage));
+	/* Create stream for qurt_mem_pool_structs.  feed pool storage. panic for moremem. */
+	if ((mem_pool_s5 = qurt_s5_create(sizeof(struct qurt_mem_pool_struct),more_mem_fatal,NULL)) < 0) {
+		mem_fatal("s5_create");
+	}
+	qurt_s5_feed(mem_pool_s5,pool_storage,sizeof(pool_storage));
+	/* Create stream for qurt_mem_region_structs  feed some initial storage. malloc for moremem. */
+	if ((mem_region_s5 = qurt_s5_create(sizeof(struct qurt_mem_pool_struct),more_region_storage,NULL)) < 0) {
+		mem_fatal("s5_create");
+	}
+	qurt_s5_feed(mem_region_s5,region_storage,sizeof(region_storage));
 }
 
-static inline int qurt_mem_coalesce_count(
-	H2K_linear_fmt_t a,
-	H2K_linear_fmt_t b,
-	H2K_linear_fmt_t c,
-	H2K_linear_fmt_t d,
-	unsigned int shift)
-{
-	int count = 0;
-	unsigned int mask_hi = (~0) << shift;
-	count += ((a.vpn & mask_hi) == (b.vpn & mask_hi));
-	count += ((a.vpn & mask_hi) == (c.vpn & mask_hi));
-	count += ((a.vpn & mask_hi) == (d.vpn & mask_hi));
-	return count;
-}
-
-static inline int qurt_mem_coalesce_good_idea(
-	H2K_linear_fmt_t a,
-	H2K_linear_fmt_t b,
-	H2K_linear_fmt_t c,
-	H2K_linear_fmt_t d,
-	unsigned int size,
-	unsigned int shift)
-{
-	if ((qurt_mem_coalesce_count(a,b,c,d,shift) == 0) && (size > 3)) return 0;
-	if (size >= 6) return 0;
-	return 1;
-}
-
-int qurt_memory_translation_optimize_pass()
+void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long int *tlbfmt_b, unsigned int offset)
 {
 	int i;
-	H2K_linear_fmt_t a,b,c,d;
-	unsigned int shift;
-	unsigned int size;
-	// unsigned int mask_hi;
-	unsigned int mask_lo;
-	for (i = 0; (i < (MAX_TRANSLATIONS-3)) && (linear_pages[i].raw != 0); i++) {
-		a = linear_pages[i+0];
-		b = linear_pages[i+1];
-		c = linear_pages[i+2];
-		d = linear_pages[i+3];
-		size = a.size;				/* Current translation size */
-		shift = (size+1)*2;			/* Shift for new mask: one bigger */
-		// mask_hi = (~0) << shift;
-		mask_lo = (1<<shift) - 1;
-		if ((a.vpn & mask_lo) != 0) continue;	/* first one not aligned */
-		if ((a.ppn & mask_lo) != 0) continue;	/* first one not aligned */
-		if (!qurt_mem_coalesce_ok(a,b,shift)) continue;
-		if (!qurt_mem_coalesce_ok(a,c,shift)) continue;
-		if (!qurt_mem_coalesce_ok(a,d,shift)) continue;
-		if (qurt_mem_coalesce_good_idea(a,b,c,d,size,shift) == 0) continue;
-		/* Everything OK. Coalesce to bigger size. */
-		a = qurt_mem_do_coalesce(a,i+1,shift);
-		a = qurt_mem_do_coalesce(a,i+2,shift);
-		a = qurt_mem_do_coalesce(a,i+3,shift);
-		//qurt_printf("[[optimized entry %d]]\n",i);
-		a.size++;
-		linear_pages[i] = a;
-		return 1;
+	unsigned int root_entry;
+	//qurt_mem_check_sizes();
+	qurt_pgalloc_init();
+	qurt_memory_init_early_setup_s5mem();
+	qurt_rmutex_init(&mem_mutex);
+	/* Root table already alloc'd, 256 entries. */
+	for (i = 0; tlbfmt_a[i] != 0; i++) {
+		qurt_memory_init_early_varadix_from_tlb(tlbfmt_a[i]);
 	}
-	return 0;
+	for (i = 0; tlbfmt_b[i] != 0; i++) {
+		qurt_memory_init_early_varadix_from_tlb(tlbfmt_b[i]);
+	}
+	qurt_memory_pool_init();
+	/* Now copy things into TCM that need to be located there 
+	 * (including the page tables we just set up) 
+	 */
+	qurt_mapping_static_tcm_load(offset);
+	/* OK, everything should be where it needs to go... now actually turn on real translation */
+	root_entry = tcm_v2p(table_root) >> 2;
+	root_entry |= (1<<(ROOT_ENTRY_BITS-1));
+	qurt_pprint_table();
+	h2_vmtrap_newmap_extra((void *)root_entry,H2K_ASID_TRANS_TYPE_VARADIX,H2K_ASID_TLB_INVALIDATE_FALSE,20);
+	// qurt_memory_tlb_pin();	// maybe?
+	//qurt_pprint_mappings();
+	//qurt_pprint_regions();
 }
 
-static inline void qurt_memory_translation_optimize()
+#ifdef QURTMEM_DEBUG
+static inline void try_pool_alloc()
 {
-	int changed;
-	/* Find mappings that we can grow: lowest mapping aligned, next
-	 * mappings either missing or to the appropriately-larger PA range, same CCCC.
-	 * If different WRXU, or together. 
-	 * If we change something, start all over
-	 */
-	//qurt_printf(">> BEFORE\n");
-	//qurt_pprint_mappings();
-	do {
-		/* sort translations by VA */
-		qsort(	linear_pages,
-			MAX_TRANSLATIONS,
-			sizeof(H2K_linear_fmt_t),
-			qurt_mem_compare_va);
-		changed = qurt_memory_translation_optimize_pass();
-		//qurt_printf(">> OPTIMIZE PASS (changed=%d)\n",changed);
-		//qurt_pprint_mappings();
-	} while (changed != 0);
-	/* Now sort translations by size */
-	qsort(	linear_pages,
-		MAX_TRANSLATIONS,
-		sizeof(H2K_linear_fmt_t),
-		qurt_mem_compare_size);
-	//qurt_printf(">> FINAL\n");
-	//qurt_pprint_mappings();
+	qurt_mem_pool_t ppool;
+	qurt_mem_region_t region;
+	qurt_mem_region_attr_t attr;
+	unsigned int addr;
+	qurt_mem_pool_attach("DEFAULT_PHYSPOOL",&ppool);
+	qurt_mem_region_attr_init(&attr);
+	qurt_mem_region_create(&region,4096*64,ppool,&attr);
+	qurt_mem_region_attr_get(region,&attr);
+	qurt_mem_region_attr_get_virtaddr(&attr,&addr);
+	qurt_printf("va=%x\n",addr);
+	qurt_pprint_table();
+}
+
+void qurt_mem_tester(unsigned long long int *tlbfmt_a)
+{
+	int i;
+	unsigned int vpn;
+	unsigned int *entryptr;
+	qurt_pgalloc_init();
+	qurt_memory_init_early_setup_s5mem();
+	qurt_rmutex_init(&mem_mutex);
+	for (i = 0; tlbfmt_a[i] != 0; i++) {
+		qurt_memory_init_early_varadix_from_tlb(tlbfmt_a[i]);
+	}
+	qurt_pprint_table();
+	for (i = 0; tlbfmt_a[i] != 0; i++) {
+		vpn = (tlbfmt_a[i]>>32) & 0x000FFFFF;
+		entryptr = find_mapping(vpn);
+		qurt_printf("find_mapping: vpn=%x entry @ %p = %x\n",vpn,entryptr,
+			(entryptr==NULL) ? 0xdeadbeefU : *entryptr);
+	}
+	qurt_memory_pool_init();
+	qurt_mapping_create_64(0x60000000,0x50000000ULL,0x01000000,0x7,0xf);
+	qurt_pprint_table();
+	try_pool_alloc();
 }
 #endif
 
-void qurt_memory_translation_check()
+void qurt_memory_init()
 {
-	int i,j;
-	H2K_linear_fmt_t a;
-	H2K_linear_fmt_t b;
-	unsigned int mask;
-	for (i = 0; linear_pages[i].raw != 0; i++) {
-		a = linear_pages[i];
-		for (j = 0; linear_pages[j].raw != 0; j++) {
-			if (i == j) continue;
-			b = linear_pages[j];
-			mask = ((~0) << (a.size*2)) & ((~0) << (b.size*2));
-			if ((a.vpn & mask) == (b.vpn & mask)) {
-				qurt_printf("OOPS::: %d overlaps %d? 0x%016llx 0x%016llx\n",i,j,a.raw,b.raw);
-			}
-		}
-	}
-}
-
-void qurt_memory_tlb_pin()
-{
-	int i;
-	qurt_addr_t vaddr;
-	qurt_paddr_64_t paddr;
-	qurt_size_t size;
-	qurt_mem_cache_mode_t cache_attribs;
-	qurt_perm_t perms;
-	unsigned int id;
-	for (i = 0; linear_pages[i].raw != 0; i++) {
-		if (!vpn_in_tcm_range(linear_pages[i].vpn) 
-			&& (linear_pages[i].size < 4)) continue;
-		vaddr = linear_pages[i].vpn;
-		vaddr <<= 12;
-		paddr = linear_pages[i].ppn;
-		paddr <<= 12;
-		size = 0x1000 << (linear_pages[i].size * 2);
-		cache_attribs = linear_pages[i].cccc;
-		perms = linear_pages[i].xwru >> 1;
-		qurt_tlb_entry_create_64(&id,vaddr,paddr,size,cache_attribs,perms,0);
-	}
-}
-
-void qurt_memory_init_early(unsigned long long int *tlbfmt_a, unsigned long long int *tlbfmt_b)
-{
-	int i;
-	qurt_rmutex_init(&mem_mutex);
-	for (i = 0; tlbfmt_a[i] != 0; i++) {
-		if (qurt_mem_kludge_reject(tlbfmt_a[i])) continue;
-		qurt_memory_early_add_tlbfmt(tlbfmt_a[i]);
-	}
-	for (i = 0; tlbfmt_b[i] != 0; i++) {
-		if (qurt_mem_kludge_reject(tlbfmt_b[i])) continue;
-		qurt_memory_early_add_tlbfmt(tlbfmt_b[i]);
-	}
-	//qurt_memory_translation_optimize();
-	qurt_memory_translation_check();
-	h2_vmtrap_newmap(linear_pages,H2K_ASID_TRANS_TYPE_LINEAR,H2K_ASID_TLB_INVALIDATE_FALSE);
-	qurt_memory_tlb_pin();
-	qurt_memory_pool_init(); // for now... 
-	//qurt_pprint_mappings();
-	//qurt_pprint_regions();
+	if (vpool == NULL) qurt_printf("Not really setting up memory here...\n");
+	//qurt_printf("qurt memory init: sizeof(mempool node): %d\n",sizeof(struct qurt_mem_pool_struct));
+	//qurt_printf("qurt memory init: sizeof(region node): %d\n",sizeof(struct qurt_mem_region_struct));
 }
 

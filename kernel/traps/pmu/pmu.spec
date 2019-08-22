@@ -10,7 +10,7 @@ This module contains routines to manage the Performance Monitor Unit.
 H2K_trap_pmuctrl
 ------------------
 
-.. cfunction:: u32_t H2K_trap_pmuctrl(u32_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_pmuctrl(u32_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
 
 	:param configtype: Configuration operation to do
 	:param val1: Operation-dependent value
@@ -35,10 +35,10 @@ We look up which configuration routine in H2K_pmuctrltab, and jump to the
 appropriate routine.
 
 
-H2K_trap_pmuctrl_threadset
-----------------------------
+REMOVED: H2K_trap_pmuctrl_threadset
+-----------------------------------
 
-.. cfunction:: u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param vdest: thread ID to change PMU configuration for
@@ -71,7 +71,7 @@ We then release the BKL and return.
 H2K_trap_pmuctrl_setreg
 -------------------------
 
-.. cfunction:: u32_t H2K_trap_pmuconcig_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_pmuconcig_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param unused2: Unused parameter
@@ -93,7 +93,7 @@ Write the PMU register
 H2K_trap_pmuctrl_getreg
 -------------------------
 
-.. cfunction:: u32_t H2K_trap_pmuconcig_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_pmuconcig_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param unused2: Unused parameter

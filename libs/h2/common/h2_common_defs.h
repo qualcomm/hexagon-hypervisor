@@ -8,13 +8,16 @@
 #ifndef H2_COMMON_DEFS_H
 #define H2_COMMON_DEFS_H 1
 
-#ifndef ARCHV
-#define ARCHV 0
+#define CLUSTER_SCHED_HACK 0
+
+#if ((ARCHV >= 60) && !TINY_CORE)
+#define HAVE_EXTENSIONS 1
+#define DO_EXT_SWITCH 1
 #endif
 
-#if ARCHV >= 60
-#define HAVE_EXTENSIONS 1
-#endif
+#define PAGE_BITS 12 /* Minimum page size: 4K */
+
+#define DO_PROFILE 1
 
 #ifndef MAX_HTHREADS
 #if ARCHV <= 3
@@ -23,8 +26,8 @@
 #define MAX_HTHREADS 3
 #elif ARCHV == 5
 #define MAX_HTHREADS 4
-#elif ARCHV == 60
-#define MAX_HTHREADS 4
+#elif ARCHV >= 60
+#define MAX_HTHREADS 6
 #endif
 #endif
 
@@ -96,6 +99,10 @@
 #define SYSCFG_ITCM_LEN 1
 #define SYSCFG_ITCM (((0x1 << SYSCFG_ITCM_LEN) - 1) << SYSCFG_ITCM_BIT)
 
+#define SYSCFG_CLADEN_BIT 20
+#define SYSCFG_CLADEN_LEN 1
+#define SYSCFG_CLADEN (((0x1 << SYSCFG_CLADEN_LEN) - 1) << SYSCFG_CLADEN_BIT)
+
 #define SYSCFG_L2NWA_BIT 21
 #define SYSCFG_L2NWA_LEN 1
 #define SYSCFG_L2NWA (((0x1 << SYSCFG_L2NWA_LEN) - 1) << SYSCFG_L2NWA_BIT)
@@ -119,7 +126,24 @@
 #define SYSCFG_L2PART_LEN 2
 #define SYSCFG_L2PART (((0x1 << SYSCFG_L2PART_LEN) - 1) << SYSCFG_L2PART_BIT)
 
+#define CLADE_REG_REGION 0x0
+#define CLADE_REG_PD_CHUNK 0x10
+#define CLADE_REG_COMP 0x10
+#define CLADE_REG_EX_HI 0x14
+#define CLADE_REG_EX_LO_SMALL 0x18
+#define CLADE_REG_EX_LO_LARGE 0x1c
+
+#define CLADE_NUM_PDS 4
+#define CLADE_DICT_OFFSET 0x2000
+#define CLADE_DICT_LEN 0x2000
+#define CLADE_NUM_DICTS 3
+#define CLADE_REGION_LEN 0x08000000
+#define CLADE_INVALID_ADDRESS 0xffffffff
+
 #define H2K_TIME_GUESTINT 12
 #define H2K_VM_CHILDINT 14
+
+#define EXT_HVX_XA_START 4
+#define EXT_NO_EXT 0
 
 #endif

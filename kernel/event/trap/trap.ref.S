@@ -118,15 +118,19 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 	}
 	{
 		r0 = r7
-		jump H2K_thread_id	// 13
+#ifdef DO_PROFILE
+		jump H2K_sample_start // 13
+#else
+		jump H2K_thread_id
+#endif
 	}
 	{
-		r0 = r7
-		jump H2K_thread_id // 14
+		r2 = r7
+		jump H2K_intpool_configure // 14	// EJP: FIXME: uncommon, put in config or hwconfig
 	}
 	{
-		r0 = r7
-		jump H2K_thread_id // 15
+		r1 = r7
+		jump H2K_intpool_wait // 15
 	}
 	{
 		r0 = r7

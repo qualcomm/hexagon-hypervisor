@@ -39,7 +39,7 @@ typedef struct H2K_vmblock_struct {
 	H2K_ext_context *ext_contexts;
 #endif
 
-	translation_type pmap_type;
+	H2K_asid_entry_t guestmap;
 	u8_t tlbidxmask;
 	/* physical memory map, page table style */
 	union {
@@ -70,6 +70,10 @@ typedef struct H2K_vmblock_struct {
 	u32_t num_cpus;
 	u32_t bestprio; 	/* best allowed priority */
 
+	H2K_thread_context *intpool;
+	unsigned int intpool_anypending;
+	u32_t intpool_pending[MAX_INTERRUPTS/32];
+
 	/* Linked List of free threads in this VM */
 	H2K_thread_context *free_threads;
 	/* Pointer to thread context storage */
@@ -79,8 +83,15 @@ typedef struct H2K_vmblock_struct {
 		u32_t flags;
 		struct {
 #ifdef HAVE_EXTENSIONS
-			u32_t use_ext:1;
+			u32_t use_ext:1;  // guest wants kernel ext switch
+
+#ifdef DO_EXT_SWITCH
+			u32_t do_ext:1;   // ext context switch active
+			u32_t flags_unused:30;
+#else
 			u32_t flags_unused:31;
+#endif
+
 #else
 			u32_t flags_unused:32;
 #endif

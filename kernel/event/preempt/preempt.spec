@@ -9,7 +9,7 @@ ASM_REF_CODE(preempt requires special register changes difficult in C)
 H2K_preempt
 -----------
 
-.. cfunction:: void H2K_preempt()
+.. c:function:: void H2K_preempt()
 
 
 Description
@@ -21,12 +21,12 @@ to by SGP will be continued by calling the continuation.
 Functionality
 ~~~~~~~~~~~~~
 
-The :cfunc:`H2K_preempt()` routine attempts to take an interrupt from the
+The :c:func:`H2K_preempt()` routine attempts to take an interrupt from the
 Kernel, if it may be beneficial to do so, as if the currently scheduled task
 was running.  This avoids the bulk of the context restore and save, and lowers
 worst-case interrupt latency.
 
-In the event that no interrupt was taken, the :cfunc:`H2K_preempt()` routine
+In the event that no interrupt was taken, the :c:func:`H2K_preempt()` routine
 may return.  Otherwise, it will continue by calling the continuation function
 in the current task.
 
@@ -43,7 +43,7 @@ While checking for an interrupt, we use the value of 0x00000001 in SGP to indica
 that the interrupt was taken from the preemption point.
 
 In the case that the interrupt is taken, the interrupt handler
-:cfunc:`H2K_handle_int()` must be careful to observe that the SGP indicates a
+:c:func:`H2K_handle_int()` must be careful to observe that the SGP indicates a
 preemption, and then that the thread context is located in r0.
 
 Testing

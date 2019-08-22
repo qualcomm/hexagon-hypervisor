@@ -35,6 +35,7 @@ int main(int argc, char **argv)
 	h2_sem_down(&sema);
 	printf("Wahoo!\n");
 
+	h2_thread_stop(0);
 	return 0;
 }
 

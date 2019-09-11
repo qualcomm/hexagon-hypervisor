@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -I$(INSTALLPATH)/include -I../h2/include -I../posix/include -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -g
+CFLAGS := -Iinclude -I$(INSTALLPATH)/include -I../h2/include -I../posix/include -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG

@@ -143,10 +143,10 @@ LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NP
 
 ifdef BOOT
 BOOTER=${INSTALLPATH}/bin/booter
-CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -g
+CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header -g
 LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
-CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -g
+CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -Wno-builtin-requires-header -g
 ifndef STANDALONE
 
 # 0xfffffff0 means don't call the hook
@@ -157,7 +157,7 @@ endif
 ifdef STANDALONE
 CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
 LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
-ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall $(KERNEL_INCLUDES)
+ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES)
 
 else # non-STANDALONE
 OSLIB=-moslib=h2

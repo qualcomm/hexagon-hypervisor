@@ -6,8 +6,8 @@
 #ifndef SYSCALL_DEFS_H
 #define SYSCALL_DEFS_H 1
 
-#define SIZE__boot_cmdline__ 256
-#define SIZE__dir_prefix__ 512
+#define SIZE__boot_cmdline__ 1024
+#define SIZE__dir_prefix__ 1024
 #define SIZE__file_suffix__ 16
 
 #endif

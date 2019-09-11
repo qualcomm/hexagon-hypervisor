@@ -70,8 +70,8 @@ KERNEL_CFLAGS += -mhvx
 endif
 
 else # latest
-TOOLS_FLAVOR ?= v68_stable
-TOOLS_FLAVOR_KERNEL ?= v68_stable
+TOOLS_FLAVOR ?= 8.4.alpha3
+TOOLS_FLAVOR_KERNEL ?= 8.4.alpha3
 ARCH_FLAVOR ?= v68_latest
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B
 DEVSIM := archsim

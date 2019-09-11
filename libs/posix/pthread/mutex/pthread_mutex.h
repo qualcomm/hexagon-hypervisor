@@ -41,20 +41,20 @@ typedef struct {
 	/* Don't need PSHARED ? */
 } pthread_mutexattr_t;
 
-enum {
-	PTHREAD_MUTEX_NORMAL = 0,
-	PTHREAD_MUTEX_RECURSIVE = 1,
-	PTHREAD_MUTEX_ERRORCHECK = PTHREAD_MUTEX_NORMAL, /* FIXME: make this work */
-	PTHREAD_MUTEX_DEFAULT = PTHREAD_MUTEX_NORMAL,
-	PTHREAD_MUTEX_FAST_NP = PTHREAD_MUTEX_NORMAL,
-};
+/* enum { */
+/* 	PTHREAD_MUTEX_NORMAL = 0, */
+/* 	PTHREAD_MUTEX_RECURSIVE = 1, */
+/* 	PTHREAD_MUTEX_ERRORCHECK = PTHREAD_MUTEX_NORMAL, /\* FIXME: make this work *\/ */
+/* 	PTHREAD_MUTEX_DEFAULT = PTHREAD_MUTEX_NORMAL, */
+/* 	PTHREAD_MUTEX_FAST_NP = PTHREAD_MUTEX_NORMAL, */
+/* }; */
 
-typedef struct {
-	pthread_plainmutex_t mutex;
-	int type;
-	unsigned int depth;
-	unsigned int owner_id;
-} __attribute__((aligned(8))) pthread_mutex_t;
+/* typedef struct { */
+/* 	pthread_plainmutex_t mutex; */
+/* 	int type; */
+/* 	unsigned int depth; */
+/* 	unsigned int owner_id; */
+/* } __attribute__((aligned(8))) pthread_mutex_t; */
 
 #define PTHREAD_MUTEX_INITIALIZER { PTHREAD_PLAINMUTEX_INITIALIZER_NP, PTHREAD_MUTEX_NORMAL, 0, 0 }
 #define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP { PTHREAD_PLAINMUTEX_INITIALIZER_NP, PTHREAD_MUTEX_RECURSIVE, 0, 0 }

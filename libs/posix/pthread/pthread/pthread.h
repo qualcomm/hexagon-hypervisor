@@ -52,7 +52,7 @@ static inline int pthread_unsup() { return ENOTSUP; }
 #endif
 
 #ifdef __cplusplus
-}; /* extern "C" */
+} /* extern "C" */
 #endif
 
 #endif

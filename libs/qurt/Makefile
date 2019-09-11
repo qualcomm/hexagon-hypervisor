@@ -1,6 +1,6 @@
 
 
-CC = hexagon-clang -mv$(ARCHV) -Iinclude -Wall -I../h2/include -I../posix/include -I../h2_compat/include -D_PROVIDE_POSIX_TIME_DECLS=1
+CC = hexagon-clang -mv$(ARCHV) -Iinclude -Wall -Wno-builtin-requires-header -I../h2/include -I../posix/include -I../h2_compat/include -D_PROVIDE_POSIX_TIME_DECLS=1
 AR = hexagon-ar
 
 OPTIMIZE := -O2

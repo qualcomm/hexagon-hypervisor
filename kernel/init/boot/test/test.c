@@ -21,6 +21,9 @@ void FAIL(const char *str)
 int main()
 {
 	u32_t tmp,i;
+
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+
 	h2_init();
 	H2K_trap_hwconfig_hwthreads_mask(0, NULL, -1, 0, NULL);  // start all hw threads
 

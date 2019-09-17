@@ -113,7 +113,7 @@ info_stlb_type  stlb_info;
 int hwt_mask = -1;
 int hwt_num = -1;
 int ecc_enable = -1;
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 int cluster_sched = 0;
 #endif
 
@@ -258,7 +258,7 @@ void usage()
 	printf("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	printf("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	printf("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 	printf("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 0.\n");
 #endif
 }		
@@ -1164,7 +1164,7 @@ void kernel_setup() {
 	}
 #endif
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 	if (cluster_sched) {
 		if (h2_config_cluster_sched(1) < 0) {
 			FAIL("Cluster sched", "");
@@ -1416,7 +1416,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 		} else if (0 == strcmp(argv[0], "--cluster_sched")) {
 			if (argc < 2) die_usage();
 			cluster_sched = strtoul(argv[1],NULL,0);

@@ -31,7 +31,7 @@ static const configptr_t H2K_configtab[CONFIG_MAX] IN_SECTION(".data.config.conf
 	H2K_trap_config_vmblock_init,
 	H2K_trap_config_stlb_alloc,
 	H2K_trap_config_fatal_hook,
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 	H2K_trap_config_cluster_sched,
 #endif
 };
@@ -304,7 +304,7 @@ u32_t H2K_trap_config_stlb_alloc(u32_t unused, u32_t sets, u32_t unused2, u32_t 
 	return H2K_mem_stlb_alloc();
 }
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 u32_t H2K_trap_config_cluster_sched(u32_t unused, u32_t enable, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) {
 
 	H2K_gp->cluster_sched = enable;

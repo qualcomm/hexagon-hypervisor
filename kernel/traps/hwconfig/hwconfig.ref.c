@@ -20,7 +20,7 @@
 #include <cfg_table.h>
 #include <atomic.h>
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 #include <readylist.h>
 #include <runlist.h>
 #include <dosched.h>
@@ -249,7 +249,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	/* FIXME: should check for allowed XA values here (maybe?) */
 	/* EJP: Always allow XE/XA to be set if only for silver tests working also */
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 	if (H2K_gp->cluster_sched) {
 		/* Don't use H2K_gp->hthreads_mask here since some threads could be turned off */
 		u32_t cluster = H2K_hthread_cluster(me->hthread);

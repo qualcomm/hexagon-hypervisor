@@ -91,7 +91,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	H2K_thread_context *head = H2K_gp->ready[prio];
 	H2K_thread_context *ret = head;
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 	if (!H2K_gp->cluster_sched) {
 		return ret;
 	}
@@ -157,7 +157,7 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 	u32_t prio;
 	prio = H2K_ready_best_prio();
 	if (prio >= MAX_PRIOS) {  // !H2K_ready_any_valid(), go to sleep
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 		if (!H2K_gp->cluster_sched) {
 			return NULL;
 		}

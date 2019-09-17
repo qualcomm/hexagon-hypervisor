@@ -49,7 +49,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	if (0x65 < H2K_kg.arch) {
 		have_hvx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) == CFG_TABLE_COPROC_TYPE_HVX);
 		H2K_kg.hvx_contexts = (have_hvx ? H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS) : 0);
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 		H2K_kg.cluster_hthreads = (Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
 		H2K_kg.cluster_mask[0] = 0xffff >> (16 - H2K_kg.cluster_hthreads);
 		H2K_kg.cluster_mask[1] = (0xffff >> (16 - H2K_kg.cluster_hthreads)) << H2K_kg.cluster_hthreads;

@@ -94,7 +94,7 @@ typedef struct {
 	u32_t hvx_contexts;  // # of native length
 	u32_t hmx_units;
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 #define XE_SET_SET(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] |= (0x1 << HTHREAD))
 #define XE_SET_CLR(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] &= ~(0x1 << HTHREAD))
 #define XE_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe_set[CLUSTER]))

@@ -29,6 +29,8 @@ export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
 #export USE_TCM ?= 1
 endif
 
+# FIXME: Remove when cluster sched ported to opt
+export OMIT_OPT=dosched resched
 
 include scripts/Makefile.inc.tools
 

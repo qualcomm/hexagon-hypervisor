@@ -16,11 +16,19 @@ int nanosleep(const struct timespec *req, struct timespec *rem)
 	unsigned long long int now = h2_get_elapsed_nanos();
 	unsigned long long int delta;
 	unsigned long long int later;
+	unsigned long long int nsec_left;
 	delta = req->tv_sec;
 	delta <<= 30;
 	delta |= req->tv_nsec;
-	later = now + delta;
-	while (h2_get_elapsed_nanos() < later) h2_yield(); /* SPIN */
+	/* later = now + delta; */
+	/* while (h2_get_elapsed_nanos() < later) h2_yield(); /\* SPIN *\/ */
+
+	nsec_left = h2_nanosleep(delta);
+	if (rem) {
+		rem->tv_sec = nsec_left >> 30;
+		rem->tv_nsec = nsec_left & ((0x1 << 30) - 1);
+	}
+
 	return 0;
 }
 /* BMC: lie about sleep for now as well */

@@ -25,7 +25,7 @@ else
 EXTRA_CFLAGS += -DDEBUG
 endif
 
-CFLAGS := $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include $(EXTRA_CFLAGS)
+CFLAGS := $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -Wno-builtin-requires-header $(EXTRA_CFLAGS)
 LDFLAGS = $(NOSTARTFILES) -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 all: $(BOOTVM_PROG)

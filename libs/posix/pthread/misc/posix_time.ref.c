@@ -8,14 +8,16 @@
 #include <errno.h>
 #include <pthread.h>
 
+unsigned long long int h2_nanosleep(unsigned long long int time);
+
 int nanosleep(const struct timespec *req, struct timespec *rem)
 {
 /* EJP: for now, lie about nanosleep.
  * We can actually nanosleep, see h2_nanosleep, but it might not be conformant and we have to simulate with timer.
  */
-	unsigned long long int now = h2_get_elapsed_nanos();
+//	unsigned long long int now = h2_get_elapsed_nanos();
 	unsigned long long int delta;
-	unsigned long long int later;
+	//	unsigned long long int later;
 	unsigned long long int nsec_left;
 	delta = req->tv_sec;
 	delta <<= 30;

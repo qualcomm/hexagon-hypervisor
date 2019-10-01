@@ -114,7 +114,7 @@ int hwt_mask = -1;
 int hwt_num = -1;
 int ecc_enable = -1;
 #ifdef CLUSTER_SCHED
-int cluster_sched = 0;
+int cluster_sched = 1;
 #endif
 
 typedef struct {

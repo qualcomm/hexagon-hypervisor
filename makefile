@@ -184,25 +184,23 @@ gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML
 
 cov_fns:
-	$(MAKE) clean ref ARCHV=v4 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v4ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v4 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v4opt_cov_fns;
-	$(MAKE) clean ref ARCHV=v5 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v5 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v5opt_cov_fns;
-	$(MAKE) clean ref ARCHV=v60 OPTIMIZE='-Os -fno-inline';
+	# $(MAKE) clean ref ARCHV=v4 OPTIMIZE='-Os -fno-inline';
+	# ./scripts/gen_cov_fns.pl > ./scripts/v4ref_cov_fns;
+	# $(MAKE) clean opt ARCHV=v4 OPTIMIZE='-Os -fno-inline';
+	# ./scripts/gen_cov_fns.pl > ./scripts/v4opt_cov_fns;
+	# $(MAKE) clean ref ARCHV=v5 OPTIMIZE='-Os -fno-inline';
+	# ./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
+	# $(MAKE) clean opt ARCHV=v5 OPTIMIZE='-Os -fno-inline';
+	# ./scripts/gen_cov_fns.pl > ./scripts/v5opt_cov_fns;
+	$(MAKE) clean ref ARCHV=60 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v60 OPTIMIZE='-Os -fno-inline';
+	$(MAKE) clean opt ARCHV=60 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-	$(MAKE) clean ref ARCHV=v65 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v65 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-	$(MAKE) clean ref ARCHV=v68 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v68 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-
-
+	$(MAKE) clean ref ARCHV=65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v65ref_cov_fns;
+	$(MAKE) clean opt ARCHV=65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v65opt_cov_fns;
+	$(MAKE) clean ref ARCHV=68 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v68ref_cov_fns;
+	$(MAKE) clean opt ARCHV=68 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v68opt_cov_fns;

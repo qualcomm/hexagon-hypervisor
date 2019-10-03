@@ -12,8 +12,8 @@ use warnings;
 
 my %funclist;
 
-my @h2k=`hexagon-objdump --syms ./install/lib/libh2kernel.a|grep F`;
-#my @h2=`hexagon-objdump --syms ./install/lib/libh2.a|grep F`;
+my @h2k=`hexagon-llvm-objdump --syms ./install/lib/libh2kernel.a|grep F`;
+#my @h2=`hexagon-llvm-objdump --syms ./install/lib/libh2.a|grep F`;
 #skip h2 lib functions for now.
 my @h2;
 

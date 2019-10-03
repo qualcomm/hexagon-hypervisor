@@ -18,7 +18,7 @@ my %funclist;
 #$test .= "*.o";
 
 while (my $test = shift @ARGV) {
-  my @tobj=`hexagon-objdump --syms $test`;
+  my @tobj=`hexagon-llvm-objdump --syms $test`;
 
   foreach my $line (@tobj) {
     # (g) functions are added to the ignore list

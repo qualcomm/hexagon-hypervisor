@@ -37,9 +37,9 @@ void H2K_intpool_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_vmb
 		H2K_runlist_remove(me);
 		H2K_ready_append(me);
 	} else {
-		H2K_gp->wait_mask = Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
+		H2K_gp->wait_mask = (u32_t)Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
 	}
-	H2K_gp->priomask = Q6_R_clrbit_RR(H2K_gp->priomask,hwtnum);
+	H2K_gp->priomask = (u32_t)Q6_R_clrbit_RR(H2K_gp->priomask,hwtnum);
 	highprio_imask(hwtnum);
 	H2K_runlist_push(woken);
 	H2K_switch(me,woken);
@@ -65,7 +65,7 @@ static inline int get_pending_interrupt(H2K_vmblock_t *vmblock)
 
 int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 {
-	int hthread = me->hthread;
+	u32_t hthread = me->hthread;
 	int intno;
 	H2K_vmblock_t *vmblock = me->vmblock;
 	if (int_ack_num < MAX_INTERRUPTS) {
@@ -85,8 +85,8 @@ int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 	H2K_runlist_remove(me);
 	H2K_ring_append(&vmblock->intpool,me);
 	me->status = H2K_STATUS_INTBLOCKED;	/* OR INTPOOL_BLOCKED? */
-	me->r00 = -1;
-	H2K_dosched(me,hthread);
+	me->r00 = (u32_t)-1;
+	H2K_dosched(me, hthread);
 }
 
 int H2K_intpool_configure(u32_t intno, u32_t enable, H2K_thread_context *me)
@@ -110,6 +110,6 @@ void H2K_intpool_cancel(H2K_thread_context *dest)
 {
 	H2K_vmblock_t *vmblock = dest->vmblock;
 	H2K_ring_remove(&vmblock->intpool,dest);
-	dest->r00 = -1;
+	dest->r00 = (u32_t)-1;
 }
 

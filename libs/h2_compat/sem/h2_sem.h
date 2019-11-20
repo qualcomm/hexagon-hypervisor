@@ -36,7 +36,7 @@ Initialize a semaphore with a specific value.
 @returns None
 @dependencies None
 */
-static inline void h2_sem_init_val(h2_sem_t *sem, unsigned short val) { sem_init(sem,1,val); };
+static inline void h2_sem_init_val(h2_sem_t *sem, unsigned int val) { sem_init(sem,1,val); };
 
 /**
 Add to a semaphore.  If threads are blocked, they will be woken up.

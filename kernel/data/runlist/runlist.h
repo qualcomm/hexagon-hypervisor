@@ -17,7 +17,7 @@ static inline void H2K_runlist_push(H2K_thread_context *newthread)
 	u32_t prio = newthread->prio;
 	newthread->status = H2K_STATUS_RUNNING;
 	H2K_gp->runlist[hthread] = newthread;
-	H2K_gp->runlist_prios[hthread] = prio;
+	H2K_gp->runlist_prios[hthread] = (s16_t)prio;
 }
 
 static inline u32_t H2K_runlist_worst_prio()
@@ -31,7 +31,7 @@ static inline u32_t H2K_runlist_worst_prio()
 			hthread = i;
 		}
 	}
-	return hthread == -1 ? MAX_PRIOS : worst_prio;
+	return hthread == -1 ? MAX_PRIOS : (u32_t)worst_prio;
 }
 
 static inline u32_t H2K_runlist_worst_prio_hthread()
@@ -45,7 +45,7 @@ static inline u32_t H2K_runlist_worst_prio_hthread()
 			hthread = i;
 		}
 	}
-	return hthread;
+	return (u32_t)hthread;
 }
 
 /* Given bitmap of hardware threads, return bitmap of those whose priority is not better than prio */

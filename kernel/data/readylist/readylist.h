@@ -22,10 +22,10 @@ static inline u32_t H2K_ready_best_prio()
 	u32_t ct0;
 	u32_t i;
 	for (i = 0; i < MAX_PRIOS/64; i++) {
-		ct0 = Q6_R_ct0_R((u32_t) H2K_gp->ready_valids[i]);
+		ct0 = (u32_t)Q6_R_ct0_R((u32_t) H2K_gp->ready_valids[i]);
 		prio += ct0;
 		if (ct0 < 32) return prio;
-		ct0 = Q6_R_ct0_R((u32_t) (H2K_gp->ready_valids[i] >> 32));
+		ct0 = (u32_t)Q6_R_ct0_R((u32_t) (H2K_gp->ready_valids[i] >> 32));
 		prio += ct0;
 		if (ct0 < 32) return prio;
 	}

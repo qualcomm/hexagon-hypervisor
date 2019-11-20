@@ -80,12 +80,13 @@ s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 		return 0;
 	}
 	do {
-		if ((tmp = H2K_futex_hash_remove_one(pa,ring,&pos)) != NULL) {
+		/* FIXME: pass full PA when supported */
+		if ((tmp = H2K_futex_hash_remove_one((u32_t)pa,ring,&pos)) != NULL) {
 			n_woken++;
 		} else {
 			break;
 		}
 	} while (n_woken < n_to_wake);
-	return H2K_check_sanity_unlock(n_woken);
+	return (s32_t)H2K_check_sanity_unlock(n_woken);
 }
 

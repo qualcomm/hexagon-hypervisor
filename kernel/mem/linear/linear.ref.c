@@ -54,8 +54,8 @@ H2K_translation_t H2K_linear_translate(H2K_translation_t in, H2K_asid_entry_t in
 		entry.raw = H2K_mem_physread_dword(list_pa);
 		if (entry.raw == 0) break;
 		if (entry.chain) {
-			list = entry.low & -8;
-			list_pa &= (list_pa & -(1<<PAGE_BITS));
+			list = entry.low & (u32_t)-8;
+			list_pa &= (list_pa & (u32_t)(-(1<<PAGE_BITS)));
 			list_pa |= list & ((1<<PAGE_BITS)-1);
 			continue;
 		}

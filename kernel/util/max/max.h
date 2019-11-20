@@ -218,7 +218,7 @@
 #define SSR_XA_NBITS 3
 #define SSR_XA_BITS_MASK (((0x1 << (SSR_XA_NBITS)) - 1) << SSR_XA_BITS)
 #define SSR_XE_BIT 31
-#define SSR_XE_BIT_MASK (0x1 << SSR_XE_BIT)
+#define SSR_XE_BIT_MASK ((u32_t)(0x1 << SSR_XE_BIT))
 
 #define SSR_XE2_BIT 26
 

@@ -14,7 +14,7 @@
 
 void h2_vmtrap_return();
 int h2_vmtrap_setvec(void *ptr);
-int h2_vmtrap_setie(ie_type val);
+ie_type h2_vmtrap_setie(ie_type val);
 int h2_vmtrap_getie();
 int h2_vmtrap_intop(intop_type op, unsigned int arg1, unsigned int arg2);
 int h2_vmtrap_clrmap(void *ptr);

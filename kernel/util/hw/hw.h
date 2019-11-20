@@ -70,14 +70,14 @@ static inline u32_t iassignr(u32_t intno)
 
 static inline u32_t hthreads_mask()
 {
-	iassignw(0,-1);
+	iassignw(0, (u32_t)-1);
 	return iassignr(0);
 }
 
 static inline u32_t get_hthreads()
 {
 #if ARCHV >= 5
-	return Q6_R_popcount_P(hthreads_mask());
+	return (u32_t)Q6_R_popcount_P(hthreads_mask());
 #elif ARCHV == 4
 	return 3;
 #endif

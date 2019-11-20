@@ -39,7 +39,7 @@ static inline int pthread_barrier_init_spin_np(pthread_barrier_t *barrier, unsig
 
 static inline int pthread_barrier_init(pthread_barrier_t *barrier, 
 	const pthread_barrierattr_t *attr, 
-	unsigned count) 
+	unsigned short count) 
 {
 	return pthread_barrier_init_spin_np(barrier,count,0);
 }

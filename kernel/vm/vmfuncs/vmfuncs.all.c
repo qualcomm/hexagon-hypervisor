@@ -25,13 +25,13 @@ void H2K_vmtrap_pmuctrl(H2K_thread_context *me) {
 		for (i = 0; i < vmblock->max_cpus; i++) {
 			id.cpuidx = i;
 			/* Ignore error from dead CPUs */
-			if (H2K_trap_pmuctrl(op, id.raw, turnon, 0, me) == 0) {
+			if (H2K_trap_pmuctrl((pmuop_type)op, id.raw, turnon, 0, me) == 0) {
 				ret++;
 			}
 		}
 		me ->r00 = ret;
 	} else {
-		me->r00 = H2K_trap_pmuctrl(me->r00, me->r01, me->r02, me->r03, me);
+		me->r00 = H2K_trap_pmuctrl((pmuop_type)me->r00, me->r01, me->r02, me->r03, me);
 	}
 }
 

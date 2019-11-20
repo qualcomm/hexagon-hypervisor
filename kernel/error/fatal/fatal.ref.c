@@ -31,13 +31,13 @@ static void H2K_fatal_sim_exit(u32_t why)
 
 void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	H2K_trace(H2K_TRACE_FATAL_KERNEL,(u32_t)me,H2K_get_pcycle_reg(),hthread);
+	H2K_trace(H2K_TRACE_FATAL_KERNEL,(u32_t)me,(u32_t)H2K_get_pcycle_reg(),(u8_t)hthread);
 	H2K_fatal_sim_exit(1);
 }
 
 void H2K_fatal_thread(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 {
-	H2K_trace(H2K_TRACE_FATAL_THREAD,me->id.raw >> 8,H2K_get_pcycle_reg(),hthread);
-	return H2K_thread_stop(H2_THREAD_FATAL_ERROR, me);  // get it?
+	H2K_trace(H2K_TRACE_FATAL_THREAD,me->id.raw >> 8,(u32_t)H2K_get_pcycle_reg(),(u8_t)hthread);
+	H2K_thread_stop((s32_t)H2_THREAD_FATAL_ERROR, me);  // get it?
 }
 

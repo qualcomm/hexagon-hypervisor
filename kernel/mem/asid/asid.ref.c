@@ -12,12 +12,12 @@
 #include <atomic.h>
 #include <globals.h>
 
-#define ASID_HASHVAL(X) (Q6_R_extractu_RII((((unsigned int)(X)) * 2654435761UL),ASID_BITS,32-ASID_BITS))
+#define ASID_HASHVAL(X) ((u32_t)Q6_R_extractu_RII((((unsigned int)(X)) * 2654435761UL),ASID_BITS,32-ASID_BITS))
 #define NEXTIDX(X,Y) (((X)+(Y)) & ((1<<ASID_BITS)-1))
 
 static inline u32_t log2_greater(u32_t x)
 {
-	return 32-Q6_R_cl0_R(x);
+	return 32 - (u32_t)Q6_R_cl0_R(x);
 }
 
 /*
@@ -92,8 +92,8 @@ s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_fla
 		tmp->fields.count++;
 		asid = tmp - H2K_gp->asid_table;
 		if (flag) {
-			H2K_mem_tlb_invalidate_asid(asid);
-			H2K_mem_stlb_invalidate_asid(asid);
+			H2K_mem_tlb_invalidate_asid((u32_t)asid);
+			H2K_mem_stlb_invalidate_asid((u32_t)asid);
 		}
 	} else if ((tmp = H2K_asid_table_eviction(ptb)) != NULL) {
 		tmp->ptb = ptb;
@@ -102,8 +102,8 @@ s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_fla
 		tmp->fields.count = 1;
 		tmp->fields.extra = extra;
 		asid = tmp - H2K_gp->asid_table;
-		H2K_mem_tlb_invalidate_asid(asid);
-		H2K_mem_stlb_invalidate_asid(asid);
+		H2K_mem_tlb_invalidate_asid((u32_t)asid);
+		H2K_mem_stlb_invalidate_asid((u32_t)asid);
 	} else {
 		asid = -1;
 	}

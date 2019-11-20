@@ -84,8 +84,8 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t phys_o
 	u32_t devpage_priv_offset = DEVICE_PAGE_OFFSET(ssbase + QDSP6SS_PUB_PRIV_OFFSET);
 	u32_t devpage_pub_offset = DEVICE_PAGE_OFFSET(ssbase);
 
-	heap_top = (void *)((((u32_t)&HEAP_SIZE == 0 ? DEFAULT_HEAP_SIZE : (u32_t)&HEAP_SIZE) + (u32_t)&end + 15) & -16);
-	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & -16);
+	heap_top = (void *)((((u32_t)&HEAP_SIZE == 0 ? DEFAULT_HEAP_SIZE : (u32_t)&HEAP_SIZE) + (u32_t)&end + 15) & (u32_t)-16);
+	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & (u32_t)-16);
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
 	H2K_kg_init(phys_offset, devpage_priv_offset, last_tlb_index, tlb_size);		/* Kernel Globals first! */
@@ -130,7 +130,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	bootvm->num_cpus = 1;
 	bootvm->guestmap.raw = 0;
 
-	boot->base_prio = boot->prio = bootvm->bestprio;
+	boot->base_prio = boot->prio = (u8_t)(bootvm->bestprio);
 	boot->gpugp = BOOT_THREAD_GPUGP;
 	boot->usr = BOOT_THREAD_USR;
 	boot->ssr = (BOOT_THREAD_SSR);
@@ -140,9 +140,9 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	boot->trapmask = bootvm->trapmask;
 	boot->continuation = H2K_interrupt_restore;
 	boot->vmstatus = 0x0;
-	boot->tlbidxmask = ~0;
+	boot->tlbidxmask = (u8_t)~0;
 	asid = H2K_asid_table_inc(boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, H2K_ASID_TLB_INVALIDATE_FALSE, 0, bootvm);
-	boot->ssr_asid = asid;
+	boot->ssr_asid = (u8_t)asid;
 	BKL_LOCK();
 
 #ifdef HTHREADS_MASK

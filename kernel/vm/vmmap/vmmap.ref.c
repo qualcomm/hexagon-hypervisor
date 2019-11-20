@@ -52,7 +52,7 @@ void H2K_vmtrap_newmap(H2K_thread_context *me)
 	s32_t newasid;
 	u32_t newptb = me->r00;
 	translation_type type;
-	tlb_invalidate_flag flag = me->r02;
+	tlb_invalidate_flag flag = (tlb_invalidate_flag)me->r02;
 	u32_t extra = me->r03;
 
 	
@@ -63,12 +63,12 @@ void H2K_vmtrap_newmap(H2K_thread_context *me)
 		return;
 	}
 
-	type = me->r01;
+	type = (translation_type)me->r01;
 	if ((newasid = H2K_asid_table_inc(newptb, type, flag, extra, me->vmblock)) == -1) {
 		me->r00 = -1;
 	} else {
 		H2K_asid_table_dec(me->ssr_asid);
-		me->ssr_asid = newasid;
+		me->ssr_asid = (u8_t)newasid;
 		me->r00 = 0;
 	}
 }

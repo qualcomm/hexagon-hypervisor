@@ -31,14 +31,14 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		 * Don't know what thread is blocked on... 
 		 * Need to get get hashval from dest somehow
 		 */ 
-		dest->prio = prio;
+		dest->prio = (u8_t)prio;
 		if (dest->next == dest) /* Only thing in the list */ return;
 		hashval = FUTEX_HASHVAL(dest->futex_ptr);
 		H2K_ring_remove(&H2K_gp->futexhash[hashval],dest);
 		H2K_futex_hash_add_ring(&H2K_gp->futexhash[FUTEX_HASHVAL(dest->futex_ptr)],dest);
 	} else if (dest->status == H2K_STATUS_READY) {
 		H2K_ready_remove(dest);
-		dest->prio = prio;
+		dest->prio = (u8_t)prio;
 		H2K_ready_insert(dest);
 	} else if (dest->status == H2K_STATUS_RUNNING) {
 		/* 
@@ -46,7 +46,7 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		 * Now that runlist structure has changed, this adjustment should be easier? 
 		 */
 		H2K_runlist_remove(dest);
-		dest->prio = prio;
+		dest->prio = (u8_t)prio;
 		H2K_runlist_push(dest);
 		if (H2K_gp->priomask & (1<<dest->hthread)) {
 			H2K_raise_lowprio();
@@ -54,7 +54,7 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		/* Need to update lowprio */
 	} else if (dest->status == H2K_STATUS_INTBLOCKED) {
 		/* Waiting on interrupt, but we want it to have high priority when it starts up */
-		dest->prio = prio;
+		dest->prio = (u8_t)prio;
 	} else {
 		/* Dead?  Should we notify someone about that? */
 	}
@@ -126,7 +126,8 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	hashval = FUTEX_HASHVAL(pa);
 	ring = &H2K_gp->futexhash[hashval];
 	pos = *ring;
-	ret = H2K_futex_hash_remove_one(pa,ring,&pos);
+	/* FIXME: pass full PA when supported */
+	ret = H2K_futex_hash_remove_one((u32_t)pa,ring,&pos);
 	if (ret == NULL) {
 		/* TBD: Do this more carefully */
 		/* TBD: check return value? */
@@ -141,6 +142,6 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 		me->prio = me->base_prio;
 		H2K_runlist_push(me);
 	}
-	return H2K_check_sanity_unlock(0);
+	return (s32_t)H2K_check_sanity_unlock(0);
 }
 

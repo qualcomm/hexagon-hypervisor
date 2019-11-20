@@ -11,7 +11,7 @@ include ../scripts/Makefile.inc.config
 
 include ../scripts/Makefile.inc.version
 
-CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wimplicit-int-conversion -Werror -g
+CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
 
 CFLAGS += -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_GUEST_END=$(H2K_GUEST_END)
 

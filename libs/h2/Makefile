@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Wimplicit-int-conversion -Werror -g
+CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -20,7 +20,7 @@ endif
 #
 #O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 
-CFLAGS += $(H2_EXTRA_CFLAGS)
+CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
 
 SRC_HFILES := 
 DEST_HFILES := 

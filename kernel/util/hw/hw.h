@@ -224,6 +224,11 @@ static inline void H2K_l2gcleaninv()
 {
 	asm volatile (" l2gcleaninv ");
 }
+
+static inline void H2K_l2gclean()
+{
+	asm volatile (" l2gclean ");
+}
 #endif
 
 static inline u32_t H2K_get_modectl()

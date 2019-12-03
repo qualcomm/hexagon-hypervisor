@@ -51,7 +51,7 @@ $(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S)
 	${CC} ${CFLAGS} -c -o $@ $<
 
 $(BOOTVM_IMAGE_BIN): $(BOOTVM_IMAGE)
-	hexagon-elfcopy -O binary $(BOOTVM_IMAGE) $@
+	$(ELFCOPY) -O binary $(BOOTVM_IMAGE) $@
 
 $(BOOTVM_PROG_TMP): $(BOOTVM_O) $(BOOTVM_DEPS)
 	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -o $@ $(BOOTVM_O)

@@ -154,6 +154,18 @@ static inline void H2K_set_livelock(u32_t val)
 	asm volatile (" s35 = %0 // set livelock" : : "r"(val));
 }
 
+static inline u32_t H2K_get_turkey()
+{
+	u32_t ret;
+	asm volatile (" %0 = s61 // get turkey" : "=r"(ret));
+	return ret;
+}
+
+static inline void H2K_set_turkey(u32_t val)
+{
+	asm volatile (" s61 = %0 // set turkey" : : "r"(val));
+}
+
 static inline u32_t H2K_get_duck()
 {
 	u32_t ret;

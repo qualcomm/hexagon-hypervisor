@@ -211,6 +211,7 @@ void usage()
 	printf("  booter --file <path> [--file <path> ...]\n\tOptions from <path>, one guest VM per line.");
 	printf("\n");
 	printf("Global options:\n");
+	printf("  --turkey <int>\n\tSet the turkey bits.\n");
 	printf("  --duck <int>\n\tSet the duck bits.\n");
 	printf("  --chicken <int>\n\tSet the chicken bits.\n");
 	printf("  --rgdr <int>\n\tSet rgdr.\n");
@@ -1286,6 +1287,17 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			H2K_set_livelock(regval);
 			regval = h2_info(INFO_LIVELOCK);
 			printf("New value for livelock: 0x%08x\n",regval);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0],"--turkey")) {
+			if (argc < 2) die_usage();
+			regval = H2K_get_turkey();
+			printf("Old value for turkey: 0x%08x\n",regval);
+			regval = strtoul(argv[1],NULL,0);
+			H2K_set_turkey(regval);
+			regval = H2K_get_turkey();
+			printf("New value for turkey: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 

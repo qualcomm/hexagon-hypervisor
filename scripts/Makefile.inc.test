@@ -387,6 +387,11 @@ try_gmon_out: test.log
 	find . -maxdepth 1 | egrep -q 'gmon\.t_'; \
 	if [ $$? -eq 0 ]; then \
 		${GMON_MERGE} -o gmon.out gmon.t_*; \
+	else \
+		find . -maxdepth 1 | egrep -q 'gmon\-0x'; \
+		if [ $$? -eq 0 ]; then \
+			${GMON_MERGE} -o gmon.out gmon-0x*; \
+		fi; \
 	fi
 
 COVFILE=cov.txt

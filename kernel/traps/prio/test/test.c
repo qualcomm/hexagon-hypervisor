@@ -19,7 +19,7 @@ void FAIL(const char *str)
 }
 
 H2K_thread_context a;
-
+struct H2K_vmblock_struct vmblock;
 int main()
 {
 	u32_t i;
@@ -28,8 +28,16 @@ int main()
 		a.base_prio = i;
 		if (H2K_prio_get(0,&a) != i) FAIL("prio_get");
 	}
-	if (H2K_prio_set(&a,999,&a) != -1) FAIL("prio_set");
-	// FIXME: probably should actually test real prio set behavior?
+	a.vmblock = NULL;
+	H2K_prio_set(&a,0,&a);
+	if (a.base_prio != 0) FAIL("prio_set_null");
+	a.vmblock = &vmblock;
+	for (i = 0; i < MAX_PRIOS-1; i++) {
+		a.vmblock->bestprio = i+1;
+		H2K_prio_set(&a,a.vmblock->bestprio,&a);
+		if (a.base_prio != a.vmblock->bestprio) FAIL("prio_set_mid");
+	}
+	if (H2K_prio_set(&a,MAX_PRIOS,&a) != -1) FAIL("prio_set_limit");
 	puts("TEST PASSED\n");
 	return 0;
 }

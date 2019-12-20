@@ -5,7 +5,7 @@
 
 #include <vm.h>
 #include <translate.h>
-
+/* REMOVED
 void H2K_vmblock_clear(H2K_vmblock_t *vmblock) {
 	u32_t i;
 	u64_t *x = (u64_t *)vmblock;
@@ -13,4 +13,4 @@ void H2K_vmblock_clear(H2K_vmblock_t *vmblock) {
 		x[i] = 0;
 	}
 }
-
+*/

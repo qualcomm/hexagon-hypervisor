@@ -10,7 +10,8 @@
 #include <vmblock.h>
 #include <translate.h>
 
+/* REMOVED
 void H2K_vmblock_clear(H2K_vmblock_t *vmblock) IN_SECTION(".text.data.vm");
-
+*/
 #endif
 

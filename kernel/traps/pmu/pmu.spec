@@ -35,10 +35,10 @@ We look up which configuration routine in H2K_pmuctrltab, and jump to the
 appropriate routine.
 
 
-REMOVED: H2K_trap_pmuctrl_threadset
+REMOVED: trap_pmuctrl_threadset
 -----------------------------------
 
-.. c:function:: u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
+.. c:function:: u32_t trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param vdest: thread ID to change PMU configuration for
@@ -71,7 +71,7 @@ We then release the BKL and return.
 H2K_trap_pmuctrl_setreg
 -------------------------
 
-.. c:function:: u32_t H2K_trap_pmuconcig_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param unused2: Unused parameter
@@ -93,7 +93,7 @@ Write the PMU register
 H2K_trap_pmuctrl_getreg
 -------------------------
 
-.. c:function:: u32_t H2K_trap_pmuconcig_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
 
 	:param unused: Unused paramater
 	:param unused2: Unused parameter

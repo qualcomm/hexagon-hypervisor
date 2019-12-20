@@ -14,9 +14,11 @@ import sys
 import re
 
 # group(1) is PC, group(2) is name
-function_patt = re.compile("(\w+)\s+\<(\w+)\>:")
+function_patt = re.compile("(\w+)\s+(\w+):")
 covdata_patt = re.compile("\**\s+(\w+\s+(cycles|0))*\s+(\w+):\s+(.+)")
+covdata_patt2 = re.compile("\**\s+(\w+)\s+(1.0|0.0)*\s+(\w+):\s+(.+)")
 skip_patt = re.compile('No data!|--\sOut\sof\srange\s--.*')
+nop_patt = re.compile('.*\{\s+(\w+)')
 packet_start_patt = re.compile('.*\{')
 packet_end_patt = re.compile('.*\}')
 
@@ -50,7 +52,11 @@ class function_data(object):
             if self.ccount[pc] == 0:
                zero = "**"
             ccount = "%d cycles" % (self.ccount[pc])
-         output += "%2s%20s %08x: %s\n" % (zero,ccount, pc,self.text[pc])  
+         match = nop_patt.match(self.text[pc])
+         if match.group(1) == "nop" and zero == "**":
+            output += "\n"
+         else:
+            output += "%2s%20s %08x: %s\n" % (zero,ccount, pc,self.text[pc])  
       return output
 
    def set_offset(self,name,offset):
@@ -89,10 +95,11 @@ class function_data(object):
             continue
          m = covdata_patt.match(line)
          if not m:
-            print "covdata_patt match failed"
-            sys.exit(1)
+            m = covdata_patt2.match(line)
+            #print "covdata_patt match failed"
+            #sys.exit(1)
          ccount = None
-         if m.group(1):
+         if m and m.group(1):
             countstr = m.group(1).replace(" cycles","")
             countstr = countstr.replace(" 0", "")
             ccount = long(countstr, 10)
@@ -107,7 +114,10 @@ class function_data(object):
             pc -= self.offset
          text = m.group(4)
 
-         if text.find("nop") != -1:  #  silently dump all nop lines
+         #if text.find("nop") != -1:  #  silently dump all nop lines
+            #continue
+
+         if text.find("unknown") != -1:  #  silently dump all 0-content lines
             continue
 
          # print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)

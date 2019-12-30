@@ -141,9 +141,9 @@ qurt_test_single: ./qurt/test/testcases
 qurt_test_libs:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
 
-# coverage is broken
-#cov: h2_cov
-cov: h2_test
+# coverage
+#cov: h2_test
+cov: h2_cov
 	head -n -1 h2_report.html > report.html
 #	tail -n +2 qurt_report.html >> report.html
 

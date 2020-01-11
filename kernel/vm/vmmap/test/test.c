@@ -44,7 +44,7 @@ u32_t TH_saw_tlb_inv_va = 0;
 u32_t TH_oldasid = 0;
 u32_t TH_newasid = 0;
 
-void H2K_mem_stlb_invalidate_asid(u32_t asid)
+void H2K_mem_stlb_invalidate_asid_ext(u32_t asid)
 {
 	if (TH_expected_stlb_invasid == 0) FAIL("Unexpected invalidate stlb");
 	TH_expected_stlb_invasid = 0;
@@ -52,14 +52,14 @@ void H2K_mem_stlb_invalidate_asid(u32_t asid)
 	TH_saw_stlb_invasid = 1;
 }
 
-void H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) {
+void H2K_mem_stlb_invalidate_va_ext(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) {
 	if (TH_expected_stlb_inv_va == 0) FAIL("Unexpected invalidate stlb va");
 	TH_expected_stlb_inv_va = 0;
 	if (asid != TH_oldasid) FAIL("unexpected asid inv stlb");
 	TH_saw_stlb_inv_va = 1;
 }
 
-void H2K_mem_tlb_invalidate_asid(u32_t asid)
+void H2K_mem_tlb_invalidate_asid_ext(u32_t asid)
 {
 	if (TH_expected_tlb_invasid == 0) FAIL("Unexpected invalidate tlb");
 	TH_expected_tlb_invasid = 0;
@@ -67,7 +67,7 @@ void H2K_mem_tlb_invalidate_asid(u32_t asid)
 	TH_saw_tlb_invasid = 1;
 }
 
-void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) {
+void H2K_mem_tlb_invalidate_va_ext(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) {
 	if (TH_expected_tlb_inv_va == 0) FAIL("Unexpected invalidate tlb va");
 	TH_expected_tlb_inv_va = 0;
 	if (asid != TH_oldasid) FAIL("unexpected asid inv tlb");
@@ -101,6 +101,7 @@ void H2K_asid_table_dec(u32_t asid)
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	u32_t count = 0;
 
 	a.vmblock = &av;
 
@@ -109,6 +110,11 @@ int main()
 	a.r00 = 0x1000;
 	a.r01 = 0;
 	H2K_vmtrap_clrmap(&a);
+	count = a.r01;
+	if (count != 0) {
+		H2K_mem_stlb_invalidate_va_ext(a.r00, a.r01, a.ssr_asid, &a);
+		H2K_mem_tlb_invalidate_va_ext(a.r00, a.r01, a.ssr_asid, &a);
+	}
 	if (TH_saw_stlb_invasid || TH_saw_tlb_invasid) FAIL("saw invalidate on 0 count");
 	if (a.r00 != 0) FAIL("clrmap ret");
 
@@ -117,6 +123,11 @@ int main()
 	a.r01 = 0x10000;
 	TH_expected_tlb_inv_va = TH_expected_stlb_inv_va = 1;
 	H2K_vmtrap_clrmap(&a);
+	count = a.r01;
+	if (count != 0) {
+		H2K_mem_stlb_invalidate_va_ext(a.r00, a.r01, a.ssr_asid, &a);
+		H2K_mem_tlb_invalidate_va_ext(a.r00, a.r01, a.ssr_asid, &a);
+	}
 	if (!(TH_saw_stlb_inv_va && TH_saw_tlb_inv_va)) FAIL("no invalidate");
 	if (a.r00 != 0) FAIL("clrmap ret");
 	TH_saw_stlb_inv_va = TH_saw_tlb_inv_va = 0;

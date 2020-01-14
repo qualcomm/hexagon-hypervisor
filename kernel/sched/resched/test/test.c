@@ -54,6 +54,13 @@ void TH_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 	}
 }
 
+void TH_resched_cluster(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
+{
+	if (setjmp(env) == 0) {
+		H2K_resched_cluster(unused,me,hwtnum);
+	}
+}
+
 int main() 
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
@@ -87,6 +94,14 @@ int main()
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
 	if (H2K_gp->ready[MAX_PRIOS - 30] != &a) FAIL("Unexpected thread in readylist");
 	if (H2K_gp->ready[MAX_PRIOS - 30]->next != &c) FAIL("Unexpected thread in readylist");
+	H2K_gp->wait_mask = 0;
+	TB_saw_dosched = 0;
+	TB_in = &b;
+	H2K_runlist_push(&b);
+	TH_resched_cluster(0,TB_in,1);
+	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
+	if (H2K_gp->runlist[b.hthread] == &b) FAIL("Unexpected thread in runlist");
+	if (H2K_gp->ready[MAX_PRIOS - 30]->next->next != &b) FAIL("Unexpected thread in readylist");
 	puts("TEST PASSED\n");
 	return 0;
 }

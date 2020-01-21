@@ -9,7 +9,7 @@
 /* This maybe isn't technically part of pthreads, but it should be. */
 /* It's a similar primitive for us so we'll put it here */
 
-#include <posix_time.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,13 +27,14 @@ typedef union {
 
 static inline int pthread_sem_init_np(pthread_sem_t *sem, int pshared, unsigned int value)
 {
+	(void)pshared;
 	if (value > PTHREAD_SEM_VALUE_MAX_NP) value = PTHREAD_SEM_VALUE_MAX_NP;
 	sem->raw = value;
 	return 0;
 }
-static inline int pthread_sem_destroy_np(pthread_sem_t *sem) { return 0; }
+static inline int pthread_sem_destroy_np(pthread_sem_t *sem) { (void)sem; return 0; }
 int pthread_sem_wait_np(pthread_sem_t *sem);
-static inline int pthread_sem_timedwait_np(pthread_sem_t *sem, const struct timespec *abstime) { return pthread_sem_wait_np(sem); }
+static inline int pthread_sem_timedwait_np(pthread_sem_t *sem, const struct timespec *abstime) { (void)abstime; return pthread_sem_wait_np(sem); }
 int pthread_sem_trywait_np(pthread_sem_t *sem);
 int pthread_sem_add_np(pthread_sem_t *sem, unsigned int amount);
 static inline int pthread_sem_post_np(pthread_sem_t *sem) { return pthread_sem_add_np(sem,1); }

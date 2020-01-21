@@ -97,6 +97,7 @@ enum {
 #ifdef HAVE_EXTENSIONS
 unsigned int ext_power = 1;
 #endif
+unsigned int silent = 0;
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
@@ -116,6 +117,8 @@ int ecc_enable = -1;
 #ifdef CLUSTER_SCHED
 int cluster_sched = 1;
 #endif
+
+#define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
 
 typedef struct {
 	unsigned int id;  // h2 VM id
@@ -198,69 +201,70 @@ void error(char *str1, char *str2) {
 
 void FAIL(const char *str1, const char *str2)
 {
-	printf("FAIL %s %s\n", str1, str2);
+	BOOTER_PRINTF("FAIL %s %s\n", str1, str2);
 	exit(1);
 }
 
 void usage()
 {
-	printf("Usage:\n");
-	printf("  booter [options] <executable> <args>\n");
-	printf("  booter [options] <executable> <args> [ --new_vm <instances> [vm options] <executable> <args> ...]\n");
-	printf("  booter [global options] --new_vm <int> [vm options] <executable> <args> [--new_vm <int> [vm options] <executable> <args> ...]\n\tBoot new <instances> of guest VMs with given options.\n");
-	printf("  booter --file <path> [--file <path> ...]\n\tOptions from <path>, one guest VM per line.");
-	printf("\n");
-	printf("Global options:\n");
-	printf("  --turkey <int>\n\tSet the turkey bits.\n");
-	printf("  --duck <int>\n\tSet the duck bits.\n");
-	printf("  --chicken <int>\n\tSet the chicken bits.\n");
-	printf("  --rgdr <int>\n\tSet rgdr.\n");
-	printf("  --syscfg <int>\n\tSet syscfg.\n");
-	printf("  --livelock <int>\n\tSet livelock.\n");
-	printf("  --syscfg_bit <name> <int>\n\tSet syscfg bit(s) not covered by other options.\n");
-	printf("  --l1dp [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 data cache partitioning (ARCHV <= 5).\n");
-	printf("  --l1ip [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 instruction cache partitioning (ARCHV <= 5).\n");
-	printf("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
-	printf("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
-	printf("  --l2_reg <offset int> <int>\n\tSet L2 config register. Setting to -1 reads current value, doesn't set.\n");
+	BOOTER_PRINTF("Usage:\n");
+	BOOTER_PRINTF("  booter [options] <executable> <args>\n");
+	BOOTER_PRINTF("  booter [options] <executable> <args> [ --new_vm <instances> [vm options] <executable> <args> ...]\n");
+	BOOTER_PRINTF("  booter [global options] --new_vm <int> [vm options] <executable> <args> [--new_vm <int> [vm options] <executable> <args> ...]\n\tBoot new <instances> of guest VMs with given options.\n");
+	BOOTER_PRINTF("  booter --file <path> [--file <path> ...]\n\tOptions from <path>, one guest VM per line.");
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("Global options:\n");
+	BOOTER_PRINTF("  --turkey <int>\n\tSet the turkey bits.\n");
+	BOOTER_PRINTF("  --duck <int>\n\tSet the duck bits.\n");
+	BOOTER_PRINTF("  --chicken <int>\n\tSet the chicken bits.\n");
+	BOOTER_PRINTF("  --rgdr <int>\n\tSet rgdr.\n");
+	BOOTER_PRINTF("  --syscfg <int>\n\tSet syscfg.\n");
+	BOOTER_PRINTF("  --livelock <int>\n\tSet livelock.\n");
+	BOOTER_PRINTF("  --syscfg_bit <name> <int>\n\tSet syscfg bit(s) not covered by other options.\n");
+	BOOTER_PRINTF("  --l1dp [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 data cache partitioning (ARCHV <= 5).\n");
+	BOOTER_PRINTF("  --l1ip [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 instruction cache partitioning (ARCHV <= 5).\n");
+	BOOTER_PRINTF("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
+	BOOTER_PRINTF("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
+	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register. Setting to -1 reads current value, doesn't set.\n");
 #ifdef HAVE_EXTENSIONS
-	printf("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
+	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
 #endif
-	printf("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
-	printf("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
-	printf("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
-	printf("  --hwt_mask <int>\n\tMask of hardware threads to start. Default -1 (all).\n");
-	printf("  --hwt_num <int>\n\tNumber of hardware threads to start. Default -1 (all).\n");
-	printf("  --ecc_enable (0|1)\n\tEnable/disable ECC for all applicable memories.  Default 0.\n");
+	BOOTER_PRINTF("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
+	BOOTER_PRINTF("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
+	BOOTER_PRINTF("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
+	BOOTER_PRINTF("  --hwt_mask <int>\n\tMask of hardware threads to start. Default -1 (all).\n");
+	BOOTER_PRINTF("  --hwt_num <int>\n\tNumber of hardware threads to start. Default -1 (all).\n");
+	BOOTER_PRINTF("  --ecc_enable (0|1)\n\tEnable/disable ECC for all applicable memories.  Default 0.\n");
+	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
 
-	printf("\n");
-	printf("VM options:\n");
-	printf("  --ccr <int>\n\tSet ccr.\n");
-	printf("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("VM options:\n");
+	BOOTER_PRINTF("  --ccr <int>\n\tSet ccr.\n");
+	BOOTER_PRINTF("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
 #ifdef HAVE_EXTENSIONS
-	printf("  --use_ext (0|1)\n\tSupport extended contexts.  Default 0.\n");
+	BOOTER_PRINTF("  --use_ext (0|1)\n\tSupport extended contexts.  Default 0.\n");
 #endif
-	printf("  --num_shared_ints <int>\n\tNumber of shared interrupts.  Default 0.\n");
-	printf("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
-	printf("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C (0xa == L1WB_L2CWB_AUX).\n");
-	printf("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
-	printf("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
-	printf("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default lowest mapped physical page.\n");
-	printf("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default (end - fence_lo) + heap size + stack size.\n");
-	printf("  --load_offset <int>\n\tOffset for loading ELF image.  Default (guest_base - <first_program_header_addr>).\n");
-	printf("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf).  Default 0.\n");
-	printf("  --bestprio <int>\n\tBest allowed priority for a virtual CPU.  Default 0.\n");
-	printf("  --trapmask <int>\n\tBitmask of allowed trap0 numbers.  Default 0xffffffff (all allowed).\n");
-	printf("  --stack <int>\n\tStack pointer VA for first virtual CPU.  Default 0xfeffff8.\n");
-	printf("  --arg <int>\n\tInitial argument (R0) for first virtual CPU.  Default 0.\n");
-	printf("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status.  Default 1.\n");
-	printf("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
-	printf("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 1.\n");
-	printf("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
-	printf("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
-	printf("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
+	BOOTER_PRINTF("  --num_shared_ints <int>\n\tNumber of shared interrupts.  Default 0.\n");
+	BOOTER_PRINTF("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
+	BOOTER_PRINTF("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C (0xa == L1WB_L2CWB_AUX).\n");
+	BOOTER_PRINTF("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
+	BOOTER_PRINTF("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
+	BOOTER_PRINTF("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default lowest mapped physical page.\n");
+	BOOTER_PRINTF("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default (end - fence_lo) + heap size + stack size.\n");
+	BOOTER_PRINTF("  --load_offset <int>\n\tOffset for loading ELF image.  Default (guest_base - <first_program_header_addr>).\n");
+	BOOTER_PRINTF("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf).  Default 0.\n");
+	BOOTER_PRINTF("  --bestprio <int>\n\tBest allowed priority for a virtual CPU.  Default 0.\n");
+	BOOTER_PRINTF("  --trapmask <int>\n\tBitmask of allowed trap0 numbers.  Default 0xffffffff (all allowed).\n");
+	BOOTER_PRINTF("  --stack <int>\n\tStack pointer VA for first virtual CPU.  Default 0xfeffff8.\n");
+	BOOTER_PRINTF("  --arg <int>\n\tInitial argument (R0) for first virtual CPU.  Default 0.\n");
+	BOOTER_PRINTF("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status.  Default 1.\n");
+	BOOTER_PRINTF("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
+	BOOTER_PRINTF("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 1.\n");
+	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
+	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
+	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
 #ifdef CLUSTER_SCHED
-	printf("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 0.\n");
+	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 0.\n");
 #endif
 }		
 
@@ -383,9 +387,9 @@ void get_pmap(unsigned int idx, long offset) {
 	unsigned long addr;
 
 	if ((addr = vm_params[idx].specials[SPECIAL___guest_pmap__].addr) == -1) {
-		printf("\t__guest_pmap__ not found.\n");
+		BOOTER_PRINTF("\t__guest_pmap__ not found.\n");
 	} else {
-		printf("\t__guest_pmap__ found @ 0x%08lx\n",addr);
+		BOOTER_PRINTF("\t__guest_pmap__ found @ 0x%08lx\n",addr);
 
 		vm_params[idx].pmap = (h2_guest_pmap_t *)(addr + offset);
 	}
@@ -411,10 +415,10 @@ void set_cmdline(unsigned int idx, long offset) {
 	int len = 0;
 
 	if ((addr = vm_params[idx].specials[SPECIAL___boot_cmdline__].addr) == -1) {
-		printf("\t__boot_cmdline__ not found.\n");
+		BOOTER_PRINTF("\t__boot_cmdline__ not found.\n");
 		return;
 	} else {
-		printf("\t__boot_cmdline__ found @ 0x%08x\n", (unsigned int)addr);
+		BOOTER_PRINTF("\t__boot_cmdline__ found @ 0x%08x\n", (unsigned int)addr);
 	}
 	dst = (char *)(addr + offset);
 	dst[0] = 0;
@@ -426,7 +430,7 @@ void set_cmdline(unsigned int idx, long offset) {
 		strcat(dst, " ");
 	}
 
-	printf("\tcmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);
+	BOOTER_PRINTF("\tcmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);
 }
 
 void set_string(unsigned int idx, int sym, char *string, int maxlen, long offset) {
@@ -441,16 +445,16 @@ void set_string(unsigned int idx, int sym, char *string, int maxlen, long offset
 	}
 
 	if ((addr = vm_params[idx].specials[sym].addr) == -1) {
-		printf("\t%s not found.\n", vm_params[idx].specials[sym].name);
+		BOOTER_PRINTF("\t%s not found.\n", vm_params[idx].specials[sym].name);
 		return;
 	} else {
-		printf("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
+		BOOTER_PRINTF("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
 	}
 
 	dst = (char *)(addr + offset);
 	strcpy(dst, string);
 
-	printf("\t%s at 0x%08x set to <<%s>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, dst);
+	BOOTER_PRINTF("\t%s at 0x%08x set to <<%s>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, dst);
 }
 
 void set_var(unsigned int idx, int sym, int val, long offset) {
@@ -459,16 +463,16 @@ void set_var(unsigned int idx, int sym, int val, long offset) {
 	unsigned long addr;
 
 	if ((addr = vm_params[idx].specials[sym].addr) == -1) {
-		printf("\t%s not found.\n", vm_params[idx].specials[sym].name);
+		BOOTER_PRINTF("\t%s not found.\n", vm_params[idx].specials[sym].name);
 		return;
 	} else {
-		printf("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
+		BOOTER_PRINTF("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
 	}
 
 	dst = (int *)(addr + offset);
 	*dst = val;
 
-	printf("\t%s at 0x%08x set to <<%d>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, *dst);
+	BOOTER_PRINTF("\t%s at 0x%08x set to <<%d>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, *dst);
 }
 
 void set_net_phys_offset(unsigned int idx, long offset) {
@@ -476,15 +480,15 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 	long *dst;
 	unsigned long addr;
 	if ((addr = vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr) == -1) {
-		printf("\t__boot_net_phys_offset__ not found.\n");
+		BOOTER_PRINTF("\t__boot_net_phys_offset__ not found.\n");
 		return;
 	} else {
-		printf("\t__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
+		BOOTER_PRINTF("\t__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
 	}
 	dst = (long *)(addr + offset);
 	*dst = offset;
 
-	printf("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
+	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
 }
 
 void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages) {
@@ -521,7 +525,7 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	pa >>= H2K_KERNEL_ADDRBITS;
 		
 	for (i = 0; i < npages; i++) {
-		//		printf("trans 0x%08lx -> 0x%09llx\n", va << H2K_KERNEL_ADDRBITS, pa << H2K_KERNEL_ADDRBITS);
+		//		BOOTER_PRINTF("trans 0x%08lx -> 0x%09llx\n", va << H2K_KERNEL_ADDRBITS, pa << H2K_KERNEL_ADDRBITS);
 		base[end + i].raw = 0ULL;
 		base[end + i].ppn = pa;
 		base[end + i].cccc = L1WB_L2C;
@@ -544,55 +548,55 @@ void clade_setup(unsigned int idx, long offset) {
 
 	/* Skip if any clade symbols are missing */
 	if ((region_hi = vm_params[idx].specials[SPECIAL___clade_region_high_pd0_start__].addr) == -1) {
-		printf("\t__clade_region_high_pd0_start__ not found.\n");
+		BOOTER_PRINTF("\t__clade_region_high_pd0_start__ not found.\n");
 		goto no_clade;
 	} else {
-		printf("\t__clade_region_high_pd0_start__ found @ 0x%08x\n", (unsigned int)region_hi);
+		BOOTER_PRINTF("\t__clade_region_high_pd0_start__ found @ 0x%08x\n", (unsigned int)region_hi);
 	}
 	if (0 == region_hi) {  // unused weak symbol
 		goto no_clade;
 	}
 
 	if ((comp = vm_params[idx].specials[SPECIAL___clade_comp_pd0_start__].addr) == -1) {
-		printf("\t__clade_comp_pd0_start__ not found.\n");
+		BOOTER_PRINTF("\t__clade_comp_pd0_start__ not found.\n");
 		goto no_clade;
 	} else {
-		printf("\t__clade_comp_pd0_start__ found @ 0x%08x\n", (unsigned int)comp);
+		BOOTER_PRINTF("\t__clade_comp_pd0_start__ found @ 0x%08x\n", (unsigned int)comp);
 	}
 
 	if ((ex_lo_small = vm_params[idx].specials[SPECIAL___clade_exception_low_small_pd0_start__].addr) == -1) {
-		printf("\t__clade_exception_low_small_pd0_start__ not found.\n");
+		BOOTER_PRINTF("\t__clade_exception_low_small_pd0_start__ not found.\n");
 		goto no_clade;
 	} else {
-		printf("\t__clade_exception_low_small_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_small);
+		BOOTER_PRINTF("\t__clade_exception_low_small_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_small);
 	}
 
 	if ((ex_lo_large = vm_params[idx].specials[SPECIAL___clade_exception_low_large_pd0_start__].addr) == -1) {
-		printf("\t__clade_exception_low_large_pd0_start__ not found.\n");
+		BOOTER_PRINTF("\t__clade_exception_low_large_pd0_start__ not found.\n");
 		goto no_clade;
 	} else {
-		printf("\t__clade_exception_low_large_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_large);
+		BOOTER_PRINTF("\t__clade_exception_low_large_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_lo_large);
 	}
 
 	if ((ex_hi_start = vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_start__].addr) == -1) {
-		printf("\t__clade_exception_high_pd0_start__ not found.\n");
+		BOOTER_PRINTF("\t__clade_exception_high_pd0_start__ not found.\n");
 		goto no_clade;
 	} else {
-		printf("\t__clade_exception_high_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_hi_start);
+		BOOTER_PRINTF("\t__clade_exception_high_pd0_start__ found @ 0x%08x\n", (unsigned int)ex_hi_start);
 	}
 
 	if ((ex_hi_end = vm_params[idx].specials[SPECIAL___clade_exception_high_pd0_end__].addr) == -1) {
-		printf("\t__clade_exception_high_pd0_end__ not found.\n");
+		BOOTER_PRINTF("\t__clade_exception_high_pd0_end__ not found.\n");
 		goto no_clade;
 	} else {
-		printf("\t__clade_exception_high_pd0_end__ found @ 0x%08x\n", (unsigned int)ex_hi_end);
+		BOOTER_PRINTF("\t__clade_exception_high_pd0_end__ found @ 0x%08x\n", (unsigned int)ex_hi_end);
 	}
 
 	if ((dict_start = vm_params[idx].specials[SPECIAL___clade_dict_pd0_start__].addr) == -1) {
-		printf("\t__clade_dict_pd0_start__ not found.\n");
+		BOOTER_PRINTF("\t__clade_dict_pd0_start__ not found.\n");
 		goto no_clade;
 	} else {
-		printf("\t__clade_dict_pd0_start__ found @ 0x%08x\n", (unsigned int)dict_start);
+		BOOTER_PRINTF("\t__clade_dict_pd0_start__ found @ 0x%08x\n", (unsigned int)dict_start);
 	}
 
 	/* Allocate a clade pd */
@@ -607,7 +611,7 @@ void clade_setup(unsigned int idx, long offset) {
 		if (NULL == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4096, 0))) {
 			FAIL("\tgalloc ex_hi", "");
 		}
-		//		printf("memcpy(0x%08x, 0x%08lx, 0x%08lx\n", vm_params[idx].clade_ex_hi, ex_hi_start + offset, ex_hi_size);
+		//		BOOTER_PRINTF("memcpy(0x%08x, 0x%08lx, 0x%08lx\n", vm_params[idx].clade_ex_hi, ex_hi_start + offset, ex_hi_size);
 		memcpy((void *)(vm_params[idx].clade_ex_hi), (void *)ex_hi_start + offset, ex_hi_size);
 	} else {
 		vm_params[idx].clade_ex_hi = ex_hi_start + offset;  // should never be referenced, but point it at something kind of meaningful
@@ -642,10 +646,10 @@ void clade_setup(unsigned int idx, long offset) {
 	} else if (region_hi != clade_region) {  // has to be identical for all concurrent clade guests
 			FAIL("\tCLADE region address mismatch", "");
 	}
-	printf("\tCLADE enabled\n");
+	BOOTER_PRINTF("\tCLADE enabled\n");
 	return;
  no_clade:
-	printf("\tCLADE not enabled\n");
+	BOOTER_PRINTF("\tCLADE not enabled\n");
 }
 
 void load_vm(unsigned int idx) {
@@ -665,8 +669,8 @@ void load_vm(unsigned int idx) {
 
 	char *elf = vm_params[idx].argv[0];
 
-	printf("\n");  // FIXME: prepending \n to string results in an empty line in the output lately. Weird.
-	printf("Load VM index %d %s\n", idx, elf);
+	BOOTER_PRINTF("\n");  // FIXME: prepending \n to string results in an empty line in the output lately. Weird.
+	BOOTER_PRINTF("Load VM index %d %s\n", idx, elf);
 
 	/* FIXME? It would be better to get the page size from the __guest_pmap__ if
 		 it exists (and if it is an offset mapping), but to read that we need to
@@ -705,7 +709,7 @@ void load_vm(unsigned int idx) {
 			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
-		printf("\tCopying from VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", clone, vm_params[clone].start_pa, vm_params[clone].start_pa + prev_size, vm_params[clone].end_pa - vm_params[clone].start_pa);
+		BOOTER_PRINTF("\tCopying from VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", clone, vm_params[clone].start_pa, vm_params[clone].start_pa + prev_size, vm_params[clone].end_pa - vm_params[clone].start_pa);
 		memcpy((void *)(vm_params[clone].start_pa) + prev_size, (void *)(vm_params[clone].start_pa), vm_params[clone].end_pa - vm_params[clone].start_pa);
 		set_net_phys_offset(idx, total_offset);
 		dcclean_range((unsigned long)vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
@@ -768,7 +772,7 @@ void load_vm(unsigned int idx) {
 			}
 
 			if (!vm_params[idx].skip_load) {
-				printf("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
+				BOOTER_PRINTF("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
 				bytes_read = 0;
 				do {
 					bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
@@ -803,7 +807,7 @@ void load_vm(unsigned int idx) {
 		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
 			FAIL("\tCan't find end symbol", "");
 		}
-		printf("\tend 0x%08lx\n", end);
+		BOOTER_PRINTF("\tend 0x%08lx\n", end);
 
 		vm_params[idx].start_pa = start + total_offset;
 		vm_params[idx].end_pa = end + total_offset;
@@ -814,13 +818,13 @@ void load_vm(unsigned int idx) {
 			if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr
 					|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr) {
 				heap_size = GUESS_HEAP_SIZE;
-				printf("\t** warning: heap size unknown, guessing 0x%08lx\n", heap_size);
+				BOOTER_PRINTF("\t** warning: heap size unknown, guessing 0x%08lx\n", heap_size);
 			} else {
 				heap_size = vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr;
-				printf("\theap_size 0x%08lx (DEFAULT_HEAP_SIZE)\n", heap_size);
+				BOOTER_PRINTF("\theap_size 0x%08lx (DEFAULT_HEAP_SIZE)\n", heap_size);
 			}
 		} else {
-			printf("\theap_size 0x%08lx\n", heap_size);
+			BOOTER_PRINTF("\theap_size 0x%08lx\n", heap_size);
 		}
 
 		stack_size = vm_params[idx].specials[SPECIAL_STACK_SIZE].addr;
@@ -828,13 +832,13 @@ void load_vm(unsigned int idx) {
 			if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr
 					|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr) {
 				stack_size = GUESS_STACK_SIZE;
-				printf("\t** warning: stack size unknown, guessing 0x%08lx\n", stack_size);
+				BOOTER_PRINTF("\t** warning: stack size unknown, guessing 0x%08lx\n", stack_size);
 			} else {
 				stack_size = vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr;
-				printf("\tstack_size 0x%08lx (DEFAULT_STACK_SIZE)\n", stack_size);
+				BOOTER_PRINTF("\tstack_size 0x%08lx (DEFAULT_STACK_SIZE)\n", stack_size);
 			}
 		} else {
-			printf("\tstack_size 0x%08lx\n", stack_size);
+			BOOTER_PRINTF("\tstack_size 0x%08lx\n", stack_size);
 		}
 
 		end += heap_size + stack_size;
@@ -847,7 +851,7 @@ void load_vm(unsigned int idx) {
 		total_size = H2_ALIGN_UP((end - start), one_page);
 		vm_params[idx].pages = total_size >> page_shift;
 
-		printf("\ttotal_size 0x%08lx\n", total_size);
+		BOOTER_PRINTF("\ttotal_size 0x%08lx\n", total_size);
 		guest_base += total_size;
 
 		if (set_fence_lo) {
@@ -864,16 +868,16 @@ void load_vm(unsigned int idx) {
 
 	clade_setup(idx, total_offset);
 
-	printf("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
-	printf("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
-	printf("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
-	printf("\toffset_pages 0x%lx\n", vm_params[idx].offset_pages);
+	BOOTER_PRINTF("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
+	BOOTER_PRINTF("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
+	BOOTER_PRINTF("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
+	BOOTER_PRINTF("\toffset_pages 0x%lx\n", vm_params[idx].offset_pages);
 
 	if (vm_params[idx].pmap_added) {
-		printf("\tguest translations added\n");
+		BOOTER_PRINTF("\tguest translations added\n");
 	} else {
-		printf("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
-		printf("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
+		BOOTER_PRINTF("\tfence_lo 0x%08x\n", vm_params[idx].fence_lo);
+		BOOTER_PRINTF("\tfence_hi 0x%08x\n", vm_params[idx].fence_hi);
 	}
 }
 
@@ -885,11 +889,11 @@ void config_vm(unsigned int idx) {
 	int trans;
 	
 
-	printf("\n");
-	printf("Config VM index %d\n", idx);
-	printf("\tVirtual CPUs %d\n", vm_params[idx].num_vcpus);
-	printf("\tShared interrupts  %d\n", vm_params[idx].num_shared_ints);
-	printf("\tPriority  %d\n", vm_params[idx].startprio);
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("Config VM index %d\n", idx);
+	BOOTER_PRINTF("\tVirtual CPUs %d\n", vm_params[idx].num_vcpus);
+	BOOTER_PRINTF("\tShared interrupts  %d\n", vm_params[idx].num_shared_ints);
+	BOOTER_PRINTF("\tPriority  %d\n", vm_params[idx].startprio);
 
 	vm = h2_config_vmblock_init(0, SET_CPUS_INTS, CONFIG_CPUS(vm_params[idx].use_ext, vm_params[idx].num_vcpus), vm_params[idx].num_shared_ints);
 
@@ -902,14 +906,14 @@ void config_vm(unsigned int idx) {
 		if (NULL != vm_params[idx].pmap) {  // has __guest_pmap__
 			trans = vm_params[idx].pmap->type;
 		  base.raw = vm_params[idx].pmap->base.raw;
-			printf("\tGuest pmap type %s\n", trans_name[trans]);
-			printf("\tGuest pmap base 0x%08x\n", base.raw);
+			BOOTER_PRINTF("\tGuest pmap type %s\n", trans_name[trans]);
+			BOOTER_PRINTF("\tGuest pmap base 0x%08x\n", base.raw);
 		} else {  // default
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
-			printf("\tTranslation type offset\n");
-			printf("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
-			printf("\t\tCCCC 0x%1x\n", base.cccc);
-			printf("\t\tXWRU 0x%1x\n", base.xwru);
+			BOOTER_PRINTF("\tTranslation type offset\n");
+			BOOTER_PRINTF("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
+			BOOTER_PRINTF("\t\tCCCC 0x%1x\n", base.cccc);
+			BOOTER_PRINTF("\t\tXWRU 0x%1x\n", base.xwru);
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
@@ -928,8 +932,8 @@ void config_vm(unsigned int idx) {
 		}
 	}
 
-	printf("\tPriority %d\n", vm_params[idx].bestprio);
-	printf("\tTrapmask 0x%08x\n", vm_params[idx].trapmask);
+	BOOTER_PRINTF("\tPriority %d\n", vm_params[idx].bestprio);
+	BOOTER_PRINTF("\tTrapmask 0x%08x\n", vm_params[idx].trapmask);
 	if (h2_config_vmblock_init(vm, SET_PRIO_TRAPMASK, vm_params[idx].bestprio, vm_params[idx].trapmask) != vm) {
 		FAIL("\tSET_PRIO_TRAPMASK", "");
 	}
@@ -950,22 +954,22 @@ void config_vm(unsigned int idx) {
 #endif
 
 	vm_params[idx].id = vm;
-	printf("\tVM ID %lu\n", vm);
+	BOOTER_PRINTF("\tVM ID %lu\n", vm);
 }
 
 void boot_vm(unsigned int idx) {
 
 	unsigned int regval;
 
-	printf("\n");
-	printf("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
 
 	if (~0L != vm_params[idx].ccr) {
 		regval = H2K_get_ccr();
-		printf("\told value for ccr: 0x%08x\n",regval);
+		BOOTER_PRINTF("\told value for ccr: 0x%08x\n",regval);
 		H2K_set_ccr(vm_params[idx].ccr);
 		regval = H2K_get_ccr();
-		printf("\tnew value for ccr: 0x%08x\n",regval);
+		BOOTER_PRINTF("\tnew value for ccr: 0x%08x\n",regval);
 	}
 
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
@@ -997,8 +1001,8 @@ void run(unsigned int idx) {
 	}
 
 	/* Wait for all VMs to stop or error */
-	printf("\n");
-	printf("booter: Waiting for interrupts\n");
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("booter: Waiting for interrupts\n");
 
 	do {
 		if (sample_usecs) {
@@ -1012,7 +1016,7 @@ void run(unsigned int idx) {
 
 			for (i = 0; i < MAX_HTHREADS; i++) {
 				if (hthreads_mask & (1 << i)) {
-					printf("Sample -- hthread: %d  ID: 0x%08x  ELR: 0x%08x\n", i, (unsigned int)(res[i] >> 32), (unsigned int)(res[i] & 0xffffffff));
+					BOOTER_PRINTF("Sample -- hthread: %d  ID: 0x%08x  ELR: 0x%08x\n", i, (unsigned int)(res[i] >> 32), (unsigned int)(res[i] & 0xffffffff));
 				}
 			}
 			if (hthreads_mask) {
@@ -1031,9 +1035,9 @@ void run(unsigned int idx) {
 					continue;
 				}
 				status = h2_vmstatus(VMOP_STATUS_STATUS, vm);
-				printf("VM %d status 0x%x\n", vm, status);
+				BOOTER_PRINTF("VM %d status 0x%x\n", vm, status);
 				cpus = h2_vmstatus(VMOP_STATUS_CPUS, vm);
-				printf("VM %d Live CPUs: %d\n", vm, cpus);
+				BOOTER_PRINTF("VM %d Live CPUs: %d\n", vm, cpus);
 
 				if (0 == cpus) {  // no more cpus running
 					if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
@@ -1070,64 +1074,64 @@ void die_usage()
 
 void print_infos() {
 
-	printf("H2/core info:\n");
-	printf("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
-	printf("\tGuest PC sampling available: ");
-	printf((boot_flags.boot_have_sample ? "true\n" : "false\n"));
-	printf("\tHVX:\n");
-	printf("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
+	BOOTER_PRINTF("H2/core info:\n");
+	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
+	BOOTER_PRINTF("\tGuest PC sampling available: ");
+	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tHVX:\n");
+	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
 	if (boot_flags.boot_have_hvx) {
-		printf("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
-		printf("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_HVX_CONTEXTS));
-		printf("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
+		BOOTER_PRINTF("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
+		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_HVX_CONTEXTS));
+		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
 #if ARCHV >= 65
-		printf("\t\tVTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
-		printf("\t\tVTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
+		BOOTER_PRINTF("\t\tVTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
+		BOOTER_PRINTF("\t\tVTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
 #endif
 	}
 #if ARCHV >= 68
-	printf("\tHMX present: ");
-	printf((boot_flags.boot_have_hmx ? "true\n" : "false\n"));
-	printf("\tUser-mode DMA present: ");
-	printf((boot_flags.boot_have_dma ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tHMX present: ");
+	BOOTER_PRINTF((boot_flags.boot_have_hmx ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tUser-mode DMA present: ");
+	BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
 #endif
-	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
-	printf("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
-	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
-	printf("\tH2 kernel in TCM: ");
-	printf((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
-	printf("\tcfgbase: 0x%08x\n", h2_info(INFO_CFGBASE));
-	printf("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
-	printf("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
-	printf("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
-	printf("\tL2 cache size: %dK\n", h2_info(INFO_L2TAG_SIZE) / 1024);
-	printf("\tL2 line size: %d\n", h2_info(INFO_L2_LINE_SZ));
-	printf("\tL2 register base: 0x%08x\n", h2_info(INFO_L2CFG_BASE));
-	printf("\tCLADE register base: 0x%08x\n", clade_base);
+	BOOTER_PRINTF("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
+	BOOTER_PRINTF("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
+	BOOTER_PRINTF("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
+	BOOTER_PRINTF("\tH2 kernel in TCM: ");
+	BOOTER_PRINTF((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tcfgbase: 0x%08x\n", h2_info(INFO_CFGBASE));
+	BOOTER_PRINTF("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
+	BOOTER_PRINTF("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
+	BOOTER_PRINTF("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
+	BOOTER_PRINTF("\tL2 cache size: %dK\n", h2_info(INFO_L2TAG_SIZE) / 1024);
+	BOOTER_PRINTF("\tL2 line size: %d\n", h2_info(INFO_L2_LINE_SZ));
+	BOOTER_PRINTF("\tL2 register base: 0x%08x\n", h2_info(INFO_L2CFG_BASE));
+	BOOTER_PRINTF("\tCLADE register base: 0x%08x\n", clade_base);
 #if ARCHV >= 65
-	printf("\tECC register base: 0x%08x\n", h2_info(INFO_ECC_BASE));
-	printf("\tAudio extension: %d\n", h2_info(INFO_AUDIO_EXT));
+	BOOTER_PRINTF("\tECC register base: 0x%08x\n", h2_info(INFO_ECC_BASE));
+	BOOTER_PRINTF("\tAudio extension: %d\n", h2_info(INFO_AUDIO_EXT));
 #endif
-	printf("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
-	printf("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
-	printf("\tSTLB:\n");
-	printf("\t\tEnabled: ");
+	BOOTER_PRINTF("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
+	BOOTER_PRINTF("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
+	BOOTER_PRINTF("\tSTLB:\n");
+	BOOTER_PRINTF("\t\tEnabled: ");
 	if (stlb_info.stlb_enabled) {
-		printf("true\n");
-		printf("\t\tSets per ASID: %d\n", 1 << stlb_info.stlb_max_sets_log2);
-		printf("\t\tWays: %d\n", stlb_info.stlb_max_ways);
-		printf("\t\tSize: %d\n", stlb_info.stlb_size);
-		printf("\t\tEntries: %dK\n", ((1 << stlb_info.stlb_max_sets_log2) * stlb_info.stlb_max_ways * stlb_info.stlb_size) / 1024);
+		BOOTER_PRINTF("true\n");
+		BOOTER_PRINTF("\t\tSets per ASID: %d\n", 1 << stlb_info.stlb_max_sets_log2);
+		BOOTER_PRINTF("\t\tWays: %d\n", stlb_info.stlb_max_ways);
+		BOOTER_PRINTF("\t\tSize: %d\n", stlb_info.stlb_size);
+		BOOTER_PRINTF("\t\tEntries: %dK\n", ((1 << stlb_info.stlb_max_sets_log2) * stlb_info.stlb_max_ways * stlb_info.stlb_size) / 1024);
 	} else {
-		printf("false\n");
+		BOOTER_PRINTF("false\n");
 	}
-	printf("\tsyscfg: 0x%08x\n", h2_info(INFO_SYSCFG));
-	printf("\trev: 0x%08x\n", h2_info(INFO_REV));
-	printf("\tSubsystem base: 0x%08x\n", h2_info(INFO_SSBASE));
-	printf("\tL2VIC physical base: 0x%08x\n", h2_info(INFO_L2VIC_BASE));
-	printf("\tTimer physical base: 0x%08x\n", h2_info(INFO_TIMER_BASE));
-	printf("\tTimer interrupt: %d\n", h2_info(INFO_TIMER_INT));
-	printf("\tRunning HW threads mask: 0x%08x\n", h2_info(INFO_HTHREADS));
+	BOOTER_PRINTF("\tsyscfg: 0x%08x\n", h2_info(INFO_SYSCFG));
+	BOOTER_PRINTF("\trev: 0x%08x\n", h2_info(INFO_REV));
+	BOOTER_PRINTF("\tSubsystem base: 0x%08x\n", h2_info(INFO_SSBASE));
+	BOOTER_PRINTF("\tL2VIC physical base: 0x%08x\n", h2_info(INFO_L2VIC_BASE));
+	BOOTER_PRINTF("\tTimer physical base: 0x%08x\n", h2_info(INFO_TIMER_BASE));
+	BOOTER_PRINTF("\tTimer interrupt: %d\n", h2_info(INFO_TIMER_INT));
+	BOOTER_PRINTF("\tRunning HW threads mask: 0x%08x\n", h2_info(INFO_HTHREADS));
 }
 
 void kernel_setup() {
@@ -1178,10 +1182,10 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 
 	unsigned int old, ret;
 
-	printf("Set L2 reg at offset 0x%08x:\n", offset);
+	BOOTER_PRINTF("Set L2 reg at offset 0x%08x:\n", offset);
 
 	old = h2_hwconfig_l2_get_reg(offset);
-	printf("\tOld value:  0x%08x\n", old);
+	BOOTER_PRINTF("\tOld value:  0x%08x\n", old);
 
 	if (val != -1) {
 		ret = h2_hwconfig_l2_set_reg(offset, val);
@@ -1190,7 +1194,7 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 			FAIL("set_l2_reg mismatch.", "");
 		}
 
-		printf("\tNew value:  0x%08x\n", val);
+		BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
 	}
 }
 
@@ -1236,7 +1240,7 @@ void set_syscfg_field(char *name, unsigned int val) {
 		}
 		i++;
 	}
-	printf("Unknown SYSCFG bit %s\n", name);
+	BOOTER_PRINTF("Unknown SYSCFG bit %s\n", name);
 	FAIL("set_syscfg_field", "");
 }
 
@@ -1245,12 +1249,12 @@ extern void bootvm_vectors();
 void booter_isr(unsigned int gssr) {
 
 	if ((gssr & 0xff) == H2K_VM_CHILDINT) {
-		//		printf("Got child interrupt\n");
+		//		BOOTER_PRINTF("Got child interrupt\n");
 		h2_anysignal_set(&wake_sig, WAKE_CHILD);
 		h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_VM_CHILDINT, 0);
 	}
 	if ((gssr & 0xff) == H2K_TIME_GUESTINT) {
-		//		printf("Got timer interrupt\n");
+		//		BOOTER_PRINTF("Got timer interrupt\n");
 		h2_anysignal_set(&wake_sig, WAKE_TIMER);
 		h2_vmtrap_intop(H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT, 0);
 	}
@@ -1267,70 +1271,73 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 	while (argc) {
 
 		/* Global options */
-
-		if (0 == strcmp(argv[0],"--syscfg")) {
+		if (0 == strcmp(argv[0],"--quiet")) {
+			/* already quieted */
+			argc -= 1; argv += 1;
+			continue;
+		} else if (0 == strcmp(argv[0],"--syscfg")) {
 			if (argc < 2) die_usage();
 			regval = h2_info(INFO_SYSCFG);
-			printf("Old value for syscfg: 0x%08x\n",regval);
+			BOOTER_PRINTF("Old value for syscfg: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
 			H2K_set_syscfg(regval);
 			regval = h2_info(INFO_SYSCFG);
-			printf("New value for syscfg: 0x%08x\n",regval);
+			BOOTER_PRINTF("New value for syscfg: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--livelock")) {
 			if (argc < 2) die_usage();
 			regval = h2_info(INFO_LIVELOCK);
-			printf("Old value for livelock: 0x%08x\n",regval);
+			BOOTER_PRINTF("Old value for livelock: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
 			H2K_set_livelock(regval);
 			regval = h2_info(INFO_LIVELOCK);
-			printf("New value for livelock: 0x%08x\n",regval);
+			BOOTER_PRINTF("New value for livelock: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--turkey")) {
 			if (argc < 2) die_usage();
 			regval = H2K_get_turkey();
-			printf("Old value for turkey: 0x%08x\n",regval);
+			BOOTER_PRINTF("Old value for turkey: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
 			H2K_set_turkey(regval);
 			regval = H2K_get_turkey();
-			printf("New value for turkey: 0x%08x\n",regval);
+			BOOTER_PRINTF("New value for turkey: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--duck")) {
 			if (argc < 2) die_usage();
 			regval = H2K_get_duck();
-			printf("Old value for duck: 0x%08x\n",regval);
+			BOOTER_PRINTF("Old value for duck: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
 			H2K_set_duck(regval);
 			regval = H2K_get_duck();
-			printf("New value for duck: 0x%08x\n",regval);
+			BOOTER_PRINTF("New value for duck: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--chicken")) {
 			if (argc < 2) die_usage();
 			regval = H2K_get_chicken();
-			printf("Old value for chicken: 0x%08x\n",regval);
+			BOOTER_PRINTF("Old value for chicken: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
 			H2K_set_chicken(regval);
 			regval = H2K_get_chicken();
-			printf("New value for chicken: 0x%08x\n",regval);
+			BOOTER_PRINTF("New value for chicken: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--rgdr")) {
 			if (argc < 2) die_usage();
 			regval = H2K_get_rgdr();
-			printf("Old value for rgdr: 0x%08x\n",regval);
+			BOOTER_PRINTF("Old value for rgdr: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
 			H2K_set_rgdr(regval);
 			regval = H2K_get_rgdr();
-			printf("New value for rgdr: 0x%08x\n",regval);
+			BOOTER_PRINTF("New value for rgdr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
@@ -1700,12 +1707,17 @@ int main(int argc, char **argv)
 		usage();
 		return 1;
 	}
+	for (idx = 0; idx < argc; idx++) {
+		if (0 == strcmp(argv[idx],"--quiet")) { 
+			silent = 1;
+		}
+	}
 
 	// check for kernel boot errors
 	kerror = h2_info(INFO_ERROR);
 	if (kerror != KERROR_NONE) {
-		printf("\n");
-		printf("Kernel error: %s\n\n", kerror_msg[kerror]);
+		BOOTER_PRINTF("\n");
+		BOOTER_PRINTF("Kernel error: %s\n\n", kerror_msg[kerror]);
 		print_infos();
 		return 1;
 	}

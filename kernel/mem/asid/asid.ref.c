@@ -120,9 +120,9 @@ s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag f
 
 void H2K_asid_table_dec(u32_t asid)
 {
-	H2K_spinlock_lock(&H2K_gp->asid_spinlock);
-	H2K_gp->asid_table[asid].fields.count--;
-	H2K_spinlock_unlock(&H2K_gp->asid_spinlock);
+	H2K_atomic_add_mask((u32_t *)&(H2K_gp->asid_table[asid].fields),
+											((~0u) << H2K_ASID_ENTRY_COUNT_POS) & H2K_ASID_ENTRY_COUNT_MASK,
+											H2K_ASID_ENTRY_COUNT_MASK);
 }
 
 void H2K_asid_table_init()

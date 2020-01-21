@@ -261,6 +261,17 @@ static inline int h2_hwconfig_dma_setcfg(unsigned int index, unsigned int data) 
 	return h2_hwconfig_trap(HWCONFIG_SETDMACFG, NULL, index, data);
 }
 
+/**
+Clean L2 cache
+@param[in] inv  Invalidate (zero == false, nonzero == true)
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+static inline int h2_hwconfig_l2gclean(unsigned int inv) {
+
+	return h2_hwconfig_trap(HWCONFIG_L2GCLEAN, NULL, inv, 0);
+}
+
 #endif
 
 /** @} */

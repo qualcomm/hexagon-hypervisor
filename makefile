@@ -175,7 +175,7 @@ compat:
 .PHONY: gtags gtagsclean htags
 
 gtags:
-	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
+	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path libs/syscall/angel/include -o -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
 
 htags: gtags
 	htags -ahnosTxvF --show-position --auto-completion --tree-view=filetree

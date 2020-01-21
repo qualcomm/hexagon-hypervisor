@@ -191,7 +191,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		p0 = cmp.eq(NEXT,DEST)
 		if (p0.new) jump:nt .Lraise_done
-		HASH=mpyi(DESTPA_LO,##FUTEX_PRIME)
+		HASH=+mpyi(DESTPA_LO,##FUTEX_PRIME)
 		DESTPA_HI = and(DESTPA_HI,#3)
 	}
 	{
@@ -294,7 +294,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	/* EJP: maybe we can keep HASH around along with PA_LO_SAV? */
 	PA = memd(ME+#CONTEXT_futex_ptr_64)			// reload PA from context
 	{
-		HASH = mpyi(PA_LO,##FUTEX_PRIME)
+		HASH =+mpyi(PA_LO,##FUTEX_PRIME)
 		FUTEXRING = add(H2K_GP,#KG_futexhash)
 		PA_HI = and(PA_HI,#3)
 	}
@@ -387,7 +387,7 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 		PA = lsr(PA,#2)
 	}
 	{
-		HASH = mpyi(PA_LO,##FUTEX_PRIME)
+		HASH =+mpyi(PA_LO,##FUTEX_PRIME)
 		HTHREAD = memub(ME+#CONTEXT_hthread)
 		PA_HI = and(PA_HI,#3)
 	}

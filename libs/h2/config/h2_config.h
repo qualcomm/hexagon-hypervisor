@@ -46,7 +46,7 @@ Initialize fields for a vm block
 */
 
 static inline unsigned int h2_config_vmblock_init(unsigned int vm, vmblock_init_op_t op, unsigned int arg1, unsigned int arg2) {
-	return h2_config_trap(CONFIG_VMBLOCK_INIT, vm, op, arg1, arg2);
+	return (unsigned int)h2_config_trap(CONFIG_VMBLOCK_INIT, vm, op, arg1, arg2);
 }
 
 /**

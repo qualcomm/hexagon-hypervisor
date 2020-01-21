@@ -5,12 +5,13 @@
 
 #include "allsyscalls.h"
 #include <h2_error.h>
+#include <syscall_defs.h>
 
 void __attribute__ ((weak)) __h2_handle_errors_hook__(void) {
 	h2_handle_errors(0);
 }
 
-char __boot_cmdline__[256] __attribute__((section(".data"))) = { 0 };
+char __boot_cmdline__[SIZE__boot_cmdline__] __attribute__((section(".data"))) = { 0 };
 
 errno_t sys_get_cmdline(char *buffer, count_t count)
 {

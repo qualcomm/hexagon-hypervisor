@@ -23,7 +23,7 @@ FUNC_START H2K_futex_cancel .text.core.futex .p2align 2 // futex_cancel(dest)
 		DEST = DEST_IN
 	}
 	{
-		HASH = mpyi(PA_LO,##FUTEX_PRIME)
+		HASH =+mpyi(PA_LO,##FUTEX_PRIME)
 		PA_HI = and(PA_HI,#3)
 	}
 	{

@@ -32,14 +32,10 @@ struct pthread_tcb {
 	pthread_attr_t attrs;
 };
 
-char dummy;
-static char tdata_start __attribute__((weakref("dummy")));
-static char tdata_end __attribute__((weakref("dummy")));
-static char tbss_start __attribute__((weakref("dummy")));
-static char tbss_end __attribute__((weakref("dummy")));
+extern char TLS_START __attribute__((weak));
+extern char TLS_END __attribute__((weak));
 
 static char *elftls_start;
-static char *elftls_end;
 static unsigned int elftls_size;
 
 static struct pthread_tcb *pthread_root = NULL;
@@ -142,6 +138,16 @@ static void pthread_trampoline(void *arg)
 	pthread_exit(ret);
 }
 
+int pthread_detach(pthread_t thread)
+{
+	struct pthread_tcb *dest;
+	if ((dest = pthread_thread_find_id(thread)) == NULL) return ESRCH;
+	if (dest->attrs.detached) return EINVAL;
+	dest->attrs.detached = 1;
+	pthread_sem_post_np(&dest->joined);
+	return 0;
+}
+
 int pthread_join(pthread_t thread, void **retval)
 {
 	struct pthread_tcb *dest;
@@ -159,14 +165,14 @@ int pthread_join(pthread_t thread, void **retval)
 
 static struct pthread_tcb *pthread_create_common(struct pthread_tcb *dst)
 {
-	unsigned char *elftls_area;
+	char *elftls_area;
 	/* init semaphores */
 	pthread_sem_init_np(&dst->joined,0,0);
 	pthread_sem_init_np(&dst->waiters,0,0);
 	pthread_sem_init_np(&dst->exiting,0,0);
 	pthread_sem_init_np(&dst->ack,0,0);
 	/* Copy ELF TLS area */
-	elftls_area = (unsigned char *)dst;
+	elftls_area = (char *)dst;
 	elftls_area -= elftls_size;
 	memcpy(elftls_area,elftls_start,elftls_size);
 	return dst;
@@ -247,11 +253,12 @@ void pthread_mainthread_setup()
 
 static void do_pthread_init()
 {
-	elftls_size = ((((&tbss_end-&tbss_start) + (&tdata_end - &tdata_start))+7) & -8);
-	elftls_start = &tdata_start;
-	elftls_end = elftls_start + elftls_size;
+	char *elftls_end = &TLS_END;
+	elftls_start = &TLS_START;
+	elftls_size = elftls_end - elftls_start;
 	if (elftls_size > MAX_ELFTLS_SIZE) {
 		/* FIXME: FATAL ERROR @ BOOT */;
+		elftls_size = 0;
 	}
 	pthread_mainthread_setup();
 }

@@ -73,7 +73,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 	}
 	{
 		memw(ME+#CONTEXT_futex_ptr_hi) |= PA_HI
-		HASH = mpyi(PA_LO,##FUTEX_PRIME)
+		HASH =+mpyi(PA_LO,##FUTEX_PRIME)
 	}
 	{
 		RUNLIST = add(H2K_GP,#KG_runlist)
@@ -165,7 +165,7 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 		PA = lsr(PA,#2)
 	}
 	{
-		HASH = mpyi(PA_LO,##FUTEX_PRIME)
+		HASH =+mpyi(PA_LO,##FUTEX_PRIME)
 		RING = add(H2K_GP,#KG_futexhash)
 	}
 	{

@@ -9,7 +9,7 @@
 /* This maybe isn't technically part of pthreads, but it should be. */
 /* It's a similar primitive for us so we'll put it here */
 
-#include <time.h>
+#include <posix_time.h>
 
 #ifdef __cplusplus
 extern "C" {

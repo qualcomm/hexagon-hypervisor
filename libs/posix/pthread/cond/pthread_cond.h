@@ -6,7 +6,8 @@
 #ifndef PTHREAD_COND_H
 #define PTHREAD_COND_H 1
 /* COND */
-#include <time.h>
+
+#include <posix_time.h>
 #include <pthread_misc.h>
 #include <stdio.h>
 

@@ -4,7 +4,7 @@
  */
 
 #include <h2if.h>
-#include <time.h>
+#include <posix_time.h>
 #include <errno.h>
 #include <pthread.h>
 

@@ -15,7 +15,7 @@ BOOTVM_PROG := booter
 
 BOOTVM_IMAGE_HEAP_SIZE := 0x10000
 
-CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-requires-header -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -D_PROVIDE_POSIX_TIME_DECLS=1
+CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-requires-header -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 include $(H2DIR)/scripts/Makefile.inc.config

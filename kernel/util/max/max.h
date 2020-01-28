@@ -252,7 +252,10 @@
 #define WAYS_MAX 16
 #define SETS_MAX (((32*1024)/32)/(WAYS_MAX))
 
+#ifndef MAX_BOOT_CONTEXTS
 #define MAX_BOOT_CONTEXTS 1
+#endif
+
 #define INTS_PER_BOOT_CONTEXT 32
 #define BOOT_STACK_SIZE 128
 

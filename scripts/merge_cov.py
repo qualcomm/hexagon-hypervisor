@@ -14,6 +14,7 @@ import sys
 import re
 
 # group(1) is PC, group(2) is name
+nopcfunc_patt = re.compile("(\w+):")
 function_patt = re.compile("(\w+)\s+(\w+):")
 covdata_patt = re.compile("\**\s+(\w+\s+(cycles|0))*\s+(\w+):\s+(.+)")
 covdata_patt2 = re.compile("\**\s+(\w+)\s+(1.0|0.0)*\s+(\w+):\s+(.+)")
@@ -185,6 +186,28 @@ def read_covfile(fn):
             #    fdata[line] = function_data(line)
       ignore_file.close()
 
+      ftemp = fn+"_temp"  # copy the test file to temporary file
+      fhtmp = open(ftemp,"w+")
+      if not fhtmp:
+         return
+      for line in fh:
+         currline = line.splitlines()[0]
+         match = nopcfunc_patt.match(currline)
+         if match and match.group(1) in fn_list and match.group(1) not in ignore_fn_list:
+            nextline = next(fh).rstrip("\n")
+            m = covdata_patt.match(nextline)
+            if not m:
+              m = covdata_patt2.match(nextline)
+              if m:
+                pc = str(hex(long(m.group(3),16))).lstrip("0x").rstrip("L")
+                currline = pc + " " + currline + "\n" + nextline
+         currline = currline + "\n"
+         fhtmp.write(currline)
+      fhtmp.close()
+      fh.close()
+      fh = open(ftemp,"r") # then operate on temporary file
+      if not fh:
+         return
       counter = 1
       for line in fh:
          counter += 1
@@ -197,6 +220,7 @@ def read_covfile(fn):
             #  start parsing until empty line
             fdata[match.group(2)].set_offset(match.group(2),pc)
             fdata[match.group(2)].add_data(fh,fn)
+      fh.close()
 
 if __name__ == "__main__":
 

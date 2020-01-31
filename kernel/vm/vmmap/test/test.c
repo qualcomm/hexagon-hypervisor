@@ -12,7 +12,7 @@
 #include <stlb.h>
 #include <asid.h>
 #include <vmmap.h>
-
+#include <tmpmap.h>
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -101,7 +101,7 @@ void H2K_asid_table_dec(u32_t asid)
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	H2K_kg.last_tlb_index = 0x3f;
+	H2K_kg.last_tlb_index = 0x7d;
 	H2K_kg.tlb_size = 0x80;
 	u32_t asid;
 	asm volatile (
@@ -135,8 +135,9 @@ int main()
 	if (a.r00 != 0) FAIL("clrmap ret");
 	TH_saw_stlb_inv_va = TH_saw_tlb_inv_va = 0;
 
+#if 0
 	TH_oldasid = a.ssr_asid = asid;
-	a.r00 = H2K_LINK_ADDR;
+	a.r00 = H2K_tmpmap_add_and_lock((pa_t)H2K_LINK_ADDR, UNCACHED);
 	a.r01 = 0x1;
 	TH_expected_tlb_inv_va = TH_expected_stlb_inv_va = 1;
 	H2K_vmtrap_clrmap(&a);
@@ -144,9 +145,11 @@ int main()
 		H2K_mem_stlb_invalidate_va_ext(a.r00, a.r01, a.ssr_asid, &a);
 		H2K_mem_tlb_invalidate_va_ext(a.r00, a.r01, a.ssr_asid, &a);
 	}
+	H2K_tmpmap_remove_and_unlock();
 	if (!(TH_saw_stlb_inv_va && TH_saw_tlb_inv_va)) FAIL("no invalidate on 1 count");
 	if (a.r00 != 0) FAIL("clrmap ret");
 	TH_saw_stlb_inv_va = TH_saw_tlb_inv_va = 0;
+#endif
 
 	/* NEWMAP */
 

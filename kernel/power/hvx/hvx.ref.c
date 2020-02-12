@@ -25,6 +25,8 @@ void H2K_hvx_poweron(void) {
 		return;
 	}
 
+#if ARCHV < 66
+
 #if ARCHV < 65
 	/* From HPG 4.7.8 */
 
@@ -79,6 +81,33 @@ void H2K_hvx_poweron(void) {
 
 #endif
 
+#else
+
+	// v66
+	u32_t val;
+
+	/* From HPG 4.8.X */
+
+	val = *((u32_t volatile *)(H2K_gp->hvx_cpmem_status)) & 
+				 ((0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT) | (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT));
+
+    if (val != ((0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT) | (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) {
+	    *((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg)) = QDSP6SS_CPMEM_CFG_VTCM_POWER_ON;
+	    *((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) |= (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_NRET_N_BIT);
+	    delay = 1000;
+	    while ((delay--) &&
+				 !((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) asm volatile ("nop");
+	    *((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) |= (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_RET_N_BIT);
+	    delay = 1000;
+	    while ((delay--) &&
+				 !((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT))) asm volatile ("nop");
+    }
+
+	*((u32_t volatile *)(H2K_gp->hvx_clock)) = QDSP6SS_CP_CLK_CTL_ENABLE;
+	val = *((u32_t volatile *)(H2K_gp->hvx_clock));  // sync
+
+#endif
+
 	H2K_gp->hvx_state = H2K_HVX_STATE_ON;
 	BKL_UNLOCK();
 #endif
@@ -99,6 +128,8 @@ void H2K_hvx_poweroff(void) {
 		BKL_UNLOCK();
 		return;
 	}
+
+#if ARCHV < 66
 
 #if ARCHV < 65
 	volatile u32_t delay = 500;
@@ -121,6 +152,55 @@ void H2K_hvx_poweroff(void) {
 #else
 
 	// v65
+	volatile u32_t delay = 65536;
+
+	/* From HPG 4.8.9 */
+
+	H2K_syncht(); //sync
+	while ((delay--) &&
+				 (*((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg))) & QDSP6SS_CPMEM_CFG_VTCM_POWER_ON) asm volatile ("nop");
+	H2K_set_ssr(H2K_get_ssr() & ~(((u32_t)(0x1)) << SSR_XE_BIT));
+	*((u32_t volatile *)(H2K_gp->hvx_clock)) = QDSP6SS_CP_CLK_CTL_DISABLE;
+	*((u32_t volatile *)(H2K_gp->hvx_power)) |= (((u32_t)(0x1)) << QDSP6SS_CP_PWR_CTL_CLAMP_IO_BIT);
+	*((u32_t volatile *)(H2K_gp->hvx_power)) |= (((u32_t)(0x1)) << QDSP6SS_CP_PWR_CTL_CLAMP_QMC_MEM_BIT);
+	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg)) &= ~QDSP6SS_CPMEM_CFG_VTCM_POWER_ON;
+	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) &= ~(0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_RET_N_BIT);
+	delay = 1000;
+	while ((delay--) &&
+				 ((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT))) asm volatile ("nop");
+	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) &= ~(0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_NRET_N_BIT);
+	delay = 1000;
+	while ((delay--) &&
+				 ((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) asm volatile ("nop");
+	*((u32_t volatile *)(H2K_gp->hvx_bhs_cfg)) &= ~(0x1 << QDSP6SS_CP_BHS_CFG_BHS_ON_BIT);
+	*((u32_t volatile *)(H2K_gp->hvx_bhs_cmd)) |= (0x1 << QDSP6SS_CP_BHS_CMD_UPDATE_BIT);
+	delay = 1000;
+	while ((delay--) &&
+				 ((*((u32_t volatile *)(H2K_gp->hvx_bhs_status))) & (0x1 << QDSP6SS_CP_BHS_STATUS_BHS_ON_BIT))) asm volatile ("nop");
+
+#endif
+
+#else
+
+	// v66
+	volatile u32_t delay = 500;
+
+	/* From HPG 4.8.X */
+
+	H2K_syncht(); //sync
+	while ((delay--) &&
+				 (*((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg))) & QDSP6SS_CPMEM_CFG_VTCM_POWER_ON) asm volatile ("nop");
+	H2K_set_ssr(H2K_get_ssr() & ~(((u32_t)(0x1)) << SSR_XE_BIT));
+	*((u32_t volatile *)(H2K_gp->hvx_clock)) = QDSP6SS_CP_CLK_CTL_DISABLE;
+	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg)) &= ~QDSP6SS_CPMEM_CFG_VTCM_POWER_ON;
+	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) &= ~(0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_RET_N_BIT);
+	delay = 1000;
+	while ((delay--) &&
+				 ((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT))) asm volatile ("nop");
+	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) &= ~(0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_NRET_N_BIT);
+	delay = 1000;
+	while ((delay--) &&
+				 ((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) asm volatile ("nop");
 
 #endif
 

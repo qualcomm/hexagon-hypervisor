@@ -129,6 +129,8 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	bootvm->free_threads = boot->next;
 	bootvm->num_cpus = 1;
 	bootvm->guestmap.raw = 0;
+	bootvm->fence_lo = 0;
+	bootvm->fence_hi = 0xffffffff & BOOT_TLB_PAGE_MASK;
 
 	boot->base_prio = boot->prio = (u8_t)(bootvm->bestprio);
 	boot->gpugp = BOOT_THREAD_GPUGP;

@@ -11,6 +11,7 @@
 #include <tlbmisc.h>
 #include <tlbfmt.h>
 #include <tlbinsert.h>
+#include <cfg_table.h>
 #include <hw.h>
 #include <globals.h>
 
@@ -71,8 +72,9 @@ void set_tlb_entry_at_table_index(u32_t tlb_index, u64_t tlb_entry) {
 int main()
 {
     __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+    H2K_kg.dma_version = H2K_cfg_table(CFG_TABLE_DMA_VERSION);
     H2K_kg.tlb_size = 0x80;  // tlb size value in init unit test
-    H2K_kg.last_tlb_index = H2K_kg.tlb_size - 1;
+    H2K_kg.last_tlb_index = H2K_kg.tlb_size - 1; // tlb last index set to index for tlb size
     
     H2K_thread_context H2K_tc;
     u32_t tlb_index_last_used = find_tlb_index_last_used();  // used tlb index to get tlb entry template

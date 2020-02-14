@@ -73,7 +73,6 @@ int main()
     __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
     H2K_kg.tlb_size = 0x80;  // tlb size value in init unit test
     H2K_kg.last_tlb_index = H2K_kg.tlb_size - 1;
-    H2K_kg.pinned_tlb_mask = (~0ULL) << ((H2K_kg.last_tlb_index+1) & 0x7F);
     
     H2K_thread_context H2K_tc;
     u32_t tlb_index_last_used = find_tlb_index_last_used();  // used tlb index to get tlb entry template

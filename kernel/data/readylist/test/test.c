@@ -85,20 +85,25 @@ void H2K_ready_REG_SSR_XE_SET_TB()
 	H2K_set_ssr(H2K_get_ssr() | SSR_XE_BIT_MASK);
 }
 
-void H2K_ready_CLUSTER_XE_CLEAR_TB()
+u32_t H2K_ready_create_hthreadmask_TB(u32_t hthreadstartidx, u32_t hthreadstopidx)
 {
-	u32_t cluster = H2K_hthread_cluster(0);
-	for (u32_t hthread = 0; hthread < MAX_HVX_PER_CLUSTER; hthread++) {
-		H2K_gp->xe_set[cluster] &= ~(0x1 << hthread);
+	u32_t hthreadmask = 0;
+	for (u32_t hthread = hthreadstartidx; hthread <= hthreadstopidx; hthread++) {
+	    hthreadmask |= (0x1 << hthread);
 	}
+	return hthreadmask;
 }
 
-void H2K_ready_CLUSTER_XE_SET_TB()
+void H2K_ready_CLUSTER_XE_CLEAR_TB(u32_t hthreadmask)
 {
 	u32_t cluster = H2K_hthread_cluster(0);
-	for (u32_t hthread = 0; hthread < MAX_HVX_PER_CLUSTER; hthread++) {
-		H2K_gp->xe_set[cluster] |= (0x1 << hthread);
-	}
+	H2K_gp->xe_set[cluster] &= ~hthreadmask;
+}
+
+void H2K_ready_CLUSTER_XE_SET_TB(u32_t hthreadmask)
+{
+	u32_t cluster = H2K_hthread_cluster(0);
+	H2K_gp->xe_set[cluster] |= hthreadmask;
 }
 
 void H2K_ready_THREAD_XE_CLEAR_TB(H2K_thread_context *thread)
@@ -179,33 +184,15 @@ int main()
 	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (empty) ");
 
 #ifdef CLUSTER_SCHED
+	u32_t hthreadmask = 0;
 	H2K_gp->cluster_sched = 1;
 	H2K_gp->cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
 	H2K_gp->cluster_mask[0] = (u32_t)(0xffff >> (16 - H2K_gp->cluster_hthreads));
 	H2K_gp->cluster_mask[1] = (u32_t)((0xffff >> (16 - H2K_gp->cluster_hthreads)) << H2K_gp->cluster_hthreads);
 
 	H2K_ready_REG_SSR_XE_CLEAR_TB();
-	H2K_ready_CLUSTER_XE_SET_TB();
-	H2K_ready_THREAD_XE_CLEAR_TB(&a);
-	H2K_ready_THREAD_XE_CLEAR_TB(&b);
-	H2K_ready_insert_TB(&a);
-	H2K_ready_insert_TB(&b);
-
-	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b) ");
-	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a) ");
-
-	H2K_ready_REG_SSR_XE_CLEAR_TB();
-	H2K_ready_CLUSTER_XE_SET_TB();
-	H2K_ready_THREAD_XE_SET_TB(&a);
-	H2K_ready_THREAD_XE_CLEAR_TB(&b);
-	H2K_ready_insert_TB(&a);
-	H2K_ready_insert_TB(&b);
-
-	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b) ");
-	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (a) ");
-
-	H2K_ready_REG_SSR_XE_CLEAR_TB();
-	H2K_ready_CLUSTER_XE_SET_TB();
+	hthreadmask = H2K_ready_create_hthreadmask_TB(0, MAX_HVX_PER_CLUSTER-1);
+	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask);
 	H2K_ready_THREAD_XE_CLEAR_TB(&a);
 	H2K_ready_THREAD_XE_SET_TB(&b);
 	H2K_ready_insert_TB(&a);
@@ -215,15 +202,41 @@ int main()
 	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (a) ");
 
 	H2K_ready_REG_SSR_XE_CLEAR_TB();
-	H2K_ready_CLUSTER_XE_SET_TB();
+	hthreadmask = H2K_ready_create_hthreadmask_TB(0, MAX_HVX_PER_CLUSTER-1);
+	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask);
 	H2K_ready_THREAD_XE_SET_TB(&a);
-	H2K_ready_THREAD_XE_SET_TB(&b);
-
+	H2K_ready_THREAD_XE_CLEAR_TB(&b);
 	H2K_ready_insert_TB(&a);
 	H2K_ready_insert_TB(&b);
 
-	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (b) ");
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b) ");
 	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (a) ");
+
+	H2K_ready_REG_SSR_XE_CLEAR_TB();
+	hthreadmask = H2K_ready_create_hthreadmask_TB(0, 0);
+	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask);
+	hthreadmask = H2K_ready_create_hthreadmask_TB(1, MAX_HVX_PER_CLUSTER-1);
+	H2K_ready_CLUSTER_XE_CLEAR_TB(hthreadmask);
+	H2K_ready_THREAD_XE_CLEAR_TB(&a);
+	H2K_ready_THREAD_XE_SET_TB(&b);
+	H2K_ready_insert_TB(&a);
+	H2K_ready_insert_TB(&b);
+
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b) ");
+	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a) ");
+
+	H2K_ready_REG_SSR_XE_SET_TB();
+	hthreadmask = H2K_ready_create_hthreadmask_TB(0, 0);
+	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask);
+	hthreadmask = H2K_ready_create_hthreadmask_TB(1, MAX_HVX_PER_CLUSTER-1);
+	H2K_ready_CLUSTER_XE_CLEAR_TB(hthreadmask);
+	H2K_ready_THREAD_XE_SET_TB(&a);
+	H2K_ready_THREAD_XE_CLEAR_TB(&b);
+	H2K_ready_insert_TB(&a);
+	H2K_ready_insert_TB(&b);
+
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b) ");
+	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a) ");
 #endif
 
 	puts("TEST PASSED\n");

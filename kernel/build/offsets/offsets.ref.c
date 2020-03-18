@@ -105,9 +105,6 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(ready);
 	PRINT_KG_OFFSET(futexhash);
 	PRINT_KG_OFFSET(inthandlers);
-	PRINT_KG_OFFSET(stacks_traptab);
-	PRINT_KG_OFFSET(stacks_addr);
-	PRINT_KG_OFFSET(traptab_addr);
 	PRINT_KG_OFFSET(lowprio_masks);
 	PRINT_KG_OFFSET(stlbptr);
 	PRINT_KG_OFFSET(vmblocks);

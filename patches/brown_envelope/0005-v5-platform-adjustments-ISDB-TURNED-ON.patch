@@ -1,0 +1,51 @@
+From 3ec6f0f8fb0b19e2bfe0418bffa8f37d88c7f700 Mon Sep 17 00:00:00 2001
+From: Richard Kuo <rkuo@codeaurora.org>
+Date: Tue, 20 Aug 2013 17:44:55 -0500
+Subject: [PATCH 5/8] v5 platform adjustments, ISDB TURNED ON
+
+---
+ kernel/init/boot/boot.ref.S |   13 +++++++++++--
+ 1 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/init/boot/boot.ref.S b/kernel/init/boot/boot.ref.S
+index 41c6abc..fa09344 100644
+--- a/kernel/init/boot/boot.ref.S
++++ b/kernel/init/boot/boot.ref.S
+@@ -72,8 +72,14 @@ FUNC_START start .entry .p2align 12
+ 	r0 = ##0x00002004
+ 	s63 = r0
+ #elif ARCHV == 5
+-	r0 = #0     /* (No chickenbits) */
++	r0 = #0     /* (New chickenbits) */
++	r0 = setbit(r0,#2);	//  AXI L1 Snoop something
++	r0 = setbit(r0,#27);	//  force store
++	r0 = setbit(r0,#12);	//  HW loops
+ 	s63 = r0
++	r0 = #0
++	r0 = setbit(r0,#22);	//  fix for address calculation corruption
++	s62 = r0
+ #else
+ #endif
+ 
+@@ -145,6 +151,10 @@ FUNC_START start .entry .p2align 12
+ 	DO_TLBW(3,2,1)
+ 1:
+ 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
++
++	r0 = #1;
++	isdben = r0
++
+ #if ARCHV <= 4
+  	r0 = #0x77f
+ #else
+@@ -161,7 +171,6 @@ FUNC_START start .entry .p2align 12
+ #endif
+ 	syscfg = r0
+ 	isync
+-
+ 	// make the jump to hyperspace
+ 	r2.h = #hi(1f)
+ 	r2.l = #lo(1f)
+-- 
+1.7.8.3
+

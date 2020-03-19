@@ -1,0 +1,44 @@
+From 21cd287471680c14f3d7f60d2fc4fd80858176f0 Mon Sep 17 00:00:00 2001
+From: Richard Kuo <rkuo@codeaurora.org>
+Date: Wed, 16 Oct 2013 14:07:55 -0500
+Subject: [PATCH 2/2] MODEM define added
+
+---
+ linux/loadlinux.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/linux/loadlinux.c b/linux/loadlinux.c
+index a0b4dae..04dac93 100644
+--- a/linux/loadlinux.c
++++ b/linux/loadlinux.c
+@@ -17,7 +17,9 @@
+ 
+ #define LINUX_NUM_VCPU 3
+ #define UCOS_NUM_VCPU 1
+-#define TOTAL_INTS 160
++
++#define TOTAL_INTS 288
++
+ #define SHARED_INTS (TOTAL_INTS - PERCPU_INTERRUPTS)
+ #define VCPU_STACK_SIZE 1024
+ #define LINUX_VM_PRIO 3
+@@ -101,8 +103,14 @@ void setup_ints(unsigned long vm, char num_cpus) {
+ 
+ 	int i;
+ 
+-	for (i = 0; i < TOTAL_INTS; i++) {
+-		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
++#ifdef MODEM
++#define INTERRUPT_SHIFT (32)
++#else
++#define INTERRUPT_SHIFT (0)
++#endif
++
++	for (i = 32; i < TOTAL_INTS; i++) {
++		if (h2_config_vmblock_init(vm, MAP_PHYS_INTR, i-INTERRUPT_SHIFT, CONFIG_PHYSINT_CPUID(i, num_cpus - 1)) != vm) {
+ 				FAIL("MAP_PHYS_INTR");
+ 		}
+ 	}
+-- 
+1.7.12.1
+

@@ -1,0 +1,69 @@
+From a5ac8c2fbff9fd3283463f477a060efdb4d21be7 Mon Sep 17 00:00:00 2001
+From: Richard Kuo <rkuo@codeaurora.org>
+Date: Tue, 20 Aug 2013 15:52:41 -0500
+Subject: [PATCH 2/8] v5 platform timer changes
+
+---
+ kernel/time/timer/timer.ref.c |   12 ++++++++----
+ kernel/util/max/max.h         |    8 +++++---
+ 2 files changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/kernel/time/timer/timer.ref.c b/kernel/time/timer/timer.ref.c
+index 5e58792..0d029fd 100644
+--- a/kernel/time/timer/timer.ref.c
++++ b/kernel/time/timer/timer.ref.c
+@@ -20,12 +20,16 @@
+ #define HW_ENABLE 2
+ #define TICK_GRANULARITY 64
+ 
+-//#define TIMERHW_TICK_REALFREQ	19200000
+-//#define TIMERHW_NSEC_PER_TICK 	52
++#if ARCHV <= 4
+ #define TIMERHW_TICK_REALFREQ	27000000
+ #define TIMERHW_NSEC_PER_TICK 	37
+-//#define TIMERHW_NSEC_PER_TICK 	53
+-//#define TIMERHW_NSEC_PER_TICK 	56
++#endif
++
++#if ARCHV == 5
++#define TIMERHW_TICK_REALFREQ	19200000
++#define TIMERHW_NSEC_PER_TICK 	52
++#endif
++
+ #define TIMERHW_NSEC_FREQ 	(TIMERHW_TICK_REALFREQ * TIMERHW_NSEC_PER_TICK)
+ #define TIMERHW_NS2TICKS(X)	((X)/(TIMERHW_NSEC_PER_TICK))
+ #define TIMERHW_TICKS2NS(X)	((X)*TIMERHW_NSEC_PER_TICK)
+diff --git a/kernel/util/max/max.h b/kernel/util/max/max.h
+index e2cfb48..cc6233d 100644
+--- a/kernel/util/max/max.h
++++ b/kernel/util/max/max.h
+@@ -53,13 +53,15 @@
+ #define MAX_ASIDS (1<<(ASID_BITS))
+ 
+ /* EJP: FIXME: PA should be learned from cfgtable in v4+ */
+-#define Q6_SS_BASE_PA 0x28880000
+ #define Q6_SS_BASE_VA 0xFFC80000
+ #if ARCHV <= 4
++#define Q6_SS_BASE_PA 0x28880000
+ #define TIMER_BASE_PA (Q6_SS_BASE_PA + 0x04000)
+ #define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x04000)
+ #else
+-#define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x20000)
++#define Q6_SS_BASE_PA 0xFE000000
++#define TIMER_BASE_VA (Q6_SS_BASE_VA + 0x2A0000 - 0x80000)
++#define L2_INT_BASE   (Q6_SS_BASE_VA + 0x290000 - 0x80000)
+ #endif
+ 
+ #define PERCPU_INTERRUPTS 32
+@@ -84,7 +86,7 @@
+ #if ARCHV <= 4
+ #define TIMER_INT 50
+ #else
+-#define TIMER_INT 35
++#define TIMER_INT 34
+ #endif
+ 
+ #define MAX_TRACE_LEVEL 0
+-- 
+1.7.8.3
+

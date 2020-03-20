@@ -19,6 +19,7 @@ nopcfunc_patt = re.compile("(\w+):")
 function_patt = re.compile("(\w+)\s+(\w+):")
 covdata_patt = re.compile("\**\s+(\w+\s+(cycles|0))*\s+(\w+):\s+(.+)")
 covdata_patt2 = re.compile("\**\s+(\w+)\s+(1.0|0.0)*\s+(\w+):\s+(.+)")
+covdata_patt3 = re.compile("(\**       0 1.0)\s+(\w+):\s+(.+)")
 skip_patt = re.compile('No data!|--\sOut\sof\srange\s--.*')
 nop_patt = re.compile('.*\{\s+(\w+)')
 packet_start_patt = re.compile('.*\{')
@@ -186,9 +187,9 @@ def read_covfile(fn):
             #    fdata[line] = function_data(line)
       ignore_file.close()
 
-      ftemp = fn+"_temp"  # copy the test file to temporary file
-      fhtmp = open(ftemp,"w+")
-      if not fhtmp:
+      fmid = fn+"_mid"  # copy the test file to temporary file
+      fhmid = open(fmid,"w+")
+      if not fhmid:
          return
       for line in fh:
          currline = line.splitlines()[0]
@@ -202,9 +203,37 @@ def read_covfile(fn):
                 pc = str(hex(long(m.group(3),16))).lstrip("0x").rstrip("L")
                 currline = pc + " " + currline + "\n" + nextline
          currline = currline + "\n"
+         fhmid.write(currline)
+      fhmid.close()
+      fh.close()
+
+      fmid = fn+"_mid"
+      fhmid = open(fmid,"r")
+      ftemp = fn+"_temp"
+      fhtmp = open(ftemp,"w+")
+      if not fhmid:
+         return
+      if not fhtmp:
+         return
+      for line in fhmid:
+         currline = line.splitlines()[0].rstrip("\n")
+         match = function_patt.match(currline)
+         if match and match.group(2) in fn_list and match.group(2) not in ignore_fn_list:
+            nextline = next(fhmid).rstrip("\n")
+            m = covdata_patt3.match(nextline)
+            if m:
+              currline = match.group(1) + " " + match.group(2) + "(unused):\n" + nextline
+            else:
+              currline = match.group(1) + " " + match.group(2) + ":\n" + nextline
+         currline = currline + "\n"
          fhtmp.write(currline)
       fhtmp.close()
-      fh.close()
+      fhmid.close()
+      fhmid = open(fmid,"w")
+      fhmid.close()
+      os.remove(fhmid.name)
+
+      ftemp = fn+"_temp"
       fh = open(ftemp,"r") # then operate on temporary file
       if not fh:
          return

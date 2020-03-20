@@ -12,6 +12,7 @@ Insert informative documentation  here.
 import getopt
 import sys
 import re
+import os
 
 # group(1) is PC, group(2) is name
 nopcfunc_patt = re.compile("(\w+):")
@@ -22,7 +23,6 @@ skip_patt = re.compile('No data!|--\sOut\sof\srange\s--.*')
 nop_patt = re.compile('.*\{\s+(\w+)')
 packet_start_patt = re.compile('.*\{')
 packet_end_patt = re.compile('.*\}')
-
 do_offsets = 0
 
 class function_data(object):
@@ -221,6 +221,9 @@ def read_covfile(fn):
             fdata[match.group(2)].set_offset(match.group(2),pc)
             fdata[match.group(2)].add_data(fh,fn)
       fh.close()
+      fh = open(ftemp,"w")
+      fh.close()
+      os.remove(fh.name)
 
 if __name__ == "__main__":
 

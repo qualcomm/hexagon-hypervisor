@@ -226,6 +226,13 @@ int main()
 
 	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b3) ");
 	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a3) ");
+
+	H2K_readylist_init(); // init set prio at maxprio
+	H2K_ready_REG_SSR_XE_SET_TB(); // set ssr xe bits
+	H2K_ready_insert_TB(&c); // insert thread to list
+	H2K_ready_clear_prio(c.prio); // reset prio to max
+
+	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (maxprio) ");
 #endif
 
 	puts("TEST PASSED\n");

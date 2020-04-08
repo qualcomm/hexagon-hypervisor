@@ -88,20 +88,20 @@ void H2K_hvx_poweron(void) {
 
 	/* From HPG 4.8.X */
 
-	val = *((u32_t volatile *)(H2K_gp->hvx_cpmem_status)) & 
-				 ((0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT) | (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT));
+	val = *((u32_t volatile *)(H2K_gp->hvx_cpmem_status)) &
+		((0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT) | (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT));
 
-    if (val != ((0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT) | (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) {
-	    *((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg)) = QDSP6SS_CPMEM_CFG_VTCM_POWER_ON;
-	    *((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) |= (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_NRET_N_BIT);
-	    delay = 1000;
-	    while ((delay--) &&
-				 !((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) asm volatile ("nop");
-	    *((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) |= (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_RET_N_BIT);
-	    delay = 1000;
-	    while ((delay--) &&
-				 !((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT))) asm volatile ("nop");
-    }
+	if (val != ((0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT) | (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) {
+		*((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg)) = QDSP6SS_CPMEM_CFG_VTCM_POWER_ON;
+		*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) = (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_NRET_N_BIT);
+		delay = 1000;
+		while ((delay--) &&
+					 !((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) asm volatile ("nop");
+		*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) = (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_RET_N_BIT);
+		delay = 1000;
+		while ((delay--) &&
+					 !((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT))) asm volatile ("nop");
+	}
 
 	*((u32_t volatile *)(H2K_gp->hvx_clock)) = QDSP6SS_CP_CLK_CTL_ENABLE;
 	val = *((u32_t volatile *)(H2K_gp->hvx_clock));  // sync
@@ -193,11 +193,11 @@ void H2K_hvx_poweroff(void) {
 	H2K_set_ssr(H2K_get_ssr() & ~(((u32_t)(0x1)) << SSR_XE_BIT));
 	*((u32_t volatile *)(H2K_gp->hvx_clock)) = QDSP6SS_CP_CLK_CTL_DISABLE;
 	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cfg)) &= ~QDSP6SS_CPMEM_CFG_VTCM_POWER_ON;
-	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) &= ~(0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_RET_N_BIT);
+	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) = (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_RET_N_BIT);
 	delay = 1000;
 	while ((delay--) &&
 				 ((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_RET_N_BIT))) asm volatile ("nop");
-	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) &= ~(0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_NRET_N_BIT);
+	*((u32_t volatile *)(H2K_gp->hvx_cpmem_cmd)) = (0x1 << QDSP6SS_CPMEM_CMD_UPDATE_VTCM_SLP_NRET_N_BIT);
 	delay = 1000;
 	while ((delay--) &&
 				 ((*((u32_t volatile *)(H2K_gp->hvx_cpmem_status))) & (0x1 << QDSP6SS_CPMEM_STATUS_VTCM_SLP_NRET_N_BIT))) asm volatile ("nop");

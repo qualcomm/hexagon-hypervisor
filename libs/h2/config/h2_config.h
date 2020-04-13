@@ -46,7 +46,7 @@ Initialize fields for a vm block
 */
 
 static inline unsigned int h2_config_vmblock_init(unsigned int vm, vmblock_init_op_t op, unsigned int arg1, unsigned int arg2) {
-	return h2_config_trap(CONFIG_VMBLOCK_INIT, vm, op, arg1, arg2);
+	return (unsigned int)h2_config_trap(CONFIG_VMBLOCK_INIT, vm, op, arg1, arg2);
 }
 
 /**
@@ -63,7 +63,7 @@ static inline int h2_config_fatal_hook(unsigned int funcaddr, unsigned int arg)
 	return h2_config_trap(CONFIG_FATAL_HOOK,funcaddr,arg,0,0);
 }
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 static inline int h2_config_cluster_sched(unsigned int enable) {
 
 	return h2_config_trap(CONFIG_CLUSTER_SCHED, enable, 0, 0, 0);

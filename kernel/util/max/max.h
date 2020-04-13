@@ -179,6 +179,8 @@
 
 #define RESCHED_INT 1
 #define VM_IPI_INT 0
+// interrupts 3-5 for l2vic 1-3
+#define CLUSTER_RESCHED_INT 6
 
 #define TIMER_INT_CORE_V4 50
 #define TIMER_INT_CORE_V5 34
@@ -206,6 +208,7 @@
 #define SSR_GUEST_BIT 13
 #else
 #define RESCHED_INT_INTMASK (0x00000001 << RESCHED_INT)
+#define CLUSTER_RESCHED_INT_INTMASK (0x00000001 << CLUSTER_RESCHED_INT)
 #define VM_IPI_INTMASK (0x00000001 << VM_IPI_INT)
 #define SSR_GUEST_BIT 19
 #define SSR_SS_BIT 30
@@ -215,7 +218,7 @@
 #define SSR_XA_NBITS 3
 #define SSR_XA_BITS_MASK (((0x1 << (SSR_XA_NBITS)) - 1) << SSR_XA_BITS)
 #define SSR_XE_BIT 31
-#define SSR_XE_BIT_MASK (0x1 << SSR_XE_BIT)
+#define SSR_XE_BIT_MASK ((u32_t)(0x1 << SSR_XE_BIT))
 
 #define SSR_XE2_BIT 26
 
@@ -251,7 +254,10 @@
 #define WAYS_MAX 16
 #define SETS_MAX (((32*1024)/32)/(WAYS_MAX))
 
+#ifndef MAX_BOOT_CONTEXTS
 #define MAX_BOOT_CONTEXTS 1
+#endif
+
 #define INTS_PER_BOOT_CONTEXT 32
 #define BOOT_STACK_SIZE 128
 

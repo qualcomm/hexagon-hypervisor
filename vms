@@ -1,0 +1,6 @@
+/data/pwa/h2/booter/hello 1  2  
+
+# boo
+--new_vm 1 /data/pwa/h2/booter/hello 3 4  # ignore
+ 
+--new_vm 3 /data/pwa/h2/booter/hello 5 6

@@ -41,7 +41,7 @@ static inline H2K_translation_t H2K_varadix_mktrans(u32_t vpn, u32_t entry, u32_
 	if (size > maxsize) {
 		size = maxsize;
 	}
-	ret.size = size>>1;
+	ret.size = (u8_t)(size >> 1);
 	return ret;
 }
 

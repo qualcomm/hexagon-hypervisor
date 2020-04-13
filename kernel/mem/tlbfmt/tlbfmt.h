@@ -42,14 +42,14 @@ static inline u32_t H2K_mem_tlbfmt_get_perms(H2K_mem_tlbfmt_t entry)
 
 static inline u32_t H2K_mem_tlbfmt_get_size(H2K_mem_tlbfmt_t entry)
 {
-	return Q6_R_ct0_R(entry.low);
+	return (u32_t)Q6_R_ct0_R(entry.low);
 }
 
 static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
 {
 	pa_t ret;
 	ret = entry.ppd;
-	ret |= entry.pa35 << 24;
+	ret |= (pa_t)(entry.pa35 << 24);
 	ret &= ret - 1;	/* Clear least significant set bit */
 	ret <<= 11;
 	return ret;

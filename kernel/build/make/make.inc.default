@@ -1,4 +1,4 @@
-
+# -*- makefile -*-
 # ==== no modifies below ====
 
 $(MOD)_CHECK_CFILES := $(wildcard $(DIR)$(MOD).check.c)
@@ -39,6 +39,10 @@ $(MOD)_OPT_V65_OFILES := $($(MOD)_OPT_V65_CFILES:%.c=%.o) $($(MOD)_OPT_V65_SFILE
 $(MOD)_OPT_V68_CFILES := $(wildcard $(DIR)*.v68opt.c)
 $(MOD)_OPT_V68_SFILES := $(wildcard $(DIR)*.v68opt.S)
 $(MOD)_OPT_V68_OFILES := $($(MOD)_OPT_V68_CFILES:%.c=%.o) $($(MOD)_OPT_V68_SFILES:%.S=%.o)
+
+ifneq (,$(filter $(MOD),$(OMIT_OPT)))
+$(MOD)_OPT_V$(ARCHV)_OFILES :=
+endif
 
 ifeq "$(strip $($(MOD)_OPT_V3_OFILES))" ""
 $(MOD)_OPT_V3_OFILES := $($(MOD)_REF_OFILES)

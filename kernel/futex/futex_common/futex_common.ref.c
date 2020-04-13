@@ -41,6 +41,9 @@ void H2K_futex_hash_add_ring(H2K_thread_context **ring, H2K_thread_context *me)
  * This returns the next position in the ring (for multi wake) 
  * as well as removed thread (for pi)
  * Thus we avoid re-iterating over the first elements in the ring
+ *
+ * Comparing only the lower 32 bits of the PA works here because the hash
+ * function guarantees that addresses with distinct upper bits hash to distinct buckets
  */
 
 H2K_thread_context *H2K_futex_hash_remove_one(u32_t locklo, H2K_thread_context **ring, H2K_thread_context **pos)

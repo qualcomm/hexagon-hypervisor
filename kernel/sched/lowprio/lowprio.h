@@ -29,7 +29,7 @@ static inline void H2K_raise_lowprio()
 	u32_t mask = H2K_gp->priomask;
 	if (H2K_gp->wait_mask) return; // just a sanity check... should be an error
 	H2K_gp->priomask = 0;
-	change_imask(Q6_R_ct0_R(mask),-1);
+	change_imask((u32_t)Q6_R_ct0_R(mask),(u32_t)-1);
 }
 
 void H2K_lowprio_init() IN_SECTION(".text.init.lowprio");

@@ -16,7 +16,7 @@
 static inline H2K_translation_t H2K_pagewalk_update_translation(H2K_translation_t in, H2K_pte_t pte)
 {
 	u32_t size = pte.s;
-	in.size = min(in.size,size);
+	in.size = min(in.size, (u8_t)size);
 	/* Carefully update pn since later translation might be < current size */
 	in.pn &= (1<<(size*2))-1;
 	in.pn |= pte.ppn & (-1<<(size*2));
@@ -34,7 +34,7 @@ static inline H2K_pte_t H2K_mem_pagewalk_l2(H2K_translation_t in, u32_t l2addr, 
 	H2K_pte_t pte;
 	H2K_translation_t tmp;
 	pa_t l2_paddr = l2addr;
-	l2_paddr = Q6_P_insert_PP(l2_paddr,(in.pn >> (2*pagesize)),Q6_P_combine_RR(tablesize*2,2));
+	l2_paddr = (pa_t)Q6_P_insert_PP(l2_paddr,(in.pn >> (2*pagesize)),Q6_P_combine_RR(tablesize*2,2));
 	if (vmblock->guestmap.raw) {
 		tmp = H2K_translate_default(l2_paddr);
 		tmp = H2K_translate(tmp,vmblock->guestmap);
@@ -42,7 +42,7 @@ static inline H2K_pte_t H2K_mem_pagewalk_l2(H2K_translation_t in, u32_t l2addr, 
 			pte.raw = 0;
 			return pte;
 		}
-		l2_paddr = Q6_P_insert_PII(l2_paddr,tmp.pn,24,12);
+		l2_paddr = (pa_t)Q6_P_insert_PII(l2_paddr,tmp.pn,24,12);
 	}
 	pte.raw = H2K_mem_physread_word(l2_paddr);
 	/* Ignore L2 page size field & overwrite */
@@ -68,7 +68,7 @@ static inline H2K_pte_t H2K_mem_pagewalk_l1(H2K_translation_t in, H2K_asid_entry
 	}
 	pte.raw = H2K_mem_physread_word((ppn << PAGE_BITS)| ((in.pn>>8) & 0xffc));
 	size = pte.s;
-	if (size <= 4) return H2K_mem_pagewalk_l2(in,pte.raw & -16, 5-size, size, vmblock);
+	if (size <= 4) return H2K_mem_pagewalk_l2(in,pte.raw & (u32_t)-16, 5-size, size, vmblock);
 	if (size == 7) goto fail;
 	/* REFINE PPN, PERMS */
 	return pte;

@@ -12,11 +12,9 @@
 #include <lowprio.h>
 #include <resched.h>
 #include <globals.h>
+#include <log.h>
 
-void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
-{
-	ciad(RESCHED_INT_INTMASK);
-	BKL_LOCK(&H2K_bkl);
+static inline void resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum) {
 	if (me != NULL) {
 		H2K_runlist_remove(me);
 		H2K_ready_append(me);
@@ -27,3 +25,18 @@ void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 	H2K_dosched(me, hwtnum);
 }
 
+void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
+{
+	ciad(RESCHED_INT_INTMASK);
+	BKL_LOCK(&H2K_bkl);
+	resched(unused, me, hwtnum);
+}
+
+void H2K_resched_cluster(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
+{
+	H2K_log("HW thread %d got CLUSTER_RESCHED_INT\n", hwtnum);
+	ciad(CLUSTER_RESCHED_INT_INTMASK);
+	BKL_LOCK(&H2K_bkl);
+	iassignw(CLUSTER_RESCHED_INT, -1);  // disable for all hw threads
+	resched(unused, me, hwtnum);
+}

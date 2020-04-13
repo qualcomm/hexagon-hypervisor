@@ -12,24 +12,25 @@
 #include <id.h>
 #include <hexagon_protos.h>
 
+u32_t trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me);
+
 typedef u32_t (*pmuctrlptr_t)(u32_t, u32_t, u32_t, u32_t, H2K_thread_context *);
 
 static const pmuctrlptr_t H2K_pmuctrltab[PMUCTRL_MAX] IN_SECTION(".data.config.pmuctrl") = {
-	H2K_trap_pmuctrl_threadset,
+	trap_pmuctrl_threadset,
 	H2K_trap_pmuctrl_setreg,
 	H2K_trap_pmuctrl_getreg
 };
 
 u32_t H2K_trap_pmuctrl(pmuop_type configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
 {
-	if (configtype >= PMUCTRL_MAX) return -1;
+	if ((configtype == PMUCTRL_THREADSET) || (configtype >= PMUCTRL_MAX)) return -1;
 	return H2K_pmuctrltab[configtype](0,val1,val2,val3,me);
 }
 
-// FIXME: remove
-u32_t H2K_trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused2, H2K_thread_context *me)
+u32_t trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
 {
-	return -1;
+	return -1; // functionality removed
 }
 
 u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)

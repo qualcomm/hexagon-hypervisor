@@ -1,0 +1,61 @@
+covered:
+
+thread_create
+thread_get_anysignal
+thread_get_id
+thread_set_priority
+thread_exit
+thread_join
+mutex_*
+rmutex_*
+anysignal_*
+allsignal_*
+sem_*
+barrier_*
+cond_*
+tls_*
+*alloc
+fastint_*
+
+
+
+easy to add or update:
+
+thread_attr_*
+thread_get_name
+thread_get_priority
+thread_get_timetest_id          // extra debug id
+thread_set_timetest_id
+signal_*                        // probably just wrappers for any/allsignal
+pipe_*                          // just missing attr_set_*
+lookup_physaddr
+mapping_create                  // assuming we can use newmap since qurt
+mapping_remove                  // page tables are opaque
+mem_cache_clean
+mem_map_static_query            // not sure what static means
+sysenv_*                        // config info
+profile_*                       // idle/running pcycles
+pmu_*                           // mostly matches PMU stuff we have
+system_*                        // direct access to IPEND. nop?
+                                // system_jump (to physaddr) may be harder
+
+
+
+harder to add or update:
+
+thread_resume                   // from which states?
+process_*                       // need info about elf load and mapping
+pimutex_*                       // spec is vague, code is hairy
+timer_*                         // stop, query, delete, groups; tied to signals
+sysclock_*                      // a bit easier than timers, closer to h2, signals
+interrupt_*                     // uses phys ints; need to virtualize and map to signals
+exception_*                     // need handler to wake thread on exception
+mem_pool_*                      // need allocator with lots of attribute stuff, mappings
+mem_region_*
+trace_*                         // qurt kernel specific
+isr_*                           // "long" fastints; hw thread can return to scheduler?
+tlb_*                           // directly messing with TLB
+power_*                         // maybe ok, but poor docs. Needs more code staring
+
+
+Also need VM boot code for exception handling, page-table setup

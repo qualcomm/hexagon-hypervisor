@@ -29,13 +29,13 @@ void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_threa
 		H2K_runlist_remove(me);
 		H2K_ready_append(me);
 	} else {
-		H2K_gp->wait_mask = Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
+		H2K_gp->wait_mask = (u32_t)Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
 	}
 	/* Assume woken is better than interrupted thread.  
 	 * If not, check_sanity will detect. 
 	 * Let check_sanity find the new lowprio thread also...
 	 */
-	H2K_gp->priomask = Q6_R_clrbit_RR(H2K_gp->priomask,hwtnum);
+	H2K_gp->priomask = (u32_t)Q6_R_clrbit_RR(H2K_gp->priomask,hwtnum);
 	highprio_imask(hwtnum);
 	H2K_runlist_push(woken);
 	H2K_switch(me,woken);
@@ -43,7 +43,7 @@ void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_threa
 
 int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 {
-	int hthread = me->hthread;
+	u32_t hthread = me->hthread;
 	if (intnum >= MAX_INTERRUPTS) return -1;
 
 	/* Can't change L2 interrupt vector */
@@ -69,7 +69,7 @@ void H2K_popup_cancel(H2K_thread_context *dest)
 {
 	u32_t intnum = dest->r00;
 	H2K_gp->inthandlers[intnum].raw = 0;
-	dest->r00 = -1;
+	dest->r00 = (u32_t)-1;
 	/* intcontrol_disable intnum? */
 }
 

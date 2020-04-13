@@ -20,7 +20,7 @@
 #include <cfg_table.h>
 #include <atomic.h>
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 #include <readylist.h>
 #include <runlist.h>
 #include <dosched.h>
@@ -47,7 +47,8 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_ecc,
 	H2K_trap_hwconfig_hmxbits,
 	H2K_trap_hwconfig_getdmacfg,
-	H2K_trap_hwconfig_setdmacfg
+	H2K_trap_hwconfig_setdmacfg,
+	H2K_trap_hwconfig_l2gclean
 };
 
 typedef struct {
@@ -249,7 +250,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	/* FIXME: should check for allowed XA values here (maybe?) */
 	/* EJP: Always allow XE/XA to be set if only for silver tests working also */
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 	if (H2K_gp->cluster_sched) {
 		/* Don't use H2K_gp->hthreads_mask here since some threads could be turned off */
 		u32_t cluster = H2K_hthread_cluster(me->hthread);
@@ -538,6 +539,19 @@ u32_t H2K_trap_hwconfig_setdmacfg(u32_t unused, void *unusedp, u32_t index, u32_
 		H2K_dmcfgwr(index, data);
 		return 0;
 	}
+#endif
+	return -1;
+}
+
+u32_t H2K_trap_hwconfig_l2gclean(u32_t unused, void *unusedp, u32_t inv, u32_t unused3, H2K_thread_context *me) {
+
+#if ARCHV >= 60
+	if (inv) {
+		H2K_l2gcleaninv();
+	} else {
+		H2K_l2gclean();
+	}
+	return 0;
 #endif
 	return -1;
 }

@@ -42,7 +42,7 @@ void TH_init_vm()
 	TH_vm.vm.max_cpus = CPUS;
 	TH_vm.contexts[0].id.raw = 0;
 	TH_vm.contexts[0].id.vmidx = 2;
-	a.id.vmidx = TH_vm.contexts[0].id.vmidx;  // H2K_trap_pmuctrl_threadset() requires same vm
+	a.id.vmidx = TH_vm.contexts[0].id.vmidx;  // trap_pmuctrl_threadset() requires same vm
 	H2K_kg.vmblocks[2] = &TH_vm.vm;
 	bptr = &TH_vm.contexts[0];
 }

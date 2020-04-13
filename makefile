@@ -29,6 +29,8 @@ export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
 #export USE_TCM ?= 1
 endif
 
+# FIXME: Remove when cluster sched ported to opt
+export OMIT_OPT=dosched resched
 
 include scripts/Makefile.inc.tools
 
@@ -139,9 +141,9 @@ qurt_test_single: ./qurt/test/testcases
 qurt_test_libs:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
 
-# coverage is broken
-# cov: h2_cov
-cov: h2_test
+# coverage
+#cov: h2_test
+cov: h2_cov
 	head -n -1 h2_report.html > report.html
 #	tail -n +2 qurt_report.html >> report.html
 
@@ -170,35 +172,35 @@ doc:
 compat:
 	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
 
-.PHONY: gtags gtagsclean
+.PHONY: gtags gtagsclean htags
 
 gtags:
-	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
-#	htags -afhnosTxv --show-position
+	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path libs/syscall/angel/include -o -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
+
+htags: gtags
+	htags -ahnosTxvF --show-position --auto-completion --tree-view=filetree
 
 gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML
 
 cov_fns:
-	$(MAKE) clean ref ARCHV=v4 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v4ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v4 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v4opt_cov_fns;
-	$(MAKE) clean ref ARCHV=v5 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v5 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v5opt_cov_fns;
-	$(MAKE) clean ref ARCHV=v60 OPTIMIZE='-Os -fno-inline';
+	# $(MAKE) clean ref ARCHV=v4 OPTIMIZE='-Os -fno-inline';
+	# ./scripts/gen_cov_fns.pl > ./scripts/v4ref_cov_fns;
+	# $(MAKE) clean opt ARCHV=v4 OPTIMIZE='-Os -fno-inline';
+	# ./scripts/gen_cov_fns.pl > ./scripts/v4opt_cov_fns;
+	# $(MAKE) clean ref ARCHV=v5 OPTIMIZE='-Os -fno-inline';
+	# ./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
+	# $(MAKE) clean opt ARCHV=v5 OPTIMIZE='-Os -fno-inline';
+	# ./scripts/gen_cov_fns.pl > ./scripts/v5opt_cov_fns;
+	$(MAKE) clean ref ARCHV=60 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v60 OPTIMIZE='-Os -fno-inline';
+	$(MAKE) clean opt ARCHV=60 OPTIMIZE='-Os -fno-inline';
 	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-	$(MAKE) clean ref ARCHV=v65 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v65 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-	$(MAKE) clean ref ARCHV=v68 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=v68 OPTIMIZE='-Os -fno-inline';
-	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-
-
+	$(MAKE) clean ref ARCHV=65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v65ref_cov_fns;
+	$(MAKE) clean opt ARCHV=65 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v65opt_cov_fns;
+	$(MAKE) clean ref ARCHV=68 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v68ref_cov_fns;
+	$(MAKE) clean opt ARCHV=68 OPTIMIZE='-Os -fno-inline';
+	./scripts/gen_cov_fns.pl > ./scripts/v68opt_cov_fns;

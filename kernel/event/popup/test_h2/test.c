@@ -47,8 +47,9 @@ void delay()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-#define INTERRUPT_T0 6
-#define INTERRUPT_T1 7
+/* FIXME: These interrupts could be needed for l2vic2-3 */
+#define INTERRUPT_T0 4
+#define INTERRUPT_T1 5
 
 static volatile int counter0;
 static volatile int counter1;

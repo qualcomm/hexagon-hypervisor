@@ -1,0 +1,28 @@
+From 3b9eecd873dd9af6c44405988a323f6535729876 Mon Sep 17 00:00:00 2001
+From: Richard Kuo <rkuo@codeaurora.org>
+Date: Tue, 27 Aug 2013 12:09:44 -0500
+Subject: [PATCH 7/8] nop workarounds for v5 TLB lock bug
+
+---
+ kernel/mem/tlbfill/tlbfill.ref.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
+
+diff --git a/kernel/mem/tlbfill/tlbfill.ref.c b/kernel/mem/tlbfill/tlbfill.ref.c
+index 3a6ce03..07b88fa 100644
+--- a/kernel/mem/tlbfill/tlbfill.ref.c
++++ b/kernel/mem/tlbfill/tlbfill.ref.c
+@@ -47,6 +47,11 @@ static inline void H2K_mem_tlb_insert(H2K_mem_tlbfmt_t entry, H2K_thread_context
+ 	asm volatile
+ 		(
+ 		 " tlbw(%0,%1)\n"
++#if ARCHV == 5
++		 " nop\n"
++		 " nop\n"
++		 " nop\n"
++#endif
+ 		 " isync\n"
+ 		 : : "r"(rawentry),"r"(index));
+ #endif
+-- 
+1.7.8.3
+

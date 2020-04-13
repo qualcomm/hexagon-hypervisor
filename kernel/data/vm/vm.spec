@@ -3,24 +3,6 @@
 
 .. module:: vm
 
-H2K_vmblock_clear
------------------
-
-.. c:function:: void H2K_vmblock_clear(H2K_vmblock_t *vmblock)
-
-	:param vmblock: Pointer to vmblock to clear
-
-Description
-~~~~~~~~~~~
-
-Set VM block to all 0s.
-
-Functionality
-~~~~~~~~~~~~~
-
-Indeed.
-
-
 H2K_vm_translate
 ----------------
 

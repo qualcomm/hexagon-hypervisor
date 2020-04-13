@@ -68,7 +68,7 @@ void H2K_register_passthru(u32_t phys_int, H2K_id_t id, u32_t virt_int) {
 }
 
 #if H2K_L2_CONTROL && ! defined NO_DEVICES
-static void H2K_intconfig_l2_init(ssbase)
+static void H2K_intconfig_l2_init(u32_t ssbase)
 {
 
 	/* int i; */
@@ -189,7 +189,7 @@ static void H2K_intconfig_l2_init(ssbase)
 		/* Ew ew ew, part deux */
 		if (ssbase != QDSP6SS_PRIV_BASE_MSS - QDSP6SS_PUB_PRIV_OFFSET) {
 			if (i == LPASS_USB1_HS_WORD) {
-				intbase[(0x280/4) + i] &= ~(1<<(LPASS_USB1_HS_IRQ % 32));
+				intbase[(0x280/4) + i] &= (u32_t)(~(1<<(LPASS_USB1_HS_IRQ % 32)));
 			}
 		}
 
@@ -223,6 +223,9 @@ void H2K_intconfig_init(u32_t ssbase)
 	H2K_gp->inthandlers[RESCHED_INT].param = (void *)1; // mark interrupt taken
 	H2K_gp->inthandlers[RESCHED_INT].handler = H2K_resched;
 
+	H2K_gp->inthandlers[CLUSTER_RESCHED_INT].param = (void *)1;
+	H2K_gp->inthandlers[CLUSTER_RESCHED_INT].handler = H2K_resched_cluster;
+
 	H2K_gp->inthandlers[VM_IPI_INT].param = (void *)1;
 	H2K_gp->inthandlers[VM_IPI_INT].handler = H2K_vm_ipi_do;
 
@@ -232,10 +235,9 @@ void H2K_intconfig_init(u32_t ssbase)
 	for (i = 0; i < H2K_gp->hthreads; i++) {
 		tmp = &H2K_fastint_contexts[i].context;
 		H2K_thread_context_clear(tmp);
-		tmp->hthread = i;
+		tmp->hthread = (u8_t)i;
 		tmp->trapmask = FASTINT_TRAPMASK;
-		tmp->id.raw = i;
+		tmp->id.raw = (u32_t)i;
 	}
-	H2K_intconfig_l2_init(ssbase);
+	(H2K_intconfig_l2_init(ssbase));
 }
-

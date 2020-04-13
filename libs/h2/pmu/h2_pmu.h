@@ -64,29 +64,29 @@ static inline int h2_pmu_getreg(int reg)
 	return h2_pmuctrl_trap(PMUCTRL_GETREG, 0, reg, 0);
 }
 
-/**
-REMOVED: Enable PMU monitoring for a thread
-@param[in] threadid		ID of a thread to enable performance monitoring
-@returns 0 on success, nonzero otherwise 
-*/
+/* /\** */
+/* REMOVED: Enable PMU monitoring for a thread */
+/* @param[in] threadid		ID of a thread to enable performance monitoring */
+/* @returns 0 on success, nonzero otherwise  */
+/* *\/ */
 
-static inline int h2_pmu_enable(int threadid)
-{
-	return -1;
-	//return h2_pmuctrl_trap(PMUCTRL_THREADSET, threadid, 1, 0);
-}
+/* static inline int h2_pmu_enable(int threadid) */
+/* { */
+/* 	return -1; */
+/* 	//return h2_pmuctrl_trap(PMUCTRL_THREADSET, threadid, 1, 0); */
+/* } */
 
-/**
-REMOVED: Disable PMU monitoring for a thread
-@param[in] threadid		ID of a thread to enable performance monitoring
-@returns 0 on success, nonzero otherwise 
-*/
+/* /\** */
+/* REMOVED: Disable PMU monitoring for a thread */
+/* @param[in] threadid		ID of a thread to enable performance monitoring */
+/* @returns 0 on success, nonzero otherwise  */
+/* *\/ */
 
-static inline int h2_pmu_disable(int threadid)
-{
-	return -1;
-	// return h2_pmuctrl_trap(PMUCTRL_THREADSET, threadid, 0, 0);
-}
+/* static inline int h2_pmu_disable(int threadid) */
+/* { */
+/* 	return -1; */
+/* 	// return h2_pmuctrl_trap(PMUCTRL_THREADSET, threadid, 0, 0); */
+/* } */
 
 /** @} */
 

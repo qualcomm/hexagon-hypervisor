@@ -62,6 +62,6 @@ FUNC_START H2K_event_vectors .text.core.vectors .p2align VEC_P2ALIGN
 	jump H2K_handle_int
 	jump H2K_handle_int /* 31 */
 FUNC_END H2K_event_vectors
-FUNC_START H2K_event_vectors_end .text.core.vectors 
-FUNC_END H2K_event_vectors_end
+//FUNC_START H2K_event_vectors_end .text.core.vectors
+//FUNC_END H2K_event_vectors_end
 

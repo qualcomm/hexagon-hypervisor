@@ -58,23 +58,25 @@ TOOLS_FLAVOR_KERNEL ?= 8.1.01
 ARCH_FLAVOR ?= v60_latest
 else
 ifeq (65, $(ARCHV))
-TOOLS_FLAVOR ?= 8.1.03
-TOOLS_FLAVOR_KERNEL ?= 8.1.03
+TOOLS_FLAVOR ?= 8.4.03
+TOOLS_FLAVOR_KERNEL ?= 8.4.03
 ARCH_FLAVOR ?= v65_latest
 ifdef TINY_CORE
-TOOLS_FLAVOR := v66_stable
-TOOLS_FLAVOR_KERNEL := v66_stable
-ARCH_FLAVOR := v66t_latest
+TOOLS_FLAVOR := 8.4.03
+TOOLS_FLAVOR_KERNEL := 8.4.03
+ARCH_FLAVOR := v67_latest
 KERNEL_CFLAGS += -DTINY_CORE
 else
-KERNEL_CFLAGS += -mhvx
+KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
+LIB_CFLAGS += -Wimplicit-int-conversion
 endif
 
 else # latest
-TOOLS_FLAVOR ?= v68_stable
-TOOLS_FLAVOR_KERNEL ?= v68_stable
+TOOLS_FLAVOR ?= 8.4.03
+TOOLS_FLAVOR_KERNEL ?= 8.4.03
 ARCH_FLAVOR ?= v68_latest
-KERNEL_CFLAGS += -mhvx -mhvx-length=128B
+KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
+LIB_CFLAGS += -Wimplicit-int-conversion
 DEVSIM := archsim
 ELFCOPY := hexagon-llvm-objcopy
 endif
@@ -102,8 +104,8 @@ export KERNEL_TOOLARCH := 61
 endif
 
 ifdef TINY_CORE
-export TOOLARCH := 66t
-export KERNEL_TOOLARCH := 66t
+export TOOLARCH := 67t
+export KERNEL_TOOLARCH := 67t
 endif
 
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))

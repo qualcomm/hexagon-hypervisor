@@ -12,21 +12,23 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 {
 	H2K_vmblock_t *vmblock;
 	H2K_offset_t offset;
+	H2K_translation_t out;
+
 	offset.raw = info.ptb;
 	in.pn += offset.pages;
 	if (in.size > offset.size) in.size = offset.size;
 	in.xwru &= offset.xwru;
 	if (in.cccc > 0xF) in.cccc = offset.cccc;
-	if (info.fields.extra) {
-		vmblock = H2K_gp->vmblocks[info.fields.extra];
-		if ((in.pn < vmblock->fence_lo) || (in.pn > vmblock->fence_hi)) {
-			in.raw = 0;
-			return in;
-		}
-	}
+
 	vmblock = H2K_gp->vmblocks[info.fields.vmid];
-	if (vmblock == NULL) return in; /* FIXME: Should always be filled out... but just in case... */
-	if (vmblock->guestmap.raw) return H2K_translate(in,vmblock->guestmap);
-	else return in;
+	if (vmblock->guestmap.raw) {
+		out = H2K_translate(in,vmblock->guestmap);
+	}	else {
+		out = in;
+	}
+	if ((out.pn < vmblock->fence_lo) || (out.pn >= ((vmblock->fence_hi) + (0x1 << (out.size * 2))))) {
+		out.raw = 0;
+	}
+	return out;
 }
 

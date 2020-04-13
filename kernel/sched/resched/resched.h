@@ -10,6 +10,7 @@
 #include <context.h>
 
 void H2K_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum) IN_SECTION(".text.core.resched");
+void H2K_resched_cluster(u32_t unused, H2K_thread_context *me, u32_t hwtnum) IN_SECTION(".text.core.resched");
 
 #endif
 

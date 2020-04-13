@@ -70,14 +70,14 @@ static inline u32_t iassignr(u32_t intno)
 
 static inline u32_t hthreads_mask()
 {
-	iassignw(0,-1);
+	iassignw(0, (u32_t)-1);
 	return iassignr(0);
 }
 
 static inline u32_t get_hthreads()
 {
 #if ARCHV >= 5
-	return Q6_R_popcount_P(hthreads_mask());
+	return (u32_t)Q6_R_popcount_P(hthreads_mask());
 #elif ARCHV == 4
 	return 3;
 #endif
@@ -88,6 +88,11 @@ static inline u32_t get_hthreads()
 static inline void resched_int()
 {
 	asm(" swi(%0) // wake up & resched" : : "r"(RESCHED_INT_INTMASK));
+}
+
+static inline void cluster_resched_int()
+{
+	asm(" swi(%0) // cluster resched" : : "r"(CLUSTER_RESCHED_INT_INTMASK));
 }
 
 #if (ARCHV <= 2)
@@ -235,6 +240,11 @@ static inline void H2K_l2kill()
 static inline void H2K_l2gcleaninv()
 {
 	asm volatile (" l2gcleaninv ");
+}
+
+static inline void H2K_l2gclean()
+{
+	asm volatile (" l2gclean ");
 }
 #endif
 
@@ -470,7 +480,7 @@ static inline void H2K_dmcfgwr(u32_t index, u32_t data) {
 
 void H2K_start_threads(unsigned int mask);
 
-#ifdef CLUSTER_SCHED_HACK
+#ifdef CLUSTER_SCHED
 static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 	return (hthread >= H2K_gp->cluster_hthreads ? 1 : 0);
 }

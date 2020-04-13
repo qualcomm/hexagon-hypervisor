@@ -86,7 +86,7 @@ endif
 
 export ELFCOPY
 
-DEVSIM ?= archsim
+DEVSIM ?= devsim
 
 DEVICE_CONFIG ?= $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
 

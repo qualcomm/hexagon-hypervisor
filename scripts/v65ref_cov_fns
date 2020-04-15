@@ -91,11 +91,9 @@ H2K_init_setup
 H2K_init_setup_bootvm
 H2K_intconfig_init
 H2K_intconfig_l2_init
-H2K_intcontrol_disable
 H2K_intcontrol_disable__merged
 H2K_intcontrol_enable
 H2K_intcontrol_enable__merged
-H2K_intcontrol_raise
 H2K_interrupted_preempt
 H2K_interrupted_waitmode
 H2K_intpool_cancel

@@ -12,23 +12,29 @@
 #include <stlb.h>
 #include <tlbfmt.h>
 #include <asid.h>
+#include <alloc.h>
 
 /*  this test can be reseeded  */
-
 #ifndef TEST_SEED
 #define TEST_SEED 2
 #endif
 
 H2K_thread_context a;
 
-H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS];
-H2K_mem_tlbfmt_t TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS];
+H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS];   // 128*(256B+4B+4B+4B) = ~33kB
+H2K_mem_tlbfmt_t TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS]; // 2048*2*4*8B         = 128kB
+H2K_mem_alloc_tag_t Heap[H2K_ALLOC_HEAP_SIZE] __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}}; //65536*4B=256kB
 
 void FAIL(const char *str)
 {
 	puts("FAIL");
 	puts(str);
 	exit(1);
+}
+
+s32_t TH_mem_stlb_alloc()
+{
+	return H2K_mem_stlb_alloc();
 }
 
 void TH_mem_stlb_init()
@@ -89,6 +95,8 @@ int main()
 	/* int count,total; */
 	H2K_mem_tlbfmt_t entry, test;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	H2K_mem_alloc_init(Heap, H2K_ALLOC_HEAP_SIZE);
+
 	H2K_asid_table_init();
 
 	srand(TEST_SEED);
@@ -108,6 +116,7 @@ int main()
 	entry.asid = 0;
 	entry.vpn = 0;
 #endif
+
         /* No storage */
 	H2K_asid_table_init();
 	H2K_mem_stlb_invalidate_va(0,1,0,&a);
@@ -116,6 +125,9 @@ int main()
 	if (H2K_mem_stlb_lookup(0,0,&a).raw != 0) {
 		FAIL("found entry with no storage");
 	}
+
+	/* Use Test Harness alloc */
+	if (TH_mem_stlb_alloc() <= 0) FAIL("couldn't allocate stlb");
 
 	/* Use Test Harness storage */
 	TH_mem_stlb_init();

@@ -97,8 +97,6 @@ int main()
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_mem_alloc_init(Heap, H2K_ALLOC_HEAP_SIZE);
 
-	H2K_asid_table_init();
-
 	srand(TEST_SEED);
 #if ARCHV <= 3
 	entry.ppn = 0;
@@ -125,9 +123,6 @@ int main()
 	if (H2K_mem_stlb_lookup(0,0,&a).raw != 0) {
 		FAIL("found entry with no storage");
 	}
-
-	/* Use Test Harness alloc */
-	if (TH_mem_stlb_alloc() <= 0) FAIL("couldn't allocate stlb");
 
 	/* Use Test Harness storage */
 	TH_mem_stlb_init();
@@ -183,6 +178,9 @@ int main()
 		}
 
 	}
+
+	/* Use Test Harness alloc - Note: Overwrites H2K stlbptr in its updated init of STLB */
+	if (TH_mem_stlb_alloc() <= 0) FAIL("couldn't allocate stlb");
 
 	/* Reinitialize */
 	TH_mem_stlb_init();

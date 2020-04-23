@@ -95,7 +95,6 @@ int main()
 	/* int count,total; */
 	H2K_mem_tlbfmt_t entry, test;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	H2K_mem_alloc_init(Heap, H2K_ALLOC_HEAP_SIZE);
 
 	srand(TEST_SEED);
 #if ARCHV <= 3
@@ -180,7 +179,11 @@ int main()
 	}
 
 	/* Use Test Harness alloc - Note: Overwrites H2K stlbptr in its updated init of STLB */
-	if (TH_mem_stlb_alloc() <= 0) FAIL("couldn't allocate stlb");
+	H2K_mem_alloc_init(Heap, (MAX_ASIDS)*sizeof(H2K_mem_stlb_asid_info_t));
+	if (TH_mem_stlb_alloc() > 0) FAIL("allocation of stlb with small heap");
+	H2K_mem_alloc_free(Heap);
+	H2K_mem_alloc_init(Heap, H2K_ALLOC_HEAP_SIZE);
+	if (TH_mem_stlb_alloc() <= 0) FAIL("non-allocation of stlb with large heap");
 
 	/* Reinitialize */
 	TH_mem_stlb_init();

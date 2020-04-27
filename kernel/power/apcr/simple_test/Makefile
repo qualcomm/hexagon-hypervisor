@@ -1,5 +1,6 @@
 H2DIR=${UPDIR}../../../..
 
+include ${H2DIR}/scripts/Makefile.inc.test
 include $(H2DIR)/scripts/Makefile.inc.tools
 
 ifeq ($(INSTALLPATH),)
@@ -20,7 +21,7 @@ CRT0_O := min_crt0.o
 
 
 CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include $(EXTRA_CFLAGS)
-LDFLAGS = -nostartfiles -L$(INSTALLPATH)/lib -moslib=h2
+LDFLAGS = -nostartfiles -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 all: $(BOOTVM_PROG)
 

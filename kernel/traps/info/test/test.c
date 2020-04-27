@@ -30,7 +30,7 @@ int main() {
 	u32_t val;
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	H2K_kg_init(0, 0);
+	H2K_kg_init(0, 0, 125, 128);
 	H2K_mem_alloc_init(Heap, H2K_ALLOC_HEAP_SIZE);
 	if (H2K_mem_stlb_alloc() == -1) FAIL("STLB alloc");
 

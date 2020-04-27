@@ -31,6 +31,7 @@
 ./kernel/mem/varadix/test
 ./kernel/power/apcr/test_multi
 ./kernel/power/hvx/test
+./kernel/power/apcr/simple_test
 ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios
 ./kernel/sched/dosched/test/test
 ./kernel/futex/futex/test/tests/badaccess
@@ -56,6 +57,7 @@
 ./kernel/traps/cputime/test
 ./kernel/traps/tlb/test
 ./kernel/traps/waitcycles/test
+./kernel/traps/info/test
 # ./kernel/time/timer/test_standalone # out for ARCHV > 60 because can't set timer regs
 ./kernel/time/timer/test_h2
 ./kernel/time/timer/test_h2_multi

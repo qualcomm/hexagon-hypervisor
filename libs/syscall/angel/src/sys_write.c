@@ -38,6 +38,6 @@ count_t sys_write(fd_t fd, const char *buffer, count_t count)
 			if (H2_ANGEL_write_buf_idx == H2_ANGEL_write_buf_size) H2_ANGEL_write_buf_idx = 0;
 		}
 	}
-	return count;
+	return angel_ret;
 }
 

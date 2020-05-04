@@ -40,7 +40,7 @@ void h2_debug_context_dump(h2_context_t *context)
 
 	h2_mutex_lock(&debug_mutex);
 	printf("DEBUG DUMP threadid = 0x%08x, core_pcycles = 0x%016llx\n", id, h2_get_core_pcycles());
-	printf("Exception PC (g0) = 0x%08x, cause (g1 & 0xff) = 0x%02x\n\n", context->g0, context->g1 & 0xff);
+	printf("Exception PC (g0) = 0x%08x, cause (g1 & 0xff) = 0x%02x, badva (g3) = 0x%08x\n\n", context->g0, context->g1 & 0xff, context->g3);
 
 	/* Jam the cause in ssr value; ssr_cause has since been overwritten by trap calls  */
 	val.byte0 = context->g1 & 0xff;

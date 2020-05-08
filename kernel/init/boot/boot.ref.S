@@ -201,19 +201,45 @@ H2_BOOT_attempts:
 	SS_BASE = memw_phys(CFG_IDX, CFG_HI) // == SSBASE[35:16]
 	SS_BASE = asl(SS_BASE, #CFG_TABLE_SHIFT)  // SSBASE
 
+#if ARCHV >= 68
 	CFG_IDX = #CFG_TABLE_JTLB_SIZE
 	TLB_SIZE = memw_phys(CFG_IDX, CFG_HI)
 	LAST_TLB = TLB_SIZE
+#endif
 
-	// Clear TLB and probe size.  We rely on the index wrapping around!
+	// Clear TLB and probe size.  We rely on the index wrapping around in ARCHV < 68!
 	TLB_ENTRY = #0
+#if ARCHV < 68
+	TLB_INDEX = #1
+#else
 	TLB_INDEX = #0
+#endif
+
 4:
 	DO_TLBW
 
 	TLB_INDEX = add(TLB_INDEX,#1)
+#if ARCHV < 68
+	p0 = cmp.eq(TLB_INDEX, #MAX_TLB_ENTRIES)  // # tlb entries
+#else
 	p0 = cmp.eq(TLB_INDEX, TLB_SIZE)  // # tlb entries
+#endif
 	if (!p0) jump 4b
+
+#if ARCHV < 68
+	// mark entry 0 so we can tell when index wraps
+	TLB_ENTRY = #1
+	TLB_INDEX = #0
+	DO_TLBW
+
+5:
+	TLB_INDEX = add(TLB_INDEX,#1)
+	TLB_ENTRY = tlbr(TLB_INDEX)
+	p0 = cmp.eq(TLB_LO, #1)
+	if (!p0) jump 5b
+	LAST_TLB = TLB_INDEX
+	TLB_SIZE = TLB_INDEX
+#endif
 
 	// Set up TLB entries for jump to virtual space
 #define TLB_PHYS    r26  // phys page being mapped

@@ -13,6 +13,10 @@
 #define SIZE_1M 4
 #define SIZE_4M 5
 #define SIZE_16M 6
+#define SIZE_64M 7
+#define SIZE_256M 8
+#define SIZE_1G 9
+#define SIZE_4G 10
 
 #define L1WB_L2UC 0
 #define L1WT_L2UC 1

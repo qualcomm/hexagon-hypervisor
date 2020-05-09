@@ -62,7 +62,7 @@ void TH_mem_stlb_init()
 #if ARCHV < 73
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].abits = rand() % (1U<<2);
 #else
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa3536 = rand() % (1U<<2);
+			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa3637 = rand() % (1U<<2);
 #endif
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa35 = rand() % (1U<<1);
 #endif

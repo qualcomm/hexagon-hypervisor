@@ -26,6 +26,7 @@
 ./kernel/mem/physread/test
 ./kernel/mem/safemem/test
 ./kernel/mem/stlb/test
+./kernel/mem/tlbfill/test
 ./kernel/mem/tlbmisc/test
 ./kernel/mem/tlbmiss/test
 ./kernel/mem/varadix/test

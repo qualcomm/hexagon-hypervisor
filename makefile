@@ -1,4 +1,11 @@
+
+include scripts/Makefile.inc.tools
+
+TARGET ?= opt
+ARCHV ?= 68
+
 ifeq ($(TARGET), 8960)
+T := opt
 ARCHV := 4
 H2K_KERNEL_PGSIZE ?= 3
 H2K_ALLOC_HEAP_SIZE ?= 0xb000
@@ -6,6 +13,7 @@ export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
 endif
 
 ifeq ($(TARGET), 8974)
+T := opt
 ARCHV := 5
 H2K_KERNEL_PGSIZE ?= 3
 H2K_ALLOC_HEAP_SIZE ?= 0xb000
@@ -14,6 +22,7 @@ export USE_TCM ?= 1
 endif
 
 ifeq ($(TARGET), zebu_v60)
+T := opt
 ARCHV := 60
 H2K_KERNEL_PGSIZE ?= 3
 H2K_ALLOC_HEAP_SIZE ?= 0xb000
@@ -22,6 +31,7 @@ export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
 endif
 
 ifeq ($(TARGET), zebu_v65)
+T := opt
 ARCHV := 65
 H2K_KERNEL_PGSIZE ?= 3
 H2K_ALLOC_HEAP_SIZE ?= 0xb000
@@ -29,10 +39,40 @@ export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
 #export USE_TCM ?= 1
 endif
 
+ifeq ($(TARGET), opt)
+T := opt
+endif
+
+ifeq ($(TARGET), opt_cov)
+T := opt
+export OPTIMIZE := $(OPTIMIZE_COV)
+endif
+
+ifeq ($(TARGET), opt_snap)
+T := opt
+export H2K_LOAD_ADDR=0x00400000 
+export H2K_EXTRA_CFLAGS+=-DNMI_STOP
+endif
+
+ifeq ($(TARGET), opt_tiny_snap)
+override ARCHV := 65  # because some things call make with ARCHV=66t
+T := opt
+export TINY_CORE=1
+export H2K_LOAD_ADDR=0x00400000
+export H2K_EXTRA_CFLAGS+=-DNMI_STOP
+endif
+
+ifeq ($(TARGET), ref)
+T := ref
+endif
+
+ifeq ($(TARGET), ref_cov)
+T := ref
+export OPTIMIZE := $(OPTIMIZE_COV)
+endif
+
 # FIXME: Remove when cluster sched ported to opt
 export OMIT_OPT=dosched resched
-
-include scripts/Makefile.inc.tools
 
 ifeq ($(H2DIR),)
 export H2DIR := $(CURDIR)
@@ -53,7 +93,9 @@ TEST_JFLAG=-j 8
 
 include scripts/Makefile.inc.config
 
-all: ref doc gtags
+.PHONY: all
+all:
+	$(MAKE) $(T)
 
 distclean: clean docclean gtagsclean
 
@@ -192,15 +234,15 @@ cov_fns:
 	# ./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
 	# $(MAKE) clean opt ARCHV=v5 OPTIMIZE='-Os -fno-inline';
 	# ./scripts/gen_cov_fns.pl > ./scripts/v5opt_cov_fns;
-	$(MAKE) clean ref ARCHV=60 OPTIMIZE='-Os -fno-inline';
+	$(MAKE) clean ref ARCHV=60 OPTIMIZE="$(OPTIMIZE_COV)";
 	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=60 OPTIMIZE='-Os -fno-inline';
+	$(MAKE) clean opt ARCHV=60 OPTIMIZE="$(OPTIMIZE_COV)";
 	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-	$(MAKE) clean ref ARCHV=65 OPTIMIZE='-Os -fno-inline';
+	$(MAKE) clean ref ARCHV=65 OPTIMIZE="$(OPTIMIZE_COV)";
 	./scripts/gen_cov_fns.pl > ./scripts/v65ref_cov_fns;
-	$(MAKE) clean opt ARCHV=65 OPTIMIZE='-Os -fno-inline';
+	$(MAKE) clean opt ARCHV=65 OPTIMIZE="$(OPTIMIZE_COV)";
 	./scripts/gen_cov_fns.pl > ./scripts/v65opt_cov_fns;
-	$(MAKE) clean ref ARCHV=68 OPTIMIZE='-Os -fno-inline';
+	$(MAKE) clean ref ARCHV=68 OPTIMIZE="$(OPTIMIZE_COV)";
 	./scripts/gen_cov_fns.pl > ./scripts/v68ref_cov_fns;
-	$(MAKE) clean opt ARCHV=68 OPTIMIZE='-Os -fno-inline';
+	$(MAKE) clean opt ARCHV=68 OPTIMIZE="$(OPTIMIZE_COV)";
 	./scripts/gen_cov_fns.pl > ./scripts/v68opt_cov_fns;

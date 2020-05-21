@@ -115,6 +115,7 @@ export RUN := $(RUN_TOOLSIM)
 endif
 
 export SIM := $(RUN)
-export OPTIMIZE := -O2
+OPTIMIZE ?= -O2
+export OPTIMIZE_COV := -Os -fno-inline
 
 endif

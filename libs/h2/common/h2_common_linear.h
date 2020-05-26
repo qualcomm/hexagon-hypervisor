@@ -23,8 +23,12 @@ typedef union {
 			struct {
 				h2_u32_t vpn:20;
 				h2_u32_t size:4;
+#if ARCHV < 73
 				h2_u32_t abits:2;
 				h2_u32_t unused:5;
+#else
+				h2_u32_t unused:7;
+#endif
 				h2_u32_t chain:1;
 			};
 		};

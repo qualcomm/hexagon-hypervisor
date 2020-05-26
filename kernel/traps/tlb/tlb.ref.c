@@ -92,12 +92,27 @@ static s64_t H2K_tlb_tlbfree(u32_t unused0, u32_t index, u64_t unused32, H2K_thr
 	return 0;
 }
 
+static s64_t H2K_tlb_dmaset(u32_t unused0, u32_t idx, u64_t entry_in, H2K_thread_context *me) {
+#if ARCHV >= 73
+	H2K_mem_tlbfmt_t entry;
+	entry.raw = entry_in;
+	idx += H2K_gp->dma_tlb_start;
+	H2K_mutex_lock_tlb();
+	H2K_mem_tlb_write(idx,entry.raw);
+	H2K_mutex_unlock_tlb();
+	return idx;
+#else
+	return -1;
+#endif
+}
+
 static const tlbopptr_t H2K_tlbtab[TLBOP_MAX] IN_SECTION(".data.tlb.tlbop") = {
 	H2K_tlb_tlbread,
 	H2K_tlb_tlbwrite,
 	H2K_tlb_tlbquery,
 	H2K_tlb_tlballoc,
 	H2K_tlb_tlbfree,
+	H2K_tlb_dmaset
 };
 
 s64_t H2K_tlb_tlbop(u32_t op, u32_t val32, u64_t val64, H2K_thread_context *me)

@@ -16,7 +16,11 @@ typedef union {
 		u8_t size;
 		u8_t xwru;
 		u8_t cccc;
+#if ARCHV < 73
 		u8_t abits;
+#else
+		u8_t unused;
+#endif
 	};
 } H2K_translation_t;
 
@@ -27,7 +31,11 @@ static inline H2K_translation_t H2K_translate_default(pa_t va)
 		.size = (32 - PAGE_BITS)/2,
 		.xwru = 0xf,
 		.cccc = 0xFF,
+#if ARCHV < 73
 		.abits = 0,
+#else
+		.unused = 0,
+#endif
 	};
 	return trans;
 }

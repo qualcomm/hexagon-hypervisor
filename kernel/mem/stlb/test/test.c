@@ -59,7 +59,11 @@ void TH_mem_stlb_init()
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].ppd = rand() % (1U<<24);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].cccc = rand() % (1U<<4);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].xwru = rand() % (1U<<4);
+#if ARCHV < 73
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].abits = rand() % (1U<<2);
+#else
+			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa3637 = rand() % (1U<<2);
+#endif
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa35 = rand() % (1U<<1);
 #endif
 		}

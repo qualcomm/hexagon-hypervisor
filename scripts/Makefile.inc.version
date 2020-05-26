@@ -7,11 +7,14 @@ MAKE_INC_VERSION := 1
 __IN_GIT:=$(shell if [ 0 -eq `git rev-parse --is-inside-work-tree > /dev/null 2>&1; echo $$?` ]; then echo "true"; fi;)
 ifeq (true, $(__IN_GIT))
 	H2K_GIT_COMMIT ?= 0x$(shell git rev-parse --short HEAD)
+	H2K_GIT_COMMIT_LONG ?= 0x$(shell git rev-parse HEAD)
 else
 	H2K_GIT_COMMIT ?= NO-GIT-VERSION
+	H2K_GIT_COMMIT_LONG ?= NO-GIT-VERSION
 endif
 
 export H2K_GIT_COMMIT
+export H2K_GIT_COMMIT_LONG
 
 
 endif

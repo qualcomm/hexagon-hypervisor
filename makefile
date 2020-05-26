@@ -92,6 +92,7 @@ REF_JFLAG=-j 3
 TEST_JFLAG=-j 8
 
 include scripts/Makefile.inc.config
+include scripts/Makefile.inc.version
 
 .PHONY: all
 all:
@@ -134,6 +135,8 @@ opt:
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
+	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
+	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
 
 ref:
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
@@ -146,6 +149,8 @@ ref:
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
+	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
+	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
 
 sim: ref
 	$(CC) -mv$(TOOLARCH) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \

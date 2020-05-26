@@ -152,6 +152,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 #if ARCHV >= 73
 	// FIXME
 	//	H2K_kg.dma_tlb_start = H2K_cfg_table(something);
+	H2K_kg.dma_tlb_start = 512;
 #endif
 
 }

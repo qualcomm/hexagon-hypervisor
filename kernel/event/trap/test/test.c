@@ -118,14 +118,9 @@ void TH_guest_trap()
 	longjmp(env,1);
 }
 
-void H2K_traptab();
-char H2K_stacks;
-
 int main() 
 {
 	s32_t i;
-	H2K_kg.traptab_addr = H2K_traptab;
-	H2K_kg.stacks_addr = &H2K_stacks;
 	a.trapmask = 0xffffffff;
 	a.gevb = NULL;
 

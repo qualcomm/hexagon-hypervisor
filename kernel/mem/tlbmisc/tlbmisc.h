@@ -13,7 +13,7 @@
 static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
 {
 	u32_t ret;
-	asm (
+	asm volatile (
 	" tlbhi = %1\n"
 	" tlbp\n"
 	" %0 = tlbidx\n"
@@ -25,7 +25,7 @@ static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
 static inline u64_t H2K_mem_tlb_read(u32_t index)
 {
 	u64_t ret;
-	asm (
+	asm volatile (
 	" tlbidx = %1\n"
 	" tlbr\n"
 	" %H0 = tlbhi\n"
@@ -50,7 +50,7 @@ static inline void H2K_mem_tlb_write(u32_t index, u64_t entry)
 static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
 {
 	u32_t ret;
-	asm (
+	asm volatile (
 	" %0 = tlbp(%1);\n"
 	: "=r"(ret)
 	: "r"((asid << (32 - PAGE_BITS)) | (va >> PAGE_BITS)));
@@ -60,7 +60,7 @@ static inline u32_t H2K_mem_tlb_probe(u32_t va, u32_t asid)
 static inline u64_t H2K_mem_tlb_read(u32_t index)
 {
 	u64_t ret;
-	asm (
+	asm volatile (
 	" %0 = tlbr(%1);\n"
 	: "=r"(ret)
 	: "r"(index));

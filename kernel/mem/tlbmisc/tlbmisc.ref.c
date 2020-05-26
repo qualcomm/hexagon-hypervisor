@@ -38,13 +38,13 @@ void H2K_mem_tlb_invalidate_asid(u32_t asid) {
 
 void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me)
 {
-	int tmp;
+	u32_t tmp;
 	if (count > 1) return H2K_mem_tlb_invalidate_asid(asid);
 
 	H2K_spinlock_lock(&H2K_gp->tmpmap_lock);  // for tmpmap
 	H2K_mutex_lock_tlb();  // for H2K_safemem_check_and_lock
 	tmp = H2K_mem_tlb_probe(va,asid);
-	if ((tmp >= 0) && (tmp <= H2K_gp->last_tlb_index)) {
+	if (tmp <= H2K_gp->last_tlb_index) {
 		H2K_mem_tlb_write(tmp,0);
 		H2K_isync();
 	}

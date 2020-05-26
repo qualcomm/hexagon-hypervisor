@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <globals.h>
+#include <cfg_table.h>
 
 /*
  * Strategy: 
@@ -28,7 +29,6 @@ void FAIL(const char *str)
 static H2K_thread_context a,b,c;
 
 /* These functions create a real version of the inlines in readylist.h */
-
 u32_t H2K_ready_best_prio_TB()
 {
 	return H2K_ready_best_prio();
@@ -73,6 +73,49 @@ H2K_thread_context *H2K_ready_getbest_TB()
 {
 	return H2K_ready_getbest(0);
 }
+
+#ifdef CLUSTER_SCHED
+void H2K_ready_REG_SSR_XE_CLEAR_TB()
+{
+	H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK);
+}
+
+void H2K_ready_REG_SSR_XE_SET_TB()
+{
+	H2K_set_ssr(H2K_get_ssr() | SSR_XE_BIT_MASK);
+}
+
+u32_t H2K_ready_create_hthreadmask_TB(u32_t hthreadstartidx, u32_t hthreadstopidx)
+{
+	u32_t hthreadmask = 0;
+	for (u32_t hthread = hthreadstartidx; hthread <= hthreadstopidx; hthread++) {
+	    hthreadmask |= (0x1 << hthread);
+	}
+	return hthreadmask;
+}
+
+void H2K_ready_CLUSTER_XE_CLEAR_TB(u32_t hthreadmask)
+{
+	u32_t cluster = H2K_hthread_cluster(0);
+	H2K_gp->xe_set[cluster] &= ~hthreadmask;
+}
+
+void H2K_ready_CLUSTER_XE_SET_TB(u32_t hthreadmask)
+{
+	u32_t cluster = H2K_hthread_cluster(0);
+	H2K_gp->xe_set[cluster] |= hthreadmask;
+}
+
+void H2K_ready_THREAD_XE_CLEAR_TB(H2K_thread_context *thread)
+{
+	thread->ssr &= ~SSR_XE_BIT_MASK;
+}
+
+void H2K_ready_THREAD_XE_SET_TB(H2K_thread_context *thread)
+{
+	thread->ssr |= SSR_XE_BIT_MASK;
+}
+#endif
 
 int main() 
 {
@@ -139,6 +182,75 @@ int main()
 	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a) ");
 	if (H2K_ready_getbest_TB() != &c) FAIL("ready_best_prio failed (c) ");
 	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (empty) ");
+
+#ifdef CLUSTER_SCHED
+	u32_t hthreadmask = 0;
+	H2K_gp->cluster_sched = 1;
+	H2K_gp->cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
+	H2K_gp->cluster_mask[0] = (u32_t)(0xffff >> (16 - H2K_gp->cluster_hthreads));
+	H2K_gp->cluster_mask[1] = (u32_t)((0xffff >> (16 - H2K_gp->cluster_hthreads)) << H2K_gp->cluster_hthreads);
+
+	// case where cluster has xe set for all its hthreads, and register sse xe clr,
+	// and td(i) inserted has td xe set, and td(ii) inserted has td xe clr (both td with same prio),
+	// should then find/get best td(ii) in same cluster to remove (with hthread not needing xe mod),
+	// should then not find/get any best td to remove.
+	// (skipping htheads with xe set as that would bump up total xe hthreads per cluster past limit,
+	// then searching in other cluster and signaling for resched interrupt to eligible hthread seen)
+	H2K_ready_REG_SSR_XE_CLEAR_TB(); // clr xe for ssr reg
+	hthreadmask = H2K_ready_create_hthreadmask_TB(0, MAX_HVX_PER_CLUSTER-1); // init hthreadmask
+	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask); // set cluster xe for all its hthreads via hthreadmask
+	H2K_ready_THREAD_XE_SET_TB(&a); // set xe for td(i)
+	H2K_ready_THREAD_XE_CLEAR_TB(&b); // clr xe for td(ii)
+	H2K_ready_insert_TB(&a); // insert td(i) to list
+	H2K_ready_insert_TB(&b); // insert td(ii) to list
+
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b1) ");
+	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (a1) ");
+
+	// case where cluster has xe set for hthread0 but clr for non-hthread0, and register sse xe clr,
+	// and td(i) inserted has td xe clr, and td(ii) inserted has td xe set (both td with same prio),
+	// should then find/get best td(ii) in same cluster to remove (with hthread xe mod to set xe),
+	// should then find/get best td(i) in same cluster to remove.
+	H2K_ready_REG_SSR_XE_CLEAR_TB(); // clr xe for ssr reg
+	hthreadmask = H2K_ready_create_hthreadmask_TB(0, 0); // init hthreadmask
+	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask); // set cluster xe for its hthread0 via hthreadmask
+	hthreadmask = H2K_ready_create_hthreadmask_TB(1, MAX_HVX_PER_CLUSTER-1); // init hthreadmask
+	H2K_ready_CLUSTER_XE_CLEAR_TB(hthreadmask);// clr cluster xe for its nonhthread0 via hthreadmask
+	H2K_ready_THREAD_XE_CLEAR_TB(&a); // clr xe for td(i)
+	H2K_ready_THREAD_XE_SET_TB(&b); // set xe for td(ii)
+	H2K_ready_insert_TB(&a); // insert td(i) to list
+	H2K_ready_insert_TB(&b); // insert td(ii) to list
+
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b2) ");
+	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a2) ");
+
+	// case where cluster has xe set for hthread0 but clr for non-hthread0, and register sse xe clr,
+	// and td(i) inserted has td xe set, and td(ii) inserted has td xe clr (both td with same prio),
+	// should then find/get best td(ii) in same cluster to remove (with hthread xe mod to clr xe),
+	// should then find/get best td(i) in same cluster to remove.
+	H2K_ready_REG_SSR_XE_SET_TB(); // set xe for ssr reg
+	hthreadmask = H2K_ready_create_hthreadmask_TB(0, 0); // init hthreadmask
+	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask); // set cluster xe for its hthread0 via hthreadmask
+	hthreadmask = H2K_ready_create_hthreadmask_TB(1, MAX_HVX_PER_CLUSTER-1); // init hthreadmask
+	H2K_ready_CLUSTER_XE_CLEAR_TB(hthreadmask);// clr cluster xe for its nonhthread0 via hthreadmask
+	H2K_ready_THREAD_XE_SET_TB(&a); // set xe for td(i)
+	H2K_ready_THREAD_XE_CLEAR_TB(&b); // clr xe for td(ii)
+	H2K_ready_insert_TB(&a); // insert td(i) to list
+	H2K_ready_insert_TB(&b); // insert td(ii) to list
+
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b3) ");
+	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a3) ");
+
+	// case where all prio up to maxprio reset via init, and register sse xe set,
+	// and single td inserted with its prio re-reset,
+	// should then not find/get any best td as no td valid ready (as all prio up to maxprio reset).
+	H2K_readylist_init(); // reset all prio upto maxprio
+	H2K_ready_REG_SSR_XE_SET_TB(); // set xe for ssr reg
+	H2K_ready_insert_TB(&c); // insert td to list
+	H2K_ready_clear_prio(c.prio); // reset td prio
+
+	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (maxprio) ");
+#endif
 
 	puts("TEST PASSED\n");
 	return 0;

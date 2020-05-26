@@ -44,13 +44,6 @@ typedef struct {
 		};
 	};
 	union {
-		u64_t stacks_traptab;
-		struct {
-			void *traptab_addr;
-			void *stacks_addr;
-		};
-	};
-	union {
 		u64_t syscfg_stlbptr;
 		struct {
 			H2K_mem_stlb_asid_info_t *stlbptr;

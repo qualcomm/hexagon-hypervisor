@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <checker_ring.h>
 #include <ringtests.h>
 
@@ -14,6 +13,7 @@ static H2K_ringnode_t bdata, *b = &bdata;
 static H2K_ringnode_t cdata, *c = &cdata;
 static H2K_ringnode_t ddata, *d = &ddata;
 
+void test_ring_next();
 void test_ring_remove();
 void test_ring_append();
 void test_ring_insert();
@@ -88,6 +88,7 @@ H2K_ringnode_t *makering(const char *str)
 
 int main()
 {
+	test_ring_next();
 	test_ring_remove();
 	test_ring_insert();
 	test_ring_append();

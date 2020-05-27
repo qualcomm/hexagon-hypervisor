@@ -4,6 +4,11 @@ include scripts/Makefile.inc.tools
 TARGET ?= opt
 ARCHV ?= 68
 
+JFLAG ?= -j 3
+OPT_JFLAG := $(JFLAG)
+REF_JFLAG := $(JFLAG)
+TEST_JFLAG ?= -j 8
+
 ifeq ($(TARGET), 8960)
 T := opt
 ARCHV := 4
@@ -41,15 +46,18 @@ endif
 
 ifeq ($(TARGET), opt)
 T := opt
+OPT_JFLAG :=
 endif
 
 ifeq ($(TARGET), opt_cov)
 T := opt
+OPT_JFLAG :=
 export OPTIMIZE := $(OPTIMIZE_COV)
 endif
 
 ifeq ($(TARGET), opt_snap)
 T := opt
+OPT_JFLAG :=
 export H2K_LOAD_ADDR=0x00400000 
 export H2K_EXTRA_CFLAGS+=-DNMI_STOP
 endif
@@ -57,6 +65,7 @@ endif
 ifeq ($(TARGET), opt_tiny_snap)
 override ARCHV := 65  # because some things call make with ARCHV=66t
 T := opt
+OPT_JFLAG :=
 export TINY_CORE=1
 export H2K_LOAD_ADDR=0x00400000
 export H2K_EXTRA_CFLAGS+=-DNMI_STOP
@@ -64,10 +73,12 @@ endif
 
 ifeq ($(TARGET), ref)
 T := ref
+REF_JFLAG :=
 endif
 
 ifeq ($(TARGET), ref_cov)
 T := ref
+REF_JFLAG :=
 export OPTIMIZE := $(OPTIMIZE_COV)
 endif
 
@@ -87,16 +98,12 @@ export KERNELPATH := $(H2DIR)/kernel
 endif
 
 
-OPT_JFLAG=-j 3
-REF_JFLAG=-j 3
-TEST_JFLAG=-j 8
-
 include scripts/Makefile.inc.config
 include scripts/Makefile.inc.version
 
 .PHONY: all
 all:
-	$(MAKE) $(T)
+	$(MAKE) $(JFLAG) $(T)
 
 distclean: clean docclean gtagsclean
 

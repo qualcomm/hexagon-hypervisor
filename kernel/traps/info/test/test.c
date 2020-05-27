@@ -14,11 +14,14 @@
 #include <cfg_table.h>
 #include <l2cache.h>
 #include <thread.h>
-//#include <symbols.h>
-
+#include <max.h>
 #define UNIT_BYTES (ALLOC_UNIT * sizeof(H2K_mem_alloc_tag_t))
 
+unsigned int alloc_heap_size = H2K_ALLOC_HEAP_SIZE;
 H2K_mem_alloc_tag_t Heap[H2K_ALLOC_HEAP_SIZE] __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}};
+#undef H2K_ALLOC_HEAP_SIZE
+#include <symbols.h>
+
 static H2K_thread_context a;
 static struct H2K_vmblock_struct vmblock;
 
@@ -37,7 +40,7 @@ int main() {
 	u32_t phys_offset=0, devpage_offset=0, last_tlb_index=125, tlb_size=128;
 	H2K_kg_init(phys_offset, devpage_offset, last_tlb_index, tlb_size);
 	H2K_l2cache_init();
-	H2K_mem_alloc_init(Heap, H2K_ALLOC_HEAP_SIZE);
+	H2K_mem_alloc_init(Heap, alloc_heap_size);
 	if (H2K_mem_stlb_alloc() == -1) FAIL("STLB alloc");
 
 	if (H2K_trap_info(INFO_BUILD_ID, 0) != H2K_GIT_COMMIT) FAIL("Build ID");
@@ -91,9 +94,11 @@ int main() {
 	val = H2K_kg.tcm_size;
 	if (H2K_trap_info(INFO_TCM_SIZE, &a) != val) FAIL("TCM_SIZE");
 
-	//if (H2K_trap_info(INFO_H2K_PGSIZE, &a) != H2K_PAGESIZE) FAIL("H2K_PAGESIZE"); // TBD
+	val = H2K_PAGESIZE;
+	if (H2K_trap_info(INFO_H2K_PGSIZE, &a) != val) FAIL("H2K_PAGESIZE");
 
-	//if (H2K_trap_info(INFO_H2K_NPAGES, &a) != (u32_t)&H2K_KERNEL_NPAGES) FAIL("H2K_NPAGES"); // TBD
+	val = (u32_t)&H2K_KERNEL_NPAGES;
+	if (H2K_trap_info(INFO_H2K_NPAGES, &a) != val) FAIL("H2K_NPAGES");
 
 	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + L2VIC_OFFSET);
 	if (H2K_trap_info(INFO_L2VIC_BASE, &a) != val) FAIL("L2VIC_BASE");
@@ -102,12 +107,13 @@ int main() {
 	if (H2K_trap_info(INFO_TIMER_BASE, &a) != val) FAIL("TIMER_BASE");
 
 #if ARCHV >= 60
-	if (H2K_trap_info(INFO_TIMER_INT, &a) != TIMER_INT_CORE_V60) FAIL("TIMER_INT");
+	val = TIMER_INT_CORE_V60;
 #elif ARCHV >= 5
-	if (H2K_trap_info(INFO_TIMER_INT, &a) != TIMER_INT_CORE_V5) FAIL("TIMER_INT");
+	val = TIMER_INT_CORE_V5;
 #else
-	if (H2K_trap_info(INFO_TIMER_INT, &a) != TIMER_INT_CORE_V4) FAIL("TIMER_INT");
+	val = TIMER_INT_CORE_V4;
 #endif
+	if (H2K_trap_info(INFO_TIMER_INT, &a) != val) FAIL("TIMER_INT");
 
 	val = H2K_kg.kernel_error;
 	if (H2K_trap_info(INFO_ERROR, &a) != val) FAIL("ERROR");

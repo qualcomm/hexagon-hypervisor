@@ -3,4 +3,5 @@ H2DIR=${UPDIR}../../../..
 
 #  Everything else defined here
 include ${H2DIR}/scripts/Makefile.inc.test
+CFLAGS +=  -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE)
 

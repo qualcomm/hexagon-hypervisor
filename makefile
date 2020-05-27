@@ -114,8 +114,8 @@ docclean:
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
 testclean covclean: ucosclean qurtclean
-	$(MAKE) -f scripts/Makefile.coverage clean && \
-	$(MAKE) -f scripts/Makefile.coverage clean_top
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) clean && \
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) clean_top
 
 ucosclean:
 	$(MAKE) -C ucos clean

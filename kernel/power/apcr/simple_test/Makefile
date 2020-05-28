@@ -38,10 +38,9 @@ $(BOOTVM_IMAGE): test.o $(CRT0_O) $(BOOTVM_IMAGE_DEPS)
 # This bit of stupidity is needed to suppress warnings about changing the
 # recipe for test.elf
 $(EXEC) : private CC = true
-test.log: move
-test.objdump: move
+test.log: | symlink
+test.objdump: | symlink
 
-.PHONY: move
-move: $(BOOTVM_PROG)
-	rm -f $(EXEC)
-	mv $(BOOTVM_PROG) $(EXEC)
+.PHONY: symlink
+symlink: $(BOOTVM_PROG)
+	if [ ! -f $(EXEC) ]; then ln -s $(BOOTVM_PROG) $(EXEC); fi;

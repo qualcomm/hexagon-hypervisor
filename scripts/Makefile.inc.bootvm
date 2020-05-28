@@ -27,9 +27,9 @@ BOOTVM_IMAGE_CFLAGS = -Wl,--section-start=.entry=$(H2K_BOOTVM_OFFSET) -Wl,--scri
 
 BOOTVM_CFLAGS = -nostartfiles -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--script=$(VAPA_KERNEL) -Wl,--defsym=__entry=$(H2K_LOAD_ADDR) -Wl,--entry=__entry -Wl,-mv$(TOOLARCH) # -Wl,--just-symbols=$(BOOTVM_SYMBOLS)
 
-BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) constants
+BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) | constants
 
-BOOTVM_DEPS = $(VAPA_KERNEL) $(INSTALLPATH)/lib/libh2kernel.a constants
+BOOTVM_DEPS = $(VAPA_KERNEL) $(INSTALLPATH)/lib/libh2kernel.a | constants
 
 
 %.o: %.c
@@ -44,7 +44,7 @@ $(CRT0_O): $(CRT0_S)
 $(BOOTVM_O): $(BOOTVM_S) $(BOOTVM_IMAGE_BIN)
 	${CC} ${CFLAGS} -c -o $@ $<
 
-$(VAPA_KERNEL): $(VAPA_KERNEL_X_IN) $(KERNEL_TMP) constants
+$(VAPA_KERNEL): $(VAPA_KERNEL_X_IN) $(KERNEL_TMP) | constants
 	cat $< | perl -p -i -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/$(H2K_BOOTVM_OFFSET)/;' > $@
 
 $(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S)
@@ -59,7 +59,7 @@ $(BOOTVM_PROG_TMP): $(BOOTVM_O) $(BOOTVM_DEPS)
 $(BOOTVM_SYMBOLS): $(BOOTVM_IMAGE) $(BOOTVM_PROG_TMP)
 	$(SYMS) $(BOOTVM_PROG_TMP) $(BOOTVM_IMAGE) $@
 
-$(BOOTVM_PROG): $(BOOTVM_O) $(BOOTVM_DEPS)  $(BOOTVM_SYMBOLS)
+$(BOOTVM_PROG): $(BOOTVM_O) $(BOOTVM_SYMBOLS) $(BOOTVM_DEPS)
 	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -Wl,@$(BOOTVM_SYMBOLS) -o $@ $(BOOTVM_O)
 
 endif

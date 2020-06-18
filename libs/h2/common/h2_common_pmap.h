@@ -20,8 +20,8 @@
 
 #define L1WB_L2UC 0
 #define L1WT_L2UC 1
-//#define L1WB_L2UC_S 2
-//#define L1WT_L2UC_S 3
+#define DEVICE_TYPE_SFC 2
+#define UNCACHED_SFC 3
 #define DEVICE_TYPE 4
 #define L1WT_L2C 5
 #define UNCACHED 6
@@ -30,7 +30,8 @@
 #define L1WT_L2CWB 9
 #define L1WB_L2CWB_AUX 0xa
 #define L1WT_L2CWT_AUX 0xb
-#define L1UC_L2CWT 0xb
+#define L1UC_L2CWT 0xd
+#define L1UC_L2CWB 0xf
 
 #define MAIN 0
 #define AUX 1

@@ -11,7 +11,7 @@
 #ifndef DEBUG
 #define ITERS 1
 #ifndef INTERRUPT_NUM
-#define INTERRUPT_NUM 2
+#define INTERRUPT_NUM 3
 #endif
 #else
 #define ITERS 2

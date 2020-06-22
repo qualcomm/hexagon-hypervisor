@@ -58,27 +58,37 @@ TOOLS_FLAVOR_KERNEL ?= 8.1.01
 ARCH_FLAVOR ?= v60_latest
 else
 ifeq (65, $(ARCHV))
-TOOLS_FLAVOR ?= 8.4.03
-TOOLS_FLAVOR_KERNEL ?= 8.4.03
+TOOLS_FLAVOR ?= 8.4.04
+TOOLS_FLAVOR_KERNEL ?= 8.4.04
 ARCH_FLAVOR ?= v65_latest
 ifdef TINY_CORE
-TOOLS_FLAVOR := 8.4.03
-TOOLS_FLAVOR_KERNEL := 8.4.03
+TOOLS_FLAVOR := 8.4.04
+TOOLS_FLAVOR_KERNEL := 8.4.04
 ARCH_FLAVOR := v67_latest
 KERNEL_CFLAGS += -DTINY_CORE
 else
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion
 endif
-
-else # latest
-TOOLS_FLAVOR ?= 8.4.03
-TOOLS_FLAVOR_KERNEL ?= 8.4.03
+else
+ifeq (68, $(ARCHV))
+TOOLS_FLAVOR ?= 8.4.04
+TOOLS_FLAVOR_KERNEL ?= 8.4.04
 ARCH_FLAVOR ?= v68_latest
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion
 DEVSIM := archsim
 ELFCOPY := hexagon-llvm-objcopy
+
+else # latest
+TOOLS_FLAVOR ?= v69_stable # fixme when v73 tools not broken
+TOOLS_FLAVOR_KERNEL ?= v69_stable
+ARCH_FLAVOR ?= v73_stable
+KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
+LIB_CFLAGS += -Wimplicit-int-conversion
+DEVSIM := archsim
+ELFCOPY := hexagon-llvm-objcopy
+endif
 endif
 endif
 endif
@@ -115,6 +125,7 @@ export RUN := $(RUN_TOOLSIM)
 endif
 
 export SIM := $(RUN)
-export OPTIMIZE := -O2
+OPTIMIZE ?= -O2
+export OPTIMIZE_COV := -Os -fno-inline
 
 endif

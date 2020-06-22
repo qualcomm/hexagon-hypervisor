@@ -33,7 +33,6 @@ H2K_do_asid_table_inc
 H2K_dosched
 H2K_enable_guest_interrupts
 H2K_event_vectors
-H2K_event_vectors_end
 H2K_ext_context_clear
 H2K_ext_context_restore
 H2K_fastint
@@ -92,11 +91,9 @@ H2K_init_setup
 H2K_init_setup_bootvm
 H2K_intconfig_init
 H2K_intconfig_l2_init
-H2K_intcontrol_disable
 H2K_intcontrol_disable__merged
 H2K_intcontrol_enable
 H2K_intcontrol_enable__merged
-H2K_intcontrol_raise
 H2K_interrupted_preempt
 H2K_interrupted_waitmode
 H2K_intpool_cancel
@@ -294,7 +291,6 @@ H2K_trap_info
 H2K_trap_pmuctrl
 H2K_trap_pmuctrl_getreg
 H2K_trap_pmuctrl_setreg
-H2K_trap_pmuctrl_threadset
 H2K_traptab
 H2K_tree_add
 H2K_tree_add_key
@@ -349,7 +345,6 @@ H2K_vm_shint_peek
 H2K_vm_shint_post
 H2K_vm_shint_setaffinity
 H2K_vm_shint_status
-H2K_vmblock_clear
 H2K_vmint_fixup_aff
 H2K_vmint_fixup_default
 H2K_vmint_fixup_getpeek

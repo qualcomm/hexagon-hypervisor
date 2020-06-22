@@ -182,7 +182,7 @@ static u32_t H2K_config_vmblock_init_pmap_type(H2K_vmblock_t *vmblock, u32_t vm,
 
 		/* Make sure offset is aligned to a valid page size, and size field matches */
 		if (offset.size < SIZE_4K
-				|| offset.size > SIZE_16M
+				|| offset.size > SIZE_4G
 				|| offset.pages % (0x1 << (2 * offset.size)) != 0) {
 			return 0;
 		}

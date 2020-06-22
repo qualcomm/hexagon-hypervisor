@@ -44,5 +44,17 @@ $builds = {
 		  release => ["opt","opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP",
 			      "ref","ref H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
 		  branch => ["master", "stable", "multicore"],
+		 },
+	   73 => {
+		  buildtool => "g61_latest",
+		  hextool => "6.1",
+		  targets => ["ref -fno-inline", "opt -fno-inline", "ref", "opt",
+			      "opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP",
+			      "ref H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
+		  cov => ["ref -fno-inline", "opt -fno-inline"],
+		  docs => "opt",
+		  release => ["opt","opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP",
+			      "ref","ref H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
+		  branch => ["master", "stable", "vapa38"],
 		 }
 	  };

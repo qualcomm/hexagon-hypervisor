@@ -28,9 +28,12 @@ endif
 CFLAGS := $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -Wno-builtin-requires-header $(EXTRA_CFLAGS)
 LDFLAGS = $(NOSTARTFILES) -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
+
 all: $(BOOTVM_PROG)
 
 include $(H2DIR)/scripts/Makefile.inc.bootvm
+
+CLEANUP += *.elf $(BOOTVM_CLEAN) hello stats.* *.o pmu_statsfile.txt
 
 
 $(BOOTVM_IMAGE): test.o $(CRT0_O) $(BOOTVM_IMAGE_DEPS)
@@ -39,16 +42,9 @@ $(BOOTVM_IMAGE): test.o $(CRT0_O) $(BOOTVM_IMAGE_DEPS)
 # This bit of stupidity is needed to suppress warnings about changing the
 # recipe for test.elf
 $(EXEC) : private CC = true
-test.log: move
-test.objdump: move
+test.log: | symlink
+test.objdump: | symlink
 
-.PHONY: move
-move: $(BOOTVM_PROG)
-	rm -f $(EXEC)
-	mv $(BOOTVM_PROG) $(EXEC)
-
-.PHONY: .clean
-.clean:
-	rm -f *.elf $(BOOTVM_CLEAN) hello stats.* *.o pmu_statsfile.txt
-
-clean: .clean
+.PHONY: symlink
+symlink: $(BOOTVM_PROG)
+	if [ ! -f $(EXEC) ]; then ln -s $(BOOTVM_PROG) $(EXEC); fi;

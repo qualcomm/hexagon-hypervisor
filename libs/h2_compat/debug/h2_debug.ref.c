@@ -75,6 +75,11 @@ void h2_debug_context_dump(h2_context_t *context)
 	PRINT_CPAIR(lc0,sa0);
 	printf("\n");
 
+	printf("\nDMA regs:\n");
+	for (i = 0; i < 6; i++) {
+		printf("\tDM%d: 0x%08x\n", i, h2_hwconfig_dma_getcfg(i));
+	}
+
 	printf("\nStack:\n\n");
 	ptr = (unsigned int *)(context->r29);
 	for (i = 0 ; i < 64 ; i += 4) {

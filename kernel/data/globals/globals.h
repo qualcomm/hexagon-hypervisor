@@ -44,13 +44,6 @@ typedef struct {
 		};
 	};
 	union {
-		u64_t stacks_traptab;
-		struct {
-			void *traptab_addr;
-			void *stacks_addr;
-		};
-	};
-	union {
 		u64_t syscfg_stlbptr;
 		struct {
 			H2K_mem_stlb_asid_info_t *stlbptr;
@@ -122,6 +115,9 @@ typedef struct {
 	u32_t mask_for_ipi;
 	u32_t tlb_index;
 	u32_t last_tlb_index;
+#if ARCHV >= 73
+	u32_t dma_tlb_start;
+#endif
 	H2K_spinlock_t tmpmap_lock;
 	u32_t tlb_size;
 	u64_t pinned_tlb_mask;

@@ -9,6 +9,7 @@
 #include <c_std.h>
 #include <hexagon_protos.h>
 #include <translate.h>
+#include <h2_common_pmap.h>
 
 typedef union {
 	u64_t raw;
@@ -26,7 +27,11 @@ typedef union {
 			struct {
 				u32_t vpn:20;
 				u32_t asid:7;
+#if ARCHV < 73
 				u32_t abits:2;
+#else
+				u32_t pa3637:2;
+#endif
 				u32_t pa35:1;
 				u32_t global:1;
 				u32_t valid:1;
@@ -49,9 +54,12 @@ static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
 {
 	pa_t ret;
 	ret = entry.ppd;
-	ret |= (pa_t)(entry.pa35 << 24);
+	ret |= (pa_t)(entry.pa35 << (35 - PAGE_BITS + 1));  // + 1 because ppn starts at bit 1 of ppd
+#if ARCHV >= 73
+	ret |= (pa_t)(entry.pa3637 << (36 - PAGE_BITS + 1));
+#endif
 	ret &= ret - 1;	/* Clear least significant set bit */
-	ret <<= 11;
+	ret <<= (PAGE_BITS - 1);
 	return ret;
 }
 
@@ -61,16 +69,24 @@ static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans
 	u32_t tlbsize;
 	u32_t ppd;
 	if (((trans.xwru) & -2) == 0) return ret;
-	ret.vpn = va >> 12;
+	ret.vpn = va >> PAGE_BITS;
 	ret.asid = asid;
 	ret.valid = 1;
 	ret.global = 0;
-	ret.pa35 = (trans.pn >> (35-PAGE_BITS)) & 1;
+	ret.pa35 = (trans.pn >> (35 - PAGE_BITS)) & 0x1;
+#if ARCHV < 73
 	ret.abits = trans.abits;
+#else
+	ret.pa3637 = (trans.pn >> (36 - PAGE_BITS)) & 0x3;
+#endif
 	ret.xwru = trans.xwru;
 	ret.cccc = trans.cccc;
 	tlbsize = trans.size;
-	if (tlbsize > 6) tlbsize = 6;
+#if ARCHV < 73
+	if (tlbsize > SIZE_16M) tlbsize = SIZE_16M;
+#else
+	if (tlbsize > SIZE_4G) tlbsize = SIZE_4G;
+#endif
 	ppd = trans.pn;
 	ppd &= -(1<<tlbsize);
 	ret.ppd = (ppd << 1) | (1<<tlbsize);

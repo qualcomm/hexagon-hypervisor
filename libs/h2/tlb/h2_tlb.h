@@ -83,6 +83,22 @@ static inline int h2_tlb_free(int index)
 	return (int)h2_tlb_trap(TLBOP_TLBFREE, (unsigned int)index, 0);
 }
 
+/**
+Set DMA TLB entry
+@param[in] index  index relative to start of DMA TLB
+@param[in] entry  TLB entry
+@returns absolute index on success, negative value if failure
+*/
+
+static inline int h2_tlb_dma_set(unsigned int index, unsigned long long int entry)
+{
+#if ARCHV >= 73
+	return (int)h2_tlb_trap(TLBOP_DMASET, 0, entry);
+#else
+	return -1;
+#endif
+}
+
 #endif
 
 /** @} */

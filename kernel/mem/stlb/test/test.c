@@ -12,23 +12,29 @@
 #include <stlb.h>
 #include <tlbfmt.h>
 #include <asid.h>
+#include <alloc.h>
 
 /*  this test can be reseeded  */
-
 #ifndef TEST_SEED
 #define TEST_SEED 2
 #endif
 
 H2K_thread_context a;
 
-H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS];
-H2K_mem_tlbfmt_t TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS];
+H2K_mem_stlb_asid_info_t TH_mem_stlb_asid_infos[MAX_ASIDS];   // 128*(256B+4B+4B+4B) = ~33kB
+H2K_mem_tlbfmt_t TH_mem_stlb[STLB_MAX_SETS*2][STLB_MAX_WAYS]; // 2048*2*4*8B         = 128kB
+H2K_mem_alloc_tag_t Heap[H2K_ALLOC_HEAP_SIZE] __attribute__((aligned(ALLOC_UNIT))) = {{{.size = 0, .free = 0}}}; //65536*4B=256kB
 
 void FAIL(const char *str)
 {
 	puts("FAIL");
 	puts(str);
 	exit(1);
+}
+
+s32_t TH_mem_stlb_alloc()
+{
+	return H2K_mem_stlb_alloc();
 }
 
 void TH_mem_stlb_init()
@@ -59,7 +65,11 @@ void TH_mem_stlb_init()
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].ppd = rand() % (1U<<24);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].cccc = rand() % (1U<<4);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].xwru = rand() % (1U<<4);
+#if ARCHV < 73
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].abits = rand() % (1U<<2);
+#else
+			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa3637 = rand() % (1U<<2);
+#endif
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa35 = rand() % (1U<<1);
 #endif
 		}
@@ -89,7 +99,6 @@ int main()
 	/* int count,total; */
 	H2K_mem_tlbfmt_t entry, test;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	H2K_asid_table_init();
 
 	srand(TEST_SEED);
 #if ARCHV <= 3
@@ -108,6 +117,7 @@ int main()
 	entry.asid = 0;
 	entry.vpn = 0;
 #endif
+
         /* No storage */
 	H2K_asid_table_init();
 	H2K_mem_stlb_invalidate_va(0,1,0,&a);
@@ -171,6 +181,13 @@ int main()
 		}
 
 	}
+
+	/* Use Test Harness alloc - Note: Overwrites H2K stlbptr in its updated init of STLB */
+	H2K_mem_alloc_init(Heap, (MAX_ASIDS)*sizeof(H2K_mem_stlb_asid_info_t));
+	if (TH_mem_stlb_alloc() > 0) FAIL("allocation of stlb with small heap");
+	H2K_mem_alloc_free(Heap);
+	H2K_mem_alloc_init(Heap, H2K_ALLOC_HEAP_SIZE);
+	if (TH_mem_stlb_alloc() <= 0) FAIL("non-allocation of stlb with large heap");
 
 	/* Reinitialize */
 	TH_mem_stlb_init();

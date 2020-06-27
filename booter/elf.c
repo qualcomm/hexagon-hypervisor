@@ -18,6 +18,22 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <angel.h>
+
+char errstr[ERRSTR_LEN];
+
+void error(char *str1, char *str2) {
+
+	int err = sys_errno();
+	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr) - 1);
+	errno = err;
+	perror(errstr);
+
+	exit(1);
+}
 
 int elf_get_ehdr(int fdesc, Elf32_Ehdr *ehdr)
 {
@@ -48,13 +64,6 @@ int elf_get_shdr(int fdesc, int i, Elf32_Shdr *shdr, const Elf32_Ehdr *ehdr)
 	return 0;
 }
 
-#define SPECIALS_BUFSIZE 256
-
-/* FIXME: Need this for problem with low-alignment angel sysread() on zebu, on some cores  */
-#ifndef SPECIALS_ALIGN
-#define SPECIALS_ALIGN 32
-#endif
-
 int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf32_Ehdr *ehdr) {
 	const bool verbose = false;
 	int i, bytes, pos;
@@ -66,8 +75,8 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	int shstrtab_offset;
 	char *shstrtab;
 	
-	if (SHN_UNDEF == ehdr->e_shstrndx) goto error;
-	if (-1 == elf_get_shdr(fdesc, ehdr->e_shstrndx, &shstr, ehdr)) goto error;
+	if (SHN_UNDEF == ehdr->e_shstrndx) error("1", NULL);
+	if (-1 == elf_get_shdr(fdesc, ehdr->e_shstrndx, &shstr, ehdr)) error("2", NULL);
 	shstrtab_offset = shstr.sh_offset;
 	shstrtab = (char *)ehdr + shstrtab_offset;
 
@@ -77,7 +86,7 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	int hdrNum = 0;
 	for (i = 0; i < ehdr->e_shnum; i++) {
 		if (i == ehdr->e_shstrndx) continue;
-		if (elf_get_shdr(fdesc,i,&hdr[hdrNum],ehdr) == -1) goto error;
+		if (elf_get_shdr(fdesc,i,&hdr[hdrNum],ehdr) == -1) error("3", NULL);
 		
 		if (hdr[hdrNum].sh_type == SHT_SYMTAB) {
 			pSymhdr = &hdr[hdrNum];
@@ -88,23 +97,23 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 		}
 		if (hdrNum == 2) break;	// got both headers
 	}
-	if (pSymhdr->sh_type != SHT_SYMTAB) goto error;
-	if (pStrhdr->sh_type != SHT_STRTAB) goto error;
+	if (pSymhdr->sh_type != SHT_SYMTAB) error("4", NULL);
+	if (pStrhdr->sh_type != SHT_STRTAB) error("5", NULL);
 	
 	/* read symtab & strtab */
 	if (verbose) printf("%s: reading symtab\n", __func__);
 	Elf32_Sym *symtab = malloc(pSymhdr->sh_size);
 	if (verbose) printf("%s: symtab=0x%p 0x%xB\n", __func__, symtab, pSymhdr->sh_size);
-	if (symtab == NULL) goto error;
-	if ((pos = lseek(fdesc, pSymhdr->sh_offset, SEEK_SET)) == -1) goto error;
-	if ( (bytes = read(fdesc, symtab, pSymhdr->sh_size)) != pSymhdr->sh_size) goto error;
+	if (symtab == NULL) error("6", NULL);
+	if ((pos = lseek(fdesc, pSymhdr->sh_offset, SEEK_SET)) == -1) error("7", NULL);
+	if ( (bytes = read(fdesc, symtab, pSymhdr->sh_size)) != pSymhdr->sh_size) error("8", NULL);
 	
 	if (verbose) printf("%s: reading strtab\n", __func__);
 	char *strtab = malloc(pStrhdr->sh_size);
 	if (verbose) printf("%s: strtab=0x%p 0x%xB\n", __func__, strtab, pStrhdr->sh_size);
-	if (strtab == NULL) goto error;
-	if ((pos = lseek(fdesc, pStrhdr->sh_offset, SEEK_SET)) == -1) goto error;
-	if ( (bytes = read(fdesc, strtab, pStrhdr->sh_size)) != pStrhdr->sh_size) goto error;
+	if (strtab == NULL) error("9", NULL);
+	if ((pos = lseek(fdesc, pStrhdr->sh_offset, SEEK_SET)) == -1) error("10", NULL);
+	if ( (bytes = read(fdesc, strtab, pStrhdr->sh_size)) != pStrhdr->sh_size) error("11", NULL);
 	
 	if (verbose) printf("%s: looking for special symbol values\n", __func__);
 	/* Loop through the symbol table */
@@ -139,7 +148,4 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	if (verbose) printf("%s: free'd memory\n", __func__);
 
 	return 0;
-
- error:
-	return -1;
 }

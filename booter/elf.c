@@ -103,6 +103,7 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	/* read symtab & strtab */
 	if (verbose) printf("%s: reading symtab\n", __func__);
 	Elf32_Sym *symtab = malloc(pSymhdr->sh_size);
+	if (NULL == symtab) error("Can't malloc symtab", NULL);
 	if (verbose) printf("%s: symtab=0x%p 0x%xB\n", __func__, symtab, pSymhdr->sh_size);
 	if (symtab == NULL) error("6", NULL);
 	if ((pos = lseek(fdesc, pSymhdr->sh_offset, SEEK_SET)) == -1) error("7", NULL);
@@ -110,6 +111,7 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	
 	if (verbose) printf("%s: reading strtab\n", __func__);
 	char *strtab = malloc(pStrhdr->sh_size);
+	if (NULL == strtab) error("Can't malloc strtab", NULL);
 	if (verbose) printf("%s: strtab=0x%p 0x%xB\n", __func__, strtab, pStrhdr->sh_size);
 	if (strtab == NULL) error("9", NULL);
 	if ((pos = lseek(fdesc, pStrhdr->sh_offset, SEEK_SET)) == -1) error("10", NULL);

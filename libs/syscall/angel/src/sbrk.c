@@ -26,6 +26,7 @@ static unsigned long long int *heap_start = NULL;
 void *sys_sbrk(ptrdiff_t more)
 {
 	unsigned long long int *old_base, *new_base;
+	pthread_init();  // because c++ mallocs before main(), and some mallocs call sys_sbrk().
 	pthread_mutex_lock(&mylock);
 	if (heap_base == NULL) {
 		if (((unsigned int)(heapBase)) >= ((unsigned int)(&end))) {

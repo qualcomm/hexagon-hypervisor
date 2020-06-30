@@ -7,8 +7,6 @@
 #include <h2.h>
 #include <pthread.h>
 #include <stdio.h>
-#include <errno.h>
-#include <angel.h>
 #include <stdlib.h>
 #include <string.h>
 #include <h2_vm.h>
@@ -36,9 +34,6 @@
 #define BUFSIZE 256
 
 /* Misc */
-#define ERRSTR_LEN 1024
-char errstr[ERRSTR_LEN];
-
 char *trans_name[] = {
 	"linear",
 	"table",
@@ -186,18 +181,6 @@ typedef struct {
 } vm_t;
 
 vm_t *vm_params = NULL;
-
-void error(char *str1, char *str2) {
-
-	int err = sys_errno();
-	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr) - 1);
-	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr) - 1);
-	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr) - 1);
-	errno = err;
-	perror(errstr);
-
-	exit(1);
-}
 
 void FAIL(const char *str1, const char *str2)
 {

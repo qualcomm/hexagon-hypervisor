@@ -112,6 +112,13 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(core_rev);
 	PRINT_KG_OFFSET(timer_intnum);
 
+#ifdef CLUSTER_SCHED
+	PRINT_KG_OFFSET(xe_set);
+	PRINT_KG_OFFSET(cluster_hthreads);
+	PRINT_KG_OFFSET(cluster_mask);
+	PRINT_KG_OFFSET(cluster_sched);
+#endif
+
 #ifdef CRASH_DEBUG
 	PRINT_KG_OFFSET(crash_contexts);
 	PRINT_KG_OFFSET(crash_tlb);

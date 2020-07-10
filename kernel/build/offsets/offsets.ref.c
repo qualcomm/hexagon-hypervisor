@@ -111,6 +111,8 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(phys_offset);
 	PRINT_KG_OFFSET(core_rev);
 	PRINT_KG_OFFSET(timer_intnum);
+	PRINT_KG_OFFSET(hthreads_mask);
+	PRINT_KG_OFFSET(hthreads);
 
 #ifdef CLUSTER_SCHED
 	PRINT_KG_OFFSET(xe_set);

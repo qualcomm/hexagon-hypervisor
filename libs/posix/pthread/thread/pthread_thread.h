@@ -116,4 +116,6 @@ static inline int pthread_cancel(pthread_t thread) {
 static inline int pthread_yield(void) { h2_yield(); return 0; }
 int pthread_join(pthread_t thread, void **retval);
 
+void pthread_init();
+
 #endif

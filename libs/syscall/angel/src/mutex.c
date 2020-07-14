@@ -17,7 +17,6 @@ typedef struct {
 static mutex_entry libc_mutexes[MAX_LIBC_MUTEXES];
 
 static pthread_plainmutex_t bigmutex = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
-extern void pthread_init();
 void sys_Mtxinit(void **mutex)
 {
 	int i;

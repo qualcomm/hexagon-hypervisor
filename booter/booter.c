@@ -1664,8 +1664,6 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
 	return p - buf - 1;
 }
 
-extern void pthread_init();
-
 int main(int argc, char **argv)
 {
 	unsigned int kerror;

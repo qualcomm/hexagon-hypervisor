@@ -82,11 +82,7 @@ static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans
 	ret.xwru = trans.xwru;
 	ret.cccc = trans.cccc;
 	tlbsize = trans.size;
-#if ARCHV < 73
-	if (tlbsize > SIZE_16M) tlbsize = SIZE_16M;
-#else
-	if (tlbsize > SIZE_4G) tlbsize = SIZE_4G;
-#endif
+	if (tlbsize > SIZE_MAX) tlbsize = PAGE_SIZE_MAX;
 	ppd = trans.pn;
 	ppd &= -(1<<tlbsize);
 	ret.ppd = (ppd << 1) | (1<<tlbsize);

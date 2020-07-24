@@ -16,7 +16,12 @@
 #define SIZE_64M 7
 #define SIZE_256M 8
 #define SIZE_1G 9
-#define SIZE_4G 10
+
+#if ARCHV < 73
+#define PAGE_SIZE_MAX SIZE_16M
+#else
+#define PAGE_SIZE_MAX SIZE_1G
+#endif
 
 #define L1WB_L2UC 0
 #define L1WT_L2UC 1

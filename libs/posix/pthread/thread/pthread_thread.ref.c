@@ -122,7 +122,7 @@ static inline void pthread_special_setup(struct pthread_tcb *self)
 {
 	/* SET UGP */
 	asm volatile (" ugp = %0 " : : "r"(self) : "memory");
-	/* FIXME: set up FRAMELIMIT */
+	asm volatile (" framelimit = %0 " : : "r"(self->attrs.stackaddr - self->attrs.stacksize + 4) : "memory");
 }
 
 static void pthread_trampoline(void *arg)

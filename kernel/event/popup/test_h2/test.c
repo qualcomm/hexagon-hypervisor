@@ -190,7 +190,6 @@ void spawn_vm(void *pc)
 	printf("vm booted\n");
 }
 
-int pthread_init();
 int main() 
 {
 	u32_t asid;

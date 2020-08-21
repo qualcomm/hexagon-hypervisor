@@ -3,6 +3,7 @@
 #  It is meant to be run from the top level ob directory.
 
 SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/^\s*\#.*//;')
+SUBDIRS_ALL:=$(shell cat ./scripts/testlist.v* | sort | uniq | perl -p -e 's/^\s*\#.*//;')
 
 all:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
@@ -11,7 +12,7 @@ tst:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=tst
 
 clean:
-	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=clean
+	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS_ALL) TARG=clean
 
 $(SUBDIRS)::
 	cd $@;\
@@ -21,7 +22,12 @@ $(SUBDIRS)::
 	$(MAKE) $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
 	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
 
-.PHONY: $(SUBDIRS) tst
+$(SUBDIRS_ALL)::
+	cd $@;\
+	$(MAKE) $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
+	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
+
+.PHONY: $(SUBDIRS) $(SUBDIRS_ALL) tst
 
 
 include ./scripts/Makefile.inc.test

@@ -8,7 +8,7 @@ export SHELL := /bin/bash
 ifneq (,${Q6VERSION})
 export ARCHV := $(patsubst 6%,60,$(subst v,,$(Q6VERSION)))
 else
-export ARCHV ?= 4
+export ARCHV ?= 60
 endif
 
 #export SIMF := --timing

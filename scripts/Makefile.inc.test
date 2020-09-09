@@ -143,7 +143,7 @@ LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NP
 
 ifdef BOOT
 BOOTER=${INSTALLPATH}/bin/booter
-CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header -g
+CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_GUEST_START=${H2K_GUEST_START} -Wall -Wno-builtin-requires-header -g
 LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
 CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -Wno-builtin-requires-header -g

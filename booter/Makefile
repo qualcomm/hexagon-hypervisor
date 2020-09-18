@@ -13,7 +13,7 @@ endif
 
 BOOTVM_PROG := booter
 
-BOOTVM_IMAGE_HEAP_SIZE := 0xb00000
+BOOTVM_IMAGE_HEAP_SIZE := 0x1000000
 
 all: hello should_crash should_pagefault $(BOOTVM_PROG)
 

@@ -88,6 +88,9 @@ enum {
 #define WAKE_TIMER 0x1
 #define WAKE_CHILD 0x2
 
+#define DMA_CTRL_SET_MASK 0x1
+#define DMA_CTRL_SET_INDEX 2
+
 /* Globals */
 #ifdef HAVE_EXTENSIONS
 unsigned int ext_power = 1;
@@ -109,6 +112,8 @@ info_stlb_type  stlb_info;
 int hwt_mask = -1;
 int hwt_num = -1;
 int ecc_enable = -1;
+int set_dmactrl = 0;
+int dmactrl;
 #ifdef CLUSTER_SCHED
 int cluster_sched = 1;
 #endif
@@ -204,6 +209,7 @@ void usage()
 	BOOTER_PRINTF("  --syscfg <int>\n\tSet syscfg.\n");
 	BOOTER_PRINTF("  --livelock <int>\n\tSet livelock.\n");
 	BOOTER_PRINTF("  --syscfg_bit <name> <int>\n\tSet syscfg bit(s) not covered by other options.\n");
+	BOOTER_PRINTF("  --dma_ctrl <int>\n\tSet user DMA control register (DM2).\n");
 	BOOTER_PRINTF("  --l1dp [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 data cache partitioning (ARCHV <= 5).\n");
 	BOOTER_PRINTF("  --l1ip [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 instruction cache partitioning (ARCHV <= 5).\n");
 	BOOTER_PRINTF("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
@@ -1119,6 +1125,8 @@ void print_infos() {
 
 void kernel_setup() {
 
+	int val;
+
 	if (hwt_num != -1) {
 		if (hwt_mask != -1) {
 			FAIL("Can't set both hwt_mask and hwt_num", "");
@@ -1141,6 +1149,25 @@ void kernel_setup() {
 	if (ecc_enable != -1) {
 		if (h2_hwconfig_ecc(ecc_enable) < 0) {
 			FAIL("ECC enable", "");
+		}
+	}
+
+	if (boot_flags.boot_have_dma) {
+		if (set_dmactrl) {
+			val = dmactrl;
+		} else {
+			if ((val = h2_hwconfig_dma_getcfg(DMA_CTRL_SET_INDEX)) == -1) {
+				FAIL("dma_getcfg", "");
+			}
+			/* Disable DMA stall in guest mode */
+			val |= DMA_CTRL_SET_MASK;
+		}
+		if (h2_hwconfig_dma_setcfg(DMA_CTRL_SET_INDEX, val) == -1) {
+			FAIL("dma_setcfg", "");
+		}
+	} else {
+		if (set_dmactrl) {
+			FAIL("Can't set DMA control reg -- DMA not present", "");
 		}
 	}
 
@@ -1168,9 +1195,9 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 	BOOTER_PRINTF("Set L2 reg at offset 0x%08x:\n", offset);
 
 	old = h2_hwconfig_l2_get_reg(offset);
-	BOOTER_PRINTF("\tOld value:  0x%08x\n", old);
 
-	if (val != -1) {
+	if (old != -1) {
+		BOOTER_PRINTF("\tOld value:  0x%08x\n", old);
 		ret = h2_hwconfig_l2_set_reg(offset, val);
 
 		if (ret != old) {
@@ -1178,6 +1205,8 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 		}
 
 		BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
+	} else {
+	  FAIL("Can't get L2 reg.", "");
 	}
 }
 
@@ -1374,6 +1403,13 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			if (argc < 3) die_usage();
 			set_syscfg_field(argv[1], strtoul(argv[2], NULL, 0));
 			argc -= 3; argv += 3;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--dma_ctrl")) {
+			if (argc < 2) die_usage();
+			dmactrl = strtoul(argv[1], NULL, 0);
+			set_dmactrl = 1;
+			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0], "--l2_reg")) {

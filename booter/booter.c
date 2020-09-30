@@ -88,7 +88,7 @@ enum {
 #define WAKE_TIMER 0x1
 #define WAKE_CHILD 0x2
 
-#define DMA_CTRL_SET_MASK 0x1
+#define DMA_CTRL_SET_VAL 0x2e3
 #define DMA_CTRL_SET_INDEX 2
 
 /* Globals */
@@ -1160,7 +1160,7 @@ void kernel_setup() {
 				FAIL("dma_getcfg", "");
 			}
 			/* Disable DMA stall in guest mode */
-			val |= DMA_CTRL_SET_MASK;
+			val = DMA_CTRL_SET_VAL;
 		}
 		if (h2_hwconfig_dma_setcfg(DMA_CTRL_SET_INDEX, val) == -1) {
 			FAIL("dma_setcfg", "");

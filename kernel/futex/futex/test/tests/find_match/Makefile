@@ -7,4 +7,4 @@ EXEC=test.elf
 include Makefile.inc
 
 # big allocator heap for all those threads; size in words
-LDFLAGS += -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=0x20000
+LDFLAGS += -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=0x20000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0

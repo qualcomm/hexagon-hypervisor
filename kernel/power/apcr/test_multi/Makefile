@@ -37,7 +37,7 @@ CLEANUP += *.elf $(BOOTVM_CLEAN) hello stats.* *.o pmu_statsfile.txt
 
 
 $(BOOTVM_IMAGE): test.o $(CRT0_O) $(BOOTVM_IMAGE_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o $@ test.o $(CRT0_O) $(BOOTVM_ENTRY_O)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -o $@ test.o $(CRT0_O) $(BOOTVM_ENTRY_O)
 
 # This bit of stupidity is needed to suppress warnings about changing the
 # recipe for test.elf

@@ -1,0 +1,5 @@
+target module add /prj/dsp/qdsp6/users/bryanb/pwa/h2/booter/booter
+target module load --file /prj/dsp/qdsp6/users/bryanb/pwa/h2/booter/booter --slide 0x0
+target module add /prj/dsp/qdsp6/users/bryanb/pwa/h2/booter/bootvm_image
+target module load --file /prj/dsp/qdsp6/users/bryanb/pwa/h2/booter/bootvm_image --slide 0x0
+gdb-remote 1234

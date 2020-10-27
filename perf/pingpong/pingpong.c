@@ -21,6 +21,7 @@ unsigned long long int stacks[MAX_THREADS][64];
 
 #ifdef H2_H
 static inline void my_thread_create(void *f, void *s, int ss, void *p, int prio) { h2_thread_create(f,s,p,prio); }
+static inline void my_thread_stop(int status) { h2_thread_stop(status); }
 #else
 static inline void my_thread_create(void *f, void *s, int ss, void *p, int prio) { 
 	qurt_thread_attr_t attr;
@@ -44,6 +45,8 @@ static inline void my_thread_create(void *f, void *s, int ss, void *p, int prio)
 		printf(" failed to create thread \n");
 	}
 }
+
+static inline void my_thread_stop(int status) { qurt_thread_exit(status); }
 #endif
 
 void ping(void *id) {
@@ -65,7 +68,8 @@ void ping(void *id) {
 		qurt_sem_up(out);
 	}
 	if (myid == MAX_THREADS-1) qurt_sem_up(&tomain);
-	while (1) qurt_sem_down(&deadlock);
+	my_thread_stop(0);
+	//	while (1) qurt_sem_down(&deadlock);
 }
 
 char context_space[1024];

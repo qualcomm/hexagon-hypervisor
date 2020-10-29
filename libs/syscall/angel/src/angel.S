@@ -18,8 +18,5 @@ __angel:
 	.type exit,@function
 	.p2align 2
 _exit:
-	r1 = r0
-	r2 = r0
-	r0 = #0x18
-	jump __angel
+	jump sys_exit
 	.size _exit,.-_exit

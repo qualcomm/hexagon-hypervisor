@@ -65,10 +65,9 @@ void worker_thread(void *param)
 	h2_sem_t *my_sema = (void *)(PERMS(7) | (u32_t)(&sema));
 	h2_sem_t *my_semb = (void *)(PERMS(7) | (u32_t)(&semb));
 	printf("worker thread: my_sema=%p my_semb=%p\n",my_sema,my_semb);
-	while (1) {
-		h2_sem_up(my_sema);
-		h2_sem_down(my_semb);
-	}
+	h2_sem_up(my_sema);
+	h2_sem_down(my_semb);
+	h2_sem_up(my_sema);
 }
 
 #define TRANS_ENTRY(VPN,PPN,SIZE,CCCC,PERMS) \

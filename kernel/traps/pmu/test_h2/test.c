@@ -21,6 +21,7 @@
 
 h2_sem_t sem_call,sem_ret,sem_done;
 int t0id,t1id;
+volatile int quit = 0;
 
 u64_t stack0[STACK_SIZE];
 u64_t stack1[STACK_SIZE];
@@ -147,10 +148,12 @@ void thread1(int thread)
 {
 	while (1) {
 		h2_sem_down(&sem_call);
+		if (quit) {
+			h2_thread_stop(0);
+		}
 		delay();
 		h2_sem_up(&sem_ret);
 	}
-	h2_thread_stop(0);
 }
 
 int main(int argc, char **argv)
@@ -163,6 +166,8 @@ int main(int argc, char **argv)
 	t0id = h2_thread_create(thread0,&stack0[STACK_SIZE],0,2);
 
 	h2_sem_down(&sem_done);
+	quit = 1;
+	h2_sem_up(&sem_call);
 	puts("TEST PASSED\n");
 	exit(0);
 }

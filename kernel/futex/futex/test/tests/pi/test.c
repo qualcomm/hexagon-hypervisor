@@ -53,6 +53,7 @@ int futex1;
 
 volatile int TH_nextstep_id = 0;
 volatile int TH_shutdown_now = 0;
+volatile int TH_done = 0;
 volatile int TH_caller_woke = 0;
 
 #define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
@@ -93,12 +94,14 @@ void spinner_thread(void * v_threadid)
 	counter = (volatile int *)(&spinner_arr[threadid]);
 	h2_sem_up(&startup_sem);
 	while (1) {
-		while (TH_nextstep_id != myid) {
+		while ((TH_nextstep_id != myid) && !TH_done) {
 			(*counter)++;
 			h2_yield();
 		}
 		TH_nextstep_id = 0;
-		if (TH_shutdown_now) h2_thread_stop(0);
+		if (TH_shutdown_now) {
+			h2_thread_stop(0);
+		}
 		h2_futex_unlock_pi(&futex0);
 	}
 	h2_thread_stop(0);
@@ -113,10 +116,12 @@ void blocker_thread(blocker_thread_struct *info)
 {
 	int myid = h2_thread_myid();
 	volatile int *counter;
+
+	info("blocker thread %d is H2 TID 0x%x\n", info->threadid, myid);
 	counter = (volatile int *)(&spinner_arr[info->threadid]);
 	h2_sem_up(&startup_sem);
 	h2_sem_down(&info->sem);
-	while (TH_nextstep_id != myid) {
+	while ((TH_nextstep_id != myid) && !TH_done) {
 		(*counter)++;
 		h2_yield();
 	}
@@ -128,6 +133,8 @@ void pi_caller(int *futex_addr)
 {
 	int myid = h2_thread_myid();
 	int ret;
+
+	info("pi_caller thread is H2 TID 0x%x\n", myid);
 	h2_sem_up(&startup_sem);
 	ret = h2_futex_lock_pi(futex_addr);
 	if (ret != 0) {
@@ -280,6 +287,9 @@ int main(int argc, char **argv)
 	TH_caller_woke = 0;
 	if ((futex1 & -2) != TH_expected_futex_wakeup_thread) FAIL("Futex should PASS");
 
+	h2_sem_up(&blocker2.sem);
+	TH_shutdown_now = 1;
+	TH_done = 1;
 	puts("TEST PASSED");
 	exit(0);
 }

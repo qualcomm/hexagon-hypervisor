@@ -20,6 +20,5 @@ void sys_exit(okay_t status)
 		__h2_thread_stop_hook__(status);
 	}
 
-	clean(&status, 1);
-	ANGEL(SYS_EXIT,&status,status);
+	ANGEL(SYS_EXIT,status,status);
 }

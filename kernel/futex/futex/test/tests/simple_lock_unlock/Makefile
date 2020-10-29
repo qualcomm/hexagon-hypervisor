@@ -7,3 +7,4 @@ EXEC=test.elf
 
 include Makefile.inc
 
+LDFLAGS += -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0

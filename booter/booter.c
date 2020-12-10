@@ -658,6 +658,10 @@ void load_vm(unsigned int idx) {
 
 	char *elf = vm_params[idx].argv[0];
 
+#ifdef BOOTVM_DEBUG
+	int reads = 0;
+#endif
+
 	BOOTER_PRINTF("\n");  // FIXME: prepending \n to string results in an empty line in the output lately. Weird.
 	BOOTER_PRINTF("Load VM index %d %s\n", idx, elf);
 
@@ -765,6 +769,9 @@ void load_vm(unsigned int idx) {
 				bytes_read = 0;
 				do {
 					bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
+#ifdef BOOTVM_DEBUG
+					reads++;
+#endif					
 				} while (ret > 0);
 				if (ret == -1) {
 					error("\tCan't read() in ", elf);
@@ -775,6 +782,9 @@ void load_vm(unsigned int idx) {
 				dcclean_range(phdr.p_paddr, phdr.p_memsz);
 			}
 		}
+#ifdef BOOTVM_DEBUG
+		BOOTER_PRINTF("\t\tTotal read operations: %d\n", reads);
+#endif		
 		close(fdesc);
 
 		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;

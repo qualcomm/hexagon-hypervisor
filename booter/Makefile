@@ -15,7 +15,7 @@ BOOTVM_PROG := booter
 
 BOOTVM_IMAGE_HEAP_SIZE := 0x1000000
 
-all: hello should_crash should_pagefault $(BOOTVM_PROG)
+all: hello should_crash should_pagefault bigio $(BOOTVM_PROG)
 
 CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-requires-header -g -I. -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
@@ -34,6 +34,9 @@ should_pagefault: should_pagefault.o
 should_crash: OPTIMIZE = -O0
 should_crash: should_crash.o
 	${CC} $(LDFLAGS) $(CFLAGS)  -O0 -Wl,--section-start=.start=$(H2K_GUEST_START) -o should_crash should_crash.o
+
+bigio: bigio.o
+	${CC} $(LDFLAGS) $(CFLAGS)  -O0 -Wl,--section-start=.start=$(H2K_GUEST_START) -o bigio bigio.o
 
 # %.o: %.c
 # 	${CC} ${CFLAGS} -c -o $@ $<

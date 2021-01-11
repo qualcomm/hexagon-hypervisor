@@ -6,7 +6,6 @@
 #include "allsyscalls.h"
 
 #ifdef SYS_READ_DEBUG
-#include <h2_vmtraps.h>
 #include "stdio.h"
 #endif
 

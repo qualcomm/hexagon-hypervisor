@@ -159,7 +159,9 @@ int qurt_thread_join(unsigned int threadid, int *status)
 	void *pt_status;
 	int pt_ret;
 	if ((pt_ret = pthread_join((pthread_t)threadid,&pt_status)) == 0) {
-		*status = (int)((long)pt_status);
+		if (status) {
+			*status = (int)((long)pt_status);
+		}
 	}
 	// return (pt_ret == 0) ? QURT_EOK : QURT_ENOTHREAD;
 	return pt_ret;

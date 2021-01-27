@@ -250,8 +250,13 @@ void qurt_timer_IST (void *arg)
 #define IST_STACK_SIZE 1024
 unsigned long long qurt_timer_IST_stack[IST_STACK_SIZE];
 
+extern int __disable_qurt_timer_IST_init__ __attribute__ ((weak));
+
 void qurt_timer_IST_init (void)
 {
+	if (&__disable_qurt_timer_IST_init__) {
+		return;
+	}
 	
 	h2_sem_init_val(&ist_sem, 0);
 

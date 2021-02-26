@@ -1200,24 +1200,27 @@ void kernel_setup() {
 
 void set_l2_reg(unsigned int offset, unsigned int val) {
 
-	unsigned int old, ret;
+  unsigned int old, ret, kerror;
 
 	BOOTER_PRINTF("Set L2 reg at offset 0x%08x:\n", offset);
 
 	old = h2_hwconfig_l2_get_reg(offset);
 
-	if (old != -1) {
-		BOOTER_PRINTF("\tOld value:  0x%08x\n", old);
-		ret = h2_hwconfig_l2_set_reg(offset, val);
-
-		if (ret != old) {
-			FAIL("set_l2_reg mismatch.", "");
-		}
-
-		BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
-	} else {
-	  FAIL("Can't get L2 reg.", "");
+	kerror = h2_info(INFO_ERROR);
+	if (kerror != KERROR_NONE) {
+		BOOTER_PRINTF("\n");
+		BOOTER_PRINTF("Kernel error: %s\n\n", kerror_msg[kerror]);
+		FAIL("Can't get L2 reg.", "");
 	}
+
+	BOOTER_PRINTF("\tOld value:  0x%08x\n", old);
+	ret = h2_hwconfig_l2_set_reg(offset, val);
+
+	if (ret != old) {
+		FAIL("set_l2_reg mismatch.", "");
+	}
+
+	BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
 }
 
 /* Need to clean when clearing L2WB */

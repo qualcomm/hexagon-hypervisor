@@ -48,7 +48,9 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_hmxbits,
 	H2K_trap_hwconfig_getdmacfg,
 	H2K_trap_hwconfig_setdmacfg,
-	H2K_trap_hwconfig_l2gclean
+	H2K_trap_hwconfig_l2gclean,
+	H2K_trap_hwconfig_getstrideprefetcherreg,
+	H2K_trap_hwconfig_setstrideprefetcherreg
 };
 
 typedef struct {
@@ -77,6 +79,8 @@ static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
 	u32_t volatile *reg;
 	u32_t ret;
 
+	offset &= -4;
+
 	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
 
 	va = H2K_tmpmap_add_and_lock(base, UNCACHED);
@@ -92,6 +96,8 @@ static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
 	pa_t base;
 	u32_t volatile *reg;
 	u32_t ret;
+
+	offset &= -4;
 
 	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
 
@@ -550,4 +556,24 @@ u32_t H2K_trap_hwconfig_l2gclean(u32_t unused, void *unusedp, u32_t inv, u32_t u
 	return 0;
 #endif
 	return -1;
+}
+
+u32_t H2K_trap_hwconfig_getstrideprefetcherreg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
+	if ((offset > H2K_gp->hthreads * 4) 
+			|| ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_STRIDE_PREFETCHER_MASK) == 0)) {  // out of range: reg0 + per-thread regs
+		H2K_gp->kernel_error = KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE;
+		return 0;
+	}
+
+	return getxreg(CFG_TABLE_CORECFG_BASE, CORECFG_STRIDE_PREFETCHER_BASE + offset);
+}
+
+u32_t H2K_trap_hwconfig_setstrideprefetcherreg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
+	if ((offset > H2K_gp->hthreads * 4) 
+			|| ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_STRIDE_PREFETCHER_MASK) == 0)) {  // out of range: reg0 + per-thread regs
+		H2K_gp->kernel_error = KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE;
+		return 0;
+	}
+
+	return setxreg(CFG_TABLE_CORECFG_BASE, CORECFG_STRIDE_PREFETCHER_BASE + offset, val);
 }

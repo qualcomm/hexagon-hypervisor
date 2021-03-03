@@ -274,6 +274,7 @@
 #define CFG_TABLE_SHIFT 16
 #define CFG_TABLE_L2TCM 0x0
 #define CFG_TABLE_SSBASE 0x8
+#define CFG_TABLE_CORECFG_BASE 0xc
 #define CFG_TABLE_L2REGS 0x10
 #define CFG_TABLE_CLADEREGS 0x24
 #define CFG_TABLE_FASTL2VIC_BASE 0x28
@@ -308,6 +309,8 @@
 #define CFG_TABLE_L1I_SZ 0xa8
 #define CFG_TABLE_L1D_WRITE_POLICY 0xac
 #define CFG_TABLE_VTCM_BANK_WIDTH 0xb0
+
+#define CFG_TABLE_CORECFG_PRESENT 0xd4
 
 #define CFG_TABLE_COPROC_TYPE_HVX 1
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
@@ -355,5 +358,13 @@
 #define L2REGS_MAX L2REGS_QOS_DANGER_3
 
 #define CLADEREGS_MAX                    ((CLADE_REG_PD_CHUNK * CLADE_NUM_PDS) + 0x1c)
+
+#define CORECFG_ETM_BASE               0x0000
+#define CORECFG_LIVELOCK_BASE          0x1000
+#define CORECFG_STRIDE_PREFETCHER_BASE 0x2000
+
+#define CORECFG_PRESENT_ETM_MASK               0x1
+#define CORECFG_PRESENT_LIVELOCK_MASK          0x2
+#define CORECFG_PRESENT_STRIDE_PREFETCHER_MASK 0x4
 
 #define LOGBUF_SIZE (32 * 1024)  // bytes

@@ -13,5 +13,6 @@ const char *kerror_msg[] = {
 	[KERROR_L2CACHE_INIT_CONFIG] = "L2 cache init: Hardware config failed",
 	[KERROR_HWCONFIG_L2REG_RANGE] = "L2 get/set reg: offset out of range",
 	[KERROR_HWCONFIG_CLADEREG_RANGE] = "CLADE get/set reg: offset out of range",
-	[KERROR_SETUP_NUM_HTHREADS] = "NUM_HTHREADS too large"
+	[KERROR_SETUP_NUM_HTHREADS] = "NUM_HTHREADS too large",
+	[KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE] = "Stride prefetcher get/set reg: offset out of range"
 };

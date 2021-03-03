@@ -32,7 +32,7 @@ int h2_hwconfig_trap(hwconfig_type_t whichtrap, void *ptr, unsigned int a, unsig
 /**
 Get L2 register.
 @param[in] offset  Offset from L2 register base
-@returns register value or -1 on failure
+@returns register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
 
@@ -45,7 +45,7 @@ static inline int h2_hwconfig_l2_get_reg(unsigned int offset)
 Set L2 register.
 @param[in] offset  Offset from L2 register base
 @param[in] val  Value to write
-@returns previous register value or -1 on failure
+@returns previous register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
 
@@ -57,7 +57,7 @@ static inline int h2_hwconfig_l2_set_reg(unsigned int offset, unsigned int val)
 /**
 Get CLADE register.
 @param[in] offset  Offset from CLADE register base
-@returns register value or -1 on failure
+@returns register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
 
@@ -70,7 +70,7 @@ static inline int h2_hwconfig_clade_get_reg(unsigned int offset)
 Set CLADE register.
 @param[in] offset  Offset from CLADE register base
 @param[in] val  Value to write
-@returns previous register value or -1 on failure
+@returns previous register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
 
@@ -270,6 +270,31 @@ Clean L2 cache
 static inline int h2_hwconfig_l2gclean(unsigned int inv) {
 
 	return h2_hwconfig_trap(HWCONFIG_L2GCLEAN, NULL, inv, 0);
+}
+
+/**
+Get stride prefetcher register.
+@param[in] offset  Offset from stride prefetcher register base
+@returns register value or 0 on failure -- check kerror
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_strideprefetcher_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETSTRIDEPREFETCHERREG, NULL, offset, 0);
+}
+
+/**
+Set stride prefetcher register.
+@param[in] offset  Offset from stride prefetcher register base
+@param[in] val  Value to write
+@returns previous register value or 0 on failure -- check kerror
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_strideprefetcher_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETSTRIDEPREFETCHERREG, NULL, offset, val);
 }
 
 #endif

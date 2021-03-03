@@ -214,7 +214,8 @@ void usage()
 	BOOTER_PRINTF("  --l1ip [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main ]\n\tSet L1 instruction cache partitioning (ARCHV <= 5).\n");
 	BOOTER_PRINTF("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	BOOTER_PRINTF("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
-	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register. Setting to -1 reads current value, doesn't set.\n");
+	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
+	BOOTER_PRINTF("  --stride_prefetch_reg <offset int> <int>\n\tSet stride prefetcher register.\n");
 #ifdef HAVE_EXTENSIONS
 	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
 #endif
@@ -1213,6 +1214,31 @@ void set_l2_reg(unsigned int offset, unsigned int val) {
 	BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
 }
 
+void set_stride_prefetcher_reg(unsigned int offset, unsigned int val) {
+
+  unsigned int old, ret, kerror;
+
+	BOOTER_PRINTF("Set stride prefetcher reg at offset 0x%08x:\n", offset);
+
+	old = h2_hwconfig_strideprefetcher_get_reg(offset);
+
+	kerror = h2_info(INFO_ERROR);
+	if (kerror != KERROR_NONE) {
+		BOOTER_PRINTF("\n");
+		BOOTER_PRINTF("Kernel error: %s\n\n", kerror_msg[kerror]);
+		FAIL("Can't get stride prefetcher reg.", "");
+	}
+
+	BOOTER_PRINTF("\tOld value:  0x%08x\n", old);
+	ret = h2_hwconfig_strideprefetcher_set_reg(offset, val);
+
+	if (ret != old) {
+		FAIL("set_stride_prefetcher_reg mismatch.", "");
+	}
+
+	BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
+}
+
 /* Need to clean when clearing L2WB */
 void set_l2wb (unsigned int val) {
 	unsigned int old = h2_info(INFO_SYSCFG);
@@ -1418,6 +1444,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--l2_reg")) {
 			if (argc < 3) die_usage();
 			set_l2_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
+			argc -= 3; argv += 3;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--stride_prefetch_reg")) {
+			if (argc < 3) die_usage();
+			set_stride_prefetcher_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
 			argc -= 3; argv += 3;
 			continue;
 

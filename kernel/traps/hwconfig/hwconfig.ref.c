@@ -16,6 +16,7 @@
 #include <intcontrol.h>
 #include <tmpmap.h>
 #include <hvx.h>
+#include <hmx.h>
 #include <safemem.h>
 #include <cfg_table.h>
 #include <atomic.h>
@@ -244,12 +245,18 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 }
 
 u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t unused3, H2K_thread_context *me) {
-
+#if ARCHV >= 68
 	if (0 < H2K_gp->hmx_units) {  // exists
 		me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
+		if (xe2) {
+			H2K_hmx_poweron(); // make sure the lights are on
+		}
 		return 0;
 	}
 	return -1;
+#else
+	return -1;
+#endif
 }
 
 u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) {
@@ -361,11 +368,13 @@ u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t
 
 #ifdef HAVE_EXTENSIONS
 
-	/* Just HVX for now */
+	/* Both HVX HMX now */
 	if (state) {
 		H2K_hvx_poweron();
+		H2K_hmx_poweron();
 	} else {
 		H2K_hvx_poweroff();
+		H2K_hmx_poweroff();
 	}
 	return 0;
 #else

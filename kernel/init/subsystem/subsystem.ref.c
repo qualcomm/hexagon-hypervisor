@@ -7,7 +7,7 @@
 #include <max.h>
 #include <globals.h>
 #include <hvx.h>
-
+#include <hmx.h>
 /* Power up HVX */
 void H2K_hvx_init(u32_t devpage_offset) {
 
@@ -31,4 +31,24 @@ void H2K_hvx_init(u32_t devpage_offset) {
 	H2K_gp->hvx_state = H2K_HVX_STATE_OFF;
 
 #endif
+}
+
+/* Power up HMX */
+void H2K_hmx_init(u32_t devpage_offset) {
+
+#ifdef HAVE_EXTENSIONS
+
+	if (!H2K_gp->info_boot_flags.boot_have_hmx) {
+		return;
+	}
+
+#if ARCHV >= 68
+	H2K_gp->hmx_rsc_seq_busy_drv0 = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_RSCC_RSC_SEQ_BUSY_DRV0);
+	H2K_gp->hmx_rsc_seq_override_trigger_drv0 = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_RSCC_RSC_SEQ_OVERRIDE_TRIGGER_DRV0);
+	H2K_gp->hmx_rsc_seq_override_trigger_start_addr_drv0 = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_RSCC_RSC_SEQ_OVERRIDE_TRIGGER_START_ADDR_DRV0);
+	H2K_gp->hmx_state = H2K_HMX_STATE_OFF;
+#endif
+
+#endif
+
 }

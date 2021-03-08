@@ -85,8 +85,8 @@ typedef struct {
 	u32_t hvx_state;
 	u32_t hvx_vlength;   // native vector length
 	u32_t hvx_contexts;  // # of native length
-#if ARCHV >= 68
 	u32_t hmx_units;
+#if ARCHV >= 68
 	u32_t hmx_state;
 	u32_t *hmx_rsc_seq_busy_drv0;
 	u32_t *hmx_rsc_seq_override_trigger_drv0;

@@ -17,8 +17,6 @@
 #include <h2_hwconfig.h>
 #include <hexagon_protos.h>
 
-#define H2_VECACCESS_NUM_HVX_CONTEXTS 4  // when using shortest vlength
-
 enum {
 	H2_VECACCESS_EXT_SILVER = 3,
 	H2_VECACCESS_EXT_HVX = 4
@@ -92,7 +90,7 @@ static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, unsigned int req
 		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_64)) <0) return ret;
 		vacc->ext = H2_VECACCESS_EXT_HVX;
 		vacc->length = H2_VECACCESS_VLENGTH_64;
-		h2_sem_init_val(&vacc->sem, H2_VECACCESS_NUM_HVX_CONTEXTS);
+		h2_sem_init_val(&vacc->sem, h2_info(INFO_HVX_CONTEXTS));
 		break;
 
 	case H2_VECACCESS_HVX_128:
@@ -100,7 +98,7 @@ static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, unsigned int req
 		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_128)) <0) return ret;
 		vacc->ext = H2_VECACCESS_EXT_HVX;
 		vacc->length = H2_VECACCESS_VLENGTH_128;
-		h2_sem_init_val(&vacc->sem, H2_VECACCESS_NUM_HVX_CONTEXTS / (128 / native_vlength));
+		h2_sem_init_val(&vacc->sem, h2_info(INFO_HVX_CONTEXTS) / (128 / native_vlength));
 		break;
 
 	default:

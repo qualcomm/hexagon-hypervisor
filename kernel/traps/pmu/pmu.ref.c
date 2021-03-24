@@ -38,6 +38,8 @@ u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t
 	switch ((s32_t)whichreg) {
 	case 8: H2K_set_pmuevtcfg(newval); return 0;
 	case 10: H2K_set_pmucfg(newval); return 0;
+	case 11: H2K_set_pmustid0(newval); return 0;
+	case 12: H2K_set_pmustid1(newval); return 0;
 
 #ifdef COUNT_TLB_EVENTS
 	case -2: me->vmblock->tlbmissx_lo = newval;
@@ -53,6 +55,10 @@ u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t
 	case 1: H2K_set_pmucnt1(newval); return 0;
 	case 2: H2K_set_pmucnt2(newval); return 0;
 	case 3: H2K_set_pmucnt3(newval); return 0;
+	case 4: H2K_set_pmucnt4(newval); return 0;
+	case 5: H2K_set_pmucnt5(newval); return 0;
+	case 6: H2K_set_pmucnt6(newval); return 0;
+	case 7: H2K_set_pmucnt7(newval); return 0;
 	default: return -1;
 	}
 	return -1;
@@ -63,6 +69,8 @@ u32_t H2K_trap_pmuctrl_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t
 	switch ((s32_t)whichreg) {
 	case 8: return H2K_get_pmuevtcfg();
 	case 10: return H2K_get_pmucfg();
+	case 11: return H2K_get_pmustid0();
+	case 12: return H2K_get_pmustid1();
 
 #ifdef COUNT_TLB_EVENTS
 	case -2: return me->vmblock->tlbmissx_lo;
@@ -78,6 +86,10 @@ u32_t H2K_trap_pmuctrl_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t
 	case 1: return H2K_get_pmucnt1();
 	case 2: return H2K_get_pmucnt2();
 	case 3: return H2K_get_pmucnt3();
+	case 4: return H2K_get_pmucnt4();
+	case 5: return H2K_get_pmucnt5();
+	case 6: return H2K_get_pmucnt6();
+	case 7: return H2K_get_pmucnt7();
 	default: return -1;
 	}
 	return -1;

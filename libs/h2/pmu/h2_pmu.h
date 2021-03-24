@@ -15,20 +15,26 @@
 #include <stdlib.h>
 #include <h2_common_pmu.h>
 
-#define H2_PMUEVTCFG 8			/**< Event Configuration Register */
-#define H2_PMUCFG 10			/**< Event Configuration Register */
-#define H2_PMUCNT0 0	          /**< PMU Performance Counter 0 */
-#define H2_PMUCNT1 1			      /**< PMU Performance Counter 1 */
-#define H2_PMUCNT2 2			      /**< PMU Performance Counter 2 */
-#define H2_PMUCNT3 3			      /**< PMU Performance Counter 3 */
+#define H2_PMUEVTCFG 8            /**< PMU Event Configuration Register */
+#define H2_PMUCFG   10            /**< PMU Configuration Register */
+#define H2_PMUSTID0 11            /**< PMU STID0 Configuration Register */
+#define H2_PMUSTID1 12            /**< PMU STID1 Configuration Register */
+#define H2_PMUCNT0   0            /**< PMU Performance Counter 0 */
+#define H2_PMUCNT1   1            /**< PMU Performance Counter 1 */
+#define H2_PMUCNT2   2            /**< PMU Performance Counter 2 */
+#define H2_PMUCNT3   3            /**< PMU Performance Counter 3 */
+#define H2_PMUCNT4   4            /**< PMU Performance Counter 4 */
+#define H2_PMUCNT5   5            /**< PMU Performance Counter 5 */
+#define H2_PMUCNT6   6            /**< PMU Performance Counter 6 */
+#define H2_PMUCNT7   7            /**< PMU Performance Counter 7 */
 
 /* soft counters */
-#define H2_TLBMISSX_LO (-2)    /**< TLB execute miss low word */
-#define H2_TLBMISSX_HI (-3)    /**< TLB execute miss high word */
-#define H2_TLBMISSRW_LO (-4)   /**< TLB read/write miss low word */
-#define H2_TLBMISSRW_HI (-5)   /**< TLB read/write miss high word */
-#define H2_STLBMISS_LO (-6)    /**< STLB miss low word */
-#define H2_STLBMISS_HI (-7)    /**< STLB miss high word */
+#define H2_TLBMISSX_LO  (-2)    /**< TLB execute miss low word */
+#define H2_TLBMISSX_HI  (-3)    /**< TLB execute miss high word */
+#define H2_TLBMISSRW_LO (-4)    /**< TLB read/write miss low word */
+#define H2_TLBMISSRW_HI (-5)    /**< TLB read/write miss high word */
+#define H2_STLBMISS_LO  (-6)    /**< STLB miss low word */
+#define H2_STLBMISS_HI  (-7)    /**< STLB miss high word */
 
 /**
 PMU Configuration Trap Interface.  Please do not use this directly, instead use the other h2_pmu functions.

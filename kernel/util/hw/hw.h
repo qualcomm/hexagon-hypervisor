@@ -417,6 +417,8 @@ static inline void H2K_set_##REG(u32_t val) \
 MAKE_SETGET(pmucfg)
 MAKE_SETGET(pmuevtcfg)
 MAKE_SETGET(pmuevtcfg1)
+MAKE_SETGET(pmustid0)
+MAKE_SETGET(pmustid1)
 MAKE_SETGET(pmucnt0)
 MAKE_SETGET(pmucnt1)
 MAKE_SETGET(pmucnt2)

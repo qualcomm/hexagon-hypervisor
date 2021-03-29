@@ -37,6 +37,7 @@ u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t
 {
 	switch ((s32_t)whichreg) {
 	case 8: H2K_set_pmuevtcfg(newval); return 0;
+	case 9: H2K_set_pmuevtcfg1(newval); return 0;
 	case 10: H2K_set_pmucfg(newval); return 0;
 	case 11: H2K_set_pmustid0(newval); return 0;
 	case 12: H2K_set_pmustid1(newval); return 0;
@@ -68,6 +69,7 @@ u32_t H2K_trap_pmuctrl_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t
 {
 	switch ((s32_t)whichreg) {
 	case 8: return H2K_get_pmuevtcfg();
+	case 9: return H2K_get_pmuevtcfg1();
 	case 10: return H2K_get_pmucfg();
 	case 11: return H2K_get_pmustid0();
 	case 12: return H2K_get_pmustid1();

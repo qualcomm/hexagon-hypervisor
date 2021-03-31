@@ -59,6 +59,9 @@ char *pagesize_name[] = {
 	GEN(__use_file_suffix__)											\
 	GEN(__dir_prefix__)														\
 	GEN(__file_suffix__)													\
+	GEN(__h2_pmu_evtcfg__)												\
+	GEN(__h2_pmu_evtcfg1__)												\
+	GEN(__h2_pmu_cfg__)   												\
 	GEN(end)																			\
 	GEN(DEFAULT_HEAP_SIZE)												\
 	GEN(DEFAULT_STACK_SIZE)												\
@@ -91,6 +94,21 @@ enum {
 #define DMA_CTRL_SET_VAL 0x2e3
 #define DMA_CTRL_SET_INDEX 2
 
+#define PMU_COUNTER_NONE 0
+#define PMU_COUNTER0_OVERFLOW 1
+#define PMU_COUNTER2_OVERFLOW 2
+#define PMU_COUNTER4_OVERFLOW 5
+#define PMU_COUNTER6_OVERFLOW 6
+#define PMU_FILE "pmu_stats.txt"
+
+#define PMU_FIRST_EVENT 0
+#if ARCHV >= 68
+#define PMU_LAST_EVENT 1023
+#define PMU_LAST_EVENT_STR "1023"
+#else
+#define PMU_LAST_EVENT 511
+#define PMU_LAST_EVENT_STR "511"
+#endif
 /* Globals */
 #ifdef HAVE_EXTENSIONS
 unsigned int ext_power = 1;
@@ -112,6 +130,15 @@ info_stlb_type  stlb_info;
 int hwt_mask = -1;
 int hwt_num = -1;
 int ecc_enable = -1;
+int set_pmu_evtcfg = 0;
+int set_pmu_evtcfg1 = 0;
+int set_pmu_cfg = 0;
+unsigned int pmu_evtcfg;
+unsigned int pmu_evtcfg1;
+unsigned int pmu_cfg;
+int pmu_dump = 0;
+char *pmu_file = "pmu_stats_booter.txt";
+FILE *pmu_fp;
 int set_dmactrl = 0;
 int dmactrl;
 #ifdef CLUSTER_SCHED
@@ -162,9 +189,16 @@ typedef struct {
 	/* rebooting */
 	unsigned int boots;
 	unsigned int expect_status;
+	unsigned int reboot_reload;
 
 	/* exit on error */
 	unsigned int error_exit;
+
+	/* PMU */
+	int pmu_sweep;
+	int pmu_first_event;
+	int pmu_last_event;
+	int pmu_overflow;
 
 	/* clade */
 	int clade_pd;
@@ -225,6 +259,11 @@ void usage()
 	BOOTER_PRINTF("  --hwt_mask <int>\n\tMask of hardware threads to start. Default -1 (all).\n");
 	BOOTER_PRINTF("  --hwt_num <int>\n\tNumber of hardware threads to start. Default -1 (all).\n");
 	BOOTER_PRINTF("  --ecc_enable (0|1)\n\tEnable/disable ECC for all applicable memories.  Default 0.\n");
+	BOOTER_PRINTF("  --pmu_evtcfg <int>\n\tSet PMU event config register 0.\n");
+	BOOTER_PRINTF("  --pmu_evtcfg1 <int>\n\tSet PMU event config register 1.\n");
+	BOOTER_PRINTF("  --pmu_cfg <int>\n\tSet PMU config register.\n");
+	BOOTER_PRINTF("  --pmu_dump (0|1)\n\tDump PMU counters.  Default 0.\n");
+	BOOTER_PRINTF("  --pmu_file <string>\n\tPMU output file name. Default " PMU_FILE ".\n");
 	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
 
 	BOOTER_PRINTF("\n");
@@ -249,7 +288,12 @@ void usage()
 	BOOTER_PRINTF("  --arg <int>\n\tInitial argument (R0) for first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status.  Default 1.\n");
 	BOOTER_PRINTF("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
+	BOOTER_PRINTF("  --reboot_reload (0|1)\n\tReload program when rebooting VM.  Default 0.\n");
 	BOOTER_PRINTF("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 1.\n");
+	BOOTER_PRINTF("  --pmu_sweep (0|1)\n\tCollect PMU counters over multiple runs.  Default 0.\n");
+	BOOTER_PRINTF("  --pmu_first_event <int>\n\tFirst PMU event for sweep.  Default 0.\n");
+	BOOTER_PRINTF("  --pmu_last_event <int>\n\tLast PMU event for sweep.  Default " PMU_LAST_EVENT_STR ".\n");
+	BOOTER_PRINTF("  --pmu_overflow (0|1)\n\tUse 64-bit PMU counters in sweep.  Default 0.\n");
 	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
@@ -295,7 +339,14 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].startprio = VM_BEST_PRIO;
 	vm_params[idx].boots = 1;
 	vm_params[idx].expect_status = 0;
+	vm_params[idx].reboot_reload = 0;
 	vm_params[idx].error_exit = 1;
+
+	vm_params[idx].pmu_sweep = 0;
+	vm_params[idx].pmu_first_event = PMU_FIRST_EVENT;
+	vm_params[idx].pmu_last_event = PMU_LAST_EVENT;
+	vm_params[idx].pmu_overflow = 0;
+
 	vm_params[idx].clade_pd = -1;
 	vm_params[idx].clade_ex_hi = CLADE_INVALID_ADDRESS;
 
@@ -351,7 +402,15 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].startprio = vm_params[idx].startprio;
 		vm_params[idx + num].boots = vm_params[idx].boots;
 		vm_params[idx + num].expect_status = vm_params[idx].expect_status;
+		vm_params[idx + num].reboot_reload = vm_params[idx].reboot_reload;
 		vm_params[idx + num].error_exit = vm_params[idx].error_exit;
+
+		/* FIXME: Maybe clones shouldn't set the PMU, but they do need to run each time */
+		vm_params[idx + num].pmu_sweep = vm_params[idx].pmu_sweep;
+		vm_params[idx + num].pmu_first_event = vm_params[idx].pmu_first_event;
+		vm_params[idx + num].pmu_last_event = vm_params[idx].pmu_last_event;
+		vm_params[idx + num].pmu_overflow = vm_params[idx].pmu_overflow;
+
 		vm_params[idx + num].clade_pd = -1;
 		vm_params[idx + num].clade_ex_hi = CLADE_INVALID_ADDRESS;
 
@@ -462,7 +521,21 @@ void set_var(unsigned int idx, int sym, int val, long offset) {
 	dst = (int *)(addr + offset);
 	*dst = val;
 
-	BOOTER_PRINTF("\t%s at 0x%08x set to <<%d>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, *dst);
+	BOOTER_PRINTF("\t%s at 0x%08x set to <<0x%08x>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, *dst);
+}
+
+unsigned long get_var(unsigned int idx, int sym, long offset) {
+
+	int *dst;
+	unsigned long addr;
+
+	if ((addr = vm_params[idx].specials[sym].addr) == -1) {
+		BOOTER_PRINTF("\t%s not found.\n", vm_params[idx].specials[sym].name);
+		return 0;
+	}
+
+	dst = (int *)(addr + offset);
+	return *dst;
 }
 
 void set_net_phys_offset(unsigned int idx, long offset) {
@@ -960,6 +1033,8 @@ void config_vm(unsigned int idx) {
 void boot_vm(unsigned int idx) {
 
 	unsigned int regval;
+	int bit = 0;
+	int shift;
 
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
@@ -971,9 +1046,95 @@ void boot_vm(unsigned int idx) {
 		regval = H2K_get_ccr();
 		BOOTER_PRINTF("\tnew value for ccr: 0x%08x\n",regval);
 	}
+	if (vm_params[idx].pmu_sweep) {
+		if (vm_params[idx].pmu_overflow) {  // 64-bit counters
+			pmu_evtcfg =  0x02000100;  // COUNTER2_OVERFLOW ... COUNTER0_OVERFLOW
+			pmu_evtcfg1 = 0x06000500;  // COUNTER6_OVERFLOW ... COUNTER4_OVERFLOW
+			shift = 16;
+		} else {
+			pmu_evtcfg = pmu_evtcfg1 = 0;  // off
+			shift = 8;
+		}
+		pmu_cfg = 0;
+		while ((vm_params[idx].pmu_first_event <= vm_params[idx].pmu_last_event) && bit < 64) {
+			switch (vm_params[idx].pmu_first_event ) {
+			case PMU_COUNTER_NONE:
+			case PMU_COUNTER0_OVERFLOW:
+			case PMU_COUNTER2_OVERFLOW:
+			case PMU_COUNTER4_OVERFLOW:
+			case PMU_COUNTER6_OVERFLOW:
+				vm_params[idx].pmu_first_event++;  // skip
+				break;
+			default:
+				if (bit < 32) {
+					pmu_cfg |= (vm_params[idx].pmu_first_event >> 8) << (bit / 4);
+					pmu_evtcfg |= (vm_params[idx].pmu_first_event++ & 0xff) << bit;
+				} else {
+					pmu_cfg |= (vm_params[idx].pmu_first_event >> 8) << (bit / 4);
+					pmu_evtcfg1 |= (vm_params[idx].pmu_first_event++ & 0xff) << (bit - 32);
+				}
+				bit += shift;
+			}
+		}
+	}
+
+	/* Global options, but we set these in every vm */
+	if (set_pmu_evtcfg) {
+		set_var(idx, SPECIAL___h2_pmu_evtcfg__, pmu_evtcfg, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+	}
+	if (set_pmu_evtcfg1) {
+		set_var(idx, SPECIAL___h2_pmu_evtcfg1__, pmu_evtcfg1, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+	}
+	if (set_pmu_cfg) {
+		set_var(idx, SPECIAL___h2_pmu_cfg__, pmu_cfg, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+	}
 
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
 		FAIL("\tfailed to boot vm\n", "");
+	}
+}
+
+void dump_pmu(int idx) {
+	int i;
+	unsigned long long int val;
+	int event;
+
+	if (!pmu_dump) return;
+
+	/* In case someone has messed with __h2_pmu_* while we were napping */
+	pmu_evtcfg = get_var(idx, SPECIAL___h2_pmu_evtcfg__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+	pmu_evtcfg1 = get_var(idx, SPECIAL___h2_pmu_evtcfg1__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+	pmu_cfg = get_var(idx, SPECIAL___h2_pmu_cfg__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+
+	if (vm_params[idx].pmu_overflow) {
+		for (i = 0; i < 8; i += 2) {
+			if (i < 4) {
+				event = (pmu_evtcfg >> (i * 8)) & 0xff;
+			} else {
+				event = (pmu_evtcfg1 >> ((i - 4) * 8)) & 0xff;
+			}
+			event |= ((pmu_cfg >> (i * 2)) & 0x3) << 8;
+
+			val = h2_pmu_getreg(H2_PMUCNT0 + i);
+			val |= ((unsigned long long int)h2_pmu_getreg(H2_PMUCNT0 + i + 1)) << 32;
+			if (event != PMU_COUNTER_NONE) {
+				fprintf(pmu_fp, "0x%x\t: %lld\n", event, val);
+			}
+		}
+	} else {
+		for (i = 0; i < 8; i++) {
+			if (i < 4) {
+				event = (pmu_evtcfg >> (i * 8)) & 0xff;
+			} else {
+				event = (pmu_evtcfg1 >> ((i - 4) * 8)) & 0xff;
+			}
+			event |= ((pmu_cfg >> (i * 2)) & 0x3) << 8;
+
+			val = h2_pmu_getreg(H2_PMUCNT0 + i);
+			if (event != PMU_COUNTER_NONE) {
+				fprintf(pmu_fp, "0x%x\t: %lld\n", event, val);
+			}
+		}
 	}
 }
 
@@ -992,8 +1153,20 @@ void run(unsigned int idx) {
 	for (i = 0 ; i <= idx; i++) {
 		config_vm(i);
 	}
+	if (pmu_dump) {
+		if (NULL == (pmu_fp = fopen(pmu_file, "w"))) {
+			error("Can't open ", pmu_file);
+		}
+	}
 
-	/* Stats Reset */
+	/* Reset PMU */
+	if (0 != h2_pmu_setreg(H2_PMUEVTCFG, 0)) error("h2_pmu_setreg(H2_PMUEVTCFG, 0)", NULL);
+	if (0 != h2_pmu_setreg(H2_PMUEVTCFG1, 0)) error("h2_pmu_setreg(H2_PMUEVTCFG1, 0)", NULL);
+	if (0 != h2_pmu_setreg(H2_PMUCFG, 0)) error("h2_pmu_setreg(H2_PMUCFG, 0)", NULL);
+	for (i = 0; i < 8; i++) {
+		if (0 != h2_pmu_setreg(H2_PMUCNT0 + i, 0)) error("h2_pmu_setreg(H2_PMUCNTx, 0)", NULL);
+	}
+	/* sim/emu PMU stats reset */
 	asm volatile (" r0 = #0x48 ; trap0(#0); \n" : : : "r0","r1","r2","r3","r4","r5","r6","r7","memory");
 
 	for (i = 0 ; i <= idx; i++) {
@@ -1043,11 +1216,18 @@ void run(unsigned int idx) {
 					if (status != vm_params[i].expect_status && vm_params[i].error_exit) {
 						FAIL("\tUnexpected exit status.", "");
 					}
-					if (--vm_params[i].boots) {  // reboot
+					vm_params[i].boots = (vm_params[i].boots > 0 ? vm_params[i].boots - 1 : 0);
+					if (vm_params[i].boots
+							|| (vm_params[i].pmu_sweep
+									&& (vm_params[i].pmu_first_event <= vm_params[i].pmu_last_event))) {  // reboot
 						done = 0;
-						load_vm(i);
+						dump_pmu(i);
+						if (vm_params[i].reboot_reload) {
+							load_vm(i);
+						}
 						boot_vm(i);
 					} else {  // all done with this VM
+						dump_pmu(i);
 						vm_params[i].id = ~0;  // mark non-existent
 						h2_vmfree(vm);
 					}
@@ -1064,6 +1244,10 @@ void run(unsigned int idx) {
 	H2K_set_syscfg(h2_info(INFO_SYSCFG) & ~SYSCFG_CLADEN);  // disable clade
 	pd_num = 0;  // reset
 	h2_galloc_reset(&tcm_alloc, 0);
+
+	if (pmu_dump) {
+		fclose(pmu_fp);
+	}
 }
 
 void die_usage()
@@ -1499,6 +1683,39 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--pmu_evtcfg")) {
+			if (argc < 2) die_usage();
+			pmu_evtcfg = strtoul(argv[1],NULL,0);
+			set_pmu_evtcfg = 1;
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--pmu_evtcfg1")) {
+			if (argc < 2) die_usage();
+			pmu_evtcfg1 = strtoul(argv[1],NULL,0);
+			set_pmu_evtcfg1 = 1;
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--pmu_cfg")) {
+			if (argc < 2) die_usage();
+			pmu_cfg = strtoul(argv[1],NULL,0);
+			set_pmu_cfg = 1;
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--pmu_dump")) {
+			if (argc < 2) die_usage();
+			pmu_dump = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--pmu_file")) {
+			if (argc < 2) die_usage();
+			pmu_file = argv[1];
+			argc -= 2; argv += 2;
+			continue;
+
 #ifdef CLUSTER_SCHED
 		} else if (0 == strcmp(argv[0], "--cluster_sched")) {
 			if (argc < 2) die_usage();
@@ -1619,6 +1836,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--reboot_reload")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].reboot_reload = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0], "--expect_status")) {
 			if (argc < 2) die_usage();
 			vm_params[idx].expect_status = strtoul(argv[1],NULL,0);
@@ -1628,6 +1851,31 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--error_exit")) {
 			if (argc < 2) die_usage();
 			vm_params[idx].error_exit = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--pmu_sweep")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].pmu_sweep = strtoul(argv[1],NULL,0);
+			set_pmu_cfg = set_pmu_evtcfg1 = set_pmu_evtcfg = 1;
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--pmu_first_event")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].pmu_first_event = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--pmu_last_event")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].pmu_last_event = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--pmu_overflow")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].pmu_overflow = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

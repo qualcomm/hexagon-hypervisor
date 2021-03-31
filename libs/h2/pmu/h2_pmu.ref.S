@@ -12,3 +12,14 @@ FUNC_START h2_pmuctrl_trap .text.h2.pmu
 	jumpr r31
 FUNC_END h2_pmuctrl_trap
 
+DATA_START __h2_pmu_evtcfg__ .sdata.h2.pmu .p2align 2
+	.word 0x0
+DATA_END __h2_pmu_evtcfg__
+
+DATA_START __h2_pmu_evtcfg1__ .sdata.h2.pmu .p2align 2
+	.word 0x0
+DATA_END __h2_pmu_evtcfg1__
+
+DATA_START __h2_pmu_cfg__ .sdata.h2.pmu .p2align 2
+	.word 0x0
+DATA_END __h2_pmu_cfg__

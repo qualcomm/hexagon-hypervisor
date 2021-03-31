@@ -16,6 +16,7 @@
 #include <h2_common_pmu.h>
 
 #define H2_PMUEVTCFG 8            /**< PMU Event Configuration Register */
+#define H2_PMUEVTCFG1 9           /**< PMU Event Configuration Register 1 */
 #define H2_PMUCFG   10            /**< PMU Configuration Register */
 #define H2_PMUSTID0 11            /**< PMU STID0 Configuration Register */
 #define H2_PMUSTID1 12            /**< PMU STID1 Configuration Register */
@@ -36,6 +37,10 @@
 #define H2_STLBMISS_LO  (-6)    /**< STLB miss low word */
 #define H2_STLBMISS_HI  (-7)    /**< STLB miss high word */
 
+extern unsigned int __h2_pmu_evtcfg__;
+extern unsigned int __h2_pmu_evtcfg1__;
+extern unsigned int __h2_pmu_cfg__;
+
 /**
 PMU Configuration Trap Interface.  Please do not use this directly, instead use the other h2_pmu functions.
 @param[in] configtype		Type of operation
@@ -45,7 +50,7 @@ PMU Configuration Trap Interface.  Please do not use this directly, instead use 
 @returns 0 on success, nonzero otherwise 
 */
 
-int h2_pmuctrl_trap(int configtype, int val1, int val2, int val3);
+unsigned int h2_pmuctrl_trap(int configtype, int val1, int val2, int val3);
 
 /**
 Write PMU register
@@ -56,7 +61,7 @@ Write PMU register
 
 static inline int h2_pmu_setreg(int reg, int val)
 {
-	return h2_pmuctrl_trap(PMUCTRL_SETREG, 0, reg, val);
+	return (int)h2_pmuctrl_trap(PMUCTRL_SETREG, 0, reg, val);
 }
 
 /**
@@ -65,9 +70,47 @@ Read PMU register
 @returns Value read
 */
 
-static inline int h2_pmu_getreg(int reg)
+static inline unsigned int h2_pmu_getreg(int reg)
 {
 	return h2_pmuctrl_trap(PMUCTRL_GETREG, 0, reg, 0);
+}
+
+static inline int h2_pmu_reset() {
+	int i;
+	int ret = 0;
+	
+	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG, 0))) return ret;
+	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, 0))) return ret;
+	if (0 != (ret = h2_pmu_setreg(H2_PMUCFG, 0))) return ret;
+	for (i = 0; i < 8; i++) {
+		if (0 != (ret = h2_pmu_setreg(H2_PMUCNT0 + i, 0))) return ret;
+	}
+	return ret;
+}
+
+static inline int h2_pmu_enable() {
+	int ret = 0;
+	
+	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG, __h2_pmu_evtcfg__))) return ret;
+	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, __h2_pmu_evtcfg1__))) return ret;
+	if (0 != (ret = h2_pmu_setreg(H2_PMUCFG, __h2_pmu_cfg__))) return ret;
+
+	return ret;
+}
+
+static inline int h2_pmu_disable() {
+	int ret = 0;
+
+	/* save */
+	__h2_pmu_evtcfg__ = h2_pmu_getreg(H2_PMUEVTCFG);
+	__h2_pmu_evtcfg1__ = h2_pmu_getreg(H2_PMUEVTCFG1);
+	__h2_pmu_cfg__ = h2_pmu_getreg(H2_PMUCFG);
+
+	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG, 0))) return ret;
+	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, 0))) return ret;
+	if (0 != (ret = h2_pmu_setreg(H2_PMUCFG, 0))) return ret;
+
+	return ret;
 }
 
 /* /\** */

@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <h2.h>
+#include "arch_pmu.h"
 
 h2_sem_t sema,semb;
 
@@ -21,6 +22,9 @@ void worker_thread(void *param)
 int main(int argc, char **argv)
 {
 	int i;
+
+	RESET_PMU();
+	//	printf("PMUEVTCFG %08x\n", h2_pmu_getreg(H2_PMUEVTCFG));
 	printf("Hello, World!\n");
 	for (i = 0; i < argc; i++) {
 		printf("argv[%d] = <%s>\n",i,argv[i]);
@@ -35,6 +39,7 @@ int main(int argc, char **argv)
 	h2_sem_down(&sema);
 	printf("Wahoo!\n");
 
+	DUMP_PMU();
 	h2_thread_stop(0);
 	return 0;
 }

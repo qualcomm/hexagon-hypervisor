@@ -17,7 +17,7 @@ BOOTVM_IMAGE_HEAP_SIZE := 0x1000000
 
 all: hello should_crash should_pagefault $(BOOTVM_PROG)
 
-CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-requires-header -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
+CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-requires-header -g -I. -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 include $(H2DIR)/scripts/Makefile.inc.config

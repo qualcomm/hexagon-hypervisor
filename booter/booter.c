@@ -190,6 +190,8 @@ typedef struct {
 	unsigned int boots;
 	unsigned int expect_status;
 	unsigned int reboot_reload;
+	unsigned int stash;
+	unsigned long long int stash_addr;
 
 	/* exit on error */
 	unsigned int error_exit;
@@ -289,6 +291,8 @@ void usage()
 	BOOTER_PRINTF("  --boots <int>\n\tNumber of times to boot the VM, if exiting with expected status.  Default 1.\n");
 	BOOTER_PRINTF("  --expect_status <int>\n\tReboot-request status value. The last virtual CPU is expected to vmstop with this status, in which case the VM is started again if the requested number of boots has not been reached.  Default 0.\n");
 	BOOTER_PRINTF("  --reboot_reload (0|1)\n\tReload program when rebooting VM.  Default 0.\n");
+	BOOTER_PRINTF("  --stash (0|1)\n\tStash a copy of VM load image for reboot.  Default 0.\n");
+	BOOTER_PRINTF("  --stash_addr <int>\n\tStart address for stash. Default determined by booter.\n");
 	BOOTER_PRINTF("  --error_exit (0|1)\n\tExit when a virtual CPU stops on fatal error.  Default 1.\n");
 	BOOTER_PRINTF("  --pmu_sweep (0|1)\n\tCollect PMU counters over multiple runs.  Default 0.\n");
 	BOOTER_PRINTF("  --pmu_first_event <int>\n\tFirst PMU event for sweep.  Default 0.\n");
@@ -340,6 +344,8 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].boots = 1;
 	vm_params[idx].expect_status = 0;
 	vm_params[idx].reboot_reload = 0;
+	vm_params[idx].stash = 0;
+	vm_params[idx].stash_addr = 0;
 	vm_params[idx].error_exit = 1;
 
 	vm_params[idx].pmu_sweep = 0;
@@ -403,6 +409,8 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].boots = vm_params[idx].boots;
 		vm_params[idx + num].expect_status = vm_params[idx].expect_status;
 		vm_params[idx + num].reboot_reload = vm_params[idx].reboot_reload;
+		vm_params[idx + num].stash = vm_params[idx].stash;
+		vm_params[idx + num].stash_addr = vm_params[idx].stash_addr;
 		vm_params[idx + num].error_exit = vm_params[idx].error_exit;
 
 		/* FIXME: Maybe clones shouldn't set the PMU, but they do need to run each time */
@@ -715,6 +723,13 @@ void clade_setup(unsigned int idx, long offset) {
 	BOOTER_PRINTF("\tCLADE not enabled\n");
 }
 
+void copy_vm(unsigned int idx, unsigned int offset) {
+
+BOOTER_PRINTF("\tCopying from VM index %d:\n\t0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].start_pa, vm_params[idx].start_pa + offset, vm_params[idx].end_pa - vm_params[idx].start_pa);
+	memcpy((void *)(vm_params[idx].start_pa) + offset, (void *)(vm_params[idx].start_pa), vm_params[idx].end_pa - vm_params[idx].start_pa);
+	dcclean_range((unsigned long)vm_params[idx].start_pa + offset, vm_params[idx].end_pa - vm_params[idx].start_pa);
+}
+
 void load_vm(unsigned int idx) {
 
 	int fdesc, i, ret;
@@ -772,10 +787,8 @@ void load_vm(unsigned int idx) {
 			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
-		BOOTER_PRINTF("\tCopying from VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", clone, vm_params[clone].start_pa, vm_params[clone].start_pa + prev_size, vm_params[clone].end_pa - vm_params[clone].start_pa);
-		memcpy((void *)(vm_params[clone].start_pa) + prev_size, (void *)(vm_params[clone].start_pa), vm_params[clone].end_pa - vm_params[clone].start_pa);
+		copy_vm(clone, prev_size);
 		set_net_phys_offset(idx, total_offset);
-		dcclean_range((unsigned long)vm_params[clone].start_pa, vm_params[clone].end_pa - vm_params[clone].start_pa);
 
 		vm_params[idx].start_pa = vm_params[clone].start_pa + prev_size;
 		vm_params[idx].end_pa = vm_params[clone].end_pa + prev_size;
@@ -926,6 +939,13 @@ void load_vm(unsigned int idx) {
 			} else {
 				vm_params[idx].fence_hi = FENCE_HI_MAX & HI_MASK(one_page);
 			}
+		}
+		if (vm_params[idx].stash) {
+			BOOTER_PRINTF("\tStashing:\n\t");
+			vm_params[idx].stash_addr = guest_base;
+			guest_base += vm_params[idx].end_pa - vm_params[idx].start_pa;
+			guest_base = H2_ALIGN_UP(guest_base, one_page);
+			copy_vm(idx, vm_params[idx].stash_addr - vm_params[idx].start_pa);
 		}
 	}  // else not a clone
 
@@ -1109,6 +1129,7 @@ void dump_pmu(int idx) {
 			val |= ((unsigned long long int)h2_pmu_getreg(H2_PMUCNT0 + i + 1)) << 32;
 			if (event != PMU_COUNTER_NONE) {
 				fprintf(pmu_fp, "0x%x\t: %lld\n", event, val);
+				fflush(pmu_fp);
 			}
 		}
 	} else {
@@ -1123,6 +1144,7 @@ void dump_pmu(int idx) {
 			val = h2_pmu_getreg(H2_PMUCNT0 + i);
 			if (event != PMU_COUNTER_NONE) {
 				fprintf(pmu_fp, "0x%x\t: %lld\n", event, val);
+				fflush(pmu_fp);
 			}
 		}
 	}
@@ -1214,6 +1236,11 @@ void run(unsigned int idx) {
 						dump_pmu(i);
 						if (vm_params[i].reboot_reload) {
 							load_vm(i);
+						}
+						if (vm_params[i].stash) {
+							BOOTER_PRINTF("Restoring VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].stash_addr, vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
+							memcpy((void *)(vm_params[idx].start_pa), (void *)(vm_params[idx].stash_addr), vm_params[idx].end_pa - vm_params[idx].start_pa);
+							dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
 						}
 						boot_vm(i);
 					} else {  // all done with this VM
@@ -1840,6 +1867,18 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--reboot_reload")) {
 			if (argc < 2) die_usage();
 			vm_params[idx].reboot_reload = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--stash")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].stash = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--stash_addr")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].stash_addr = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

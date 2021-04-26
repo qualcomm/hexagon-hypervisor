@@ -109,6 +109,7 @@ enum {
 #define PMU_LAST_EVENT 511
 #define PMU_LAST_EVENT_STR "511"
 #endif
+#define PMU_BUFSIZE (PMU_LAST_EVENT * 32)
 /* Globals */
 #ifdef HAVE_EXTENSIONS
 unsigned int ext_power = 1;
@@ -139,6 +140,8 @@ unsigned int pmu_cfg;
 int pmu_dump = 0;
 char *pmu_file = "pmu_stats_booter.txt";
 FILE *pmu_fp;
+char pmu_buf[PMU_BUFSIZE];
+int pmu_idx = 0;
 int set_dmactrl = 0;
 int dmactrl;
 #ifdef CLUSTER_SCHED
@@ -1128,8 +1131,7 @@ void dump_pmu(int idx) {
 			val = h2_pmu_getreg(H2_PMUCNT0 + i);
 			val |= ((unsigned long long int)h2_pmu_getreg(H2_PMUCNT0 + i + 1)) << 32;
 			if (event != PMU_COUNTER_NONE) {
-				fprintf(pmu_fp, "0x%x\t: %lld\n", event, val);
-				fflush(pmu_fp);
+				pmu_idx += snprintf(pmu_buf + pmu_idx, PMU_BUFSIZE - idx, "0x%x\t: %lld\n", event, val);
 			}
 		}
 	} else {
@@ -1143,8 +1145,7 @@ void dump_pmu(int idx) {
 
 			val = h2_pmu_getreg(H2_PMUCNT0 + i);
 			if (event != PMU_COUNTER_NONE) {
-				fprintf(pmu_fp, "0x%x\t: %lld\n", event, val);
-				fflush(pmu_fp);
+				pmu_idx += snprintf(pmu_buf + pmu_idx, PMU_BUFSIZE - idx, "0x%x\t: %lld\n", event, val);
 			}
 		}
 	}
@@ -1263,6 +1264,7 @@ void run(unsigned int idx) {
 	h2_galloc_reset(&tcm_alloc, 0);
 
 	if (pmu_dump) {
+		fprintf(pmu_fp, "%s", pmu_buf);
 		fclose(pmu_fp);
 	}
 }

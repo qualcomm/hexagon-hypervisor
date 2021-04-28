@@ -72,7 +72,36 @@ Read PMU register
 
 static inline unsigned int h2_pmu_getreg(int reg)
 {
-	return h2_pmuctrl_trap(PMUCTRL_GETREG, 0, reg, 0);
+	unsigned int ret;
+
+	switch (reg) {
+	case H2_PMUCNT0:
+		asm volatile (" %0 = g26 " : "=r"(ret));
+		return ret;
+	case H2_PMUCNT1:
+		asm volatile (" %0 = g27 " : "=r"(ret));
+		return ret;
+	case H2_PMUCNT2:
+		asm volatile (" %0 = g28 " : "=r"(ret));
+		return ret;
+	case H2_PMUCNT3:
+		asm volatile (" %0 = g29 " : "=r"(ret));
+		return ret;
+	case H2_PMUCNT4:
+		asm volatile (" %0 = g16 " : "=r"(ret));
+		return ret;
+	case H2_PMUCNT5:
+		asm volatile (" %0 = g17 " : "=r"(ret));
+		return ret;
+	case H2_PMUCNT6:
+		asm volatile (" %0 = g18 " : "=r"(ret));
+		return ret;
+	case H2_PMUCNT7:
+		asm volatile (" %0 = g19 " : "=r"(ret));
+		return ret;
+	default:
+		return h2_pmuctrl_trap(PMUCTRL_GETREG, 0, reg, 0);
+	}
 }
 
 static inline int h2_pmu_reset() {

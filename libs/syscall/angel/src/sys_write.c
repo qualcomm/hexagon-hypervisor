@@ -16,6 +16,12 @@ static inline void dccleana(const char *addr)
 
 count_t sys_write(fd_t fd, const char *buffer, count_t count)
 {
+#ifdef NULL_SYS_WRITE_FD1
+	if (1 == fd) {  // stdout
+		return 0;
+	}
+#endif
+	
 	struct { fd_t fd; const char *buf; count_t c; } x;
 	count_t angel_ret;
 	x.fd = fd;

@@ -99,7 +99,7 @@ enum {
 #define PMU_COUNTER2_OVERFLOW 2
 #define PMU_COUNTER4_OVERFLOW 5
 #define PMU_COUNTER6_OVERFLOW 6
-#define PMU_FILE "pmu_stats.txt"
+#define PMU_FILE "pmu_stats_booter.txt"
 
 #define PMU_FIRST_EVENT 0
 #if ARCHV >= 68
@@ -138,7 +138,7 @@ unsigned int pmu_evtcfg;
 unsigned int pmu_evtcfg1;
 unsigned int pmu_cfg;
 int pmu_dump = 0;
-char *pmu_file = "pmu_stats_booter.txt";
+char *pmu_file = PMU_FILE;
 FILE *pmu_fp;
 char pmu_buf[PMU_BUFSIZE];
 int pmu_idx = 0;
@@ -305,7 +305,7 @@ void usage()
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
 #ifdef CLUSTER_SCHED
-	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 0.\n");
+	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 1.\n");
 #endif
 }		
 

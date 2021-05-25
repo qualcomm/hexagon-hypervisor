@@ -11,6 +11,7 @@
 #include <hw.h>
 
 #if ARCHV >= 68
+#ifndef NO_DEVICES
 static inline void H2K_hmx_rsc_seq_power_change(u32_t hmx_rsc_seq_power_change_start_addr) {
 	/* From HPG 4.8.X */
 	volatile u32_t delay;
@@ -38,6 +39,7 @@ static inline void H2K_hmx_rsc_seq_power_change(u32_t hmx_rsc_seq_power_change_s
 	*((u32_t volatile *)(H2K_gp->hmx_rsc_seq_override_trigger_drv0)) &= ~(((u32_t)(0x1)) << QDSP6SS_RSCC_RSC_SEQ_OVERRIDE_TRIGGER_DRV0_TRIGGER_BIT);
 	H2K_syncht();
 }
+#endif
 #endif
 
 void H2K_hmx_poweron(void) {

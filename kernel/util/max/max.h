@@ -334,6 +334,7 @@
 
 #define CFG_TABLE_COPROC_TYPE_HVX 1
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
+#define EXT_HVX_VTCM_BANK_WIDTH 16  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_OFFSET 0x200000
 #define EXT_HVX_VTCM_SIZE 256
 #define EXT_HVX_MAX_VLENGTH 128  // bytes

@@ -146,7 +146,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_VTCM_BANK_WIDTH:
 		if (CORE_V68 <= H2K_gp->arch) {
 			return H2K_cfg_table(CFG_TABLE_VTCM_BANK_WIDTH);
-		} else if ((0 < H2K_gp->hvx_contexts) && (CORE_V65 <= H2K_gp->arch) && (CORE_V68 > H2K_gp->arch)) {
+		} else if ((0 < H2K_gp->hvx_contexts) && (CORE_V65 <= H2K_gp->arch)) {
 			return EXT_HVX_VTCM_BANK_WIDTH;
 		} else {
 			return 0;

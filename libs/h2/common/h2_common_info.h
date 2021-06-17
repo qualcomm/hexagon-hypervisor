@@ -39,6 +39,7 @@ typedef enum {
 	INFO_ECC_BASE,    /**< ECC base */
 	INFO_L2_LINE_SZ,  /**< L2 cache line size */
 	INFO_AUDIO_EXT,   /**< Audio extension type */
+	INFO_VTCM_BANK_WIDTH, /**< VTCM bank width */
 	INFO_MAX
 } info_type;
 

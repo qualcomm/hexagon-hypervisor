@@ -85,6 +85,8 @@ endif
 ifeq ($(TARGET), opt_si)
 T := opt
 OPT_JFLAG :=
+# FIXME: temp hack
+NO_TEST := 1
 export H2K_LOAD_ADDR=0x84c00000
 export H2K_GUEST_START=0x87000000
 export NULL_ANGEL_TRAP=1
@@ -152,6 +154,9 @@ opt:
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
+ifeq ($(NO_TEST), 1)
+	touch $(INSTALLPATH)/no_test
+endif
 
 ref:
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
@@ -179,15 +184,15 @@ t:
 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
 test:	h2_test
-	head -n -1 h2_report.html > report.html
+	if [ ! -f $(INSTALLPATH)/no_test ]; then head -n -1 h2_report.html > report.html; fi
 #	tail -n +2 qurt_report.html >> report.html
 
 h2_test: ucosclean
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
+	if [ ! -f $(INSTALLPATH)/no_test ]; then $(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; fi
+	if [ ! -f $(INSTALLPATH)/no_test ]; then $(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out; fi
 #$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
-	[ `fgrep -c -i warning: test.out` -eq 0 ]
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
+	if [ ! -f $(INSTALLPATH)/no_test ]; then [ `fgrep -c -i warning: test.out` -eq 0 ]; fi
+	if [ ! -f $(INSTALLPATH)/no_test ]; then $(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html; fi
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
@@ -205,15 +210,15 @@ qurt_test_libs:
 
 #cov: h2_test
 cov: h2_cov
-	head -n -1 h2_report.html > report.html
+	if [ ! -f $(INSTALLPATH)/no_test ]; then head -n -1 h2_report.html > report.html; fi
 #	tail -n +2 qurt_report.html >> report.html
 
 h2_cov:
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
+	if [ ! -f $(INSTALLPATH)/no_test ]; then $(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare; fi
+	if [ ! -f $(INSTALLPATH)/no_test ]; then $(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all; fi
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
+	if [ ! -f $(INSTALLPATH)/no_test ]; then $(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt; fi
+	if [ ! -f $(INSTALLPATH)/no_test ]; then $(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html; fi
 
 .PHONY: check-fail test-check cov-check cov_fns
 

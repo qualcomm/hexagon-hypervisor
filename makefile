@@ -223,7 +223,7 @@ h2_cov:
 .PHONY: check-fail test-check cov-check cov_fns
 
 check-fail test-check cov-check:
-	$(MAKE) -f scripts/Makefile.coverage check-fail
+	if [ ! -f $(INSTALLPATH)/no_test ]; then $(MAKE) -f scripts/Makefile.coverage check-fail; fi
 #	$(MAKE) -C ucos check
 
 check:

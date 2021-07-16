@@ -38,7 +38,7 @@
 #define SLEEP (1000*1000*5)
 #endif
 
-#define PASSFAIL_VA 0x01000000
+#define PASSFAIL_VA (H2K_GUEST_START + 0x01000000)
 
 #define STACK_SIZE 256
 #define TASKS 4

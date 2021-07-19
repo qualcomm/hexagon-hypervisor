@@ -62,6 +62,7 @@ char *pagesize_name[] = {
 	GEN(__h2_pmu_evtcfg__)												\
 	GEN(__h2_pmu_evtcfg1__)												\
 	GEN(__h2_pmu_cfg__)   												\
+	GEN(__sys_write_mode__)												\
 	GEN(end)																			\
 	GEN(DEFAULT_HEAP_SIZE)												\
 	GEN(DEFAULT_STACK_SIZE)												\
@@ -204,6 +205,7 @@ typedef struct {
 	int pmu_first_event;
 	int pmu_last_event;
 	int pmu_overflow;
+	sys_write_mode sys_write_mode;
 
 	/* clade */
 	int clade_pd;
@@ -301,6 +303,7 @@ void usage()
 	BOOTER_PRINTF("  --pmu_first_event <int>\n\tFirst PMU event for sweep.  Default 0.\n");
 	BOOTER_PRINTF("  --pmu_last_event <int>\n\tLast PMU event for sweep.  Default " PMU_LAST_EVENT_STR ".\n");
 	BOOTER_PRINTF("  --pmu_overflow (0|1)\n\tUse 64-bit PMU counters in sweep.  Default 0.\n");
+	BOOTER_PRINTF("  --sys_write_mode [ 0 == normal, 1 == suppress stdout, 2 == allow only stdout, 3 == suppress all ]\n\tMode for sys_write().  Default 0.\n");
 	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
@@ -355,6 +358,7 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].pmu_first_event = PMU_FIRST_EVENT;
 	vm_params[idx].pmu_last_event = PMU_LAST_EVENT;
 	vm_params[idx].pmu_overflow = 0;
+	vm_params[idx].sys_write_mode = H2_SYS_WRITE_MODE_NORMAL;
 
 	vm_params[idx].clade_pd = -1;
 	vm_params[idx].clade_ex_hi = CLADE_INVALID_ADDRESS;
@@ -421,6 +425,7 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].pmu_first_event = vm_params[idx].pmu_first_event;
 		vm_params[idx + num].pmu_last_event = vm_params[idx].pmu_last_event;
 		vm_params[idx + num].pmu_overflow = vm_params[idx].pmu_overflow;
+		vm_params[idx + num].sys_write_mode = vm_params[idx].sys_write_mode;
 
 		vm_params[idx + num].clade_pd = -1;
 		vm_params[idx + num].clade_ex_hi = CLADE_INVALID_ADDRESS;
@@ -1048,6 +1053,7 @@ void boot_vm(unsigned int idx) {
 	unsigned int regval;
 	int bit = 0;
 	int shift;
+	long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
@@ -1090,16 +1096,17 @@ void boot_vm(unsigned int idx) {
 			}
 		}
 	}
-
+	set_var(idx, SPECIAL___sys_write_mode__, vm_params[idx].sys_write_mode, total_offset);
+	
 	/* Global options, but we set these in every vm */
 	if (set_pmu_evtcfg) {
-		set_var(idx, SPECIAL___h2_pmu_evtcfg__, pmu_evtcfg, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		set_var(idx, SPECIAL___h2_pmu_evtcfg__, pmu_evtcfg, total_offset);
 	}
 	if (set_pmu_evtcfg1) {
-		set_var(idx, SPECIAL___h2_pmu_evtcfg1__, pmu_evtcfg1, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		set_var(idx, SPECIAL___h2_pmu_evtcfg1__, pmu_evtcfg1, total_offset);
 	}
 	if (set_pmu_cfg) {
-		set_var(idx, SPECIAL___h2_pmu_cfg__, pmu_cfg, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+		set_var(idx, SPECIAL___h2_pmu_cfg__, pmu_cfg, total_offset);
 	}
 
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
@@ -1111,13 +1118,14 @@ void dump_pmu(int idx) {
 	int i;
 	unsigned long long int val;
 	int event;
+	long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	if (!pmu_dump) return;
 
 	/* In case someone has messed with __h2_pmu_* while we were napping */
-	pmu_evtcfg = get_var(idx, SPECIAL___h2_pmu_evtcfg__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
-	pmu_evtcfg1 = get_var(idx, SPECIAL___h2_pmu_evtcfg1__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
-	pmu_cfg = get_var(idx, SPECIAL___h2_pmu_cfg__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+	pmu_evtcfg = get_var(idx, SPECIAL___h2_pmu_evtcfg__, total_offset);
+	pmu_evtcfg1 = get_var(idx, SPECIAL___h2_pmu_evtcfg1__, total_offset);
+	pmu_cfg = get_var(idx, SPECIAL___h2_pmu_cfg__, total_offset);
 
 	if (vm_params[idx].pmu_overflow) {
 		for (i = 0; i < 8; i += 2) {
@@ -1918,6 +1926,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--pmu_overflow")) {
 			if (argc < 2) die_usage();
 			vm_params[idx].pmu_overflow = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--sys_write_mode")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].sys_write_mode = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

@@ -10,7 +10,7 @@ extern char H2_ANGEL_write_buf[];
 extern unsigned int H2_ANGEL_write_buf_idx;
 extern const unsigned int H2_ANGEL_write_buf_size;
 
-sys_write_mode __sys_write_mode__;
+int __sys_write_mode__;
 
 static inline void dccleana(const char *addr)
 {

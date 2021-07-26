@@ -557,6 +557,7 @@ u32_t H2K_trap_hwconfig_setdmacfg(u32_t unused, void *unusedp, u32_t index, u32_
 u32_t H2K_trap_hwconfig_l2gclean(u32_t unused, void *unusedp, u32_t inv, u32_t unused3, H2K_thread_context *me) {
 
 #if ARCHV >= 60
+	H2K_syncht();
 	if (inv) {
 		H2K_l2gcleaninv();
 	} else {

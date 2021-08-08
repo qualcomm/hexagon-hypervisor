@@ -297,6 +297,28 @@ static inline int h2_hwconfig_strideprefetcher_set_reg(unsigned int offset, unsi
 	return h2_hwconfig_trap(HWCONFIG_SETSTRIDEPREFETCHERREG, NULL, offset, val);
 }
 
+/**
+Set HMX RSC sequence power-on start address
+@param[in] addr  Address
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+
+static inline int h2_hwconfig_hmxpower_on_set_addr(unsigned int addr) {
+	return h2_hwconfig_trap(HWCONFIG_SETHMXPOWERONSTARTADDR, NULL, addr, 0);
+}
+
+/**
+Set HMX RSC sequence power-off start address
+@param[in] addr  Address
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+
+static inline int h2_hwconfig_hmxpower_off_set_addr(unsigned int addr) {
+	return h2_hwconfig_trap(HWCONFIG_SETHMXPOWEROFFSTARTADDR, NULL, addr, 0);
+}
+
 #endif
 
 /** @} */

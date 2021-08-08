@@ -259,6 +259,8 @@ void usage()
 	BOOTER_PRINTF("  --stride_prefetch_reg <offset int> <int>\n\tSet stride prefetcher register.\n");
 #ifdef HAVE_EXTENSIONS
 	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
+	BOOTER_PRINTF("  --hmx_poweron_addr <addr>\n\tSet Set HMX RSC sequence power-on start address.\n");
+	BOOTER_PRINTF("  --hmx_poweroff_addr <addr>\n\tSet Set HMX RSC sequence power-off start address.\n");
 #endif
 	BOOTER_PRINTF("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	BOOTER_PRINTF("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
@@ -1680,6 +1682,23 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			ext_power = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
+
+		} else if (0 == strcmp(argv[0], "--hmx_poweron_addr")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_hmxpower_on_set_addr(strtoul(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_HMX_POWERON_ADDR", "");
+			}
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--hmx_poweroff_addr")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_hmxpower_off_set_addr(strtoul(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_HMX_POWEROFF_ADDR", "");
+			}
+			argc -= 2; argv += 2;
+			continue;
+
 #endif
 
 		} else if (0 == strcmp(argv[0], "--use_stlb")) {

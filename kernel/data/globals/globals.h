@@ -91,6 +91,8 @@ typedef struct {
 	u32_t *hmx_rsc_seq_busy_drv0;
 	u32_t *hmx_rsc_seq_override_trigger_drv0;
 	u32_t *hmx_rsc_seq_override_trigger_start_addr_drv0;
+	u32_t hmx_rsc_seq_power_on_start_addr;
+	u32_t hmx_rsc_seq_power_off_start_addr;
 #endif
 
 #ifdef CLUSTER_SCHED

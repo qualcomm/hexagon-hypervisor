@@ -51,7 +51,9 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_setdmacfg,
 	H2K_trap_hwconfig_l2gclean,
 	H2K_trap_hwconfig_getstrideprefetcherreg,
-	H2K_trap_hwconfig_setstrideprefetcherreg
+	H2K_trap_hwconfig_setstrideprefetcherreg,
+	H2K_trap_hwconfig_set_hmx_power_on_start_addr,
+	H2K_trap_hwconfig_set_hmx_power_off_start_addr
 };
 
 typedef struct {
@@ -586,4 +588,14 @@ u32_t H2K_trap_hwconfig_setstrideprefetcherreg(u32_t unused, void *unusedp, u32_
 	}
 
 	return setxreg(CFG_TABLE_CORECFG_BASE, CORECFG_STRIDE_PREFETCHER_BASE + offset, val);
+}
+
+u32_t H2K_trap_hwconfig_set_hmx_power_on_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
+	H2K_gp->hmx_rsc_seq_power_on_start_addr = addr;
+	return 0;
+}
+
+u32_t H2K_trap_hwconfig_set_hmx_power_off_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
+	H2K_gp->hmx_rsc_seq_power_off_start_addr = addr;
+	return 0;
 }

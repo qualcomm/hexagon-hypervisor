@@ -18,9 +18,6 @@
 // Kailua Cores RSC Config @ SiVal Project Generation Folders
 #define Q6SS_RSCC_CDSP_HMX_RSC_SEQ_POWER_OFF_START_ADDR_COREV73  0x59
 #define Q6SS_RSCC_CDSP_HMX_RSC_SEQ_POWER_ON_START_ADDR_COREV73   0x63
-// Other TBD Cores RSC Config @ SiVal Project Generation Folders
-#define Q6SS_RSCC_CDSP_HMX_RSC_SEQ_POWER_OFF_START_ADDR_DEFAULT  0x59
-#define Q6SS_RSCC_CDSP_HMX_RSC_SEQ_POWER_ON_START_ADDR_DEFAULT   0x63
 
 #ifndef ASM
 #include <c_std.h>

@@ -591,11 +591,19 @@ u32_t H2K_trap_hwconfig_setstrideprefetcherreg(u32_t unused, void *unusedp, u32_
 }
 
 u32_t H2K_trap_hwconfig_set_hmx_power_on_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
+#if ARCHV >= 68
 	H2K_gp->hmx_rsc_seq_power_on_start_addr = addr;
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 u32_t H2K_trap_hwconfig_set_hmx_power_off_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
+#if ARCHV >= 68
 	H2K_gp->hmx_rsc_seq_power_off_start_addr = addr;
 	return 0;
+#else
+	return -1;
+#endif
 }

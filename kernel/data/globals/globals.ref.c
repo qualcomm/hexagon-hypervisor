@@ -112,6 +112,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.info_boot_flags.boot_have_dma = (H2K_kg.dma_version > 0);
 
 		/* From HPG 4.8.X */
+#if ARCHV >= 68
 		switch (H2K_kg.arch) {
 		case CORE_V68:
 			H2K_kg.hmx_rsc_seq_power_on_start_addr = Q6SS_RSCC_CDSP_HMX_RSC_SEQ_POWER_ON_START_ADDR_COREV68;
@@ -127,6 +128,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 			H2K_kg.hmx_rsc_seq_power_off_start_addr = Q6SS_RSCC_CDSP_HMX_RSC_SEQ_POWER_OFF_START_ADDR_COREV73;
 			break;
 		}
+#endif
 
 	} else {
 		H2K_kg.hmx_units = 0;

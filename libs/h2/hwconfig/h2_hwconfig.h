@@ -319,6 +319,28 @@ static inline int h2_hwconfig_hmxpower_off_set_addr(unsigned int addr) {
 	return h2_hwconfig_trap(HWCONFIG_SETHMXPOWEROFFSTARTADDR, NULL, addr, 0);
 }
 
+/**
+Toggle power-measurement GPIO
+@param[in] val  Value (1 == on, 0 == off)
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+
+static inline int h2_hwconfig_gpio_toggle(unsigned int val) {
+	return h2_hwconfig_trap(HWCONFIG_GPIOTOGGLE, NULL, val, 0);
+}
+
+/**
+Set power-measurement GPIO physical address
+@param[in] addr  Address
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+
+static inline int h2_hwconfig_set_gpio_addr(unsigned int addr) {
+	return h2_hwconfig_trap(HWCONFIG_SETGPIOADDR, NULL, addr, 0);
+}
+
 #endif
 
 /** @} */

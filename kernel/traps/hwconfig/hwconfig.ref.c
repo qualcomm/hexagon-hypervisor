@@ -53,7 +53,9 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_getstrideprefetcherreg,
 	H2K_trap_hwconfig_setstrideprefetcherreg,
 	H2K_trap_hwconfig_set_hmx_power_on_start_addr,
-	H2K_trap_hwconfig_set_hmx_power_off_start_addr
+	H2K_trap_hwconfig_set_hmx_power_off_start_addr,
+	H2K_trap_hwconfig_gpio_toggle,
+	H2K_trap_hwconfig_set_gpio_addr
 };
 
 typedef struct {
@@ -602,6 +604,37 @@ u32_t H2K_trap_hwconfig_set_hmx_power_on_start_addr(u32_t unused, void *unusedp,
 u32_t H2K_trap_hwconfig_set_hmx_power_off_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
 #if ARCHV >= 68
 	H2K_gp->hmx_rsc_seq_power_off_start_addr = addr;
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_gpio_toggle(u32_t unused, void *unusedp, u32_t on, u32_t unused3, H2K_thread_context *me) {
+#if ARCHV >= 68
+	if (0 == H2K_gp->gpio_reg) return 0;  // not set
+	
+	u32_t va = H2K_tmpmap_add_and_lock((pa_t)(H2K_gp->gpio_reg), UNCACHED);
+	u32_t volatile *reg = (u32_t *)va;
+	u32_t val = ((*reg) & ~(0x3c)) | 0x200;
+
+	*reg = val;
+	if (on) {
+		*(reg + 0x4) = 0x2;
+	} else {
+		*(reg + 0x4) = 0x0;
+	}
+	H2K_dccleana((void *)reg);
+	H2K_tmpmap_remove_and_unlock();
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_set_gpio_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
+#if ARCHV >= 68
+	H2K_gp->gpio_reg = (u32_t *)addr;
 	return 0;
 #else
 	return -1;

@@ -40,6 +40,7 @@
 extern unsigned int __h2_pmu_evtcfg__;
 extern unsigned int __h2_pmu_evtcfg1__;
 extern unsigned int __h2_pmu_cfg__;
+extern unsigned int __h2_gpio_toggle__;
 
 /**
 PMU Configuration Trap Interface.  Please do not use this directly, instead use the other h2_pmu functions.
@@ -124,6 +125,10 @@ static inline int h2_pmu_enable() {
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, __h2_pmu_evtcfg1__))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUCFG, __h2_pmu_cfg__))) return ret;
 
+	if (__h2_gpio_toggle__) {
+		if (0 != (ret = h2_hwconfig_gpio_toggle(1))) return ret;
+	}
+
 	return ret;
 }
 
@@ -138,6 +143,10 @@ static inline int h2_pmu_disable() {
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG, 0))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, 0))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUCFG, 0))) return ret;
+
+	if (__h2_gpio_toggle__) {
+		if (0 != (ret = h2_hwconfig_gpio_toggle(0))) return ret;
+	}
 
 	return ret;
 }

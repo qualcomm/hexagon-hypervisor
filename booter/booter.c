@@ -62,6 +62,7 @@ char *pagesize_name[] = {
 	GEN(__h2_pmu_evtcfg__)												\
 	GEN(__h2_pmu_evtcfg1__)												\
 	GEN(__h2_pmu_cfg__)   												\
+	GEN(__h2_gpio_toggle__)												\
 	GEN(__sys_write_mode__)												\
 	GEN(end)																			\
 	GEN(DEFAULT_HEAP_SIZE)												\
@@ -143,6 +144,7 @@ char *pmu_file = PMU_FILE;
 FILE *pmu_fp;
 char pmu_buf[PMU_BUFSIZE];
 int pmu_idx = 0;
+int gpio_toggle = 0;
 int set_dmactrl = 0;
 int dmactrl;
 #ifdef CLUSTER_SCHED
@@ -259,8 +261,8 @@ void usage()
 	BOOTER_PRINTF("  --stride_prefetch_reg <offset int> <int>\n\tSet stride prefetcher register.\n");
 #ifdef HAVE_EXTENSIONS
 	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
-	BOOTER_PRINTF("  --hmx_poweron_addr <addr>\n\tSet Set HMX RSC sequence power-on start address.\n");
-	BOOTER_PRINTF("  --hmx_poweroff_addr <addr>\n\tSet Set HMX RSC sequence power-off start address.\n");
+	BOOTER_PRINTF("  --hmx_poweron_addr <addr>\n\tSet HMX RSC sequence power-on start address.\n");
+	BOOTER_PRINTF("  --hmx_poweroff_addr <addr>\n\tSet HMX RSC sequence power-off start address.\n");
 #endif
 	BOOTER_PRINTF("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	BOOTER_PRINTF("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
@@ -273,6 +275,8 @@ void usage()
 	BOOTER_PRINTF("  --pmu_cfg <int>\n\tSet PMU config register.\n");
 	BOOTER_PRINTF("  --pmu_dump (0|1)\n\tDump PMU counters.  Default 0.\n");
 	BOOTER_PRINTF("  --pmu_file <string>\n\tPMU output file name. Default " PMU_FILE ".\n");
+	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
+	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
 	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
 
 	BOOTER_PRINTF("\n");
@@ -1110,6 +1114,9 @@ void boot_vm(unsigned int idx) {
 	if (set_pmu_cfg) {
 		set_var(idx, SPECIAL___h2_pmu_cfg__, pmu_cfg, total_offset);
 	}
+	if (gpio_toggle) {
+		set_var(idx, SPECIAL___h2_gpio_toggle__, gpio_toggle, total_offset);
+	}
 
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
 		FAIL("\tfailed to boot vm\n", "");
@@ -1770,6 +1777,20 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--pmu_file")) {
 			if (argc < 2) die_usage();
 			pmu_file = argv[1];
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--gpio_toggle")) {
+			if (argc < 2) die_usage();
+			gpio_toggle = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--gpio_addr")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_set_gpio_addr(strtoul(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_SETGPIOADDR", "");
+			}
 			argc -= 2; argv += 2;
 			continue;
 

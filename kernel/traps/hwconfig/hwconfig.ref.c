@@ -620,9 +620,9 @@ u32_t H2K_trap_hwconfig_gpio_toggle(u32_t unused, void *unusedp, u32_t on, u32_t
 
 	*reg = val;
 	if (on) {
-		*(reg + 0x4) = 0x2;
+		*(reg + 0x1) = 0x2;
 	} else {
-		*(reg + 0x4) = 0x0;
+		*(reg + 0x1) = 0x0;
 	}
 	H2K_dccleana((void *)reg);
 	H2K_tmpmap_remove_and_unlock();

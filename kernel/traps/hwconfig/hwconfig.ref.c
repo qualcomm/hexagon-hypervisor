@@ -614,7 +614,7 @@ u32_t H2K_trap_hwconfig_gpio_toggle(u32_t unused, void *unusedp, u32_t on, u32_t
 #if ARCHV >= 68
 	if (0 == H2K_gp->gpio_reg) return 0;  // not set
 	
-	u32_t va = H2K_tmpmap_add_and_lock((pa_t)(H2K_gp->gpio_reg), UNCACHED);
+	u32_t va = H2K_tmpmap_add_and_lock((pa_t)(H2K_gp->gpio_reg), DEVICE_TYPE);
 	u32_t volatile *reg = (u32_t *)va;
 	u32_t val = ((*reg) & ~(0x3c)) | 0x200;
 
@@ -624,7 +624,6 @@ u32_t H2K_trap_hwconfig_gpio_toggle(u32_t unused, void *unusedp, u32_t on, u32_t
 	} else {
 		*(reg + 0x1) = 0x0;
 	}
-	H2K_dccleana((void *)reg);
 	H2K_tmpmap_remove_and_unlock();
 	return 0;
 #else

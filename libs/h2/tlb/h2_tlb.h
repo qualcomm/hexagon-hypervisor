@@ -92,11 +92,7 @@ Set DMA TLB entry
 
 static inline int h2_tlb_dma_set(unsigned int index, unsigned long long int entry)
 {
-#if ARCHV >= 73
 	return (int)h2_tlb_trap(TLBOP_DMASET, index, entry);
-#else
-	return -1;
-#endif
 }
 
 #endif

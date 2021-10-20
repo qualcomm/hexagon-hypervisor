@@ -889,6 +889,7 @@ void load_vm(unsigned int idx) {
 			set_var(idx, SPECIAL___use_file_suffix__, 1, total_offset);
 			set_string(idx, SPECIAL___file_suffix__, vm_params[idx].file_suffix, SIZE__file_suffix__, total_offset);
 		}
+		set_var(idx, SPECIAL___sys_write_mode__, vm_params[idx].sys_write_mode, total_offset);
 
 		get_pmap(idx, total_offset);
 		// if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
@@ -1102,7 +1103,6 @@ void boot_vm(unsigned int idx) {
 			}
 		}
 	}
-	set_var(idx, SPECIAL___sys_write_mode__, vm_params[idx].sys_write_mode, total_offset);
 	
 	/* Global options, but we set these in every vm */
 	if (set_pmu_evtcfg) {

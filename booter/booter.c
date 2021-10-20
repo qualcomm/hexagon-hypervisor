@@ -1259,6 +1259,8 @@ void run(unsigned int idx) {
 							BOOTER_PRINTF("Restoring VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].stash_addr, vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
 							memcpy((void *)(vm_params[idx].start_pa), (void *)(vm_params[idx].stash_addr), vm_params[idx].end_pa - vm_params[idx].start_pa);
 							dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
+							/* if this vm was cloned from another, need to set its net phys offset again (overwritten by restore from stash) */
+							set_net_phys_offset(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);  // i.e. set_net_phys_offset(idx, total_offset)
 						}
 						boot_vm(i);
 					} else {  // all done with this VM

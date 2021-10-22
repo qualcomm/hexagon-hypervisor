@@ -1104,18 +1104,20 @@ void boot_vm(unsigned int idx) {
 		}
 	}
 	
-	/* Global options, but we set these in every vm */
-	if (set_pmu_evtcfg) {
-		set_var(idx, SPECIAL___h2_pmu_evtcfg__, pmu_evtcfg, total_offset);
-	}
-	if (set_pmu_evtcfg1) {
-		set_var(idx, SPECIAL___h2_pmu_evtcfg1__, pmu_evtcfg1, total_offset);
-	}
-	if (set_pmu_cfg) {
-		set_var(idx, SPECIAL___h2_pmu_cfg__, pmu_cfg, total_offset);
-	}
-	if (gpio_toggle) {
-		set_var(idx, SPECIAL___h2_gpio_toggle__, gpio_toggle, total_offset);
+	/* FIXME: For now set only in first vm */
+	if (0 == idx) {
+		if (set_pmu_evtcfg) {
+			set_var(idx, SPECIAL___h2_pmu_evtcfg__, pmu_evtcfg, total_offset);
+		}
+		if (set_pmu_evtcfg1) {
+			set_var(idx, SPECIAL___h2_pmu_evtcfg1__, pmu_evtcfg1, total_offset);
+		}
+		if (set_pmu_cfg) {
+			set_var(idx, SPECIAL___h2_pmu_cfg__, pmu_cfg, total_offset);
+		}
+		if (gpio_toggle) {
+			set_var(idx, SPECIAL___h2_gpio_toggle__, gpio_toggle, total_offset);
+		}
 	}
 
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
@@ -1130,6 +1132,9 @@ void dump_pmu(int idx) {
 	long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	if (!pmu_dump) return;
+
+	/* FIXME: For now, dump only first vm */
+	if (0 != idx) return;
 
 	/* In case someone has messed with __h2_pmu_* while we were napping */
 	pmu_evtcfg = get_var(idx, SPECIAL___h2_pmu_evtcfg__, total_offset);

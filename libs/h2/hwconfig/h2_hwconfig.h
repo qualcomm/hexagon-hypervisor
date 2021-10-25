@@ -107,7 +107,7 @@ static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int pa
 
 /**
 Configure prefetch.
-@param[in] whichcache	Select the cache to change partitioning on
+@param[in] whichcache	Select the cache to change prefetch on
 @param[in] prefetch_cfg Prefetch type
 @returns 0 on success, negative value on error
 @dependencies None
@@ -339,6 +339,18 @@ Set power-measurement GPIO physical address
 
 static inline int h2_hwconfig_set_gpio_addr(unsigned int addr) {
 	return h2_hwconfig_trap(HWCONFIG_SETGPIOADDR, NULL, addr, 0);
+}
+
+/**
+Configure per-thread cache partition use
+@param[in] l2cp_cfg Partition selection
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_l2cp(unsigned int l2cp_cfg)
+{
+	return h2_hwconfig_trap(HWCONFIG_L2CP, NULL, l2cp_cfg, 0);
 }
 
 #endif

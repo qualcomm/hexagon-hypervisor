@@ -35,6 +35,7 @@ typedef enum {
 	HWCONFIG_SETHMXPOWEROFFSTARTADDR,
 	HWCONFIG_GPIOTOGGLE,
 	HWCONFIG_SETGPIOADDR,
+	HWCONFIG_L2CP,
 	HWCONFIG_MAX
 } hwconfig_type_t;
 
@@ -63,6 +64,16 @@ enum {
 	HWCONFIG_PARTITION_AUX_HALF,	/**< Select Half and Half partition */
 	HWCONFIG_PARTITION_AUX_QUARTER,	/**< Select 1/4 and 3/4 partition */
 	HWCONFIG_PARTITION_AUX_EIGHTH	/**< Select 1/8 and 7/8 partition */
+};
+
+/**
+Constants for partition by thread
+*/
+enum {
+	HWCONFIG_L2CP_CCCC, /**< Use CCCC page-attribute bits */
+	HWCONFIG_L2CP_MAIN, /**< Use main partition */
+	HWCONFIG_L2CP_AUX,  /**< Use aux partition */
+	HWCONFIG_L2CP_MIN /**< Use minimum cache space */
 };
 
 /** 

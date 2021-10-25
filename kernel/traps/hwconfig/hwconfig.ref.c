@@ -55,7 +55,8 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_set_hmx_power_on_start_addr,
 	H2K_trap_hwconfig_set_hmx_power_off_start_addr,
 	H2K_trap_hwconfig_gpio_toggle,
-	H2K_trap_hwconfig_set_gpio_addr
+	H2K_trap_hwconfig_set_gpio_addr,
+	H2K_trap_hwconfig_l2cp
 };
 
 typedef struct {
@@ -638,4 +639,11 @@ u32_t H2K_trap_hwconfig_set_gpio_addr(u32_t unused, void *unusedp, u32_t addr, u
 #else
 	return -1;
 #endif
+}
+
+u32_t H2K_trap_hwconfig_l2cp(u32_t unused, void *unusedp, u32_t configval, u32_t unused3, H2K_thread_context *me) {
+	/* SSR/CCR gets saved/restored at trap time.  If that changes to switch
+	 * time, modify SSR/CCR directly. */
+	me->ccr = Q6_R_insert_RII(me->ccr, configval, CCR_L2CP_NBITS, CCR_L2CP_BITS);
+	return 0;
 }

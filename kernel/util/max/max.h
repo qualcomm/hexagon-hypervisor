@@ -244,6 +244,9 @@
 
 #define SSR_XE2_BIT 26
 
+#define CCR_L2CP_BITS 6
+#define CCR_L2CP_NBITS 2
+
 #if ARCHV <= 4
 #define BOOT_THREAD_USR 0x00000000
 #elif ARCHV == 5

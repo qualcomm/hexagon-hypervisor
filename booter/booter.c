@@ -208,6 +208,7 @@ typedef struct {
 	int pmu_last_event;
 	int pmu_overflow;
 	sys_write_mode sys_write_mode;
+	int va_angel;
 
 	/* clade */
 	int clade_pd;
@@ -310,6 +311,7 @@ void usage()
 	BOOTER_PRINTF("  --pmu_last_event <int>\n\tLast PMU event for sweep.  Default " PMU_LAST_EVENT_STR ".\n");
 	BOOTER_PRINTF("  --pmu_overflow (0|1)\n\tUse 64-bit PMU counters in sweep.  Default 0.\n");
 	BOOTER_PRINTF("  --sys_write_mode [ 0 == normal, 1 == suppress stdout, 2 == allow only stdout, 3 == suppress all ]\n\tMode for sys_write().  Default 0.\n");
+	BOOTER_PRINTF("  --va_angel (0|1)\n\tUse virtual addresses in angel calls.  Default 0.\n");
 	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
@@ -365,6 +367,7 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].pmu_last_event = PMU_LAST_EVENT;
 	vm_params[idx].pmu_overflow = 0;
 	vm_params[idx].sys_write_mode = H2_SYS_WRITE_MODE_NORMAL;
+	vm_params[idx].va_angel = 0;
 
 	vm_params[idx].clade_pd = -1;
 	vm_params[idx].clade_ex_hi = CLADE_INVALID_ADDRESS;
@@ -432,6 +435,7 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].pmu_last_event = vm_params[idx].pmu_last_event;
 		vm_params[idx + num].pmu_overflow = vm_params[idx].pmu_overflow;
 		vm_params[idx + num].sys_write_mode = vm_params[idx].sys_write_mode;
+		vm_params[idx + num].va_angel = vm_params[idx].va_angel;
 
 		vm_params[idx + num].clade_pd = -1;
 		vm_params[idx + num].clade_ex_hi = CLADE_INVALID_ADDRESS;
@@ -564,6 +568,11 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 
 	long *dst;
 	unsigned long addr;
+
+	/* FIXME: If __boot_net_phys_offset__ is used for anything except ANGEL_OFFSET_PTR() then va_angel needs to be handled differently */
+	if (vm_params[idx].va_angel) {
+		offset = 0;
+	}
 	if ((addr = vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr) == -1) {
 		BOOTER_PRINTF("\t__boot_net_phys_offset__ not found.\n");
 		return;
@@ -1979,6 +1988,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--sys_write_mode")) {
 			if (argc < 2) die_usage();
 			vm_params[idx].sys_write_mode = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--va_angel")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].va_angel = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 

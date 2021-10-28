@@ -569,10 +569,6 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 	long *dst;
 	unsigned long addr;
 
-	/* FIXME: If __boot_net_phys_offset__ is used for anything except ANGEL_OFFSET_PTR() then va_angel needs to be handled differently */
-	if (vm_params[idx].va_angel) {
-		offset = 0;
-	}
 	if ((addr = vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr) == -1) {
 		BOOTER_PRINTF("\t__boot_net_phys_offset__ not found.\n");
 		return;
@@ -580,7 +576,13 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 		BOOTER_PRINTF("\t__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
 	}
 	dst = (long *)(addr + offset);
-	*dst = offset;
+
+	/* FIXME: If __boot_net_phys_offset__ is used for anything except ANGEL_OFFSET_PTR() then va_angel needs to be handled differently */
+	if (vm_params[idx].va_angel) {
+		*dst = 0;
+	} else {
+		*dst = offset;
+	}
 
 	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
 }

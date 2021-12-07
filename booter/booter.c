@@ -261,7 +261,7 @@ void usage()
 	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
 	BOOTER_PRINTF("  --stride_prefetch_reg <offset int> <int>\n\tSet stride prefetcher register.\n");
 #ifdef HAVE_EXTENSIONS
-	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
+	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on/off coprocessors.  Default 1.\n");
 	BOOTER_PRINTF("  --hmx_poweron_addr <addr>\n\tSet HMX RSC sequence power-on start address.\n");
 	BOOTER_PRINTF("  --hmx_poweroff_addr <addr>\n\tSet HMX RSC sequence power-off start address.\n");
 #endif
@@ -1421,7 +1421,7 @@ void kernel_setup() {
 	}
 
 #if HAVE_EXTENSIONS
-	if (ext_power && boot_flags.boot_have_hvx) {
+	if (ext_power) {
 		if (h2_hwconfig_extpower(1) < 0) {
 			FAIL("extpower", "");
 		}
@@ -2237,7 +2237,17 @@ int main(int argc, char **argv)
 			kernel_setup();
 			print_infos();
 			run(idx);
+			if (ext_power) {
+				if (h2_hwconfig_extpower(0) < 0) {
+					FAIL("extpower", "");
+				}
+			}
 			return 0;
+		}
+	}
+	if (ext_power) {
+		if (h2_hwconfig_extpower(0) < 0) {
+			FAIL("extpower", "");
 		}
 	}
 	return 0;

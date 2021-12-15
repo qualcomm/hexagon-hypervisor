@@ -20,6 +20,7 @@
 #include <safemem.h>
 #include <cfg_table.h>
 #include <atomic.h>
+#include <tlb.h>
 
 #ifdef CLUSTER_SCHED
 #include <readylist.h>
@@ -613,10 +614,9 @@ u32_t H2K_trap_hwconfig_set_hmx_power_off_start_addr(u32_t unused, void *unusedp
 
 u32_t H2K_trap_hwconfig_gpio_toggle(u32_t unused, void *unusedp, u32_t on, u32_t unused3, H2K_thread_context *me) {
 #if ARCHV >= 68
-	if (0 == H2K_gp->gpio_reg) return 0;  // not set
+	if (0 == H2K_gp->gpio_reg) return -1;  // not set
 	
-	u32_t va = H2K_tmpmap_add_and_lock((pa_t)(H2K_gp->gpio_reg), DEVICE_TYPE);
-	u32_t volatile *reg = (u32_t *)va;
+	u32_t volatile *reg = (u32_t *)GPIO_VA;
 	u32_t val = ((*reg) & ~(0x3c)) | 0x200;
 
 	*reg = val;
@@ -625,17 +625,31 @@ u32_t H2K_trap_hwconfig_gpio_toggle(u32_t unused, void *unusedp, u32_t on, u32_t
 	} else {
 		*(reg + 0x1) = 0x0;
 	}
-	H2K_tmpmap_remove_and_unlock();
 	return 0;
 #else
 	return -1;
 #endif
 }
 
-u32_t H2K_trap_hwconfig_set_gpio_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
+u32_t H2K_trap_hwconfig_set_gpio_addr(u32_t unused, void *unusedp, u32_t addr_hi, u32_t addr_lo, H2K_thread_context *me) {
 #if ARCHV >= 68
-	H2K_gp->gpio_reg = (u32_t *)addr;
-	return 0;
+	H2K_mem_tlbfmt_t entry;
+
+	H2K_gp->gpio_reg = ((pa_t)addr_hi) << 32 | addr_lo;
+
+	entry.raw = 0;
+	entry.ppd = ((H2K_gp->gpio_reg & GPIO_PG_MASK ) >> (PAGE_BITS - 1)) | (1 << GPIO_PG_SIZE);
+	entry.pa35 = (H2K_gp->gpio_reg >> 35) & 0x1;
+#if ARCHV >= 73
+	entry.pa3637 = (H2K_gp->gpio_reg >> 36) & 0x3;
+#endif
+	entry.cccc = DEVICE_TYPE;
+	entry.xwru = 0;  // only monitor access
+	entry.vpn = (GPIO_VA >> PAGE_BITS);
+	// entry.asid = don't care
+	entry.global = 1;
+	entry.valid = 1;
+	return H2K_tlb_tlbop(TLBOP_TLBALLOC, 0, entry.raw, me);
 #else
 	return -1;
 #endif

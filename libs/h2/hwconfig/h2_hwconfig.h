@@ -337,8 +337,8 @@ Set power-measurement GPIO physical address
 @dependencies none
 */
 
-static inline int h2_hwconfig_set_gpio_addr(unsigned int addr) {
-	return h2_hwconfig_trap(HWCONFIG_SETGPIOADDR, NULL, addr, 0);
+static inline int h2_hwconfig_set_gpio_addr(unsigned long long int addr) {
+	return h2_hwconfig_trap(HWCONFIG_SETGPIOADDR, NULL, addr >> 32, addr & 0xffffffff);
 }
 
 /**

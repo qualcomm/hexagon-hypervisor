@@ -55,6 +55,10 @@
 #define TEMP_MAP_PG_MASK (0xffffffff << (PAGE_BITS + (TEMP_MAP_PG_SIZE * 2)))
 #define TEMP_MAP_OFF_MASK (~TEMP_MAP_PG_MASK)
 
+#define GPIO_VA 0xff7f8000
+#define GPIO_PG_SIZE SIZE_4K
+#define GPIO_PG_MASK (0xffffffff << (PAGE_BITS + (GPIO_PG_SIZE * 2)))
+
 #define MAX_TLB_ENTRIES 192
 #define TLB_ENTRY_C_BITS 24
 #define TLB_ENTRY_GLOBAL_BIT 62

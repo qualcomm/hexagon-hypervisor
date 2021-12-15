@@ -1806,7 +1806,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 
 		} else if (0 == strcmp(argv[0], "--gpio_addr")) {
 			if (argc < 2) die_usage();
-			if (h2_hwconfig_set_gpio_addr(strtoul(argv[1],NULL,0)) == -1) {
+			if (h2_hwconfig_set_gpio_addr(strtoull(argv[1],NULL,0)) == -1) {
 				FAIL("HWCONFIG_SETGPIOADDR", "");
 			}
 			argc -= 2; argv += 2;

@@ -135,6 +135,10 @@ static inline int h2_pmu_enable() {
 static inline int h2_pmu_disable() {
 	int ret = 0;
 
+	if (__h2_gpio_toggle__) {
+		if (0 != (ret = h2_hwconfig_gpio_toggle(0))) return ret;
+	}
+
 	/* save */
 	__h2_pmu_evtcfg__ = h2_pmu_getreg(H2_PMUEVTCFG);
 	__h2_pmu_evtcfg1__ = h2_pmu_getreg(H2_PMUEVTCFG1);
@@ -143,10 +147,6 @@ static inline int h2_pmu_disable() {
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG, 0))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, 0))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUCFG, 0))) return ret;
-
-	if (__h2_gpio_toggle__) {
-		if (0 != (ret = h2_hwconfig_gpio_toggle(0))) return ret;
-	}
 
 	return ret;
 }

@@ -72,8 +72,8 @@ LIB_CFLAGS += -Wimplicit-int-conversion
 endif
 else
 ifeq (68, $(ARCHV))
-TOOLS_FLAVOR ?= 8.6-beta1
-TOOLS_FLAVOR_KERNEL ?= 8.6-beta1
+TOOLS_FLAVOR ?= 8.6
+TOOLS_FLAVOR_KERNEL ?= 8.6
 ARCH_FLAVOR ?= v68_latest
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion
@@ -81,8 +81,8 @@ DEVSIM := archsim
 ELFCOPY := hexagon-llvm-objcopy
 
 else # latest
-TOOLS_FLAVOR ?= 8.6-beta1
-TOOLS_FLAVOR_KERNEL ?= 8.6-beta1
+TOOLS_FLAVOR ?= 8.6
+TOOLS_FLAVOR_KERNEL ?= 8.6
 ARCH_FLAVOR ?= v73_stable
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion

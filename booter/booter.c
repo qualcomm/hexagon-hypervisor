@@ -1376,6 +1376,12 @@ void kernel_setup() {
 
 	int val;
 
+	if (ecc_enable != -1) {
+		if (h2_hwconfig_ecc(ecc_enable) < 0) {
+			FAIL("ECC enable", "");
+		}
+	}
+
 	if (hwt_num != -1) {
 		if (hwt_mask != -1) {
 			FAIL("Can't set both hwt_mask and hwt_num", "");
@@ -1392,12 +1398,6 @@ void kernel_setup() {
 	if (use_stlb) {
 		if (h2_config_stlb_alloc() < 0) {
 			FAIL("STLB alloc", "");
-		}
-	}
-
-	if (ecc_enable != -1) {
-		if (h2_hwconfig_ecc(ecc_enable) < 0) {
-			FAIL("ECC enable", "");
 		}
 	}
 

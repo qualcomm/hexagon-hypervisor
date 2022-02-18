@@ -259,6 +259,7 @@ void usage()
 	BOOTER_PRINTF("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	BOOTER_PRINTF("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
 	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
+	BOOTER_PRINTF("  --get_l2_reg <offset int>\n\tPrint value of L2 config register.\n");
 	BOOTER_PRINTF("  --stride_prefetch_reg <offset int> <int>\n\tSet stride prefetcher register.\n");
 #ifdef HAVE_EXTENSIONS
 	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on/off coprocessors.  Default 1.\n");
@@ -1437,6 +1438,19 @@ void kernel_setup() {
 #endif	
 }
 
+void get_l2_reg(unsigned int offset) {
+	unsigned int val, kerror;
+	
+	val = h2_hwconfig_l2_get_reg(offset);
+	kerror = h2_info(INFO_ERROR);
+	if (kerror != KERROR_NONE) {
+		BOOTER_PRINTF("\n");
+		BOOTER_PRINTF("Kernel error: %s\n\n", kerror_msg[kerror]);
+		FAIL("Can't get L2 reg.", "");
+	}
+	BOOTER_PRINTF("L2 reg at offset 0x%08x: 0x%08x\n", offset, val);
+}
+
 void set_l2_reg(unsigned int offset, unsigned int val) {
 
   unsigned int old, ret, kerror;
@@ -1693,6 +1707,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			if (argc < 3) die_usage();
 			set_l2_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
 			argc -= 3; argv += 3;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--get_l2_reg")) {
+			if (argc < 3) die_usage();
+			get_l2_reg(strtoul(argv[1], NULL, 0));
+			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0], "--stride_prefetch_reg")) {

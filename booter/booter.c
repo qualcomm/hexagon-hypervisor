@@ -150,6 +150,8 @@ int dmactrl;
 #ifdef CLUSTER_SCHED
 int cluster_sched = 1;
 #endif
+unsigned int getl2reg = 0;
+unsigned int getl2reg_offset = 0;
 
 #define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
 
@@ -1711,7 +1713,9 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 
 		} else if (0 == strcmp(argv[0], "--get_l2_reg")) {
 			if (argc < 3) die_usage();
-			get_l2_reg(strtoul(argv[1], NULL, 0));
+			getl2reg = 1;
+			getl2reg_offset = strtoul(argv[1], NULL, 0);
+			get_l2_reg(getl2reg_offset);
 			argc -= 2; argv += 2;
 			continue;
 
@@ -2262,6 +2266,9 @@ int main(int argc, char **argv)
 					FAIL("extpower", "");
 				}
 			}
+			if (getl2reg) {
+				get_l2_reg(getl2reg_offset);
+			}
 			return 0;
 		}
 	}
@@ -2269,6 +2276,9 @@ int main(int argc, char **argv)
 		if (h2_hwconfig_extpower(0) < 0) {
 			FAIL("extpower", "");
 		}
+	}
+	if (getl2reg) {
+		get_l2_reg(getl2reg_offset);
 	}
 	return 0;
 }

@@ -151,7 +151,7 @@ int dmactrl;
 int cluster_sched = 1;
 #endif
 unsigned int getl2reg = 0;
-unsigned int getl2reg_offset = 0;
+unsigned int *getl2reg_offsets;
 
 #define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
 
@@ -1440,17 +1440,17 @@ void kernel_setup() {
 #endif	
 }
 
-void get_l2_reg(unsigned int offset) {
+void get_l2_reg(unsigned int idx) {
 	unsigned int val, kerror;
 	
-	val = h2_hwconfig_l2_get_reg(offset);
+	val = h2_hwconfig_l2_get_reg(getl2reg_offsets[idx]);
 	kerror = h2_info(INFO_ERROR);
 	if (kerror != KERROR_NONE) {
 		BOOTER_PRINTF("\n");
 		BOOTER_PRINTF("Kernel error: %s\n\n", kerror_msg[kerror]);
 		FAIL("Can't get L2 reg.", "");
 	}
-	BOOTER_PRINTF("L2 reg at offset 0x%08x: 0x%08x\n", offset, val);
+	BOOTER_PRINTF("L2 reg at offset 0x%08x: 0x%08x\n", getl2reg_offsets[idx], val);
 }
 
 void set_l2_reg(unsigned int offset, unsigned int val) {
@@ -1713,9 +1713,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 
 		} else if (0 == strcmp(argv[0], "--get_l2_reg")) {
 			if (argc < 3) die_usage();
-			getl2reg = 1;
-			getl2reg_offset = strtoul(argv[1], NULL, 0);
-			get_l2_reg(getl2reg_offset);
+			if (NULL == (getl2reg_offsets = realloc(getl2reg_offsets, sizeof(unsigned int) * (getl2reg + 1)))) {
+				error("realloc getl2reg_offsets", NULL);
+			}
+			getl2reg_offsets[getl2reg] = strtoul(argv[1], NULL, 0);
+			get_l2_reg(getl2reg);
+			getl2reg++;
 			argc -= 2; argv += 2;
 			continue;
 
@@ -2148,6 +2151,7 @@ int main(int argc, char **argv)
 	size_t line_size;
 	char *arg_ptr;
 	char *p;
+	int i;
 
 	int idx;
 
@@ -2266,8 +2270,8 @@ int main(int argc, char **argv)
 					FAIL("extpower", "");
 				}
 			}
-			if (getl2reg) {
-				get_l2_reg(getl2reg_offset);
+			for (i = 0; i < getl2reg; i++) {
+				get_l2_reg(i);
 			}
 			return 0;
 		}
@@ -2277,8 +2281,8 @@ int main(int argc, char **argv)
 			FAIL("extpower", "");
 		}
 	}
-	if (getl2reg) {
-		get_l2_reg(getl2reg_offset);
+	for (i = 0; i < getl2reg; i++) {
+		get_l2_reg(i);
 	}
 	return 0;
 }

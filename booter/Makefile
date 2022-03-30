@@ -36,7 +36,7 @@ should_crash: should_crash.o
 	${CC} $(LDFLAGS) $(CFLAGS)  -O0 -Wl,--section-start=.start=$(H2K_GUEST_START) -o should_crash should_crash.o
 
 bigio: bigio.o
-	${CC} $(LDFLAGS) $(CFLAGS)  -Wl,--section-start=.start=$(H2K_GUEST_START) -o bigio bigio.o
+	${CC} $(LDFLAGS) $(CFLAGS)  -O0 -Wl,--section-start=.start=$(H2K_GUEST_START) -o bigio bigio.o
 
 # %.o: %.c
 # 	${CC} ${CFLAGS} -c -o $@ $<

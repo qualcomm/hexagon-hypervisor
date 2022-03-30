@@ -4,11 +4,14 @@
  */
 
 #include "allsyscalls.h"
+#include "syscall_defs.h"
 
 #ifdef SYS_WRITE_BUF
 extern char H2_ANGEL_write_buf[];
 extern unsigned int H2_ANGEL_write_buf_idx;
 extern const unsigned int H2_ANGEL_write_buf_size;
+
+int __sys_write_mode__;
 
 static inline void dccleana(const char *addr)
 {
@@ -18,6 +21,16 @@ static inline void dccleana(const char *addr)
 
 count_t sys_write(fd_t fd, const char *buffer, count_t count)
 {
+	if (H2_SYS_WRITE_MODE_SILENT == __sys_write_mode__) {
+		return 0;
+	}
+	if (1 == fd && H2_SYS_WRITE_MODE_NO_FD1 == __sys_write_mode__) {  // stdout
+		return 0;
+	}
+	if (1 != fd && H2_SYS_WRITE_MODE_ONLY_FD1 == __sys_write_mode__) {  // !stdout
+		return 0;
+	}
+	
 	struct { fd_t fd; const char *buf; count_t c; } x;
 	count_t angel_ret;
 	x.fd = fd;

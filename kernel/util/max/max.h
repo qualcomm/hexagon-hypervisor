@@ -29,6 +29,13 @@
 #define CORE_V62 0x62
 #define CORE_V65 0x65
 #define CORE_V66 0x66
+#define CORE_V67 0x67
+#define CORE_V68 0x68
+#define CORE_V69 0x69
+#define CORE_V70 0x70
+#define CORE_V71 0x71
+#define CORE_V72 0x72
+#define CORE_V73 0x73
 
 #define CORE_V6_A 0x0
 #define CORE_V6_B 0x1
@@ -47,6 +54,10 @@
 #define TEMP_MAP_PG_SIZE SIZE_4M
 #define TEMP_MAP_PG_MASK (0xffffffff << (PAGE_BITS + (TEMP_MAP_PG_SIZE * 2)))
 #define TEMP_MAP_OFF_MASK (~TEMP_MAP_PG_MASK)
+
+#define GPIO_VA 0xff7f8000
+#define GPIO_PG_SIZE SIZE_4K
+#define GPIO_PG_MASK (0xffffffff << (PAGE_BITS + (GPIO_PG_SIZE * 2)))
 
 #define MAX_TLB_ENTRIES 192
 #define TLB_ENTRY_C_BITS 24
@@ -154,6 +165,19 @@
 
 #endif
 
+#if ARCHV >= 68
+
+#define QDSP6SS_RSCC_RSC_SEQ_BUSY_DRV0  0x00030404
+#define QDSP6SS_RSCC_RSC_SEQ_BUSY_DRV0_STATUS_BIT 0
+
+#define QDSP6SS_RSCC_RSC_SEQ_OVERRIDE_TRIGGER_DRV0  0x00030460
+#define QDSP6SS_RSCC_RSC_SEQ_OVERRIDE_TRIGGER_DRV0_TRIGGER_BIT  0
+
+#define QDSP6SS_RSCC_RSC_SEQ_OVERRIDE_TRIGGER_START_ADDR_DRV0    0x00030464
+#define QDSP6SS_RSCC_RSC_SEQ_OVERRIDE_TRIGGER_START_ADDR_DRV0_ADDRESS_BITMASK   0x000003FF
+
+#endif
+
 #endif
 
 #endif
@@ -221,6 +245,11 @@
 #define SSR_XE_BIT_MASK ((u32_t)(0x1 << SSR_XE_BIT))
 
 #define SSR_XE2_BIT 26
+
+#define SSR_XE2_BIT 26
+
+#define CCR_L2CP_BITS 6
+#define CCR_L2CP_NBITS 2
 
 #if ARCHV <= 4
 #define BOOT_THREAD_USR 0x00000000
@@ -312,6 +341,7 @@
 
 #define CFG_TABLE_COPROC_TYPE_HVX 1
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
+#define EXT_HVX_VTCM_BANK_WIDTH 16  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_OFFSET 0x200000
 #define EXT_HVX_VTCM_SIZE 256
 #define EXT_HVX_MAX_VLENGTH 128  // bytes

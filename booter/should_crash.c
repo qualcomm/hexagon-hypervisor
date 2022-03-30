@@ -9,10 +9,11 @@
 int main()
 {
 	char *p = (char *)0x01000000;
-	volatile unsigned int x;
+	volatile unsigned int __attribute__ ((unused)) x;
 
 	p++;
 	x = *((unsigned int *)p);
 	printf("Load from 0x01000001 successful");
+	
 	return 0;
 }

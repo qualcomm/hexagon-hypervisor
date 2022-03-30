@@ -62,6 +62,8 @@ char *pagesize_name[] = {
 	GEN(__h2_pmu_evtcfg__)												\
 	GEN(__h2_pmu_evtcfg1__)												\
 	GEN(__h2_pmu_cfg__)   												\
+	GEN(__h2_gpio_toggle__)												\
+	GEN(__sys_write_mode__)												\
 	GEN(end)																			\
 	GEN(DEFAULT_HEAP_SIZE)												\
 	GEN(DEFAULT_STACK_SIZE)												\
@@ -99,7 +101,7 @@ enum {
 #define PMU_COUNTER2_OVERFLOW 2
 #define PMU_COUNTER4_OVERFLOW 5
 #define PMU_COUNTER6_OVERFLOW 6
-#define PMU_FILE "pmu_stats.txt"
+#define PMU_FILE "pmu_stats_booter.txt"
 
 #define PMU_FIRST_EVENT 0
 #if ARCHV >= 68
@@ -138,15 +140,18 @@ unsigned int pmu_evtcfg;
 unsigned int pmu_evtcfg1;
 unsigned int pmu_cfg;
 int pmu_dump = 0;
-char *pmu_file = "pmu_stats_booter.txt";
+char *pmu_file = PMU_FILE;
 FILE *pmu_fp;
 char pmu_buf[PMU_BUFSIZE];
 int pmu_idx = 0;
+int gpio_toggle = 0;
 int set_dmactrl = 0;
 int dmactrl;
 #ifdef CLUSTER_SCHED
 int cluster_sched = 1;
 #endif
+unsigned int getl2reg = 0;
+unsigned int *getl2reg_offsets;
 
 #define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
 
@@ -204,6 +209,8 @@ typedef struct {
 	int pmu_first_event;
 	int pmu_last_event;
 	int pmu_overflow;
+	sys_write_mode sys_write_mode;
+	int va_angel;
 
 	/* clade */
 	int clade_pd;
@@ -254,9 +261,12 @@ void usage()
 	BOOTER_PRINTF("  --l2part [ 0 == shared, 1 == 1/2 main, 2 == 3/4 main, 3 == 7/8 main ]\n\tSet L2 cache partitioning.\n");
 	BOOTER_PRINTF("  --l2cfg <int>\n\tSet L2 cache tag size bits.\n");
 	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
+	BOOTER_PRINTF("  --get_l2_reg <offset int>\n\tPrint value of L2 config register.\n");
 	BOOTER_PRINTF("  --stride_prefetch_reg <offset int> <int>\n\tSet stride prefetcher register.\n");
 #ifdef HAVE_EXTENSIONS
-	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on coprocessor.  Default 1.\n");
+	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on/off coprocessors.  Default 1.\n");
+	BOOTER_PRINTF("  --hmx_poweron_addr <addr>\n\tSet HMX RSC sequence power-on start address.\n");
+	BOOTER_PRINTF("  --hmx_poweroff_addr <addr>\n\tSet HMX RSC sequence power-off start address.\n");
 #endif
 	BOOTER_PRINTF("  --use_stlb (0|1)\n\tTurn on STLB.  Default 0.\n");
 	BOOTER_PRINTF("  --guest_base <int>\n\tStart of guest physical memory. Default 0x%08x.\n", H2K_GUEST_START);
@@ -269,6 +279,8 @@ void usage()
 	BOOTER_PRINTF("  --pmu_cfg <int>\n\tSet PMU config register.\n");
 	BOOTER_PRINTF("  --pmu_dump (0|1)\n\tDump PMU counters.  Default 0.\n");
 	BOOTER_PRINTF("  --pmu_file <string>\n\tPMU output file name. Default " PMU_FILE ".\n");
+	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
+	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
 	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
 
 	BOOTER_PRINTF("\n");
@@ -301,11 +313,13 @@ void usage()
 	BOOTER_PRINTF("  --pmu_first_event <int>\n\tFirst PMU event for sweep.  Default 0.\n");
 	BOOTER_PRINTF("  --pmu_last_event <int>\n\tLast PMU event for sweep.  Default " PMU_LAST_EVENT_STR ".\n");
 	BOOTER_PRINTF("  --pmu_overflow (0|1)\n\tUse 64-bit PMU counters in sweep.  Default 0.\n");
+	BOOTER_PRINTF("  --sys_write_mode [ 0 == normal, 1 == suppress stdout, 2 == allow only stdout, 3 == suppress all ]\n\tMode for sys_write().  Default 0.\n");
+	BOOTER_PRINTF("  --va_angel (0|1)\n\tUse virtual addresses in angel calls.  Default 0.\n");
 	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
 #ifdef CLUSTER_SCHED
-	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 0.\n");
+	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 1.\n");
 #endif
 }		
 
@@ -355,6 +369,8 @@ void add_vm(unsigned int idx) {
 	vm_params[idx].pmu_first_event = PMU_FIRST_EVENT;
 	vm_params[idx].pmu_last_event = PMU_LAST_EVENT;
 	vm_params[idx].pmu_overflow = 0;
+	vm_params[idx].sys_write_mode = H2_SYS_WRITE_MODE_NORMAL;
+	vm_params[idx].va_angel = 0;
 
 	vm_params[idx].clade_pd = -1;
 	vm_params[idx].clade_ex_hi = CLADE_INVALID_ADDRESS;
@@ -421,6 +437,8 @@ void clone_vm(unsigned int idx, unsigned int num) {
 		vm_params[idx + num].pmu_first_event = vm_params[idx].pmu_first_event;
 		vm_params[idx + num].pmu_last_event = vm_params[idx].pmu_last_event;
 		vm_params[idx + num].pmu_overflow = vm_params[idx].pmu_overflow;
+		vm_params[idx + num].sys_write_mode = vm_params[idx].sys_write_mode;
+		vm_params[idx + num].va_angel = vm_params[idx].va_angel;
 
 		vm_params[idx + num].clade_pd = -1;
 		vm_params[idx + num].clade_ex_hi = CLADE_INVALID_ADDRESS;
@@ -553,6 +571,7 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 
 	long *dst;
 	unsigned long addr;
+
 	if ((addr = vm_params[idx].specials[SPECIAL___boot_net_phys_offset__].addr) == -1) {
 		BOOTER_PRINTF("\t__boot_net_phys_offset__ not found.\n");
 		return;
@@ -560,7 +579,13 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 		BOOTER_PRINTF("\t__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
 	}
 	dst = (long *)(addr + offset);
-	*dst = offset;
+
+	/* FIXME: If __boot_net_phys_offset__ is used for anything except ANGEL_OFFSET_PTR() then va_angel needs to be handled differently */
+	if (vm_params[idx].va_angel) {
+		*dst = 0;
+	} else {
+		*dst = offset;
+	}
 
 	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
 }
@@ -888,6 +913,7 @@ void load_vm(unsigned int idx) {
 			set_var(idx, SPECIAL___use_file_suffix__, 1, total_offset);
 			set_string(idx, SPECIAL___file_suffix__, vm_params[idx].file_suffix, SIZE__file_suffix__, total_offset);
 		}
+		set_var(idx, SPECIAL___sys_write_mode__, vm_params[idx].sys_write_mode, total_offset);
 
 		get_pmap(idx, total_offset);
 		// if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
@@ -1058,6 +1084,7 @@ void boot_vm(unsigned int idx) {
 	unsigned int regval;
 	int bit = 0;
 	int shift;
+	long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
@@ -1100,16 +1127,21 @@ void boot_vm(unsigned int idx) {
 			}
 		}
 	}
-
-	/* Global options, but we set these in every vm */
-	if (set_pmu_evtcfg) {
-		set_var(idx, SPECIAL___h2_pmu_evtcfg__, pmu_evtcfg, vm_params[idx].phys_offset + vm_params[idx].load_offset);
-	}
-	if (set_pmu_evtcfg1) {
-		set_var(idx, SPECIAL___h2_pmu_evtcfg1__, pmu_evtcfg1, vm_params[idx].phys_offset + vm_params[idx].load_offset);
-	}
-	if (set_pmu_cfg) {
-		set_var(idx, SPECIAL___h2_pmu_cfg__, pmu_cfg, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+	
+	/* FIXME: For now set only in first vm */
+	if (0 == idx) {
+		if (set_pmu_evtcfg) {
+			set_var(idx, SPECIAL___h2_pmu_evtcfg__, pmu_evtcfg, total_offset);
+		}
+		if (set_pmu_evtcfg1) {
+			set_var(idx, SPECIAL___h2_pmu_evtcfg1__, pmu_evtcfg1, total_offset);
+		}
+		if (set_pmu_cfg) {
+			set_var(idx, SPECIAL___h2_pmu_cfg__, pmu_cfg, total_offset);
+		}
+		if (gpio_toggle) {
+			set_var(idx, SPECIAL___h2_gpio_toggle__, gpio_toggle, total_offset);
+		}
 	}
 
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
@@ -1121,13 +1153,17 @@ void dump_pmu(int idx) {
 	int i;
 	unsigned long long int val;
 	int event;
+	long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	if (!pmu_dump) return;
 
+	/* FIXME: For now, dump only first vm */
+	if (0 != idx) return;
+
 	/* In case someone has messed with __h2_pmu_* while we were napping */
-	pmu_evtcfg = get_var(idx, SPECIAL___h2_pmu_evtcfg__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
-	pmu_evtcfg1 = get_var(idx, SPECIAL___h2_pmu_evtcfg1__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
-	pmu_cfg = get_var(idx, SPECIAL___h2_pmu_cfg__, vm_params[idx].phys_offset + vm_params[idx].load_offset);
+	pmu_evtcfg = get_var(idx, SPECIAL___h2_pmu_evtcfg__, total_offset);
+	pmu_evtcfg1 = get_var(idx, SPECIAL___h2_pmu_evtcfg1__, total_offset);
+	pmu_cfg = get_var(idx, SPECIAL___h2_pmu_cfg__, total_offset);
 
 	if (vm_params[idx].pmu_overflow) {
 		for (i = 0; i < 8; i += 2) {
@@ -1252,6 +1288,8 @@ void run(unsigned int idx) {
 							BOOTER_PRINTF("Restoring VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].stash_addr, vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
 							memcpy((void *)(vm_params[idx].start_pa), (void *)(vm_params[idx].stash_addr), vm_params[idx].end_pa - vm_params[idx].start_pa);
 							dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
+							/* if this vm was cloned from another, need to set its net phys offset again (overwritten by restore from stash) */
+							set_net_phys_offset(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);  // i.e. set_net_phys_offset(idx, total_offset)
 						}
 						boot_vm(i);
 					} else {  // all done with this VM
@@ -1351,6 +1389,12 @@ void kernel_setup() {
 
 	int val;
 
+	if (ecc_enable != -1) {
+		if (h2_hwconfig_ecc(ecc_enable) < 0) {
+			FAIL("ECC enable", "");
+		}
+	}
+
 	if (hwt_num != -1) {
 		if (hwt_mask != -1) {
 			FAIL("Can't set both hwt_mask and hwt_num", "");
@@ -1367,12 +1411,6 @@ void kernel_setup() {
 	if (use_stlb) {
 		if (h2_config_stlb_alloc() < 0) {
 			FAIL("STLB alloc", "");
-		}
-	}
-
-	if (ecc_enable != -1) {
-		if (h2_hwconfig_ecc(ecc_enable) < 0) {
-			FAIL("ECC enable", "");
 		}
 	}
 
@@ -1396,7 +1434,7 @@ void kernel_setup() {
 	}
 
 #if HAVE_EXTENSIONS
-	if (ext_power && boot_flags.boot_have_hvx) {
+	if (ext_power) {
 		if (h2_hwconfig_extpower(1) < 0) {
 			FAIL("extpower", "");
 		}
@@ -1410,6 +1448,19 @@ void kernel_setup() {
 		}
 	}
 #endif	
+}
+
+void get_l2_reg(unsigned int idx) {
+	unsigned int val, kerror;
+	
+	val = h2_hwconfig_l2_get_reg(getl2reg_offsets[idx]);
+	kerror = h2_info(INFO_ERROR);
+	if (kerror != KERROR_NONE) {
+		BOOTER_PRINTF("\n");
+		BOOTER_PRINTF("Kernel error: %s\n\n", kerror_msg[kerror]);
+		FAIL("Can't get L2 reg.", "");
+	}
+	BOOTER_PRINTF("L2 reg at offset 0x%08x: 0x%08x\n", getl2reg_offsets[idx], val);
 }
 
 void set_l2_reg(unsigned int offset, unsigned int val) {
@@ -1572,6 +1623,17 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0],"--turkey")) {
+			if (argc < 2) die_usage();
+			regval = H2K_get_turkey();
+			printf("Old value for turkey: 0x%08x\n",regval);
+			regval = strtoul(argv[1],NULL,0);
+			H2K_set_turkey(regval);
+			regval = H2K_get_turkey();
+			printf("New value for turkey: 0x%08x\n",regval);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0],"--duck")) {
 			if (argc < 2) die_usage();
 			regval = H2K_get_duck();
@@ -1659,6 +1721,17 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 3; argv += 3;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--get_l2_reg")) {
+			if (argc < 3) die_usage();
+			if (NULL == (getl2reg_offsets = realloc(getl2reg_offsets, sizeof(unsigned int) * (getl2reg + 1)))) {
+				error("realloc getl2reg_offsets", NULL);
+			}
+			getl2reg_offsets[getl2reg] = strtoul(argv[1], NULL, 0);
+			get_l2_reg(getl2reg);
+			getl2reg++;
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0], "--stride_prefetch_reg")) {
 			if (argc < 3) die_usage();
 			set_stride_prefetcher_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
@@ -1671,6 +1744,23 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			ext_power = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
+
+		} else if (0 == strcmp(argv[0], "--hmx_poweron_addr")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_hmxpower_on_set_addr(strtoul(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_HMX_POWERON_ADDR", "");
+			}
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--hmx_poweroff_addr")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_hmxpower_off_set_addr(strtoul(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_HMX_POWEROFF_ADDR", "");
+			}
+			argc -= 2; argv += 2;
+			continue;
+
 #endif
 
 		} else if (0 == strcmp(argv[0], "--use_stlb")) {
@@ -1742,6 +1832,20 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--pmu_file")) {
 			if (argc < 2) die_usage();
 			pmu_file = argv[1];
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--gpio_toggle")) {
+			if (argc < 2) die_usage();
+			gpio_toggle = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--gpio_addr")) {
+			if (argc < 2) die_usage();
+			if (h2_hwconfig_set_gpio_addr(strtoull(argv[1],NULL,0)) == -1) {
+				FAIL("HWCONFIG_SETGPIOADDR", "");
+			}
 			argc -= 2; argv += 2;
 			continue;
 
@@ -1920,6 +2024,18 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
+		} else if (0 == strcmp(argv[0], "--sys_write_mode")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].sys_write_mode = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--va_angel")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].va_angel = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+
 		} else if (0 == strcmp(argv[0], "--startprio")) {
 			if (argc < 2) die_usage();
 			vm_params[idx].startprio = strtoul(argv[1],NULL,0);
@@ -2045,6 +2161,7 @@ int main(int argc, char **argv)
 	size_t line_size;
 	char *arg_ptr;
 	char *p;
+	int i;
 
 	int idx;
 
@@ -2158,8 +2275,24 @@ int main(int argc, char **argv)
 			kernel_setup();
 			print_infos();
 			run(idx);
+			if (ext_power) {
+				if (h2_hwconfig_extpower(0) < 0) {
+					FAIL("extpower", "");
+				}
+			}
+			for (i = 0; i < getl2reg; i++) {
+				get_l2_reg(i);
+			}
 			return 0;
 		}
+	}
+	if (ext_power) {
+		if (h2_hwconfig_extpower(0) < 0) {
+			FAIL("extpower", "");
+		}
+	}
+	for (i = 0; i < getl2reg; i++) {
+		get_l2_reg(i);
 	}
 	return 0;
 }

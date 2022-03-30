@@ -107,7 +107,7 @@ static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int pa
 
 /**
 Configure prefetch.
-@param[in] whichcache	Select the cache to change partitioning on
+@param[in] whichcache	Select the cache to change prefetch on
 @param[in] prefetch_cfg Prefetch type
 @returns 0 on success, negative value on error
 @dependencies None
@@ -295,6 +295,62 @@ Set stride prefetcher register.
 static inline int h2_hwconfig_strideprefetcher_set_reg(unsigned int offset, unsigned int val)
 {
 	return h2_hwconfig_trap(HWCONFIG_SETSTRIDEPREFETCHERREG, NULL, offset, val);
+}
+
+/**
+Set HMX RSC sequence power-on start address
+@param[in] addr  Address
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+
+static inline int h2_hwconfig_hmxpower_on_set_addr(unsigned int addr) {
+	return h2_hwconfig_trap(HWCONFIG_SETHMXPOWERONSTARTADDR, NULL, addr, 0);
+}
+
+/**
+Set HMX RSC sequence power-off start address
+@param[in] addr  Address
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+
+static inline int h2_hwconfig_hmxpower_off_set_addr(unsigned int addr) {
+	return h2_hwconfig_trap(HWCONFIG_SETHMXPOWEROFFSTARTADDR, NULL, addr, 0);
+}
+
+/**
+Toggle power-measurement GPIO
+@param[in] val  Value (1 == on, 0 == off)
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+
+static inline int h2_hwconfig_gpio_toggle(unsigned int val) {
+	return h2_hwconfig_trap(HWCONFIG_GPIOTOGGLE, NULL, val, 0);
+}
+
+/**
+Set power-measurement GPIO physical address
+@param[in] addr  Address
+@returns 0 on success, negative value on error
+@dependencies none
+*/
+
+static inline int h2_hwconfig_set_gpio_addr(unsigned long long int addr) {
+	return h2_hwconfig_trap(HWCONFIG_SETGPIOADDR, NULL, addr >> 32, addr & 0xffffffff);
+}
+
+/**
+Configure per-thread cache partition use
+@param[in] l2cp_cfg Partition selection
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_l2cp(unsigned int l2cp_cfg)
+{
+	return h2_hwconfig_trap(HWCONFIG_L2CP, NULL, l2cp_cfg, 0);
 }
 
 #endif

@@ -72,13 +72,8 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	Elf32_Shdr hdr[2],	// used for strhdr & symhdr
 		shstr;  // section-header string table section header :()
 
-	int shstrtab_offset;
-	char *shstrtab;
-	
 	if (SHN_UNDEF == ehdr->e_shstrndx) error("1", NULL);
 	if (-1 == elf_get_shdr(fdesc, ehdr->e_shstrndx, &shstr, ehdr)) error("2", NULL);
-	shstrtab_offset = shstr.sh_offset;
-	shstrtab = (char *)ehdr + shstrtab_offset;
 
 	if (verbose) printf("%s: reading symhdr & strhdr\n", __func__);
 	/* find symhdr & strhdr */

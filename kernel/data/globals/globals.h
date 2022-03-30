@@ -86,6 +86,15 @@ typedef struct {
 	u32_t hvx_vlength;   // native vector length
 	u32_t hvx_contexts;  // # of native length
 	u32_t hmx_units;
+#if ARCHV >= 68
+	u32_t hmx_state;
+	u32_t *hmx_rsc_seq_busy_drv0;
+	u32_t *hmx_rsc_seq_override_trigger_drv0;
+	u32_t *hmx_rsc_seq_override_trigger_start_addr_drv0;
+	u32_t hmx_rsc_seq_power_on_start_addr;
+	u32_t hmx_rsc_seq_power_off_start_addr;
+	pa_t gpio_reg;
+#endif
 
 #ifdef CLUSTER_SCHED
 #define XE_SET_SET(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] |= (0x1 << HTHREAD))

@@ -82,6 +82,15 @@ REF_JFLAG :=
 export OPTIMIZE := $(OPTIMIZE_COV)
 endif
 
+ifeq ($(TARGET), opt_si)
+T := opt
+OPT_JFLAG :=
+export H2K_LOAD_ADDR=0x84c00000
+export H2K_GUEST_START=0x87000000
+export NULL_ANGEL_TRAP=1
+export MAGIC_ANGEL=--magic_angel
+endif
+
 # FIXME: Remove when cluster sched ported to opt
 export OMIT_OPT=dosched resched
 

@@ -16,9 +16,11 @@
 #include <intcontrol.h>
 #include <tmpmap.h>
 #include <hvx.h>
+#include <hmx.h>
 #include <safemem.h>
 #include <cfg_table.h>
 #include <atomic.h>
+#include <tlb.h>
 
 #ifdef CLUSTER_SCHED
 #include <readylist.h>
@@ -50,7 +52,12 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_setdmacfg,
 	H2K_trap_hwconfig_l2gclean,
 	H2K_trap_hwconfig_getstrideprefetcherreg,
-	H2K_trap_hwconfig_setstrideprefetcherreg
+	H2K_trap_hwconfig_setstrideprefetcherreg,
+	H2K_trap_hwconfig_set_hmx_power_on_start_addr,
+	H2K_trap_hwconfig_set_hmx_power_off_start_addr,
+	H2K_trap_hwconfig_gpio_toggle,
+	H2K_trap_hwconfig_set_gpio_addr,
+	H2K_trap_hwconfig_l2cp
 };
 
 typedef struct {
@@ -159,10 +166,10 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 
 		/* ECC */
 		if (ecc_enable != H2K_gp->ecc_enable) {
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, (ecc_enable ? 0xa : 0x5));
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, (ecc_enable ? 0xa : 0x5));
+			//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));  // l1i
+			//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));  // l1d
+			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, (ecc_enable ? 0xa : 0x5));  // l2
+			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, (ecc_enable ? 0xa : 0x5));  // vtcm
 		}
 
 	} else if (use_wb && !cur_wb) {
@@ -244,12 +251,18 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 }
 
 u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t unused3, H2K_thread_context *me) {
-
+#if ARCHV >= 68
 	if (0 < H2K_gp->hmx_units) {  // exists
 		me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
+		if (xe2) {
+			H2K_hmx_poweron(); // make sure the lights are on
+		}
 		return 0;
 	}
 	return -1;
+#else
+	return -1;
+#endif
 }
 
 u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe, H2K_thread_context *me) {
@@ -361,11 +374,13 @@ u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t
 
 #ifdef HAVE_EXTENSIONS
 
-	/* Just HVX for now */
+	/* Both HVX HMX now */
 	if (state) {
 		H2K_hvx_poweron();
+		H2K_hmx_poweron();
 	} else {
 		H2K_hvx_poweroff();
+		H2K_hmx_poweroff();
 	}
 	return 0;
 #else
@@ -548,6 +563,7 @@ u32_t H2K_trap_hwconfig_setdmacfg(u32_t unused, void *unusedp, u32_t index, u32_
 u32_t H2K_trap_hwconfig_l2gclean(u32_t unused, void *unusedp, u32_t inv, u32_t unused3, H2K_thread_context *me) {
 
 #if ARCHV >= 60
+	H2K_syncht();
 	if (inv) {
 		H2K_l2gcleaninv();
 	} else {
@@ -576,4 +592,72 @@ u32_t H2K_trap_hwconfig_setstrideprefetcherreg(u32_t unused, void *unusedp, u32_
 	}
 
 	return setxreg(CFG_TABLE_CORECFG_BASE, CORECFG_STRIDE_PREFETCHER_BASE + offset, val);
+}
+
+u32_t H2K_trap_hwconfig_set_hmx_power_on_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
+#if ARCHV >= 68
+	H2K_gp->hmx_rsc_seq_power_on_start_addr = addr;
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_set_hmx_power_off_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
+#if ARCHV >= 68
+	H2K_gp->hmx_rsc_seq_power_off_start_addr = addr;
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_gpio_toggle(u32_t unused, void *unusedp, u32_t on, u32_t unused3, H2K_thread_context *me) {
+#if ARCHV >= 68
+	if (0 == H2K_gp->gpio_reg) return -1;  // not set
+	
+	u32_t volatile *reg = (u32_t *)GPIO_VA;
+	u32_t val = ((*reg) & ~(0x3c)) | 0x200;
+
+	*reg = val;
+	if (on) {
+		*(reg + 0x1) = 0x2;
+	} else {
+		*(reg + 0x1) = 0x0;
+	}
+	return 0;
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_set_gpio_addr(u32_t unused, void *unusedp, u32_t addr_hi, u32_t addr_lo, H2K_thread_context *me) {
+#if ARCHV >= 68
+	H2K_mem_tlbfmt_t entry;
+
+	H2K_gp->gpio_reg = ((pa_t)addr_hi) << 32 | addr_lo;
+
+	entry.raw = 0;
+	entry.ppd = ((H2K_gp->gpio_reg & GPIO_PG_MASK ) >> (PAGE_BITS - 1)) | (1 << GPIO_PG_SIZE);
+	entry.pa35 = (H2K_gp->gpio_reg >> 35) & 0x1;
+#if ARCHV >= 73
+	entry.pa3637 = (H2K_gp->gpio_reg >> 36) & 0x3;
+#endif
+	entry.cccc = DEVICE_TYPE;
+	entry.xwru = 0;  // only monitor access
+	entry.vpn = (GPIO_VA >> PAGE_BITS);
+	// entry.asid = don't care
+	entry.global = 1;
+	entry.valid = 1;
+	return H2K_tlb_tlbop(TLBOP_TLBALLOC, 0, entry.raw, me);
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_l2cp(u32_t unused, void *unusedp, u32_t configval, u32_t unused3, H2K_thread_context *me) {
+	/* SSR/CCR gets saved/restored at trap time.  If that changes to switch
+	 * time, modify SSR/CCR directly. */
+	me->ccr = Q6_R_insert_RII(me->ccr, configval, CCR_L2CP_NBITS, CCR_L2CP_BITS);
+	return 0;
 }

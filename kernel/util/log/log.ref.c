@@ -134,7 +134,7 @@ u32_t num(u64_t n, u32_t base, u32_t width, u32_t neg) {
 	*(--p) = '\0';
 
 	do {
-		*(--p) = ((n % base) >= 10 ? 'a' + (n % base) - 10 : '0' + (n % base));
+		*(--p) = ((n % base) >= 10 ? 'a' + (u8_t)(n % base) - 10 : '0' + (u8_t)(n % base));
 		n /= base;
 		len++;
 	 } while (0 < n);

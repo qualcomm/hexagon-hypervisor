@@ -3,9 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifdef SYS_WRITE_BUF
 #define WRITE_BUFSIZE (1024*8)
 char H2_ANGEL_write_buf[WRITE_BUFSIZE] __attribute__((aligned(64))) = { 0 };
 unsigned int H2_ANGEL_write_buf_idx = 0;
 const unsigned int H2_ANGEL_write_buf_size = WRITE_BUFSIZE;
-#endif

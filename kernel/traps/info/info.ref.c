@@ -151,6 +151,15 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		} else {
 			return 0;
 		}
+
+	case INFO_L1D_SIZE:
+		if (CORE_V68 <= H2K_gp->arch) {
+			return H2K_cfg_table(CFG_TABLE_L1D_SZ)*1024;
+		} else if ((0 < H2K_gp->hvx_contexts) && (CORE_V65 <= H2K_gp->arch)) {
+			return LIMIT_L1D_SZ*1024;
+		} else {
+			return 0;
+		}
 #endif
 
 	default:

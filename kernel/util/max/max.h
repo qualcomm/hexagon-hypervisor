@@ -347,6 +347,9 @@
 #define EXT_HVX_MAX_VLENGTH 128  // bytes
 #define MAX_HVX_PER_CLUSTER 2
 
+#define LIMIT_L1D_SZ 16 // (value in kilobytes) fallback for old cores that don't have this in cfg_table
+#define LIMIT_L1I_SZ 16 // (value in kilobytes) fallback for old cores that don't have this in cfg_table
+
 #define ECCREGS_PROT_ENABLE_0 0x0
 #define ECCREGS_PROT_ENABLE_1 0x100
 #define ECCREGS_PROT_ENABLE_2 0x200

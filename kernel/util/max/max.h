@@ -345,7 +345,7 @@
 #define EXT_HVX_VTCM_OFFSET 0x200000
 #define EXT_HVX_VTCM_SIZE 256
 #define EXT_HVX_MAX_VLENGTH 128  // bytes
-#define MAX_HVX_PER_CLUSTER 2
+#define MAX_HVX_PER_CLUSTER 3
 
 #define LIMIT_L1D_SZ 16 // (value in kilobytes) fallback for old cores that don't have this in cfg_table
 #define LIMIT_L1I_SZ 16 // (value in kilobytes) fallback for old cores that don't have this in cfg_table

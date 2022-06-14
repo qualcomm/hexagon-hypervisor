@@ -17,10 +17,9 @@
 #include <h2_hwconfig.h>
 #include <hexagon_protos.h>
 
-enum {
-	H2_VECACCESS_EXT_SILVER = 3,
-	H2_VECACCESS_EXT_HVX = 4
-};
+/* both start at ssr:xa == 0 */
+#define H2_VECACCESS_EXT_SILVER 0
+#define H2_VECACCESS_EXT_HVX 0
 
 enum {
 	H2_VECACCESS_VLENGTH_MIN,

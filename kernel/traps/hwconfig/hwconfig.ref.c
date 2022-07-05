@@ -172,14 +172,14 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, (ecc_enable ? 0xa : 0x5));  // vtcm
 		}
 
-	} else if (use_wb && !cur_wb) {
+	}
+	if (use_wb && !cur_wb) {
 		syscfg |= SYSCFG_L2WB;
 
 	} else if (!use_wb && cur_wb) {
 		/* Just leave WB mode */
 		/* Clean entire cache */
 #if ARCHV >= 60
-		/* EJP: FIXME: in ARCHV >= 60 H2K_cache_l2_cleaninv() should just be H2K_l2gclenainv() */
 		H2K_l2gcleaninv();
 #else
 		H2K_cache_l2_cleaninv();
@@ -211,7 +211,7 @@ u32_t H2K_trap_hwconfig_ecc(u32_t unused, void *unusedp, u32_t ecc_enable, u32_t
 
 	syscfg = H2K_get_syscfg();
 	/* size and use_wb unchanged */
-	return H2K_trap_do_hwconfig_l2cache(unused, ecc_enable, (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, syscfg & SYSCFG_L2WB, me);
+	return H2K_trap_do_hwconfig_l2cache(unused, ecc_enable, (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, (syscfg & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT, me);
 }
 
 u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)

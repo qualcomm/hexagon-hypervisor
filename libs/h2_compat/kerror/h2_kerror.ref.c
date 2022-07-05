@@ -14,5 +14,6 @@ const char *kerror_msg[] = {
 	[KERROR_HWCONFIG_L2REG_RANGE] = "L2 get/set reg: offset out of range",
 	[KERROR_HWCONFIG_CLADEREG_RANGE] = "CLADE get/set reg: offset out of range",
 	[KERROR_SETUP_NUM_HTHREADS] = "NUM_HTHREADS too large",
-	[KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE] = "Stride prefetcher get/set reg: offset out of range"
+	[KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE] = "Stride prefetcher get/set reg: offset out of range",
+	[KERROR_HWCONFIG_ECCREG_RANGE] = "ECC get/set reg: offset out of range"
 };

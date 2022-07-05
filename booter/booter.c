@@ -1377,11 +1377,15 @@ void print_infos() {
 
 void kernel_setup() {
 
-	int val;
+	int val, offset;
 
 	if (ecc_enable != -1) {
 		if (h2_hwconfig_ecc(ecc_enable) < 0) {
 			FAIL("ECC enable", "");
+		}
+		BOOTER_PRINTF("ECC regs:\n");
+		for (offset = ECCREGS_PROT_ENABLE_0; offset <= ECCREGS_MAX; offset += 0x100) {
+			BOOTER_PRINTF("\toffset 0x%03x: 0x%08x\n", offset, h2_hwconfig_ecc_get_reg(offset));
 		}
 	}
 

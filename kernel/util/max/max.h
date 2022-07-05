@@ -350,11 +350,6 @@
 #define LIMIT_L1D_SZ 16 // (value in kilobytes) fallback for old cores that don't have this in cfg_table
 #define LIMIT_L1I_SZ 16 // (value in kilobytes) fallback for old cores that don't have this in cfg_table
 
-#define ECCREGS_PROT_ENABLE_0 0x0
-#define ECCREGS_PROT_ENABLE_1 0x100
-#define ECCREGS_PROT_ENABLE_2 0x200
-#define ECCREGS_PROT_ENABLE_3 0x300
-
 #define L2REGS_COPROC_EGY_CFG             0x28
 #define L2REGS_COPROC_EGY_CFG_DEFAULT_V62 0xc3e03ff5
 #define L2REGS_COPROC_EGY_WEIGHTS         0x2c

@@ -353,6 +353,18 @@ static inline int h2_hwconfig_l2cp(unsigned int l2cp_cfg)
 	return h2_hwconfig_trap(HWCONFIG_L2CP, NULL, l2cp_cfg, 0);
 }
 
+/**
+Get ECC register.
+@param[in] offset  Offset from ECC register base
+@returns register value or 0 on failure -- check kerror
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_ecc_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETECCREG, NULL, offset, 0);
+}
+
 #endif
 
 /** @} */

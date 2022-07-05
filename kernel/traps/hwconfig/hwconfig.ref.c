@@ -121,8 +121,6 @@ static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
 
 u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u32_t use_wb, H2K_thread_context *me)
 {
-	u32_t cur_size;
-	u32_t cur_wb;
 	u32_t cur_nwa;
 	u32_t cur_nra;
 	u32_t syscfg;
@@ -130,8 +128,6 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 
 	/* Don't need to lock here since we only proceed in ST mode */
 	syscfg = H2K_get_syscfg();
-	cur_size = (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS;
-	cur_wb = syscfg & SYSCFG_L2WB;
 	cur_nwa = syscfg & SYSCFG_L2NWA;
 	cur_nra = syscfg & SYSCFG_L2NRA;
 	size &= 0x7;
@@ -140,58 +136,40 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 	/* ST Mode */
 	if (H2K_stmode_begin() != 0) return -1;
 
-	if ((size != cur_size) || (ecc_enable != H2K_gp->ecc_enable)) {
-		/* write-through, no write-alloc, no read-alloc */
-		syscfg &= ~SYSCFG_L2WB;
-		syscfg &= ~SYSCFG_L2NWA;
-		syscfg &= ~SYSCFG_L2NRA;
-		H2K_set_syscfg(syscfg);
-		H2K_gp->syscfg_val = syscfg;
-		H2K_syncht();
+	/* write-through, no write-alloc, no read-alloc */
+	syscfg &= ~SYSCFG_L2WB;
+	syscfg &= ~SYSCFG_L2NWA;
+	syscfg &= ~SYSCFG_L2NRA;
+	H2K_set_syscfg(syscfg);
+	H2K_syncht();
 
-		/* Clean entire cache */
+	/* Clean entire cache */
 #if ARCHV >= 60
-		H2K_l2gcleaninv();
+	H2K_l2gcleaninv();
 #else
-		H2K_cache_l2_cleaninv();
+	H2K_cache_l2_cleaninv();
 #endif
 
-		/* Set to 0 size */
-		syscfg &= ~SYSCFG_L2CFG;
-		H2K_set_syscfg(syscfg);
-		H2K_gp->syscfg_val = syscfg;
-		H2K_l2kill();
-		H2K_isync();
-		/* Update size, mode */
-		syscfg |= ((size << SYSCFG_L2CFG_BITS) | (use_wb ? SYSCFG_L2WB : 0));
-		syscfg |= cur_wb | cur_nwa | cur_nra;
+	/* Set to 0 size */
+	syscfg &= ~SYSCFG_L2CFG;
+	H2K_set_syscfg(syscfg);
+	H2K_l2kill();
+	H2K_isync();
 
-		/* ECC */
-		if (ecc_enable != H2K_gp->ecc_enable) {
-			//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));  // l1i
-			//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));  // l1d
-			tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2);
-			tmp = Q6_R_insert_RII(tmp, (ecc_enable ? 0xa : 0x5), 4, 0);
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, tmp);  // l2
-			tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3);
-			tmp = Q6_R_insert_RII(tmp, (ecc_enable ? 0xa : 0x5), 4, 0);
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, tmp);  // vtcm
-		}
-
-	}
-	if (use_wb && !cur_wb) {
-		syscfg |= SYSCFG_L2WB;
-
-	} else if (!use_wb && cur_wb) {
-		/* Just leave WB mode */
-		/* Clean entire cache */
-#if ARCHV >= 60
-		H2K_l2gcleaninv();
-#else
-		H2K_cache_l2_cleaninv();
-#endif
-		/* Disable WB mode on L2$ */
-		syscfg &= ~SYSCFG_L2WB;
+	syscfg |= size << SYSCFG_L2CFG_BITS;
+	syscfg |= use_wb << SYSCFG_L2WB_BIT;
+	syscfg |= cur_nwa | cur_nra;
+	
+	/* ECC */
+	if (ecc_enable != H2K_gp->ecc_enable) {
+		//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));  // l1i
+		//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));  // l1d
+		tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2);
+		tmp = Q6_R_insert_RII(tmp, (ecc_enable ? 0xa : 0x5), 4, 0);
+		setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, tmp);  // l2
+		tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3);
+		tmp = Q6_R_insert_RII(tmp, (ecc_enable ? 0xa : 0x5), 4, 0);
+		setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, tmp);  // vtcm
 	}
 
 	H2K_syncht();

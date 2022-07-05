@@ -121,7 +121,7 @@ int main()
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
 	if (cur_size != 1) FAIL("Invalid cache size");
-	if (cur_wb != 0) FAIL("Invalid mode");
+	if (cur_wb != 0) FAIL("Invalid mode 1");
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,1,1,&a);
@@ -130,7 +130,7 @@ int main()
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
 	if (cur_size != 1) FAIL("Invalid cache size");
-	if (cur_wb != 1) FAIL("Invalid mode");
+	if (cur_wb != 1) FAIL("Invalid mode 2");
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,1,0,&a);
@@ -143,7 +143,7 @@ int main()
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
 	if (cur_size != 1) FAIL("Invalid cache size");
-	if (cur_wb != 0) FAIL("Invalid mode");
+	if (cur_wb != 0) FAIL("Invalid mode 3");
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,2,1,&a);
@@ -153,7 +153,7 @@ int main()
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
 	if (cur_size != 2) FAIL("Invalid cache size 1");
-	if (cur_wb != 1) FAIL("Invalid mode");
+	if (cur_wb != 1) FAIL("Invalid mode 4");
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,2,1,&a);
@@ -162,7 +162,7 @@ int main()
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
 	if (cur_size != 2) FAIL("Invalid cache size 2");
-	if (cur_wb != 1) FAIL("Invalid mode");
+	if (cur_wb != 1) FAIL("Invalid mode 5");
 
 	TH_saw_l2_cleaninv = 0;
 	H2K_trap_hwconfig(0,NULL,3,1,&a);
@@ -175,7 +175,7 @@ int main()
 	cur_size = (syscfg >> 16) & 0x7;
 	cur_wb = (syscfg >> 23) & 1;
 	if (cur_size != 3) FAIL("Invalid cache size 3");
-	if (cur_wb != 1) FAIL("Invalid mode");
+	if (cur_wb != 1) FAIL("Invalid mode 6");
 
 	/* Check for partitioning */
 	for (i = 0; i < 4; i++) {

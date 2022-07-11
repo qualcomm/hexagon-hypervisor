@@ -119,6 +119,7 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(cluster_hthreads);
 	PRINT_KG_OFFSET(cluster_mask);
 	PRINT_KG_OFFSET(cluster_sched);
+	PRINT_KG_OFFSET(hvx_max);
 #endif
 
 #ifdef CRASH_DEBUG

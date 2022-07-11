@@ -160,6 +160,13 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		} else {
 			return 0;
 		}
+	case INFO_MAX_CLUSTER_HVX:
+#ifdef CLUSTER_SCHED
+		return H2K_gp->hvx_max;
+#else
+		return H2K_gp->hvx_contexts;
+#endif
+
 #endif
 
 	default:

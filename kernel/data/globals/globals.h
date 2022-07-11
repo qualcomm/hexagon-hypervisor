@@ -104,6 +104,7 @@ typedef struct {
 	u32_t cluster_hthreads;  // hardware threads per cluster
 	u32_t cluster_mask[2];   // bitmask of threads in cluster
 	u32_t cluster_sched;     // do cluster scheduling?
+	u32_t hvx_max;           // max hvx threads per cluster
 #endif
 
 	union {

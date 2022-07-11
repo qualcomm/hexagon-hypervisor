@@ -49,7 +49,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
 		H2K_kg.cluster_mask[0] = 0xffff >> (16 - H2K_kg.cluster_hthreads);
 		H2K_kg.cluster_mask[1] = (u32_t)((0xffff >> (16 - H2K_kg.cluster_hthreads)) << H2K_kg.cluster_hthreads);
-		H2K_kg.hvx_max = H2K_kg.hvx_contexts >> 1;
 #endif	 
 	} else {
 		switch(H2K_kg.arch) {
@@ -90,6 +89,9 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		}
 		H2K_kg.hvx_contexts = EXT_HVX_CONTEXTS;
 	}
+#ifdef CLUSTER_SCHED
+	H2K_kg.hvx_max = H2K_kg.hvx_contexts >> 1;
+#endif	
 	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
 
 	if (have_hvx) {

@@ -189,7 +189,11 @@ int main()
 	H2K_gp->cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
 	H2K_gp->cluster_mask[0] = (u32_t)(0xffff >> (16 - H2K_gp->cluster_hthreads));
 	H2K_gp->cluster_mask[1] = (u32_t)((0xffff >> (16 - H2K_gp->cluster_hthreads)) << H2K_gp->cluster_hthreads);
+#if ARCHV > 65
 	H2K_gp->hvx_contexts = H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS);
+#else
+	H2K_gp->hvx_contexts = EXT_HVX_CONTEXTS;
+#endif	
 	H2K_gp->hvx_max = H2K_gp->hvx_contexts >> 1;
 
 	// case where cluster has xe set for all its hthreads, and register sse xe clr,

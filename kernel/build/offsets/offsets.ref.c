@@ -86,6 +86,9 @@ int main(int argc, char **argv)
 #if ARCHV >= 68
 	PRINT_CONTEXT_OFFSET(dm0);
 #endif
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	PRINT_CONTEXT_OFFSET(vwctrl);
+#endif
 	fprintf(outfile, "#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
 #ifdef DO_EXT_SWITCH
 	fprintf(outfile, "#define EXT_CONTEXT_SIZE %d\n",sizeof(H2K_ext_context));

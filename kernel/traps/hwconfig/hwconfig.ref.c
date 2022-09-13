@@ -58,7 +58,9 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_gpio_toggle,
 	H2K_trap_hwconfig_set_gpio_addr,
 	H2K_trap_hwconfig_l2cp,
-	H2K_trap_hwconfig_geteccreg
+	H2K_trap_hwconfig_geteccreg,
+	H2K_trap_hwconfig_getvwctrl,
+	H2K_trap_hwconfig_setvwctrl
 };
 
 typedef struct {
@@ -654,3 +656,32 @@ u32_t H2K_trap_hwconfig_geteccreg(u32_t unused, void *unusedp, u32_t offset, u32
 
 	return getxreg(CFG_TABLE_ECC_BASE, offset);
 }
+
+u32_t H2K_trap_hwconfig_getvwctrl(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) {
+
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	if (0x79 <= H2K_gp->arch) {
+		return H2K_get_vwctrl();
+	} else {
+		return -1;
+	}
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_setvwctrl(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) {
+
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	if (0x79 <= H2K_gp->arch) {
+		me->vwctrl = val;
+		H2K_set_vwctrl(val);
+		return 0;
+	} else {
+		return -1;
+	}
+#else
+	return -1;
+#endif
+}
+

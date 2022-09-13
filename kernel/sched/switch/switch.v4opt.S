@@ -36,6 +36,7 @@
 #define NOW r19:18
 #define NOW_LO r18
 #define DM0 r26
+#define VWCTRL r25
 
 FUNC_START H2K_switch .text.core.switch .p2align 5
 /* EJP: seems like trace is commented out... maybe need to add trace... */
@@ -101,10 +102,18 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		memd(SRC+#CONTEXT_pktcount) = r1:0
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+		VWCTRL = s12
+#endif
 	}
 #if	ARCHV >= 68
-		DM0 = dmpause
+	DM0 = dmpause
+	{
 		memw(SRC + #CONTEXT_dm0) = DM0
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+		memw(SRC + #CONTEXT_vwctrl) = VWCTRL
+		#endif
+	}
 #endif
 	{
 #ifdef DO_EXT_SWITCH
@@ -287,9 +296,15 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #if ARCHV >= 68
 		DM0 = memw(DST + #CONTEXT_dm0)
 #endif
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+		VWCTRL = memw(DST + #CONTEXT_vwctrl)
+#endif
 	}
 #if ARCHV >= 68
 	dmresume(DM0)
+#endif
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	s12 = VWCTRL
 #endif
 	{
 		P_VMWORK = tstbit(VMSTATUS,#H2K_VMSTATUS_VMWORK_BIT)
@@ -304,6 +319,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #undef ENTRIES
 #undef BUFADDR
 #undef ENTRIES_BUFADDR
+#undef DM0
+#undef VWCTRL
 
 	{
 		r23:22 = memd(DST+#CONTEXT_cs1cs0)

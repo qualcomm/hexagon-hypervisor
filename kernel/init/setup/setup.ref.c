@@ -137,6 +137,9 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	boot->gpugp = BOOT_THREAD_GPUGP;
 	boot->usr = BOOT_THREAD_USR;
 	boot->ssr = (BOOT_THREAD_SSR);
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	boot->vwctrl = H2K_get_vwctrl();
+#endif
 	boot->elr = ((u32_t)(__bootvm_entry) - boot_off);
 	boot->r0100 = 0;
 	boot->ccr = BOOT_THREAD_CCR;

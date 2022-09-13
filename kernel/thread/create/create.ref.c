@@ -72,6 +72,9 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->gp = H2K_get_gp();
 	tmp->usr = me->usr;
 	tmp->ssr = me->ssr;
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	tmp->vwctrl = me->vwctrl;
+#endif
 	tmp->elr = pc;
 	tmp->r29 = sp;
 	tmp->r0100 = arg1;

@@ -102,7 +102,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = dmpause
 	memw(r0 + #CONTEXT_dm0) = r14
 #endif
-
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	r14 = s12
+	memw(r0 + #CONTEXT_vwctrl) = r14
+#endif
 #ifdef DO_EXT_SWITCH
 
 	// check if ext needs saving, and mark as saved
@@ -224,7 +227,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = memw(r1 + #CONTEXT_dm0)
 	dmresume(r14)
 #endif
-
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	r14 = memw(r1+ #CONTEXT_vwctrl)
+	s12 = r14
+#endif
 #if ARCHV >= 4
 	r15:14 = memd(r1+#CONTEXT_ccrssr)
 	r21:20 = memd(r1+#CONTEXT_cs1cs0)

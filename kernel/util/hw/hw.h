@@ -209,6 +209,18 @@ static inline void H2K_set_rgdr(u32_t val)
 	asm volatile (" s60 = %0 // set rgdr" : : "r"(val));
 }
 
+static inline u32_t H2K_get_vwctrl()
+{
+	u32_t ret;
+	asm volatile (" %0 = s12 // get vwctrl" : "=r"(ret));
+	return ret;
+}
+
+static inline void H2K_set_vwctrl(u32_t val)
+{
+	asm volatile (" s12 = %0 // set vwctrl" : : "r"(val));
+}
+
 static inline void H2K_clear_gie()
 {
 	u32_t scratch;

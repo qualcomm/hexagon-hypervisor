@@ -365,6 +365,27 @@ static inline int h2_hwconfig_ecc_get_reg(unsigned int offset)
 	return h2_hwconfig_trap(HWCONFIG_GETECCREG, NULL, offset, 0);
 }
 
+/**
+Get VWCTRL register
+@returns register value or -1 on error
+@dependencies none
+*/
+static inline int h2_hwconfig_vwctrl_get(void) {
+
+	return h2_hwconfig_trap(HWCONFIG_GETVWCTRL, NULL, 0, 0);
+}
+
+/**
+Set VWCTRL register
+@param[in] value  Value
+@returns 0, negative value on error
+@dependencies none
+*/
+static inline int h2_hwconfig_vwctrl_set(unsigned int val) {
+
+	return h2_hwconfig_trap(HWCONFIG_SETVWCTRL, NULL, val, 0);
+}
+
 #endif
 
 /** @} */

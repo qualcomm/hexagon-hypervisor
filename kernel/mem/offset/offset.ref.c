@@ -25,9 +25,9 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 		out = H2K_translate(in,vmblock->guestmap);
 	}	else {
 		out = in;
-	}
-	if ((out.pn < vmblock->fence_lo) || (out.pn >= ((vmblock->fence_hi) + (0x1 << (out.size * 2))))) {
-		out.raw = 0;
+		if ((out.pn < vmblock->fence_lo) || (out.pn >= ((vmblock->fence_hi) + (0x1 << (out.size * 2))))) {
+			out.raw = 0;
+		}
 	}
 	return out;
 }

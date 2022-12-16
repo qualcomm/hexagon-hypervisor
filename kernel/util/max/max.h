@@ -348,7 +348,8 @@
 
 #define CFG_TABLE_CORECFG_PRESENT 0xd4
 
-#define CFG_TABLE_COPROC_TYPE_HVX 1
+#define CFG_TABLE_COPROC_TYPE_HVX_MASK 0x1
+
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_BANK_WIDTH 16  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_OFFSET 0x200000

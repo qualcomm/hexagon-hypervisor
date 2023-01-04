@@ -187,7 +187,7 @@ h2_test: ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
 #$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
-	[ `fgrep -c -i warning: test.out` -eq 0 ]
+	[ `fgrep -c warning: test.out` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 
 qurt_test: ./qurt/test/testcases

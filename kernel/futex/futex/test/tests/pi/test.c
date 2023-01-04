@@ -216,6 +216,14 @@ int main(int argc, char **argv)
 	spawn_spinner(13,16);
 	spawn_spinner(14,16);
 	spawn_spinner(15,16);
+	spawn_spinner(16,16);
+	spawn_spinner(17,16);
+	spawn_spinner(18,16);
+	spawn_spinner(19,16);
+	spawn_spinner(20,16);
+	spawn_spinner(21,16);
+	spawn_spinner(22,16);
+	spawn_spinner(23,16);
 
 	info("Middle Spinners Launched\n");
 

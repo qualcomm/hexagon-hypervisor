@@ -79,8 +79,8 @@ KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion
 DEVSIM := archsim
 ELFCOPY := hexagon-llvm-objcopy
-
-else # latest
+else
+ifeq (73, $(ARCHV))
 TOOLS_FLAVOR ?= 8.6
 TOOLS_FLAVOR_KERNEL ?= 8.6
 ARCH_FLAVOR ?= v73_stable
@@ -88,6 +88,17 @@ KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion
 DEVSIM := archsim
 ELFCOPY := hexagon-llvm-objcopy
+
+else # latest
+TOOLS_FLAVOR ?= v81_stable
+TOOLS_FLAVOR_KERNEL ?= v81_stable
+ARCH_FLAVOR ?= v81_stable
+KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
+LIB_CFLAGS += -Wimplicit-int-conversion
+DEVSIM := archsim
+ELFCOPY := hexagon-llvm-objcopy
+
+endif
 endif
 endif
 endif

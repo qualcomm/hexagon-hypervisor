@@ -189,6 +189,12 @@ int main()
 	H2K_gp->cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
 	H2K_gp->cluster_mask[0] = (u32_t)(0xffff >> (16 - H2K_gp->cluster_hthreads));
 	H2K_gp->cluster_mask[1] = (u32_t)((0xffff >> (16 - H2K_gp->cluster_hthreads)) << H2K_gp->cluster_hthreads);
+#if ARCHV > 65
+	H2K_gp->hvx_contexts = H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS);
+#else
+	H2K_gp->hvx_contexts = EXT_HVX_CONTEXTS;
+#endif	
+	H2K_gp->hvx_max = H2K_gp->hvx_contexts >> 1;
 
 	// case where cluster has xe set for all its hthreads, and register sse xe clr,
 	// and td(i) inserted has td xe set, and td(ii) inserted has td xe clr (both td with same prio),
@@ -197,7 +203,7 @@ int main()
 	// (skipping htheads with xe set as that would bump up total xe hthreads per cluster past limit,
 	// then searching in other cluster and signaling for resched interrupt to eligible hthread seen)
 	H2K_ready_REG_SSR_XE_CLEAR_TB(); // clr xe for ssr reg
-	hthreadmask = H2K_ready_create_hthreadmask_TB(0, MAX_HVX_PER_CLUSTER-1); // init hthreadmask
+	hthreadmask = H2K_ready_create_hthreadmask_TB(0, H2K_gp->hvx_max - 1); // init hthreadmask
 	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask); // set cluster xe for all its hthreads via hthreadmask
 	H2K_ready_THREAD_XE_SET_TB(&a); // set xe for td(i)
 	H2K_ready_THREAD_XE_CLEAR_TB(&b); // clr xe for td(ii)
@@ -214,7 +220,7 @@ int main()
 	H2K_ready_REG_SSR_XE_CLEAR_TB(); // clr xe for ssr reg
 	hthreadmask = H2K_ready_create_hthreadmask_TB(0, 0); // init hthreadmask
 	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask); // set cluster xe for its hthread0 via hthreadmask
-	hthreadmask = H2K_ready_create_hthreadmask_TB(1, MAX_HVX_PER_CLUSTER-1); // init hthreadmask
+	hthreadmask = H2K_ready_create_hthreadmask_TB(1, H2K_gp->hvx_max - 1); // init hthreadmask
 	H2K_ready_CLUSTER_XE_CLEAR_TB(hthreadmask);// clr cluster xe for its nonhthread0 via hthreadmask
 	H2K_ready_THREAD_XE_CLEAR_TB(&a); // clr xe for td(i)
 	H2K_ready_THREAD_XE_SET_TB(&b); // set xe for td(ii)
@@ -231,7 +237,7 @@ int main()
 	H2K_ready_REG_SSR_XE_SET_TB(); // set xe for ssr reg
 	hthreadmask = H2K_ready_create_hthreadmask_TB(0, 0); // init hthreadmask
 	H2K_ready_CLUSTER_XE_SET_TB(hthreadmask); // set cluster xe for its hthread0 via hthreadmask
-	hthreadmask = H2K_ready_create_hthreadmask_TB(1, MAX_HVX_PER_CLUSTER-1); // init hthreadmask
+	hthreadmask = H2K_ready_create_hthreadmask_TB(1, H2K_gp->hvx_max - 1); // init hthreadmask
 	H2K_ready_CLUSTER_XE_CLEAR_TB(hthreadmask);// clr cluster xe for its nonhthread0 via hthreadmask
 	H2K_ready_THREAD_XE_SET_TB(&a); // set xe for td(i)
 	H2K_ready_THREAD_XE_CLEAR_TB(&b); // clr xe for td(ii)

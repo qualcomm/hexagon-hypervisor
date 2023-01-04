@@ -57,7 +57,10 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_set_hmx_power_off_start_addr,
 	H2K_trap_hwconfig_gpio_toggle,
 	H2K_trap_hwconfig_set_gpio_addr,
-	H2K_trap_hwconfig_l2cp
+	H2K_trap_hwconfig_l2cp,
+	H2K_trap_hwconfig_geteccreg,
+	H2K_trap_hwconfig_getvwctrl,
+	H2K_trap_hwconfig_setvwctrl
 };
 
 typedef struct {
@@ -120,16 +123,13 @@ static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
 
 u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u32_t use_wb, H2K_thread_context *me)
 {
-	u32_t cur_size;
-	u32_t cur_wb;
 	u32_t cur_nwa;
 	u32_t cur_nra;
 	u32_t syscfg;
+	u32_t tmp;
 
 	/* Don't need to lock here since we only proceed in ST mode */
 	syscfg = H2K_get_syscfg();
-	cur_size = (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS;
-	cur_wb = syscfg & SYSCFG_L2WB;
 	cur_nwa = syscfg & SYSCFG_L2NWA;
 	cur_nra = syscfg & SYSCFG_L2NRA;
 	size &= 0x7;
@@ -138,54 +138,40 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 	/* ST Mode */
 	if (H2K_stmode_begin() != 0) return -1;
 
-	if ((size != cur_size) || (ecc_enable != H2K_gp->ecc_enable)) {
-		/* write-through, no write-alloc, no read-alloc */
-		syscfg &= ~SYSCFG_L2WB;
-		syscfg &= ~SYSCFG_L2NWA;
-		syscfg &= ~SYSCFG_L2NRA;
-		H2K_set_syscfg(syscfg);
-		H2K_gp->syscfg_val = syscfg;
-		H2K_syncht();
+	/* write-through, no write-alloc, no read-alloc */
+	syscfg &= ~SYSCFG_L2WB;
+	syscfg &= ~SYSCFG_L2NWA;
+	syscfg &= ~SYSCFG_L2NRA;
+	H2K_set_syscfg(syscfg);
+	H2K_syncht();
 
-		/* Clean entire cache */
+	/* Clean entire cache */
 #if ARCHV >= 60
-		H2K_l2gcleaninv();
+	H2K_l2gcleaninv();
 #else
-		H2K_cache_l2_cleaninv();
+	H2K_cache_l2_cleaninv();
 #endif
 
-		/* Set to 0 size */
-		syscfg &= ~SYSCFG_L2CFG;
-		H2K_set_syscfg(syscfg);
-		H2K_gp->syscfg_val = syscfg;
-		H2K_l2kill();
-		H2K_isync();
-		/* Update size, mode */
-		syscfg |= ((size << SYSCFG_L2CFG_BITS) | (use_wb ? SYSCFG_L2WB : 0));
-		syscfg |= cur_wb | cur_nwa | cur_nra;
+	/* Set to 0 size */
+	syscfg &= ~SYSCFG_L2CFG;
+	H2K_set_syscfg(syscfg);
+	H2K_l2kill();
+	H2K_isync();
 
-		/* ECC */
-		if (ecc_enable != H2K_gp->ecc_enable) {
-			//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));  // l1i
-			//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));  // l1d
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, (ecc_enable ? 0xa : 0x5));  // l2
-			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, (ecc_enable ? 0xa : 0x5));  // vtcm
-		}
-
-	} else if (use_wb && !cur_wb) {
-		syscfg |= SYSCFG_L2WB;
-
-	} else if (!use_wb && cur_wb) {
-		/* Just leave WB mode */
-		/* Clean entire cache */
-#if ARCHV >= 60
-		/* EJP: FIXME: in ARCHV >= 60 H2K_cache_l2_cleaninv() should just be H2K_l2gclenainv() */
-		H2K_l2gcleaninv();
-#else
-		H2K_cache_l2_cleaninv();
-#endif
-		/* Disable WB mode on L2$ */
-		syscfg &= ~SYSCFG_L2WB;
+	syscfg |= size << SYSCFG_L2CFG_BITS;
+	syscfg |= use_wb << SYSCFG_L2WB_BIT;
+	syscfg |= cur_nwa | cur_nra;
+	
+	/* ECC */
+	if (ecc_enable != H2K_gp->ecc_enable) {
+		//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));  // l1i
+		//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));  // l1d
+		tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2);
+		tmp = Q6_R_insert_RII(tmp, (ecc_enable ? 0xa : 0x5), 4, 0);
+		setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, tmp);  // l2
+		tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3);
+		tmp = Q6_R_insert_RII(tmp, (ecc_enable ? 0xa : 0x5), 4, 0);
+		setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, tmp);  // vtcm
 	}
 
 	H2K_syncht();
@@ -211,7 +197,7 @@ u32_t H2K_trap_hwconfig_ecc(u32_t unused, void *unusedp, u32_t ecc_enable, u32_t
 
 	syscfg = H2K_get_syscfg();
 	/* size and use_wb unchanged */
-	return H2K_trap_do_hwconfig_l2cache(unused, ecc_enable, (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, syscfg & SYSCFG_L2WB, me);
+	return H2K_trap_do_hwconfig_l2cache(unused, ecc_enable, (syscfg & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, (syscfg & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT, me);
 }
 
 u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache, u32_t configval, H2K_thread_context *me)
@@ -275,7 +261,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 		u32_t cluster = H2K_hthread_cluster(me->hthread);
 		BKL_LOCK();
 		if (xe && !(me->ssr & SSR_XE_BIT_MASK)) {  // turning xe on
-			if (XE_SET_COUNT(cluster) < MAX_HVX_PER_CLUSTER) {
+			if (XE_SET_COUNT(cluster) < H2K_gp->hvx_max) {
 				XE_SET_SET(cluster, me->hthread);
 				H2K_log("extbits: hthread %d  cluster %d  xe_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe_set[cluster]);
 			} else {  // block as if we got resched interrupt
@@ -661,3 +647,41 @@ u32_t H2K_trap_hwconfig_l2cp(u32_t unused, void *unusedp, u32_t configval, u32_t
 	me->ccr = Q6_R_insert_RII(me->ccr, configval, CCR_L2CP_NBITS, CCR_L2CP_BITS);
 	return 0;
 }
+
+u32_t H2K_trap_hwconfig_geteccreg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
+	if (offset > ECCREGS_MAX) {  // out of range
+		H2K_gp->kernel_error = KERROR_HWCONFIG_ECCREG_RANGE;
+		return 0;
+	}
+
+	return getxreg(CFG_TABLE_ECC_BASE, offset);
+}
+
+u32_t H2K_trap_hwconfig_getvwctrl(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) {
+
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	if (0x79 <= H2K_gp->arch) {
+		return H2K_get_vwctrl();
+	} else {
+		return -1;
+	}
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_setvwctrl(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) {
+
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	if (0x79 <= H2K_gp->arch) {
+		me->vwctrl = val;
+		H2K_set_vwctrl(val);
+		return 0;
+	} else {
+		return -1;
+	}
+#else
+	return -1;
+#endif
+}
+

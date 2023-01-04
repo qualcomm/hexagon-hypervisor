@@ -238,15 +238,24 @@
 #define SSR_SS_BIT 30
 #endif
 
+#define BITS_MASK(NBITS, START) ((u32_t)(((0x1 << ((NBITS))) - 1) << (START)))
+
 #define SSR_XA_BITS 27
 #define SSR_XA_NBITS 3
-#define SSR_XA_BITS_MASK (((0x1 << (SSR_XA_NBITS)) - 1) << SSR_XA_BITS)
+#define SSR_XA_BITS_MASK BITS_MASK(SSR_XA_NBITS, SSR_XA_BITS)
 #define SSR_XE_BIT 31
-#define SSR_XE_BIT_MASK ((u32_t)(0x1 << SSR_XE_BIT))
+#define SSR_XE_BIT_MASK BITS_MASK(1, SSR_XE_BIT)
 
 #define SSR_XE2_BIT 26
 
 #define SSR_XE2_BIT 26
+
+#define VWCTRL_EN_BIT 31
+#define VWCTRL_HI_BITS 16
+#define VWCTRL_HI_NBITS 12
+#define VWCTRL_HI_BITS_MASK BITS_MASK(VWCTRL_HI_NBITS, VWCTRL_HI_BITS)
+#define VWCTRL_LO_BITS 0
+#define VWCTRL_LO_NBITS 12
 
 #define CCR_L2CP_BITS 6
 #define CCR_L2CP_NBITS 2
@@ -339,18 +348,16 @@
 
 #define CFG_TABLE_CORECFG_PRESENT 0xd4
 
-#define CFG_TABLE_COPROC_TYPE_HVX 1
+#define CFG_TABLE_COPROC_TYPE_HVX_MASK 0x1
+
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_BANK_WIDTH 16  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_OFFSET 0x200000
 #define EXT_HVX_VTCM_SIZE 256
 #define EXT_HVX_MAX_VLENGTH 128  // bytes
-#define MAX_HVX_PER_CLUSTER 2
 
-#define ECCREGS_PROT_ENABLE_0 0x0
-#define ECCREGS_PROT_ENABLE_1 0x100
-#define ECCREGS_PROT_ENABLE_2 0x200
-#define ECCREGS_PROT_ENABLE_3 0x300
+#define LIMIT_L1D_SZ 16 // (value in kilobytes) fallback for old cores that don't have this in cfg_table
+#define LIMIT_L1I_SZ 16 // (value in kilobytes) fallback for old cores that don't have this in cfg_table
 
 #define L2REGS_COPROC_EGY_CFG             0x28
 #define L2REGS_COPROC_EGY_CFG_DEFAULT_V62 0xc3e03ff5

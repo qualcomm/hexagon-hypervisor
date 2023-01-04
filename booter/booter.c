@@ -166,6 +166,9 @@ typedef struct {
 #endif
 	unsigned int num_shared_ints;
 	unsigned int ccr;
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	unsigned int vwctrl;
+#endif
 
 	/* Translation options from cmdline */
 	unsigned int page_size;
@@ -286,6 +289,9 @@ void usage()
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("VM options:\n");
 	BOOTER_PRINTF("  --ccr <int>\n\tSet ccr.\n");
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	BOOTER_PRINTF("  --vwctrl <int>\n\tSet vwctrl.\n");
+#endif
 	BOOTER_PRINTF("  --num_vcpus <int>\n\tMax number of virtual CPUs. Default 32.\n");
 #ifdef HAVE_EXTENSIONS
 	BOOTER_PRINTF("  --use_ext (0|1)\n\tSupport extended contexts.  Default 0.\n");
@@ -339,6 +345,9 @@ void add_vm(unsigned int idx) {
 #endif
 	vm_params[idx].num_shared_ints = 0;
 	vm_params[idx].ccr = ~0L;
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	vm_params[idx].vwctrl = ~0L;
+#endif
 
 	vm_params[idx].page_size = SIZE_16M;
 	vm_params[idx].cccc = L1WB_L2C;
@@ -407,6 +416,9 @@ void clone_vm(unsigned int idx, unsigned int num) {
 #endif
 		vm_params[idx + num].num_shared_ints = vm_params[idx].num_shared_ints;
 		vm_params[idx + num].ccr = ~0L;
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+		vm_params[idx + num].vwctrl = ~0L;
+#endif
 		vm_params[idx + num].page_size = vm_params[idx].page_size;
 		vm_params[idx + num].cccc = vm_params[idx].cccc;
 		vm_params[idx + num].xwru = vm_params[idx].xwru;
@@ -1096,6 +1108,18 @@ void boot_vm(unsigned int idx) {
 		regval = H2K_get_ccr();
 		BOOTER_PRINTF("\tnew value for ccr: 0x%08x\n",regval);
 	}
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	int err;
+	if (~0L != vm_params[idx].vwctrl) {
+		regval = h2_hwconfig_vwctrl_get();
+		BOOTER_PRINTF("\told value for vwctrl: 0x%08x\n",regval);
+		if ((err = h2_hwconfig_vwctrl_set(vm_params[idx].vwctrl))) {
+			FAIL("\tCan't set vwctrl\n", "");
+		}
+		regval = h2_hwconfig_vwctrl_get();
+		BOOTER_PRINTF("\tnew value for vwctrl: 0x%08x\n",regval);
+	}
+#endif
 	if (vm_params[idx].pmu_sweep) {
 		if (vm_params[idx].pmu_overflow) {  // 64-bit counters
 			pmu_evtcfg =  0x02000100;  // COUNTER2_OVERFLOW ... COUNTER0_OVERFLOW
@@ -1334,6 +1358,9 @@ void print_infos() {
 	if (boot_flags.boot_have_hvx) {
 		BOOTER_PRINTF("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
 		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_HVX_CONTEXTS));
+#ifdef CLUSTER_SCHED
+		BOOTER_PRINTF("\t\tMax HVX contexts per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_HVX));
+#endif
 		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
 #if ARCHV >= 65
 		BOOTER_PRINTF("\t\tVTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
@@ -1387,11 +1414,15 @@ void print_infos() {
 
 void kernel_setup() {
 
-	int val;
+	int val, offset;
 
 	if (ecc_enable != -1) {
 		if (h2_hwconfig_ecc(ecc_enable) < 0) {
 			FAIL("ECC enable", "");
+		}
+		BOOTER_PRINTF("ECC regs:\n");
+		for (offset = ECCREGS_PROT_ENABLE_0; offset <= ECCREGS_MAX; offset += 0x100) {
+			BOOTER_PRINTF("\toffset 0x%03x: 0x%08x\n", offset, h2_hwconfig_ecc_get_reg(offset));
 		}
 	}
 
@@ -1870,6 +1901,14 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			vm_params[idx].ccr = strtoul(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
+
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+		} else if (0 == strcmp(argv[0],"--vwctrl")) {
+			if (argc < 2) die_usage();
+			vm_params[idx].vwctrl = strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+			continue;
+#endif
 
 		} else if (0 == strcmp(argv[0], "--num_vcpus")) {
 			if (argc < 2) die_usage();

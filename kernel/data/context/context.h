@@ -260,6 +260,10 @@ typedef struct _h2_thread_context
 	u32_t dm0;
 	// 292
 #endif
+#if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
+	u32_t vwctrl;
+	// 296
+#endif
 } __attribute__((aligned(H2K_CONTEXT_ALIGN))) H2K_thread_context;
 
 /* Big enough for 128-byte contexts. FIXME: size this space dynamically */

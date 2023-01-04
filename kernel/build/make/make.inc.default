@@ -44,6 +44,10 @@ $(MOD)_OPT_V73_CFILES := $(wildcard $(DIR)*.v73opt.c)
 $(MOD)_OPT_V73_SFILES := $(wildcard $(DIR)*.v73opt.S)
 $(MOD)_OPT_V73_OFILES := $($(MOD)_OPT_V73_CFILES:%.c=%.o) $($(MOD)_OPT_V73_SFILES:%.S=%.o)
 
+$(MOD)_OPT_V81_CFILES := $(wildcard $(DIR)*.v81opt.c)
+$(MOD)_OPT_V81_SFILES := $(wildcard $(DIR)*.v81opt.S)
+$(MOD)_OPT_V81_OFILES := $($(MOD)_OPT_V81_CFILES:%.c=%.o) $($(MOD)_OPT_V81_SFILES:%.S=%.o)
+
 ifneq (,$(filter $(MOD),$(OMIT_OPT)))
 $(MOD)_OPT_V$(ARCHV)_OFILES :=
 endif
@@ -74,6 +78,10 @@ endif
 
 ifeq "$(strip $($(MOD)_OPT_V73_OFILES))" ""
 $(MOD)_OPT_V73_OFILES := $($(MOD)_REF_OFILES)
+endif
+
+ifeq "$(strip $($(MOD)_OPT_V81_OFILES))" ""
+$(MOD)_OPT_V81_OFILES := $($(MOD)_REF_OFILES)
 endif
 
 
@@ -127,3 +135,7 @@ OPT_V68_OFILES += $($(MOD)_OPT_V68_OFILES) $($(MOD)_ALL_OFILES)
 OPT_V73_CFILES += $($(MOD)_OPT_V73_CFILES) $($(MOD)_ALL_CFILES)
 OPT_V73_SFILES += $($(MOD)_OPT_V73_SFILES) $($(MOD)_ALL_SFILES)
 OPT_V73_OFILES += $($(MOD)_OPT_V73_OFILES) $($(MOD)_ALL_OFILES)
+
+OPT_V81_CFILES += $($(MOD)_OPT_V81_CFILES) $($(MOD)_ALL_CFILES)
+OPT_V81_SFILES += $($(MOD)_OPT_V81_SFILES) $($(MOD)_ALL_SFILES)
+OPT_V81_OFILES += $($(MOD)_OPT_V81_OFILES) $($(MOD)_ALL_OFILES)

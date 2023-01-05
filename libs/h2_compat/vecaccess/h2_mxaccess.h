@@ -22,6 +22,7 @@
 */
 typedef struct {
 	h2_sem_t sem;
+	atomic_u32_t active;
 } h2_mxaccess_state_t;
 
 /**
@@ -33,36 +34,45 @@ Initialize the MX Access type.
 
 static inline int h2_mxaccess_init(h2_mxaccess_state_t *mxacc) {
 
-	h2_sem_init_val(&mxacc->sem, 1);
+	h2_sem_init_val(&mxacc->sem, h2_info(INFO_HMX_INSTANCES));
 	return 0;
 }
 
 /**
-Get mx access.
+Get MX access.
 @param[in] mxacc  Address of the MX Access structure
-@returns Index of the acquired unit (currently always 0).  Negative index on error.
+@returns Index of the acquired unit.  Negative index on error.
 @dependencies None
 */
 
 static inline int h2_mxaccess_acquire(h2_mxaccess_state_t *mxacc) {
+	int idx;
+	unsigned int old_active;
+	unsigned int new_active;
 
 	h2_sem_down(&mxacc->sem); 
-	return h2_hwconfig_hmxbits(1);
+	do {
+		old_active = mxacc->active;
+		idx = Q6_R_ct1_R(old_active);
+		new_active = old_active | (1<<idx);
+	} while (h2_atomic_compare_swap32(&mxacc->active, old_active, new_active) != old_active);
+	return h2_hwconfig_set_hmxbits(idx, 1);
 }
 
 /**
-Release mx access.
+Release MX access.
 @param[in] mxacc  Address of the MX Access structure
-@param[in] unit  Unit to release. Currently ignored
+@param[in] idx  Index of unit to release
 @returns 0 on success or negative value on error
 @dependencies None
 */
 
-static inline int h2_mxaccess_release(h2_mxaccess_state_t *mxacc, int unit) 
+static inline int h2_mxaccess_release(h2_mxaccess_state_t *mxacc, int idx) 
 {
 	int ret;
 
-	ret = h2_hwconfig_hmxbits(0);
+	ret = h2_hwconfig_set_hmxbits(0, 0);
+	h2_atomic_clrbit32(&mxacc->active, idx);
 	h2_sem_up(&mxacc->sem);
 
 	return ret;

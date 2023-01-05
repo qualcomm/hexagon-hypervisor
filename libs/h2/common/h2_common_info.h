@@ -42,6 +42,7 @@ typedef enum {
 	INFO_VTCM_BANK_WIDTH, /**< VTCM bank width */
 	INFO_L1D_SIZE,    /**< L1data cache size */
 	INFO_MAX_CLUSTER_HVX, /**< Max HVX per cluster */
+	INFO_HMX_INSTANCES, /**< Number of HMX instances */
 	INFO_MAX
 } info_type;
 

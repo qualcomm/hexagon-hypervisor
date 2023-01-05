@@ -120,15 +120,15 @@ static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int pre
 
 /**
 Set XA2, XE2 bits.
-@param[in] xa2 XA2 value
 @param[in] xe2 XE2 value
+@param[in] xa2 XA2 value
 @returns 0 on success, negative value on error
 @dependencies None
 */
 
-static inline int h2_hwconfig_set_hmxbits(unsigned int xa2,  unsigned int xe2)
+static inline int h2_hwconfig_set_hmxbits(unsigned int xe2,  unsigned int xa2)
 {
-	return h2_hwconfig_trap(HWCONFIG_HMXBITS, NULL, xa2, xe2);
+	return h2_hwconfig_trap(HWCONFIG_HMXBITS, NULL, xe2, xa2);
 }
 
 /**
@@ -140,7 +140,7 @@ Set XE2 bit (deprecated).
 
 static inline int h2_hwconfig_hmxbits(unsigned int xe2)
 {
-	return h2_hwconfig_set_hmxbits(0, xe2);
+	return h2_hwconfig_set_hmxbits(xe2, 0);
 }
 
 /**

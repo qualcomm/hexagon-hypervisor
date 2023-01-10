@@ -35,6 +35,7 @@ Initialize the MX Access type.
 static inline int h2_mxaccess_init(h2_mxaccess_state_t *mxacc) {
 
 	h2_sem_init_val(&mxacc->sem, h2_info(INFO_HMX_INSTANCES));
+	mxacc->active = 0;
 	return 0;
 }
 
@@ -46,7 +47,7 @@ Get MX access.
 */
 
 static inline int h2_mxaccess_acquire(h2_mxaccess_state_t *mxacc) {
-	int idx;
+	int idx, res;
 	unsigned int old_active;
 	unsigned int new_active;
 
@@ -56,7 +57,11 @@ static inline int h2_mxaccess_acquire(h2_mxaccess_state_t *mxacc) {
 		idx = Q6_R_ct1_R(old_active);
 		new_active = old_active | (1<<idx);
 	} while (h2_atomic_compare_swap32(&mxacc->active, old_active, new_active) != old_active);
-	return h2_hwconfig_set_hmxbits(1, idx);
+	res = h2_hwconfig_set_hmxbits(1, idx);
+	if (0 == res) {
+		return idx;
+	}
+	return res;
 }
 
 /**

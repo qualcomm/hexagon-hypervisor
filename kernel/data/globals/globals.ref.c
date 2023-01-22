@@ -46,9 +46,13 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		have_hvx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HVX_MASK);
 		H2K_kg.hvx_contexts = (have_hvx ? H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS) : 0);
 #ifdef CLUSTER_SCHED
-		H2K_kg.cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
-		H2K_kg.cluster_mask[0] = 0xffff >> (16 - H2K_kg.cluster_hthreads);
-		H2K_kg.cluster_mask[1] = (u32_t)((0xffff >> (16 - H2K_kg.cluster_hthreads)) << H2K_kg.cluster_hthreads);
+		/* FIXME: need a cfg_table entry for this */
+		H2K_kg.cluster_clusters = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) > 8 ? 4 : 2); // hack
+		H2K_kg.cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / H2K_kg.cluster_clusters);
+		H2K_kg.cluster_mask[0] = ~(0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 0);
+		H2K_kg.cluster_mask[1] = ~(0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 1);
+		H2K_kg.cluster_mask[2] = ~(0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 2);
+		H2K_kg.cluster_mask[3] = ~(0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 3);
 #endif	 
 	} else {
 		switch(H2K_kg.arch) {
@@ -89,9 +93,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		}
 		H2K_kg.hvx_contexts = EXT_HVX_CONTEXTS;
 	}
-#ifdef CLUSTER_SCHED
-	H2K_kg.hvx_max = H2K_kg.hvx_contexts >> 1;
-#endif	
+
 	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
 
 	if (have_hvx) {
@@ -115,6 +117,11 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_SIZE) != 0);  // exists?
 #endif
 		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_kg.hmx_units > 0);
+#ifdef CLUSTER_SCHED
+		H2K_kg.coproc_max = ((H2K_kg.hvx_contexts + H2K_kg.hmx_units) / H2K_kg.cluster_clusters) + (((H2K_kg.hvx_contexts + H2K_kg.hmx_units) % H2K_kg.cluster_clusters) != 0);
+		H2K_kg.coproc_max = (H2K_kg.coproc_max < CLUSTER_SCHED_MIN_COPROCS ? CLUSTER_SCHED_MIN_COPROCS : H2K_kg.coproc_max);
+#endif	
+
 		H2K_kg.dma_version = H2K_cfg_table(CFG_TABLE_DMA_VERSION);
 		H2K_kg.info_boot_flags.boot_have_dma = (H2K_kg.dma_version > 0);
 

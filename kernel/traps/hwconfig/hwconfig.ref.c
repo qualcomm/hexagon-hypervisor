@@ -239,33 +239,8 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa2, H2K_thread_context *me) {
 #if ARCHV >= 68
 	if (0 < H2K_gp->hmx_units) {  // exists
-#ifdef CLUSTER_SCHED
-		if (H2K_gp->cluster_sched) {
-			u32_t cluster = H2K_hthread_cluster(me->hthread);
-			BKL_LOCK();
-			if (xe2 && !(me->ssr & SSR_XE2_BIT_MASK)) {  // turning xe2 on
-				if (XE_SET_COUNT(cluster) + XE2_SET_COUNT(cluster) < H2K_gp->coproc_max) {
-					XE2_SET_SET(me->hthread);
-					H2K_log("hmxbits: hthread %d  cluster %d  xe2_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe2_set);
-				} else {  // block as if we got resched interrupt
-					H2K_log("hmxbits: hthread %d  cluster %d full\n", me->hthread, cluster);
-					me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
-					me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
-					H2K_runlist_remove(me);
-					H2K_ready_append(me);
-					H2K_dosched(me, me->hthread);
-				}
-			}
-			if (!xe2 && (me->ssr & SSR_XE2_BIT_MASK)) {  // turning xe2 off
-				XE_SET_CLR(me->hthread);
-				H2K_log("hmxbits: hthread %d  cluster %d  xe2_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe2_set);
-			}
-			BKL_UNLOCK();
-		}
-#endif
 		me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
 		me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
-
 		if (xe2) {
 			H2K_hmx_poweron(); // make sure the lights are on
 		}
@@ -287,9 +262,9 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 		u32_t cluster = H2K_hthread_cluster(me->hthread);
 		BKL_LOCK();
 		if (xe && !(me->ssr & SSR_XE_BIT_MASK)) {  // turning xe on
-			if (XE_SET_COUNT(cluster) + XE2_SET_COUNT(cluster) < H2K_gp->coproc_max) {
-				XE_SET_SET(me->hthread);
-				H2K_log("extbits: hthread %d  cluster %d  xe_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe_set);
+			if (XE_SET_COUNT(cluster) < H2K_gp->hvx_max) {
+				XE_SET_SET(cluster, me->hthread);
+				H2K_log("extbits: hthread %d  cluster %d  xe_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe_set[cluster]);
 			} else {  // block as if we got resched interrupt
 				H2K_log("extbits: hthread %d  cluster %d full\n", me->hthread, cluster);
 
@@ -309,8 +284,8 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 			}
 		}
 		if (!xe && (me->ssr & SSR_XE_BIT_MASK)) {  // turning xe off
-			XE_SET_CLR(me->hthread);
-			H2K_log("extbits: hthread %d  cluster %d  xe_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe_set);
+			XE_SET_CLR(cluster, me->hthread);
+			H2K_log("extbits: hthread %d  cluster %d  xe_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe_set[cluster]);
 		}
 		BKL_UNLOCK();
 	}

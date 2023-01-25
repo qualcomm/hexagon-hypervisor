@@ -86,113 +86,62 @@ static inline void H2K_ready_remove(H2K_thread_context *thread)
 	if (H2K_gp->ready[prio] == NULL) H2K_ready_clear_prio(prio);
 }
 
-#ifdef CLUSTER_SCHED
-static inline u32_t H2K_hthread_cluster(u32_t hthread) {
-	return (hthread / H2K_gp->cluster_hthreads);
-}
-#endif
-
 /* Return head of ready list at prio */
 static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	H2K_thread_context *head = H2K_gp->ready[prio];
 	H2K_thread_context *ret = head;
-
-	if (NULL == ret) {
-		return ret;
-	}
 
 #ifdef CLUSTER_SCHED
 	if (!H2K_gp->cluster_sched) {
 		return ret;
 	}
 
-	u32_t ssr = H2K_get_ssr();
-	u32_t hthread_xe = ssr & SSR_XE_BIT_MASK;
-	u32_t hthread_xe2 = ssr & SSR_XE2_BIT_MASK;
-	u32_t cluster = H2K_hthread_cluster(hthread);  // cluster of hthread
-	u32_t coprocs = XE_SET_COUNT(cluster) + XE2_SET_COUNT(cluster);  // coproc threads in cluster
-	u32_t hthreads;  // candidate hthreads in other clusters to interrupt
-	s32_t victim;  // hthread to receive interrupt
-	u32_t head_xe, head_xe2;  // thread at head needs xe/xe2
-	u32_t head_coprocs;  // number of coprocs needed by thread at head
-	u32_t i;
+	u32_t hthread_xe = ((H2K_get_ssr() & SSR_XE_BIT_MASK) != 0);
+	u32_t cluster = H2K_hthread_cluster(hthread);
+	u32_t hthreads;  // hw threads in other cluster to interrupt
 
-	H2K_log("ready_head 1: hthread %d  xe_set 0x%08x\n", hthread, H2K_gp->xe_set);
-	H2K_log("ready_head 1: hthread %d  xe2_set 0x%08x\n", hthread, H2K_gp->xe2_set);
+	H2K_log("hthread %d  cluster %d  xe_set 0x%08x\n", hthread, cluster, H2K_gp->xe_set[cluster]);
 
-	/* Skip threads that have xe/xe2 set if that would increase the total xe+xe2 threads
+	/* Skip threads that have xe set if that would increase the total xe threads
 		 per cluster beyond the limit */
-	H2K_log("cluster_mask 0x%08x\n", H2K_gp->cluster_mask[cluster]);
-	H2K_log("coprocs %d\n", coprocs);
-	H2K_log("coprocs_max %d\n", H2K_gp->coproc_max);
-	if (coprocs == H2K_gp->coproc_max || coprocs == H2K_gp->coproc_max - 1) {  // cluster at/near limit
-		head_xe = ret->ssr & SSR_XE_BIT_MASK;
-		head_xe2 = ret->ssr & SSR_XE2_BIT_MASK;
-		while (NULL != ret) {
-			/* If this hthread doesn't already hold xe/xe2 but new thread needs it */
-			if (((coprocs == H2K_gp->coproc_max)  // and need 1 new coproc
-					 && ((!hthread_xe && (ret->ssr & SSR_XE_BIT_MASK))
-							 != (!hthread_xe2 && (ret->ssr & SSR_XE2_BIT_MASK))))
-					|| ((coprocs == H2K_gp->coproc_max - 1)  // and need 2 new coprocs
-							&& ((!hthread_xe && (ret->ssr & SSR_XE_BIT_MASK))
-									&& (!hthread_xe2 && (ret->ssr & SSR_XE2_BIT_MASK))))) {
-				H2K_log("\tSkipping hvx/hmx thread in H2K_ready_head\n");
-				ret = (H2K_thread_context *)H2K_ring_next(head, ret);  // try the next one
-			} else {
-				break;
-			}
+	if (!hthread_xe	&& (XE_SET_COUNT(cluster) == H2K_gp->hvx_max)) {
+		while ((ret != NULL) && (ret->ssr & SSR_XE_BIT_MASK)) {  // xe set in new thread
+			H2K_log("\tSkipping hvx thread in H2K_ready_head\n");
+			ret = (H2K_thread_context *)H2K_ring_next(head, ret);  // try the next one
 		}
 	}
+
 	if (NULL == ret) {  // didn't find anything to schedule
 		H2K_log("\tDidn't find a thread to schedule\n");
-		H2K_log("\tOther clusters xe_set 0x%08x\n", H2K_gp->xe_set & H2K_gp->cluster_mask[cluster]);
-		H2K_log("\tOther clusters xe2_set 0x%08x\n", H2K_gp->xe2_set & H2K_gp->cluster_mask[cluster]);
+		H2K_log("\tOther cluster xe_set 0x%08x\n", H2K_gp->xe_set[1 - cluster]);
 
-		/* This hthread is no longer using xe/xe2 */
-		if (hthread_xe) {
-			XE_SET_CLR(hthread);
-			ssr &= ~SSR_XE_BIT_MASK;
-			H2K_log("ready_head 2: hthread %d  xe_set 0x%08x\n", hthread, H2K_gp->xe_set);
-		}
-		if (hthread_xe2) {
-			XE2_SET_CLR(hthread);
-			ssr &= ~SSR_XE2_BIT_MASK;
-			H2K_log("ready_head 2: hthread %d  xe2_set 0x%08x\n", hthread, H2K_gp->xe2_set);
-		}
-		H2K_set_ssr(ssr);
+		/* If we are returing NULL, then we must have gone through the above loop,
+			 and therefore hthread_xe must be false, so we don't need the code
+			 below */
 
-		/* Try to interrupt a thread of equal or lower priority on the other clusters that doesn't have xe/xe2 set */
-		/* If the thread at the head of the ready list needs both coprocs, only choose clusters that have 2 slots free */
-		head_coprocs = (head_xe != 0) + (head_xe2 != 0);
-		hthreads = 0;
-		for (i = 0; i < H2K_gp->cluster_clusters; i++) {
-			if (H2K_gp->coproc_max - XE_SET_COUNT(i) >= head_coprocs) {  // has room
-				hthreads |= ~(H2K_gp->cluster_mask[i]);
-			}
-		}
-		victim = H2K_runlist_prio_hthreads(hthreads, prio);
+		/* if (hthread_xe) { */
+		/* 	XE_SET_CLR(cluster, hthread); */
+		/* 	H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK); */
+		/* } */
 
-		if (victim != -1) {  // any eligible
-			H2K_log("\tSignal thread %d\n", victim);
-			iassignw(CLUSTER_RESCHED_INT, ~(0x1 << victim));  // steer the interrupt
+		/* Try to interrupt a thread of equal or lower priority on the other cluster that doesn't have xe set */
+		hthreads = (~H2K_gp->xe_set[1 - cluster])
+			& H2K_gp->cluster_mask[1 - cluster]; // threads with xe not set, in other cluster
+		hthreads = H2K_runlist_prio_hthreads(hthreads, prio);
+
+		if (hthreads) {  // any eligible
+			H2K_log("\tSignal threadmask 0x%08x\n", hthreads);
+			iassignw(CLUSTER_RESCHED_INT, ~hthreads);  // steer the interrupt
 			cluster_resched_int();    // try to get another thread to pick up what we skipped
 		}
 	} else {
 		if (!hthread_xe && (ret->ssr & SSR_XE_BIT_MASK)) {  // new hthread with xe set
-			XE_SET_SET(hthread);
-			H2K_log("\tNow set xe_set to  0x%08x\n", H2K_gp->xe_set);
+			XE_SET_SET(cluster, hthread);
+			H2K_log("\tNow set xe_set to  0x%08x\n", H2K_gp->xe_set[cluster]);
 		}
 		if (hthread_xe && !(ret->ssr & SSR_XE_BIT_MASK)) {
-			XE_SET_CLR(hthread);
-			H2K_log("\tNow clear xe_set to 0x%08x\n", H2K_gp->xe_set);
-		}
-		if (!hthread_xe2 && (ret->ssr & SSR_XE2_BIT_MASK)) {  // new hthread with xe2 set
-			XE2_SET_SET(hthread);
-			H2K_log("\tNow set xe2_set to  0x%08x\n", H2K_gp->xe2_set);
-		}
-		if (hthread_xe2 && !(ret->ssr & SSR_XE2_BIT_MASK)) {
-			XE2_SET_CLR(hthread);
-			H2K_log("\tNow clear xe2_set to 0x%08x\n", H2K_gp->xe2_set);
+			XE_SET_CLR(cluster, hthread);
+			H2K_log("\tNow clear xe_set to 0x%08x\n", H2K_gp->xe_set[cluster]);
 		}
 	}
 #endif
@@ -213,21 +162,14 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 			return NULL;
 		}
 
-		u32_t ssr = H2K_get_ssr();
-		u32_t hthread_xe = ssr & SSR_XE_BIT_MASK;
-		u32_t hthread_xe2 = ssr & SSR_XE2_BIT_MASK;
+		u32_t hthread_xe = ((H2K_get_ssr() & SSR_XE_BIT_MASK) != 0);
+		u32_t cluster = H2K_hthread_cluster(hthread);
 
 		if (hthread_xe) {
-			XE_SET_CLR(hthread);
-			ssr &= ~SSR_XE_BIT_MASK;
-			H2K_log("getbest: hthread %d  xe_set 0x%08x\n", hthread, H2K_gp->xe_set);
+			XE_SET_CLR(cluster, hthread);
+			H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK);
+			H2K_log("getbest: hthread %d  cluster %d  xe_set 0x%08x\n", hthread, cluster, H2K_gp->xe_set[cluster]);
 		}
-		if (hthread_xe2) {
-			XE2_SET_CLR(hthread);
-			ssr &= ~SSR_XE2_BIT_MASK;
-			H2K_log("getbest: hthread %d  xe2_set 0x%08x\n", hthread, H2K_gp->xe2_set);
-		}
-		H2K_set_ssr(ssr);
 #endif
 		return NULL;
 	}

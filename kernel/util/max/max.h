@@ -238,8 +238,6 @@
 #define SSR_SS_BIT 30
 #endif
 
-#define CLUSTER_SCHED_MIN_COPROCS 2  // allow at least this many coprocs per cluster
-
 #define BITS_MASK(NBITS, START) ((u32_t)(((0x1 << ((NBITS))) - 1) << (START)))
 
 #define SSR_XA_BITS 27

@@ -11,7 +11,6 @@
 #include <bzero.h>
 #include <cfg_table.h>
 #include <hmx.h>
-#include <log.h>
 
 H2K_kg_t H2K_kg;
 
@@ -50,10 +49,10 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		/* FIXME: need a cfg_table entry for this */
 		H2K_kg.cluster_clusters = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) > 8 ? 4 : 2); // hack
 		H2K_kg.cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / H2K_kg.cluster_clusters);
-		H2K_kg.cluster_mask[0] = ~((0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 0));
-		H2K_kg.cluster_mask[1] = ~((0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 1));
-		H2K_kg.cluster_mask[2] = ~((0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 2));
-		H2K_kg.cluster_mask[3] = ~((0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 3));
+		H2K_kg.cluster_mask[0] = ~(0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 0);
+		H2K_kg.cluster_mask[1] = ~(0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 1);
+		H2K_kg.cluster_mask[2] = ~(0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 2);
+		H2K_kg.cluster_mask[3] = ~(0xffffffff >> (32 - H2K_kg.cluster_hthreads)) << (H2K_kg.cluster_hthreads * 3);
 #endif	 
 	} else {
 		switch(H2K_kg.arch) {

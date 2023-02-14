@@ -45,6 +45,9 @@ typedef enum {
 	INFO_MAX
 } info_type;
 
+#define INFO_HVX_CONTEXTS (INFO_COPROC_CONTEXTS)  // compat
+#define INFO_MAX_CLUSTER_HVX (INFO_MAX_CLUSTER_COPROC)  // compat
+
 typedef union {
 	struct {
 		unsigned long boot_use_tcm:1;     /**< Hypervisor in TCM? */

@@ -20,6 +20,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
 #ifdef HAVE_EXTENSIONS
 	u32_t have_hvx;
+	u32_t have_silver;
 #endif
 	
 	H2K_bzero(&H2K_kg,sizeof(H2K_kg));
@@ -44,7 +45,8 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	/* HVX present? */
 	if (CORE_V65 < H2K_kg.arch) {
 		have_hvx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HVX_MASK);
-		H2K_kg.hvx_contexts = (have_hvx ? H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS) : 0);
+		have_silver = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_SILVER_MASK);
+		H2K_kg.coproc_contexts = (have_hvx || have_silver ? H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS) : 0);
 #ifdef CLUSTER_SCHED
 		H2K_kg.cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / 2);
 		H2K_kg.cluster_mask[0] = 0xffff >> (16 - H2K_kg.cluster_hthreads);
@@ -87,12 +89,14 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		default:
 			have_hvx = 0;
 		}
-		H2K_kg.hvx_contexts = EXT_HVX_CONTEXTS;
+		H2K_kg.coproc_contexts = EXT_HVX_CONTEXTS;
+		have_silver = 0;
 	}
 #ifdef CLUSTER_SCHED
-	H2K_kg.hvx_max = H2K_kg.hvx_contexts >> 1;
+	H2K_kg.coproc_max = H2K_kg.coproc_contexts >> 1;
 #endif	
 	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
+	H2K_kg.info_boot_flags.boot_have_silver = have_silver;
 
 	if (have_hvx) {
 		if (CORE_V67 < H2K_kg.arch) {
@@ -150,7 +154,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	}
 
 	H2K_kg.info_boot_flags.boot_ext_ok = have_hvx && (!(H2K_kg.syscfg_val & SYSCFG_V2X))
-		&& (H2K_kg.hthreads <= H2K_kg.hvx_contexts);
+		&& (H2K_kg.hthreads <= H2K_kg.coproc_contexts);
 
 #endif
 

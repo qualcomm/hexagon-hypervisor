@@ -104,7 +104,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 
 	/* Skip threads that have xe set if that would increase the total xe threads
 		 per cluster beyond the limit */
-	if (!hthread_xe	&& (XE_SET_COUNT(cluster) == H2K_gp->hvx_max)) {
+	if (!hthread_xe	&& (XE_SET_COUNT(cluster) == H2K_gp->coproc_max)) {
 		while ((ret != NULL) && (ret->ssr & SSR_XE_BIT_MASK)) {  // xe set in new thread
 			H2K_log("\tSkipping hvx thread in H2K_ready_head\n");
 			ret = (H2K_thread_context *)H2K_ring_next(head, ret);  // try the next one

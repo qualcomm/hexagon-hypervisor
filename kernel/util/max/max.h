@@ -360,6 +360,7 @@
 #define CFG_TABLE_AXIM_DATA_WIDTH 0xe0
 
 #define CFG_TABLE_COPROC_TYPE_HVX_MASK 0x1
+#define CFG_TABLE_COPROC_TYPE_SILVER_MASK 0x2
 #define CFG_TABLE_COPROC_TYPE_HMX_MASK 0x4
 
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table

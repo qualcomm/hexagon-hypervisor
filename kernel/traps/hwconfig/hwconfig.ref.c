@@ -262,13 +262,13 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 		u32_t cluster = H2K_hthread_cluster(me->hthread);
 		BKL_LOCK();
 		if (xe && !(me->ssr & SSR_XE_BIT_MASK)) {  // turning xe on
-			if (XE_SET_COUNT(cluster) < H2K_gp->hvx_max) {
+			if (XE_SET_COUNT(cluster) < H2K_gp->coproc_max) {
 				XE_SET_SET(cluster, me->hthread);
 				H2K_log("extbits: hthread %d  cluster %d  xe_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe_set[cluster]);
 			} else {  // block as if we got resched interrupt
 				H2K_log("extbits: hthread %d  cluster %d full\n", me->hthread, cluster);
 
-				if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + H2K_gp->hvx_contexts)  // not in HVX range
+				if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + H2K_gp->coproc_contexts)  // not in HVX range
 #ifdef DO_EXT_SWITCH
 						|| (!(me->vmblock->do_ext))
 #endif
@@ -291,7 +291,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	}
 #endif
 
-	if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + H2K_gp->hvx_contexts)  // not in HVX range
+	if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + H2K_gp->coproc_contexts)  // not in HVX range
 #ifdef DO_EXT_SWITCH
 			|| (!(me->vmblock->do_ext))
 #endif
@@ -331,7 +331,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 		H2K_gp->syscfg_val = cur;
 
 #ifdef DO_EXT_SWITCH
-		H2K_gp->info_boot_flags.boot_ext_ok = H2K_gp->info_boot_flags.boot_have_hvx && (!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= H2K_gp->hvx_contexts);
+		H2K_gp->info_boot_flags.boot_ext_ok = H2K_gp->info_boot_flags.boot_have_hvx && (!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= H2K_gp->coproc_contexts);
 		if (H2K_gp->info_boot_flags.boot_ext_ok) {
 			if (me->vmblock->use_ext) {
 				me->vmblock->do_ext = 1;

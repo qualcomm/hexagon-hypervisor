@@ -84,7 +84,7 @@ typedef struct {
 #endif
 	u32_t hvx_state;
 	u32_t hvx_vlength;   // native vector length
-	u32_t hvx_contexts;  // # of native length
+	u32_t coproc_contexts;  // # of native length (HVX or SILVER)
 	u32_t hmx_units;
 #if ARCHV >= 68
 	u32_t hmx_state;
@@ -104,7 +104,7 @@ typedef struct {
 	u32_t cluster_hthreads;  // hardware threads per cluster
 	u32_t cluster_mask[2];   // bitmask of threads in cluster
 	u32_t cluster_sched;     // do cluster scheduling?
-	u32_t hvx_max;           // max hvx threads per cluster
+	u32_t coproc_max;        // max coproc threads per cluster
 #endif
 
 	union {

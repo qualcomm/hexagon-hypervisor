@@ -32,7 +32,7 @@ typedef enum {
 	INFO_CLADE_BASE,  /**< CLADE regs base */
 	INFO_CFGBASE,     /**< cfgbase register */
 	INFO_HVX_VLENGTH, /**< HVX native (no v2x) vector length, in bytes */
-	INFO_HVX_CONTEXTS,/**< Number of HVX contexts (no v2x) */
+	INFO_COPROC_CONTEXTS,/**< Number of HVX/SILVER contexts (no v2x) */
 	INFO_HVX_SWITCH,  /**< HVX context switch in kernel active */
 	INFO_VTCM_BASE,   /**< VTCM base address */
 	INFO_VTCM_SIZE,   /**< VTCM size */
@@ -41,7 +41,7 @@ typedef enum {
 	INFO_AUDIO_EXT,   /**< Audio extension type */
 	INFO_VTCM_BANK_WIDTH, /**< VTCM bank width */
 	INFO_L1D_SIZE,    /**< L1data cache size */
-	INFO_MAX_CLUSTER_HVX, /**< Max HVX per cluster */
+	INFO_MAX_CLUSTER_COPROC, /**< Max coprocessor threads per cluster */
 	INFO_MAX
 } info_type;
 
@@ -53,7 +53,8 @@ typedef union {
 		unsigned long boot_ext_ok:1;      /**< Kernel can switch extended contexts? */
 		unsigned long boot_have_dma:1;    /**< Core has user-mode DMA? */
 		unsigned long boot_have_hmx:1;    /**< Core has HMX? */
-		unsigned long boot_unused:26;
+		unsigned long boot_have_silver:1; /**< Core has SILVER? */
+		unsigned long boot_unused:25;
 	};
 	unsigned long raw;
 } info_boot_flags_type;

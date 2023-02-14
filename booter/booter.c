@@ -1357,9 +1357,9 @@ void print_infos() {
 	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
 	if (boot_flags.boot_have_hvx) {
 		BOOTER_PRINTF("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
-		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_HVX_CONTEXTS));
+		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_COPROC_CONTEXTS));
 #ifdef CLUSTER_SCHED
-		BOOTER_PRINTF("\t\tMax HVX contexts per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_HVX));
+		BOOTER_PRINTF("\t\tMax HVX contexts per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_COPROC));
 #endif
 		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
 #if ARCHV >= 65
@@ -1367,6 +1367,8 @@ void print_infos() {
 		BOOTER_PRINTF("\t\tVTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
 #endif
 	}
+	BOOTER_PRINTF("\tSILVER present: ");
+	BOOTER_PRINTF((boot_flags.boot_have_silver ? "true\n" : "false\n"));
 #if ARCHV >= 68
 	BOOTER_PRINTF("\tHMX present: ");
 	BOOTER_PRINTF((boot_flags.boot_have_hmx ? "true\n" : "false\n"));

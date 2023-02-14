@@ -136,8 +136,8 @@ int main() {
 	val = H2K_kg.hvx_vlength;
 	if (H2K_trap_info(INFO_HVX_VLENGTH, &a) != val) FAIL("HVX_VLENGTH");
 
-	val = H2K_kg.hvx_contexts;
-	if (H2K_trap_info(INFO_HVX_CONTEXTS, &a) != val) FAIL("HVX_CONTEXTS");
+	val = H2K_kg.coproc_contexts;
+	if (H2K_trap_info(INFO_COPROC_CONTEXTS, &a) != val) FAIL("COPROC_CONTEXTS");
 
 #ifdef DO_EXT_SWITCH
 	val = a.vmblock->do_ext;
@@ -149,7 +149,7 @@ int main() {
 #if ARCHV > 65
 	val = (H2K_cfg_table(CFG_TABLE_VTCM_BASE) << CFG_TABLE_SHIFT);
 #elif ARCHV == 65
-	val = (H2K_kg.hvx_contexts > 0 ? H2K_kg.tcm_base + EXT_HVX_VTCM_OFFSET : 0);
+	val = (H2K_kg.coproc_contexts > 0 ? H2K_kg.tcm_base + EXT_HVX_VTCM_OFFSET : 0);
 #else
 	val = 0;
 #endif
@@ -158,7 +158,7 @@ int main() {
 #if ARCHV > 65
 	val = H2K_cfg_table(CFG_TABLE_VTCM_SIZE);
 #elif ARCHV == 65
-	val = (H2K_kg.hvx_contexts > 0 ? EXT_HVX_VTCM_SIZE : 0);
+	val = (H2K_kg.coproc_contexts > 0 ? EXT_HVX_VTCM_SIZE : 0);
 #else
 	val = 0;
 #endif

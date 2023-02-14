@@ -93,8 +93,8 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_HVX_VLENGTH:
 		return H2K_gp->hvx_vlength;
 
-	case INFO_HVX_CONTEXTS:
-		return H2K_gp->hvx_contexts;
+	case INFO_COPROC_CONTEXTS:
+		return H2K_gp->coproc_contexts;
 
 	case INFO_HVX_SWITCH:
 #ifdef DO_EXT_SWITCH
@@ -108,7 +108,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		if (0x65 < H2K_gp->arch) {
 			return H2K_cfg_table(CFG_TABLE_VTCM_BASE) << CFG_TABLE_SHIFT;
 
-		} else if (0 < H2K_gp->hvx_contexts && 0x65 == H2K_gp->arch) {
+		} else if (0 < H2K_gp->coproc_contexts && 0x65 == H2K_gp->arch) {
 			return H2K_gp->tcm_base + EXT_HVX_VTCM_OFFSET;
 		}
 		return 0;
@@ -117,7 +117,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		if (0x65 < H2K_gp->arch) {
 			return H2K_cfg_table(CFG_TABLE_VTCM_SIZE);
 
-		} else if (0 < H2K_gp->hvx_contexts && 0x65 == H2K_gp->arch) {
+		} else if (0 < H2K_gp->coproc_contexts && 0x65 == H2K_gp->arch) {
 			return EXT_HVX_VTCM_SIZE;
 		}
 		return 0;
@@ -146,7 +146,7 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_VTCM_BANK_WIDTH:
 		if (CORE_V68 <= H2K_gp->arch) {
 			return H2K_cfg_table(CFG_TABLE_VTCM_BANK_WIDTH);
-		} else if ((0 < H2K_gp->hvx_contexts) && (CORE_V65 <= H2K_gp->arch)) {
+		} else if ((0 < H2K_gp->coproc_contexts) && (CORE_V65 <= H2K_gp->arch)) {
 			return EXT_HVX_VTCM_BANK_WIDTH;
 		} else {
 			return 0;
@@ -155,16 +155,16 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_L1D_SIZE:
 		if (CORE_V68 <= H2K_gp->arch) {
 			return H2K_cfg_table(CFG_TABLE_L1D_SZ)*1024;
-		} else if ((0 < H2K_gp->hvx_contexts) && (CORE_V65 <= H2K_gp->arch)) {
+		} else if ((0 < H2K_gp->coproc_contexts) && (CORE_V65 <= H2K_gp->arch)) {
 			return LIMIT_L1D_SZ*1024;
 		} else {
 			return 0;
 		}
-	case INFO_MAX_CLUSTER_HVX:
+	case INFO_MAX_CLUSTER_COPROC:
 #ifdef CLUSTER_SCHED
-		return H2K_gp->hvx_max;
+		return H2K_gp->coproc_max;
 #else
-		return H2K_gp->hvx_contexts;
+		return H2K_gp->coproc_contexts;
 #endif
 
 #endif

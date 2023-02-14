@@ -82,14 +82,14 @@ static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, unsigned int req
 		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_MIN)) <0) return ret;
 		vacc->ext = H2_VECACCESS_EXT_SILVER;
 		vacc->length = H2_VECACCESS_VLENGTH_128;
-		h2_sem_init_val(&vacc->sem, 1);
+		h2_sem_init_val(&vacc->sem, h2_info(INFO_COPROC_CONTEXTS));
 		break;
 
 	case H2_VECACCESS_HVX_64:
 		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_64)) <0) return ret;
 		vacc->ext = H2_VECACCESS_EXT_HVX;
 		vacc->length = H2_VECACCESS_VLENGTH_64;
-		h2_sem_init_val(&vacc->sem, h2_info(INFO_HVX_CONTEXTS));
+		h2_sem_init_val(&vacc->sem, h2_info(INFO_COPROC_CONTEXTS));
 		break;
 
 	case H2_VECACCESS_HVX_128:
@@ -97,7 +97,7 @@ static inline int h2_vecaccess_init(h2_vecaccess_state_t *vacc, unsigned int req
 		if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_128)) <0) return ret;
 		vacc->ext = H2_VECACCESS_EXT_HVX;
 		vacc->length = H2_VECACCESS_VLENGTH_128;
-		h2_sem_init_val(&vacc->sem, h2_info(INFO_HVX_CONTEXTS) / (128 / native_vlength));
+		h2_sem_init_val(&vacc->sem, h2_info(INFO_COPROC_CONTEXTS) / (128 / native_vlength));
 		break;
 
 	default:

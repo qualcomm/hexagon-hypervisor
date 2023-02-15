@@ -21,7 +21,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 #ifdef HAVE_EXTENSIONS
 	u32_t have_hvx;
 #endif
-	u32_t i, val;
 	
 	H2K_bzero(&H2K_kg,sizeof(H2K_kg));
 
@@ -111,6 +110,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 
 	if (CORE_V67 < H2K_kg.arch) {
 #if ARCHV >= 81
+		u32_t i, val;
 		val = H2K_cfg_table(CFG_TABLE_HMX_INT8_RATE);
 		for (i = 0; i < 4; i++) {
 			H2K_kg.hmx_units += ((val & (0xff << i)) != 0);  // byte not 0?

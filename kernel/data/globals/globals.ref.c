@@ -22,7 +22,8 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	u32_t have_hvx;
 	u32_t have_silver;
 #endif
-
+	u32_t i, val;
+	
 	H2K_bzero(&H2K_kg,sizeof(H2K_kg));
 
 	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
@@ -114,11 +115,15 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 
 	if (CORE_V67 < H2K_kg.arch) {
 #if ARCHV >= 81
-		H2K_kg.hmx_units = H2K_cfg_table(CFG_TABLE_HMX_INSTANCES);
+		val = H2K_cfg_table(CFG_TABLE_HMX_INT8_RATE);
+		for (i = 0; i < 4; i++) {
+			H2K_kg.hmx_units += ((val & (0xff << i)) != 0);  // byte not 0?
+		}
+		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HMX_MASK);
 #else
-		H2K_kg.hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_SIZE) != 0);  // exists?
-#endif
+		H2K_kg.hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_INT8_RATE) != 0);  // exists?
 		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_kg.hmx_units > 0);
+#endif
 		H2K_kg.dma_version = H2K_cfg_table(CFG_TABLE_DMA_VERSION);
 		H2K_kg.info_boot_flags.boot_have_dma = (H2K_kg.dma_version > 0);
 

@@ -1370,8 +1370,11 @@ void print_infos() {
 	BOOTER_PRINTF("\tSILVER present: ");
 	BOOTER_PRINTF((boot_flags.boot_have_silver ? "true\n" : "false\n"));
 #if ARCHV >= 68
-	BOOTER_PRINTF("\tHMX present: ");
-	BOOTER_PRINTF((boot_flags.boot_have_hmx ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tHMX:\n");
+	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hmx ? "true" : "false"));
+	if (boot_flags.boot_have_hmx) {
+		BOOTER_PRINTF("\t\tUnits: %d\n", h2_info(INFO_HMX_INSTANCES));
+	}
 	BOOTER_PRINTF("\tUser-mode DMA present: ");
 	BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
 #endif

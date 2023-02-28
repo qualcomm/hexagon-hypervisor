@@ -113,7 +113,11 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	}
 
 	if (CORE_V67 < H2K_kg.arch) {
+#if ARCHV >= 81
+		H2K_kg.hmx_units = H2K_cfg_table(CFG_TABLE_HMX_INSTANCES);
+#else
 		H2K_kg.hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_SIZE) != 0);  // exists?
+#endif
 		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_kg.hmx_units > 0);
 		H2K_kg.dma_version = H2K_cfg_table(CFG_TABLE_DMA_VERSION);
 		H2K_kg.info_boot_flags.boot_have_dma = (H2K_kg.dma_version > 0);

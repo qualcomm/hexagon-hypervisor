@@ -7,7 +7,6 @@
 #define H2K_LOG_H 1
 
 #ifdef H2K_LOGBUF
-
 #define H2K_log(...) H2K_log_print(__VA_ARGS__)
 #define H2K_log_string(S) H2K_do_log_string(S)
 
@@ -18,10 +17,15 @@ char *H2K_logbuf_alloc(u32_t count) IN_SECTION(".text.util.log");
 char *H2K_log_init(void) IN_SECTION(".text.util.log");
 
 #else
-
+#ifdef H2K_LOG_PRINTF
+#include <stdio.h>
+#include <stdlib.h>
+#define H2K_log(...) printf(__VA_ARGS__)
+#define H2K_log_string(S) puts(S)
+#else
 #define H2K_log(...)
 #define H2K_log_string(S)
-
+#endif
 #endif
 
 #endif

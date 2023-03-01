@@ -117,7 +117,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		u32_t i, val;
 		val = H2K_cfg_table(CFG_TABLE_HMX_INT8_RATE);
 		for (i = 0; i < 4; i++) {
-			H2K_kg.hmx_units += ((val & (0xff << i)) != 0);  // byte not 0?
+			H2K_kg.hmx_units += ((val & (0xff << (i * 8))) != 0);  // byte not 0?
 		}
 		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HMX_MASK) != 0;
 #else

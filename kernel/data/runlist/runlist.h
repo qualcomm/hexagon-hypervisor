@@ -48,16 +48,24 @@ static inline u32_t H2K_runlist_worst_prio_hthread()
 	return (u32_t)hthread;
 }
 
-/* Given bitmap of hardware threads, return bitmap of those whose priority is not better than prio */
-static inline u32_t H2K_runlist_prio_hthreads(u32_t hthreads, u32_t prio) {
+/* Given bitmap of hardware threads, return worst-prio hthread whose priority is not better than prio */
+static inline s32_t H2K_runlist_prio_hthreads(u32_t hthreads, u32_t prio) {
 
 	s32_t i;
+	s32_t worst_prio = -1;
+	s32_t hthread = -1;
+	
 	for (i = 0; i < H2K_gp->hthreads; i++) {
-		if (H2K_gp->runlist_prios[i] < prio) {  // IS_BETTER_THAN
-			hthreads &= ~(0x1 << i);  // remove the better-prio hw thread from result
+		if (hthreads & (0x1 << i)) {
+			if (H2K_gp->runlist_prios[i] IS_WORSE_THAN worst_prio) {
+				worst_prio = H2K_gp->runlist_prios[i];
+				if (H2K_gp->runlist_prios[i] >= prio) {
+					hthread = i;
+				}
+			}
 		}
 	}
-	return hthreads;
+	return hthread;
 }
 
 static inline void H2K_runlist_remove(H2K_thread_context *thread)

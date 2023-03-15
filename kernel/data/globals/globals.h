@@ -97,14 +97,21 @@ typedef struct {
 #endif
 
 #ifdef CLUSTER_SCHED
-#define XE_SET_SET(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] |= (0x1 << HTHREAD))
-#define XE_SET_CLR(CLUSTER, HTHREAD) (H2K_gp->xe_set[CLUSTER] &= ~(0x1 << HTHREAD))
-#define XE_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe_set[CLUSTER]))
-	u32_t xe_set[2];         // bitmap of hw threads that have ssr:xe set in each cluster
-	u32_t cluster_hthreads;  // hardware threads per cluster
-	u32_t cluster_mask[2];   // bitmask of threads in cluster
-	u32_t cluster_sched;     // do cluster scheduling?
-	u32_t coproc_max;        // max coproc threads per cluster
+#define XE_SET_SET(HTHREAD) (H2K_gp->xe_set |= (0x1 << (HTHREAD)))
+#define XE_SET_CLR(HTHREAD) (H2K_gp->xe_set &= ~(0x1 << (HTHREAD)))
+#define XE_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe_set & ~(H2K_gp->cluster_mask[(CLUSTER)])))
+
+#define XE2_SET_SET(HTHREAD) (H2K_gp->xe2_set |= (0x1 << (HTHREAD)))
+#define XE2_SET_CLR(HTHREAD) (H2K_gp->xe2_set &= ~(0x1 << (HTHREAD)))
+#define XE2_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe2_set & ~(H2K_gp->cluster_mask[(CLUSTER)])))
+
+	u32_t xe_set;             // bitmap of hw threads that have ssr:xe set in each cluster
+	u32_t xe2_set;             // bitmap of hw threads that have ssr:xe2 set in each cluster
+	u32_t cluster_clusters;   // number of clusters
+	u32_t cluster_hthreads;   // hardware threads per cluster
+	u32_t cluster_mask[4];    // bitmask of threads in cluster
+	u32_t cluster_sched;      // do cluster scheduling?
+	u32_t coproc_max;         // max coprocessor threads per cluster
 #endif
 
 	union {

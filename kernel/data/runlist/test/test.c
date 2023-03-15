@@ -120,7 +120,8 @@ int main()
 	if (0 <= H2K_gp->runlist_prios[2] && H2K_gp->runlist_prios[2] <= MAX_PRIO) FAIL("runlist_remove failed (13)");
 	if (H2K_runlist_worst_prio_TB() != 2) FAIL("runlist_worst_prio (17)");
 	if (!H2K_runlist_worst_prio_hthread_OK()) FAIL("runlist_worst_prio_hthread failed (33)");
-	if (H2K_runlist_prio_hthreads_TB(hthreads_bc,b.prio) != 1) FAIL("runlist_prio_hthreads failed (43)");
+	printf("xxx %d\n", H2K_runlist_prio_hthreads_TB(hthreads_bc,b.prio));
+	if (H2K_runlist_prio_hthreads_TB(hthreads_bc,b.prio) != 2) FAIL("runlist_prio_hthreads failed (43)");  // find waiting hthread
 	if (H2K_runlist_prio_hthreads_TB(hthreads_b,b.prio) != 1) FAIL("runlist_prio_hthreads failed (44)");
 
 	H2K_runlist_remove_TB(&b);

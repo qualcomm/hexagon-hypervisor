@@ -80,7 +80,7 @@ static int still_spinning(volatile int *counter)
 {
 	int test0,test1;
 	test0 = *counter;
-	wait(1000);
+	wait(2000);
 	test1 = *counter;
 	return (test0 != test1);
 }

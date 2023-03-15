@@ -200,9 +200,13 @@ int main()
 #endif
 
 #if ARCHV >= 81
-	H2K_gp->hmx_units = H2K_cfg_table(CFG_TABLE_HMX_INSTANCES);
+	u32_t i, val;
+	val = H2K_cfg_table(CFG_TABLE_HMX_INT8_RATE);
+	for (i = 0; i < 4; i++) {
+		H2K_gp->hmx_units += ((val & (0xff << (i * 8))) != 0);  // byte not 0?
+	}
 #else
-	H2K_gp->hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_SIZE) != 0);  // exists?
+	H2K_gp->hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_INT8_RATE) != 0);  // exists?
 #endif
 	H2K_gp->coproc_max = ((H2K_gp->coproc_contexts + H2K_gp->hmx_units) / H2K_gp->cluster_clusters) + (((H2K_gp->coproc_contexts + H2K_gp->hmx_units) % H2K_gp->cluster_clusters) != 0);
 	H2K_kg.coproc_max = (H2K_kg.coproc_max < CLUSTER_SCHED_MIN_COPROCS ? CLUSTER_SCHED_MIN_COPROCS : H2K_kg.coproc_max);

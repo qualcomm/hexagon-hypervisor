@@ -148,8 +148,8 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	}
 	if (NULL == ret) {  // didn't find anything to schedule
 		H2K_log("\ththread %d Didn't find a thread to schedule\n", hthread);
-		H2K_log("\ththread %d Other clusters xe_set 0x%08x\n", hthread, H2K_gp->xe_set & H2K_gp->cluster_mask[cluster]);
-		H2K_log("\ththread %d Other clusters xe2_set 0x%08x\n", hthread, H2K_gp->xe2_set & H2K_gp->cluster_mask[cluster]);
+		H2K_log("\ththread %d Other clusters xe_set 0x%08x\n", hthread, H2K_gp->xe_set & ~(H2K_gp->cluster_mask[cluster]));
+		H2K_log("\ththread %d Other clusters xe2_set 0x%08x\n", hthread, H2K_gp->xe2_set & ~(H2K_gp->cluster_mask[cluster]));
 
 		/* This hthread is no longer using xe/xe2 */
 		if (hthread_xe) {
@@ -170,7 +170,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 		hthreads = 0;
 		for (i = 0; i < H2K_gp->cluster_clusters; i++) {
 			if (H2K_gp->coproc_max - XE_SET_COUNT(i) >= head_coprocs) {  // has room
-				hthreads |= ~(H2K_gp->cluster_mask[i]);
+				hthreads |= H2K_gp->cluster_mask[i];
 			}
 		}
 		victim = H2K_runlist_prio_hthreads(hthreads, prio);

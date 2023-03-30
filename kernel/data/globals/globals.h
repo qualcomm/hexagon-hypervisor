@@ -106,12 +106,13 @@ typedef struct {
 #define XE2_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe2_set & H2K_gp->cluster_mask[(CLUSTER)]))
 
 	u32_t xe_set;             // bitmap of hw threads that have ssr:xe set in each cluster
-	u32_t xe2_set;             // bitmap of hw threads that have ssr:xe2 set in each cluster
+	u32_t xe2_set;            // bitmap of hw threads that have ssr:xe2 set in each cluster
 	u32_t cluster_clusters;   // number of clusters
 	u32_t cluster_hthreads;   // hardware threads per cluster
 	u32_t cluster_mask[4];    // bitmask of threads in cluster
 	u32_t cluster_sched;      // do cluster scheduling?
 	u32_t coproc_max;         // max coprocessor threads per cluster
+	u32_t coproc_max_save;    // max coprocessor threads per cluster prior to adjustment for stopped hthreads
 #endif
 
 	union {

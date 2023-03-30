@@ -118,9 +118,6 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	u32_t i;
 
 	H2K_log("hthread %d  cluster %d  coprocs %d  hthread_xe %d  hthread_xe2 %d\n", hthread, cluster, coprocs, hthread_xe, hthread_xe2);
-	H2K_log("coprocs_max %d\n", H2K_gp->coproc_max);
-	H2K_log("cluster_masks  0x%08x 0x%08x 0x%08x 0x%08x\n", H2K_gp->cluster_mask[0], H2K_gp->cluster_mask[1], H2K_gp->cluster_mask[2], H2K_gp->cluster_mask[3]);
-
 	H2K_log("ready_head 1: hthread %d  xe_set 0x%08x\n", hthread, H2K_gp->xe_set);
 	H2K_log("ready_head 1: hthread %d  xe2_set 0x%08x\n", hthread, H2K_gp->xe2_set);
 

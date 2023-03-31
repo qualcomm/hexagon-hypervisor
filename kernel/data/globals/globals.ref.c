@@ -203,10 +203,10 @@ void H2K_cluster_config(void) {
 	H2K_log("hthreads_mask 0x%08x\n", H2K_gp->hthreads_mask);
 
 	/* Mask hthreads that are not started */
-	H2K_gp->cluster_mask[0] = (H2K_gp->hthreads_mask >> (H2K_gp->cluster_hthreads * 0)) & (0xffffffff >> (32 - H2K_gp->cluster_hthreads));
-	H2K_gp->cluster_mask[1] = (H2K_gp->hthreads_mask >> (H2K_gp->cluster_hthreads * 1)) & (0xffffffff >> (32 - H2K_gp->cluster_hthreads));
-	H2K_gp->cluster_mask[2] = (H2K_gp->hthreads_mask >> (H2K_gp->cluster_hthreads * 2)) & (0xffffffff >> (32 - H2K_gp->cluster_hthreads));
-	H2K_gp->cluster_mask[3] = (H2K_gp->hthreads_mask >> (H2K_gp->cluster_hthreads * 3)) & (0xffffffff >> (32 - H2K_gp->cluster_hthreads));
+	H2K_gp->cluster_mask[0] = ((H2K_gp->hthreads_mask >> (H2K_gp->cluster_hthreads * 0)) & (0xffffffff >> (32 - H2K_gp->cluster_hthreads))) << (H2K_gp->cluster_hthreads * 0);
+	H2K_gp->cluster_mask[1] = ((H2K_gp->hthreads_mask >> (H2K_gp->cluster_hthreads * 1)) & (0xffffffff >> (32 - H2K_gp->cluster_hthreads))) << (H2K_gp->cluster_hthreads * 1);
+	H2K_gp->cluster_mask[2] = ((H2K_gp->hthreads_mask >> (H2K_gp->cluster_hthreads * 2)) & (0xffffffff >> (32 - H2K_gp->cluster_hthreads))) << (H2K_gp->cluster_hthreads * 2);
+	H2K_gp->cluster_mask[3] = ((H2K_gp->hthreads_mask >> (H2K_gp->cluster_hthreads * 3)) & (0xffffffff >> (32 - H2K_gp->cluster_hthreads))) << (H2K_gp->cluster_hthreads * 3);
 
 	H2K_log("cluster_masks  0x%08x 0x%08x 0x%08x 0x%08x\n", H2K_gp->cluster_mask[3], H2K_gp->cluster_mask[2], H2K_gp->cluster_mask[1], H2K_gp->cluster_mask[0]);
 

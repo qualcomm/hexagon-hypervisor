@@ -97,22 +97,13 @@ typedef struct {
 #endif
 
 #ifdef CLUSTER_SCHED
-#define XE_SET_SET(HTHREAD) (H2K_gp->xe_set |= (0x1 << (HTHREAD)))
-#define XE_SET_CLR(HTHREAD) (H2K_gp->xe_set &= ~(0x1 << (HTHREAD)))
-#define XE_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe_set & H2K_gp->cluster_mask[(CLUSTER)]))
-
-#define XE2_SET_SET(HTHREAD) (H2K_gp->xe2_set |= (0x1 << (HTHREAD)))
-#define XE2_SET_CLR(HTHREAD) (H2K_gp->xe2_set &= ~(0x1 << (HTHREAD)))
-#define XE2_SET_COUNT(CLUSTER) (Q6_R_popcount_P(H2K_gp->xe2_set & H2K_gp->cluster_mask[(CLUSTER)]))
-
-	u32_t xe_set;             // bitmap of hw threads that have ssr:xe set in each cluster
-	u32_t xe2_set;            // bitmap of hw threads that have ssr:xe2 set in each cluster
 	u32_t cluster_clusters;   // number of clusters
 	u32_t cluster_hthreads;   // hardware threads per cluster
 	u32_t cluster_mask[4];    // bitmask of threads in cluster
 	u32_t cluster_sched;      // do cluster scheduling?
 	u32_t coproc_max;         // max coprocessor threads per cluster
-	u32_t coproc_max_save;    // max coprocessor threads per cluster prior to adjustment for stopped hthreads
+	u32_t coproc_max_save;    // max coprocessor threads per cluster when all hw threads enabled
+	u32_t coproc_count[CLUSTER_MAX_CLUSTERS];  // number of coprocs active in cluster
 #endif
 
 	union {
@@ -204,7 +195,25 @@ static inline H2K_kg_t PURITY *H2K_gp_llvm()
 #undef PURITY
 #endif
 
+#ifdef CLUSTER_SCHED
+static inline u32_t H2K_hthread_cluster(u32_t hthread) {
+	return (hthread / H2K_gp->cluster_hthreads);
+}
+
+static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2) {
+	u32_t cluster = H2K_hthread_cluster(hthread);
+
+	H2K_gp->coproc_count[cluster] += (xe + xe2);
+}
+
+static inline void xex_set_clr(u32_t hthread, u32_t xe, u32_t xe2) {
+	u32_t cluster = H2K_hthread_cluster(hthread);
+
+	H2K_gp->coproc_count[cluster] -= (xe + xe2);
+}
+
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) IN_SECTION(".text.init.globals");
 
 #endif
 
+#endif

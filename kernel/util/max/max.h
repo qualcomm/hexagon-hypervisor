@@ -239,6 +239,7 @@
 #endif
 
 #define CLUSTER_SCHED_MIN_COPROCS 2  // allow at least this many coprocs per cluster
+#define CLUSTER_MAX_CLUSTERS 4  // max clusters per processor
 
 #define BITS_MASK(NBITS, START) ((u32_t)(((0x1 << ((NBITS))) - 1) << (START)))
 

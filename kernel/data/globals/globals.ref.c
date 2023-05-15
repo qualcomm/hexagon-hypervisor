@@ -124,7 +124,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_kg.hmx_units > 0);
 #endif
 #ifdef CLUSTER_SCHED
-		/* Adjusted for stopped hthreads later */
 		H2K_kg.coproc_max_save = ((H2K_kg.coproc_contexts + H2K_kg.hmx_units) / H2K_kg.cluster_clusters) + (((H2K_kg.coproc_contexts + H2K_kg.hmx_units) % H2K_kg.cluster_clusters) != 0);
 		H2K_kg.coproc_max_save = (H2K_kg.coproc_max < CLUSTER_SCHED_MIN_COPROCS ? CLUSTER_SCHED_MIN_COPROCS : H2K_kg.coproc_max);
 #endif	
@@ -214,7 +213,7 @@ void H2K_cluster_config(void) {
 	H2K_gp->coproc_max = H2K_gp->coproc_max_save;
 	for (i = 0; i < H2K_gp->cluster_clusters; i++) {
 		if (Q6_R_popcount_P(H2K_gp->cluster_mask[i]) < H2K_gp->coproc_max) {  // too few hthreads for max
-			H2K_gp->coproc_max = -1;  // allow unlimited instead of trying to figure out how to balance among asymmetric clusters
+			H2K_gp->coproc_max = -1;  // disable cluster scheduling
 			break;
 		}
 	}

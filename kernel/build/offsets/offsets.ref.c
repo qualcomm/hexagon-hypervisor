@@ -118,13 +118,12 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(hthreads);
 
 #ifdef CLUSTER_SCHED
-	PRINT_KG_OFFSET(xe_set);
-	PRINT_KG_OFFSET(xe2_set);
 	PRINT_KG_OFFSET(cluster_clusters);
 	PRINT_KG_OFFSET(cluster_hthreads);
 	PRINT_KG_OFFSET(cluster_mask);
 	PRINT_KG_OFFSET(cluster_sched);
 	PRINT_KG_OFFSET(coproc_max);
+	PRINT_KG_OFFSET(coproc_count);
 #endif
 
 #ifdef CRASH_DEBUG

@@ -1359,7 +1359,7 @@ void print_infos() {
 		BOOTER_PRINTF("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
 		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_COPROC_CONTEXTS));
 #ifdef CLUSTER_SCHED
-		BOOTER_PRINTF("\t\tMax HVX contexts per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_COPROC));
+		BOOTER_PRINTF("\t\tMax coprocessor threads per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_COPROC));
 #endif
 		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
 #if ARCHV >= 65

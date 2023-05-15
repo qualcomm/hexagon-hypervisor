@@ -134,6 +134,9 @@ void H2K_trace(s8_t type, u8_t hwtnum, u8_t tid, u32_t pcyclelo)
 {
 }
 
+void H2K_cluster_config(void) {
+}
+
 H2K_kg_t H2K_kg;
 
 void H2K_thread_boot();

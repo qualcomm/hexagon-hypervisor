@@ -241,24 +241,19 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa
 	if (0 < H2K_gp->hmx_units) {  // exists
 #ifdef CLUSTER_SCHED
 		if (H2K_gp->cluster_sched) {
-			u32_t cluster = H2K_hthread_cluster(me->hthread);
 			BKL_LOCK();
 			if (xe2 && !(me->ssr & SSR_XE2_BIT_MASK)) {  // turning xe2 on
-				if (XE_SET_COUNT(cluster) + XE2_SET_COUNT(cluster) < H2K_gp->coproc_max) {
-					XE2_SET_SET(me->hthread);
-					H2K_log("hmxbits: hthread %d  cluster %d  xe2_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe2_set);
-				} else {  // block as if we got resched interrupt
-					H2K_log("hmxbits: hthread %d  cluster %d full\n", me->hthread, cluster);
-					me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
-					me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
-					H2K_runlist_remove(me);
-					H2K_ready_append(me);
-					H2K_dosched(me, me->hthread);
-				}
+				// block as if we got resched interrupt
+				H2K_log("hmxbits: hthread %d  setting xe2\n", me->hthread);
+				me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
+				me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
+				H2K_runlist_remove(me);
+				H2K_ready_append(me);
+				H2K_dosched(me, me->hthread);
 			}
 			if (!xe2 && (me->ssr & SSR_XE2_BIT_MASK)) {  // turning xe2 off
-				XE_SET_CLR(me->hthread);
-				H2K_log("hmxbits: hthread %d  cluster %d  xe2_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe2_set);
+				xex_set_clr(me->hthread, 0, 1);
+				H2K_log("hmxbits: hthread %d  clearing xe2\n", me->hthread);
 			}
 			BKL_UNLOCK();
 		}
@@ -283,34 +278,28 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 
 #ifdef CLUSTER_SCHED
 	if (H2K_gp->cluster_sched) {
-		/* Don't use H2K_gp->hthreads_mask here since some threads could be turned off */
-		u32_t cluster = H2K_hthread_cluster(me->hthread);
 		BKL_LOCK();
 		if (xe && !(me->ssr & SSR_XE_BIT_MASK)) {  // turning xe on
-			if (XE_SET_COUNT(cluster) + XE2_SET_COUNT(cluster) < H2K_gp->coproc_max) {
-				XE_SET_SET(me->hthread);
-				H2K_log("extbits: hthread %d  cluster %d  xe_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe_set);
-			} else {  // block as if we got resched interrupt
-				H2K_log("extbits: hthread %d  cluster %d full\n", me->hthread, cluster);
+			// block as if we got resched interrupt
+			H2K_log("extbits: hthread %d  setting xe\n", me->hthread);
 
-				if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + H2K_gp->coproc_contexts)  // not in HVX range
+			if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + H2K_gp->coproc_contexts)  // not in HVX range
 #ifdef DO_EXT_SWITCH
-						|| (!(me->vmblock->do_ext))
+					|| (!(me->vmblock->do_ext))
 #endif
-						) {
-					me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
-					me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
-					H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
-				}
-				/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
-				H2K_runlist_remove(me);
-				H2K_ready_append(me);
-				H2K_dosched(me, me->hthread);
+					) {
+				me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
+				me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+				H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
 			}
+			/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
+			H2K_runlist_remove(me);
+			H2K_ready_append(me);
+			H2K_dosched(me, me->hthread);
 		}
 		if (!xe && (me->ssr & SSR_XE_BIT_MASK)) {  // turning xe off
-			XE_SET_CLR(me->hthread);
-			H2K_log("extbits: hthread %d  cluster %d  xe_set 0x%08x\n", me->hthread, cluster, H2K_gp->xe_set);
+			xex_set_clr(me->hthread, 1, 0);
+			H2K_log("extbits: hthread %d  clearing xe\n", me->hthread);
 		}
 		BKL_UNLOCK();
 	}

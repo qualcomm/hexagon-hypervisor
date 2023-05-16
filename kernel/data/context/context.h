@@ -156,7 +156,7 @@ typedef struct _h2_thread_context
 					u8_t ssr_badva_pe:1;
 					u8_t ssr_bp:1;
 #ifdef HAVE_EXTENSIONS
-					u8_t ssr_xe2;
+					u8_t ssr_xe2:1;
 					u8_t ssr_xa:3;
 #else
 					u8_t ssr_hi_rsvd:4;

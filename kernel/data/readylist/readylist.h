@@ -118,7 +118,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	H2K_thread_context *ret = head;
 
 #ifdef CLUSTER_SCHED
-	if (!H2K_gp->cluster_sched) {
+	if ((!H2K_gp->cluster_sched) || H2K_gp->coproc_max == -1) {
 		return ret;
 	}
 
@@ -133,11 +133,11 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	u32_t cluster = H2K_hthread_cluster(hthread);  // cluster of hthread
 	u32_t victim;  // hthread to receive interrupt
 	u32_t min_coprocs = -1;  // min # coprocs found on cluster with at least 1 waiting thread
-	u32_t min_cluster = -1;  // cluster that has min coprocs and at least 1 waiting thread
+	u32_t __attribute__((unused)) min_cluster = -1;  // cluster that has min coprocs and at least 1 waiting thread
 	u32_t need_tmp = need;  // save # needed coprocs when walking ready list
 	u32_t i;
 
-	H2K_log("hthread %d  have %d  need %d  head_xe %d  head_xe2 %d  count %d \n\tcheck task 0x%08x\n", hthread, have, need, head_xe, head_xe2, H2K_gp->coproc_count[cluster], ret);
+	H2K_log("hthread %d  have %d  need %d  head_xe %d  head_xe2 %d  counts %d %d %d %d \n\tcheck task 0x%08x\n", hthread, have, need, head_xe, head_xe2, H2K_gp->coproc_count[0], H2K_gp->coproc_count[1], H2K_gp->coproc_count[2], H2K_gp->coproc_count[3], ret);
 
 	if (H2K_gp->coproc_count[cluster] + (need - have) <= H2K_gp->coproc_max) {  // within limit
 		H2K_update_coprocs(hthread, hthread_xe, hthread_xe2, head_xe, head_xe2);
@@ -146,17 +146,18 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	}
 
 	/* find the least-loaded cluster that has thread(s) in wait mode */
-	for (i = 0; i < H2K_gp->cluster_clusters; i++) {
-		if (H2K_gp->wait_mask & H2K_gp->cluster_mask[i]) {  // threads in wait mode
-			if (H2K_gp->coproc_count[i] < min_coprocs) {  // new min
-				min_coprocs = H2K_gp->coproc_count[i];
-				min_cluster = i;
-				victim = H2K_gp->wait_mask & H2K_gp->cluster_mask[i];
-				H2K_log("hthread %d  min cluster %d, min coprocs %d, victims 0x%08x\n", hthread, min_cluster, min_coprocs, victim);
+	if (H2K_gp->wait_mask) {  // only check if there are waiting threads
+		for (i = 0; i < H2K_gp->cluster_clusters; i++) {
+			if (H2K_gp->wait_mask & H2K_gp->cluster_mask[i]) {  // threads in wait mode
+				if (H2K_gp->coproc_count[i] < min_coprocs) {  // new min
+					min_coprocs = H2K_gp->coproc_count[i];
+					min_cluster = i;
+					victim = H2K_gp->wait_mask & H2K_gp->cluster_mask[i];
+					H2K_log("hthread %d  min cluster %d, min coprocs %d, victims 0x%08x\n", hthread, min_cluster, min_coprocs, victim);
+				}
 			}
 		}
-	}
-	if (min_cluster == -1) {  // no eligible cluster found, so pick up task on this hthread
+	} else {  // no eligible cluster found, so pick up task on this hthread
 		H2K_update_coprocs(hthread, hthread_xe, hthread_xe2, head_xe, head_xe2);
 		H2K_log("hthread %d  clusters full; change coprocs from %d to %d, new cluster count %d\n", hthread, have, need, H2K_gp->coproc_count[cluster]);
 		return ret;
@@ -174,6 +175,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			ssr &= ~SSR_XE2_BIT_MASK;
 			H2K_set_ssr(ssr);
 			xex_set_clr(hthread, hthread_xe, hthread_xe2);
+			H2K_log("hthread %d  sleeping 1, hthread_xe %d  hthread_xe2 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, H2K_gp->coproc_count[cluster]);
 			return NULL;
 		}
 
@@ -217,7 +219,7 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 		ssr &= ~SSR_XE2_BIT_MASK;
 		H2K_set_ssr(ssr);
 		xex_set_clr(hthread, hthread_xe, hthread_xe2);
-		H2K_log("hthread %d  sleeping, hthread_xe %d  hthread_xe2 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, H2K_gp->coproc_count[H2K_hthread_cluster(hthread)]);
+		H2K_log("hthread %d  sleeping 2, hthread_xe %d  hthread_xe2 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, H2K_gp->coproc_count[H2K_hthread_cluster(hthread)]);
 #endif
 		return NULL;
 	}

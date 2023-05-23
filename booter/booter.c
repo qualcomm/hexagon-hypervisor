@@ -1358,9 +1358,6 @@ void print_infos() {
 	if (boot_flags.boot_have_hvx) {
 		BOOTER_PRINTF("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
 		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_COPROC_CONTEXTS));
-#ifdef CLUSTER_SCHED
-		BOOTER_PRINTF("\t\tMax coprocessor threads per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_COPROC));
-#endif
 		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
 #if ARCHV >= 65
 		BOOTER_PRINTF("\t\tVTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
@@ -1375,6 +1372,14 @@ void print_infos() {
 	if (boot_flags.boot_have_hmx) {
 		BOOTER_PRINTF("\t\tUnits: %d\n", h2_info(INFO_HMX_INSTANCES));
 	}
+#ifdef CLUSTER_SCHED
+		unsigned int max_coprocs = h2_info(INFO_MAX_CLUSTER_COPROC);
+		if (max_coprocs == -1) {
+			BOOTER_PRINTF("\tCluster scheduling disabled\n");
+		} else {
+			BOOTER_PRINTF("\tMax coprocessor threads per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_COPROC));
+		}
+#endif
 	BOOTER_PRINTF("\tUser-mode DMA present: ");
 	BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
 #endif

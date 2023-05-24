@@ -212,6 +212,8 @@ static inline void xex_set_clr(u32_t hthread, u32_t xe, u32_t xe2) {
 	H2K_gp->coproc_count[cluster] -= (xe + xe2);
 }
 
+void H2K_cluster_config(void) IN_SECTION(".text.init.globals");
+
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) IN_SECTION(".text.init.globals");
 
 #endif

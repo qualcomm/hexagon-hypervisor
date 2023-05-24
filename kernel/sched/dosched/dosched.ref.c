@@ -20,7 +20,12 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 	if (new == NULL) {
 		/* GO TO SLEEP */
 		H2K_raise_lowprio();
-		H2K_switch(me,NULL);
+		/* FIXME: temporary ugly hack for broken 8.7+ compiler */
+		asm volatile ("r0 = %0\n"
+									"r1 = #0\n"
+									"call H2K_switch\n"
+									: : "r"(me));
+		//		H2K_switch(me,NULL);
 		/* EJP: should never get here! */
 	}
 	if ((H2K_gp->wait_mask == 0) && (new->prio IS_WORSE_THAN H2K_runlist_worst_prio())) {

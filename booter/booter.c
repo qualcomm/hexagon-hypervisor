@@ -787,6 +787,10 @@ void load_vm(unsigned int idx) {
 
 	char *elf = vm_params[idx].argv[0];
 
+#ifdef BOOTVM_DEBUG
+	int reads = 0;
+#endif
+
 	BOOTER_PRINTF("\n");  // FIXME: prepending \n to string results in an empty line in the output lately. Weird.
 	BOOTER_PRINTF("Load VM index %d %s\n", idx, elf);
 
@@ -892,6 +896,9 @@ void load_vm(unsigned int idx) {
 				bytes_read = 0;
 				do {
 					bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
+#ifdef BOOTVM_DEBUG
+					reads++;
+#endif					
 				} while (ret > 0);
 				if (ret == -1) {
 					error("\tCan't read() in ", elf);
@@ -902,6 +909,9 @@ void load_vm(unsigned int idx) {
 				dcclean_range(phdr.p_paddr, phdr.p_memsz);
 			}
 		}
+#ifdef BOOTVM_DEBUG
+		BOOTER_PRINTF("\t\tTotal read operations: %d\n", reads);
+#endif		
 		close(fdesc);
 
 		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
@@ -1348,9 +1358,6 @@ void print_infos() {
 	if (boot_flags.boot_have_hvx) {
 		BOOTER_PRINTF("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
 		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_COPROC_CONTEXTS));
-#ifdef CLUSTER_SCHED
-		BOOTER_PRINTF("\t\tMax HVX contexts per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_COPROC));
-#endif
 		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
 #if ARCHV >= 65
 		BOOTER_PRINTF("\t\tVTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
@@ -1365,6 +1372,14 @@ void print_infos() {
 	if (boot_flags.boot_have_hmx) {
 		BOOTER_PRINTF("\t\tUnits: %d\n", h2_info(INFO_HMX_INSTANCES));
 	}
+#ifdef CLUSTER_SCHED
+		unsigned int max_coprocs = h2_info(INFO_MAX_CLUSTER_COPROC);
+		if (max_coprocs == -1) {
+			BOOTER_PRINTF("\tCluster scheduling disabled\n");
+		} else {
+			BOOTER_PRINTF("\tMax coprocessor threads per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_COPROC));
+		}
+#endif
 	BOOTER_PRINTF("\tUser-mode DMA present: ");
 	BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
 #endif

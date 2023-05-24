@@ -134,6 +134,7 @@ int blast_thread_create(void *pc, void *stack, void *arg,
 	qurt_thread_attr_set_priority(&attr,prio);
 	qurt_thread_attr_set_stack_addr(&attr,(unsigned char *)stack-BLAST_STACK_SIZE);	/* FIXME: is that right? */
 	qurt_thread_attr_set_stack_size(&attr,BLAST_STACK_SIZE);	/* FIXME: is that right? */
+	pthread_attr_setdetachstate(&attr.pthread_attrs, PTHREAD_CREATE_DETACHED);
 
 	qurt_thread_create(&id, &attr, pc, arg);
 	return id;

@@ -80,7 +80,7 @@ static int still_spinning(volatile int *counter)
 {
 	int test0,test1;
 	test0 = *counter;
-	wait(1000);
+	wait(2000);
 	test1 = *counter;
 	return (test0 != test1);
 }
@@ -224,6 +224,22 @@ int main(int argc, char **argv)
 	spawn_spinner(21,16);
 	spawn_spinner(22,16);
 	spawn_spinner(23,16);
+	spawn_spinner(24,16);
+	spawn_spinner(25,16);
+	spawn_spinner(26,16);
+	spawn_spinner(27,16);
+	spawn_spinner(28,16);
+	spawn_spinner(29,16);
+	spawn_spinner(30,16);
+	spawn_spinner(31,16);
+	spawn_spinner(32,16);
+	spawn_spinner(33,16);
+	spawn_spinner(34,16);
+	spawn_spinner(35,16);
+	spawn_spinner(36,16);
+	spawn_spinner(37,16);
+	spawn_spinner(38,16);
+	spawn_spinner(39,16);
 
 	info("Middle Spinners Launched\n");
 

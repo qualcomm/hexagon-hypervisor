@@ -494,11 +494,5 @@ static inline void H2K_dmcfgwr(u32_t index, u32_t data) {
 
 void H2K_start_threads(unsigned int mask);
 
-#ifdef CLUSTER_SCHED
-static inline u32_t H2K_hthread_cluster(u32_t hthread) {
-	return (hthread >= H2K_gp->cluster_hthreads ? 1 : 0);
-}
-#endif
-
 #endif
 

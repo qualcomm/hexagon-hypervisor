@@ -172,6 +172,9 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 	case INFO_HMX_INSTANCES:
 		return H2K_gp->hmx_units;
 
+	case INFO_CORECFG_BASE:
+		return H2K_cfg_table(CFG_TABLE_CORECFG_BASE) << CFG_TABLE_SHIFT;
+
 	default:
 		return -1;
 	}

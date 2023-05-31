@@ -43,6 +43,7 @@ typedef enum {
 	INFO_L1D_SIZE,    /**< L1data cache size */
 	INFO_MAX_CLUSTER_COPROC, /**< Max coprocessor threads per cluster */
 	INFO_HMX_INSTANCES, /**< Number of HMX instances */
+	INFO_CORECFG_BASE,/**< Core regs base */
 	INFO_MAX
 } info_type;
 

@@ -9,7 +9,7 @@
 #include "stdio.h"
 #endif
 
-count_t sys_read(fd_t fd, char *buffer, count_t count)
+static count_t do_sys_read(fd_t fd, char *buffer, count_t count)
 {
 	count_t ret;
 	struct { fd_t fd; char *buf; count_t count; } x;
@@ -31,5 +31,18 @@ count_t sys_read(fd_t fd, char *buffer, count_t count)
 	printf("SYS_READ_DEBUG: angel read %d bytes in %llu nsecs\n", count, (end_time - start_time) * 52);
 #endif
 	return ret;
+}
+
+/* Trampoline to align sp down to next cache line. This prevents stack
+	 allocations further down the call tree from falling in the same
+	 cache line as the buffer that needs to be invalidated prior to
+	 angel SYS_READ, which can foil the invalidation. */
+count_t sys_read(fd_t fd, char *buffer, count_t count) {
+	unsigned long sp_save;
+	/*FIXME: Maybe we should get the actual cache line size from cfg_table and save it in a global */
+	asm volatile ( " %0 = r29  // save sp \n"
+								 " r29 = and(r29, #-256)  // align sp down \n"
+								 : "=r"(sp_save));
+	return do_sys_read(fd, buffer, count);
 }
 

@@ -241,7 +241,7 @@ static inline int h2_hwconfig_hwthreads_num(unsigned int num) {
 
 /**
 Enable/Disable memory ECC
-@param[in] ecc_enable 1 == enable, 0 == disable
+@param[in] ecc_enable Mask of memories to enable
 @returns 0 on success, negative value on error
 @dependencies None
 */

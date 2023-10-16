@@ -127,6 +127,7 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 	u32_t cur_nra;
 	u32_t syscfg;
 	u32_t tmp;
+	u32_t i;
 
 	/* Don't need to lock here since we only proceed in ST mode */
 	syscfg = H2K_get_syscfg();
@@ -164,14 +165,12 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 	
 	/* ECC */
 	if (ecc_enable != H2K_gp->ecc_enable) {
-		//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_0, (ecc_enable ? 0xa : 0x5));  // l1i
-		//			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_1, (ecc_enable ? 0xa : 0x5));  // l1d
-		tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2);
-		tmp = Q6_R_insert_RII(tmp, (ecc_enable ? 0xa : 0x5), 4, 0);
-		setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_2, tmp);  // l2
-		tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3);
-		tmp = Q6_R_insert_RII(tmp, (ecc_enable ? 0xa : 0x5), 4, 0);
-		setxreg(CFG_TABLE_ECC_BASE, ECCREGS_PROT_ENABLE_3, tmp);  // vtcm
+		for (i = 0; i < ECCREGS_NREGS; i++) {
+			tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_STRIDE * i);
+			tmp = Q6_R_insert_RII(tmp, ((ecc_enable & (1 << i)) ? 0xa : 0x5), 4, 0);
+			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_STRIDE * i, tmp);
+		}
+		H2K_gp->ecc_enable = ecc_enable;
 	}
 
 	H2K_syncht();
@@ -194,6 +193,10 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 
 u32_t H2K_trap_hwconfig_ecc(u32_t unused, void *unusedp, u32_t ecc_enable, u32_t unused3, H2K_thread_context *me) {
 	u32_t syscfg;
+
+	if (ecc_enable >= 0x1 << ECCREGS_NREGS) {  // out of range
+		return -1;
+	}
 
 	syscfg = H2K_get_syscfg();
 	/* size and use_wb unchanged */

@@ -276,7 +276,7 @@ void usage()
 	BOOTER_PRINTF("  --sample <int>\n\tSet guest PC sample interval in usecs. Default 0 (disabled).\n");
 	BOOTER_PRINTF("  --hwt_mask <int>\n\tMask of hardware threads to start. Default -1 (all).\n");
 	BOOTER_PRINTF("  --hwt_num <int>\n\tNumber of hardware threads to start. Default -1 (all).\n");
-	BOOTER_PRINTF("  --ecc_enable (0|1)\n\tEnable/disable ECC for all applicable memories.  Default 0.\n");
+	BOOTER_PRINTF("  --ecc_enable <int>\n\tMask of memories to enable/disable ECC.  Default 0.\n");
 	BOOTER_PRINTF("  --pmu_evtcfg <int>\n\tSet PMU event config register 0.\n");
 	BOOTER_PRINTF("  --pmu_evtcfg1 <int>\n\tSet PMU event config register 1.\n");
 	BOOTER_PRINTF("  --pmu_cfg <int>\n\tSet PMU config register.\n");
@@ -1431,7 +1431,7 @@ void kernel_setup() {
 			FAIL("ECC enable", "");
 		}
 		BOOTER_PRINTF("ECC regs:\n");
-		for (offset = ECCREGS_PROT_ENABLE_0; offset <= ECCREGS_MAX; offset += 0x100) {
+		for (offset = 0; offset <= ECCREGS_MAX; offset += ECCREGS_STRIDE) {
 			BOOTER_PRINTF("\toffset 0x%03x: 0x%08x\n", offset, h2_hwconfig_ecc_get_reg(offset));
 		}
 	}

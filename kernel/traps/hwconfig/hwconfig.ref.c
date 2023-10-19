@@ -167,7 +167,7 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 	if (ecc_enable != H2K_gp->ecc_enable) {
 		for (i = 0; i < ECCREGS_NREGS; i++) {
 			tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_STRIDE * i);
-			tmp = Q6_R_insert_RII(tmp, ((ecc_enable & (1 << i)) ? 0xa : 0x5), 4, 0);
+			tmp = Q6_R_insert_RII(tmp, ((ecc_enable & (1 << i)) ? ECCREGS_ENABLE : ECCREGS_DISABLE), ECCREGS_BITS, 0);
 			setxreg(CFG_TABLE_ECC_BASE, ECCREGS_STRIDE * i, tmp);
 		}
 		H2K_gp->ecc_enable = ecc_enable;
@@ -193,9 +193,18 @@ u32_t H2K_trap_hwconfig_l2cache(u32_t unused, void *unusedp, u32_t size, u32_t u
 
 u32_t H2K_trap_hwconfig_ecc(u32_t unused, void *unusedp, u32_t ecc_enable, u32_t unused3, H2K_thread_context *me) {
 	u32_t syscfg;
+	u32_t tmp, i;
 
 	if (ecc_enable >= 0x1 << ECCREGS_NREGS) {  // out of range
 		return -1;
+	}
+
+	/* get ECC enable state */
+	for (i = 0; i < ECCREGS_NREGS; i++) {
+		tmp = getxreg(CFG_TABLE_ECC_BASE, ECCREGS_STRIDE * i);
+		if (tmp & ECCREGS_ENABLE) {
+			H2K_gp->ecc_enable |= (1 << i);
+		}
 	}
 
 	syscfg = H2K_get_syscfg();

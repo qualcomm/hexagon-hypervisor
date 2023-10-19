@@ -1427,10 +1427,14 @@ void kernel_setup() {
 	int val, offset;
 
 	if (ecc_enable != -1) {
+		BOOTER_PRINTF("ECC regs old values:\n");
+		for (offset = 0; offset <= ECCREGS_MAX; offset += ECCREGS_STRIDE) {
+			BOOTER_PRINTF("\toffset 0x%03x: 0x%08x\n", offset, h2_hwconfig_ecc_get_reg(offset));
+		}
 		if (h2_hwconfig_ecc(ecc_enable) < 0) {
 			FAIL("ECC enable", "");
 		}
-		BOOTER_PRINTF("ECC regs:\n");
+		BOOTER_PRINTF("ECC regs new values:\n");
 		for (offset = 0; offset <= ECCREGS_MAX; offset += ECCREGS_STRIDE) {
 			BOOTER_PRINTF("\toffset 0x%03x: 0x%08x\n", offset, h2_hwconfig_ecc_get_reg(offset));
 		}

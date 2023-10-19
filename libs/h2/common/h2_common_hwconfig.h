@@ -53,6 +53,9 @@ HWCONFIG_PREFETCH_SF_D_L2
 #define ECCREGS_NREGS 8
 #define ECCREGS_STRIDE 0x100
 #define ECCREGS_MAX (ECCREGS_STRIDE * (ECCREGS_NREGS - 1))
+#define ECCREGS_ENABLE 0xa
+#define ECCREGS_DISABLE 0x5
+#define ECCREGS_BITS 4
 
 /** 
 Constants for choosing a cache to change partitioning on

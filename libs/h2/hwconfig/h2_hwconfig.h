@@ -399,6 +399,31 @@ static inline int h2_hwconfig_vwctrl_set(unsigned int val) {
 	return h2_hwconfig_trap(HWCONFIG_SETVWCTRL, NULL, val, 0);
 }
 
+/**
+Get DPM volt limits management register.
+@param[in] offset  Offset from DPM volt limits management register from base
+@returns register value or 0 on failure -- check kerror
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_dpm_voltlmtmgmt_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GET_DPM_VOLTLMTMGMT_REG, NULL, offset, 0);
+}
+
+/**
+Set DPM volt limits management register.
+@param[in] offset  Offset from DPM volt limits management register from base
+@param[in] val  Value to write
+@returns previous register value or 0 on failure -- check kerror
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_dpm_voltlmtmgmt_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SET_DPM_VOLTLMTMGMT_REG, NULL, offset, val);
+}
+
 #endif
 
 /** @} */

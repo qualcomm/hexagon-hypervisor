@@ -60,7 +60,9 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_l2cp,
 	H2K_trap_hwconfig_geteccreg,
 	H2K_trap_hwconfig_getvwctrl,
-	H2K_trap_hwconfig_setvwctrl
+	H2K_trap_hwconfig_setvwctrl,
+	H2K_trap_hwconfig_get_dpm_voltlimitmgmt_reg,
+	H2K_trap_hwconfig_set_dpm_voltlimitmgmt_reg	
 };
 
 typedef struct {
@@ -716,5 +718,35 @@ u32_t H2K_trap_hwconfig_setvwctrl(u32_t unused, void *unusedp, u32_t val, u32_t 
 #else
 	return -1;
 #endif
+}
+
+u32_t H2K_trap_hwconfig_get_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
+  if (0x79 <= H2K_gp->arch) {  // hthreads_mask in cfg_table
+    
+    if ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_DPM_VOLTLMTMGMT_MASK) == 0) {  // out of range: reg0 + per-thread regs
+      H2K_gp->kernel_error = KERROR_HWCONFIG_DPM_VOLTLMTMGMT_RANGE;
+      return 0;
+    }
+    
+    return getxreg(CFG_TABLE_CORECFG_BASE, CORECFG_DPM_VOLTLMTMGMT_BASE + offset);
+  }
+  else {
+    return 0;
+  }
+}
+
+u32_t H2K_trap_hwconfig_set_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
+  if (0x79 <= H2K_gp->arch) {  // hthreads_mask in cfg_table
+
+    if ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_DPM_VOLTLMTMGMT_MASK) == 0) {  // out of range: reg0 + per-thread regs
+      H2K_gp->kernel_error = KERROR_HWCONFIG_DPM_VOLTLMTMGMT_RANGE;
+      return 0;
+    }
+    
+    return setxreg(CFG_TABLE_CORECFG_BASE, CORECFG_DPM_VOLTLMTMGMT_BASE + offset, val);
+  }
+  else {
+    return 0;
+  }
 }
 

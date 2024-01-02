@@ -266,7 +266,7 @@ void usage()
 	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
 	BOOTER_PRINTF("  --get_l2_reg <offset int>\n\tPrint value of L2 config register.\n");
 	BOOTER_PRINTF("  --stride_prefetch_reg <offset int> <int>\n\tSet stride prefetcher register.\n");
-	BOOTER_PRINTF("  --dpm_volt_reg <offset int> <int>\n\tSet DPM voltlimit register.\n");
+	BOOTER_PRINTF("  --dvlm_reg <offset int> <int>\n\tSet DPM voltlimit register.\n");
 #ifdef HAVE_EXTENSIONS
 	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on/off coprocessors.  Default 1.\n");
 	BOOTER_PRINTF("  --hmx_poweron_addr <addr>\n\tSet HMX RSC sequence power-on start address.\n");
@@ -1559,7 +1559,7 @@ void set_stride_prefetcher_reg(unsigned int offset, unsigned int val) {
 	BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
 }
 
-void set_dpm_volt_reg(unsigned int offset, unsigned int val) {
+void set_dvlm_reg(unsigned int offset, unsigned int val) {
 
   unsigned int old, ret, kerror;
 
@@ -1578,7 +1578,7 @@ void set_dpm_volt_reg(unsigned int offset, unsigned int val) {
 	ret = h2_hwconfig_dpm_voltlmtmgmt_set_reg(offset, val);
 
 	if (ret != old) {
-		FAIL("set_dpm_volt_reg mismatch.", "");
+		FAIL("set_dvlm_reg mismatch.", "");
 	}
 
 	BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
@@ -1809,9 +1809,9 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 3; argv += 3;
 			continue;
 
-		} else if (0 == strcmp(argv[0], "--dpm_volt_reg")) {
+		} else if (0 == strcmp(argv[0], "--dvlm_reg")) {
 			if (argc < 3) die_usage();
-			set_dpm_volt_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
+			set_dvlm_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
 			argc -= 3; argv += 3;
 			continue;
 

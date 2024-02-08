@@ -15,6 +15,8 @@
 #define DO_EXT_SWITCH 1
 #endif
 
+#define HAVE_HLX 1 //TODO:REMOVE , need so vs code tells me what is compilable
+
 #define PAGE_BITS 12 /* Minimum page size: 4K */
 
 #define DO_PROFILE 1

@@ -200,16 +200,16 @@ static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 	return (hthread / H2K_gp->cluster_hthreads);
 }
 
-static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2) {
+static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2, u32_t xe3) { //TODO: Does this need to be done for hlx, will it break other things
 	u32_t cluster = H2K_hthread_cluster(hthread);
 
-	H2K_gp->coproc_count[cluster] += (xe + xe2);
+	H2K_gp->coproc_count[cluster] += (xe + xe2 + xe3);
 }
 
-static inline void xex_set_clr(u32_t hthread, u32_t xe, u32_t xe2) {
+static inline void xex_set_clr(u32_t hthread, u32_t xe, u32_t xe2, u32_t xe3) {
 	u32_t cluster = H2K_hthread_cluster(hthread);
 
-	H2K_gp->coproc_count[cluster] -= (xe + xe2);
+	H2K_gp->coproc_count[cluster] -= (xe + xe2 + xe3);
 }
 
 void H2K_cluster_config(void) IN_SECTION(".text.init.globals");

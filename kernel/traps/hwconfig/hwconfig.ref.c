@@ -337,6 +337,57 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	return 0;
 }
 
+u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe3, H2K_thread_context *me) {
+	/* FIXME: should check for allowed XA3 values here (maybe?) */
+	/* EJP: Always allow XE3/XA3 to be set if only for silver tests working also */
+
+#ifdef CLUSTER_SCHED
+	if (H2K_gp->cluster_sched) {
+		BKL_LOCK();
+		if (xe3 && !(me->ssr & SSR_XE3_BIT_MASK)) {  // turning xe on
+			// block as if we got resched interrupt
+			H2K_log("hthread %d  extbits:  task 0x%08x  setting xe3\n", me->hthread, me);
+
+			if ((xa3 < EXT_HVX_XA_START || xa3 >= EXT_HVX_XA_START + H2K_gp->coproc_contexts)  // not in HLX range //TODO: Do we need to do this for HLX
+#ifdef DO_EXT_SWITCH
+					|| (!(me->vmblock->do_ext))
+#endif
+					) {
+				me->ssr = Q6_R_insert_RII(me->ssr, xa3, SSR_XA3_NBITS, SSR_XA3_BITS);
+				me->ssr = Q6_R_insert_RII(me->ssr, xe3, 1, SSR_XE3_BIT);
+				H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
+			}
+			/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
+			H2K_runlist_remove(me);
+			H2K_ready_append(me);
+			H2K_dosched(me, me->hthread);
+		}
+		if (!xe3 && (me->ssr & SSR_XE3_BIT_MASK)) {  // turning xe off
+			xex_set_clr(me->hthread, 1, 0);
+			H2K_log("hthread %d  extbits: task 0x%08x  clearing xe3\n", me->hthread, me);
+		}
+		BKL_UNLOCK();
+	}
+#endif
+
+	if ((xa3 < EXT_HVX_XA_START || xa3 >= EXT_HVX_XA_START + H2K_gp->coproc_contexts)  // not in HVX range
+#ifdef DO_EXT_SWITCH
+			|| (!(me->vmblock->do_ext))
+#endif
+			) {
+		me->ssr = Q6_R_insert_RII(me->ssr, xa3, SSR_XA3_NBITS, SSR_XA3_BITS);
+		me->ssr = Q6_R_insert_RII(me->ssr, xe3, 1, SSR_XE3_BIT);
+		H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
+	}
+	/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
+#ifdef HAVE_HLX
+	if (xe3) {
+		H2K_hlx_poweron(); // make sure the lights are on
+	}
+#endif
+	return 0;
+}
+
 u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {
 
 #ifdef HAVE_EXTENSIONS

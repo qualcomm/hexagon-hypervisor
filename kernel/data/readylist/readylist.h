@@ -87,10 +87,9 @@ static inline void H2K_ready_remove(H2K_thread_context *thread)
 }
 
 #ifdef CLUSTER_SCHED
-static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t head_xe, u32_t head_xe2) {
-	xex_set_clr(hthread, (head_xe < hthread_xe), (head_xe2 < hthread_xe2));
-	xex_set_set(hthread, (head_xe > hthread_xe), (head_xe2 > hthread_xe2));
-
+static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t hthread_xe3,u32_t head_xe, u32_t head_xe2, u32_t head_xe3) {//TODO: Does this need to be done for hlx, will it break other things
+	xex_set_clr(hthread, (head_xe < hthread_xe), (head_xe2 < hthread_xe2), (head_xe3 < hthread_xe3));
+	xex_set_set(hthread, (head_xe > hthread_xe), (head_xe2 > hthread_xe2), (head_xe3 > hthread_xe3));
 	if (hthread_xe) {
 		if (!head_xe) {
 			H2K_log("hthread %d  update_coprocs: drop xe\n");
@@ -109,6 +108,15 @@ static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hth
 			H2K_log("hthread %d  update_coprocs: add xe2\n");
 		}
 	}
+	if (hthread_xe3) {
+		if (!head_xe3) {
+			H2K_log("hthread %d  update_coprocs: drop xe3\n");
+		}
+	} else {
+		if (head_xe3) {
+			H2K_log("hthread %d  update_coprocs: add xe3\n");
+		}
+	}
 }
 #endif
 
@@ -125,11 +133,13 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	u32_t ssr = H2K_get_ssr();
 	u32_t hthread_xe = ((ssr & SSR_XE_BIT_MASK) ? 1 : 0);
 	u32_t hthread_xe2 = ((ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
-	u32_t have = hthread_xe + hthread_xe2; // # coprocs active on this thread
+	u32_t hthread_xe3 = ((ssr & SSR_XE3_BIT_MASK) ? 1 : 0);//TODO: Change if there is an SSR 2 for HLX
+	u32_t have = hthread_xe + hthread_xe2 + hthread_xe3; // # coprocs active on this thread
 
 	u32_t head_xe = ((ret->ssr_xe) ? 1 : 0);  // thread at head needs xe
 	u32_t head_xe2 = ((ret->ssr_xe2) ? 1 : 0);  // thread at head needs xe2
-	u32_t need = head_xe + head_xe2; // total coprocs needed by thread at head
+	u32_t head_xe3 = ((ret->ssr_xe3) ? 1 : 0);  // thread at head needs xe3
+	u32_t need = head_xe + head_xe2 + head_xe3; // total coprocs needed by thread at head
 	u32_t cluster = H2K_hthread_cluster(hthread);  // cluster of hthread
 	u32_t victim;  // hthread to receive interrupt
 	u32_t min_coprocs = -1;  // min # coprocs found on cluster with at least 1 waiting thread
@@ -137,10 +147,10 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	u32_t need_tmp = need;  // save # needed coprocs when walking ready list
 	u32_t i;
 
-	H2K_log("hthread %d  have %d  need %d  head_xe %d  head_xe2 %d  counts %d %d %d %d \n\tcheck task 0x%08x\n", hthread, have, need, head_xe, head_xe2, H2K_gp->coproc_count[0], H2K_gp->coproc_count[1], H2K_gp->coproc_count[2], H2K_gp->coproc_count[3], ret);
+	H2K_log("hthread %d  have %d  need %d  head_xe %d  head_xe2 %d  head_xe3 %d  counts %d %d %d %d \n\tcheck task 0x%08x\n", hthread, have, need, head_xe, head_xe2, head_xe3,H2K_gp->coproc_count[0], H2K_gp->coproc_count[1], H2K_gp->coproc_count[2], H2K_gp->coproc_count[3], ret);
 
 	if (H2K_gp->coproc_count[cluster] + (need - have) <= H2K_gp->coproc_max) {  // within limit
-		H2K_update_coprocs(hthread, hthread_xe, hthread_xe2, head_xe, head_xe2);
+		H2K_update_coprocs(hthread, hthread_xe, hthread_xe2,hthread_xe3, head_xe, head_xe2, head_xe3);
 		H2K_log("hthread %d  change coprocs from %d to %d, new cluster count %d\n", hthread, have, need, H2K_gp->coproc_count[cluster]);
 		return ret;  // pick up task
 	}
@@ -158,7 +168,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			}
 		}
 	} else {  // no eligible cluster found, so pick up task on this hthread
-		H2K_update_coprocs(hthread, hthread_xe, hthread_xe2, head_xe, head_xe2);
+		H2K_update_coprocs(hthread, hthread_xe, hthread_xe2, hthread_xe3,head_xe, head_xe2, head_xe3);
 		H2K_log("hthread %d  clusters full; change coprocs from %d to %d, new cluster count %d\n", hthread, have, need, H2K_gp->coproc_count[cluster]);
 		return ret;
 	}
@@ -170,24 +180,25 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			H2K_log("hthread %d Signal thread %d\n", hthread, victim);
 			iassignw(CLUSTER_RESCHED_INT, ~(0x1 << victim));  // steer the interrupt
 			cluster_resched_int();    // get victim hthread to pick up what we skipped
-			/* This hthread is going to sleep, so no longer using xe/xe2 */
+			/* This hthread is going to sleep, so no longer using xe/xe2/xe3 */
 			ssr &= ~SSR_XE_BIT_MASK;
 			ssr &= ~SSR_XE2_BIT_MASK;
+			ssr &= ~SSR_XE3_BIT_MASK;
 			H2K_set_ssr(ssr);
-			xex_set_clr(hthread, hthread_xe, hthread_xe2);
-			H2K_log("hthread %d  sleeping 1, hthread_xe %d  hthread_xe2 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, H2K_gp->coproc_count[cluster]);
+			xex_set_clr(hthread, hthread_xe, hthread_xe2, hthread_xe3);
+			H2K_log("hthread %d  sleeping 1, hthread_xe %d  hthread_xe2 %d  hthread_xe2 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2,hthread_xe3, H2K_gp->coproc_count[cluster]);
 			return NULL;
 		}
 
 		/* else walk the ready list until we find a task that fits on min_cluster */
 		do {
 			ret = (H2K_thread_context *)H2K_ring_next(head, ret);
-		} while (ret != NULL && (need_tmp = (((ret->ssr_xe) ? 1 : 0) + ((ret->ssr_xe2) ? 1 : 0)) + min_coprocs) > H2K_gp->coproc_max);
+		} while (ret != NULL && (need_tmp = (((ret->ssr_xe) ? 1 : 0) + ((ret->ssr_xe2) ? 1 : 0) + ((ret->ssr_xe3) ? 1 : 0)) + min_coprocs) > H2K_gp->coproc_max);
 		H2K_log("hthread %d try new task 0x%08x\n", ret);
 	} while (ret != NULL);
 	
 	/* Didn't find another task to schedule, so pick up the head task even though this unbalances the coprocs */
-	H2K_update_coprocs(hthread, hthread_xe, hthread_xe2, head_xe, head_xe2);
+	H2K_update_coprocs(hthread, hthread_xe, hthread_xe2, hthread_xe3, head_xe, head_xe2, head_xe3);
 	H2K_log("hthread %d  increase coprocs from %d to %d, new cluster count %d\n", hthread, have, need, H2K_gp->coproc_count[cluster]);
  
 #endif
@@ -213,13 +224,15 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 		u32_t ssr = H2K_get_ssr();
 		u32_t hthread_xe = ((ssr & SSR_XE_BIT_MASK) ? 1 : 0);
 		u32_t hthread_xe2 = ((ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
+		u32_t hthread_xe3 = ((ssr & SSR_XE3_BIT_MASK) ? 1 : 0);//TODO: Change if there is an SSR 2 for HLX
 
 		/* This hthread is goint to sleep, so no longer using xe/xe2 */
 		ssr &= ~SSR_XE_BIT_MASK;
 		ssr &= ~SSR_XE2_BIT_MASK;
+		ssr &= ~SSR_XE3_BIT_MASK;
 		H2K_set_ssr(ssr);
-		xex_set_clr(hthread, hthread_xe, hthread_xe2);
-		H2K_log("hthread %d  sleeping 2, hthread_xe %d  hthread_xe2 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, H2K_gp->coproc_count[H2K_hthread_cluster(hthread)]);
+		xex_set_clr(hthread, hthread_xe, hthread_xe2, hthread_xe3);
+		H2K_log("hthread %d  sleeping 2, hthread_xe %d  hthread_xe2 %d  hthread_xe2 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, hthread_xe2, H2K_gp->coproc_count[H2K_hthread_cluster(hthread)]);
 #endif
 		return NULL;
 	}

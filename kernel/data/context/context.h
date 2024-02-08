@@ -132,7 +132,11 @@ typedef struct _h2_thread_context
 					u8_t ssr_cause;
 #if ARCHV <= 3
 					u8_t ssr_asid:5;
+#ifdef HAVE_HLX //TODO: change hlx implementation, check where bits go
+					u8_t ssr_xe3:1; 
+#else
 					u8_t ssr_guest:1; /* Fake guest bit using a bit of ASID */
+#endif
 					u8_t ssr_asid_byte_unused:2;
 #else
 					u8_t ssr_asid:7;

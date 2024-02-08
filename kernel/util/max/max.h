@@ -252,15 +252,15 @@
 #define SSR_XE2_BIT 26
 #define SSR_XE2_BIT_MASK BITS_MASK(1, SSR_XE2_BIT)
 
-//hlx, will change, we might get a new register
-#define SSR_XE3_BIT 15
-#define SSR_XE3_BIT_MASK BITS_MASK(1, SSR_XE3_BIT)
+#define CCR_XE3_BIT 28
+#define CCR_XE3_BIT_MASK BITS_MASK(1, CCR_XE3_BIT)
 
-#define SSR_XA3_BITS 21
-#define SSR_XA3_NBITS 2
-#define SSR_XA3_BITS_MASK BITS_MASK(SSR_XA3_NBITS, SSR_XA3_BITS)
+#define CCR_XA3_BITS 21
+#define CCR_XA3_NBITS 1
+#define CCR_XA3_BITS_MASK BITS_MASK(CCR_XA3_NBITS, CCR_XA3_BITS)
 //end
 
+//ccr_xa2 was a part of a proposal for multiple hmx contexts, it is not currently used
 #define CCR_XA2_BITS 21
 #define CCR_XA2_NBITS 2
 #define CCR_XA2_BITS_MASK BITS_MASK(CCR_XA2_NBITS, CCR_XA2_BITS)

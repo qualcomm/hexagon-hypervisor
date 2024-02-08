@@ -146,6 +146,7 @@
 #define H2K_VM_CHILDINT 14
 
 #define EXT_HVX_XA_START 0
+#define EXT_HLX_XA3_START 0
 #define EXT_NO_EXT 0
 
 #endif

@@ -1354,6 +1354,13 @@ void print_infos() {
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
 	BOOTER_PRINTF("\tGuest PC sampling available: ");
 	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tHLX:\n");
+	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hlx ? "true" : "false"));
+	if (boot_flags.boot_have_hvx) {
+		BOOTER_PRINTF("\t\tNative length: %d\n", h2_info(INFO_HLX_LENGTH));
+		BOOTER_PRINTF("\t\tContexts : %d\n", h2_info(INFO_HLX_CONTEXTS));
+		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
+	}
 	BOOTER_PRINTF("\tHVX:\n");
 	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
 	if (boot_flags.boot_have_hvx) {

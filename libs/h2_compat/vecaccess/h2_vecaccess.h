@@ -45,7 +45,7 @@ typedef enum {
 /*HLX*/
 #define H2_ELTACCESS_EXT_HLX 0
 
-#define H2_ELTACCESS_LENGTH_MIN 2048 //TODO: Reconfirm value
+#define H2_ELTACCESS_LENGTH_MIN 128 //TODO: Reconfirm value
 enum {
 	H2_ELTACCESS_LENGTH_MIN
 };

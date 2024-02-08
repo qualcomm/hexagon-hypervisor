@@ -139,6 +139,14 @@ int main() {
 	val = H2K_kg.coproc_contexts;
 	if (H2K_trap_info(INFO_COPROC_CONTEXTS, &a) != val) FAIL("COPROC_CONTEXTS");
 
+#ifdef HAVE_HLX
+	val = H2K_kg.hlx_contexts;
+	if (H2K_trap_info(INFO_HLX_CONTEXTS, &a) != val) FAIL("HLX_CONTEXTS");
+
+	val = H2K_kg.hlx_length;
+	if (H2K_trap_info(INFO_HLX_LENGTH, &a) != val) FAIL("HLX_LENGTH");
+#endif
+
 #ifdef DO_EXT_SWITCH
 	val = a.vmblock->do_ext;
 #else

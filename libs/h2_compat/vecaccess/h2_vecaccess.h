@@ -45,9 +45,8 @@ typedef enum {
 /*HLX*/
 #define H2_ELTACCESS_EXT_HLX 0
 
-#define H2_ELTACCESS_LENGTH_MIN 128 //TODO: Reconfirm value
 enum {
-	H2_ELTACCESS_LENGTH_MIN
+	H2_ELTACCESS_LENGTH_MIN = 1 // TODO: reconfirm value 16/32
 };
 /**
 @brief Extension and vector-length selection.
@@ -203,7 +202,7 @@ static inline int h2_eltaccess_init(h2_vecaccess_state_t *vacc, unsigned int req
 	if ((ret = h2_hwconfig_vlength(H2_ELTACCESS_LENGTH_MIN)) <0) return ret; /*TODO: Check if vlength config is right and what response of VLENGTH_MIN is*/
 	vacc->ext = H2_ELTACCESS_EXT_HLX; //sets elt extension type
 	vacc->length = H2_ELTACCESS_LENGTH_MIN; // sets elt len
-	h2_sem_init_val(&vacc->sem, h2_info(INFO_HLX_INSTANCES) / (128 / native_vlength)); //TODO: Check h2_info(INFO_HLX_INSTANCES) response
+	h2_sem_init_val(&vacc->sem, h2_info(INFO_HLX_CONTEXTS) / (128 / native_vlength)); //TODO: What is the value for hlx
 
 	vacc->active = 0;
 	return 0;

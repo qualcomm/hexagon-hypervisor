@@ -176,7 +176,7 @@ typedef struct {
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 
 #ifdef HAVE_HLX
-	u32_t hlx_instances;  
+	u32_t hlx_contexts;  
 	u32_t hlx_length; 
 #endif
 } H2K_kg_t;

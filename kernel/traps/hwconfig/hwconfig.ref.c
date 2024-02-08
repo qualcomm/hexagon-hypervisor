@@ -357,16 +357,16 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe
 			// block as if we got resched interrupt
 			H2K_log("hthread %d  extbits:  task 0x%08x  setting xe3\n", me->hthread, me);
 
-			if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_instances)  // not in HLX range //TODO: Do we need to do this for HLX
+			if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_contexts)  // not in HLX range //TODO: Do we need to do this for HLX
 #ifdef DO_EXT_SWITCH
 					|| (!(me->vmblock->do_ext))//TODO: Do we need to do this for HLX
 #endif
 					) {
 				me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 				me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
-				H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
+				H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT); //TODO: Do we need to do this for HLX
 			}
-			/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
+			/* else (when in hlx range and do_ext) kernel is managing xa/xe, so do nothing here */
 			H2K_runlist_remove(me);
 			H2K_ready_append(me);
 			H2K_dosched(me, me->hthread);
@@ -379,16 +379,16 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe
 	}
 #endif
 
-	if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_instances)  // not in HVX range
+	if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_contexts)  // not in HLX range
 #ifdef DO_EXT_SWITCH
 			|| (!(me->vmblock->do_ext))
 #endif
 			) {
 		me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 		me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
-		H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
+		H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT); //TODO: Do we need to do this for HLX
 	}
-	/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
+	/* else (when in hlx range and do_ext) kernel is managing xa3/xe3, so do nothing here */
 #ifdef HAVE_HLX
 	if (xe3) {
 		H2K_hlx_poweron(); // make sure the lights are on

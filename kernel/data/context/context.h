@@ -173,7 +173,7 @@ typedef struct _h2_thread_context
 			};
 			union {
 				u32_t ccr;
-				struct {
+				struct {//TODO: Fix with correct CCR 
 					u8_t ccr_resvd_1:6;
 					u8_t ccr_l2cp:2; //7
 					u8_t ccr_cd;//15

@@ -47,7 +47,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	u32_t have_hlx;
 	have_hlx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HLX_MASK) != 0;
 	H2K_kg.hlx_contexts = H2K_cfg_table(CFG_TABLE_HLX_CONTEXTS);
-	H2K_kg.hvx_length = H2K_cfg_table(CFG_TABLE_HLX_LENGTH);
+	H2K_kg.hlx_length = H2K_cfg_table(CFG_TABLE_HLX_LENGTH);
 #endif
 
 #ifdef HAVE_EXTENSIONS

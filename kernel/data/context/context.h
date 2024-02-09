@@ -129,18 +129,14 @@ typedef struct _h2_thread_context
 			union {
 				u32_t ssr;
 				struct {
-					u8_t ssr_cause;
+					u8_t ssr_cause;//7
 #if ARCHV <= 3
 					u8_t ssr_asid:5;
-#ifdef HAVE_HLX //TODO: change hlx implementation, check where bits go
-					u8_t ssr_xe3:1; 
-#else
 					u8_t ssr_guest:1; /* Fake guest bit using a bit of ASID */
-#endif
-					u8_t ssr_asid_byte_unused:2;
+					u8_t ssr_asid_byte_unused:2;//15
 #else
 					u8_t ssr_asid:7;
-					u8_t ssr_asid_byte_unused:1;
+					u8_t ssr_asid_byte_unused:1;//15
 #endif
 					u8_t ssr_um:1;
 					u8_t ssr_ex:1;
@@ -175,7 +171,28 @@ typedef struct _h2_thread_context
 #endif
 				};
 			};
-			u32_t ccr;
+			union {
+				u32_t ccr;
+				struct {
+					u8_t ccr_resvd_1:6;
+					u8_t ccr_l2cp:2; //7
+					u8_t ccr_cd;//15
+					u8_t ccr_hfi:1;
+					u8_t ccr_hfd:1;
+					u8_t ccr_xa3:1;//option to expand xa3 from [21] into [23:21]
+					u8_t ccr_resvd_2:1;
+					u8_t ccr_sfd:1;
+					u8_t ccr_resvd_3:3;//23
+					u8_t ccr_gie:1;
+					u8_t ccr_gte:1;
+					u8_t ccr_gee:1;
+					u8_t ccr_gre:1;
+					u8_t ccr_xe3:1;
+					u8_t ccr_vv1:1;
+					u8_t ccr_vv2:1;
+					u8_t ccr_vv3:1;//31
+				};
+			}
 		};
 	};
 	u64_t r3130;

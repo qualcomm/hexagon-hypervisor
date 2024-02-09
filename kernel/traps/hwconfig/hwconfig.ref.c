@@ -16,6 +16,7 @@
 #include <intcontrol.h>
 #include <tmpmap.h>
 #include <hvx.h>
+#include <hlx.h>
 #include <hmx.h>
 #include <safemem.h>
 #include <cfg_table.h>
@@ -452,9 +453,15 @@ u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t
 	/* Both HVX HMX now */
 	if (state) {
 		H2K_hvx_poweron();
+# ifdef HAVE_HLX
+		H2K_hlx_poweron();
+# endif
 		H2K_hmx_poweron();
 	} else {
 		H2K_hvx_poweroff();
+# ifdef HAVE_HLX
+		H2K_hlx_poweroff();
+# endif
 		H2K_hmx_poweroff();
 	}
 	return 0;

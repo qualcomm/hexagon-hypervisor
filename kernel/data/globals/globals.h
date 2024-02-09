@@ -177,7 +177,20 @@ typedef struct {
 
 #ifdef HAVE_HLX
 	u32_t hlx_contexts;  
+	u32_t hlx_state;  
 	u32_t hlx_length; 
+	u32_t timer_intnum;
+	u32_t *hlx_clock;
+	u32_t *hlx_reset;
+	u32_t *hlx_power;
+# if ARCHV >= 65
+	u32_t *hlx_bhs_status;
+	u32_t *hlx_bhs_cfg;
+	u32_t *hlx_bhs_cmd;
+	u32_t *hlx_cpmem_cfg;
+	u32_t *hlx_cpmem_cmd;
+	u32_t *hlx_cpmem_status;
+# endif
 #endif
 } H2K_kg_t;
 
@@ -206,13 +219,13 @@ static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 }
 
 #ifdef HAVE_HLX
-static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2, u32_t xe3) { //TODO: Does this need to be done for hlx, will it break other things
+static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2, u32_t xe3) {
 	u32_t cluster = H2K_hthread_cluster(hthread);
 
 	H2K_gp->coproc_count[cluster] += (xe + xe2 + xe3);
 }
 #else
-static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2) { //TODO: Does this need to be done for hlx, will it break other things
+static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2) {
 	u32_t cluster = H2K_hthread_cluster(hthread);
 
 	H2K_gp->coproc_count[cluster] += (xe + xe2);

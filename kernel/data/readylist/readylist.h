@@ -88,7 +88,7 @@ static inline void H2K_ready_remove(H2K_thread_context *thread)
 
 #ifdef CLUSTER_SCHED
 # ifdef HAVE_HLX
-static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t hthread_xe3,u32_t head_xe, u32_t head_xe2, u32_t head_xe3) {//TODO: Does this need to be done for hlx, will it break other things
+static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t hthread_xe3,u32_t head_xe, u32_t head_xe2, u32_t head_xe3) {
 	xex_set_clr(hthread, (head_xe < hthread_xe), (head_xe2 < hthread_xe2), (head_xe3 < hthread_xe3));
 	xex_set_set(hthread, (head_xe > hthread_xe), (head_xe2 > hthread_xe2), (head_xe3 > hthread_xe3));
 	if (hthread_xe) {
@@ -120,7 +120,7 @@ static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hth
 	}
 }
 # else
-static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t head_xe, u32_t head_xe2) {//TODO: Does this need to be done for hlx, will it break other things
+static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t head_xe, u32_t head_xe2) {
 	xex_set_clr(hthread, (head_xe < hthread_xe), (head_xe2 < hthread_xe2));
 	xex_set_set(hthread, (head_xe > hthread_xe), (head_xe2 > hthread_xe2));
 	if (hthread_xe) {
@@ -159,7 +159,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	u32_t hthread_xe = ((ssr & SSR_XE_BIT_MASK) ? 1 : 0);
 	u32_t hthread_xe2 = ((ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
 # ifdef HAVE_HLX
-	u32_t hthread_xe3 = ((ssr & SSR_XE3_BIT_MASK) ? 1 : 0);//TODO: Change if there is an SSR 2 for HLX
+	u32_t hthread_xe3 = ((ssr & CCR_XE3_BIT_MASK) ? 1 : 0);
 	u32_t have = hthread_xe + hthread_xe2 + hthread_xe3; // # coprocs active on this thread
 #else
 	u32_t have = hthread_xe + hthread_xe2; // # coprocs active on this thread
@@ -168,7 +168,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	u32_t head_xe = ((ret->ssr_xe) ? 1 : 0);  // thread at head needs xe
 	u32_t head_xe2 = ((ret->ssr_xe2) ? 1 : 0);  // thread at head needs xe2
 # ifdef HAVE_HLX
-	u32_t head_xe3 = ((ret->ssr_xe3) ? 1 : 0);  // thread at head needs xe3
+	u32_t head_xe3 = ((ret->ccr_xe3) ? 1 : 0);  // thread at head needs xe3
 	u32_t need = head_xe + head_xe2 + head_xe3; // total coprocs needed by thread at head
 #else
 	u32_t need = head_xe + head_xe2; // total coprocs needed by thread at head
@@ -231,7 +231,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			ssr &= ~SSR_XE_BIT_MASK;
 			ssr &= ~SSR_XE2_BIT_MASK;
 # ifdef HAVE_HLX
-			ssr &= ~SSR_XE3_BIT_MASK;
+			ssr &= ~CCR_XE3_BIT_MASK;
 # endif
 
 			H2K_set_ssr(ssr);
@@ -252,7 +252,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			ret = (H2K_thread_context *)H2K_ring_next(head, ret);
 		}
 # ifdef HAVE_HLX 
-		while (ret != NULL && (need_tmp = (((ret->ssr_xe) ? 1 : 0) + ((ret->ssr_xe2) ? 1 : 0) + ((ret->ssr_xe3) ? 1 : 0)) + min_coprocs) > H2K_gp->coproc_max);
+		while (ret != NULL && (need_tmp = (((ret->ssr_xe) ? 1 : 0) + ((ret->ssr_xe2) ? 1 : 0) + ((ret->ccr_xe3) ? 1 : 0)) + min_coprocs) > H2K_gp->coproc_max);
 # else
 		while (ret != NULL && (need_tmp = (((ret->ssr_xe) ? 1 : 0) + ((ret->ssr_xe2) ? 1 : 0)) + min_coprocs) > H2K_gp->coproc_max);
 # endif
@@ -292,13 +292,13 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 		u32_t hthread_xe = ((ssr & SSR_XE_BIT_MASK) ? 1 : 0);
 		u32_t hthread_xe2 = ((ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
 # ifdef HAVE_HLX 
-		u32_t hthread_xe3 = ((ssr & SSR_XE3_BIT_MASK) ? 1 : 0);//TODO: Change if there is an SSR 2 for HLX
+		u32_t hthread_xe3 = ((ssr & CCR_XE3_BIT_MASK) ? 1 : 0);
 # endif
 		/* This hthread is goint to sleep, so no longer using xe/xe2 */
 		ssr &= ~SSR_XE_BIT_MASK;
 		ssr &= ~SSR_XE2_BIT_MASK;
 # ifdef HAVE_HLX
-		ssr &= ~SSR_XE3_BIT_MASK;
+		ssr &= ~CCR_XE3_BIT_MASK;
 # endif
 		H2K_set_ssr(ssr);
 # ifdef HAVE_HLX

@@ -17,6 +17,7 @@ H2K_kg_t H2K_kg;
 
 extern void _end();
 
+//TODO: Ensure HLX is compliant with this page
 void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) {
 	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
 #ifdef HAVE_EXTENSIONS
@@ -43,6 +44,8 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 
 #ifdef HAVE_HLX
+	u32_t have_hlx;
+	have_hlx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HLX_MASK) != 0;
 	H2K_kg.hlx_contexts = H2K_cfg_table(CFG_TABLE_HLX_CONTEXTS);
 	H2K_kg.hvx_length = H2K_cfg_table(CFG_TABLE_HLX_LENGTH);
 #endif

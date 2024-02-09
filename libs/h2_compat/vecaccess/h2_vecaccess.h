@@ -193,16 +193,16 @@ Initialize the Vector Access type.
 static inline int h2_eltaccess_init(h2_vecaccess_state_t *vacc, unsigned int req) {
 
 	int ret;
-	unsigned long native_vlength = h2_info(INFO_HLX_LENGTH); //TODO: Check h2_info(INFO_HLX_LENGTH) response
+	unsigned long native_length = h2_info(INFO_HLX_LENGTH); //TODO: Check h2_info(INFO_HLX_LENGTH) response
 
 	/* Block be default if init fails */
 	h2_sem_init_val(&vacc->sem, 0); /*semaphore init*/
 
 	
-	if ((ret = h2_hwconfig_vlength(H2_ELTACCESS_LENGTH_MIN)) <0) return ret; /*TODO: Check if vlength config is right and what response of VLENGTH_MIN is*/
+	if ((ret = h2_hwconfig_vlength(H2_ELTACCESS_LENGTH_MIN)) <0) return ret; /*TODO: Check if length config is right and what response of LENGTH_MIN should be*/
 	vacc->ext = H2_ELTACCESS_EXT_HLX; //sets elt extension type
 	vacc->length = H2_ELTACCESS_LENGTH_MIN; // sets elt len
-	h2_sem_init_val(&vacc->sem, h2_info(INFO_HLX_CONTEXTS) / (128 / native_vlength)); //TODO: What is the value for hlx
+	h2_sem_init_val(&vacc->sem, h2_info(INFO_HLX_CONTEXTS) / (128 / native_length)); //TODO: What is the value for hlx
 
 	vacc->active = 0;
 	return 0;
@@ -225,14 +225,14 @@ static inline h2_vecaccess_ret_t h2_eltaccess_acquire(h2_vecaccess_state_t *vacc
 	ret.idx = -1;
 	ret.length = 0;
 
-	h2_sem_down(&vacc->sem); 
+	h2_sem_down(&vacc->sem); //blocking sem
 	do {
 		old_active = vacc->active;
 		idx = Q6_R_ct1_R(old_active);
 		new_active = old_active | (1<<idx);
-	} while (h2_atomic_compare_swap32(&vacc->active,old_active,new_active) != old_active);
+	} while (h2_atomic_compare_swap32(&vacc->active,old_active,new_active) != old_active); //get next available HLX Context
 	/* TURN ON VECTOR */
-	res = h2_hwconfig_set_hlxbits(vacc->ext + idx, 1);
+	res = h2_hwconfig_set_hlxbits(vacc->ext + idx, 1);//xa3/xe3
 	if (res == 0) {
 		ret.idx = idx;
 		ret.length = vacc->length;
@@ -253,9 +253,9 @@ static inline int h2_eltaccess_release(h2_vecaccess_state_t *vacc, int idx)
 	int ret;
 
 	/* TURN OFF VECTORS */
-	ret = h2_hwconfig_set_hlxbits(0, 0);
-	h2_atomic_clrbit32(&vacc->active,idx);
-	h2_sem_up(&vacc->sem);
+	ret = h2_hwconfig_set_hlxbits(0, 0);//xa3/xe3
+	h2_atomic_clrbit32(&vacc->active,idx);//release hlx context
+	h2_sem_up(&vacc->sem); //release sem
 
 	return ret;
 }

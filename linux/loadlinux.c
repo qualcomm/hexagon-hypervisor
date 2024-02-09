@@ -231,6 +231,8 @@ void print_infos() {
 	printf("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
 	printf("\tHVX present: ");
 	printf((boot_flags.boot_have_hvx ? "true\n" : "false\n"));
+	printf("\tHLX present: ");
+	printf((boot_flags.boot_have_hlx ? "true\n" : "false\n"));
 	printf("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	printf("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
 	printf("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));

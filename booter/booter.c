@@ -1359,7 +1359,7 @@ void print_infos() {
 	if (boot_flags.boot_have_hlx) {
 		BOOTER_PRINTF("\t\tNative length: %d\n", h2_info(INFO_HLX_LENGTH));
 		BOOTER_PRINTF("\t\tContexts : %d\n", h2_info(INFO_HLX_CONTEXTS));
-		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));//TODO: Is this needed for HLX
+		//BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));//TODO: Is this needed for HLX
 	}
 	BOOTER_PRINTF("\tHVX:\n");
 	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));

@@ -1,36 +1,36 @@
 //TODO:REDO for HLX
-:mod:`hvx` -- HVX Power Control
+:mod:`hlx` -- HLX Power Control
 ===============================
 
-.. module:: hvx
+.. module:: hlx
 
-H2K_hvx_poweron
+H2K_hlx_poweron
 ---------------
 
-.. c:function:: void H2K_hvx_poweron(void)
+.. c:function:: void H2K_hlx_poweron(void)
 
 Description
 ~~~~~~~~~~~
 
-Power HVX on.
+Power HLX on.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Check and set HVX power state bit atomically.  If power was off, execute the power-on sequence.
+Check and set HLX power state bit atomically.  If power was off, execute the power-on sequence.
 
 
-H2K_hvx_poweroff
+H2K_hlx_poweroff
 ----------------
 
-.. c:function:: void H2K_hvx_poweroff(void)
+.. c:function:: void H2K_hlx_poweroff(void)
 
 Description
 ~~~~~~~~~~~
 
-Power HVX off.
+Power HLX off.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Check and set HVX power state bit atomically.  If power was on, execute the power-off sequence.
+Check and set HLX power state bit atomically.  If power was on, execute the power-off sequence.

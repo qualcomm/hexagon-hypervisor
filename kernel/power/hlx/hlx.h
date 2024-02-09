@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-//TODO:REDO for HLX
+#ifndef H2K_POWER_HLX_H
+#define H2K_POWER_HLX_H 1
 
-#ifndef H2K_POWER_HVX_H
-#define H2K_POWER_HVX_H 1
-
-#define H2K_HVX_STATE_OFF 0
-#define H2K_HVX_STATE_ON  1
+#define H2K_HLX_STATE_OFF 0
+#define H2K_HLX_STATE_ON  1
 
 /* #define QDSP6SS_CP_CLK_CTL 0x000000fc */
 /* #define QDSP6SS_CP_CLK_CTL_DISABLE      0x00000000 */
@@ -30,8 +28,8 @@
 
 #ifndef ASM
 #include <c_std.h>
-void H2K_hvx_poweron(void) IN_SECTION(".text.power.hvx");
-void H2K_hvx_poweroff(void) IN_SECTION(".text.power.hvx");
+void H2K_hlx_poweron(void) IN_SECTION(".text.power.hlx");
+void H2K_hlx_poweroff(void) IN_SECTION(".text.power.hlx");
 #endif
 
 #endif

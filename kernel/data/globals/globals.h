@@ -179,7 +179,7 @@ typedef struct {
 	u32_t hlx_contexts;  
 	u32_t hlx_state;  
 	u32_t hlx_length; 
-	u32_t timer_intnum;
+	u32_t hlx_timer_intnum;
 	u32_t *hlx_clock;
 	u32_t *hlx_reset;
 	u32_t *hlx_power;

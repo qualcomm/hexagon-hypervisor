@@ -192,7 +192,7 @@ typedef struct _h2_thread_context
 					u8_t ccr_vv2:1;
 					u8_t ccr_vv3:1;//31
 				};
-			}
+			};
 		};
 	};
 	u64_t r3130;

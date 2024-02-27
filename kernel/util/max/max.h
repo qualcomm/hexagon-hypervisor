@@ -377,7 +377,7 @@
 #define CFG_TABLE_COPROC_TYPE_HVX_MASK 0x1
 #define CFG_TABLE_COPROC_TYPE_SILVER_MASK 0x2
 #define CFG_TABLE_COPROC_TYPE_HMX_MASK 0x4
-#define CFG_TABLE_COPROC_TYPE_HLX_MASK 0x8
+#define CFG_TABLE_COPROC_TYPE_HLX_MASK 0x10
 
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_BANK_WIDTH 16  // fallback for old cores that don't have this in cfg_table

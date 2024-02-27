@@ -44,8 +44,9 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 
 #ifdef HAVE_HLX
-	//u32_t have_hlx;//set but not used errors....
-	//have_hlx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HLX_MASK) != 0;
+	u32_t have_hlx;//set but not used errors....
+	have_hlx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HLX_MASK) != 0;
+	H2K_kg.info_boot_flags.boot_have_hvx = have_hvx;
 	H2K_kg.hlx_contexts = H2K_cfg_table(CFG_TABLE_HLX_CONTEXTS);
 	H2K_kg.hlx_length = H2K_cfg_table(CFG_TABLE_HLX_LENGTH);
 #endif

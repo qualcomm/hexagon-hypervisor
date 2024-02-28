@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <h2.h>
+#include <h2_vecaccess.h>
 #include "arch_pmu.h"
 
 h2_sem_t sema,semb;
@@ -21,6 +22,7 @@ void worker_thread(void *param)
 
 int main(int argc, char **argv)
 {
+	printf("\nStart of Hello\n");
 	int i;
 
 	RESET_PMU();
@@ -37,10 +39,14 @@ int main(int argc, char **argv)
 	h2_sem_down(&sema);
 	h2_sem_up(&semb);
 	h2_sem_down(&sema);
-	printf("Wahoo!\n");
+	printf("Wahoo3!\n");
+
+	h2_vecaccess_state_t vecstate;
+	h2_vecaccess_init(&vecstate,H2_VECACCESS_HVX_128);
 
 	DUMP_PMU();
 	h2_thread_stop(0);
+	printf("\nEnd of Hello\n");
 	return 0;
 }
 

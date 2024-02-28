@@ -202,7 +202,7 @@ static inline int h2_eltaccess_init(h2_vecaccess_state_t *vacc, unsigned int req
 	if ((ret = h2_hwconfig_vlength(H2_ELTACCESS_LENGTH_MIN)) <0) return ret; /*TODO: Check if length config is right and what response of LENGTH_MIN should be*/
 	vacc->ext = H2_ELTACCESS_EXT_HLX; //sets elt extension type
 	vacc->length = H2_ELTACCESS_LENGTH_MIN; // sets elt len
-	h2_sem_init_val(&vacc->sem, h2_info(INFO_HLX_CONTEXTS) / (128 / native_length)); //TODO: What is the value for hlx
+	h2_sem_init_val(&vacc->sem, h2_info(INFO_HLX_CONTEXTS) / (2048 / native_length)); //TODO: What is the value for hlx
 
 	vacc->active = 0;
 	return 0;

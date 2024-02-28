@@ -45,8 +45,9 @@ int main(int argc, char **argv)
 	h2_vecaccess_init(&vecstate,H2_VECACCESS_HVX_128);
 
 	DUMP_PMU();
-	h2_thread_stop(0);
 	printf("\nEnd of Hello\n");
+	h2_thread_stop(0);
+	
 	return 0;
 }
 

@@ -161,7 +161,7 @@ ref:
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
-	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
+	$(MAKE) $(REF_JFLAG) -C libs/h2_compat/vecaccess/test ARCHV=$(ARCHV) all
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;

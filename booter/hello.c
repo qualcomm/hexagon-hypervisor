@@ -41,9 +41,6 @@ int main(int argc, char **argv)
 	h2_sem_down(&sema);
 	printf("Wahoo3!\n");
 
-	h2_vecaccess_state_t vecstate;
-	h2_vecaccess_init(&vecstate,H2_VECACCESS_HVX_128);
-
 	DUMP_PMU();
 	printf("\nEnd of Hello\n");
 	h2_thread_stop(0);

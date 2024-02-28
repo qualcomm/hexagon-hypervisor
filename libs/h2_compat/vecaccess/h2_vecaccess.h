@@ -46,7 +46,7 @@ typedef enum {
 #define H2_ELTACCESS_EXT_HLX 0
 
 enum {
-	H2_ELTACCESS_LENGTH_MIN = 1 // TODO: reconfirm value 16/32
+	H2_ELTACCESS_LENGTH_MIN = 11 // TODO: reconfirm value 2048 (val = log2(x), 2048=11)
 };
 /**
 @brief Extension and vector-length selection.

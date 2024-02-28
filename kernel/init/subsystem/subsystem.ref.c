@@ -63,16 +63,16 @@ void H2K_hlx_init(u32_t devpage_offset) {
 		return;
 	}
 
-	H2K_gp->hlx_clock = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_CLK_CTL);
-	H2K_gp->hlx_reset = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_RESET);
-	H2K_gp->hlx_power = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_PWR_CTL); 
+	//H2K_gp->hlx_clock = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_CLK_CTL);
+	//H2K_gp->hlx_reset = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_RESET);
+	//H2K_gp->hlx_power = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_PWR_CTL); 
 # if ARCHV >= 65 //TODO: DO we need this for HLX? What are the correct values
-	H2K_gp->hlx_bhs_status = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_STATUS); 
-	H2K_gp->hlx_bhs_cfg = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_CFG); 
-	H2K_gp->hlx_bhs_cmd = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_CMD); 
-	H2K_gp->hlx_cpmem_cfg = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_CFG); 
-	H2K_gp->hlx_cpmem_cmd = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_CMD); 
-	H2K_gp->hlx_cpmem_status = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_STATUS); 
+	//H2K_gp->hlx_bhs_status = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_STATUS); 
+	//H2K_gp->hlx_bhs_cfg = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_CFG); 
+	//H2K_gp->hlx_bhs_cmd = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CP_BHS_CMD); 
+	//H2K_gp->hlx_cpmem_cfg = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_CFG); 
+	//H2K_gp->hlx_cpmem_cmd = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_CMD); 
+	//H2K_gp->hlx_cpmem_status = (u32_t *)(Q6_SS_BASE_VA + devpage_offset + QDSP6SS_CPMEM_STATUS); 
 # endif
 	H2K_gp->hlx_state = H2K_HLX_STATE_OFF;
 

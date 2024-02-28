@@ -11,7 +11,10 @@
 #include <atomic.h>
 #include <hw.h>
 
+#define HLX_POWER_FUNCTIONAL 0
+
 void H2K_hlx_poweron(void) {
+#if HLX_POWER_FUNCTIONAL
 #ifndef NO_DEVICES
 #ifdef HAVE_HLX
 	volatile u32_t delay;
@@ -113,9 +116,11 @@ void H2K_hlx_poweron(void) {
 	BKL_UNLOCK();
 #endif
 #endif
+#endif
 }
 
 void H2K_hlx_poweroff(void) {
+#if HLX_POWER_FUNCTIONAL
 #ifndef NO_DEVICES
 #ifdef HAVE_HLX
 
@@ -208,6 +213,7 @@ void H2K_hlx_poweroff(void) {
 	H2K_gp->hlx_state = H2K_HLX_STATE_OFF;
 
 	BKL_UNLOCK();
+#endif
 #endif
 #endif
 }

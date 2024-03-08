@@ -64,7 +64,8 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_setvwctrl,
 	H2K_trap_hwconfig_get_dpm_voltlimitmgmt_reg,
 	H2K_trap_hwconfig_set_dpm_voltlimitmgmt_reg,
-	H2K_trap_hwconfig_hlxbits	
+	H2K_trap_hwconfig_hlxbits,
+	H2K_trap_hwconfig_hlxlength
 };
 
 typedef struct {
@@ -396,6 +397,63 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe
 	}
 #endif
 	return 0;
+}
+
+u32_t H2K_trap_hwconfig_hlxlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {
+
+#ifdef HAVE_HLX
+	/*
+	u32_t cur;
+	
+// FIXME: This needs to be virtualized 
+	 
+	BKL_LOCK();
+	cur = H2K_get_syscfg();
+
+	
+	u32_t new;
+	//TODO: Does this need to be done for hlx? Disabled for now
+	if (vlength > Q6_R_ct0_R(H2K_gp->hlx_length)) {  // turn on long vectors
+		new = cur | SYSCFG_V2X;
+	} else {
+		new = cur & ~SYSCFG_V2X;
+	}
+	
+	
+	if (new != cur) {
+		H2K_set_syscfg(new);
+		H2K_isync();
+		cur = H2K_get_syscfg();
+		H2K_gp->syscfg_val = cur;
+
+#ifdef DO_EXT_SWITCH
+		H2K_gp->info_boot_flags.boot_ext_ok = H2K_gp->info_boot_flags.boot_have_hlx && (!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= H2K_gp->hlx_contexts);
+		if (H2K_gp->info_boot_flags.boot_ext_ok) {
+			if (me->vmblock->use_ext) {
+				me->vmblock->do_ext = 1;
+				H2K_hlx_poweron();
+			}
+		} else {
+			me->vmblock->do_ext = 0;
+			//Forget about live HVX regs when enabling long vectors
+			H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
+		}
+#endif
+
+		if (cur != new) {  // failed
+			BKL_UNLOCK();
+			return -1;
+		}
+	}
+	
+
+	BKL_UNLOCK();
+	*/
+	
+	return 0;
+#else
+	return -1;
+#endif
 }
 
 u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {

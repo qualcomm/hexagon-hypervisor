@@ -182,6 +182,18 @@ static inline int h2_hwconfig_vlength(unsigned int vlength)
 }
 
 /**
+Set vector length
+@param[in] vlength Vector length log 2
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_hlxlength(unsigned int vlength)
+{
+	return h2_hwconfig_trap(HWCONFIG_HLXLENGTH, NULL, vlength, 0);
+}
+
+/**
 Control extension power state
 @param[in] state Power state (zero == off, nonzero == on)
 @returns 0 on success, negative value on error

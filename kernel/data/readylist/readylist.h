@@ -289,18 +289,20 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 		}
 
 		u32_t ssr = H2K_get_ssr();
+		u32_t ccr = H2K_get_ccr();
 		u32_t hthread_xe = ((ssr & SSR_XE_BIT_MASK) ? 1 : 0);
 		u32_t hthread_xe2 = ((ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
 # ifdef HAVE_HLX 
-		u32_t hthread_xe3 = ((ssr & CCR_XE3_BIT_MASK) ? 1 : 0);
+		u32_t hthread_xe3 = ((ccr & CCR_XE3_BIT_MASK) ? 1 : 0);
 # endif
 		/* This hthread is goint to sleep, so no longer using xe/xe2 */
 		ssr &= ~SSR_XE_BIT_MASK;
 		ssr &= ~SSR_XE2_BIT_MASK;
 # ifdef HAVE_HLX
-		ssr &= ~CCR_XE3_BIT_MASK;
+		ccr &= ~CCR_XE3_BIT_MASK;
 # endif
 		H2K_set_ssr(ssr);
+		H2K_set_ccr(ccr);
 # ifdef HAVE_HLX
 		xex_set_clr(hthread, hthread_xe, hthread_xe2, hthread_xe3);
 		H2K_log("hthread %d  sleeping 2, hthread_xe %d  hthread_xe2 %d  hthread_xe2 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, hthread_xe2, H2K_gp->coproc_count[H2K_hthread_cluster(hthread)]);

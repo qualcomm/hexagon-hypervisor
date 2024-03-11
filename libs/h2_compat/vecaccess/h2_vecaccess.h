@@ -198,8 +198,6 @@ static inline int h2_eltaccess_init(h2_vecaccess_state_t *vacc, unsigned int req
 	/* Block be default if init fails */
 	h2_sem_init_val(&vacc->sem, 0); /*semaphore init*/
 
-	
-	if ((ret = h2_hwconfig_hlxlength(H2_ELTACCESS_LENGTH_MIN)) <0) return ret; /*TODO: Check if length config is right and what response of LENGTH_MIN should be*/
 	vacc->ext = H2_ELTACCESS_EXT_HLX; //sets elt extension type
 	vacc->length = H2_ELTACCESS_LENGTH_MIN; // sets elt len
 	h2_sem_init_val(&vacc->sem, h2_info(INFO_HLX_CONTEXTS) / (2048 / native_length)); //TODO: What is the value for hlx

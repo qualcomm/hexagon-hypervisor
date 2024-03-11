@@ -22,6 +22,8 @@
 #define H2_VECACCESS_EXT_SILVER 0
 #define H2_VECACCESS_EXT_HVX 0
 
+#define HLX_LENGTH_BYTES 2048
+
 enum {
 	H2_VECACCESS_VLENGTH_MIN,
 	H2_VECACCESS_VLENGTH_32 = 5,
@@ -192,7 +194,7 @@ Initialize the Vector Access type.
 
 static inline int h2_eltaccess_init(h2_vecaccess_state_t *vacc, unsigned int req) {
 
-	unsigned long native_length = h2_info(INFO_HLX_LENGTH); //TODO: Check h2_info(INFO_HLX_LENGTH) response
+	unsigned long native_length = HLX_LENGTH_BYTES;
 
 	/* Block be default if init fails */
 	h2_sem_init_val(&vacc->sem, 0); /*semaphore init*/

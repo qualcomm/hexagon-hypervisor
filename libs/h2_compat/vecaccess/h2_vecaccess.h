@@ -192,7 +192,6 @@ Initialize the Vector Access type.
 
 static inline int h2_eltaccess_init(h2_vecaccess_state_t *vacc, unsigned int req) {
 
-	int ret;
 	unsigned long native_length = h2_info(INFO_HLX_LENGTH); //TODO: Check h2_info(INFO_HLX_LENGTH) response
 
 	/* Block be default if init fails */

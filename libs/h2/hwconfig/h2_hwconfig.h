@@ -119,19 +119,6 @@ static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int pre
 }
 
 /**
-Set XA3, XE3 bits. for HLX
-@param[in] xe3 XE3 value
-@param[in] xa3 XA3 value
-@returns 0 on success, negative value on error
-@dependencies None
-*/
-
-static inline int h2_hwconfig_set_hlxbits(unsigned int xe3,  unsigned int xa3)
-{
-	return h2_hwconfig_trap(HWCONFIG_HLXBITS, NULL, xe3, xa3); //TODO: Ensure this is accessing the right CCR/SSR2 registers
-}
-
-/**
 Set XA2, XE2 bits.
 @param[in] xe2 XE2 value
 @param[in] xa2 XA2 value
@@ -154,6 +141,19 @@ Set XE2 bit (deprecated).
 static inline int h2_hwconfig_hmxbits(unsigned int xe2)
 {
 	return h2_hwconfig_set_hmxbits(xe2, 0);
+}
+
+/**
+Set XA3, XE3 bits. for HLX
+@param[in] xe3 XE3 value
+@param[in] xa3 XA3 value
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_set_hlxbits(unsigned int xe3,  unsigned int xa3)
+{
+	return h2_hwconfig_trap(HWCONFIG_HLXBITS, NULL, xe3, xa3); //TODO: Ensure this is accessing the right CCR/SSR2 registers
 }
 
 /**

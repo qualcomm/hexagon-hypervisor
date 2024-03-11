@@ -84,8 +84,15 @@ static const clade_reg_t clade_regs[] = {
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 {
-	if (configtype >= HWCONFIG_MAX) return -1;
-	return H2K_hwconfigtab[configtype](0, ptr, val2, val3, me);
+	if (configtype >= HWCONFIG_MAX) 
+	{
+		return -1;
+	}
+	else
+	{
+		return H2K_hwconfigtab[configtype](0, ptr, val2, val3, me);
+	}
+	
 }
 
 static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
@@ -253,6 +260,39 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	return 0;
 }
 
+u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xe3, u32_t xa3, H2K_thread_context *me) {
+#ifdef HAVE_HLX
+# ifdef CLUSTER_SCHED
+	if (H2K_gp->cluster_sched) {
+		BKL_LOCK();
+		if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
+			// block as if we got resched interrupt
+			H2K_log("hthread %d  hlxbits: task 0x%08x  setting xe3\n", me->hthread, me);
+			me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
+			me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+			H2K_runlist_remove(me);
+			H2K_ready_append(me);
+			H2K_dosched(me, me->hthread);
+		}
+		if (!xe3 && (me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 off
+			xex_set_clr(me->hthread, 0, 0, 1);
+			H2K_log("hthread %d  hmxbits: task 0x%08x  clearing xe3\n", me->hthread, me);
+		}
+		BKL_UNLOCK();
+	}
+# endif
+	me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
+	me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+
+	if (xe3) {
+		H2K_hlx_poweron(); // make sure the lights are on
+	}
+	return 0;
+#else
+	return -1;
+#endif
+}
+
 u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa2, H2K_thread_context *me) {
 #if ARCHV >= 68
 	if (0 < H2K_gp->hmx_units) {  // exists
@@ -348,14 +388,14 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	return 0;
 }
 
-u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe3, H2K_thread_context *me) {
+u32_t H2K_trap_hwconfig2_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe3, H2K_thread_context *me) {
 	/* FIXME: should check for allowed XA3 values here (maybe?) */
 	/* EJP: Always allow XE3/XA3 to be set if only for silver tests working also */
-
+	
 #ifdef CLUSTER_SCHED
 	if (H2K_gp->cluster_sched) {
 		BKL_LOCK();
-		if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe on
+		if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
 			// block as if we got resched interrupt
 			H2K_log("hthread %d  extbits:  task 0x%08x  setting xe3\n", me->hthread, me);
 
@@ -397,6 +437,54 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe
 	}
 #endif
 	return 0;
+}
+
+u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {
+
+#ifdef HAVE_EXTENSIONS
+
+	u32_t cur, new;
+	
+/* FIXME: This needs to be virtualized */
+
+	BKL_LOCK();
+	cur = H2K_get_syscfg();
+	if (vlength > Q6_R_ct0_R(H2K_gp->hvx_vlength)) {  // turn on long vectors
+		new = cur | SYSCFG_V2X;
+	} else {
+		new = cur & ~SYSCFG_V2X;
+	}
+	if (new != cur) {
+		H2K_set_syscfg(new);
+		H2K_isync();
+		cur = H2K_get_syscfg();
+		H2K_gp->syscfg_val = cur;
+
+#ifdef DO_EXT_SWITCH
+		H2K_gp->info_boot_flags.boot_ext_ok = H2K_gp->info_boot_flags.boot_have_hvx && (!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= H2K_gp->coproc_contexts);
+		if (H2K_gp->info_boot_flags.boot_ext_ok) {
+			if (me->vmblock->use_ext) {
+				me->vmblock->do_ext = 1;
+				H2K_hvx_poweron();
+			}
+		} else {
+			me->vmblock->do_ext = 0;
+			/* Forget about live HVX regs when enabling long vectors */
+			H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
+		}
+#endif
+
+		if (cur != new) {  // failed
+			BKL_UNLOCK();
+			return -1;
+		}
+	}
+
+	BKL_UNLOCK();
+	return 0;
+#else
+	return -1;
+#endif
 }
 
 u32_t H2K_trap_hwconfig_hlxlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {
@@ -450,54 +538,6 @@ u32_t H2K_trap_hwconfig_hlxlength(u32_t unused, void *unusedp, u32_t vlength, u3
 	BKL_UNLOCK();
 	*/
 	
-	return 0;
-#else
-	return -1;
-#endif
-}
-
-u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {
-
-#ifdef HAVE_EXTENSIONS
-
-	u32_t cur, new;
-	
-/* FIXME: This needs to be virtualized */
-
-	BKL_LOCK();
-	cur = H2K_get_syscfg();
-	if (vlength > Q6_R_ct0_R(H2K_gp->hvx_vlength)) {  // turn on long vectors
-		new = cur | SYSCFG_V2X;
-	} else {
-		new = cur & ~SYSCFG_V2X;
-	}
-	if (new != cur) {
-		H2K_set_syscfg(new);
-		H2K_isync();
-		cur = H2K_get_syscfg();
-		H2K_gp->syscfg_val = cur;
-
-#ifdef DO_EXT_SWITCH
-		H2K_gp->info_boot_flags.boot_ext_ok = H2K_gp->info_boot_flags.boot_have_hvx && (!(H2K_gp->syscfg_val & SYSCFG_V2X)) && (H2K_gp->hthreads <= H2K_gp->coproc_contexts);
-		if (H2K_gp->info_boot_flags.boot_ext_ok) {
-			if (me->vmblock->use_ext) {
-				me->vmblock->do_ext = 1;
-				H2K_hvx_poweron();
-			}
-		} else {
-			me->vmblock->do_ext = 0;
-			/* Forget about live HVX regs when enabling long vectors */
-			H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
-		}
-#endif
-
-		if (cur != new) {  // failed
-			BKL_UNLOCK();
-			return -1;
-		}
-	}
-
-	BKL_UNLOCK();
 	return 0;
 #else
 	return -1;

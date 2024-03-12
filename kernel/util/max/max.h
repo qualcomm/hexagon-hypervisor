@@ -355,7 +355,6 @@
 #define CFG_TABLE_VX2XMODE 0x80
 //TODO: HLX Change to actual values
 #define CFG_TABLE_HLX_CONTEXTS 0x84
-#define CFG_TABLE_HLX_LENGTH 0x88
 
 #define CFG_TABLE_ACD_PRESET 0x9c
 #define CFG_TABLE_MND_PRESET 0xa0

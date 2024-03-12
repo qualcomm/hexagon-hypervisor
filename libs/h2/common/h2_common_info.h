@@ -45,7 +45,6 @@ typedef enum {
 	INFO_HMX_INSTANCES, /**< Number of HMX instances */
 	INFO_CORECFG_BASE,/**< Core regs base */
 	INFO_HLX_CONTEXTS, /**< Number of HLX instances */
-	INFO_HLX_LENGTH, /**< HLX length, in bytes */
 	INFO_MAX
 } info_type;
 

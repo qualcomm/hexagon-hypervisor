@@ -151,9 +151,9 @@ Set XA3, XE3 bits. for HLX
 @dependencies None
 */
 
-static inline int h2_hwconfig_set_hlxbits(unsigned int xe3,  unsigned int xa3)
+static inline int h2_hwconfig_set_hlxbits(unsigned int xa3,  unsigned int xe3)
 {
-	return h2_hwconfig_trap(HWCONFIG_HLXBITS, NULL, xe3, xa3); //TODO: Ensure this is accessing the right CCR/SSR2 registers
+	return h2_hwconfig_trap(HWCONFIG_HLXBITS, NULL, xa3, xe3); //TODO: Ensure this is accessing the right CCR/SSR2 registers
 }
 
 /**

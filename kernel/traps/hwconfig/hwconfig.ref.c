@@ -259,7 +259,7 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	return 0;
 }
 
-u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xe3, u32_t xa3, H2K_thread_context *me) {
+u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t xe3, H2K_thread_context *me) {
 #ifdef HAVE_HLX
 # ifdef CLUSTER_SCHED
 	if (H2K_gp->cluster_sched) {

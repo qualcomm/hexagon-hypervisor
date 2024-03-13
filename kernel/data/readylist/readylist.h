@@ -236,6 +236,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 # endif
 
 			H2K_set_ssr(ssr);
+			H2K_set_ccr(ccr);
 
 # ifdef HAVE_HLX
 			xex_set_clr(hthread, hthread_xe, hthread_xe2, hthread_xe3);

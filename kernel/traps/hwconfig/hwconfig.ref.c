@@ -396,7 +396,7 @@ u32_t H2K_trap_hwconfig2_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t x
 		BKL_LOCK();
 		if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
 			// block as if we got resched interrupt
-			H2K_log("hthread %d  extbits:  task 0x%08x  setting xe3\n", me->hthread, me);
+			H2K_log("hthread %d  hlxbits:  task 0x%08x  setting xe3\n", me->hthread, me);
 
 			if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_contexts)  // not in HLX range //TODO: Do we need to do this for HLX
 #ifdef DO_EXT_SWITCH

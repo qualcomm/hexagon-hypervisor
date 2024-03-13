@@ -156,10 +156,11 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	}
 
 	u32_t ssr = H2K_get_ssr();
+	u32_t ccr = H2K_get_ccr();
 	u32_t hthread_xe = ((ssr & SSR_XE_BIT_MASK) ? 1 : 0);
 	u32_t hthread_xe2 = ((ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
 # ifdef HAVE_HLX
-	u32_t hthread_xe3 = ((ssr & CCR_XE3_BIT_MASK) ? 1 : 0);
+	u32_t hthread_xe3 = ((ccr & CCR_XE3_BIT_MASK) ? 1 : 0);
 	u32_t have = hthread_xe + hthread_xe2 + hthread_xe3; // # coprocs active on this thread
 #else
 	u32_t have = hthread_xe + hthread_xe2; // # coprocs active on this thread
@@ -231,7 +232,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			ssr &= ~SSR_XE_BIT_MASK;
 			ssr &= ~SSR_XE2_BIT_MASK;
 # ifdef HAVE_HLX
-			ssr &= ~CCR_XE3_BIT_MASK;
+			ccr &= ~CCR_XE3_BIT_MASK;
 # endif
 
 			H2K_set_ssr(ssr);

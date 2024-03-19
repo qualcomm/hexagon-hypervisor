@@ -259,9 +259,27 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	return 0;
 }
 
-u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t xe3, H2K_thread_context *me) {
-	//HMX ACCESS STYLE, barebones (no cluster sched stuff)
+u32_t H2K_trap_hwconfig_hlxbits_hmx(u32_t unused, void *unusedp,  u32_t xa3, u32_t xe3, H2K_thread_context *me) {
 #ifdef HAVE_HLX
+# ifdef CLUSTER_SCHED
+	if (H2K_gp->cluster_sched) {
+		BKL_LOCK();
+		if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
+			// block as if we got resched interrupt
+			H2K_log("hthread %d  hlxbits: task 0x%08x  setting xe3\n", me->hthread, me);
+			me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
+			me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+			H2K_runlist_remove(me);
+			H2K_ready_append(me);
+			H2K_dosched(me, me->hthread);
+		}
+		if (!xe3 && (me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 off
+			xex_set_clr(me->hthread, 0, 0, 1);
+			H2K_log("hthread %d  hmxbits: task 0x%08x  clearing xe3\n", me->hthread, me);
+		}
+		BKL_UNLOCK();
+	}
+# endif
 	me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 	me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
 
@@ -369,56 +387,70 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	return 0;
 }
 
-u32_t H2K_trap_hwconfig2_hlxbits2(u32_t unused, void *unusedp, u32_t xa3, u32_t xe3, H2K_thread_context *me) {
-	//HVX ACCESS STYLE
-	/* FIXME: should check for allowed XA3 values here (maybe?) */
-	/* EJP: Always allow XE3/XA3 to be set if only for silver tests working also */
-	
-#ifdef CLUSTER_SCHED
-	if (H2K_gp->cluster_sched) {
-		BKL_LOCK();
-		if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
-			// block as if we got resched interrupt
-			H2K_log("hthread %d  hlxbits:  task 0x%08x  setting xe3\n", me->hthread, me);
-
-			if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_contexts)  // not in HLX range //TODO: Do we need to do this for HLX
-#ifdef DO_EXT_SWITCH
-					|| (!(me->vmblock->do_ext))//TODO: Do we need to do this for HLX
-#endif
-					) {
-				me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
-				me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
-				H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT); //TODO: Do we need to do this for HLX
-			}
-			/* else (when in hlx range and do_ext) kernel is managing xa/xe, so do nothing here */
-			H2K_runlist_remove(me);
-			H2K_ready_append(me);
-			H2K_dosched(me, me->hthread);
-		}
-		if (!xe3 && (me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe off
-			xex_set_clr(me->hthread, 0, 0, 1);
-			H2K_log("hthread %d  extbits: task 0x%08x  clearing xe3\n", me->hthread, me);
-		}
-		BKL_UNLOCK();
-	}
-#endif
-
-	if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_contexts)  // not in HLX range
-#ifdef DO_EXT_SWITCH
-			|| (!(me->vmblock->do_ext))
-#endif
-			) {
-		me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
-		me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
-		H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT); //TODO: Do we need to do this for HLX
-	}
-	/* else (when in hlx range and do_ext) kernel is managing xa3/xe3, so do nothing here */
+u32_t H2K_trap_hwconfig_hlxbits_bare(u32_t unused, void *unusedp,  u32_t xa3, u32_t xe3, H2K_thread_context *me) {
 #ifdef HAVE_HLX
+	me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
+	me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+	
+
 	if (xe3) {
 		H2K_hlx_poweron(); // make sure the lights are on
 	}
-#endif
 	return 0;
+#else
+	return -1;
+#endif
+}
+
+u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe3, H2K_thread_context *me) {
+#ifdef HAVE_HLX
+	/* FIXME: should check for allowed XA3 values here (maybe?) */
+	/* EJP: Always allow XE3/XA3 to be set if only for silver tests working also */
+	
+	/* //Whatever this is, is breaking HLX, no acquire happening.
+	
+	BKL_LOCK();
+	if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
+		// block as if we got resched interrupt
+		H2K_log("hthread %d  hlxbits:  task 0x%08x  setting xe3\n", me->hthread, me);
+
+		if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_contexts)  // not in HLX range //TODO: Do we need to do this for HLX
+#ifdef DO_EXT_SWITCH
+				|| (!(me->vmblock->do_ext))//TODO: Do we need to do this for HLX
+#endif
+				) {
+			me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
+			me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+			H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT); //TODO: Do we need to do this for HLX
+		}
+		// else (when in hlx range and do_ext) kernel is managing xa/xe, so do nothing here 
+		H2K_runlist_remove(me);
+		H2K_ready_append(me);
+		H2K_dosched(me, me->hthread);
+	}
+	if (!xe3 && (me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe off
+		xex_set_clr(me->hthread, 0, 0, 1);
+		H2K_log("hthread %d  extbits: task 0x%08x  clearing xe3\n", me->hthread, me);
+	}
+	BKL_UNLOCK();*/
+
+	if ((xa3 < EXT_HLX_XA3_START || xa3 >= EXT_HLX_XA3_START + H2K_gp->hlx_contexts)  // not in HLX range
+/*#ifdef DO_EXT_SWITCH //TODO: DO we need this for hlx
+			|| (!(me->vmblock->do_ext))
+#endif*/
+			) {
+		me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
+		me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+		//H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT); //TODO: Do we need to do this for HLX
+	}
+	/* else (when in hlx range and do_ext) kernel is managing xa3/xe3, so do nothing here */
+	if (xe3) {
+		H2K_hlx_poweron(); // make sure the lights are on
+	}
+	return 0;
+#else
+	return -1;
+#endif
 }
 
 u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_t unused3, H2K_thread_context *me) {

@@ -260,26 +260,8 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 }
 
 u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t xe3, H2K_thread_context *me) {
+	//HMX ACCESS STYLE, barebones (no cluster sched stuff)
 #ifdef HAVE_HLX
-# ifdef CLUSTER_SCHED
-	if (H2K_gp->cluster_sched) {
-		BKL_LOCK();
-		if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
-			// block as if we got resched interrupt
-			H2K_log("hthread %d  hlxbits: task 0x%08x  setting xe3\n", me->hthread, me);
-			me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
-			me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
-			H2K_runlist_remove(me);
-			H2K_ready_append(me);
-			H2K_dosched(me, me->hthread);
-		}
-		if (!xe3 && (me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 off
-			xex_set_clr(me->hthread, 0, 0, 1);
-			H2K_log("hthread %d  hmxbits: task 0x%08x  clearing xe3\n", me->hthread, me);
-		}
-		BKL_UNLOCK();
-	}
-# endif
 	me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 	me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
 
@@ -387,7 +369,8 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	return 0;
 }
 
-u32_t H2K_trap_hwconfig2_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe3, H2K_thread_context *me) {
+u32_t H2K_trap_hwconfig2_hlxbits2(u32_t unused, void *unusedp, u32_t xa3, u32_t xe3, H2K_thread_context *me) {
+	//HVX ACCESS STYLE
 	/* FIXME: should check for allowed XA3 values here (maybe?) */
 	/* EJP: Always allow XE3/XA3 to be set if only for silver tests working also */
 	

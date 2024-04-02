@@ -21,10 +21,6 @@
 #include <hvx.h>
 #endif
 
-#ifdef HAVE_HLX
-#include <hlx.h>
-#endif
-
 #ifdef DEBUG
 #include <stdio.h>
 #endif
@@ -144,7 +140,6 @@ static u32_t H2K_config_vmblock_init_cpus_ints(H2K_vmblock_t *vmblock, u32_t vm,
 #endif
 	}
 #endif
-	//TODO: Do we need to do something with HLX here?
 
 	vmblock->intinfo = (H2K_vm_int_opinfo_t *)ptrtmp; 
 	ptrtmp += INTINFO_SPACE(vmblock->num_ints);

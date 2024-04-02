@@ -169,10 +169,8 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 #endif
 
-#ifdef HAVE_HLX
 	case INFO_HLX_CONTEXTS:
 		return H2K_gp->hlx_contexts;
-#endif
 
 	case INFO_HMX_INSTANCES:
 		return H2K_gp->hmx_units;

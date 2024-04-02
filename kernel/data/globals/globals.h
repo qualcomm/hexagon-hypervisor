@@ -175,22 +175,8 @@ typedef struct {
 	H2K_asid_entry_t asid_table[MAX_ASIDS] __attribute__((aligned(MAX_ASIDS*sizeof(H2K_asid_entry_t))));
 	H2K_thread_context *ready[MAX_PRIOS] __attribute__((aligned(MAX_PRIOS * sizeof(void *))));
 
-#ifdef HAVE_HLX
 	u32_t hlx_contexts;  
 	u32_t hlx_state;
-	u32_t hlx_timer_intnum;
-	u32_t *hlx_clock;
-	u32_t *hlx_reset;
-	u32_t *hlx_power;
-# if ARCHV >= 65
-	u32_t *hlx_bhs_status;
-	u32_t *hlx_bhs_cfg;
-	u32_t *hlx_bhs_cmd;
-	u32_t *hlx_cpmem_cfg;
-	u32_t *hlx_cpmem_cmd;
-	u32_t *hlx_cpmem_status;
-# endif
-#endif
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");
@@ -217,33 +203,17 @@ static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 	return (hthread / H2K_gp->cluster_hthreads);
 }
 
-#ifdef HAVE_HLX
 static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2, u32_t xe3) {
 	u32_t cluster = H2K_hthread_cluster(hthread);
 
-	H2K_gp->coproc_count[cluster] += (xe + xe2 + xe3);
+	H2K_gp->coproc_count[cluster] += (xe + xe2);  // + xe3);
 }
-#else
-static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2) {
-	u32_t cluster = H2K_hthread_cluster(hthread);
 
-	H2K_gp->coproc_count[cluster] += (xe + xe2);
-}
-#endif
-
-#ifdef HAVE_HLX
 static inline void xex_set_clr(u32_t hthread, u32_t xe, u32_t xe2, u32_t xe3) {
 	u32_t cluster = H2K_hthread_cluster(hthread);
 
-	H2K_gp->coproc_count[cluster] -= (xe + xe2 + xe3);
+	H2K_gp->coproc_count[cluster] -= (xe + xe2);  // + xe3);
 }
-#else
-static inline void xex_set_clr(u32_t hthread, u32_t xe, u32_t xe2) {
-	u32_t cluster = H2K_hthread_cluster(hthread);
-
-	H2K_gp->coproc_count[cluster] -= (xe + xe2);
-}
-#endif
 
 void H2K_cluster_config(void) IN_SECTION(".text.init.globals");
 

@@ -72,7 +72,6 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	tmp->gp = H2K_get_gp();
 	tmp->usr = me->usr;
 	tmp->ssr = me->ssr;
-	tmp->ccr = me->ccr;
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
 	tmp->vwctrl = me->vwctrl;
 #endif
@@ -100,6 +99,8 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 #ifdef HAVE_EXTENSIONS
 	tmp->ssr_xa = EXT_NO_EXT;
 	tmp->ssr_xe = 0; // ext disabled to cause exception
+	tmp->ssr_xe2 = 0;
+	tmp->ccr_xe3 = 0;
 #endif
 
 	vmblock->num_cpus++;

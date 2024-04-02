@@ -132,11 +132,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_kg.hmx_units > 0);
 #endif
 #ifdef CLUSTER_SCHED
-# ifdef HAVE_HLX
-		H2K_kg.coproc_max_save = ((H2K_kg.coproc_contexts + H2K_kg.hmx_units + H2K_kg.hlx_contexts) / H2K_kg.cluster_clusters) + (((H2K_kg.coproc_contexts + H2K_kg.hmx_units + H2K_kg.hlx_contexts) % H2K_kg.cluster_clusters) != 0);
-# else
 		H2K_kg.coproc_max_save = ((H2K_kg.coproc_contexts + H2K_kg.hmx_units) / H2K_kg.cluster_clusters) + (((H2K_kg.coproc_contexts + H2K_kg.hmx_units) % H2K_kg.cluster_clusters) != 0);
-# endif
 		H2K_kg.coproc_max_save = (H2K_kg.coproc_max < CLUSTER_SCHED_MIN_COPROCS ? CLUSTER_SCHED_MIN_COPROCS : H2K_kg.coproc_max);
 #endif	
 

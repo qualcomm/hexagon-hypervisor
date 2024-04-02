@@ -15,8 +15,6 @@
 #define DO_EXT_SWITCH 1
 #endif
 
-#define HAVE_HLX 1 //TODO:What is the proper way for this?
-
 #define PAGE_BITS 12 /* Minimum page size: 4K */
 
 #define DO_PROFILE 1
@@ -146,7 +144,6 @@
 #define H2K_VM_CHILDINT 14
 
 #define EXT_HVX_XA_START 0
-#define EXT_HLX_XA3_START 0
 #define EXT_NO_EXT 0
 
 #endif

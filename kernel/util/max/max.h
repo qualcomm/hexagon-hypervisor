@@ -259,13 +259,6 @@
 #define CCR_XA3_BITS 21
 #define CCR_XA3_NBITS 1
 #define CCR_XA3_BITS_MASK BITS_MASK(CCR_XA3_NBITS, CCR_XA3_BITS)
-//HLX XA3/XE3
-//end
-
-//ccr_xa2 was a part of a proposal for multiple hmx contexts, it is not currently used
-#define CCR_XA2_BITS 21
-#define CCR_XA2_NBITS 2
-#define CCR_XA2_BITS_MASK BITS_MASK(CCR_XA2_NBITS, CCR_XA2_BITS)
 
 #define VWCTRL_EN_BIT 31
 #define VWCTRL_HI_BITS 16
@@ -353,8 +346,8 @@
 #define CFG_TABLE_HMX_INT8_RATE 0x78
 #define CFG_TABLE_HMX_FP16_RATE 0x7c
 #define CFG_TABLE_VX2XMODE 0x80
-//TODO: HLX Change to actual values
 #define CFG_TABLE_HLX_CONTEXTS 0x84
+#define CFG_TABLE_HLX_LENGTH 0x88
 
 #define CFG_TABLE_ACD_PRESET 0x9c
 #define CFG_TABLE_MND_PRESET 0xa0

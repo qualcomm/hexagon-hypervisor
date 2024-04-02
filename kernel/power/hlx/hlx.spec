@@ -1,4 +1,3 @@
-//TODO:REDO for HLX
 :mod:`hlx` -- HLX Power Control
 ===============================
 

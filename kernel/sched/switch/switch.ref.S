@@ -84,11 +84,9 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r25:24 = g1:0
 	r21 = cs1
 	r20 = cs0
-	r14 = ccr
 	memd(r0+#CONTEXT_gbadva_gosp) = r27:26
 	memd(r0+#CONTEXT_gssr_gelr) = r25:24
 	memd(r0+#CONTEXT_cs1cs0) = r21:20
-	memw(r0+#CONTEXT_ccr) = r14
 #endif
 
 #if ARCHV >= 60
@@ -232,11 +230,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	s12 = r14
 #endif
 #if ARCHV >= 4
-	r15:14 = memd(r1+#CONTEXT_ccrssr)
+	r14 = memw(r1+#CONTEXT_ssr)
 	r21:20 = memd(r1+#CONTEXT_cs1cs0)
 	r25:24 = memd(r1+#CONTEXT_gssr_gelr)
 	r27:26 = memd(r1+#CONTEXT_gbadva_gosp)
-	ccr = r15
 	ssr = r14
 	cs0 = r20
 	cs1 = r21

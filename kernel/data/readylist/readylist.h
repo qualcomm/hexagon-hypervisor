@@ -88,33 +88,32 @@ static inline void H2K_ready_remove(H2K_thread_context *thread)
 
 #ifdef CLUSTER_SCHED
 static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t hthread_xe3,u32_t head_xe, u32_t head_xe2, u32_t head_xe3) {
-	xex_set_clr(hthread, (head_xe < hthread_xe), (head_xe2 < hthread_xe2), (head_xe3 < hthread_xe3));
-	xex_set_set(hthread, (head_xe > hthread_xe), (head_xe2 > hthread_xe2), (head_xe3 > hthread_xe3));
+	xex(hthread, head_xe, head_xe2, head_xe3, hthread_xe, hthread_xe2, hthread_xe3);
 	if (hthread_xe) {
 		if (!head_xe) {
-			H2K_log("hthread %d  update_coprocs: drop xe\n");
+			H2K_log("hthread %d  update_coprocs: drop xe\n", hthread);
 		}
 	} else {
 		if (head_xe) {
-			H2K_log("hthread %d  update_coprocs: add xe\n");
+			H2K_log("hthread %d  update_coprocs: add xe\n", hthread);
 		}
 	}
 	if (hthread_xe2) {
 		if (!head_xe2) {
-			H2K_log("hthread %d  update_coprocs: drop xe2\n");
+			H2K_log("hthread %d  update_coprocs: drop xe2\n", hthread);
 		}
 	} else {
 		if (head_xe2) {
-			H2K_log("hthread %d  update_coprocs: add xe2\n");
+			H2K_log("hthread %d  update_coprocs: add xe2\n", hthread);
 		}
 	}
 	if (hthread_xe3) {
 		if (!head_xe3) {
-			H2K_log("hthread %d  update_coprocs: drop xe3\n");
+			H2K_log("hthread %d  update_coprocs: drop xe3\n", hthread);
 		}
 	} else {
 		if (head_xe3) {
-			H2K_log("hthread %d  update_coprocs: add xe3\n");
+			H2K_log("hthread %d  update_coprocs: add xe3\n", hthread);
 		}
 	}
 }
@@ -191,7 +190,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			H2K_set_ssr(ssr);
 			H2K_set_ccr(ccr);
 
-			xex_set_clr(hthread, hthread_xe, hthread_xe2, hthread_xe3);
+			xex(hthread, 0, 0, 0, hthread_xe, hthread_xe2, hthread_xe3);
 			H2K_log("hthread %d  sleeping 1, hthread_xe %d  hthread_xe2 %d  hthread_xe3 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, hthread_xe3, H2K_gp->coproc_count[cluster]);
 			return NULL;
 		}
@@ -241,7 +240,7 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 		ccr &= ~CCR_XE3_BIT_MASK;
 		H2K_set_ssr(ssr);
 		H2K_set_ccr(ccr);
-		xex_set_clr(hthread, hthread_xe, hthread_xe2, hthread_xe3);
+		xex(hthread, 0, 0, 0, hthread_xe, hthread_xe2, hthread_xe3);
 		H2K_log("hthread %d  sleeping 2, hthread_xe %d  hthread_xe2 %d  hthread_xe3 %d  new cluster count %d\n", hthread, hthread_xe, hthread_xe2, hthread_xe3, H2K_gp->coproc_count[H2K_hthread_cluster(hthread)]);
 #endif
 		return NULL;

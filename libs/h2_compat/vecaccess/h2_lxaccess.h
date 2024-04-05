@@ -57,7 +57,7 @@ static inline int h2_lxaccess_acquire(h2_lxaccess_state_t *lxacc) {
 		idx = Q6_R_ct1_R(old_active);
 		new_active = old_active | (1<<idx);
 	} while (h2_atomic_compare_swap32(&lxacc->active, old_active, new_active) != old_active);
-	res = h2_hwconfig_set_hlxbits(1, idx);
+	res = h2_hwconfig_set_hlxbits(idx, 1);
 	if (0 == res) {
 		return idx;
 	}

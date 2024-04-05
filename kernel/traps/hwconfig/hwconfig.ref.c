@@ -270,12 +270,16 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 				H2K_log("hthread %d  hlxbits: task 0x%08x  setting xe3\n", me->hthread, me);
 				me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 				me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+				me->r00 = 0;
 				H2K_runlist_remove(me);
 				H2K_ready_append(me);
 				H2K_dosched(me, me->hthread);
 			}
 			if (!xe3 && (me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 off
-				xex_set_clr(me->hthread, 0, 0, 1);
+				u32_t hthread_xe = ((me->ssr & SSR_XE_BIT_MASK) ? 1 : 0);
+				u32_t hthread_xe2 = ((me->ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
+
+				xex(me->hthread, hthread_xe, hthread_xe2, 0, hthread_xe, hthread_xe2, 1);
 				H2K_log("hthread %d  hlxbits: task 0x%08x  clearing xe3\n", me->hthread, me);
 			}
 			BKL_UNLOCK();
@@ -283,10 +287,6 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 # endif
 		me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 		me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
-
-		if (xe3) {
-			H2K_hlx_poweron(); // make sure the lights are on
-		}
 		return 0;
 	}
 	return -1;
@@ -306,12 +306,16 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa
 				H2K_log("hthread %d  hmxbits: task 0x%08x  setting xe2\n", me->hthread, me);
 				// me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
 				me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
+				me->r00 = 0;
 				H2K_runlist_remove(me);
 				H2K_ready_append(me);
 				H2K_dosched(me, me->hthread);
 			}
 			if (!xe2 && (me->ssr & SSR_XE2_BIT_MASK)) {  // turning xe2 off
-				xex_set_clr(me->hthread, 0, 1, 0);
+				u32_t hthread_xe = ((me->ssr & SSR_XE_BIT_MASK) ? 1 : 0);
+				u32_t hthread_xe3 = ((me->ccr & CCR_XE3_BIT_MASK) ? 1 : 0);
+
+				xex(me->hthread, hthread_xe, 0, hthread_xe3, hthread_xe, 1, hthread_xe3);
 				H2K_log("hthread %d  hmxbits: task 0x%08x  clearing xe2\n", me->hthread, me);
 			}
 			BKL_UNLOCK();
@@ -319,10 +323,6 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa
 #endif
 		// me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
 		me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
-
-		if (xe2) {
-			H2K_hmx_poweron(); // make sure the lights are on
-		}
 		return 0;
 	}
 	return -1;
@@ -352,12 +352,16 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 				H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
 			}
 			/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
+			me->r00 = 0;
 			H2K_runlist_remove(me);
 			H2K_ready_append(me);
 			H2K_dosched(me, me->hthread);
 		}
 		if (!xe && (me->ssr & SSR_XE_BIT_MASK)) {  // turning xe off
-				xex_set_clr(me->hthread, 1, 0, 0);
+				u32_t hthread_xe2 = ((me->ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
+				u32_t hthread_xe3 = ((me->ccr & CCR_XE3_BIT_MASK) ? 1 : 0);
+
+				xex(me->hthread, 0, hthread_xe2, hthread_xe3, 1, hthread_xe2, hthread_xe3);
 			H2K_log("hthread %d  extbits: task 0x%08x  clearing xe\n", me->hthread, me);
 		}
 		BKL_UNLOCK();
@@ -374,11 +378,6 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 		H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
 	}
 	/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
-#ifdef HAVE_EXTENSIONS
-	if (xe) {
-		H2K_hvx_poweron(); // make sure the lights are on
-	}
-#endif
 	return 0;
 }
 

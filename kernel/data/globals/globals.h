@@ -203,16 +203,36 @@ static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 	return (hthread / H2K_gp->cluster_hthreads);
 }
 
-static inline void xex_set_set(u32_t hthread, u32_t xe, u32_t xe2, u32_t xe3) {
+static inline void xex(u32_t hthread, u32_t new_xe, u32_t new_xe2, u32_t new_xe3, u32_t cur_xe, u32_t cur_xe2, u32_t cur_xe3) {
+#ifdef H2K_LOG_H
+	H2K_log("xex: new_xe %d  new_xe2 %d  new_xe3 %d  cur_xe %d  cur_xe2 %d  cur_xe3 %d\n", new_xe, new_xe2, new_xe3, cur_xe, cur_xe2, cur_xe3);
+#endif
+
 	u32_t cluster = H2K_hthread_cluster(hthread);
+	s32_t count = 0;
 
-	H2K_gp->coproc_count[cluster] += (xe + xe2);  // + xe3);
-}
+	switch (cur_xe + cur_xe3) {  // current HVX + HLX for hthread
+	case 0:  // neither active
+		count += (new_xe || new_xe3);
+		break;
 
-static inline void xex_set_clr(u32_t hthread, u32_t xe, u32_t xe2, u32_t xe3) {
-	u32_t cluster = H2K_hthread_cluster(hthread);
+	case 1:  // one coproc active
+	case 2:
+		if (new_xe + new_xe3 == 0) {  // clearing both
+			count -= 1;
+		}  // else 1 or 2 are being set, which doesn't affect the count
+		break;
+	default:
+		break;
+	}
 
-	H2K_gp->coproc_count[cluster] -= (xe + xe2);  // + xe3);
+	if (new_xe2 < cur_xe2) {  // clearing xe2
+		count -= 1;
+	} else if (new_xe2 > cur_xe2) {  // setting xe2
+		count += 1;
+	}
+
+	H2K_gp->coproc_count[cluster] += count;
 }
 
 void H2K_cluster_config(void) IN_SECTION(".text.init.globals");

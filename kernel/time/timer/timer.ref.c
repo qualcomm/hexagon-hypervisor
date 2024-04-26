@@ -139,7 +139,7 @@ static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 {
 	H2K_gp->time.next_ticks = nextticks;
 	H2K_gp->time.devptr[HW_MATCH_HI] = ~0;
-	H2K_gp->time.devptr[HW_MATCH_LO] = nextticks;
+	H2K_gp->time.devptr[HW_MATCH_LO] = (u32_t)nextticks;
 	H2K_gp->time.devptr[HW_MATCH_HI] = nextticks >> 32;
 }
 

@@ -716,7 +716,7 @@ u32_t H2K_trap_hwconfig_set_gpio_addr(u32_t unused, void *unusedp, u32_t addr_hi
 	// entry.asid = don't care
 	entry.global = 1;
 	entry.valid = 1;
-	return H2K_tlb_tlbop(TLBOP_TLBALLOC, 0, entry.raw, me);
+	return (u32_t)H2K_tlb_tlbop(TLBOP_TLBALLOC, 0, entry.raw, me);
 #else
 	return -1;
 #endif

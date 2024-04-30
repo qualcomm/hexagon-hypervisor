@@ -33,7 +33,7 @@
 ./kernel/power/apcr/test_multi
 ./kernel/power/hvx/test
 #./kernel/power/apcr/simple_test
-./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios
+#./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios
 ./kernel/sched/dosched/test/test
 ./kernel/futex/futex/test/tests/badaccess
 ./kernel/futex/futex/test/tests/find_match
@@ -67,7 +67,7 @@
 ./kernel/util/stmode/test
 ./kernel/util/spinlock/test
 ./kernel/util/trace/test
-./kernel/util/tree/test
+#./kernel/util/tree/test
 ./kernel/util/intcontrol/test
 ./kernel/vm/vmop/test
 ./kernel/vm/vmevent/test

@@ -169,6 +169,13 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 #endif
 
+	case INFO_HLX_CONTEXTS:
+		if (CORE_V85 <= H2K_gp->arch) {
+			return H2K_gp->hlx_contexts;
+		} else {
+			return 0;
+		}
+
 	case INFO_HMX_INSTANCES:
 		return H2K_gp->hmx_units;
 

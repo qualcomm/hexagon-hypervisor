@@ -144,6 +144,19 @@ static inline int h2_hwconfig_hmxbits(unsigned int xe2)
 }
 
 /**
+Set XA3, XE3 bits. for HLX
+@param[in] xe3 XE3 value
+@param[in] xa3 XA3 value
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_set_hlxbits(unsigned int xa3,  unsigned int xe3)
+{
+	return h2_hwconfig_trap(HWCONFIG_HLXBITS, NULL, xa3, xe3);
+}
+
+/**
 Set XA, XE bits.
 @param[in] xa XA value
 @param[in] xe XE value
@@ -397,6 +410,31 @@ Set VWCTRL register
 static inline int h2_hwconfig_vwctrl_set(unsigned int val) {
 
 	return h2_hwconfig_trap(HWCONFIG_SETVWCTRL, NULL, val, 0);
+}
+
+/**
+Get DPM volt limits management register.
+@param[in] offset  Offset from DPM volt limits management register from base
+@returns register value or 0 on failure -- check kerror
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_dpm_voltlmtmgmt_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GET_DPM_VOLTLMTMGMT_REG, NULL, offset, 0);
+}
+
+/**
+Set DPM volt limits management register.
+@param[in] offset  Offset from DPM volt limits management register from base
+@param[in] val  Value to write
+@returns previous register value or 0 on failure -- check kerror
+@dependencies Returns failure if offset out of range
+*/
+
+static inline int h2_hwconfig_dpm_voltlmtmgmt_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SET_DPM_VOLTLMTMGMT_REG, NULL, offset, val);
 }
 
 #endif

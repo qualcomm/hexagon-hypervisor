@@ -44,6 +44,7 @@ typedef enum {
 	INFO_MAX_CLUSTER_COPROC, /**< Max coprocessor threads per cluster */
 	INFO_HMX_INSTANCES, /**< Number of HMX instances */
 	INFO_CORECFG_BASE,/**< Core regs base */
+	INFO_HLX_CONTEXTS, /**< Number of HLX instances */
 	INFO_MAX
 } info_type;
 
@@ -59,7 +60,8 @@ typedef union {
 		unsigned long boot_have_dma:1;    /**< Core has user-mode DMA? */
 		unsigned long boot_have_hmx:1;    /**< Core has HMX? */
 		unsigned long boot_have_silver:1; /**< Core has SILVER? */
-		unsigned long boot_unused:25;
+		unsigned long boot_have_hlx:1;    /**< Core has HLX? */
+		unsigned long boot_unused:24;
 	};
 	unsigned long raw;
 } info_boot_flags_type;

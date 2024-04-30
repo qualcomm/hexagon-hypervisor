@@ -36,6 +36,11 @@
 #define CORE_V71 0x71
 #define CORE_V72 0x72
 #define CORE_V73 0x73
+#define CORE_V75 0x75
+#define CORE_V77 0x77
+#define CORE_V79 0x79
+#define CORE_V81 0x81
+#define CORE_V85 0x85
 
 #define CORE_V6_A 0x0
 #define CORE_V6_B 0x1
@@ -252,9 +257,13 @@
 #define SSR_XE2_BIT 26
 #define SSR_XE2_BIT_MASK BITS_MASK(1, SSR_XE2_BIT)
 
-#define CCR_XA2_BITS 21
-#define CCR_XA2_NBITS 2
-#define CCR_XA2_BITS_MASK BITS_MASK(CCR_XA2_NBITS, CCR_XA2_BITS)
+//HLX XA3/XE3
+#define CCR_XE3_BIT 28
+#define CCR_XE3_BIT_MASK BITS_MASK(1, CCR_XE3_BIT)
+
+#define CCR_XA3_BITS 21
+#define CCR_XA3_NBITS 1
+#define CCR_XA3_BITS_MASK BITS_MASK(CCR_XA3_NBITS, CCR_XA3_BITS)
 
 #define VWCTRL_EN_BIT 31
 #define VWCTRL_HI_BITS 16
@@ -342,6 +351,8 @@
 #define CFG_TABLE_HMX_INT8_RATE 0x78
 #define CFG_TABLE_HMX_FP16_RATE 0x7c
 #define CFG_TABLE_VX2XMODE 0x80
+#define CFG_TABLE_HLX_CONTEXTS 0x84
+#define CFG_TABLE_HLX_LENGTH 0x88
 
 #define CFG_TABLE_ACD_PRESET 0x9c
 #define CFG_TABLE_MND_PRESET 0xa0
@@ -365,6 +376,7 @@
 #define CFG_TABLE_COPROC_TYPE_HVX_MASK 0x1
 #define CFG_TABLE_COPROC_TYPE_SILVER_MASK 0x2
 #define CFG_TABLE_COPROC_TYPE_HMX_MASK 0x4
+#define CFG_TABLE_COPROC_TYPE_HLX_MASK 0x10
 
 #define EXT_HVX_CONTEXTS 4  // fallback for old cores that don't have this in cfg_table
 #define EXT_HVX_VTCM_BANK_WIDTH 16  // fallback for old cores that don't have this in cfg_table
@@ -413,9 +425,11 @@
 #define CORECFG_ETM_BASE               0x0000
 #define CORECFG_LIVELOCK_BASE          0x1000
 #define CORECFG_STRIDE_PREFETCHER_BASE 0x2000
+#define CORECFG_DPM_VOLTLMTMGMT_BASE   0x3000
 
 #define CORECFG_PRESENT_ETM_MASK               0x1
 #define CORECFG_PRESENT_LIVELOCK_MASK          0x2
 #define CORECFG_PRESENT_STRIDE_PREFETCHER_MASK 0x4
+#define CORECFG_PRESENT_DPM_VOLTLMTMGMT_MASK   0x8
 
 #define LOGBUF_SIZE (32 * 1024)  // bytes

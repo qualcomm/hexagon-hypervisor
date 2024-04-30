@@ -13,6 +13,7 @@
 *.lzo
 *.patch
 *.gcno
+.idea/
 stats.txt
 results.txt
 make.log
@@ -47,3 +48,5 @@ kernel/include/
 kernel/offsets
 kernel/sched/check_sanity/check_sanity_debug.h
 kernel/util/intcontrol/intcontrol_debug.h
+__pycache__/
+git_update.bat

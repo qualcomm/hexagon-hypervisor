@@ -266,6 +266,7 @@ void usage()
 	BOOTER_PRINTF("  --l2_reg <offset int> <int>\n\tSet L2 config register.\n");
 	BOOTER_PRINTF("  --get_l2_reg <offset int>\n\tPrint value of L2 config register.\n");
 	BOOTER_PRINTF("  --stride_prefetch_reg <offset int> <int>\n\tSet stride prefetcher register.\n");
+	BOOTER_PRINTF("  --dvlm_reg <offset int> <int>\n\tSet DPM voltlimit register.\n");
 #ifdef HAVE_EXTENSIONS
 	BOOTER_PRINTF("  --ext_power (0|1)\n\tPower on/off coprocessors.  Default 1.\n");
 	BOOTER_PRINTF("  --hmx_poweron_addr <addr>\n\tSet HMX RSC sequence power-on start address.\n");
@@ -1353,6 +1354,11 @@ void print_infos() {
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
 	BOOTER_PRINTF("\tGuest PC sampling available: ");
 	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tHLX:\n");
+	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hlx ? "true" : "false"));
+	if (boot_flags.boot_have_hlx) {
+		BOOTER_PRINTF("\t\tContexts : %d\n", h2_info(INFO_HLX_CONTEXTS));
+	}
 	BOOTER_PRINTF("\tHVX:\n");
 	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
 	if (boot_flags.boot_have_hvx) {
@@ -1553,6 +1559,31 @@ void set_stride_prefetcher_reg(unsigned int offset, unsigned int val) {
 
 	if (ret != old) {
 		FAIL("set_stride_prefetcher_reg mismatch.", "");
+	}
+
+	BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
+}
+
+void set_dvlm_reg(unsigned int offset, unsigned int val) {
+
+  unsigned int old, ret, kerror;
+
+	BOOTER_PRINTF("Set DPM volt reg at offset 0x%08x:\n", offset);
+
+	old = h2_hwconfig_dpm_voltlmtmgmt_get_reg(offset);
+
+	kerror = h2_info(INFO_ERROR);
+	if (kerror != KERROR_NONE) {
+		BOOTER_PRINTF("\n");
+		BOOTER_PRINTF("Kernel error: %s\n\n", kerror_msg[kerror]);
+		FAIL("Can't get DPM volt reg.", "");
+	}
+
+	BOOTER_PRINTF("\tOld value:  0x%08x\n", old);
+	ret = h2_hwconfig_dpm_voltlmtmgmt_set_reg(offset, val);
+
+	if (ret != old) {
+		FAIL("set_dvlm_reg mismatch.", "");
 	}
 
 	BOOTER_PRINTF("\tNew value:  0x%08x\n", val);
@@ -1780,6 +1811,12 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else if (0 == strcmp(argv[0], "--stride_prefetch_reg")) {
 			if (argc < 3) die_usage();
 			set_stride_prefetcher_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
+			argc -= 3; argv += 3;
+			continue;
+
+		} else if (0 == strcmp(argv[0], "--dvlm_reg")) {
+			if (argc < 3) die_usage();
+			set_dvlm_reg(strtoul(argv[1], NULL, 0), strtoul(argv[2], NULL, 0));
 			argc -= 3; argv += 3;
 			continue;
 

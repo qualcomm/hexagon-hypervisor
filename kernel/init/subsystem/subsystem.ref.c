@@ -8,6 +8,7 @@
 #include <globals.h>
 #include <hvx.h>
 #include <hmx.h>
+#include <hlx.h>
 /* Power up HVX */
 void H2K_hvx_init(u32_t devpage_offset) {
 
@@ -51,4 +52,14 @@ void H2K_hmx_init(u32_t devpage_offset) {
 
 #endif
 
+}
+
+//TODO: HLX, what has to be done here?
+void H2K_hlx_init(u32_t devpage_offset) {
+
+	if (!H2K_gp->info_boot_flags.boot_have_hlx) {
+		return;
+	}
+
+	H2K_gp->hlx_state = H2K_HLX_STATE_OFF;
 }

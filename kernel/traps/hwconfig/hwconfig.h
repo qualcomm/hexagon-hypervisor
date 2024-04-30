@@ -29,6 +29,7 @@ u32_t H2K_trap_hwconfig_hwthreads_mask(u32_t unused, void *unusedp, u32_t mask, 
 u32_t H2K_trap_hwconfig_hwthreads_num(u32_t unused, void *unusedp, u32_t num, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_ecc(u32_t unused, void *unusedp, u32_t ecc_enable, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa2, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp, u32_t xa3, u32_t xe3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_getdmacfg(u32_t unused, void *unusedp, u32_t index, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_setdmacfg(u32_t unused, void *unusedp, u32_t index, u32_t data, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_l2gclean(u32_t unused, void *unusedp, u32_t inv, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
@@ -42,5 +43,8 @@ u32_t H2K_trap_hwconfig_l2cp(u32_t unused, void *unusedp, u32_t configval, u32_t
 u32_t H2K_trap_hwconfig_geteccreg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_getvwctrl(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_setvwctrl(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_get_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me)IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_set_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me)IN_SECTION(".text.config.hwconfig");
+
 #endif
 

@@ -42,6 +42,11 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.build_id = H2K_GIT_COMMIT;
 	H2K_kg.info_boot_flags.boot_use_tcm = 0;
 
+	u32_t have_hlx;
+	have_hlx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HLX_MASK) != 0;
+	H2K_kg.info_boot_flags.boot_have_hlx = have_hlx;
+	H2K_kg.hlx_contexts = H2K_cfg_table(CFG_TABLE_HLX_CONTEXTS);
+
 #ifdef HAVE_EXTENSIONS
 	/* HVX present? */
 	if (CORE_V65 < H2K_kg.arch) {

@@ -1,0 +1,39 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+#include <c_std.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <context.h>
+#include <globals.h>
+#include <hlx.h>
+
+H2K_kg_t H2K_kg;
+
+void FAIL(const char *str)
+{
+    puts("FAIL");
+    puts(str);
+    exit(1);
+}
+
+int main()
+{
+    __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+    H2K_kg.info_boot_flags.boot_have_hlx = 1;
+    
+    H2K_kg.hlx_state = H2K_HLX_STATE_OFF;
+    H2K_hlx_poweron(); // attempt hlx power on
+    if (H2K_kg.hlx_state != H2K_HLX_STATE_ON) FAIL("hlx_poweron");
+    H2K_hlx_poweroff(); // re-attempt hlx power on to check no breakage
+    
+    H2K_kg.hlx_state = H2K_HLX_STATE_ON;
+    H2K_hlx_poweroff(); // attempt hlx power off
+    if (H2K_kg.hlx_state != H2K_HLX_STATE_OFF) FAIL("hlx_poweroff");    
+    H2K_hlx_poweroff(); // re-attempt hlx power off to check no breakage
+    
+    puts("TEST PASSED");
+    return 0;
+}

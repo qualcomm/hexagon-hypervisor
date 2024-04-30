@@ -129,14 +129,14 @@ typedef struct _h2_thread_context
 			union {
 				u32_t ssr;
 				struct {
-					u8_t ssr_cause;
+					u8_t ssr_cause;  //7
 #if ARCHV <= 3
 					u8_t ssr_asid:5;
 					u8_t ssr_guest:1; /* Fake guest bit using a bit of ASID */
-					u8_t ssr_asid_byte_unused:2;
+					u8_t ssr_asid_byte_unused:2;  //15
 #else
 					u8_t ssr_asid:7;
-					u8_t ssr_asid_byte_unused:1;
+					u8_t ssr_asid_byte_unused:1;  //15
 #endif
 					u8_t ssr_um:1;
 					u8_t ssr_ex:1;
@@ -146,20 +146,20 @@ typedef struct _h2_thread_context
 					u8_t ssr_hfi:1;
 					u8_t ssr_hfd:1;
 					u8_t ssr_sfd:1;
-					u8_t ssr_hi_rsvd:7;
+					u8_t ssr_hi_rsvd1:7;
 #else
 					u8_t ssr_guest:1;
 					u8_t ssr_badva_v0:1;
 					u8_t ssr_badva_v1:1;
 					u8_t ssr_badva_bvs:1;
 					u8_t ssr_badva_ce:1;
-					u8_t ssr_badva_pe:1;
+					u8_t ssr_badva_pe:1;  //24
 					u8_t ssr_bp:1;
 #ifdef HAVE_EXTENSIONS
 					u8_t ssr_xe2:1;
 					u8_t ssr_xa:3;
 #else
-					u8_t ssr_hi_rsvd:4;
+					u8_t ssr_hi_rsvd2:4;
 #endif
 					u8_t ssr_ss:1;
 #ifdef HAVE_EXTENSIONS
@@ -171,7 +171,32 @@ typedef struct _h2_thread_context
 #endif
 				};
 			};
-			u32_t ccr;
+			union {
+				u32_t ccr;
+				struct {
+					u8_t ccr_l1icp:2;
+					u8_t ccr_rsvd_b2:1;
+					u8_t ccr_l1dcp:2;
+					u8_t ccr_rsvd_b5:1;
+					u8_t ccr_l2cp:2;    //7
+					u8_t ccr_cd;//15
+					u8_t ccr_hfi:1;    //16
+					u8_t ccr_hfd:1;    //17
+					u8_t ccr_hfil2:1;  //18
+					u8_t ccr_hfld2:1;  //19
+					u8_t ccr_sfd:1;    //20
+					u8_t ccr_xa3:1;  //option to expand xa3 from [21] into [23:21]
+					u8_t ccr_resvd_b22_b23:2;  //22-23
+					u8_t ccr_gie:1;//24
+					u8_t ccr_gte:1;
+					u8_t ccr_gee:1;
+					u8_t ccr_gre:1;
+					u8_t ccr_xe3:1;
+					u8_t ccr_vv1:1;
+					u8_t ccr_vv2:1;
+					u8_t ccr_vv3:1;//31
+				};
+			};
 		};
 	};
 	u64_t r3130;

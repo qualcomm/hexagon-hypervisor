@@ -117,6 +117,7 @@ enum {
 unsigned int ext_power = 1;
 #endif
 unsigned int silent = 0;
+unsigned int cycles = 0;
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
@@ -242,6 +243,15 @@ void FAIL(const char *str1, const char *str2)
 	exit(1);
 }
 
+void pcycles(void) {
+	unsigned long long int cyc;
+
+	if (!cycles) return;
+	
+	asm volatile ( " %0 = c15:14 // upcycle \n" : "=r"(cyc));
+	BOOTER_PRINTF("\nPCYCLES %llu\n", cyc);
+}
+
 void usage()
 {
 	BOOTER_PRINTF("Usage:\n");
@@ -285,6 +295,7 @@ void usage()
 	BOOTER_PRINTF("  --pmu_file <string>\n\tPMU output file name. Default " PMU_FILE ".\n");
 	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
 	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
+	BOOTER_PRINTF("  --cycles\n\tPrint pcycles during boot.\n");
 	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
 
 	BOOTER_PRINTF("\n");
@@ -778,6 +789,8 @@ void load_vm(unsigned int idx) {
 	Elf32_Phdr phdr;
 	int bytes_read;
 
+	pcycles();
+
 	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
 	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
@@ -1169,6 +1182,8 @@ void boot_vm(unsigned int idx) {
 		}
 	}
 
+	pcycles();
+
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
 		FAIL("\tfailed to boot vm\n", "");
 	}
@@ -1321,6 +1336,7 @@ void run(unsigned int idx) {
 						dump_pmu(i);
 						vm_params[i].id = ~0;  // mark non-existent
 						h2_vmfree(vm);
+						pcycles();
 					}
 				} else {
 					done = 0; // someone's not done
@@ -1350,7 +1366,9 @@ void die_usage()
 
 void print_infos() {
 
-	BOOTER_PRINTF("H2/core info:\n");
+	pcycles();
+
+	BOOTER_PRINTF("\nH2/core info:\n");
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
 	BOOTER_PRINTF("\tGuest PC sampling available: ");
 	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
@@ -1664,6 +1682,10 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		/* Global options */
 		if (0 == strcmp(argv[0],"--quiet")) {
 			/* already quieted */
+			argc -= 1; argv += 1;
+			continue;
+		} else if (0 == strcmp(argv[0],"--cycles")) {
+			cycles = 1;
 			argc -= 1; argv += 1;
 			continue;
 		} else if (0 == strcmp(argv[0],"--syscfg")) {

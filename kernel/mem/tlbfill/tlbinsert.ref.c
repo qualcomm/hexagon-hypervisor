@@ -7,7 +7,7 @@
 #include <hw.h>
 
 /* Called by tmpmap */
-void H2K_mem_tlb_insert_index_unlock(H2K_mem_tlbfmt_t entry, u32_t index) {
+u32_t H2K_mem_tlb_insert_index(H2K_mem_tlbfmt_t entry, u32_t index) {
 
 	u64_t rawentry = entry.raw;
 	u32_t result;
@@ -37,6 +37,6 @@ void H2K_mem_tlb_insert_index_unlock(H2K_mem_tlbfmt_t entry, u32_t index) {
 #endif
 		 );
 
-	H2K_mutex_unlock_tlb();
+	return result == 0x80000000U;
 }
 

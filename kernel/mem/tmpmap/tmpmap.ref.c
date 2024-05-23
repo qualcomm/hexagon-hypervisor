@@ -36,7 +36,8 @@ u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc) {
 	H2K_mutex_lock_tlb();
 	index = H2K_gp->last_tlb_index--;
 	if (H2K_gp->tlb_index >= index) H2K_gp->tlb_index = 0;
-	H2K_mem_tlb_insert_index_unlock(entry, index);  // and invalidate what's there
+	H2K_mem_tlb_insert_index(entry, index);  // and invalidate what's there
+	H2K_mutex_unlock_tlb();
 	return TEMP_MAP_VA | (pa & TEMP_MAP_OFF_MASK);
 }
 

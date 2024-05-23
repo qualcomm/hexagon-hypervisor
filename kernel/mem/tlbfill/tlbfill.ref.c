@@ -28,13 +28,14 @@ static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_
 	H2K_mutex_lock_tlb();
 	index = *p_index;
 
-	if ((index + 1) <= H2K_gp->last_tlb_index) {
-		*p_index = index + 1;
-	} else {
-		*p_index = 0;
+	if (H2K_mem_tlb_insert_index(entry, index & me->tlbidxmask)) {
+		if ((index + 1) <= H2K_gp->last_tlb_index) {
+			*p_index = index + 1;
+		} else {
+			*p_index = 0;
+		}
 	}
-	index &= me->tlbidxmask;
-	H2K_mem_tlb_insert_index_unlock(entry, index);
+	H2K_mutex_unlock_tlb();
 }
 
 void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)

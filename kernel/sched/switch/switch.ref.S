@@ -221,10 +221,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 	memd(r8) = r19:18
 
-#if ARCHV >= 68
-	r14 = memw(r1 + #CONTEXT_dm0)
-	dmresume(r14)
-#endif
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
 	r14 = memw(r1+ #CONTEXT_vwctrl)
 	s12 = r14
@@ -239,6 +235,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	cs1 = r21
 	g1:0 = r25:24
 	g3:2 = r27:26
+#endif
+#if ARCHV >= 68
+	r14 = memw(r1 + #CONTEXT_dm0)
+	dmresume(r14)
 #endif
 
 #if ARCHV >= 60

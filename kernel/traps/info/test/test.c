@@ -139,7 +139,11 @@ int main() {
 	val = H2K_kg.coproc_contexts;
 	if (H2K_trap_info(INFO_COPROC_CONTEXTS, &a) != val) FAIL("COPROC_CONTEXTS");
 
-	val = H2K_kg.hlx_contexts;
+	if (CORE_V85 <= H2K_kg.arch) {
+		val = H2K_kg.hlx_contexts;
+	} else {
+		val = 0;
+	}
 	if (H2K_trap_info(INFO_HLX_CONTEXTS, &a) != val) FAIL("HLX_CONTEXTS");
 
 #ifdef DO_EXT_SWITCH

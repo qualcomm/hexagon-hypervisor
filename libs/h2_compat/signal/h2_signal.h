@@ -86,7 +86,10 @@ Clear signals in an any-signal.  Bits set in mask are cleared in the signal.
 */
 static inline unsigned int h2_signal_clear(h2_signal_t *signal, unsigned int mask)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
 	return h2_atomic_and32((unsigned int *)&signal->signals,~mask);
+#pragma GCC diagnostic pop
 }
 
 /**

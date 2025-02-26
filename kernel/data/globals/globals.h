@@ -149,10 +149,12 @@ typedef struct {
 	kerror_type kernel_error;
 	u32_t hthreads;
 	u32_t hthreads_mask;
-	u32_t tcm_base; // FIXME: pa_t ?
-	u32_t tcm_size;
+	u32_t tcm_base; // 4k pages
+	u32_t tcm_size; // 4k pages
 	u32_t l2size;
 	u32_t l2tags;
+	u32_t vtcm_base; // 4k pages
+	u32_t vtcm_size; // 4k pages
 	u32_t ecc_enable;
 	u32_t dma_version;
 

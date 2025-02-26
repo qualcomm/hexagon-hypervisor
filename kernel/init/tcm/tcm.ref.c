@@ -26,14 +26,17 @@ void H2K_tcm_copy(u32_t last_tlb_index) {
 	u32_t page_num;
 	u64_t tmp;
 
-	if (H2K_gp->tcm_size > (u32_t)&H2K_KERNEL_NPAGES * H2K_PAGESIZE) {  // room in TCM?
+	tcm_base = H2K_gp->tcm_base << PAGE_BITS;
+	tcm_size = H2K_gp->tcm_size << PAGE_BITS;
+
+	if (tcm_size > (u32_t)&H2K_KERNEL_NPAGES * H2K_PAGESIZE) {  // room in TCM?
 
 		// remap
-		H2K_tmpmap_add_and_lock((pa_t)(H2K_gp->tcm_base), DEVICE_TYPE);
+		H2K_tmpmap_add_and_lock((pa_t)tcm_base, DEVICE_TYPE);
 
 		for (page_num = 0; page_num < (u32_t)&H2K_KERNEL_NPAGES; page_num++) {
 			entry.raw = 0;
-			page = H2K_gp->tcm_base + (page_num * H2K_PAGESIZE);
+			page = tcm_base + (page_num * H2K_PAGESIZE);
 			entry.ppd = (page >> (PAGE_BITS - 1)) | (1 << H2K_KERNEL_PGSIZE);
 			entry.cccc = L1WB_L2UC;
 			entry.xwru = 0;  // only monitor access
@@ -69,9 +72,9 @@ void H2K_tcm_copy(u32_t last_tlb_index) {
 		H2K_tmpmap_remove_and_unlock();
 
 		H2K_gp->info_boot_flags.boot_use_tcm = 1;
-		H2K_gp->tcm_base += (page_num * H2K_PAGESIZE);
-		H2K_gp->tcm_size -= (page_num * H2K_PAGESIZE);
-		H2K_gp->phys_offset = H2K_LINK_ADDR - H2K_gp->tcm_base;
+		H2K_gp->tcm_base += (page_num * H2K_PAGESIZE) >> PAGE_BITS;
+		H2K_gp->tcm_size -= (page_num * H2K_PAGESIZE) >> PAGE_BITS;
+		H2K_gp->phys_offset = H2K_LINK_ADDR - tcm_base;
 	}
 
 #endif
@@ -91,8 +94,8 @@ void H2K_tcm_crash_copy()
 	// Just in case we were using TCM crash area as STLB...
 	H2K_gp->stlbptr = NULL;
 	u32_t *dst = (u32_t *)(KERNEL_CRASH_TCM_ADDR); /* EJP: FIXME: we're not necessarily at the start of the page, and our pgsize isn't necessarily this big... */
-	tcm_addr = H2K_gp->tcm_base;
-	tcm_size = H2K_gp->tcm_size;
+	tcm_addr = H2K_gp->tcm_base << PAGE_BITS;
+	tcm_size = H2K_gp->tcm_size << PAGE_BITS;
 	if (tcm_size > MAX_TCM_COPY_SIZE) tcm_size = MAX_TCM_COPY_SIZE;
 	for (i = 0; i < (tcm_size/sizeof(bytes)); i++) {
 		bytes = H2K_mem_physread_word(tcm_addr+(i*sizeof(bytes)));

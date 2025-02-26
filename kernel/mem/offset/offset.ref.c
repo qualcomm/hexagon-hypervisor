@@ -13,6 +13,7 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 	H2K_vmblock_t *vmblock;
 	H2K_offset_t offset;
 	H2K_translation_t out;
+	u32_t orig_in = in.pn;
 
 	offset.raw = info.ptb;
 	in.pn += offset.pages;
@@ -20,13 +21,21 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 	in.xwru &= offset.xwru;
 	if (in.cccc > 0xF) in.cccc = offset.cccc;
 
-	vmblock = H2K_gp->vmblocks[info.fields.vmid];
+	vmblock = H2K_gp->vmblocks[info.fields.vmid]; // parent VM has next-level translation
 	if (vmblock->guestmap.raw) {
 		out = H2K_translate(in,vmblock->guestmap);
-	}	else {
-		out = in;
-		if ((out.pn < vmblock->fence_lo) || (out.pn >= ((vmblock->fence_hi) + (0x1 << (out.size * 2))))) {
-			out.raw = 0;
+	}	else { // lowest level
+		/* Don't apply offset or check fences when mapping special address spaces */
+		/* FIXME: We need to allocate ranges to guests and check access here */
+		if ((H2K_gp->tcm_base <= orig_in && orig_in < H2K_gp->tcm_base + H2K_gp->tcm_size) ||
+				(H2K_gp->vtcm_base <= orig_in &&  orig_in < H2K_gp->vtcm_base + H2K_gp->vtcm_size)) {
+			in.pn = orig_in;
+			out = in;
+		} else {
+			out = in;
+			if ((out.pn < vmblock->fence_lo) || (out.pn >= ((vmblock->fence_hi) + (0x1 << (out.size * 2))))) {
+				out.raw = 0;
+			}
 		}
 	}
 	return out;

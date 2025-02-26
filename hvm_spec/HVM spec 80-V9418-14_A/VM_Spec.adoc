@@ -1,237 +1,52 @@
-= (???)
 :stem:
+:toc: macro
+= Hexagon Virtual Machine
 
-+
- +
+:author:
+:email:
+:revnumber:
+:revdate:
 
-image::VM_Spec_html_d6f6269d4201a530.gif[Shape1,619,82]
+[.text-center]
+System-Level Specification
 
-== _*Hexagon Virtual Machine*_
+[.text-center]
+INTERNAL USE ONLY
 
-_*Specification [Draft]*_
+[.text-center]
+*Confidential - Qualcomm Technologies, Inc. and/or its affiliated companies - May Contain Trade Secrets*
 
-_*80-V9418-14 Rev. A July 8, 2011*_
 
-image::VM_Spec_html_b3cfc5812c77050c.gif[Shape2,623,1]
+*NO PUBLIC DISCLOSURE PERMITTED*: Please report postings of this document on public servers or websites to:
+DocCtrlAgent@qualcomm.com.
 
-*Submit technical questions at:* https://support.cdmatech.com/[*https://support.cdmatech.com*]
+*Confidential Distribution*: Use or distribution of this item, in whole or in part, is prohibited except as expressly permitted by written
+agreement(s) and/or terms with Qualcomm Incorporated and/or its subsidiaries.
 
-*Qualcomm Confidential and Proprietary*
+Not to be used, copied, reproduced, or modified in whole or in part, nor its contents revealed in any manner to others without the
+express written permission of Qualcomm Technologies, Inc.
 
-*Restricted Distribution.* Not to be distributed to anyone who is not an employee of either Qualcomm or a subsidiary of Qualcomm without the express approval of Qualcomm's Configuration Management.
+All Qualcomm products mentioned herein are products of Qualcomm Technologies, Inc. and/or its subsidiaries.
 
-Not to be used, copied, reproduced in whole or in part, nor its contents revealed in any manner to others without the express written permission of Qualcomm.
+Qualcomm and Hexagon are trademarks or registered trademarks of Qualcomm Incorporated. Other product and brand names may
+be trademarks or registered trademarks of their respective owners.
 
-QUALCOMM is a registered trademark of QUALCOMM Incorporated in the United States and may be registered in other countries. Other product and brand names may be trademarks or registered trademarks of their respective owners. ARM is a registered trademark of ARM Limited. Hexagon is a trademark of QUALCOMM Incorporated in the United States and other countries.
+This technical data may be subject to U.S. and international export, re-export, or transfer ("export") laws. Diversion contrary to U.S.
+and international law is strictly prohibited.
 
-This technical data may be subject to U.S. and international export, re-export, or transfer ("export") laws. Diversion contrary to U.S. and international law is strictly prohibited.
+[.text-center]
+----
+Qualcomm Technologies, Inc.
+5775 Morehouse Drive
+San Diego, CA 92121
+U.S.A.
+----
 
-*QUALCOMM Incorporated*
+[.text-center]
+© {docyear} Qualcomm Technologies, Inc. and/or its subsidiaries. All rights reserved.
 
-*5775 Morehouse Drive*
 
-*San Diego, CA 92121-1714 U.S.A.*
-
-*Copyright ©2011 QUALCOMM Incorporated.*
-
-*All rights reserved.*
-
-== Contents
-
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape3,529,2]
-
-. *Introduction*
-.. Overview ................................................................................................................8
-.. Architecture............................................................................................................8
-.. Modes.....................................................................................................................9
-.. Instructions and events...........................................................................................9
-.. Virtual privileged resource model..........................................................................9
-.. Using this manual.................................................................................................10
-.. Terminology .........................................................................................................10 1.8 Notation................................................................................................................ 11
-. *HVM User Mode*
-.. Overview ..............................................................................................................12
-.. Restrictions...........................................................................................................12 2.2.1 Memory addressing..............................................................................12
-. *HVM Guest Mode*
-.. Overview ..............................................................................................................13
-.. Guest mode capabilities........................................................................................14
-... Event handling .....................................................................................14
-... Interrupts..............................................................................................14
-... Exceptions............................................................................................14
-... Cache control .......................................................................................15
-... Memory management ..........................................................................15
-... Processor resource management..........................................................15
-.. Restrictions...........................................................................................................16 3.3.1 Memory addressing..............................................................................16
-. *Initial State*
-.. Overview ..............................................................................................................17
-.. Virtual processor...................................................................................................17
-.. Registers...............................................................................................................17
-.. Memory ................................................................................................................17 4.5 Initial memory map ..............................................................................................18
-. *Event Model*
-.. Overview ..............................................................................................................19
-.. Event model..........................................................................................................19
-
-[[Table of Contents1]]
-
-[[TextSection]]
-
-_Contents_
-
-<<_Toc115569,5.3 Event registers 20>>
-
-<<_Toc115570,5.3.1 GELR 20>>
-
-<<_Toc115571,5.3.2 GSR 21>>
-
-<<_Toc115572,5.3.3 GOSP 21>>
-
-<<_Toc115573,5.3.4 GBADVA 21>>
-
-<<_Toc115574,5.4 Event types 22>>
-
-<<_Toc115575,5.5 Event vector registration 22>>
-
-<<_Toc115576,5.6 Event handler return 23>>
-
-<<_Toc115577,5.7 Virtual instructions for event management 23>>
-
-<<_Toc115578,5.8 Programmers note 23>>
-
-*<<_Toc115579,6 Interrupts >>*
-
-<<_Toc115580,6.1 Overview 24>>
-
-<<_Toc115581,6.2 Virtual interrupt controller 24>>
-
-<<_Toc115582,6.3 Interrupt type and polarity 25>>
-
-<<_Toc115583,6.4 Interrupt masks 25>>
-
-<<_Toc115584,6.5 Interrupt acknowledgement 25>>
-
-<<_Toc115585,6.6 Interrupt enable 25>>
-
-<<_Toc115586,6.7 Virtual instructions for interrupt management 26>>
-
-*<<_Toc115587,7 Exceptions >>*
-
-<<_Toc115588,7.1 Overview 27>>
-
-<<_Toc115589,7.2 Exception classes 27>>
-
-<<_Toc115590,7.3 General exceptions 28>>
-
-<<_Toc115591,7.4 Trap exceptions 29>>
-
-<<_Toc115592,7.5 Virtual machine check 29>>
-
-*<<_Toc115593,8 Cache Control >>*
-
-<<_Toc115594,8.1 Overview 30>>
-
-<<_Toc115595,8.2 HVM cache operations 30>>
-
-<<_Toc115596,8.3 Virtual instructions for cache control 31>>
-
-*<<_Toc115597,9 Memory Management >>*
-
-<<_Toc115598,9.1 Overview 32>>
-
-<<_Toc115599,9.2 Underlying logical/physical memory 32>>
-
-<<_Toc115600,9.3 Linear translations 32>>
-
-<<_Toc115601,9.4 Virtual page table entries 34>>
-
-<<_Toc115602,9.4.1 Page directory entries 35>>
-
-<<_Toc115603,9.4.2 Page table entries 35>>
-
-<<_Toc115604,9.4.3 Cache attributes 37>>
-
-<<_Toc115605,9.5 Setting new memory maps 38>>
-
-<<_Toc115606,9.6 Flushing stale memory maps 38>>
-
-<<_Toc115607,9.7 Virtual instructions for memory management 38>>
-
-+
- +
-
-_Contents_
-
-[start=10]
-. *Processor Resource Management*
-.. Overview ..............................................................................................................39
-.. Timer ....................................................................................................................39
-.. Processor suspension............................................................................................40
-.. Processor creation.................................................................................................40 10.5 Virtual instructions for processor management....................................................41
-. *Trust Model*
-.. Overview ..............................................................................................................42
-. *Debug*
-.. Overview ..............................................................................................................43
-.. User-mode software debug...................................................................................43 12.3 Guest-mode software debug.................................................................................43
-
-[type=A]
-. *HVM Instructions*
-.. Overview ..............................................................................................................44
-.. Instruction properties............................................................................................46
-... VMCACHE..........................................................................................47
-... VMCLRMAP.......................................................................................49
-... VMGETIE............................................................................................50
-... VMINTOP ...........................................................................................51
-... VMGETTIME......................................................................................53
-... VMNEWMAP .....................................................................................54
-... VMRTE................................................................................................56
-... VMSETIE ............................................................................................57
-... VMSETTIME ......................................................................................58
-... VMSETVEC........................................................................................59
-... VMSTART...........................................................................................60
-... VMSTOP .............................................................................................61
-... VMVERSION......................................................................................62
-... VMVPID..............................................................................................63
-... VMWAIT.............................................................................................64
-... VMYIELD...........................................................................................65
-. *Determining HVM Environment*
-.. Overview ..............................................................................................................66
-.. Accessing environment version............................................................................66
-.. Virtual instructions for determining environment................................................66
-
-_Figures_
-
-===== Figures
-
-Figure 1-1 HVM architecture......................................................................................8 Figure 6-1 Virtual interrupt controller......................................................................24 Figure 9-1 Translation list entry................................................................................33 Figure 9-2 Page table entry (generic)........................................................................34 Figure 9-3 Page directory entry ................................................................................35 Figure 9-4 Page table entry (L1 – 4MB)...................................................................35 Figure 9-5 Page table entry (L1 – 16MB).................................................................35 Figure 9-6 Page table entry (L2)...............................................................................35
-
-_Tables_
-
-*Tables*
-
-[width=528]
-|===
-h| Table 1-1 h| Terminology...................................................................................................10
-| Table 5-1 | Event registers................................................................................................20
-| Table 5-2 | GSR field encodings......................................................................................21
-| Table 5-3 | Event types.....................................................................................................22
-| Table 5-4 | Virtual instructions for event management....................................................23
-| Table 6-1 | Virtual instructions for interrupt management...............................................26
-| Table 7-1 | General exceptions.........................................................................................28
-| Table 7-2 | Machine check exceptions.............................................................................29
-| Table 8-1 | HVM cache control operations......................................................................30
-| Table 8-2 | Virtual instructions for event management....................................................31
-| Table 9-1 | Translation list entry fields ............................................................................33
-| Table 9-2 | L1 page table entry types...............................................................................34
-| Table 9-3 | Page table entry fields....................................................................................36
-| Table 9-4 | LPN bits used as function of page size..........................................................37
-| Table 9-5 | Cache attribute types......................................................................................37
-| Table 9-6 | Virtual instructions.........................................................................................38
-2+.>| Table 10-1 Virtual instructions for processor management .............................................41 Table A-1 HVM virtual instruction summary.................................................................45 Table B-1 Virtual instructions for determining environment .........................................66
-
-|===
-
-+
- +
-
-_Revision History_
+toc::[]
 
 ===== Revision History
 
@@ -242,63 +57,32 @@ h| *Revision* h| *Date* h| *Description*
 
 |===
 
-. 
+
 == Introduction
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape51,529,2]
-
-*1.1 Overview*
+=== Overview
 
 The Hexagon™ Virtual Machine (HVM) provides system programmers with an abstraction layer which enables multiple operating systems and other clients to execute concurrently on a single Hexagon processor, through the virtualization and partitioning of physical hardware resources.
 
 For example, HVM enables the Hexagon processor to concurrently run the following software systems while enforcing strict resource protection between them:
 
-■ A fine-tuned real-time application managing special devices and services.
-
-■ A general-purpose operating system implementing a user interface and application stack.
+* A fine-tuned real-time application managing special devices and services.
+* A general-purpose operating system implementing a user interface and application stack.
 
 HVM virtualizes the Hexagon processor itself as multiple virtual processors which execute concurrently, while ensuring security and quality of service.
 
-*1.2 Architecture*
+=== Architecture
 
 Figure 1-1 shows the major functional units of the HVM architecture.
 
-[width=452]
-|===
-.>a| Hexagon Virtual Machine
-
-[width=160]
-|===
-a| +
-
-[width=158]
-|===
-.<h| VirtualInterruptController .<a| +
-
-h| LogicalMemory
-
-|===
- +
- +
-
-h| image::VM_Spec_html_30b8428273fab646.gif[Group 1,1,36]
-
-|===
-Virtual Virtual VirtualPimage::VM_Spec_html_dcd105d14891dda3.png["",246,48] rocessor Processor Processor
-| Virtual Machine Monitor
-| Hardware
-
-|===
-
-*Figure 1-1 HVM architecture*
+.HVM architecture
+image::_register_vid_vid1.svg[vid_vid1,align="center"]
 
 The Hexagon Virtual Machine consists of the virtualized programming environment in which a client software system runs. It includes the following items:
 
-■ One or more virtual processors
-
-■ Virtual interrupt controller
-
-■ Logical memory
+* One or more virtual processors
+* Virtual interrupt controller
+* Logical memory
 
 The virtual processors (which can be started and stopped) share the virtual interrupt controller and logical memory.
 
@@ -306,42 +90,41 @@ The Virtual Machine Monitor (VMM) is a software layer which manages the hardware
 
 The hardware layer consists of the Hexagon hardware resources. This includes the Hexagon processor and related subsystems (memory, interrupt controller, etc.) which are managed by the VMM.
 
-*NOTE* The VMM supports multiple concurrent HVM instances – each instance is referred to as a _virtual machine_.
+[NOTE]
+====
+The VMM supports multiple concurrent HVM instances - each instance is referred to as a _virtual machine_.
+====
 
-*1.3 Modes*
+=== Modes
 
 HVM supports two levels of privilege within the virtual machine:
 
-■ HVM User mode
-
-■ HVM Guest mode
+* HVM User mode
+* HVM Guest mode
 
 Guest mode is privileged with respect to User mode, but neither mode is privileged to directly access the underlying hardware.
 
-*1.4 Instructions and events*
+=== Instructions and events
 
 HVM provides virtual instructions and events which control the transitions between User and Guest modes, and which enable a guest operating system to manage the privileged virtual resources.
 
-*1.5 Virtual privileged resource model*
+==== Virtual privileged resource model
 
 The HVM virtual privileged resource model was designed with the following goals:
 
-■ Expose the minimum amount of detail on the underlying privileged hardware resources.
+* Expose the minimum amount of detail on the underlying privileged hardware resources.
+* Perform as efficiently as possible when implemented in software on the Hexagon V2 processor and later processor versions.
+* Define interfaces to support their implementation in hardware (either whole or partial) on future Hexagon processor versions.
 
-■ Perform as efficiently as possible when implemented in software on the Hexagon V2 processor and later processor versions.
-
-■ Define interfaces to support their implementation in hardware (either whole or partial) on future Hexagon processor versions.
-
-*1.6 Using this manual*
+==== Using this manual
 
 This document is intended for system programmers who are targeting their software for operation on an HVM Monitor or Hypervisor. It is also intended as a reference for HVM implementors.
 
-*1.7 Terminology*
+==== Terminology
 
 Except where otherwise noted, the terms used to describe HVM are identical to those used to describe the Hexagon processor architecture.
 
-*Table 1-1 Terminology*
-
+.Terminology
 [width=527]
 |===
 h| *Term* h| *Definition*
@@ -358,231 +141,187 @@ h| *Term* h| *Definition*
 | Virtual event | Asynchronous invocation of Guest mode by the virtual machine.
 | Virtual instruction | An operation requesting a function of HVM that cannot be expressed by a native Hexagon processor instruction. Virtual instructions are generally implemented as Hexagon instructions which trap to the underlying hardware Supervisor mode, which performs the necessary function.
 | Virtual machine | HVM instance running on the VMM.
-
-|===
-
-*Table 1-1 Terminology (continued)*
-
-[width=527]
-|===
-h| *Term* h| *Definition*
 | Virtual processor | HVM resource that is necessary to run a program.  A virtual machine can support multiple instances of a virtual processor, with each instance executing concurrently and sharing common memory and I/O resources.
 | VMM | Virtual Machine MonitorSoftware layer which underlies HVM. It manages the hardware resources and provides them to HVM in their virtualized form.
 
 |===
 
-*1.8 Notation*
+=== Notation
 
 This document uses the same notational conventions used in the _Hexagon Programmer's Reference Manual_. For details see the appropriate version of that document.
 
-[start=2]
-. 
-== HVM User Mode 
+== HVM User Mode
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape57,529,2]
-
-[start=2]
-
-.. *Overview*
+=== *Overview*
 
 Except for the restrictions noted below, HVM User mode is identical to the processor architecture defined in the _Hexagon Programmer's Reference Manual_.
 
 Most HVM clients run in User mode.
 
-[start=2]
-
-[start=2]
-.. *Restrictions*
+=== Restrictions
 
 HVM User mode has the following restrictions:
 
-■ Memory addressing
+* Memory addressing
 
-===== 2.2.1 Memory addressing
+==== Memory addressing
 
 The VMM reserves the high 16 MB of the User-mode address space (addresses 0xff00_0000 to 0xffff_ffff) for its own use.
 
 Any attempts by an HVM client to load, store, or execute from addresses in this range will result in a protection-violation event being posted to Guest mode.
 
-*NOTE* This restriction also applies to the Guest-mode address space (Section 3.3.1).
+[NOTE]
+====
+This restriction also applies to the Guest-mode address space (Section 3.3.1).
+====
 
-[start=3]
-. 
-== HVM Guest Mode 
+== HVM Guest Mode
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape58,529,2]
-
-*3.1 Overview*
+=== Overview
 
 HVM Guest mode is a superset of HVM User mode (Chapter 2).
 
 In addition to the standard Hexagon processor architecture supported by User mode, Guest mode defines _virtual instructions_ and _virtual events_ to support the implementation of protected, multi-user, multi-tasking operating systems that run on HVM.
 
-Virtual instructions are extensions to the Hexagon instruction set – they invoke HVM operations that cannot be performed by a regular Hexagon instruction. Virtual instructions are generally implemented as Hexagon traps which switch the processor to its Supervisor mode.
+Virtual instructions are extensions to the Hexagon instruction set - they invoke HVM operations that cannot be performed by a regular Hexagon instruction. Virtual instructions are generally implemented as Hexagon traps which switch the processor to its Supervisor mode.
 
-Virtual events are asynchronous transfers from User to Guest mode – they provide a controlled way to switch between the HVM modes. Virtual events can be triggered by exceptions or interrupts.
+Virtual events are asynchronous transfers from User to Guest mode - they provide a controlled way to switch between the HVM modes. Virtual events can be triggered by exceptions or interrupts.
 
-*NOTE* HVM virtual instructions execute like regular processor instructions, but are always treated as solo instructions which cannot be grouped in packets with other instructions.
-
-
+[NOTE]
+====
+HVM virtual instructions execute like regular processor instructions, but are always treated as solo instructions which cannot be grouped in packets with other instructions.
 
 Appendix A provides details on the encoding and semantics of the virtual instructions.
+====
 
-*3.2 Guest mode capabilities*
+=== Guest mode capabilities
 
 HVM Guest mode has the following capabilities:
 
-■ Event handling
+* Event handling
+* Interrupts
+* Exceptions
+* Cache control
+* Memory management
+* Processor resource management
 
-■ Interrupts
-
-■ Exceptions
-
-■ Cache control
-
-■ Memory management
-
-■ Processor resource management
-
-===== 3.2.1 Event handling
+==== Event handling
 
 HVM can transfer control asynchronously to handle events:
 
-■ Handler vectors must be registered using privileged virtual instruction vmsetvec
+* Handler vectors must be registered using privileged virtual instruction vmsetvec
 
-■ Event handling is terminated with virtual instruction vmrte
+* Event handling is terminated with virtual instruction vmrte
 
 For more information see Chapter 5.
 
-===== 3.2.2 Interrupts
+==== Interrupts
 
 HVM supports Hexagon interrupts as a special case of asynchronous events:
 
-■ Interrupts are individually maskable
+* Interrupts are individually maskable
 
-■ Interrupts can be collectively enabled and disabled
+* Interrupts can be collectively enabled and disabled
 
-■ Interrupts are managed with virtual instructions vmintop, vmsetie_,_ and vmgetie
+* Interrupts are managed with virtual instructions vmintop, vmsetie_,_ and vmgetie
 
 For more information see Chapter 6.
 
-===== 3.2.3 Exceptions
+==== Exceptions
 
 HVM supports Hexagon exceptions as another type of event:
 
-■ Exceptions are not maskable (unlike interrupts)
+* Exceptions are not maskable (unlike interrupts)
 
 For more information see Chapter 7.
 
-_Hexagon Virtual Machine Specification [Draft]_
-
-image::VM_Spec_html_cb9ba07a057ca780.gif[Shape63,624,1]
-
-===== 3.2.4 Cache control
+==== Cache control
 
 HVM supports certain Hexagon cache control operations:
 
-■ Privileged operations (Guest mode only)
+* Privileged operations (Guest mode only)
 
-■ Managed with virtual instruction vmcache
+* Managed with virtual instruction vmcache
 
 For more information see Chapter 8.
 
-===== 3.2.5 Memory management
+==== Memory management
 
 HVM implements a virtual memory management unit:
 
-■ Privileged operations (Guest mode only)
-
-■ Autonomous page table walking
-
-■ Page tables in canonical HVM format
-
-■ Managed with virtual instructions vmnewmap and vmclrmap
+* Privileged operations (Guest mode only)
+* Autonomous page table walking
+* Page tables in canonical HVM format
+* Managed with virtual instructions vmnewmap and vmclrmap
 
 For more information see Chapter 9.
 
-===== 3.2.6 Processor resource management
+==== Processor resource management
 
 HVM supports virtual processors and a fine-grained timer:
 
-■ Privileged operations (Guest mode only)
-
-■ Create and destroy concurrently-executing virtual processor instances
-
-■ Virtual processors managed with virtual instructions vmstart and vmstop
-
-■ High-precision 64-bit timer
-
-■ Timer managed with virtual instructions vmgettime and vmsettime
+* Privileged operations (Guest mode only)
+* Create and destroy concurrently-executing virtual processor instances
+* Virtual processors managed with virtual instructions vmstart and vmstop
+* High-precision 64-bit timer
+* Timer managed with virtual instructions vmgettime and vmsettime
 
 For more information see Chapter 10.
 
-*3.3 Restrictions*
+=== Restrictions
 
 HVM Guest mode has the following restrictions:
 
-■ Memory addressing
+* Memory addressing
 
-===== 3.3.1 Memory addressing
+==== Memory addressing
 
 The VMM reserves the high 16 MB of the Guest-mode address space (addresses 0xff00_0000 to 0xffff_ffff) for its own use.
 
 Any attempts by an HVM client to load, store, or execute from addresses in this range will result in a protection-violation event being posted to Guest mode.
 
-*NOTE* This restriction also applies to the User-mode address space (Section 2.2.1).
+[NOTE]
+====
+This restriction also applies to the User-mode address space (Section 2.2.1).
+====
 
-[start=4]
-. 
 == Initial State
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape64,529,2]
-
-[start=4]
-
-.. *Overview*
+=== Overview
 
 This chapter describes the initial state of the following HVM resources:
 
-■ Virtual processor
+* Virtual processor
+* Registers
+* Memory
 
-■ Registers
 
-■ Memory
-
-[start=4]
-
-[start=2]
-.. *Virtual processor*
+=== Virtual processor
 
 A virtual processor begins executing in Guest mode. The virtual MMU is always active.
 
-[start=4]
 
-[start=3]
-.. *Registers*
+=== Registers
 
 For virtual processors the initial value of the program counter (PC) and stack pointer are specified externally: either as parameters to commands passed to the VMM, or as arguments to the virtual instruction vmstart which creates a new virtual processor instance (Section 10.4).
 
-The initial values of all other registers are undefined – these registers must be initialized by software starting at the initial PC.
+The initial values of all other registers are undefined - these registers must be initialized by software starting at the initial PC.
 
-*Implementors Note:* _While register values are undefined at the startup of a virtual processor, if the hardware processor resources are re-assigned, the register values of trusted virtual processors must never be inherited by untrusted virtual processors._
+[NOTE]
+====
+While register values are undefined at the startup of a virtual processor, if the hardware processor resources are re-assigned, the register values of trusted virtual processors must never be inherited by untrusted virtual processors.
+====
 
-[start=4]
-
-[start=4]
-.. *Memory*
+=== Memory
 
 When an initial program is loaded by the VMM, the program image may contain initialized data. Otherwise the initial memory state of HVM consists of undefined memory values.
 
-*Implementors Note:* _While memory values are undefined at startup of a virtual machine, in the event that the hardware resources are re-assigned, memory values of trusted virtual machines must never be inherited by untrusted virtual machines._
+[NOTE]
+====
+While memory values are undefined at startup of a virtual machine, in the event that the hardware resources are re-assigned, memory values of trusted virtual machines must never be inherited by untrusted virtual machines.
+====
 
-_Initial State_
-
-[start=4]
-
-[start=5]
-.. *Initial memory map*
+=== Initial memory map
 
 In the HVM initial memory map, the logical memory segment that the initial program is loaded into is mapped to the identical virtual address range, with consecutive virtual pages mapped 1:1 to consecutive logical pages.
 
@@ -590,22 +329,13 @@ The page tables describing the initial map are outside the initial logical addre
 
 Any other mapping must be created by Guest-mode software constructing a new set of page tables and activating them with virtual instruction vmnewmap (Section 9.5).
 
-[start=4]
-. 
 == Event Model
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape69,529,2]
-
-[start=4]
-
-.. *Overview*
+=== Overview
 
 HVM supports _virtual events_ (or more simply, _events_) as a means for transferring control between User-mode applications and Guest-mode operating systems. HVM events can be caused by Hexagon processor exceptions or interrupts.
 
-[start=4]
-
-[start=2]
-.. *Event model*
+=== Event model
 
 Events are specified by their assigned event number. When an event occurs, HVM uses the event number as an index into the event vector table to determine which event handler will process the event. The vector table and handlers are defined by the guest operating system.
 
@@ -613,7 +343,7 @@ Before it begins receiving events, the guest operating system must register the 
 
 HVM responds to an event by storing event-related information (called the _event record_) in the dedicated event registers (Section 5.3), and then transferring control to the event vector specified by the event number.
 
-Event handlers access the event registers with the virtual instructions vmgetregs and vmsetregs – the guest operating system is responsible for managing these registers.
+Event handlers access the event registers with the virtual instructions vmgetregs and vmsetregs - the guest operating system is responsible for managing these registers.
 
 When an event is dispatched to a handler, interrupts are disabled to the virtual processor. Interrupts are re-enabled either explicitly when the handler executes the virtual instruction vmsetie, or implicitly when the handler returns by executing the virtual instruction vmrte. (vmrte restores the interrupt enable value from the event record.)
 
@@ -621,15 +351,16 @@ When HVM transfers control between User and Guest modes, it swaps the contents o
 
 If an event handler causes an additional event, the original event record is lost because the event registers are overwritten. Similarly, when returning from an event, the event registers are reloaded by the guest operating system before executing the virtual instruction vmrte. Care must be taken to ensure that no event occurs during this time.
 
-*NOTE* If an event occurs before GEVB is configured, HVM terminates the current virtual processor (Section 10.4).
+[NOTE]
+====
+If an event occurs before GEVB is configured, HVM terminates the current virtual processor (Section 10.4).
+====
 
-=== 5.3 Event registers
+=== Event registers
 
 Table 5-1 defines the four 32-bit registers that are used to store HVM event records (Section 5.2).
 
-*Table 5-1 Event registers*
-
-[width=372]
+.Event registers
 |===
 h| *Register* h| *Alias* h| *Name*
 | GELR | G0 | Guest Event Link Register
@@ -641,9 +372,12 @@ h| *Register* h| *Alias* h| *Name*
 
 The Hexagon processor instruction set does not provide instructions for directly accessing the event registers. Instead, these registers are accessed with the virtual instructions vmgetregs and vmsetregs.
 
-*NOTE* Future Hexagon processor versions may support direct access to the event registers, eliminating the need for these virtual instructions.
+[NOTE]
+====
+Future Hexagon processor versions may support direct access to the event registers, eliminating the need for these virtual instructions.
+====
 
-==== 5.3.1 GELR
+==== GELR
 
 GELR is the Guest Event Link Register.
 
@@ -651,7 +385,7 @@ It contains a 32-bit virtual address value specifying where the virtual processo
 
 If a guest operating system wishes a processed event to return to a different address in User mode (for example, in the case of a user-level context switch), the GELR value can be modified before the virtual instruction vmrte is executed.
 
-==== 5.3.2 GSR
+==== GSR
 
 GSR is the Guest Status Register.
 
@@ -720,9 +454,7 @@ h| *0*
 
 Table 5-2 describes the fields of the GSR word.
 
-*Table 5-2 GSR field encodings*
-
-[width=527]
+.GSR field encodings
 |===
 h| *Bits* h| *Name* h| *Description*
 | 31 | UM | Set if virtual processor was executing in User mode when the event was taken, clear otherwise.
@@ -731,9 +463,12 @@ h| *Bits* h| *Name* h| *Description*
 
 |===
 
-*NOTE* The User Mode and Interrupt Enable mask of the virtual processor are restored from GSR by a vmrte instruction.
+[NOTE]
+====
+The User Mode and Interrupt Enable mask of the virtual processor are restored from GSR by a vmrte instruction.
+====
 
-==== 5.3.3 GOSP
+==== GOSP
 
 GOSP is the Guest Other Stack Pointer.
 
@@ -743,66 +478,60 @@ If an event occurs during User-mode execution, HVM swaps the contents of GOSP an
 
 When the virtual instruction vmrte switches from Guest back to User mode, HVM swaps R29 and GOSP again, saving the Guest-mode stack pointer in GOSP and restoring the Usermode stack pointer in R29.
 
-==== 5.3.4 GBADVA
+==== GBADVA
 
 GBADVA is the Guest Bad Virtual Address value.
 
 When servicing a memory-related event (page fault, alignment error, permissions violation), GBADVA contains the 32-bit virtual address that caused the event.
 
-=== 5.4 Event types
+=== Event types
 
 Table 5-3 summarizes the event types.
 
-*Table 5-3 Event types*
-
-[width=524]
+.Event types
 |===
 .<h| *Event* *Number* h| *Event Name* h| *Event Description* h| *Notes*
-| 0 | Reserved a| +
-
-a| +
-| 1 | Machine  Check | Unrecoverable virtual machine state (Section 7.5) | Non-maskable exception.Virtual machine execution terminates if not handled.
-| 2 | General Exception | Precise internal hardware or software exception (Section 7.3) | Non-maskable exception
-| 3, 4 | Reserved a| +
-
-a| +
+| 0 3+| Reserved
+| 1 | Machine Check | Unrecoverable virtual machine state (Section 7.5) | Non-maskable exception.Virtual machine execution terminates if not handled.
+| 2 | General Exception | Precise internal hardware or software exception (Section 7.3) | Non-maskable exception
+| 3, 4 3+| Reserved
 | 5 | Trap0 | SW Trap0 instruction (Section 7.4) | Non-maskable exception
-| 6 | Reserved a| +
-
-a| +
+| 6 3+| Reserved
 | 7 | Interrupt | General external interrupts (Chapter 6) | Maskable.Interrupt priority decreases with increasing interrupt number, Interrupt0 being highest.
 
 |===
 
-*NOTE* The Hexagon architecture specifies that if an instruction packet contains multiple exception-causing instructions, then Slot 1 exceptions are resolved before Slot 0 exceptions. If a single instruction has multiple exceptions, the priority is listed in the table from highest (first row) to lowest (last row).
+[NOTE]
+====
+The Hexagon architecture specifies that if an instruction packet contains multiple exception-causing instructions, then Slot 1 exceptions are resolved before Slot 0 exceptions. If a single instruction has multiple exceptions, the priority is listed in the table from highest (first row) to lowest (last row).
+====
 
-=== 5.5 Event vector registration
+=== Event vector registration
 
 Guest-mode software can register a service vector for an event by executing the virtual machine instruction vmsetvec, which is passed a 32-bit Guest-mode virtual address.
 
 Events begin executing at the address computed by the following formula:
 
-GEBV + (event_number \* 4)
+GEBV + (event_number \ 4)
 
-=== 5.6 Event handler return
+=== Event handler return
 
 Event handlers return by executing the virtual instruction vmrte. This instruction uses the values stored in the event registers to restore the following states:
 
-■ User/Guest mode and interrupt enable (stored in GSR.UM and GSR.IE)
+* User/Guest mode and interrupt enable (stored in GSR.UM and GSR.IE)
+* Program counter (stored in GELR)
+* Stack pointer (stored in GOSP) if the value in GSR.UM indicates that the mode switch is from Guest to User
 
-■ Program counter (stored in GELR)
+[NOTE]
+====
+vmrte assumes that a valid event record is stored in the event registers.
+====
 
-■ Stack pointer (stored in GOSP) if the value in GSR.UM indicates that the mode switch is from Guest to User
-
-*NOTE* vmrte assumes that a valid event record is stored in the event registers.
-
-=== 5.7 Virtual instructions for event management
+=== Virtual instructions for event management
 
 Table 5-4 summarizes the virtual instructions used for event management.
 
-*Table 5-4 Virtual instructions for event management*
-
-[width=360]
+.Virtual instructions for event management
 |===
 h| *Instruction* h| *Description*
 | vmsetvec | Register event vector table
@@ -813,9 +542,12 @@ h| *Instruction* h| *Description*
 
 |===
 
-*NOTE* For details on these instructions see Appendix A.
+[NOTE]
+====
+For details on these instructions see Appendix A.
+====
 
-=== 5.8 Programmers note
+=== Programmers note
 
 An HVM instance begins executing in Guest mode, so the only way to execute software in User mode is to perform the following steps:
 
@@ -864,9 +596,9 @@ image::VM_Spec_html_cb9ba07a057ca780.gif[Shape83,624,1]
 
 Each interrupt has a global enable, as well as a per-virtual processor local enable:
 
-■ If an interrupt is disabled globally, no virtual processor takes the interrupt.
+* If an interrupt is disabled globally, no virtual processor takes the interrupt.
 
-■ If an interrupt is disabled locally, the specific virtual processor does not take the interrupt.
+* If an interrupt is disabled locally, the specific virtual processor does not take the interrupt.
 
 By manipulating the local and global enable values, interrupts can be steered to specific virtual processors, or received by any available virtual processor.
 
@@ -906,35 +638,35 @@ Table 6-1 summarizes the virtual instructions used for interrupt management.
 |===
 | *Instruction* 2+| *Description*
 
-| vmintop 2+| Perform interrupt-related operation: ■ Globally enable interrupt
+| vmintop 2+| Perform interrupt-related operation: * Globally enable interrupt
 
 a| +
 
-| ■ | Globally disable interrupt
+| * | Globally disable interrupt
 a| +
 
-| ■ | Locally enable interrupt
+| * | Locally enable interrupt
 a| +
 
-| ■ | Locally disable interrupt
+| * | Locally disable interrupt
 a| +
 
-| ■ | Set interrupt affinity
+| * | Set interrupt affinity
 a| +
 
-| ■ | Post software interrupt
+| * | Post software interrupt
 a| +
 
-| ■ | Check for pending interrupt
+| * | Check for pending interrupt
 a| +
 
-| ■ | Take pending interrupt
+| * | Take pending interrupt
 a| +
 
-| ■ | Clear pending interrupt
+| * | Clear pending interrupt
 a| +
 
-| ■ | Get interrupt pending, global enable, local enable
+| * | Get interrupt pending, global enable, local enable
 | vmgetie 2+| Return current Interrupt Enabled state
 
 | vmsetie 2+| Set Interrupt Enabled state and return old state
@@ -955,9 +687,9 @@ Exceptions are non-interrupt events, and are not maskable like interrupts.
 
 Exceptions can be precise or imprecise. When a precise exception event is handled, GELR contains the following value:
 
-■ General exceptions – The address of the instruction packet that caused the exception
+* General exceptions - The address of the instruction packet that caused the exception
 
-■ Trap exceptions – The packet following the trap instruction
+* Trap exceptions - The packet following the trap instruction
 
 *NOTE* When an exception occurs as a consequence of a load or store address, GBADVA contains the address associated with the exceptional operation.
 
@@ -965,11 +697,11 @@ Exceptions can be precise or imprecise. When a precise exception event is handle
 
 HVM supports three classes of exceptions, each of which is handled separately:
 
-■ General exceptions
+* General exceptions
 
-■ Trap exceptions
+* Trap exceptions
 
-■ Virtual machine check
+* Virtual machine check
 
 _Hexagon Virtual Machine Specification [Draft] Exceptions_
 
@@ -1148,8 +880,8 @@ h| Virtual Page
 h| *Field* h| *Description*
 | Logical Page | Logical Page Number that the corresponding Virtual Page maps to
 | Virtual Page | Virtual Page Number that is matched against the load or store address
-| Size | Page size: ■ 000: 4 KB ■ 001: 16 KB ■ 010: 64 KB ■ 011: 256 KB ■ 100: 1 MB ■ 101: 4 MB ■ 110: 16 MBNOTE - All other values are reserved. Programming an entry with a reserved pattern results in undefined behavior.
-| U, R,W, X | Permissions: ■ U: User-enable. Set if user accesses are allowed for this page ■ R: read-enable. Set if reads are allowed from this page. ■ W: write-enable. Set if writes are allowed to this page. ■ X: execute-enable. Set if execution is allowed for this page. If permissions are violated, a precise exception will be raised with the appropriate cause code (load, store, or fetch).
+| Size | Page size: * 000: 4 KB * 001: 16 KB * 010: 64 KB * 011: 256 KB * 100: 1 MB * 101: 4 MB * 110: 16 MBNOTE - All other values are reserved. Programming an entry with a reserved pattern results in undefined behavior.
+| U, R,W, X | Permissions: * U: User-enable. Set if user accesses are allowed for this page * R: read-enable. Set if reads are allowed from this page. * W: write-enable. Set if writes are allowed to this page. * X: execute-enable. Set if execution is allowed for this page. If permissions are violated, a precise exception will be raised with the appropriate cause code (load, store, or fetch).
 | C | Cacheability (Section 9.4.3)
 | L | Link bit.If this bit is set, the current entry points to next set of translation entries. Bits 31:0 specify address of the next translation in the list; the other bits in the entry are ignored.
 | Reserved | Reserved field.Field currently ignored by HVM. Because it may be used in future HVM versions, the recommended value for this field is 0.
@@ -1162,9 +894,9 @@ HVM defines two levels of virtual page table. The first level breaks down the vi
 
 A first-level PTE always contains the size of the virtual memory page that is mapped:
 
-■ In the case of pages 4MB or greater, the first-level entry contains the translation and permissions information for the page.
+* In the case of pages 4MB or greater, the first-level entry contains the translation and permissions information for the page.
 
-■ For pages less than 4MB, the first-level entry contains a pointer to an array of second-level entries.
+* For pages less than 4MB, the first-level entry contains a pointer to an array of second-level entries.
 
 A first-level PTE encodes the entry type and page size in its 3-bit S field (Figure 9-3). The definition of the remaining bits varies according to the entry type.
 
@@ -1250,7 +982,7 @@ Instead of a pointer to a second-level page table, a PTE can specify a 4MB or 16
 
 |===
 
-*Figure 9-4 Page table entry (L1 – 4MB)*
+*Figure 9-4 Page table entry (L1 - 4MB)*
 
 [width=306]
 |===
@@ -1265,7 +997,7 @@ Instead of a pointer to a second-level page table, a PTE can specify a 4MB or 16
 
 |===
 
-*Figure 9-5 Page table entry (L1 – 16MB)*
+*Figure 9-5 Page table entry (L1 - 16MB)*
 
 Second-level page tables specify translations for a contiguous 4MB of the address space.
 
@@ -1298,7 +1030,7 @@ h| *Bits* h| *Mnemonic* h| *Description*
 | 8:6 | C | Cache AttributesSee Section 9.4.3.
 | 5 | U | User ModeIf the bit is set (1), User mode programs may reference the page. If it is cleared (0), read, write, or execute references in User mode result in a User Access Exception event.
 | 4 | T | TrustedBehavior depends on the system trust model. Recommended setting is cleared (0).
-| Varies | – | Unused. Ignored by HVM.
+| Varies | - | Unused. Ignored by HVM.
 
 |===
 
@@ -1395,33 +1127,32 @@ h| *Instruction* h| *Description*
 For details on these instructions see Appendix A.
 
 [start=10]
-. 
+.
 == Processor Resource Management
 
 image::VM_Spec_html_c5a4304b651551fd.gif[Shape104,529,2]
 
 [start=10]
 
-.. *Overview*
+=== Overview
 
 HVM supports the following facilities for processor resource management:
 
-■ Fine-grained system timer
+* Fine-grained system timer
 
-■ Ability to suspend processor execution
+* Ability to suspend processor execution
 
-■ Ability to create new virtual processors
+* Ability to create new virtual processors
 
 [start=10]
 
-[start=2]
-.. *Timer*
+=== Timer*
 
 HVM supports a fine-grained timer which is accessed through the virtual instructions vmgettime and vmsettime:
 
-■ vmgettime returns a 64-bit value representing the current time.
+* vmgettime returns a 64-bit value representing the current time.
 
-■ vmsettime resets the timer to the 64-bit value passed as an argument.
+* vmsettime resets the timer to the 64-bit value passed as an argument.
 
 _*Implementors Note:*_ _The HVM implementation is free to define whether the timer corresponds to CPU time or wall-clock time. For example, if a Virtual Machine Monitor schedules out a virtual CPU, the timer may or may not continue to increment while the virtual CPU is not executing._
 
@@ -1431,14 +1162,13 @@ image::VM_Spec_html_cb9ba07a057ca780.gif[Shape105,624,1]
 
 [start=10]
 
-[start=3]
-.. *Processor suspension*
+=== Processor suspension*
 
 Guest-mode software on HVM can suspend the execution of a virtual processor in two ways:
 
-■ The virtual instruction vmwait
+* The virtual instruction vmwait
 
-■ The virtual instruction vmyield
+* The virtual instruction vmyield
 
 vmwait suspends execution pending an interrupt event. After the next event is handled, the virtual instruction vmrte that terminates the event servicing will result in execution resuming at the instruction after the vmwait instruction.
 
@@ -1460,11 +1190,11 @@ A virtual processor ID value can never have the value -1 (all ones). The initial
 
 The inverse of vmstart is the virtual instruction vmstop. When a virtual processor executes vmstop, the following events occur:
 
-■ Execution of the virtual processor is terminated.
+* Execution of the virtual processor is terminated.
 
-■ The instruction following the vmstop is not issued.
+* The instruction following the vmstop is not issued.
 
-■ The resources associated with the virtual processor are freed and made available for use by any new virtual processor instance created by a subsequent vmstart operation.
+* The resources associated with the virtual processor are freed and made available for use by any new virtual processor instance created by a subsequent vmstart operation.
 
 _Hexagon Virtual Machine Specification [Draft] Processor Resource Management_
 
@@ -1492,42 +1222,40 @@ h| *Instruction* h| *Description*
 For details on these instructions see Appendix A.
 
 [start=11]
-. 
+.
 == Trust Model
 
-.. *Overview*
+=== Overview
 
 The HVM environment provides a trust model which is distinct from, but interoperable with the trust model of other cores in the system.
 
 [start=11]
-. 
+.
 == Debug
 
-.. *Overview*
+=== Overview
 
 HVM debug support must reconcile two factors:
 
-■ The development requirement for simple and effective debugging of programs executing on the virtual machine.
+* The development requirement for simple and effective debugging of programs executing on the virtual machine.
 
-■ The operational requirement for security and isolation.
+* The operational requirement for security and isolation.
 
 [start=11]
 
-[start=2]
-.. *User-mode software debug*
+=== User-mode software debug*
 
 User-mode software can be debugged using Guest-mode facilities. For example:
 
-■ Generating page faults on memory references
+* Generating page faults on memory references
 
-■ Inserting trap0 instructions for breakpoints and single-step operation
+* Inserting trap0 instructions for breakpoints and single-step operation
 
 These facilities are sufficient to implement a UNIX-style ptrace capability for the guest operating system.
 
 [start=11]
 
-[start=3]
-.. *Guest-mode software debug*
+=== Guest-mode software debug*
 
 The VMM can use the Hexagon processor's supervisor-mode facilities to debug Usermode code. These same process-level facilities can be used to debug Guest-mode software.
 
@@ -1536,14 +1264,14 @@ _*Implementors Note:*_ _The HVM implementation is free to determine whether the 
 _Under no circumstances, however, can an untrusted VMM or operator debug agent generate trusted load or store cycles, either directly or indirectly, through a trusted system that is being debugged._
 
 [type=A]
-. 
+.
 == HVM Instructions
 
-.. *Overview*
+=== Overview
 
 HVM provides virtual instructions and events which control the transitions between User and Guest modes, and which support the implementation of protected, multi-user, multitasking operating systems that run on HVM.
 
-Virtual instructions are extensions to the Hexagon instruction set – they invoke HVM operations that cannot be performed by a regular Hexagon instruction.
+Virtual instructions are extensions to the Hexagon instruction set - they invoke HVM operations that cannot be performed by a regular Hexagon instruction.
 
 This appendix provides detailed descriptions of the HVM virtual instructions. The instructions are listed alphabetically.
 
@@ -1577,18 +1305,17 @@ h| *Mnemonic* h| *Function* h| *Encoding* h| *Inputs* h| *Outputs*
 
 [type=A]
 
-[start=2]
-.. *Instruction properties*
+=== Instruction properties*
 
 HVM virtual instructions have the following properties:
 
-■ They are privileged, and can be executed only in Guest-mode software. If executed in User mode, they will generate a privilege violation exception.
+* They are privileged, and can be executed only in Guest-mode software. If executed in User mode, they will generate a privilege violation exception.
 
-■ By convention they take their inputs (if any) from the Hexagon processor registers R0–R4, and return their outputs in registers R0 and R1, as necessary.
+* By convention they take their inputs (if any) from the Hexagon processor registers R0-R4, and return their outputs in registers R0 and R1, as necessary.
 
-■ They are solo instructions (as defined in the _Hexagon Programmer's Reference Manual_), and thus cannot be grouped with other instructions in an instruction packet.
+* They are solo instructions (as defined in the _Hexagon Programmer's Reference Manual_), and thus cannot be grouped with other instructions in an instruction packet.
 
-■ They are generally implemented as Hexagon traps which switch the processor to its Monitor mode.
+* They are generally implemented as Hexagon traps which switch the processor to its Monitor mode.
 
 ===== A.2.1 VMCACHE
 
@@ -1614,13 +1341,13 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Exceptions*
 
-■ Store protection exception on range-based operations if virtual address range contains pages without write permission.
+* Store protection exception on range-based operations if virtual address range contains pages without write permission.
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -1696,11 +1423,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -1775,11 +1502,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -1857,11 +1584,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -1936,11 +1663,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2015,15 +1742,15 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
-■ Machine check event if invalid page table subsequently detected at run time by a virtual machine implementation which does not do full page table validation at vmnewmap time.
+* Machine check event if invalid page table subsequently detected at run time by a virtual machine implementation which does not do full page table validation at vmnewmap time.
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-■ The virtual machine instruction following the vmnewmap operation will be the instruction at the address following the vmnewmap's address in the original map, as translated by the new map. Care must be taken in replacing the mapping of guest OS pages containing vmnewmap instructions.
+* The virtual machine instruction following the vmnewmap operation will be the instruction at the address following the vmnewmap's address in the original map, as translated by the new map. Care must be taken in replacing the mapping of guest OS pages containing vmnewmap instructions.
 
 *Encoding*
 
@@ -2080,13 +1807,13 @@ a| +
 
 Return from event service
 
-■ PC = G0 (GELR)
+* PC = G0 (GELR)
 
-■ Interrupt Enable State = G1[30] (GSR.IE)
+* Interrupt Enable State = G1[30] (GSR.IE)
 
-■ User Mode = G1[31] (GSR.UM)
+* User Mode = G1[31] (GSR.UM)
 
-■ if (User Mode) swap(R29,G2) (GOSP)
+* if (User Mode) swap(R29,G2) (GOSP)
 
 *Syntax*
 
@@ -2105,11 +1832,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo Instruction. It must not be grouped with other instructions in a packet.
+* This is a solo Instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2183,11 +1910,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2257,11 +1984,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo Instruction. It must not be grouped with other instructions in a packet.
+* This is a solo Instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2335,11 +2062,11 @@ h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo Instruction. It must not be grouped with other instructions in a packet.
+* This is a solo Instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2416,13 +2143,13 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-■ If the initial instruction virtual address is not valid, an execute protection violation exception event is taken by the *new virtual processor.*
+* If the initial instruction virtual address is not valid, an execute protection violation exception event is taken by the *new virtual processor.*
 
 *Encoding*
 
@@ -2490,11 +2217,11 @@ The virtual processor executing thevmstopinstruction ceases execution, and its r
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2567,13 +2294,13 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-■ The version corresponding to this spec is 0x0000_0700.
+* The version corresponding to this spec is 0x0000_0700.
 
 *Encoding*
 
@@ -2644,11 +2371,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2721,11 +2448,11 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Type*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo Instruction. It must not be grouped with other instructions in a packet.
+* This is a solo Instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2791,11 +2518,11 @@ If other virtual processors at the same or higher priority are runnable but wait
 
 *Exceptions*
 
-■ Privilege violation exception if executed in User mode
+* Privilege violation exception if executed in User mode
 
 *Notes*
 
-■ This is a solo instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
@@ -2844,21 +2571,20 @@ h| *2* h| *1* h| *0*
 |===
 
 [start=2,type=A]
-. 
+.
 == Determining HVM Environment
 
 image::VM_Spec_html_c5a4304b651551fd.gif[Shape122,529,2]
 
 [start=2,type=A]
 
-.. *Overview*
+=== Overview
 
 Guest-mode software can poll the VMM for the current HVM version to determine if they are version-compatible.
 
 [start=2,type=A]
 
-[start=2]
-.. *Accessing environment version*
+=== Accessing environment version*
 
 When Guest-mode software begins execution, it may need an efficient way to determine the HVM environment provided by the VMM. This can be done with the virtual instruction vmversion, which returns a value specifying the virtual machine environment version that is supported by the VMM.
 

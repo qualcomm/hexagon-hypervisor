@@ -17,7 +17,7 @@ H2K_kg_t H2K_kg;
 
 extern void _end();
 
-void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) {
+void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count) {
 	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
 #ifdef HAVE_EXTENSIONS
 	u32_t have_hvx;

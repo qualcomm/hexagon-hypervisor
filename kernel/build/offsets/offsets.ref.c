@@ -143,6 +143,8 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(angel_lock);
 	PRINT_KG_OFFSET(info_boot_flags);
 	PRINT_KG_OFFSET(dma_version);
+	PRINT_KG_OFFSET(core_id);
+	PRINT_KG_OFFSET(core_count);
 
 	PRINT_KG_SUBSTRUCT_OFFSET(time,next_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_ticks);

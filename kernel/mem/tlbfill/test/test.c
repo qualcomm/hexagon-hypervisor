@@ -37,7 +37,7 @@ void TH_mem_tlb_fill(u32_t va, H2K_thread_context* me)
 int main() 
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	H2K_kg_init(0, 0, 125, 128);
+	H2K_kg_init(0, 0, 125, 128, 0, 0);
 
 	u32_t va = H2K_LINK_ADDR;  // VA set H2K_LINK_ADDR OK to use if just within a unit test 
 

@@ -17,6 +17,7 @@
 #include <timeinfo.h>
 #include <h2_common_info.h>
 #include <h2_common_kerror.h>
+#include <alloc.h>
 
 typedef	union {
 	u64_t raw;
@@ -181,6 +182,11 @@ typedef struct {
 
 	u32_t hlx_contexts;  
 	u32_t hlx_state;
+
+	H2K_mem_alloc_tag_t *alloc_heap;
+	u32_t alloc_heap_size;
+	H2K_spinlock_t alloc_heap_lock;
+
 } H2K_kg_t;
 
 extern H2K_kg_t H2K_kg IN_SECTION(".data.core.globals");
@@ -241,7 +247,7 @@ static inline void xex(u32_t hthread, u32_t new_xe, u32_t new_xe2, u32_t new_xe3
 
 void H2K_cluster_config(void) IN_SECTION(".text.init.globals");
 
-void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size) IN_SECTION(".text.init.globals");
+void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count) IN_SECTION(".text.init.globals");
 
 #endif
 

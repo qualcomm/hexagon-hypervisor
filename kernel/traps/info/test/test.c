@@ -38,7 +38,7 @@ int main() {
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	u32_t phys_offset=0, devpage_offset=0, last_tlb_index=125, tlb_size=128;
-	H2K_kg_init(phys_offset, devpage_offset, last_tlb_index, tlb_size);
+	H2K_kg_init(phys_offset, devpage_offset, last_tlb_index, tlb_size, 0, 0);
 	H2K_l2cache_init();
 	H2K_mem_alloc_init(Heap, alloc_heap_size);
 	if (H2K_mem_stlb_alloc() == -1) FAIL("STLB alloc");

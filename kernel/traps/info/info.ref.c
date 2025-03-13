@@ -178,6 +178,12 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 	case INFO_UNIT_ENTRY:
 		return H2K_cfg_table_unit_entry(unit, entry);
 
+	case INFO_CORE_ID:
+		return H2K_gp->core_id;
+
+	case INFO_CORE_COUNT:
+		return H2K_gp->core_count;
+
 	default:
 		return -1;
 	}

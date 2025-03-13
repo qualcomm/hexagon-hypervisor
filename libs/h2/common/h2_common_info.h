@@ -45,10 +45,10 @@ typedef enum {
 	INFO_HMX_INSTANCES, /**< Number of HMX instances */
 	INFO_CORECFG_BASE,/**< Core regs base */
 	INFO_HLX_CONTEXTS, /**< Number of HLX instances */
-	INFO_CORE_ID,     /**< Multicore core ID */
-	INFO_CORE_COUNT,  /**< Multicore core count */
 	INFO_UNIT_START,  /**< Start of unit config list */
 	INFO_UNIT_ENTRY,  /**< Unit entry */
+	INFO_CORE_ID,     /**< Multicore core ID */
+	INFO_CORE_COUNT,  /**< Multicore core count */
 	INFO_MAX
 } info_type;
 

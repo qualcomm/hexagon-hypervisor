@@ -40,26 +40,22 @@
 #define CFG_IDX      r8  // cfg_table index
 #define CFG_HI       r9  // cfg_table address [35:11]
 #define TMP         r10
-
-#define BOOT_OFFSET r13  // subtract from __bootvm_entry to get bootvm VA
+#define FROM        r11
+#define TO          r12
+#define TMP2        r13
 #define SS_BASE     r14  // *public* subsystem base
-#define REVID       r15  // rev
+
 #define LAST_TLB    r16  // last replaceable TLB index
 #define PHYS_ADDR   r17  // where we are loaded, page-aligned
-#define L2_SIZE     r18  // L2 mem size from rev
-#define REV_ARCH    r19  // arch from rev
-#define REV_UARCH   r20  // uarch from rev
+#define CORE_ID     r18
+#define CORE_COUNT  r19  // 0 for non-multicore
+
 #define LINK_ADDR   r21  // kernel VA
 #define COUNTER     r22
 #define STACK_SIZE  r23
 #define TLB_SIZE 		r24
 
 #define SP          r29
-
-/* EJP: TBD: save off syscfg val
- * start other threads to try and get context
- * Make sure other threads don't replicate work
- */
 
 FUNC_START start .entry .p2align 12
 	jump 1f
@@ -138,6 +134,66 @@ H2_BOOT_attempts:
 	TMP = #(SYSCFG_I | SYSCFG_D)					// 7
 	syscfg = TMP				// 0
 	isync					// 1 ... needs to be in same cache line as syscfg
+
+	PHYS_ADDR = pc
+	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)  // addr of lowest page
+	SETCONST(LINK_ADDR, H2K_LINK_ADDR)
+	SETCONST(NPAGES, H2K_KERNEL_NPAGES)
+
+	// Read cfg_table
+	CFG_HI = cfgbase
+	CFG_HI = asl(CFG_HI, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
+
+	CFG_IDX = #CFG_TABLE_CORE_ID
+	CORE_ID = memw_phys(CFG_IDX, CFG_HI)
+	CFG_IDX = #CFG_TABLE_CORE_COUNT
+	CORE_COUNT = memw_phys(CFG_IDX, CFG_HI)
+
+	CFG_IDX = #CFG_TABLE_SSBASE
+	SS_BASE = memw_phys(CFG_IDX, CFG_HI) // == SSBASE[35:16]
+	SS_BASE = asl(SS_BASE, #CFG_TABLE_SHIFT)  // SSBASE
+
+#if ARCHV >= 68
+	CFG_IDX = #CFG_TABLE_JTLB_SIZE
+	TLB_SIZE = memw_phys(CFG_IDX, CFG_HI)
+	LAST_TLB = TLB_SIZE
+#endif
+
+#ifdef MULTICORE
+	/* Clone for multicore */
+	p0 = cmp.eq(CORE_ID, #0)  // no multicore or this is core 0
+	if (p0) jump 6f
+	p0 = cmp.eq(CORE_COUNT, #0) // no multicore
+	if (p0) jump 6f
+
+	PAGE_COUNT = add(NPAGES, #1)      // FIXME: handle bootvm > 1 pages or different size
+	FROM = PHYS_ADDR
+	TMP = lsr(PHYS_ADDR, #PAGE_BITS)  // 4K page
+	TMP = sub(#0x00100000, TMP)       // total space
+	TMP2 = ct0(CORE_COUNT)            // FIXME: handle non-2^^n
+	TMP = lsr(TMP, TMP2)
+	TMP = asl(TMP, #PAGE_BITS)        // space per core
+	TO = add(FROM, mpyi(TMP, CORE_ID)
+	TMP2 = TO                         // save for jump
+
+	TMP = mpyi(PAGE_COUNT, #(PAGE_BITS + (H2K_KERNEL_PGSIZE * 2)))  // bytes to copy
+7:
+	DATA = memd(FROM)
+	memd(TO) = DATA
+	FROM = add(FROM, #8)
+	TO = add(TO, #8)
+	TMP = add(TMP, #-8)
+	p0 = cmp.eq(TMP, #0)              // done
+	if (!p0) jump 7b
+
+	TMP = add(TMP2, ##boot_continuation && #BOOT_TLB_OFFSET_MASK)
+	jumpr TMP                         // point pc to copied page
+6:
+boot_continuation:
+	PHYS_ADDR = pc
+	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)  // addr of lowest page
+#endif
+	
 	/* Setup EVB */
 	SETCONST(TMP,H2K_event_vectors)
 	evb = TMP
@@ -146,33 +202,6 @@ H2_BOOT_attempts:
 	gp = TMP
 
 	SETCONST(H2K_GP,H2K_kg)
-
-	REVID = rev
-	REV_ARCH = and(REVID, #0xff)         // arch version
-	REV_UARCH = extractu(REVID, #4, #8)  // uarch version
-
-	p0 = cmp.eq(REV_ARCH, #CORE_V4)
-	if (!p0) jump .Lv5
-	TMP = ##0x00002004
-	s63 = TMP
-	jump .Lchicken_out
-
-.Lv5:
-	p0 = cmp.eq(REV_ARCH, #CORE_V5)
-	if (!p0) jump .Lv60
-	TMP = #0     /* (New chickenbits) */
-	TMP = setbit(TMP,#2);	//  AXI L1 Snoop something
-	TMP = setbit(TMP,#27);	//  force store
-	TMP = setbit(TMP,#12);	//  HW loops
-	s63 = TMP
-	TMP = #0
-	TMP = setbit(TMP,#22);	//  fix for address calculation corruption
-	s62 = TMP
-	//	jump .Lchicken_out
-
-.Lv60:
-
-.Lchicken_out:
 
 	/* Set up rising edge triggered */
 	TMP = #-1
@@ -185,27 +214,6 @@ H2_BOOT_attempts:
 #endif
 	cswi(TMP)
 	ciad(TMP)
-
-	PHYS_ADDR = pc
-	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)
-	SETCONST(LINK_ADDR, H2K_LINK_ADDR)
-	BOOT_OFFSET = sub(LINK_ADDR, PHYS_ADDR)
-	SETCONST(NPAGES, H2K_KERNEL_NPAGES)
-	L2_SIZE = extractu (REVID, #4, #12)  // L2 mem size
-
-	// Read cfg_table
-	CFG_HI = cfgbase
-	CFG_HI = asl(CFG_HI, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
-
-	CFG_IDX = #CFG_TABLE_SSBASE
-	SS_BASE = memw_phys(CFG_IDX, CFG_HI) // == SSBASE[35:16]
-	SS_BASE = asl(SS_BASE, #CFG_TABLE_SHIFT)  // SSBASE
-
-#if ARCHV >= 68
-	CFG_IDX = #CFG_TABLE_JTLB_SIZE
-	TLB_SIZE = memw_phys(CFG_IDX, CFG_HI)
-	LAST_TLB = TLB_SIZE
-#endif
 
 	// Clear TLB and probe size.  We rely on the index wrapping around in ARCHV < 68!
 	TLB_ENTRY = #0
@@ -353,10 +361,11 @@ H2_BOOT_attempts:
 	LR = #0
 
 	r0 = sub(LINK_ADDR, PHYS_ADDR)  // phys_offset
-	r1 = BOOT_OFFSET
-	r2 = SS_BASE
-	r3 = LAST_TLB
-	r4 = TLB_SIZE
+	r1 = SS_BASE
+	r2 = LAST_TLB
+	r3 = TLB_SIZE
+	r4 = CORE_ID
+	r5 = CORE_COUNT
 
 	jump H2K_thread_boot
 FUNC_END start

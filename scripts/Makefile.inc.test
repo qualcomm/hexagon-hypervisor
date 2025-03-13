@@ -140,7 +140,7 @@ OPTIMIZE := -O1
 
 KERNEL_INCLUDES := -I ${H2DIR}/kernel/include -I ${H2DIR}/libs/h2/common
 
-LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=start
+LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=start -Wl,--defsym=__entry=$(H2K_LOAD_ADDR)
 
 ifdef BOOT
 BOOTER=${INSTALLPATH}/bin/booter

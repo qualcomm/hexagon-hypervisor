@@ -32,20 +32,24 @@ static H2K_thread_context a,b,c;
 u32_t TH_saw_dosched = 0;
 H2K_thread_context *TH_me = NULL;
 
-void H2K_mem_alloc_release(u32_t *unused)
+H2K_mem_alloc_tag_t *H2K_mem_alloc_release(u32_t *unused)
 {
+	return NULL;
 }
 
-void H2K_mem_alloc_free(u32_t *ptr)
+H2K_mem_alloc_tag_t *H2K_mem_alloc_free(void *ptr)
 {
 	return H2K_mem_alloc_release(ptr);
 }
 
-void H2K_mem_alloc_init();
+void H2K_mem_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size);
 
-u64_t *H2K_mem_alloc_get(u32_t size)
+H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t size)
 {
-	return malloc(size);
+	H2K_mem_alloc_block_t tmp;
+	tmp.size = size;
+	tmp.ptr = malloc(size);
+	return tmp;
 }
 
 void H2K_dosched(H2K_thread_context *me, u32_t hwtnum)

@@ -154,6 +154,10 @@ int cluster_sched = 1;
 #endif
 unsigned int getl2reg = 0;
 unsigned int *getl2reg_offsets;
+#ifdef MULTICORE
+unsigned int core_id;
+unsigned int core_count;
+#endif
 
 #define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
 
@@ -262,6 +266,9 @@ void usage()
 	BOOTER_PRINTF("  booter --file <path> [--file <path> ...]\n\tOptions from <path>, one guest VM per line.");
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("Global options:\n");
+#ifdef MULTICORE
+	BOOTER_PRINTF("  --core <int>\n\tIf current core ID is not <int>, ignore all following options until the next --core.\n");
+#endif
 	BOOTER_PRINTF("  --turkey <int>\n\tSet the turkey bits.\n");
 	BOOTER_PRINTF("  --duck <int>\n\tSet the duck bits.\n");
 	BOOTER_PRINTF("  --chicken <int>\n\tSet the chicken bits.\n");
@@ -1701,8 +1708,18 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 	while (argc) {
 
 		/* Global options */
+#ifdef MULTICORE
+		if (0 == strcmp(argv[0], "--core")) {
+			if (strtoul(argv[1],NULL,0) != core_id) {  // not this core
+				argc -= 2; argv += 2;
+				while (argc > 0 && 0 != strcmp(argv[0], "--core")) {  // skip to next --core
+					argc -= 1; argv += 1;
+				}
+			}
+		}
+#endif
 		if (0 == strcmp(argv[0],"--quiet")) {
-			/* already quieted */
+			silent = 1;
 			argc -= 1; argv += 1;
 			continue;
 		} else if (0 == strcmp(argv[0],"--cycles")) {
@@ -2308,11 +2325,6 @@ int main(int argc, char **argv)
 		usage();
 		return 1;
 	}
-	for (idx = 0; idx < argc; idx++) {
-		if (0 == strcmp(argv[idx],"--quiet")) { 
-			silent = 1;
-		}
-	}
 
 	// check for kernel boot errors
 	kerror = h2_info(INFO_ERROR);
@@ -2342,6 +2354,11 @@ int main(int argc, char **argv)
 		FAIL("H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT", "");
 	}
 	h2_vmtrap_setie(1);
+
+#ifdef MULTICORE
+	core_id = h2_info(CORE_ID);
+	core_count = h2_info(CORE_COUNT);
+#endif
 
 	/* Each file specifies a set of VMs to run concurrently */
 	while (argc) {

@@ -30,7 +30,7 @@
 
 #define DATA       r1:0
 
-#define TLB_INDEX        r1
+#define TLB_INDEX    r1
 #define TLB_ENTRY  r3:2  // TLB data
 #define TLB_LO       r2
 #define TLB_HI       r3
@@ -166,15 +166,15 @@ H2_BOOT_attempts:
 	p0 = cmp.eq(CORE_COUNT, #0) // no multicore
 	if (p0) jump 6f
 
-	PAGE_COUNT = add(NPAGES, #1)      // FIXME: handle bootvm > 1 pages or different size
+	PAGE_COUNT = add(NPAGES, #1)    // FIXME: handle bootvm > 1 pages or different size
 	FROM = PHYS_ADDR
-	TMP = lsr(PHYS_ADDR, #PAGE_BITS)  // 4K page
-	TMP = sub(#0x00100000, TMP)       // total space
-	TMP2 = ct0(CORE_COUNT)            // FIXME: handle non-2^^n
-	TMP = lsr(TMP, TMP2)
-	TMP = asl(TMP, #PAGE_BITS)        // space per core
-	TO = add(FROM, mpyi(TMP, CORE_ID)
-	TMP2 = TO                         // save for jump
+	TO = lsr(PHYS_ADDR, #PAGE_BITS) // 4K page
+	TO = sub(#0x00100000, TO)       // total space
+	TMP = ct0(CORE_COUNT)           // FIXME: handle non-2^^n
+	TO = lsr(TO, TMP)
+	TO = asl(TO, #PAGE_BITS)        // space per core
+	TO = add(FROM, mpyi(TO, CORE_ID))
+	TMP2 = TO                       // save for jump
 
 	TMP = mpyi(PAGE_COUNT, #(PAGE_BITS + (H2K_KERNEL_PGSIZE * 2)))  // bytes to copy
 7:
@@ -186,7 +186,9 @@ H2_BOOT_attempts:
 	p0 = cmp.eq(TMP, #0)              // done
 	if (!p0) jump 7b
 
-	TMP = add(TMP2, ##boot_continuation && #BOOT_TLB_OFFSET_MASK)
+	TMP = ##boot_continuation
+	TMP = and (TMP, #BOOT_TLB_OFFSET_MASK)
+	TMP = add(TMP, TMP2)
 	jumpr TMP                         // point pc to copied page
 6:
 boot_continuation:

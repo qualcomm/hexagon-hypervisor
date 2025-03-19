@@ -184,6 +184,9 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 	case INFO_CORE_COUNT:
 		return H2K_gp->core_count;
 
+	case INFO_SHIFT:
+		return H2K_gp->multicore_shift;
+
 	default:
 		return -1;
 	}

@@ -49,6 +49,7 @@ typedef enum {
 	INFO_UNIT_ENTRY,  /**< Unit entry */
 	INFO_CORE_ID,     /**< Multicore core ID */
 	INFO_CORE_COUNT,  /**< Multicore core count */
+	INFO_SHIFT,       /**< Multicore shift - offset translation for boot VM */
 	INFO_MAX
 } info_type;
 

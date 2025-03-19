@@ -32,8 +32,7 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 	r0 = memw(r0)
 	r0 = add(r0, #1)
 	r0 = mpyi(r0, #0x20)
-	r1 = #0x0
-	r2 = #L1WB_L2C
+	r1 = #UNCACHED
 	call H2K_tmpmap_add_and_lock
 	r6 = r0  // va of mailbox base
 	jump .Llocked

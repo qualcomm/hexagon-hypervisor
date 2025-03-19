@@ -44,7 +44,7 @@
 #define TO          r12
 #define TMP2        r13
 #define SS_BASE     r14  // *public* subsystem base
-
+#define SHIFT       r15  // multicore shift - offset translation for boot VM
 #define LAST_TLB    r16  // last replaceable TLB index
 #define PHYS_ADDR   r17  // where we are loaded, page-aligned
 #define CORE_ID     r18
@@ -55,6 +55,9 @@
 #define STACK_SIZE  r23
 #define TLB_SIZE 		r24
 
+#define TLB_PHYS    r26  // phys page being mapped
+#define TLB_TMP     r27
+// H2K_GP r28
 #define SP          r29
 
 FUNC_START start .entry .p2align 12
@@ -146,6 +149,7 @@ H2_BOOT_attempts:
 
 	CFG_IDX = #CFG_TABLE_CORE_ID
 	CORE_ID = memw_phys(CFG_IDX, CFG_HI)
+
 	CFG_IDX = #CFG_TABLE_CORE_COUNT
 	CORE_COUNT = memw_phys(CFG_IDX, CFG_HI)
 
@@ -166,25 +170,31 @@ H2_BOOT_attempts:
 	p0 = cmp.eq(CORE_COUNT, #0) // no multicore
 	if (p0) jump 6f
 
-	PAGE_COUNT = add(NPAGES, #1)    // FIXME: handle bootvm > 1 pages or different size
+	PAGE_COUNT = add(NPAGES, #1)        // FIXME: handle bootvm > 1 pages or different size
 	FROM = PHYS_ADDR
-	TO = lsr(PHYS_ADDR, #PAGE_BITS) // 4K page
-	TO = sub(#0x00100000, TO)       // total space
-	TMP = ct0(CORE_COUNT)           // FIXME: handle non-2^^n
+	TO = lsr(PHYS_ADDR, #PAGE_BITS)     // 4K page
+	TO = sub(#0x00100000, TO)           // total space
+	TMP = ct0(CORE_COUNT)               // FIXME: handle non-2^^n
 	TO = lsr(TO, TMP)
-	TO = asl(TO, #PAGE_BITS)        // space per core
-	TO = add(FROM, mpyi(TO, CORE_ID))
+	TO = asl(TO, #PAGE_BITS)            // space per core
+	TO = and(TO, ##BOOT_TLB_PAGE_MASK)  // align down to page size
+	SHIFT = mpyi(TO, CORE_ID)           // total shift for this core
+	TO = add(FROM, SHIFT)               // copy dest
+
+	TMP2 = #(H2K_PAGESIZE >> 3)
+	TMP = mpyi(PAGE_COUNT, TMP2)    // dwords to copy
 	TMP2 = TO                       // save for jump
 
-	TMP = mpyi(PAGE_COUNT, #(PAGE_BITS + (H2K_KERNEL_PGSIZE * 2)))  // bytes to copy
+	loop0(7f, TMP)
 7:
-	DATA = memd(FROM)
-	memd(TO) = DATA
-	FROM = add(FROM, #8)
-	TO = add(TO, #8)
-	TMP = add(TMP, #-8)
-	p0 = cmp.eq(TMP, #0)              // done
-	if (!p0) jump 7b
+	{
+		DATA = memd(FROM)
+		FROM = add(FROM, #8)
+	}
+	{
+		memd(TO) = DATA
+		TO = add(TO, #8)
+	}:endloop0
 
 	TMP = ##boot_continuation
 	TMP = and (TMP, #BOOT_TLB_OFFSET_MASK)
@@ -252,9 +262,6 @@ boot_continuation:
 #endif
 
 	// Set up TLB entries for jump to virtual space
-#define TLB_PHYS    r26  // phys page being mapped
-#define TLB_TMP     r27
-
 	TLB_PHYS = PHYS_ADDR
 
 	TLB_INDEX = sub(LAST_TLB, NPAGES)
@@ -362,7 +369,7 @@ boot_continuation:
 	FP = #0
 	LR = #0
 
-	r0 = sub(LINK_ADDR, PHYS_ADDR)  // phys_offset
+	r0 = SHIFT
 	r1 = SS_BASE
 	r2 = LAST_TLB
 	r3 = TLB_SIZE

@@ -7,6 +7,7 @@
 #include <vmblock.h>
 #include <h2_common_vmblock.h>
 #include <globals.h>
+#include <log.h>
 
 H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t info)
 {

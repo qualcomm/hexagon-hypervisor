@@ -1712,17 +1712,26 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 	int finish = 0;
 
 	while (argc) {
-
 		/* Global options */
 #ifdef MULTICORE
+		int count = 0;
+		char **save;
 		if (0 == strcmp(argv[0], "--core")) {
 			if (strtoul(argv[1],NULL,0) != core_id) {  // not this core
 				argc -= 2; argv += 2;
 				while (argc > 0 && 0 != strcmp(argv[0], "--core")) {  // skip to next --core
 					argc -= 1; argv += 1;
 				}
+			} else {  // is this core, adjust argc
+				argc -= 2; argv += 2; save = argv;
+				while (argc > 0 && 0 != strcmp(argv[0], "--core")) {  // count to next --core
+					count += 1; argc -= 1; argv += 1;
+				}
+				argc = count;
+				argv = save;
 			}
-		}
+			continue;
+		} else
 #endif
 		if (0 == strcmp(argv[0],"--quiet")) {
 			silent = 1;

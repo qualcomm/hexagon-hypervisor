@@ -49,7 +49,7 @@
 #define PHYS_ADDR   r17  // where we are loaded, page-aligned
 #define CORE_ID     r18
 #define CORE_COUNT  r19  // 0 for non-multicore
-
+#define BARRIER     r20
 #define LINK_ADDR   r21  // kernel VA
 #define COUNTER     r22
 #define STACK_SIZE  r23
@@ -62,7 +62,8 @@
 
 FUNC_START start .entry .p2align 12
 	jump 1f
-	.space 0x40
+	.space 0x80  // FIXME: needs to be enough for all angel mailboxes but still fit all code in 4K
+
 1:
 
 #ifdef CRASH_DEBUG
@@ -147,12 +148,6 @@ H2_BOOT_attempts:
 	CFG_HI = cfgbase
 	CFG_HI = asl(CFG_HI, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
 
-	CFG_IDX = #CFG_TABLE_CORE_ID
-	CORE_ID = memw_phys(CFG_IDX, CFG_HI)
-
-	CFG_IDX = #CFG_TABLE_CORE_COUNT
-	CORE_COUNT = memw_phys(CFG_IDX, CFG_HI)
-
 	CFG_IDX = #CFG_TABLE_SSBASE
 	SS_BASE = memw_phys(CFG_IDX, CFG_HI) // == SSBASE[35:16]
 	SS_BASE = asl(SS_BASE, #CFG_TABLE_SHIFT)  // SSBASE
@@ -164,12 +159,39 @@ H2_BOOT_attempts:
 #endif
 
 #ifdef MULTICORE
-	/* Clone for multicore */
-	p0 = cmp.eq(CORE_ID, #0)  // no multicore or this is core 0
-	if (p0) jump 6f
+	CFG_IDX = #CFG_TABLE_CORE_ID
+	CORE_ID = memw_phys(CFG_IDX, CFG_HI)
+
+	/*
+	p0 = cmp.eq(CORE_ID, #0)
+	if (!p0) jump 12f
+	wait(r1)
+12:
+*/
+
+	CFG_IDX = #CFG_TABLE_CORE_COUNT
+	CORE_COUNT = memw_phys(CFG_IDX, CFG_HI)
+	BARRIER = add(pc, ##boot_sync@PCREL)
+
 	p0 = cmp.eq(CORE_COUNT, #0) // no multicore
 	if (p0) jump 6f
+	p0 = cmp.eq(CORE_ID, #0)
+	if (!p0) jump 10f           // not core 0
 
+	/* core 0 inits barrier */
+	TMP = ct0(CORE_COUNT)       // FIXME: handle non-2^^n
+	TMP = sub(#31, TMP)
+	TMP2 = ##0xffffffff
+	TMP2 = lsr(TMP2, TMP)
+	memw(BARRIER) = TMP2        // other cores can go when ready
+11:	
+	TMP = memw(BARRIER)
+	p0 = cmp.eq(TMP, #0x1)      // other cores done
+	if (!p0) jump 11b
+	jump 6f
+
+	/* Clone for multicore, cores 1 - N */
+10:
 	PAGE_COUNT = add(NPAGES, #1)        // FIXME: handle bootvm > 1 pages or different size
 	FROM = PHYS_ADDR
 	TO = lsr(PHYS_ADDR, #PAGE_BITS)     // 4K page
@@ -195,6 +217,15 @@ H2_BOOT_attempts:
 		memd(TO) = DATA
 		TO = add(TO, #8)
 	}:endloop0
+13:
+	TMP = memw(BARRIER)
+	p0 = cmp.eq(TMP, ##0xffffffff)  // wait for core 0 barrier init
+	if (p0) jump 13b
+12:
+	TMP = memw_locked(BARRIER)
+	TMP = clrbit(TMP, CORE_ID)      // copy done for this core
+	memw_locked(BARRIER, p0) = TMP
+	if (!p0) jump 12b
 
 	TMP = ##boot_continuation
 	TMP = and (TMP, #BOOT_TLB_OFFSET_MASK)
@@ -378,6 +409,10 @@ boot_continuation:
 
 	jump H2K_thread_boot
 FUNC_END start
+
+	.p2align 8
+boot_sync:
+	.word 0xffffffff  // ensure non-0
 
 FUNC_START h2_init .text.init.boot .p2align 2
 	jumpr r31

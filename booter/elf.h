@@ -16,6 +16,12 @@
 #ifndef _ELF_H_ 
 #define _ELF_H_ 1
 
+#ifdef MULTICORE
+#define BOOTER_PRINTF(...) if (!((silent >> core_id) & 0x1)) {printf("CORE %d:\t", core_id); printf(__VA_ARGS__);}
+#else
+#define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
+#endif
+
 typedef unsigned int Elf32_Addr;
 typedef unsigned short Elf32_Half;
 typedef unsigned int Elf32_Off;

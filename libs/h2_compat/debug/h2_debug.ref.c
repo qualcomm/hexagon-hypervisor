@@ -39,7 +39,11 @@ void h2_debug_context_dump(h2_context_t *context)
 	val.raw = h2_thread_state(id, CONTEXT_ccrssr);
 
 	h2_mutex_lock(&debug_mutex);
-	printf("DEBUG DUMP threadid = 0x%08x, core_pcycles = 0x%016llx\n", id, h2_get_core_pcycles());
+	if (h2_info(INFO_CORE_COUNT) > 0) {
+		printf("DEBUG DUMP core %d, threadid = 0x%08x, core_pcycles = 0x%016llx\n", h2_info(INFO_CORE_ID), id, h2_get_core_pcycles());
+	} else {
+		printf("DEBUG DUMP threadid = 0x%08x, core_pcycles = 0x%016llx\n", id, h2_get_core_pcycles());
+	}
 	printf("Exception PC (g0) = 0x%08x, cause (g1 & 0xff) = 0x%02x, badva (g3) = 0x%08x\n\n", context->g0, context->g1 & 0xff, context->g3);
 
 	/* Jam the cause in ssr value; ssr_cause has since been overwritten by trap calls  */

@@ -122,7 +122,6 @@ unsigned int cycles = 0;
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 0;
 unsigned long guest_base;
-unsigned long multicore_shift;
 h2_anysignal_t wake_sig;
 int tcm_base;
 int tcm_size;
@@ -156,11 +155,9 @@ int cluster_sched = 1;
 unsigned int getl2reg = 0;
 unsigned int *getl2reg_offsets;
 #ifdef MULTICORE
-unsigned int core_id;
-unsigned int core_count;
+unsigned int core_id = -1;
+unsigned int core_count = -1;
 #endif
-
-#define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
 
 extern long __boot_net_phys_offset__;
 
@@ -307,8 +304,11 @@ void usage()
 	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
 	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
 	BOOTER_PRINTF("  --cycles\n\tPrint pcycles during boot.\n");
+#ifdef MULTICORE
+	BOOTER_PRINTF("  --quiet <core bitmap>\n\tSuppress output from cores.\n");
+#else
 	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
-
+#endif
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("VM options:\n");
 	BOOTER_PRINTF("  --ccr <int>\n\tSet ccr.\n");
@@ -504,7 +504,7 @@ void get_pmap(unsigned int idx, long offset) {
 	} else {
 		BOOTER_PRINTF("\t__guest_pmap__ found @ 0x%08lx\n",addr);
 
-		vm_params[idx].pmap = (h2_guest_pmap_t *)(addr + offset - __boot_net_phys_offset__);
+		vm_params[idx].pmap = (h2_guest_pmap_t *)(addr + offset);
 	}
 }
 
@@ -533,7 +533,7 @@ void set_cmdline(unsigned int idx, long offset) {
 	} else {
 		BOOTER_PRINTF("\t__boot_cmdline__ found @ 0x%08x\n", (unsigned int)addr);
 	}
-	dst = (char *)(addr + offset - __boot_net_phys_offset__);
+	dst = (char *)(addr + offset);
 	dst[0] = 0;
 	for (i = 0; i < vm_params[idx].argc; i++) {
 		if ((len += strlen(vm_params[idx].argv[i])) >= SIZE__boot_cmdline__) {
@@ -564,7 +564,7 @@ void set_string(unsigned int idx, int sym, char *string, int maxlen, long offset
 		BOOTER_PRINTF("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
 	}
 
-	dst = (char *)(addr + offset  - __boot_net_phys_offset__);
+	dst = (char *)(addr + offset);
 	strcpy(dst, string);
 
 	BOOTER_PRINTF("\t%s at 0x%08x set to <<%s>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, dst);
@@ -582,7 +582,7 @@ void set_var(unsigned int idx, int sym, int val, long offset) {
 		BOOTER_PRINTF("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
 	}
 
-	dst = (int *)(addr + offset - __boot_net_phys_offset__);
+	dst = (int *)(addr + offset);
 	*dst = val;
 
 	BOOTER_PRINTF("\t%s at 0x%08x set to <<0x%08x>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, *dst);
@@ -598,11 +598,11 @@ unsigned long get_var(unsigned int idx, int sym, long offset) {
 		return 0;
 	}
 
-	dst = (int *)(addr + offset - __boot_net_phys_offset__);
+	dst = (int *)(addr + offset);
 	return *dst;
 }
 
-void set_net_phys_offset(unsigned int idx, long offset) {
+void set_net_phys_offset(unsigned int idx, long offset) {  // called with total_offset
 
 	long *dst;
 	unsigned long addr;
@@ -613,16 +613,16 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 	} else {
 		BOOTER_PRINTF("\t__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
 	}
-	dst = (long *)(addr + offset - __boot_net_phys_offset__);
+	dst = (long *)(addr + offset);
 
 	/* FIXME: If __boot_net_phys_offset__ is used for anything except ANGEL_OFFSET_PTR() then va_angel needs to be handled differently */
 	if (vm_params[idx].va_angel) {
 		*dst = 0;
 	} else {
-		*dst = offset;
+		*dst = __boot_net_phys_offset__ + offset;
 	}
 
-	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
+	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int) *dst);
 }
 
 void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages) {
@@ -848,7 +848,7 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].load_offset = vm_params[clone].load_offset + prev_size;
 		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
-		vm_params[idx].offset_pages = total_offset >> PAGE_BITS;
+		vm_params[idx].offset_pages = (__boot_net_phys_offset__ + total_offset) >> PAGE_BITS;
 		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
 		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
@@ -908,7 +908,7 @@ void load_vm(unsigned int idx) {
 			total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 			if (vm_params[idx].offset_pages == -1) {
-				vm_params[idx].offset_pages = total_offset >> PAGE_BITS;
+				vm_params[idx].offset_pages = (__boot_net_phys_offset__ + total_offset) >> PAGE_BITS;
 			}
 			phdr.p_paddr += vm_params[idx].load_offset;
 
@@ -917,13 +917,10 @@ void load_vm(unsigned int idx) {
 			}
 
 			if (!vm_params[idx].skip_load) {
-				BOOTER_PRINTF("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
+				BOOTER_PRINTF("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr + __boot_net_phys_offset__);
 				bytes_read = 0;
 				do {
-					/* The load offset already takes the multicore shift into
-						 account, so subtract __boot_net_phys_offset__ here to
-						 prevent the shift being added again during translation */
-					bytes_read += ret = read(fdesc,(char *)phdr.p_paddr - __boot_net_phys_offset__ + bytes_read, phdr.p_filesz - bytes_read);
+					bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
 #ifdef BOOTVM_DEBUG
 					reads++;
 #endif					
@@ -932,9 +929,9 @@ void load_vm(unsigned int idx) {
 					error("\tCan't read() in ", elf);
 				}
 
-				memset((char *)phdr.p_paddr + phdr.p_filesz - __boot_net_phys_offset__, 0, phdr.p_memsz - phdr.p_filesz);
+				memset((char *)phdr.p_paddr + phdr.p_filesz, 0, phdr.p_memsz - phdr.p_filesz);
 				/* Really, only need to clean out text sections */
-				dcclean_range(phdr.p_paddr - __boot_net_phys_offset__, phdr.p_memsz);
+				dcclean_range(phdr.p_paddr, phdr.p_memsz);
 			}
 		}
 #ifdef BOOTVM_DEBUG
@@ -966,7 +963,7 @@ void load_vm(unsigned int idx) {
 
 		vm_params[idx].start_pa = start + total_offset;
 		vm_params[idx].end_pa = end + total_offset;
-		dcclean_range((unsigned long)vm_params[idx].start_pa - __boot_net_phys_offset__, vm_params[idx].end_pa - vm_params[idx].start_pa);
+		dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
 
 		heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
 		if (0 == heap_size || -1 == heap_size) {
@@ -1021,7 +1018,7 @@ void load_vm(unsigned int idx) {
 		}
 		if (vm_params[idx].stash) {
 			BOOTER_PRINTF("\tStashing:\n\t");
-			vm_params[idx].stash_addr = guest_base;
+			vm_params[idx].stash_addr = __boot_net_phys_offset__ + guest_base;
 			guest_base += vm_params[idx].end_pa - vm_params[idx].start_pa;
 			guest_base = H2_ALIGN_UP(guest_base, one_page);
 			copy_vm(idx, vm_params[idx].stash_addr - vm_params[idx].start_pa);
@@ -1387,6 +1384,11 @@ void print_infos() {
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
 	BOOTER_PRINTF("\tGuest PC sampling available: ");
 	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
+
+	BOOTER_PRINTF("\tMulti-core:\n");
+	BOOTER_PRINTF("\t\tCount ( 0 == single core) %d\n", core_count);
+	BOOTER_PRINTF("\t\tID %d\n", core_id);
+
 	BOOTER_PRINTF("\tCoprocessors:\n");
 	unit = h2_info(INFO_UNIT_START);
 	if (0 != unit) {  // have new unit cfg blocks
@@ -1734,8 +1736,13 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		} else
 #endif
 		if (0 == strcmp(argv[0],"--quiet")) {
+#ifdef MULTICORE
+			silent |= strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+#else
 			silent = 1;
 			argc -= 1; argv += 1;
+#endif
 			continue;
 		} else if (0 == strcmp(argv[0],"--cycles")) {
 			cycles = 1;
@@ -2357,8 +2364,7 @@ int main(int argc, char **argv)
 	tcm_base = (unsigned int)h2_info(INFO_TCM_BASE);
 	tcm_size = h2_info(INFO_TCM_SIZE);
 	clade_base = h2_info(INFO_CLADE_BASE);
-	multicore_shift = h2_info(INFO_SHIFT);
-	guest_base = multicore_shift + H2K_GUEST_START;
+	guest_base = H2K_GUEST_START;
 
 	h2_galloc_init(&tcm_alloc, (unsigned int)tcm_base, (unsigned int)tcm_size, NULL);
 
@@ -2432,7 +2438,7 @@ int main(int argc, char **argv)
 			free(vm_params);
 			vm_params = NULL;  // malloc anew if more --files
 			tight_fence_hi = 0;
-			guest_base = multicore_shift + H2K_GUEST_START;
+			guest_base = H2K_GUEST_START;
 
 			h2_anysignal_init(&wake_sig);  // could be leftovers
 
@@ -2452,8 +2458,7 @@ int main(int argc, char **argv)
 			for (i = 0; i < getl2reg; i++) {
 				get_l2_reg(i);
 			}
-			//			return 0;
-			while (1);
+			return 0;
 		}
 	}
 	if (ext_power) {

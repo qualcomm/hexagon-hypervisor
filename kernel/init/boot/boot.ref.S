@@ -186,6 +186,7 @@ H2_BOOT_attempts:
 	memw(BARRIER) = TMP2        // other cores can go when ready
 	dccleana(BARRIER)
 11:	
+	dcinva(BARRIER)
 	TMP = memw(BARRIER)
 	p0 = cmp.eq(TMP, #0x1)      // other cores done
 	if (!p0) jump 11b
@@ -219,10 +220,12 @@ H2_BOOT_attempts:
 		TO = add(TO, #8)
 	}:endloop0
 13:
+	dcinva(BARRIER)
 	TMP = memw(BARRIER)
 	p0 = cmp.eq(TMP, ##0xffffffff)  // wait for core 0 barrier init
 	if (p0) jump 13b
 12:
+	dcinva(BARRIER)
 	TMP = memw_locked(BARRIER)
 	TMP = clrbit(TMP, CORE_ID)      // copy done for this core
 	memw_locked(BARRIER, p0) = TMP

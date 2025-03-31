@@ -1446,8 +1446,7 @@ void print_infos() {
 	BOOTER_PRINTF("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	BOOTER_PRINTF("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
 	BOOTER_PRINTF("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
-	BOOTER_PRINTF("\tH2 kernel in TCM: ");
-	BOOTER_PRINTF((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tH2 kernel in TCM: %s\n", (boot_flags.boot_use_tcm ? "true" : "false"));
 	BOOTER_PRINTF("\tcfgbase: 0x%08x\n", h2_info(INFO_CFGBASE));
 	BOOTER_PRINTF("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
 	BOOTER_PRINTF("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
@@ -1462,16 +1461,13 @@ void print_infos() {
 #endif
 	BOOTER_PRINTF("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
 	BOOTER_PRINTF("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
-	BOOTER_PRINTF("\tSTLB:\n");
-	BOOTER_PRINTF("\t\tEnabled: ");
+	BOOTER_PRINTF("\tSTLB: %s\n", (stlb_info.stlb_enabled ? "true" : "false"));
+	BOOTER_PRINTF("\t\tEnabled: %s\n", (stlb_info.stlb_enabled ? "true" : "false"));
 	if (stlb_info.stlb_enabled) {
-		BOOTER_PRINTF("true\n");
 		BOOTER_PRINTF("\t\tSets per ASID: %d\n", 1 << stlb_info.stlb_max_sets_log2);
 		BOOTER_PRINTF("\t\tWays: %d\n", stlb_info.stlb_max_ways);
 		BOOTER_PRINTF("\t\tSize: %d\n", stlb_info.stlb_size);
 		BOOTER_PRINTF("\t\tEntries: %dK\n", ((1 << stlb_info.stlb_max_sets_log2) * stlb_info.stlb_max_ways * stlb_info.stlb_size) / 1024);
-	} else {
-		BOOTER_PRINTF("false\n");
 	}
 	BOOTER_PRINTF("\tsyscfg: 0x%08x\n", h2_info(INFO_SYSCFG));
 	BOOTER_PRINTF("\trev: 0x%08x\n", h2_info(INFO_REV));

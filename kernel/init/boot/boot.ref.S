@@ -184,6 +184,7 @@ H2_BOOT_attempts:
 	TMP2 = ##0xffffffff
 	TMP2 = lsr(TMP2, TMP)
 	memw(BARRIER) = TMP2        // other cores can go when ready
+	dccleana(BARRIER)
 11:	
 	TMP = memw(BARRIER)
 	p0 = cmp.eq(TMP, #0x1)      // other cores done
@@ -226,6 +227,7 @@ H2_BOOT_attempts:
 	TMP = clrbit(TMP, CORE_ID)      // copy done for this core
 	memw_locked(BARRIER, p0) = TMP
 	if (!p0) jump 12b
+	dccleana(BARRIER)
 
 	TMP = ##boot_continuation
 	TMP = and (TMP, #BOOT_TLB_OFFSET_MASK)

@@ -120,7 +120,7 @@ unsigned int ext_power = 1;
 unsigned int silent = 0;
 unsigned int cycles = 0;
 unsigned int use_stlb = 0;
-unsigned int tight_fence_hi = 0;
+unsigned int tight_fence_hi = 1;
 unsigned long guest_base;
 h2_anysignal_t wake_sig;
 int tcm_base;
@@ -1382,9 +1382,8 @@ void print_infos() {
 
 	BOOTER_PRINTF("\nH2/core info:\n");
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
-	BOOTER_PRINTF("\tGuest PC sampling available: ");
-	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
-
+	BOOTER_PRINTF("\tGuest PC sampling available: %s\n", (boot_flags.boot_have_sample ? "true" : "false"));
+#ifdef MULTICORE
 	BOOTER_PRINTF("\tMulti-core:\n");
 	BOOTER_PRINTF("\t\tCount ( 0 == single core) %d\n", core_count);
 	BOOTER_PRINTF("\t\tID %d\n", core_id);
@@ -2433,7 +2432,7 @@ int main(int argc, char **argv)
 			run(idx);
 			free(vm_params);
 			vm_params = NULL;  // malloc anew if more --files
-			tight_fence_hi = 0;
+			tight_fence_hi = 1;
 			guest_base = H2K_GUEST_START;
 
 			h2_anysignal_init(&wake_sig);  // could be leftovers

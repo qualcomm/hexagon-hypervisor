@@ -37,9 +37,7 @@
 
 void H2K_interrupt_restore();
 
-u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
-
-extern u32_t __entry;
+// u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
 
 #ifndef BOOT_CCCC
 #define BOOT_CCCC L1WB_L2C
@@ -90,7 +88,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & (u32_t)-16);
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
-	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - (u32_t)(&__entry), multicore_shift, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count);		/* Kernel Globals first! */
+	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count);		/* Kernel Globals first! */
 	H2K_tmpmap_init();
 	H2K_l2cache_init();
 	H2K_tcm_copy(last_tlb_index);
@@ -228,7 +226,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 	H2K_cluster_config();
 #endif
 	H2K_runlist_push(boot);
-	H2K_init_complete = 1;
+	//	H2K_init_complete = 1;
 	H2K_mutex_unlock_tlb();
 	H2K_switch(NULL,boot);
 }

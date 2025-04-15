@@ -158,19 +158,13 @@ H2_BOOT_attempts:
 	LAST_TLB = TLB_SIZE
 #endif
 
-#ifdef MULTICORE
 	CFG_IDX = #CFG_TABLE_CORE_ID
 	CORE_ID = memw_phys(CFG_IDX, CFG_HI)
 
-	/*
-	p0 = cmp.eq(CORE_ID, #0)
-	if (!p0) jump 12f
-	wait(r1)
-12:
-*/
-
 	CFG_IDX = #CFG_TABLE_CORE_COUNT
 	CORE_COUNT = memw_phys(CFG_IDX, CFG_HI)
+
+#ifdef MULTICORE
 	BARRIER = add(pc, ##boot_sync@PCREL)
 
 	p0 = cmp.eq(CORE_COUNT, #0) // no multicore
@@ -185,6 +179,14 @@ H2_BOOT_attempts:
 	TMP2 = lsr(TMP2, TMP)
 	memw(BARRIER) = TMP2        // other cores can go when ready
 	dccleana(BARRIER)
+
+	/*
+	p0 = cmp.eq(CORE_ID, #0)
+	if (!p0) jump 14f
+	wait(r1)
+14:
+*/
+
 11:	
 	dcinva(BARRIER)
 	TMP = memw(BARRIER)

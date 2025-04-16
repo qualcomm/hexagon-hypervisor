@@ -23,7 +23,7 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 	if (in.cccc > 0xF) in.cccc = offset.cccc;
 
 	vmblock = H2K_gp->vmblocks[info.fields.vmid]; // parent VM has next-level translation
-	if (vmblock->guestmap.raw) {
+	if (!in.shared && vmblock->guestmap.raw) {
 		out = H2K_translate(in,vmblock->guestmap);
 	}	else { // lowest level
 		/* Don't apply offset or check fences when mapping special address spaces */

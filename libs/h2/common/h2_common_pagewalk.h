@@ -12,7 +12,7 @@ typedef union {
 	h2_u32_t raw;
 	struct {
 		h2_u32_t s:3;
-		h2_u32_t rsvd:1;
+		h2_u32_t shared:1;
 		h2_u32_t t:1;
 		h2_u32_t u:1;
 		h2_u32_t ccc:3;

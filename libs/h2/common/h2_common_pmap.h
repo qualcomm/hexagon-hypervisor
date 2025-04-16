@@ -60,10 +60,12 @@
 
 #define NONE 0
 
-#define MEMORY_MAP(VPN,PERM,CFIELD,PGSIZE,PPN) \
+#define MEMORY_MAP2(VPN, PERM, CFIELD, PGSIZE, PPN, SHARED)	\
 	{ .raw = \
-		(((h2_u64_t)((VPN) | ((PGSIZE) << 20)) << 32) | \
+		(( (h2_u64_t)((VPN) | ((PGSIZE) << 20) | (SHARED << 30)) << 32) |	\
 		(h2_u32_t)(((PPN)) | ((CFIELD) << 24) | ((PERM) << 28))) \
 	 },
+
+#define MEMORY_MAP(VPN,PERM,CFIELD,PGSIZE,PPN) MEMORY_MAP2(VPN, PERM, CFIELD, PGSIZE, PPN, 0)
 
 #endif

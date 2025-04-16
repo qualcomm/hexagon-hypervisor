@@ -25,10 +25,11 @@ typedef union {
 				h2_u32_t size:4;
 #if ARCHV < 73
 				h2_u32_t abits:2;
-				h2_u32_t unused:5;
+				h2_u32_t unused:4;
 #else
-				h2_u32_t unused:7;
+				h2_u32_t unused:6;
 #endif
+				h2_u32_t shared:1;
 				h2_u32_t chain:1;
 			};
 		};

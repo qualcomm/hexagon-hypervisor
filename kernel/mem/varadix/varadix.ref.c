@@ -20,6 +20,7 @@ static inline H2K_translation_t H2K_varadix_update(H2K_translation_t in, H2K_tra
 {
 	in.pn = new.pn;
 	in.xwru &= new.xwru;
+	in.shared = new.shared;
 	if (new.raw == 0) return new;
 	if (in.cccc > 0xF) in.cccc = new.cccc;
 	if (in.size > new.size) in.size = new.size;
@@ -92,7 +93,7 @@ H2K_translation_t H2K_varadix_translate(H2K_translation_t in, H2K_asid_entry_t i
 		new = H2K_varadix_walk(in.pn,info.ptb,startsize+1,vpnbits-(startsize+1),vmblock);
 	}
 	in = H2K_varadix_update(in,new);
-	if (vmblock->guestmap.raw) return H2K_translate(in,vmblock->guestmap);
+	if (!in.shared && vmblock->guestmap.raw) return H2K_translate(in,vmblock->guestmap);
 	else return in;
 }
 

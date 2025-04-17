@@ -25,8 +25,13 @@
 
 #define MAKE_TLBLO_DEV(DST,SRCVAL,TMPREG) \
 	SETCONST(DST,BOOT_TLBLO_DEV) ; \
-	TMPREG = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS_4M); \
-	DST |= asl(TMPREG, #  BOOT_TLB_SHIFT_4M + SBIT_SIZE);
+	TMPREG = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS_1M); \
+	DST |= asl(TMPREG, #  BOOT_TLB_SHIFT_1M + SBIT_SIZE);
+
+#define MAKE_TLBLO_ANGEL(DST,SRCVAL,TMPREG) \
+	SETCONST(DST,BOOT_TLBLO_ANGEL) ; \
+	TMPREG = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS_1M); \
+	DST |= asl(TMPREG, #  BOOT_TLB_SHIFT_1M + SBIT_SIZE);
 
 #define DATA       r1:0
 
@@ -303,7 +308,11 @@ boot_continuation:
 	TLB_PHYS = PHYS_ADDR
 
 	TLB_INDEX = sub(LAST_TLB, NPAGES)
-	TLB_INDEX = add(TLB_INDEX, #-1)  // -1 for device page = starting index for pinned entries
+#ifdef NULL_ANGEL_TRAP	
+	TLB_INDEX = add(TLB_INDEX, #-1)
+#else
+	TLB_INDEX = add(TLB_INDEX, #-2)  // -2 for angel and device page: starting index for pinned entries
+#endif
 	LAST_TLB = add(TLB_INDEX, #-1) // last free entry
 	COUNTER = #0
 	PAGE_COUNT = NPAGES
@@ -328,29 +337,39 @@ boot_continuation:
 	p0 = cmp.eq(PAGE_COUNT, #0)
 	if (!p0) jump 2b
 
-	// Set up entry for L2 interrupt controller
-	MAKE_TLBHI(TLB_HI,Q6_SS_BASE_VA,BOOT_TLB_OFFSET_BITS_4M,BOOT_TLB_SHIFT_4M)
+	// entry for L2 interrupt controller
+	MAKE_TLBHI(TLB_HI, Q6_SS_BASE_VA, BOOT_TLB_OFFSET_BITS_1M, BOOT_TLB_SHIFT_1M)
 	// SS_BASE == SSBASE (PRIV_BASE)
 	// apply offet to get PUB_BASE
 	SS_BASE = add(SS_BASE, ##-QDSP6SS_PUB_PRIV_OFFSET)
 	MAKE_TLBLO_DEV(TLB_LO, SS_BASE, TLB_TMP)
 	DO_TLBW
 
-	// index for temporary entry
-	TLB_INDEX = #0
-
+#ifndef NULL_ANGEL_TRAP
+	// entry for angel (0 page)
+	TLB_INDEX = add(TLB_INDEX, #1)
+	MAKE_TLBHI(TLB_HI, ANGEL_VA, BOOT_TLB_OFFSET_BITS_4K, BOOT_TLB_SHIFT_4K)
+	TMP = #0x0
+	MAKE_TLBLO_ANGEL(TLB_LO, TMP, TLB_TMP)
+	DO_TLBW
+#endif
+	
 	// Don't make a temporary entry if we're loaded at the link address,
 	// to avoid multiple tlb match since the permanent entry will match.
 	TMP = and(LINK_ADDR, PHYS_ADDR)
 	p0 = cmp.eq(TMP, LINK_ADDR)
-	if (p0) jump 1f
+	if (p0) jump .Latlink
+
+	// index for temporary entry
+	TLB_INDEX = #0
 
 	/* This one page had better be enough */
 	MAKE_TLBHI(TLB_HI,0,BOOT_TLB_OFFSET_BITS,BOOT_TLB_SHIFT)
 	TLB_HI |= lsr(PHYS_ADDR, #BOOT_TLB_ADDRBITS)
 	MAKE_TLBLO(TLB_LO, PHYS_ADDR, TLB_TMP)
 	DO_TLBW
-1:
+
+.Latlink:
 	/* Turn on translation, ISDB, PMU, ignore data aborts, TLB lock, etc */
 
 #ifdef ISDBEN

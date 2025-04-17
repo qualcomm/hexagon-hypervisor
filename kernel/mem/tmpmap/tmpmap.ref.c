@@ -10,14 +10,22 @@
 #include <tlbinsert.h>
 #include <tlbmisc.h>
 
+#define TEMP_MAP_VA 0xff800000  // at most 8M for kernel
+#define TEMP_MAP_PG_SIZE SIZE_4K
+#define TEMP_MAP_PG_MASK(size) (0xffffffff << (PAGE_BITS + (size * 2)))
+#define TEMP_MAP_OFF_MASK(size) (~(TEMP_MAP_PG_MASK(size)))
+
 /* Return va of pa */
-u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc) {
+u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc, u32_t size) {
 
 	H2K_mem_tlbfmt_t entry;
 	u32_t index;
 
+	if (SIZE_DEFAULT == size) {
+		size = TEMP_MAP_PG_SIZE;
+	}
 	entry.raw = 0;
-	entry.ppd = ((pa & TEMP_MAP_PG_MASK ) >> (PAGE_BITS - 1)) | (1 << TEMP_MAP_PG_SIZE);
+	entry.ppd = ((pa & TEMP_MAP_PG_MASK(size) ) >> (PAGE_BITS - 1)) | (1 << size);
 	entry.pa35 = (pa >> 35) & 0x1;
 #if ARCHV >= 73
 	entry.pa3637 = (pa >> 36) & 0x3;
@@ -38,7 +46,7 @@ u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc) {
 	if (H2K_gp->tlb_index >= index) H2K_gp->tlb_index = 0;
 	H2K_mem_tlb_insert_index(entry, index);  // and invalidate what's there
 	H2K_mutex_unlock_tlb();
-	return TEMP_MAP_VA | (pa & TEMP_MAP_OFF_MASK);
+	return TEMP_MAP_VA | (pa & TEMP_MAP_OFF_MASK(size));
 }
 
 void H2K_tmpmap_remove_and_unlock() {

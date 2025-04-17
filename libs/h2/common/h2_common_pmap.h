@@ -6,6 +6,7 @@
 #ifndef H2_COMMON_PMAP_H
 #define H2_COMMON_PMAP_H 1
 
+#define SIZE_DEFAULT -1
 #define SIZE_4K 0
 #define SIZE_16K 1
 #define SIZE_64K 2

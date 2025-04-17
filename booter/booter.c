@@ -1007,6 +1007,7 @@ void load_vm(unsigned int idx) {
 		guest_base += total_size;
 
 		if (set_fence_lo) {
+			vm_params[idx].fence_lo += __boot_net_phys_offset__;
 			vm_params[idx].fence_lo &= HI_MASK(one_page);
 		}
 		if (set_fence_hi) {

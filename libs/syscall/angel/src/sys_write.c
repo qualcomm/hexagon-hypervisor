@@ -12,10 +12,10 @@ extern const unsigned int H2_ANGEL_write_buf_size;
 
 int __sys_write_mode__;
 
-static inline void dccleana(const char *addr)
-{
-	asm volatile (" dccleana(%0)" : : "r"(addr));
-}
+/* static inline void dccleana(const char *addr) */
+/* { */
+/* 	asm volatile (" dccleana(%0)" : : "r"(addr)); */
+/* } */
 
 count_t sys_write(fd_t fd, const char *buffer, count_t count)
 {
@@ -37,20 +37,20 @@ count_t sys_write(fd_t fd, const char *buffer, count_t count)
 	clean(buffer,count/4+3);
 	clean(&x,3);
 	angel_ret = ANGEL(SYS_WRITE,&x,0);
-	if (fd > 2) return angel_ret;
-	if (H2_ANGEL_write_buf_idx+count < H2_ANGEL_write_buf_size) {
-		memcpy(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx,buffer,count);
-		dccleana(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx);
-		H2_ANGEL_write_buf_idx += count;
-		dccleana(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx);
-		if (H2_ANGEL_write_buf_idx == H2_ANGEL_write_buf_size) H2_ANGEL_write_buf_idx = 0;
-	} else {
-		int i;
-		for (i = 0; i < count; i++) {
-			H2_ANGEL_write_buf[H2_ANGEL_write_buf_idx++] = buffer[i];
-			if (H2_ANGEL_write_buf_idx == H2_ANGEL_write_buf_size) H2_ANGEL_write_buf_idx = 0;
-		}
-	}
+	/* if (fd > 2) return angel_ret; */
+	/* if (H2_ANGEL_write_buf_idx+count < H2_ANGEL_write_buf_size) { */
+	/* 	memcpy(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx,buffer,count); */
+	/* 	dccleana(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx); */
+	/* 	H2_ANGEL_write_buf_idx += count; */
+	/* 	dccleana(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx); */
+	/* 	if (H2_ANGEL_write_buf_idx == H2_ANGEL_write_buf_size) H2_ANGEL_write_buf_idx = 0; */
+	/* } else { */
+	/* 	int i; */
+	/* 	for (i = 0; i < count; i++) { */
+	/* 		H2_ANGEL_write_buf[H2_ANGEL_write_buf_idx++] = buffer[i]; */
+	/* 		if (H2_ANGEL_write_buf_idx == H2_ANGEL_write_buf_size) H2_ANGEL_write_buf_idx = 0; */
+	/* 	} */
+	/* } */
 	return angel_ret;
 }
 

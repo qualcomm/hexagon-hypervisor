@@ -42,10 +42,11 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 		if (p0.new) r2 = r1
 	}
 	dccleaninva(r6)
+/*	
 	r5:4 = memd(r6+#0)
 	p0 = cmp.eq(r5:4,r1:0)
 	if (!p0) jump .Lerror
-
+*/
 	memw(r6+#12) = r8
 	dccleaninva(r6)
 	r8 = memub(r6+#15)

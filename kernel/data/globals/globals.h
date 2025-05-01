@@ -161,6 +161,7 @@ typedef struct {
 	u32_t core_id;
 	u32_t core_count;
 	u32_t multicore_shift;
+	u32_t tcm_offset;
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf;
@@ -248,7 +249,7 @@ static inline void xex(u32_t hthread, u32_t new_xe, u32_t new_xe2, u32_t new_xe3
 
 void H2K_cluster_config(void) IN_SECTION(".text.init.globals");
 
-void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count) IN_SECTION(".text.init.globals");
+void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) IN_SECTION(".text.init.globals");
 
 #endif
 

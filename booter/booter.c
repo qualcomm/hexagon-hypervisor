@@ -1381,13 +1381,17 @@ void print_infos() {
 	unsigned int unit;
 	pcycles();
 
-	BOOTER_PRINTF("\nH2/core info:\n");
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("H2/core info:\n");
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
 	BOOTER_PRINTF("\tGuest PC sampling available: %s\n", (boot_flags.boot_have_sample ? "true" : "false"));
 #ifdef MULTICORE
 	BOOTER_PRINTF("\tMulti-core:\n");
 	BOOTER_PRINTF("\t\tCount ( 0 == single core) %d\n", core_count);
 	BOOTER_PRINTF("\t\tID %d\n", core_id);
+	BOOTER_PRINTF("\t\tShift 0x%08x\n", h2_info(INFO_SHIFT));
+	BOOTER_PRINTF("\t\tTCM base offset 0x%08x\n", h2_info(INFO_TCM_OFFSET));
+#endif
 
 	BOOTER_PRINTF("\tCoprocessors:\n");
 	unit = h2_info(INFO_UNIT_START);

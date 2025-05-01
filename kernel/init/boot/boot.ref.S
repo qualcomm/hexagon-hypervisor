@@ -41,7 +41,8 @@
 #define TLB_HI       r3
 #define NPAGES       r4  // # kernel pages
 #define PAGE_COUNT   r5  // counter for TLB setup
-
+#define TCM_OFFSET   r6
+#define TCM_VAL      r7
 #define CFG_IDX      r8  // cfg_table index
 #define CFG_HI       r9  // cfg_table address [35:11]
 #define TMP         r10
@@ -54,22 +55,22 @@
 #define PHYS_ADDR   r17  // where we are loaded, page-aligned
 #define CORE_ID     r18
 #define CORE_COUNT  r19  // 0 for non-multicore
-#define BARRIER     r20
+#define SIGNAL      r20
 #define LINK_ADDR   r21  // kernel VA
 #define COUNTER     r22
 #define STACK_SIZE  r23
-#define TLB_SIZE 		r24
-
+#define TLB_SIZE    r24
+#define TCM_BASE    r25
 #define TLB_PHYS    r26  // phys page being mapped
 #define TLB_TMP     r27
 // H2K_GP r28
 #define SP          r29
 
 FUNC_START start .entry .p2align 12
-	jump 1f
+	jump .Lpast_mbox
 	.space 0x80  // FIXME: needs to be enough for all angel mailboxes but still fit all code in 4K
 
-1:
+.Lpast_mbox:
 
 #ifdef CRASH_DEBUG
 	r7 = PC
@@ -163,44 +164,60 @@ H2_BOOT_attempts:
 	LAST_TLB = TLB_SIZE
 #endif
 
+#ifdef MULTICORE
 	CFG_IDX = #CFG_TABLE_CORE_ID
 	CORE_ID = memw_phys(CFG_IDX, CFG_HI)
 
 	CFG_IDX = #CFG_TABLE_CORE_COUNT
 	CORE_COUNT = memw_phys(CFG_IDX, CFG_HI)
 
-#ifdef MULTICORE
-	BARRIER = add(pc, ##boot_sync@PCREL)
-
 	p0 = cmp.eq(CORE_COUNT, #0) // no multicore
-	if (p0) jump 6f
-	p0 = cmp.eq(CORE_ID, #0)
-	if (!p0) jump 10f           // not core 0
+	if (p0) jump:nt .Lno_multicore
 
-	/* core 0 inits barrier */
+	CFG_IDX = #CFG_TABLE_L2TCM
+	TCM_VAL = memw_phys(CFG_IDX, CFG_HI)       // == TCM_BASE[35:16]
+	TCM_VAL = asl(TCM_VAL, #CFG_TABLE_SHIFT)   // TCM_BASE
+
+	SIGNAL = add(pc, ##boot_sync@PCREL)
+	TCM_BASE = add(pc, ##boot_tcm_base@PCREL)
+	TCM_OFFSET = add(pc, ##boot_tcm_offset@PCREL)
+
+	p0 = cmp.eq(CORE_ID, #0)
+	if (!p0) jump .Lnot_core0
+
+/*** core 0 only ***/
+	memw(TCM_BASE) = TCM_VAL
+	
+	/* core 0 inits signal */
 	TMP = ct0(CORE_COUNT)       // FIXME: handle non-2^^n
 	TMP = sub(#31, TMP)
 	TMP2 = ##0xffffffff
 	TMP2 = lsr(TMP2, TMP)
-	memw(BARRIER) = TMP2        // other cores can go when ready
-	dccleana(BARRIER)
+	memw(SIGNAL) = TMP2        // other cores can go when ready
+	dccleana(SIGNAL)
+	syncht                     // to ensure tcm_base write observed
 
 	/*
 	p0 = cmp.eq(CORE_ID, #0)
-	if (!p0) jump 14f
+	if (!p0) jump .Lwait
 	wait(r1)
-14:
+.Lwait:
 */
 
-11:	
-	dcinva(BARRIER)
-	TMP = memw(BARRIER)
-	p0 = cmp.eq(TMP, #0x1)      // other cores done
-	if (!p0) jump 11b
-	jump 6f
+.Lsignal_wait:
+	dcinva(SIGNAL)
+	TMP = memw(SIGNAL)
+	p0 = cmp.eq(TMP, #0x1)      // other cores done?
+	if (!p0) jump:t .Lsignal_wait
+
+	TCM_VAL = memw(TCM_OFFSET)
+	jump .Lcores_booted
+/*** end core 0 only ***/
+	
+/*** core > 0 only ***/
+.Lnot_core0:
 
 	/* Clone for multicore, cores 1 - N */
-10:
 	PAGE_COUNT = add(NPAGES, #1)        // FIXME: handle bootvm > 1 pages or different size
 	FROM = PHYS_ADDR
 	TO = lsr(PHYS_ADDR, #PAGE_BITS)     // 4K page
@@ -216,8 +233,8 @@ H2_BOOT_attempts:
 	TMP = mpyi(PAGE_COUNT, TMP2)    // dwords to copy
 	TMP2 = TO                       // save for jump
 
-	loop0(7f, TMP)
-7:
+	loop0(.Lcopy, TMP)
+.Lcopy:
 	{
 		DATA = memd(FROM)
 		FROM = add(FROM, #8)
@@ -226,24 +243,45 @@ H2_BOOT_attempts:
 		memd(TO) = DATA
 		TO = add(TO, #8)
 	}:endloop0
-13:
-	dcinva(BARRIER)
-	TMP = memw(BARRIER)
-	p0 = cmp.eq(TMP, ##0xffffffff)  // wait for core 0 barrier init
-	if (p0) jump 13b
-12:
-	dcinva(BARRIER)
-	TMP = memw_locked(BARRIER)
+
+.Lcore0_wait:
+	dcinva(SIGNAL)
+	TMP = memw(SIGNAL)
+	p0 = cmp.eq(TMP, ##0xffffffff)  // wait for core 0 signal init
+	if (p0) jump:t .Lcore0_wait
+
+	/* core 0 write to boot_tcm_base complete here */
+	p0 = cmp.eq(CORE_ID, #1)
+	if (!p0) jump .Lnot_core1
+
+	/* core 1 gets the per-core TCM offset */
+	TMP = memw(TCM_BASE)            // core 0 TCM base
+	TCM_VAL = sub(TMP, TCM_VAL)     // per-core TCM base offset
+	memw(TCM_OFFSET) = TCM_VAL
+	dccleana(TCM_OFFSET)
+
+.Lnot_core1:
+.Lsignal_clr:
+	dcinva(SIGNAL)
+	TMP = memw_locked(SIGNAL)
 	TMP = clrbit(TMP, CORE_ID)      // copy done for this core
-	memw_locked(BARRIER, p0) = TMP
-	if (!p0) jump 12b
-	dccleana(BARRIER)
+	memw_locked(SIGNAL, p0) = TMP
+	if (!p0) jump:nt .Lsignal_clr
+	dccleana(SIGNAL)
 
 	TMP = ##boot_continuation
 	TMP = and (TMP, #BOOT_TLB_OFFSET_MASK)
 	TMP = add(TMP, TMP2)
 	jumpr TMP                         // point pc to copied page
-6:
+/*** end core > 0 only ***/
+
+.Lno_multicore:
+.Lcores_booted:
+.Lget_offset:
+	TCM_VAL = memw(TCM_OFFSET)
+	p0 = cmp.eq(TCM_VAL, #0x0)
+	if (p0) jump:t .Lget_offset
+	
 boot_continuation:
 	PHYS_ADDR = pc
 	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)  // addr of lowest page
@@ -278,7 +316,7 @@ boot_continuation:
 	TLB_INDEX = #0
 #endif
 
-4:
+.Ltlb_clr:
 	DO_TLBW
 
 	TLB_INDEX = add(TLB_INDEX,#1)
@@ -287,7 +325,7 @@ boot_continuation:
 #else
 	p0 = cmp.eq(TLB_INDEX, TLB_SIZE)  // # tlb entries
 #endif
-	if (!p0) jump 4b
+	if (!p0) jump:t .Ltlb_clr
 
 #if ARCHV < 68
 	// mark entry 0 so we can tell when index wraps
@@ -295,11 +333,11 @@ boot_continuation:
 	TLB_INDEX = #0
 	DO_TLBW
 
-5:
+.Ltlb_count:
 	TLB_INDEX = add(TLB_INDEX,#1)
 	TLB_ENTRY = tlbr(TLB_INDEX)
 	p0 = cmp.eq(TLB_LO, #1)
-	if (!p0) jump 5b
+	if (!p0) jump:t .Ltlb_count
 	LAST_TLB = TLB_INDEX
 	TLB_SIZE = TLB_INDEX
 #endif
@@ -317,7 +355,7 @@ boot_continuation:
 	COUNTER = #0
 	PAGE_COUNT = NPAGES
 
-2:
+.Ltlb_init:
 	TMP = asl(COUNTER, #BOOT_TLB_OFFSET_BITS)
 	SETCONST(TLB_HI, H2K_LINK_ADDR)
 	TLB_HI = add(TLB_HI, TMP)
@@ -335,7 +373,7 @@ boot_continuation:
 	
 	PAGE_COUNT = add(PAGE_COUNT, #-1)
 	p0 = cmp.eq(PAGE_COUNT, #0)
-	if (!p0) jump 2b
+	if (!p0) jump:t .Ltlb_init
 
 	// entry for L2 interrupt controller
 	MAKE_TLBHI(TLB_HI, Q6_SS_BASE_VA, BOOT_TLB_OFFSET_BITS_1M, BOOT_TLB_SHIFT_1M)
@@ -406,11 +444,10 @@ boot_continuation:
 	syscfg = TMP
 	isync
 	// make the jump to hyperspace
-	TMP.h = #hi(1f)
-	TMP.l = #lo(1f)
+	TMP = ##boot_va
 	jumpr TMP
 
-1:
+boot_va:
 	// invalidate temporary TLB entry
 	TLB_ENTRY = #0
 	DO_TLBW
@@ -430,8 +467,7 @@ boot_continuation:
 	r1 = SS_BASE
 	r2 = LAST_TLB
 	r3 = TLB_SIZE
-	r4 = CORE_ID
-	r5 = CORE_COUNT
+	r4 = TCM_VAL
 
 	jump H2K_thread_boot
 FUNC_END start
@@ -439,6 +475,10 @@ FUNC_END start
 	.p2align 8
 boot_sync:
 	.word 0xffffffff  // ensure non-0
+boot_tcm_base:
+	.word 0x0
+boot_tcm_offset:
+	.word 0x0
 
 FUNC_START h2_init .text.init.boot .p2align 2
 	jumpr r31

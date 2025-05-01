@@ -17,7 +17,7 @@ H2K_kg_t H2K_kg;
 
 extern void _end();
 
-void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count) {
+void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
 	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
 #ifdef HAVE_EXTENSIONS
 	u32_t have_hvx;
@@ -30,6 +30,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 
 	H2K_kg.phys_offset = phys_offset;
 	H2K_kg.multicore_shift = multicore_shift;
+	H2K_kg.tcm_offset = tcm_offset;
 	H2K_kg.last_tlb_index = last_tlb_index;
 	H2K_kg.tlb_size = tlb_size;
 	H2K_kg.pinned_tlb_mask = (~0ULL) << ((last_tlb_index+1) & 0x3F);

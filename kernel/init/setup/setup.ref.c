@@ -75,7 +75,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup_bootvm()
 
 #define DEVICE_PAGE_OFFSET(ADDR) ((ADDR) & ((0x1 << (H2K_KERNEL_ADDRBITS + (2 * DEVICE_PAGE_SIZE))) - 1))
 
-IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multicore_shift, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count) {
+IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multicore_shift, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
 	/* FIXME: The allocator heap can just go at the end of data once boot VM is
 		 moved out of monitor space */
 	void *heap_top;
@@ -88,7 +88,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & (u32_t)-16);
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
-	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count);		/* Kernel Globals first! */
+	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);		/* Kernel Globals first! */
 	H2K_tmpmap_init();
 	H2K_l2cache_init();
 	H2K_tcm_copy(last_tlb_index);
@@ -118,12 +118,14 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	return H2K_init_setup_bootvm();
 }
 
-IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count)
+IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size, u32_t tcm_offset)
 {
 	s32_t asid;
 	H2K_vmblock_t *bootvm;
+	u32_t core_id  = H2K_cfg_table(CFG_TABLE_CORE_ID);
+	u32_t core_count = H2K_cfg_table(CFG_TABLE_CORE_COUNT);
 
-	bootvm = H2K_init_setup(multicore_shift, ssbase, last_tlb_index, tlb_size, core_id, core_count);
+	bootvm = H2K_init_setup(multicore_shift, ssbase, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);
 
 	/* allocate first thread */
 	H2K_thread_context *boot = bootvm->free_threads;

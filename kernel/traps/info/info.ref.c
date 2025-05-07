@@ -106,7 +106,7 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 		return H2K_gp->vtcm_base << PAGE_BITS;
 
 	case INFO_VTCM_SIZE:
-		return (H2K_gp->vtcm_size << PAGE_BITS) / 1024;
+		return H2K_gp->vtcm_size << (PAGE_BITS - 10);
 
 	case INFO_ECC_BASE:
 		if (0x65 < H2K_gp->arch) {

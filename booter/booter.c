@@ -69,6 +69,7 @@ char *pagesize_name[] = {
 	GEN(DEFAULT_HEAP_SIZE)												\
 	GEN(DEFAULT_STACK_SIZE)												\
 	GEN(HEAP_SIZE)																\
+	GEN(HEAP_START)																\
 	GEN(STACK_SIZE)																\
 	GEN(__clade_region_high_pd0_start__)					\
 	GEN(__clade_comp_pd0_start__)									\
@@ -325,7 +326,7 @@ void usage()
 	BOOTER_PRINTF("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
 	BOOTER_PRINTF("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
 	BOOTER_PRINTF("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default lowest mapped physical page.\n");
-	BOOTER_PRINTF("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default (end - fence_lo) + heap size + stack size.\n");
+	BOOTER_PRINTF("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default heap_start + heap size + stack size.\n");
 	BOOTER_PRINTF("  --load_offset <int>\n\tOffset for loading ELF image.  Default (guest_base - <first_program_header_addr>).\n");
 	BOOTER_PRINTF("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf).  Default 0.\n");
 	BOOTER_PRINTF("  --bestprio <int>\n\tBest allowed priority for a virtual CPU.  Default 0.\n");
@@ -805,7 +806,7 @@ void load_vm(unsigned int idx) {
 	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
 	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
-	unsigned long heap_size, stack_size, total_size, prev_size, end, one_page, page_shift;
+	unsigned long heap_size, heap_start, stack_size, total_size, prev_size, end, one_page, page_shift;
 	unsigned long start = ~0L;
 	int clone;
 	unsigned long total_offset;
@@ -979,6 +980,12 @@ void load_vm(unsigned int idx) {
 			BOOTER_PRINTF("\theap_size 0x%08lx\n", heap_size);
 		}
 
+		heap_start = vm_params[idx].specials[SPECIAL_HEAP_START].addr;
+		if (0 == heap_start || -1 == heap_start) {
+			heap_start = end + 4;
+		}
+		BOOTER_PRINTF("\theap_start 0x%08lx\n", heap_start);
+
 		stack_size = vm_params[idx].specials[SPECIAL_STACK_SIZE].addr;
 		if (0 == stack_size || -1 == stack_size) {
 			if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr
@@ -993,7 +1000,7 @@ void load_vm(unsigned int idx) {
 			BOOTER_PRINTF("\tstack_size 0x%08lx\n", stack_size);
 		}
 
-		end += heap_size + stack_size;
+		end = heap_start + heap_size + stack_size;
 		vm_params[idx].stack = (void *)(end & -32);  // should be close to where crt0 puts the stack
 
 		end = H2_ALIGN_UP(end, one_page);
@@ -1387,10 +1394,10 @@ void print_infos() {
 	BOOTER_PRINTF("\tGuest PC sampling available: %s\n", (boot_flags.boot_have_sample ? "true" : "false"));
 #ifdef MULTICORE
 	BOOTER_PRINTF("\tMulti-core:\n");
-	BOOTER_PRINTF("\t\tCount ( 0 == single core) %d\n", core_count);
-	BOOTER_PRINTF("\t\tID %d\n", core_id);
-	BOOTER_PRINTF("\t\tShift 0x%08x\n", h2_info(INFO_SHIFT));
-	BOOTER_PRINTF("\t\tTCM base offset 0x%08x\n", h2_info(INFO_TCM_OFFSET));
+	BOOTER_PRINTF("\t\tCount: ( 0 == single core) %d\n", core_count);
+	BOOTER_PRINTF("\t\tID: %d\n", core_id);
+	BOOTER_PRINTF("\t\tShift: 0x%08x\n", h2_info(INFO_SHIFT));
+	BOOTER_PRINTF("\t\tTCM base offset per core: 0x%08x\n", h2_info(INFO_TCM_OFFSET));
 #endif
 
 	BOOTER_PRINTF("\tCoprocessors:\n");

@@ -189,11 +189,10 @@ H2_BOOT_attempts:
 	memw(TCM_BASE) = TCM_VAL
 	
 	/* core 0 inits signal */
-	TMP = ct0(CORE_COUNT)       // FIXME: handle non-2^^n
-	TMP = sub(#31, TMP)
-	TMP2 = ##0xffffffff
-	TMP2 = lsr(TMP2, TMP)
-	memw(SIGNAL) = TMP2        // other cores can go when ready
+	TMP = #0x1
+	TMP = asl(TMP, CORE_COUNT)
+	TMP = add(TMP, #-1)
+	memw(SIGNAL) = TMP         // other cores can go when ready
 	dccleana(SIGNAL)
 	syncht                     // to ensure tcm_base write observed
 
@@ -261,13 +260,23 @@ H2_BOOT_attempts:
 	dccleana(TCM_OFFSET)
 
 .Lnot_core1:
+#undef FROM
+#define SYSCFG r11
+	SYSCFG = syscfg
+	SYSCFG = clrbit(SYSCFG, #SYSCFG_D_BIT)    // dcache off to make llsc work
+	syscfg = SYSCFG
+	isync
+
 .Lsignal_clr:
-	dcinva(SIGNAL)
 	TMP = memw_locked(SIGNAL)
 	TMP = clrbit(TMP, CORE_ID)      // copy done for this core
 	memw_locked(SIGNAL, p0) = TMP
 	if (!p0) jump:nt .Lsignal_clr
-	dccleana(SIGNAL)
+
+	SYSCFG = setbit(SYSCFG, #SYSCFG_D_BIT)    // dcache back on
+	dckill
+	syscfg = SYSCFG
+	isync
 
 	TMP = ##boot_continuation
 	TMP = and (TMP, #BOOT_TLB_OFFSET_MASK)
@@ -277,14 +286,15 @@ H2_BOOT_attempts:
 
 .Lno_multicore:
 .Lcores_booted:
+boot_continuation:
+	PHYS_ADDR = pc
+	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)  // addr of lowest page
+
 .Lget_offset:
 	TCM_VAL = memw(TCM_OFFSET)
 	p0 = cmp.eq(TCM_VAL, #0x0)
 	if (p0) jump:t .Lget_offset
 	
-boot_continuation:
-	PHYS_ADDR = pc
-	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)  // addr of lowest page
 #endif
 	
 	/* Setup EVB */

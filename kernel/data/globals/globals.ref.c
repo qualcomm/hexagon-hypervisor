@@ -203,9 +203,9 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 		H2K_kg.vtcm_base = 0;
 	}
 	if (0x65 < H2K_gp->arch) {
-		H2K_kg.vtcm_size = (H2K_cfg_table(CFG_TABLE_VTCM_SIZE) * 1024) >> PAGE_BITS;
+		H2K_kg.vtcm_size = H2K_cfg_table(CFG_TABLE_VTCM_SIZE) >> (PAGE_BITS - 10);  // entry in kbytes
 	} else if (0 < H2K_gp->coproc_contexts && 0x65 == H2K_gp->arch) {
-		H2K_kg.vtcm_size = (EXT_HVX_VTCM_SIZE * 1024) >> PAGE_BITS;
+		H2K_kg.vtcm_size = EXT_HVX_VTCM_SIZE >> (PAGE_BITS - 10);  // entry in kbytes
 	} else {
 		H2K_kg.vtcm_size = 0;
 	}

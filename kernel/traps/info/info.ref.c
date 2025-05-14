@@ -53,7 +53,7 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 		return H2K_gp->l2size;
 
 	case INFO_TCM_SIZE:
-		return H2K_gp->tcm_size << PAGE_BITS;
+		return H2K_gp->tcm_size;
 
 	case INFO_H2K_PGSIZE:
 		return H2K_PAGESIZE;

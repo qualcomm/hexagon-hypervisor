@@ -1864,6 +1864,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			if (h2_hwconfig_l2cache_size(strtoul(argv[1],NULL,0), (regval & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT) == -1) {
 				FAIL("HWCONFIG_L2CACHE", "");
 			}
+			tcm_size = h2_info(INFO_TCM_SIZE);
 			argc -= 2; argv += 2;
 			continue;
 

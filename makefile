@@ -9,7 +9,7 @@ TESTOUT ?= test.out
 TARGET ?= opt
 ARCHV ?= 81
 
-JFLAG ?= -j 3
+JFLAG ?= -j
 OPT_JFLAG := $(JFLAG)
 REF_JFLAG := $(JFLAG)
 TEST_JFLAG ?= -j 8
@@ -51,18 +51,18 @@ endif
 
 ifeq ($(TARGET), opt)
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 endif
 
 ifeq ($(TARGET), opt_cov)
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 export OPTIMIZE := $(OPTIMIZE_COV)
 endif
 
 ifeq ($(TARGET), opt_snap)
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 export H2K_LOAD_ADDR=0x00400000 
 export H2K_EXTRA_CFLAGS+=-DNMI_STOP
 endif
@@ -70,7 +70,7 @@ endif
 ifeq ($(TARGET), opt_tiny_snap)
 override ARCHV := 65  # because some things call make with ARCHV=66t
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 export TINY_CORE=1
 export H2K_LOAD_ADDR=0x00400000
 export H2K_EXTRA_CFLAGS+=-DNMI_STOP
@@ -78,12 +78,12 @@ endif
 
 ifeq ($(TARGET), ref)
 T := ref
-REF_JFLAG :=
+#REF_JFLAG :=
 endif
 
 ifeq ($(TARGET), ref_cov)
 T := ref
-REF_JFLAG :=
+#REF_JFLAG :=
 export OPTIMIZE := $(OPTIMIZE_COV)
 endif
 
@@ -95,11 +95,17 @@ endif
 
 ifeq ($(TARGET), opt_si)
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 export H2K_LOAD_ADDR=0x84c00000
 export H2K_GUEST_START=0x87000000
 export NULL_ANGEL_TRAP=1
 export MAGIC_ANGEL=--magic_angel
+endif
+
+ifeq ($(TARGET), debug)
+T := ref
+#OPT_JFLAG :=
+export OPTIMIZE := $(OPTIMIZE_DEBUG)
 endif
 
 # FIXME: Remove when cluster sched ported to opt

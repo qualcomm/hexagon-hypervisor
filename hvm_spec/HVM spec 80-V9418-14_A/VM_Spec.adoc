@@ -1,5 +1,6 @@
 :stem:
 :toc: macro
+:imagedir: images/
 = Hexagon Virtual Machine
 
 :author:
@@ -554,45 +555,20 @@ An HVM instance begins executing in Guest mode, so the only way to execute softw
 . Set the event registers so the GSR.UM bit is set, and the GELR value specifies code to be executed in User mode.
 . Execute a vmrte instruction.
 
-== 6Interrupts
+== Interrupts
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape81,529,2]
-
-=== 6.1Overview
+=== Overview
 
 In HVM interrupts are handled as a special case of events. When an interrupt event is dispatched, the GSR.Cause value in the event record is set to the interrupt number.
 
 Interrupts can be enabled or completely disabled per virtual processor by setting the virtual state Interrupt Enabled. When an event is taken, Interrupt Enabled is cleared and the previous Interrupt Enabled state is stored in GSR.
 
-=== 6.2Virtual interrupt controller
+=== Virtual interrupt controller
 
 HVM defines a _virtual interrupt controller_ to manage interrupt events flowing into the multiple virtual processors.
 
-[width=513]
-|===
-6+.<h| image::VM_Spec_html_3eadb37af242f3a6.gif[Shape82,492,307] .>a| +
-
-[width=16]
-|===
-h| N
-
-|===
- +
- +
-.<a| +
-
-| VP 0 .<a| +
- +
-
-| VP 1 .<| *...* 2+| VP N
-
-|===
-
-*Figure 6-1 Virtual interrupt controller*
-
-_Hexagon Virtual Machine Specification [Draft] Interrupts_
-
-image::VM_Spec_html_cb9ba07a057ca780.gif[Shape83,624,1]
+.Virtual interrupt controller
+image::virtual_interrupt_controller.svg[]
 
 Each interrupt has a global enable, as well as a per-virtual processor local enable:
 
@@ -604,37 +580,35 @@ By manipulating the local and global enable values, interrupts can be steered to
 
 When an interrupt arrives, its bit is set in the pending-interrupt bit vector. If the interrupt is globally and locally enabled for a virtual processor that has interrupts enabled, the virtual processor may take the interrupt: the PC changes to the interrupt event, and the interrupt number is stored in GSR.CAUSE. In addition, the interrupt is cleared from the pending register and automatically disabled globally.
 
-*NOTE* At most one virtual processor takes a given interrupt. Interrupting a virtual machine and clearing the pending bit and global enable are atomic operations.
+[NOTE]
+====
+At most one virtual processor takes a given interrupt. Interrupting a virtual machine and clearing the pending bit and global enable are atomic operations.
+====
 
-=== 6.3Interrupt type and polarity
+=== Interrupt type and polarity
 
 The VMM is responsible for configuring interrupt type and polarity.
 
-=== 6.4Interrupt masks
+=== Interrupt masks
 
 HVM has both a per-interrupt global enable bit and a per-interrupt, per-virtual-processor enable bit. These bits can be modified by the virtual instruction vmintop, and can be used to mask interrupts either for a specific processor or for all processors.
 
-=== 6.5Interrupt acknowledgement
+=== Interrupt acknowledgement
 
 When HVM posts an interrupt event, the interrupt is disabled globally. Thus, any further occurrences of that interrupt are not posted on any virtual processor until the interrupt service routine re-enables it using the GLOBEN operation of the virtual instruction vmintop.
 
-=== 6.6Interrupt enable
+=== Interrupt enable
 
 Each virtual processor has an Interrupt Enabled status. This status can be checked using the virtual instruction vmgetie, and modified using the virtual instruction vmsetie (as well as vmrte). When a virtual processor has the Interrupt Enabled status disabled (set to zero), it takes no interrupts.
 
 The Interrupt Enabled status is automatically set to Disabled on every taken event (exception or interrupt), as well as when the virtual processor starts.
 
-_Hexagon Virtual Machine Specification [Draft] Interrupts_
-
-image::VM_Spec_html_cb9ba07a057ca780.gif[Shape84,624,1]
-
-=== 6.7Virtual instructions for interrupt management
+=== Virtual instructions for interrupt management
 
 Table 6-1 summarizes the virtual instructions used for interrupt management.
 
-*Table 6-1 Virtual instructions for interrupt management*
-
 [width=452]
+.Virtual instructions for interrupt management*
 |===
 | *Instruction* 2+| *Description*
 
@@ -675,13 +649,14 @@ a| +
 
 The vmintop operation "Set interrupt affinity" locally enables an interrupt for the specified virtual processor, and locally disables it for all other virtual processors.
 
-*NOTE* For details on these instructions see Appendix A.
+[NOTE]
+====
+For details on these instructions see Appendix A.
+====
 
-== 7Exceptions
+== Exceptions
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape85,529,2]
-
-=== 7.1Overview
+=== Overview
 
 Exceptions are non-interrupt events, and are not maskable like interrupts.
 
@@ -691,9 +666,12 @@ Exceptions can be precise or imprecise. When a precise exception event is handle
 
 * Trap exceptions - The packet following the trap instruction
 
-*NOTE* When an exception occurs as a consequence of a load or store address, GBADVA contains the address associated with the exceptional operation.
+[NOTE] 
+====
+When an exception occurs as a consequence of a load or store address, GBADVA contains the address associated with the exceptional operation.
+====
 
-=== 7.2Exception classes
+=== Exception classes
 
 HVM supports three classes of exceptions, each of which is handled separately:
 
@@ -703,11 +681,7 @@ HVM supports three classes of exceptions, each of which is handled separately:
 
 * Virtual machine check
 
-_Hexagon Virtual Machine Specification [Draft] Exceptions_
-
-image::VM_Spec_html_cb9ba07a057ca780.gif[Shape86,624,1]
-
-=== 7.3General exceptions
+=== General exceptions
 
 General exceptions in HVM correspond closely to precise exceptions in the underlying Hexagon processor. The general exception value is stored in the GSR.Cause field of the event record.
 
@@ -740,17 +714,18 @@ h| *Exception* h| *Description* h| *GBADVA*
 
 |===
 
-_Exceptions_
-
-=== 7.4Trap exceptions
+=== Trap exceptions
 
 Trap exceptions are triggered when a _trap0_ instruction is executed by an HVM client.
 
 The 8-bit value encoded in the _trap0_ instruction is stored in the GSR.Cause field of the event record.
 
-*NOTE* On trap exceptions GELR points to the packet following the trap instruction, and not to the trap instruction itself.
+[NOTE]
+====
+On trap exceptions GELR points to the packet following the trap instruction, and not to the trap instruction itself.
+====
 
-=== 7.5Virtual machine check
+=== Virtual machine check
 
 Machine Check exceptions indicate the occurrence of potentially unrecoverable failures in the virtual machine or its underlying hardware.
 
@@ -758,9 +733,9 @@ HVM software can register and handle machine check exceptions to perform emergen
 
 If the Guest-mode software has fully handled the failure (for example, the fault has been isolated to a single User-mode program which can be terminated in isolation), then it can terminate with a vmrte. However, it is implementation-dependent whether the virtual machine monitor will allow resumption of pre-event processing.
 
-*Table 7-2 Machine check exceptions*
 
 [width=521]
+.Machine check exceptions
 |===
 h| *Exception* h| *Description*
 | 0x00 | Shutdown. Administrative shutdown of virtual machine
@@ -777,8 +752,6 @@ h| *Exception* h| *Description*
 
 == 8Cache Control
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape90,529,2]
-
 === 8.1Overview
 
 The user-level Hexagon cache management instructions (dcfetch_,_ icinva_,_ dccleaninva_,_ dccleana_,_ dcinva) can be used in HVM clients.
@@ -791,7 +764,10 @@ The virtual instruction vmcache is used to perform various cache operations that
 
 vmcache additionally enables cleaninva-like operations over large virtual address areas to be optimized by the VMM (Section A.2.1).
 
-*NOTE* vmcache operations are non-destructive of data in the cache.
+[NOTE]
+====
+vmcache operations are non-destructive of data in the cache.
+====
 
 Table 8-1 lists the HVM-specific cache control operations.
 
@@ -805,7 +781,7 @@ h| *Operation* h| *Description*
 | L2KILL | Non-destructive invalidate of entire L2 data cache
 | DCCLEANINVA | Non-destructive invalidate of virtual address range, starting at address in R1 for the number of bytes in R2, through full D-cache hierarchy.
 | ICINVA | Non-destructive invalidate of virtual address range, starting at address in R1 for the number of bytes in R2, through full I-cache hierarchy.
-| IDSYNC | Ensure that Instruction cache can observe all data in specified address range.NOTE - Similar to DCCLEANINVA followed by ICINVA.
+| IDSYNC | Ensure that Instruction cache can observe all data in specified address range. Noe that this is similar to DCCLEANINVA followed by ICINVA.
 | Reserved | Reserved (No-op)
 
 |===
@@ -827,31 +803,33 @@ h| *Instruction* h| *Description*
 
 For details on these instructions see Appendix A.
 
-== 9Memory Management
+== Memory Management
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape91,529,2]
-
-=== 9.1Overview
+=== verview
 
 HVM maps virtual addresses 0x0000_0000 to 0xfeff_ffff onto a 32-bit logical address space, using either a list of translations, or a 1- or 2-level virtual page table scheme. The translations are visible to and writable by a guest operating system running on HVM.
 
 The VMM is responsible for validating and transforming the information as necessary when filling the physical processor TLB. In normal operation, translations are loaded ondemand by the VMM.
 
-=== 9.2Underlying logical/physical memory
+=== Underlying logical/physical memory
 
 "Logical" addresses are addresses not translated by the HVM MMU. Depending on the virtual machine implementation and configuration, they may be hardware physical addresses or addresses mapped by the VMM.
 
-*NOTE* The ranges of logical memory accessible in HVM may be determined by platform-specific operations. Attempts to map and access logical addresses which are not accessible to a virtual machine will result in a protection violation exception event.
+[NOTE]
+====
+The ranges of logical memory accessible in HVM may be determined by platform-specific operations. Attempts to map and access logical addresses which are not accessible to a virtual machine will result in a protection violation exception event.
+====
 
-=== 9.3Linear translations
+=== Linear translations
 
 Virtual-to-logical address translations can be specified by a list of translations. Figure 9-1 shows the format of a list entry. Table 9-1 describes the fields in a list entry.
 
 The VMM traverses the translation list in a linear fashion. The list is terminated by a translation entry which has all bits set to zero.
 
-*NOTE* This format requires less space to hold simple memory layouts, and may be preferable for more highly-embedded Guest-mode environments.
-
-63 54 5251 32
+[NOTE]
+====
+This format requires less space to hold simple memory layouts, and may be preferable for more highly-embedded Guest-mode environments.
+====
 
 [width=280]
 |===
@@ -888,7 +866,7 @@ h| *Field* h| *Description*
 
 |===
 
-=== 9.4Virtual page table entries
+=== Virtual page table entries
 
 HVM defines two levels of virtual page table. The first level breaks down the virtual address space into 1020 4MB segments, with each segment represented by a first-level page table entry (PTE).
 
@@ -902,27 +880,12 @@ A first-level PTE encodes the entry type and page size in its 3-bit S field (Fig
 
 31 2 0
 
-[width=290]
-|===
-h| image::VM_Spec_html_32caab6d28a69.gif[Shape97,252,22] a| +
-
-[width=35]
-|===
-.<h| S
-
-|===
- +
- +
-
-|===
-
-*Figure 9-2 Page table entry (generic)*
+.Page table entry (generic)
+image::page_table_entry.svg[]
 
 Table 9-2 lists the entry types for an L1 page table entry.
 
-*Table 9-2 L1 page table entry types*
-
-[width=509]
+.L1 page table entry types
 |===
 h| *S Field Value* h| *Entry Type* h| *Page Size* h| *L2 Entries* h| *Address Bits*
 | 000 | Page Directory Entry | 4KB | 1024 | 31:12
@@ -938,13 +901,14 @@ h| *S Field Value* h| *Entry Type* h| *Page Size* h| *L2 Entries* h| *Address Bi
 
 If the size specified in S is greater than or equal to 4M, a second level of page table is not necessary to define the mapping: the entry defines the page mapping and permissions directly. For smaller pages, the entry is interpreted as a directory entry which points to a second-level table.
 
-*NOTE* Referencing a virtual address which resolves to a PTE marked as invalid (111) results in a protection violation exception event.
-
-
+[NOTE]
+====
+Referencing a virtual address which resolves to a PTE marked as invalid (111) results in a protection violation exception event.
 
 Because the granularity of the first-level page table is 4MB, the PTE for a 16MB virtual page must be replicated for each of the 4 entries in the firstlevel page table that correspond to the 16MB virtual address range.
+====
 
-==== 9.4.1Page directory entries
+==== Page directory entries
 
 A PTE contains (in addition to the S field) a pointer to a second-level page table. The most significant bits of the entry are used as the most significant bits of the logical address of the L2 table.
 
@@ -961,9 +925,12 @@ Figure 9-3 shows the format of a page directory entry.
 
 *Figure 9-3 Page directory entry*
 
-*NOTE* L2 tables must be aligned to the size of the table.
+[NOTE]
+====
+L2 tables must be aligned to the size of the table.
+====
 
-==== 9.4.2Page table entries
+==== Page table entries
 
 PTEs are used to define the virtual-to-logical translation for a specific memory page.
 
@@ -1034,13 +1001,14 @@ h| *Bits* h| *Mnemonic* h| *Description*
 
 |===
 
-*NOTE* For L1 entries, the size field must be set correctly for determining page size.
+[NOTE]
+====
+For L1 entries, the size field must be set correctly for determining page size.
 
-For L2 entries, the size field is ignored and may be used by software.
-
-
+For L2 entries, the size field is ignored and may be used by software.
 
 If none of the R, W, or X bits are set, the virtual map is considered invalid, and any access (load, store, fetch) results in a Page Fault Exception event.
+====
 
 *Table 9-4 LPN bits used as function of page size*
 
@@ -1057,9 +1025,12 @@ h| *Page SIze* h| *LPN Bits Used*
 
 |===
 
-*NOTE* HVM ignores any LPN bits that are not required to address an aligned page of the specified size.
+[NOTE]
+====
+HVM ignores any LPN bits that are not required to address an aligned page of the specified size.
+====
 
-==== 9.4.3Cache attributes
+==== Cache attributes
 
 In a page table entry (Section 9.4.2) the C field controls the cache attributes of the virtual page. The cache behavior is undefined if virtual aliases map the same logical page with different cache attributes.
 
@@ -1086,13 +1057,19 @@ The cache attribute Device Access should be used whenever loads or stores have s
 
 The cache attribute Uncached Memorydoes not allow memory to be cached. However, the implementation is allowed to replay loads and stores.
 
-*Implementors Note:* _The HVM implementation is free to replay loads and stores for pages assigned_ _Uncached Memory_. _(The Hexagon processor will in fact do this.)_ *NOTE* To maintain compatibility with future HTM versions, the reserved cache attribute settings should not be used.
+[NOTE]
+====
+The HVM implementation is free to replay loads and stores for pages assigned Uncached Memory (The Hexagon processor will in fact do this.) 
+====
 
-
+[NOTE]
+====
+To maintain compatibility with future HTM versions, the reserved cache attribute settings should not be used.
+====
 
 HVM may choose to reduce the cacheability of a translation for reasons of correctness or Quality-of-Service.
 
-=== 9.5Setting new memory maps
+=== Setting new memory maps
 
 The virtual instruction vmnewmap establishes a new logical-to-virtual memory map for HVM.
 
@@ -1102,7 +1079,7 @@ vmnewmap accepts as arguments the logical addresses of either a segment table
 
 *Implementors Note:* _If an invalid page table is passed to __vmnewmap__ , the HVM implementation is free to determine whether __vmnewmap_ _returns with a value indicating failure, or whether a subsequent attempt to de-reference an address with an invalid mapping causes a virtual machine check. For more information see_ _Section 7.5__._
 
-=== 9.6Flushing stale memory maps
+=== Flushing stale memory maps
 
 The virtual instruction vmclrmap flushes a possibly-stale virtual mapping.
 
@@ -1110,7 +1087,7 @@ vmclrmap accepts as arguments a range of virtual addresses. It causes copies of 
 
 Subsequent accesses to the memory range use the values in the memory map tables.
 
-=== 9.7Virtual instructions for memory management
+=== Virtual instructions for memory management
 
 Table 9-6 summarizes the virtual instructions used for memory management.
 
@@ -1130,10 +1107,6 @@ For details on these instructions see Appendix A.
 .
 == Processor Resource Management
 
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape104,529,2]
-
-[start=10]
-
 === Overview
 
 HVM supports the following facilities for processor resource management:
@@ -1144,9 +1117,7 @@ HVM supports the following facilities for processor resource management:
 
 * Ability to create new virtual processors
 
-[start=10]
-
-=== Timer*
+=== Timer
 
 HVM supports a fine-grained timer which is accessed through the virtual instructions vmgettime and vmsettime:
 
@@ -1154,15 +1125,12 @@ HVM supports a fine-grained timer which is accessed through the virtual instruct
 
 * vmsettime resets the timer to the 64-bit value passed as an argument.
 
-_*Implementors Note:*_ _The HVM implementation is free to define whether the timer corresponds to CPU time or wall-clock time. For example, if a Virtual Machine Monitor schedules out a virtual CPU, the timer may or may not continue to increment while the virtual CPU is not executing._
+[NOTE]
+====
+The HVM implementation is free to define whether the timer corresponds to CPU time or wall-clock time. For example, if a Virtual Machine Monitor schedules out a virtual CPU, the timer may or may not continue to increment while the virtual CPU is not executing.
+====
 
-_Hexagon Virtual Machine Specification [Draft] Processor Resource Management_
-
-image::VM_Spec_html_cb9ba07a057ca780.gif[Shape105,624,1]
-
-[start=10]
-
-=== Processor suspension*
+=== Processor suspension
 
 Guest-mode software on HVM can suspend the execution of a virtual processor in two ways:
 
@@ -1174,9 +1142,12 @@ vmwait suspends execution pending an interrupt event. After the next event is ha
 
 vmyield suspends execution temporarily, independently of any virtual processor events. It auses the VMM to schedule other virtual processors at the same or higher priority, without the need for pre-emption.
 
-*NOTE* It is recommended that the guest operating system yield while attempting to acquire a spinlock. This ensures that a virtual processor holding the spinlock has an opportunity to execute.
+[NOTE]
+====
+It is recommended that the guest operating system yield while attempting to acquire a spinlock. This ensures that a virtual processor holding the spinlock has an opportunity to execute.
+====
 
-*10.4 Processor creation*
+=== Processor creation
 
 Guest-mode software can create new instances of virtual processors with the virtual instruction vmstart. The newly-created instances execute concurrently with the existing processor instances.
 
@@ -1184,7 +1155,7 @@ A new virtual processor instance begins execution in Guest mode, fetching instru
 
 Each virtual processor has a unique 32-bit identifier, which can have values in the following range:
 
-0 .. (max_number_of_supported_virtual_processors - 1)
+`0 .. (max_number_of_supported_virtual_processors - 1)`
 
 A virtual processor ID value can never have the value -1 (all ones). The initial virtual processor instance has a virtual processor ID of zero. Software running on a virtual processor can access its virtual processor ID by executing the virtual instruction vmvpid.
 
@@ -1196,17 +1167,12 @@ The inverse of vmstart is the virtual instruction vmstop. When a virtual process
 
 * The resources associated with the virtual processor are freed and made available for use by any new virtual processor instance created by a subsequent vmstart operation.
 
-_Hexagon Virtual Machine Specification [Draft] Processor Resource Management_
-
-image::VM_Spec_html_cb9ba07a057ca780.gif[Shape106,624,1]
-
-*10.5 Virtual instructions for processor management*
+=== Virtual instructions for processor management
 
 Table 10-1 summarizes the virtual instructions used for processor resource management.
 
-*Table 10-1 Virtual instructions for processor management*
-
 [width=390]
+.Virtual instructions for processor management
 |===
 h| *Instruction* h| *Description*
 | vmgettime | Get the 64-bit virtual processor timestamp
@@ -1221,16 +1187,12 @@ h| *Instruction* h| *Description*
 
 For details on these instructions see Appendix A.
 
-[start=11]
-.
 == Trust Model
 
 === Overview
 
 The HVM environment provides a trust model which is distinct from, but interoperable with the trust model of other cores in the system.
 
-[start=11]
-.
 == Debug
 
 === Overview
@@ -1241,9 +1203,7 @@ HVM debug support must reconcile two factors:
 
 * The operational requirement for security and isolation.
 
-[start=11]
-
-=== User-mode software debug*
+=== User-mode software debug
 
 User-mode software can be debugged using Guest-mode facilities. For example:
 
@@ -1253,9 +1213,7 @@ User-mode software can be debugged using Guest-mode facilities. For example:
 
 These facilities are sufficient to implement a UNIX-style ptrace capability for the guest operating system.
 
-[start=11]
-
-=== Guest-mode software debug*
+=== Guest-mode software debug
 
 The VMM can use the Hexagon processor's supervisor-mode facilities to debug Usermode code. These same process-level facilities can be used to debug Guest-mode software.
 
@@ -1263,8 +1221,6 @@ _*Implementors Note:*_ _The HVM implementation is free to determine whether the 
 
 _Under no circumstances, however, can an untrusted VMM or operator debug agent generate trusted load or store cycles, either directly or indirectly, through a trusted system that is being debugged._
 
-[type=A]
-.
 == HVM Instructions
 
 === Overview
@@ -1277,9 +1233,9 @@ This appendix provides detailed descriptions of the HVM virtual instructions. Th
 
 Table A-1 summarizes the virtual instructions.
 
-*Table A-1 HVM virtual instruction summary*
 
 [width=624]
+.HVM virtual instruction summary
 |===
 h| *Mnemonic* h| *Function* h| *Encoding* h| *Inputs* h| *Outputs*
 | vmversion | Request Virtual Machine Version | trap1(#0) | R0 = Requested VM Version | R0 = Configured VM Version
@@ -2570,19 +2526,11 @@ h| *2* h| *1* h| *0*
 
 |===
 
-[start=2,type=A]
-.
 == Determining HVM Environment
-
-image::VM_Spec_html_c5a4304b651551fd.gif[Shape122,529,2]
-
-[start=2,type=A]
 
 === Overview
 
 Guest-mode software can poll the VMM for the current HVM version to determine if they are version-compatible.
-
-[start=2,type=A]
 
 === Accessing environment version*
 
@@ -2592,9 +2540,10 @@ This enables the guest software to request a virtual machine environment version
 
 This feature enables the VMM to support guests that may only support an older HVM specification. Alternatively, it enables guests to support Monitors that only support older HVM specifications.
 
-*NOTE* Further communication about the system configuration will likely be beneficial for the guest, but the definition of this feature is TBD.
-
-
+[NOTE]
+====
+Further communication about the system configuration will likely be beneficial for the guest, but the definition of this feature is TBD.
+====
 
 The version number associated with the current VM specification is 0x0000_0700.
 

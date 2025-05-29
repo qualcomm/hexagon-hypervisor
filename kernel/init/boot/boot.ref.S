@@ -171,7 +171,7 @@ H2_BOOT_attempts:
 	CFG_IDX = #CFG_TABLE_CORE_COUNT
 	CORE_COUNT = memw_phys(CFG_IDX, CFG_HI)
 
-	p0 = cmp.eq(CORE_COUNT, #0) // no multicore
+	p0 = !cmp.gtu(CORE_COUNT, #1) // no multicore
 	if (p0) jump:nt .Lno_multicore
 
 	CFG_IDX = #CFG_TABLE_L2TCM

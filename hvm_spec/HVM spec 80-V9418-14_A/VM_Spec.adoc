@@ -165,6 +165,7 @@ HVM User mode has the following restrictions:
 
 * Memory addressing
 
+[user_mode_memory_addressing]
 ==== Memory addressing
 
 The VMM reserves the high 16 MB of the User-mode address space (addresses 0xff00_0000 to 0xffff_ffff) for its own use.
@@ -173,7 +174,7 @@ Any attempts by an HVM client to load, store, or execute from addresses in this 
 
 [NOTE]
 ====
-This restriction also applies to the Guest-mode address space (Section 3.3.1).
+This restriction also applies to the Guest-mode address space (<<Memory addressing>>).
 ====
 
 == HVM Guest Mode
@@ -275,6 +276,7 @@ HVM Guest mode has the following restrictions:
 
 * Memory addressing
 
+[guest_mode_memory_addressing]
 ==== Memory addressing
 
 The VMM reserves the high 16 MB of the Guest-mode address space (addresses 0xff00_0000 to 0xffff_ffff) for its own use.
@@ -283,7 +285,7 @@ Any attempts by an HVM client to load, store, or execute from addresses in this 
 
 [NOTE]
 ====
-This restriction also applies to the User-mode address space (Section 2.2.1).
+This restriction also applies to the User-mode address space (<<Memory addressing>>).
 ====
 
 == Initial State
@@ -304,7 +306,7 @@ A virtual processor begins executing in Guest mode. The virtual MMU is always ac
 
 === Registers
 
-For virtual processors the initial value of the program counter (PC) and stack pointer are specified externally: either as parameters to commands passed to the VMM, or as arguments to the virtual instruction vmstart which creates a new virtual processor instance (Section 10.4).
+For virtual processors the initial value of the program counter (PC) and stack pointer are specified externally: either as parameters to commands passed to the VMM, or as arguments to the virtual instruction vmstart which creates a new virtual processor instance (<<Processor creation>>).
 
 The initial values of all other registers are undefined - these registers must be initialized by software starting at the initial PC.
 
@@ -326,9 +328,9 @@ While memory values are undefined at startup of a virtual machine, in the event 
 
 In the HVM initial memory map, the logical memory segment that the initial program is loaded into is mapped to the identical virtual address range, with consecutive virtual pages mapped 1:1 to consecutive logical pages.
 
-The page tables describing the initial map are outside the initial logical address space, and cannot be modified by HVM clients (Section 2.2.1, Section 3.3.1).
+The page tables describing the initial map are outside the initial logical address space, and cannot be modified by HVM clients (<<user_mode_memory_addressing,User mode memory addressing>>, <<guest_mode_memory_addressing,Guest mode memory addressing>>).
 
-Any other mapping must be created by Guest-mode software constructing a new set of page tables and activating them with virtual instruction vmnewmap (Section 9.5).
+Any other mapping must be created by Guest-mode software constructing a new set of page tables and activating them with virtual instruction `vmnewmap` (<<Setting new memory maps>>).
 
 == Event Model
 
@@ -342,11 +344,11 @@ Events are specified by their assigned event number. When an event occurs, HVM u
 
 Before it begins receiving events, the guest operating system must register the Guest Event Vector Base (GEVB) value with HVM. It does this with the virtual instruction vmsetvec.
 
-HVM responds to an event by storing event-related information (called the _event record_) in the dedicated event registers (Section 5.3), and then transferring control to the event vector specified by the event number.
+HVM responds to an event by storing event-related information (called the _event record_) in the dedicated event registers (<<Event registers>>), and then transferring control to the event vector specified by the event number.
 
 Event handlers access the event registers with the virtual instructions vmgetregs and vmsetregs - the guest operating system is responsible for managing these registers.
 
-When an event is dispatched to a handler, interrupts are disabled to the virtual processor. Interrupts are re-enabled either explicitly when the handler executes the virtual instruction vmsetie, or implicitly when the handler returns by executing the virtual instruction vmrte. (vmrte restores the interrupt enable value from the event record.)
+When an event is dispatched to a handler, interrupts are disabled to the virtual processor. Interrupts are re-enabled either explicitly when the handler executes the virtual instruction `vmsetie`, or implicitly when the handler returns by executing the virtual instruction `vmrte`. (`vmrte` restores the interrupt enable value from the event record.)
 
 When HVM transfers control between User and Guest modes, it swaps the contents of the Guest Other Stack Pointer (GOSP) and R29 (the Hexagon processor stack pointer).
 
@@ -354,12 +356,12 @@ If an event handler causes an additional event, the original event record is los
 
 [NOTE]
 ====
-If an event occurs before GEVB is configured, HVM terminates the current virtual processor (Section 10.4).
+If an event occurs before GEVB is configured, HVM terminates the current virtual processor (<<Processor creation>>).
 ====
 
 === Event registers
 
-Table 5-1 defines the four 32-bit registers that are used to store HVM event records (Section 5.2).
+Table 5-1 defines the four 32-bit registers that are used to store HVM event records (<< Event model>>).
 
 .Event registers
 |===
@@ -871,7 +873,8 @@ h| *Bits* h| *Mnemonic* h| *Description*
 | 11 | X | Execute Permission.HVM has execute access to page. Attempts fetch instructions from an address within page causes an Execute Permission Exception event if the X bit is cleared (0).
 | 10 | W | Write PermissionHVM has write access to page. Attempts to store data to an address within the page causes a Write Permission Exception event if W bit is cleared (0).
 | 9 | R | Read PermissionHVM has read access to page. Attempts to load data from an address within the page causes a Read Permission Exception event if the R bit is cleared (0).
-| 8:6 | C | Cache AttributesSee Section 9.4.3.
+| 8:6 | C | Cache Attributes
+See <<Cache attributes>>.
 | 5 | U | User ModeIf the bit is set (1), User mode programs may reference the page. If it is cleared (0), read, write, or execute references in User mode result in a User Access Exception event.
 | 4 | T | TrustedBehavior depends on the system trust model. Recommended setting is cleared (0).
 | Varies | - | Unused. Ignored by HVM.
@@ -907,7 +910,7 @@ HVM ignores any LPN bits that are not required to address an aligned page of the
 
 ==== Cache attributes
 
-In a page table entry (Section 9.4.2) the C field controls the cache attributes of the virtual page. The cache behavior is undefined if virtual aliases map the same logical page with different cache attributes.
+In a page table entry (<<Page table entries>>) the C field controls the cache attributes of the virtual page. The cache behavior is undefined if virtual aliases map the same logical page with different cache attributes.
 
 C is relevant only for "terminal" PTEs which resolve to a target logical page address.
 

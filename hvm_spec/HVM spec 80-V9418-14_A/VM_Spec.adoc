@@ -153,7 +153,7 @@ This document uses the same notational conventions used in the _Hexagon Programm
 
 == HVM User Mode
 
-=== *Overview*
+=== Overview
 
 Except for the restrictions noted below, HVM User mode is identical to the processor architecture defined in the _Hexagon Programmer's Reference Manual_.
 
@@ -224,7 +224,7 @@ HVM supports Hexagon interrupts as a special case of asynchronous events:
 
 * Interrupts can be collectively enabled and disabled
 
-* Interrupts are managed with virtual instructions vmintop, vmsetie_,_ and vmgetie
+* Interrupts are managed with virtual instructions vmintop, vmsetie, and vmgetie
 
 For more information see Chapter 6.
 
@@ -392,68 +392,14 @@ GSR is the Guest Status Register.
 
 It provides information about the virtual processor state when the event occurred, and about the nature of the event beyond what is implicitly indicated by the event vector.
 
-[width=523]
+
 |===
-h| *31* h| *30* h| *29* a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *24* h| *23* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *0*
-| UM | IE a| +
-
-5+| Reserved a| +
-
-3+| Res 4+| erved a| +
-
-7+| Ca 8+| use
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
+| UM | IE 14+^| Reserved 16+^| Cause
 
 |===
 
-Table 5-2 describes the fields of the GSR word.
+<<GSR field encodings>> describes the fields of the GSR word.
 
 .GSR field encodings
 |===
@@ -493,12 +439,12 @@ Table 5-3 summarizes the event types.
 |===
 .<h| *Event* *Number* h| *Event Name* h| *Event Description* h| *Notes*
 | 0 3+| Reserved
-| 1 | Machine Check | Unrecoverable virtual machine state (Section 7.5) | Non-maskable exception.Virtual machine execution terminates if not handled.
-| 2 | General Exception | Precise internal hardware or software exception (Section 7.3) | Non-maskable exception
+| 1 | Machine Check | Unrecoverable virtual machine state (<<Virtual machine check>>) | Non-maskable exception.Virtual machine execution terminates if not handled.
+| 2 | General Exception | Precise internal hardware or software exception (<<General exceptions>>) | Non-maskable exception
 | 3, 4 3+| Reserved
-| 5 | Trap0 | SW Trap0 instruction (Section 7.4) | Non-maskable exception
+| 5 | Trap0 | SW Trap0 instruction (<<Trap exceptions>>) | Non-maskable exception
 | 6 3+| Reserved
-| 7 | Interrupt | General external interrupts (Chapter 6) | Maskable.Interrupt priority decreases with increasing interrupt number, Interrupt0 being highest.
+| 7 | Interrupt | General external interrupts (<<Interrupts>>) | Maskable.Interrupt priority decreases with increasing interrupt number, Interrupt0 being highest.
 
 |===
 
@@ -513,7 +459,7 @@ Guest-mode software can register a service vector for an event by executing the 
 
 Events begin executing at the address computed by the following formula:
 
-GEBV + (event_number \ 4)
+`GEBV + (event_number * 4)`
 
 === Event handler return
 
@@ -530,7 +476,7 @@ vmrte assumes that a valid event record is stored in the event registers.
 
 === Virtual instructions for event management
 
-Table 5-4 summarizes the virtual instructions used for event management.
+The table below summarizes the virtual instructions used for event management.
 
 .Virtual instructions for event management
 |===
@@ -567,8 +513,8 @@ Interrupts can be enabled or completely disabled per virtual processor by settin
 
 HVM defines a _virtual interrupt controller_ to manage interrupt events flowing into the multiple virtual processors.
 
-.Virtual interrupt controller
-image::virtual_interrupt_controller.svg[]
+//.Virtual interrupt controller
+//TODO: need to add image
 
 Each interrupt has a global enable, as well as a per-virtual processor local enable:
 
@@ -591,63 +537,49 @@ The VMM is responsible for configuring interrupt type and polarity.
 
 === Interrupt masks
 
-HVM has both a per-interrupt global enable bit and a per-interrupt, per-virtual-processor enable bit. These bits can be modified by the virtual instruction vmintop, and can be used to mask interrupts either for a specific processor or for all processors.
+HVM has both a per-interrupt global enable bit and a per-interrupt, per-virtual-processor enable bit. These bits can be modified by the virtual instruction `vmintop`, and can be used to mask interrupts either for a specific processor or for all processors.
 
 === Interrupt acknowledgement
 
-When HVM posts an interrupt event, the interrupt is disabled globally. Thus, any further occurrences of that interrupt are not posted on any virtual processor until the interrupt service routine re-enables it using the GLOBEN operation of the virtual instruction vmintop.
+When HVM posts an interrupt event, the interrupt is disabled globally. Thus, any further occurrences of that interrupt are not posted on any virtual processor until the interrupt service routine re-enables it using the GLOBEN operation of the virtual instruction `vmintop`.
 
 === Interrupt enable
 
-Each virtual processor has an Interrupt Enabled status. This status can be checked using the virtual instruction vmgetie, and modified using the virtual instruction vmsetie (as well as vmrte). When a virtual processor has the Interrupt Enabled status disabled (set to zero), it takes no interrupts.
+Each virtual processor has an Interrupt Enabled status. This status can be checked using the virtual instruction `vmgetie`, and modified using the virtual instruction `vmsetie` (as well as `vmrte`). When a virtual processor has the Interrupt Enabled status disabled (set to zero), it takes no interrupts.
 
 The Interrupt Enabled status is automatically set to Disabled on every taken event (exception or interrupt), as well as when the virtual processor starts.
 
 === Virtual instructions for interrupt management
 
-Table 6-1 summarizes the virtual instructions used for interrupt management.
+The table below summarizes the virtual instructions used for interrupt management.
 
-[width=452]
 .Virtual instructions for interrupt management*
 |===
-| *Instruction* 2+| *Description*
+h| Instruction h| Description
 
-| vmintop 2+| Perform interrupt-related operation: * Globally enable interrupt
+| `vmintop` a|
 
-a| +
+Perform interrupt-related operation:
 
-| * | Globally disable interrupt
-a| +
+* Globally enable interrupt
+* Globally disable interrupt
+* Locally enable interrupt
+* Locally disable interrupt
+* Set interrupt affinity
+* Post software interrupt
+* Check for pending interrupt
+* Take pending interrupt
+* Clear pending interrupt
 
-| * | Locally enable interrupt
-a| +
+* Get interrupt pending, global enable, local enable
 
-| * | Locally disable interrupt
-a| +
+| `vmgetie` | Return current Interrupt Enabled state
 
-| * | Set interrupt affinity
-a| +
-
-| * | Post software interrupt
-a| +
-
-| * | Check for pending interrupt
-a| +
-
-| * | Take pending interrupt
-a| +
-
-| * | Clear pending interrupt
-a| +
-
-| * | Get interrupt pending, global enable, local enable
-| vmgetie 2+| Return current Interrupt Enabled state
-
-| vmsetie 2+| Set Interrupt Enabled state and return old state
+| `vmsetie` | Set Interrupt Enabled state and return old state
 
 |===
 
-The vmintop operation "Set interrupt affinity" locally enables an interrupt for the specified virtual processor, and locally disables it for all other virtual processors.
+The `vmintop` operation "Set interrupt affinity" locally enables an interrupt for the specified virtual processor, and locally disables it for all other virtual processors.
 
 [NOTE]
 ====
@@ -666,7 +598,7 @@ Exceptions can be precise or imprecise. When a precise exception event is handle
 
 * Trap exceptions - The packet following the trap instruction
 
-[NOTE] 
+[NOTE]
 ====
 When an exception occurs as a consequence of a load or store address, GBADVA contains the address associated with the exceptional operation.
 ====
@@ -716,9 +648,9 @@ h| *Exception* h| *Description* h| *GBADVA*
 
 === Trap exceptions
 
-Trap exceptions are triggered when a _trap0_ instruction is executed by an HVM client.
+Trap exceptions are triggered when a `trap0` instruction is executed by an HVM client.
 
-The 8-bit value encoded in the _trap0_ instruction is stored in the GSR.Cause field of the event record.
+The 8-bit value encoded in the `trap0` instruction is stored in the GSR.Cause field of the event record.
 
 [NOTE]
 ====
@@ -729,12 +661,10 @@ On trap exceptions GELR points to the packet following the trap instruction, and
 
 Machine Check exceptions indicate the occurrence of potentially unrecoverable failures in the virtual machine or its underlying hardware.
 
-HVM software can register and handle machine check exceptions to perform emergency shutdown operations or to attempt recovery. Normal termination of a machine check event handler is performed with a vmstop virtual instruction (and not vmrte).
+HVM software can register and handle machine check exceptions to perform emergency shutdown operations or to attempt recovery. Normal termination of a machine check event handler is performed with a `vmstop` virtual instruction (and not `vmrte`).
 
-If the Guest-mode software has fully handled the failure (for example, the fault has been isolated to a single User-mode program which can be terminated in isolation), then it can terminate with a vmrte. However, it is implementation-dependent whether the virtual machine monitor will allow resumption of pre-event processing.
+If the Guest-mode software has fully handled the failure (for example, the fault has been isolated to a single User-mode program which can be terminated in isolation), then it can terminate with a `vmrte`. However, it is implementation-dependent whether the virtual machine monitor will allow resumption of pre-event processing.
 
-
-[width=521]
 .Machine check exceptions
 |===
 h| *Exception* h| *Description*
@@ -750,32 +680,30 @@ h| *Exception* h| *Description*
 
 |===
 
-== 8Cache Control
+== Cache Control
 
-=== 8.1Overview
+=== Overview
 
-The user-level Hexagon cache management instructions (dcfetch_,_ icinva_,_ dccleaninva_,_ dccleana_,_ dcinva) can be used in HVM clients.
+The user-level Hexagon cache management instructions (`dcfetch`, `icinva`, `dccleaninva`, `dccleana`, `dcinva`) can be used in HVM clients.
 
-Additional cache control operations that must be handled by the VMM are performed with the virtual instruction vmcache.
+Additional cache control operations that must be handled by the VMM are performed with the virtual instruction `vmcache`.
 
-=== 8.2HVM cache operations
+=== HVM cache operations
 
-The virtual instruction vmcache is used to perform various cache operations that are difficult (or inefficient) to perform with the user-level Hexagon cache control instructions (dcfetch_,_ icinva_,_ dccleaninva_,_ dccleana_,_ dcinva).
+The virtual instruction vmcache is used to perform various cache operations that are difficult (or inefficient) to perform with the user-level Hexagon cache control instructions (`dcfetch`, `icinva`, `dccleaninva`, `dccleana`, `dcinva`).
 
-vmcache additionally enables cleaninva-like operations over large virtual address areas to be optimized by the VMM (Section A.2.1).
+`vmcache` additionally enables cleaninva-like operations over large virtual address areas to be optimized by the VMM (<<Section A.2.1>>).
 
 [NOTE]
 ====
 vmcache operations are non-destructive of data in the cache.
 ====
 
-Table 8-1 lists the HVM-specific cache control operations.
+The table below lists the HVM-specific cache control operations.
 
-*Table 8-1 HVM cache control operations*
-
-[width=503]
+.HVM cache control operations
 |===
-h| *Operation* h| *Description*
+h| Operation h| Description
 | ICKILL | Non-destructive invalidate of entire instruction cache
 | DCKILL | Non-destructive invalidate of entire data cache
 | L2KILL | Non-destructive invalidate of entire L2 data cache
@@ -786,17 +714,13 @@ h| *Operation* h| *Description*
 
 |===
 
-_Cache Control_
+=== Virtual instructions for cache control
 
-=== 8.3Virtual instructions for cache control
+The table below summarizes the virtual instructions used for HVM cache control.
 
-Table 8-2 summarizes the virtual instructions used for HVM cache control.
-
-*Table 8-2 Virtual instructions for event management*
-
-[width=434]
+.Virtual instructions for event management
 |===
-h| *Instruction* h| *Description*
+h| Instruction h| Description
 | vmcache | Perform one of several HVM cache control operations
 
 |===
@@ -805,7 +729,7 @@ For details on these instructions see Appendix A.
 
 == Memory Management
 
-=== verview
+=== Overview
 
 HVM maps virtual addresses 0x0000_0000 to 0xfeff_ffff onto a 32-bit logical address space, using either a list of translations, or a 1- or 2-level virtual page table scheme. The translations are visible to and writable by a guest operating system running on HVM.
 
@@ -831,36 +755,36 @@ The VMM traverses the translation list in a linear fashion. The list is terminat
 This format requires less space to hold simple memory layouts, and may be preferable for more highly-embedded Guest-mode environments.
 ====
 
-[width=280]
+//.Translation list entry
+// TODO: Add figure
+
+.Translation list entry fields
 |===
-h| L 4+h| Reserved a| +
-
-3+h| Size a| +
-
-h| Virtual Page
-5+.<| 31 30 29 28 27 5+.>| 24 23 2019 .<| 0
-| X | W | R | U a| +
-
-2+| C a| +
-
-| - a| +
-
-| Logical Page
-
-|===
-
-*Figure 9-1 Translation list entry*
-
-*Table 9-1 Translation list entry fields*
-
-[width=527]
-|===
-h| *Field* h| *Description*
+h| Field h| Description
 | Logical Page | Logical Page Number that the corresponding Virtual Page maps to
 | Virtual Page | Virtual Page Number that is matched against the load or store address
-| Size | Page size: * 000: 4 KB * 001: 16 KB * 010: 64 KB * 011: 256 KB * 100: 1 MB * 101: 4 MB * 110: 16 MBNOTE - All other values are reserved. Programming an entry with a reserved pattern results in undefined behavior.
-| U, R,W, X | Permissions: * U: User-enable. Set if user accesses are allowed for this page * R: read-enable. Set if reads are allowed from this page. * W: write-enable. Set if writes are allowed to this page. * X: execute-enable. Set if execution is allowed for this page. If permissions are violated, a precise exception will be raised with the appropriate cause code (load, store, or fetch).
-| C | Cacheability (Section 9.4.3)
+| Size
+a| Page size:
+
+* 000: 4 KB
+* 001: 16 KB
+* 010: 64 KB
+* 011: 256 KB
+* 100: 1 MB
+* 101: 4 MB
+* 110: 16 MB
+
+NOTE - All other values are reserved. Programming an entry with a reserved pattern results in undefined behavior.
+| U, R, W, X
+a|
+Permissions:
+
+* U: User-enable. Set if user accesses are allowed for this page
+* R: read-enable. Set if reads are allowed from this page.
+* W: write-enable. Set if writes are allowed to this page.
+* X: execute-enable. Set if execution is allowed for this page. If permissions are violated, a precise exception will be raised with the appropriate cause code (load, store, or fetch).
+
+| C | Cacheability (<< Cache attributes>>)
 | L | Link bit.If this bit is set, the current entry points to next set of translation entries. Bits 31:0 specify address of the next translation in the list; the other bits in the entry are ignored.
 | Reserved | Reserved field.Field currently ignored by HVM. Because it may be used in future HVM versions, the recommended value for this field is 0.
 
@@ -877,17 +801,14 @@ A first-level PTE always contains the size of the virtual memory page that is ma
 * For pages less than 4MB, the first-level entry contains a pointer to an array of second-level entries.
 
 A first-level PTE encodes the entry type and page size in its 3-bit S field (Figure 9-3). The definition of the remaining bits varies according to the entry type.
+// .Page table entry (generic)
+// TODO: Add image
 
-31 2 0
-
-.Page table entry (generic)
-image::page_table_entry.svg[]
-
-Table 9-2 lists the entry types for an L1 page table entry.
+The table below lists the entry types for an L1 page table entry.
 
 .L1 page table entry types
 |===
-h| *S Field Value* h| *Entry Type* h| *Page Size* h| *L2 Entries* h| *Address Bits*
+h| S Field Value h| Entry Type h| Page Size h| L2 Entries h| Address Bits
 | 000 | Page Directory Entry | 4KB | 1024 | 31:12
 | 001 | Page Directory Entry | 16KB | 256 | 31:10
 | 010 | Page Directory Entry | 64KB | 64 | 31:8
@@ -904,6 +825,7 @@ If the size specified in S is greater than or equal to 4M, a second level of pag
 [NOTE]
 ====
 Referencing a virtual address which resolves to a PTE marked as invalid (111) results in a protection violation exception event.
+====
 
 Because the granularity of the first-level page table is 4MB, the PTE for a 16MB virtual page must be replicated for each of the 4 entries in the firstlevel page table that correspond to the 16MB virtual address range.
 ====
@@ -912,18 +834,10 @@ Because the granularity of the first-level page table is 4MB, the PTE for a 16MB
 
 A PTE contains (in addition to the S field) a pointer to a second-level page table. The most significant bits of the entry are used as the most significant bits of the logical address of the L2 table.
 
-Figure 9-3 shows the format of a page directory entry.
+The figure below shows the format of a page directory entry.
 
-[width=306]
-|===
-3+h| 31 4 3 2 h| 0
-| L2 Table Address | - a| +
-
-| S
-
-|===
-
-*Figure 9-3 Page directory entry*
+//.Page directory entry
+//TODO: Add figure
 
 [NOTE]
 ====
@@ -936,58 +850,22 @@ PTEs are used to define the virtual-to-logical translation for a specific memory
 
 Instead of a pointer to a second-level page table, a PTE can specify a 4MB or 16MB translation at the L1 level. Figure 9-4 and Figure 9-5 show the corresponding entry formats (with the S field set to specific values per Table 9-2).
 
-[width=306]
-|===
-2+h| 31 22 21 5+h| 12 11 10 9 8 5+h| 6 5 4 3 2 h| 0
-| Logical Page | - a| +
+// Page table entry (L1 - 4MB)
+// TODO: add figure
 
-| X | W | R a| +
-
-| C | U | T | - a| +
-
-| 5
-
-|===
-
-*Figure 9-4 Page table entry (L1 - 4MB)*
-
-[width=306]
-|===
-2+h| 31 24 23 5+h| 12 11 10 9 8 5+h| 6 5 4 3 2 h| 0
-| Logical Page | - a| +
-
-| X | W | R a| +
-
-| C | U | T | - a| +
-
-| 6
-
-|===
-
-*Figure 9-5 Page table entry (L1 - 16MB)*
+// Page table entry (L1 - 16MB)
+// TODO: Add figure
 
 Second-level page tables specify translations for a contiguous 4MB of the address space.
 
 Each entry has the same translation size. This uniform size is specified at the first level. Figure 9-6 shows a second-level PTE.
 
-[width=306]
-|===
-h| 31 5+h| 12 11 10 9 8 5+h| 6 5 4 3 2 0
-| Logical Page a| +
+// Page table entry (L2)
+// TODO: Add figure
 
-| X | W | R a| +
+The table below describes the fields in a PTE.
 
-| C | U | T | - | -
-
-|===
-
-*Figure 9-6 Page table entry (L2)*
-
-Table 9-3 describes the fields in a PTE.
-
-*Table 9-3 Page table entry fields*
-
-[width=525]
+.Page table entry fields
 |===
 h| *Bits* h| *Mnemonic* h| *Description*
 | 31:12 | LPN | Logical Page Number.High-order bits of page-aligned logical address corresponding to mapped page. The number of bits actually used depends on specified page size.  See Table 9-4.
@@ -1004,17 +882,16 @@ h| *Bits* h| *Mnemonic* h| *Description*
 [NOTE]
 ====
 For L1 entries, the size field must be set correctly for determining page size.
+====
 
 For L2 entries, the size field is ignored and may be used by software.
 
 If none of the R, W, or X bits are set, the virtual map is considered invalid, and any access (load, store, fetch) results in a Page Fault Exception event.
 ====
 
-*Table 9-4 LPN bits used as function of page size*
-
-[width=330]
+.LPN bits used as function of page size
 |===
-h| *Page SIze* h| *LPN Bits Used*
+h| Page Size h| LPN Bits Used
 | 4KB | 31:12
 | 16KB | 31:14
 | 64KB | 31:16
@@ -1059,7 +936,7 @@ The cache attribute Uncached Memorydoes not allow memory to be cached. However, 
 
 [NOTE]
 ====
-The HVM implementation is free to replay loads and stores for pages assigned Uncached Memory (The Hexagon processor will in fact do this.) 
+The HVM implementation is free to replay loads and stores for pages assigned Uncached Memory (The Hexagon processor will in fact do this.)
 ====
 
 [NOTE]

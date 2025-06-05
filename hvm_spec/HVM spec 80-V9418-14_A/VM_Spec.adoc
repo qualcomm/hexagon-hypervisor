@@ -828,7 +828,6 @@ Referencing a virtual address which resolves to a PTE marked as invalid (111) re
 ====
 
 Because the granularity of the first-level page table is 4MB, the PTE for a 16MB virtual page must be replicated for each of the 4 entries in the firstlevel page table that correspond to the 16MB virtual address range.
-====
 
 ==== Page directory entries
 
@@ -887,7 +886,6 @@ For L1 entries, the size field must be set correctly for determining page size.
 For L2 entries, the size field is ignored and may be used by software.
 
 If none of the R, W, or X bits are set, the virtual map is considered invalid, and any access (load, store, fetch) results in a Page Fault Exception event.
-====
 
 .LPN bits used as function of page size
 |===
@@ -913,11 +911,9 @@ In a page table entry (Section 9.4.2) the C field controls the cache attributes 
 
 C is relevant only for "terminal" PTEs which resolve to a target logical page address.
 
-*Table 9-5 Cache attribute types*
-
-[width=469]
+.Cache attribute types
 |===
-h| *C Field Value* h| *L1 Cache Policy* h| *L2 Cache Policy*
+h| C Field Value h| L1 Cache Policy h| L2 Cache Policy
 | 0 | Write-back | Non-cacheable
 | 1 | Write-through | Non-cacheable
 | 2 2+| Reserved
@@ -952,27 +948,28 @@ The virtual instruction vmnewmap establishes a new logical-to-virtual memory map
 
 vmnewmap accepts as arguments the logical addresses of either a segment table
 
-(Section 9.4) or linear translation list (Section 9.3). The instruction immediately following vmnewmap executes with the new memory map in effect.
+(<<Virtual page table entries>>) or linear translation list (<<Linear translations>>). The instruction immediately following vmnewmap executes with the new memory map in effect.
 
-*Implementors Note:* _If an invalid page table is passed to __vmnewmap__ , the HVM implementation is free to determine whether __vmnewmap_ _returns with a value indicating failure, or whether a subsequent attempt to de-reference an address with an invalid mapping causes a virtual machine check. For more information see_ _Section 7.5__._
+[NOTE]
+====
+If an invalid page table is passed to `vmnewmap`, the HVM implementation is free to determine whether `vmnewmap` returns with a value indicating failure, or whether a subsequent attempt to de-reference an address with an invalid mapping causes a virtual machine check. For more information see <<Virtual machine check>>
+====
 
 === Flushing stale memory maps
 
-The virtual instruction vmclrmap flushes a possibly-stale virtual mapping.
+The virtual instruction `vmclrmap` flushes a possibly-stale virtual mapping.
 
-vmclrmap accepts as arguments a range of virtual addresses. It causes copies of virtual address translations to be purged from the virtual machine (including the TLB) for the specified range of virtual addresses.
+`vmclrmap` accepts as arguments a range of virtual addresses. It causes copies of virtual address translations to be purged from the virtual machine (including the TLB) for the specified range of virtual addresses.
 
 Subsequent accesses to the memory range use the values in the memory map tables.
 
 === Virtual instructions for memory management
 
-Table 9-6 summarizes the virtual instructions used for memory management.
+The table below summarizes the virtual instructions used for memory management.
 
-*Table 9-6 Virtual instructions*
-
-[width=390]
+.Virtual instructions
 |===
-h| *Instruction* h| *Description*
+h| Instruction h| Description
 | vmnewmap | Register new logical-to-virtual memory map.
 | vmclrmap | Flush a possibly-stale virtual mapping.
 
@@ -980,8 +977,6 @@ h| *Instruction* h| *Description*
 
 For details on these instructions see Appendix A.
 
-[start=10]
-.
 == Processor Resource Management
 
 === Overview
@@ -1015,9 +1010,9 @@ Guest-mode software on HVM can suspend the execution of a virtual processor in t
 
 * The virtual instruction vmyield
 
-vmwait suspends execution pending an interrupt event. After the next event is handled, the virtual instruction vmrte that terminates the event servicing will result in execution resuming at the instruction after the vmwait instruction.
+`vmwait` suspends execution pending an interrupt event. After the next event is handled, the virtual instruction vmrte that terminates the event servicing will result in execution resuming at the instruction after the vmwait instruction.
 
-vmyield suspends execution temporarily, independently of any virtual processor events. It auses the VMM to schedule other virtual processors at the same or higher priority, without the need for pre-emption.
+`vmyield` suspends execution temporarily, independently of any virtual processor events. It auses the VMM to schedule other virtual processors at the same or higher priority, without the need for pre-emption.
 
 [NOTE]
 ====
@@ -1046,12 +1041,11 @@ The inverse of vmstart is the virtual instruction vmstop. When a virtual process
 
 === Virtual instructions for processor management
 
-Table 10-1 summarizes the virtual instructions used for processor resource management.
+The table below summarizes the virtual instructions used for processor resource management.
 
-[width=390]
 .Virtual instructions for processor management
 |===
-h| *Instruction* h| *Description*
+h| Instruction h| Description
 | vmgettime | Get the 64-bit virtual processor timestamp
 | vmsettime | Set virtual processor timestamp value.
 | vmwait | Wait on an interrupt event.
@@ -1094,9 +1088,12 @@ These facilities are sufficient to implement a UNIX-style ptrace capability for 
 
 The VMM can use the Hexagon processor's supervisor-mode facilities to debug Usermode code. These same process-level facilities can be used to debug Guest-mode software.
 
-_*Implementors Note:*_ _The HVM implementation is free to determine whether the VMM accepts debugging commands directly from some operator communications channel (such as a serial port or a JTAG interface), or whether the VMM provides an API to trusteddebug-agent module which translates from operator/host debugger commands on the communications channel and VMM debug API functions._
+[NOTE]
+====
+The HVM implementation is free to determine whether the VMM accepts debugging commands directly from some operator communications channel (such as a serial port or a JTAG interface), or whether the VMM provides an API to trusteddebug-agent module which translates from operator/host debugger commands on the communications channel and VMM debug API functions.
 
-_Under no circumstances, however, can an untrusted VMM or operator debug agent generate trusted load or store cycles, either directly or indirectly, through a trusted system that is being debugged._
+Under no circumstances, however, can an untrusted VMM or operator debug agent generate trusted load or store cycles, either directly or indirectly, through a trusted system that is being debugged.
+====
 
 == HVM Instructions
 
@@ -1111,7 +1108,6 @@ This appendix provides detailed descriptions of the HVM virtual instructions. Th
 Table A-1 summarizes the virtual instructions.
 
 
-[width=624]
 .HVM virtual instruction summary
 |===
 h| *Mnemonic* h| *Function* h| *Encoding* h| *Inputs* h| *Outputs*
@@ -1136,9 +1132,8 @@ h| *Mnemonic* h| *Function* h| *Encoding* h| *Inputs* h| *Outputs*
 
 |===
 
-[type=A]
 
-=== Instruction properties*
+=== Instruction properties
 
 HVM virtual instructions have the following properties:
 

@@ -1,12 +1,6 @@
-This list is for the H2 kernel as hypervisor for a single (Linux) guest only.
-There's a much longer list for H2 to replace qurt, although it can run most qurt user code now.
-
-
 Must do for productization:
 
-- Merge any needed kernel changes from modem branch (it's mostly lib stuff).
-
-- Get coverage working again (broken by switch to LLVM).
+- Get coverage working again again.
 
 - Reach 100% coverage for kernel code (add tests).
 
@@ -24,16 +18,18 @@ request phys int config.
 
 - Update kernel internals docs (sphinx :\ ) and HVM spec.
 
-- Ensure all code is 36-bit PA clean.
+- Support HSV39 translations.
+
+- Ensure all code is 36/46-bit PA clean.
 
 
 Should do (for our sanity and reputation):
 
 - (Better) kernel trace.
 
-- DEBUG build with more stuff: printh2k etc.
+- DEBUG build with more stuff: printh2k etc. [Added H2K_log since]
 
-- Guest debug support (T32).
+- Guest debug support (lldb and T32).
 
 - Debug H2 kernel from privileged guest.
 

@@ -1,6 +1,8 @@
 :stem:
 :toc: macro
 :imagedir: images/
+:sectnums:
+:toc:
 = Hexagon Virtual Machine
 
 :author:
@@ -140,9 +142,13 @@ h| *Term* h| *Definition*
 | PTE | Page table entry
 | User mode | Operating mode under which most HVM applications run.
 | Virtual event | Asynchronous invocation of Guest mode by the virtual machine.
-| Virtual instruction | An operation requesting a function of HVM that cannot be expressed by a native Hexagon processor instruction. Virtual instructions are generally implemented as Hexagon instructions which trap to the underlying hardware Supervisor mode, which performs the necessary function.
+| Virtual instruction | An operation requesting a function of HVM that cannot be expressed by a native Hexagon processor instruction.
+
+Virtual instructions are generally implemented as Hexagon instructions which trap to the underlying hardware Supervisor mode, which performs the necessary function.
 | Virtual machine | HVM instance running on the VMM.
-| Virtual processor | HVM resource that is necessary to run a program.  A virtual machine can support multiple instances of a virtual processor, with each instance executing concurrently and sharing common memory and I/O resources.
+| Virtual processor | HVM resource that is necessary to run a program.
+
+A virtual machine can support multiple instances of a virtual processor, with each instance executing concurrently and sharing common memory and I/O resources.
 | VMM | Virtual Machine MonitorSoftware layer which underlies HVM. It manages the hardware resources and provides them to HVM in their virtualized form.
 
 |===
@@ -869,7 +875,8 @@ The table below describes the fields in a PTE.
 .Page table entry fields
 |===
 h| *Bits* h| *Mnemonic* h| *Description*
-| 31:12 | LPN | Logical Page Number.High-order bits of page-aligned logical address corresponding to mapped page. The number of bits actually used depends on specified page size.  See Table 9-4.
+| 31:12 | LPN | Logical Page Number.High-order bits of page-aligned logical address corresponding to mapped page. The number of bits actually used depends on specified page size.
+ See Table 9-4.
 | 11 | X | Execute Permission.HVM has execute access to page. Attempts fetch instructions from an address within page causes an Execute Permission Exception event if the X bit is cleared (0).
 | 10 | W | Write PermissionHVM has write access to page. Attempts to store data to an address within the page causes a Write Permission Exception event if W bit is cleared (0).
 | 9 | R | Read PermissionHVM has read access to page. Attempts to load data from an address within the page causes a Read Permission Exception event if the R bit is cleared (0).
@@ -1098,6 +1105,7 @@ The HVM implementation is free to determine whether the VMM accepts debugging co
 Under no circumstances, however, can an untrusted VMM or operator debug agent generate trusted load or store cycles, either directly or indirectly, through a trusted system that is being debugged.
 ====
 
+[appendix]
 == HVM Instructions
 
 === Overview
@@ -1108,7 +1116,7 @@ Virtual instructions are extensions to the Hexagon instruction set - they invoke
 
 This appendix provides detailed descriptions of the HVM virtual instructions. The instructions are listed alphabetically.
 
-Table A-1 summarizes the virtual instructions.
+The table below summarizes the virtual instructions.
 
 
 .HVM virtual instruction summary
@@ -1119,15 +1127,33 @@ h| *Mnemonic* h| *Function* h| *Encoding* h| *Inputs* h| *Outputs*
 | vmsetvec | Set event vector | trap1(#2) | R0 = Vector Table Address | R0 = 0 on success, otherwise -1
 | vmsetie | Set interrupt enable state | trap1(#3) | R0 1 to enable, 0 to disable | R0 = Previous enable state in bit 0
 | vmgetie | Get interrupt enable state | trap1(#4) | N/A | R0 = Enable state in bit 0
-| vmintop | Interrupt Operation | trap1(#5) | R0 = Interrupt Op R1-R4: Depends on Op | R0 depends on Op.
-| vmclrmap | Clear virtual memory map | trap1(#10) | R0 = Starting VAR1 = Length in bytes | R0 = 0 on success, otherwise -1
-| vmnewmap | Set new virtual memory map | trap1(#11) | R0 =Logical address of new segment tableR1 =Type of translations | R0 = 0 on success, otherwise negative error code
-| vmcache | Virtual Machine cache control | trap1(#13) | R0 = Operation to be performedR1 = Starting virtual addressR2 = Length in bytes | R0 = 0 on success, otherwise -1
-| vmgettime | Get Virtual Machine Time | trap1(#14) | N/A | R0 = least significant 32 bits of timestampR1 = most significant 32 bits of timestamp
-| vmsettime | Set Virtual Machine time | trap1(#15) | R0 = least significant 32 bits of timestampR1 = most significant 32 bits of timestamp | N/A
+| vmintop | Interrupt Operation | trap1(#5) | R0 = Interrupt Op R1-R4: Depends on Op | R0 depends on Op.
+| vmclrmap | Clear virtual memory map | trap1(#10) a|
+R0 = Starting VA
+R1 = Length in bytes | R0 = 0 on success, otherwise -1
+
+| vmnewmap | Set new virtual memory map | trap1(#11) a|
+R0 = Logical address of new segment table
+
+R1 = Type of translations | R0 = 0 on success, otherwise negative error code
+| vmcache | Virtual Machine cache control | trap1(#13) a|
+R0 = Operation to be performed
+
+R1 = Starting virtual address
+
+R2 = Length in bytes | R0 = 0 on success, otherwise -1
+| vmgettime | Get Virtual Machine Time | trap1(#14) | N/A a| R0 = least significant 32 bits of timestamp
+
+R1 = most significant 32 bits of timestamp
+| vmsettime | Set Virtual Machine time | trap1(#15) a| R0 = least significant 32 bits of timestamp
+
+R1 = most significant 32 bits of timestamp | N/A
 | vmwait | Wait for next interrupt | trap1(#16) | N/A | R0 = Interrupt number of reactivating event
 | vmyield | Voluntarily reschedule virtual processor | trap1(#17) | N/A | N/A
-| vmstart | Create new virtual processor instance | trap1(#18) | R0 = Starting execution address R1 = Starting stack pointer | R0 = Virtual processor number of new virtual processor on success, otherwise -1
+| vmstart | Create new virtual processor instance | trap1(#18) a|
+R0 = Starting execution address
+
+R1 = Starting stack pointer | R0 = Virtual processor number of new virtual processor on success, otherwise -1
 | vmstop | Terminate current virtual processor instance | trap1(#19) | N/A | N/A
 | vmvpid | Obtain virtual processor ID | trap1(#20) | N/A | R0 = Virtual processor number of virtual processor executing the instruction
 | vmsetregs | Set Guest Registers | trap1(#21) | R0-3 hold G0-3 values | N/A
@@ -1148,21 +1174,33 @@ HVM virtual instructions have the following properties:
 
 * They are generally implemented as Hexagon traps which switch the processor to its Monitor mode.
 
-===== A.2.1 VMCACHE
+==== VMCACHE
 
 Perform cache maintenance operations which are either impossible or inefficient using the native cache management instructions.
 
 *Syntax*
 
-*vmcache*
+`vmcache`
 
 *Registers*
 
 [width=526]
 |===
 h| *Register* h| *In/Out* h| *Description*
-.2+| R0 | In .<| Cache operation to perform:#0: ICKILL - Nondestructive Invalidate of entire instruction cache#1: DCKILL - Nondestructive invalidate of entire data cache#2: L2KILL - Nondestructive invalidate of entire L2 data cache#3: DCCLEANINVA - Nondestructive invalidate of the range of virtual addresses starting at the address in R1 for the number of bytes in R2 through the full D-cache hierarchy.#4: ICINVA - Nondestructive invalidate of the range of virtual addresses starting at the address in R1 for the number of bytes in R2 through the full I-cache hierarchy.#5: IDSYNC - Ensures that Instruction cache can observe all data in the specified range; similar to DCCLEANINVA followed by ICINVA.other: Reserved (No-Op)
-| Out .<| 0: Operation successful-1: Operation unsuccessful
+.2+| R0 | In .<a| Cache operation to perform:
+
+* #0: ICKILL - Nondestructive Invalidate of entire instruction cache
+* #1: DCKILL - Nondestructive invalidate of entire data cache
+* #2: L2KILL - Nondestructive invalidate of entire L2 data cache
+* #3: DCCLEANINVA - Nondestructive invalidate of the range of virtual addresses starting at the address in R1 for the number of bytes in R2 through the full D-cache hierarchy.
+* #4: ICINVA - Nondestructive invalidate of the range of virtual addresses starting at the address in R1 for the number of bytes in R2 through the full I-cache hierarchy.
+* #5: IDSYNC - Ensures that Instruction cache can observe all data in the specified range; similar to DCCLEANINVA followed by ICINVA.
+* other: Reserved (No-Op)
+| Out .<a|
+
+* 0: Operation successful
+* -1: Operation unsuccessful
+
 | R1 | In | Starting virtual address for range-based operations
 | R2 | In | Byte count for range-based operations
 
@@ -1180,72 +1218,37 @@ h| *Register* h| *In/Out* h| *Description*
 
 * This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-*Encoding*
-
-[width=523]
+.vmcache encoding
 |===
-h| *31* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 1 3+| - 3+| vmcache 2+| -
-| 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 1 | - | - | - | 1 | 0 | 1 | - | -
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 1 3+^| - 3+^| vmcache 2+^| -
+| 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0
+| 1 | - | - | - | - | - | - | -
+| P | P | - | 0 | 0 | 0 | 0 | 1
+| - | - | - | 1 | 0 | 1 | - | -
 
 |===
 
-+
- +
 
-===== A.2.2 VMCLRMAP
+===== VMCLRMAP
 
 Flush possible stale virtual mapping.
 
 *Syntax*
 
-*vmclrmap*
+`vmclrmap`
 
 *Registers*
 
 [width=526]
 |===
 h| *Register* h| *In/Out* h| *Description*
-.2+| R0 | In .<| Starting virtual address.Purge MMU state for the virtual address range starting at the address in R0, and covering the number of bytes in R1. NOTE - This would typically follow a modification to an active page table.
-| Out .<| 0: Operation successful-1: Operation unsuccessful
+.2+| R0 | In .<a|
+Starting virtual address.
+Purge MMU state for the virtual address range starting at the address in R0, and covering the number of bytes in R1. NOTE - This would typically follow a modification to an active page table.
+| Out .<a|
+* 0: Operation successful
+* -1: Operation unsuccessful
 | R1 | In | Byte count
 
 |===
@@ -1260,72 +1263,30 @@ h| *Register* h| *In/Out* h| *Description*
 
 * This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-*Encoding*
-
-[width=526]
+.vmclrmap encoding
 |===
-h| *31* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-7+| VM (trap1) a| +
-
-a| +
-
-5+| - a| +
-
-2+| Parse | - 5+| VM Group 1 3+| - 3+| vmclrmap 2+| -
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 1 3+^| - 3+^| vmclrmap 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 1 | - | - | - | 0 | 1 | 0 | - | -
 
 |===
 
-===== A.2.3 VMGETIE
+===== VMGETIE
 
 Get virtual processor interrupt enable value.
 
 *Syntax*
 
-*vmgetie*
+`vmgetie`
 
 *Registers*
 
 [width=526]
 |===
 h| *Register* h| *In/Out* h| *Description*
-| R0 | Out .<| 0: Interrupts disabled on virtual processor1: Interrupts enabled on virtual processor
+| R0 | Out .<a|
+* 0: Interrupts disabled on virtual processor
+* 1: Interrupts enabled on virtual processor
 
 |===
 
@@ -1343,69 +1304,43 @@ h| *Register* h| *In/Out* h| *Description*
 
 [width=527]
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-7+| VM (trap1) a| +
-
-a| +
-
-5+| - a| +
-
-2+| Parse | - 5+| VM Group 0 3+| - 3+| vmgetie 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 0 3+^| - 3+^| vmgetie 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 0 | - | - | - | 1 | 0 | 0 | - | -
 
 |===
 
-===== A.2.4 VMINTOP
+===== VMINTOP
 
 Operate on virtual interrupt controller.
 
 *Syntax*
 
-*vmintop*
+`vmintop`
 
 *Registers*
 
 [width=526]
 |===
 h| *Register* h| *In/Out* h| *Description*
-.2+| R0 | In .<| Interrupt operation to perform:0: VMINTOP_NOP: Do nothing1: VMINTOP_GLOBEN: Global Enable2: VMINTOP_GLOBIDIS: Global Disable3: VMINTOP_LOCEN: Local Enable4: VMINTOP_LOCDIS: Local Disable5: VMINTOP_AFFINITY: Set Interrupt Affinity6: VMINTOP_GET: Take Next Interrupt7: VMINTOP_PEEK: Query which interrupt is next, without taking8: VMINTOP_STATUS: For an interrupt, return pending and enablement status9: VMINTOP_POST: Post an interrupt into interrupt controller10: VMINTOP_CLEAR: Clear an interrupt without taking it
-| Out .<| Non-zero value for failure for operations 1-5 and 9-10. R0=6:GET: returns 0 if interrupt taken, -1 if not taken.R0=7: PEEK: returns highest priority pending/enable interrupt, otherwise -1.R0=8: STATUS: 0 if pending, 1 if local enable. 2: global enable. -1 on failure.
+.2+| R0 | In .<a| Interrupt operation to perform:
+
+* 0: VMINTOP_NOP: Do nothing
+* 1: VMINTOP_GLOBEN: Global Enable
+* 2: VMINTOP_GLOBIDIS: Global Disable
+* 3: VMINTOP_LOCEN: Local Enable
+* 4: VMINTOP_LOCDIS: Local Disable
+* 5: VMINTOP_AFFINITY: Set Interrupt Affinity
+* 6: VMINTOP_GET: Take Next Interrupt
+* 7: VMINTOP_PEEK: Query which interrupt is next, without taking
+* 8: VMINTOP_STATUS: For an interrupt, return pending and enablement status
+* 9: VMINTOP_POST: Post an interrupt into interrupt controller
+* 10: VMINTOP_CLEAR: Clear an interrupt without taking it
+| Out .<| Non-zero value for failure for operations 1-5 and 9-10.
+* R0=6:GET: returns 0 if interrupt taken, -1 if not taken.
+* R0=7: PEEK: returns highest priority pending/enable interrupt, otherwise -1.
+* R0=8: STATUS: 0 if pending, 1 if local enable. 2: global enable. -1 on failure.
 | R1 | In | Interrupt that the operation acts upon.
 | R2 | In | Only used if R0 = 5: the virtual processor to take the interrupt.
 
@@ -1421,70 +1356,28 @@ h| *Register* h| *In/Out* h| *Description*
 
 * This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-*Encoding*
-
-[width=526]
+.vmintop ncoding
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 0 3+| - 3+| vmintop 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 0 3+^| - 3+^| vmintop 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 0 | - | - | - | 1 | 0 | 1 | - | -
 
 |===
 
-+
- +
 
-===== A.2.5 VMGETTIME
+=====   VMGETTIME
 
 Get 64-bit virtual processor timestamp.
 
 *Syntax*
 
-*vmgettime*
+`vmgettime`
 
 *Registers*
 
-[width=526]
 |===
-h| *Register* h| *In/Out* h| *Description*
+h| Register h| In/Out h| Description
 | R0 | Out | Least-significant 32 bits of virtual processor timestamp
 | R1 | Out | Most-significant 32 bits of virtual processor timestamp
 
@@ -1502,53 +1395,14 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Encoding*
 
-[width=527]
 |===
-h| *31* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 1 3+| - 3+| vmgettime 2+| -
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 1 3+^| - 3+^| vmgettime 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 1 | - | - | - | 1 | 1 | 0 | - | -
 
 |===
 
-===== A.2.6 VMNEWMAP
+===== VMNEWMAP
 
 Establish new logical-to-virtual memory map.
 
@@ -1556,7 +1410,7 @@ The virtual machine's MMU is reprogrammed to discard the previous virtual-physic
 
 *Syntax*
 
-*vmnewmap*
+`vmnewmap`
 
 *Registers*
 
@@ -1565,7 +1419,9 @@ The virtual machine's MMU is reprogrammed to discard the previous virtual-physic
 h| *Register* h| *In/Out* h| *Description*
 .2+| R0 .<| In .<| *Logical* address of new MMU segment table.
 | Out .<| 0 if operation was successful, otherwise an implementation-specific negative error code.
-| R1 | In .<| 0: Linear list of translations1: Set of page tables
+| R1 | In .<a|
+* 0: Linear list of translations
+* 1: Set of page tables
 
 |===
 
@@ -1587,54 +1443,13 @@ h| *Register* h| *In/Out* h| *Description*
 
 [width=528]
 |===
-h| *31* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 1 3+| - 3+| vmnewmap 2+| -
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 1 3+^| - 3+^| vmnewmap 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 1 | - | - | - | 0 | 1 | 1 | - | -
 
 |===
 
-+
- +
-
-===== A.2.7 VMRTE
+===== VMRTE
 
 Return from event service
 
@@ -1648,7 +1463,7 @@ Return from event service
 
 *Syntax*
 
-*vmrte*
+`vmrte`
 
 *Registers*
 
@@ -1667,73 +1482,37 @@ h| *Register* h| *In/Out* h| *Description*
 
 *Notes*
 
-* This is a solo Instruction. It must not be grouped with other instructions in a packet.
+* This is a solo instruction. It must not be grouped with other instructions in a packet.
 
 *Encoding*
 
-[width=527]
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-2+a| +
-
-5+| VM (trap1) 2+a| +
-
-a| +
-
-6+| - 2+| Parse | - 5+| VM Group 0 3+| - 3+| vmrte 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 0 3+^| - 3+^| vmrte 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 0 | - | - | - | 0 | 0 | 1 | - | -
 
 |===
 
-===== A.2.8 VMSETIE
+===== VMSETIE
 
 Set virtual processor interrupt enable value.
 
 *Syntax*
 
-*vmsetie*
+`vmsetie`
 
 *Registers*
 
 [width=526]
 |===
 h| *Register* h| *In/Out* h| *Description*
-.2+| R0 | In .<| 1 (or any odd value): Enable interrupts to the virtual processor0 (or any even value): Disable interrupts to the virtual processor
-| Out .<| 0: Interrupts were previously disabled on the virtual processor1: Interrupts were previously enabled on the virtual processor
+.2+| R0 | In .<a|
+* 1 (or any odd value): Enable interrupts to the virtual processor
+* 0 (or any even value): Disable interrupts to the virtual processor
+| Out .<a|
+* 0: Interrupts were previously disabled on the virtual processor
+* 1: Interrupts were previously enabled on the virtual processor
 
 |===
 
@@ -1747,59 +1526,22 @@ h| *Register* h| *In/Out* h| *Description*
 
 * This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-*Encoding*
-
-[width=528]
+.vmsetie encoding
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 0 3+| - 3+| vmsetie 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 0 3+^| - 3+^| vmsetie 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 0 | - | - | - | 0 | 1 | 1 | - | -
 
 |===
 
-===== A.2.9 VMSETTIME
+===== VMSETTIME
 
 Set virtual processor timestamp value.
 
-*Syntax* *vmsettime*
+*Syntax*
+
+`vmsettime`
 
 *Registers*
 
@@ -1825,57 +1567,21 @@ h| *Register* h| *In/Out* h| *Description*
 
 [width=524]
 |===
-h| *31* a| +
 
-a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 1 3+| - 3+| vmsettime 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 1 3+^| - 3+^| vmsettime 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 1 | - | - | - | 1 | 1 | 1 | - | -
 
 |===
 
-===== A.2.10 VMSETVEC
+===== VMSETVEC
 
 Set event handler vector table for events.
 
 *Syntax*
 
-*vmsetvec*
+`vmsetvec`
 
 *Registers*
 
@@ -1899,55 +1605,16 @@ h| *Description*
 
 * This is a solo Instruction. It must not be grouped with other instructions in a packet.
 
-*Encoding*
-
-[width=524]
+.vmsetvec encodings
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 0 3+| - 3+| vmsetvec 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 0 3+^| - 3+^| vmsetvec 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 0 | - | - | - | 0 | 1 | 0 | - | -
 
 |===
 
-===== A.2.11 VMSTART
+===== VMSTART
 
 Start a new, concurrently-executing virtual processor.
 
@@ -1957,7 +1624,7 @@ If resources are unavailable, the operation fails, and a value of -1 is returned
 
 *Syntax*
 
-*vmstart*
+`vmstart`
 
 *Registers*
 
@@ -1982,59 +1649,16 @@ h| *Register* h| *In/Out* h| *Description*
 
 * If the initial instruction virtual address is not valid, an execute protection violation exception event is taken by the *new virtual processor.*
 
-*Encoding*
-
-[width=526]
+.vmstart encoding
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-7+| VM (trap1) a| +
-
-a| +
-
-5+| - a| +
-
-2+| Parse | - 5+| VM Group 2 3+| - 3+| vmstart 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 2 3+^| - 3+^| vmstart 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 1 | 0 | - | - | - | 0 | 1 | 0 | - | -
 
 |===
 
-===== A.2.12 VMSTOP
+===== VMSTOP
 
 Terminate virtual processor execution.
 
@@ -2042,7 +1666,7 @@ The virtual processor executing thevmstopinstruction ceases execution, and its r
 
 *Syntax*
 
-*vmstop*
+`vmstop`
 
 *Type: JR (slot 2)*
 
@@ -2054,61 +1678,22 @@ The virtual processor executing thevmstopinstruction ceases execution, and its r
 
 * This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-*Encoding*
-
-[width=526]
+.vmstop encoding
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 2 3+| - 3+| vmstop 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 2 3+^| - 3+^| vmstop 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 1 | 0 | - | - | - | 0 | 1 | 1 | - | -
 
 |===
 
-===== A.2.13 VMVERSION
+===== VMVERSION
 
 Request and obtain the virtual machine version
 
 *Syntax*
 
-*vmversion*
+`vmversion`
 
 *Registers*
 
@@ -2133,61 +1718,22 @@ h| *Register* h| *In/Out* h| *Description*
 
 * The version corresponding to this spec is 0x0000_0700.
 
-*Encoding*
-
-[width=526]
+.vmversion encoding
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 0 3+| - 3+| vmversion 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 0 3+^| - 3+^| vmversion 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 0 | 0 | - | - | - | 0 | 0 | 0 | - | -
 
 |===
 
-===== A.2.14 VMVPID
+===== VMVPID
 
 Get virtual processor identification number of the current processor.
 
 *Syntax*
 
-*vmvpid*
+`vmvpid`
 
 *Registers*
 
@@ -2208,55 +1754,16 @@ h| *Register* h| *In/Out* h| *Description*
 
 * This is a solo instruction. It must not be grouped with other instructions in a packet.
 
-*Encoding*
-
-[width=526]
+.vmvpid encoding
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-a| +
-
-8+| VM (trap1) a| +
-
-6+| - 2+| Parse | - 5+| VM Group 2 3+| - 3+| vmvpid 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse | - 5+^| VM Group 2 3+^| - 3+^| vmvpid 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 1 | 0 | - | - | - | 1 | 0 | 0 | - | -
 
 |===
 
-===== A.2.15 VMWAIT
+===== VMWAIT
 
 Wait on an interrupt event.
 
@@ -2264,7 +1771,7 @@ The virtual processor issuing the vmwait suspends execution until a configured a
 
 *Syntax*
 
-*vmwait*
+`vmwait`
 
 *Registers*
 
@@ -2285,57 +1792,16 @@ h| *Register* h| *In/Out* h| *Description*
 
 * This is a solo Instruction. It must not be grouped with other instructions in a packet.
 
-*Encoding*
-
-[width=527]
+.vmwait encoding
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-4+| VM (trap1) 2+a| +
-
-3+a| +
-
-| - 6+a| +
-
-2+| Parse | - 5+| VM Group 2 3+| - 3+| vmwait 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 2 3+^| - 3+^| vmwait 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 1 | 0 | - | - | - | 0 | 0 | 0 | - | -
 
 |===
 
-===== A.2.16 VMYIELD
+===== VMYIELD
 
 Voluntarily reschedule virtual processor resources.
 
@@ -2343,7 +1809,7 @@ If other virtual processors at the same or higher priority are runnable but wait
 
 *Syntax*
 
-*vmyield*
+`vmyield`
 
 *Type: JR (slot 2)*
 
@@ -2359,55 +1825,21 @@ If other virtual processors at the same or higher priority are runnable but wait
 
 [width=526]
 |===
-h| *31* a| +
+h| 31 h| 30 h| 29 h| 28 h| 27 h| 26 h| 25 h| 24 h| 23 h| 22 h| 21 h| 20 h| 19 h| 18 h| 17 h| 16 h| 15 h| 14 h| 13 h| 12 h| 11 h| 10 h| 9 h| 8 h| 7 h| 6 h| 5 h| 4 h| 3 h| 2 h| 1 h| 0
 
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *23* h| *22* a| +
-
-a| +
-
-a| +
-
-a| +
-
-a| +
-
-h| *16* h| *15* h| *14* h| *13* h| *12* a| +
-
-a| +
-
-a| +
-
-h| *8* h| *7* a| +
-
-h| *5* h| *4* a| +
-
-h| *2* h| *1* h| *0*
-9+| VM (trap1) | - 6+a| +
-
-2+| Parse | - 5+| VM Group 2 3+| - 3+| vmyield 2+| -
+9+^| VM (trap1) 7+^| - 2+^| Parse ^| - 5+^| VM Group 2 3+^| - 3+^| vmyield 2+^| -
 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | - | - | - | - | - | - | - | P | P | - | 0 | 0 | 0 | 1 | 0 | - | - | - | 0 | 0 | 1 | - | -
 
 |===
 
+[appendix]
 == Determining HVM Environment
 
 === Overview
 
 Guest-mode software can poll the VMM for the current HVM version to determine if they are version-compatible.
 
-=== Accessing environment version*
+=== Accessing environment version
 
 When Guest-mode software begins execution, it may need an efficient way to determine the HVM environment provided by the VMM. This can be done with the virtual instruction vmversion, which returns a value specifying the virtual machine environment version that is supported by the VMM.
 
@@ -2418,25 +1850,19 @@ This feature enables the VMM to support guests that may only support an older HV
 [NOTE]
 ====
 Further communication about the system configuration will likely be beneficial for the guest, but the definition of this feature is TBD.
-====
 
 The version number associated with the current VM specification is 0x0000_0700.
+====
 
-*B.3 Virtual instructions for determining environment*
+=== Virtual instructions for determining environment*
 
-Table B-1 summarizes the virtual instructions used for determining the HVM environment.
+The table below summarizes the virtual instructions used for determining the HVM environment.
 
-*Table B-1 Virtual instructions for determining environment*
-
-[width=407]
+.Virtual instructions for determining environment
 |===
-h| *Instruction* h| *Description*
+h| Instruction h| Description
 | vmversion | Return the virtual machine version
 
 |===
 
 For details on these instructions see Appendix A.
-
-+
- +
-

@@ -220,7 +220,7 @@ H2_BOOT_attempts:
 	PAGE_COUNT = add(NPAGES, #1)        // FIXME: handle bootvm > 1 pages or different size
 	FROM = PHYS_ADDR
 	TO = lsr(PHYS_ADDR, #PAGE_BITS)     // 4K page
-	TO = sub(#0x00100000, TO)           // total space
+	TO = sub(#0x000e0000, TO)           // total space
 	TMP = ct0(CORE_COUNT)               // FIXME: handle non-2^^n
 	TO = lsr(TO, TMP)
 	TO = asl(TO, #PAGE_BITS)            // space per core

@@ -16,7 +16,8 @@ typedef union {
 		u32_t pn;
 		u32_t size:4;
 		u32_t xwru:4;
-		u32_t cccc:4;
+		u32_t cccc:3;
+		u32_t weak_ccc:1;  // subsequent translations override cccc
 		u32_t shared:1;
 #if ARCHV < 73
 		u32_t abits:2;
@@ -33,7 +34,8 @@ static inline H2K_translation_t H2K_translate_default(pa_t va)
 		.pn = (u32_t)(va >> PAGE_BITS),
 		.size = (32 - PAGE_BITS)/2,
 		.xwru = 0xf,
-		.cccc = 0xf,
+		.cccc = 0x0,
+		.weak_ccc = 1,
 		.shared = 0,
 #if ARCHV < 73
 		.abits = 0,

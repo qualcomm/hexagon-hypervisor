@@ -22,7 +22,8 @@ static inline H2K_translation_t H2K_pagewalk_update_translation(H2K_translation_
 	in.pn |= pte.ppn & (-1<<(size*2));
 	in.xwru &= (pte.xwr << 1) | pte.u;
 	in.shared = pte.shared;
-	if (in.cccc > 0xF) in.cccc = pte.ccc;
+	if (in.weak_ccc) in.cccc = pte.ccc;
+	in.weak_ccc = 0;  // FIXME: pte_t has no weak_ccc
 	return in;
 }
 

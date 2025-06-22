@@ -14,7 +14,8 @@ typedef union {
 			h2_u32_t low;
 			struct {
 				h2_u32_t ppn:24;
-				h2_u32_t cccc:4;
+				h2_u32_t cccc:3;
+				h2_u32_t weak_ccc:1;  // old translations will set this to 0
 				h2_u32_t xwru:4;
 			};
 		};

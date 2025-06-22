@@ -22,8 +22,9 @@ static inline H2K_translation_t H2K_varadix_update(H2K_translation_t in, H2K_tra
 	in.xwru &= new.xwru;
 	in.shared = new.shared;
 	if (new.raw == 0) return new;
-	if (in.cccc > 0xF) in.cccc = new.cccc;
+	if (in.weak_ccc) in.cccc = new.cccc;
 	if (in.size > new.size) in.size = new.size;
+	in.weak_ccc = new.weak_ccc;
 	return in;
 }
 

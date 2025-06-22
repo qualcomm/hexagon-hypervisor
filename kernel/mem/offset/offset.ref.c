@@ -20,7 +20,9 @@ H2K_translation_t H2K_offset_translate(H2K_translation_t in, H2K_asid_entry_t in
 	in.pn += offset.pages;
 	if (in.size > offset.size) in.size = offset.size;
 	in.xwru &= offset.xwru;
-	if (in.cccc > 0xF) in.cccc = offset.cccc;
+	if (in.weak_ccc) in.cccc = offset.cccc;
+	in.weak_ccc = offset.weak_ccc;
+	// in.shared unchanged, since this is meaningless for offset translations
 
 	vmblock = H2K_gp->vmblocks[info.fields.vmid]; // parent VM has next-level translation
 	if (!in.shared && vmblock->guestmap.raw) {

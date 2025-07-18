@@ -255,7 +255,7 @@ H2_BOOT_attempts:
 
 	/* core 1 gets the per-core TCM offset */
 	TMP = memw(TCM_BASE)            // core 0 TCM base
-	TCM_VAL = sub(TMP, TCM_VAL)     // per-core TCM base offset
+	TCM_VAL = sub(TCM_VAL, TMP)     // per-core TCM base offset
 	memw(TCM_OFFSET) = TCM_VAL
 	dccleana(TCM_OFFSET)
 
@@ -264,6 +264,7 @@ H2_BOOT_attempts:
 #define SYSCFG r11
 	SYSCFG = syscfg
 	SYSCFG = clrbit(SYSCFG, #SYSCFG_D_BIT)    // dcache off to make llsc work
+	syncht
 	syscfg = SYSCFG
 	isync
 

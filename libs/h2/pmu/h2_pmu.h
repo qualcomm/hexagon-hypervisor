@@ -105,21 +105,29 @@ static inline unsigned int h2_pmu_getreg(int reg)
 	}
 }
 
-static inline int h2_pmu_reset() {
+static inline int h2_pmu_count_clear() {
 	int i;
-	int ret = 0;
+	int ret;
+	
+	for (i = 0; i < 8; i++) {
+		if (0 != (ret = h2_pmu_setreg(H2_PMUCNT0 + i, 0))) return ret;
+	}
+
+	return 0;
+}
+
+static inline int h2_pmu_reset() {
+	int ret;
 	
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG, 0))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, 0))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUCFG, 0))) return ret;
-	for (i = 0; i < 8; i++) {
-		if (0 != (ret = h2_pmu_setreg(H2_PMUCNT0 + i, 0))) return ret;
-	}
-	return ret;
+
+	return h2_pmu_count_clear();
 }
 
 static inline int h2_pmu_enable() {
-	int ret = 0;
+	int ret;
 	
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG, __h2_pmu_evtcfg__))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, __h2_pmu_evtcfg1__))) return ret;
@@ -129,11 +137,11 @@ static inline int h2_pmu_enable() {
 		if (0 != (ret = h2_hwconfig_gpio_toggle(1))) return ret;
 	}
 
-	return ret;
+	return 0;
 }
 
 static inline int h2_pmu_disable() {
-	int ret = 0;
+	int ret;
 
 	if (__h2_gpio_toggle__) {
 		if (0 != (ret = h2_hwconfig_gpio_toggle(0))) return ret;
@@ -148,7 +156,7 @@ static inline int h2_pmu_disable() {
 	if (0 != (ret = h2_pmu_setreg(H2_PMUEVTCFG1, 0))) return ret;
 	if (0 != (ret = h2_pmu_setreg(H2_PMUCFG, 0))) return ret;
 
-	return ret;
+	return 0;
 }
 
 /* /\** */

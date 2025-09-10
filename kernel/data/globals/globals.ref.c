@@ -32,6 +32,8 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 	H2K_kg.last_tlb_index = last_tlb_index;
 	H2K_kg.tlb_size = tlb_size;
 	H2K_kg.pinned_tlb_mask = (~0ULL) << ((last_tlb_index+1) & 0x3F);
+	H2K_kg.core_id = H2K_cfg_table(CFG_TABLE_CORE_ID);
+	H2K_kg.core_count = H2K_cfg_table(CFG_TABLE_CORE_COUNT);
 
 #ifdef H2K_L2_CONTROL
 	H2K_kg.l2_int_base = (void *)(l2vic_base + 0x000);

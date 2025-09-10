@@ -157,6 +157,8 @@ typedef struct {
 	u32_t vtcm_size; // 4k pages
 	u32_t ecc_enable;
 	u32_t dma_version;
+	u32_t core_id;
+	u32_t core_count;
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf;

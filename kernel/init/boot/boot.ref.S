@@ -165,11 +165,18 @@ H2_BOOT_attempts:
 #endif
 
 #ifdef MULTICORE
+#ifdef CFG_HACK
+	CORE_ID = #0
+	TMP = lsr(SS_BASE, #PHYSREAD_HI_SHIFT)
+	CORE_ID = memw_phys(CORE_ID, TMP)  // read from subsystem instance ID -- offst 0
+	CORE_COUNT = #2
+#else
 	CFG_IDX = #CFG_TABLE_CORE_ID
 	CORE_ID = memw_phys(CFG_IDX, CFG_HI)
 
 	CFG_IDX = #CFG_TABLE_CORE_COUNT
 	CORE_COUNT = memw_phys(CFG_IDX, CFG_HI)
+#endif
 
 	p0 = !cmp.gtu(CORE_COUNT, #1) // no multicore
 	if (p0) jump:nt .Lno_multicore

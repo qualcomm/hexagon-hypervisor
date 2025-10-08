@@ -12,9 +12,7 @@
 #include <cfg_table.h>
 #include <log.h>
 
-u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
-
-	//	H2K_log("Info trap %02d %s 0x%016llx boo\n", op, "and", 0xfeedbeaf12345678);
+u32_t H2K_trap_info(info_type op, u32_t unit, cfg_unit_entry entry, H2K_thread_context *me) {
 
 	switch(op) {
 
@@ -169,6 +167,12 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 	case INFO_CORECFG_BASE:
 		return H2K_cfg_table(CFG_TABLE_CORECFG_BASE) << CFG_TABLE_SHIFT;
+
+	case INFO_UNIT_START:
+		return H2K_cfg_table(CFG_TABLE_UNIT_CONFIG_REG_BASE);
+
+	case INFO_UNIT_ENTRY:
+		return H2K_cfg_table_unit_entry(unit, entry);
 
 	default:
 		return -1;

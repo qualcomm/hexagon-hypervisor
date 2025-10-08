@@ -43,68 +43,68 @@ int main() {
 	H2K_mem_alloc_init(Heap, alloc_heap_size);
 	if (H2K_mem_stlb_alloc() == -1) FAIL("STLB alloc");
 
-	if (H2K_trap_info(INFO_BUILD_ID, 0) != H2K_GIT_COMMIT) FAIL("Build ID");
+	if (H2K_trap_info(INFO_BUILD_ID, 0, 0, 0) != H2K_GIT_COMMIT) FAIL("Build ID");
 
 #ifdef H2K_USE_TCM
 	if ((H2K_trap_info(INFO_BOOT_FLAGS, 0) & 1) != 1) FAIL("USE_TCM");
 #else
-	if ((H2K_trap_info(INFO_BOOT_FLAGS, 0) & 1) != 0) FAIL("USE_TCM");
+	if ((H2K_trap_info(INFO_BOOT_FLAGS, 0, 0, 0) & 1) != 0) FAIL("USE_TCM");
 #endif
 
-	stlb_info.raw = H2K_trap_info(INFO_STLB, 0);
+	stlb_info.raw = H2K_trap_info(INFO_STLB, 0, 0, 0);
 	if (stlb_info.stlb_max_sets_log2 != STLB_MAX_SETS_LOG2) FAIL("STLB sets");
 	if (stlb_info.stlb_max_ways != STLB_MAX_WAYS) FAIL("STLB ways");
 	if (stlb_info.stlb_size != STLB_MULT) FAIL("STLB size");
 	if (stlb_info.stlb_enabled != 1) FAIL("STLB enabled");
 
 	asm volatile ( "%0 = syscfg\n" : "=r" (val));
-	if (H2K_trap_info(INFO_SYSCFG, 0) != val) FAIL("SYSCFG");
+	if (H2K_trap_info(INFO_SYSCFG, 0, 0, 0) != val) FAIL("SYSCFG");
 
 	asm volatile ( "%0 = rev\n" : "=r" (val));
-	if (H2K_trap_info(INFO_REV, 0) != val) FAIL("REV");
+	if (H2K_trap_info(INFO_REV, 0, 0, 0) != val) FAIL("REV");
 
 	a.next = a.prev = &a; // single-thread usage
 	a.prio = 0;
 	a.hthread = 0;
 	a.tid = 0;
-	a.id.raw = 0; // thread vmidx, cpuidx & id_vint all clear
+	a.id.raw = 0; // thread vmidx, 0, 0, cpuidx & id_vint all clear
 	a.vmblock = &vmblock; // thread vmblock ptr set to struct
 
 	asm volatile ( "%0 = s35\n" : "=r" (val));
-	if (H2K_trap_info(INFO_LIVELOCK, &a) != val) FAIL("LIVELOCK");
+	if (H2K_trap_info(INFO_LIVELOCK, 0, 0, &a) != val) FAIL("LIVELOCK");
 
 	val = H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT;
-	if (H2K_trap_info(INFO_SSBASE, &a) != val) FAIL("SSBASE");
+	if (H2K_trap_info(INFO_SSBASE, 0, 0, &a) != val) FAIL("SSBASE");
 
 	val = H2K_kg.last_tlb_index+1;
-	if (H2K_trap_info(INFO_TLB_FREE, &a) != val) FAIL("TLB_FREE");
+	if (H2K_trap_info(INFO_TLB_FREE, 0, 0, &a) != val) FAIL("TLB_FREE");
 
 	val = H2K_kg.tlb_size;
-	if (H2K_trap_info(INFO_TLB_SIZE, &a) != val) FAIL("TLB_SIZE");
+	if (H2K_trap_info(INFO_TLB_SIZE, 0, 0, &a) != val) FAIL("TLB_SIZE");
 
 	val = (H2K_LINK_ADDR - H2K_kg.phys_offset);
-	if (H2K_trap_info(INFO_PHYSADDR, &a) != val) FAIL("PHYSADDR");
+	if (H2K_trap_info(INFO_PHYSADDR, 0, 0, &a) != val) FAIL("PHYSADDR");
 
 	val = (H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT);
-	if (H2K_trap_info(INFO_TCM_BASE, &a) != val) FAIL("TCM_BASE");
+	if (H2K_trap_info(INFO_TCM_BASE, 0, 0, &a) != val) FAIL("TCM_BASE");
 
 	val = H2K_kg.l2size;
-	if (H2K_trap_info(INFO_L2MEM_SIZE, &a) != val) FAIL("L2MEM_SIZE");
+	if (H2K_trap_info(INFO_L2MEM_SIZE, 0, 0, &a) != val) FAIL("L2MEM_SIZE");
 
 	val = H2K_kg.tcm_size;
-	if (H2K_trap_info(INFO_TCM_SIZE, &a) != val) FAIL("TCM_SIZE");
+	if (H2K_trap_info(INFO_TCM_SIZE, 0, 0, &a) != val) FAIL("TCM_SIZE");
 
 	val = H2K_PAGESIZE;
-	if (H2K_trap_info(INFO_H2K_PGSIZE, &a) != val) FAIL("H2K_PAGESIZE");
+	if (H2K_trap_info(INFO_H2K_PGSIZE, 0, 0, &a) != val) FAIL("H2K_PAGESIZE");
 
 	val = (u32_t)&H2K_KERNEL_NPAGES;
-	if (H2K_trap_info(INFO_H2K_NPAGES, &a) != val) FAIL("H2K_NPAGES");
+	if (H2K_trap_info(INFO_H2K_NPAGES, 0, 0, &a) != val) FAIL("H2K_NPAGES");
 
 	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + L2VIC_OFFSET);
-	if (H2K_trap_info(INFO_L2VIC_BASE, &a) != val) FAIL("L2VIC_BASE");
+	if (H2K_trap_info(INFO_L2VIC_BASE, 0, 0, &a) != val) FAIL("L2VIC_BASE");
 
 	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + TIMER_OFFSET);
-	if (H2K_trap_info(INFO_TIMER_BASE, &a) != val) FAIL("TIMER_BASE");
+	if (H2K_trap_info(INFO_TIMER_BASE, 0, 0, &a) != val) FAIL("TIMER_BASE");
 
 #if ARCHV >= 60
 	val = TIMER_INT_CORE_V60;
@@ -113,41 +113,41 @@ int main() {
 #else
 	val = TIMER_INT_CORE_V4;
 #endif
-	if (H2K_trap_info(INFO_TIMER_INT, &a) != val) FAIL("TIMER_INT");
+	if (H2K_trap_info(INFO_TIMER_INT, 0, 0, &a) != val) FAIL("TIMER_INT");
 
 	val = H2K_kg.kernel_error;
-	if (H2K_trap_info(INFO_ERROR, &a) != val) FAIL("ERROR");
+	if (H2K_trap_info(INFO_ERROR, 0, 0, &a) != val) FAIL("ERROR");
 
 	val = H2K_kg.hthreads_mask;
-	if (H2K_trap_info(INFO_HTHREADS, &a) != val) FAIL("HTHREADS");
+	if (H2K_trap_info(INFO_HTHREADS, 0, 0, &a) != val) FAIL("HTHREADS");
 
 	val = (H2K_kg.l2tags > 0 ? (1 << H2K_kg.l2tags) * L2_TAG_CHUNK : 0);
-	if (H2K_trap_info(INFO_L2TAG_SIZE, &a) != val) FAIL("L2TAG_SIZE");
+	if (H2K_trap_info(INFO_L2TAG_SIZE, 0, 0, &a) != val) FAIL("L2TAG_SIZE");
 
 	val = H2K_cfg_table(CFG_TABLE_L2REGS) << CFG_TABLE_SHIFT;
-	if (H2K_trap_info(INFO_L2CFG_BASE, &a) != val) FAIL("L2CFG_BASE");
+	if (H2K_trap_info(INFO_L2CFG_BASE, 0, 0, &a) != val) FAIL("L2CFG_BASE");
 
 	val = H2K_cfg_table(CFG_TABLE_CLADEREGS) << CFG_TABLE_SHIFT;
-	if (H2K_trap_info(INFO_CLADE_BASE, &a) != val) FAIL("CLADE_BASE");
+	if (H2K_trap_info(INFO_CLADE_BASE, 0, 0, &a) != val) FAIL("CLADE_BASE");
 
 	val = H2K_get_cfgbase();
-	if (H2K_trap_info(INFO_CFGBASE, &a) != val) FAIL("CFGBASE");
+	if (H2K_trap_info(INFO_CFGBASE, 0, 0, &a) != val) FAIL("CFGBASE");
 
 	val = H2K_kg.hvx_vlength;
-	if (H2K_trap_info(INFO_HVX_VLENGTH, &a) != val) FAIL("HVX_VLENGTH");
+	if (H2K_trap_info(INFO_HVX_VLENGTH, 0, 0, &a) != val) FAIL("HVX_VLENGTH");
 
 	val = H2K_kg.coproc_contexts;
-	if (H2K_trap_info(INFO_COPROC_CONTEXTS, &a) != val) FAIL("COPROC_CONTEXTS");
+	if (H2K_trap_info(INFO_COPROC_CONTEXTS, 0, 0, &a) != val) FAIL("COPROC_CONTEXTS");
 
 	val = H2K_kg.hlx_contexts;
-	if (H2K_trap_info(INFO_HLX_CONTEXTS, &a) != val) FAIL("HLX_CONTEXTS");
+	if (H2K_trap_info(INFO_HLX_CONTEXTS, 0, 0, &a) != val) FAIL("HLX_CONTEXTS");
 
 #ifdef DO_EXT_SWITCH
 	val = a.vmblock->do_ext;
 #else
 	val = 0;
 #endif
-	if (H2K_trap_info(INFO_HVX_SWITCH, &a) != val) FAIL("HVX_SWITCH");
+	if (H2K_trap_info(INFO_HVX_SWITCH, 0, 0,  &a) != val) FAIL("HVX_SWITCH");
 
 #if ARCHV > 65
 	val = (H2K_cfg_table(CFG_TABLE_VTCM_BASE) << CFG_TABLE_SHIFT);
@@ -156,7 +156,7 @@ int main() {
 #else
 	val = 0;
 #endif
-	if (H2K_trap_info(INFO_VTCM_BASE, &a) != val) FAIL("VTCM_BASE");
+	if (H2K_trap_info(INFO_VTCM_BASE, 0, 0, &a) != val) FAIL("VTCM_BASE");
 
 #if ARCHV > 65
 	val = H2K_cfg_table(CFG_TABLE_VTCM_SIZE);
@@ -165,7 +165,7 @@ int main() {
 #else
 	val = 0;
 #endif
-	if (H2K_trap_info(INFO_VTCM_SIZE, &a) != val) FAIL("VTCM_SIZE");
+	if (H2K_trap_info(INFO_VTCM_SIZE, 0, 0, &a) != val) FAIL("VTCM_SIZE");
 
 #if ARCHV > 65
 	val = (H2K_cfg_table(CFG_TABLE_ECC_BASE) << CFG_TABLE_SHIFT);
@@ -174,7 +174,7 @@ int main() {
 #else
 	val = 0;
 #endif
-	if (H2K_trap_info(INFO_ECC_BASE, &a) != val) FAIL("ECC_BASE");
+	if (H2K_trap_info(INFO_ECC_BASE, 0, 0, &a) != val) FAIL("ECC_BASE");
 
 #if ARCHV > 65
 	val = H2K_cfg_table(CFG_TABLE_L2_LINE_SZ);
@@ -183,7 +183,7 @@ int main() {
 #else
 	val = 64;
 #endif
-	if (H2K_trap_info(INFO_L2_LINE_SZ, &a) != val) FAIL("L2_LINE_SZ");
+	if (H2K_trap_info(INFO_L2_LINE_SZ, 0, 0, &a) != val) FAIL("L2_LINE_SZ");
 
 #if ARCHV > 65
 	val = H2K_cfg_table(CFG_TABLE_AUDIO_EXT);
@@ -192,7 +192,7 @@ int main() {
 #else
 	val = 0;
 #endif
-	if (H2K_trap_info(INFO_AUDIO_EXT, &a) != val) FAIL("AUDIO_EXT");
+	if (H2K_trap_info(INFO_AUDIO_EXT, 0, 0, &a) != val) FAIL("AUDIO_EXT");
 
 	puts("TEST PASSED\n");
 	return 0;

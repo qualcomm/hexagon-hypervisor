@@ -167,7 +167,7 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_state // 25
 	}
 	{
-		r1 = sgp0
+		r3 = sgp0
 		jump H2K_trap_info // 26
 	}
 	{

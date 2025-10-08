@@ -47,6 +47,8 @@ typedef enum {
 	INFO_HLX_CONTEXTS, /**< Number of HLX instances */
 	INFO_CORE_ID,     /**< Multicore core ID */
 	INFO_CORE_COUNT,  /**< Multicore core count */
+	INFO_UNIT_START,  /**< Start of unit config list */
+	INFO_UNIT_ENTRY,  /**< Unit entry */
 	INFO_MAX
 } info_type;
 
@@ -78,5 +80,21 @@ typedef union {
 	};
 	unsigned long raw;
 } info_stlb_type;
+
+/* symbolic entry names for all unit types */
+typedef enum {
+	CFG_UNIT_ID,
+	CFG_UNIT_SUBID,
+	CFG_UNIT_NEXT,
+	CFG_VXU_UNIT_ID,
+	CFG_HVX_CONTEXTS,
+	CFG_HLX_CONTEXTS,
+	CFG_HMX_CONTEXTS,
+	CFG_HVX_VEC_LENGTH,
+	CFG_HLX_REG_LENGTH,
+	CFG_VTCM_BASE,
+	CFG_VTCM_SIZE,
+	CFG_END
+} cfg_unit_entry;
 
 #endif

@@ -141,4 +141,11 @@
 #define EXT_HVX_XA_START 0
 #define EXT_NO_EXT 0
 
+#define CFG_NUM_UNIT_TYPES 1
+#define CFG_NUM_UNIT_SUBTYPES 1
+
+#define CFG_TYPE_VXU0 0
+
+#define CFG_SUBTYPE_VXU0 0
+
 #endif

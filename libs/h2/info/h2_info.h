@@ -15,11 +15,27 @@
 @{ */
 
 /**
+Raw interface for the info trap.  Do not use.
+@param[in] type  Requested configuration parameter; see h2_common_info.h
+@param[in] unit  Unit index
+@param[in] index  Entry index
+@returns Parameter value or -1 on unknown request.
+@dependencies None
+*/
+int h2_info_trap(info_type type, unsigned int unit, cfg_unit_entry entry);
+
+/**
 Get info.
 @param[in] type  Requested configuration parameter; see h2_common_info.h
 @returns Parameter value or -1 on unknown request.
 @dependencies None
 */
-int h2_info(info_type type);
+static inline int h2_info(info_type type) {
+	return h2_info_trap(type, 0, 0);
+}
+
+static inline int h2_info_unit(unsigned int unit, cfg_unit_entry entry) {
+	return h2_info_trap(INFO_UNIT_ENTRY, unit, entry);
+}
 
 #endif

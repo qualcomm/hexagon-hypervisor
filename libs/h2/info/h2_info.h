@@ -31,7 +31,7 @@ Get info.
 @dependencies None
 */
 static inline int h2_info(info_type type) {
-	return h2_info_trap(type, 0, 0);
+	return h2_info_trap(type, 0, (cfg_unit_entry)0);
 }
 
 static inline int h2_info_unit(unsigned int unit, cfg_unit_entry entry) {

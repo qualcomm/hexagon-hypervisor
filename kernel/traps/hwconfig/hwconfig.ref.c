@@ -64,7 +64,8 @@ static const configptr_t H2K_hwconfigtab[HWCONFIG_MAX] IN_SECTION(".data.config.
 	H2K_trap_hwconfig_setvwctrl,
 	H2K_trap_hwconfig_get_dpm_voltlimitmgmt_reg,
 	H2K_trap_hwconfig_set_dpm_voltlimitmgmt_reg,
-	H2K_trap_hwconfig_hlxbits
+	H2K_trap_hwconfig_hlxbits,
+	H2K_trap_hwconfig_coproc_bits
 };
 
 typedef struct {
@@ -259,6 +260,11 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 	return 0;
 }
 
+u32_t H2K_trap_hwconfig_coproc_bits(u32_t unused, void *unusedp,  u32_t coproc, u32_t unused3, H2K_thread_context *me) {
+	me->ccr = Q6_R_insert_RII(me->ccr, coproc, 1, CCR_COPROC_BIT);
+	return 0;
+}
+
 u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t xe3, H2K_thread_context *me) {
 #if ARCHV >= 81
 	if (0 < H2K_gp->hlx_contexts) { // exists
@@ -295,7 +301,7 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 #endif
 }
 
-u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa2unused, H2K_thread_context *me) {
+u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t unused3, H2K_thread_context *me) {
 #if ARCHV >= 68
 	if (0 < H2K_gp->hmx_units) {  // exists
 #ifdef CLUSTER_SCHED
@@ -795,4 +801,3 @@ u32_t H2K_trap_hwconfig_set_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u
     return 0;
   }
 }
-

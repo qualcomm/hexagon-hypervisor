@@ -12,9 +12,7 @@
 #include <cfg_table.h>
 #include <log.h>
 
-u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
-
-	//	H2K_log("Info trap %02d %s 0x%016llx boo\n", op, "and", 0xfeedbeaf12345678);
+u32_t H2K_trap_info(info_type op, u32_t unit, cfg_unit_entry entry, H2K_thread_context *me) {
 
 	switch(op) {
 
@@ -49,13 +47,13 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 		return H2K_LINK_ADDR - H2K_gp->phys_offset;
 
 	case INFO_TCM_BASE:
-		return H2K_gp->tcm_base;
+		return H2K_gp->tcm_base << PAGE_BITS;
 
 	case INFO_L2MEM_SIZE:
 		return H2K_gp->l2size;
 
 	case INFO_TCM_SIZE:
-		return H2K_gp->tcm_size;
+		return H2K_gp->tcm_size << PAGE_BITS;
 
 	case INFO_H2K_PGSIZE:
 		return H2K_PAGESIZE;
@@ -105,22 +103,10 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 #if ARCHV >= 65
 	case INFO_VTCM_BASE:
-		if (0x65 < H2K_gp->arch) {
-			return H2K_cfg_table(CFG_TABLE_VTCM_BASE) << CFG_TABLE_SHIFT;
-
-		} else if (0 < H2K_gp->coproc_contexts && 0x65 == H2K_gp->arch) {
-			return H2K_gp->tcm_base + EXT_HVX_VTCM_OFFSET;
-		}
-		return 0;
+		return H2K_gp->vtcm_base << PAGE_BITS;
 
 	case INFO_VTCM_SIZE:
-		if (0x65 < H2K_gp->arch) {
-			return H2K_cfg_table(CFG_TABLE_VTCM_SIZE);
-
-		} else if (0 < H2K_gp->coproc_contexts && 0x65 == H2K_gp->arch) {
-			return EXT_HVX_VTCM_SIZE;
-		}
-		return 0;
+		return (H2K_gp->vtcm_size << PAGE_BITS) / 1024;
 
 	case INFO_ECC_BASE:
 		if (0x65 < H2K_gp->arch) {
@@ -181,6 +167,12 @@ u32_t H2K_trap_info(info_type op, H2K_thread_context *me) {
 
 	case INFO_CORECFG_BASE:
 		return H2K_cfg_table(CFG_TABLE_CORECFG_BASE) << CFG_TABLE_SHIFT;
+
+	case INFO_UNIT_START:
+		return H2K_cfg_table(CFG_TABLE_UNIT_CONFIG_REG_BASE);
+
+	case INFO_UNIT_ENTRY:
+		return H2K_cfg_table_unit_entry(unit, entry);
 
 	default:
 		return -1;

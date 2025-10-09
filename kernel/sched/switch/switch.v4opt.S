@@ -293,16 +293,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		DATA = insert(TRACE, #8, #0)
-#if ARCHV >= 68
-		DM0 = memw(DST + #CONTEXT_dm0)
-#endif
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
 		VWCTRL = memw(DST + #CONTEXT_vwctrl)
 #endif
 	}
-#if ARCHV >= 68
-	dmresume(DM0)
-#endif
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
 	s12 = VWCTRL
 #endif
@@ -361,7 +355,15 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 #if ARCHV >= 60
 	c19:18 = r23:22
-	c17:16 = r21:20
+	{
+		c17:16 = r21:20
+#if ARCHV >= 68
+		r23 = memw(DST + #CONTEXT_dm0)
+#endif
+	}
+#endif
+#if ARCHV >= 68
+	dmresume(r23)
 #endif
 
 	{

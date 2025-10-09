@@ -49,15 +49,15 @@ static inline H2K_translation_t H2K_translate_bad()
 
 H2K_translation_t H2K_translate(H2K_translation_t in, H2K_asid_entry_t info) IN_SECTION(".text.mem.translate");
 
-static inline pa_t H2K_translate_addr(pa_t addr_in, H2K_asid_entry_t info)
-{
-	H2K_translation_t translation = H2K_translate_default(addr_in);
-	pa_t ret;
-	translation = H2K_translate(translation, info);
-	ret = translation.pn;
-	ret <<= 12;
-	ret |= addr_in & ((1<<PAGE_BITS)-1);
-	return ret;
-}
+/* static inline pa_t H2K_translate_addr(pa_t addr_in, H2K_asid_entry_t info) */
+/* { */
+/* 	H2K_translation_t translation = H2K_translate_default(addr_in); */
+/* 	pa_t ret; */
+/* 	translation = H2K_translate(translation, info); */
+/* 	ret = translation.pn; */
+/* 	ret <<= 12; */
+/* 	ret |= addr_in & ((1<<PAGE_BITS)-1); */
+/* 	return ret; */
+/* } */
 
 #endif

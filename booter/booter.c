@@ -117,6 +117,7 @@ enum {
 unsigned int ext_power = 1;
 #endif
 unsigned int silent = 0;
+unsigned int cycles = 0;
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 0;
 unsigned long guest_base = H2K_GUEST_START;
@@ -242,6 +243,15 @@ void FAIL(const char *str1, const char *str2)
 	exit(1);
 }
 
+void pcycles(void) {
+	unsigned long long int cyc;
+
+	if (!cycles) return;
+	
+	asm volatile ( " %0 = c15:14 // upcycle \n" : "=r"(cyc));
+	BOOTER_PRINTF("\nPCYCLES %llu\n", cyc);
+}
+
 void usage()
 {
 	BOOTER_PRINTF("Usage:\n");
@@ -285,6 +295,7 @@ void usage()
 	BOOTER_PRINTF("  --pmu_file <string>\n\tPMU output file name. Default " PMU_FILE ".\n");
 	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
 	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
+	BOOTER_PRINTF("  --cycles\n\tPrint pcycles during boot.\n");
 	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
 
 	BOOTER_PRINTF("\n");
@@ -778,6 +789,8 @@ void load_vm(unsigned int idx) {
 	Elf32_Phdr phdr;
 	int bytes_read;
 
+	pcycles();
+
 	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
 	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
@@ -1169,6 +1182,8 @@ void boot_vm(unsigned int idx) {
 		}
 	}
 
+	pcycles();
+
 	if (-1 == h2_vmboot(vm_params[idx].entry, vm_params[idx].stack, vm_params[idx].arg, vm_params[idx].startprio, vm_params[idx].id) ) {
 		FAIL("\tfailed to boot vm\n", "");
 	}
@@ -1321,6 +1336,7 @@ void run(unsigned int idx) {
 						dump_pmu(i);
 						vm_params[i].id = ~0;  // mark non-existent
 						h2_vmfree(vm);
+						pcycles();
 					}
 				} else {
 					done = 0; // someone's not done
@@ -1350,45 +1366,66 @@ void die_usage()
 
 void print_infos() {
 
-	BOOTER_PRINTF("H2/core info:\n");
+	unsigned int unit;
+	pcycles();
+
+	BOOTER_PRINTF("\nH2/core info:\n");
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
 	BOOTER_PRINTF("\tGuest PC sampling available: ");
 	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
-	BOOTER_PRINTF("\tHLX:\n");
-	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hlx ? "true" : "false"));
-	if (boot_flags.boot_have_hlx) {
-		BOOTER_PRINTF("\t\tContexts : %d\n", h2_info(INFO_HLX_CONTEXTS));
-	}
-	BOOTER_PRINTF("\tHVX:\n");
-	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
-	if (boot_flags.boot_have_hvx) {
-		BOOTER_PRINTF("\t\tNative vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
-		BOOTER_PRINTF("\t\tContexts (when v2x == 0): %d\n", h2_info(INFO_COPROC_CONTEXTS));
-		BOOTER_PRINTF("\t\tCan context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
+	BOOTER_PRINTF("\tCoprocessors:\n");
+	unit = h2_info(INFO_UNIT_START);
+	if (0 != unit) {  // have new unit cfg blocks
+		while (unit && h2_info_unit(unit, CFG_UNIT_ID) == CFG_TYPE_VXU0) {
+			BOOTER_PRINTF("\t  VXU0 subtype %x:\n", h2_info_unit(unit, CFG_UNIT_SUBID));
+			BOOTER_PRINTF("\t    Unit ID %x:\n", h2_info_unit(unit, CFG_VXU_UNIT_ID));
+			BOOTER_PRINTF("\t    HVX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HVX_CONTEXTS));
+			BOOTER_PRINTF("\t    HLX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HLX_CONTEXTS));
+			BOOTER_PRINTF("\t    HMX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HMX_CONTEXTS));
+			BOOTER_PRINTF("\t    HVX vector length: %d bytes\n", h2_info_unit(unit, CFG_HVX_VEC_LENGTH));
+			BOOTER_PRINTF("\t    HLX register length: %d bytes\n", h2_info_unit(unit, CFG_HLX_REG_LENGTH));
+			BOOTER_PRINTF("\t    VTCM base: 0x%08x\n", h2_info_unit(unit, CFG_VTCM_BASE) << 16);
+			BOOTER_PRINTF("\t    VTCM size: %dK\n", h2_info_unit(unit, CFG_VTCM_SIZE));
+
+			unit = h2_info_unit(unit, CFG_UNIT_NEXT);
+		}
+	} else { // old style
+		BOOTER_PRINTF("\t  HLX:\n");
+		BOOTER_PRINTF("\t    Present: %s\n", (boot_flags.boot_have_hlx ? "true" : "false"));
+		if (boot_flags.boot_have_hlx) {
+			BOOTER_PRINTF("\t    Contexts : %d\n", h2_info(INFO_HLX_CONTEXTS));
+		}
+		BOOTER_PRINTF("\t  HVX:\n");
+		BOOTER_PRINTF("\t    Present: %s\n", (boot_flags.boot_have_hvx ? "true" : "false"));
+		if (boot_flags.boot_have_hvx) {
+			BOOTER_PRINTF("\t    Native vector length: %d\n", h2_info(INFO_HVX_VLENGTH));
+			BOOTER_PRINTF("\t    Contexts (when v2x == 0): %d\n", h2_info(INFO_COPROC_CONTEXTS));
+			BOOTER_PRINTF("\t    Can context-switch in kernel: %s\n", (boot_flags.boot_ext_ok ? "true" : "false"));
 #if ARCHV >= 65
-		BOOTER_PRINTF("\t\tVTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
-		BOOTER_PRINTF("\t\tVTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
+			BOOTER_PRINTF("\t    VTCM base: 0x%08x\n", h2_info(INFO_VTCM_BASE));
+			BOOTER_PRINTF("\t    VTCM size: %dK\n", h2_info(INFO_VTCM_SIZE));
+#endif
+		}
+#if ARCHV >= 68
+		BOOTER_PRINTF("\t  HMX:\n");
+		BOOTER_PRINTF("\t    Present: %s\n", (boot_flags.boot_have_hmx ? "true" : "false"));
+		if (boot_flags.boot_have_hmx) {
+			BOOTER_PRINTF("\t    Units: %d\n", h2_info(INFO_HMX_INSTANCES));
+		}
+		BOOTER_PRINTF("\tUser-mode DMA present: ");
+		BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
 #endif
 	}
-	BOOTER_PRINTF("\tSILVER present: ");
-	BOOTER_PRINTF((boot_flags.boot_have_silver ? "true\n" : "false\n"));
-#if ARCHV >= 68
-	BOOTER_PRINTF("\tHMX:\n");
-	BOOTER_PRINTF("\t\tPresent: %s\n", (boot_flags.boot_have_hmx ? "true" : "false"));
-	if (boot_flags.boot_have_hmx) {
-		BOOTER_PRINTF("\t\tUnits: %d\n", h2_info(INFO_HMX_INSTANCES));
-	}
 #ifdef CLUSTER_SCHED
-		unsigned int max_coprocs = h2_info(INFO_MAX_CLUSTER_COPROC);
-		if (max_coprocs == -1) {
+	unsigned int max_coprocs = h2_info(INFO_MAX_CLUSTER_COPROC);
+	if (max_coprocs == -1) {
 			BOOTER_PRINTF("\tCluster scheduling disabled\n");
 		} else {
 			BOOTER_PRINTF("\tMax coprocessor threads per cluster: %d\n", h2_info(INFO_MAX_CLUSTER_COPROC));
 		}
 #endif
-	BOOTER_PRINTF("\tUser-mode DMA present: ");
-	BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
-#endif
+	BOOTER_PRINTF("\tSILVER present: ");
+	BOOTER_PRINTF((boot_flags.boot_have_silver ? "true\n" : "false\n"));
 	BOOTER_PRINTF("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	BOOTER_PRINTF("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
 	BOOTER_PRINTF("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
@@ -1664,6 +1701,10 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 		/* Global options */
 		if (0 == strcmp(argv[0],"--quiet")) {
 			/* already quieted */
+			argc -= 1; argv += 1;
+			continue;
+		} else if (0 == strcmp(argv[0],"--cycles")) {
+			cycles = 1;
 			argc -= 1; argv += 1;
 			continue;
 		} else if (0 == strcmp(argv[0],"--syscfg")) {

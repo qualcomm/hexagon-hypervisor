@@ -119,6 +119,18 @@ static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int pre
 }
 
 /**
+Set COPROC bits
+@param[in] coproc COPROC value
+@returns 0 on success, negative value on error
+@dependencies None
+*/
+
+static inline int h2_hwconfig_set_coprocbits(unsigned int coproc)
+{
+	return h2_hwconfig_trap(HWCONFIG_COPROCBITS, NULL, coproc, 0);
+}
+
+/**
 Set XA2, XE2 bits.
 @param[in] xe2 XE2 value
 @param[in] xa2 XA2 value

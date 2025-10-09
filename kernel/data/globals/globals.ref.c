@@ -190,7 +190,23 @@ void H2K_kg_init(u32_t phys_offset, u32_t devpage_offset, u32_t last_tlb_index, 
 		break;
 	}
 
-	H2K_kg.tcm_base = H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT;
+	H2K_kg.tcm_base = (H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT) >> PAGE_BITS;
+	// H2K_kg.tcm_size set in H2K_trap_do_hwconfig_l2cache()
+
+	if (0x65 < H2K_gp->arch) {
+		H2K_kg.vtcm_base = (H2K_cfg_table(CFG_TABLE_VTCM_BASE) << CFG_TABLE_SHIFT) >> PAGE_BITS;
+	} else if (0 < H2K_gp->coproc_contexts && 0x65 == H2K_gp->arch) {
+		H2K_kg.vtcm_base = (H2K_gp->tcm_base + EXT_HVX_VTCM_OFFSET) >> PAGE_BITS;
+	} else {
+		H2K_kg.vtcm_base = 0;
+	}
+	if (0x65 < H2K_gp->arch) {
+		H2K_kg.vtcm_size = (H2K_cfg_table(CFG_TABLE_VTCM_SIZE) * 1024) >> PAGE_BITS;
+	} else if (0 < H2K_gp->coproc_contexts && 0x65 == H2K_gp->arch) {
+		H2K_kg.vtcm_size = (EXT_HVX_VTCM_SIZE * 1024) >> PAGE_BITS;
+	} else {
+		H2K_kg.vtcm_size = 0;
+	}
 
 #if ARCHV >= 73
 	// FIXME

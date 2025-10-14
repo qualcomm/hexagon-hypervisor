@@ -169,7 +169,11 @@ u32_t H2K_trap_info(info_type op, u32_t unit, cfg_unit_entry entry, H2K_thread_c
 		return H2K_cfg_table(CFG_TABLE_CORECFG_BASE) << CFG_TABLE_SHIFT;
 
 	case INFO_UNIT_START:
-		return H2K_cfg_table(CFG_TABLE_UNIT_CONFIG_REG_BASE);
+		if (CORE_V89 <= H2K_gp->arch) {
+			return H2K_cfg_table(CFG_TABLE_UNIT_CONFIG_REG_BASE);
+		} else {
+			return 0;
+		}			
 
 	case INFO_UNIT_ENTRY:
 		return H2K_cfg_table_unit_entry(unit, entry);

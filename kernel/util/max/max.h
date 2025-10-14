@@ -41,6 +41,9 @@
 #define CORE_V79 0x79
 #define CORE_V81 0x81
 #define CORE_V85 0x85
+#define CORE_V87 0x87
+#define CORE_V89 0x89
+#define CORE_V91 0x91
 
 #define CORE_V6_A 0x0
 #define CORE_V6_B 0x1

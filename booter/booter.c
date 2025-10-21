@@ -20,6 +20,7 @@
 #include <h2_common_linear.h>
 #include <h2_sleep.h>
 #include <h2_prof.h>
+#include <h2_coproc.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -1376,17 +1377,18 @@ void print_infos() {
 	BOOTER_PRINTF("\tCoprocessors:\n");
 	unit = h2_info(INFO_UNIT_START);
 	if (0 != unit) {  // have new unit cfg blocks
-		while (unit && h2_info_unit(unit, CFG_UNIT_ID) == CFG_TYPE_VXU0) {
-			BOOTER_PRINTF("\t  VXU0 subtype %x:\n", h2_info_unit(unit, CFG_UNIT_SUBID));
-			BOOTER_PRINTF("\t    Unit ID %x:\n", h2_info_unit(unit, CFG_VXU_UNIT_ID));
-			BOOTER_PRINTF("\t    HVX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HVX_CONTEXTS));
-			BOOTER_PRINTF("\t    HLX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HLX_CONTEXTS));
-			BOOTER_PRINTF("\t    HMX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HMX_CONTEXTS));
-			BOOTER_PRINTF("\t    HVX vector length: %d bytes\n", h2_info_unit(unit, CFG_HVX_VEC_LENGTH));
-			BOOTER_PRINTF("\t    HLX register length: %d bytes\n", h2_info_unit(unit, CFG_HLX_REG_LENGTH));
-			BOOTER_PRINTF("\t    VTCM base: 0x%08x\n", h2_info_unit(unit, CFG_VTCM_BASE) << 16);
-			BOOTER_PRINTF("\t    VTCM size: %dK\n", h2_info_unit(unit, CFG_VTCM_SIZE));
-
+		while (unit) {
+			if (h2_info_unit(unit, CFG_UNIT_ID) == CFG_TYPE_VXU0) {
+				BOOTER_PRINTF("\t  VXU0 subtype %x:\n", h2_info_unit(unit, CFG_UNIT_SUBID));
+				BOOTER_PRINTF("\t    Unit ID %x:\n", h2_info_unit(unit, CFG_VXU_UNIT_ID));
+				BOOTER_PRINTF("\t    HVX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HVX_CONTEXTS));
+				BOOTER_PRINTF("\t    HLX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HLX_CONTEXTS));
+				BOOTER_PRINTF("\t    HMX contexts: 0x%08x\n", h2_info_unit(unit, CFG_HMX_CONTEXTS));
+				BOOTER_PRINTF("\t    HVX vector length: %d bytes\n", h2_info_unit(unit, CFG_HVX_VEC_LENGTH));
+				BOOTER_PRINTF("\t    HLX register length: %d bytes\n", h2_info_unit(unit, CFG_HLX_REG_LENGTH));
+				BOOTER_PRINTF("\t    VTCM base: 0x%08x\n", h2_info_unit(unit, CFG_VTCM_BASE) << 16);
+				BOOTER_PRINTF("\t    VTCM size: %dK\n", h2_info_unit(unit, CFG_VTCM_SIZE));
+			}
 			unit = h2_info_unit(unit, CFG_UNIT_NEXT);
 		}
 	} else { // old style

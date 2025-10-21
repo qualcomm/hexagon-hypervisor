@@ -12,7 +12,7 @@
 #include <cfg_table.h>
 #include <log.h>
 
-u32_t H2K_trap_info(info_type op, u32_t unit, cfg_unit_entry entry, H2K_thread_context *me) {
+u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_thread_context *me) {
 
 	switch(op) {
 

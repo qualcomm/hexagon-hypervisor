@@ -7,6 +7,7 @@
 #define H2_INFO_H 1
 
 #include <h2_common_info.h>
+#include <h2_common_coproc.h>
 
 /** @file h2_info.h
  @brief Get system configuration info
@@ -22,7 +23,7 @@ Raw interface for the info trap.  Do not use.
 @returns Parameter value or -1 on unknown request.
 @dependencies None
 */
-int h2_info_trap(info_type type, unsigned int unit, cfg_unit_entry entry);
+int h2_info_trap(info_type type, unsigned int unit, h2_cfg_unit_entry entry);
 
 /**
 Get info.
@@ -31,10 +32,10 @@ Get info.
 @dependencies None
 */
 static inline int h2_info(info_type type) {
-	return h2_info_trap(type, 0, (cfg_unit_entry)0);
+	return h2_info_trap(type, 0, (h2_cfg_unit_entry)0);
 }
 
-static inline int h2_info_unit(unsigned int unit, cfg_unit_entry entry) {
+static inline int h2_info_unit(unsigned int unit, h2_cfg_unit_entry entry) {
 	return h2_info_trap(INFO_UNIT_ENTRY, unit, entry);
 }
 

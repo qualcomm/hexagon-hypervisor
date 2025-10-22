@@ -16,6 +16,10 @@ void FAIL(const char *str)
 int main() {
 	h2_coproc_init();
 
+	printf("HMX 0 %d\n", h2_coproc_count(CFG_TYPE_VXU0, CFG_SUBTYPE_VXU0, CFG_HMX_CONTEXTS, 0x1));
+	printf("HMX 1 %d\n", h2_coproc_count(CFG_TYPE_VXU0, CFG_SUBTYPE_VXU0, CFG_HMX_CONTEXTS, 0x2));
+	printf("HMX all %d\n", h2_coproc_count(CFG_TYPE_VXU0, CFG_SUBTYPE_VXU0, CFG_HMX_CONTEXTS, -1));
+
 	printf("TEST PASSED\n");
 	return 0;
 }

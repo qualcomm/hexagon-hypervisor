@@ -42,8 +42,11 @@ Initialize the LX Access type.
 */
 
 static inline int h2_lxaccess_unit_init(h2_lxaccess_state_t *lxacc, h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_unit_entry entry_type, unsigned int unit_mask) {
+	int ret;
 	
-	if (1 == h2_coproc_init()) {  // old style
+	if ((ret = h2_coproc_init()) < 0) return ret;
+
+	if (1 == ret) {  // old style
 		h2_sem_init_val(&lxacc->sem, h2_info(INFO_HLX_CONTEXTS));
 	} else {
 		h2_sem_init_val(&lxacc->sem, h2_coproc_count(type, subtype, entry_type, unit_mask));

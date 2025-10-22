@@ -78,13 +78,14 @@ Initialize the Vector Access type
 */
 
 static inline int h2_vecaccess_unit_init(h2_vecaccess_state_t *vacc, unsigned int req, h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_unit_entry entry_type, unsigned int unit_mask) {
-
 	int ret;
 
 	/* Block by default if init fails */
 	h2_sem_init_val(&vacc->sem, 0);
 
-	if (1 == h2_coproc_init()) {  // old style
+	if ((ret = h2_coproc_init()) < 0) return ret;
+
+	if (1 == ret) {  // old style
 
 		unsigned long native_vlength = h2_info(INFO_HVX_VLENGTH);
 

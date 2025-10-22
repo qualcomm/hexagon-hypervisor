@@ -42,8 +42,11 @@ Initialize the MX Access type.
 */
 
 static inline int h2_mxaccess_unit_init(h2_mxaccess_state_t *mxacc, h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_unit_entry entry_type, unsigned int unit_mask) {
+	int ret;
 
-	if (1 == h2_coproc_init()) {  // old style
+	if ((ret = h2_coproc_init()) < 0) return ret;
+
+	if (1 == ret) {  // old style
 		h2_sem_init_val(&mxacc->sem, h2_info(INFO_HMX_INSTANCES));
 	} else {
 		h2_sem_init_val(&mxacc->sem, h2_coproc_count(type, subtype, entry_type, unit_mask));

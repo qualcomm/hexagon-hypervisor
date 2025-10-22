@@ -110,7 +110,7 @@ int h2_coproc_set(h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_uni
 	return -1;
 }
 
-static int init_entry_vxu0(unsigned int unit, h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_unit_entry entry_type, unsigned int idx) {
+static int init_entry_vxu0(unsigned int unit, h2_coproc_type_t type, h2_coproc_subtype_t subtype, unsigned int idx) {
 	unsigned int *entry;
 
 	entry = &configs[type][subtype][idx * CFG_MAX];
@@ -140,13 +140,21 @@ static int init_entry_vxu0(unsigned int unit, h2_coproc_type_t type, h2_coproc_s
 	return 0;
 }
 
+typedef int(*initptr_t)(unsigned int, h2_coproc_type_t, h2_coproc_subtype_t, unsigned int);
+
+static const initptr_t inits[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {
+	{
+		init_entry_vxu0
+	}
+};
+
 int h2_coproc_init() {
 	unsigned int unit;
 	h2_coproc_type_t type;
 	h2_coproc_subtype_t subtype;
 	unsigned int idx;
 
-	if (init_done) {  // init done
+	if (init_done) {
 		return 0;
 	}
 		
@@ -166,33 +174,31 @@ int h2_coproc_init() {
 			return -1;
 		}
 		nunits[type][subtype]++;
-
-		switch(type) {
-		case CFG_TYPE_VXU0:
-			switch (subtype) {
-			case CFG_SUBTYPE_VXU0:
-				if (-1 == init_entry_vxu0(unit, type, subtype, CFG_HVX_CONTEXTS, idx)) return -1;
-				if (-1 == init_entry_vxu0(unit, type, subtype, CFG_HLX_CONTEXTS, idx)) return -1;
-				if (-1 == init_entry_vxu0(unit, type, subtype, CFG_HMX_CONTEXTS, idx)) return -1;
-				break;
-			default:
-				return -1;
-			}
-		default:
-			return -1;
-		}
+		if (-1 == inits[type][subtype](unit, type, subtype, idx)) return -1;
 		unit = h2_info_unit(unit, CFG_UNIT_NEXT);
 	}
 
-	/* printf ("0x%08x\n", configs[0][0][CFG_VXU_UNIT_ID]); */
-	/* printf ("0x%08x\n", configs[0][0][CFG_HVX_CONTEXTS]); */
-	/* printf ("0x%08x\n", configs[0][0][CFG_HLX_CONTEXTS]); */
-	/* printf ("0x%08x\n", configs[0][0][CFG_HMX_CONTEXTS]); */
+	/* printf ("nunits 0x%08x\n", nunits[0][0]); */
 
-	/* printf ("0x%08x\n", configs[0][0][CFG_MAX + CFG_VXU_UNIT_ID]); */
-	/* printf ("0x%08x\n", configs[0][0][CFG_MAX + CFG_HVX_CONTEXTS]); */
-	/* printf ("0x%08x\n", configs[0][0][CFG_MAX + CFG_HLX_CONTEXTS]); */
-	/* printf ("0x%08x\n", configs[0][0][CFG_MAX + CFG_HMX_CONTEXTS]); */
+	/* printf ("unit ID 0x%08x\n", configs[0][0][CFG_VXU_UNIT_ID]); */
+
+	/* printf ("configs 0x%08x\n", configs[0][0][CFG_HVX_CONTEXTS]); */
+	/* printf ("configs 0x%08x\n", configs[0][0][CFG_HLX_CONTEXTS]); */
+	/* printf ("configs 0x%08x\n", configs[0][0][CFG_HMX_CONTEXTS]); */
+
+	/* printf ("counts 0x%08x\n", counts[0][0][CFG_HVX_CONTEXTS][0]); */
+	/* printf ("counts 0x%08x\n", counts[0][0][CFG_HLX_CONTEXTS][0]); */
+	/* printf ("counts 0x%08x\n", counts[0][0][CFG_HMX_CONTEXTS][0]); */
+
+	/* printf ("unit ID 0x%08x\n", configs[0][0][CFG_MAX + CFG_VXU_UNIT_ID]); */
+
+	/* printf ("configs 0x%08x\n", configs[0][0][CFG_MAX + CFG_HVX_CONTEXTS]); */
+	/* printf ("configs 0x%08x\n", configs[0][0][CFG_MAX + CFG_HLX_CONTEXTS]); */
+	/* printf ("configs 0x%08x\n", configs[0][0][CFG_MAX + CFG_HMX_CONTEXTS]); */
+
+	/* printf ("counts 0x%08x\n", counts[0][0][CFG_HVX_CONTEXTS][1]); */
+	/* printf ("counts 0x%08x\n", counts[0][0][CFG_HLX_CONTEXTS][1]); */
+	/* printf ("counts 0x%08x\n", counts[0][0][CFG_HMX_CONTEXTS][1]); */
 
 	return 0;
 }

@@ -82,10 +82,9 @@ int h2_coproc_set(h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_uni
 				xa = 0;  // index of bit
 				do {
 					if (bits & 0x1) {  // context exists
-						if (0 == num) {  // none left to find; now xa is correct
+						if (0 == (--num)) {  // none left to find; now xa is correct
 							break;
 						} else {
-							num--;  // find another
 							xa++;
 							continue;
 						}

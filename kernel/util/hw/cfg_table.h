@@ -10,10 +10,11 @@
 #include <physread.h>
 #include <h2_common_defs.h>
 #include <h2_common_info.h>
+#include <h2_common_coproc.h>
 
 #include<log.h>
 
-extern const u32_t H2K_unit_offsets[CFG_NUM_UNIT_TYPES][CFG_NUM_UNIT_SUBTYPES][CFG_END];
+extern const u32_t H2K_unit_offsets[CFG_TYPE_MAX][CFG_SUBTYPE_MAX][CFG_MAX];
 
 static inline u32_t H2K_cfg_table(u32_t entry) {
 	u32_t cfgbase;
@@ -21,7 +22,7 @@ static inline u32_t H2K_cfg_table(u32_t entry) {
 	return H2K_mem_physread_word((cfgbase << CFG_TABLE_SHIFT) + entry);
 }
 
-static inline u32_t H2K_cfg_table_unit_entry(u32_t unit, cfg_unit_entry entry) {
+static inline u32_t H2K_cfg_table_unit_entry(u32_t unit, h2_cfg_unit_entry entry) {
 	u32_t cfgbase;
 	u32_t type;
 	u32_t subtype;

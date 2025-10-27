@@ -82,17 +82,18 @@
 ./kernel/vm/vmmap/test
 ./kernel/vm/vmcache/test
 
-#./libs/h2/alloc/test
-#./libs/h2/allsignal/test/simple
-#./libs/h2/allsignal/test/trapfails
-#./libs/h2/anysignal/test/simple
-#./libs/h2/anysignal/test/trapfails
-#./libs/h2/error/test/simple
-#./libs/h2/sem/test/simple
-#./libs/h2/sleep/test
-#./libs/h2/vmtraps/test/test_ie
+./libs/h2_compat/alloc/test
+./libs/h2_compat/allsignal/test/simple
+./libs/h2_compat/allsignal/test/trapfails
+./libs/h2_compat/anysignal/test/simple
+./libs/h2_compat/anysignal/test/trapfails
+./libs/h2_compat/error/test/simple
+./libs/h2_compat/sem/test/simple
+./libs/h2_compat/sleep/test
+
+./libs/h2/vmtraps/test/test_ie
 #./libs/h2/vmtraps/test/test_pcycles
-#./libs/h2/vmtraps/test/test_return
+./libs/h2/vmtraps/test/test_return
 #./libs/h2/vmtraps/test/test_yield
 
 ./perf/setie

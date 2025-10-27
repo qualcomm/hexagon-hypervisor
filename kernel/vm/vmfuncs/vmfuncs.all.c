@@ -7,6 +7,7 @@
 #include <vmblock.h>
 #include <globals.h>
 #include <info.h>
+#include <h2_common_coproc.h>
 
 void H2K_vmtrap_pmuctrl(H2K_thread_context *me) {
 
@@ -42,6 +43,6 @@ void H2K_vmtrap_version(H2K_thread_context *me)
 
 void H2K_vmtrap_info(H2K_thread_context *me) {
 
-	me->r00 = H2K_trap_info((info_type)(me->r00), me->r01, (cfg_unit_entry)(me->r02), me);
+	me->r00 = H2K_trap_info((info_type)(me->r00), me->r01, (h2_cfg_unit_entry)(me->r02), me);
 }
 

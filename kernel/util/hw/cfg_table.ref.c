@@ -6,7 +6,7 @@
 #include <cfg_table.h>
 
 /* entry offsets for unit blocks in cfg_table, [CONFIG_ID][CONFIG_SUB_ID][ENTRY] */
-const u32_t H2K_unit_offsets[CFG_NUM_UNIT_TYPES][CFG_NUM_UNIT_SUBTYPES][CFG_END] = {
+const u32_t H2K_unit_offsets[CFG_TYPE_MAX][CFG_SUBTYPE_MAX][CFG_MAX] = {
 	// ID 0x0
 	{
 		// SUBID 0x0

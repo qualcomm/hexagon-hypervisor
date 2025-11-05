@@ -138,5 +138,6 @@ endif
 export SIM := $(RUN)
 OPTIMIZE ?= -O2
 export OPTIMIZE_COV := -Os -fno-inline
+export OPTIMIZE_DEBUG := -O0 -fno-inline
 
 endif

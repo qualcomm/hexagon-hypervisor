@@ -82,6 +82,12 @@ REF_JFLAG :=
 export OPTIMIZE := $(OPTIMIZE_COV)
 endif
 
+ifeq ($(TARGET), debug)
+T := ref
+REF_JFLAG :=
+export OPTIMIZE := $(OPTIMIZE_DEBUG)
+endif
+
 ifeq ($(TARGET), opt_si)
 T := opt
 OPT_JFLAG :=

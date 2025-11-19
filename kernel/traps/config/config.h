@@ -81,6 +81,6 @@ u32_t H2K_trap_config_fatal_hook(u32_t unused, u32_t funcaddr, u32_t arg, u32_t 
 #ifdef CLUSTER_SCHED
 u32_t H2K_trap_config_cluster_sched(u32_t unused, u32_t enable, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) IN_SECTION(".text.config.config");
 #endif
-
+u32_t H2K_trap_config_noc(u32_t unused, u32_t master, u32_t slave, u32_t unused3, u32_t unused4, H2K_thread_context *me) IN_SECTION(".text.config.config"); 
 #endif
 

@@ -34,6 +34,7 @@ static const configptr_t H2K_configtab[CONFIG_MAX] IN_SECTION(".data.config.conf
 #ifdef CLUSTER_SCHED
 	H2K_trap_config_cluster_sched,
 #endif
+	H2K_trap_config_noc
 };
 
 u32_t H2K_trap_config(config_type_t configtype, u32_t val1, u32_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
@@ -311,3 +312,10 @@ u32_t H2K_trap_config_cluster_sched(u32_t unused, u32_t enable, u32_t unused2, u
 	return 0;
 }
 #endif
+
+u32_t H2K_trap_config_noc(u32_t unused, u32_t master, u32_t slave, u32_t unused3, u32_t unused4, H2K_thread_context *me) {
+	H2K_gp->noc_mbase = master;
+	H2K_gp->noc_sbase = slave;
+
+	return 0;
+}

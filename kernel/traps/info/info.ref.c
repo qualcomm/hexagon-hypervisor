@@ -190,7 +190,13 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 	case INFO_TCM_OFFSET:
 		return H2K_gp->tcm_offset;
 
-	default:
+	case INFO_NOC_MBASE:
+	return H2K_gp->noc_mbase;
+	
+	case INFO_NOC_SBASE:
+	return H2K_gp->noc_sbase;
+	
+default:
 		return -1;
 	}
 }

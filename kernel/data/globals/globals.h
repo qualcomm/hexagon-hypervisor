@@ -162,6 +162,8 @@ typedef struct {
 	u32_t core_count;
 	u32_t multicore_shift;
 	u32_t tcm_offset;
+	u32_t noc_mbase;  // 4k pages
+	u32_t noc_sbase;  // 4k pages
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf;

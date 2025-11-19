@@ -305,6 +305,13 @@ void usage()
 	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
 	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
 	BOOTER_PRINTF("  --cycles\n\tPrint pcycles during boot.\n");
+#ifdef CLUSTER_SCHED
+	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 1.\n");
+#endif
+
+	// FIXME: hack for setting noc table addresses
+	BOOTER_PRINTF("  --noc <master int> <slave int>\n\tSet NOC master and slave widget addresses.\n");
+
 #ifdef MULTICORE
 	BOOTER_PRINTF("  --quiet <core bitmap>\n\tSuppress output from cores.\n");
 #else
@@ -348,9 +355,6 @@ void usage()
 	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
-#ifdef CLUSTER_SCHED
-	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 1.\n");
-#endif
 }		
 
 #define GEN_specials(NAME) vm_params[idx].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx].specials[SPECIAL_ ## NAME].addr = -1;
@@ -1398,6 +1402,8 @@ void print_infos() {
 	BOOTER_PRINTF("\t\tID: %d\n", core_id);
 	BOOTER_PRINTF("\t\tShift: 0x%08x\n", h2_info(INFO_SHIFT));
 	BOOTER_PRINTF("\t\tTCM base offset per core: 0x%08x\n", h2_info(INFO_TCM_OFFSET));
+	BOOTER_PRINTF("\t\tNOC master LUT base: 0x%08x\n", h2_info(INFO_NOC_MBASE) << PAGE_BITS);
+	BOOTER_PRINTF("\t\tNOC slave LUT base:  0x%08x\n", h2_info(INFO_NOC_SBASE) << PAGE_BITS);
 #endif
 
 	BOOTER_PRINTF("\tCoprocessors:\n");
@@ -2028,6 +2034,14 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 #endif
+
+		} else if (0 == strcmp(argv[0], "--noc")) {
+			if (argc < 3) die_usage();
+			if (h2_config_set_noc(strtoull(argv[1], NULL, 0), strtoull(argv[2], NULL, 0)) == -1) {
+				FAIL("CONFIG_NOC", "");
+			}
+			argc -= 3; argv += 3;
+			continue;
 
 		} else if (0 == strcmp(argv[0], "--help")) {
 			kernel_setup();

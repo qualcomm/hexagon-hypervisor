@@ -51,6 +51,8 @@ typedef enum {
 	INFO_CORE_COUNT,  /**< Multicore core count */
 	INFO_SHIFT,       /**< Multicore shift - offset translation for boot VM */
 	INFO_TCM_OFFSET,  /**< Multicore TCM base offset */
+	INFO_NOC_MBASE,   /**< Multicore NOC master widget base */
+	INFO_NOC_SBASE,   /**< Multicore NOC slave widget base */
 	INFO_MAX
 } info_type;
 

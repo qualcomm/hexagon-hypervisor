@@ -310,7 +310,7 @@ void usage()
 #endif
 
 	// FIXME: hack for setting noc table addresses
-	BOOTER_PRINTF("  --noc <master int> <slave int>\n\tSet NOC master and slave widget addresses.\n");
+	BOOTER_PRINTF("  --noc <master int> <slave int>\n\tSet NOC master and slave widget offsets from TCM base.\n");
 
 #ifdef MULTICORE
 	BOOTER_PRINTF("  --quiet <core bitmap>\n\tSuppress output from cores.\n");
@@ -1402,8 +1402,8 @@ void print_infos() {
 	BOOTER_PRINTF("\t\tID: %d\n", core_id);
 	BOOTER_PRINTF("\t\tShift: 0x%08x\n", h2_info(INFO_SHIFT));
 	BOOTER_PRINTF("\t\tTCM base offset per core: 0x%08x\n", h2_info(INFO_TCM_OFFSET));
-	BOOTER_PRINTF("\t\tNOC master LUT base: 0x%08x\n", h2_info(INFO_NOC_MBASE) << PAGE_BITS);
-	BOOTER_PRINTF("\t\tNOC slave LUT base:  0x%08x\n", h2_info(INFO_NOC_SBASE) << PAGE_BITS);
+	BOOTER_PRINTF("\t\tNOC master LUT base: 0x%08x\n", tcm_base + (h2_info(INFO_NOC_MBASE) << PAGE_BITS));
+	BOOTER_PRINTF("\t\tNOC slave LUT base:  0x%08x\n", tcm_base + (h2_info(INFO_NOC_SBASE) << PAGE_BITS));
 #endif
 
 	BOOTER_PRINTF("\tCoprocessors:\n");
@@ -1465,8 +1465,8 @@ void print_infos() {
 	BOOTER_PRINTF("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
 	BOOTER_PRINTF("\tH2 kernel in TCM: %s\n", (boot_flags.boot_use_tcm ? "true" : "false"));
 	BOOTER_PRINTF("\tcfgbase: 0x%08x\n", h2_info(INFO_CFGBASE));
-	BOOTER_PRINTF("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
-	BOOTER_PRINTF("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
+	BOOTER_PRINTF("\tTCM base: 0x%08x\n", tcm_base);
+	BOOTER_PRINTF("\tTCM size: %dK\n", tcm_size / 1024);
 	BOOTER_PRINTF("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
 	BOOTER_PRINTF("\tL2 cache size: %dK\n", h2_info(INFO_L2TAG_SIZE) / 1024);
 	BOOTER_PRINTF("\tL2 line size: %d\n", h2_info(INFO_L2_LINE_SZ));

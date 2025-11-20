@@ -73,8 +73,9 @@ void H2K_tcm_copy(u32_t last_tlb_index) {
 		H2K_tmpmap_remove_and_unlock();
 
 		H2K_gp->info_boot_flags.boot_use_tcm = 1;
-		H2K_gp->tcm_base += (page_num * H2K_PAGESIZE) >> PAGE_BITS;
-		H2K_gp->tcm_size -= (page_num * H2K_PAGESIZE) >> PAGE_BITS;
+		/* FIXME: necessary? */
+		//		H2K_gp->tcm_base += (page_num * H2K_PAGESIZE) >> PAGE_BITS;
+		//		H2K_gp->tcm_size -= (page_num * H2K_PAGESIZE) >> PAGE_BITS;
 		H2K_gp->phys_offset = H2K_LINK_ADDR - tcm_base;
 	}
 

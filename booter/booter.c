@@ -1402,8 +1402,8 @@ void print_infos() {
 	BOOTER_PRINTF("\t\tID: %d\n", core_id);
 	BOOTER_PRINTF("\t\tShift: 0x%08x\n", h2_info(INFO_SHIFT));
 	BOOTER_PRINTF("\t\tTCM base offset per core: 0x%08x\n", h2_info(INFO_TCM_OFFSET));
-	BOOTER_PRINTF("\t\tNOC master LUT base: 0x%08x\n", tcm_base + (h2_info(INFO_NOC_MBASE) << PAGE_BITS));
-	BOOTER_PRINTF("\t\tNOC slave LUT base:  0x%08x\n", tcm_base + (h2_info(INFO_NOC_SBASE) << PAGE_BITS));
+	BOOTER_PRINTF("\t\tNOC master LUT base: 0x%08x\n", tcm_base + h2_info(INFO_NOC_MBASE));
+	BOOTER_PRINTF("\t\tNOC slave LUT base:  0x%08x\n", tcm_base + h2_info(INFO_NOC_SBASE));
 #endif
 
 	BOOTER_PRINTF("\tCoprocessors:\n");

@@ -19,8 +19,9 @@ default-target: all
 
 include $(H2DIR)/scripts/Makefile.inc.tools
 
+ifeq ($(USE_PKW),1)
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
-
+endif
 
 ifeq ($(MODEL),)
    MODEL = ref
@@ -366,9 +367,11 @@ ignore_fns: ${OBJS}
 
 # each test has a max of 60 seconds!
 test.log: ${EXEC}
+ifeq ($(USE_PKW),1)
 	echo PKW_VERSIONS $(PKW_VERSIONS) >> $@
 	echo PKW_arch $(PKW_arch) >> $@
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
+endif
 	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee -a $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	echo exit status == $$CODE; \

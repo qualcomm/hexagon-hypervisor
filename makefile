@@ -1,3 +1,5 @@
+# build controls
+export USE_PKW ?= 1
 
 include scripts/Makefile.inc.tools
 
@@ -147,8 +149,10 @@ qurtclean:
 	$(MAKE) -f scripts/Makefile.qurt clean_top
 
 opt:
+ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
+endif
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
@@ -161,8 +165,10 @@ opt:
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
 
 ref:
+ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
+endif
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install

@@ -111,7 +111,9 @@ DEVSIM ?= devsim
 
 DEVICE_CONFIG ?= $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
 
+ifeq ($(USE_PKW),1)
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR) arch=$(ARCH_FLAVOR)
+endif
 
 export RUN_DEVSIM := $(DEVSIM) $(DEVSIM_EXTRA) --quiet $(MAGIC_ANGEL) --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(DEVICE_CONFIG)
 
@@ -129,10 +131,13 @@ export TOOLARCH := 67t
 export KERNEL_TOOLARCH := 67t
 endif
 
+export RUN := $(RUN_TOOLSIM)
+
+# if using pkw and ARCHV >=5, use devsim
+ifeq ($(USE_PKW),1)
 ifeq (0, $(shell [ $(ARCHV) -ge 5 ]; echo $$?))
 export RUN := $(RUN_DEVSIM)
-else
-export RUN := $(RUN_TOOLSIM)
+endif
 endif
 
 export SIM := $(RUN)

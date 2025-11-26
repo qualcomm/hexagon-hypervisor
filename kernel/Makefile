@@ -5,7 +5,9 @@ H2DIR ?= ..
 
 include ../scripts/Makefile.inc.tools
 
+ifeq ($(USE_PKW),1)
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
+endif
 
 include ../scripts/Makefile.inc.config
 
@@ -198,8 +200,10 @@ opt: build/opt_v$(ARCHV)/libh2kernel.a
 
 .PHONY: info
 info :
+ifeq ($(USE_PKW),1)
 	@echo Kernel PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
+endif
 
 opt_install: info opt
 	mkdir -p $(INSTALLPATH)/lib

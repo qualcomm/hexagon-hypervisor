@@ -90,8 +90,8 @@ DEVSIM := archsim
 ELFCOPY := hexagon-llvm-objcopy
 
 else # latest
-TOOLS_FLAVOR ?= v81_stable
-TOOLS_FLAVOR_KERNEL ?= v81_stable
+TOOLS_FLAVOR ?= 19.0.07
+TOOLS_FLAVOR_KERNEL ?= 19.0.07
 ARCH_FLAVOR ?= v81_stable
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion

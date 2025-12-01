@@ -258,7 +258,7 @@ qurt_report.html: report.html
 h2_report.html: report.html
 	mv report.html h2_report.html
 
-.PHONY: check
+.PHONY: check check-fail
 
 check-fail:
 	@for SUBDIR in ${SUBDIRS}; do\
@@ -293,7 +293,7 @@ check-fail:
 	      exit 1;\
 	   fi;\
 	   echo; \
-	done
+	done 2>&1 | tee -a $(TESTOUT)
 
 check:
 	@for SUBDIR in ${SUBDIRS}; do\

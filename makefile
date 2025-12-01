@@ -3,8 +3,11 @@ export USE_PKW ?= 1
 
 include scripts/Makefile.inc.tools
 
+ARCHV_LIST ?= 65 68 73 81
+TESTOUT ?= test.out
+
 TARGET ?= opt
-ARCHV ?= 68
+ARCHV ?= 81
 
 JFLAG ?= -j 3
 OPT_JFLAG := $(JFLAG)
@@ -124,7 +127,7 @@ all:
 
 distclean: clean docclean gtagsclean
 
-clean: covclean ucosclean booterclean docclean qurtclean
+clean: covclean booterclean docclean qurtclean # ucosclean 
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
@@ -137,12 +140,12 @@ docclean:
 	$(MAKE) -C libs/docs/dox clean
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
-testclean covclean: ucosclean qurtclean
+testclean covclean: qurtclean # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) clean && \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) clean_top
 
-ucosclean:
-	$(MAKE) -C ucos clean
+# ucosclean:
+# 	$(MAKE) -C ucos clean
 
 qurtclean:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) clean
@@ -188,30 +191,44 @@ size:
 	hexagon-objdump -h $(INSTALLPATH)/lib/*.a | $(SIZE_TOOL) text > size && \
 	cat size;
 
-t:
-	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
+# t:
+# 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
-test:	h2_test
-	head -n -1 h2_report.html > report.html
-#	tail -n +2 qurt_report.html >> report.html
+.PHONY: testall testall_prepare
+testall: testall_prepare $(ARCHV_LIST)
 
-h2_test: ucosclean
+testall_prepare:
+	git clean -dxf
+
+.PHONY: $(ARCHV_LIST)
+$(ARCHV_LIST):
+	@echo '/// $@ opt ///' >> $(TESTOUT)
+	$(MAKE) ARCHV=$@ TARGET=opt all test
+	git clean -dxf -e $(TESTOUT)
+	@echo '/// $@ ref ///' >> $(TESTOUT)
+	$(MAKE) ARCHV=$@ TARGET=ref all test
+	git clean -dxf -e $(TESTOUT)
+
+test:	h2_test check-fail
+
+h2_test: # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
-#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
-	[ `fgrep -v "WARNING: Overriding currently set revid" test.out | fgrep -c -i warning:` -eq 0 ]
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee -a $(TESTOUT)
+#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a $(TESTOUT)
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(TESTOUT) | fgrep -c -i warning:` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
+	head -n -1 h2_report.html > report.html
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee test.out
-#	[ `fgrep -c -i warning: test.out` -eq 0 ]
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee $(TESTOUT)
+#	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_report.html
 
 qurt_test_single: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee test.out
-	[ `fgrep -c -i warning: test.out` -eq 0 ]
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee $(TESTOUT)
+	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
 
 qurt_test_libs:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
@@ -231,7 +248,7 @@ h2_cov:
 .PHONY: check-fail test-check cov-check cov_fns
 
 check-fail test-check cov-check:
-	$(MAKE) -f scripts/Makefile.coverage check-fail
+	$(MAKE) -f scripts/Makefile.coverage TESTOUT=$(TESTOUT) check-fail
 #	$(MAKE) -C ucos check
 
 check:
@@ -249,7 +266,7 @@ compat:
 .PHONY: gtags gtagsclean htags
 
 gtags:
-	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path libs/syscall/angel/include -o -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
+	find booter examples kernel libs linux perf qurt scripts stake tst -path libs/syscall/angel/include -o -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
 
 htags: gtags
 	htags -ahnosTxvF --show-position --auto-completion --tree-view=filetree

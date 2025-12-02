@@ -295,3 +295,8 @@ cov_fns:
 	./scripts/gen_cov_fns.pl > ./scripts/v68ref_cov_fns;
 	$(MAKE) clean opt ARCHV=68 OPTIMIZE="$(OPTIMIZE_COV)";
 	./scripts/gen_cov_fns.pl > ./scripts/v68opt_cov_fns;
+
+.PHONY: q6testinstallenvs
+ q6testinstallenvs:
+	export Q6TESTINSTALL_MAKEJOBS=1
+	export Q6TESTINSTALL_TESTTARGET='testall'

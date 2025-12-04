@@ -47,7 +47,7 @@ AR=${ARCH}-ar
 OBJDUMP=${ARCH}-objdump
 GMON_MERGE=${ARCH}-gmon-merge
 COV=${ARCH}-cov
-PYTHON=python
+PYTHON=python3
 
 ################################################################################
 #  Rules for building the kernel if necessary; should be built way before any
@@ -159,7 +159,7 @@ test.cov_fns:
 
 #  Uh...  don't run this unless all the tests are run for now.
 cov.txt: test.cov_fns 
-	find . -name "cov.txt" | python ${H2DIR}/scripts/merge_cov.py > $@
+	find . -name "cov.txt" | python3 ${H2DIR}/scripts/merge_cov.py > $@
 
 
 #  every "subdir" needs to have a results.txt in it for this to run properly.

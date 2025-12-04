@@ -18,22 +18,6 @@
 //SPINS is a delay
 #define SPINS (1024*1024)
 
-//OVERHEAD is how long it takes to return from trap, add, and trap again.
-#ifndef NUM_THREADS
-#if ARCHV == 3
-#define NUM_THREADS 6
-#elif ARCHV == 4
-#define NUM_THREADS 3
-#elif ARCHV == 5
-#define NUM_THREADS 3
-#elif ARCHV == 60
-// FIXME
-#define NUM_THREADS 3
-#else
-#error define NUM_THREADS
-#endif
-#endif
-
 #define STACKSIZE 512
 
 h2_sem_t donesem;
@@ -42,8 +26,6 @@ int done = 0;
 
 unsigned long long int stack_yield[STACKSIZE];
 unsigned long long int stack_finish[STACKSIZE];
-
-unsigned long long int delaystack[NUM_THREADS-1][STACKSIZE];
 
 void FAIL(const char *str)
 {
@@ -99,19 +81,23 @@ void allow_finish()
 
 int main() 
 {
+	unsigned int num_hw_threads = __builtin_popcount(h2_info(INFO_HTHREADS));
+	info("Num HW threads: %d\n", num_hw_threads);
+
+	unsigned long long int delaystack[num_hw_threads - 1][STACKSIZE];
 	int i;
 
 	h2_handle_errors(0);  // creates timer interrupt handler
 
 	h2_sem_init_val(&donesem,0);
-	// Start a delat thread for each HW thread.
-	for(i=0; i<NUM_THREADS-1; i++) {
+	// Start a delay thread for each HW thread.
+	for(i=0; i<num_hw_threads-1; i++) {
 		h2_thread_create(delay,&delaystack[i][STACKSIZE],(void *)i,1); 
 	}
 
 	// Start a thread that will yield
 	h2_thread_create(delay_yield,&stack_yield[STACKSIZE],NULL,6);
-        // Start the thread that will allow the test to finish
+	// Start the thread that will allow the test to finish
 	h2_thread_create(allow_finish,&stack_finish[STACKSIZE],NULL,6);
 
 	h2_sem_down(&donesem);

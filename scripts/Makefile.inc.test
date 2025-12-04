@@ -50,7 +50,7 @@ include $(H2DIR)/scripts/Makefile.inc.version
 include $(H2DIR)/scripts/Makefile.inc.constants
 include $(H2DIR)/scripts/Makefile.inc.tools
 
-PYTHON=python
+PYTHON=python3
 
 BUSPENALTY=
 TIMING=

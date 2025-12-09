@@ -198,14 +198,14 @@ size:
 testall: testall_prepare $(ARCHV_LIST)
 
 testall_prepare:
-	git clean -dxf
+	git clean -dxf -e 'jenkins[0-9]*'
 
 .PHONY: $(ARCHV_LIST)
 $(ARCHV_LIST):
-	@echo '/// $@ opt ///' >> $(TESTOUT)
+	@echo '/// $@ opt ///' | tee -a $(TESTOUT)
 	$(MAKE) ARCHV=$@ TARGET=opt all test
 	git clean -dxf -e $(TESTOUT) -e 'jenkins[0-9]*'
-	@echo '/// $@ ref ///' >> $(TESTOUT)
+	@echo '/// $@ ref ///' | tee -a $(TESTOUT)
 	$(MAKE) ARCHV=$@ TARGET=ref all test
 	git clean -dxf -e $(TESTOUT)  -e 'jenkins[0-9]*'
 

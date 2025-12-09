@@ -204,10 +204,10 @@ testall_prepare:
 $(ARCHV_LIST):
 	@echo '/// $@ opt ///' >> $(TESTOUT)
 	$(MAKE) ARCHV=$@ TARGET=opt all test
-	git clean -dxf -e $(TESTOUT)
+	git clean -dxf -e $(TESTOUT) -e 'jenkins[0-9]*'
 	@echo '/// $@ ref ///' >> $(TESTOUT)
 	$(MAKE) ARCHV=$@ TARGET=ref all test
-	git clean -dxf -e $(TESTOUT)
+	git clean -dxf -e $(TESTOUT)  -e 'jenkins[0-9]*'
 
 test:	h2_test check-fail
 

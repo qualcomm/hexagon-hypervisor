@@ -258,7 +258,7 @@ check-fail test-check cov-check:
 #	$(MAKE) -C ucos check
 
 check:
-	$(MAKE) -f scripts/Makefile.coverage check
+	$(MAKE) -f scripts/Makefile.coverage TESTOUT=$(TESTOUT) check
 #	$(MAKE) -C ucos check
 
 doc:

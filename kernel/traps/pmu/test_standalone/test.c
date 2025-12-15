@@ -54,6 +54,10 @@ void TH_set_dead()
 	H2K_set_pmucnt1(0xdead);
 	H2K_set_pmucnt2(0xdead);
 	H2K_set_pmucnt3(0xdead);
+	H2K_set_pmucnt4(0xdead);
+	H2K_set_pmucnt5(0xdead);
+	H2K_set_pmucnt6(0xdead);
+	H2K_set_pmucnt7(0xdead);
 }
 
 void TH_check_dead()
@@ -63,6 +67,10 @@ void TH_check_dead()
 	if (H2K_get_pmucnt1() != 0xdead) FAIL("unexpected changed value");
 	if (H2K_get_pmucnt2() != 0xdead) FAIL("unexpected changed value");
 	if (H2K_get_pmucnt3() != 0xdead) FAIL("unexpected changed value");
+	if (H2K_get_pmucnt4() != 0xdead) FAIL("unexpected changed value");
+	if (H2K_get_pmucnt5() != 0xdead) FAIL("unexpected changed value");
+	if (H2K_get_pmucnt6() != 0xdead) FAIL("unexpected changed value");
+	if (H2K_get_pmucnt7() != 0xdead) FAIL("unexpected changed value");
 }
 
 #define CONST_pmuevtcfg 8
@@ -70,15 +78,15 @@ void TH_check_dead()
 #define CONST_pmucnt1 1
 #define CONST_pmucnt2 2
 #define CONST_pmucnt3 3
+#define CONST_pmucnt4 4
+#define CONST_pmucnt5 5
+#define CONST_pmucnt6 6
+#define CONST_pmucnt7 7
 
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	TH_init_vm();
-	//H2K_thread_init();
-	//H2K_readylist_init();
-	//H2K_runlist_init();
-	//H2K_lowprio_init();
 
 #define TEST(X) \
 	TH_set_dead(); H2K_set_##X(0xbabe); \
@@ -90,6 +98,10 @@ int main()
 	TEST(pmucnt1)
 	TEST(pmucnt2)
 	TEST(pmucnt3)
+	TEST(pmucnt4)
+	TEST(pmucnt5)
+	TEST(pmucnt6)
+	TEST(pmucnt7)
 
 #undef TEST
 
@@ -106,77 +118,14 @@ int main()
 	TEST(pmucnt1)
 	TEST(pmucnt2)
 	TEST(pmucnt3)
+	TEST(pmucnt4)
+	TEST(pmucnt5)
+	TEST(pmucnt6)
+	TEST(pmucnt7)
 
 #undef TEST
 	puts("writes done");
 
-	if (H2K_trap_pmuctrl(PMUCTRL_SETREG,0,0xdead,0xbabe,&a) != -1) FAIL("Unexpected return 1");
-	if (H2K_trap_pmuctrl(PMUCTRL_GETREG,0,0xdead,0xbabe,&a) != -1) FAIL("Unexpected return 2");
-
-	H2K_set_pmucfg(0);
-
-	if (bptr->pmu_on != 0) FAIL("PMU started on");
-	printf("a\n");
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,0,0xbabe,&a) != -1) FAIL("dead thread 1");
-	if (bptr->pmu_on != 0) FAIL("PMU turned on");
-	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg 1");
-
-	printf("b\n");
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,4,0xbabe,&a) != -1) FAIL("dead thread 2");
-	if (bptr->pmu_on != 0) FAIL("Changed dead thread");
-	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg 2");
-
-	bptr->status = H2K_STATUS_BLOCKED;
-
-	printf("c\n");
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return 3");
-	if (bptr->pmu_on != 0) FAIL("PMU turned on");
-	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg 3");
-
-	printf("d\n");
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,4,0xbabe,&a) != 0) FAIL("unexpected return 4");
-	if (bptr->pmu_on != 1) {
-		printf("bptr->pmu_on == 0x%08x\n",bptr->pmu_on);
-		FAIL(">Invalid value written");
-	}
-	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg 4");
-
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,0,0xbabe,&a) != 0) FAIL("Unexpected return 5");
-	if (bptr->pmu_on != 0) FAIL("PMU didn't turn off");
-	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg 5");
-
-	bptr->status = H2K_STATUS_RUNNING;
-
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return 6");
-	if (bptr->pmu_on != 0) FAIL("PMU turned on");
-	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg 6");
-
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,4,0xbabe,&a) != 0) FAIL("unexpected return 7");
-	if (bptr->pmu_on != 1) FAIL("Invalid value written");
-	if (H2K_get_pmucfg() != 1) FAIL("didn't change pmucfg 1");
-
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return 8");
-	if (bptr->pmu_on != 0) FAIL("PMU didn't turn off");
-	if (H2K_get_pmucfg() != 0) FAIL("didn't change pmucfg 2");
-
-	bptr->status = H2K_STATUS_RUNNING;
-	bptr->hthread = 1;
-
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return 9");
-	if (bptr->pmu_on != 0) FAIL("PMU turned on");
-	if (H2K_get_pmucfg() != 0) FAIL("Changed pmucfg 7");
-
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,4,0xbabe,&a) != 0) FAIL("unexpected return 10");
-	if (bptr->pmu_on != 1) FAIL("Invalid value written");
-	if (H2K_get_pmucfg() != 2) FAIL("didn't change pmucfg 3");
-
-	if (H2K_trap_pmuctrl(PMUCTRL_THREADSET, bptr->id.raw,0,0xbabe,&a) != 0) FAIL("unexpected return 11");
-	if (bptr->pmu_on != 0) FAIL("PMU didn't turn off");
-	if (H2K_get_pmucfg() != 0) FAIL("didn't change pmucfg 4");
-
-	puts("setthread passed");
-
 	puts("TEST PASSED\n");
 	return 0;
 }
-

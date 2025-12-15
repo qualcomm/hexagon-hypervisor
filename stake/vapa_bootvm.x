@@ -153,6 +153,17 @@ SECTIONS
   {
     *(.data.hot .data.hot.* .gnu.linkonce.d.hot.*)
     *(.data .data.* .gnu.linkonce.d.*)
+
+    /* Start and stop symbols for the instrumentation counters */
+    __start___llvm_prf_cnts = .;
+    KEEP(*(__llvm_prf_cnts))
+    __stop___llvm_prf_cnts = .;
+         
+    /* Other related sections for PGO/coverage (optional, but often used) */
+    __start___llvm_prf_data = .;
+    KEEP(*(__llvm_prf_data))
+    __stop___llvm_prf_data = .;
+
     SORT(CONSTRUCTORS)
   }
   .data1          :  { *(.data1) }

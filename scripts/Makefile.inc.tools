@@ -18,9 +18,11 @@ export CXX := hexagon-clang++
 export AS := hexagon-clang
 export AR := hexagon-ar
 export RANLIB := hexagon-ranlib
-export COV := hexagon-coverage
+export COV := $(shell PKW_VERSIONS=hexagon-tools=8.6.07 pkw --which hexagon-coverage)
+export LLVM_COV := hexagon-llvm-cov
 export OBJDUMP := hexagon-llvm-objdump
 export GMON_MERGE := hexagon-gmon-merge
+export LLVM_PROFDATA := hexagon-llvm-profdata
 export DOXYGEN := doxygen
 ELFCOPY := hexagon-elfcopy
 
@@ -142,6 +144,8 @@ endif
 
 export SIM := $(RUN)
 OPTIMIZE ?= -O2
+export LLVM_COV_CFLAGS := -fprofile-instr-generate -fcoverage-mapping
+export LLVM_COV_LDFLAGS := -fprofile-instr-generate
 export OPTIMIZE_COV := -Os -fno-inline
 export OPTIMIZE_DEBUG := -O0 -fno-inline
 

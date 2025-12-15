@@ -21,6 +21,9 @@ endif
 #O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 
 CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
+ifeq ($(EN_LLVM_COV), 1)
+CFLAGS += ${LLVM_COV_CFLAGS}
+endif
 
 SRC_HFILES := 
 DEST_HFILES := 

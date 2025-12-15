@@ -19,6 +19,11 @@ results.txt
 make.log
 test.log
 test*.out
+*.profraw
+coverage_report.lcov
+coverage_report.txt
+index.html
+coverage/
 gmon.*
 gmon-*.out
 gdb*.cmd

@@ -60,6 +60,12 @@ OPT_JFLAG :=
 export OPTIMIZE := $(OPTIMIZE_COV)
 endif
 
+ifeq ($(TARGET), llvm_cov)
+T := opt
+OPT_JFLAG :=
+export EN_LLVM_COV := 1
+endif
+
 ifeq ($(TARGET), opt_snap)
 T := opt
 OPT_JFLAG :=
@@ -242,6 +248,7 @@ h2_cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
+#	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) coverage_report
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 

@@ -146,7 +146,7 @@ export SIM := $(RUN)
 OPTIMIZE ?= -O2
 export LLVM_COV_CFLAGS := -fprofile-instr-generate -fcoverage-mapping
 export LLVM_COV_LDFLAGS := -fprofile-instr-generate
-export OPTIMIZE_COV := -Os -fno-inline
+export OPTIMIZE_COV := -fno-inline
 export OPTIMIZE_DEBUG := -O0 -fno-inline
 
 endif

@@ -2,7 +2,7 @@
 
 CC = hexagon-clang
 AR = hexagon-ar
-CFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -g $(OPTIMIZE) -G0
+CFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -g $(OPTIMIZE) $(OPT_ADD) -G0
 ASFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include
 OPTIMIZE := -O2
 

@@ -57,7 +57,7 @@ endif
 ifeq ($(TARGET), opt_cov)
 T := opt
 OPT_JFLAG :=
-export OPTIMIZE := $(OPTIMIZE_COV)
+export OPT_ADD := $(OPTIMIZE_COV)
 endif
 
 ifeq ($(TARGET), llvm_cov)
@@ -90,7 +90,7 @@ endif
 ifeq ($(TARGET), ref_cov)
 T := ref
 REF_JFLAG :=
-export OPTIMIZE := $(OPTIMIZE_COV)
+export OPT_ADD := $(OPTIMIZE_COV)
 endif
 
 ifeq ($(TARGET), debug)

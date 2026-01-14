@@ -169,6 +169,7 @@ H2_BOOT_attempts:
 	CORE_ID = #0
 	TMP = lsr(SS_BASE, #PHYSREAD_HI_SHIFT)
 	CORE_ID = memw_phys(CORE_ID, TMP)  // read from subsystem instance ID -- offst 0
+	CORE_ID = lsr(CORE_ID, #8)
 	CORE_COUNT = #2
 #else
 	CFG_IDX = #CFG_TABLE_CORE_ID

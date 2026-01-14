@@ -34,6 +34,7 @@
 #include <cfg_table.h>
 #include <angel.h>
 #include <log.h>
+#include <bootvm_entry.h>
 
 void H2K_interrupt_restore();
 
@@ -142,7 +143,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
 	boot->vwctrl = H2K_get_vwctrl();
 #endif
-	boot->elr = ((u32_t)(__bootvm_entry) - H2K_LINK_ADDR);
+	boot->elr = (u32_t)(__bootvm_entry_point);
 	boot->r0100 = multicore_shift;
 
 	H2K_log("multicore_shift 0x%08x\n", multicore_shift);

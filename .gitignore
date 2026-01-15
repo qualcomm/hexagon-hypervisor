@@ -55,3 +55,6 @@ kernel/sched/check_sanity/check_sanity_debug.h
 kernel/util/intcontrol/intcontrol_debug.h
 __pycache__/
 git_update.bat
+libs/h2_compat/include
+libs/h2/include
+libs/posix/include

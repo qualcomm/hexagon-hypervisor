@@ -35,11 +35,7 @@ Get L2 register.
 @returns register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_l2_get_reg(unsigned int offset)
-{
-	return h2_hwconfig_trap(HWCONFIG_GETL2REG, NULL, offset, 0);
-}
+int h2_hwconfig_l2_get_reg(unsigned int offset);
 
 /**
 Set L2 register.
@@ -48,11 +44,7 @@ Set L2 register.
 @returns previous register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_l2_set_reg(unsigned int offset, unsigned int val)
-{
-	return h2_hwconfig_trap(HWCONFIG_SETL2REG, NULL, offset, val);
-}
+int h2_hwconfig_l2_set_reg(unsigned int offset, unsigned int val);
 
 /**
 Get CLADE register.
@@ -60,11 +52,7 @@ Get CLADE register.
 @returns register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_clade_get_reg(unsigned int offset)
-{
-	return h2_hwconfig_trap(HWCONFIG_GETCLADEREG, NULL, offset, 0);
-}
+int h2_hwconfig_clade_get_reg(unsigned int offset);
 
 /**
 Set CLADE register.
@@ -73,11 +61,7 @@ Set CLADE register.
 @returns previous register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_clade_set_reg(unsigned int offset, unsigned int val)
-{
-	return h2_hwconfig_trap(HWCONFIG_SETCLADEREG, NULL, offset, val);
-}
+int h2_hwconfig_clade_set_reg(unsigned int offset, unsigned int val);
 
 /**
 Configure the L2 cache size.
@@ -86,11 +70,7 @@ Configure the L2 cache size.
 @returns 0 on success, negative value on error
 @dependencies May return failure if more than one thread is currently running
 */
-
-static inline int h2_hwconfig_l2cache_size(unsigned int sizeval, unsigned int use_wb)
-{
-	return h2_hwconfig_trap(HWCONFIG_L2CACHE, NULL, sizeval, use_wb);
-}
+int h2_hwconfig_l2cache_size(unsigned int sizeval, unsigned int use_wb);
 
 /**
 Configure partitioning.
@@ -99,11 +79,7 @@ Configure partitioning.
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_partition(unsigned int whichcache, unsigned int partition_cfg)
-{
-	return h2_hwconfig_trap(HWCONFIG_PARTITIONS, NULL, whichcache, partition_cfg);
-}
+int h2_hwconfig_partition(unsigned int whichcache, unsigned int partition_cfg);
 
 /**
 Configure prefetch.
@@ -112,11 +88,7 @@ Configure prefetch.
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int prefetch_cfg)
-{
-	return h2_hwconfig_trap(HWCONFIG_PREFETCH, NULL, whichcache, prefetch_cfg);
-}
+int h2_hwconfig_prefetch(unsigned int whichcache, unsigned int prefetch_cfg);
 
 /**
 Set COPROC bits
@@ -124,11 +96,7 @@ Set COPROC bits
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_set_coprocbits(unsigned int coproc)
-{
-	return h2_hwconfig_trap(HWCONFIG_COPROCBITS, NULL, coproc, 0);
-}
+int h2_hwconfig_set_coprocbits(unsigned int coproc);
 
 /**
 Set XA2, XE2 bits.
@@ -137,11 +105,7 @@ Set XA2, XE2 bits.
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_set_hmxbits(unsigned int xe2,  unsigned int xa2)
-{
-	return h2_hwconfig_trap(HWCONFIG_HMXBITS, NULL, xe2, xa2);
-}
+int h2_hwconfig_set_hmxbits(unsigned int xe2,  unsigned int xa2);
 
 /**
 Set XE2 bit (deprecated).
@@ -149,11 +113,7 @@ Set XE2 bit (deprecated).
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_hmxbits(unsigned int xe2)
-{
-	return h2_hwconfig_set_hmxbits(xe2, 0);
-}
+int h2_hwconfig_hmxbits(unsigned int xe2);
 
 /**
 Set XA3, XE3 bits. for HLX
@@ -162,11 +122,7 @@ Set XA3, XE3 bits. for HLX
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_set_hlxbits(unsigned int xa3,  unsigned int xe3)
-{
-	return h2_hwconfig_trap(HWCONFIG_HLXBITS, NULL, xa3, xe3);
-}
+int h2_hwconfig_set_hlxbits(unsigned int xa3,  unsigned int xe3);
 
 /**
 Set XA, XE bits.
@@ -175,11 +131,7 @@ Set XA, XE bits.
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_extbits(unsigned int xa, unsigned int xe)
-{
-	return h2_hwconfig_trap(HWCONFIG_EXTBITS, NULL, xa, xe);
-}
+int h2_hwconfig_extbits(unsigned int xa, unsigned int xe);
 
 /**
 Set vector length
@@ -187,11 +139,7 @@ Set vector length
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_vlength(unsigned int vlength)
-{
-	return h2_hwconfig_trap(HWCONFIG_VLENGTH, NULL, vlength, 0);
-}
+int h2_hwconfig_vlength(unsigned int vlength);
 
 /**
 Control extension power state
@@ -199,11 +147,7 @@ Control extension power state
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_extpower(unsigned int state)
-{
-	return h2_hwconfig_trap(HWCONFIG_EXTPOWER, NULL, state, 0);
-}
+int h2_hwconfig_extpower(unsigned int state);
 
 /**
 L2 lock address range
@@ -212,33 +156,21 @@ L2 lock address range
 @returns 0 on success, nonzero value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_l2locka(void *addr, unsigned int len)
-{
-	return h2_hwconfig_trap(HWCONFIG_L2LOCKA, addr, len, 0);
-}
+int h2_hwconfig_l2locka(void *addr, unsigned int len);
 
 /**
 L2 unlock everything
 @returns 0 on success, nonzero value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_unlock()
-{
-	return h2_hwconfig_trap(HWCONFIG_L2UNLOCK, NULL, 0, 0);
-}
+int h2_hwconfig_unlock(void);
 
 /**
 Control interrupt hardware directly
 @returns 0 on success, nonzero value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_hwintop(unsigned int op, unsigned int intno, unsigned int val)
-{
-	return h2_hwconfig_trap(HWCONFIG_HWINTOP, NULL, (op << 16) | intno, val);
-}
+int h2_hwconfig_hwintop(unsigned int op, unsigned int intno, unsigned int val);
 
 /**
 Start hardware threads with mask (-1 to start all)
@@ -246,11 +178,7 @@ Start hardware threads with mask (-1 to start all)
 @returns mask of threads started on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_hwthreads_mask(unsigned int mask) {
-
-	return h2_hwconfig_trap(HWCONFIG_HWTHREADS_MASK, NULL, mask, 0);
-}
+int h2_hwconfig_hwthreads_mask(unsigned int mask);
 
 /**
 Start number of hardware threads
@@ -258,11 +186,7 @@ Start number of hardware threads
 @returns number of threads started on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_hwthreads_num(unsigned int num) {
-
-	return h2_hwconfig_trap(HWCONFIG_HWTHREADS_NUM, NULL, num, 0);
-}
+int h2_hwconfig_hwthreads_num(unsigned int num);
 
 /**
 Enable/Disable memory ECC
@@ -270,11 +194,7 @@ Enable/Disable memory ECC
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_ecc(unsigned int ecc_enable) {
-
-	return h2_hwconfig_trap(HWCONFIG_ECC, NULL, ecc_enable, 0);
-}
+int h2_hwconfig_ecc(unsigned int ecc_enable);
 
 /**
 Read DMA configuration register
@@ -282,10 +202,7 @@ Read DMA configuration register
 @returns Register value on success, negative value on error
 @dependencies none
 */
-static inline int h2_hwconfig_dma_getcfg(unsigned int index) {
-
-	return h2_hwconfig_trap(HWCONFIG_GETDMACFG, NULL, index, 0);
-}
+int h2_hwconfig_dma_getcfg(unsigned int index);
 
 /**
 Write DMA configuration register
@@ -294,10 +211,7 @@ Write DMA configuration register
 @returns 0 on success, negative value on error
 @dependencies none
 */
-static inline int h2_hwconfig_dma_setcfg(unsigned int index, unsigned int data) {
-
-	return h2_hwconfig_trap(HWCONFIG_SETDMACFG, NULL, index, data);
-}
+int h2_hwconfig_dma_setcfg(unsigned int index, unsigned int data);
 
 /**
 Clean L2 cache
@@ -305,10 +219,7 @@ Clean L2 cache
 @returns 0 on success, negative value on error
 @dependencies none
 */
-static inline int h2_hwconfig_l2gclean(unsigned int inv) {
-
-	return h2_hwconfig_trap(HWCONFIG_L2GCLEAN, NULL, inv, 0);
-}
+int h2_hwconfig_l2gclean(unsigned int inv);
 
 /**
 Get stride prefetcher register.
@@ -316,11 +227,7 @@ Get stride prefetcher register.
 @returns register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_strideprefetcher_get_reg(unsigned int offset)
-{
-	return h2_hwconfig_trap(HWCONFIG_GETSTRIDEPREFETCHERREG, NULL, offset, 0);
-}
+int h2_hwconfig_strideprefetcher_get_reg(unsigned int offset);
 
 /**
 Set stride prefetcher register.
@@ -329,11 +236,7 @@ Set stride prefetcher register.
 @returns previous register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_strideprefetcher_set_reg(unsigned int offset, unsigned int val)
-{
-	return h2_hwconfig_trap(HWCONFIG_SETSTRIDEPREFETCHERREG, NULL, offset, val);
-}
+int h2_hwconfig_strideprefetcher_set_reg(unsigned int offset, unsigned int val);
 
 /**
 Set HMX RSC sequence power-on start address
@@ -341,10 +244,7 @@ Set HMX RSC sequence power-on start address
 @returns 0 on success, negative value on error
 @dependencies none
 */
-
-static inline int h2_hwconfig_hmxpower_on_set_addr(unsigned int addr) {
-	return h2_hwconfig_trap(HWCONFIG_SETHMXPOWERONSTARTADDR, NULL, addr, 0);
-}
+int h2_hwconfig_hmxpower_on_set_addr(unsigned int addr);
 
 /**
 Set HMX RSC sequence power-off start address
@@ -352,10 +252,7 @@ Set HMX RSC sequence power-off start address
 @returns 0 on success, negative value on error
 @dependencies none
 */
-
-static inline int h2_hwconfig_hmxpower_off_set_addr(unsigned int addr) {
-	return h2_hwconfig_trap(HWCONFIG_SETHMXPOWEROFFSTARTADDR, NULL, addr, 0);
-}
+int h2_hwconfig_hmxpower_off_set_addr(unsigned int addr);
 
 /**
 Toggle power-measurement GPIO
@@ -363,10 +260,7 @@ Toggle power-measurement GPIO
 @returns 0 on success, negative value on error
 @dependencies none
 */
-
-static inline int h2_hwconfig_gpio_toggle(unsigned int val) {
-	return h2_hwconfig_trap(HWCONFIG_GPIOTOGGLE, NULL, val, 0);
-}
+int h2_hwconfig_gpio_toggle(unsigned int val);
 
 /**
 Set power-measurement GPIO physical address
@@ -374,10 +268,7 @@ Set power-measurement GPIO physical address
 @returns 0 on success, negative value on error
 @dependencies none
 */
-
-static inline int h2_hwconfig_set_gpio_addr(unsigned long long int addr) {
-	return h2_hwconfig_trap(HWCONFIG_SETGPIOADDR, NULL, addr >> 32, addr & 0xffffffff);
-}
+int h2_hwconfig_set_gpio_addr(unsigned long long int addr);
 
 /**
 Configure per-thread cache partition use
@@ -385,11 +276,7 @@ Configure per-thread cache partition use
 @returns 0 on success, negative value on error
 @dependencies None
 */
-
-static inline int h2_hwconfig_l2cp(unsigned int l2cp_cfg)
-{
-	return h2_hwconfig_trap(HWCONFIG_L2CP, NULL, l2cp_cfg, 0);
-}
+int h2_hwconfig_l2cp(unsigned int l2cp_cfg);
 
 /**
 Get ECC register.
@@ -397,21 +284,14 @@ Get ECC register.
 @returns register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_ecc_get_reg(unsigned int offset)
-{
-	return h2_hwconfig_trap(HWCONFIG_GETECCREG, NULL, offset, 0);
-}
+int h2_hwconfig_ecc_get_reg(unsigned int offset);
 
 /**
 Get VWCTRL register
 @returns register value or -1 on error
 @dependencies none
 */
-static inline int h2_hwconfig_vwctrl_get(void) {
-
-	return h2_hwconfig_trap(HWCONFIG_GETVWCTRL, NULL, 0, 0);
-}
+int h2_hwconfig_vwctrl_get(void);
 
 /**
 Set VWCTRL register
@@ -419,10 +299,7 @@ Set VWCTRL register
 @returns 0, negative value on error
 @dependencies none
 */
-static inline int h2_hwconfig_vwctrl_set(unsigned int val) {
-
-	return h2_hwconfig_trap(HWCONFIG_SETVWCTRL, NULL, val, 0);
-}
+int h2_hwconfig_vwctrl_set(unsigned int val);
 
 /**
 Get DPM volt limits management register.
@@ -430,11 +307,7 @@ Get DPM volt limits management register.
 @returns register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_dpm_voltlmtmgmt_get_reg(unsigned int offset)
-{
-	return h2_hwconfig_trap(HWCONFIG_GET_DPM_VOLTLMTMGMT_REG, NULL, offset, 0);
-}
+int h2_hwconfig_dpm_voltlmtmgmt_get_reg(unsigned int offset);
 
 /**
 Set DPM volt limits management register.
@@ -443,11 +316,7 @@ Set DPM volt limits management register.
 @returns previous register value or 0 on failure -- check kerror
 @dependencies Returns failure if offset out of range
 */
-
-static inline int h2_hwconfig_dpm_voltlmtmgmt_set_reg(unsigned int offset, unsigned int val)
-{
-	return h2_hwconfig_trap(HWCONFIG_SET_DPM_VOLTLMTMGMT_REG, NULL, offset, val);
-}
+int h2_hwconfig_dpm_voltlmtmgmt_set_reg(unsigned int offset, unsigned int val);
 
 #endif
 

@@ -27,8 +27,7 @@ Initialize a Mutex.  The mutex is initialized to be unheld.
 @returns None
 @dependencies None
 */
-
-static inline void h2_rmutex_init(h2_mutex_t *lock) { h2_mutex_init_type(lock,H2_MUTEX_RECURSIVE); }
+void h2_rmutex_init(h2_mutex_t *lock);
 
 /**
 Lock a Mutex.  If the lock is held by another thread, this will block.
@@ -36,7 +35,7 @@ Lock a Mutex.  If the lock is held by another thread, this will block.
 @returns None for now, need to change to help POSIX
 @dependencies None
 */
-static inline void h2_rmutex_lock(h2_mutex_t *lock) { h2_mutex_lock(lock); }
+void h2_rmutex_lock(h2_mutex_t *lock);
 
 /**
 Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will be woken.
@@ -44,7 +43,7 @@ Unlock a Mutex.  If the count of recursive locks is zero, a blocked thread will 
 @returns None for now, need to change to help POSIX
 @dependencies None
 */
-static inline void h2_rmutex_unlock(h2_mutex_t *lock) { h2_mutex_unlock(lock); }
+void h2_rmutex_unlock(h2_mutex_t *lock);
 
 /**
 Try to lock a Mutex.  If the mutex was already held by another thread, return failure.
@@ -52,7 +51,7 @@ Try to lock a Mutex.  If the mutex was already held by another thread, return fa
 @returns 0 on success, nonzero otherwise
 @dependencies None
 */
-static inline int h2_rmutex_trylock(h2_mutex_t *lock) { return h2_mutex_trylock(lock); }
+int h2_rmutex_trylock(h2_mutex_t *lock);
 
 /** @} */
 

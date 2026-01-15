@@ -128,38 +128,10 @@ void sys_write0(const char *);
 #define DEBUG_PRINTF(...) /* nothing */
 #endif
 
-#if 0
-static inline void clean(const void *vx,int words)
-{
-	const int *x = vx;
-	int i;
-	for (i = 0; i < words; i++) {
-		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
-	};
-	asm volatile (" syncht ");
-}
-
+void clean(const void *vx,int words);
 /* X must be 32-byte aligned and COUNT must be a multiple of 32. */
-static inline void invalidate(const char *x,count_t count)
-{
-	count_t i;
-	for (i = 0; i < count; i += 32) {
-		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
-	};
-	asm volatile (" syncht ");
-}
-
-static inline void clean_str(const char *x)
-{
-	int len = strlen(x);
-	int i;
-	for (i = 0; i <= (len+1); i++) {
-		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
-	}
-	asm volatile (" syncht ");
-}
-
-#endif
+void invalidate(const char *x,count_t count);
+void clean_str(const char *x);
 
 #endif
 

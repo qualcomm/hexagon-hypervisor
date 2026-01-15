@@ -28,7 +28,7 @@ extern "C" {
 #define unlikely(x) (__builtin_expect(!!(x), 0))
 #endif
 
-static inline int pthread_unsup() { return ENOTSUP; }
+int pthread_unsup();
 
 #include <pthread_thread.h>
 #include <pthread_plainmutex.h>

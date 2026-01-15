@@ -12,7 +12,7 @@ extern const unsigned int H2_ANGEL_write_buf_size;
 
 int __sys_write_mode__;
 
-static inline void dccleana(const char *addr)
+void dccleana(const char *addr)
 {
 	asm volatile (" dccleana(%0)" : : "r"(addr));
 }

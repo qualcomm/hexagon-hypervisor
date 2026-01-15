@@ -33,55 +33,35 @@ Read TLB entry
 @param[in] index  Index of TLB entry
 @returns TLB entry
 */
-
-static inline unsigned long long int h2_tlb_read(unsigned int index)
-{
-	return (unsigned long long)h2_tlb_trap(TLBOP_TLBREAD, index, 0);
-}
+unsigned long long int h2_tlb_read(unsigned int index);
 
 /**
 Write TLB entry
 @param[in] index  Index of TLB entry
 @param[in] entry  new TLB entry value
 */
-
-static inline void h2_tlb_write(unsigned int index, unsigned long long int entry)
-{
-	h2_tlb_trap(TLBOP_TLBWRITE, index, entry);
-}
+void h2_tlb_write(unsigned int index, unsigned long long int entry);
 
 /**
 Search for TLB entry
 @param[in] va  Virtual Address
 @returns index on success, negative value if not found
 */
-
-static inline int h2_tlb_query(unsigned long va)
-{
-	return (int)h2_tlb_trap(TLBOP_TLBQUERY, va, 0);
-}
+int h2_tlb_query(unsigned long va);
 
 /**
 Allocate TLB entry
 @param[in] entry  TLB entry
 @returns index on success, negative value if failure
 */
-
-static inline int h2_tlb_alloc(unsigned long long int entry)
-{
-	return (int)h2_tlb_trap(TLBOP_TLBALLOC, 0, entry);
-}
+int h2_tlb_alloc(unsigned long long int entry);
 
 /**
 Free TLB entry
 @param[in] index  entry index
 @returns zero on success, negative value if failure
 */
-
-static inline int h2_tlb_free(int index)
-{
-	return (int)h2_tlb_trap(TLBOP_TLBFREE, (unsigned int)index, 0);
-}
+int h2_tlb_free(int index);
 
 /**
 Set DMA TLB entry
@@ -89,11 +69,7 @@ Set DMA TLB entry
 @param[in] entry  TLB entry
 @returns absolute index on success, negative value if failure
 */
-
-static inline int h2_tlb_dma_set(unsigned int index, unsigned long long int entry)
-{
-	return (int)h2_tlb_trap(TLBOP_DMASET, index, entry);
-}
+int h2_tlb_dma_set(unsigned int index, unsigned long long int entry);
 
 #endif
 

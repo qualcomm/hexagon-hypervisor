@@ -27,8 +27,7 @@ Initialize an all-signal.  No signals are being waited on, and no signals are se
 @returns None
 @dependencies None
 */
-
-static inline void h2_allsignal_init(h2_allsignal_t *signal) { signal->raw = 0; };
+void h2_allsignal_init(h2_allsignal_t *signal);
 
 /**
 Wait for signals.  When all the signals in mask have been set, the thread should be woken.
@@ -51,4 +50,3 @@ void h2_allsignal_signal(h2_allsignal_t *signal, unsigned int mask);
 /** @} */
 
 #endif
-

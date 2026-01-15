@@ -19,10 +19,7 @@ int h2_vmtrap_getie();
 int h2_vmtrap_intop(intop_type op, unsigned int arg1, unsigned int arg2);
 int h2_vmtrap_clrmap(void *ptr);
 int h2_vmtrap_newmap_extra(void *newbase, translation_type type, tlb_invalidate_flag flag, unsigned int extrainfo);
-static inline int h2_vmtrap_newmap(void *newbase, translation_type type, tlb_invalidate_flag flag)
-{
-	return h2_vmtrap_newmap_extra(newbase,type,flag,0);
-}
+int h2_vmtrap_newmap(void *newbase, translation_type type, tlb_invalidate_flag flag);
 int h2_vmtrap_cachectl(unsigned int op, void *start, unsigned int count);
 unsigned long long int h2_vmtrap_get_pcycles();
 void h2_vmtrap_set_pcycles(unsigned long long int);
@@ -38,4 +35,3 @@ int h2_vmtrap_pmuctrl(pmuop_type op, unsigned int id, unsigned int arg1, unsigne
 int h2_vmtrap_info(info_type type);
 
 #endif
-

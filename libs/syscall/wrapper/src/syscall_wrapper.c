@@ -7,8 +7,18 @@
 #include "syscall_defs.h"
 #include <angel.h>
 
+// Space holder for error code translation (SYS error code to libc error code)
+static int sys_error_translation(errno_t err) {
+	return err;
+}
+
 __attribute__((weak)) int open(const char *pathname, int flags, ...) {
-	return sys_open(pathname, flags);
+	fd_t res = sys_open(pathname, flags);
+	if (res < 0) {
+	    SET_LTS_ERROR((errno_t)res);
+	    return -1;
+	}
+	return res;
 }
 
 __attribute__((weak)) int close(int fd) {
@@ -64,27 +74,21 @@ __attribute__((weak)) int ftell(int fd) {
 __attribute__((weak)) clock_t times(struct tms *buf) {
 	count_t time = sys_time();
 	// TODO: add support of tms struct
+	(void)buf;
 	return time;
 }
 
-#if 0 //TODO: Using of thread local variable brakes Picolibc: printf shows nothing, fprintf shows on the screen instead of to be written into the file
-static _Thread_local char __cmd_line__ [SIZE__boot_cmdline__];
+static char __cmd_line__ [SIZE__boot_cmdline__];
 __attribute__((weak)) char *sys_semihost_get_cmdline(void) {
 	__cmd_line__[0] = '\0';
 	sys_get_cmdline(__cmd_line__, sizeof(__cmd_line__)/sizeof(__cmd_line__[0]));
 	__cmd_line__[sizeof(__cmd_line__)/sizeof(__cmd_line__[0]) - 1] = '\0';
     return __cmd_line__;
 }
-#else
-// STUB
-__attribute__((weak)) char *sys_semihost_get_cmdline(void) {
-	return "";
-}
-#endif
 
-#if 0 //TODO: fix flags of picolibc compilation
+#ifdef __PICOLIBC_ERRNO_FUNCTION
 __attribute__((weak)) int errno(void) {
-	return sys_errno();
+	return sys_error_translation(sys_errno());
 }
 #endif
 

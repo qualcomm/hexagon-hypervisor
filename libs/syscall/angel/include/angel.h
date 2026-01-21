@@ -128,10 +128,5 @@ void sys_write0(const char *);
 #define DEBUG_PRINTF(...) /* nothing */
 #endif
 
-void clean(const void *vx,int words);
-/* X must be 32-byte aligned and COUNT must be a multiple of 32. */
-void invalidate(const char *x,count_t count);
-void clean_str(const char *x);
-
 #endif
 

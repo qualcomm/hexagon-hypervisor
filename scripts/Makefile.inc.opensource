@@ -1,0 +1,9 @@
+# Dear emacs, this is a -*- Makefile -*-
+
+ifndef MAKE_INC_OPENSOURCE
+MAKE_INC_OPENSOURCE := 1
+
+# HMX / HLX Support
+export HMX_HLX_SUPPORT ?= 1
+
+endif

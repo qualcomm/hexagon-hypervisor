@@ -62,6 +62,7 @@ CFLAGS = -Wall -G0 -g $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -I. -Iinc -Isr
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2
 
 include ../scripts/Makefile.inc.config
+include ../scripts/Makefile.inc.opensource
 include ../scripts/Makefile.inc.bootvm
 
 

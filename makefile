@@ -125,6 +125,7 @@ endif
 
 
 include scripts/Makefile.inc.config
+include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
 
 .PHONY: all
@@ -167,6 +168,7 @@ endif
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
@@ -183,6 +185,7 @@ endif
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver

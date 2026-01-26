@@ -18,7 +18,7 @@
 #ifdef __PICOLIBC_ERRNO_FUNCTION
 #define SET_LTS_ERROR(err)
 #else
-#define SET_LTS_ERROR(err) do {if (err < 0) errno = sys_error_translation((err));} while(0)
+#define SET_LTS_ERROR(ret, err) do {if (ret == -1) errno = sys_error_translation((err));} while(0)
 #endif
 
 #endif /*H2_SYSCALL_WRAPPER*/

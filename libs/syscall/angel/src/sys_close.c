@@ -5,5 +5,11 @@
 
 #include "allsyscalls.h"
 
-errno_t sys_close(fd_t fd) { clean(&fd,1); return ANGEL(SYS_CLOSE,&fd,0); }
+sys_call_ret_t sys_close_internal(fd_t fd) {
+	clean(&fd,1);
+	return angel_with_err(SYS_CLOSE, &fd, 0);
+}
 
+errno_t sys_close(fd_t fd) {
+	return sys_close_internal(fd).ret_value;
+}

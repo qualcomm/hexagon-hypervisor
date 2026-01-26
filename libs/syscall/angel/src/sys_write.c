@@ -16,27 +16,29 @@ void dccleana(const char *addr)
 {
 	asm volatile (" dccleana(%0)" : : "r"(addr));
 }
-
-count_t sys_write(fd_t fd, const char *buffer, count_t count)
+sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count)
 {
 	if (H2_SYS_WRITE_MODE_SILENT == __sys_write_mode__) {
-		return 0;
+		sys_call_ret_t angel_ret = {0};
+		return angel_ret;
 	}
 	if (1 == fd && H2_SYS_WRITE_MODE_NO_FD1 == __sys_write_mode__) {  // stdout
-		return 0;
+		sys_call_ret_t angel_ret = {0};
+		return angel_ret;
 	}
 	if (1 != fd && H2_SYS_WRITE_MODE_ONLY_FD1 == __sys_write_mode__) {  // !stdout
-		return 0;
+		sys_call_ret_t angel_ret = {0};
+		return angel_ret;
 	}
 	
 	struct { fd_t fd; const char *buf; count_t c; } x;
-	count_t angel_ret;
+	sys_call_ret_t angel_ret;
 	x.fd = fd;
 	x.buf = ANGEL_OFFSET_PTR(buffer);
 	x.c = count;
 	clean(buffer,count/4+3);
 	clean(&x,3);
-	angel_ret = ANGEL(SYS_WRITE,&x,0);
+	angel_ret = angel_with_err(SYS_WRITE,&x,0);
 	if (fd > 2) return angel_ret;
 	if (H2_ANGEL_write_buf_idx+count < H2_ANGEL_write_buf_size) {
 		memcpy(H2_ANGEL_write_buf+H2_ANGEL_write_buf_idx,buffer,count);
@@ -54,3 +56,6 @@ count_t sys_write(fd_t fd, const char *buffer, count_t count)
 	return angel_ret;
 }
 
+count_t sys_write(fd_t fd, const char *buffer, count_t count) {
+	return sys_write_internal(fd, buffer, count).ret_value;
+}

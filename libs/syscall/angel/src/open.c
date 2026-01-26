@@ -57,7 +57,7 @@ int __use_file_suffix__ __attribute__((section(".data"))) = 0;
 char __dir_prefix__[SIZE__dir_prefix__] __attribute__((section(".data"))) = { 0 };
 char __file_suffix__[SIZE__file_suffix__] __attribute__((section(".data"))) = { 0 };
 
-fd_t sys_open(const char *name, t_mode_t mode)
+sys_call_ret_t sys_open_internal(const char *name, t_mode_t mode)
 {
 	int i;
 	char string[SIZE__dir_prefix__];
@@ -100,6 +100,11 @@ fd_t sys_open(const char *name, t_mode_t mode)
 	x.len = strlen(string);
 
 	clean_str(string); clean(&x, 3);
-	return ANGEL(SYS_OPEN, &x, 0);
+	return angel_with_err(SYS_OPEN, &x, 0);
 }
+
+fd_t sys_open(const char *name, t_mode_t mode) {
+	return sys_open_internal(name, mode).ret_value;
+}
+
 _STD_END

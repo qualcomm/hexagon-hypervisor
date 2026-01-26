@@ -21,6 +21,7 @@ CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 include $(H2DIR)/scripts/Makefile.inc.config
+include $(H2DIR)/scripts/Makefile.inc.opensource
 include $(H2DIR)/scripts/Makefile.inc.bootvm
 
 

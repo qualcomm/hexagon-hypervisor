@@ -10,6 +10,7 @@
 #include "h2_lxaccess.h"
 
 int h2_lxaccess_unit_init(h2_lxaccess_state_t *lxacc, h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_unit_entry entry_type, unsigned int unit_mask) {
+#ifdef HMX_HLX_SUPPORT
 	int ret;
 	
 	if ((ret = h2_coproc_init()) < 0) return ret;
@@ -27,13 +28,21 @@ int h2_lxaccess_unit_init(h2_lxaccess_state_t *lxacc, h2_coproc_type_t type, h2_
 	lxacc->unit_mask = unit_mask;
 
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 int h2_lxaccess_init(h2_lxaccess_state_t *lxacc) {
+#ifdef HMX_HLX_SUPPORT
 	return h2_lxaccess_unit_init(lxacc, CFG_TYPE_VXU0, CFG_SUBTYPE_VXU0, CFG_HLX_CONTEXTS, -1);
+#else
+	return -1;
+#endif
 }
 
 int h2_lxaccess_acquire(h2_lxaccess_state_t *lxacc) {
+#ifdef HMX_HLX_SUPPORT
 	int idx, res;
 	unsigned int old_active;
 	unsigned int new_active;
@@ -49,10 +58,14 @@ int h2_lxaccess_acquire(h2_lxaccess_state_t *lxacc) {
 		return idx;
 	}
 	return res;
+#else
+	return -1;
+#endif
 }
 
 int h2_lxaccess_release(h2_lxaccess_state_t *lxacc, int idx) 
 {
+#ifdef HMX_HLX_SUPPORT
 	int ret;
 
 	ret = h2_coproc_set(lxacc->type, lxacc->subtype, lxacc->entry_type, lxacc->unit_mask, 0, 0);
@@ -60,4 +73,7 @@ int h2_lxaccess_release(h2_lxaccess_state_t *lxacc, int idx)
 	h2_sem_up(&lxacc->sem);
 
 	return ret;
+#else
+	return -1;
+#endif
 }

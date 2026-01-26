@@ -10,12 +10,16 @@ export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
 endif
 
 include ../scripts/Makefile.inc.config
-
+include ../scripts/Makefile.inc.opensource
 include ../scripts/Makefile.inc.version
 
 CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
 
 CFLAGS += -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_GUEST_END=$(H2K_GUEST_END)
+
+ifeq ($(HMX_HLX_SUPPORT),1)
+	CFLAGS += -DHMX_HLX_SUPPORT
+endif
 
 ifdef NULL_ANGEL_TRAP
 CFLAGS += -DNULL_ANGEL_TRAP

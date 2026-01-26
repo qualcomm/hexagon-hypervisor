@@ -12,6 +12,7 @@
 
 #if ARCHV >= 68
 #ifndef NO_DEVICES
+#ifdef HMX_HLX_SUPPORT
 static inline void H2K_hmx_rsc_seq_power_change(u32_t hmx_rsc_seq_power_change_start_addr) {
 	/* From HPG 4.8.X */
 	volatile u32_t delay;
@@ -41,10 +42,12 @@ static inline void H2K_hmx_rsc_seq_power_change(u32_t hmx_rsc_seq_power_change_s
 }
 #endif
 #endif
+#endif
 
 void H2K_hmx_poweron(void) {
 #ifndef NO_DEVICES
 #ifdef HAVE_EXTENSIONS
+#ifdef HMX_HLX_SUPPORT
 	if (!H2K_gp->info_boot_flags.boot_have_hmx) {
 		return;
 	}
@@ -63,11 +66,13 @@ void H2K_hmx_poweron(void) {
 #endif
 #endif
 #endif
+#endif
 }
 
 void H2K_hmx_poweroff(void) {
 #ifndef NO_DEVICES
 #ifdef HAVE_EXTENSIONS
+#ifdef HMX_HLX_SUPPORT
 	if (!H2K_gp->info_boot_flags.boot_have_hmx) {
 		return;
 	}
@@ -83,6 +88,7 @@ void H2K_hmx_poweroff(void) {
 
 	H2K_gp->hmx_state = H2K_HMX_STATE_OFF;
 	BKL_UNLOCK();
+#endif
 #endif
 #endif
 #endif

@@ -46,6 +46,7 @@ endif
 
 
 include $(H2DIR)/scripts/Makefile.inc.config
+include $(H2DIR)/scripts/Makefile.inc.opensource
 include $(H2DIR)/scripts/Makefile.inc.version
 include $(H2DIR)/scripts/Makefile.inc.constants
 include $(H2DIR)/scripts/Makefile.inc.tools

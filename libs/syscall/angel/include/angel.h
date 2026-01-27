@@ -10,7 +10,7 @@
 
 extern long __boot_net_phys_offset__;
 
-unsigned int __angel(unsigned int r0, void *r1, unsigned int r2); //TODO: remove later
+unsigned int __angel(unsigned int r0, void *r1, unsigned int r2); // FIXME: remove later
 unsigned long long __angel64r(unsigned int r0, void *r1, unsigned int r2);
 
 unsigned int angel(unsigned int r0, void *r1, unsigned int r2);

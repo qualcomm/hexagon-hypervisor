@@ -129,7 +129,7 @@ __attribute__((weak)) int unlink (const char *__path) { // Need to be provided t
 }
 
 static char __cmd_line__ [SIZE__boot_cmdline__];
-__attribute__((weak)) char *sys_semihost_get_cmdline(void) {
+__attribute__((weak)) char *get_cmdline(void) {
 	__cmd_line__[0] = '\0';
 	sys_get_cmdline(__cmd_line__, sizeof(__cmd_line__)/sizeof(__cmd_line__[0]));
 	__cmd_line__[sizeof(__cmd_line__)/sizeof(__cmd_line__[0]) - 1] = '\0';

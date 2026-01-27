@@ -7,10 +7,6 @@ ifeq ($(EN_LLVM_COV), 1)
 CFLAGS += ${LLVM_COV_CFLAGS}
 endif
 
-ifdef NULL_SYS_WRITE_FD1
-CFLAGS += -DNULL_SYS_WRITE_FD1
-endif
-
 CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
 
 export BLAST_LIB_INCLUDE=$(shell pwd)/include

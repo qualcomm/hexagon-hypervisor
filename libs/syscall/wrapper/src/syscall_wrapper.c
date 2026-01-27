@@ -89,7 +89,7 @@ __attribute__((weak)) off_t lseek(int fd, off_t offset, int whence) {
 	if (current_offset == -1)
 		return -1;
 
-    sys_seek_internal(fd, current_offset + offset);
+	sys_seek_internal(fd, current_offset + offset);
 
 	return sys_ftell(fd);
 }
@@ -105,7 +105,7 @@ __attribute__((weak)) void _exit(int status) {
 
 __attribute__((weak)) clock_t times(struct tms *buf) {
 	count_t time = sys_time();
-	// TODO: add support of tms struct
+	// FIXME: add support of tms struct
 	(void)buf;
 	return time;
 }

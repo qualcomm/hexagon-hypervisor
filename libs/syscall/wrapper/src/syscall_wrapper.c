@@ -34,18 +34,18 @@ sys_call_ret_t  sys_read_internal(fd_t fd, char *buffer, count_t count);
 
 __attribute__((weak)) ssize_t read(int fd, void *buf, size_t count) {
 	sys_call_ret_t res = sys_read_internal(fd, buf, count);
-	ssize_t ret = (ssize_t)res.ret_value;
+	int ret = (ssize_t)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
-	return ret;
+	return count - ret; // According to documentation there should be, but doesn't work: return ret == 0 ? count : 0;
 }
 
 sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count);
 
 __attribute__((weak)) ssize_t write(int fd, const void *buf, size_t count) {
 	sys_call_ret_t res = sys_write_internal(fd, buf, count);
-	ssize_t ret = (ssize_t)res.ret_value;
+	int ret = (ssize_t)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
-    return ret;
+	return count - ret; // According to documentation there should be, but doesn't work: return ret == 0 ? count : 0;
 }
 
 sys_call_ret_t sys_flen_internal(fd_t fd);

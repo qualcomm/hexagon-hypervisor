@@ -9,8 +9,6 @@ endif
 
 CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
 
-export BLAST_LIB_INCLUDE=$(shell pwd)/include
-
 ASM_FILES = 
 C_FILES = $(wildcard src/*.c)
 

@@ -90,7 +90,9 @@ install: libh2.a $(SYS_WRAPPER_LIB)
 	mkdir -p $(INSTALLPATH)/include;
 	cp $^ $(INSTALLPATH)/lib;
 	for dir in $(dir ${LIB_DIRS}); do\
-		pushd $$dir/include;\
-		/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
-		popd;\
+		if [ -d "$$dir/include" ]; then \
+			pushd $$dir/include;\
+			/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
+			popd;\
+		fi;\
 	done;

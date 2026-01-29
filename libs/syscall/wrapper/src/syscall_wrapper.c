@@ -128,12 +128,13 @@ __attribute__((weak)) int unlink (const char *__path) { // Need to be provided t
 	return ret;
 }
 
-static char __cmd_line__ [SIZE__boot_cmdline__];
-__attribute__((weak)) char *get_cmdline(void) {
-	__cmd_line__[0] = '\0';
-	sys_get_cmdline(__cmd_line__, sizeof(__cmd_line__)/sizeof(__cmd_line__[0]));
-	__cmd_line__[sizeof(__cmd_line__)/sizeof(__cmd_line__[0]) - 1] = '\0';
-    return __cmd_line__;
+__attribute__((weak)) int get_cmdline(char *buffer, int count) {
+	if (count < 1)
+		return -1;
+	buffer[0] = '\0';
+	errno_t res = sys_get_cmdline(buffer, count);
+	buffer[count - 1] = '\0';
+	return res;
 }
 
 #ifdef __PICOLIBC_ERRNO_FUNCTION

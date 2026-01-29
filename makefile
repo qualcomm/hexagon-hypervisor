@@ -1,13 +1,29 @@
 # build controls
 export USE_PKW ?= 1
 
-include scripts/Makefile.inc.tools
-
 ARCHV_LIST ?= 65 68 73 81
 TESTOUT ?= test.out
 
 TARGET ?= opt
 ARCHV ?= 81
+
+ifneq ($(findstring $(ARCHV),65,66,67),)
+override ARCHV := 65
+endif
+
+ifneq ($(findstring $(ARCHV),68,71),)
+override ARCHV := 68
+endif
+
+ifneq ($(findstring $(ARCHV),73,75,77,79),)
+override ARCHV := 73
+endif
+
+ifneq ($(findstring $(ARCHV),81,83,85,87,89,91),)
+override ARCHV := 81
+endif
+
+include scripts/Makefile.inc.tools
 
 JFLAG ?= -j 3
 OPT_JFLAG := $(JFLAG)
@@ -258,11 +274,11 @@ h2_cov:
 .PHONY: check-fail test-check cov-check cov_fns
 
 check-fail test-check cov-check:
-	$(MAKE) -f scripts/Makefile.coverage TESTOUT=$(TESTOUT) check-fail
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check-fail
 #	$(MAKE) -C ucos check
 
 check:
-	$(MAKE) -f scripts/Makefile.coverage check
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) check
 #	$(MAKE) -C ucos check
 
 doc:

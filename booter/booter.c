@@ -65,7 +65,7 @@ char *pagesize_name[] = {
 	GEN(__h2_pmu_cfg__)   												\
 	GEN(__h2_gpio_toggle__)												\
 	GEN(__sys_write_mode__)												\
-	GEN(end)																			\
+	GEN(_end)																			\
 	GEN(DEFAULT_HEAP_SIZE)												\
 	GEN(DEFAULT_STACK_SIZE)												\
 	GEN(HEAP_SIZE)																\
@@ -946,7 +946,7 @@ void load_vm(unsigned int idx) {
 		// if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 
 		/* Adjust guest_base and fences */
-		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
+		if (-1 == (end = vm_params[idx].specials[SPECIAL__end].addr)) {
 			FAIL("\tCan't find end symbol", "");
 		}
 		BOOTER_PRINTF("\tend 0x%08lx\n", end);
@@ -1061,8 +1061,10 @@ void config_vm(unsigned int idx) {
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
 			BOOTER_PRINTF("\tTranslation type offset\n");
 			BOOTER_PRINTF("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
-			BOOTER_PRINTF("\t\tCCCC 0x%1x\n", base.cccc);
-			BOOTER_PRINTF("\t\tXWRU 0x%1x\n", base.xwru);
+			BOOTER_PRINTF("\t\tCCCC  0x%1x\n", base.cccc);
+			BOOTER_PRINTF("\t\tXWRU  0x%1x\n", base.xwru);
+			BOOTER_PRINTF("\t\tPAGES 0x%1x\n", base.pages);
+			BOOTER_PRINTF("\t\tRAW   0x%1x\n", base.raw);
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {

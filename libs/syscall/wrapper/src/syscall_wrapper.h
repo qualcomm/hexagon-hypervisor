@@ -14,6 +14,8 @@
 #include <sys/unistd.h>
 #include <sys/times.h>
 #include <sys/errno.h>
+#include <sys/time.h>
+#include <signal.h>
 
 #ifdef __PICOLIBC_ERRNO_FUNCTION
 #define SET_LTS_ERROR(err)

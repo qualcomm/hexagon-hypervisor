@@ -137,14 +137,39 @@ __attribute__((weak)) int get_cmdline(char *buffer, int count) {
 	return res;
 }
 
+sys_call_ret_t sys_stat_internal(const char *name, void *buffer);
+
+__attribute__((weak)) int stat(const char    *__restrict __path, struct stat    *__restrict __sbuf) {
+	sys_call_ret_t res = sys_stat_internal(__path, __sbuf);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	return ret;
+}
+
 #ifdef __PICOLIBC_ERRNO_FUNCTION
 __attribute__((weak)) int errno(void) {
 	return sys_error_translation(sys_errno());
 }
 #endif
 
-// STUBS
+// STUBS FIXME: add support of missed system calls
 
 __attribute__((weak)) off64_t lseek64(int fd, off64_t offset, int whence) {
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int getentropy(void *buffer, size_t length) {
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int sigprocmask(int how, const sigset_t *set, sigset_t *oldset) {
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int gettimeofday(struct timeval * __restrict __p, void * __restrict __tz) {
+	SET_LTS_ERROR(-1, ENOSYS);
 	return -1;
 }

@@ -68,7 +68,7 @@
 
 FUNC_START start .entry .p2align 12
 	jump .Lpast_mbox
-	.space 0x100  // FIXME: needs to be enough for all angel mailboxes but still fit all code in 4K
+	.space 0x200  // FIXME: needs to be enough for all angel mailboxes but still fit all code in 4K
 
 .Lpast_mbox:
 

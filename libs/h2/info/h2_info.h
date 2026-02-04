@@ -31,12 +31,8 @@ Get info.
 @returns Parameter value or -1 on unknown request.
 @dependencies None
 */
-static inline int h2_info(info_type type) {
-	return h2_info_trap(type, 0, (h2_cfg_unit_entry)0);
-}
+int h2_info(info_type type);
 
-static inline int h2_info_unit(unsigned int unit, h2_cfg_unit_entry entry) {
-	return h2_info_trap(INFO_UNIT_ENTRY, unit, entry);
-}
+int h2_info_unit(unsigned int unit, h2_cfg_unit_entry entry);
 
 #endif

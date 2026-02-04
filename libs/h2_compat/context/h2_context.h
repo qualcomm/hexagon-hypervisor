@@ -28,36 +28,38 @@
 
 typedef struct {
 	/* OFFSET 0 */
-	CREGPAIR(lc0,sa0);
-	CREGPAIR(lc1,sa1);
-	CREGPAIR(usr,p3_0);
-	CREGPAIR(m1,m0);
+	CREGPAIR(lc0,sa0);             // 0
+	CREGPAIR(lc1,sa1);             // 8
+	CREGPAIR(usr,p3_0);            // 16
+	CREGPAIR(m1,m0);               // 24
 	/* OFFSET 32 */
-	CREGPAIR(gp,ugp);
-	CREGPAIR(cs1,cs0);
-	CREGPAIR(g1,g0);
-	CREGPAIR(g3,g2);
+	CREGPAIR(gp,ugp);              // 32
+	CREGPAIR(cs1,cs0);             // 40
+	CREGPAIR(g1,g0);               // 48
+	CREGPAIR(g3,g2);               // 56
 	/* OFFSET 64 */
-	REGPAIR(01,00);
-	REGPAIR(03,02);
-	REGPAIR(05,04);
-	REGPAIR(07,06);
+	CREGPAIR(framekey,framelimit); // 64
+	REGPAIR(01,00);                // 72
+	REGPAIR(03,02);                // 80
+	REGPAIR(05,04);                // 88
 	/* OFFSET 96 */
-	REGPAIR(09,08);
-	REGPAIR(11,10);
-	REGPAIR(13,12);
-	REGPAIR(15,14);
+	REGPAIR(07,06);                // 96
+	REGPAIR(09,08);                // 104
+	REGPAIR(11,10);                // 112
+	REGPAIR(13,12);                // 120
 	/* OFFSET 128 */
-	REGPAIR(17,16);
-	REGPAIR(19,18);
-	REGPAIR(21,20);
-	REGPAIR(23,22);
+	REGPAIR(15,14);                // 128
+	REGPAIR(17,16);                // 136
+	REGPAIR(19,18);                // 144
+	REGPAIR(21,20);                // 152
 	/* OFFSET 160 */
-	REGPAIR(25,24);
-	REGPAIR(27,26);
-	REGPAIR(29,28);
-	REGPAIR(31,30);
-	/* SIZE: 192 */
+	REGPAIR(23,22);                // 160
+	REGPAIR(25,24);                // 168
+	REGPAIR(27,26);                // 176
+	REGPAIR(29,28);                // 184
+	/* OFFSET 192 */
+	REGPAIR(31,30);                // 192
+	/* SIZE: 200 */
 } h2_context_t;
 
 #endif

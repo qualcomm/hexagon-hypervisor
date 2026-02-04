@@ -1,1 +1,1 @@
-../../../install/include/asm_offsets.h
+../../../kernel/include/asm_offsets.h

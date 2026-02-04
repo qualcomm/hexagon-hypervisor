@@ -13,6 +13,26 @@ tst:
 
 clean:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS_ALL) TARG=clean
+	rm -rf coverage_report.txt coverage_report.lcov index.html
+		
+merged.profraw: tst
+	echo '[COVERAGE] Merging:' $(shell find ${H2DIR}/kernel ${H2DIR}/libs -name "default.profraw")
+	$(LLVM_PROFDATA) merge -o ${H2DIR}/merged.profraw $(shell find ${H2DIR}/kernel ${H2DIR}/libs -name "default.profraw")
+
+coverage_report.txt: merged.profraw	
+	echo '[COVERAGE] Creating text report'
+	$(LLVM_COV) report ${H2DIR}/install/bin/booter --instr-profile=${H2DIR}/merged.profraw --format=text | tee ${H2DIR}/coverage_report.txt
+
+coverage_report.lcov: merged.profraw
+	echo '[COVERAGE] Creating lcov report'	
+	$(LLVM_COV) export ${H2DIR}/install/bin/booter --instr-profile=${H2DIR}/merged.profraw --format=lcov > ${H2DIR}/coverage_report.lcov
+	 
+index.html:	merged.profraw
+	echo '[COVERAGE] Creating html report'
+	$(LLVM_COV) report ${H2DIR}/install/bin/booter --instr-profile=${H2DIR}/merged.profraw --format=html
+	
+#TODO: enable html reports
+coverage_report: coverage_report.txt coverage_report.lcov #index.html  
 
 $(SUBDIRS)::
 	cd $@;\
@@ -27,7 +47,7 @@ $(SUBDIRS_ALL)::
 	$(MAKE) $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
 	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
 
-.PHONY: $(SUBDIRS) $(SUBDIRS_ALL) tst
+.PHONY: $(SUBDIRS) $(SUBDIRS_ALL) tst coverage_report
 
 
 include ./scripts/Makefile.inc.test

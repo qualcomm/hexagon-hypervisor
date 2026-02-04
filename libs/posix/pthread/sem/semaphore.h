@@ -17,14 +17,14 @@ extern "C" {
 
 typedef pthread_sem_t sem_t;
 
-static inline int sem_init(sem_t *sem, int pshared, unsigned int value) { return pthread_sem_init_np(sem,pshared,value); }
-static inline int sem_destroy(sem_t *sem) { return 0; }
-static inline int sem_wait(sem_t *sem) { return pthread_sem_wait_np(sem); }
-static inline int sem_timedwait(sem_t *sem, const struct timespec *abstime) { return sem_wait(sem); }
-static inline int sem_trywait(sem_t *sem) { return pthread_sem_trywait_np(sem); }
-static inline int sem_add_np(sem_t *sem, unsigned int amount) { return pthread_sem_add_np(sem,amount); }
-static inline int sem_post(sem_t *sem) { return sem_add_np(sem,1); }
-static inline int sem_getvalue(sem_t *sem, int *sval) { return pthread_sem_getvalue_np(sem,sval); }
+int sem_init(sem_t *sem, int pshared, unsigned int value);
+int sem_destroy(sem_t *sem);
+int sem_wait(sem_t *sem);
+int sem_timedwait(sem_t *sem, const struct timespec *abstime);
+int sem_trywait(sem_t *sem);
+int sem_add_np(sem_t *sem, unsigned int amount);
+int sem_post(sem_t *sem);
+int sem_getvalue(sem_t *sem, int *sval);
 
 #ifdef __cplusplus
 } /* extern "C" */ 

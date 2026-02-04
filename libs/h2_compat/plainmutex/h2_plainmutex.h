@@ -26,7 +26,7 @@ Initialize a mutex.  The mutex is not held once initialized.
 @returns None
 @dependencies None
 */
-static inline void h2_plainmutex_init(h2_plainmutex_t *lock) { *lock = H2_PLAINMUTEX_T_INIT; }
+void h2_plainmutex_init(h2_plainmutex_t *lock);
 
 /**
 Lock a mutex.  If the mutex is already held, it will block until the mutex can be locked.
@@ -34,8 +34,7 @@ Lock a mutex.  If the mutex is already held, it will block until the mutex can b
 @returns None, but should return success/fail for POSIX integration
 @dependencies None
 */
-
-static inline void h2_plainmutex_lock(h2_plainmutex_t *lock) { pthread_plainmutex_lock_np(lock); }
+void h2_plainmutex_lock(h2_plainmutex_t *lock);
 
 /**
 Unlock a mutex.
@@ -43,7 +42,7 @@ Unlock a mutex.
 @returns None, but should return success/fail for POSIX integration
 @dependencies None
 */
-static inline void h2_plainmutex_unlock(h2_plainmutex_t *lock) { pthread_plainmutex_unlock_np(lock); }	/* unlock */
+void h2_plainmutex_unlock(h2_plainmutex_t *lock);
 
 /**
 Try to lock a mutex.  If the mutex is already held, return failure.
@@ -51,10 +50,8 @@ Try to lock a mutex.  If the mutex is already held, return failure.
 @returns 0 on success, nonzero value on failure.
 @dependencies None
 */
-
-static inline int h2_plainmutex_trylock(h2_plainmutex_t *lock) { return pthread_plainmutex_trylock_np(lock); }	/* just try... 0 if successful, nonzero if not */
+int h2_plainmutex_trylock(h2_plainmutex_t *lock);
 
 /** @} */
 
 #endif
-

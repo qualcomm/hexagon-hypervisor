@@ -25,8 +25,7 @@ Initialize a condition variable.
 @returns None
 @dependencies None
 */
-
-static inline void h2_cond_init(h2_cond_t *cond) { pthread_cond_init(cond,NULL); };
+void h2_cond_init(h2_cond_t *cond);
 
 /**
 Signal to one thread that a condition has changed.
@@ -34,8 +33,7 @@ Signal to one thread that a condition has changed.
 @returns None
 @dependencies None
 */
-
-static inline void h2_cond_signal(h2_cond_t *cond) { pthread_cond_signal(cond); };
+void h2_cond_signal(h2_cond_t *cond);
 
 /**
 Signal to all threads that a condition has changed.
@@ -43,8 +41,7 @@ Signal to all threads that a condition has changed.
 @returns None
 @dependencies None
 */
-
-static inline void h2_cond_broadcast(h2_cond_t *cond) { pthread_cond_broadcast(cond); };
+void h2_cond_broadcast(h2_cond_t *cond);
 
 /**
 Wait on a condition.  The mutex will be freed before blocking and re-acquired before returning.
@@ -53,8 +50,7 @@ Wait on a condition.  The mutex will be freed before blocking and re-acquired be
 @returns None
 @dependencies None
 */
-
-static inline void h2_cond_wait(h2_cond_t *cond, h2_mutex_t *mutex) { pthread_cond_wait(cond,mutex); };
+void h2_cond_wait(h2_cond_t *cond, h2_mutex_t *mutex);
 
 /**
 Wait on a condition.  The rmutex will be freed before blocking and re-acquired before returning.
@@ -63,9 +59,8 @@ Wait on a condition.  The rmutex will be freed before blocking and re-acquired b
 @returns None
 @dependencies None
 */
-static inline void h2_cond_wait_rmutex(h2_cond_t *cond, h2_rmutex_t *mutex) { h2_cond_wait(cond,mutex); }
+void h2_cond_wait_rmutex(h2_cond_t *cond, h2_rmutex_t *mutex);
 
 /** @} */
 
 #endif
-

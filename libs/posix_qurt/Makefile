@@ -2,7 +2,7 @@ LIBNAME=posix
 
 OPTIMIZE := -Os
 
-CFLAGS =  -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../qurt/include -g $(OPTIMIZE) -G0
+CFLAGS =  -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../qurt/include -g $(OPTIMIZE) $(OPT_ADD) -G0
 ASFLAGS = -mv$(TOOLARCH) -Iinclude -Wall -I../h2/include -I../qurt/include 
 
 export QURT_LIB_INCLUDE=$(shell pwd)/include

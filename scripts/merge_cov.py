@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
@@ -16,7 +16,7 @@ import os
 
 # group(1) is PC, group(2) is name
 nopcfunc_patt = re.compile("(\w+):")
-function_patt = re.compile("(\w+)\s+(\w+):")
+function_patt = re.compile(r"([a-fA-F0-9]+)\s*<([A-Za-z0-9_.]+)>:")
 covdata_patt = re.compile("\**\s+(\w+\s+(cycles|0))*\s+(\w+):\s+(.+)")
 covdata_patt2 = re.compile("\**\s+(\w+)\s+(1.0|0.0)*\s+(\w+):\s+(.+)")
 covdata_patt3 = re.compile("(\**       0 1.0)\s+(\w+):\s+(.+)")
@@ -43,14 +43,13 @@ class function_data(object):
       else:
          output += "0x00000000 <"
       output += self.name + ">:\n"
-      pclist = self.text.keys()
-      pclist.sort()
+      pclist = sorted(self.text.keys())
       if len(self.text) == 0:
          output += "No data!\n"
       for pc in pclist:
          ccount = ""
          zero = ""
-         if self.ccount.has_key(pc):
+         if pc in self.ccount:
             if self.ccount[pc] == 0:
                zero = "**"
             ccount = "%d cycles" % (self.ccount[pc])
@@ -64,7 +63,7 @@ class function_data(object):
    def set_offset(self,name,offset):
       # print "Set offset %s %08x" % (name, offset)
       if self.name != name:
-         print "mismatching function name"
+         print("mismatching function name {%s}" % (name))
       self.offset = offset
 
    #  probably should check the CSV for function lengths to make sure they match.
@@ -104,14 +103,14 @@ class function_data(object):
          if m and m.group(1):
             countstr = m.group(1).replace(" cycles","")
             countstr = countstr.replace(" 0", "")
-            ccount = long(countstr, 10)
+            ccount = int(countstr, 10)
          # FIXME: hexagon-cov sometimes fails to mark instructions as -- Out of
          # range -- when they in fact are.  If there is no annotation, assume
          # for now that it's out of range.
          else:
             continue
          # print "XXX %s %08x" %(m.group(3), self.offset)
-         pc = long(m.group(3),16)
+         pc = int(m.group(3),16)
          if (do_offsets):
             pc -= self.offset
          text = m.group(4)
@@ -124,22 +123,22 @@ class function_data(object):
 
          # print "cycle count = %s, pc = 0x%08x, text = %s" %(ccount, pc, text)
          if ccount != None:
-            if not self.ccount.has_key(pc):
+            if pc not in self.ccount:
                self.ccount[pc] = ccount
             else:
                self.ccount[pc] += ccount
          if mode == "new":
             self.text[pc] = text
          else:
-            if not self.text.has_key(pc):
-               print "%s:  additional pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile)
+            if pc not in self.text:
+               print("%s:  additional pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile))
                return
             #  extended check -- check that the parse bits at least match.
             #  Todo:  make sure cycles are only reported for instructions at start of packet, or single instruction packets.
-            original_pp = (long(self.text[pc].split()[4],16) >> 14) & 3
-            new_pp = (long(text.split()[4],16) >> 14) & 3
+            original_pp = (int(self.text[pc].split()[4],16) >> 14) & 3
+            new_pp = (int(text.split()[4],16) >> 14) & 3
             if original_pp != new_pp:
-               print "%s:  parse bit mismatch pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile)
+               print("%s:  parse bit mismatch pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile))
                return
 
 fn_list = []
@@ -172,7 +171,7 @@ def read_covfile(fn):
       fh = open(fn,"r")
       if not fh:
          return
-      #print "Reading " + fn
+#      print("Reading: '%s' " % fn)
 
       #  first, find the test.cov_fns in the same 
       #  directory and pull in the functions we should be reading.
@@ -193,15 +192,24 @@ def read_covfile(fn):
          return
       for line in fh:
          currline = line.splitlines()[0]
-         match = nopcfunc_patt.match(currline)
-         if match and match.group(1) in fn_list and match.group(1) not in ignore_fn_list:
-            nextline = next(fh).rstrip("\n")
-            m = covdata_patt.match(nextline)
-            if not m:
-              m = covdata_patt2.match(nextline)
-              if m:
-                pc = str(hex(long(m.group(3),16))).lstrip("0x").rstrip("L")
-                currline = pc + " " + currline + "\n" + nextline
+# It is not relevant for latest format
+#         match = nopcfunc_patt.match(currline)
+#         print("currline: '%s'  match.group(1) '%s'  match.group(2) '%s'" % (currline, match.group(1) if match else "not_match", match.group(2) if match else "not_match") )
+#         if match and match.group(2) in fn_list and match.group(2) not in ignore_fn_list:
+#            nextline = next(fh).rstrip("\n")
+#            currline = currline + "\n" + nextline
+#            print("rebuild currline: '%s' " % currline)
+
+#            nextline = next(fh).rstrip("\n")
+#            print("nextline: '%s' " % nextline)
+#            m = covdata_patt.match(nextline)
+#            if not m:
+#              m = covdata_patt2.match(nextline)
+#              if m:
+#                pc = str(hex(int(m.group(3),16))).lstrip("0x").rstrip("L")
+#                currline = pc + " " + currline + "\n" + nextline
+#                print("rebuild currline: '%s' " % currline)
+
          currline = currline + "\n"
          fhmid.write(currline)
       fhmid.close()
@@ -218,13 +226,15 @@ def read_covfile(fn):
       for line in fhmid:
          currline = line.splitlines()[0].rstrip("\n")
          match = function_patt.match(currline)
+#         print("currline: '%s'  match.group(1) '%s'  match.group(2) '%s'" % (currline, match.group(1) if match else "not_match", match.group(2) if match else "not_match") )
          if match and match.group(2) in fn_list and match.group(2) not in ignore_fn_list:
             nextline = next(fhmid).rstrip("\n")
+#            print("nextline: '%s'" % (nextline) )
             m = covdata_patt3.match(nextline)
             if m:
-              currline = match.group(1) + " " + match.group(2) + "(unused):\n" + nextline
+              currline = match.group(1) + " <" + match.group(2) + ">(unused):\n" + nextline
             else:
-              currline = match.group(1) + " " + match.group(2) + ":\n" + nextline
+              currline = match.group(1) + " <" + match.group(2) + ">:\n" + nextline
          currline = currline + "\n"
          fhtmp.write(currline)
       fhtmp.close()
@@ -242,11 +252,14 @@ def read_covfile(fn):
          counter += 1
          line = line.splitlines()[0]
          match = function_patt.match(line)
+#         print("line: '%s'  match.group(1) '%s'  match.group(2) '%s'" % (line, match.group(1) if match else "not_match", match.group(2) if match else "not_match") )
          if match and match.group(2) in fn_list and match.group(2) not in ignore_fn_list:
-            pc = long(match.group(1),16)
+#            print("not filtered out, currline: '%s'  match.group(1) '%s'  match.group(2) '%s'" % (currline, match.group(1) if match else "not_match", match.group(2) if match else "not_match") )
+            pc = int(match.group(1),16)
             # print "%8d Function found:  %s" % (counter,match.group(2))
             #  add label
             #  start parsing until empty line
+#            print("Set offset  func: '%s'   addr: '%s'" % ( match.group(2) , match.group(1) ) )
             fdata[match.group(2)].set_offset(match.group(2),pc)
             fdata[match.group(2)].add_data(fh,fn)
       fh.close()
@@ -261,14 +274,14 @@ if __name__ == "__main__":
 
    except getopt.GetoptError:
       # print help information and exit:
-      print __doc__
+      print(__doc__)
       sys.exit(2)
 
    h2dir = "."
 
    for o, a in opts:
       if o in ("-h", "--help"):
-         print __doc__
+         print(__doc__)
          sys.exit(0)
 
       if o in ("-d", "--dir"):
@@ -290,7 +303,7 @@ if __name__ == "__main__":
    for fn in sys.stdin:
       read_covfile(fn)
 
-   print ver+" "+opt
+   print(ver+" "+opt)
    for func in fdata.keys():
-      print fdata[func].sprint()
+      print(fdata[func].sprint())
 

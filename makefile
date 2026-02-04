@@ -1,8 +1,29 @@
+# build controls
+export USE_PKW ?= 1
 
-include scripts/Makefile.inc.tools
+ARCHV_LIST ?= 65 68 73 81
+TESTOUT ?= test.out
 
 TARGET ?= opt
-ARCHV ?= 68
+ARCHV ?= 81
+
+ifneq ($(findstring $(ARCHV),65,66,67),)
+override ARCHV := 65
+endif
+
+ifneq ($(findstring $(ARCHV),68,71),)
+override ARCHV := 68
+endif
+
+ifneq ($(findstring $(ARCHV),73,75,77,79),)
+override ARCHV := 73
+endif
+
+ifneq ($(findstring $(ARCHV),81,83,85,87,89,91),)
+override ARCHV := 81
+endif
+
+include scripts/Makefile.inc.tools
 
 JFLAG ?= -j 3
 OPT_JFLAG := $(JFLAG)
@@ -52,7 +73,13 @@ endif
 ifeq ($(TARGET), opt_cov)
 T := opt
 OPT_JFLAG :=
-export OPTIMIZE := $(OPTIMIZE_COV)
+export OPT_ADD := $(OPTIMIZE_COV)
+endif
+
+ifeq ($(TARGET), llvm_cov)
+T := opt
+OPT_JFLAG :=
+export EN_LLVM_COV := 1
 endif
 
 ifeq ($(TARGET), opt_snap)
@@ -79,7 +106,13 @@ endif
 ifeq ($(TARGET), ref_cov)
 T := ref
 REF_JFLAG :=
-export OPTIMIZE := $(OPTIMIZE_COV)
+export OPT_ADD := $(OPTIMIZE_COV)
+endif
+
+ifeq ($(TARGET), debug)
+T := ref
+REF_JFLAG :=
+export OPTIMIZE := $(OPTIMIZE_DEBUG)
 endif
 
 ifeq ($(TARGET), opt_si)
@@ -108,6 +141,7 @@ endif
 
 
 include scripts/Makefile.inc.config
+include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
 
 .PHONY: all
@@ -116,7 +150,7 @@ all:
 
 distclean: clean docclean gtagsclean
 
-clean: covclean ucosclean booterclean docclean qurtclean
+clean: covclean booterclean docclean qurtclean # ucosclean 
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
@@ -129,25 +163,28 @@ docclean:
 	$(MAKE) -C libs/docs/dox clean
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
-testclean covclean: ucosclean qurtclean
+testclean covclean: qurtclean # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) clean && \
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) clean_top
 
-ucosclean:
-	$(MAKE) -C ucos clean
+# ucosclean:
+# 	$(MAKE) -C ucos clean
 
 qurtclean:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) clean
 	$(MAKE) -f scripts/Makefile.qurt clean_top
 
 opt:
+ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
+endif
 	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
@@ -155,13 +192,16 @@ opt:
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
 
 ref:
+ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
+endif
 	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
@@ -176,30 +216,44 @@ size:
 	hexagon-objdump -h $(INSTALLPATH)/lib/*.a | $(SIZE_TOOL) text > size && \
 	cat size;
 
-t:
-	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
+# t:
+# 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
-test:	h2_test
-	head -n -1 h2_report.html > report.html
-#	tail -n +2 qurt_report.html >> report.html
+.PHONY: testall testall_prepare
+testall: testall_prepare $(ARCHV_LIST)
 
-h2_test: ucosclean
+testall_prepare:
+	git clean -dxf -e 'jenkins[0-9]*'
+
+.PHONY: $(ARCHV_LIST)
+$(ARCHV_LIST):
+	@echo '/// $@ opt ///' | tee -a $(TESTOUT)
+	$(MAKE) ARCHV=$@ TARGET=opt all test
+	git clean -dxf -e $(TESTOUT) -e 'jenkins[0-9]*'
+	@echo '/// $@ ref ///' | tee -a $(TESTOUT)
+	$(MAKE) ARCHV=$@ TARGET=ref all test
+	git clean -dxf -e $(TESTOUT)  -e 'jenkins[0-9]*'
+
+test:	h2_test check-fail
+
+h2_test: # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee test.out
-#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a test.out
-	[ `fgrep -v "WARNING: Overriding currently set revid" test.out | fgrep -c -i warning:` -eq 0 ]
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee -a $(TESTOUT)
+#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a $(TESTOUT)
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(TESTOUT) | fgrep -c -i warning:` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
+	head -n -1 h2_report.html > report.html
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee test.out
-#	[ `fgrep -c -i warning: test.out` -eq 0 ]
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee $(TESTOUT)
+#	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_report.html
 
 qurt_test_single: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee test.out
-	[ `fgrep -c -i warning: test.out` -eq 0 ]
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee $(TESTOUT)
+	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
 
 qurt_test_libs:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
@@ -213,17 +267,18 @@ h2_cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
+#	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) coverage_report
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 
 .PHONY: check-fail test-check cov-check cov_fns
 
 check-fail test-check cov-check:
-	$(MAKE) -f scripts/Makefile.coverage check-fail
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check-fail
 #	$(MAKE) -C ucos check
 
 check:
-	$(MAKE) -f scripts/Makefile.coverage check
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) check
 #	$(MAKE) -C ucos check
 
 doc:
@@ -237,7 +292,7 @@ compat:
 .PHONY: gtags gtagsclean htags
 
 gtags:
-	find booter examples kernel libs linux perf qurt scripts stake tst ucos -path libs/syscall/angel/include -o -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
+	find booter examples kernel libs linux perf qurt scripts stake tst -path libs/syscall/angel/include -o -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
 
 htags: gtags
 	htags -ahnosTxvF --show-position --auto-completion --tree-view=filetree
@@ -266,3 +321,8 @@ cov_fns:
 	./scripts/gen_cov_fns.pl > ./scripts/v68ref_cov_fns;
 	$(MAKE) clean opt ARCHV=68 OPTIMIZE="$(OPTIMIZE_COV)";
 	./scripts/gen_cov_fns.pl > ./scripts/v68opt_cov_fns;
+
+.PHONY: q6testinstallenvs
+ q6testinstallenvs:
+	export Q6TESTINSTALL_MAKEJOBS=1
+	export Q6TESTINSTALL_TESTTARGET='testall'

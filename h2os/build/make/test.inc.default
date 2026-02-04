@@ -47,7 +47,8 @@ AR=${ARCH}-ar
 OBJDUMP=${ARCH}-objdump
 GMON_MERGE=${ARCH}-gmon-merge
 COV=${ARCH}-cov
-PYTHON=python
+LLVM_COV=${ARCH}-llvm-cov
+PYTHON=python3
 
 ################################################################################
 #  Rules for building the kernel if necessary; should be built way before any

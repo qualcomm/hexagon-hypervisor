@@ -26,8 +26,7 @@ Initialize a semaphore.  The semaphore is initialized to 1.
 @returns None
 @dependencies None
 */
-
-static inline void h2_sem_init(h2_sem_t *sem) { sem_init(sem,1,1); }
+void h2_sem_init(h2_sem_t *sem);
 
 /**
 Initialize a semaphore with a specific value.
@@ -36,7 +35,7 @@ Initialize a semaphore with a specific value.
 @returns None
 @dependencies None
 */
-static inline void h2_sem_init_val(h2_sem_t *sem, unsigned int val) { sem_init(sem,1,val); };
+void h2_sem_init_val(h2_sem_t *sem, unsigned int val);
 
 /**
 Add to a semaphore.  If threads are blocked, they will be woken up.
@@ -45,7 +44,7 @@ Add to a semaphore.  If threads are blocked, they will be woken up.
 @returns Arbitrary value
 @dependencies None
 */
-static inline int h2_sem_add(h2_sem_t *sem, unsigned int amt) { return sem_add_np(sem,amt); }
+int h2_sem_add(h2_sem_t *sem, unsigned int amt);
 
 /**
 Add one to a semaphore.
@@ -53,7 +52,7 @@ Add one to a semaphore.
 @returns Arbitrary value
 @dependencies None
 */
-static inline int h2_sem_up(h2_sem_t *sem) { return sem_post(sem); };
+int h2_sem_up(h2_sem_t *sem);
 
 /**
 Decrement a semaphore.  If the semaphore is zero, block until it is positive.
@@ -61,7 +60,7 @@ Decrement a semaphore.  If the semaphore is zero, block until it is positive.
 @returns Arbitrary value
 @dependencies None
 */
-static inline int h2_sem_down(h2_sem_t *sem) { return sem_wait(sem); };
+int h2_sem_down(h2_sem_t *sem);
 
 /**
 Attempt to decrement a semaphore.  If unsuccessful, return failure.
@@ -69,9 +68,8 @@ Attempt to decrement a semaphore.  If unsuccessful, return failure.
 @returns 0 on success, nonzero otherwise
 @dependencies None
 */
-static inline int h2_sem_trydown(h2_sem_t *sem) { return sem_trywait(sem); }
+int h2_sem_trydown(h2_sem_t *sem);
 
 /** @} */
 
 #endif
-

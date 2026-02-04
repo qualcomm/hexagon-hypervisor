@@ -16,7 +16,7 @@ struct sched_param {
 	int sched_priority;
 };
 
-static inline int sched_yield(void) { h2_yield(); return 0; }
+int sched_yield(void);
 
 /* PID-based schedparam stuff may need to go here */
 

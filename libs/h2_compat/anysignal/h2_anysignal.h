@@ -27,8 +27,7 @@ Initialize an any-signal.  No signals are being waited on, and no signals are se
 @returns None
 @dependencies None
 */
-
-static inline void h2_anysignal_init(h2_anysignal_t *signal) { signal->raw = 0; };
+void h2_anysignal_init(h2_anysignal_t *signal);
 
 /**
 Wait for one of a set of signals.  When any of the signals arrive, the thread should be woken.
@@ -63,9 +62,8 @@ Get the signals set in an any-signal.  This does not change the any-signal or wa
 @returns None
 @dependencies None
 */
-static inline unsigned int h2_anysignal_get(h2_anysignal_t *signal) { return signal->signals; };
+unsigned int h2_anysignal_get(h2_anysignal_t *signal);
 
 /** @} */
 
 #endif
-

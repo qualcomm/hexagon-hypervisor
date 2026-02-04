@@ -6,6 +6,6 @@
 #ifndef H2_CONTEXT_DEFS_H
 #define H2_CONTEXT_DEFS_H 1
 
-#define H2_CONTEXT_SIZE 192
+#define H2_CONTEXT_SIZE 200
 
 #endif

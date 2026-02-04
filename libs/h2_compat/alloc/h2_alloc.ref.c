@@ -58,6 +58,24 @@ void h2_free(void *ptr)
 	h2_plainmutex_unlock(&memlock);
 }
 
+void h2_galloc_init(h2_galloc_t *alloc, unsigned int base, unsigned int size, h2_galloc_t *next)
+{
+	alloc->base = base;
+	alloc->size = size;
+	alloc->cur = base;
+	alloc->next = next;
+
+	h2_plainmutex_init(&alloc->lock);
+}
+
+void h2_galloc_reset(h2_galloc_t *alloc, int chain)
+{
+	do {
+		alloc->cur = alloc->base;
+		alloc = alloc->next;
+	} while (chain && alloc);
+}
+
 void *h2_galloc(h2_galloc_t *alloc, unsigned int size, unsigned int align, int chain) {
 
 	unsigned int addr;

@@ -13,6 +13,7 @@
 
 void H2K_hlx_poweron(void) {
 #ifndef NO_DEVICES
+#ifdef HMX_HLX_SUPPORT
 	if (!H2K_gp->info_boot_flags.boot_have_hlx) {
 		return;
 	}
@@ -26,10 +27,12 @@ void H2K_hlx_poweron(void) {
 	H2K_gp->hlx_state = H2K_HLX_STATE_ON;
 	BKL_UNLOCK();
 #endif
+#endif
 }
 
 void H2K_hlx_poweroff(void) {
 #ifndef NO_DEVICES
+#ifdef HMX_HLX_SUPPORT
 
 	if (!H2K_gp->info_boot_flags.boot_have_hlx) {
 		return;
@@ -45,5 +48,6 @@ void H2K_hlx_poweroff(void) {
 	H2K_gp->hlx_state = H2K_HLX_STATE_OFF;
 
 	BKL_UNLOCK();
+#endif
 #endif
 }

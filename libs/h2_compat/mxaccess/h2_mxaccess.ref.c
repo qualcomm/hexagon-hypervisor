@@ -75,4 +75,3 @@ int h2_mxaccess_release(h2_mxaccess_state_t *mxacc, int idx)
 	return -1;
 #endif
 }
-#endif

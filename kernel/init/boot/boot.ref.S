@@ -226,6 +226,7 @@ H2_BOOT_attempts:
 	TMP = add(SIGNAL, #4)           // skip core 0 entry
 	loop0(.Lsync, SIG_COUNT)
 .Lsync:
+	dcinva(TMP)
 	TMP2 = memw(TMP)
 	p0 = cmp.eq(TMP2, #CORE_DONE)
 	if (!p0) jump .Lnotdone
@@ -239,6 +240,7 @@ H2_BOOT_attempts:
 	if (!p0) jump:t .Lsignal_wait
 
 	TCM_VAL = memw(TCM_OFFSET)
+	dccleana(TCM_OFFSET)
 	jump .Lcores_booted
 /*** end core 0 only ***/
 	
@@ -283,6 +285,7 @@ H2_BOOT_attempts:
 	if (!p0) jump .Lnot_core1
 
 	/* core 1 gets the per-core TCM offset */
+	dcinva(TCM_BASE)
 	TMP = memw(TCM_BASE)            // core 0 TCM base
 	TCM_VAL = sub(TCM_VAL, TMP)     // per-core TCM base offset
 	memw(TCM_OFFSET) = TCM_VAL
@@ -308,6 +311,7 @@ H2_BOOT_attempts:
 
 	SIGNAL += mpyi(CORE_ID, #4)
 	memw(SIGNAL) = #CORE_DONE
+	dccleana(SIGNAL)
 	
 /* for llsc
 	SYSCFG = setbit(SYSCFG, #SYSCFG_D_BIT)    // dcache back on
@@ -329,6 +333,7 @@ boot_continuation:
 	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)  // addr of lowest page
 
 .Lget_offset:
+	dcinva(TCM_OFFSET)
 	TCM_VAL = memw(TCM_OFFSET)
 	p0 = cmp.eq(TCM_VAL, #0x0)
 	if (p0) jump:t .Lget_offset

@@ -11,9 +11,7 @@
 #include <h2_common_pmap.h>
 #include <h2_common_defs.h>
 
-// now in common? #define MAX_HTHREADS 8
-
-//#define DO_EXT_SWITCH 1
+#define MAX_CORES 8
 
 #define CORE_REV_ARCH_MASK 0xff
 

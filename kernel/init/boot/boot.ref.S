@@ -66,6 +66,9 @@
 // H2K_GP r28
 #define SP          r29
 
+#define CORE0_UNINIT 0xffffffff
+#define CORE_DONE 0x1
+
 FUNC_START start .entry .p2align 12
 	jump .Lpast_mbox
 	.space 0x200  // FIXME: needs to be enough for all angel mailboxes but still fit all code in 4K
@@ -194,27 +197,45 @@ H2_BOOT_attempts:
 	if (!p0) jump .Lnot_core0
 
 /*** core 0 only ***/
+
+#undef CFG_IDX
+#define SIG_COUNT r8
+
 	memw(TCM_BASE) = TCM_VAL
 	
 	/* core 0 inits signal */
+	
+/* for llsc
 	TMP = #0x1
 	TMP = asl(TMP, CORE_COUNT)
 	TMP = add(TMP, #-1)
+*/
+	TMP = #CORE_DONE
 	memw(SIGNAL) = TMP         // other cores can go when ready
 	dccleana(SIGNAL)
 	syncht                     // to ensure tcm_base write observed
 
-	/*
-	p0 = cmp.eq(CORE_ID, #0)
-	if (!p0) jump .Lwait
-	wait(r1)
-.Lwait:
-*/
-
 .Lsignal_wait:
 	dcinva(SIGNAL)
+
+/* for llsc
 	TMP = memw(SIGNAL)
 	p0 = cmp.eq(TMP, #0x1)      // other cores done?
+*/
+	SIG_COUNT = add(CORE_COUNT, #-1)  // check other cores
+	TMP = add(SIGNAL, #4)           // skip core 0 entry
+	loop0(.Lsync, SIG_COUNT)
+.Lsync:
+	TMP2 = memw(TMP)
+	p0 = cmp.eq(TMP2, #CORE_DONE)
+	if (!p0) jump .Lnotdone
+	SIG_COUNT = add(SIG_COUNT, #-1)
+.Lnotdone:
+	{
+		TMP = add(TMP, #4)
+	}:endloop0
+
+	p0 = cmp.eq(SIG_COUNT, #0)
 	if (!p0) jump:t .Lsignal_wait
 
 	TCM_VAL = memw(TCM_OFFSET)
@@ -254,7 +275,7 @@ H2_BOOT_attempts:
 .Lcore0_wait:
 	dcinva(SIGNAL)
 	TMP = memw(SIGNAL)
-	p0 = cmp.eq(TMP, ##0xffffffff)  // wait for core 0 signal init
+	p0 = cmp.eq(TMP, ##CORE0_UNINIT)  // wait for core 0 signal init
 	if (p0) jump:t .Lcore0_wait
 
 	/* core 0 write to boot_tcm_base complete here */
@@ -268,6 +289,8 @@ H2_BOOT_attempts:
 	dccleana(TCM_OFFSET)
 
 .Lnot_core1:
+
+/* for llsc
 #undef FROM
 #define SYSCFG r11
 	SYSCFG = syscfg
@@ -275,18 +298,24 @@ H2_BOOT_attempts:
 	syncht
 	syscfg = SYSCFG
 	isync
-
+	
 .Lsignal_clr:
 	TMP = memw_locked(SIGNAL)
 	TMP = clrbit(TMP, CORE_ID)      // copy done for this core
 	memw_locked(SIGNAL, p0) = TMP
 	if (!p0) jump:nt .Lsignal_clr
+*/
 
+	SIGNAL += mpyi(CORE_ID, #4)
+	memw(SIGNAL) = #CORE_DONE
+	
+/* for llsc
 	SYSCFG = setbit(SYSCFG, #SYSCFG_D_BIT)    // dcache back on
 	dckill
 	syscfg = SYSCFG
 	isync
-
+*/
+	
 	TMP = ##boot_continuation
 	TMP = and (TMP, #BOOT_TLB_OFFSET_MASK)
 	TMP = add(TMP, TMP2)
@@ -491,9 +520,11 @@ boot_va:
 	jump H2K_thread_boot
 FUNC_END start
 
-	.p2align 8
+  .p2align 8  // one dcclean should cover
 boot_sync:
-	.word 0xffffffff  // ensure non-0
+	.word CORE0_UNINIT
+	.fill ((MAX_CORES - 1) * 4), 4, 0x0
+
 boot_tcm_base:
 	.word 0x0
 boot_tcm_offset:

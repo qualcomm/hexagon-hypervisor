@@ -253,15 +253,14 @@ H2_BOOT_attempts:
 
 	/* Clone for multicore, cores 1 - N */
 	PAGE_COUNT = add(NPAGES, #1)        // FIXME: handle bootvm > 1 pages or different size
-	FROM = PHYS_ADDR
-	TO = lsr(PHYS_ADDR, #PAGE_BITS)     // 4K page
-	TO = sub(#0x000e0000, TO)           // total space
-	TMP = ct0(CORE_COUNT)               // FIXME: handle non-2^^n
-	TO = lsr(TO, TMP)
-	TO = asl(TO, #PAGE_BITS)            // space per core
-	TO = and(TO, ##BOOT_TLB_PAGE_MASK)  // align down to page size
-	SHIFT = mpyi(TO, CORE_ID)           // total shift for this core
-	TO = add(FROM, SHIFT)               // copy dest
+	FROM = PHYS_ADDR                    // assuming located at the beginning of bootmem
+
+	TMP = ct0(CORE_COUNT)                // FIXME: handle non-2^^n
+	TMP2 = ##H2K_BOOTMEM_SIZE
+	TMP2 = lsr(TMP2, TMP)                // space per core
+	TMP2 = and(TMP2, ##BOOT_TLB_PAGE_MASK) // align down to page size
+	SHIFT = mpyi(TMP2, CORE_ID)          // total shift for this core
+	TO = add(FROM, SHIFT)                // copy dest
 
 	TMP2 = #(H2K_PAGESIZE >> 3)
 	TMP = mpyi(PAGE_COUNT, TMP2)    // dwords to copy

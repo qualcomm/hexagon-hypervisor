@@ -199,8 +199,18 @@ H2_BOOT_attempts:
 /*** core 0 only ***/
 
 #undef CFG_IDX
-#define SIG_COUNT r8
+#undef CFG_HI	
+#define SYSCFG r8
+#define SIG_COUNT r9
 
+	SYSCFG = syscfg
+	TMP = clrbit(SYSCFG, #SYSCFG_D_BIT)
+	TMP = and(TMP, #(~SYSCFG_L2CFG))
+	syncht
+	syscfg = TMP      // dcache, l2cache off
+	syncht
+	isync
+	
 	memw(TCM_BASE) = TCM_VAL
 	
 	/* core 0 inits signal */
@@ -212,12 +222,8 @@ H2_BOOT_attempts:
 */
 	TMP = #CORE_DONE
 	memw(SIGNAL) = TMP         // other cores can go when ready
-	dccleana(SIGNAL)
-	syncht                     // to ensure tcm_base write observed
 
 .Lsignal_wait:
-	dcinva(SIGNAL)
-
 /* for llsc
 	TMP = memw(SIGNAL)
 	p0 = cmp.eq(TMP, #0x1)      // other cores done?
@@ -239,8 +245,6 @@ H2_BOOT_attempts:
 	p0 = cmp.eq(SIG_COUNT, #0)
 	if (!p0) jump:t .Lsignal_wait
 
-	TCM_VAL = memw(TCM_OFFSET)
-	dccleana(TCM_OFFSET)
 	jump .Lcores_booted
 /*** end core 0 only ***/
 	
@@ -275,7 +279,15 @@ H2_BOOT_attempts:
 	}:endloop0
 
 .Lcore0_wait:
-	dcinva(SIGNAL)
+
+	SYSCFG = syscfg
+	TMP = clrbit(SYSCFG, #SYSCFG_D_BIT)
+	TMP = and(TMP, #(~SYSCFG_L2CFG))
+	syncht
+	syscfg = TMP      // dcache, l2cache off
+	syncht
+	isync
+	
 	TMP = memw(SIGNAL)
 	p0 = cmp.eq(TMP, ##CORE0_UNINIT)  // wait for core 0 signal init
 	if (p0) jump:t .Lcore0_wait
@@ -285,23 +297,13 @@ H2_BOOT_attempts:
 	if (!p0) jump .Lnot_core1
 
 	/* core 1 gets the per-core TCM offset */
-	dcinva(TCM_BASE)
 	TMP = memw(TCM_BASE)            // core 0 TCM base
 	TCM_VAL = sub(TCM_VAL, TMP)     // per-core TCM base offset
 	memw(TCM_OFFSET) = TCM_VAL
-	dccleana(TCM_OFFSET)
 
 .Lnot_core1:
 
 /* for llsc
-#undef FROM
-#define SYSCFG r11
-	SYSCFG = syscfg
-	SYSCFG = clrbit(SYSCFG, #SYSCFG_D_BIT)    // dcache off to make llsc work
-	syncht
-	syscfg = SYSCFG
-	isync
-	
 .Lsignal_clr:
 	TMP = memw_locked(SIGNAL)
 	TMP = clrbit(TMP, CORE_ID)      // copy done for this core
@@ -311,15 +313,7 @@ H2_BOOT_attempts:
 
 	SIGNAL += mpyi(CORE_ID, #4)
 	memw(SIGNAL) = #CORE_DONE
-	dccleana(SIGNAL)
-	
-/* for llsc
-	SYSCFG = setbit(SYSCFG, #SYSCFG_D_BIT)    // dcache back on
-	dckill
-	syscfg = SYSCFG
-	isync
-*/
-	
+
 	TMP = ##boot_continuation
 	TMP = and (TMP, #BOOT_TLB_OFFSET_MASK)
 	TMP = add(TMP, TMP2)
@@ -333,11 +327,16 @@ boot_continuation:
 	PHYS_ADDR = and(PHYS_ADDR, ##BOOT_TLB_PAGE_MASK)  // addr of lowest page
 
 .Lget_offset:
-	dcinva(TCM_OFFSET)
 	TCM_VAL = memw(TCM_OFFSET)
 	p0 = cmp.eq(TCM_VAL, #0x0)
 	if (p0) jump:t .Lget_offset
-	
+
+	syncht
+	dckill
+	syscfg = SYSCFG  // re-enable caches
+	syncht
+	isync
+
 #endif
 	
 	/* Setup EVB */
@@ -528,7 +527,7 @@ FUNC_END start
   .p2align 8  // one dcclean should cover
 boot_sync:
 	.word CORE0_UNINIT
-	.fill ((MAX_CORES - 1) * 4), 4, 0x0
+	.fill (MAX_CORES - 1), 4, 0x0
 
 boot_tcm_base:
 	.word 0x0

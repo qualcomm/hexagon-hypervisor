@@ -30,11 +30,12 @@ endif
 #MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a 
 MOST_LIBS= syscall/angel/libangel.a qurt/libqurt.a
 
-ifeq ($(PICOLIBPATH),)
-$(warning PICOLIBPATH is not set; building without syscall wrapper)
-SYS_WRAPPER_LIB =
-else
+# Picolibc support: if PICOLIBC=1, build syscall wrapper
+ifeq ($(PICOLIBC),1)
+export PICOLIBC
 SYS_WRAPPER_LIB = syscall/wrapper/libsyscall_wrapper.a
+else
+SYS_WRAPPER_LIB =
 endif
 
 ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
@@ -61,7 +62,7 @@ qurt/libqurt.a: tmp $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
 syscall/angel/libangel.a: tmp $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
 	+${MAKE_LIB};
 
-ifneq ($(PICOLIBPATH),)
+ifeq ($(PICOLIBC),1)
 $(SYS_WRAPPER_LIB):
 	+${MAKE_LIB};
 endif

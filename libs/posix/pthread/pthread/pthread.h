@@ -38,6 +38,7 @@ int pthread_unsup();
 #include <pthread_sem.h>
 #include <pthread_misc.h>
 #include <pthread_tls.h>
+#include <pthread_rwlock.h>
 
 #ifdef PTHREAD_SELF_DEF_LIKELY
 #undef PTHREAD_SELF_DEF_LIKELY

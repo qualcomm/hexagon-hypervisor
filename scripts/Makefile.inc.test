@@ -34,7 +34,9 @@ else
    endif
 endif
 
-H2K_HEAP_SIZE = 0x00010000
+# overrides for tests linked in kernel space
+H2K_HEAP_SIZE =  0x00010000
+H2K_STACK_SIZE = 0x00001000
 
 ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(H2DIR)/install
@@ -140,7 +142,7 @@ OPTIMIZE := -O1
 
 KERNEL_INCLUDES := -I ${H2DIR}/kernel/include -I ${H2DIR}/libs/h2/common
 
-LDFLAGS += -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=start # -Wl,--defsym=__entry=$(H2K_LOAD_ADDR)
+LDFLAGS += -Wl,--defsym=__bootvm_entry_point=hexagon_pre_main -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=start # -Wl,--defsym=__entry=$(H2K_LOAD_ADDR)
 
 ifdef BOOT
 BOOTER=${INSTALLPATH}/bin/booter
@@ -151,7 +153,7 @@ CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK
 ifndef STANDALONE
 
 # 0xfffffff0 means don't call the hook
-LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
+LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
 endif
 endif
 

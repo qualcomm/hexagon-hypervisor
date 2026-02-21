@@ -500,6 +500,7 @@ boot_continuation:
 
 boot_va:
 	// invalidate temporary TLB entry
+	TLB_INDEX = #0
 	TLB_ENTRY = #0
 	DO_TLBW
 	isync

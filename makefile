@@ -102,12 +102,6 @@ export NULL_ANGEL_TRAP=1
 export MAGIC_ANGEL=--magic_angel
 endif
 
-ifeq ($(TARGET), debug)
-T := ref
-#OPT_JFLAG :=
-export OPTIMIZE := $(OPTIMIZE_DEBUG)
-endif
-
 # FIXME: Remove when cluster sched ported to opt
 export OMIT_OPT=dosched resched
 

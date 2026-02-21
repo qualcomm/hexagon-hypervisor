@@ -112,7 +112,7 @@ int main()
 	int i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	printf("Hello!\n");
-	H2K_kg_init(0, 0, 0, 125, 128, 0, 0);
+	H2K_kg_init(0, 0, 0, 125, 128, 0, 0, 0);
 	printf("initted!\n");
 	if (H2K_gp->pinned_tlb_mask != 0xC000000000000000ULL) {
 		FAIL("mask setup");

@@ -5,17 +5,21 @@
 
 use strict;
 
-my ($op, $image, $addrbits, $pgsize, $heapsize, $linkaddr, $loadaddr) = @ARGV;
+my ($op, $image, $addrbits, $pgsize, $heapsize, $stacksize, $alloc_heapsize, $linkaddr, $loadaddr) = @ARGV;
+
+#print STDERR sprintf("op: %s  addrbits %s  pgsize %s  heapsize %s  stacksize %s  alloc_heapsize %s  linkaddr %s  loadaddr %s\n", $op, $addrbits, $pgsize, $heapsize, $stacksize, $alloc_heapsize, $linkaddr, $loadaddr);
 
 my $page_bits = $addrbits + (2 * $pgsize);
-my $heap_size = (oct $heapsize) * 4; # size is in words
+#print STDERR sprintf("page_bits: %d\n", $page_bits);
+
+my $alloc_heap_size = (oct $alloc_heapsize) * 4; # size is in words
 my $v2p_offset = (oct $linkaddr) - (oct $loadaddr);
 
 my $end = `hexagon-nm $image | egrep \' end\$\'`;
 $end =~ s/\s.*//;
 $end = oct "0x$end";
 $end = (($end + 31) / 32) * 32;	# align for allocator heap
-$end += $heap_size;
+$end += $heapsize + $stacksize + $alloc_heap_size;
 #print STDERR sprintf("end: 0x%0x\n", $end);
 
 my $vpage = (($end >> $page_bits) + 1);

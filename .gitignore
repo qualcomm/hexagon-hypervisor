@@ -58,3 +58,15 @@ git_update.bat
 libs/h2_compat/include
 libs/h2/include
 libs/posix/include
+booter/bigio
+booter/booter
+booter/booter_tmp
+booter/bootvm_image
+booter/bootvm_image.sym
+booter/hello
+booter/should_crash
+booter/should_pagefault
+booter/vapa_kernel.x
+libs/sos/include/sos.h
+stake/kernel_tmp
+stake/vapa_kernel_tmp.x

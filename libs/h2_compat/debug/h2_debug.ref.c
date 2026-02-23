@@ -4,8 +4,12 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <h2.h>
 #include <asm_offsets.h>
+#include <h2_symtab.h>
+#include <syscall_defs.h>
+#include <angel.h>
 
 #define PRINT_R4(NAME0,NAME1,NAME2,NAME3) \
 	printf("r" #NAME0 ":0x%08x r" #NAME1 ":0x%08x r" #NAME2 ":0x%08x r" #NAME3 ":0x%08x\n", context->r##NAME0, context->r##NAME1, context->r##NAME2, context->r##NAME3);
@@ -32,7 +36,6 @@ typedef union {
 
 void h2_debug_context_dump(h2_context_t *context)
 {
-	unsigned int *ptr;
 	unsigned int i;
 	val_t val, val1;
 	unsigned int dm[6];
@@ -41,6 +44,7 @@ void h2_debug_context_dump(h2_context_t *context)
 	unsigned int id = h2_thread_myid();
 
 	h2_mutex_lock(&debug_mutex);
+
 	val.raw = h2_thread_state(id, CONTEXT_PSEUDO_SGP0);
 	printf("DEBUG DUMP\n");
 	printf("tid:\t\t0x%08x\tcause:\t\t0x%02x\t\tpcycles:\t0x%016llx\n", id, context->g1 & 0xff, h2_get_core_pcycles());
@@ -63,7 +67,7 @@ void h2_debug_context_dump(h2_context_t *context)
 	val1.raw = h2_thread_state(id, CONTEXT_gevb);
 	printf("elr:\t\t0x%08x\tgevb:\t\t0x%08x\n",
 	       val.word0, val1.word0);
-	
+
 	val.raw = h2_thread_state(id, CONTEXT_PSEUDO_IMASK);
 	printf("framekey:\t0x%08x\tframelimit:\t0x%08x\timask:\t0x%08x\n",
 		context->framekey, context->framelimit, val.word0);
@@ -90,14 +94,71 @@ void h2_debug_context_dump(h2_context_t *context)
 	}
 	printf("DM0: 0x%08x\tDM1: 0x%08x\tDM2: 0x%08x\tDM3: 0x%08x\tDM4: 0x%08x\tDM5: 0x%08x\n", dm[0], dm[1], dm[2], dm[3], dm[4], dm[5]);
 
-	printf("\nStack:\n");
-	ptr = (unsigned int *)(context->r29);
-	for (i = 0 ; i < 64 ; i += 4) {
-		printf("%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",(unsigned int)(ptr + i),
-		   ptr[i],ptr[i+1],ptr[i+2],ptr[i+3]);
+	/* Call stack backtrace */
+	/* Load ELF to get textual stack trace */
+	char cmdline[SIZE__boot_cmdline__];
+	char *elf = NULL;
+	sys_get_cmdline(cmdline, sizeof(cmdline));
+	elf = strtok(cmdline, " ");
+	printf("elf: %s\n", elf);
+	h2_symtab_init(elf);
+
+	printf("\nCall Trace:\n");
+
+	unsigned int fp = context->r30;
+	unsigned int pc = context->g0;
+	const unsigned int MAX_FRAMES = 32;
+	int frame_num = 0;
+
+	/* Print current frame */
+	{
+		unsigned int offset;
+		const char *symbol = h2_symtab_lookup(pc, &offset);
+
+		if (symbol != NULL && offset < 0x10000) {
+			printf(" [<%08x>] %s() + 0x%x\n", pc, symbol, offset);
+		} else {
+			printf(" [<%08x>]\n", pc);
+		}
+		frame_num++;
+	}
+
+	/* Walk frame pointer chain */
+	while (fp != 0 && frame_num < MAX_FRAMES) {
+		unsigned int *frame_ptr;
+		unsigned int prev_fp, saved_lr, offset;
+		const char *symbol;
+
+		if ((fp & 0x3) != 0 || fp < 0x1000 || fp > 0xFFFF0000) {
+			break;
+		}
+
+		frame_ptr = (unsigned int *)fp;
+		prev_fp = frame_ptr[0];
+		saved_lr = frame_ptr[1];
+
+		if (saved_lr == 0) {
+			break;
+		}
+
+		symbol = h2_symtab_lookup(saved_lr, &offset);
+
+		if (symbol != NULL && offset < 0x10000) {
+			printf(" [<%08x>] %s() + 0x%x\n", saved_lr, symbol, offset);
+		} else {
+			printf(" [<%08x>]\n", saved_lr);
+		}
+
+		if (prev_fp == 0 || prev_fp <= fp) {
+			break;
+		}
+
+		fp = prev_fp;
+		frame_num++;
 	}
 	printf("\n");
 
+	h2_symtab_cleanup();
 	h2_mutex_unlock(&debug_mutex);
 }
 

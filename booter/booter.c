@@ -16,16 +16,13 @@
 #include <h2_common_error.h>
 #include <h2_common_defs.h>
 #include <h2_kerror.h>
-#include <h2_alloc.h>
 #include <h2_common_linear.h>
-#include <h2_sleep.h>
 #include <h2_prof.h>
-#include <h2_coproc.h>
+#include <angel.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "elf.h"
 #include "../kernel/include/max.h"
 #include "../kernel/include/hw.h"
 #include <syscall_defs.h>
@@ -237,6 +234,20 @@ typedef struct {
 } vm_t;
 
 vm_t *vm_params = NULL;
+
+#define ERRSTR_LEN 1024
+char errstr[ERRSTR_LEN];
+void error(char *str1, char *str2) {
+	int err = sys_errno();
+
+	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr) - 1);
+	errno = err;
+	perror(errstr);
+
+	exit(1);
+}
 
 void FAIL(const char *str1, const char *str2)
 {

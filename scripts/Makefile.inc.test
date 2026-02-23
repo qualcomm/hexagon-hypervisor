@@ -17,6 +17,9 @@ MAKE_INC_TEST := 1
 
 default-target: all
 
+include $(H2DIR)/scripts/Makefile.inc.config
+include $(H2DIR)/scripts/Makefile.inc.version
+include $(H2DIR)/scripts/Makefile.inc.constants
 include $(H2DIR)/scripts/Makefile.inc.tools
 
 ifeq ($(USE_PKW),1)
@@ -46,11 +49,6 @@ ifeq ($(KERNELPATH),)
 export KERNELPATH := $(H2DIR)/kernel
 endif
 
-
-include $(H2DIR)/scripts/Makefile.inc.config
-include $(H2DIR)/scripts/Makefile.inc.version
-include $(H2DIR)/scripts/Makefile.inc.constants
-include $(H2DIR)/scripts/Makefile.inc.tools
 
 PYTHON=python3
 

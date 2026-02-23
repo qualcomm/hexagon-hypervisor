@@ -1,6 +1,5 @@
-# build controls
-export USE_PKW ?= 1
-
+include scripts/Makefile.inc.config
+include scripts/Makefile.inc.version
 include scripts/Makefile.inc.tools
 
 ARCHV_LIST ?= 65 68 73 81
@@ -105,21 +104,6 @@ endif
 # FIXME: Remove when cluster sched ported to opt
 export OMIT_OPT=dosched resched
 
-ifeq ($(H2DIR),)
-export H2DIR := $(CURDIR)
-endif
-
-ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(H2DIR)/install
-endif
-
-ifeq ($(KERNELPATH),)
-export KERNELPATH := $(H2DIR)/kernel
-endif
-
-
-include scripts/Makefile.inc.config
-include scripts/Makefile.inc.version
 
 .PHONY: all
 all:

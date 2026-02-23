@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+CFLAGS := -Iinclude -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -21,6 +21,9 @@ endif
 #O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 
 CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
+ifeq ($(EN_LLVM_COV), 1)
+CFLAGS += ${LLVM_COV_CFLAGS}
+endif
 
 SRC_HFILES := 
 DEST_HFILES := 
@@ -152,5 +155,3 @@ includes: $(DEST_HFILES)
 ref: build/ref/libh2.a
 
 opt: build/opt_v$(ARCHV)/libh2.a
-
-

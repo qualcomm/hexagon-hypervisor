@@ -40,8 +40,7 @@ Get run time in tcycles
 @returns The number of tcycles that have elapsed while the thread has been scheduled.
 @dependencies None
 */
-
-static inline unsigned long long int h2_get_tcycles(void) { return h2_get_pcycles()/H2_CYCLES__PER_THREAD; }
+unsigned long long int h2_get_tcycles(void);
 
 /**
 Get total core pcycles
@@ -49,18 +48,9 @@ Get total core pcycles
 @Hexagon v60 and later read 
 @dependencies None
 */
-
 extern unsigned long long int h2_get_core_pcycles_trap(void);
 
-static inline unsigned long long int h2_get_core_pcycles(void) {
-#if ARCHV < 60
-	return h2_get_core_pcycles_trap();
-#else
-	unsigned long long int ret;
-	asm volatile ( " %0 = c15:14 // READ UPCYCLES \n" : "=r"(ret));
-	return ret;
-#endif
-}
+unsigned long long int h2_get_core_pcycles(void);
 
 #if 0
 static inline void h2_profile_enable(int enable) { return; }
@@ -75,4 +65,3 @@ static inline void h2_profile_get_thread_pcycles(int thread_id, unsigned long lo
 /** @} */
 
 #endif
-

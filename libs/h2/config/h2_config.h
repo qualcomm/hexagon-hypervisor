@@ -44,30 +44,18 @@ Initialize fields for a vm block
 @returns VM number; 0 on failure
 @dependencies None
 */
-
-static inline unsigned int h2_config_vmblock_init(unsigned int vm, vmblock_init_op_t op, unsigned int arg1, unsigned int arg2) {
-	return (unsigned int)h2_config_trap(CONFIG_VMBLOCK_INIT, vm, op, arg1, arg2);
-}
+unsigned int h2_config_vmblock_init(unsigned int vm, vmblock_init_op_t op, unsigned int arg1, unsigned int arg2);
 
 /**
 Allocate and initialize STLB
 @returns number of STLB entries; -1 on failure
 */
+int h2_config_stlb_alloc(void);
 
-static inline int h2_config_stlb_alloc() {
-	return h2_config_trap(CONFIG_STLB_ALLOC, 0, 0, 0, 0);
-}
-
-static inline int h2_config_fatal_hook(unsigned int funcaddr, unsigned int arg)
-{
-	return h2_config_trap(CONFIG_FATAL_HOOK,funcaddr,arg,0,0);
-}
+int h2_config_fatal_hook(unsigned int funcaddr, unsigned int arg);
 
 #ifdef CLUSTER_SCHED
-static inline int h2_config_cluster_sched(unsigned int enable) {
-
-	return h2_config_trap(CONFIG_CLUSTER_SCHED, enable, 0, 0, 0);
-}
+int h2_config_cluster_sched(unsigned int enable);
 #endif
 
 // FIXME: hack for setting noc table addresses
@@ -79,4 +67,3 @@ static inline int h2_config_set_noc(unsigned int master, unsigned int slave) {
 /** @} */
 
 #endif
-

@@ -38,16 +38,7 @@ Initialize generic allocator.
 @param[in] next  Pointer to next allocator; may be NULL
 @dependencies None
 */
-
-static inline void h2_galloc_init(h2_galloc_t *alloc, unsigned int base, unsigned int size, h2_galloc_t *next) {
-
-	alloc->base = base;
-	alloc->size = size;
-	alloc->cur = base;
-	alloc->next = next;
-
-	h2_plainmutex_init(&alloc->lock);
-}
+void h2_galloc_init(h2_galloc_t *alloc, unsigned int base, unsigned int size, h2_galloc_t *next);
 
 /**
 Reset generic allocator.
@@ -55,13 +46,7 @@ Reset generic allocator.
 @param[in] chain  Flag: Reset all allocators in chain
 @dependencies None
 */
-static inline void h2_galloc_reset(h2_galloc_t *alloc, int chain) {
-
-	do {
-		alloc->cur = alloc->base;
-		alloc = alloc->next;
-	} while (chain && alloc);
-}
+void h2_galloc_reset(h2_galloc_t *alloc, int chain);
 
 /**
 Allocate memory; optionally try chained allocators if preceding ones fail.
@@ -75,4 +60,3 @@ Allocate memory; optionally try chained allocators if preceding ones fail.
 void *h2_galloc(h2_galloc_t *alloc, unsigned int size, unsigned int align, int chain);
 
 #endif
-

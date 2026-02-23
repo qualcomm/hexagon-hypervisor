@@ -34,8 +34,7 @@ Initialize an any-signal.  No signals are being waited on, and no signals are se
 @returns None
 @dependencies None
 */
-
-static inline void h2_signal_init(h2_signal_t *signal) { signal->raw = 0; };
+void h2_signal_init(h2_signal_t *signal);
 
 /**
 Wait for one of a set of signals.  When any of the signals arrive, the thread should be woken.
@@ -62,11 +61,7 @@ Wait for all of a set of signals.  When any of the signals arrive, the thread sh
 @returns The signal value after waking
 @dependencies None
 */
-static inline unsigned int h2_signal_wait(h2_signal_t *signal, unsigned int mask, unsigned int type)
-{
-	if (type == H2_SIGNAL_WAIT_ANY) return h2_signal_wait_any(signal,mask);
-	else return h2_signal_wait_all(signal,mask);
-}
+unsigned int h2_signal_wait(h2_signal_t *signal, unsigned int mask, unsigned int type);
 
 /**
 Set signals in an any-signal.  If any of the signals are being waited on, the waiter is woken.
@@ -84,13 +79,7 @@ Clear signals in an any-signal.  Bits set in mask are cleared in the signal.
 @returns The new value of the set signals
 @dependencies None
 */
-static inline unsigned int h2_signal_clear(h2_signal_t *signal, unsigned int mask)
-{
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-qual"
-	return h2_atomic_and32((unsigned int *)&signal->signals,~mask);
-#pragma GCC diagnostic pop
-}
+unsigned int h2_signal_clear(h2_signal_t *signal, unsigned int mask);
 
 /**
 Get the signals set in an any-signal.  This does not change the any-signal or wake any threads.
@@ -98,9 +87,8 @@ Get the signals set in an any-signal.  This does not change the any-signal or wa
 @returns None
 @dependencies None
 */
-static inline unsigned int h2_signal_get(h2_signal_t *signal) { return signal->signals; };
+unsigned int h2_signal_get(h2_signal_t *signal);
 
 /** @} */
 
 #endif
-

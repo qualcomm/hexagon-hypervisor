@@ -266,7 +266,7 @@ u32_t H2K_trap_hwconfig_coproc_bits(u32_t unused, void *unusedp,  u32_t coproc, 
 }
 
 u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t xe3, H2K_thread_context *me) {
-#if ARCHV >= 81
+#if (ARCHV >= 81 && defined(HMX_HLX_SUPPORT))
 	if (0 < H2K_gp->hlx_contexts) { // exists
 # ifdef CLUSTER_SCHED
 		if (H2K_gp->cluster_sched) {
@@ -302,7 +302,7 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 }
 
 u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t unused3, H2K_thread_context *me) {
-#if ARCHV >= 68
+#if (ARCHV >= 68 && defined(HMX_HLX_SUPPORT))
 	if (0 < H2K_gp->hmx_units) {  // exists
 #ifdef CLUSTER_SCHED
 		if (H2K_gp->cluster_sched) {
@@ -668,7 +668,7 @@ u32_t H2K_trap_hwconfig_setstrideprefetcherreg(u32_t unused, void *unusedp, u32_
 }
 
 u32_t H2K_trap_hwconfig_set_hmx_power_on_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
-#if ARCHV >= 68
+#if (ARCHV >= 68 && defined(HMX_HLX_SUPPORT))
 	H2K_gp->hmx_rsc_seq_power_on_start_addr = addr;
 	return 0;
 #else
@@ -677,7 +677,7 @@ u32_t H2K_trap_hwconfig_set_hmx_power_on_start_addr(u32_t unused, void *unusedp,
 }
 
 u32_t H2K_trap_hwconfig_set_hmx_power_off_start_addr(u32_t unused, void *unusedp, u32_t addr, u32_t unused3, H2K_thread_context *me) {
-#if ARCHV >= 68
+#if (ARCHV >= 68 && defined(HMX_HLX_SUPPORT))
 	H2K_gp->hmx_rsc_seq_power_off_start_addr = addr;
 	return 0;
 #else

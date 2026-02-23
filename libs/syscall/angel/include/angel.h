@@ -10,9 +10,22 @@
 
 extern long __boot_net_phys_offset__;
 
-unsigned int __angel(unsigned int r0, void *r1, unsigned int r2);
+unsigned int __angel(unsigned int r0, void *r1, unsigned int r2); // FIXME: remove later
+unsigned long long __angel64r(unsigned int r0, void *r1, unsigned int r2);
 
 unsigned int angel(unsigned int r0, void *r1, unsigned int r2);
+
+typedef struct sys_call_ret_s {
+	union {
+		struct {
+			unsigned int ret_value;
+			int err_value;
+		};
+		long long raw_value;
+	};
+} sys_call_ret_t;
+
+sys_call_ret_t angel_with_err(unsigned int r0, void *r1, unsigned int r2);
 
 #define ANGEL_OFFSET_PTR(P) ((void *)((unsigned long)(P) + __boot_net_phys_offset__))
 
@@ -126,39 +139,6 @@ void sys_write0(const char *);
 
 #ifndef DEBUG_PRINTF
 #define DEBUG_PRINTF(...) /* nothing */
-#endif
-
-#if 0
-static inline void clean(const void *vx,int words)
-{
-	const int *x = vx;
-	int i;
-	for (i = 0; i < words; i++) {
-		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
-	};
-	asm volatile (" syncht ");
-}
-
-/* X must be 32-byte aligned and COUNT must be a multiple of 32. */
-static inline void invalidate(const char *x,count_t count)
-{
-	count_t i;
-	for (i = 0; i < count; i += 32) {
-		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
-	};
-	asm volatile (" syncht ");
-}
-
-static inline void clean_str(const char *x)
-{
-	int len = strlen(x);
-	int i;
-	for (i = 0; i <= (len+1); i++) {
-		asm volatile ("dccleaninva(%0)" : :"r"(x+i):"memory");
-	}
-	asm volatile (" syncht ");
-}
-
 #endif
 
 #endif

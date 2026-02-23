@@ -15,7 +15,7 @@
 #define MAX_THREADS_TO_WAKE 32767
 
 #if 0
-static inline int atomic_circ_increment(unsigned int *val, unsigned int size, unsigned int recvidx)
+int atomic_circ_increment(unsigned int *val, unsigned int size, unsigned int recvidx)
 {
 	unsigned int ret;
 	unsigned int newval;
@@ -33,7 +33,7 @@ static inline int atomic_circ_increment(unsigned int *val, unsigned int size, un
 }
 #endif
 
-static inline h2_pipe_data_t get_recv_data(unsigned int *recvptr, h2_pipe_data_t *buf, unsigned int size) {
+h2_pipe_data_t get_recv_data(unsigned int *recvptr, h2_pipe_data_t *buf, unsigned int size) {
 	h2_pipe_data_t ret;
 	asm("\n"
 	"\t1: r9 = memw_locked(%1)\n"

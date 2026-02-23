@@ -41,14 +41,14 @@ static unsigned int elftls_size;
 static struct pthread_tcb *pthread_root = NULL;
 static pthread_plainmutex_t pthread_tcb_mutex = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
 
-static inline struct pthread_tcb *pthread_self_ptr()
+struct pthread_tcb *pthread_self_ptr()
 {
 	struct pthread_tcb *ret;
 	asm volatile (" %0 = ugp " : "=r"(ret) );
 	return ret;
 }
 
-static inline void pthread_tcb_add(struct pthread_tcb *dst)
+void pthread_tcb_add(struct pthread_tcb *dst)
 {
 	pthread_plainmutex_lock_np(&pthread_tcb_mutex);
 	dst->next = pthread_root;
@@ -56,7 +56,7 @@ static inline void pthread_tcb_add(struct pthread_tcb *dst)
 	pthread_plainmutex_unlock_np(&pthread_tcb_mutex);
 }
 
-static inline void pthread_tcb_do_remove(struct pthread_tcb **root, struct pthread_tcb *dst)
+void pthread_tcb_do_remove(struct pthread_tcb **root, struct pthread_tcb *dst)
 {
 	if (*root == NULL) return;	/* NOT FOUND */
 	if (*root == dst) {
@@ -66,7 +66,7 @@ static inline void pthread_tcb_do_remove(struct pthread_tcb **root, struct pthre
 	}
 }
 
-static inline void pthread_tcb_remove(struct pthread_tcb *dst)
+void pthread_tcb_remove(struct pthread_tcb *dst)
 {
 	pthread_plainmutex_lock_np(&pthread_tcb_mutex);
 	pthread_tcb_do_remove(&pthread_root,dst);
@@ -118,7 +118,7 @@ void __attribute__((noreturn)) pthread_exit(void *retval)
 	pthread_safe_death(&pthread_exit_lock,pthread_self());
 }
 
-static inline void pthread_special_setup(struct pthread_tcb *self)
+void pthread_special_setup(struct pthread_tcb *self)
 {
 	/* SET UGP */
 	asm volatile (" ugp = %0 " : : "r"(self) : "memory");
@@ -270,3 +270,89 @@ void pthread_init()
 	pthread_once(&init_once,do_pthread_init);
 }
 
+int pthread_attr_init(pthread_attr_t *attr)
+{
+	const pthread_attr_t mydefault = { PTHREAD_DEFAULT_STACKSIZE, NULL, { 100 }, 0, 0, 0, 0};
+	*attr = mydefault;
+	return 0;
+}
+
+int pthread_attr_destroy(pthread_attr_t *attr)
+{
+	(void)attr;
+	return 0;
+}
+
+int pthread_attr_getschedpolicy(pthread_attr_t *attr, int *policy) {
+	(void)attr; (void)policy;
+	return ENOTSUP;
+}
+int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy) {
+	(void)attr; (void) policy;
+	return ENOTSUP;
+}
+int pthread_attr_getinheritsched(pthread_attr_t *attr, int *is) {
+	(void)attr; (void)is;
+	return ENOTSUP;
+}
+int pthread_attr_setinheritsched(pthread_attr_t *attr, int is) {
+	(void)attr; (void)is;
+	return ENOTSUP;
+}
+
+int pthread_attr_getextra_np(pthread_attr_t *attr, 
+	void **extra, 
+	void (**constructor)(void *), 
+	void (**destructor)(void *))
+{
+	*extra = attr->extra;
+	*constructor = attr->extra_ctor;
+	*destructor = attr->extra_dtor;
+	return 0;
+}
+
+int pthread_attr_setextra_np(pthread_attr_t *attr, 
+	void *extra, 
+	void (*constructor)(void *), 
+	void (*destructor)(void *))
+{
+	attr->extra = extra;
+	attr->extra_ctor = constructor;
+	attr->extra_dtor = destructor;
+	return 0;
+}
+
+int pthread_attr_getdetachstate(pthread_attr_t *attr, int *ds) { *ds = attr->detached; return 0; }
+int pthread_attr_setdetachstate(pthread_attr_t *attr, int ds) { attr->detached = ds; return 0; }
+int pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *p) { *p = attr->sched; return 0; }
+int pthread_attr_setschedparam(pthread_attr_t *attr, const struct sched_param *p) { attr->sched = *p; return 0; }
+int pthread_attr_getstacksize(pthread_attr_t *attr, size_t *stacksize) { *stacksize = attr->stacksize; return 0; }
+int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize) { attr->stacksize = stacksize; return 0; }
+int pthread_attr_getstackaddr(pthread_attr_t *attr, void **stackaddr) { *stackaddr = attr->stackaddr; return 0; }
+int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr) { attr->stackaddr = stackaddr; return 0; }
+/* EJP: probably others, scope? guardsize? */
+
+int pthread_attr_getstack(pthread_attr_t *attr, void **stackaddr, size_t *stacksize)
+{
+	*stackaddr = attr->stackaddr;
+	*stacksize = attr->stacksize;
+	return 0;
+}
+
+int pthread_attr_setstack(pthread_attr_t *attr, void *stackaddr, size_t stacksize)
+{
+	attr->stackaddr = stackaddr;
+	attr->stacksize = stacksize;
+	return 0;
+}
+
+pthread_t pthread_self(void) { pthread_t *idp; asm (" %0 = ugp " : "=r"(idp)); return *idp; }
+int pthread_equal(pthread_t t1, pthread_t t2) { return t1 == t2; }
+int pthread_cancel(pthread_t thread) {
+	(void)thread;
+	return ENOTSUP;
+}
+
+int pthread_yield(void) { h2_yield(); return 0; }
+
+int pthread_unsup() { return ENOTSUP; }

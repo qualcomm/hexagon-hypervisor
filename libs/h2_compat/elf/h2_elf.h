@@ -286,10 +286,9 @@ int elf_get_phdr(int fdesc, int i, Elf32_Phdr *phdr, const Elf32_Ehdr *ehdr);
 int elf_get_shdr(int fdesc, int i, Elf32_Shdr *shdr, const Elf32_Ehdr *ehdr);
 //int elf_get_symbol(int fdesc, const char *sym, const Elf32_Ehdr *ehdr);
 int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf32_Ehdr *ehdr);
-void error(char *str1, char *str2);
+void elf_error(char *str1, char *str2);
 
 #define ERRSTR_LEN 1024
-extern char errstr[ERRSTR_LEN];
+extern char elf_errstr[ERRSTR_LEN];
 
 #endif /* _ELF_H_ */
-

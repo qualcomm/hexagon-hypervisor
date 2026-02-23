@@ -37,12 +37,12 @@ typedef struct {
 
 #define PTHREAD_RWLOCK_INITIALIZER { .raw = 0 }
 
-static inline int pthread_condattr_init(pthread_condattr_t *attr) { attr->unused = 0; return 0; }
-static inline int pthread_condattr_destroy(pthread_condattr_t *attr) { return 0; }
-static inline int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared) { *pshared = PTHREAD_PROCESS_SHARED; return 0; }
-static inline int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared) { return 0; }
+int pthread_condattr_init(pthread_condattr_t *attr);
+int pthread_condattr_destroy(pthread_condattr_t *attr);
+int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared);
+int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared);
 
-static inline int pthread_rwlock_init(pthread_rwlock_t *lock, pthread_rwlock_attr_t *attr) { lock->raw = 0; }
+int pthread_rwlock_init(pthread_rwlock_t *lock, pthread_rwlock_attr_t *attr);
 int pthread_rwlock_tryrdlock(pthread_rwlock_t *lock);
 int pthread_rwlock_trywrlock(pthread_rwlock_t *lock);
 int pthread_rwlock_rdlock(pthread_rwlock_t *lock);

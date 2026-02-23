@@ -12,19 +12,19 @@ static pthread_tls_destructor_t pthread_tls_dtors[PTHREAD_KEYS_MAX];
 unsigned long long int pthread_tls_key_valid = 0ULL;
 pthread_plainmutex_t mutex = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
 
-static inline const void ***get_pthread_tls_ptr()
+const void ***get_pthread_tls_ptr()
 {
 	unsigned long ugp_val;
 	asm volatile (" %0 = ugp " : "=r"(ugp_val) );
 	return (const void ***)(ugp_val + 4);
 }
 
-static inline const void **get_pthread_tls()
+const void **get_pthread_tls()
 {
 	return *(get_pthread_tls_ptr());
 }
 
-static inline void set_pthread_tls(const void **x)
+void set_pthread_tls(const void **x)
 {
 	*(get_pthread_tls_ptr()) = x;
 }

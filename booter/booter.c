@@ -16,16 +16,13 @@
 #include <h2_common_error.h>
 #include <h2_common_defs.h>
 #include <h2_kerror.h>
-#include <h2_alloc.h>
 #include <h2_common_linear.h>
-#include <h2_sleep.h>
 #include <h2_prof.h>
-#include <h2_coproc.h>
+#include <angel.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "elf.h"
 #include "../kernel/include/max.h"
 #include "../kernel/include/hw.h"
 #include <syscall_defs.h>
@@ -65,7 +62,7 @@ char *pagesize_name[] = {
 	GEN(__h2_pmu_cfg__)   												\
 	GEN(__h2_gpio_toggle__)												\
 	GEN(__sys_write_mode__)												\
-	GEN(end)																			\
+	GEN(_end)																			\
 	GEN(DEFAULT_HEAP_SIZE)												\
 	GEN(DEFAULT_STACK_SIZE)												\
 	GEN(HEAP_SIZE)																\
@@ -242,6 +239,20 @@ typedef struct {
 } vm_t;
 
 vm_t *vm_params = NULL;
+
+#define ERRSTR_LEN 1024
+char errstr[ERRSTR_LEN];
+void error(char *str1, char *str2) {
+	int err = sys_errno();
+
+	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr) - 1);
+	errno = err;
+	perror(errstr);
+
+	exit(1);
+}
 
 void FAIL(const char *str1, const char *str2)
 {
@@ -961,7 +972,7 @@ void load_vm(unsigned int idx) {
 		// if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 
 		/* Adjust guest_base and fences */
-		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
+		if (-1 == (end = vm_params[idx].specials[SPECIAL__end].addr)) {
 			FAIL("\tCan't find end symbol", "");
 		}
 		BOOTER_PRINTF("\tend 0x%08lx\n", end);
@@ -1083,8 +1094,10 @@ void config_vm(unsigned int idx) {
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
 			BOOTER_PRINTF("\tTranslation type offset\n");
 			BOOTER_PRINTF("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
-			BOOTER_PRINTF("\t\tCCCC 0x%1x\n", base.cccc);
-			BOOTER_PRINTF("\t\tXWRU 0x%1x\n", base.xwru);
+			BOOTER_PRINTF("\t\tCCCC  0x%1x\n", base.cccc);
+			BOOTER_PRINTF("\t\tXWRU  0x%1x\n", base.xwru);
+			BOOTER_PRINTF("\t\tPAGES 0x%1x\n", base.pages);
+			BOOTER_PRINTF("\t\tRAW   0x%1x\n", base.raw);
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {

@@ -21,6 +21,7 @@ CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 include $(H2DIR)/scripts/Makefile.inc.config
+include $(H2DIR)/scripts/Makefile.inc.opensource
 include $(H2DIR)/scripts/Makefile.inc.bootvm
 
 
@@ -44,8 +45,8 @@ bigio: bigio.o
 %.o: %.S
 	${CC} ${CFLAGS} -c -o $@ $<
 
-$(BOOTVM_IMAGE): booter.o elf.o booter_event.o $(BOOTVM_IMAGE_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=$(BOOTVM_IMAGE_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -o $@ booter.o elf.o booter_event.o $(BOOTVM_ENTRY_O)
+$(BOOTVM_IMAGE): booter.o booter_event.o $(BOOTVM_IMAGE_DEPS)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=$(BOOTVM_IMAGE_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -o $@ booter.o booter_event.o $(BOOTVM_ENTRY_O)
 
 
 test: hello $(BOOTVM_PROG)

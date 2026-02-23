@@ -14,6 +14,7 @@ endif
 all: kernel_tmp
 
 include ../scripts/Makefile.inc.config
+include ../scripts/Makefile.inc.opensource
 include ../scripts/Makefile.inc.bootvm
 
 CONSTS := ./consts.pl

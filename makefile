@@ -1,4 +1,5 @@
 include scripts/Makefile.inc.config
+include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
 include scripts/Makefile.inc.tools
 
@@ -55,8 +56,14 @@ endif
 
 ifeq ($(TARGET), opt_cov)
 T := opt
-#OPT_JFLAG :=
-export OPTIMIZE := $(OPTIMIZE_COV)
+OPT_JFLAG :=
+export OPT_ADD := $(OPTIMIZE_COV)
+endif
+
+ifeq ($(TARGET), llvm_cov)
+T := opt
+OPT_JFLAG :=
+export EN_LLVM_COV := 1
 endif
 
 ifeq ($(TARGET), opt_snap)
@@ -82,8 +89,8 @@ endif
 
 ifeq ($(TARGET), ref_cov)
 T := ref
-#REF_JFLAG :=
-export OPTIMIZE := $(OPTIMIZE_COV)
+REF_JFLAG :=
+export OPT_ADD := $(OPTIMIZE_COV)
 endif
 
 ifeq ($(TARGET), debug)
@@ -145,6 +152,7 @@ endif
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
@@ -161,6 +169,7 @@ endif
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
@@ -226,17 +235,18 @@ h2_cov:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
+#	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) coverage_report
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 
 .PHONY: check-fail test-check cov-check cov_fns
 
 check-fail test-check cov-check:
-	$(MAKE) -f scripts/Makefile.coverage TESTOUT=$(TESTOUT) check-fail
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check-fail
 #	$(MAKE) -C ucos check
 
 check:
-	$(MAKE) -f scripts/Makefile.coverage TESTOUT=$(TESTOUT) check
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check
 #	$(MAKE) -C ucos check
 
 doc:

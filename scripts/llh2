@@ -1,0 +1,11 @@
+#!/bin/sh
+
+echo target module add $1/booter/booter > lldb-tmp
+echo target module load --file $1/booter/booter --slide 0x0 >> lldb-tmp
+echo target module add $1/booter/bootvm_image >> lldb-tmp
+echo target module load --file $1/booter/bootvm_image --slide 0x0 >> lldb-tmp
+echo gdb-remote 1234 >> lldb-tmp
+
+shift 1
+hexagon-lldb -s lldb-tmp $*
+rm lldb-tmp

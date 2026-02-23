@@ -28,7 +28,7 @@ extern "C" {
 #define unlikely(x) (__builtin_expect(!!(x), 0))
 #endif
 
-static inline int pthread_unsup() { return ENOTSUP; }
+int pthread_unsup();
 
 #include <pthread_thread.h>
 #include <pthread_plainmutex.h>
@@ -38,6 +38,7 @@ static inline int pthread_unsup() { return ENOTSUP; }
 #include <pthread_sem.h>
 #include <pthread_misc.h>
 #include <pthread_tls.h>
+#include <pthread_rwlock.h>
 
 #ifdef PTHREAD_SELF_DEF_LIKELY
 #undef PTHREAD_SELF_DEF_LIKELY

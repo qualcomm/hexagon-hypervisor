@@ -20,11 +20,7 @@ Invalidate address in instruction cache
 @returns Nothing
 @dependencies None
 */
-
-static inline void h2_icinva(void *ptr)
-{
-	asm volatile (" icinva(%0) " : :"r"(ptr) : "memory");
-}
+void h2_icinva(void *ptr);
 
 /**
 Flush address from data cache to memory.
@@ -32,11 +28,7 @@ Flush address from data cache to memory.
 @returns Nothing
 @dependencies None
 */
-
-static inline void h2_dccleana(void *ptr)
-{
-	asm volatile (" dccleana(%0) " : :"r"(ptr) : "memory");
-}
+void h2_dccleana(void *ptr);
 
 /**
 Flush address from data cache to memory and invalidate.
@@ -44,11 +36,7 @@ Flush address from data cache to memory and invalidate.
 @returns Nothing
 @dependencies None
 */
-
-static inline void h2_dccleaninva(void *ptr)
-{
-	asm volatile (" dccleaninva(%0) " : :"r"(ptr) : "memory");
-}
+void h2_dccleaninva(void *ptr);
 
 /**
 Invalidate address in data cache.
@@ -56,11 +44,7 @@ Invalidate address in data cache.
 @returns Nothing
 @dependencies None
 */
-
-static inline void h2_dcinva(void *ptr)
-{
-	asm volatile (" dcinva(%0) " : :"r"(ptr) : "memory");
-}
+void h2_dcinva(void *ptr);
 
 /**
 clean range of memory from data cache hierarchy

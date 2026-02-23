@@ -10,12 +10,16 @@ export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
 endif
 
 include ../scripts/Makefile.inc.config
-
+include ../scripts/Makefile.inc.opensource
 include ../scripts/Makefile.inc.version
 
-CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
+CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
 
 CFLAGS += -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -DH2K_GUEST_END=$(H2K_GUEST_END) -DH2K_BOOTMEM_SIZE=$(H2K_BOOTMEM_SIZE)
+
+ifeq ($(HMX_HLX_SUPPORT),1)
+	CFLAGS += -DHMX_HLX_SUPPORT
+endif
 
 ifdef NULL_ANGEL_TRAP
 CFLAGS += -DNULL_ANGEL_TRAP
@@ -57,6 +61,9 @@ endif
 CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT)
 
 CFLAGS += $(KERNEL_CFLAGS) $(H2K_EXTRA_CFLAGS)
+ifeq ($(EN_LLVM_COV), 1)
+CFLAGS += ${LLVM_COV_CFLAGS}
+endif
 
 SRC_HFILES := 
 DEST_HFILES := 

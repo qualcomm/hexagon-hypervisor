@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -I$(INSTALLPATH)/include -I../h2/include -I../posix/include -G0 $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+CFLAGS := -Iinclude -I$(INSTALLPATH)/include -I../h2/include -I../posix/include -I../../libs/syscall/angel/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -152,5 +152,3 @@ includes: $(DEST_HFILES)
 ref: build/ref/libh2_compat.a
 
 opt: build/opt_v$(ARCHV)/libh2_compat.a
-
-

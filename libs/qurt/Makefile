@@ -5,7 +5,7 @@ AR = hexagon-ar
 
 OPTIMIZE := -O2
 
-CFLAGS = -g $(OPTIMIZE) -G0
+CFLAGS = -g $(OPTIMIZE) $(OPT_ADD) -G0
 
 export QURT_LIB_INCLUDE=$(shell pwd)/include
 

@@ -65,6 +65,7 @@ int elf_get_shdr(int fdesc, int i, Elf32_Shdr *shdr, const Elf32_Ehdr *ehdr)
 }
 
 int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf32_Ehdr *ehdr) {
+	const bool verbose = false;
 	int i, bytes, pos;
 
 	int ntomatch = nsyms;

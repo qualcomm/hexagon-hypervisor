@@ -1,2 +1,0 @@
-bin/lnx64/uart.so --baseaddress 0xAB000000 --interrupt_number 5 --pty
-

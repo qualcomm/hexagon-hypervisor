@@ -1,13 +1,31 @@
 include scripts/Makefile.inc.config
 include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
-include scripts/Makefile.inc.tools
 
 ARCHV_LIST ?= 65 68 73 81
 TESTOUT ?= test.out
 
 TARGET ?= opt
 ARCHV ?= 81
+
+ifneq ($(findstring $(ARCHV),65,66,67),)
+override ARCHV := 65
+endif
+
+ifneq ($(findstring $(ARCHV),68,71),)
+override ARCHV := 68
+endif
+
+ifneq ($(findstring $(ARCHV),73,75,77,79),)
+override ARCHV := 73
+endif
+
+ifneq ($(findstring $(ARCHV),81,83,85,87,89,91),)
+override ARCHV := 81
+endif
+
+include scripts/Makefile.inc.tools
+
 
 JFLAG ?= -j
 OPT_JFLAG := $(JFLAG)

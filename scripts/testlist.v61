@@ -1,4 +1,4 @@
-r./kernel/data/intconfig/test
+./kernel/data/intconfig/test
 ./kernel/data/context/test
 ./kernel/data/readylist/test
 ./kernel/data/runlist/test

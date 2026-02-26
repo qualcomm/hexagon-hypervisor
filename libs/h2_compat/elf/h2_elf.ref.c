@@ -75,7 +75,7 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	if (SHN_UNDEF == ehdr->e_shstrndx) elf_error("1", NULL);
 	if (-1 == elf_get_shdr(fdesc, ehdr->e_shstrndx, &shstr, ehdr)) elf_error("2", NULL);
 
-	//	BOOTER_PRINTF("%s: reading symhdr & strhdr\n", __func__);
+	if (verbose) printf("%s: reading symhdr & strhdr\n", __func__);
 	/* find symhdr & strhdr */
 	Elf32_Shdr *pSymhdr, *pStrhdr;
 	int hdrNum = 0;
@@ -96,7 +96,7 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	if (pStrhdr->sh_type != SHT_STRTAB) elf_error("5", NULL);
 
 	/* read symtab & strtab */
-	//	BOOTER_PRINTF("%s: reading symtab\n", __func__);
+	if (verbose) printf("%s: reading symtab\n", __func__);
 	Elf32_Sym *symtab = malloc(pSymhdr->sh_size);
 	if (NULL == symtab) elf_error("Can't malloc symtab", NULL);
 	if (verbose) printf("%s: symtab=0x%p 0x%xB\n", __func__, symtab, pSymhdr->sh_size);
@@ -130,7 +130,7 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 			if (0 == strcmp(looking_for, st_name)) {
 				specials[i].addr = pSym->st_value;
 				ntomatch--;
-				//				BOOTER_PRINTF("%s: found %s\n", __func__, looking_for);
+				if (verbose) printf("%s: found %s\n", __func__, looking_for);
 				break; // presumably we're looking for unique symbols
 			}
 		}

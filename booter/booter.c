@@ -49,6 +49,12 @@ char *pagesize_name[] = {
 	"16MB"
 };
 
+#ifdef MULTICORE
+#define BOOTER_PRINTF(...) if (!((silent >> core_id) & 0x1)) {printf("CORE %d:\t", core_id); printf(__VA_ARGS__);}
+#else
+#define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
+#endif
+
 #define FOREACH_sym(GEN)												\
 	GEN(__guest_pmap__)														\
 	GEN(__boot_cmdline__)													\

@@ -19,7 +19,7 @@ my $end = `hexagon-nm $image | egrep \' end\$\'`;
 $end =~ s/\s.*//;
 $end = oct "0x$end";
 $end = (($end + 31) / 32) * 32;	# align for allocator heap
-$end += $heapsize + $stacksize + $alloc_heap_size;
+$end += (oct $heapsize) + (oct $stacksize) + $alloc_heap_size;
 #print STDERR sprintf("end: 0x%0x\n", $end);
 
 my $vpage = (($end >> $page_bits) + 1);

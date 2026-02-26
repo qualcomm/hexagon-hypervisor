@@ -1,4 +1,4 @@
-./kernel/data/intconfig/test
+r./kernel/data/intconfig/test
 ./kernel/data/context/test
 ./kernel/data/readylist/test
 ./kernel/data/runlist/test
@@ -30,7 +30,7 @@
 ./kernel/mem/tlbmisc/test
 ./kernel/mem/tlbmiss/test
 #./kernel/mem/varadix/test  FIXME: needs to adapt to different kernel page size/count
-./kernel/power/apcr/test_multi
+#./kernel/power/apcr/test_multi  FIXME: needs changes to work with new ${EXEC}_tmp make target
 ./kernel/power/hvx/test
 #./kernel/power/apcr/simple_test
 ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios

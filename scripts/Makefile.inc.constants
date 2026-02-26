@@ -7,14 +7,20 @@ CONSTS := $(INSTALLPATH)/scripts/consts.pl
 PARAMS := $(H2K_KERNEL_ADDRBITS) $(H2K_KERNEL_PGSIZE) $(H2K_HEAP_SIZE) $(H2K_STACK_SIZE) $(H2K_ALLOC_HEAP_SIZE) $(H2K_LINK_ADDR) $(H2K_LOAD_ADDR)
 KERNEL_TMP := $(INSTALLPATH)/stake/kernel_tmp
 
+# EXEC is set when building a test, which might be linked in kernel space and so
+# require more kernel pages
+ifndef EXEC
+END_SYM_FROM = $(KERNEL_TMP)
+else
+END_SYM_FROM = $(EXEC)_tmp
+endif
 
 .PHONY: constants
 
-constants: $(KERNEL_TMP)
-	$(eval export H2K_BOOTVM_OFFSET := $(shell $(CONSTS) bootvm_offset $(KERNEL_TMP) $(PARAMS)))
-	$(eval export H2K_BOOTVM_START := $(shell $(CONSTS) bootvm_start $(KERNEL_TMP) $(PARAMS)))
-	$(eval export H2K_V2P_OFFSET := $(shell $(CONSTS) v2p_offset $(KERNEL_TMP) $(PARAMS)))
-	@echo PARAMS $(PARAMS)
-	$(eval export H2K_KERNEL_NPAGES := $(shell $(CONSTS) kernel_npages $(KERNEL_TMP) $(PARAMS)))
+constants: $(END_SYM_FROM)
+	$(eval export H2K_BOOTVM_OFFSET := $(shell $(CONSTS) bootvm_offset $(END_SYM_FROM) $(PARAMS)))
+	$(eval export H2K_BOOTVM_START := $(shell $(CONSTS) bootvm_start $(END_SYM_FROM) $(PARAMS)))
+	$(eval export H2K_V2P_OFFSET := $(shell $(CONSTS) v2p_offset $(END_SYM_FROM) $(PARAMS)))
+	$(eval export H2K_KERNEL_NPAGES = $(shell $(CONSTS) kernel_npages $(END_SYM_FROM) $(PARAMS)))
 
 endif

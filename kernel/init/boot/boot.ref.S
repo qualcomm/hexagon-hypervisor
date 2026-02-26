@@ -319,7 +319,6 @@ H2_BOOT_attempts:
 	jumpr TMP                         // point pc to copied page
 /*** end core > 0 only ***/
 
-.Lno_multicore:
 .Lcores_booted:
 boot_continuation:
 	PHYS_ADDR = pc
@@ -336,6 +335,7 @@ boot_continuation:
 	syncht
 	isync
 
+.Lno_multicore:
 #endif
 	
 	/* Setup EVB */

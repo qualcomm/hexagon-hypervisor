@@ -83,8 +83,8 @@ DEVSIM := archsim
 ELFCOPY := hexagon-llvm-objcopy
 else
 ifeq (73, $(ARCHV))
-TOOLS_FLAVOR ?= 8.8.03
-TOOLS_FLAVOR_KERNEL ?= 8.8.03
+TOOLS_FLAVOR ?= 8.8.07
+TOOLS_FLAVOR_KERNEL ?= 8.8.07
 ARCH_FLAVOR ?= v73_stable
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion

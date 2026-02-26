@@ -45,10 +45,14 @@ typedef enum {
 	INFO_HMX_INSTANCES, /**< Number of HMX instances */
 	INFO_CORECFG_BASE,/**< Core regs base */
 	INFO_HLX_CONTEXTS, /**< Number of HLX instances */
-	INFO_CORE_ID,     /**< Multicore core ID */
-	INFO_CORE_COUNT,  /**< Multicore core count */
 	INFO_UNIT_START,  /**< Start of unit config list */
 	INFO_UNIT_ENTRY,  /**< Unit entry */
+	INFO_CORE_ID,     /**< Multicore core ID */
+	INFO_CORE_COUNT,  /**< Multicore core count */
+	INFO_SHIFT,       /**< Multicore shift - offset translation for boot VM */
+	INFO_TCM_OFFSET,  /**< Multicore TCM base offset */
+	INFO_NOC_MBASE,   /**< Multicore NOC master widget base */
+	INFO_NOC_SBASE,   /**< Multicore NOC slave widget base */
 	INFO_MAX
 } info_type;
 

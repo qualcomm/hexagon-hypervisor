@@ -25,14 +25,15 @@ void H2K_tcm_copy(u32_t last_tlb_index) {
 	u32_t page;  // FIXME: pa_t ?
 	u32_t page_num;
 	u64_t tmp;
+	u32_t va;
+	u32_t tcm_pgsize;
 
 	tcm_base = H2K_gp->tcm_base << PAGE_BITS;
 	tcm_size = H2K_gp->tcm_size << PAGE_BITS;
+	tcm_pgsize = (32 - __builtin_clz(H2K_gp->tcm_size)) >> 1;
 
 	if (tcm_size > (u32_t)&H2K_KERNEL_NPAGES * H2K_PAGESIZE) {  // room in TCM?
-
-		// remap
-		H2K_tmpmap_add_and_lock((pa_t)tcm_base, DEVICE_TYPE);
+		va = H2K_tmpmap_add_and_lock((pa_t)tcm_base, UNCACHED, tcm_pgsize);
 
 		for (page_num = 0; page_num < (u32_t)&H2K_KERNEL_NPAGES; page_num++) {
 			entry.raw = 0;
@@ -47,7 +48,7 @@ void H2K_tcm_copy(u32_t last_tlb_index) {
 			entry.valid = 1;
 
 			from = (u64_t *)page;
-			to = (u64_t *)(TEMP_MAP_VA + (page_num * H2K_PAGESIZE));
+			to = (u64_t *)(va + (page_num * H2K_PAGESIZE));
 			len = 1 << (PAGE_BITS + (H2K_KERNEL_PGSIZE * 2));
 
 			/* Copy a page at a time to TCM and replace the TLB entry right out from
@@ -72,8 +73,9 @@ void H2K_tcm_copy(u32_t last_tlb_index) {
 		H2K_tmpmap_remove_and_unlock();
 
 		H2K_gp->info_boot_flags.boot_use_tcm = 1;
-		H2K_gp->tcm_base += (page_num * H2K_PAGESIZE) >> PAGE_BITS;
-		H2K_gp->tcm_size -= (page_num * H2K_PAGESIZE) >> PAGE_BITS;
+		/* FIXME: necessary? */
+		//		H2K_gp->tcm_base += (page_num * H2K_PAGESIZE) >> PAGE_BITS;
+		//		H2K_gp->tcm_size -= (page_num * H2K_PAGESIZE) >> PAGE_BITS;
 		H2K_gp->phys_offset = H2K_LINK_ADDR - tcm_base;
 	}
 

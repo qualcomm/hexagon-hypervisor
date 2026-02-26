@@ -8,7 +8,7 @@
 
 #include <c_std.h>
 
-u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc) IN_SECTION(".text.mem.tmpmap");
+u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc, u32_t size) IN_SECTION(".text.mem.tmpmap");
 
 void H2K_tmpmap_remove_and_unlock(void) IN_SECTION(".text.mem.tmpmap");
 

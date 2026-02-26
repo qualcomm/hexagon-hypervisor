@@ -1,5 +1,7 @@
-# build controls
-export USE_PKW ?= 1
+include scripts/Makefile.inc.config
+include scripts/Makefile.inc.opensource
+include scripts/Makefile.inc.version
+include scripts/Makefile.inc.tools
 
 ARCHV_LIST ?= 65 68 73 81
 TESTOUT ?= test.out
@@ -7,25 +9,7 @@ TESTOUT ?= test.out
 TARGET ?= opt
 ARCHV ?= 81
 
-ifneq ($(findstring $(ARCHV),65,66,67),)
-override ARCHV := 65
-endif
-
-ifneq ($(findstring $(ARCHV),68,71),)
-override ARCHV := 68
-endif
-
-ifneq ($(findstring $(ARCHV),73,75,77,79),)
-override ARCHV := 73
-endif
-
-ifneq ($(findstring $(ARCHV),81,83,85,87,89,91),)
-override ARCHV := 81
-endif
-
-include scripts/Makefile.inc.tools
-
-JFLAG ?= -j 3
+JFLAG ?= -j
 OPT_JFLAG := $(JFLAG)
 REF_JFLAG := $(JFLAG)
 TEST_JFLAG ?= -j 8
@@ -67,7 +51,7 @@ endif
 
 ifeq ($(TARGET), opt)
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 endif
 
 ifeq ($(TARGET), opt_cov)
@@ -84,7 +68,7 @@ endif
 
 ifeq ($(TARGET), opt_snap)
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 export H2K_LOAD_ADDR=0x00400000 
 export H2K_EXTRA_CFLAGS+=-DNMI_STOP
 endif
@@ -92,7 +76,7 @@ endif
 ifeq ($(TARGET), opt_tiny_snap)
 override ARCHV := 65  # because some things call make with ARCHV=66t
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 export TINY_CORE=1
 export H2K_LOAD_ADDR=0x00400000
 export H2K_EXTRA_CFLAGS+=-DNMI_STOP
@@ -100,7 +84,7 @@ endif
 
 ifeq ($(TARGET), ref)
 T := ref
-REF_JFLAG :=
+#REF_JFLAG :=
 endif
 
 ifeq ($(TARGET), ref_cov)
@@ -117,7 +101,7 @@ endif
 
 ifeq ($(TARGET), opt_si)
 T := opt
-OPT_JFLAG :=
+#OPT_JFLAG :=
 export H2K_LOAD_ADDR=0x84c00000
 export H2K_GUEST_START=0x87000000
 export NULL_ANGEL_TRAP=1
@@ -127,22 +111,6 @@ endif
 # FIXME: Remove when cluster sched ported to opt
 export OMIT_OPT=dosched resched
 
-ifeq ($(H2DIR),)
-export H2DIR := $(CURDIR)
-endif
-
-ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(H2DIR)/install
-endif
-
-ifeq ($(KERNELPATH),)
-export KERNELPATH := $(H2DIR)/kernel
-endif
-
-
-include scripts/Makefile.inc.config
-include scripts/Makefile.inc.opensource
-include scripts/Makefile.inc.version
 
 .PHONY: all
 all:
@@ -278,7 +246,7 @@ check-fail test-check cov-check:
 #	$(MAKE) -C ucos check
 
 check:
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) check
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check
 #	$(MAKE) -C ucos check
 
 doc:

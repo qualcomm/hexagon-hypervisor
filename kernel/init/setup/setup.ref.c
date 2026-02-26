@@ -34,16 +34,15 @@
 #include <cfg_table.h>
 #include <angel.h>
 #include <log.h>
+#include <bootvm_entry.h>
 
 void H2K_interrupt_restore();
-
-u32_t H2K_init_complete IN_SECTION(".data.init.boot") = 0;
 
 #ifndef BOOT_CCCC
 #define BOOT_CCCC L1WB_L2C
 #endif
 
-static const H2K_offset_t boot_offset = {{
+static H2K_offset_t boot_offset = {{
 		.size = BOOT_TLB_PGSIZE, // same as kernel
 		.cccc = BOOT_CCCC,
 		.xwru = URWX,
@@ -53,7 +52,7 @@ static const H2K_offset_t boot_offset = {{
 #define DEFAULT_HEAP_SIZE 0x4000000 /* 64MB */
 #define DEFAULT_STACK_SIZE 0x100000 /* 1MB */
 
-IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup_bootvm(u32_t phys_offset)
+IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup_bootvm()
 {
 	u32_t vm;
 	//	BKL_UNLOCK();  // because config locks
@@ -75,7 +74,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup_bootvm(u32_t
 
 #define DEVICE_PAGE_OFFSET(ADDR) ((ADDR) & ((0x1 << (H2K_KERNEL_ADDRBITS + (2 * DEVICE_PAGE_SIZE))) - 1))
 
-IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t phys_offset, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size) {
+IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multicore_shift, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
 	/* FIXME: The allocator heap can just go at the end of data once boot VM is
 		 moved out of monitor space */
 	void *heap_top;
@@ -88,7 +87,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t phys_o
 	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & (u32_t)-16);
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
-	H2K_kg_init(phys_offset, devpage_priv_offset, last_tlb_index, tlb_size);		/* Kernel Globals first! */
+	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);		/* Kernel Globals first! */
 	H2K_tmpmap_init();
 	H2K_l2cache_init();
 	H2K_tcm_copy(last_tlb_index);
@@ -115,15 +114,17 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t phys_o
 	H2K_log_init();
 #endif
 	H2K_log_string("Booting\n");
-	return H2K_init_setup_bootvm(phys_offset);
+	return H2K_init_setup_bootvm();
 }
 
-IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot_off, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size)
+IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size, u32_t tcm_offset)
 {
 	s32_t asid;
 	H2K_vmblock_t *bootvm;
+	u32_t core_id  = H2K_cfg_table(CFG_TABLE_CORE_ID);
+	u32_t core_count = H2K_cfg_table(CFG_TABLE_CORE_COUNT);
 
-	bootvm = H2K_init_setup(phys_offset, ssbase, last_tlb_index, tlb_size);
+	bootvm = H2K_init_setup(multicore_shift, ssbase, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);
 
 	/* allocate first thread */
 	H2K_thread_context *boot = bootvm->free_threads;
@@ -140,13 +141,22 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
 	boot->vwctrl = H2K_get_vwctrl();
 #endif
-	boot->elr = ((u32_t)(__bootvm_entry) - boot_off);
-	boot->r0100 = 0;
+	boot->elr = (u32_t)(__bootvm_entry_point);
+	boot->r0100 = multicore_shift;
+
+	H2K_log("multicore_shift 0x%08x\n", multicore_shift);
+
 	boot->ccr = BOOT_THREAD_CCR;
 	boot->trapmask = bootvm->trapmask;
 	boot->continuation = H2K_interrupt_restore;
 	boot->vmstatus = 0x0;
 	boot->tlbidxmask = (u8_t)~0;
+	/* offset_pages should be 0 unless the kernel booted at some address other than its load addr, */
+	/* such as when we clone for multicore */
+	boot_offset.pages = multicore_shift >> PAGE_BITS;
+
+	H2K_log("offset pages 0x%08x\n", boot_offset.pages);
+
 	asid = H2K_asid_table_inc(boot_offset.raw, H2K_ASID_TRANS_TYPE_OFFSET, H2K_ASID_TLB_INVALIDATE_FALSE, 0, bootvm);
 	boot->ssr_asid = (u8_t)asid;
 	BKL_LOCK();
@@ -217,7 +227,6 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t phys_offset, u32_t boot
 	H2K_cluster_config();
 #endif
 	H2K_runlist_push(boot);
-	H2K_init_complete = 1;
 	H2K_mutex_unlock_tlb();
 	H2K_switch(NULL,boot);
 }

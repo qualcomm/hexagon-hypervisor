@@ -13,8 +13,7 @@ void __attribute__ ((weak)) __h2_handle_errors_hook__(void) {
 
 char __boot_cmdline__[SIZE__boot_cmdline__] __attribute__((section(".data"))) = { 0 };
 
-errno_t sys_get_cmdline(char *buffer, count_t count)
-{
+static errno_t do_sys_get_cmdline(char *buffer, count_t count) {
 	errno_t ret;
 	struct { char *buf; count_t count; } x;
 
@@ -35,3 +34,15 @@ errno_t sys_get_cmdline(char *buffer, count_t count)
 	return ret;
 }
 
+/* Trampoline to align sp down to next cache line. This prevents stack
+	 allocations further down the call tree from falling in the same
+	 cache line as the buffer that needs to be invalidated prior to
+	 angel SYS_READ, which can foil the invalidation. */
+errno_t sys_get_cmdline(char *buffer, count_t count) {
+	unsigned long sp_save;
+	/*FIXME: Maybe we should get the actual cache line size from cfg_table and save it in a global */
+	asm volatile ( " %0 = r29  // save sp \n"
+								 " r29 = and(r29, #-256)  // align sp down \n"
+								 : "=r"(sp_save));
+	return do_sys_get_cmdline(buffer, count);
+}

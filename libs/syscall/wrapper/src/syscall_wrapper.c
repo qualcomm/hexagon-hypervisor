@@ -154,11 +154,6 @@ __attribute__((weak)) int errno(void) {
 
 // STUBS FIXME: add support of missed system calls
 
-__attribute__((weak)) off64_t lseek64(int fd, off64_t offset, int whence) {
-	SET_LTS_ERROR(-1, ENOSYS);
-	return -1;
-}
-
 __attribute__((weak)) int getentropy(void *buffer, size_t length) {
 	SET_LTS_ERROR(-1, ENOSYS);
 	return -1;

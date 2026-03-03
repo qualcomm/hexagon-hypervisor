@@ -10,9 +10,6 @@ ifeq (,$(IMPL))
 IMPL=ref
 endif
 
-SOS_DIR=sos/
-SOS_LIB=sos/build/ref/libsos.a
-
 H2_DIR=h2/
 H2_COMPAT_DIR=h2_compat/
 POSIX_DIR=posix/
@@ -38,8 +35,8 @@ else
 SYS_WRAPPER_LIB =
 endif
 
-ALL_LIBS= $(H2_LIB) $(SOS_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
-LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(SOS_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPPER_LIB))
+ALL_LIBS= $(H2_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
+LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPPER_LIB))
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 
@@ -66,9 +63,6 @@ ifeq ($(PICOLIBC),1)
 $(SYS_WRAPPER_LIB):
 	+${MAKE_LIB};
 endif
-
-$(SOS_LIB): tmp $(H2_LIB)
-	+${MAKE} -C $(SOS_DIR) ref; cp $@ tmp/
 
 clean:
 	rm -rf tmp libh2.a

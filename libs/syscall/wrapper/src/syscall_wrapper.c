@@ -168,3 +168,9 @@ __attribute__((weak)) int gettimeofday(struct timeval * __restrict __p, void * _
 	SET_LTS_ERROR(-1, ENOSYS);
 	return -1;
 }
+
+/* libh2.a is still compiled with older libc which defines errno as a macro that
+ * expands to _Geterrno we can scrap this symbol once we start building H2 with
+ * Picolibc
+ */
+int _Geterrno(void) { return errno; }

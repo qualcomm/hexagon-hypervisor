@@ -12,11 +12,12 @@ typedef union {
 	h2_u32_t raw;
 	struct {
 		h2_u32_t s:3;
-		h2_u32_t rsvd:1;
+		h2_u32_t shared:1;
 		h2_u32_t t:1;
 		h2_u32_t u:1;
 		h2_u32_t ccc:3;
 		h2_u32_t xwr:3;
+		// FIXME: no room for weak_ccc
 		h2_u32_t ppn:20;
 	};
 } H2K_pte_t;

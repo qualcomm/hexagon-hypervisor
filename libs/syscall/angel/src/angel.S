@@ -6,7 +6,10 @@
 	.text
 	.global __angel
 	.type __angel,@function
+	.global __angel64r
+	.type __angel64r,@function
 	.p2align 2
+__angel64r:
 __angel:
 	allocframe(#0)
 	trap0(#0)

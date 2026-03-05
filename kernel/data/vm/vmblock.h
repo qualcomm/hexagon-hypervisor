@@ -3,9 +3,6 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#ifndef H2K_VMBLOCK_H
-#define H2K_VMBLOCK_H 1
-
 #include <c_std.h>
 #include <vmdefs.h>
 #include <context.h>
@@ -15,6 +12,9 @@
 #include <asid_types.h>
 #include <h2_common_vmblock.h>
 #include <h2_common_defs.h>
+
+#ifndef H2K_VMBLOCK_H
+#define H2K_VMBLOCK_H 1
 
 /* Version supported */
 

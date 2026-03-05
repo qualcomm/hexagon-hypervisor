@@ -11,9 +11,7 @@
 #include <h2_common_pmap.h>
 #include <h2_common_defs.h>
 
-// now in common? #define MAX_HTHREADS 8
-
-//#define DO_EXT_SWITCH 1
+#define MAX_CORES 8
 
 #define CORE_REV_ARCH_MASK 0xff
 
@@ -58,10 +56,8 @@
 #define CORE_V6_S 0x2
 #define CORE_V6_U 0x5
 
-#define TEMP_MAP_VA 0xff800000
-#define TEMP_MAP_PG_SIZE SIZE_4M
-#define TEMP_MAP_PG_MASK (0xffffffff << (PAGE_BITS + (TEMP_MAP_PG_SIZE * 2)))
-#define TEMP_MAP_OFF_MASK (~TEMP_MAP_PG_MASK)
+#define TEMP_MAP_VA 0xff800000  // leaves at most 8M for kernel at 0xff000000
+#define TEMP_MAP_PG_SIZE SIZE_4K  // default
 
 #define GPIO_VA 0xff7f8000
 #define GPIO_PG_SIZE SIZE_4K
@@ -94,10 +90,13 @@
 	 map QDSP6SS_PUB_BASE to Q6_SS_BASE_VA so we can get at the public registers.
 	 FIXME? Is the QDSP6SS_PUB_PRIV_OFFSET the same for all subsystems? */
 
-#define DEVICE_PAGE_SIZE SIZE_4M
+#define DEVICE_PAGE_SIZE SIZE_1M
 
-#define Q6_SS_BASE_VA 0xFFC00000
+#define Q6_SS_BASE_VA 0xffc00000  // leaves at most 4M for tmpmap at 0xff800000
 #define QDSP6SS_PUB_PRIV_OFFSET 0x80000
+
+#define ANGEL_VA 0xffd00000
+#define ANGEL_PG_SIZE SIZE_4K
 
 #if ARCHV == 4
 /* #define QDSP6SS_PRIV_BASE_FW    0x08880000 */

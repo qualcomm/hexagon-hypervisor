@@ -21,7 +21,9 @@ static inline H2K_translation_t H2K_pagewalk_update_translation(H2K_translation_
 	in.pn &= (1<<(size*2))-1;
 	in.pn |= pte.ppn & (-1<<(size*2));
 	in.xwru &= (pte.xwr << 1) | pte.u;
-	if (in.cccc > 0xF) in.cccc = pte.ccc;
+	in.shared = pte.shared;
+	if (in.weak_ccc) in.cccc = pte.ccc;
+	in.weak_ccc = 0;  // FIXME: pte_t has no weak_ccc
 	return in;
 }
 
@@ -83,7 +85,7 @@ H2K_translation_t H2K_pagewalk_translate(H2K_translation_t in, H2K_asid_entry_t 
 	H2K_vmblock_t *vmblock = H2K_gp->vmblocks[info.fields.vmid];
 	pte = H2K_mem_pagewalk_l1(in,info,vmblock);
 	in = H2K_pagewalk_update_translation(in,pte);
-	if (vmblock->guestmap.raw) return H2K_translate(in, vmblock->guestmap);
+	if (!in.shared && vmblock->guestmap.raw) return H2K_translate(in, vmblock->guestmap);
 	else return in;
 }
 

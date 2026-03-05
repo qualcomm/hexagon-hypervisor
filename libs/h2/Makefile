@@ -155,5 +155,3 @@ includes: $(DEST_HFILES)
 ref: build/ref/libh2.a
 
 opt: build/opt_v$(ARCHV)/libh2.a
-
-

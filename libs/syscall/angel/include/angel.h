@@ -10,9 +10,22 @@
 
 extern long __boot_net_phys_offset__;
 
-unsigned int __angel(unsigned int r0, void *r1, unsigned int r2);
+unsigned int __angel(unsigned int r0, void *r1, unsigned int r2); // FIXME: remove later
+unsigned long long __angel64r(unsigned int r0, void *r1, unsigned int r2);
 
 unsigned int angel(unsigned int r0, void *r1, unsigned int r2);
+
+typedef struct sys_call_ret_s {
+	union {
+		struct {
+			unsigned int ret_value;
+			int err_value;
+		};
+		long long raw_value;
+	};
+} sys_call_ret_t;
+
+sys_call_ret_t angel_with_err(unsigned int r0, void *r1, unsigned int r2);
 
 #define ANGEL_OFFSET_PTR(P) ((void *)((unsigned long)(P) + __boot_net_phys_offset__))
 

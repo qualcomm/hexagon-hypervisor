@@ -16,16 +16,13 @@
 #include <h2_common_error.h>
 #include <h2_common_defs.h>
 #include <h2_kerror.h>
-#include <h2_alloc.h>
 #include <h2_common_linear.h>
-#include <h2_sleep.h>
 #include <h2_prof.h>
-#include <h2_coproc.h>
+#include <angel.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "elf.h"
 #include "../kernel/include/max.h"
 #include "../kernel/include/hw.h"
 #include <syscall_defs.h>
@@ -52,6 +49,12 @@ char *pagesize_name[] = {
 	"16MB"
 };
 
+#ifdef MULTICORE
+#define BOOTER_PRINTF(...) if (!((silent >> core_id) & 0x1)) {printf("CORE %d:\t", core_id); printf(__VA_ARGS__);}
+#else
+#define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
+#endif
+
 #define FOREACH_sym(GEN)												\
 	GEN(__guest_pmap__)														\
 	GEN(__boot_cmdline__)													\
@@ -65,10 +68,11 @@ char *pagesize_name[] = {
 	GEN(__h2_pmu_cfg__)   												\
 	GEN(__h2_gpio_toggle__)												\
 	GEN(__sys_write_mode__)												\
-	GEN(end)																			\
+	GEN(_end)																			\
 	GEN(DEFAULT_HEAP_SIZE)												\
 	GEN(DEFAULT_STACK_SIZE)												\
 	GEN(HEAP_SIZE)																\
+	GEN(HEAP_START)																\
 	GEN(STACK_SIZE)																\
 	GEN(__clade_region_high_pd0_start__)					\
 	GEN(__clade_comp_pd0_start__)									\
@@ -120,8 +124,8 @@ unsigned int ext_power = 1;
 unsigned int silent = 0;
 unsigned int cycles = 0;
 unsigned int use_stlb = 0;
-unsigned int tight_fence_hi = 0;
-unsigned long guest_base = H2K_GUEST_START;
+unsigned int tight_fence_hi = 1;
+unsigned long guest_base;
 h2_anysignal_t wake_sig;
 int tcm_base;
 int tcm_size;
@@ -154,8 +158,12 @@ int cluster_sched = 1;
 #endif
 unsigned int getl2reg = 0;
 unsigned int *getl2reg_offsets;
+#ifdef MULTICORE
+unsigned int core_id = -1;
+unsigned int core_count = -1;
+#endif
 
-#define BOOTER_PRINTF(...) if (!silent) printf(__VA_ARGS__)
+extern long __boot_net_phys_offset__;
 
 typedef struct {
 	unsigned int id;  // h2 VM id
@@ -176,7 +184,7 @@ typedef struct {
 	unsigned int page_size;
 	unsigned int cccc;
 	unsigned int xwru;
-	long offset_pages;
+	unsigned long offset_pages;
 	int trans_type;
 
 	unsigned int fence_lo;
@@ -238,6 +246,20 @@ typedef struct {
 
 vm_t *vm_params = NULL;
 
+#define ERRSTR_LEN 1024
+char errstr[ERRSTR_LEN];
+void error(char *str1, char *str2) {
+	int err = sys_errno();
+
+	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr) - 1);
+	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr) - 1);
+	errno = err;
+	perror(errstr);
+
+	exit(1);
+}
+
 void FAIL(const char *str1, const char *str2)
 {
 	BOOTER_PRINTF("FAIL %s %s\n", str1, str2);
@@ -262,6 +284,9 @@ void usage()
 	BOOTER_PRINTF("  booter --file <path> [--file <path> ...]\n\tOptions from <path>, one guest VM per line.");
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("Global options:\n");
+#ifdef MULTICORE
+	BOOTER_PRINTF("  --core <int>\n\tIf current core ID is not <int>, ignore all following options until the next --core.\n");
+#endif
 	BOOTER_PRINTF("  --turkey <int>\n\tSet the turkey bits.\n");
 	BOOTER_PRINTF("  --duck <int>\n\tSet the duck bits.\n");
 	BOOTER_PRINTF("  --chicken <int>\n\tSet the chicken bits.\n");
@@ -297,8 +322,18 @@ void usage()
 	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
 	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
 	BOOTER_PRINTF("  --cycles\n\tPrint pcycles during boot.\n");
-	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
+#ifdef CLUSTER_SCHED
+	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 1.\n");
+#endif
 
+	// FIXME: hack for setting noc table addresses
+	BOOTER_PRINTF("  --noc <master int> <slave int>\n\tSet NOC master and slave widget offsets from TCM base.\n");
+
+#ifdef MULTICORE
+	BOOTER_PRINTF("  --quiet <core bitmap>\n\tSuppress output from cores.\n");
+#else
+	BOOTER_PRINTF("  --quiet\n\tSuppress output.\n");
+#endif
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("VM options:\n");
 	BOOTER_PRINTF("  --ccr <int>\n\tSet ccr.\n");
@@ -315,7 +350,7 @@ void usage()
 	BOOTER_PRINTF("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
 	BOOTER_PRINTF("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
 	BOOTER_PRINTF("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default lowest mapped physical page.\n");
-	BOOTER_PRINTF("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default (end - fence_lo) + heap size + stack size.\n");
+	BOOTER_PRINTF("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default heap_start + heap size + stack size.\n");
 	BOOTER_PRINTF("  --load_offset <int>\n\tOffset for loading ELF image.  Default (guest_base - <first_program_header_addr>).\n");
 	BOOTER_PRINTF("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf).  Default 0.\n");
 	BOOTER_PRINTF("  --bestprio <int>\n\tBest allowed priority for a virtual CPU.  Default 0.\n");
@@ -337,9 +372,6 @@ void usage()
 	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
-#ifdef CLUSTER_SCHED
-	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 1.\n");
-#endif
 }		
 
 #define GEN_specials(NAME) vm_params[idx].specials[SPECIAL_ ## NAME].name = #NAME; vm_params[idx].specials[SPECIAL_ ## NAME].addr = -1;
@@ -592,7 +624,7 @@ unsigned long get_var(unsigned int idx, int sym, long offset) {
 	return *dst;
 }
 
-void set_net_phys_offset(unsigned int idx, long offset) {
+void set_net_phys_offset(unsigned int idx, long offset) {  // called with total_offset
 
 	long *dst;
 	unsigned long addr;
@@ -609,10 +641,10 @@ void set_net_phys_offset(unsigned int idx, long offset) {
 	if (vm_params[idx].va_angel) {
 		*dst = 0;
 	} else {
-		*dst = offset;
+		*dst = __boot_net_phys_offset__ + offset;
 	}
 
-	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int)*dst);
+	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int) *dst);
 }
 
 void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages) {
@@ -795,10 +827,10 @@ void load_vm(unsigned int idx) {
 	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
 	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
-	unsigned long heap_size, stack_size, total_size, prev_size, end, one_page, page_shift;
+	unsigned long heap_size, heap_start, stack_size, total_size, prev_size, end, one_page, page_shift;
 	unsigned long start = ~0L;
 	int clone;
-	long total_offset;
+	unsigned long total_offset;
 
 	char *elf = vm_params[idx].argv[0];
 
@@ -838,7 +870,7 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].load_offset = vm_params[clone].load_offset + prev_size;
 		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
-		vm_params[idx].offset_pages = total_offset >> PAGE_BITS;
+		vm_params[idx].offset_pages = (__boot_net_phys_offset__ + total_offset) >> PAGE_BITS;
 		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
 		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
@@ -898,7 +930,7 @@ void load_vm(unsigned int idx) {
 			total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 			if (vm_params[idx].offset_pages == -1) {
-				vm_params[idx].offset_pages = total_offset >> PAGE_BITS;
+				vm_params[idx].offset_pages = (__boot_net_phys_offset__ + total_offset) >> PAGE_BITS;
 			}
 			phdr.p_paddr += vm_params[idx].load_offset;
 
@@ -907,7 +939,7 @@ void load_vm(unsigned int idx) {
 			}
 
 			if (!vm_params[idx].skip_load) {
-				BOOTER_PRINTF("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr);
+				BOOTER_PRINTF("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr + __boot_net_phys_offset__);
 				bytes_read = 0;
 				do {
 					bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
@@ -919,7 +951,7 @@ void load_vm(unsigned int idx) {
 					error("\tCan't read() in ", elf);
 				}
 
-				memset((char *)phdr.p_paddr+phdr.p_filesz, 0, phdr.p_memsz-phdr.p_filesz);
+				memset((char *)phdr.p_paddr + phdr.p_filesz, 0, phdr.p_memsz - phdr.p_filesz);
 				/* Really, only need to clean out text sections */
 				dcclean_range(phdr.p_paddr, phdr.p_memsz);
 			}
@@ -946,7 +978,7 @@ void load_vm(unsigned int idx) {
 		// if (phdr.p_filesz < phdr.p_memsz) phdr.p_filesz = phdr.p_memsz;
 
 		/* Adjust guest_base and fences */
-		if (-1 == (end = vm_params[idx].specials[SPECIAL_end].addr)) {
+		if (-1 == (end = vm_params[idx].specials[SPECIAL__end].addr)) {
 			FAIL("\tCan't find end symbol", "");
 		}
 		BOOTER_PRINTF("\tend 0x%08lx\n", end);
@@ -969,6 +1001,12 @@ void load_vm(unsigned int idx) {
 			BOOTER_PRINTF("\theap_size 0x%08lx\n", heap_size);
 		}
 
+		heap_start = vm_params[idx].specials[SPECIAL_HEAP_START].addr;
+		if (0 == heap_start || -1 == heap_start) {
+			heap_start = end + 4;
+		}
+		BOOTER_PRINTF("\theap_start 0x%08lx\n", heap_start);
+
 		stack_size = vm_params[idx].specials[SPECIAL_STACK_SIZE].addr;
 		if (0 == stack_size || -1 == stack_size) {
 			if (0 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr
@@ -983,7 +1021,7 @@ void load_vm(unsigned int idx) {
 			BOOTER_PRINTF("\tstack_size 0x%08lx\n", stack_size);
 		}
 
-		end += heap_size + stack_size;
+		end = heap_start + heap_size + stack_size;
 		vm_params[idx].stack = (void *)(end & -32);  // should be close to where crt0 puts the stack
 
 		end = H2_ALIGN_UP(end, one_page);
@@ -997,6 +1035,7 @@ void load_vm(unsigned int idx) {
 		guest_base += total_size;
 
 		if (set_fence_lo) {
+			vm_params[idx].fence_lo += __boot_net_phys_offset__;
 			vm_params[idx].fence_lo &= HI_MASK(one_page);
 		}
 		if (set_fence_hi) {
@@ -1008,7 +1047,7 @@ void load_vm(unsigned int idx) {
 		}
 		if (vm_params[idx].stash) {
 			BOOTER_PRINTF("\tStashing:\n\t");
-			vm_params[idx].stash_addr = guest_base;
+			vm_params[idx].stash_addr = __boot_net_phys_offset__ + guest_base;
 			guest_base += vm_params[idx].end_pa - vm_params[idx].start_pa;
 			guest_base = H2_ALIGN_UP(guest_base, one_page);
 			copy_vm(idx, vm_params[idx].stash_addr - vm_params[idx].start_pa);
@@ -1020,7 +1059,7 @@ void load_vm(unsigned int idx) {
 	BOOTER_PRINTF("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
 	BOOTER_PRINTF("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
 	BOOTER_PRINTF("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
-	BOOTER_PRINTF("\toffset_pages 0x%lx\n", vm_params[idx].offset_pages);
+	BOOTER_PRINTF("\toffset_pages 0x%08lx\n", vm_params[idx].offset_pages);
 
 	if (vm_params[idx].pmap_added) {
 		BOOTER_PRINTF("\tguest translations added\n");
@@ -1061,8 +1100,10 @@ void config_vm(unsigned int idx) {
 			trans = H2K_ASID_TRANS_TYPE_OFFSET;
 			BOOTER_PRINTF("\tTranslation type offset\n");
 			BOOTER_PRINTF("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
-			BOOTER_PRINTF("\t\tCCCC 0x%1x\n", base.cccc);
-			BOOTER_PRINTF("\t\tXWRU 0x%1x\n", base.xwru);
+			BOOTER_PRINTF("\t\tCCCC  0x%1x\n", base.cccc);
+			BOOTER_PRINTF("\t\tXWRU  0x%1x\n", base.xwru);
+			BOOTER_PRINTF("\t\tPAGES 0x%1x\n", base.pages);
+			BOOTER_PRINTF("\t\tRAW   0x%1x\n", base.raw);
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
@@ -1111,7 +1152,7 @@ void boot_vm(unsigned int idx) {
 	unsigned int regval;
 	int bit = 0;
 	int shift;
-	long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
+	unsigned long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
@@ -1194,7 +1235,7 @@ void dump_pmu(int idx) {
 	int i;
 	unsigned long long int val;
 	int event;
-	long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
+	unsigned long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	if (!pmu_dump) return;
 
@@ -1370,10 +1411,20 @@ void print_infos() {
 	unsigned int unit;
 	pcycles();
 
-	BOOTER_PRINTF("\nH2/core info:\n");
+	BOOTER_PRINTF("\n");
+	BOOTER_PRINTF("H2/core info:\n");
 	BOOTER_PRINTF("\tBuild ID: 0x%08x\n", h2_info(INFO_BUILD_ID));
-	BOOTER_PRINTF("\tGuest PC sampling available: ");
-	BOOTER_PRINTF((boot_flags.boot_have_sample ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tGuest PC sampling available: %s\n", (boot_flags.boot_have_sample ? "true" : "false"));
+#ifdef MULTICORE
+	BOOTER_PRINTF("\tMulti-core:\n");
+	BOOTER_PRINTF("\t\tCount: ( 0 == single core) %d\n", core_count);
+	BOOTER_PRINTF("\t\tID: %d\n", core_id);
+	BOOTER_PRINTF("\t\tShift: 0x%08x\n", h2_info(INFO_SHIFT));
+	BOOTER_PRINTF("\t\tTCM base offset per core: 0x%08x\n", h2_info(INFO_TCM_OFFSET));
+	BOOTER_PRINTF("\t\tNOC master LUT base: 0x%08x\n", tcm_base + h2_info(INFO_NOC_MBASE));
+	BOOTER_PRINTF("\t\tNOC slave LUT base:  0x%08x\n", tcm_base + h2_info(INFO_NOC_SBASE));
+#endif
+
 	BOOTER_PRINTF("\tCoprocessors:\n");
 	unit = h2_info(INFO_UNIT_START);
 	if (0 != unit) {  // have new unit cfg blocks
@@ -1431,11 +1482,10 @@ void print_infos() {
 	BOOTER_PRINTF("\tKernel physical address: 0x%08x\n", h2_info(INFO_PHYSADDR));
 	BOOTER_PRINTF("\tKernel page size: %dK\n", h2_info(INFO_H2K_PGSIZE) / 1024);
 	BOOTER_PRINTF("\tNumber of kernel pages: %d\n", h2_info(INFO_H2K_NPAGES));
-	BOOTER_PRINTF("\tH2 kernel in TCM: ");
-	BOOTER_PRINTF((boot_flags.boot_use_tcm ? "true\n" : "false\n"));
+	BOOTER_PRINTF("\tH2 kernel in TCM: %s\n", (boot_flags.boot_use_tcm ? "true" : "false"));
 	BOOTER_PRINTF("\tcfgbase: 0x%08x\n", h2_info(INFO_CFGBASE));
-	BOOTER_PRINTF("\tTCM (adjusted) base: 0x%08x\n", tcm_base);
-	BOOTER_PRINTF("\tTCM (remaining) size: %dK\n", tcm_size / 1024);
+	BOOTER_PRINTF("\tTCM base: 0x%08x\n", tcm_base);
+	BOOTER_PRINTF("\tTCM size: %dK\n", tcm_size / 1024);
 	BOOTER_PRINTF("\tL2 array size: %dK\n", h2_info(INFO_L2MEM_SIZE) / 1024);
 	BOOTER_PRINTF("\tL2 cache size: %dK\n", h2_info(INFO_L2TAG_SIZE) / 1024);
 	BOOTER_PRINTF("\tL2 line size: %d\n", h2_info(INFO_L2_LINE_SZ));
@@ -1447,16 +1497,13 @@ void print_infos() {
 #endif
 	BOOTER_PRINTF("\tTLB entries: %d\n", h2_info(INFO_TLB_SIZE));
 	BOOTER_PRINTF("\tReplaceable TLB entries: %d\n", h2_info(INFO_TLB_FREE));
-	BOOTER_PRINTF("\tSTLB:\n");
-	BOOTER_PRINTF("\t\tEnabled: ");
+	BOOTER_PRINTF("\tSTLB: %s\n", (stlb_info.stlb_enabled ? "true" : "false"));
+	BOOTER_PRINTF("\t\tEnabled: %s\n", (stlb_info.stlb_enabled ? "true" : "false"));
 	if (stlb_info.stlb_enabled) {
-		BOOTER_PRINTF("true\n");
 		BOOTER_PRINTF("\t\tSets per ASID: %d\n", 1 << stlb_info.stlb_max_sets_log2);
 		BOOTER_PRINTF("\t\tWays: %d\n", stlb_info.stlb_max_ways);
 		BOOTER_PRINTF("\t\tSize: %d\n", stlb_info.stlb_size);
 		BOOTER_PRINTF("\t\tEntries: %dK\n", ((1 << stlb_info.stlb_max_sets_log2) * stlb_info.stlb_max_ways * stlb_info.stlb_size) / 1024);
-	} else {
-		BOOTER_PRINTF("false\n");
 	}
 	BOOTER_PRINTF("\tsyscfg: 0x%08x\n", h2_info(INFO_SYSCFG));
 	BOOTER_PRINTF("\trev: 0x%08x\n", h2_info(INFO_REV));
@@ -1699,11 +1746,35 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 	int finish = 0;
 
 	while (argc) {
-
 		/* Global options */
+#ifdef MULTICORE
+		int count = 0;
+		char **save;
+		if (0 == strcmp(argv[0], "--core")) {
+			if (strtoul(argv[1],NULL,0) != core_id) {  // not this core
+				argc -= 2; argv += 2;
+				while (argc > 0 && 0 != strcmp(argv[0], "--core")) {  // skip to next --core
+					argc -= 1; argv += 1;
+				}
+			} else {  // is this core, adjust argc
+				argc -= 2; argv += 2; save = argv;
+				while (argc > 0 && 0 != strcmp(argv[0], "--core")) {  // count to next --core
+					count += 1; argc -= 1; argv += 1;
+				}
+				argc = count;
+				argv = save;
+			}
+			continue;
+		} else
+#endif
 		if (0 == strcmp(argv[0],"--quiet")) {
-			/* already quieted */
+#ifdef MULTICORE
+			silent |= strtoul(argv[1],NULL,0);
+			argc -= 2; argv += 2;
+#else
+			silent = 1;
 			argc -= 1; argv += 1;
+#endif
 			continue;
 		} else if (0 == strcmp(argv[0],"--cycles")) {
 			cycles = 1;
@@ -1818,6 +1889,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			if (h2_hwconfig_l2cache_size(strtoul(argv[1],NULL,0), (regval & SYSCFG_L2WB) >> SYSCFG_L2WB_BIT) == -1) {
 				FAIL("HWCONFIG_L2CACHE", "");
 			}
+			tcm_size = h2_info(INFO_TCM_SIZE);
 			argc -= 2; argv += 2;
 			continue;
 
@@ -1981,6 +2053,14 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 #endif
+
+		} else if (0 == strcmp(argv[0], "--noc")) {
+			if (argc < 3) die_usage();
+			if (h2_config_set_noc(strtoull(argv[1], NULL, 0), strtoull(argv[2], NULL, 0)) == -1) {
+				FAIL("CONFIG_NOC", "");
+			}
+			argc -= 3; argv += 3;
+			continue;
 
 		} else if (0 == strcmp(argv[0], "--help")) {
 			kernel_setup();
@@ -2298,8 +2378,9 @@ int main(int argc, char **argv)
 
 	int idx;
 
-	//Remove booter from cmdline
 	pthread_init();
+
+	//Remove booter from cmdline
 	strncpy(errstr, argv[0], ERRSTR_LEN - 1);
 	argc--;
 	argv++;
@@ -2307,11 +2388,6 @@ int main(int argc, char **argv)
 	if (argc < 1) {
 		usage();
 		return 1;
-	}
-	for (idx = 0; idx < argc; idx++) {
-		if (0 == strcmp(argv[idx],"--quiet")) { 
-			silent = 1;
-		}
 	}
 
 	// check for kernel boot errors
@@ -2329,6 +2405,8 @@ int main(int argc, char **argv)
 	tcm_base = (unsigned int)h2_info(INFO_TCM_BASE);
 	tcm_size = h2_info(INFO_TCM_SIZE);
 	clade_base = h2_info(INFO_CLADE_BASE);
+	guest_base = H2K_GUEST_START;
+
 	h2_galloc_init(&tcm_alloc, (unsigned int)tcm_base, (unsigned int)tcm_size, NULL);
 
 	h2_vmtrap_setvec(bootvm_vectors);
@@ -2342,6 +2420,11 @@ int main(int argc, char **argv)
 		FAIL("H2K_INTOP_GLOBEN, H2K_TIME_GUESTINT", "");
 	}
 	h2_vmtrap_setie(1);
+
+#ifdef MULTICORE
+	core_id = h2_info(INFO_CORE_ID);
+	core_count = h2_info(INFO_CORE_COUNT);
+#endif
 
 	/* Each file specifies a set of VMs to run concurrently */
 	while (argc) {
@@ -2395,7 +2478,7 @@ int main(int argc, char **argv)
 			run(idx);
 			free(vm_params);
 			vm_params = NULL;  // malloc anew if more --files
-			tight_fence_hi = 0;
+			tight_fence_hi = 1;
 			guest_base = H2K_GUEST_START;
 
 			h2_anysignal_init(&wake_sig);  // could be leftovers

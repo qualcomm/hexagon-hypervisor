@@ -58,6 +58,12 @@ int h2_config_fatal_hook(unsigned int funcaddr, unsigned int arg);
 int h2_config_cluster_sched(unsigned int enable);
 #endif
 
+// FIXME: hack for setting noc table addresses
+
+static inline int h2_config_set_noc(unsigned int master, unsigned int slave) {
+	return h2_config_trap(CONFIG_NOC, master, slave, 0, 0);
+}
+
 /** @} */
 
 #endif

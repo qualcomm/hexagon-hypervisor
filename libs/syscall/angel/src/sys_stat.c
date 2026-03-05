@@ -5,7 +5,7 @@
 
 #include "allsyscalls.h"
 
-errno_t sys_stat(const char *name, void *buffer) {
+sys_call_ret_t sys_stat_internal(const char *name, void *buffer) {
 	struct {
 		char *n;
 		void *buf;
@@ -15,6 +15,9 @@ errno_t sys_stat(const char *name, void *buffer) {
 	clean_str(name);
 	clean(buffer, sizeof(struct __sys_stat) / 4);
 	clean(&x, 2);
-	return ANGEL(SYS_STAT, &x, 0);
+	return angel_with_err(SYS_STAT, &x, 0);
 }
 
+errno_t sys_stat(const char *name, void *buffer) {
+	return sys_stat_internal(name, buffer).ret_value;
+}

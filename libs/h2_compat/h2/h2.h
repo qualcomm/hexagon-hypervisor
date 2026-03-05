@@ -38,6 +38,7 @@ extern "C" {
 #include "h2_debug.h"
 #include "h2_sleep.h"
 #include "h2_thread_compat.h"
+#include "h2_elf.h"
 
 #ifdef __cplusplus
 } /* closing brace for extern "C" */

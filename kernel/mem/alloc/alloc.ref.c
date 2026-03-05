@@ -12,12 +12,6 @@
 #define WORDS(X) (((X) + sizeof(H2K_mem_alloc_tag_t)) / sizeof(H2K_mem_alloc_tag_t))
 #define UNITS(X) (((X) + ALLOC_UNIT) / ALLOC_UNIT)
 
-/* EJP: move to kg? In theory this allows KG to be alloc'd, but in practice we
- * use KG really early */
-static H2K_mem_alloc_tag_t *heap IN_SECTION(".data.core.globals");
-static u32_t heap_size IN_SECTION(".data.core.globals");
-static u32_t heap_lock IN_SECTION(".data.core.globals");
-
 H2K_mem_alloc_tag_t *H2K_mem_alloc_free_spinlocked(u32_t *ptr) {
 
 	H2K_mem_alloc_tag_t *tag = (H2K_mem_alloc_tag_t *)ptr - 1;
@@ -44,7 +38,7 @@ H2K_mem_alloc_tag_t *H2K_mem_alloc_free_spinlocked(u32_t *ptr) {
 /* Request mem, in bytes.  Return size and pointer to beginning of aligned space, or NULL */
 H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 
-	H2K_mem_alloc_tag_t *tag = &heap[ALLOC_UNIT - 1]; // first tag
+	H2K_mem_alloc_tag_t *tag = &(H2K_gp->alloc_heap)[ALLOC_UNIT - 1]; // first tag
 	H2K_mem_alloc_tag_t *splinter;
 	int request_units;
 	int request_words;
@@ -52,7 +46,7 @@ H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 
 	ret.raw = 0;
 
-	H2K_spinlock_lock(&heap_lock);
+	H2K_spinlock_lock(&(H2K_gp->alloc_heap_lock));
 	while (1) {
 		if (tag->released) {  // try to free
 			BKL_LOCK();  // can't free until H2K_switch() is done with the block
@@ -63,7 +57,7 @@ H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 		if (!(tag + tag->size)->free || BYTES(tag->size - 1) < request) {
 			tag += tag->size;
 			if (tag->size == 0) { // all out of bacon today
-				H2K_spinlock_unlock(&heap_lock);
+				H2K_spinlock_unlock(&(H2K_gp->alloc_heap_lock));
 				return ret;
 			}
 		} else break;
@@ -85,7 +79,7 @@ H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 		(tag + tag->size)->free = 0;
 	}
 
-	H2K_spinlock_unlock(&heap_lock);
+	H2K_spinlock_unlock(&(H2K_gp->alloc_heap_lock));
 	ret.ptr = (u32_t *)(tag + 1);
 	ret.size = (tag->size - 1) * sizeof(H2K_mem_alloc_tag_t);
 	return ret;
@@ -94,31 +88,31 @@ H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 H2K_mem_alloc_tag_t *H2K_mem_alloc_free(void *vptr) {
 	u32_t *ptr = vptr;
 	H2K_mem_alloc_tag_t *ret;
-	H2K_spinlock_lock(&heap_lock);
+	H2K_spinlock_lock(&(H2K_gp->alloc_heap_lock));
 	ret = H2K_mem_alloc_free_spinlocked(ptr);
-	H2K_spinlock_unlock(&heap_lock);
+	H2K_spinlock_unlock(&(H2K_gp->alloc_heap_lock));
 	return ret;
 }
 
 /* Assume addr is cache-aligned */
 void H2K_mem_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size) {
 	
-	heap = addr;
-	heap_size = size;
+	H2K_gp->alloc_heap = addr;
+	H2K_gp->alloc_heap_size = size;
 
 	/* Last word before start of aligned space holds the tag for the first free
 		 block, which contains all allocatable space */
-	heap[ALLOC_UNIT - 1].size = heap_size - ALLOC_UNIT;
-	heap[ALLOC_UNIT - 1].free = 0;    // bogus previous is "allocated"
-	heap[ALLOC_UNIT - 1].released = 0;
+	(H2K_gp->alloc_heap)[ALLOC_UNIT - 1].size = (H2K_gp->alloc_heap_size) - ALLOC_UNIT;
+	(H2K_gp->alloc_heap)[ALLOC_UNIT - 1].free = 0;    // bogus previous is "allocated"
+	(H2K_gp->alloc_heap)[ALLOC_UNIT - 1].released = 0;
 	
 	/* The last word in the heap holds the tag for the "next" block, which
 		 doesn't exist, but we need it for the last block's free bit */
-	heap[heap_size - 1].size = 0;     // mark end of allocation space
-	heap[heap_size - 1].free = 1;     // the wilderness is wild and free
-	heap[heap_size - 1].released = 0; // don't care
+	(H2K_gp->alloc_heap)[(H2K_gp->alloc_heap_size) - 1].size = 0;     // mark end of allocation space
+	(H2K_gp->alloc_heap)[(H2K_gp->alloc_heap_size) - 1].free = 1;     // the wilderness is wild and free
+	(H2K_gp->alloc_heap)[(H2K_gp->alloc_heap_size) - 1].released = 0; // don't care
 
-	H2K_spinlock_init(&heap_lock);
+	H2K_spinlock_init(&(H2K_gp->alloc_heap_lock));
 
 }
 

@@ -53,7 +53,7 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 		return H2K_gp->l2size;
 
 	case INFO_TCM_SIZE:
-		return H2K_gp->tcm_size << PAGE_BITS;
+		return H2K_gp->tcm_size;
 
 	case INFO_H2K_PGSIZE:
 		return H2K_PAGESIZE;
@@ -106,7 +106,7 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 		return H2K_gp->vtcm_base << PAGE_BITS;
 
 	case INFO_VTCM_SIZE:
-		return (H2K_gp->vtcm_size << PAGE_BITS) / 1024;
+		return H2K_gp->vtcm_size << (PAGE_BITS - 10);
 
 	case INFO_ECC_BASE:
 		if (0x65 < H2K_gp->arch) {
@@ -178,7 +178,25 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 	case INFO_UNIT_ENTRY:
 		return H2K_cfg_table_unit_entry(unit, entry);
 
-	default:
+	case INFO_CORE_ID:
+		return H2K_gp->core_id;
+
+	case INFO_CORE_COUNT:
+		return H2K_gp->core_count;
+
+	case INFO_SHIFT:
+		return H2K_gp->multicore_shift;
+
+	case INFO_TCM_OFFSET:
+		return H2K_gp->tcm_offset;
+
+	case INFO_NOC_MBASE:
+	return H2K_gp->noc_mbase;
+	
+	case INFO_NOC_SBASE:
+	return H2K_gp->noc_sbase;
+	
+default:
 		return -1;
 	}
 }

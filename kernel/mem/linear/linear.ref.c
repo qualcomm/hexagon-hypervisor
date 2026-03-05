@@ -16,8 +16,10 @@ static inline H2K_translation_t H2K_linear_translate_update(H2K_translation_t in
 {
 	in.size = min(in.size,entry.size);
 	in.pn = entry.ppn;
-	if (in.cccc > 0xF) in.cccc = entry.cccc;
+	if (in.weak_ccc) in.cccc = entry.cccc;
 	in.xwru &= entry.xwru;
+	in.weak_ccc = entry.weak_ccc;
+	in.shared = entry.shared;
 	return in;
 }
 
@@ -64,7 +66,7 @@ H2K_translation_t H2K_linear_translate(H2K_translation_t in, H2K_asid_entry_t in
 		if ((evpn & mask) == (badvpn & mask)) {
 			/* REFINE PPN, PERMS */
 			in = H2K_linear_translate_update(in,entry);
-			if (vmblock->guestmap.raw) return H2K_translate(in,vmblock->guestmap);
+			if (!in.shared && vmblock->guestmap.raw) return H2K_translate(in,vmblock->guestmap);
 			return in;
 		}
 		list += 8;

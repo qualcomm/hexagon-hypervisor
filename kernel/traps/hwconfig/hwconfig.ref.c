@@ -105,7 +105,7 @@ static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
 
 	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
 
-	va = H2K_tmpmap_add_and_lock(base, UNCACHED);
+	va = H2K_tmpmap_add_and_lock(base, UNCACHED, SIZE_DEFAULT);
 	reg = (u32_t *) (va + offset);
 	ret = *reg;
 	H2K_tmpmap_remove_and_unlock();
@@ -123,7 +123,7 @@ static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
 
 	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
 
-	va = H2K_tmpmap_add_and_lock(base, UNCACHED);
+	va = H2K_tmpmap_add_and_lock(base, UNCACHED, SIZE_DEFAULT);
 	reg = (u32_t *) (va + offset);
 	ret = *reg;
 	*reg = val;

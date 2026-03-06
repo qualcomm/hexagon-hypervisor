@@ -88,8 +88,14 @@ __attribute__((weak)) off_t lseek(int fd, off_t offset, int whence) {
 
 	if (current_offset == -1)
 		return -1;
+        /* file offset is out of range, only 32bit offsets are supported right
+         * now */
+        if (offset > INT32_MAX || offset < INT32_MIN) {
+          errno = EINVAL;
+          return -1;
+        }
 
-	sys_seek_internal(fd, current_offset + offset);
+        sys_seek_internal(fd, current_offset + offset);
 
 	return sys_ftell(fd);
 }

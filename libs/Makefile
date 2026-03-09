@@ -27,16 +27,18 @@ endif
 #MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a 
 MOST_LIBS= syscall/angel/libangel.a qurt/libqurt.a
 
-# Picolibc support: if PICOLIBC=1, build syscall wrapper
+# Picolibc support: if PICOLIBC=1, build syscall wrapper and locks
 ifeq ($(PICOLIBC),1)
 export PICOLIBC
 SYS_WRAPPER_LIB = syscall/wrapper/libsyscall_wrapper.a
+LOCKS_LIB = locks/liblocks.a
 else
 SYS_WRAPPER_LIB =
+LOCKS_LIB =
 endif
 
 ALL_LIBS= $(H2_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
-LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPPER_LIB))
+LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPPER_LIB) $(LOCKS_LIB))
 
 MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
 
@@ -62,6 +64,9 @@ syscall/angel/libangel.a: tmp $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
 ifeq ($(PICOLIBC),1)
 $(SYS_WRAPPER_LIB):
 	+${MAKE_LIB};
+
+$(LOCKS_LIB):
+	+${MAKE_LIB};
 endif
 
 clean:
@@ -80,7 +85,7 @@ libh2.a: ${ALL_LIBS}
 #  tar is used instead of cp so we can recursively copy and also exclude CVS
 #  Also, /pkg/gnu/bin/tar doesn't seem to work right.
 
-install: libh2.a $(SYS_WRAPPER_LIB)
+install: libh2.a $(SYS_WRAPPER_LIB) $(LOCKS_LIB)
 	mkdir -p $(INSTALLPATH)/lib;
 	mkdir -p $(INSTALLPATH)/include;
 	cp $^ $(INSTALLPATH)/lib;

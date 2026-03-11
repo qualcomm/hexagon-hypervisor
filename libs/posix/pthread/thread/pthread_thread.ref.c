@@ -38,6 +38,10 @@ extern char TLS_END __attribute__((weak));
 static char *elftls_start;
 static unsigned int elftls_size;
 
+#define TLS_ALIGN (8)
+static char *main_thread_tls_unaligned;
+static char *main_thread_tls;
+
 static struct pthread_tcb *pthread_root = NULL;
 static pthread_plainmutex_t pthread_tcb_mutex = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
 
@@ -241,9 +245,8 @@ static struct {
 	struct pthread_tcb main_tcb;
 } mainthread_static_storage;
 
-void pthread_mainthread_setup()
+void pthread_mainthread_setup(struct pthread_tcb *self)
 {
-	struct pthread_tcb *self = &mainthread_static_storage.main_tcb;
 	self->id = h2_thread_myid();
 	self->attrs.detached = 1;
 	pthread_create_common(self);
@@ -251,16 +254,38 @@ void pthread_mainthread_setup()
 	pthread_tcb_add(self);
 }
 
+void sys_exit(int status); // FIXME: check why it is not possible to include angel.h
+
 static void do_pthread_init()
 {
 	char *elftls_end = &TLS_END;
 	elftls_start = &TLS_START;
 	elftls_size = elftls_end - elftls_start;
-	if (elftls_size > MAX_ELFTLS_SIZE) {
-		/* FIXME: FATAL ERROR @ BOOT */;
-		elftls_size = 0;
+
+	if ((elftls_size & ((unsigned int)TLS_ALIGN - 1)) != 0)
+	{
+		sys_exit(ENOEXEC);
+		__builtin_unreachable();
 	}
-	pthread_mainthread_setup();
+	if (elftls_size > MAX_ELFTLS_SIZE)
+	{
+		main_thread_tls_unaligned = malloc(elftls_size + sizeof(struct pthread_tcb) + TLS_ALIGN);
+		if (main_thread_tls_unaligned == NULL)
+		{
+			sys_exit(ENOMEM);
+			__builtin_unreachable();
+		}
+		size_t misalignment = (ssize_t)main_thread_tls_unaligned & ((ssize_t)TLS_ALIGN - 1);
+		main_thread_tls = main_thread_tls_unaligned + (((size_t)TLS_ALIGN - misalignment) & ((size_t)TLS_ALIGN - 1));
+
+		struct pthread_tcb *self = (struct pthread_tcb *)(main_thread_tls + elftls_size);
+
+		pthread_mainthread_setup(self);
+	} else
+	{ // FIXME: WA to not brake booter, remove after complete moving to Picolibc
+		struct pthread_tcb *self = &mainthread_static_storage.main_tcb;
+		pthread_mainthread_setup(self);
+	}
 }
 
 __attribute__((constructor(0)))

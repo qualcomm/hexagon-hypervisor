@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/times.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <sys/time.h>
 #include <signal.h>
 

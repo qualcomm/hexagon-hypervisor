@@ -6,7 +6,7 @@ Your help is essential for keeping this project great and for making it better.
 
 ## Branching Strategy
 
-In general, contributors should develop on branches based off of `main` and pull requests should be made against `main`.
+In general, contributors should develop on branches based on `master` and pull requests should be made against `master`.
 
 ## Submitting a pull request
 
@@ -17,10 +17,10 @@ In general, contributors should develop on branches based off of `main` and pull
     git clone https://github.com/<username>/hexagon-hypervisor.git
     ```
 
-1. Create a new branch based on `main`:
+1. Create a new branch based on `master`:
 
     ```bash
-    git checkout -b <my-branch-name> main
+    git checkout -b <my-branch-name> master
     ```
 
 1. Create an upstream `remote` to make it easier to keep your branches up-to-date:
@@ -39,7 +39,7 @@ In general, contributors should develop on branches based off of `main` and pull
 1. After committing your changes on the topic branch, sync it with the upstream branch:
 
     ```bash
-    git pull --rebase upstream main
+    git pull --rebase upstream master
     ```
 
 1. Push to your fork.
@@ -50,7 +50,7 @@ In general, contributors should develop on branches based off of `main` and pull
 
     The `-u` is shorthand for `--set-upstream`. This will set up the tracking reference so subsequent runs of `git push` or `git pull` can omit the remote and branch.
 
-1. [Submit a pull request](https://github.com/qualcomm/hexagon-hypervisor/pulls) from your branch to `main`.
+1. [Submit a pull request](https://github.com/qualcomm/hexagon-hypervisor/pulls) from your branch to `master`.
 1. Pat yourself on the back and wait for your pull request to be reviewed.
 
 ## Security Analysis of Pull Requests
@@ -68,8 +68,8 @@ By submitting a PR, you agree to participate in this process and help us keep th
 
 Here are a few things you can do that will increase the likelihood of your pull request to be accepted:
 
-- Follow the existing style where possible. **INSERT LINK TO STYLE, e.g. PEP8 for python**
-- Write tests.
+- Follow the existing style where possible. See the file docs/codingstyle.txt
+- Write or modify unit tests following the pattern of existing tests. There are `test` subdirectories in each module (major subdirectories of kernel and libs).
 - Keep your change as focused as possible.
   If you want to make multiple independent changes, please consider submitting them as separate pull requests.
 - Write a [good commit message](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).

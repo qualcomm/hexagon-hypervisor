@@ -1,40 +1,41 @@
-**After repository creation:**
-- [ ] Update this `README.md`. Update the Project Name, description, and all sections. Remove this checklist.
-- [ ] If required, update `LICENSE.txt` and the License section with your project's approved license
-- [ ] Search this repo for "REPLACE-ME" and update all instances accordingly
-- [ ] Update `CONTRIBUTING.md` as needed
-- [ ] Review the workflows in `.github/workflows`, updating as needed. See https://docs.github.com/en/actions for information on what these files do and how they work.
-- [ ] Review and update the suggested Issue and PR templates as needed in `.github/ISSUE_TEMPLATE` and `.github/PULL_REQUEST_TEMPLATE`
+# Hexagon Hypervisor
 
-# Project Name
-
-*\<update with your project name and a short description\>*
-
-Project that does ... implemented in ... runs on Qualcomm® *\<processor\>*
+This software comprises:
+* A hypervisor kernel that provides a stable interface to the Qualcomm® Hexagon™ processor.
+* A virtual-machine model that allows multiple guest operating systems to run concurrently using virtualized system resources.
+* A sample guest operating system that allows application software to run in a virtual machine.
 
 ## Branches
 
-**main**: Primary development branch. Contributors should develop submissions based on this branch, and submit pull requests to this branch.
+**master**: Primary development branch. Contributors should develop submissions based on this branch, and submit pull requests to this branch. CI tests this branch; merging pull requests requires passing status and approval.
+
+**stable**: Release and hot-fix branch. We merge master to this branch to create a release candidate. Developers may also base pull requests for simple hot fixes on stable. CI tests this branch; merging pull requests and tagging for release versions requires passing status and approval.
 
 ## Requirements
 
-List requirements to run the project, how to install them, instructions to use docker container, etc...
+An installation of the [Hexagon SDK](https://softwarecenter.qualcomm.com/catalog/item/Hexagon_SDK).
 
-## Installation Instructions
+## Build Instructions
 
-How to install the software itself.
+* Modify scripts/Makefile.inc.config as needed.
+* `make` in the top-level directory.
+
+make options:
+* ARCHV=\<hexagon architecture version\>. List of available versions is given by ARCHV_LIST in top makefile.
+* TARGET=ref // for debug
 
 ## Usage
 
-Describe how to use the project.
+Run with hexagon-sim from Hexagon tools:
+
+* hexagon-sim \<options\> -- install/bin/booter \<options\> \<application executable\>
+* hexagon-sim \<options\> -- install/bin/booter --help  // list available booter options
 
 ## Development
 
-How to develop new features/fixes for the software. Maybe different than "usage". Also provide details on how to contribute via a [CONTRIBUTING.md file](CONTRIBUTING.md).
+See [CONTRIBUTING.md file](CONTRIBUTING.md).
 
 ## Getting in Contact
-
-How to contact maintainers. E.g. GitHub Issues, GitHub Discussions could be indicated for many cases. However a mail list or list of Maintainer e-mails could be shared for other types of discussions. E.g.
 
 * [Report an Issue on GitHub](../../issues)
 * [Open a Discussion on GitHub](../../discussions)
@@ -42,6 +43,4 @@ How to contact maintainers. E.g. GitHub Issues, GitHub Discussions could be indi
 
 ## License
 
-*\<update with your project name and license\>*
-
-*\<hexagon-hypervisor\>* is licensed under the [BSD-3-clause License](https://spdx.org/licenses/BSD-3-Clause.html). See [LICENSE.txt](LICENSE.txt) for the full license text.
+Hexagon Hypervisor is licensed under the [BSD-3-clause License](https://spdx.org/licenses/BSD-3-Clause.html). See [LICENSE.txt](LICENSE.txt) for the full license text.

@@ -24,4 +24,4 @@ Please delete options that are not relevant.
 - [ ] Any dependent changes have been merged and published in downstream modules
 
 **Additional Context**
-Add any other context or screenshots about the pull request here.
+Add any other context about the pull request here.

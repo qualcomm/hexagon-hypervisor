@@ -23,7 +23,7 @@ FUNC_START H2K_event_vectors .text.core.vectors .p2align VEC_P2ALIGN
 #if ARCHV < 73
 	jump H2K_handle_rsvd
 #else
-	jump H2K_handle_error // DMA TLB, pass to guest
+	jump H2K_handle_dma
 #endif
 	jump H2K_handle_trap0
 	jump H2K_handle_trap1

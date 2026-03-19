@@ -21,15 +21,25 @@
 
 static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_context *me) {
 
-	u32_t volatile *p_index = &H2K_gp->tlb_index;
+	u32_t volatile *p_index;
 	u32_t index;
 
+#if ARCHV >= 73
+	p_index = (entry.hsv39 ? &H2K_gp->tlb_index_dma : &H2K_gp->tlb_index);
+#else
+	p_index = &H2K_gp->tlb_index;
+#endif
+	
 	/* Need to tlblock even with ctlbw because futex code locks TLB */
 	H2K_mutex_lock_tlb();
 	index = *p_index;
 
 	if (H2K_mem_tlb_insert_index(entry, index & me->tlbidxmask)) {
+#if ARCHV >= 73
+		if ((index + 1) <= (entry.hsv39 ? H2K_gp->last_tlb_index_dma : H2K_gp->last_tlb_index)) {
+#else
 		if ((index + 1) <= H2K_gp->last_tlb_index) {
+#endif
 			*p_index = index + 1;
 		} else {
 			*p_index = 0;
@@ -53,7 +63,11 @@ void H2K_mem_tlb_fill(u32_t va, H2K_thread_context *me)
 		return;
 	}
 	trans = H2K_translate(trans, H2K_gp->asid_table[asid]);
-	if ((entry = H2K_mem_tlbfmt_from_trans(trans,va,asid)).raw == 0) {
+#if ARCHV >= 73
+	if ((entry = H2K_mem_tlbfmt_from_trans(trans, va, asid, H2K_gp->tlb_size_dma)).raw == 0) {
+#else
+		if ((entry = H2K_mem_tlbfmt_from_trans(trans, va, asid)).raw == 0) {
+#endif
 		H2K_mem_pagefault(va,me);
 	} else {
 		H2K_mem_stlb_add(va,asid,entry,me);

@@ -98,6 +98,6 @@ static inline int H2K_mem_tlboc(u64_t entry)
 
 void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) IN_SECTION(".text.mem.tlb");
 void H2K_mem_tlb_invalidate_asid(u32_t asid) IN_SECTION(".text.mem.tlb");
-
+void H2K_mem_tlb_dma_clear(void) IN_SECTION(".text.mem.tlb");
 #endif
 

@@ -121,6 +121,14 @@ typedef struct H2K_vmblock_struct {
 		};
 		u64_t stlbmiss;
 	};
+
+	union {
+		struct {
+			u32_t dmatlbmiss_lo;
+			u32_t dmatlbmiss_hi;
+		};
+		u64_t dmatlbmiss;
+	};
 #endif
 
 } __attribute__((aligned(32))) H2K_vmblock_t;

@@ -123,14 +123,18 @@ typedef struct {
 	};
 
 	u32_t mask_for_ipi;
+
 	u32_t tlb_index;
 	u32_t last_tlb_index;
+	u32_t tlb_size;
+	u64_t pinned_tlb_mask;
 #if ARCHV >= 73
+	u32_t tlb_index_dma;
+	u32_t last_tlb_index_dma;
+	u32_t tlb_size_dma;
 	u32_t dma_tlb_start;
 #endif
 	H2K_spinlock_t tmpmap_lock;
-	u32_t tlb_size;
-	u64_t pinned_tlb_mask;
 	H2K_spinlock_t asid_spinlock;
 	u64_t oncpu_start[MAX_HTHREADS];
 	u64_t oncpu_wait[MAX_HTHREADS];

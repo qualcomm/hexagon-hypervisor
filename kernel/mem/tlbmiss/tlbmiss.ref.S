@@ -55,9 +55,9 @@ FUNC_START H2K_handle_tlbmissx .text.mem.tlbmiss .p2align 2
 	p0 = cmp.eq(r3,#1)
 	p1 = cmp.eq(r3,#2)
 	if (p0) r2 = add(r2,#16)
-	if (!p1) jump .Ltlbmiss_common
+	if (!p1) jump H2K_tlbmiss_common
 	r2 = badva
-	jump .Ltlbmiss_common
+	jump H2K_tlbmiss_common
 
 FUNC_END H2K_handle_tlbmissx
 
@@ -81,7 +81,8 @@ FUNC_START H2K_handle_tlbmissrw .text.mem.tlbmiss .p2align 2
 #endif
 
 	r2 = badva
-.Ltlbmiss_common:
+.global H2K_tlbmiss_common
+H2K_tlbmiss_common:
 	r1:0 = combine(r7,r2)	// H2K_mem_tlb_fill(va,me)
 	call H2K_mem_tlb_fill // unlocks
 	jump H2K_context_restore_return

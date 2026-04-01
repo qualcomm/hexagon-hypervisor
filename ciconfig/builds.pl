@@ -53,7 +53,7 @@ $builds = {
 		  release => ["opt","opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP",
 			      "ref","ref H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
 		  branch => ["master", "stable", "vapa38"],
-		 }
+		 },
 	   81 => {
 		  buildtool => "g61_latest",
 		  hextool => "6.1",

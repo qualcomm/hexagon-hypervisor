@@ -10,8 +10,9 @@
  * applications can override them if needed.
  */
 
+#include <h2_atomic.h>
+#include <hexagon_protos.h>
 #include <pthread.h>
-#include <stdatomic.h>
 
 /*
  * Lock structure - wraps a pthread_mutex_t
@@ -36,12 +37,13 @@ struct __lock __lock___libc_recursive_mutex = {
 
 /*
  * Pool of dynamic locks for stdio and other uses
- * Using atomics for thread-safe allocation without needing initialization
+ * Using a 64-bit bitmask for thread-safe allocation without needing
+ * initialization Each bit represents one lock slot: 0 = free, 1 = in use
  */
 #define MAX_LOCKS 64
 
 static struct __lock locks[MAX_LOCKS];
-static _Atomic int in_use[MAX_LOCKS];
+static atomic_u64_t in_use = 0;
 
 /*
  * Initialize a new dynamic non-recursive lock
@@ -51,31 +53,42 @@ static _Atomic int in_use[MAX_LOCKS];
  */
 __attribute__((weak)) void __retarget_lock_init(_LOCK_T *lock) {
   int lock_id;
+  unsigned long long old_in_use;
+  unsigned long long new_in_use;
 
-  /* Search for an available lock slot */
-  for (lock_id = 0; lock_id < MAX_LOCKS; lock_id++) {
-    int expected = 0;
-    int desired = 1;
+  /* Use Hexagon-optimized bit operations to find and claim a free slot */
+  do {
+    old_in_use = in_use;
 
-    /* Atomically claim this slot if it's free */
-    if (atomic_compare_exchange_strong(&in_use[lock_id], &expected, desired)) {
-      pthread_mutexattr_t mutexattr;
+    /* Find the first 0 bit (free slot) using Hexagon intrinsic */
+    lock_id = Q6_R_ct0_R(old_in_use);
 
-      /* Initialize mutex attributes for recursive mutex */
-      pthread_mutexattr_init(&mutexattr);
-      pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
-
-      /* Initialize the mutex */
-      pthread_mutex_init(&locks[lock_id].mut, &mutexattr);
-
-      /* Return pointer to the lock */
-      *lock = &locks[lock_id];
+    /* Check if we found a valid slot (ct0 returns 64 if all bits are 1) */
+    if (lock_id >= MAX_LOCKS) {
+      /* Out of lock slots - return NULL */
+      *lock = NULL;
       return;
     }
-  }
 
-  /* Out of lock slots - return NULL */
-  *lock = NULL;
+    /* Set the bit to claim this slot */
+    new_in_use = old_in_use | (1ULL << lock_id);
+
+    /* Atomically claim the slot using Hexagon-optimized compare-swap */
+  } while (h2_atomic_compare_swap64(&in_use, old_in_use, new_in_use) !=
+           old_in_use);
+
+  /* Successfully claimed the slot, now initialize the mutex */
+  pthread_mutexattr_t mutexattr;
+
+  /* Initialize mutex attributes for recursive mutex */
+  pthread_mutexattr_init(&mutexattr);
+  pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
+
+  /* Initialize the mutex */
+  pthread_mutex_init(&locks[lock_id].mut, &mutexattr);
+
+  /* Return pointer to the lock */
+  *lock = &locks[lock_id];
 }
 
 /*
@@ -103,9 +116,8 @@ __attribute__((weak)) void __retarget_lock_close(_LOCK_T lock) {
   /* Destroy the mutex */
   pthread_mutex_destroy(&locks[lock_id].mut);
 
-  /* Mark the slot as free */
-  int desired = 0;
-  atomic_exchange(&in_use[lock_id], desired);
+  /* Mark the slot as free using Hexagon-optimized atomic clear bit */
+  h2_atomic_clrbit64(&in_use, lock_id);
 }
 
 /*

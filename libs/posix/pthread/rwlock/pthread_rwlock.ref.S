@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#if 0
 /* Almost done, try later */
 /*
  * pthread_tryrdlock(pthread_rwlock_t *lock)

@@ -12,7 +12,7 @@ tst:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=tst
 
 clean:
-	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS_ALL) TARG=clean
+	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=clean
 	rm -rf coverage_report.txt coverage_report.lcov index.html
 
 merged.profraw: tst

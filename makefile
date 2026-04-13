@@ -143,10 +143,10 @@ clean: covclean booterclean docclean qurtclean # ucosclean
 	rm -Rf size test.exe stats.txt install kernel/stats.txt
 
 booterclean:
-	$(MAKE) -C booter clean
+	$(MAKE) -C booter ARCHV=$(ARCHV) clean
 
 docclean:
-	$(MAKE) -C libs/docs/dox clean
+	$(MAKE) -C libs/docs/dox ARCHV=$(ARCHV) clean
 	$(MAKE) -f scripts/docs/Makefile.sphinx clean
 
 testclean covclean: qurtclean # ucosclean

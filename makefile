@@ -24,6 +24,10 @@ ifneq ($(findstring $(ARCHV),81,83,85,87,89,91),)
 override ARCHV := 81
 endif
 
+ifneq ($(USE_PKW),)
+export USE_PKW = $(USE_PKW)
+endif
+
 include scripts/Makefile.inc.tools
 
 

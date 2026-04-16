@@ -40,7 +40,7 @@ $builds = {
 		  docs => "opt",
 		  release => ["opt","opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP",
 			      "ref","ref H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
-		  branch => ["master", "stable", "multicore"],
+		  branch => ["master", "stable"],
 		 },
 	   73 => {
 		  buildtool => "g61_latest",
@@ -52,7 +52,7 @@ $builds = {
 		  docs => "opt",
 		  release => ["opt","opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP",
 			      "ref","ref H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
-		  branch => ["master", "stable", "vapa38"],
+		  branch => ["master", "stable"],
 		 },
 	   81 => {
 		  buildtool => "g61_latest",
@@ -64,6 +64,6 @@ $builds = {
 		  docs => "opt",
 		  release => ["opt","opt H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP",
 			      "ref","ref H2K_LOAD_ADDR=0x00400000 H2K_EXTRA_CFLAGS=-DNMI_STOP"],
-		  branch => ["master", "stable", "vapa38"],
+		  branch => ["master", "stable"],
 		 }
 	  };

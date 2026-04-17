@@ -5,6 +5,15 @@ MAKE_INC_TOOLS := 1
 
 export SHELL := /bin/bash
 
+# Toolchain location override.
+# If TOOLCHAIN_BIN is provided, prefer its hexagon-* tools.
+TOOLCHAIN_BIN ?=
+ifneq ($(TOOLCHAIN_BIN),)
+# Ensure sub-makes inherit toolchain bin directory.
+export TOOLCHAIN_BIN
+export PATH := $(TOOLCHAIN_BIN):$(PATH)
+endif
+
 ifneq (,${Q6VERSION})
 export ARCHV := $(patsubst 6%,60,$(subst v,,$(Q6VERSION)))
 else
@@ -18,7 +27,10 @@ export CXX := hexagon-clang++
 export AS := hexagon-clang
 export AR := hexagon-ar
 export RANLIB := hexagon-ranlib
-export COV := $(shell PKW_VERSIONS=hexagon-tools=8.6.07 pkw --which hexagon-coverage)
+
+# pkw isn't always available (e.g. local toolchain drops it). Default to
+# hexagon-coverage and let PATH resolution find it.
+export COV ?= hexagon-coverage
 export LLVM_COV := hexagon-llvm-cov
 export OBJDUMP := hexagon-llvm-objdump
 export GMON_MERGE := hexagon-gmon-merge

@@ -23,6 +23,4 @@
 #define SET_LTS_ERROR(ret, err) do {if (ret == -1) errno = sys_error_translation((err));} while(0)
 #endif
 
-int _Geterrno(void);
-
 #endif /*H2_SYSCALL_WRAPPER*/

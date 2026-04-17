@@ -7,6 +7,18 @@
 #define H2_POSIX_TIME_H 1
 
 #define _PROVIDE_POSIX_TIME_DECLS 1
+#ifdef __PICOLIBC__
+/* Enable POSIX clock IDs in Picolibc's time.h */
+#ifndef _POSIX_MONOTONIC_CLOCK
+#define _POSIX_MONOTONIC_CLOCK 1
+#endif
+#ifndef _POSIX_CPUTIME
+#define _POSIX_CPUTIME 1
+#endif
+#ifndef _POSIX_THREAD_CPUTIME
+#define _POSIX_THREAD_CPUTIME 1
+#endif
+#endif
 #include <time.h> // dinkumware time.h, if we change c libraries we probably need to nuke this
 
 /* In case time.h was included early without defining

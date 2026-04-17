@@ -6,6 +6,7 @@
 #include <h2_alloc.h>
 #include <h2_plainmutex.h>
 #include <stdlib.h>
+#include <malloc.h>
 
 /*
  * h2_alloc.c

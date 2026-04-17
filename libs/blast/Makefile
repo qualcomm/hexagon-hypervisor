@@ -1,9 +1,18 @@
 
 
+
+
+# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-picolibc
+ifeq ($(PICOLIBC),1)
+TARGET_FLAG = --target=hexagon-h2-picolibc
+else
+TARGET_FLAG =
+endif
+
 CC = hexagon-clang
 AR = hexagon-ar
-CFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -g $(OPTIMIZE) $(OPT_ADD) -G0
-ASFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include
+CFLAGS = $(TARGET_FLAG) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include -g $(OPTIMIZE) $(OPT_ADD) -G0
+ASFLAGS = $(TARGET_FLAG) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I../h2/include -I../../kernel/include
 OPTIMIZE := -O2
 
 export BLAST_LIB_INCLUDE=$(shell pwd)/include

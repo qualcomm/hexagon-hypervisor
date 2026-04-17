@@ -5,12 +5,20 @@ MAKE_INC_BOOTVM := 1
 
 VAPA_KERNEL_X_IN := $(INSTALLPATH)/scripts/vapa_kernel.x.in
 VAPA_KERNEL := vapa_kernel.x
+ifeq ($(PICOLIBC),1)
+VAPA_BOOTVM := $(INSTALLPATH)/scripts/vapa_bootvm_picolibc.x
+else
 VAPA_BOOTVM := $(INSTALLPATH)/scripts/vapa_bootvm.x
+endif
 BOOTVM_S := $(INSTALLPATH)/src/bootvm.S
 BOOTVM_O := bootvm.o
 BOOTVM_IMAGE := bootvm_image
 BOOTVM_IMAGE_BIN := bootvm_image.bin
+ifeq ($(PICOLIBC),1)
+BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry_picolibc.S
+else
 BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry.S
+endif
 BOOTVM_ENTRY_O := bootvm_entry.o
 BOOTVM_SYMBOLS := bootvm_image.sym
 BOOTVM_PROG_TMP := $(BOOTVM_PROG)_tmp

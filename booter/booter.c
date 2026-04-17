@@ -671,7 +671,7 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 		vm_params[idx].pmap_added = 1;
 	}
 
-	if (NULL == (pmap->base.raw = (h2_u32_t)realloc((void *)(pmap->base.raw), sizeof(H2K_linear_fmt_t) * (end + npages + 1)))) {
+	if (0 == (pmap->base.raw = (h2_u32_t)realloc((void *)(pmap->base.raw), sizeof(H2K_linear_fmt_t) * (end + npages + 1)))) {
 		error("realloc pmap->base", NULL);
 	}
 	base = (H2K_linear_fmt_t *)(pmap->base.raw);
@@ -764,7 +764,7 @@ void clade_setup(unsigned int idx, long offset) {
 	/* Copy high-prio exception data to TCM */
 	ex_hi_size = ex_hi_end - ex_hi_start;
 	if (ex_hi_size && tcm_size) {
-		if (NULL == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4096, 0))) {
+		if (0 == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4096, 0))) {
 			FAIL("\tgalloc ex_hi", "");
 		}
 		//		BOOTER_PRINTF("memcpy(0x%08x, 0x%08lx, 0x%08lx\n", vm_params[idx].clade_ex_hi, ex_hi_start + offset, ex_hi_size);
@@ -2310,6 +2310,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 	return idx;
 }
 
+#ifndef __PICOLIBC__
 size_t getline(char **lineptr, size_t *n, FILE *stream) {
 
 	char *buf = NULL;
@@ -2362,6 +2363,7 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
 
 	return p - buf - 1;
 }
+#endif /* !__PICOLIBC__ */
 
 int main(int argc, char **argv)
 {

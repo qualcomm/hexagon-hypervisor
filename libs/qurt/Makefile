@@ -5,9 +5,15 @@ H2_BUILD_DIR        := $(INSTALLPATH)/../build/libs/h2
 H2_COMPAT_BUILD_DIR := $(INSTALLPATH)/../build/libs/h2_compat
 POSIX_BUILD_DIR     := $(INSTALLPATH)/../build/libs/posix
 
-CC = hexagon-clang -mv$(TOOLARCH) -Iinclude -Wall -Wno-builtin-requires-header -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include -I$(H2_COMPAT_BUILD_DIR)/include
-AR = hexagon-ar
+# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-picolibc
+ifeq ($(PICOLIBC),1)
+TARGET_FLAG = --target=hexagon-h2-picolibc
+else
+TARGET_FLAG =
+endif
 
+CC = hexagon-clang $(TARGET_FLAG) -mv$(TOOLARCH) -Iinclude -Wall -Wno-builtin-requires-header -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include -I$(H2_COMPAT_BUILD_DIR)/include
+AR = hexagon-ar
 OPTIMIZE := -O2
 
 CFLAGS = -g $(OPTIMIZE) $(OPT_ADD) -G0

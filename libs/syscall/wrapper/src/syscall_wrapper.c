@@ -180,15 +180,26 @@ __attribute__((weak)) off_t lseek(int fd, off_t offset, int whence) {
 	return sys_ftell(fd);
 }
 
-sys_call_ret_t sys_fstat_internal(fd_t fd, void *buffer);
+sys_call_ret_t sys_fstat_internal(int fd, void *buffer);
 
-__attribute__((weak)) int fstat(int fd, struct stat *statbuf) {
+__attribute__((weak)) int fstat(int fd, struct stat *__sbuf) {
 	struct __sys_stat hexstat;
 	sys_call_ret_t res = sys_fstat_internal(fd, &hexstat);
 	int ret = (int)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
-	if (ret >= 0)
-		map_stat(statbuf, &hexstat);
+	if(ret >= 0)
+        {
+          memset(__sbuf, 0, sizeof(*__sbuf));
+          __sbuf->st_dev = hexstat.dev;
+          __sbuf->st_ino = hexstat.ino;
+          __sbuf->st_mode = hexstat.mode;
+          __sbuf->st_nlink = hexstat.nlink;
+          __sbuf->st_rdev = hexstat.rdev;
+          __sbuf->st_size = hexstat.size;
+          __sbuf->st_atime = hexstat.atime;
+          __sbuf->st_mtime = hexstat.mtime;
+          __sbuf->st_ctime = hexstat.ctime;
+        }
 	return ret;
 }
 
@@ -238,8 +249,19 @@ __attribute__((weak)) int stat(const char    *__restrict __path, struct stat    
 	sys_call_ret_t res = sys_stat_internal(__path, &hexstat);
 	int ret = (int)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
-	if (ret >= 0)
-		map_stat(__sbuf, &hexstat);
+	if(ret >= 0)
+        {
+          memset(__sbuf, 0, sizeof(*__sbuf));
+          __sbuf->st_dev = hexstat.dev;
+          __sbuf->st_ino = hexstat.ino;
+          __sbuf->st_mode = hexstat.mode;
+          __sbuf->st_nlink = hexstat.nlink;
+          __sbuf->st_rdev = hexstat.rdev;
+          __sbuf->st_size = hexstat.size;
+          __sbuf->st_atime = hexstat.atime;
+          __sbuf->st_mtime = hexstat.mtime;
+          __sbuf->st_ctime = hexstat.ctime;
+        }
 	return ret;
 }
 
@@ -508,9 +530,3 @@ __attribute__((weak)) DIR *fdopendir(int fd) {
 	SET_LTS_ERROR(-1, ENOSYS);
 	return NULL;
 }
-
-/* libh2.a is still compiled with older libc which defines errno as a macro that
- * expands to _Geterrno we can scrap this symbol once we start building H2 with
- * Picolibc
- */
-int _Geterrno(void) { return errno; }

@@ -1,6 +1,13 @@
 
 ALL: dummy
 
+# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-elf --cstdlib=picolibc
+ifeq ($(PICOLIBC),1)
+TARGET_FLAG = --target=hexagon-h2-elf --cstdlib=picolibc
+else
+TARGET_FLAG =
+endif
+
 OPTIMIZE := -Os
 
 # Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-elf --cstdlib=picolibc
@@ -9,7 +16,6 @@ TARGET_FLAG := --target=hexagon-h2-elf --cstdlib=picolibc
 else
 TARGET_FLAG :=
 endif
-
 CFLAGS := $(TARGET_FLAG) -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG

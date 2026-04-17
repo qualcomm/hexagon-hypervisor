@@ -6,13 +6,9 @@
 #ifndef H2_POSIX_TIME_H
 #define H2_POSIX_TIME_H 1
 
-#if defined(__has_include)
-#if __has_include(<picolibc.h>)
+#if defined(__has_include) && __has_include(<picolibc.h>)
 #include <picolibc.h>
-#endif
-#endif
 
-#ifdef __PICOLIBC__
 #ifndef _POSIX_CPUTIME
 #define _POSIX_CPUTIME 1
 #endif
@@ -27,7 +23,7 @@
 #endif
 #include <time.h>
 
-#ifndef __PICOLIBC__
+#if !defined(__has_include) || !__has_include(<picolibc.h>)
 /* In case time.h was included early without defining
 	 _PROVIDE_POSIX_TIME_DECLS. This can happen as a side-effect when
 	 applications include other system includes before including h2.h, pthread.h,

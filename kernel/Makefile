@@ -6,6 +6,11 @@ H2DIR ?= ..
 include ../scripts/Makefile.inc.tools
 include ../scripts/Makefile.inc.install
 
+# Ensure toolchain path override is honored even when kernel is built directly.
+ifneq ($(TOOLCHAIN_BIN),)
+export PATH := $(TOOLCHAIN_BIN):$(PATH)
+endif
+
 ifeq ($(USE_PKW),1)
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
 endif

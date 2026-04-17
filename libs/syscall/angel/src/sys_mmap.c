@@ -4,8 +4,14 @@
  */
 
 #include "allsyscalls.h"
+#if defined(__has_include) && __has_include(<picolibc.h>)
+#include <malloc.h>
+#endif
 #include <sys/mman.h>
 
+#ifndef MAP_ANON
+#define MAP_ANON MAP_ANONYMOUS
+#endif
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif

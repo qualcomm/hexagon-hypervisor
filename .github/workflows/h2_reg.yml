@@ -6,18 +6,14 @@ on:
     branches: [master]
   workflow_dispatch:
 
-
-vars:
-  ARCHV: "81"
-
 env:
   SDK_URL: https://github.com/snapdragon-toolchain/hexagon-sdk/releases/download/v6.4.0.2/hexagon-sdk-v6.4.0.2-amd64-lnx.tar.xz
   SDK_ROOT: /opt/hexagon-sdk/6.4.0.2/tools/HEXAGON_Tools/19.0.04/Tools
-  ARCHV: ${{ vars.ARCHV }}
+  ARCHV: "81"
 
 jobs:
   build-and-test:
-    name: Build and Test (v${{ vars.ARCHV }})
+    name: Build and Test
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout

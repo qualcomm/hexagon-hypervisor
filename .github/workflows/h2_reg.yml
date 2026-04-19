@@ -13,7 +13,7 @@ env:
 
 jobs:
   build-and-test:
-    name: Build and Test (v68)
+    name: Build and Test (v${{ env.ARCHV }})
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -34,7 +34,8 @@ jobs:
         run: |
           mkdir -p /opt/hexagon-sdk
           curl -L "$SDK_URL" | tar xJ -C /opt/hexagon-sdk
-
+          test -d "$SDK_ROOT/bin"
+          
       - name: Add SDK to PATH
         run: echo "$SDK_ROOT/bin" >> "$GITHUB_PATH"
 

@@ -6,14 +6,18 @@ on:
     branches: [master]
   workflow_dispatch:
 
+
+vars:
+  ARCHV: "81"
+
 env:
   SDK_URL: https://github.com/snapdragon-toolchain/hexagon-sdk/releases/download/v6.4.0.2/hexagon-sdk-v6.4.0.2-amd64-lnx.tar.xz
   SDK_ROOT: /opt/hexagon-sdk/6.4.0.2/tools/HEXAGON_Tools/19.0.04/Tools
-  ARCHV: "81"
+  ARCHV: ${{ vars.ARCHV }}
 
 jobs:
   build-and-test:
-    name: Build and Test (v${{ env.ARCHV }})
+    name: Build and Test (v${{ var.ARCHV }})
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -35,7 +39,7 @@ jobs:
           mkdir -p /opt/hexagon-sdk
           curl -L "$SDK_URL" | tar xJ -C /opt/hexagon-sdk
           test -d "$SDK_ROOT/bin"
-          
+
       - name: Add SDK to PATH
         run: echo "$SDK_ROOT/bin" >> "$GITHUB_PATH"
 

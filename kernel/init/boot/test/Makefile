@@ -4,4 +4,4 @@ EXEC=test.elf
 
 include Makefile.inc
 
-CFLAGS += -ffixed-r28 -I../../../include
+CFLAGS += -ffixed-r28 -I$(H2DIR)/kernel/include

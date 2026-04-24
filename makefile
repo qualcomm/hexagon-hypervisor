@@ -2,8 +2,19 @@ include scripts/Makefile.inc.config
 include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
 
+# Enable parallel builds by default.  Use the number of available CPUs so we
+# don't overwhelm shared machines.  A user-supplied -jN on the command line
+# takes precedence because command-line flags are processed after the Makefile.
+ifeq ($(findstring -j,$(MAKEFLAGS)),)
+MAKEFLAGS += -j$(shell nproc)
+endif
+
 ARCHV_LIST ?= 65 68 73 81
-TESTOUT ?= test.out
+# TESTALL_OUT accumulates results across all ARCHV/variant runs in testall.
+# TESTOUT is the per-variant summary; defaults to the per-variant artifact dir
+# (lazy ?= so $(INSTALLPATH) expands correctly when used, not when assigned).
+TESTALL_OUT ?= test.out
+TESTOUT ?= $(INSTALLPATH)/test.out
 
 TARGET ?= opt
 ARCHV ?= 81
@@ -131,6 +142,16 @@ endif
 # FIXME: Remove when cluster sched ported to opt
 export OMIT_OPT=dosched resched
 
+# If invoking 'make ref', 'make ref_cov', or 'make debug' directly without
+# setting TARGET=ref, still use the ref artifact directory.
+ifneq ($(filter ref ref_cov debug,$(MAKECMDGOALS)),)
+T := ref
+endif
+
+# Derive per-ARCHV/TARGET install path.  T is set above by TARGET ifeq blocks.
+INSTALLPATH := $(H2DIR)/artifacts/v$(ARCHV)/$(T)/install
+export INSTALLPATH
+
 
 .PHONY: all
 all:
@@ -138,11 +159,11 @@ all:
 
 distclean: clean docclean gtagsclean
 
-clean: covclean booterclean docclean qurtclean # ucosclean 
+clean: covclean booterclean docclean qurtclean # ucosclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
-	rm -Rf size test.exe stats.txt install kernel/stats.txt
+	rm -Rf size test.exe stats.txt artifacts/v$(ARCHV)/$(T) kernel/stats.txt
 
 booterclean:
 	$(MAKE) -C booter ARCHV=$(ARCHV) clean
@@ -210,33 +231,46 @@ size:
 .PHONY: testall testall_prepare
 testall: testall_prepare $(ARCHV_LIST)
 
+# Ensure testall_prepare (which resets TESTALL_OUT) always finishes before
+# any ARCHV variant starts, so parallel -j testall runs are safe.
+$(ARCHV_LIST): testall_prepare
+
 testall_prepare:
-	git clean -dxf -e 'jenkins[0-9]*'
+	> $(TESTALL_OUT)
 
 .PHONY: $(ARCHV_LIST)
 $(ARCHV_LIST):
-	@echo '/// $@ opt ///' | tee -a $(TESTOUT)
-	$(MAKE) ARCHV=$@ TARGET=opt all test
-	git clean -dxf -e $(TESTOUT) -e 'jenkins[0-9]*'
-	@echo '/// $@ ref ///' | tee -a $(TESTOUT)
-	$(MAKE) ARCHV=$@ TARGET=ref all test
-	git clean -dxf -e $(TESTOUT)  -e 'jenkins[0-9]*'
+	@echo '/// $@ opt ///' | tee -a $(TESTALL_OUT)
+	$(MAKE) ARCHV=$@ TARGET=opt NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) all test
+	@echo '/// $@ ref ///' | tee -a $(TESTALL_OUT)
+	$(MAKE) ARCHV=$@ TARGET=ref NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) all test
 
-test:	h2_test check-fail
+# NO_TEST_RESET=1 prevents the sub-make's 'test' target from truncating TESTALL_OUT
+# between the opt and ref runs of each ARCHV.  Single-variant 'make test' runs use
+# their own per-variant $(INSTALLPATH)/test.out and do not need this flag.
+NO_TEST_RESET ?= 0
+
+test:
+ifneq ($(NO_TEST_RESET),1)
+	> $(TESTOUT)
+endif
+	$(MAKE) h2_test
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) test_summary
+	$(MAKE) check-fail
 
 h2_test: # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee -a $(TESTOUT)
-#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a $(TESTOUT)
-	[ `fgrep -v "WARNING: Overriding currently set revid" $(TESTOUT) | fgrep -c -i warning:` -eq 0 ]
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
-	head -n -1 h2_report.html > report.html
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log
+#$(MAKE) -C ucos sim 2>&1 | tee make.log
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
+	head -n -1 $(INSTALLPATH)/test_report.html > $(INSTALLPATH)/report.html
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee $(TESTOUT)
 #	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
-	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_report.html
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) $(INSTALLPATH)/qurt_report.html
 
 qurt_test_single: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
@@ -248,7 +282,7 @@ qurt_test_libs:
 
 #cov: h2_test
 cov: h2_cov
-	head -n -1 h2_report.html > report.html
+	head -n -1 $(INSTALLPATH)/test_report.html > $(INSTALLPATH)/report.html
 #	tail -n +2 qurt_report.html >> report.html
 
 h2_cov:
@@ -257,7 +291,7 @@ h2_cov:
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
 #	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) coverage_report
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 
 .PHONY: check-fail test-check cov-check cov_fns
 

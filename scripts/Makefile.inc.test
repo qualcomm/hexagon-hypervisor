@@ -43,8 +43,11 @@ else
 endif
 
 ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(H2DIR)/install
+export INSTALLPATH := $(H2DIR)/artifacts/v$(ARCHV)/$(MODEL)/install
 endif
+
+# Per-ARCHV/variant directory for test build artifacts (not installed, not in-source).
+TEST_BUILD_ROOT ?= $(patsubst %/install,%/build/tests,$(INSTALLPATH))
 
 ifeq ($(KERNELPATH),)
 export KERNELPATH := $(H2DIR)/kernel
@@ -88,7 +91,8 @@ LIBH2=${LIBH2_DIR}/libh2.a
 
 LIBH2KERNEL_DIR=${INSTALLPATH}/lib
 LIBH2KERNEL=${LIBH2KERNEL_DIR}/libh2kernel.a
-LIBH2CHECK=${H2DIR}/kernel/libh2check.a
+# libh2check.a is now built and installed by kernel ref_install/opt_install.
+LIBH2CHECK=${INSTALLPATH}/lib/libh2check.a
 
 #  Needs to have the tools already in path...
 #SIMPATH=/pkg/qct/software/hexagon/releases/tools/1.2/qc/bin
@@ -97,11 +101,8 @@ LIBH2CHECK=${H2DIR}/kernel/libh2check.a
 
 ${LIBH2KERNEL}: ${INSTALLPATH}
 
-#check is always in ref/
+# libh2check.a is installed as part of the full build (ref_install/opt_install).
 ${LIBH2CHECK}: ${INSTALLPATH}
-	+cd ${H2DIR}/kernel;\
-	$(MAKE) check DEBUG=0 ARCHV=${ARCHV};\
-	cp build/ref/libh2check.a ${INSTALLPATH}/lib
 
 ${LIBH2}:  ${INSTALLPATH}
 
@@ -120,10 +121,10 @@ prepare: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL} ${BOOTER}
 
 clean_libs:
 	cd ${H2DIR};\
-	rm -rf install; $(MAKE) clean
+	rm -rf artifacts/v$(ARCHV)/$(MODEL); $(MAKE) clean
 
 clean_top:
-	rm -Rf test.cov_fns cov.txt report.html h2_report.html qurt_report.html make.log
+	rm -Rf test.cov_fns cov.txt
 
 
 ################################################################################
@@ -159,9 +160,9 @@ endif
 endif
 
 ifdef STANDALONE
-CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
+CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
 LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
-ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES)
+ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include
 ifeq ($(EN_LLVM_COV), 1)
 CFLAGS += ${LLVM_COV_CFLAGS}
 LDFLAGS += ${LLVM_COV_LDFLAGS}
@@ -238,23 +239,23 @@ report.html:
 	@echo "<html><body><table>" > report.html;\
 	for SUBDIR in ${SUBDIRS}; do\
 	   echo "<tr><td> $$SUBDIR</td>" >> report.html;\
-	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
 	      echo '<td><font style="background-color: red;">' >> report.html; \
 	      echo 'Missing results.txt, that should not be!' >> report.html; \
 	      echo '</font></td>' >> report.html; \
 	   else\
-	      grep "TEST PASSED" $$SUBDIR/results.txt > /dev/null; \
+	      grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt > /dev/null; \
 	      if [ $$? -eq 0 ]; then \
 	         echo '<td>' >> report.html; \
-		 cat $$SUBDIR/results.txt >> report.html; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> report.html; \
 		 echo '</td>' >> report.html; \
 	      else \
 	         echo '<td><font style="background-color: red;">' >> report.html; \
-		 cat $$SUBDIR/results.txt >> report.html; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> report.html; \
 		 echo '</font></td>' >> report.html; \
 	      fi; \
 	   fi; \
-	   cat $$SUBDIR/make.log >> make.log;\
+	   cat $(TEST_BUILD_ROOT)/$$SUBDIR/make.log >> make.log;\
 	done;\
 	echo "</table></body></html>" >> report.html;
 
@@ -264,35 +265,84 @@ qurt_report.html: report.html
 h2_report.html: report.html
 	mv report.html h2_report.html
 
-.PHONY: check check-fail
+# Write the h2 test report directly into the artifact directory.
+# Using $@ avoids the root-level intermediate file that h2_report.html/report.html create,
+# so parallel ARCHV builds do not conflict on a shared source-root filename.
+$(INSTALLPATH)/test_report.html:
+	@echo "<html><body><table>" > $@;\
+	for SUBDIR in ${SUBDIRS}; do\
+	   echo "<tr><td> $$SUBDIR</td>" >> $@;\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
+	      echo '<td><font style="background-color: red;">' >> $@; \
+	      echo 'Missing results.txt, that should not be!' >> $@; \
+	      echo '</font></td>' >> $@; \
+	   else\
+	      grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt > /dev/null; \
+	      if [ $$? -eq 0 ]; then \
+	         echo '<td>' >> $@; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> $@; \
+		 echo '</td>' >> $@; \
+	      else \
+	         echo '<td><font style="background-color: red;">' >> $@; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> $@; \
+		 echo '</font></td>' >> $@; \
+	      fi; \
+	   fi; \
+	done;\
+	echo "</table></body></html>" >> $@
+
+# Write the qurt test report directly into the artifact directory (same pattern
+# as $(INSTALLPATH)/test_report.html above).
+$(INSTALLPATH)/qurt_report.html:
+	@echo "<html><body><table>" > $@;\
+	for SUBDIR in ${SUBDIRS}; do\
+	   echo "<tr><td> $$SUBDIR</td>" >> $@;\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
+	      echo '<td><font style="background-color: red;">' >> $@; \
+	      echo 'Missing results.txt, that should not be!' >> $@; \
+	      echo '</font></td>' >> $@; \
+	   else\
+	      grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt > /dev/null; \
+	      if [ $$? -eq 0 ]; then \
+	         echo '<td>' >> $@; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> $@; \
+		 echo '</td>' >> $@; \
+	      else \
+	         echo '<td><font style="background-color: red;">' >> $@; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> $@; \
+		 echo '</font></td>' >> $@; \
+	      fi; \
+	   fi; \
+	done;\
+	echo "</table></body></html>" >> $@
 
 check-fail:
 	@for SUBDIR in ${SUBDIRS}; do\
 	   echo -n "$$SUBDIR: "; \
-	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
 	      echo FAIL - Empty/No results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "ERROR" $$SUBDIR/results.txt;\
+	   grep "ERROR" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - ERROR detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "FAIL" $$SUBDIR/results.txt;\
+	   grep "FAIL" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - FAIL detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "status 0xaaafa7a1" $$SUBDIR/results.txt;\
+	   grep "status 0xaaafa7a1" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "TEST PASSED" $$SUBDIR/results.txt;\
+	   grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -ne 0 ]; then\
 	      echo FAIL - No PASS detected in results.txt; \
 	      echo; \
@@ -304,30 +354,30 @@ check-fail:
 check:
 	@for SUBDIR in ${SUBDIRS}; do\
 	   echo -n "$$SUBDIR: "; \
-	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
 	      echo FAIL - Empty/No results.txt; \
 	      echo; \
 	      continue;\
 	   fi;\
-	   grep "ERROR" $$SUBDIR/results.txt;\
+	   grep "ERROR" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - ERROR detected in results.txt; \
 	      echo; \
 	      continue;\
 	   fi;\
-	   grep "FAIL" $$SUBDIR/results.txt;\
+	   grep "FAIL" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - FAIL detected in results.txt; \
 	      echo; \
 	      continue;\
 	   fi;\
-	   grep "status 0xaaafa7a1" $$SUBDIR/results.txt;\
+	   grep "status 0xaaafa7a1" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "TEST PASSED" $$SUBDIR/results.txt;\
+	   grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -ne 0 ]; then\
 	      echo FAIL - No PASS detected in results.txt; \
 	      echo; \
@@ -377,8 +427,9 @@ ${EXEC}: ${EXEC}_tmp | constants
 ignore_fns: ${OBJS}
 	${H2DIR}/scripts/gen_ignore_fns.pl ${OBJS} > $@
 
-# each test has a max of 60 seconds!
+# FIXME: comment says 60 seconds but ULIMIT is 300 (5 minutes)
 test.log: ${EXEC}
+	> $@
 ifeq ($(USE_PKW),1)
 	echo PKW_VERSIONS $(PKW_VERSIONS) >> $@
 	echo PKW_arch $(PKW_arch) >> $@

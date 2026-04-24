@@ -5,6 +5,7 @@
 *.pyc
 *.[oa]
 *.elf
+*.elf_tmp
 *.bin
 *.gz
 *.bz2
@@ -17,6 +18,7 @@
 stats.txt
 results.txt
 make.log
+build.log
 test.log
 test*.out
 *.profraw
@@ -48,7 +50,7 @@ HTML/
 docs/doctest/
 docs/doctrees/
 docs/html/
-install/
+artifacts/
 kernel/include/
 kernel/offsets
 kernel/sched/check_sanity/check_sanity_debug.h

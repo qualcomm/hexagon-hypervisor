@@ -1,0 +1,63 @@
+name: Build and Test
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  SDK_URL: https://github.com/snapdragon-toolchain/hexagon-sdk/releases/download/v6.4.0.2/hexagon-sdk-v6.4.0.2-amd64-lnx.tar.xz
+  SDK_ROOT: /opt/hexagon-sdk/6.4.0.2/tools/HEXAGON_Tools/19.0.04/Tools
+  ARCHV: "81"
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libncurses5
+
+      - name: Cache Hexagon SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: /opt/hexagon-sdk
+          key: hexagon-sdk-v6.4.0.2
+
+      - name: Download Hexagon SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /opt/hexagon-sdk
+          curl -L "$SDK_URL" | tar xJ -C /opt/hexagon-sdk
+          test -d "$SDK_ROOT/bin"
+
+      - name: Add SDK to PATH
+        run: echo "$SDK_ROOT/bin" >> "$GITHUB_PATH"
+
+      - name: Build
+        run: make USE_PKW=0 ARCHV=$ARCHV TARGET=opt -j"$(nproc)"
+
+      - name: Sanity test - kernel unit test (atomic)
+        working-directory: kernel/util/atomic/test
+        run: |
+          make tst USE_PKW=0 ARCHV=$ARCHV
+          grep -q "TEST PASSED" results.txt
+
+      - name: Sanity test - booter hello
+        run: |
+          hexagon-sim --simulated_returnval \
+            --subsystem_base 0xfe28 \
+            --cosim_file scripts/timer_v${ARCHV}.cfg \
+            -- install/bin/booter booter/hello \
+            | tee hello_output.txt
+          grep -q "Hello, World!" hello_output.txt
+          
+      - name: Regression test
+        run: |
+          make test USE_PKW=0 ARCHV=$ARCHV
+

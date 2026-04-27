@@ -57,9 +57,27 @@ __attribute__((weak)) int flen(int fd) {
 	return ret;
 }
 
+sys_call_ret_t sys_rename_internal(const char *oldname, const char *newname);
+
+__attribute__((weak)) int rename(const char *old_name, const char *new_name) {
+	sys_call_ret_t res = sys_rename_internal(old_name, new_name);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	return ret;
+}
+
+sys_call_ret_t sys_mkdir_internal(const char *name, int mode);
+
+__attribute__((weak)) int mkdir(const char *path, mode_t mode) {
+	sys_call_ret_t res = sys_mkdir_internal(path, mode);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	return ret;
+}
+
 sys_call_ret_t sys_ftell_internal(fd_t fd);
 
-__attribute__((weak)) int ftell(int fd) {
+static int tell_internal(int fd) {
 	sys_call_ret_t res = sys_ftell_internal(fd);
 	int ret = (int)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
@@ -73,7 +91,7 @@ __attribute__((weak)) off_t lseek(int fd, off_t offset, int whence) {
 
 	switch(whence) {
 	case SEEK_CUR:
-		current_offset = ftell(fd);
+		current_offset = tell_internal(fd);
 		break;
 	case SEEK_END:
 		current_offset = flen(fd);

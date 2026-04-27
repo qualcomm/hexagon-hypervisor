@@ -5,5 +5,11 @@
 
 #include "allsyscalls.h"
 
-int sys_mkdir(char *name, int mode) { clean_str(name); return ANGEL(SYS_MKDIR, name, mode); }
+sys_call_ret_t sys_mkdir_internal(const char *name, int mode) {
+	clean_str(name);
+	return angel_const_with_err(SYS_MKDIR, name, mode);
+}
 
+int sys_mkdir(char *name, int mode) {
+	return sys_mkdir_internal(name, mode).ret_value;
+}

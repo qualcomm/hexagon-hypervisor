@@ -267,7 +267,7 @@ h2_report.html: report.html
 .PHONY: check check-fail
 
 check-fail:
-	@for SUBDIR in ${SUBDIRS}; do\
+	@((((for SUBDIR in ${SUBDIRS}; do\
 	   echo -n "$$SUBDIR: "; \
 	   if [ ! -s $$SUBDIR/results.txt ]; then\
 	      echo FAIL - Empty/No results.txt; \
@@ -299,7 +299,7 @@ check-fail:
 	      exit 1;\
 	   fi;\
 	   echo; \
-	done 2>&1 | tee -a $(TESTOUT)
+	done 2>&1; echo $? >&3) | tee -a $(TESTOUT) >&4) 3>&1) | (read stat; exit $$stat)) 4>&1
 
 check:
 	@for SUBDIR in ${SUBDIRS}; do\

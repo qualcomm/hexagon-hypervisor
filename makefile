@@ -157,6 +157,9 @@ export INSTALLPATH
 all:
 	$(MAKE) $(JFLAG) $(T)
 
+all_clean:
+	rm -rf artifacts/
+
 distclean: clean docclean gtagsclean
 
 clean: covclean booterclean docclean qurtclean # ucosclean
@@ -241,9 +244,11 @@ testall_prepare:
 .PHONY: $(ARCHV_LIST)
 $(ARCHV_LIST):
 	@echo '/// $@ opt ///' | tee -a $(TESTALL_OUT)
-	$(MAKE) ARCHV=$@ TARGET=opt NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) all test
+	$(MAKE) ARCHV=$@ TARGET=opt NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) opt
+	$(MAKE) ARCHV=$@ TARGET=opt NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) test
 	@echo '/// $@ ref ///' | tee -a $(TESTALL_OUT)
-	$(MAKE) ARCHV=$@ TARGET=ref NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) all test
+	$(MAKE) ARCHV=$@ TARGET=ref NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) ref
+	$(MAKE) ARCHV=$@ TARGET=ref NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) test
 
 # NO_TEST_RESET=1 prevents the sub-make's 'test' target from truncating TESTALL_OUT
 # between the opt and ref runs of each ARCHV.  Single-variant 'make test' runs use

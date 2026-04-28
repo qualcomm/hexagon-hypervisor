@@ -219,12 +219,125 @@ file-based make targets so parallel ARCHV builds write to distinct paths with no
   `report.html` also written to `$(INSTALLPATH)/report.html`.
 `clean_top` in `scripts/Makefile.inc.test` updated to drop the now-gone root-level files.
 
-**NEXT TASK:** `make testall` — validate and enable parallel cross-ARCHV builds.
-All output files are now in per-variant artifact dirs and `$(ARCHV_LIST): testall_prepare`
-ordering is in place.  Steps:
-1. Run `make testall` (sequential) to confirm all ARCHV × opt/ref variants pass.
-2. Run `make -j4 testall` to validate true parallel execution.
-3. Investigate any failures; fix any remaining conflicts that surface.
+### Individual ARCHV opt validation (2026-04-24) — COMPLETE
+
+All four opt variants pass:
+- v65/opt: 83 passed, 0 failed
+- v68/opt: 83 passed, 0 failed
+- v73/opt: 83 passed, 0 failed  (was 1 failure — pingpong stack overflow; fixed in same session)
+- v81/opt: 92 passed, 0 failed
+
+v73 has more tests than v65/v68 (83 vs 83 — same), v81 has 9 additional tests.
+
+### Individual ARCHV ref validation (2026-04-24) — COMPLETE
+
+All four ref variants pass (after `rm -rf artifacts/ install/ kernel/build/obj/` clean):
+- v65/ref: 83 passed, 0 failed
+- v68/ref: 83 passed, 0 failed
+- v73/ref: 83 passed, 0 failed
+- v81/ref: 92 passed, 0 failed
+
+The earlier ref failure (noted in previous session) was a stale artifact issue —
+after a clean build, ref works correctly for all variants.
+
+**NEXT TASK:** Consider file-based DAG for test targets (see "Potential future improvement" section) — `opt/v$(ARCHV)/test_summary.html` and `ref/v$(ARCHV)/test_summary.html` as real make nodes with file dependencies, replacing the current phony target approach.
+
+### Validated single-variant workflow (2026-04-24)
+
+Running opt and ref individually works correctly for all four variants.
+The correct invocation pattern is:
+
+    make ARCHV=XX TARGET=opt opt   # or: make ARCHV=XX opt
+    make ARCHV=XX TARGET=opt test
+
+    make ARCHV=XX TARGET=ref ref   # or: make ARCHV=XX ref
+    make ARCHV=XX TARGET=ref test
+
+Added `make all_clean` target (nukes the entire `artifacts/` directory) to
+complement the per-variant `make clean` (which only removes `artifacts/v$(ARCHV)/$(T)`).
+
+### testall fix (2026-04-27) — FIXED AND VALIDATED
+
+Two bugs fixed:
+
+1. **`makefile` `$(ARCHV_LIST)` recipe**: split `all test` into two separate `$(MAKE)` lines
+   (`opt` then `test`, `ref` then `test`) so there is no ordering ambiguity under forced `-j`.
+
+2. **`Makefile.inc.test` `${INSTALLPATH}` fallback**: changed from backslash-continuation
+   with `+$(MAKE) ${MODEL}` to a single `cd ... && $(MAKE) $(TARGET)` line.  Fixes two
+   sub-bugs: `+` on a continuation line is treated as a literal shell character (not a make
+   modifier), and `MODEL` was always `ref` regardless of `TARGET`.
+
+### testall failure analysis (2026-04-24) — NOT YET FIXED
+
+`make testall` fails with `Error 127` ("command not found") on all four ARCHV
+targets.  The failure chain:
+
+    make[3]: *** [scripts/Makefile.inc.test:110: .../v65/opt/install] Error 127
+
+The recipe at `Makefile.inc.test:109-111` is the `${INSTALLPATH}` auto-build
+fallback — triggered when a test's dependency on `${INSTALLPATH}` fires and the
+directory is not yet present:
+
+    ${INSTALLPATH}:
+        cd ${H2DIR};\
+        +$(MAKE) ${MODEL} ARCHV=${ARCHV}
+
+Two bugs in this recipe:
+
+1. **`+` prefix on continuation line causes `+make: command not found`.**
+   The `+` recipe modifier (jobserver participation) is only recognized by make
+   at the *start of a logical recipe line*.  Because the line is a backslash
+   continuation of `cd ${H2DIR};\`, the shell receives the literal string
+   `+make ref ARCHV=65`, and `/bin/bash` reports "command not found".
+
+2. **`MODEL` defaults to `ref` regardless of `TARGET`.**
+   In `Makefile.inc.test`, `MODEL` is set to `ref` when unset (lines 34-35).
+   During a `TARGET=opt` build, `MODEL` is never set to `opt`, so the fallback
+   would try to build `ref` even when the opt install dir is needed.
+
+**Root cause of why the fallback fires at all:**
+The `testall` rule invokes `$(MAKE) ARCHV=$@ TARGET=opt ... all test` as a single
+sub-make.  The Makefile unconditionally sets `MAKEFLAGS += -j$(nproc)`.  When
+this sub-make runs as a child of the `-j$(nproc)` top-level make, it triggers
+`make[2]: warning: -j40 forced in makefile: resetting jobserver mode.`  Under
+this reset, the `prepare` step of `test` appears to start *before* `all`
+finishes (prepare is seen at line 44 of the log while opt_install starts at
+line 59).  This means `${INSTALLPATH}` doesn't exist yet when the test
+Makefile tries to use it, so the fallback rule fires.
+
+The underlying question (to confirm in a fresh session): does GNU Make with
+`MAKEFLAGS += -jN` forced in the Makefile actually run command-line goals
+`all test` in parallel rather than sequentially?  If yes, that is the true
+root cause; the `+` and `MODEL` bugs are secondary.
+
+**Fix approach (to implement next session):**
+- The `testall` rule should pass `$(MAKE) ARCHV=$@ TARGET=opt ... opt` (the
+  explicit build target) and `$(MAKE) ARCHV=$@ TARGET=opt ... test` as two
+  *separate* recipe steps, so there is no ambiguity about ordering.
+- OR: ensure `all test` command-line goals are truly sequential even under
+  forced `-j` — potentially by removing `MAKEFLAGS += -j$(nproc)` and using
+  `JFLAG` more carefully so it doesn't propagate to contexts where it causes
+  goal-ordering problems.
+- Also fix the `${INSTALLPATH}` fallback recipe: remove the `+` prefix from
+  the continuation line, and make it use `$(T)` or `TARGET` rather than
+  `MODEL` so it builds the correct variant.
+
+### Potential future improvement: file-based make DAG
+
+The current `test` target (and related targets) are phony — they "run stuff" rather
+than producing named output files as make nodes.  This limits make's ability to
+reason about what is up-to-date and makes parallel scheduling less reliable.
+
+A cleaner model: each test produces a result file (e.g.
+`artifacts/v$(ARCHV)/$(T)/build/tests/<test>/result`), `test_report.html` depends
+on all result files, and the `test` phony target simply depends on `test_report.html`.
+Make would then have a true file-based DAG: nodes are real artifacts, edges are real
+dependencies, and `-j` parallelism and incremental rebuilds work correctly.
+
+This is not urgent as long as the current infrastructure is reliable, but if we hit
+ordering or parallel-execution problems it is likely the root cause and worth
+addressing then.
 
 Remaining in-source issue (FIXME in Makefile.qurt): per-test qurt support libraries
 (`$(QURT_TEST_LIBS)::`) still build in-source via `cd $@`. Needs the same out-of-tree

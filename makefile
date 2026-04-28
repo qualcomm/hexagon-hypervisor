@@ -10,10 +10,9 @@ MAKEFLAGS += -j$(shell nproc)
 endif
 
 ARCHV_LIST ?= 65 68 73 81
-# TESTALL_OUT accumulates results across all ARCHV/variant runs in testall.
-# TESTOUT is the per-variant summary; defaults to the per-variant artifact dir
-# (lazy ?= so $(INSTALLPATH) expands correctly when used, not when assigned).
-TESTALL_OUT ?= test.out
+VARIANTS   ?= opt ref
+# TESTOUT: per-variant summary file; lives in the artifact dir so parallel
+# ARCHV builds each get their own copy with no conflicts.
 TESTOUT ?= $(INSTALLPATH)/test.out
 
 TARGET ?= opt
@@ -202,6 +201,12 @@ endif
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
+	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
+	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
+	    > $(INSTALLPATH)/manifest.tmp; \
+	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
+	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
+	rm -f $(INSTALLPATH)/manifest.tmp
 
 ref:
 ifeq ($(USE_PKW),1)
@@ -219,6 +224,12 @@ endif
 	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
+	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
+	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
+	    > $(INSTALLPATH)/manifest.tmp; \
+	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
+	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
+	rm -f $(INSTALLPATH)/manifest.tmp
 
 sim: ref
 	$(CC) -mv$(TOOLARCH) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
@@ -231,33 +242,36 @@ size:
 # t:
 # 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
-.PHONY: testall testall_prepare
-testall: testall_prepare $(ARCHV_LIST)
+# All per-variant test result JSON paths — one per ARCHV×variant combination.
+ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifacts/v$a/$v/install/test_results.json))
 
-# Ensure testall_prepare (which resets TESTALL_OUT) always finishes before
-# any ARCHV variant starts, so parallel -j testall runs are safe.
-$(ARCHV_LIST): testall_prepare
+# One rule per ARCHV×variant: 'make test' auto-builds the install via the
+# $(INSTALLPATH)/manifest fallback in Makefile.inc.test when needed, then
+# runs all tests and generates test_results.json via h2_test.
+define ARCHV_VARIANT_RULE
+artifacts/v$(1)/$(2)/install/test_results.json:
+	$$(MAKE) ARCHV=$(1) TARGET=$(2) test
+endef
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_RULE,$a,$v))))
 
-testall_prepare:
-	> $(TESTALL_OUT)
+# Unified test report: one section per ARCHV×variant, driven by all JSON files.
+# Building this target drives the full build+test DAG for every combination.
+artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
+	@mkdir -p artifacts
+	python3 $(H2DIR)/scripts/gen_test_report.py \
+	    --inputs $(ARCHV_VARIANT_JSONS) \
+	    --output $@
 
-.PHONY: $(ARCHV_LIST)
-$(ARCHV_LIST):
-	@echo '/// $@ opt ///' | tee -a $(TESTALL_OUT)
-	$(MAKE) ARCHV=$@ TARGET=opt NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) opt
-	$(MAKE) ARCHV=$@ TARGET=opt NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) test
-	@echo '/// $@ ref ///' | tee -a $(TESTALL_OUT)
-	$(MAKE) ARCHV=$@ TARGET=ref NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) ref
-	$(MAKE) ARCHV=$@ TARGET=ref NO_TEST_RESET=1 TESTOUT=$(TESTALL_OUT) test
+.PHONY: testall
+testall: artifacts/test_report.html
 
-# NO_TEST_RESET=1 prevents the sub-make's 'test' target from truncating TESTALL_OUT
-# between the opt and ref runs of each ARCHV.  Single-variant 'make test' runs use
-# their own per-variant $(INSTALLPATH)/test.out and do not need this flag.
+# NO_TEST_RESET=1 suppresses TESTOUT truncation in 'make test' when the caller
+# wants to accumulate results across multiple runs (legacy single-variant use).
 NO_TEST_RESET ?= 0
 
 test:
 ifneq ($(NO_TEST_RESET),1)
-	> $(TESTOUT)
+	@if [ -d "$(dir $(TESTOUT))" ]; then > "$(TESTOUT)"; fi
 endif
 	$(MAKE) h2_test
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) test_summary
@@ -265,21 +279,22 @@ endif
 
 h2_test: # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
 #$(MAKE) -C ucos sim 2>&1 | tee make.log
 	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
 	head -n -1 $(INSTALLPATH)/test_report.html > $(INSTALLPATH)/report.html
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee $(TESTOUT)
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee $(TESTOUT); exit $${PIPESTATUS[0]}
 #	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) $(INSTALLPATH)/qurt_report.html
 
 qurt_test_single: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee $(TESTOUT)
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee $(TESTOUT); exit $${PIPESTATUS[0]}
 	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
 
 qurt_test_libs:

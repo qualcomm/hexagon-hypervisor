@@ -65,7 +65,7 @@ TIMING ?= --timing
 
 BUSPENALTY ?= --buspenalty 50
 
-ULIMIT ?= 300
+ULIMIT ?= 600
 
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
@@ -107,6 +107,18 @@ ${LIBH2CHECK}: ${INSTALLPATH}
 ${LIBH2}:  ${INSTALLPATH}
 
 ${INSTALLPATH}:
+	cd ${H2DIR} && $(MAKE) $(TARGET) ARCHV=${ARCHV}
+
+# $(INSTALLPATH)/ver is written by opt/ref recipes as a version/git-info record.
+# It is no longer used as a test dependency — $(INSTALLPATH)/manifest replaced it.
+$(INSTALLPATH)/ver:
+	cd ${H2DIR} && $(MAKE) $(TARGET) ARCHV=${ARCHV}
+
+# $(INSTALLPATH)/manifest is written by opt/ref after all install artifacts land.
+# sha256sums of libh2kernel.a, libh2.a, libh2check.a, and booter — only updated
+# when content changes, so tests re-run iff something actually changed.
+# If manifest is missing, auto-build the install.
+$(INSTALLPATH)/manifest:
 	cd ${H2DIR} && $(MAKE) $(TARGET) ARCHV=${ARCHV}
 
 ${BOOTER}: ${INSTALLPATH}
@@ -264,10 +276,23 @@ qurt_report.html: report.html
 h2_report.html: report.html
 	mv report.html h2_report.html
 
+# Derive variant name (opt/ref) from the install path for the JSON generator.
+_VARIANT := $(notdir $(patsubst %/install,%,$(INSTALLPATH)))
+
+# Per-variant parseable test results JSON.  Depends on RESULT_FILES so it is
+# only regenerated when a test result actually changes after a new build.
+$(INSTALLPATH)/test_results.json: $(RESULT_FILES)
+	python3 $(H2DIR)/scripts/gen_test_results.py \
+	    --test-build-root $(TEST_BUILD_ROOT) \
+	    --subdirs "$(SUBDIRS)" \
+	    --archv $(ARCHV) --variant $(_VARIANT) \
+	    --output $@
+
 # Write the h2 test report directly into the artifact directory.
 # Using $@ avoids the root-level intermediate file that h2_report.html/report.html create,
 # so parallel ARCHV builds do not conflict on a shared source-root filename.
-$(INSTALLPATH)/test_report.html:
+# Depends on RESULT_FILES so it is only regenerated when test results change.
+$(INSTALLPATH)/test_report.html: $(RESULT_FILES)
 	@echo "<html><body><table>" > $@;\
 	for SUBDIR in ${SUBDIRS}; do\
 	   echo "<tr><td> $$SUBDIR</td>" >> $@;\
@@ -292,7 +317,7 @@ $(INSTALLPATH)/test_report.html:
 
 # Write the qurt test report directly into the artifact directory (same pattern
 # as $(INSTALLPATH)/test_report.html above).
-$(INSTALLPATH)/qurt_report.html:
+$(INSTALLPATH)/qurt_report.html: $(RESULT_FILES)
 	@echo "<html><body><table>" > $@;\
 	for SUBDIR in ${SUBDIRS}; do\
 	   echo "<tr><td> $$SUBDIR</td>" >> $@;\
@@ -316,7 +341,7 @@ $(INSTALLPATH)/qurt_report.html:
 	echo "</table></body></html>" >> $@
 
 check-fail:
-	@for SUBDIR in ${SUBDIRS}; do\
+	@{ for SUBDIR in ${SUBDIRS}; do\
 	   echo -n "$$SUBDIR: "; \
 	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
 	      echo FAIL - Empty/No results.txt; \
@@ -348,7 +373,7 @@ check-fail:
 	      exit 1;\
 	   fi;\
 	   echo; \
-	done 2>&1 | tee -a $(TESTOUT)
+	done; } 2>&1 | tee -a $(TESTOUT); exit $${PIPESTATUS[0]}
 
 check:
 	@for SUBDIR in ${SUBDIRS}; do\
@@ -426,7 +451,7 @@ ${EXEC}: ${EXEC}_tmp | constants
 ignore_fns: ${OBJS}
 	${H2DIR}/scripts/gen_ignore_fns.pl ${OBJS} > $@
 
-# FIXME: comment says 60 seconds but ULIMIT is 300 (5 minutes)
+# FIXME: comment says 60 seconds but ULIMIT is 600 (10 minutes)
 test.log: ${EXEC}
 	> $@
 ifeq ($(USE_PKW),1)

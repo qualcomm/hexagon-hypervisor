@@ -240,7 +240,7 @@ All four ref variants pass (after `rm -rf artifacts/ install/ kernel/build/obj/`
 The earlier ref failure (noted in previous session) was a stale artifact issue —
 after a clean build, ref works correctly for all variants.
 
-**NEXT TASK:** Consider file-based DAG for test targets (see "Potential future improvement" section) — `opt/v$(ARCHV)/test_summary.html` and `ref/v$(ARCHV)/test_summary.html` as real make nodes with file dependencies, replacing the current phony target approach.
+**DONE (2026-04-27):** File-based DAG for test targets — see section below.
 
 ### Validated single-variant workflow (2026-04-24)
 
@@ -325,35 +325,94 @@ root cause; the `+` and `MODEL` bugs are secondary.
 
 ### Potential future improvement: file-based make DAG
 
-The current `test` target (and related targets) are phony — they "run stuff" rather
-than producing named output files as make nodes.  This limits make's ability to
-reason about what is up-to-date and makes parallel scheduling less reliable.
-
-A cleaner model: each test produces a result file (e.g.
-`artifacts/v$(ARCHV)/$(T)/build/tests/<test>/result`), `test_report.html` depends
-on all result files, and the `test` phony target simply depends on `test_report.html`.
-Make would then have a true file-based DAG: nodes are real artifacts, edges are real
-dependencies, and `-j` parallelism and incremental rebuilds work correctly.
-
-This is not urgent as long as the current infrastructure is reliable, but if we hit
-ordering or parallel-execution problems it is likely the root cause and worth
-addressing then.
+DONE (2026-04-27) — see section below.
 
 Remaining in-source issue (FIXME in Makefile.qurt): per-test qurt support libraries
 (`$(QURT_TEST_LIBS)::`) still build in-source via `cd $@`. Needs the same out-of-tree
 treatment as the per-test $(SUBDIRS) rule. Low priority — qurt test source doesn't
 exist in this repo yet.
 
-Dead code in Makefile.inc.test: the old `report.html`, `h2_report.html`,
-`qurt_report.html` targets (lines ~238-266) are no longer reachable from any build
-path — both h2 and qurt now use the $(INSTALLPATH)/... targets directly. Can be
-removed in a future cleanup pass.
+### File-based DAG for test targets (2026-04-27) — DONE
 
-- `test.out`: fresh on each `make test` run. SUMMARY line first, then per-test PASS/FAIL.
-- `make.log`: raw parallel test run output (overwritten each run). Check for build failures.
-- `artifacts/v$(ARCHV)/$(T)/build/tests/<test-path>/make.log`: full output for one test. Look here when a specific test fails.
-- `h2_report.html`: HTML version of per-test PASS/FAIL summary.
-- `testall` (multi-arch CI): uses `NO_TEST_RESET=1` to accumulate results across arch runs.
+**Goal:** Replace phony `tst` and always-rebuilding test rules with a real file-based
+DAG so Make can skip up-to-date tests and `-j` scheduling is explicit.
+
+**Changes to `scripts/Makefile.coverage`:**
+- `RESULT_FILES` variable: list of `$(TEST_BUILD_ROOT)/%/results.txt` paths (one per test).
+  Defined with `=` (lazy expansion); `TEST_BUILD_ROOT` defined early in the file.
+- `tst: $(RESULT_FILES)` — phony target with no recipe; depends on real file targets.
+- Pattern rule `$(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/ver`:
+  does the setup (mkdir, symlinks, Makefile.inc) + sub-make + `touch $@` on success.
+- Old `$(SUBDIRS)::` double-colon rules kept for `TARG=all` (coverage) path only.
+
+**Changes to `scripts/Makefile.inc.test`:**
+- `$(INSTALLPATH)/test_report.html` and `$(INSTALLPATH)/qurt_report.html` now
+  depend on `$(RESULT_FILES)` — only regenerated when a result file changes.
+- `$(INSTALLPATH)/ver:` rule added — triggers the full build if `ver` is missing
+  (mirrors the existing `$(INSTALLPATH):` auto-build fallback).
+
+**Key semantic:** `$(INSTALLPATH)/ver` is written by every `make opt`/`make ref` run.
+If `ver` is newer than a test's `results.txt`, the test is re-checked (sub-make is
+invoked). If the inner make finds nothing to rebuild, `touch $@` stamps the result
+to record "validated against this build." If `ver` hasn't changed since the last
+test run, the entire `tst` is a no-op.
+
+**Verified behavior (2026-04-27):**
+- `make opt test`: 92 passed, 0 failed (v81/opt)
+- Repeat `make test` (no new `make opt`): `make[2]: Nothing to be done for 'tst'.` — true no-op
+- After `touch ver` (simulate rebuild): tests re-check but simulators don't re-run;
+  `touch $@` stamps results; subsequent `make test` is again a no-op
+
+**DONE (2026-04-28):** Replaced `$(INSTALLPATH)/ver` with `$(INSTALLPATH)/manifest` as the
+test DAG sentinel. The manifest holds sha256sums of `libh2kernel.a`, `libh2.a`,
+`libh2check.a`, and `booter`. Generated at the end of both `opt` and `ref` targets using
+update-if-changed (write to `.tmp`, `cmp -s`, only `cp` if different). This means a
+no-op rebuild that produces identical binaries will not update the manifest and tests will
+stay a true no-op. `$(INSTALLPATH)/manifest:` fallback rule added to `Makefile.inc.test`.
+
+**DONE (2026-04-28):** Fixed silent failure escapes and bumped ULIMIT:
+- `check-fail` in `Makefile.inc.test`: for loop's `exit 1` was swallowed by `| tee -a $(TESTOUT)`.
+  Fixed by wrapping in `{ }` and appending `; exit $${PIPESTATUS[0]}`.
+- `h2_test` in `makefile`: `$(MAKE) tst 2>&1 | tee make.log` swallowed make failure exit code.
+  Fixed with `; exit $${PIPESTATUS[0]}`.
+- `qurt_test` and `qurt_test_single` same fix.
+- `ULIMIT` bumped from 300 → 600 seconds (needed for parallel testall load).
+  `kernel/traps/pmu/test_h2` was hitting the 300s CPU limit under full 8-way parallel load.
+
+**DONE (2026-04-28):** Updated `docs/build_and_test.md`: marked completed todo items as `[x]`, updated
+Output Files section to reference `artifacts/` paths instead of root-level files, replaced
+`install/ver` with `install/manifest` description.
+
+**DONE (2026-04-28):** Unified test report — `artifacts/test_report.html` is a file-based
+target depending on per-variant `test_results.json` files (one per ARCHV×variant combination).
+`testall` is now a phony alias for `make artifacts/test_report.html`. Per-variant JSON is
+generated by `scripts/gen_test_results.py`; unified HTML by `scripts/gen_test_report.py`.
+`make test` auto-builds via the manifest fallback, so the ARCHV_VARIANT_RULE only needs
+`$(MAKE) ARCHV=$(1) TARGET=$(2) test` — no explicit build step in the rule.
+
+Fix required: `> $(TESTOUT)` in `test` target was unconditional, failing when INSTALLPATH
+didn't exist yet. Changed to `if [ -d "$(dir $(TESTOUT))" ]; then > "$(TESTOUT)"; fi` so
+the truncation is skipped on a clean build (prepare will build INSTALLPATH first, then
+test_summary creates TESTOUT fresh). The old `mkdir -p` approach broke `prepare`'s
+`${INSTALLPATH}:` dependency check, causing build output to land in `make.log`.
+
+Validated 2026-04-28 from clean (`make all_clean && make artifacts/test_report.html`):
+- v65/opt: 83 passed, 0 failed
+- v65/ref: 83 passed, 0 failed
+- v68/opt: 83 passed, 0 failed
+- v68/ref: 83 passed, 0 failed
+- v73/opt: 83 passed, 0 failed
+- v73/ref: 83 passed, 0 failed
+- v81/opt: 92 passed, 0 failed
+- v81/ref: 92 passed, 0 failed
+Total: 682 passed, 0 failed → artifacts/test_report.html (50 KB)
+
+TODO: add top-level summary table + parseable combined JSON artifact to gen_test_report.py.
+
+**NEXT TASK:** Consider committing the branch. Remaining open items:
+- Phase 2 DAG (per-component selective re-runs)
+- Top-level summary table + combined JSON in gen_test_report.py
+- Dead code cleanup in `Makefile.inc.test` (old `report.html`/`h2_report.html`/`qurt_report.html` targets ~lines 249-280)
 
 ## Architecture Versions (ARCHV)
 - v3/v4/v5: older versions, different interrupt mask conventions.

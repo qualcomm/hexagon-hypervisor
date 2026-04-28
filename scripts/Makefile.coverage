@@ -7,11 +7,37 @@ SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/^\s*\#.*//;')
 
 TESTOUT ?= $(INSTALLPATH)/test.out
 
+# TEST_BUILD_ROOT must be defined here (before the pattern rule and RESULT_FILES) so
+# that $(TEST_BUILD_ROOT) expands correctly at parse time.  INSTALLPATH is exported by
+# the parent make (h2_test) so it is already available when this file is first read.
+TEST_BUILD_ROOT ?= $(patsubst %/install,%/build/tests,$(INSTALLPATH))
+
+# File-based list of per-test result targets.  Used by tst and test_report.html
+# so make can track what is up-to-date and skip unnecessary work.
+RESULT_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/results.txt, $(SUBDIRS))
+
 all:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
 
-tst:
-	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=tst
+# tst is phony but depends on real file targets so make tracks what needs re-running.
+.PHONY: tst
+tst: $(RESULT_FILES)
+
+# Build and run one test, producing its results.txt.
+# Depends on $(INSTALLPATH)/manifest (sha256 of key install files, updated only when
+# content changes) so tests re-run iff the build actually changed something.
+$(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
+	mkdir -p "$(TEST_BUILD_ROOT)/$*"
+	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc \
+	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
+	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
+	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
+	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
+	$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" tst TEST="$*" 2>&1 | \
+	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
+	    TSTAT=$${PIPESTATUS[0]}; \
+	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
+	    exit $$TSTAT
 
 # Collect per-test results.txt into a clean PASS/FAIL summary and append to TESTOUT.
 # Called after tst completes; each test's full output is in <test-dir>/make.log.

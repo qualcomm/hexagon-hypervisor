@@ -12,7 +12,7 @@ unsigned int h2_prof_sample(unsigned long long int **res) {
 	unsigned int hthreads_mask;
 
 	if (NULL == (*res = (unsigned long long int *)h2_malloc(sizeof(unsigned long long int) * 6))) {
-		return NULL;
+		return 0;
 	}
 
 	asm volatile

@@ -99,7 +99,6 @@ struct heap_info {	/* heap information */
 	int stack_base;
 	int stack_limit;
 	};
-
 struct __sys_stat
 {
     unsigned long long int dev;
@@ -114,6 +113,7 @@ struct __sys_stat
     unsigned long ctime;
     unsigned long __pad2;
 }__attribute__ ((aligned (8)));
+
 
 	/* SYSTEM CALL FUNCTIONS */
 errno_t sys_clock(void);

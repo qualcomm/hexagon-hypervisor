@@ -1,8 +1,14 @@
 
 
-CC = hexagon-clang -mv$(TOOLARCH) -Iinclude -Wall -Wno-builtin-requires-header -I../h2/include -I../posix/include -I../h2_compat/include
-AR = hexagon-ar
+# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-picolibc
+ifeq ($(PICOLIBC),1)
+TARGET_FLAG = --target=hexagon-h2-picolibc
+else
+TARGET_FLAG =
+endif
 
+CC = hexagon-clang $(TARGET_FLAG) -mv$(TOOLARCH) -Iinclude -Wall -Wno-builtin-requires-header -I../h2/include -I../posix/include -I../h2_compat/include
+AR = hexagon-ar
 OPTIMIZE := -O2
 
 CFLAGS = -g $(OPTIMIZE) $(OPT_ADD) -G0

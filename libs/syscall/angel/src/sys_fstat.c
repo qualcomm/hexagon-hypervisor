@@ -5,7 +5,7 @@
 
 #include "allsyscalls.h"
 
-errno_t sys_fstat(fd_t fd, void *buffer)
+sys_call_ret_t sys_fstat_internal(fd_t fd, void *buffer)
 {
 	struct {
 		fd_t fd;
@@ -15,6 +15,9 @@ errno_t sys_fstat(fd_t fd, void *buffer)
 	x.buf = ANGEL_OFFSET_PTR(buffer);
 	clean(buffer, sizeof(struct __sys_stat) / 4);
 	clean(&x, 2);
-	return ANGEL(SYS_FSTAT,&x,0);
+	return angel_with_err(SYS_FSTAT, &x, 0);
 }
 
+errno_t sys_fstat(fd_t fd, void *buffer) {
+	return sys_fstat_internal(fd, buffer).ret_value;
+}

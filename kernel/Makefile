@@ -5,6 +5,11 @@ H2DIR ?= ..
 
 include ../scripts/Makefile.inc.tools
 
+# Ensure toolchain path override is honored even when kernel is built directly.
+ifneq ($(TOOLCHAIN_BIN),)
+export PATH := $(TOOLCHAIN_BIN):$(PATH)
+endif
+
 ifeq ($(USE_PKW),1)
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
 endif
@@ -223,4 +228,3 @@ opt_install: info opt
 	cp include/asm_offsets.h $(INSTALLPATH)/include # for state trap
 
 check: build/ref/libh2check.a
-

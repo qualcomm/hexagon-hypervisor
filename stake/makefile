@@ -20,12 +20,18 @@ include ../scripts/Makefile.inc.bootvm
 CONSTS := ./consts.pl
 SYMS := ./syms.pl
 
-CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -moslib=h2 -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L$(INSTALLPATH)/lib
+ifeq ($(PICOLIBC),1)
+OSLIB_FLAG = --target=hexagon-h2-picolibc
+else
+OSLIB_FLAG = -moslib=h2
+endif
+
+CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g $(OSLIB_FLAG) -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L$(INSTALLPATH)/lib
 
 CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_KERNEL_ADDRBITS) -Qunused-arguments
 
-SCRIPTS = $(CONSTS) $(SYMS) vapa_bootvm.x vapa_kernel.x.in
-SRCFILES = bootvm_entry.S bootvm.S min_crt0.S
+SCRIPTS = $(CONSTS) $(SYMS) vapa_bootvm.x vapa_bootvm_picolibc.x vapa_kernel.x.in
+SRCFILES = bootvm_entry.S bootvm_entry_picolibc.S bootvm.S min_crt0.S
 BINFILES = kernel_tmp
 FILES := $(SCRIPTS) $(SRCFILES) $(BINFILES)
 

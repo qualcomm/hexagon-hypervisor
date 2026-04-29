@@ -260,7 +260,8 @@ artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
 	@mkdir -p artifacts
 	python3 $(H2DIR)/scripts/gen_test_report.py \
 	    --inputs $(ARCHV_VARIANT_JSONS) \
-	    --output $@
+	    --output $@ \
+	    --summary-out artifacts/test.out
 
 .PHONY: testall
 testall: artifacts/test_report.html
@@ -284,7 +285,6 @@ h2_test: # ucosclean
 	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
-	head -n -1 $(INSTALLPATH)/test_report.html > $(INSTALLPATH)/report.html
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
@@ -302,7 +302,6 @@ qurt_test_libs:
 
 #cov: h2_test
 cov: h2_cov
-	head -n -1 $(INSTALLPATH)/test_report.html > $(INSTALLPATH)/report.html
 #	tail -n +2 qurt_report.html >> report.html
 
 h2_cov:

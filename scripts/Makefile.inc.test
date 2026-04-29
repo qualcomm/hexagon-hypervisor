@@ -246,36 +246,6 @@ cov.rpt: cov.txt
 #	      grep -A 1 FAIL $$SUBDIR/test.log >> report.html; \
 #	      echo FAIL:  no pass signature >> report.html;\
 
-report.html:
-	@echo "<html><body><table>" > report.html;\
-	for SUBDIR in ${SUBDIRS}; do\
-	   echo "<tr><td> $$SUBDIR</td>" >> report.html;\
-	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
-	      echo '<td><font style="background-color: red;">' >> report.html; \
-	      echo 'Missing results.txt, that should not be!' >> report.html; \
-	      echo '</font></td>' >> report.html; \
-	   else\
-	      grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt > /dev/null; \
-	      if [ $$? -eq 0 ]; then \
-	         echo '<td>' >> report.html; \
-		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> report.html; \
-		 echo '</td>' >> report.html; \
-	      else \
-	         echo '<td><font style="background-color: red;">' >> report.html; \
-		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> report.html; \
-		 echo '</font></td>' >> report.html; \
-	      fi; \
-	   fi; \
-	   cat $(TEST_BUILD_ROOT)/$$SUBDIR/make.log >> make.log;\
-	done;\
-	echo "</table></body></html>" >> report.html;
-
-qurt_report.html: report.html
-	mv report.html qurt_report.html
-
-h2_report.html: report.html
-	mv report.html h2_report.html
-
 # Derive variant name (opt/ref) from the install path for the JSON generator.
 _VARIANT := $(notdir $(patsubst %/install,%,$(INSTALLPATH)))
 

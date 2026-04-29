@@ -414,6 +414,127 @@ TODO: add top-level summary table + parseable combined JSON artifact to gen_test
 - Top-level summary table + combined JSON in gen_test_report.py
 - Dead code cleanup in `Makefile.inc.test` (old `report.html`/`h2_report.html`/`qurt_report.html` targets ~lines 249-280)
 
+## Code Coverage (Legacy gmon approach)
+
+### Overview
+
+Two coverage mechanisms exist in the codebase:
+
+1. **Legacy gmon-based** (working): The Hexagon simulator produces `gmon.out` /
+   `gmon-0x*.out` profiling files during test runs.  `hexagon-coverage` converts these
+   to `cov.txt` per-test, `merge_cov.py` aggregates them, and `cov_rpt_tool` produces
+   the human-readable `cov.rpt`.  This works for both C and assembly.
+
+2. **LLVM instrumentation** (partially wired, not working): `TARGET=llvm_cov` adds
+   `-fprofile-instr-generate -fcoverage-mapping` to CFLAGS, producing `default.profraw`
+   files.  The merge/report targets exist in `Makefile.coverage` but are incomplete:
+   they only instrument STANDALONE test binaries (not the kernel/libs), and the HTML
+   report target is commented out as a TODO.  Assembly code is not instrumented by LLVM,
+   which is a fundamental limitation given how much asm H2 has.
+
+### How to run legacy coverage
+
+```
+make TARGET=opt_cov opt cov ARCHV=81
+```
+
+This:
+1. Rebuilds with `-fno-inline` (`OPTIMIZE_COV`)
+2. Runs all tests via `h2_cov` → `Makefile.coverage all` (TARG=all per test), generating
+   gmon files and per-test `cov.txt` in `artifacts/v81/opt/build/tests/<test-path>/`
+3. Merges all per-test `cov.txt` files into a root-level `cov.txt` via `merge_cov.py`
+4. Generates `cov.rpt` via `cov_rpt_tool`
+5. Generates `$(INSTALLPATH)/test_report.html`
+
+### Bugs fixed to get coverage working (2026-04-28)
+
+All three were fallout from the out-of-tree build migration:
+
+1. **`Makefile.inc.test:237` `find ./kernel ./libs`**: Per-test `cov.txt` files now
+   land in `TEST_BUILD_ROOT` (not in-source).  Changed to `find $(TEST_BUILD_ROOT)`.
+   Also added `--dir $(H2DIR) --installpath $(INSTALLPATH)` args to the `merge_cov.py` call.
+
+2. **`merge_cov.py` hardcoded `h2dir+"/install/ver"`**: Added `--installpath` option
+   to the script; defaults to `h2dir+"/install"` for backward compat.  The Makefile
+   now passes `--installpath $(INSTALLPATH)`.  (The `--dir` arg is for the `scripts/`
+   directory and is separate.)
+
+3. **`merge_cov.py` `nop_patt.match().group(1)` crash**: `nop_patt` does not match
+   every instruction; `match` can be `None`.  Added `match and` guard before
+   `match.group(1)`.  Pre-existing bug; not triggered until coverage was actually run.
+
+### v81/opt coverage results (2026-04-28, 220 tracked kernel functions)
+
+- **133 functions at 100%** (60%)
+- **77 functions at 0%** (35%) — see list in `cov.rpt`
+- **10 functions partially covered** (1–99%)
+
+Notable 0% functions (potential test gaps):
+`H2K_asid_match`, `H2K_asid_table_eviction`, `H2K_fatal_crash`, `H2K_futex_cancel`,
+`H2K_handle_nmi`, `H2K_handle_rsvd`, `H2K_vmop_boot`, `H2K_vmop_free`, `H2K_vmop_status`,
+`H2K_mem_physread_dword`, `H2K_intpool_cancel`, `H2K_tree_remove`, `H2K_varadix_update`,
+and many low-level accessor stubs (`H2K_get_*`, `H2K_set_*`, `H2K_dccleana`, etc.)
+
+Some 0% functions are expected to be hard to reach (NMI handler, fatal paths, rsvd traps).
+Others like `futex_cancel`, `vmop_boot/free/status`, `tree_remove` may indicate real gaps.
+
+### Known issues / noise
+
+- **merge_cov.py diagnostic messages go to stdout**, not stderr.  They get mixed into
+  `cov.txt` and then into `cov.rpt` (where `cov_rpt_tool` ignores non-matching lines).
+  Should redirect those `print()` calls to `sys.stderr`.
+
+- **`cov.txt` not removed on Make failure** (no `.DELETE_ON_ERROR`).  If `merge_cov.py`
+  fails, a zero-byte `cov.txt` is left behind.  Make won't rebuild it next run.
+  Workaround: `rm cov.txt` before retrying.  Fix: add `.DELETE_ON_ERROR` or check for
+  empty output.
+
+- **"additional pc / parse bit mismatch" warnings**: The `--offset_pc` normalization
+  subtracts the function's load address to produce position-independent PCs.  When
+  different tests link the kernel at different addresses and the code layout differs
+  slightly (tail calls, code folding), the normalized PCs don't always match across
+  files.  Pre-existing issue; data is still useful.
+
+- **Coverage pipeline not integrated with `testall`**: `make testall` runs opt+ref for
+  all four ARCHVs but does not run coverage.  Coverage must be triggered manually with
+  `make TARGET=opt_cov opt cov ARCHV=81`.
+
+### Future coverage tasks
+
+- [x] Redirect `merge_cov.py` diagnostics to stderr (done 2026-04-28: added `file=sys.stderr` to three print() calls in set_offset/add_data)
+- [x] Add `.DELETE_ON_ERROR` or empty-output guard to `cov.txt` target (done 2026-04-28: moved to Makefile.coverage as `$(INSTALLPATH)/cov.txt` with `.DELETE_ON_ERROR`)
+- [x] File-based DAG for coverage pipeline (done 2026-04-28):
+      - `cov.txt`/`cov.rpt` moved to `$(INSTALLPATH)/` (no longer written to source root)
+      - `COV_FILES` + `$(TEST_BUILD_ROOT)/%/cov.txt` pattern rule in `Makefile.coverage`
+      - `h2_cov` drives `$(INSTALLPATH)/cov.rpt` directly — no `prepare`/`all` sub-makes
+      - `T ?= opt` + `export T` fix: fallback rules now use `$(T)` not `$(TARGET)`, so
+        `TARGET=opt_cov` no longer tries `make opt_cov` (invalid target)
+      - `cov_rpt_tool` now accepts a file path argument (was hardcoded to `cov.txt`)
+      - Incremental: second `make TARGET=opt_cov cov` is a true no-op
+- [x] v81/opt coverage results (2026-04-28, after pipeline fixes): 353 tracked functions
+      (vs 220 before — old pipeline was corrupted by stdout diagnostics)
+      - **45 functions at 0%**, **249 functions at 100%**, ~59 partial
+- [ ] Investigate 0% functions: which are genuine test gaps vs. intentionally untestable?
+      Initial analysis of the 45 zero-coverage functions:
+      - **~5 false negatives** (`H2K_tree_remove`, `H2K_id_from_context`, `H2K_mem_tlb_read`,
+        `H2K_mem_tlboc`, `H2K_ring_next`): `static inline` wrappers — inlined everywhere,
+        no standalone symbol. E.g. `tree_remove` calls `tree_remove_key` which IS 100%.
+      - **~8 asm functions**: `H2K_fatal_crash`, `H2K_handle_nmi`, `H2K_handle_rsvd`,
+        `H2K_popup_cancel`, `H2K_ext_context_restore`, timer asm (`get_freq`,
+        `get_resolution`, `delta_timeout`). Hard-to-reach (crash/NMI paths) or
+        timer VM trap handlers not called by current tests.
+      - **Confirmed genuine gap**: `H2K_timer_get_freq`, `H2K_timer_get_resolution`,
+        `H2K_timer_delta_timeout` — these are registered timer vmtrap dispatch
+        functions (freq/resolution/delta queries). The timer tests only use
+        `h2_time_get_time()`/`h2_time_set_timeout()` and never invoke these traps.
+      - **~32 other C functions**: mix of further gaps (`H2K_intpool_cancel`,
+        `H2K_varadix_update/mktrans/walk`, `H2K_trap_hwconfig_*`) and
+        intentionally hard paths (HVX coprocessor context, TLB management ops)
+      Priority candidates for new tests: timer vmtraps (freq/resolution/delta),
+      `futex_cancel`, `vmop_boot/free/status`, `intpool_cancel`, `varadix_update`
+- [ ] Run coverage for all four ARCHVs and compare function lists
+- [ ] Consider integrating a coverage summary into the unified `testall` report
+
 ## Architecture Versions (ARCHV)
 - v3/v4/v5: older versions, different interrupt mask conventions.
 - v60, v65, v68, v73, v81+: modern versions.  Key differences:

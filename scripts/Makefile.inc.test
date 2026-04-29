@@ -46,6 +46,10 @@ ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(H2DIR)/artifacts/v$(ARCHV)/$(MODEL)/install
 endif
 
+# T is the build variant (opt or ref).  Exported from the top-level makefile when
+# called via 'make opt/ref/cov/test'.  Default to opt if not set (e.g. standalone).
+T ?= opt
+
 # Per-ARCHV/variant directory for test build artifacts (not installed, not in-source).
 TEST_BUILD_ROOT ?= $(patsubst %/install,%/build/tests,$(INSTALLPATH))
 
@@ -107,19 +111,19 @@ ${LIBH2CHECK}: ${INSTALLPATH}
 ${LIBH2}:  ${INSTALLPATH}
 
 ${INSTALLPATH}:
-	cd ${H2DIR} && $(MAKE) $(TARGET) ARCHV=${ARCHV}
+	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
 
 # $(INSTALLPATH)/ver is written by opt/ref recipes as a version/git-info record.
 # It is no longer used as a test dependency — $(INSTALLPATH)/manifest replaced it.
 $(INSTALLPATH)/ver:
-	cd ${H2DIR} && $(MAKE) $(TARGET) ARCHV=${ARCHV}
+	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
 
 # $(INSTALLPATH)/manifest is written by opt/ref after all install artifacts land.
 # sha256sums of libh2kernel.a, libh2.a, libh2check.a, and booter — only updated
 # when content changes, so tests re-run iff something actually changed.
 # If manifest is missing, auto-build the install.
 $(INSTALLPATH)/manifest:
-	cd ${H2DIR} && $(MAKE) $(TARGET) ARCHV=${ARCHV}
+	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
 
 ${BOOTER}: ${INSTALLPATH}
 
@@ -135,7 +139,7 @@ clean_libs:
 	rm -rf artifacts/v$(ARCHV)/$(MODEL); $(MAKE) clean
 
 clean_top:
-	rm -Rf test.cov_fns cov.txt
+	rm -Rf test.cov_fns cov.txt $(INSTALLPATH)/cov.txt $(INSTALLPATH)/cov.rpt
 
 
 ################################################################################
@@ -233,11 +237,8 @@ ifdef SUBDIRS
 #	${SUBDIR_MAKE}
 
 #  Uh...  don't run this unless all the tests are run for now.
-cov.txt:
-	find ./kernel ./libs -name "cov.txt" | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --offset_pc > $@
-
-cov.rpt: cov.txt
-	${H2DIR}/scripts/cov_rpt_tool > $@
+# (cov.txt and cov.rpt are now defined in Makefile.coverage as
+#  $(INSTALLPATH)/cov.txt and $(INSTALLPATH)/cov.rpt.)
 
 #  every "subdir" needs to have a results.txt in it for this to run properly.
 #  if no results.txt, FAIL
@@ -468,7 +469,7 @@ ${COVFILE}: ${DUMP} try_gmon_out ignore_fns
 		if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi; \
 	else \
 		find . -maxdepth 1 -name 'gmon-0x????????.out' | perl -ne 'chomp; $$f = $$_; s/^\.\/gmon-//; s/.out$$//; system("$(COV) -F -d test.objdump -o cov-$$_.txt $$f")'; \
-		find . -name 'cov-0x*.txt' | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --dir $(H2DIR) > $@; \
+		find . -name 'cov-0x*.txt' | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --dir $(H2DIR) --installpath $(INSTALLPATH) > $@; \
 	fi; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 

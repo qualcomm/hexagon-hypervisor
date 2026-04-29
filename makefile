@@ -150,6 +150,7 @@ endif
 # Derive per-ARCHV/TARGET install path.  T is set above by TARGET ifeq blocks.
 INSTALLPATH := $(H2DIR)/artifacts/v$(ARCHV)/$(T)/install
 export INSTALLPATH
+export T
 
 
 .PHONY: all
@@ -305,11 +306,7 @@ cov: h2_cov
 #	tail -n +2 qurt_report.html >> report.html
 
 h2_cov:
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
-#	$(MAKE) -C ucos sim 2>&1 | tee make.log
-#	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) coverage_report
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/cov.rpt
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 
 .PHONY: check-fail test-check cov-check cov_fns

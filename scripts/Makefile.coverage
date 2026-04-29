@@ -16,6 +16,9 @@ TEST_BUILD_ROOT ?= $(patsubst %/install,%/build/tests,$(INSTALLPATH))
 # so make can track what is up-to-date and skip unnecessary work.
 RESULT_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/results.txt, $(SUBDIRS))
 
+# Coverage result files — per-test cov.txt generated alongside gmon data.
+COV_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/cov.txt, $(SUBDIRS))
+
 all:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
 
@@ -38,6 +41,32 @@ $(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
 	    TSTAT=$${PIPESTATUS[0]}; \
 	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
 	    exit $$TSTAT
+
+# Build and run one test for coverage (TARG=all), producing per-test cov.txt.
+# Also produces results.txt as a side effect of running the simulator with --profile.
+# Depends on manifest so tests only re-run when the build actually changes.
+$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest
+	mkdir -p "$(TEST_BUILD_ROOT)/$*"
+	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc \
+	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
+	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
+	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
+	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
+	$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" all TEST="$*" 2>&1 | \
+	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
+	    TSTAT=$${PIPESTATUS[0]}; \
+	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
+	    exit $$TSTAT
+
+# Merge all per-test cov.txt files into a single file under the install directory.
+# .DELETE_ON_ERROR ensures a failed merge_cov.py run does not leave a stale output.
+.DELETE_ON_ERROR:
+$(INSTALLPATH)/cov.txt: $(COV_FILES)
+	find $(TEST_BUILD_ROOT) -name "cov.txt" | $(PYTHON) ${H2DIR}/scripts/merge_cov.py \
+	    --offset_pc --dir $(H2DIR) --installpath $(INSTALLPATH) > $@
+
+$(INSTALLPATH)/cov.rpt: $(INSTALLPATH)/cov.txt
+	${H2DIR}/scripts/cov_rpt_tool $< > $@
 
 # Collect per-test results.txt into a clean PASS/FAIL summary and append to TESTOUT.
 # Called after tst completes; each test's full output is in <test-dir>/make.log.

@@ -54,7 +54,7 @@ class function_data(object):
                zero = "**"
             ccount = "%d cycles" % (self.ccount[pc])
          match = nop_patt.match(self.text[pc])
-         if match.group(1) == "nop" and zero == "**":
+         if match and match.group(1) == "nop" and zero == "**":
             output += "\n"
          else:
             output += "%2s%20s %08x: %s\n" % (zero,ccount, pc,self.text[pc])  
@@ -63,7 +63,7 @@ class function_data(object):
    def set_offset(self,name,offset):
       # print "Set offset %s %08x" % (name, offset)
       if self.name != name:
-         print("mismatching function name {%s}" % (name))
+         print("mismatching function name {%s}" % (name), file=sys.stderr)
       self.offset = offset
 
    #  probably should check the CSV for function lengths to make sure they match.
@@ -131,14 +131,14 @@ class function_data(object):
             self.text[pc] = text
          else:
             if pc not in self.text:
-               print("%s:  additional pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile))
+               print("%s:  additional pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile), file=sys.stderr)
                return
             #  extended check -- check that the parse bits at least match.
             #  Todo:  make sure cycles are only reported for instructions at start of packet, or single instruction packets.
             original_pp = (int(self.text[pc].split()[4],16) >> 14) & 3
             new_pp = (int(text.split()[4],16) >> 14) & 3
             if original_pp != new_pp:
-               print("%s:  parse bit mismatch pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile))
+               print("%s:  parse bit mismatch pc (0x%08x) for %s doesn't match first (%s)" % (fn,pc,self.name,self.firstfile), file=sys.stderr)
                return
 
 fn_list = []
@@ -270,7 +270,7 @@ def read_covfile(fn):
 if __name__ == "__main__":
 
    try:
-      opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dir=", "offset_pc"])
+      opts, args = getopt.getopt(sys.argv[1:], "", ["help", "dir=", "offset_pc", "installpath="])
 
    except getopt.GetoptError:
       # print help information and exit:
@@ -278,6 +278,7 @@ if __name__ == "__main__":
       sys.exit(2)
 
    h2dir = "."
+   installpath = None
 
    for o, a in opts:
       if o in ("-h", "--help"):
@@ -290,8 +291,14 @@ if __name__ == "__main__":
       if o in ("-o", "--offset_pc"):
          do_offsets = 1
 
+      if o in ("--installpath",):
+         installpath = a
+
+   if installpath is None:
+      installpath = h2dir + "/install"
+
    # Which style/version are we working on
-   fh = open(h2dir+"/install/ver","r")
+   fh = open(installpath+"/ver","r")
    ver,opt = get_veropt(fh)
 
    fname = h2dir+"/scripts/"+ver+opt+"_cov_fns"

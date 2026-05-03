@@ -29,7 +29,7 @@ O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 all: liblocks.a 
 
 clean: 
-	rm -f liblocks.a $(O_FILES)
+	rm -f liblocks.a src/*.o
 
 liblocks.a: $(O_FILES)
 	$(AR) cru $@ $(sort $(O_FILES))

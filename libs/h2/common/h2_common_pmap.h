@@ -63,8 +63,8 @@
 
 #define MEMORY_MAP_EXTENDED(VPN, PERM, CFIELD, PGSIZE, PPN, SHARED, HSV39) \
 	{ .raw = \
-			((h2_u64_t) ( ((VPN) | ((PGSIZE) << 20) | ((CFIELD) << 24) | ((HSV39) << 28) | (0x1 << 29) | ((SHARED) << 30) ) << 32) ) | \
-			((h2_u32_t) (  (PPN) | ((PERM) << 28) ) )	\
+		(( (h2_u64_t)((VPN) | ((PGSIZE) << 20) | ((CFIELD) << 24) | ((HSV39) << 28) | (0x1 << 29) | ((SHARED) << 30)) << 32) | \
+		(h2_u32_t)((PPN) | ((PERM) << 28))) \
 	 },
 
 #define MEMORY_MAP2(VPN, PERM, CFIELD, PGSIZE, PPN, SHARED) MEMORY_MAP_EXTENDED(VPN, PERM, CFIELD, PGSIZE, PPN, SHARED, 0)

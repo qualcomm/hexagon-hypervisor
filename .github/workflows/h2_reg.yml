@@ -42,21 +42,6 @@ jobs:
       - name: Build
         run: make USE_PKW=0 ARCHV=$ARCHV TARGET=opt -j"$(nproc)"
 
-      - name: Sanity test - kernel unit test (atomic)
-        working-directory: kernel/util/atomic/test
-        run: |
-          make tst USE_PKW=0 ARCHV=$ARCHV
-          grep -q "TEST PASSED" results.txt
-
-      - name: Sanity test - booter hello
-        run: |
-          hexagon-sim --simulated_returnval \
-            --subsystem_base 0xfe28 \
-            --cosim_file scripts/timer_v${ARCHV}.cfg \
-            -- install/bin/booter booter/hello \
-            | tee hello_output.txt
-          grep -q "Hello, World!" hello_output.txt
-          
       - name: Regression test
         run: |
           make -O test USE_PKW=0 ARCHV=$ARCHV

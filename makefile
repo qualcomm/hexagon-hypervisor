@@ -2,7 +2,7 @@ include scripts/Makefile.inc.config
 include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
 
-ARCHV_LIST ?= 65 68 73 81
+ARCHV_LIST ?= 68 73 81
 TESTOUT ?= test.out
 
 TARGET ?= opt
@@ -224,13 +224,16 @@ $(ARCHV_LIST):
 
 test:	h2_test check-fail
 
-h2_test: # ucosclean
+h2_test: all # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee -a $(TESTOUT)
 #$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a $(TESTOUT)
 	[ `fgrep -v "WARNING: Overriding currently set revid" $(TESTOUT) | fgrep -c -i warning:` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
 	head -n -1 h2_report.html > report.html
+
+bigtest: test
+	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/pass/x86_64/master/pass.pl --retrycount 1 --results ./passout --html ./passout --q6v v$(ARCHV) --arch v$(ARCH)_stable --tld STANDALONE=0 --tld TRACES=0 --flaglist v$(ARCHV)_flags.list --flags MARGIN=12 --flags PLMARGIN=180 --tld NOTIMING --tld CHECKIN=1 --flags PLIMIT= --flags WARN=--warn --flags Q6_RTOS_INSTALL=$(INSTALLPATH)
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare

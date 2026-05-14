@@ -9,7 +9,7 @@ ifeq ($(findstring -j,$(MAKEFLAGS)),)
 MAKEFLAGS += -j$(shell nproc)
 endif
 
-ARCHV_LIST ?= 65 68 73 81
+ARCHV_LIST ?= 68 73 81
 VARIANTS   ?= opt ref
 # TESTOUT: per-variant summary file; lives in the artifact dir so parallel
 # ARCHV builds each get their own copy with no conflicts.

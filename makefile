@@ -2,7 +2,7 @@ include scripts/Makefile.inc.config
 include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
 
-ARCHV_LIST ?= 65 68 73 81
+ARCHV_LIST ?= 68 73 81
 TESTOUT ?= test.out
 
 TARGET ?= opt

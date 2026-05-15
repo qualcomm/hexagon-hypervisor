@@ -414,10 +414,34 @@ TODO: add top-level summary table + parseable combined JSON artifact to gen_test
 - Top-level summary table + combined JSON in gen_test_report.py
 - Dead code cleanup in `Makefile.inc.test` (old `report.html`/`h2_report.html`/`qurt_report.html` targets ~lines 249-280)
 
-### Parallel build race condition fixes (2026-05-14) — DONE
+### Parallel build race condition fixes (2026-05-14, completed 2026-05-15) — DONE
 
 Two race conditions fixed, stale artifacts and gitignore entries cleaned up.
 Verified: 682 passed, 0 failed across all 8 variants after `make all_clean && make testall`.
+
+#### Remaining stale source-tree include paths fixed (2026-05-15)
+
+The b7806811a commit moved kernel/lib headers into per-variant `BUILD_DIR/include/`
+but missed three Makefiles that still referenced old source-tree paths:
+
+- **`libs/syscall/angel/Makefile`**: `CFLAGS`/`ASFLAGS` used `../../h2/include`,
+  `../../h2_compat/include`, `../../posix/include`.  Added `H2_BUILD_DIR`,
+  `H2_COMPAT_BUILD_DIR`, `POSIX_BUILD_DIR` derived from `INSTALLPATH` (same pattern
+  as `libs/posix/Makefile`); updated both flag sets to use them.
+
+- **`libs/qurt/Makefile`**: Same three stale paths embedded directly in the `CC`
+  definition.  Added same three `BUILD_DIR` vars; updated `CC`.
+
+- **`booter/Makefile`** + **`booter/booter.c`**: Makefile used `-I$(KERNELPATH)/include`
+  (source-tree `kernel/include/`, no longer exists).  Added
+  `KERNEL_BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))` and
+  replaced the flag.  `booter.c` had `#include "../kernel/include/max.h"` and
+  `#include "../kernel/include/hw.h"` as relative paths bypassing `-I`; changed both
+  to `<max.h>` and `<hw.h>` (found via the new `-I$(KERNEL_BUILD_DIR)/include`).
+  `max.h`, `hw.h`, and `asm_std.h` (needed by `bootvm_entry.S`) all have `make.inc`
+  files in their kernel module dirs and are copied to `BUILD_DIR/include/` by the kernel build.
+
+Validated: `make all_clean && make opt` — clean build, no errors (v81/opt).
 
 #### include/ race condition — FIXED
 

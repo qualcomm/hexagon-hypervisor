@@ -12,7 +12,8 @@ export KERNELPATH := $(H2DIR)/kernel
 endif
 
 # All intermediate build artifacts go here.
-BUILD_DIR := $(patsubst %/install,%/build/booter,$(INSTALLPATH))
+BUILD_DIR        := $(patsubst %/install,%/build/booter,$(INSTALLPATH))
+KERNEL_BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))
 
 BOOTVM_PROG := $(BUILD_DIR)/booter
 
@@ -20,7 +21,7 @@ BOOTVM_IMAGE_HEAP_SIZE := 0x1000000
 
 all: $(BUILD_DIR)/hello $(BUILD_DIR)/should_crash $(BUILD_DIR)/should_pagefault $(BUILD_DIR)/bigio $(BOOTVM_PROG)
 
-CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-requires-header -g -I. -I$(INSTALLPATH)/include -I$(KERNELPATH)/include
+CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -Wno-builtin-requires-header -g -I. -I$(INSTALLPATH)/include -I$(KERNEL_BUILD_DIR)/include
 LDFLAGS = -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 include $(H2DIR)/scripts/Makefile.inc.config

@@ -1,8 +1,11 @@
 
-BUILD_DIR := $(patsubst %/install,%/build/libs/syscall/angel,$(INSTALLPATH))
+BUILD_DIR         := $(patsubst %/install,%/build/libs/syscall/angel,$(INSTALLPATH))
+H2_BUILD_DIR      := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))
+H2_COMPAT_BUILD_DIR := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))
+POSIX_BUILD_DIR   := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))
 
-CFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -Wno-builtin-requires-header -Werror -I../../h2/include -I../../h2_compat/include -I../../posix/include -g $(OPTIMIZE) $(OPT_ADD) -G0
-ASFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I../../h2/include -I../../posix/include
+CFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -Wno-builtin-requires-header -Werror -I$(H2_BUILD_DIR)/include -I$(H2_COMPAT_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include -g $(OPTIMIZE) $(OPT_ADD) -G0
+ASFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include
 
 CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
 

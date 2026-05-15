@@ -58,7 +58,7 @@ $(CRT0_O): $(CRT0_S)
 
 $(BOOTVM_O): $(BOOTVM_S) $(BOOTVM_IMAGE_BIN)
 	mkdir -p $(dir $@)
-	${CC} ${CFLAGS} -c -o $@ $<
+	${CC} ${CFLAGS} -DBOOTVM_IMAGE_BIN_PATH='"$(BOOTVM_IMAGE_BIN)"' -c -o $@ $<
 
 $(VAPA_KERNEL): $(VAPA_KERNEL_X_IN) $(KERNEL_TMP) | constants
 	mkdir -p $(dir $@)

@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -I$(INSTALLPATH)/include -I../h2/include -I../posix/include -I../../libs/syscall/angel/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+CFLAGS := -I$(INSTALLPATH)/include -I../../libs/syscall/angel/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -71,6 +71,9 @@ OPT_V81_SFILES :=
 OPT_V81_OFILES := 
 
 BUILD_DIR := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))
+H2_BUILD_DIR    := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))
+POSIX_BUILD_DIR := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))
+CFLAGS += -I$(BUILD_DIR)/include -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include
 
 MKINCLUDES := $(shell find . -name make.inc)
 
@@ -140,7 +143,7 @@ $(BUILD_DIR)/%.o : %.S
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR)
+	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include
 
 dummy:
 	@echo $(REF_CFILES)

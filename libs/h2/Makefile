@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -I$(INSTALLPATH)/include -Iinclude -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+CFLAGS := -I$(INSTALLPATH)/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -74,6 +74,7 @@ OPT_V81_SFILES :=
 OPT_V81_OFILES := 
 
 BUILD_DIR := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))
+CFLAGS += -I$(BUILD_DIR)/include
 
 MKINCLUDES := $(shell find . -name make.inc)
 
@@ -143,7 +144,7 @@ $(BUILD_DIR)/%.o : %.S
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) common/asm_offsets.h
+	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include
 
 dummy:
 	@echo $(REF_CFILES)

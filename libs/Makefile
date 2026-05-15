@@ -44,6 +44,11 @@ HEADER_DIRS = $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) syscall/angel/ qurt/
 
 TMP_DIR := $(patsubst %/install,%/build/libs/tmp,$(INSTALLPATH))
 
+# Per-variant header dirs for the three generated-header sub-libs.
+_H2_HDR_DIR       := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))/include
+_POSIX_HDR_DIR    := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))/include
+_H2COMPAT_HDR_DIR := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))/include
+
 MAKE_LIB=${MAKE} -C $(dir $@)
 
 
@@ -96,9 +101,9 @@ install: $(TMP_DIR)/libh2.a $(SYS_WRAPPER_LIB) $(LOCKS_LIB)
 	mkdir -p $(INSTALLPATH)/lib;
 	mkdir -p $(INSTALLPATH)/include;
 	cp $^ $(INSTALLPATH)/lib;
-	for dir in $(HEADER_DIRS); do\
-		if [ -d "$$dir/include" ]; then \
-			pushd $$dir/include;\
+	for dir in $(_H2_HDR_DIR) $(_POSIX_HDR_DIR) $(_H2COMPAT_HDR_DIR) syscall/angel/include qurt/include; do\
+		if [ -d "$$dir" ]; then \
+			pushd $$dir;\
 			/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
 			popd;\
 		fi;\

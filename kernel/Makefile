@@ -13,7 +13,7 @@ include ../scripts/Makefile.inc.config
 include ../scripts/Makefile.inc.opensource
 include ../scripts/Makefile.inc.version
 
-CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
+CFLAGS := @build/flags/abi -I../libs/h2/common -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
 
 CFLAGS += -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -DH2K_GUEST_END=$(H2K_GUEST_END) -DH2K_BOOTMEM_SIZE=$(H2K_BOOTMEM_SIZE)
 
@@ -195,7 +195,7 @@ $(BUILD_DIR)/%.o : %.S
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) \
+	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include \
 	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h \
 	pmu_statsfile.txt
 

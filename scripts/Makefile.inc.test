@@ -155,7 +155,8 @@ OPTIMIZE := -O1
 # FIXME: Remove H2K_LOAD_ADDR=$(H2K_LINK_ADDR) when tests are no longer in
 # monitor space
 
-KERNEL_INCLUDES := -I ${H2DIR}/kernel/include -I ${H2DIR}/libs/h2/common
+KERNEL_BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))
+KERNEL_INCLUDES := -I $(KERNEL_BUILD_DIR)/include -I ${H2DIR}/libs/h2/common
 
 H2K_KERNEL_NPAGES ?= 0
 

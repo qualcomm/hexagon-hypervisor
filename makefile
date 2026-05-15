@@ -246,12 +246,11 @@ size:
 # All per-variant test result JSON paths — one per ARCHV×variant combination.
 ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifacts/v$a/$v/install/test_results.json))
 
-# One rule per ARCHV×variant: 'make test' auto-builds the install via the
-# $(INSTALLPATH)/manifest fallback in Makefile.inc.test when needed, then
-# runs all tests and generates test_results.json via h2_test.
+# One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
+# generating test_results.json which testall aggregates into the unified report.
 define ARCHV_VARIANT_RULE
 artifacts/v$(1)/$(2)/install/test_results.json:
-	$$(MAKE) ARCHV=$(1) TARGET=$(2) test
+	$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
 endef
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_RULE,$a,$v))))
 
@@ -264,14 +263,18 @@ artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
 	    --output $@ \
 	    --summary-out artifacts/test.out
 
-.PHONY: testall
+.PHONY: testall test
 testall: artifacts/test_report.html
 
-# NO_TEST_RESET=1 suppresses TESTOUT truncation in 'make test' when the caller
-# wants to accumulate results across multiple runs (legacy single-variant use).
+# 'make test' runs all ARCHV×variant combinations (same as testall).
+# Use 'make test_variant' to run a single variant (ARCHV=XX TARGET=yy).
+test: testall
+
+# NO_TEST_RESET=1 suppresses TESTOUT truncation in 'make test_variant' when the
+# caller wants to accumulate results across multiple runs.
 NO_TEST_RESET ?= 0
 
-test:
+test_variant:
 ifneq ($(NO_TEST_RESET),1)
 	@if [ -d "$(dir $(TESTOUT))" ]; then > "$(TESTOUT)"; fi
 endif

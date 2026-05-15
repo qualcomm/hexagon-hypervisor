@@ -441,7 +441,28 @@ but missed three Makefiles that still referenced old source-tree paths:
   `max.h`, `hw.h`, and `asm_std.h` (needed by `bootvm_entry.S`) all have `make.inc`
   files in their kernel module dirs and are copied to `BUILD_DIR/include/` by the kernel build.
 
-Validated: `make all_clean && make opt` — clean build, no errors (v81/opt).
+#### Remaining stale source-tree include paths fixed (2026-05-15, part 2)
+
+Three more places used `${H2DIR}/kernel/include` (the old source-tree generated dir):
+
+- **`scripts/Makefile.inc.test:158`** `KERNEL_INCLUDES`: changed from
+  `-I ${H2DIR}/kernel/include` to `-I $(KERNEL_BUILD_DIR)/include` where
+  `KERNEL_BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))`.
+  This affects STANDALONE test builds.  For non-STANDALONE kernel tests that add
+  their own `-I$(H2DIR)/kernel/include`, two test Makefiles also needed fixing:
+
+- **`kernel/event/error/test/Makefile`** and **`kernel/init/boot/test/Makefile`**:
+  both had `CFLAGS += -ffixed-r28 -I$(H2DIR)/kernel/include` (and ASFLAGS for
+  error/test).  Changed to derive `KERNEL_BUILD_DIR` from `INSTALLPATH` locally
+  and use `-I$(KERNEL_BUILD_DIR)/include`.  These tests include `<asm_std.h>`,
+  `<c_std.h>` etc. from kernel/util/ which are only in the per-variant build dir.
+
+`make test` → `make testall` alias:
+- Renamed per-variant `test:` recipe to `test_variant:` (still useful for single-variant testing).
+- Updated `ARCHV_VARIANT_RULE` to call `test_variant` instead of `test`.
+- Added `test: testall` so `make test` now runs all 8 variants.
+
+Validated: `make all_clean && make test` → 682 passed, 0 failed across 8 variants.
 
 #### include/ race condition — FIXED
 

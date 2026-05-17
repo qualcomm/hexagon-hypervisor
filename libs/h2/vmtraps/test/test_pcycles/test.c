@@ -28,7 +28,10 @@
 #elif ARCHV == 5
 #define PCYCLES_PER_TCYCLE 3
 #define OVERHEAD 1536
-#elif ARCHV == 60
+#elif ARCHV >= 68
+#define PCYCLES_PER_TCYCLE 3
+#define OVERHEAD 1536
+#elif ARCHV >= 60
 #define PCYCLES_PER_TCYCLE 2
 #define OVERHEAD 1536
 #else

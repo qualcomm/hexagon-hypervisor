@@ -167,7 +167,7 @@ ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 endif
-	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
+	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) TESTING=$(TESTING) opt_install && \
 	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
 	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
@@ -184,7 +184,7 @@ ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 endif
-	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
+	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) TESTING=$(TESTING) ref_install && \
 	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
 	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install

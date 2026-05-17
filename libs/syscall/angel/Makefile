@@ -17,7 +17,7 @@ CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
 
 export BLAST_LIB_INCLUDE=$(shell pwd)/include
 
-ASM_FILES = src/angel.S
+ASM_FILES = $(wildcard src/*.S)
 C_FILES = $(wildcard src/*.c)
 
 O_FILES = $(addprefix $(BUILD_DIR)/,$(ASM_FILES:.S=.o) $(C_FILES:.c=.o))

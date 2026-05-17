@@ -340,6 +340,7 @@ check:
 else
 
 DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
+EXEC_TMP := ${EXEC}_tmp
 
 ################################################################################
 #  These are for actual terminal directories
@@ -362,13 +363,13 @@ endif
 	${CC} ${ASFLAGS} -c -o $@ $<; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
-${EXEC}_tmp: ${OBJS}
+${EXEC_TMP}: ${OBJS}
 # How's this for an ugly hack?
 	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
-${EXEC}: ${EXEC}_tmp | constants
+${EXEC}: ${EXEC_TMP} | constants
 # How's this for an ugly hack?
 	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
 	CODE=$${PIPESTATUS[0]}; \
@@ -384,7 +385,7 @@ ifeq ($(USE_PKW),1)
 	echo PKW_arch $(PKW_arch) >> $@
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
 endif
-	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee -a $@; \
+	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	echo exit status == $$CODE; \
 	if [ "$$CODE" -eq 137 ]; then \
@@ -427,7 +428,8 @@ ${COVFILE}: ${DUMP} try_gmon_out ignore_fns
 	fi; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
-CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${EXEC}_tmp ${COVFILE} cov*.txt* ${GMON_FILES} ${DUMP} make.log test.log results.txt h2 threadmap.py stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt pmu_stats.txt default.profraw
+CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${EXEC_TMP} ${COVFILE} cov*.txt* ${GMON_FILES} ${DUMP} make.log test.log results.txt h2 threadmap.py
+CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt pmu_stats.txt default.profraw
 
 clean:
 	rm -rf ${CLEANUP}

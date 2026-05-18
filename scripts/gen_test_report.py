@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 """Generate a unified HTML test report from per-variant test_results.json files.
 
 Each input JSON is produced by gen_test_results.py and covers one ARCHV×variant

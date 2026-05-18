@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 """Generate a per-variant JSON summary from individual test results.txt files.
 
 Reads results.txt from each test's build directory and emits a JSON file

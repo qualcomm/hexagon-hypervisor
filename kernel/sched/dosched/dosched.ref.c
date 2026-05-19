@@ -20,7 +20,9 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 	if (new == NULL) {
 		/* GO TO SLEEP */
 		H2K_raise_lowprio();
-		/* FIXME: temporary ugly hack for broken 8.7+ compiler */
+		/* FIXME: temporary ugly hack for broken 8.7+ compiler -- investigate
+		 * whether this is still needed and if a proper direct call can be
+		 * restored */
 		asm volatile ("r0 = %0\n"
 									"r1 = #0\n"
 									"call H2K_switch\n"

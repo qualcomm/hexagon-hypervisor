@@ -25,7 +25,7 @@ O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
 all: libsyscall_wrapper.a 
 
 clean: 
-	rm -f libsyscall_wrapper.a $(O_FILES)
+	rm -f libsyscall_wrapper.a src/*.o
 
 libsyscall_wrapper.a: $(O_FILES)
 	$(AR) cru $@ $(sort $(O_FILES))

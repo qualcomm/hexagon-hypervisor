@@ -26,6 +26,8 @@ typedef struct sys_call_ret_s {
 } sys_call_ret_t;
 
 sys_call_ret_t angel_with_err(unsigned int r0, void *r1, unsigned int r2);
+sys_call_ret_t angel_const_with_err(unsigned int r0, const void *r1, unsigned int r2);
+
 
 #define ANGEL_OFFSET_PTR(P) ((void *)((unsigned long)(P) + __boot_net_phys_offset__))
 

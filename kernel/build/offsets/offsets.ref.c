@@ -174,6 +174,7 @@ int main(int argc, char **argv)
 #ifdef COUNT_TLB_EVENTS
 	PRINT_VMBLOCK_OFFSET(tlbmissx);
 	PRINT_VMBLOCK_OFFSET(tlbmissrw);
+	PRINT_VMBLOCK_OFFSET(dmatlbmiss);
 #endif
 	fprintf(outfile, "#define VMBLOCK_TOTALSIZE %d\n",sizeof(H2K_vmblock_t));
 

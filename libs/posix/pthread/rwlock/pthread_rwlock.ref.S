@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#if 0
 /* Almost done, try later */
 /*
  * pthread_tryrdlock(pthread_rwlock_t *lock)
@@ -11,13 +10,18 @@
 
 #include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
+#include "h2_common_errno.h"
 
 	.text
 
 #define RDLOCK_AMT 4
 #define WRLOCK_VAL -16
 
-FUNC_START pthread_tryrdlock .text.pthread.rwlock .p2align 5
+FUNC_START pthread_rwlock_tryrdlock .text.pthread.rwlock .p2align 5
+	r0 = #ENOSYS
+	jumpr r31
+
+/*
 #define LOCKPTR r0
 #define LOCKVAL r1
 #define LOCKVAL_NEW r2
@@ -41,9 +45,15 @@ FUNC_START pthread_tryrdlock .text.pthread.rwlock .p2align 5
 #undef LOCKPTR
 #undef LOCKVAL
 #undef LOCKVAL_NEW
+*/
+
 FUNC_END pthread_rwlock_tryrdlock
 
 FUNC_START pthread_rwlock_trywrlock .text.pthread.rwlock .p2align 5
+	r0 = #ENOSYS
+	jumpr r31
+
+/*
 #define LOCKPTR r0
 #define LOCKVAL r1
 #define LOCKVAL_NEW r2
@@ -62,9 +72,15 @@ FUNC_START pthread_rwlock_trywrlock .text.pthread.rwlock .p2align 5
 #undef LOCKPTR
 #undef LOCKVAL
 #undef LOCKVAL_NEW
+*/
+
 FUNC_END pthread_rwlock_trywrlock
 
 FUNC_START pthread_rwlock_rdlock .text.pthread.rwlock .p2align 5
+	r0 = #ENOSYS
+	jumpr r31
+
+/*
 #define LOCKPTR r0
 #define LOCKVAL r2
 #define WAITERS r3
@@ -120,9 +136,15 @@ FUNC_START pthread_rwlock_rdlock .text.pthread.rwlock .p2align 5
 #undef WAITERS
 #undef WAITERS_LOCKVAL
 #undef LOCKPTR_SAV
+*/
+
 FUNC_END pthread_rwlock_rdlock
 
 FUNC_START pthread_rwlock_wrlock .text.pthread.rwlock .p2align 5
+	r0 = #ENOSYS
+	jumpr r31
+
+/*
 #define LOCKPTR r0
 #define LOCKVAL r2
 #define WAITERS r3
@@ -172,9 +194,15 @@ FUNC_START pthread_rwlock_wrlock .text.pthread.rwlock .p2align 5
 #undef WAITERS
 #undef WAITERS_LOCKVAL
 #undef LOCKPTR_SAV
+*/
+
 FUNC_END pthread_rwlock_wrlock
 
 FUNC_START pthread_rwlock_unlock .text.pthread.rwlock .p2align 5
+	r0 = #ENOSYS
+	jumpr r31
+
+/*
 #define LOCKPTR r0
 #define WAKEUP_NUM r1
 #define WAKEUP_LOCKPTR r1:0
@@ -221,5 +249,6 @@ FUNC_START pthread_rwlock_unlock .text.pthread.rwlock .p2align 5
 		WAITERS_LOCKVAL = memd(LOCKPTR_SAV)			// make accessible
 		jump .Lwakeup
 	}
+	*/
+FUNC_END pthread_rwlock_unlock
 
-#endif

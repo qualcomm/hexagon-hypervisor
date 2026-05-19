@@ -52,12 +52,17 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 	r8 = memub(r6+#15)
 	dccleaninva(r6)
 
-	loop0(.Lwait,#66)
+.Lpoll:
+	loop0(.Lwait,#66)  // FIXME: what is the proper value here? Maybe remove this loop.
 	.falign
 .Lwait:
 	{ nop }:endloop0
 
+	dccleaninva(r6)
 	r8 = memw(r6+#12)
+	p0 = cmp.eq(r8, #0)
+	if (!p0) jump .Lpoll	
+
 	dccleaninva(r6)
 	r11:10 = memd(r6+#0)
 

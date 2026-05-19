@@ -3,51 +3,125 @@
 #  It is meant to be run from the top level ob directory.
 
 SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/^\s*\#.*//;')
-SUBDIRS_ALL:=$(shell cat ./scripts/testlist.v* | sort | uniq | perl -p -e 's/^\s*\#.*//;')
+#SUBDIRS_ALL:=$(shell cat ./scripts/testlist.v* | sort | uniq | perl -p -e 's/^\s*\#.*//;')
+
+TESTOUT ?= $(INSTALLPATH)/test.out
+
+# TEST_BUILD_ROOT must be defined here (before the pattern rule and RESULT_FILES) so
+# that $(TEST_BUILD_ROOT) expands correctly at parse time.  INSTALLPATH is exported by
+# the parent make (h2_test) so it is already available when this file is first read.
+TEST_BUILD_ROOT ?= $(patsubst %/install,%/build/tests,$(INSTALLPATH))
+
+# File-based list of per-test result targets.  Used by tst and test_report.html
+# so make can track what is up-to-date and skip unnecessary work.
+RESULT_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/results.txt, $(SUBDIRS))
+
+# Coverage result files — per-test cov.txt generated alongside gmon data.
+COV_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/cov.txt, $(SUBDIRS))
 
 all:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
 
-tst:
-	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=tst
+# tst is phony but depends on real file targets so make tracks what needs re-running.
+.PHONY: tst
+tst: $(RESULT_FILES)
+
+# Build and run one test, producing its results.txt.
+# Depends on $(INSTALLPATH)/manifest (sha256 of key install files, updated only when
+# content changes) so tests re-run iff the build actually changed something.
+$(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
+	mkdir -p "$(TEST_BUILD_ROOT)/$*"
+	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc \
+	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
+	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
+	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
+	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
+	$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" tst TEST="$*" 2>&1 | \
+	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
+	    TSTAT=$${PIPESTATUS[0]}; \
+	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
+	    exit $$TSTAT
+
+# Build and run one test for coverage (TARG=all), producing per-test cov.txt.
+# Also produces results.txt as a side effect of running the simulator with --profile.
+# Depends on manifest so tests only re-run when the build actually changes.
+$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest
+	mkdir -p "$(TEST_BUILD_ROOT)/$*"
+	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc \
+	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
+	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
+	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
+	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
+	$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" all TEST="$*" 2>&1 | \
+	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
+	    TSTAT=$${PIPESTATUS[0]}; \
+	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
+	    exit $$TSTAT
+
+# Merge all per-test cov.txt files into a single file under the install directory.
+# .DELETE_ON_ERROR ensures a failed merge_cov.py run does not leave a stale output.
+.DELETE_ON_ERROR:
+$(INSTALLPATH)/cov.txt: $(COV_FILES)
+	find $(TEST_BUILD_ROOT) -name "cov.txt" | $(PYTHON) ${H2DIR}/scripts/merge_cov.py \
+	    --offset_pc --dir $(H2DIR) --installpath $(INSTALLPATH) > $@
+
+$(INSTALLPATH)/cov.rpt: $(INSTALLPATH)/cov.txt
+	${H2DIR}/scripts/cov_rpt_tool $< > $@
+
+# Collect per-test results.txt into a clean PASS/FAIL summary and append to TESTOUT.
+# Called after tst completes; each test's full output is in <test-dir>/make.log.
+.PHONY: test_summary
+test_summary:
+	@PASS=0; FAIL=0; \
+	for SUBDIR in ${SUBDIRS}; do \
+	    if grep -q "TEST PASSED" "$(TEST_BUILD_ROOT)/$$SUBDIR/results.txt" 2>/dev/null; then \
+	        PASS=$$((PASS+1)); \
+	    else \
+	        FAIL=$$((FAIL+1)); \
+	    fi; \
+	done; \
+	echo "SUMMARY: $$PASS passed, $$FAIL failed" | tee -a $(TESTOUT)
 
 clean:
-	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS_ALL) TARG=clean
-	rm -rf coverage_report.txt coverage_report.lcov index.html
-		
-merged.profraw: tst
+	rm -rf "$(TEST_BUILD_ROOT)"
+
+$(INSTALLPATH)/merged.profraw: tst
 	echo '[COVERAGE] Merging:' $(shell find ${H2DIR}/kernel ${H2DIR}/libs -name "default.profraw")
-	$(LLVM_PROFDATA) merge -o ${H2DIR}/merged.profraw $(shell find ${H2DIR}/kernel ${H2DIR}/libs -name "default.profraw")
+	$(LLVM_PROFDATA) merge -o $@ $(shell find ${H2DIR}/kernel ${H2DIR}/libs -name "default.profraw")
 
-coverage_report.txt: merged.profraw	
+$(INSTALLPATH)/coverage_report.txt: $(INSTALLPATH)/merged.profraw
 	echo '[COVERAGE] Creating text report'
-	$(LLVM_COV) report ${H2DIR}/install/bin/booter --instr-profile=${H2DIR}/merged.profraw --format=text | tee ${H2DIR}/coverage_report.txt
+	$(LLVM_COV) report $(INSTALLPATH)/bin/booter --instr-profile=$< --format=text | tee $@
 
-coverage_report.lcov: merged.profraw
-	echo '[COVERAGE] Creating lcov report'	
-	$(LLVM_COV) export ${H2DIR}/install/bin/booter --instr-profile=${H2DIR}/merged.profraw --format=lcov > ${H2DIR}/coverage_report.lcov
-	 
-index.html:	merged.profraw
+$(INSTALLPATH)/coverage_report.lcov: $(INSTALLPATH)/merged.profraw
+	echo '[COVERAGE] Creating lcov report'
+	$(LLVM_COV) export $(INSTALLPATH)/bin/booter --instr-profile=$< --format=lcov > $@
+
+$(INSTALLPATH)/index.html: $(INSTALLPATH)/merged.profraw
 	echo '[COVERAGE] Creating html report'
-	$(LLVM_COV) report ${H2DIR}/install/bin/booter --instr-profile=${H2DIR}/merged.profraw --format=html
-	
+	$(LLVM_COV) report $(INSTALLPATH)/bin/booter --instr-profile=$< --format=html
+
 #TODO: enable html reports
-coverage_report: coverage_report.txt coverage_report.lcov #index.html  
+coverage_report: $(INSTALLPATH)/coverage_report.txt $(INSTALLPATH)/coverage_report.lcov #$(INSTALLPATH)/index.html
 
 $(SUBDIRS)::
-	cd $@;\
-	if [ "$(TARG)" != "clean" ]; then \
-	(echo; echo; echo "##########   $@   ##########") > make.log; \
-	fi; \
-	$(MAKE) $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
-	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
+	mkdir -p "$(TEST_BUILD_ROOT)/$@"
+	find "$(H2DIR)/$@" -maxdepth 1 -type f ! -name Makefile.inc \
+	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$@/" ';'
+	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
+	    > "$(TEST_BUILD_ROOT)/$@/Makefile.inc"
+	(echo; echo; echo "##########   $@   ##########") > "$(TEST_BUILD_ROOT)/$@/make.log"
+	$(MAKE) -C "$(TEST_BUILD_ROOT)/$@" $(TARG) TEST=$@ 2>&1 | \
+	    tee -a "$(TEST_BUILD_ROOT)/$@/make.log"; \
+	    TSTAT=$${PIPESTATUS[0]}; if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi
 
-$(SUBDIRS_ALL)::
-	cd $@;\
-	$(MAKE) $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
-	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
+# $(SUBDIRS_ALL)::
+# 	cd $@;\
+# 	$(MAKE) $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
+# 	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
 
-.PHONY: $(SUBDIRS) $(SUBDIRS_ALL) tst coverage_report
+# .PHONY: $(SUBDIRS) $(SUBDIRS_ALL) tst coverage_report
+
 
 
 include ./scripts/Makefile.inc.test

@@ -10,83 +10,100 @@ ifeq (,$(IMPL))
 IMPL=ref
 endif
 
+# Derive lib archive paths and tmp staging dir from INSTALLPATH.
+# Keeps all intermediate artifacts under artifacts/v$(ARCHV)/$(T)/build/.
+H2_LIB    := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))/libh2.a
+H2_COMPAT_LIB := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))/libh2_compat.a
+POSIX_LIB := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))/libposix.a
+
+QURT_LIB  := $(patsubst %/install,%/build/libs/qurt,$(INSTALLPATH))/libqurt.a
+ANGEL_LIB := $(patsubst %/install,%/build/libs/syscall/angel,$(INSTALLPATH))/libangel.a
+
 H2_DIR=h2/
 H2_COMPAT_DIR=h2_compat/
 POSIX_DIR=posix/
-ifeq (ref,$(IMPL))
-H2_LIB=$(H2_DIR)build/ref/libh2.a
-H2_COMPAT_LIB=$(H2_COMPAT_DIR)build/ref/libh2_compat.a
-POSIX_LIB=$(POSIX_DIR)build/ref/libposix.a
-else
-IMPL=opt
-H2_LIB=$(H2_DIR)build/opt_v$(ARCHV)/libh2.a
-H2_COMPAT_LIB=$(H2_COMPAT_DIR)build/opt_v$(ARCHV)/libh2_compat.a
-POSIX_LIB=$(POSIX_DIR)build/opt_v$(ARCHV)/libposix.a
-endif
 
-#MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a 
-MOST_LIBS= syscall/angel/libangel.a qurt/libqurt.a
+#MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a
+MOST_LIBS= $(ANGEL_LIB) $(QURT_LIB)
 
-# Picolibc support: if PICOLIBC=1, build syscall wrapper
+# Picolibc support: if PICOLIBC=1, build syscall wrapper and locks
 ifeq ($(PICOLIBC),1)
 export PICOLIBC
 SYS_WRAPPER_LIB = syscall/wrapper/libsyscall_wrapper.a
+LOCKS_LIB = locks/liblocks.a
 else
 SYS_WRAPPER_LIB =
+LOCKS_LIB =
 endif
 
 ALL_LIBS= $(H2_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
-LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPPER_LIB))
+LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPPER_LIB) $(LOCKS_LIB))
 
-MAKE_LIB=${MAKE} -C $(dir $@); cp $@ tmp/
+# Source directories used for installing headers (not build dirs).
+HEADER_DIRS = $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) syscall/angel/ qurt/
+
+TMP_DIR := $(patsubst %/install,%/build/libs/tmp,$(INSTALLPATH))
+
+# Per-variant header dirs for the three generated-header sub-libs.
+_H2_HDR_DIR       := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))/include
+_POSIX_HDR_DIR    := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))/include
+_H2COMPAT_HDR_DIR := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))/include
+
+MAKE_LIB=${MAKE} -C $(dir $@)
 
 
-tmp:
-	mkdir $@
+$(TMP_DIR):
+	mkdir -p $@
 
-$(H2_LIB): tmp
-	+${MAKE} -C $(H2_DIR) $(IMPL); cp $@ tmp/
+$(H2_LIB):
+	+${MAKE} -C $(H2_DIR) $(IMPL)
 
-$(POSIX_LIB): tmp $(H2_LIB)
-	+${MAKE} -C posix $(IMPL); cp $@ tmp/;
+$(POSIX_LIB): $(H2_LIB)
+	+${MAKE} -C posix $(IMPL)
 
-$(H2_COMPAT_LIB): tmp $(H2_LIB) $(POSIX_LIB)
-	+${MAKE} -C $(H2_COMPAT_DIR) $(IMPL); cp $@ tmp/
+$(H2_COMPAT_LIB): $(H2_LIB) $(POSIX_LIB)
+	+${MAKE} -C $(H2_COMPAT_DIR) $(IMPL)
 
-qurt/libqurt.a: tmp $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
-	+${MAKE_LIB};
+$(QURT_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
+	+${MAKE} -C qurt
 
-syscall/angel/libangel.a: tmp $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
-	+${MAKE_LIB};
+$(ANGEL_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
+	+${MAKE} -C syscall/angel
 
 ifeq ($(PICOLIBC),1)
 $(SYS_WRAPPER_LIB):
 	+${MAKE_LIB};
+
+$(LOCKS_LIB):
+	+${MAKE_LIB};
 endif
 
 clean:
-	rm -rf tmp libh2.a
-	+for dir in ${LIB_DIRS}; do\
+	rm -rf $(TMP_DIR)
+	+for dir in $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) qurt/ syscall/angel/; do\
 		make -C $$dir clean;\
 	done;
 
-libh2.a: ${ALL_LIBS}
-	cd tmp;\
-	for lib in $(notdir ${ALL_LIBS}); do\
-		hexagon-ar x $$lib;\
-	done;\
-	hexagon-ar cru ../libh2.a *.o
+# Combine all component archives into a single libh2.a.  All paths are
+# absolute so cd $(TMP_DIR) doesn't invalidate them.
+$(TMP_DIR)/libh2.a: ${ALL_LIBS} | $(TMP_DIR)
+	rm -f $(TMP_DIR)/*.o
+	cd $(TMP_DIR); \
+	for lib in $(ALL_LIBS); do \
+		hexagon-ar x $$lib; \
+	done; \
+	hexagon-ar cru libh2.a *.o
 
 #  tar is used instead of cp so we can recursively copy and also exclude CVS
 #  Also, /pkg/gnu/bin/tar doesn't seem to work right.
 
-install: libh2.a $(SYS_WRAPPER_LIB)
+install: $(TMP_DIR)/libh2.a $(SYS_WRAPPER_LIB) $(LOCKS_LIB)
 	mkdir -p $(INSTALLPATH)/lib;
 	mkdir -p $(INSTALLPATH)/include;
 	cp $^ $(INSTALLPATH)/lib;
-	for dir in $(dir ${LIB_DIRS}); do\
-		if [ -d "$$dir/include" ]; then \
-			pushd $$dir/include;\
+	for dir in $(_H2_HDR_DIR) $(_POSIX_HDR_DIR) $(_H2COMPAT_HDR_DIR) syscall/angel/include qurt/include; do\
+		if [ -d "$$dir" ]; then \
+			pushd $$dir;\
 			/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
 			popd;\
 		fi;\

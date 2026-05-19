@@ -34,6 +34,18 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 	H2K_kg.last_tlb_index = last_tlb_index;
 	H2K_kg.tlb_size = tlb_size;
 	H2K_kg.pinned_tlb_mask = (~0ULL) << ((last_tlb_index+1) & 0x3F);
+	
+#if ARCHV >= 73
+	H2K_kg.dma_tlb_start = DMA_TLB_START;
+#if ARCHV >= 81
+	H2K_kg.tlb_size_dma = H2K_cfg_table(CFG_TABLE_DMA_JTLB_SIZE);
+#else
+	H2K_kg.tlb_size_dma = 128;  //FIXME: correct for v73?
+#endif	
+	H2K_kg.last_tlb_index_dma = DMA_TLB_START + H2K_kg.tlb_size - 1;
+	H2K_kg.tlb_index_dma = DMA_TLB_START;
+#endif
+
 	H2K_kg.core_id = H2K_cfg_table(CFG_TABLE_CORE_ID);
 	H2K_kg.core_count = H2K_cfg_table(CFG_TABLE_CORE_COUNT);
 

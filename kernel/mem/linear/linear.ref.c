@@ -15,10 +15,11 @@
 static inline H2K_translation_t H2K_linear_translate_update(H2K_translation_t in, H2K_linear_fmt_t entry)
 {
 	in.size = min(in.size,entry.size);
-	in.pn = entry.ppn;
-	if (in.weak_ccc) in.cccc = entry.cccc;
+	in.pn = (entry.extend ? entry.ppn_ext : entry.ppn);
+	if (in.weak_ccc) in.cccc = (entry.extend ? entry.cccc_ext : entry.cccc);
 	in.xwru &= entry.xwru;
-	in.weak_ccc = entry.weak_ccc;
+	in.weak_ccc = (entry.extend ? entry.weak_ccc_ext : entry.weak_ccc);
+	in.hsv39 = (entry.extend ? entry.hsv39 : 0);
 	in.shared = entry.shared;
 	return in;
 }

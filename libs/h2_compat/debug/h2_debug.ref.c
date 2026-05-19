@@ -98,8 +98,9 @@ void h2_debug_context_dump(h2_context_t *context)
 	/* Load ELF to get textual stack trace */
 	char cmdline[SIZE__boot_cmdline__];
 	char *elf = NULL;
+	char *saveptr;
 	sys_get_cmdline(cmdline, sizeof(cmdline));
-	elf = strtok(cmdline, " ");
+	elf = strtok_r(cmdline, " ", &saveptr);
 	printf("elf: %s\n", elf);
 	h2_symtab_init(elf);
 

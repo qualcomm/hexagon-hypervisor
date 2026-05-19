@@ -57,3 +57,15 @@ void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_con
 	}
 #endif
 }
+
+void H2K_mem_tlb_dma_clear(void) {
+#if ARCHV >= 81
+	u32_t idx = DMA_TLB_START;
+
+	while (idx < DMA_TLB_START + H2K_gp->tlb_size_dma) {
+		H2K_mem_tlb_write(idx++, 0ULL);
+	}
+#endif
+}
+
+	

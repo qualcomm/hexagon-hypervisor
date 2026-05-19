@@ -18,7 +18,8 @@ typedef union {
 			u32_t low;
 			struct {
 				u32_t ppd:24;
-				u32_t cccc:4;
+				u32_t cccc:3;
+				u32_t hsv39:1;
 				u32_t xwru:4;
 			};
 		};
@@ -63,12 +64,20 @@ static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
 	return ret;
 }
 
-static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans, u32_t va, u32_t asid)
-{
+#if ARCHV >= 73
+static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans, u32_t va, u32_t asid, u32_t tlb_size_dma) {
+#else
+static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans, u32_t va, u32_t asid) {
+#endif
 	H2K_mem_tlbfmt_t ret = { .raw = 0 };
 	u32_t tlbsize;
 	u32_t ppd;
+	// fail if no xwr or hsv39 set but there is no DMA TLB
+#if ARCHV >= 73
+	if ((((trans.xwru) & -2) == 0) || (trans.hsv39 && tlb_size_dma == 0)) return ret;
+#else
 	if (((trans.xwru) & -2) == 0) return ret;
+#endif
 	ret.vpn = va >> PAGE_BITS;
 	ret.asid = asid;
 	ret.valid = 1;
@@ -81,6 +90,7 @@ static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans
 #endif
 	ret.xwru = trans.xwru;
 	ret.cccc = trans.cccc;
+	ret.hsv39 = trans.hsv39;
 	tlbsize = trans.size;
 	if (tlbsize > SIZE_MAX) tlbsize = PAGE_SIZE_MAX;
 	ppd = trans.pn;

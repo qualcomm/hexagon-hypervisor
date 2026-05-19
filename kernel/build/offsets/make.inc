@@ -1,6 +1,7 @@
 # Yo.  -*- Makefile -*-
 
-include/asm_offsets.h: $(BUILD_DIR)/offsets
+$(BUILD_DIR)/include/asm_offsets.h: $(BUILD_DIR)/offsets
+	mkdir -p $(dir $@)
 ifeq ($(RUN), $(RUN_TOOLSIM))
 	$(RUN) $< -- $@
 else
@@ -8,9 +9,10 @@ else
 endif
 
 $(BUILD_DIR)/offsets: $(DIR)offsets.ref.c includes
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ $<
 
-DEST_HFILES += include/asm_offsets.h
+DEST_HFILES += $(BUILD_DIR)/include/asm_offsets.h
 
 CLEAN_EXTRAS += $(BUILD_DIR)/offsets
 

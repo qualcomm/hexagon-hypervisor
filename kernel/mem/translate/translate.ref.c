@@ -25,9 +25,9 @@ typedef H2K_translation_t (*translation_funcptr)(H2K_translation_t in, H2K_asid_
 
 static const translation_funcptr H2K_translate_funcs[H2K_ASID_TRANS_TYPE_XXX_LAST] = {
 	[H2K_ASID_TRANS_TYPE_LINEAR] = H2K_linear_translate,
-        [H2K_ASID_TRANS_TYPE_TABLE] = H2K_pagewalk_translate,
-        [H2K_ASID_TRANS_TYPE_OFFSET] = H2K_offset_translate,
-        [H2K_ASID_TRANS_TYPE_VARADIX] = H2K_varadix_translate,
+	[H2K_ASID_TRANS_TYPE_TABLE] = H2K_pagewalk_translate,
+	[H2K_ASID_TRANS_TYPE_OFFSET] = H2K_offset_translate,
+	[H2K_ASID_TRANS_TYPE_VARADIX] = H2K_varadix_translate,
 };
 
 /*

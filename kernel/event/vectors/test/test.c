@@ -66,6 +66,11 @@ s32_t H2K_handle_tlbmissrw()
 	return 6;
 }
 
+s32_t H2K_handle_dma()
+{
+	return 7;
+}
+
 s32_t H2K_handle_trap0()
 {
 	return 8;
@@ -91,7 +96,7 @@ s32_t testvals[] = {
 #if ARCHV < 73
 	 -1,
 #else
-	 2,
+	 7,
 #endif
 	 8, 9,-1, 2,12,-1,-1,-1,
 	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,

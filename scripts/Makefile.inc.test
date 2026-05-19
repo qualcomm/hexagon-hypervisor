@@ -43,8 +43,15 @@ else
 endif
 
 ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(H2DIR)/install
+export INSTALLPATH := $(H2DIR)/artifacts/v$(ARCHV)/$(MODEL)/install
 endif
+
+# T is the build variant (opt or ref).  Exported from the top-level makefile when
+# called via 'make opt/ref/cov/test'.  Default to opt if not set (e.g. standalone).
+T ?= opt
+
+# Per-ARCHV/variant directory for test build artifacts (not installed, not in-source).
+TEST_BUILD_ROOT ?= $(patsubst %/install,%/build/tests,$(INSTALLPATH))
 
 ifeq ($(KERNELPATH),)
 export KERNELPATH := $(H2DIR)/kernel
@@ -62,7 +69,7 @@ TIMING ?= --timing
 
 BUSPENALTY ?= --buspenalty 50
 
-ULIMIT ?= 300
+ULIMIT ?= 600
 
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
@@ -88,7 +95,8 @@ LIBH2=${LIBH2_DIR}/libh2.a
 
 LIBH2KERNEL_DIR=${INSTALLPATH}/lib
 LIBH2KERNEL=${LIBH2KERNEL_DIR}/libh2kernel.a
-LIBH2CHECK=${H2DIR}/kernel/libh2check.a
+# libh2check.a is now built and installed by kernel ref_install/opt_install.
+LIBH2CHECK=${INSTALLPATH}/lib/libh2check.a
 
 #  Needs to have the tools already in path...
 #SIMPATH=/pkg/qct/software/hexagon/releases/tools/1.2/qc/bin
@@ -97,17 +105,25 @@ LIBH2CHECK=${H2DIR}/kernel/libh2check.a
 
 ${LIBH2KERNEL}: ${INSTALLPATH}
 
-#check is always in ref/
+# libh2check.a is installed as part of the full build (ref_install/opt_install).
 ${LIBH2CHECK}: ${INSTALLPATH}
-	+cd ${H2DIR}/kernel;\
-	$(MAKE) check DEBUG=0 ARCHV=${ARCHV};\
-	cp build/ref/libh2check.a ${INSTALLPATH}/lib
 
 ${LIBH2}:  ${INSTALLPATH}
 
 ${INSTALLPATH}:
-	cd ${H2DIR};\
-	+$(MAKE) ${MODEL} ARCHV=${ARCHV}
+	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
+
+# $(INSTALLPATH)/ver is written by opt/ref recipes as a version/git-info record.
+# It is no longer used as a test dependency — $(INSTALLPATH)/manifest replaced it.
+$(INSTALLPATH)/ver:
+	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
+
+# $(INSTALLPATH)/manifest is written by opt/ref after all install artifacts land.
+# sha256sums of libh2kernel.a, libh2.a, libh2check.a, and booter — only updated
+# when content changes, so tests re-run iff something actually changed.
+# If manifest is missing, auto-build the install.
+$(INSTALLPATH)/manifest:
+	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
 
 ${BOOTER}: ${INSTALLPATH}
 
@@ -120,10 +136,10 @@ prepare: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL} ${BOOTER}
 
 clean_libs:
 	cd ${H2DIR};\
-	rm -rf install; $(MAKE) clean
+	rm -rf artifacts/v$(ARCHV)/$(MODEL); $(MAKE) clean
 
 clean_top:
-	rm -Rf test.cov_fns cov.txt report.html qurt_report.html make.log
+	rm -Rf test.cov_fns cov.txt $(INSTALLPATH)/cov.txt $(INSTALLPATH)/cov.rpt
 
 
 ################################################################################
@@ -139,7 +155,8 @@ OPTIMIZE := -O1
 # FIXME: Remove H2K_LOAD_ADDR=$(H2K_LINK_ADDR) when tests are no longer in
 # monitor space
 
-KERNEL_INCLUDES := -I ${H2DIR}/kernel/include -I ${H2DIR}/libs/h2/common
+KERNEL_BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))
+KERNEL_INCLUDES := -I $(KERNEL_BUILD_DIR)/include -I ${H2DIR}/libs/h2/common
 
 H2K_KERNEL_NPAGES ?= 0
 
@@ -159,9 +176,9 @@ endif
 endif
 
 ifdef STANDALONE
-CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
+CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
 LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
-ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES)
+ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include
 ifeq ($(EN_LLVM_COV), 1)
 CFLAGS += ${LLVM_COV_CFLAGS}
 LDFLAGS += ${LLVM_COV_LDFLAGS}
@@ -221,11 +238,8 @@ ifdef SUBDIRS
 #	${SUBDIR_MAKE}
 
 #  Uh...  don't run this unless all the tests are run for now.
-cov.txt:
-	find ./kernel ./libs -name "cov.txt" | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --offset_pc > $@
-
-cov.rpt: cov.txt
-	${H2DIR}/scripts/cov_rpt_tool > $@
+# (cov.txt and cov.rpt are now defined in Makefile.coverage as
+#  $(INSTALLPATH)/cov.txt and $(INSTALLPATH)/cov.rpt.)
 
 #  every "subdir" needs to have a results.txt in it for this to run properly.
 #  if no results.txt, FAIL
@@ -234,100 +248,132 @@ cov.rpt: cov.txt
 #	      grep -A 1 FAIL $$SUBDIR/test.log >> report.html; \
 #	      echo FAIL:  no pass signature >> report.html;\
 
-report.html:
-	@echo "<html><body><table>" > report.html;\
+# Derive variant name (opt/ref) from the install path for the JSON generator.
+_VARIANT := $(notdir $(patsubst %/install,%,$(INSTALLPATH)))
+
+# Per-variant parseable test results JSON.  Depends on RESULT_FILES so it is
+# only regenerated when a test result actually changes after a new build.
+$(INSTALLPATH)/test_results.json: $(RESULT_FILES)
+	python3 $(H2DIR)/scripts/gen_test_results.py \
+	    --test-build-root $(TEST_BUILD_ROOT) \
+	    --subdirs "$(SUBDIRS)" \
+	    --archv $(ARCHV) --variant $(_VARIANT) \
+	    --output $@
+
+# Write the h2 test report directly into the artifact directory.
+# Using $@ avoids the root-level intermediate file that h2_report.html/report.html create,
+# so parallel ARCHV builds do not conflict on a shared source-root filename.
+# Depends on RESULT_FILES so it is only regenerated when test results change.
+$(INSTALLPATH)/test_report.html: $(RESULT_FILES)
+	@echo "<html><body><table>" > $@;\
 	for SUBDIR in ${SUBDIRS}; do\
-	   echo "<tr><td> $$SUBDIR</td>" >> report.html;\
-	   if [ ! -s $$SUBDIR/results.txt ]; then\
-	      echo '<td><font style="background-color: red;">' >> report.html; \
-	      echo 'Missing results.txt, that should not be!' >> report.html; \
-	      echo '</font></td>' >> report.html; \
+	   echo "<tr><td> $$SUBDIR</td>" >> $@;\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
+	      echo '<td><font style="background-color: red;">' >> $@; \
+	      echo 'Missing results.txt, that should not be!' >> $@; \
+	      echo '</font></td>' >> $@; \
 	   else\
-	      grep "TEST PASSED" $$SUBDIR/results.txt > /dev/null; \
+	      grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt > /dev/null; \
 	      if [ $$? -eq 0 ]; then \
-	         echo '<td>' >> report.html; \
-		 cat $$SUBDIR/results.txt >> report.html; \
-		 echo '</td>' >> report.html; \
+	         echo '<td>' >> $@; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> $@; \
+		 echo '</td>' >> $@; \
 	      else \
-	         echo '<td><font style="background-color: red;">' >> report.html; \
-		 cat $$SUBDIR/results.txt >> report.html; \
-		 echo '</font></td>' >> report.html; \
+	         echo '<td><font style="background-color: red;">' >> $@; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> $@; \
+		 echo '</font></td>' >> $@; \
 	      fi; \
 	   fi; \
-	   cat $$SUBDIR/make.log >> make.log;\
 	done;\
-	echo "</table></body></html>" >> report.html;
+	echo "</table></body></html>" >> $@
 
-qurt_report.html: report.html
-	mv report.html qurt_report.html
-
-h2_report.html: report.html
-	mv report.html h2_report.html
-
-.PHONY: check check-fail
+# Write the qurt test report directly into the artifact directory (same pattern
+# as $(INSTALLPATH)/test_report.html above).
+$(INSTALLPATH)/qurt_report.html: $(RESULT_FILES)
+	@echo "<html><body><table>" > $@;\
+	for SUBDIR in ${SUBDIRS}; do\
+	   echo "<tr><td> $$SUBDIR</td>" >> $@;\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
+	      echo '<td><font style="background-color: red;">' >> $@; \
+	      echo 'Missing results.txt, that should not be!' >> $@; \
+	      echo '</font></td>' >> $@; \
+	   else\
+	      grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt > /dev/null; \
+	      if [ $$? -eq 0 ]; then \
+	         echo '<td>' >> $@; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> $@; \
+		 echo '</td>' >> $@; \
+	      else \
+	         echo '<td><font style="background-color: red;">' >> $@; \
+		 cat $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt >> $@; \
+		 echo '</font></td>' >> $@; \
+	      fi; \
+	   fi; \
+	done;\
+	echo "</table></body></html>" >> $@
 
 check-fail:
-	@for SUBDIR in ${SUBDIRS}; do\
+	@((((for SUBDIR in ${SUBDIRS}; do\
 	   echo -n "$$SUBDIR: "; \
-	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
 	      echo FAIL - Empty/No results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "ERROR" $$SUBDIR/results.txt;\
+	   grep "ERROR" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - ERROR detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "FAIL" $$SUBDIR/results.txt;\
+	   grep "FAIL" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - FAIL detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "status 0xaaafa7a1" $$SUBDIR/results.txt;\
+	   grep "status 0xaaafa7a1" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "TEST PASSED" $$SUBDIR/results.txt;\
+	   grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -ne 0 ]; then\
 	      echo FAIL - No PASS detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
 	   echo; \
-	done 2>&1 | tee -a $(TESTOUT)
+	done 2>&1; echo $? >&3) | tee -a $(TESTOUT) >&4) 3>&1) | (read stat; exit $$stat)) 4>&1
 
 check:
 	@for SUBDIR in ${SUBDIRS}; do\
 	   echo -n "$$SUBDIR: "; \
-	   if [ ! -s $$SUBDIR/results.txt ]; then\
+	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
 	      echo FAIL - Empty/No results.txt; \
 	      echo; \
 	      continue;\
 	   fi;\
-	   grep "ERROR" $$SUBDIR/results.txt;\
+	   grep "ERROR" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - ERROR detected in results.txt; \
 	      echo; \
 	      continue;\
 	   fi;\
-	   grep "FAIL" $$SUBDIR/results.txt;\
+	   grep "FAIL" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - FAIL detected in results.txt; \
 	      echo; \
 	      continue;\
 	   fi;\
-	   grep "status 0xaaafa7a1" $$SUBDIR/results.txt;\
+	   grep "status 0xaaafa7a1" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -eq 0 ]; then\
 	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
 	      echo; \
 	      exit 1;\
 	   fi;\
-	   grep "TEST PASSED" $$SUBDIR/results.txt;\
+	   grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
 	   if [ $$? -ne 0 ]; then\
 	      echo FAIL - No PASS detected in results.txt; \
 	      echo; \
@@ -340,6 +386,7 @@ check:
 else
 
 DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
+EXEC_TMP := ${EXEC}_tmp
 
 ################################################################################
 #  These are for actual terminal directories
@@ -362,13 +409,13 @@ endif
 	${CC} ${ASFLAGS} -c -o $@ $<; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
-${EXEC}_tmp: ${OBJS}
+${EXEC_TMP}: ${OBJS}
 # How's this for an ugly hack?
 	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
-${EXEC}: ${EXEC}_tmp | constants
+${EXEC}: ${EXEC_TMP} | constants
 # How's this for an ugly hack?
 	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
 	CODE=$${PIPESTATUS[0]}; \
@@ -377,14 +424,15 @@ ${EXEC}: ${EXEC}_tmp | constants
 ignore_fns: ${OBJS}
 	${H2DIR}/scripts/gen_ignore_fns.pl ${OBJS} > $@
 
-# each test has a max of 60 seconds!
+# FIXME: comment says 60 seconds but ULIMIT is 600 (10 minutes)
 test.log: ${EXEC}
+	> $@
 ifeq ($(USE_PKW),1)
 	echo PKW_VERSIONS $(PKW_VERSIONS) >> $@
 	echo PKW_arch $(PKW_arch) >> $@
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
 endif
-	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee -a $@; \
+	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	echo exit status == $$CODE; \
 	if [ "$$CODE" -eq 137 ]; then \
@@ -423,11 +471,11 @@ ${COVFILE}: ${DUMP} try_gmon_out ignore_fns
 		if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi; \
 	else \
 		find . -maxdepth 1 -name 'gmon-0x????????.out' | perl -ne 'chomp; $$f = $$_; s/^\.\/gmon-//; s/.out$$//; system("$(COV) -F -d test.objdump -o cov-$$_.txt $$f")'; \
-		find . -name 'cov-0x*.txt' | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --dir $(H2DIR) > $@; \
+		find . -name 'cov-0x*.txt' | $(PYTHON) ${H2DIR}/scripts/merge_cov.py --dir $(H2DIR) --installpath $(INSTALLPATH) > $@; \
 	fi; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
-CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${COVFILE} cov*.txt* ${GMON_FILES} ${DUMP} make.log test.log results.txt h2
+CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${EXEC_TMP} ${COVFILE} cov*.txt* ${GMON_FILES} ${DUMP} make.log test.log results.txt h2 threadmap.py
 CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt pmu_stats.txt default.profraw
 
 clean:

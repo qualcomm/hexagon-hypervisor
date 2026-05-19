@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-//#include <max.h>
+#include <max.h>
 #include <h2.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -23,8 +23,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "../kernel/include/max.h"
-#include "../kernel/include/hw.h"
+#include <hw.h>
 #include <syscall_defs.h>
 
 #define VM_BEST_PRIO 0

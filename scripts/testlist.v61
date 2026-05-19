@@ -51,7 +51,7 @@
 ./kernel/thread/stop/test
 ./kernel/traps/config/test
 ./kernel/traps/hwconfig/test
-./kernel/traps/pmu/test_h2
+# ./kernel/traps/pmu/test_h2 FIXME: removed because needs --timing (broken on hexagon-sim) 
 ./kernel/traps/pmu/test_standalone
 ./kernel/traps/prio/test
 ./kernel/traps/tid/test

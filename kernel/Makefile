@@ -13,7 +13,7 @@ include ../scripts/Makefile.inc.config
 include ../scripts/Makefile.inc.opensource
 include ../scripts/Makefile.inc.version
 
-CFLAGS := @build/flags/abi -Iinclude -I../libs/h2/common -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
+CFLAGS := @build/flags/abi -I../libs/h2/common -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(KERNEL_TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g
 
 CFLAGS += -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -DH2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -DH2K_GUEST_END=$(H2K_GUEST_END) -DH2K_BOOTMEM_SIZE=$(H2K_BOOTMEM_SIZE)
 
@@ -113,7 +113,13 @@ OPT_V81_CFILES :=
 OPT_V81_SFILES := 
 OPT_V81_OFILES := 
 
-BUILD_DIR := .
+# Derive build dir from INSTALLPATH (encodes both ARCHV and variant).
+# e.g. artifacts/v81/opt/install → artifacts/v81/opt/build/kernel
+BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))
+
+# Add per-ARCHV/variant include dir so asm_offsets.h (generated into
+# BUILD_DIR/include/) is found by all kernel compilation units.
+CFLAGS += -I$(BUILD_DIR)/include
 
 MKINCLUDES := $(shell find . -name make.inc)
 
@@ -164,28 +170,32 @@ ifeq ($(ARCHV),81)
 OPT_OFILES := $(OPT_V81_OFILES)
 endif
 
-build/ref/libh2kernel.a: $(REF_OFILES)
+ifeq ($(findstring /ref/,$(BUILD_DIR)),/ref/)
+$(BUILD_DIR)/libh2kernel.a: $(REF_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(REF_OFILES))
-
-build/opt_v$(ARCHV)/libh2kernel.a: $(OPT_V$(ARCHV)_OFILES)
-	@echo $(OPT_V$(ARCHV)_OFILES)
+else
+$(BUILD_DIR)/libh2kernel.a: $(OPT_OFILES)
+	@echo $(OPT_OFILES)
 	mkdir -p $(dir $@)
-	$(AR) cru $@ $(sort $(OPT_V$(ARCHV)_OFILES))
+	$(AR) cru $@ $(sort $(OPT_OFILES))
+endif
 
-build/ref/libh2check.a: $(CHECK_OFILES)
+$(BUILD_DIR)/libh2check.a: $(CHECK_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(CHECK_OFILES))
 
 
-%.o : %.c
+$(BUILD_DIR)/%.o : %.c
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-%.o : %.S
+$(BUILD_DIR)/%.o : %.S
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $$(find . -name '*.o') $(DEST_HFILES) $(CLEAN_EXTRAS) include/* build/ref build/opt* \
+	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include \
 	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h \
 	pmu_statsfile.txt
 
@@ -199,15 +209,16 @@ dummy:
 
 includes: $(DEST_HFILES)
 
-ref: build/ref/libh2kernel.a
+ref: $(BUILD_DIR)/libh2kernel.a
 
-ref_install: info ref
+ref_install: info ref check
 	mkdir -p $(INSTALLPATH)/lib
 	mkdir -p $(INSTALLPATH)/include
-	cp build/ref/libh2kernel.a $(INSTALLPATH)/lib
-	cp include/asm_offsets.h $(INSTALLPATH)/include # for state trap
+	cp $(BUILD_DIR)/libh2kernel.a $(INSTALLPATH)/lib
+	cp $(BUILD_DIR)/libh2check.a $(INSTALLPATH)/lib
+	cp $(BUILD_DIR)/include/asm_offsets.h $(INSTALLPATH)/include # for state trap
 
-opt: build/opt_v$(ARCHV)/libh2kernel.a
+opt: $(BUILD_DIR)/libh2kernel.a
 
 .PHONY: info
 info :
@@ -216,11 +227,12 @@ ifeq ($(USE_PKW),1)
 	pkw --which $(CC)
 endif
 
-opt_install: info opt
+opt_install: info opt check
 	mkdir -p $(INSTALLPATH)/lib
 	mkdir -p $(INSTALLPATH)/include
-	cp build/opt_v$(ARCHV)/libh2kernel.a $(INSTALLPATH)/lib
-	cp include/asm_offsets.h $(INSTALLPATH)/include # for state trap
+	cp $(BUILD_DIR)/libh2kernel.a $(INSTALLPATH)/lib
+	cp $(BUILD_DIR)/libh2check.a $(INSTALLPATH)/lib
+	cp $(BUILD_DIR)/include/asm_offsets.h $(INSTALLPATH)/include # for state trap
 
-check: build/ref/libh2check.a
+check: $(BUILD_DIR)/libh2check.a
 

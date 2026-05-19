@@ -5,4 +5,4 @@
 
 #include <bootvm.h>
 
-.incbin "bootvm_image.bin"
+.incbin BOOTVM_IMAGE_BIN_PATH

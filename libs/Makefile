@@ -11,13 +11,14 @@ IMPL=ref
 endif
 
 # Derive lib archive paths and tmp staging dir from INSTALLPATH.
-# Keeps all intermediate artifacts under artifacts/v$(ARCHV)/$(T)/build/.
-H2_LIB    := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))/libh2.a
-H2_COMPAT_LIB := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))/libh2_compat.a
-POSIX_LIB := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))/libposix.a
+# Use $(INSTALLPATH)/../build/... so this works for any INSTALLPATH value,
+# not just ones ending in /install.
+H2_LIB    := $(INSTALLPATH)/../build/libs/h2/libh2.a
+H2_COMPAT_LIB := $(INSTALLPATH)/../build/libs/h2_compat/libh2_compat.a
+POSIX_LIB := $(INSTALLPATH)/../build/libs/posix/libposix.a
 
-QURT_LIB  := $(patsubst %/install,%/build/libs/qurt,$(INSTALLPATH))/libqurt.a
-ANGEL_LIB := $(patsubst %/install,%/build/libs/syscall/angel,$(INSTALLPATH))/libangel.a
+QURT_LIB  := $(INSTALLPATH)/../build/libs/qurt/libqurt.a
+ANGEL_LIB := $(INSTALLPATH)/../build/libs/syscall/angel/libangel.a
 
 H2_DIR=h2/
 H2_COMPAT_DIR=h2_compat/
@@ -42,12 +43,12 @@ LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPP
 # Source directories used for installing headers (not build dirs).
 HEADER_DIRS = $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) syscall/angel/ qurt/
 
-TMP_DIR := $(patsubst %/install,%/build/libs/tmp,$(INSTALLPATH))
+TMP_DIR := $(INSTALLPATH)/../build/libs/tmp
 
 # Per-variant header dirs for the three generated-header sub-libs.
-_H2_HDR_DIR       := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))/include
-_POSIX_HDR_DIR    := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))/include
-_H2COMPAT_HDR_DIR := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))/include
+_H2_HDR_DIR       := $(INSTALLPATH)/../build/libs/h2/include
+_POSIX_HDR_DIR    := $(INSTALLPATH)/../build/libs/posix/include
+_H2COMPAT_HDR_DIR := $(INSTALLPATH)/../build/libs/h2_compat/include
 
 MAKE_LIB=${MAKE} -C $(dir $@)
 

@@ -12,8 +12,8 @@ export KERNELPATH := $(H2DIR)/kernel
 endif
 
 # All intermediate build artifacts go here.
-BUILD_DIR        := $(patsubst %/install,%/build/booter,$(INSTALLPATH))
-KERNEL_BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))
+BUILD_DIR        := $(INSTALLPATH)/../build/booter
+KERNEL_BUILD_DIR := $(INSTALLPATH)/../build/kernel
 
 BOOTVM_PROG := $(BUILD_DIR)/booter
 

@@ -4,7 +4,7 @@ EXEC=test.elf
 
 include Makefile.inc
 
-KERNEL_BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))
+KERNEL_BUILD_DIR := $(INSTALLPATH)/../build/kernel
 CFLAGS += -ffixed-r28 -I$(KERNEL_BUILD_DIR)/include
 ASFLAGS += -ffixed-r28 -I$(KERNEL_BUILD_DIR)/include
 

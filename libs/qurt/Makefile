@@ -1,9 +1,9 @@
 
 
-BUILD_DIR           := $(patsubst %/install,%/build/libs/qurt,$(INSTALLPATH))
-H2_BUILD_DIR        := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))
-H2_COMPAT_BUILD_DIR := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))
-POSIX_BUILD_DIR     := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))
+BUILD_DIR           := $(INSTALLPATH)/../build/libs/qurt
+H2_BUILD_DIR        := $(INSTALLPATH)/../build/libs/h2
+H2_COMPAT_BUILD_DIR := $(INSTALLPATH)/../build/libs/h2_compat
+POSIX_BUILD_DIR     := $(INSTALLPATH)/../build/libs/posix
 
 CC = hexagon-clang -mv$(TOOLARCH) -Iinclude -Wall -Wno-builtin-requires-header -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include -I$(H2_COMPAT_BUILD_DIR)/include
 AR = hexagon-ar

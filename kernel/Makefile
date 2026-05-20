@@ -113,9 +113,11 @@ OPT_V81_CFILES :=
 OPT_V81_SFILES := 
 OPT_V81_OFILES := 
 
-# Derive build dir from INSTALLPATH (encodes both ARCHV and variant).
+# Derive build dir as a sibling of INSTALLPATH so it works regardless of
+# whether INSTALLPATH ends in /install or is a user-supplied arbitrary path.
 # e.g. artifacts/v81/opt/install → artifacts/v81/opt/build/kernel
-BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))
+#      install-my               → install-my/../build/kernel
+BUILD_DIR := $(INSTALLPATH)/../build/kernel
 
 # Add per-ARCHV/variant include dir so asm_offsets.h (generated into
 # BUILD_DIR/include/) is found by all kernel compilation units.

@@ -70,9 +70,9 @@ OPT_V81_CFILES :=
 OPT_V81_SFILES := 
 OPT_V81_OFILES := 
 
-BUILD_DIR := $(patsubst %/install,%/build/libs/h2_compat,$(INSTALLPATH))
-H2_BUILD_DIR    := $(patsubst %/install,%/build/libs/h2,$(INSTALLPATH))
-POSIX_BUILD_DIR := $(patsubst %/install,%/build/libs/posix,$(INSTALLPATH))
+BUILD_DIR := $(INSTALLPATH)/../build/libs/h2_compat
+H2_BUILD_DIR    := $(INSTALLPATH)/../build/libs/h2
+POSIX_BUILD_DIR := $(INSTALLPATH)/../build/libs/posix
 CFLAGS += -I$(BUILD_DIR)/include -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include
 
 MKINCLUDES := $(shell find . -name make.inc)

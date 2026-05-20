@@ -11,7 +11,7 @@ export KERNELPATH := $(H2DIR)/kernel
 endif
 
 # All intermediate build artifacts go here.
-BUILD_DIR := $(patsubst %/install,%/build/stake,$(INSTALLPATH))
+BUILD_DIR := $(INSTALLPATH)/../build/stake
 
 all: $(BUILD_DIR)/kernel_tmp
 

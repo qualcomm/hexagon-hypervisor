@@ -30,8 +30,8 @@ MOST_LIBS= $(ANGEL_LIB) $(QURT_LIB)
 # Picolibc support: if PICOLIBC=1, build syscall wrapper and locks
 ifeq ($(PICOLIBC),1)
 export PICOLIBC
-SYS_WRAPPER_LIB = syscall/wrapper/libsyscall_wrapper.a
-LOCKS_LIB = locks/liblocks.a
+SYS_WRAPPER_LIB = $(INSTALLPATH)/../build/libs/syscall/wrapper/libsyscall_wrapper.a
+LOCKS_LIB       = $(INSTALLPATH)/../build/libs/locks/liblocks.a
 else
 SYS_WRAPPER_LIB =
 LOCKS_LIB =
@@ -73,10 +73,10 @@ $(ANGEL_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
 
 ifeq ($(PICOLIBC),1)
 $(SYS_WRAPPER_LIB):
-	+${MAKE_LIB};
+	+${MAKE} -C syscall/wrapper
 
 $(LOCKS_LIB):
-	+${MAKE_LIB};
+	+${MAKE} -C locks
 endif
 
 clean:

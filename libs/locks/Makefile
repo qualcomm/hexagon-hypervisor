@@ -21,16 +21,27 @@ endif
 
 CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
 
+BUILD_DIR := $(INSTALLPATH)/../build/libs/locks
+
 ASM_FILES = 
 C_FILES = $(wildcard src/*.c)
 
-O_FILES = $(ASM_FILES:.S=.o) $(C_FILES:.c=.o)
+O_FILES = $(addprefix $(BUILD_DIR)/,$(ASM_FILES:.S=.o) $(C_FILES:.c=.o))
 
-all: liblocks.a 
+all: $(BUILD_DIR)/liblocks.a
 
-clean: 
-	rm -f liblocks.a src/*.o
+clean:
+	rm -rf $(BUILD_DIR)
 
-liblocks.a: $(O_FILES)
+$(BUILD_DIR)/liblocks.a: $(O_FILES)
+	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(O_FILES))
+
+$(BUILD_DIR)/%.o: %.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_DIR)/%.o: %.S
+	mkdir -p $(dir $@)
+	$(CC) $(ASFLAGS) -c -o $@ $<
 

@@ -110,9 +110,16 @@ FUNC_START H2K_timer_get_ticks  .text.time.timer  .falign
 		if (p0.new) TICKLO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
 		if (p0.new) jump:nt 1f
 	}
+#ifndef TESTING
 	{
 		TICKS = TIMERHILO
 	}
+#else
+	{
+		TICKHI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		TICKLO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
+	}
+#endif
 1:
 	{
 		p1 = cmp.gtu(TICKS,LASTTICKS)		// nowticks > last_ticks?
@@ -337,9 +344,16 @@ FUNC_START H2K_timer_get_time .text.time.timer
 		if (p0.new) TICKS_LO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
 		if (p0.new) jump:nt 1f
 	}
+#ifndef TESTING
 	{
 		TICKS = TIMERHILO
 	}
+#else
+	{
+		TICKS_HI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		TICKS_LO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
+	}
+#endif
 1:
 	{
 		p1 = cmp.gtu(TICKS,LAST_TICKS)		// nowticks > last_ticks?
@@ -620,9 +634,16 @@ FUNC_START H2K_timer_delta_timeout .text.time.timer
 		p0 = cmp.ltu(CREV, V61)
 		if (p0.new) jump:nt 2f
 	}
+#ifndef TESTING
 	{
 		TICKS = TIMERHILO
 	}
+#else
+	{
+		TICKS_HI = memw(DEVPTR+#HW_COUNT_HI-HW_COUNT_LO)
+		TICKS_LO = memw(DEVPTR+#HW_COUNT_LO-HW_COUNT_LO)
+	}
+#endif
 #undef MAGIC_HI
 2:
 	{
@@ -745,4 +766,3 @@ FUNC_START H2K_vmtrap_timer .text.time.timer
 	jumpr r31
 #undef ME
 FUNC_END H2K_vmtrap_timer
-

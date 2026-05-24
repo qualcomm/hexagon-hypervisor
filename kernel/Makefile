@@ -50,6 +50,10 @@ ifdef NO_DEVICES
 CFLAGS += -DNO_DEVICES
 endif
 
+ifdef TESTING
+CFLAGS += -DTESTING
+endif
+
 ifdef LOGBUF
 CFLAGS += -DH2K_LOGBUF
 endif

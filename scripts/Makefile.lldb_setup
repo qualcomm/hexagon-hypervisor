@@ -1,5 +1,3 @@
-THIS_MK := $(lastword $(MAKEFILE_LIST))
-H2DIR   := $(abspath $(dir $(THIS_MK))/..)
 OUT  := $(H2DIR)/lldb-setup
 
 LLDB_PORT ?= 1234

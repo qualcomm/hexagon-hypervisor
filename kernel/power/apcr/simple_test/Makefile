@@ -1,16 +1,10 @@
 EXEC = test.elf
+OBJS += test.o
 
-H2DIR=${UPDIR}../../../..
-
-include ${H2DIR}/scripts/Makefile.inc.test
-include $(H2DIR)/scripts/Makefile.inc.tools
+include Makefile.inc
 
 ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(H2DIR)/install
-endif
-
-ifeq ($(KERNELPATH),)
-export KERNELPATH := $(H2DIR)/kernel
 endif
 
 H2K_KERNEL_PGSIZE := 2
@@ -18,23 +12,31 @@ H2K_ALLOC_HEAP_SIZE := 0x1000
 
 BOOTVM_PROG := .test.elf
 
+ifeq ($(TARGET), rtl)
 CRT0_S := $(INSTALLPATH)/src/min_crt0.S
 CRT0_O := min_crt0.o
+NOSTARTFILES := -nostartfiles
+EXTRA_CFLAGS += -DRTL
+else
+EXTRA_CFLAGS += -DDEBUG
+endif
 
-
-CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include $(EXTRA_CFLAGS)
-LDFLAGS = -nostartfiles -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
+CFLAGS := $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -Wno-builtin-requires-header $(EXTRA_CFLAGS)
+BOOTVM_LDFLAGS = $(NOSTARTFILES) -L$(INSTALLPATH)/lib -moslib=h2 -Qunused-arguments
 
 all: $(BOOTVM_PROG)
 
-include $(H2DIR)/scripts/Makefile.inc.config
-include $(H2DIR)/scripts/Makefile.inc.opensource
 include $(H2DIR)/scripts/Makefile.inc.bootvm
 
 CLEANUP += *.elf $(BOOTVM_CLEAN) hello stats.* *.o pmu_statsfile.txt
 
+$(BOOTVM_IMAGE): LDFLAGS = $(BOOTVM_LDFLAGS)
+$(BOOTVM_PROG_TMP): LDFLAGS = $(BOOTVM_LDFLAGS)
+$(BOOTVM_PROG): LDFLAGS = $(BOOTVM_LDFLAGS)
+
 $(BOOTVM_IMAGE): test.o $(CRT0_O) $(BOOTVM_IMAGE_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -o $@ test.o $(CRT0_O) $(BOOTVM_ENTRY_O)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -o $@ test.o $(CRT0_O) $(BOOTVM_ENTRY_O) 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//';
+
 
 # This bit of stupidity is needed to suppress warnings about changing the
 # recipe for test.elf

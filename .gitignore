@@ -55,3 +55,4 @@ kernel/sched/check_sanity/check_sanity_debug.h
 kernel/util/intcontrol/intcontrol_debug.h
 __pycache__/
 git_update.bat
+lldb-setup

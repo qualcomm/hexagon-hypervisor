@@ -2,7 +2,7 @@
 #  This behaves kind of like a SUBDIRS makefile.
 #  It is meant to be run from the top level ob directory.
 
-SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/^\s*\#.*//;')
+SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/\s*\#.*//;')
 #SUBDIRS_ALL:=$(shell cat ./scripts/testlist.v* | sort | uniq | perl -p -e 's/^\s*\#.*//;')
 
 TESTOUT ?= $(INSTALLPATH)/test.out

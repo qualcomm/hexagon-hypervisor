@@ -40,6 +40,7 @@ s32_t H2K_thread_id() { return 1; }
 s32_t H2K_thread_create() { return 4; }
 s32_t H2K_thread_stop() { return 5; }
 s32_t H2K_cputime_get() { return 6; }
+s32_t H2K_vm_stop() { return 7; }
 s32_t H2K_register_fastint() { return 8; }
 s32_t H2K_prio_set() { return 9; }
 s32_t H2K_prio_get() { return 10; }
@@ -81,7 +82,7 @@ void user_mode();
 u64_t guest_stack[128] __attribute__((aligned(128*8)));
 
 s32_t testvals[] = {
-	 0, 1, 2, 3, 4, 5, 6, 1, 8, 9,10,11,12,13,14,15,
+	 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
 	16, 1,18,19,20,21,22,23,24,25,26,27,28,29,30,31
 };
 

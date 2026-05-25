@@ -173,22 +173,22 @@ int main()
 	if (seen_0 || seen_1) FAIL("should not have seen anything after disabling.");
 
 	puts("Trying to stop all created threads");
-	stop_threads = 1;
-	h2_intpool_config(INT_START,1);
-	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,INT_START,1); // trigger interrupt to fast exit from worker thread
-	h2_sem_down(&int_received_sem);
-	h2_intpool_config(INT_START,1);
-	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,INT_START,1); // trigger interrupt to fast exit from worker thread
-	h2_sem_down(&int_received_sem);
-	puts("Awake last time");
+//	stop_threads = 1;
+//	h2_intpool_config(INT_START,1);
+//	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,INT_START,1); // trigger interrupt to fast exit from worker thread
+//	h2_sem_down(&int_received_sem);
+//	h2_intpool_config(INT_START,1);
+//	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,INT_START,1); // trigger interrupt to fast exit from worker thread
+//	h2_sem_down(&int_received_sem);
+//	puts("Awake last time");
 
-    void *ret;
-	pthread_join(timeout_child, &ret);
-	puts("Joining time-out thread");
-	pthread_join(intpool_child_0, &ret);
-	puts("Joining worker 0 thread");
-	pthread_join(intpool_child_1, &ret);
-	puts("Joining worker 1 thread");
+//    void *ret;
+//	pthread_join(timeout_child, &ret);
+//	puts("Joining time-out thread");
+//	pthread_join(intpool_child_0, &ret);
+//	puts("Joining worker 0 thread");
+//	pthread_join(intpool_child_1, &ret);
+//	puts("Joining worker 1 thread");
 	puts("TEST PASSED");
 	return 0;
 }

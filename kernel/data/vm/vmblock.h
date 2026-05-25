@@ -79,6 +79,13 @@ typedef struct H2K_vmblock_struct {
 	/* Pointer to thread context storage */
 	H2K_thread_context *contexts;
 
+	/* Main (first-created) thread of this vmblock.  When this context calls
+	 * H2K_thread_stop the entire vmblock is torn down, matching POSIX
+	 * exit()/return-from-main semantics.  NULL once main has exited. */
+	H2K_thread_context *main_context;
+	/* Set under BKL when main is exiting; gates self-reap in resched. */
+	u32_t exiting;
+
 	union {
 		u32_t flags;
 		struct {

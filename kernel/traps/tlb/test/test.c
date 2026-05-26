@@ -64,6 +64,14 @@ H2K_thread_context a;
  */
 #define ALLOC_WINDOW 64
 
+/*
+ * Fallback JTLB size for ARCHV < 68. Older Hexagon arches don't expose the
+ * JTLB size via CFG_TABLE_JTLB_SIZE -- see boot.ref.S, which gates the
+ * cfg-table read on #if ARCHV >= 68 and walks the TLB to size it instead.
+ * The pre-v68 cores always have a 128-entry JTLB, so we hardcode that here.
+ */
+#define LEGACY_JTLB_SIZE 128
+
 static inline unsigned long long int TH_tlb_read(int index)
 {
 	unsigned long long int ret;
@@ -184,7 +192,11 @@ int main()
 	int i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	printf("Hello!\n");
+#if ARCHV >= 68
 	u32_t tlb_size       = H2K_cfg_table(CFG_TABLE_JTLB_SIZE);
+#else
+	u32_t tlb_size       = LEGACY_JTLB_SIZE;
+#endif
 	u32_t last_tlb_index = tlb_size - TEST_PINNED_COUNT - 1;
 	H2K_kg_init(0, 0, 0, last_tlb_index, tlb_size, 0, 0, 0);
 	printf("initted!\n");

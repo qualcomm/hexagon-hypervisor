@@ -50,10 +50,6 @@ ifdef NO_DEVICES
 CFLAGS += -DNO_DEVICES
 endif
 
-ifeq ($(TESTING),1)
-CFLAGS += -DTESTING
-endif
-
 ifdef LOGBUF
 CFLAGS += -DH2K_LOGBUF
 endif

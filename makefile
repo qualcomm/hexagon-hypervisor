@@ -367,3 +367,12 @@ cov_fns:
  q6testinstallenvs:
 	export Q6TESTINSTALL_MAKEJOBS=1
 	export Q6TESTINSTALL_TESTTARGET='testall'
+
+LLDB_PORT ?= 1234
+
+.PHONY: lldb-setup lldb-setup-clean
+lldb-setup:
+	$(MAKE) -f scripts/Makefile.lldb_setup LLDB_PORT=$(LLDB_PORT)
+
+lldb-setup-clean:
+	$(MAKE) -f scripts/Makefile.lldb_setup clean

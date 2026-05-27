@@ -90,6 +90,18 @@ scripts (`vapa_bootvm.x`, `vapa_kernel.x.in`) and simulator device configs
 
 `install/stake` contains build support files used to compute kernel sizing.
 
+# LLDB Debugging
+
+Generate an LLDB setup file configured with your local build paths:
+
+```
+make lldb-setup                  # generate lldb-setup (default port 1234)
+make lldb-setup LLDB_PORT=6789   # override the gdb-remote port
+make lldb-setup-clean            # remove generated file
+```
+
+The generated file is gitignored; each developer generates their own.
+
 # Build and Test todo
 
 * [ ] Enable Parallel Build and Test: once there is no conflict between different builds, all the builds and testing can run in parallel

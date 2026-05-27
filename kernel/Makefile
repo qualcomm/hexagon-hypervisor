@@ -50,7 +50,7 @@ ifdef NO_DEVICES
 CFLAGS += -DNO_DEVICES
 endif
 
-ifdef TESTING
+ifeq ($(TESTING),1)
 CFLAGS += -DTESTING
 endif
 

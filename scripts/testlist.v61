@@ -29,7 +29,7 @@
 ./kernel/mem/tlbfill/test
 ./kernel/mem/tlbmisc/test
 ./kernel/mem/tlbmiss/test
-#./kernel/mem/varadix/test  FIXME: needs to adapt to different kernel page size/count
+./kernel/mem/varadix/test
 ./kernel/power/apcr/test_multi
 ./kernel/power/hvx/test
 ./kernel/power/apcr/simple_test

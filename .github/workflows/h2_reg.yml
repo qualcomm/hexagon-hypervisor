@@ -44,4 +44,4 @@ jobs:
 
       - name: Regression test
         run: |
-          make -O USE_PKW=0 NULL_ANGEL_TRAP=1 TESTING=1 testall
+          make -O USE_PKW=0 NULL_ANGEL_TRAP=1 testall

@@ -250,7 +250,7 @@ ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifac
 # generating test_results.json which testall aggregates into the unified report.
 define ARCHV_VARIANT_RULE
 artifacts/v$(1)/$(2)/install/test_results.json:
-	$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
+	$$(MAKE) ARCHV=$(1) TARGET=$(2) TESTING=1 test_variant
 endef
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_RULE,$a,$v))))
 

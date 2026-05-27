@@ -111,7 +111,7 @@ ${LIBH2CHECK}: ${INSTALLPATH}
 ${LIBH2}:  ${INSTALLPATH}
 
 ${INSTALLPATH}:
-	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV} TESTING=1
+	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
 
 # $(INSTALLPATH)/ver is written by opt/ref recipes as a version/git-info record.
 # It is no longer used as a test dependency — $(INSTALLPATH)/manifest replaced it.
@@ -216,6 +216,16 @@ CFLAGS += -DDEBUG
 endif
 
 CFLAGS += $(EXTRA_CFLAGS)
+ASFLAGS += $(EXTRA_ASFLAGS)
+
+ifdef RECOMPILE_SRCS_PREFS
+VPATH += $(RECOMPILE_DIRS)
+ifeq ($(T),ref)
+OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),$(m).ref.o)
+else
+OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),$(m).v$(ARCHV)opt.o)
+endif
+endif
 
 ################################################################################
 #  Convenience shortcuts

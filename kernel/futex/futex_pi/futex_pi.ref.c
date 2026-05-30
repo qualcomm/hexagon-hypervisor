@@ -41,13 +41,7 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		dest->prio = (u8_t)prio;
 		H2K_ready_insert(dest);
 	} else if (dest->status == H2K_STATUS_RUNNING) {
-		/* 
-		 * EJP: FIXME: 
-		 * Now that runlist structure has changed, this adjustment should be easier? 
-		 */
-		H2K_runlist_remove(dest);
-		dest->prio = (u8_t)prio;
-		H2K_runlist_push(dest);
+		H2K_runlist_set_thread_prio(dest, prio);
 		if (H2K_gp->priomask & (1<<dest->hthread)) {
 			H2K_raise_lowprio();
 		}
@@ -137,11 +131,7 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	}
 	H2K_safemem_unlock();
 	/* Restore my priority */
-	if (me->prio != me->base_prio) {
-		H2K_runlist_remove(me);
-		me->prio = me->base_prio;
-		H2K_runlist_push(me);
-	}
+	H2K_runlist_set_thread_prio(me, me->base_prio);
 	return (s32_t)H2K_check_sanity_unlock(0);
 }
 

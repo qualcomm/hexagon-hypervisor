@@ -22,8 +22,8 @@
 #define VARADIX_WEAK_CCC_ON      ((u32_t)(H2K_linear_fmt_t){.weak_ccc = ~0u}.weak_ccc)
 #define VARADIX_XWRU_OFFSET      (VARADIX_WEAK_CCC_OFFSET + __builtin_popcount(VARADIX_WEAK_CCC_ON))
 #define VARADIX_XWRU_MASK        ((u32_t)(H2K_linear_fmt_t){.xwru     = ~0u}.xwru)
-/* ppn bits [22:1] are usable PN: bit 0 is the size sentinel, bit 23 is unused */
-#define VARADIX_PN_BITS          (VARADIX_PPN_BITS - 2)
+
+#define VARADIX_PN_BITS          22
 
 #include <translate.h>
 

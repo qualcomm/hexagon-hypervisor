@@ -216,6 +216,16 @@ CFLAGS += -DDEBUG
 endif
 
 CFLAGS += $(EXTRA_CFLAGS)
+ASFLAGS += $(EXTRA_ASFLAGS)
+
+ifdef RECOMPILE_SRCS_PREFS
+VPATH += $(RECOMPILE_DIRS)
+ifeq ($(T),ref)
+OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),$(m).ref.o)
+else
+OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),$(m).v$(ARCHV)opt.o)
+endif
+endif
 
 ################################################################################
 #  Convenience shortcuts

@@ -120,9 +120,11 @@ static inline ticks_t H2K_timer_hw_read_count()
 		};
 	} ticktmp;
 
+#ifndef TESTING
 	if (H2K_gp->arch >= CORE_V61) { // use core timer regs
 		return H2K_get_timer_reg();
 	}
+#endif
 
 	do {
 		tmphi = H2K_gp->time.devptr[HW_COUNT_HI];

@@ -290,8 +290,8 @@ void test_good(u32_t good_vpn,u32_t vpn_bits, u32_t terminal_entry)
 	int i;
 	for (i = 0; i < terminal_size; i++) {
 		trans.pn = good_vpn + i;
-		trans.xwru = VARADIX_XWRU_MASK;
-		trans.cccc = VARADIX_CCCC_MASK;
+		trans.xwru = X | W | R | U;
+		trans.cccc = L1WB_L2C;
 		trans.weak_ccc = VARADIX_WEAK_CCC_ON;
 		trans = H2K_varadix_translate(trans,info);
 		if (trans.raw == 0) {
@@ -319,8 +319,8 @@ void test_bad(u32_t good_vpn,u32_t vpn_bits, u32_t terminal_entry)
 	u32_t terminal_size = entry_size(terminal_entry);
 	u32_t startbit = terminal_size;
 	H2K_translation_t trans;
-	trans.xwru = VARADIX_XWRU_MASK;
-	trans.cccc = VARADIX_CCCC_MASK;
+	trans.xwru = X | W | R | U;
+	trans.cccc = L1WB_L2C;
 	trans.weak_ccc = VARADIX_WEAK_CCC_ON;
 	int i;
 	for (i = startbit; i < vpn_bits; i++) {

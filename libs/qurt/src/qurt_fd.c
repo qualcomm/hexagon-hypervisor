@@ -5,6 +5,7 @@
 
 #include <qurt_lifo.h>
 #include <qurt_fd.h>
+#include <stdint.h>
 
 /* EJP: the best thing about this file is that most of the things are commented out. */
 

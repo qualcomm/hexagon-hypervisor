@@ -3,7 +3,14 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -I$(INSTALLPATH)/include -I../../libs/syscall/angel/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-picolibc
+ifeq ($(PICOLIBC),1)
+TARGET_FLAG = --target=hexagon-h2-picolibc
+else
+TARGET_FLAG =
+endif
+
+CFLAGS := $(TARGET_FLAG) -I$(INSTALLPATH)/include -I../../libs/syscall/angel/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG

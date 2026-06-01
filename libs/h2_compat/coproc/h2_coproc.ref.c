@@ -6,9 +6,9 @@
 #include <h2_coproc.h>
 #include <h2_alloc.h>
 
-static unsigned int *configs[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {NULL};
-static unsigned int nunits[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {0};
-static unsigned int *counts[CFG_TYPE_MAX][CFG_SUBTYPE_MAX][CFG_MAX] = {NULL};
+static unsigned int *configs[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {{NULL}};
+static unsigned int nunits[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {{0}};
+static unsigned int *counts[CFG_TYPE_MAX][CFG_SUBTYPE_MAX][CFG_MAX] = {{{NULL}}};
 static unsigned int oldstyle = 0;
 static unsigned int init_done = 0;
 

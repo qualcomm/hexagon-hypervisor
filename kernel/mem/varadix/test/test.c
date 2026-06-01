@@ -16,6 +16,9 @@
 #define TH_printf(...) printf(__VA_ARGS__);  \
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
+#define TEST_RAND_SEED   42
+#define TEST_ITERATIONS  10000
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -191,12 +194,15 @@ static inline u32_t make_terminal_entry(u32_t bitsleft)
 {
 	u32_t xwru;
 	u32_t cccc;
+	u32_t weak_ccc;
 	u32_t pn;
-	while ((xwru = rand() & 0xF) < 2) /* RETRY */;
-	cccc = rand() & 0xF;
-	pn = rand() & 0x00FFFFFF;
-	pn |= cccc << 24;
-	pn |= xwru << 28;
+	while ((xwru = rand() & VARADIX_XWRU_MASK) < 2) /* RETRY */;
+	cccc = rand() & VARADIX_CCCC_MASK;
+	weak_ccc = rand() & VARADIX_WEAK_CCC_ON;
+	pn = rand() & ((1U << VARADIX_CCCC_OFFSET) - 1);
+	pn |= cccc << VARADIX_CCCC_OFFSET;
+	pn |= weak_ccc << VARADIX_WEAK_CCC_OFFSET;
+	pn |= xwru << VARADIX_XWRU_OFFSET;
 	pn = Q6_R_insert_RP(pn,1<<bitsleft,Q6_P_combine_RR(bitsleft+1,0));
 	return pn;
 }
@@ -277,14 +283,16 @@ void test_good(u32_t good_vpn,u32_t vpn_bits, u32_t terminal_entry)
 	u32_t terminal_size = entry_size(terminal_entry);
 	H2K_translation_t trans;
 	H2K_translation_t expected_trans;
-	expected_trans.xwru = terminal_entry >> 28;
-	expected_trans.cccc = terminal_entry >> 24;
-	expected_trans.pn = ((terminal_entry & 0x007ffffe) >> 1) & (-1 << terminal_size);
+	expected_trans.xwru = terminal_entry >> VARADIX_XWRU_OFFSET;
+	expected_trans.weak_ccc = (terminal_entry >> VARADIX_WEAK_CCC_OFFSET);
+	expected_trans.cccc = terminal_entry >> VARADIX_CCCC_OFFSET;
+	expected_trans.pn = ((terminal_entry & (((1U << VARADIX_PN_BITS) - 1) << 1)) >> 1) & (-1 << terminal_size);
 	int i;
 	for (i = 0; i < terminal_size; i++) {
 		trans.pn = good_vpn + i;
-		trans.xwru = 0xf;
-		trans.cccc = 0xff;
+		trans.xwru = X | W | R | U;
+		trans.cccc = L1WB_L2C;
+		trans.weak_ccc = VARADIX_WEAK_CCC_ON;
 		trans = H2K_varadix_translate(trans,info);
 		if (trans.raw == 0) {
 			TH_printf("trans: %08x --> %016llx\n",good_vpn + i,trans.raw);
@@ -295,6 +303,7 @@ void test_good(u32_t good_vpn,u32_t vpn_bits, u32_t terminal_entry)
 			FAIL("bad xwru");
 		}
 		if (trans.cccc != expected_trans.cccc) FAIL("bad cccc");
+		if (trans.weak_ccc != expected_trans.weak_ccc) FAIL("bad weak_ccc");
 		if (trans.pn != (expected_trans.pn | i)) {
 			TH_printf("trans.pn = %08x expected_trans.pn=%08x i=%08x\n",
 				trans.pn,
@@ -310,8 +319,9 @@ void test_bad(u32_t good_vpn,u32_t vpn_bits, u32_t terminal_entry)
 	u32_t terminal_size = entry_size(terminal_entry);
 	u32_t startbit = terminal_size;
 	H2K_translation_t trans;
-	trans.xwru = 0xf;
-	trans.cccc = 0x7;
+	trans.xwru = X | W | R | U;
+	trans.cccc = L1WB_L2C;
+	trans.weak_ccc = VARADIX_WEAK_CCC_ON;
 	int i;
 	for (i = startbit; i < vpn_bits; i++) {
 		trans.pn = good_vpn ^ (1<<i);
@@ -330,7 +340,7 @@ void test_bad(u32_t good_vpn,u32_t vpn_bits, u32_t terminal_entry)
 void TH_random_test()
 {
 	TH_table_info *tables;
-	u32_t vpn_bits = rand() % 23;
+	u32_t vpn_bits = rand() % (VARADIX_PN_BITS + 1);
 	u32_t root_entry;
 	u32_t terminal_entry;
 	u32_t goodvpn = 0;
@@ -348,13 +358,13 @@ int main()
 {
 	int i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	srand(42);
+	srand(TEST_RAND_SEED);
 	H2K_gp->vmblocks[2] = &myvmblock;
 	H2K_gp->vmblocks[3] = &myvmblock2;
 	myvmblock.guestmap.raw = 0;
 	TH_expected_translate_calls = 0;
 
-	for (i = 0; i < 10000; i++) {
+	for (i = 0; i < TEST_ITERATIONS; i++) {
 		TH_random_test();
 		// TH_printf("test %d complete!\n",i);
 	}
@@ -362,4 +372,3 @@ int main()
 	puts("TEST PASSED");
 	return 0;
 }
-

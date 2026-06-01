@@ -1,7 +1,7 @@
 
-# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-picolibc
+# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-elf --cstdlib=picolibc
 ifeq ($(PICOLIBC),1)
-TARGET_FLAG = --target=hexagon-h2-picolibc
+TARGET_FLAG = --target=hexagon-h2-elf --cstdlib=picolibc
 else
 TARGET_FLAG =
 endif

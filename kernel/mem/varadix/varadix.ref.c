@@ -36,6 +36,7 @@ static inline H2K_translation_t H2K_varadix_mktrans(u32_t vpn, u32_t entry, u32_
 	ret.raw = 0;
 	ret.xwru = entry >> VARADIX_XWRU_OFFSET;
 	ret.cccc = entry >> VARADIX_CCCC_OFFSET;
+	ret.weak_ccc = entry >> VARADIX_WEAK_CCC_OFFSET;
 	entry &= entry-1;	// clear least significant set bit
 	/* Must preserve all low order bits in case pages get smaller (by stage2 translation or odd size) */
 	mypn = Q6_R_extractu_RP(entry,Q6_P_combine_RR(VARADIX_PN_BITS-size,1+size));

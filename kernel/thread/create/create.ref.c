@@ -106,6 +106,9 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	vmblock->num_cpus++;
 	tmp->vmblock = vmblock;
 
+	/* Record the first thread as main: its exit triggers VM teardown. */
+	if (vmblock->main_context == NULL) vmblock->main_context = tmp;
+
 	H2K_ready_append(tmp);
 	return (s32_t)H2K_check_sanity_unlock(H2K_id_from_context(tmp).raw);
 }

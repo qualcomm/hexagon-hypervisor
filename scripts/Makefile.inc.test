@@ -510,6 +510,8 @@ results.txt: test.log
 
 all: results.txt ${COVFILE}
 tst: results.txt
+test: results.txt
+.PHONY: test tst all
 
 
 endif

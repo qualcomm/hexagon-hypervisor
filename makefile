@@ -112,9 +112,12 @@ ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifac
 
 # One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
 # generating test_results.json which testall aggregates into the unified report.
+# The leading '-' lets the unified report build even when test_variant exits
+# non-zero (its check-fail step fails on test failures); the JSON file is still
+# produced by h2_test inside test_variant before check-fail runs.
 define ARCHV_VARIANT_RULE
 artifacts/v$(1)/$(2)/install/test_results.json:
-	$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
+	-$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
 endef
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_RULE,$a,$v))))
 
@@ -150,9 +153,9 @@ h2_test: # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
 #$(MAKE) -C ucos sim 2>&1 | tee make.log
-	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare

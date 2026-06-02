@@ -126,20 +126,16 @@ static void vm_stop_locked(s32_t status, H2K_thread_context *me)
 void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 {
 	H2K_vmblock_t *vmblock = me->vmblock;
-	int is_main;
 	u32_t i;
 
 	BKL_LOCK(&H2K_bkl);
 
-	is_main = (me == vmblock->main_context);
-
-	if (is_main) {
-		vm_stop_locked(status, me);
-		H2K_dosched(NULL, get_hwtnum());
-		/* unreachable */
-	}
-
-	/* Per-me cleanup for non-main thread exit. */
+	/*
+	 * Per-thread cleanup. Main and worker threads share this path:
+	 * pthread_exit on main must NOT tear down the VM (POSIX semantics --
+	 * workers keep running). VM-wide teardown happens only via
+	 * H2K_vm_stop (H2_TRAP_VM_STOP), which exit()/sys_exit() invokes.
+	 */
 	H2K_timer_cancel_withlock(me);
 	H2K_runlist_remove(me);
 	H2K_asid_table_dec(me->ssr_asid);
@@ -148,6 +144,10 @@ void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 	vmblock->free_threads = me;
 	vmblock->num_cpus--;
 	vmblock->status = status;
+
+	/* If main is exiting, drop the main_context reference so the
+	 * all-blocked reaper below can finalize a headless VM cleanly. */
+	if (me == vmblock->main_context) vmblock->main_context = NULL;
 
 	if (!vmblock->exiting && status == 0 && vmblock->num_cpus > 0) {
 		/* Non-main thread exit: keep the conservative all-blocked-with-no-

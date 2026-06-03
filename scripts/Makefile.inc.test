@@ -434,7 +434,6 @@ ${EXEC}: ${EXEC_TMP} | constants
 ignore_fns: ${OBJS}
 	${H2DIR}/scripts/gen_ignore_fns.pl ${OBJS} > $@
 
-# FIXME: comment says 60 seconds but ULIMIT is 600 (10 minutes)
 test.log: ${EXEC}
 	> $@
 ifeq ($(USE_PKW),1)

@@ -73,6 +73,12 @@ endif
 	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
 	rm -f $(INSTALLPATH)/manifest.tmp
 
+# opt_si is a flavor of opt with different runtime constants (load address,
+# guest start, angel trap behavior).  Same build recipe; the per-variant env
+# vars from scripts/Makefile.inc.config make the binaries differ, and the
+# T:=opt_si in that file routes the artifacts to artifacts/v$(ARCHV)/opt_si/.
+opt_si: opt
+
 ref:
 ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)

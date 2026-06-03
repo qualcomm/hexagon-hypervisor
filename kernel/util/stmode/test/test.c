@@ -9,7 +9,7 @@
 #include <max.h>
 #include <stmode.h>
 #include <hw.h>
-#include <hexagon_standalone.h>
+#include <h2.h>
 
 void FAIL(const char *str)
 {
@@ -48,6 +48,10 @@ void test2(void *unused)
 int main()
 {
 	u32_t tmp;
+
+	h2_init(NULL);
+	h2_hwconfig_hwthreads_mask(-1);
+	
 	asm volatile (" %0 = #-1; imask=%0 " : "=r"(tmp));
 	H2K_set_gie();
 
@@ -57,7 +61,7 @@ int main()
 	H2K_stmode_end();
 	if ((H2K_get_syscfg() & 0x10) == 0) FAIL("stmode_end didn't ensable gie");
 
-	thread_create(&test1,stack1+STACK_SIZE,1,(void *)1);
+	h2_thread_create(test1, &stack1[STACK_SIZE], (void *)1, 0);
 	while (handshake == 0) /* SPIN */;
 	for (tmp = 0; tmp < 100; tmp++) { asm volatile ("nop"); }
 
@@ -69,7 +73,7 @@ int main()
 
 	handshake = 0;
 
-	thread_create(&test2,stack2+STACK_SIZE,2,(void *)2);
+	h2_thread_create(test2, &stack2[STACK_SIZE], (void *)2, 0);
 	while (handshake == 0) /* SPIN */;
 	for (tmp = 0; tmp < 100; tmp++) { asm volatile ("nop"); }
 

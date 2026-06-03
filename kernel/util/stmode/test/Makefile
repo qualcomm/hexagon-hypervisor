@@ -1,7 +1,8 @@
-STANDALONE=1
 
 OBJS+=test.o
 EXEC=test.elf
 
 include Makefile.inc
-OSLIB=
+KERNEL_BUILD_DIR := $(INSTALLPATH)/../build/kernel
+CFLAGS += -ffixed-r28 -I$(KERNEL_BUILD_DIR)/include
+ASFLAGS += -ffixed-r28 -I$(KERNEL_BUILD_DIR)/include

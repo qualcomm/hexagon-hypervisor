@@ -30,7 +30,7 @@ clean: covclean booterclean docclean qurtclean # ucosclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
-	rm -Rf size test.exe stats.txt artifacts/v$(ARCHV)/$(T) kernel/stats.txt
+	rm -Rf size test.exe stats.txt artifacts/v$(ARCHV)/$(TARGET) kernel/stats.txt
 
 booterclean:
 	$(MAKE) -C booter ARCHV=$(ARCHV) clean

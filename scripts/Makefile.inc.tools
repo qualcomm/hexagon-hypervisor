@@ -18,12 +18,7 @@ export CXX := hexagon-clang++
 export AS := hexagon-clang
 export AR := hexagon-ar
 export RANLIB := hexagon-ranlib
-ifeq (1, $(USE_PKW))
-export COV := $(shell PKW_VERSIONS=hexagon-tools=8.6.07 pkw --which hexagon-coverage)
-else
-# without pkw, rely on shell path
-export COV := hexagon-coverage
-endif
+export COV := $(H2DIR)/scripts/hexagon-coverage.py
 export LLVM_COV := hexagon-llvm-cov
 export OBJDUMP := hexagon-llvm-objdump
 export GMON_MERGE := hexagon-gmon-merge

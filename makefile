@@ -1,6 +1,7 @@
 include scripts/Makefile.inc.config
 include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
+include scripts/Makefile.inc.tools
 
 # Enable parallel builds by default.  Use the number of available CPUs so we
 # don't overwhelm shared machines.  A user-supplied -jN on the command line
@@ -9,17 +10,48 @@ ifeq ($(findstring -j,$(MAKEFLAGS)),)
 MAKEFLAGS += -j$(shell nproc)
 endif
 
-include scripts/Makefile.inc.tools
-
-
 JFLAG ?= -j
-OPT_JFLAG ?= $(JFLAG)
-REF_JFLAG ?= $(JFLAG)
 TEST_JFLAG ?= -j 8
+
+NULLSTRING :=
+define nl
+
+$(NULLSTRING)
+endef
+
+tab := $(shell printf '\011')
 
 .PHONY: all
 all:
-	$(MAKE) $(JFLAG) $(T)
+	$(MAKE) $(JFLAG) build
+
+.PHONY: build
+build:
+ifeq ($(USE_PKW),1)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
+	pkw --which $(CC)
+endif
+	$(MAKE) $(JFLAG) -C kernel ARCHV=$(ARCHV) install && \
+	$(MAKE) $(JFLAG) -C libs ARCHV=$(ARCHV) install && \
+	$(MAKE) $(JFLAG) -C stake ARCHV=$(ARCHV) install
+	$(MAKE) $(JFLAG) -C booter ARCHV=$(ARCHV) install
+	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
+	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
+	$(MAKE) $(JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
+	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
+	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
+	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
+	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
+	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
+	    > $(INSTALLPATH)/manifest.tmp; \
+	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
+	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
+	rm -f $(INSTALLPATH)/manifest.tmp
+
+
+.PHONY: buildall
+$(eval buildall:$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(nl)$(tab)$$(MAKE) ARCHV=$(a) TARGET=$(v))))
 
 all_clean:
 	rm -rf artifacts/
@@ -50,52 +82,6 @@ qurtclean:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) clean
 	$(MAKE) -f scripts/Makefile.qurt clean_top
 
-opt:
-ifeq ($(USE_PKW),1)
-	@echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which $(CC)
-endif
-	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
-	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
-	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
-	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
-	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
-	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
-	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
-	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
-	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
-	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
-	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
-	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
-	    > $(INSTALLPATH)/manifest.tmp; \
-	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
-	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
-	rm -f $(INSTALLPATH)/manifest.tmp
-
-ref:
-ifeq ($(USE_PKW),1)
-	@echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which $(CC)
-endif
-	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
-	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
-	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
-	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
-	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
-	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
-	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
-	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
-	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
-	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
-	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
-	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
-	    > $(INSTALLPATH)/manifest.tmp; \
-	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
-	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
-	rm -f $(INSTALLPATH)/manifest.tmp
-
 sim: ref
 	$(CC) -mv$(TOOLARCH) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
 	$(RUN) $(SIMF) -- test.exe;
@@ -112,11 +98,11 @@ ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifac
 
 # One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
 # generating test_results.json which testall aggregates into the unified report.
-define ARCHV_VARIANT_RULE
+define ARCHV_VARIANT_TEST_RULE
 artifacts/v$(1)/$(2)/install/test_results.json:
 	$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
 endef
-$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_RULE,$a,$v))))
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_TEST_RULE,$a,$v))))
 
 # Unified test report: one section per ARCHV×variant, driven by all JSON files.
 # Building this target drives the full build+test DAG for every combination.

@@ -111,19 +111,19 @@ ${LIBH2CHECK}: ${INSTALLPATH}
 ${LIBH2}:  ${INSTALLPATH}
 
 ${INSTALLPATH}:
-	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
+	cd ${H2DIR} && $(MAKE) TARGET=$(TARGET) ARCHV=${ARCHV}
 
 # $(INSTALLPATH)/ver is written by opt/ref recipes as a version/git-info record.
 # It is no longer used as a test dependency — $(INSTALLPATH)/manifest replaced it.
 $(INSTALLPATH)/ver:
-	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
+	cd ${H2DIR} && $(MAKE) TARGET=$(TARGET) ARCHV=${ARCHV}
 
 # $(INSTALLPATH)/manifest is written by opt/ref after all install artifacts land.
 # sha256sums of libh2kernel.a, libh2.a, libh2check.a, and booter — only updated
 # when content changes, so tests re-run iff something actually changed.
 # If manifest is missing, auto-build the install.
 $(INSTALLPATH)/manifest:
-	cd ${H2DIR} && $(MAKE) $(T) ARCHV=${ARCHV}
+	cd ${H2DIR} && $(MAKE) TARGET=$(TARGET) ARCHV=${ARCHV}
 
 ${BOOTER}: ${INSTALLPATH}
 
@@ -220,7 +220,7 @@ ASFLAGS += $(EXTRA_ASFLAGS)
 
 ifdef RECOMPILE_SRCS_PREFS
 VPATH += $(RECOMPILE_DIRS)
-ifeq ($(T),ref)
+ifeq ($(BUILD_TYPE),ref)
 OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),$(m).ref.o)
 else
 OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),$(m).v$(ARCHV)opt.o)

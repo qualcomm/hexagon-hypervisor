@@ -18,6 +18,7 @@
 #include <asid.h>
 #include <vm.h>
 #include <id.h>
+#include <hwconfig.h>
 
 void H2K_interrupt_restore();
 

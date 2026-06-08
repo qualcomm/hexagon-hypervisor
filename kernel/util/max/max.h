@@ -87,6 +87,10 @@
 
 #define MAX_ASIDS (1<<(ASID_BITS))
 
+#define MODECTL_E_MASK 0x0000ffff
+#define MODECTL_W_BITS 16
+#define MODECTL_W_MASK 0xffff0000
+
 /* QDSP6SS_PRIV_BASE is the subsystem base value read from cfg_table, but we
 	 map QDSP6SS_PUB_BASE to Q6_SS_BASE_VA so we can get at the public registers.
 	 FIXME? Is the QDSP6SS_PUB_PRIV_OFFSET the same for all subsystems? */

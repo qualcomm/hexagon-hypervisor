@@ -188,7 +188,7 @@ int main()
 	asm (" %0 = sgp0\n" : "=r"(me));
 #endif
 	stmode_extend_bootvm_contexts(me);
-	h2_hwconfig_hwthreads_mask(-1);
+	H2K_trap_hwconfig_hwthreads_mask(0, NULL, (u32_t)-1, 0, me);
 	wait_for_threads_to_sleep();
 
 	H2K_set_gie();

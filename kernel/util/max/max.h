@@ -301,7 +301,7 @@
 #define BOOT_THREAD_USR 0x00057c00
 #endif
 
-#define BOOT_THREAD_SSR (0x01c60000 | (1<<SSR_GUEST_BIT) | (1<<SSR_UM_BIT))
+#define BOOT_THREAD_SSR (0x01c60000 | (1<<SSR_GUEST_BIT))
 #if ARCHV == 60
 #define BOOT_THREAD_CCR 0x00130000	// for istariv1
 #else

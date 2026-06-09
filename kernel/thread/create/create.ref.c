@@ -94,7 +94,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	}
 
 	tmp->ssr_guest = 1;  // start in guest mode
-	tmp->ssr_um = 1;
+	tmp->ssr_um = me->ssr_um;  // inherit caller's user mode bit
 	tmp->ssr_asid = (u8_t)asid;
 #ifdef HAVE_EXTENSIONS
 	tmp->ssr_xa = EXT_NO_EXT;

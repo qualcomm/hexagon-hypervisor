@@ -6,10 +6,6 @@ endif
 
 SHELL=/bin/bash
 
-ifeq (,$(IMPL))
-IMPL=ref
-endif
-
 # Derive lib archive paths and tmp staging dir from INSTALLPATH.
 # Use $(INSTALLPATH)/../build/... so this works for any INSTALLPATH value,
 # not just ones ending in /install.
@@ -57,13 +53,13 @@ $(TMP_DIR):
 	mkdir -p $@
 
 $(H2_LIB):
-	+${MAKE} -C $(H2_DIR) $(IMPL)
+	+${MAKE} -C $(H2_DIR) $(BUILD_TYPE)
 
 $(POSIX_LIB): $(H2_LIB)
-	+${MAKE} -C posix $(IMPL)
+	+${MAKE} -C posix $(BUILD_TYPE)
 
 $(H2_COMPAT_LIB): $(H2_LIB) $(POSIX_LIB)
-	+${MAKE} -C $(H2_COMPAT_DIR) $(IMPL)
+	+${MAKE} -C $(H2_COMPAT_DIR) $(BUILD_TYPE)
 
 $(QURT_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
 	+${MAKE} -C qurt

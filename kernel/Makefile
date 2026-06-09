@@ -172,15 +172,17 @@ ifeq ($(ARCHV),81)
 OPT_OFILES := $(OPT_V81_OFILES)
 endif
 
-ifeq ($(findstring /ref/,$(BUILD_DIR)),/ref/)
+ifeq ($(BUILD_TYPE),ref)
 $(BUILD_DIR)/libh2kernel.a: $(REF_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(REF_OFILES))
-else
+else ifeq ($(BUILD_TYPE),opt)
 $(BUILD_DIR)/libh2kernel.a: $(OPT_OFILES)
 	@echo $(OPT_OFILES)
 	mkdir -p $(dir $@)
 	$(AR) cru $@ $(sort $(OPT_OFILES))
+else
+	$(error BUILD_TYPE == $(value BUILD_TYPE))
 endif
 
 $(BUILD_DIR)/libh2check.a: $(CHECK_OFILES)
@@ -211,16 +213,12 @@ dummy:
 
 includes: $(DEST_HFILES)
 
-ref: $(BUILD_DIR)/libh2kernel.a
-
-ref_install: info ref check
+install: info $(BUILD_DIR)/libh2kernel.a check
 	mkdir -p $(INSTALLPATH)/lib
 	mkdir -p $(INSTALLPATH)/include
 	cp $(BUILD_DIR)/libh2kernel.a $(INSTALLPATH)/lib
 	cp $(BUILD_DIR)/libh2check.a $(INSTALLPATH)/lib
 	cp $(BUILD_DIR)/include/asm_offsets.h $(INSTALLPATH)/include # for state trap
-
-opt: $(BUILD_DIR)/libh2kernel.a
 
 .PHONY: info
 info :
@@ -228,13 +226,6 @@ ifeq ($(USE_PKW),1)
 	@echo Kernel PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 endif
-
-opt_install: info opt check
-	mkdir -p $(INSTALLPATH)/lib
-	mkdir -p $(INSTALLPATH)/include
-	cp $(BUILD_DIR)/libh2kernel.a $(INSTALLPATH)/lib
-	cp $(BUILD_DIR)/libh2check.a $(INSTALLPATH)/lib
-	cp $(BUILD_DIR)/include/asm_offsets.h $(INSTALLPATH)/include # for state trap
 
 check: $(BUILD_DIR)/libh2check.a
 

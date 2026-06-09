@@ -134,7 +134,7 @@ unsigned long long int stack2[STACK_SIZE];
    any threads. */
 static H2K_thread_context extra_contexts[NUM_TEST_THREADS] __attribute__((aligned(32)));
 
-static void stmode_extend_bootvm_contexts(H2K_thread_context *me)
+static inline void stmode_extend_bootvm_contexts(H2K_thread_context *me)
 {
 	H2K_vmblock_t *vm = me->vmblock;
 	int i;
@@ -149,7 +149,7 @@ static void stmode_extend_bootvm_contexts(H2K_thread_context *me)
 	}
 }
 
-static void wait_for_threads_to_sleep(void)
+static inline void wait_for_threads_to_sleep(void)
 {
 	u32_t mc;
 	do {
@@ -179,15 +179,10 @@ void test2(void *unused)
 
 int main()
 {
-	H2K_thread_context *me;
+	h2_init(NULL);
+	H2K_thread_context *me = H2K_get_sgp();
 	u32_t tmp;
 
-	h2_init(NULL);
-#if ARCHV <= 3
-	asm (" %0 = sgp\n" : "=r"(me));
-#else
-	asm (" %0 = sgp0\n" : "=r"(me));
-#endif
 	stmode_extend_bootvm_contexts(me);
 	H2K_trap_hwconfig_hwthreads_mask(0, NULL, (u32_t)-1, 0, me);
 	wait_for_threads_to_sleep();

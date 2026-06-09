@@ -7,6 +7,7 @@
 #include <state.h>
 #include <asm_offsets.h>
 #include <vmblock.h>
+#include <hw.h>
 
 IN_SECTION(".text.core.state") u64_t H2K_thread_state(H2K_id_t id, u32_t offset, H2K_thread_context *me) {
 	u64_t val;
@@ -15,9 +16,7 @@ IN_SECTION(".text.core.state") u64_t H2K_thread_state(H2K_id_t id, u32_t offset,
 	
 	// Special case, return SGP0 register
 	if (offset == CONTEXT_PSEUDO_SGP0) {
-		void *sgp;
-		asm (" %0 = sgp0" : "=r"(sgp));
-		return (u64_t)sgp;
+		return (u64_t)H2K_get_sgp();
 	}
 
 	// Special case, return IMASK register

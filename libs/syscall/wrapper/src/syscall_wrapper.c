@@ -185,13 +185,13 @@ __attribute__((weak)) DIR *opendir(const char *name) {
 	sys_call_ret_t res = sys_opendir_internal(name);
 	int handle = (int)res.ret_value;
 	if (handle == -1) {
-		errno = sys_error_translation((errno_t)res.err_value);
+		SET_LTS_ERROR(-1, (errno_t)res.err_value);
 		return NULL;
 	}
 	DIR *dirp = malloc(sizeof(*dirp));
 	if (!dirp) {
 		sys_closedir_internal(handle);
-		errno = ENOMEM;
+		SET_LTS_ERROR(-1, ENOMEM);
 		return NULL;
 	}
 	dirp->fd = handle;
@@ -200,14 +200,14 @@ __attribute__((weak)) DIR *opendir(const char *name) {
 
 __attribute__((weak)) struct dirent *readdir(DIR *dirp) {
 	if (!dirp) {
-		errno = EBADF;
+		SET_LTS_ERROR(-1, EBADF);
 		return NULL;
 	}
 	dirent_internal *ad = (dirent_internal *)dirp->buf;
 	sys_call_ret_t res = sys_readdir_internal(dirp->fd, ad);
 	if (res.ret_value == 0) {
 		if (res.err_value != 0)
-			errno = sys_error_translation((errno_t)res.err_value);
+			SET_LTS_ERROR(-1, (errno_t)res.err_value);
 		return NULL;
 	}
 	dirp->dirent.d_ino = ad->d_ino;
@@ -222,7 +222,7 @@ __attribute__((weak)) struct dirent *readdir(DIR *dirp) {
 
 __attribute__((weak)) int closedir(DIR *dirp) {
 	if (!dirp) {
-		errno = EBADF;
+		SET_LTS_ERROR(-1, EBADF);
 		return -1;
 	}
 	sys_call_ret_t res = sys_closedir_internal(dirp->fd);

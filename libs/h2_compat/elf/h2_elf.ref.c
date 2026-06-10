@@ -76,23 +76,23 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 	if (-1 == elf_get_shdr(fdesc, ehdr->e_shstrndx, &shstr, ehdr)) elf_error("2", NULL);
 
 	if (verbose) printf("%s: reading symhdr & strhdr\n", __func__);
-	/* find symhdr & strhdr */
-	Elf32_Shdr *pSymhdr, *pStrhdr;
-	int hdrNum = 0;
+	/* Find symhdr by type, then use sh_link to find its paired strtab.
+	 * Dynamic binaries have both .dynstr and .strtab; scanning for the
+	 * first SHT_STRTAB picks the wrong one.  sh_link is authoritative. */
+	Elf32_Shdr *pSymhdr = &hdr[0], *pStrhdr = &hdr[1];
+	int found_symtab = 0;
 	for (i = 0; i < ehdr->e_shnum; i++) {
 		if (i == ehdr->e_shstrndx) continue;
-		if (elf_get_shdr(fdesc,i,&hdr[hdrNum],ehdr) == -1) elf_error("3", NULL);
-
-		if (hdr[hdrNum].sh_type == SHT_SYMTAB) {
-			pSymhdr = &hdr[hdrNum];
-			hdrNum++;
-		} else if (hdr[hdrNum].sh_type == SHT_STRTAB) {
-			pStrhdr = &hdr[hdrNum];
-			hdrNum++;
+		if (elf_get_shdr(fdesc, i, &hdr[0], ehdr) == -1) elf_error("3", NULL);
+		if (hdr[0].sh_type == SHT_SYMTAB) {
+			*pSymhdr = hdr[0];
+			found_symtab = 1;
+			/* sh_line (sh_link in standard ELF) points to the correct string table */
+			if (elf_get_shdr(fdesc, hdr[0].sh_line, pStrhdr, ehdr) == -1) elf_error("3b", NULL);
+			break;
 		}
-		if (hdrNum == 2) break;	// got both headers
 	}
-	if (pSymhdr->sh_type != SHT_SYMTAB) elf_error("4", NULL);
+	if (!found_symtab) elf_error("4", NULL);
 	if (pStrhdr->sh_type != SHT_STRTAB) elf_error("5", NULL);
 
 	/* read symtab & strtab */

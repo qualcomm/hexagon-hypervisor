@@ -626,42 +626,83 @@ Others like `futex_cancel`, `vmop_boot/free/status`, `tree_remove` may indicate 
 - [ ] Run coverage for all four ARCHVs and compare function lists
 - [ ] Consider integrating a coverage summary into the unified `testall` report
 
-## dlopen / mmap support (2026-06-10) — DONE
+## dlopen / shared library printf investigation (2026-06-10) — IN PROGRESS
 
-Added a working `mmap`/`munmap`/`mprotect` implementation to enable BSD libdl's
-`dlopen` to load position-independent shared objects under h2/hexagon-sim.
+This session extended the dlopen work from the previous session (sys_mmap commit 328e12ca).
+The goal: get shared libraries to call libc functions (like printf) that are statically
+linked into the main binary.
 
-**Files changed:**
-- `libs/syscall/angel/src/sys_mmap.c` — new file; auto-picked up by `$(wildcard src/*.c)`
-  in `libs/syscall/angel/Makefile`, no build file changes needed.
-- `libs/qurt/src/qurt_mmap.c` — removed the three UNSUPPORTED stubs; file now holds
-  only the copyright header.
+### Problem
+`french.so` (compiled `-fPIC -shared`) has `printf` as an undefined PLT symbol.
+At `dlopen` time, the rtld needs to find `printf` from a loaded object.  In a standard
+Linux environment the main binary exports symbols via `.dynsym`, but the h2 environment
+uses a statically-linked main binary with no `.dynsym` by default.
 
-**How it works:**
+### dlinit — what it is
+`dlinit(argc, argv)` is NOT standard POSIX.  It is Hexagon/BSD-rtld-specific.
+It initializes the library-mode rtld.  The `argv` list names "builtin" shared libraries
+that are pre-loaded as part of the main binary.  For the builtins mechanism to work, the
+main binary must export those symbols via `.dynsym`.
+`-rdynamic`, `-Wl,--export-dynamic`: silently ignored by the Hexagon LLD for static
+binaries — no `.dynsym` is created.
 
-BSD rtld (`libdl.a`) loads a shared object in three mmap phases:
-1. `mmap(NULL, total_size, PROT_NONE, MAP_ANON, -1, 0)` — probe/reserve a contiguous
-   VA range.  We serve this with `memalign(4096, len)`.
-2. `mmap(base+seg_offset, filesz, prot, MAP_FIXED, fd, file_offset)` — place each
-   PT_LOAD segment within the reserved block.  MAP_FIXED means the address is already
-   valid (from step 1); we just `sys_seek` + `sys_read` directly into it.
-3. `mmap(base+bss_offset, bss_size, prot, MAP_FIXED|MAP_ANON, -1, 0)` — zero BSS.
-   We `memset` the address directly.
+### Approach tried: --force-dynamic
+`-Wl,--force-dynamic -Wl,-E` forces the Hexagon LLD to create `.dynsym` with all global
+symbols exported.  This makes `dlinit(3, builtin)` find `printf` successfully.
 
-`munmap` is a no-op (dlclose not supported yet; leaking is fine for simulation).
-`mprotect` is a no-op (simulator doesn't enforce page permissions).
+**Bug found and fixed**: `libs/h2_compat/elf/h2_elf.ref.c` `elf_get_specials()` was broken
+for dynamic binaries.  The section scan picked up `.dynstr` (the dynamic string table)
+instead of `.strtab` (the static symbol table's string table) because it searched for
+the first `SHT_STRTAB` by type.  Dynamic binaries have two string tables: `.dynstr` comes
+first in section order, breaking the pairing with `.symtab`.
+**Fix**: use `pSymhdr->sh_line` (h2_elf.h's name for the standard ELF `sh_link` field)
+to look up the correct string table for the symbol table section by index.
+**Note**: h2_elf.h uses `sh_line` where the standard ELF spec uses `sh_link`.
 
-**Test:** `dltest/` directory — `libdltest` calls `dlopen("french.so", RTLD_NOW)`,
-resolves `faux` via `dlsym`, calls it, and prints the returned string.
-Run: `PKW_arch=v73_stable make run` from `dltest/`.
-Output confirms: `faux @ 1d0e0` / `fptr called. string=Barre.`
+After this fix, the booter correctly loads dynamic binaries and finds all boot symbols
+(`end`, `__boot_cmdline__`, etc.).
 
-**Key build note:** The dltest Makefile's default target is `run` (not `libdltest`),
-so `make` will attempt to both build and run.  Use `make libdltest` to build only.
-Also, `libh2.a` changes are not detected by the dltest Makefile — use `make -B libdltest`
-to force a relink after rebuilding h2 artifacts.  Set `PKW_arch=v73_stable` when running.
+**New problem**: with `--force-dynamic`, the binary acquires `.ctors`/`.dtors`/`_init`
+sections.  The h2 startup calls `_init` (which calls a constructor at ~0xe088) before
+`main()` runs.  This constructor crashes silently: the VM runs ~48k instructions
+(vs ~120k normally) and produces no output.
 
-**Next task:** Decide whether to add dltest to the standard test suite.
+### What we know for sure
+- No GOT/PLT is created by lld for a fully-static `--force-dynamic` binary.
+  All symbol references are pre-resolved at link time.  GOT initialization is NOT
+  the remaining problem.
+- The crash is in a constructor called by `_init` at VA 0x65e0, specifically the
+  function at `##0xe088`.  Likely tries to use something the h2 runtime hasn't
+  initialized for the dynamic-binary path.
+- The `--dynamic-linker=` (empty) flag has no effect in the h2 environment: the
+  booter ignores `PT_INTERP` entirely.
+
+### Next steps to try
+1. **Identify the crashing constructor**: disassemble `0xe088` to see what it does.
+   It's in .text (range 0x6640–0x14bc0).  It may be a C++ global ctor or an h2
+   library static initializer that uses malloc/sbrk before the heap is set up.
+2. **Suppress the bad constructor**: add `-fno-use-cxa-atexit` or `-nostartfiles`
+   to remove ctors/dtors from the dynamic binary, OR strip the `.ctors`/`.dtors`
+   sections post-link.
+3. **Alternative — explicit libc.so**: instead of `--force-dynamic`, build a minimal
+   `libc.so` shim containing `printf` (using `sys_write` directly, no constructors,
+   compiled `-fPIC -shared -nostartfiles`).  Use `dlopen("libc.so", RTLD_LAZY|RTLD_GLOBAL)`
+   before `dlopen("french.so")`.  Avoids the whole `--force-dynamic` path.
+4. **Toolchain example as reference**: see
+   `/prj/qct/llvm/release/internal/HEXAGON/branch-23.0/linux64/latest/Examples/libdl/dlopen/`
+   for the canonical usage.  It uses `--whole-archive libc.a --no-whole-archive` with
+   `-E --force-dynamic --dynamic-linker=` and the standalone (non-h2) startup files.
+   The h2 startup does more initialization which is what's crashing.
+
+### dltest/ directory layout (untracked, in progress)
+- `dltest/french.c` — simple shared lib, `faux()` calls `printf` then returns `"Barre."`
+- `dltest/french.so` — built with `-fPIC -Wl,-Bsymbolic -shared -nostartfiles`
+- `dltest/libdltest.c` — main test, currently uses `dlinit(3, builtin)` with
+  `{"libgcc.so", "libc.so", "libstdc++.so"}`
+- `dltest/fstat.c` — fake `fstat` using `sys_flen` (angel)
+- `dltest/sys_mmap.c` — copy of the mmap implementation (also in libs/syscall/angel)
+- `dltest/Makefile` — build with `-moslib=h2 -Wl,--force-dynamic -Wl,-E`; run with
+  `PKW_arch=v73_stable archsim --quiet ../artifacts/v73/opt/install/bin/booter libdltest`
 
 ## Architecture Versions (ARCHV)
 - v3/v4/v5: older versions, different interrupt mask conventions.

@@ -311,6 +311,48 @@ __attribute__((weak)) int clock_getres(clockid_t clk_id, struct timespec *res) {
 	return -1;
 }
 
+__attribute__((weak)) char *getcwd(char *buf, size_t size) {
+	(void)buf;
+	(void)size;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return NULL;
+}
+
+__attribute__((weak)) int ftruncate(int fd, off_t length) {
+	(void)fd;
+	(void)length;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int getrlimit(int resource, struct rlimit *rlim) {
+	(void)resource;
+	(void)rlim;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int setrlimit(int resource, const struct rlimit *rlim) {
+	(void)resource;
+	(void)rlim;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int statvfs(const char *path, struct statvfs *buf) {
+	(void)path;
+	(void)buf;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int fstatvfs(int fd, struct statvfs *buf) {
+	(void)fd;
+	(void)buf;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
 /* libh2.a is still compiled with older libc which defines errno as a macro that
  * expands to _Geterrno we can scrap this symbol once we start building H2 with
  * Picolibc

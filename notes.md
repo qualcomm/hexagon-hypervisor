@@ -626,6 +626,43 @@ Others like `futex_cancel`, `vmop_boot/free/status`, `tree_remove` may indicate 
 - [ ] Run coverage for all four ARCHVs and compare function lists
 - [ ] Consider integrating a coverage summary into the unified `testall` report
 
+## dlopen / mmap support (2026-06-10) — DONE
+
+Added a working `mmap`/`munmap`/`mprotect` implementation to enable BSD libdl's
+`dlopen` to load position-independent shared objects under h2/hexagon-sim.
+
+**Files changed:**
+- `libs/syscall/angel/src/sys_mmap.c` — new file; auto-picked up by `$(wildcard src/*.c)`
+  in `libs/syscall/angel/Makefile`, no build file changes needed.
+- `libs/qurt/src/qurt_mmap.c` — removed the three UNSUPPORTED stubs; file now holds
+  only the copyright header.
+
+**How it works:**
+
+BSD rtld (`libdl.a`) loads a shared object in three mmap phases:
+1. `mmap(NULL, total_size, PROT_NONE, MAP_ANON, -1, 0)` — probe/reserve a contiguous
+   VA range.  We serve this with `memalign(4096, len)`.
+2. `mmap(base+seg_offset, filesz, prot, MAP_FIXED, fd, file_offset)` — place each
+   PT_LOAD segment within the reserved block.  MAP_FIXED means the address is already
+   valid (from step 1); we just `sys_seek` + `sys_read` directly into it.
+3. `mmap(base+bss_offset, bss_size, prot, MAP_FIXED|MAP_ANON, -1, 0)` — zero BSS.
+   We `memset` the address directly.
+
+`munmap` is a no-op (dlclose not supported yet; leaking is fine for simulation).
+`mprotect` is a no-op (simulator doesn't enforce page permissions).
+
+**Test:** `dltest/` directory — `libdltest` calls `dlopen("french.so", RTLD_NOW)`,
+resolves `faux` via `dlsym`, calls it, and prints the returned string.
+Run: `PKW_arch=v73_stable make run` from `dltest/`.
+Output confirms: `faux @ 1d0e0` / `fptr called. string=Barre.`
+
+**Key build note:** The dltest Makefile's default target is `run` (not `libdltest`),
+so `make` will attempt to both build and run.  Use `make libdltest` to build only.
+Also, `libh2.a` changes are not detected by the dltest Makefile — use `make -B libdltest`
+to force a relink after rebuilding h2 artifacts.  Set `PKW_arch=v73_stable` when running.
+
+**Next task:** Decide whether to add dltest to the standard test suite.
+
 ## Architecture Versions (ARCHV)
 - v3/v4/v5: older versions, different interrupt mask conventions.
 - v60, v65, v68, v73, v81+: modern versions.  Key differences:

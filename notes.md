@@ -626,11 +626,11 @@ Others like `futex_cancel`, `vmop_boot/free/status`, `tree_remove` may indicate 
 - [ ] Run coverage for all four ARCHVs and compare function lists
 - [ ] Consider integrating a coverage summary into the unified `testall` report
 
-## dlopen / shared library printf investigation (2026-06-10) — IN PROGRESS
+## dlopen / shared library printf investigation — DONE (2026-06-10)
 
-This session extended the dlopen work from the previous session (sys_mmap commit 328e12ca).
+This work spans two sessions (sys_mmap commit 328e12ca, then this session).
 The goal: get shared libraries to call libc functions (like printf) that are statically
-linked into the main binary.
+linked into the main binary.  **This now works end-to-end.**
 
 ### Problem
 `french.so` (compiled `-fPIC -shared`) has `printf` as an undefined PLT symbol.
@@ -646,63 +646,142 @@ main binary must export those symbols via `.dynsym`.
 `-rdynamic`, `-Wl,--export-dynamic`: silently ignored by the Hexagon LLD for static
 binaries — no `.dynsym` is created.
 
-### Approach tried: --force-dynamic
+### Solution: --force-dynamic + hexagon-clang++ for linking
+
 `-Wl,--force-dynamic -Wl,-E` forces the Hexagon LLD to create `.dynsym` with all global
-symbols exported.  This makes `dlinit(3, builtin)` find `printf` successfully.
+symbols exported.  This makes `dlinit(5, builtin)` find `printf` and C++ runtime symbols
+successfully.
 
-**Bug found and fixed**: `libs/h2_compat/elf/h2_elf.ref.c` `elf_get_specials()` was broken
-for dynamic binaries.  The section scan picked up `.dynstr` (the dynamic string table)
-instead of `.strtab` (the static symbol table's string table) because it searched for
-the first `SHT_STRTAB` by type.  Dynamic binaries have two string tables: `.dynstr` comes
-first in section order, breaking the pairing with `.symtab`.
-**Fix**: use `pSymhdr->sh_line` (h2_elf.h's name for the standard ELF `sh_link` field)
-to look up the correct string table for the symbol table section by index.
-**Note**: h2_elf.h uses `sh_line` where the standard ELF spec uses `sh_link`.
+**Problem with --force-dynamic**: the binary acquires `.ctors`/`.dtors`/`_init` sections.
+The h2 startup calls `_init` before `main()`, which iterates `.ctors` and calls a
+constructor (likely `__register_frame_info_base` at ~0xe088) that crashes silently.
+The VM runs ~48k instructions and produces no output.
 
-After this fix, the booter correctly loads dynamic binaries and finds all boot symbols
-(`end`, `__boot_cmdline__`, etc.).
+**Fix**: link with `hexagon-clang++` instead of `hexagon-clang`.  The C++ driver
+properly links the full C++ runtime (libc++, libc++abi) which provides working
+implementations of `__register_frame_info_base` and related frame-registration
+functions.  With `hexagon-clang++` the ctors run without crashing and `main()` is
+reached normally.  No `noinit.c` stub needed.
 
-**New problem**: with `--force-dynamic`, the binary acquires `.ctors`/`.dtors`/`_init`
-sections.  The h2 startup calls `_init` (which calls a constructor at ~0xe088) before
-`main()` runs.  This constructor crashes silently: the VM runs ~48k instructions
-(vs ~120k normally) and produces no output.
+**Note on earlier workaround**: a `noinit.c` providing no-op `_init`/`_fini` also worked
+for C-only use, but it silently suppresses ALL main-binary constructors.  The
+`hexagon-clang++` fix is correct — it lets real C++ ctors run.
 
-### What we know for sure
-- No GOT/PLT is created by lld for a fully-static `--force-dynamic` binary.
-  All symbol references are pre-resolved at link time.  GOT initialization is NOT
-  the remaining problem.
-- The crash is in a constructor called by `_init` at VA 0x65e0, specifically the
-  function at `##0xe088`.  Likely tries to use something the h2 runtime hasn't
-  initialized for the dynamic-binary path.
-- The `--dynamic-linker=` (empty) flag has no effect in the h2 environment: the
-  booter ignores `PT_INTERP` entirely.
+### C++ constructor/destructor support (2026-06-10)
 
-### Next steps to try
-1. **Identify the crashing constructor**: disassemble `0xe088` to see what it does.
-   It's in .text (range 0x6640–0x14bc0).  It may be a C++ global ctor or an h2
-   library static initializer that uses malloc/sbrk before the heap is set up.
-2. **Suppress the bad constructor**: add `-fno-use-cxa-atexit` or `-nostartfiles`
-   to remove ctors/dtors from the dynamic binary, OR strip the `.ctors`/`.dtors`
-   sections post-link.
-3. **Alternative — explicit libc.so**: instead of `--force-dynamic`, build a minimal
-   `libc.so` shim containing `printf` (using `sys_write` directly, no constructors,
-   compiled `-fPIC -shared -nostartfiles`).  Use `dlopen("libc.so", RTLD_LAZY|RTLD_GLOBAL)`
-   before `dlopen("french.so")`.  Avoids the whole `--force-dynamic` path.
-4. **Toolchain example as reference**: see
-   `/prj/qct/llvm/release/internal/HEXAGON/branch-23.0/linux64/latest/Examples/libdl/dlopen/`
-   for the canonical usage.  It uses `--whole-archive libc.a --no-whole-archive` with
-   `-E --force-dynamic --dynamic-linker=` and the standalone (non-h2) startup files.
-   The h2 startup does more initialization which is what's crashing.
+Both main-binary and shared-library C++ static constructors and destructors work.
 
-### dltest/ directory layout (untracked, in progress)
-- `dltest/french.c` — simple shared lib, `faux()` calls `printf` then returns `"Barre."`
-- `dltest/french.so` — built with `-fPIC -Wl,-Bsymbolic -shared -nostartfiles`
-- `dltest/libdltest.c` — main test, currently uses `dlinit(3, builtin)` with
-  `{"libgcc.so", "libc.so", "libstdc++.so"}`
-- `dltest/fstat.c` — fake `fstat` using `sys_flen` (angel)
-- `dltest/sys_mmap.c` — copy of the mmap implementation (also in libs/syscall/angel)
-- `dltest/Makefile` — build with `-moslib=h2 -Wl,--force-dynamic -Wl,-E`; run with
-  `PKW_arch=v73_stable archsim --quiet ../artifacts/v73/opt/install/bin/booter libdltest`
+**Main binary ctors**: link with `hexagon-clang++`; add `.cpp` objects to the link.
+Hexagon compilers use `.ctors`/`.dtors` (not `.init_array`).  The h2 startup calls
+`_init` which iterates `.ctors`.
+
+**Shared library ctors**: `hexagon-clang++` builds a fully-functional shared library with
+`DT_INIT` pointing to an `_init` that iterates `.ctors`.  The rtld calls it on `dlopen`.
+
+**NEEDED resolution for C++ .so files**: `cppso.so` built with `hexagon-clang++` has
+NEEDED entries for `libc++.so.1`, `libc++abi.so.1`, and `libgcc.so`.  These are
+satisfied via dlinit builtins (the rtld resolves their symbols from the main binary's
+exported symbol table rather than loading them as files).  Key requirements:
+- Add `"libc++.so.1"` and `"libc++abi.so.1"` to the dlinit builtins list.
+- Link `libc_eh.a` with `--whole-archive` into the main binary — it provides
+  `_Get_eh_data` (needed by libc++abi) which is not pulled in by `-moslib=h2`.
+  Without `--whole-archive` the linker drops it since no main-binary code calls it.
+- `libhexagon.so` is NOT needed; `libc_eh.a` covers all the EH symbols.
+
+**Separate CC/CXX compilation**: `.c` files compile with `hexagon-clang`; `.cpp` files
+with `hexagon-clang++`; final link uses `hexagon-clang++`.  This avoids C++ strict-typing
+errors on the C files while still using the C++ driver for linking.
+
+**crtbeginS.o / crtendS.o note**: these exist under `.../v73/G0/pic/` but use
+non-PIC relocations and cannot be linked into a `-shared` binary.  The `hexagon-clang++`
+driver handles the shared library startup correctly without them when invoked without
+`-nostartfiles`.
+
+### Bug fixed: fake fstat st_ino collision
+
+`dltest/fstat.c` had `buf->st_ino = fd`.  The rtld uses `st_dev`+`st_ino` to detect
+already-loaded libraries.  If two `.so` files are opened on the same fd number (e.g.,
+both on fd 3 at different times), both get identical `st_ino`, and the rtld returns the
+cached handle for the first library instead of loading the second.
+**Fix**: use a static counter for `st_ino` so every `fstat` call returns a unique inode.
+
+### Bug fixed earlier: booter elf_get_specials for dynamic binaries
+`libs/h2_compat/elf/h2_elf.ref.c` `elf_get_specials()` picked up `.dynstr` instead of
+`.strtab` for dynamic binaries (`.dynstr` comes first in section order; both are
+`SHT_STRTAB`).  Fix: use `sh_link` (called `sh_line` in h2_elf.h) to look up the
+correct string table for the symbol table section.
+
+### Other findings during investigation
+
+- **`--dynamic-linker=` (empty)**: has no effect; the booter ignores `PT_INTERP`.
+- **No GOT/PLT**: lld does not create GOT/PLT for a fully-static `--force-dynamic`
+  binary.  All symbol references are pre-resolved at link time.
+- **libdl.a must match the target arch**: using v68 `libdl.a` in a v73 binary causes
+  `dlinit` to hang (jump-to-self).  Always use the matching arch version.
+- **Do NOT add `-G0` to CC**: with `-moslib=h2`, adding `-G0` silently breaks output
+  (printf produces nothing).  The h2 startup manages GP correctly without it.
+- **rtld requires absolute paths**: `dlopen("./foo.so")` fails with "abs pathname
+  required".  `dlopen("foo.so")` (bare name) works if `dlinit` listed it as a builtin.
+- **Real libc.so cannot be dlopen'd directly**: the prebuilt `libc.so` has its own
+  `_init` that crashes in the h2/booter environment (jump-to-self).  The builtins
+  mechanism avoids loading it as a file.
+- **Toolchain reference example**: `dltest/example/` contains the canonical standalone
+  (non-h2) dlopen example from the toolchain, adapted for v73 + archsim.  It uses
+  `--whole-archive libc.a` + `--force-dynamic -E` + fake fstat.  Confirmed working.
+  The key structural difference from the h2 approach: standalone uses
+  `crt0_standalone.o + libstandalone.a`; h2 uses `-moslib=h2`.
+
+### Working configuration (dltest/)
+
+C and C++ objects compiled separately, linked with `hexagon-clang++`:
+
+```makefile
+CC  = hexagon-clang   -mv73
+CXX = hexagon-clang++ -mv73
+
+# C++ .so — full clang++ build, DT_INIT set automatically
+cppso.so: cppso.cpp
+    $(CXX) -fPIC -Wl,-Bsymbolic -shared -o cppso.so cppso.cpp
+
+# Main binary — link with CXX to get correct C++ runtime
+libdltest: libdltest.o fstat.o sys_mmap.o cpptest.o
+    $(CXX) -moslib=h2 -Wl,-Bsymbolic -Wl,--export-dynamic -Wl,--force-dynamic \
+        -Wl,--dynamic-linker= -Wl,--allow-multiple-definition \
+        -L.../artifacts/v73/opt/install/lib \
+        -o libdltest ... $(LIBDL) \
+        -Wl,--whole-archive $(LIBC_EH) -Wl,--no-whole-archive
+```
+
+dlinit builtins: `{"libgcc.so", "libc.so", "libstdc++.so", "libc++.so.1", "libc++abi.so.1"}`
+
+Run: `PKW_arch=v73_stable archsim --quiet .../booter libdltest`
+
+Output:
+```
+C++ ctor: main binary       ← static global in cpptest.cpp, fires before main()
+faux @ 28150
+Hello from library!
+faux returned: Barre.
+C++ ctor: cppso.so          ← static global in cppso.cpp, fires at dlopen() time
+cppfunc returned: Hello from C++ shared library!
+C++ dtor: cppso.so          ← fires at exit / dlclose
+C++ dtor: main binary       ← fires at exit
+```
+
+### dltest/ directory layout
+- `dltest/french.c` — C shared lib: `faux()` calls `printf`, returns `"Barre."`
+- `dltest/cppso.cpp` — C++ shared lib: static `SoCtor` global (ctor/dtor), `cppfunc()`
+- `dltest/libdltest.c` — main: `dlinit(5, builtins)`, dlopen/dlsym both .so files
+- `dltest/cpptest.cpp` — C++ static global in main binary to test main-binary ctors
+- `dltest/fstat.c` — fake `fstat`: uses `sys_flen` + unique `st_ino` counter
+- `dltest/sys_mmap.c` — mmap via angel (also in libs/syscall/angel)
+- `dltest/Makefile` — separate CC/CXX compile, CXX link, v73 libdl.a + libc_eh.a
+- `dltest/example/` — standalone (non-h2) reference: works under both hexagon-sim
+  and archsim; uses `crt0_standalone.o + libstandalone.a + --whole-archive libc.a`
+
+### Next tasks
+- Integrate dlopen support into the main test infrastructure
+- Consider promoting `sys_mmap` and fake `fstat` to a proper h2 library
 
 ## Architecture Versions (ARCHV)
 - v3/v4/v5: older versions, different interrupt mask conventions.

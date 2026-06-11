@@ -562,7 +562,7 @@ u32_t H2K_trap_hwconfig_hwthreads_mask(u32_t unused, void *unusedp, u32_t mask, 
 	H2K_isync();
 
 	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
-	H2K_gp->hthreads_mask &= 0xffff;
+	H2K_gp->hthreads_mask &= MODECTL_E_MASK;
 	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 
 #ifdef CLUSTER_SCHED
@@ -601,7 +601,7 @@ u32_t H2K_trap_hwconfig_hwthreads_num(u32_t unused, void *unusedp, u32_t num, u3
 	H2K_start_threads(H2K_gp->hthreads_mask);
 	H2K_isync();
 	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
-	H2K_gp->hthreads_mask &= 0xffff;
+	H2K_gp->hthreads_mask &= MODECTL_E_MASK;
 	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 
 #ifdef CLUSTER_SCHED

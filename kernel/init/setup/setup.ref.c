@@ -175,7 +175,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 	H2K_isync();
 
 	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
-	H2K_gp->hthreads_mask &= 0xffff;
+	H2K_gp->hthreads_mask &= MODECTL_E_MASK;
 	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 
 #else
@@ -211,7 +211,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 	H2K_start_threads(H2K_gp->hthreads_mask);
 	H2K_isync();
 	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
-	H2K_gp->hthreads_mask &= 0xffff;
+	H2K_gp->hthreads_mask &= MODECTL_E_MASK;
 	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 
 #else

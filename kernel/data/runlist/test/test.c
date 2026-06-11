@@ -46,6 +46,11 @@ void H2K_runlist_remove_TB(H2K_thread_context *thread)
 	hthread_mask &= ~(0x1 << thread->hthread);
 }
 
+void H2K_runlist_set_thread_prio_TB(H2K_thread_context *thread, u32_t new_prio)
+{
+	H2K_runlist_set_thread_prio(thread, new_prio);
+}
+
 u32_t H2K_runlist_worst_prio_hthread_OK()
 {
 	s32_t hthread = H2K_runlist_worst_prio_hthread_TB();
@@ -96,6 +101,18 @@ int main()
 	H2K_runlist_push_TB(&c);
 	if (H2K_runlist_worst_prio_TB() != 3) FAIL("runlist_worst_prio (8)");
 	if (!H2K_runlist_worst_prio_hthread_OK()) FAIL("runlist_worst_prio_hthread failed (32)");
+
+	H2K_runlist_set_thread_prio_TB(&a, 5);
+	if (a.prio != 5) FAIL("runlist_set_thread_prio failed (40)");
+	if (H2K_gp->runlist_prios[0] != 5) FAIL("runlist_set_thread_prio failed (41)");
+	if (H2K_runlist_worst_prio_TB() != 5) FAIL("runlist_set_thread_prio worst_prio (42)");
+	if (!H2K_runlist_worst_prio_hthread_OK()) FAIL("runlist_set_thread_prio_hthread (43)");
+
+	H2K_runlist_set_thread_prio_TB(&a, 2);
+	if (a.prio != 2) FAIL("runlist_set_thread_prio failed (44)");
+	if (H2K_gp->runlist_prios[0] != 2) FAIL("runlist_set_thread_prio failed (45)");
+	if (H2K_runlist_worst_prio_TB() != 3) FAIL("runlist_set_thread_prio worst_prio (46)");
+	if (!H2K_runlist_worst_prio_hthread_OK()) FAIL("runlist_set_thread_prio_hthread (47)");
 
 	H2K_runlist_remove_TB(&a);
 	H2K_runlist_remove_TB(&c);

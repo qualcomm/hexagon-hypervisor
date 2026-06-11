@@ -32,12 +32,6 @@
 #define L1WT_L2C 5
 #define UNCACHED 6
 #define L1WB_L2C 7
-#define L1WB_L2CWT 8
-#define L1WT_L2CWB 9
-#define L1WB_L2CWB_AUX 0xa
-#define L1WT_L2CWT_AUX 0xb
-#define L1UC_L2CWT 0xd
-#define L1UC_L2CWB 0xf
 
 #define MAIN 0
 #define AUX 1

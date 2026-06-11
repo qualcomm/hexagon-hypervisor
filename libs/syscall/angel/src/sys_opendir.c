@@ -4,5 +4,12 @@
  */
 
 #include "allsyscalls.h"
-int sys_opendir(const char *name) { clean_str(name); return ANGEL(SYS_OPENDIR, name, 0); }
 
+sys_call_ret_t sys_opendir_internal(const char *name) {
+	clean_str(name);
+	return angel_const_with_err(SYS_OPENDIR, name, 0);
+}
+
+int sys_opendir(const char *name) {
+	return sys_opendir_internal(name).ret_value;
+}

@@ -5,8 +5,11 @@
 
 #include "allsyscalls.h"
 
-struct dirent *sys_readdir(int dir, struct dirent *dptr) {
-	clean(dptr, sizeof(struct dirent) / 4);
-	return VANGEL(SYS_READDIR,dir,ANGEL_OFFSET_PTR(dptr));
+sys_call_ret_t sys_readdir_internal(int dir, dirent_internal *dptr) {
+	clean(dptr, sizeof(dirent_internal) / 4);
+	return angel_with_err(SYS_READDIR, (void *)(uintptr_t)dir, (unsigned int)ANGEL_OFFSET_PTR(dptr));
 }
 
+dirent_internal *sys_readdir(int dir, dirent_internal *dptr) {
+	return (dirent_internal *)(uintptr_t)sys_readdir_internal(dir, dptr).ret_value;
+}

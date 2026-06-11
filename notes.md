@@ -109,7 +109,7 @@ Multicore: cores > 0 copy the boot image to their memory region, then synchroniz
 - `ARCHV=xx`: select architecture version (65, 68, 73, 81 are primary).  Default is 81.
 - `make.inc` files scattered through the tree are auto-discovered and included.
 - Per-architecture optimized assembly files (e.g., `dosched.v81opt.S`).
-- Final artifacts in `artifacts/v$(ARCHV)/$(T)/install/`: `bin/booter`, `lib/libh2.a`, etc.
+- Final artifacts in `artifacts/v$(ARCHV)/$(TARGET)/install/`: `bin/booter`, `lib/libh2.a`, etc.
   Each ARCHV+variant (opt/ref) has its own install directory.
 - Intermediate .o files in `kernel/build/obj/v$(ARCHV)/opt|ref/` and similarly for libs.
   Ref archives now in `kernel/build/ref_v$(ARCHV)/` and `libs/*/build/ref_v$(ARCHV)/`.
@@ -145,7 +145,7 @@ in-source build artifacts.
 4. **Test build artifacts are in-source.** Tests build object files, ELFs, and log
    files directly in their source directories. Parallel multi-arch test runs will
    conflict. Low priority — address after library build isolation is complete.
-   FIXED (2026-04-23): Test artifacts now land in `artifacts/v$(ARCHV)/$(T)/build/tests/<test-path>/`.
+   FIXED (2026-04-23): Test artifacts now land in `artifacts/v$(ARCHV)/$(TARGET)/build/tests/<test-path>/`.
    `Makefile.coverage` creates a build dir per test, symlinks all source files (excluding
    `Makefile.inc`), generates a `Makefile.inc` with absolute H2DIR, and runs `make -C $$BDIR`.
    `clean` target now does `rm -rf $(TEST_BUILD_ROOT)` instead of per-subdir iteration.
@@ -180,7 +180,7 @@ in-source build artifacts.
 ## Unified Build Directory Plan (COMPLETED 2026-04-24)
 
 **Goal achieved:** All intermediate build artifacts (object files, intermediate archives,
-booter/qurt/angel .o files) are now under `artifacts/v$(ARCHV)/$(T)/build/`.
+booter/qurt/angel .o files) are now under `artifacts/v$(ARCHV)/$(TARGET)/build/`.
 
 **Approach:** `BUILD_DIR := $(patsubst %/install,%/build/COMPONENT,$(INSTALLPATH))` in each
 Makefile. For kernel, an `ifeq ($(findstring /ref/,$(BUILD_DIR)),/ref/)` conditional picks
@@ -254,7 +254,7 @@ The correct invocation pattern is:
     make ARCHV=XX TARGET=ref test
 
 Added `make all_clean` target (nukes the entire `artifacts/` directory) to
-complement the per-variant `make clean` (which only removes `artifacts/v$(ARCHV)/$(T)`).
+complement the per-variant `make clean` (which only removes `artifacts/v$(ARCHV)/$(TARGET)`).
 
 ### testall fix (2026-04-27) — FIXED AND VALIDATED
 
@@ -320,7 +320,7 @@ root cause; the `+` and `MODEL` bugs are secondary.
   `JFLAG` more carefully so it doesn't propagate to contexts where it causes
   goal-ordering problems.
 - Also fix the `${INSTALLPATH}` fallback recipe: remove the `+` prefix from
-  the continuation line, and make it use `$(T)` or `TARGET` rather than
+  the continuation line, and make it use `$(TARGET)` or `TARGET` rather than
   `MODEL` so it builds the correct variant.
 
 ### Potential future improvement: file-based make DAG
@@ -598,7 +598,7 @@ Others like `futex_cancel`, `vmop_boot/free/status`, `tree_remove` may indicate 
       - `cov.txt`/`cov.rpt` moved to `$(INSTALLPATH)/` (no longer written to source root)
       - `COV_FILES` + `$(TEST_BUILD_ROOT)/%/cov.txt` pattern rule in `Makefile.coverage`
       - `h2_cov` drives `$(INSTALLPATH)/cov.rpt` directly — no `prepare`/`all` sub-makes
-      - `T ?= opt` + `export T` fix: fallback rules now use `$(T)` not `$(TARGET)`, so
+      - `T ?= opt` + `export T` fix: fallback rules now use `$(BUILD_TYPE)` not `$(TARGET)`, so
         `TARGET=opt_cov` no longer tries `make opt_cov` (invalid target)
       - `cov_rpt_tool` now accepts a file path argument (was hardcoded to `cov.txt`)
       - Incremental: second `make TARGET=opt_cov cov` is a true no-op

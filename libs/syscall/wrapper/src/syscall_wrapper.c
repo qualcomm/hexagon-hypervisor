@@ -6,6 +6,7 @@
 #include "syscall_wrapper.h"
 #include "syscall_defs.h"
 #include <angel.h>
+#include <stdlib.h>
 
 // Space holder for error code translation (SYS error code to libc error code)
 static int sys_error_translation(errno_t err) {
@@ -176,19 +177,178 @@ __attribute__((weak)) int errno(void) {
 }
 #endif
 
+sys_call_ret_t sys_opendir_internal(const char *name);
+sys_call_ret_t sys_closedir_internal(int dir);
+sys_call_ret_t sys_readdir_internal(int dir, dirent_internal *dptr);
+
+__attribute__((weak)) DIR *opendir(const char *name) {
+	sys_call_ret_t res = sys_opendir_internal(name);
+	int handle = (int)res.ret_value;
+	if (handle == -1) {
+		SET_LTS_ERROR(-1, (errno_t)res.err_value);
+		return NULL;
+	}
+	DIR *dirp = malloc(sizeof(*dirp));
+	if (!dirp) {
+		sys_closedir_internal(handle);
+		SET_LTS_ERROR(-1, ENOMEM);
+		return NULL;
+	}
+	dirp->fd = handle;
+	return dirp;
+}
+
+__attribute__((weak)) struct dirent *readdir(DIR *dirp) {
+	if (!dirp) {
+		SET_LTS_ERROR(-1, EBADF);
+		return NULL;
+	}
+	dirent_internal *ad = (dirent_internal *)dirp->buf;
+	sys_call_ret_t res = sys_readdir_internal(dirp->fd, ad);
+	if (res.ret_value == 0) {
+		if (res.err_value != 0)
+			SET_LTS_ERROR(-1, (errno_t)res.err_value);
+		return NULL;
+	}
+	dirp->dirent.d_ino = ad->d_ino;
+	dirp->dirent.d_type = DT_UNKNOWN;
+	size_t name_max = sizeof(dirp->dirent.d_name) - 1;
+	if (name_max > sizeof(ad->d_name) - 1)
+		name_max = sizeof(ad->d_name) - 1;
+	strncpy(dirp->dirent.d_name, ad->d_name, name_max);
+	dirp->dirent.d_name[name_max] = '\0';
+	return &dirp->dirent;
+}
+
+__attribute__((weak)) int closedir(DIR *dirp) {
+	if (!dirp) {
+		SET_LTS_ERROR(-1, EBADF);
+		return -1;
+	}
+	sys_call_ret_t res = sys_closedir_internal(dirp->fd);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	free(dirp);
+	return ret;
+}
+
 // STUBS FIXME: add support of missed system calls
 
 __attribute__((weak)) int getentropy(void *buffer, size_t length) {
+	(void)buffer;
+	(void)length;
 	SET_LTS_ERROR(-1, ENOSYS);
 	return -1;
 }
 
 __attribute__((weak)) int sigprocmask(int how, const sigset_t *set, sigset_t *oldset) {
+	(void)how;
+	(void)set;
+	(void)oldset;
 	SET_LTS_ERROR(-1, ENOSYS);
 	return -1;
 }
 
 __attribute__((weak)) int gettimeofday(struct timeval * __restrict __p, void * __restrict __tz) {
+	(void) __p;
+	(void)__tz;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int access(const char *pathname, int mode) {
+	(void)pathname;
+	(void)mode;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) pid_t fork(void) {
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int execve(const char *path, char *const argv[], char *const envp[]) {
+	(void)path;
+	(void)argv;
+	(void)envp;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) pid_t waitpid(pid_t pid, int *wstatus, int options) {
+	(void)pid;
+	(void)wstatus;
+	(void)options;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int pipe(int pipefd[2]) {
+	(void)pipefd;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int dup2(int oldfd, int newfd) {
+	(void)oldfd;
+	(void)newfd;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+static char *__h2_empty_environ[] = { NULL };
+__attribute__((weak)) char **environ = __h2_empty_environ;
+
+__attribute__((weak)) uid_t getuid(void) {
+	return 0;
+}
+
+__attribute__((weak)) int clock_getres(clockid_t clk_id, struct timespec *res) {
+	(void)clk_id;
+	(void)res;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) char *getcwd(char *buf, size_t size) {
+	(void)buf;
+	(void)size;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return NULL;
+}
+
+__attribute__((weak)) int ftruncate(int fd, off_t length) {
+	(void)fd;
+	(void)length;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int getrlimit(int resource, struct rlimit *rlim) {
+	(void)resource;
+	(void)rlim;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int setrlimit(int resource, const struct rlimit *rlim) {
+	(void)resource;
+	(void)rlim;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int statvfs(const char *path, struct statvfs *buf) {
+	(void)path;
+	(void)buf;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int fstatvfs(int fd, struct statvfs *buf) {
+	(void)fd;
+	(void)buf;
 	SET_LTS_ERROR(-1, ENOSYS);
 	return -1;
 }

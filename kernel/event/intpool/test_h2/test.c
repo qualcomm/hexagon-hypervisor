@@ -99,18 +99,12 @@ int main()
 	pthread_attr_init(&pt_attrs);
 	pthread_attr_setschedparam(&pt_attrs,&lowprio_param);
 	pthread_create(&timeout_child,&pt_attrs,timeout,NULL);
-#ifdef USE_DETACHED_THREADS
-	pthread_detach(timeout_child);
-#endif
 	/* Configure interrupts as intpool interrupts */
 	for (i = INT_START; i < INT_LAST; i++) {
 		h2_intpool_config(i,1);
 	}
 	/* Create one intpool thread */
 	pthread_create(&intpool_child_0,NULL,worker,(void*)&seen_0);
-#ifdef USE_DETACHED_THREADS
-	pthread_detach(intpool_child_0);
-#endif
 	/* Trigger interrupt */
 	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,INT_START,1);
 	/* Check that intpool thread (down sem?) happened */
@@ -143,9 +137,6 @@ int main()
 
 	/* Create another intpool thread */
 	pthread_create(&intpool_child_1,NULL,worker,(void*)&seen_1);
-#ifdef USE_DETACHED_THREADS
-	pthread_detach(intpool_child_1);
-#endif
 	/* Check that both intpool threads can get interrupted */
 	/* Trigger more interrupts */
 	for (i = INT_START; i < INT_LAST; i++) {
@@ -172,23 +163,6 @@ int main()
 	for (i = 0; i < 1024; i++) { asm volatile (""); }
 	if (seen_0 || seen_1) FAIL("should not have seen anything after disabling.");
 
-	puts("Trying to stop all created threads");
-//	stop_threads = 1;
-//	h2_intpool_config(INT_START,1);
-//	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,INT_START,1); // trigger interrupt to fast exit from worker thread
-//	h2_sem_down(&int_received_sem);
-//	h2_intpool_config(INT_START,1);
-//	h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE,INT_START,1); // trigger interrupt to fast exit from worker thread
-//	h2_sem_down(&int_received_sem);
-//	puts("Awake last time");
-
-//    void *ret;
-//	pthread_join(timeout_child, &ret);
-//	puts("Joining time-out thread");
-//	pthread_join(intpool_child_0, &ret);
-//	puts("Joining worker 0 thread");
-//	pthread_join(intpool_child_1, &ret);
-//	puts("Joining worker 1 thread");
 	puts("TEST PASSED");
 	return 0;
 }

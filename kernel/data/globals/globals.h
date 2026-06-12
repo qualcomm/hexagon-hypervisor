@@ -217,10 +217,6 @@ static inline H2K_kg_t PURITY *H2K_gp_llvm()
 #endif
 
 #ifdef CLUSTER_SCHED
-static inline u32_t H2K_hthread_cluster(u32_t hthread) {
-	return (hthread / H2K_gp->cluster_hthreads);
-}
-
 static inline void xex(u32_t hthread, u32_t new_xe, u32_t new_xe2, u32_t new_xe3, u32_t cur_xe, u32_t cur_xe2, u32_t cur_xe3) {
 #ifdef H2K_LOG_H
 	H2K_log("xex: new_xe %d  new_xe2 %d  new_xe3 %d  cur_xe %d  cur_xe2 %d  cur_xe3 %d\n", new_xe, new_xe2, new_xe3, cur_xe, cur_xe2, cur_xe3);
@@ -229,26 +225,18 @@ static inline void xex(u32_t hthread, u32_t new_xe, u32_t new_xe2, u32_t new_xe3
 	u32_t cluster = H2K_hthread_cluster(hthread);
 	s32_t count = 0;
 
-	switch (cur_xe + cur_xe3) {  // current HVX + HLX for hthread
-	case 0:  // neither active
-		count += (new_xe || new_xe3);
-		break;
+	/* HVX (xe) and HLX (xe3) share ONE coproc slot: the slot is occupied
+	 * iff either is set, so its occupancy is (xe | xe3). The slot's
+	 * contribution to the count is therefore new occupancy minus old:
+	 *   (new_xe | new_xe3) - (cur_xe | cur_xe3)
+	 * +1 when the slot goes free->occupied, -1 when occupied->free, and 0
+	 * when it stays the same (including xe<->xe3 swaps, which don't change
+	 * whether the shared slot is in use).. */
+	count += (s32_t)(new_xe | new_xe3) - (s32_t)(cur_xe | cur_xe3);
 
-	case 1:  // one coproc active
-	case 2:
-		if (new_xe + new_xe3 == 0) {  // clearing both
-			count -= 1;
-		}  // else 1 or 2 are being set, which doesn't affect the count
-		break;
-	default:
-		break;
-	}
-
-	if (new_xe2 < cur_xe2) {  // clearing xe2
-		count -= 1;
-	} else if (new_xe2 > cur_xe2) {  // setting xe2
-		count += 1;
-	}
+	/* xe2 (HMX) is its own coproc slot: +1 when acquired (0->1),
+	 * -1 when released (1->0), 0 when unchanged. */
+	count += (s32_t)new_xe2 - (s32_t)cur_xe2;
 
 	H2K_gp->coproc_count[cluster] += count;
 }

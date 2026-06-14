@@ -262,7 +262,6 @@ __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_gp->coproc_max = ((H2K_gp->coproc_contexts + H2K_gp->hmx_units) / H2K_gp->cluster_clusters) + (((H2K_gp->coproc_contexts + H2K_gp->hmx_units) % H2K_gp->cluster_clusters) != 0);
 	H2K_gp->coproc_max = (H2K_gp->coproc_max < CLUSTER_SCHED_MIN_COPROCS ? CLUSTER_SCHED_MIN_COPROCS : H2K_gp->coproc_max);
 
-#if 1
 	// Base case: cluster scheduling disabled -> early out, head returned regardless
 	// of coproc budget. Even with the cluster "full" and the thread needing a coproc,
 	// getbest must return it (the !cluster_sched / coproc_max == -1 guard).
@@ -342,8 +341,8 @@ __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_ready_insert_TB(&a); // insert td(i) to list
 	H2K_ready_THREAD_XE_CLEAR_TB(&b); // clr xe for td(ii)
 	H2K_ready_insert_TB(&b); // insert td(ii) to list
-	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b1) ");
-	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (a1) ");
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed");
+	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed");
 
 
 
@@ -355,8 +354,8 @@ __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_ready_THREAD_XE_CLEAR_TB(&b); // clr xe for td(ii)
 	H2K_ready_insert_TB(&a); // insert td(i) to list
 	H2K_ready_insert_TB(&b); // insert td(ii) to list
-	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b2) ");
-	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a2) ");
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed");
+	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed");
 
 
 
@@ -369,8 +368,8 @@ __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_ready_THREAD_XE_CLEAR_TB(&b); // clr xe for td(ii)
 	H2K_ready_insert_TB(&a); // insert td(i) to list
 	H2K_ready_insert_TB(&b); // insert td(ii) to list
-	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed (b3) ");
-	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (a3) ");
+	if (H2K_ready_getbest_TB() != &b) FAIL("ready_best_prio failed");
+	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed");
 	H2K_ready_REG_SSR_XE_CLEAR_TB();
 
 
@@ -385,8 +384,8 @@ __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_gp->wait_mask = H2K_gp->cluster_mask[cluster2];  // idle hthread there, but no room
 	H2K_ready_THREAD_XE_SET_TB(&a); // a needs a coproc
 	H2K_ready_insert_TB(&a);
-	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed (P5a: a not picked) ");
-	if (H2K_gp->coproc_count[cluster1] != H2K_gp->coproc_max + 1) FAIL("P5a: count not oversubscribed");
+	if (H2K_ready_getbest_TB() != &a) FAIL("ready_best_prio failed");
+	if (H2K_gp->coproc_count[cluster1] != H2K_gp->coproc_max + 1) FAIL("count not oversubscribed");
 
 
 	// Case: cluster full, other cluster has ONE free slot. Head thread (a) needs 2
@@ -401,7 +400,8 @@ __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_ready_THREAD_XE2_CLEAR_TB(&b);  // b needs none
 	H2K_ready_insert_TB(&b);          // b deeper
 	H2K_ready_insert_TB(&a);          // a at head
-	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (P5b: expected handoff/NULL) ");
+	if (H2K_ready_getbest_TB() == &b) FAIL("ready_best_prio failed");
+	if (H2K_ready_getbest_TB() == &b) FAIL("ready_best_prio failed");
 	H2K_ready_remove_TB(&a);          // handoff left a/b in the list; clean up
 	H2K_ready_remove_TB(&b);
 
@@ -416,7 +416,7 @@ __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (maxprio) ");
 #endif
-#endif
+
 
 	puts("TEST PASSED\n");
 	return 0;

@@ -11,8 +11,8 @@ all: $(OUT)
 
 $(DB):
 	$(MAKE) -C $(H2DIR) all_clean
-	bear -- $(MAKE) -C $(H2DIR) TARGET=ref ARCHV=$(ARCHV)
-	bear --append -- $(MAKE) -C $(H2DIR) TARGET=ref ARCHV=$(ARCHV) test_variant
+	bear -- $(MAKE) -C $(H2DIR) TARGET=$(TARGET) ARCHV=$(ARCHV)
+	bear --append -- $(MAKE) -C $(H2DIR) TARGET=$(TARGET) ARCHV=$(ARCHV) test_variant
 
 $(OUT): $(DB)
 	@test -x "$(CLANGD_PATH)" || { echo "ERROR: hexagon-clangd not found at '$(CLANGD_PATH)'"; echo "       (pkw --which hexagon-clang resolved to '$(CLANG_PATH)')"; exit 1; }

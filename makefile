@@ -229,7 +229,7 @@ lldb-setup-clean:
 
 .PHONY: vscode vscode_clean
 vscode:
-	$(MAKE) -f scripts/Makefile.vscode TOOLS_FLAVOR=$(TOOLS_FLAVOR) ARCH_FLAVOR=$(ARCH_FLAVOR) ARCHV=$(ARCHV)
+	$(MAKE) -f scripts/Makefile.vscode TOOLS_FLAVOR=$(TOOLS_FLAVOR) ARCH_FLAVOR=$(ARCH_FLAVOR) ARCHV=$(ARCHV) TARGET=$(TARGET)
 
 vscode_clean:
 	$(MAKE) -f scripts/Makefile.vscode clean

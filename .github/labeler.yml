@@ -1,0 +1,7 @@
+# Configuration for actions/labeler
+# https://github.com/actions/labeler
+#
+# Apply the "untested" label to every pull request (matches any changed file).
+untested:
+- changed-files:
+  - any-glob-to-any-file: '**'

@@ -11,15 +11,16 @@
 #include <readylist.h>
 #include <lowprio.h>
 #include <globals.h>
+#include <hw.h>
 
 u64_t H2K_check_sanity(const u64_t retval)
 {
 	if (H2K_gp->priomask == 0) {
 		H2K_lowprio_notify();
 	}
-	if (H2K_runlist_worst_prio() IS_WORSE_THAN H2K_ready_best_prio()) {
-		resched_int();
-	} else if (H2K_gp->wait_mask && H2K_ready_any_valid()) {
+	u32_t best = H2K_ready_best_prio();
+	H2K_set_bestwait(best);
+	if (H2K_get_bestwait() != BESTWAIT_MASK && H2K_gp->wait_mask && best < MAX_PRIOS) {
 		resched_int();
 	}
 	return(retval);

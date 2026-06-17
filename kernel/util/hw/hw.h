@@ -501,6 +501,30 @@ static inline void H2K_dmcfgwr(u32_t index, u32_t data) {
 
 	asm volatile ("dmcfgwr(%0, %1);" : : "r" (index), "r" (data));
 }
+
+static inline u32_t H2K_get_bestwait()
+{
+	u32_t ret;
+	asm volatile ("%0 = bestwait; \n" : "=r" (ret));
+	return(ret);
+}
+
+static inline void H2K_set_bestwait(u32_t priority_mask)
+{
+	asm volatile (" bestwait = %0; \n" : : "r" (priority_mask));
+}
+
+static inline u32_t H2K_get_schedcfg()
+{
+	u32_t ret;
+	asm volatile ("%0 = schedcfg; \n" : "=r" (ret));
+	return(ret);
+}
+
+static inline void H2K_set_schedcfg(u32_t val)
+{
+	asm volatile (" schedcfg = %0; \n" : : "r" (val));
+}
 #endif
 
 void H2K_start_threads(unsigned int mask);

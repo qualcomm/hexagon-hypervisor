@@ -42,6 +42,16 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		H2K_ready_insert(dest);
 	} else if (dest->status == H2K_STATUS_RUNNING) {
 		H2K_runlist_set_thread_prio(dest, prio);
+		/* If dest is the thread running on THIS hthread, sync its hardware
+		 * STID.PRIO so the BESTWAIT comparator sees the boosted priority.  Only
+		 * our own hthread's STID is writable; a dest on another hthread
+		 * refreshes its STID from ->prio at its next switch-in (the boost is the
+		 * stale-worse direction there, which self-heals and cannot hang). */
+		if (dest == H2K_get_sgp()) {
+			u32_t stid = H2K_get_tid_reg();
+			stid = (stid & ~(0xffu << 16)) | ((prio & 0xffu) << 16);
+			asm volatile ("stid = %0; isync" : : "r"(stid));
+		}
 		if (H2K_gp->priomask & (1<<dest->hthread)) {
 			H2K_raise_lowprio();
 		}
@@ -132,6 +142,16 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	H2K_safemem_unlock();
 	/* Restore my priority */
 	H2K_runlist_set_thread_prio(me, me->base_prio);
+	/* Sync the hardware STID.PRIO [23:16] with the restored software priority.
+	 * 'me' is the thread running on this hthread, so its STID is writable here.
+	 * The BESTWAIT comparator reads STID.PRIO; without this the stale (boosted)
+	 * value would hide 'me' from the comparator and a higher-priority waiter
+	 * would never preempt it -- a priority inversion that hangs. */
+	{
+		u32_t stid = H2K_get_tid_reg();
+		stid = (stid & ~(0xffu << 16)) | (((u32_t)me->base_prio & 0xffu) << 16);
+		asm volatile ("stid = %0; isync" : : "r"(stid));
+	}
 	return (s32_t)H2K_check_sanity_unlock(0);
 }
 

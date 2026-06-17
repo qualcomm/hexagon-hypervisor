@@ -12,3 +12,11 @@ jobs:
       pull-requests: write
     steps:
     - uses: actions/labeler@v6
+
+    - name: Clear stale pass/fail labels
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+      run: |
+        gh pr edit "$PR" --repo "$REPO" --remove-label pass --remove-label fail || true

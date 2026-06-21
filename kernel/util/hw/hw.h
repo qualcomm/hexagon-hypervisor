@@ -56,6 +56,13 @@ static inline u32_t get_imask(u32_t thread)
 	return imask;
 }
 
+/* Write STID.PRIO for a named hardware thread (cross-thread, Monitor only).
+ * Mirrors setimask -- uses predicate register to name the target thread. */
+static inline void set_thread_stid_prio(u32_t thread, u32_t prio)
+{
+	asm volatile (" p0 = %0\n setprio(p0,%1)" : : "r"(thread),"r"(prio):"p0");
+}
+
 static inline void iassignw(u32_t intno, u32_t threadmask)
 {
 	asm(" iassignw(%0)" : : "r"(Q6_R_combine_RlRl(intno,threadmask)));
@@ -500,6 +507,30 @@ static inline u32_t H2K_dmcfgrd(u32_t index) {
 static inline void H2K_dmcfgwr(u32_t index, u32_t data) {
 
 	asm volatile ("dmcfgwr(%0, %1);" : : "r" (index), "r" (data));
+}
+
+static inline u32_t H2K_get_bestwait()
+{
+	u32_t ret;
+	asm volatile ("%0 = bestwait; \n" : "=r" (ret));
+	return(ret);
+}
+
+static inline void H2K_set_bestwait(u32_t priority_mask)
+{
+	asm volatile (" bestwait = %0; \n" : : "r" (priority_mask));
+}
+
+static inline u32_t H2K_get_schedcfg()
+{
+	u32_t ret;
+	asm volatile ("%0 = schedcfg; \n" : "=r" (ret));
+	return(ret);
+}
+
+static inline void H2K_set_schedcfg(u32_t val)
+{
+	asm volatile (" schedcfg = %0; \n" : : "r" (val));
 }
 #endif
 

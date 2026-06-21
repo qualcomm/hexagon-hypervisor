@@ -34,6 +34,7 @@
 ./kernel/power/hvx/test
 ./kernel/power/apcr/simple_test
 ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios
+./kernel/sched/check_sanity/test/tests/H2K_bestwait
 ./kernel/sched/dosched/test/test
 ./kernel/futex/futex/test/tests/badaccess
 ./kernel/futex/futex/test/tests/find_match

@@ -100,11 +100,13 @@ static void setup(struct scenario *scenario)
 	int hthread;
 	int prio;
 	int i;
+	int worst_running_prio = 0;  /* 0 == best; track max over RUNNING threads */
 
 	H2K_clear_ipend(0xffffffff);
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();
+	H2K_set_schedcfg(SCHEDCFG_EN | SCHEDCFG_INTNO(RESCHED_INT));
 	for (i = 0; i < num_threads; i++) {
 		status = scenario->thread[i].status;
 		hthread = scenario->thread[i].hthread;
@@ -114,10 +116,27 @@ static void setup(struct scenario *scenario)
 		threads[i].prio = prio;
 		if (status == RUNNING) {
 			H2K_runlist_push(&threads[i]);
+			if (prio > worst_running_prio)
+				worst_running_prio = prio;
 		} else if (status == READY) {
 			H2K_ready_append(&threads[i]);
 		}
 	}
+	/* The BESTWAIT comparator reads each hw thread's REAL STID.PRIO (bits
+	 * [23:16]), not the software runlist_prios[] array that H2K_runlist_push
+	 * fills.  This test runs on a single hw thread, so drive that thread's real
+	 * STID.PRIO to the scenario's worst running priority -- the only running
+	 * priority that affects the decision (hardware fires iff some thread's
+	 * STID.PRIO is worse than BESTWAIT, i.e. worst_running > best_ready).
+	 *
+	 * The comparator is level-sensitive, so disarm BESTWAIT (0x1FF) BEFORE
+	 * writing STID, otherwise a stale BESTWAIT left by the previous scenario
+	 * would fire spuriously the instant we install a worse STID.PRIO.  Clear
+	 * IPEND last so setup() leaves a clean slate; only H2K_check_sanity (under
+	 * test) should arm BESTWAIT and raise the interrupt. */
+	H2K_set_bestwait(BESTWAIT_MASK);
+	asm volatile ("stid = %0;" : : "r"((u32_t)worst_running_prio << 16));
+	H2K_clear_ipend(0xffffffff);
 	H2K_kg.priomask = scenario->priomask;
 	H2K_kg.wait_mask = scenario->wait_mask;
 }

@@ -248,4 +248,63 @@ Description
 This function retrieves clears the contents of the IPEND status register.
 
 
+H2K_get_bestwait
+----------------
+
+.. c:function::  static inline u32_t H2K_get_bestwait()
+
+Description
+~~~~~~~~~~~
+
+This function retrieves the contents of the BESTWAIT register.  The hardware
+resets BESTWAIT to 0x1FF after it raises the reschedule interrupt, so reading it
+back indicates whether the hardware has already fired since it was last
+programmed.  See the hardware reschedule interrupt.
+
+
+H2K_set_bestwait
+----------------
+
+.. c:function::  static inline void H2K_set_bestwait(u32_t priority_mask)
+
+	:param priority_mask:  Priority value to program into BESTWAIT
+
+Description
+~~~~~~~~~~~
+
+This function programs the BESTWAIT register with the priority of the highest
+priority task waiting to run.  The hardware raises the reschedule interrupt when
+any hardware thread's effective STID.PRIO is worse than this value.  See the
+hardware reschedule interrupt in conjunction with the SCHEDCFG register.
+
+
+H2K_get_schedcfg
+----------------
+
+.. c:function::  static inline u32_t H2K_get_schedcfg()
+
+Description
+~~~~~~~~~~~
+
+This function retrieves the contents of the SCHEDCFG register, which configures
+the hardware reschedule interrupt feature (SCHEDCFG.EN enables it, SCHEDCFG.INTNO
+selects the interrupt raised).
+
+
+H2K_set_schedcfg
+----------------
+
+.. c:function::  static inline void H2K_set_schedcfg(u32_t val)
+
+	:param val:  Value to write to the SCHEDCFG register
+
+Description
+~~~~~~~~~~~
+
+This function writes the SCHEDCFG register, used to enable the hardware
+reschedule interrupt feature and select which interrupt it raises.  See the
+hardware reschedule interrupt in conjunction with the BESTWAIT register.
+
+
+
 

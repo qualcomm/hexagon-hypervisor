@@ -3,6 +3,15 @@
 ifndef MAKE_INC_TEST
 MAKE_INC_TEST := 1
 
+# Prevent LDFLAGS (and CFLAGS/ASFLAGS) inherited from the environment from
+# leaking into sub-makes.  Makefile.coverage includes this file without BOOT=1
+# set, accumulating non-BOOT LDFLAGS; without unexport those flags would be
+# re-exported to the per-test sub-make (which sets BOOT=1) and cause duplicate
+# conflicting flags in the link command.
+unexport LDFLAGS
+unexport CFLAGS
+unexport ASFLAGS
+
 ################################################################################
 #  Test makefile doesn't share above the test dir
 ################################################################################
@@ -26,6 +35,16 @@ include $(H2DIR)/scripts/Makefile.inc.opensource
 include $(H2DIR)/scripts/Makefile.inc.version
 include $(H2DIR)/scripts/Makefile.inc.constants
 include $(H2DIR)/scripts/Makefile.inc.tools
+
+ifeq ($(PICOLIBC),1)
+TARGET_FLAG = --target=hexagon-h2-elf --cstdlib=picolibc
+PICOLIBC_LCS := $(abspath $(dir $(shell which $(CC)))/../templates/staticExecutable/static-executable-h2-picolibc.lcs.template)
+PICOLIBC_KERNEL_LCS := $(INSTALLPATH)/scripts/vapa_kernel_picolibc.x
+else
+TARGET_FLAG =
+PICOLIBC_LCS =
+PICOLIBC_KERNEL_LCS =
+endif
 
 ifeq ($(USE_PKW),1)
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
@@ -111,7 +130,7 @@ ${LIBH2CHECK}: ${INSTALLPATH}
 ${LIBH2}:  ${INSTALLPATH}
 
 ${INSTALLPATH}:
-	cd ${H2DIR} && $(MAKE) TARGET=$(TARGET) ARCHV=${ARCHV}
+	cd ${H2DIR} && $(MAKE) TARGET=$(TARGET) ARCHV=${ARCHV} PICOLIBC=$(PICOLIBC)
 
 # $(INSTALLPATH)/ver is written by opt/ref recipes as a version/git-info record.
 # It is no longer used as a test dependency — $(INSTALLPATH)/manifest replaced it.
@@ -155,19 +174,23 @@ OPTIMIZE := -O1
 # FIXME: Remove H2K_LOAD_ADDR=$(H2K_LINK_ADDR) when tests are no longer in
 # monitor space
 
-KERNEL_BUILD_DIR := $(patsubst %/install,%/build/kernel,$(INSTALLPATH))
+KERNEL_BUILD_DIR := $(INSTALLPATH)/../build/kernel
 KERNEL_INCLUDES := -I $(KERNEL_BUILD_DIR)/include -I ${H2DIR}/libs/h2/common
 
 H2K_KERNEL_NPAGES ?= 0
 
+ifeq ($(PICOLIBC),1)
+LDFLAGS += -Wl,--defsym=__bootvm_entry_point=_start -Wl,--defsym=__bootvm_entry=_start -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) # -Wl,--defsym=__entry=$(H2K_LOAD_ADDR)
+else
 LDFLAGS += -Wl,--defsym=__bootvm_entry_point=hexagon_pre_main -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=start # -Wl,--defsym=__entry=$(H2K_LOAD_ADDR)
+endif
 
 ifdef BOOT
 BOOTER=${INSTALLPATH}/bin/booter
-CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_GUEST_START=${H2K_GUEST_START} -Wall -Wno-builtin-requires-header -g
+CFLAGS += $(OPTIMIZE) $(TARGET_FLAG) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_GUEST_START=${H2K_GUEST_START} -Wall -Wno-builtin-requires-header -g
 LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
-CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -Wno-builtin-requires-header -g
+CFLAGS += $(OPTIMIZE) $(TARGET_FLAG) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -Wno-builtin-requires-header -g
 ifndef STANDALONE
 
 # 0xfffffff0 means don't call the hook
@@ -178,7 +201,32 @@ endif
 ifdef STANDALONE
 CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
 LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
-ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include
+ifeq ($(PICOLIBC),1)
+# For picolibc STANDALONE tests:
+# - ELF entry is 'start' (kernel hardware init from boot.ref.o in libh2kernel.a),
+#   same as Dinkumware where crt0.o's weak 'start' is overridden by the kernel's.
+# - .start section placed at H2K_LINK_ADDR (0xff000000) via --section-start.
+# - HEAP_SIZE and STACK_SIZE must be passed explicitly to prevent setup.ref.c's
+#   heap_top = end + DEFAULT_HEAP_SIZE (64MB) from overflowing past 0xffffffff.
+# - boot thread ELR is '_start' from the toolchain's default crt0-noflash-hosted.o
+# - --allow-multiple-definition: test stubs (e.g. H2K_sample_start, H2K_switch)
+#   override libh2kernel.a symbols; the kernel boot chain pulls in archive .o files
+#   that also define these symbols, so we need this flag to let test.o win.
+# - vapa_kernel_picolibc.x provides __stack/__bss_size/TLS symbols for picolibc
+LDFLAGS += $(TARGET_FLAG) -Wl,-e=start \
+           -Wl,--section-start=.start=$(H2K_LINK_ADDR) \
+           -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) \
+           -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) \
+           -Wl,--defsym=__bootvm_entry_point=_start \
+           -Wl,--defsym=__bootvm_entry=_start \
+           -Wl,--defsym=event_handle_tlbmissx=0xfffffff0 \
+           -Wl,--defsym=event_handle_tlbmissrw=0xfffffff0 \
+           -Wl,--allow-multiple-definition \
+           -lsyscall_wrapper \
+           -Wl,--whole-archive -llocks -Wl,--no-whole-archive \
+           -Wl,--script=$(PICOLIBC_KERNEL_LCS)
+endif
+ASFLAGS += $(TARGET_FLAG) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include
 ifeq ($(EN_LLVM_COV), 1)
 CFLAGS += ${LLVM_COV_CFLAGS}
 LDFLAGS += ${LLVM_COV_LDFLAGS}
@@ -188,17 +236,40 @@ CFLAGS += -DH2K_LOG_PRINTF
 endif
 
 else # non-STANDALONE
-OSLIB=-moslib=h2
+ifeq ($(PICOLIBC),1)
+OSLIB = $(TARGET_FLAG)
+else
+OSLIB = -moslib=h2
+endif
 
 ifdef BOOT # use booter
-LDFLAGS +=${OSLIB} -L ${INSTALLPATH}/lib
+LDFLAGS += ${OSLIB} -L ${INSTALLPATH}/lib
+ifdef EXEC
+ifeq ($(PICOLIBC),1)
+LDFLAGS += -Wl,--whole-archive -llocks -Wl,--no-whole-archive \
+           -Wl,--script=$(PICOLIBC_LCS)
+endif
+endif
 
 else # run in place of booter
+ifeq ($(PICOLIBC),1)
+# Same approach as STANDALONE: toolchain default crt0, kernel LCS.
+LDFLAGS += ${OSLIB} -lh2kernel -lh2 -lh2check -lsyscall_wrapper -L ${INSTALLPATH}/lib \
+           -Wl,--whole-archive -llocks -Wl,--no-whole-archive \
+           -Wl,-e=start \
+           -Wl,--section-start=.start=$(H2K_LINK_ADDR) \
+           -Wl,--defsym=__bootvm_entry_point=_start \
+           -Wl,--defsym=__bootvm_entry=_start
+ifdef EXEC
+LDFLAGS += -Wl,--script=$(PICOLIBC_KERNEL_LCS)
+endif
+else
 LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
+endif
 endif # BOOT
 
 CFLAGS += -I ${INSTALLPATH}/include
-ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${INSTALLPATH}/include
+ASFLAGS += $(TARGET_FLAG) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${INSTALLPATH}/include
 endif #STANDALONE
 
 LDFLAGS+= -mv${TOOLARCH} -Qunused-arguments
@@ -421,13 +492,15 @@ endif
 
 ${EXEC_TMP}: ${OBJS}
 # How's this for an ugly hack?
-	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
+	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//; s/.*Undefined weak symbol _user_strerror.*//'; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 
 ${EXEC}: ${EXEC_TMP} | constants
 # How's this for an ugly hack?
-	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
+	${CC} -o $@ ${OBJS} ${LDFLAGS} \
+	  -Wl,--defsym=H2K_KERNEL_NPAGES=$$($(CONSTS) kernel_npages $< $(PARAMS)) \
+	  2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//; s/.*Undefined weak symbol _user_strerror.*//'; \
 	CODE=$${PIPESTATUS[0]}; \
 	if [ "$$CODE" -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
 

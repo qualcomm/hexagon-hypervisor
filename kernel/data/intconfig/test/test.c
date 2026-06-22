@@ -18,7 +18,7 @@
 
 #define BAD ((void *)(0xdeadbeef))
 
-#define TEST_FASTINT_TRAPMASK 0x9
+#define TEST_FASTINT_TRAPMASK 0xb
 
 H2K_thread_context a;
 

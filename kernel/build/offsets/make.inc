@@ -11,12 +11,8 @@ endif
 
 ifeq ($(PICOLIBC),1)
 # Provide heap symbols and default memory layout expected by picolibc's libc.
-# Use the linker script from the selected toolchain sysroot.
-ifneq ($(TOOLCHAIN_BIN),)
-OFFSETS_LDSCRIPT := -Wl,-T,$(abspath $(TOOLCHAIN_BIN)/../target/hexagon-unknown-none-picolibc/lib/v$(ARCHV)/G0/picolibc.ld)
-else
+# Ask the compiler for the sysroot-relative path so this works across toolchains.
 OFFSETS_LDSCRIPT := -Wl,-T,$(shell $(CC) $(OFFSETS_TARGET_FLAG) -print-file-name=picolibc.ld)
-endif
 else
 OFFSETS_LDSCRIPT :=
 endif

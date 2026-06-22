@@ -155,13 +155,12 @@ def read_functions(file):
    file.close()
 
 def get_veropt(file):
-   ver_patt = re.compile("(v\d+)\s(ref|opt)")
+   ver_patt = re.compile(r'(v\d+).*(ref|opt)')
    for line in file:
-      match = ver_patt.match(line)
+      match = ver_patt.search(line)
       if match:
-         return (match.group(1),match.group(2))
-      else:
-         sys.exit("No version information found for compiled h2")
+         return (match.group(1), match.group(2))
+   sys.exit("No version information found for compiled h2")
 
 def read_covfile(fn):
       fn = fn.splitlines()[0]

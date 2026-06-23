@@ -87,8 +87,7 @@ int elf_get_specials(int fdesc, special_symbols specials[], int nsyms, const Elf
 		if (hdr[0].sh_type == SHT_SYMTAB) {
 			*pSymhdr = hdr[0];
 			found_symtab = 1;
-			/* sh_line (sh_link in standard ELF) points to the correct string table */
-			if (elf_get_shdr(fdesc, hdr[0].sh_line, pStrhdr, ehdr) == -1) elf_error("3b", NULL);
+			if (elf_get_shdr(fdesc, hdr[0].sh_link, pStrhdr, ehdr) == -1) elf_error("3b", NULL);
 			break;
 		}
 	}

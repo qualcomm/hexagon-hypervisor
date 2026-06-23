@@ -708,7 +708,7 @@ cached handle for the first library instead of loading the second.
 ### Bug fixed earlier: booter elf_get_specials for dynamic binaries
 `libs/h2_compat/elf/h2_elf.ref.c` `elf_get_specials()` picked up `.dynstr` instead of
 `.strtab` for dynamic binaries (`.dynstr` comes first in section order; both are
-`SHT_STRTAB`).  Fix: use `sh_link` (called `sh_line` in h2_elf.h) to look up the
+`SHT_STRTAB`).  Fix: use `sh_link` to look up the
 correct string table for the symbol table section.
 
 ### Other findings during investigation

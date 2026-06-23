@@ -20,7 +20,7 @@ and `__sys_write_mode__` are never found, the heap and cmdline are not set up, a
 binary crashes or produces no output.
 
 The fix (commit `13cecf0f`, "elf: fix elf_get_specials strtab selection for dynamic
-binaries") uses `sh_link` (called `sh_line` in h2_elf.h) on the `.symtab` section
+binaries") uses `sh_link` on the `.symtab` section
 header to find its correct paired string table by index rather than scanning by type.
 
 **Any binary built with `--force-dynamic` requires a booter built from commit

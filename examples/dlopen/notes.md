@@ -1,5 +1,8 @@
 # dltest — Notes for using as an example
 
+NOTE: if you get an unsupported sys_mmap error, try removing the entire artifacts
+directory from H2 and rebuilding.
+
 This directory demonstrates `dlopen`/`dlsym` working under h2/booter on Hexagon v73.
 It loads both a C shared library (`french.so`) and a C++ shared library (`cppso.so`)
 from a statically-linked main binary, with full constructor/destructor support.

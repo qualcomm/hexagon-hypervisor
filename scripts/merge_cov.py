@@ -108,6 +108,13 @@ class function_data(object):
          # range -- when they in fact are.  If there is no annotation, assume
          # for now that it's out of range.
          else:
+            # Continuation line: spaces + hexaddr + ": " + text, no cycle count.
+            cont_m = re.match(r'^\s+([0-9a-f]+):\s+(.+)', line)
+            if cont_m and mode == "new":
+               pc = int(cont_m.group(1), 16)
+               if do_offsets:
+                  pc -= self.offset
+               self.text[pc] = cont_m.group(2)
             continue
          # print "XXX %s %08x" %(m.group(3), self.offset)
          pc = int(m.group(3),16)
@@ -300,9 +307,8 @@ if __name__ == "__main__":
    fh = open(installpath+"/ver","r")
    ver,opt = get_veropt(fh)
 
-   fname = h2dir+"/scripts/"+ver+opt+"_cov_fns"
 
-   #  cov_fns is going to be explicit
+   fname = os.path.join(installpath, "cov", "cov_fns")
    fh = open(fname,"r")
    read_functions(fh)
 

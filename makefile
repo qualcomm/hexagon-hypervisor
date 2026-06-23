@@ -159,10 +159,10 @@ cov: h2_cov
 #	tail -n +2 qurt_report.html >> report.html
 
 h2_cov:
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/cov.rpt
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/cov.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 
-.PHONY: check-fail test-check cov-check cov_fns
+.PHONY: check-fail test-check cov-check
 
 check-fail test-check cov-check:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check-fail
@@ -190,28 +190,6 @@ htags: gtags
 
 gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML
-
-cov_fns:
-	# $(MAKE) clean ref ARCHV=v4 OPTIMIZE='-Os -fno-inline';
-	# ./scripts/gen_cov_fns.pl > ./scripts/v4ref_cov_fns;
-	# $(MAKE) clean opt ARCHV=v4 OPTIMIZE='-Os -fno-inline';
-	# ./scripts/gen_cov_fns.pl > ./scripts/v4opt_cov_fns;
-	# $(MAKE) clean ref ARCHV=v5 OPTIMIZE='-Os -fno-inline';
-	# ./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
-	# $(MAKE) clean opt ARCHV=v5 OPTIMIZE='-Os -fno-inline';
-	# ./scripts/gen_cov_fns.pl > ./scripts/v5opt_cov_fns;
-	$(MAKE) clean ref ARCHV=60 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=60 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-	$(MAKE) clean ref ARCHV=65 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v65ref_cov_fns;
-	$(MAKE) clean opt ARCHV=65 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v65opt_cov_fns;
-	$(MAKE) clean ref ARCHV=68 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v68ref_cov_fns;
-	$(MAKE) clean opt ARCHV=68 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v68opt_cov_fns;
 
 .PHONY: q6testinstallenvs
  q6testinstallenvs:

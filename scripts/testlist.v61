@@ -90,6 +90,9 @@
 ./libs/h2_compat/error/test/simple
 ./libs/h2_compat/sem/test/simple
 ./libs/h2_compat/sleep/test
+./libs/h2_compat/vecaccess/test
+./libs/h2_compat/mxaccess/test
+./libs/h2_compat/lxaccess/test
 
 ./libs/h2/vmtraps/test/test_ie
 ./libs/h2/vmtraps/test/test_pcycles

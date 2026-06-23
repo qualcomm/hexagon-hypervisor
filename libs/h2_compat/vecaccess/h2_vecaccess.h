@@ -22,6 +22,9 @@
 #define H2_VECACCESS_EXT_SILVER 0
 #define H2_VECACCESS_EXT_HVX 0
 
+/* Maximum HVX vector length in bytes. */
+#define H2_VECACCESS_MAX_VLENGTH_BYTES 128
+
 enum {
 	H2_VECACCESS_VLENGTH_MIN,
 	H2_VECACCESS_VLENGTH_32 = 5,

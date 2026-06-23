@@ -11,11 +11,11 @@
 
 int h2_mxaccess_unit_init(h2_mxaccess_state_t *mxacc, h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_unit_entry entry_type, unsigned int unit_mask) {
 #ifdef HMX_HLX_SUPPORT
-	int ret;
+	h2_coproc_init_result_t ret;
 
 	if ((ret = h2_coproc_init()) < 0) return ret;
 
-	if (1 == ret) {  // old style
+	if (H2_COPROC_INIT_OLDSTYLE == ret) {  // old style
 		h2_sem_init_val(&mxacc->sem, h2_info(INFO_HMX_INSTANCES));
 	} else {
 		h2_sem_init_val(&mxacc->sem, h2_coproc_count(type, subtype, entry_type, unit_mask));
@@ -61,12 +61,16 @@ int h2_mxaccess_acquire(h2_mxaccess_state_t *mxacc) {
 #endif
 }
 
-int h2_mxaccess_release(h2_mxaccess_state_t *mxacc, int idx) 
+int h2_mxaccess_release(h2_mxaccess_state_t *mxacc, int idx)
 {
 #ifdef HMX_HLX_SUPPORT
 	int ret;
 
-	ret = h2_coproc_set(mxacc->type, mxacc->subtype, mxacc->entry_type, mxacc->unit_mask, 0, 0);
+	if (!(mxacc->active & (1u << idx))) {
+		return -1;
+	}
+
+	ret = h2_coproc_set(mxacc->type, mxacc->subtype, mxacc->entry_type, mxacc->unit_mask, idx, 0);
 	h2_atomic_clrbit32(&mxacc->active, idx);
 	h2_sem_up(&mxacc->sem);
 

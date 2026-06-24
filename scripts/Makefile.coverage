@@ -69,6 +69,16 @@ $(INSTALLPATH)/cov/cov_fns: $(INSTALLPATH)/manifest
 	mkdir -p $(INSTALLPATH)/cov
 	${H2DIR}/scripts/gen_cov_fns.pl $(INSTALLPATH) > $@
 
+# Generate the function -> source-file map for the HTML report's file-tree view.
+# Derived from the same just-built libraries (objdump symbols + DWARF compile-unit
+# paths), so it always matches the binaries under test.  Depends on manifest for
+# the same reason as cov_fns.
+$(INSTALLPATH)/cov/cov_files: $(INSTALLPATH)/manifest
+	mkdir -p $(INSTALLPATH)/cov
+	$(PYTHON) ${H2DIR}/scripts/gen_cov_files.py \
+	    --installpath $(INSTALLPATH) --repo $(H2DIR) \
+	    --objdump "$(OBJDUMP)" --dwarfdump "$(DWARFDUMP)" > $@
+
 # Merge all per-test cov.txt files into a single file under the install directory.
 # .DELETE_ON_ERROR ensures a failed merge_cov.py run does not leave a stale output.
 .DELETE_ON_ERROR:
@@ -79,9 +89,10 @@ $(INSTALLPATH)/cov/cov.txt: $(COV_FILES) $(INSTALLPATH)/cov/cov_fns
 $(INSTALLPATH)/cov/cov.rpt: $(INSTALLPATH)/cov/cov.txt
 	${H2DIR}/scripts/cov_rpt_tool $< > $@
 
-$(INSTALLPATH)/cov.html: $(INSTALLPATH)/cov/cov.rpt
+$(INSTALLPATH)/cov.html: $(INSTALLPATH)/cov/cov.rpt $(INSTALLPATH)/cov/cov_files
 	$(PYTHON) ${H2DIR}/scripts/cov_html_report.py \
-	    --rpt $< --cov $(INSTALLPATH)/cov/cov.txt --output $@ \
+	    --rpt $< --cov $(INSTALLPATH)/cov/cov.txt \
+	    --fn-files $(INSTALLPATH)/cov/cov_files --output $@ \
 	    $(patsubst %,--test-cov %,$(COV_FILES))
 
 # Collect per-test results.txt into a clean PASS/FAIL summary and append to TESTOUT.

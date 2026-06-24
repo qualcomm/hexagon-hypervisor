@@ -54,6 +54,48 @@ body { font-family: sans-serif; display: flex; height: 100vh; overflow: hidden; 
 .pct-yellow { background: #5a4a00; color: #fd7; }
 .pct-green  { background: #1a4a1a; color: #8f8; }
 
+/* Coverage threshold slider */
+#threshold-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  padding: 7px 10px; background: #252526; border-bottom: 1px solid #444;
+  font-size: 0.8em; color: #aaa; flex-shrink: 0;
+}
+#threshold-bar label { white-space: nowrap; }
+#threshold { flex: 1 1 100%; order: 3; accent-color: #0e7; cursor: pointer; }
+#threshold-val { min-width: 46px; text-align: right; color: #ddd; font-family: monospace; }
+#threshold-count {
+  margin-left: auto; padding: 1px 7px; border-radius: 8px;
+  background: #0d3a5c; color: #9cdcfe; font-family: monospace; font-size: 0.95em;
+}
+
+/* Functions / Files mode toggle */
+#mode-toggle { display: flex; border-bottom: 1px solid #444; flex-shrink: 0; }
+.mode-btn {
+  flex: 1; padding: 6px 8px; background: #252526; color: #aaa; border: none;
+  cursor: pointer; font-size: 0.8em; border-bottom: 2px solid transparent;
+}
+.mode-btn:hover { color: #ddd; }
+.mode-btn.active { color: #fff; border-bottom-color: #0e7; background: #2a2d2e; }
+
+/* File tree (Files mode) */
+#file-tree { overflow-y: auto; flex: 1; font-family: monospace; font-size: 0.82em; }
+.tree-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 10px; white-space: nowrap; cursor: pointer;
+  border-bottom: 1px solid #2a2a2a;
+}
+.tree-row:hover { background: #2a2d2e; }
+.tree-arrow { display: inline-block; width: 12px; color: #888; font-size: 0.9em; }
+.tree-label { overflow: hidden; text-overflow: ellipsis; }
+.tree-dir  .tree-label { color: #9cdcfe; }
+.tree-file .tree-label { color: #ddd; }
+.tree-fn   { cursor: pointer; }
+.tree-fn   .tree-label { color: #bbb; padding-left: 12px; }
+.tree-fn.active { background: #094771; }
+.tree-fn.active .tree-label { color: #fff; }
+.tree-root { background: #252526; font-weight: bold; border-bottom: 1px solid #444; }
+.tree-root .tree-label { color: #ccc; }
+
 #detail { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 16px 20px; background: #1e1e1e; color: #ccc; }
 #detail h2 { font-size: 1em; margin-bottom: 10px; color: #9cdcfe; border-bottom: 1px solid #333; padding-bottom: 6px; flex-shrink: 0; }
 
@@ -98,6 +140,9 @@ var active       = null;
 var currentFunc  = null;
 var currentDepth = 3;
 var currentTest  = '__global__';  // '__global__' or a test name key
+var sidebarMode  = 'functions';   // 'functions' or 'files'
+var treeCollapsed = {};           // { dirPath: true } — collapsed tree nodes
+var maxPct       = 100;           // threshold: only show functions with pct <= maxPct
 
 // ── graph layout constants ──────────────────────────────────────────────
 var NW = 200, NH = 30, HGAP = 60, VGAP = 8, ROW = NH + VGAP;
@@ -371,27 +416,23 @@ function onTestChange() {
   if (sel) currentTest = sel.value;
 
   var pcts = currentTest === '__global__' ? fnPcts : (testPcts[currentTest] || {});
+  var q    = (document.getElementById('search').value || '').toLowerCase();
 
-  // update sidebar: filter visibility and update pct badges
+  updateThresholdLabel();   // count is View-dependent, refresh it here too
+
+  // update sidebar: filter visibility (test membership + threshold + search) and pct badges
   var entries = document.querySelectorAll('.fn-entry');
   entries.forEach(function(el) {
     var fname = el.dataset.fn;
-    if (currentTest === '__global__') {
-      el.style.display = '';
-      var p = fnPcts[fname];
+    var p = currentTest === '__global__' ? fnPcts[fname] : pcts[fname];
+    // hidden if: not exercised by this test, above threshold, or filtered by search
+    var hide = (p === undefined) || (p > maxPct)
+             || (q && fname.toLowerCase().indexOf(q) < 0);
+    el.style.display = hide ? 'none' : '';
+    if (p !== undefined) {
       var cls = p < 50 ? 'pct-red' : p < 80 ? 'pct-yellow' : 'pct-green';
       var badge = el.querySelector('.pct');
       if (badge) { badge.textContent = p + '%'; badge.className = 'pct ' + cls; }
-    } else {
-      var p = pcts[fname];
-      if (p === undefined) {
-        el.style.display = 'none';
-      } else {
-        el.style.display = '';
-        var cls = p < 50 ? 'pct-red' : p < 80 ? 'pct-yellow' : 'pct-green';
-        var badge = el.querySelector('.pct');
-        if (badge) { badge.textContent = p + '%'; badge.className = 'pct ' + cls; }
-      }
     }
   });
 
@@ -411,6 +452,9 @@ function onTestChange() {
     visibleEntries.forEach(function(el) { sidebar.appendChild(el); });
   }
 
+  // if Files mode is active, rebuild the tree for the new View
+  if (sidebarMode === 'files') renderFileTree();
+
   // if current function is not visible in this test, jump to first visible one
   if (currentFunc) {
     var funcVisible = currentTest === '__global__' || (pcts[currentFunc] !== undefined);
@@ -420,6 +464,24 @@ function onTestChange() {
     }
     refreshDetail();
   }
+}
+
+// coverage threshold slider: show only functions with pct <= maxPct
+function onThresholdChange(v) {
+  maxPct = parseInt(v, 10);
+  updateThresholdLabel();
+  onTestChange();
+}
+
+// count functions at or below the threshold in the current View, and show it
+function updateThresholdLabel() {
+  var pcts  = currentTest === '__global__' ? fnPcts : (testPcts[currentTest] || {});
+  var count = 0;
+  for (var fn in pcts) if (pcts[fn] <= maxPct) count++;
+  var lbl = document.getElementById('threshold-val');
+  if (lbl) lbl.textContent = '≤ ' + maxPct + '%';
+  var cnt = document.getElementById('threshold-count');
+  if (cnt) cnt.textContent = count + ' fn' + (count === 1 ? '' : 's');
 }
 
 function refreshDetail() {
@@ -453,15 +515,139 @@ function show(name) {
       active = entries[i]; break;
     }
   }
+  // highlight in the file tree too (Files mode)
+  document.querySelectorAll('#file-tree .tree-fn').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.fn === name);
+  });
+}
+
+// ── file tree (Files mode) ─────────────────────────────────────────────
+// Build a nested tree from fnSrc paths, accumulating [exec,total] packet
+// counts up every ancestor.  pkts is the packet source for the current View
+// (fnPackets globally, or testPackets[test] per-test); visible limits which
+// functions are included (per-test: only exercised functions).
+function buildFileTree(pkts, visible) {
+  var root = { name: '', path: '', dirs: {}, files: {}, exec: 0, total: 0 };
+  Object.keys(fnSrc).forEach(function(fn) {
+    if (visible && !visible[fn]) return;
+    if (curPct(fn) > maxPct) return;       // above coverage threshold
+    var pc = pkts[fn];
+    if (!pc) return;                       // no packet data in this View
+    var src   = fnSrc[fn] || '(unknown)';
+    var parts = src.split('/');
+    var fname = parts.pop();               // file basename
+    var node  = root;
+    node.exec += pc[0]; node.total += pc[1];
+    for (var i = 0; i < parts.length; i++) {
+      var seg = parts[i];
+      if (!node.dirs[seg])
+        node.dirs[seg] = { name: seg, path: (node.path ? node.path+'/' : '')+seg,
+                           dirs: {}, files: {}, exec: 0, total: 0 };
+      node = node.dirs[seg];
+      node.exec += pc[0]; node.total += pc[1];
+    }
+    if (!node.files[fname])
+      node.files[fname] = { name: fname, path: (node.path ? node.path+'/' : '')+fname,
+                            fns: [], exec: 0, total: 0 };
+    var f = node.files[fname];
+    f.fns.push(fn); f.exec += pc[0]; f.total += pc[1];
+  });
+  return root;
+}
+
+function nodePct(n) {
+  return n.total ? Math.round(100 * n.exec / n.total) : 0;
+}
+
+// Collapse single-child directory chains (a/b/c → a/b/c) for compactness.
+function treeRowHtml(label, pct, depth, kind, key, isOpen, dataAttr) {
+  var pad   = 10 + depth * 14;
+  var arrow = kind === 'leaf' ? '' :
+    '<span class="tree-arrow">' + (isOpen ? '▾' : '▸') + '</span>';
+  var badge = '<span class="pct ' + pctClass(pct) + '">' + pct + '%</span>';
+  return '<div class="tree-row tree-' + kind + '" style="padding-left:' + pad + 'px;" '
+    + dataAttr + '>' + arrow + badge
+    + '<span class="tree-label">' + escSvg(label) + '</span></div>';
+}
+
+function renderTreeNode(node, depth, out) {
+  // directories (sorted by pct asc, then name)
+  var dirKeys = Object.keys(node.dirs).sort(function(a, b) {
+    var pa = nodePct(node.dirs[a]), pb = nodePct(node.dirs[b]);
+    return pa !== pb ? pa - pb : a.localeCompare(b);
+  });
+  dirKeys.forEach(function(k) {
+    var d = node.dirs[k];
+    var isOpen = !treeCollapsed[d.path];
+    out.push(treeRowHtml(d.name + '/', nodePct(d), depth, 'dir', d.path, isOpen,
+                         'onclick="toggleTreeNode(\'' + d.path.replace(/'/g, "\\'") + '\')"'));
+    if (isOpen) renderTreeNode(d, depth + 1, out);
+  });
+  // files (sorted by pct asc, then name)
+  var fileKeys = Object.keys(node.files).sort(function(a, b) {
+    var pa = nodePct(node.files[a]), pb = nodePct(node.files[b]);
+    return pa !== pb ? pa - pb : a.localeCompare(b);
+  });
+  fileKeys.forEach(function(k) {
+    var f = node.files[k];
+    var isOpen = !treeCollapsed[f.path];
+    out.push(treeRowHtml(f.name, nodePct(f), depth, 'file', f.path, isOpen,
+                         'onclick="toggleTreeNode(\'' + f.path.replace(/'/g, "\\'") + '\')"'));
+    if (isOpen) {
+      // functions in this file, sorted by pct asc
+      f.fns.slice().sort(function(a, b) {
+        var pa = curPct(a), pb = curPct(b);
+        return pa !== pb ? pa - pb : a.localeCompare(b);
+      }).forEach(function(fn) {
+        var p = curPct(fn);
+        var safe = fn.replace(/'/g, "\\'");
+        out.push('<div class="tree-row tree-fn" style="padding-left:' + (10 + (depth+1)*14) + 'px;" '
+          + 'onclick="show(\'' + safe + '\')" data-fn="' + escSvg(fn) + '">'
+          + '<span class="pct ' + pctClass(p) + '">' + p + '%</span>'
+          + '<span class="tree-label">' + escSvg(fn) + '</span></div>');
+      });
+    }
+  });
+}
+
+// current-View pct for a function (global or per-test)
+function curPct(fn) {
+  if (currentTest === '__global__') return fnPcts[fn] !== undefined ? fnPcts[fn] : 0;
+  var tp = testPcts[currentTest];
+  return tp && tp[fn] !== undefined ? tp[fn] : 0;
+}
+
+function renderFileTree() {
+  var pkts    = currentTest === '__global__' ? fnPackets : (testPackets[currentTest] || {});
+  var visible = currentTest === '__global__' ? null : (testPcts[currentTest] || {});
+  var root    = buildFileTree(pkts, visible);
+  var out     = [];
+  out.push('<div class="tree-row tree-root">'
+    + '<span class="pct ' + pctClass(nodePct(root)) + '">' + nodePct(root) + '%</span>'
+    + '<span class="tree-label">' + (root.total ? 'all (' + root.exec + '/' + root.total + ' packets)'
+                                                : 'no coverage') + '</span></div>');
+  renderTreeNode(root, 0, out);
+  document.getElementById('file-tree').innerHTML = out.join('');
+}
+
+function toggleTreeNode(path) {
+  treeCollapsed[path] = !treeCollapsed[path];
+  renderFileTree();
+}
+
+function setSidebarMode(mode) {
+  sidebarMode = mode;
+  document.getElementById('mode-functions').classList.toggle('active', mode === 'functions');
+  document.getElementById('mode-files').classList.toggle('active', mode === 'files');
+  document.getElementById('fn-list').style.display   = mode === 'functions' ? '' : 'none';
+  document.getElementById('file-tree').style.display = mode === 'files' ? '' : 'none';
+  document.getElementById('search').style.display    = mode === 'functions' ? '' : 'none';
+  if (mode === 'files') renderFileTree();
 }
 
 // ── search + init ──────────────────────────────────────────────────────
-document.getElementById('search').addEventListener('input', function() {
-  var q = this.value.toLowerCase();
-  document.querySelectorAll('.fn-entry').forEach(function(el) {
-    el.style.display = el.dataset.fn.toLowerCase().includes(q) ? '' : 'none';
-  });
-});
+// search delegates to onTestChange, which applies search + threshold + test together
+document.getElementById('search').addEventListener('input', onTestChange);
 window.addEventListener('load', function() {
   var first = document.querySelector('.fn-entry');
   if (first) show(first.dataset.fn);
@@ -520,12 +706,19 @@ def parse_cov(path):
     return result
 
 
+def packet_counts(lines):
+    """Return (exec_packets, total_packets) for a function's parsed lines."""
+    total = sum(1 for k, _ in lines if k in ('exec', 'noexec'))
+    execd = sum(1 for k, _ in lines if k == 'exec')
+    return execd, total
+
+
 def calc_pct(lines):
     """Return integer % of exec packets out of total (exec+noexec) packets."""
-    total = sum(1 for k, _ in lines if k in ('exec', 'noexec'))
+    execd, total = packet_counts(lines)
     if total == 0:
         return 0
-    return round(100 * sum(1 for k, _ in lines if k == 'exec') / total)
+    return round(100 * execd / total)
 
 
 def build_call_graphs(cov_data, tracked_fns):
@@ -577,8 +770,9 @@ def render_detail(funcname, pct, lines, tracked_fns):
             + parts[-1])
 
 
-def build_html(funcs, cov_data, test_covs):
-    """test_covs: list of (test_name, cov_data_dict) — per-test datasets."""
+def build_html(funcs, cov_data, test_covs, fn_src):
+    """test_covs: list of (test_name, cov_data_dict) — per-test datasets.
+    fn_src: { funcname: "repo/relative/source.c" } for the file-tree view."""
     h = html.escape
 
     sidebar_items = []
@@ -593,16 +787,21 @@ def build_html(funcs, cov_data, test_covs):
     fn_pcts     = {name: pct for pct, name in funcs}
 
     fn_data_entries = []
+    fn_packets      = {}   # { funcname: [exec, total] } for file-tree rollup
     for pct, name in funcs:
         lines = cov_data.get(name, [('nodata', 'No data!')])
         fn_data_entries.append(f'  {json.dumps(name)}: {json.dumps(render_detail(name, pct, lines, tracked_fns))}')
+        execd, total = packet_counts(lines)
+        fn_packets[name] = [execd, total]
 
     callees, callers = build_call_graphs(cov_data, tracked_fns)
 
     fn_data_js    = 'var fnData = {\n'      + ',\n'.join(fn_data_entries) + '\n};'
-    fn_pcts_js    = 'var fnPcts = '         + json.dumps(fn_pcts)   + ';'
-    callee_js     = 'var calleeGraph = '    + json.dumps(callees)   + ';'
-    caller_js     = 'var callerGraph = '    + json.dumps(callers)   + ';'
+    fn_pcts_js    = 'var fnPcts = '         + json.dumps(fn_pcts)     + ';'
+    fn_packets_js = 'var fnPackets = '      + json.dumps(fn_packets)  + ';'
+    fn_src_js     = 'var fnSrc = '          + json.dumps(fn_src)      + ';'
+    callee_js     = 'var calleeGraph = '    + json.dumps(callees)     + ';'
+    caller_js     = 'var callerGraph = '    + json.dumps(callers)     + ';'
 
     # per-test disasm: { test_name: { funcname: rendered_html } }
     # only functions with >0 executed packets are included
@@ -610,11 +809,13 @@ def build_html(funcs, cov_data, test_covs):
     test_callee_js_parts   = []
     test_caller_js_parts   = []
     test_pcts_js_parts     = []
+    test_packets_js_parts  = []
     test_names = []
     for tname, tcov in test_covs:
         test_names.append(tname)
         entries = {}
         tpcts   = {}
+        tpackets = {}
         for fname, lines in tcov.items():
             if fname not in tracked_fns:
                 continue
@@ -622,16 +823,19 @@ def build_html(funcs, cov_data, test_covs):
                 p = calc_pct(lines)
                 entries[fname] = render_detail(fname, p, lines, tracked_fns)
                 tpcts[fname]   = p
+                tpackets[fname] = list(packet_counts(lines))
         test_cov_data_js_parts.append(f'  {json.dumps(tname)}: {json.dumps(entries)}')
         test_pcts_js_parts.append(f'  {json.dumps(tname)}: {json.dumps(tpcts)}')
+        test_packets_js_parts.append(f'  {json.dumps(tname)}: {json.dumps(tpackets)}')
         tc, tr = build_call_graphs(tcov, tracked_fns)
         test_callee_js_parts.append(f'  {json.dumps(tname)}: {json.dumps(tc)}')
         test_caller_js_parts.append(f'  {json.dumps(tname)}: {json.dumps(tr)}')
 
-    test_cov_js    = 'var testCovData = {\n'       + ',\n'.join(test_cov_data_js_parts) + '\n};'
-    test_pcts_js   = 'var testPcts = {\n'          + ',\n'.join(test_pcts_js_parts)     + '\n};'
-    test_callee_js = 'var testCalleeGraphs = {\n'  + ',\n'.join(test_callee_js_parts)   + '\n};'
-    test_caller_js = 'var testCallerGraphs = {\n'  + ',\n'.join(test_caller_js_parts)   + '\n};'
+    test_cov_js     = 'var testCovData = {\n'      + ',\n'.join(test_cov_data_js_parts) + '\n};'
+    test_pcts_js    = 'var testPcts = {\n'         + ',\n'.join(test_pcts_js_parts)     + '\n};'
+    test_packets_js = 'var testPackets = {\n'      + ',\n'.join(test_packets_js_parts)  + '\n};'
+    test_callee_js  = 'var testCalleeGraphs = {\n' + ',\n'.join(test_callee_js_parts)   + '\n};'
+    test_caller_js  = 'var testCallerGraphs = {\n' + ',\n'.join(test_caller_js_parts)   + '\n};'
 
     total        = len(funcs)
     covered_100  = sum(1 for p, _ in funcs if p == 100)
@@ -650,8 +854,31 @@ def build_html(funcs, cov_data, test_covs):
         '</div>'
     )
 
-    script = (f'<script>{fn_data_js}\n{fn_pcts_js}\n{callee_js}\n{caller_js}\n'
-              f'{test_cov_js}\n{test_pcts_js}\n{test_callee_js}\n{test_caller_js}\n{_JS}</script>')
+    # Coverage threshold slider — show only functions with pct <= maxPct
+    threshold = (
+        '<div id="threshold-bar">'
+        '<label>Show coverage</label>'
+        '<input id="threshold" type="range" min="0" max="100" value="100" '
+        'oninput="onThresholdChange(this.value)">'
+        '<span id="threshold-val">≤ 100%</span>'
+        f'<span id="threshold-count">{total} fns</span>'
+        '</div>'
+    )
+
+    # Functions / Files mode toggle
+    mode_toggle = (
+        '<div id="mode-toggle">'
+        '<button id="mode-functions" class="mode-btn active" '
+        'onclick="setSidebarMode(\'functions\')">Functions</button>'
+        '<button id="mode-files" class="mode-btn" '
+        'onclick="setSidebarMode(\'files\')">Files</button>'
+        '</div>'
+    )
+
+    script = (f'<script>{fn_data_js}\n{fn_pcts_js}\n{fn_packets_js}\n{fn_src_js}\n'
+              f'{callee_js}\n{caller_js}\n'
+              f'{test_cov_js}\n{test_pcts_js}\n{test_packets_js}\n'
+              f'{test_callee_js}\n{test_caller_js}\n{_JS}</script>')
 
     return '\n'.join([
         '<!DOCTYPE html>',
@@ -670,10 +897,13 @@ def build_html(funcs, cov_data, test_covs):
         f'  {total} functions &nbsp;·&nbsp; {covered_any} hit &nbsp;·&nbsp; {covered_100} at 100%',
         '</div>',
         test_selector,
+        threshold,
+        mode_toggle,
         '<input id="search" type="text" placeholder="Filter functions…">',
         '<div id="fn-list">',
         '\n'.join(sidebar_items),
         '</div>',
+        '<div id="file-tree" style="display:none;"></div>',
         '</div>',
 
         '<div id="detail">',
@@ -686,11 +916,26 @@ def build_html(funcs, cov_data, test_covs):
     ])
 
 
+def parse_fn_files(path):
+    """Parse the function->source map ('funcname<TAB>path' per line)."""
+    fn_src = {}
+    with open(path, errors='replace') as f:
+        for line in f:
+            line = line.rstrip('\n')
+            if not line or '\t' not in line:
+                continue
+            name, src = line.split('\t', 1)
+            fn_src[name] = src
+    return fn_src
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--rpt',      required=True,  metavar='FILE')
     ap.add_argument('--cov',      required=True,  metavar='FILE')
     ap.add_argument('--output',   required=True,  metavar='FILE')
+    ap.add_argument('--fn-files', metavar='FILE', dest='fn_files', default=None,
+                    help='function->source map (from gen_cov_files.py) for the file-tree view.')
     ap.add_argument('--test-cov', action='append', metavar='FILE', default=[],
                     dest='test_covs',
                     help='Per-test cov.txt path; may be repeated. Test name derived from path.')
@@ -698,6 +943,7 @@ def main():
 
     funcs    = parse_rpt(args.rpt)
     cov_data = parse_cov(args.cov)
+    fn_src   = parse_fn_files(args.fn_files) if args.fn_files else {}
 
     if not funcs:
         print('cov_html_report: no functions found in rpt file', file=sys.stderr)
@@ -714,7 +960,7 @@ def main():
         test_covs.append((tname, parse_cov(path)))
 
     with open(args.output, 'w') as f:
-        f.write(build_html(funcs, cov_data, test_covs))
+        f.write(build_html(funcs, cov_data, test_covs, fn_src))
 
     print(f'[cov_html_report] {len(funcs)} functions, {len(test_covs)} tests → {args.output}')
 

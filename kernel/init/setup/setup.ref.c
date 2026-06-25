@@ -92,13 +92,13 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	H2K_l2cache_init();
 	H2K_tcm_copy(last_tlb_index);
 	H2K_trace_init();
-	H2K_runlist_init();
-	H2K_readylist_init();
-	H2K_lowprio_init();
-	H2K_futex_init();
-	H2K_intconfig_init(ssbase);
-	H2K_thread_init();
-	H2K_asid_table_init();
+	H2K_runlist_init(); //fix
+	H2K_readylist_init(); //fix
+	H2K_lowprio_init(); //fix
+	H2K_futex_init(); //fix
+	H2K_intconfig_init(ssbase); //fix
+	H2K_thread_init(); 
+	H2K_asid_table_init(); //fix
 
 #ifdef CRASH_DEBUG
 	H2K_stlb_tcmcrash_init();

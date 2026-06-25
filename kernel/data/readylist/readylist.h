@@ -95,7 +95,7 @@ static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hth
 		}
 	} else {
 		if (head_xe) {
-			H2K_log("hthread %d  update_coprocs: add xe\n", hthread);
+			H2K_log_once_ht(H2K_LOG_CH_COPROC, "hthread %d  update_coprocs: add xe\n", hthread);
 		}
 	}
 	if (hthread_xe2) {
@@ -148,7 +148,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	u32_t need_tmp = need;  // save # needed coprocs when walking ready list
 	u32_t i;
 
-	H2K_log("hthread %d  have %d  need %d  head_xe %d  head_xe2 %d  head_xe3 %d  counts %d %d %d %d \n\tcheck task 0x%08x\n", hthread, have, need, head_xe, head_xe2, head_xe3,H2K_gp->coproc_count[0], H2K_gp->coproc_count[1], H2K_gp->coproc_count[2], H2K_gp->coproc_count[3], ret);
+	H2K_log("hthread %d  have %d  need %d  head_xe %d  head_xe2 %d  head_xe3 %d  counts %d %d %d %d \n\tcheck task 0x%08x\n", hthread, have, need, head_xe, head_xe2, head_xe3,H2K_gp->coproc_count[0], H2K_gp->coproc_count[1], H2K_gp->coproc_count[2], H2K_gp->coproc_count[3], (u32_t)ret);
 	
 
 	if (H2K_gp->coproc_count[cluster] + (need - have) <= H2K_gp->coproc_max) {  // within limit
@@ -201,7 +201,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 		}
 		while (ret != NULL && (need_tmp = (((ret->ssr_xe || ret->ccr_xe3) ? 1 : 0) + ((ret->ssr_xe2) ? 1 : 0)) + min_coprocs) > H2K_gp->coproc_max);
 		
-		H2K_log("hthread %d try new task 0x%08x\n", ret);
+		H2K_log("hthread %d try new task 0x%08x\n", hthread, (u32_t)ret);
 	} while (ret != NULL);
 	
 	/* Didn't find another task to schedule, so pick up the head task even though this unbalances the coprocs */
@@ -220,7 +220,7 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 	H2K_thread_context *ret;
 	u32_t prio;
 
-	H2K_log("hthread %d  getbest\n", hthread);
+	H2K_log_throttle_ht(H2K_LOG_CH_RESCHED, 1000000, "hthread %d  getbest\n", hthread);
 	prio = H2K_ready_best_prio();
 	if (prio >= MAX_PRIOS) {  // !H2K_ready_any_valid(), go to sleep
 #ifdef CLUSTER_SCHED

@@ -217,9 +217,11 @@ void H2K_intconfig_init(u32_t ssbase)
 {
 	int i;
 	H2K_thread_context *tmp;
+#ifdef TESTING
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->inthandlers[i].raw = 0;
 	}
+#endif
 	H2K_gp->inthandlers[RESCHED_INT].param = (void *)1; // mark interrupt taken
 	H2K_gp->inthandlers[RESCHED_INT].handler = H2K_resched;
 

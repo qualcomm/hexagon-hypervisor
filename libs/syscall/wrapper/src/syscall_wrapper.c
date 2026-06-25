@@ -297,9 +297,6 @@ __attribute__((weak)) int dup2(int oldfd, int newfd) {
 	return -1;
 }
 
-static char *__h2_empty_environ[] = { NULL };
-__attribute__((weak)) char **environ = __h2_empty_environ;
-
 __attribute__((weak)) uid_t getuid(void) {
 	return 0;
 }

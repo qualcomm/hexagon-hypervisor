@@ -11,4 +11,3 @@
 # The interactive report (install/cov.html) has a per-function "Omit" button
 # that accumulates names locally and lets you download an updated copy of this
 # file to commit here.
-h2_yield

@@ -810,3 +810,47 @@ Qualcomm-internal tool wrapper infrastructure.  A symlink named after each tool
 (e.g., `hexagon-clang`) points to PKW, which reads environment variables or config
 files to locate the correct tool installation.  Set `USE_PKW=1` in the build to
 enable it.
+
+### Selective logging (LOGBUF) + log severity levels
+`H2K_log` is gated per-translation-unit by the `LOGBUF` make variable:
+- `make LOGBUF=1`                       -- enable logging everywhere (legacy)
+- `make LOGBUF=sched`                   -- whole subtree (dir token)
+- `make LOGBUF=sched/resched/resched.ref.c` -- single file (file token)
+- `make LOGBUF=data/globals,sched/dosched`  -- comma-separated mix
+Util/log/ and init/setup/ are always force-flagged when LOGBUF is
+set, because they hold H2K_log_print (the impl) and H2K_log_init (the bootstrap);
+without them the selected callsites fail to link / the logbuf is never allocated.
+A token matching no sources emits a $(warning).
+
+Severity levels (kernel/util/log/log.h): H2K_log_err/warn/info/dbg map to
+H2K_LOG_ERR/WARN/INFO/DBG (0..3).  Plain `H2K_log` is an alias for `_dbg`.
+Runtime threshold `log_level` (static in log.ref.c, default
+H2K_LOG_DBG) drops messages with level > threshold.  Each line gets a
+prefix assembled in H2K_log_print: `[ht<id>][<sev>][<pcycle>][file:line] msg`,
+using get_hwtnum() and H2K_get_pcycle_reg().
+
+### Per-hthread lockless log rings (Phase 2, done)
+globals.h now holds `logbuf[MAX_HTHREADS]`, `logbuf_pos[MAX_HTHREADS]`,
+`logbuf_enable`, `log_enable` instead of a single buffer.  Each hthread writes
+ONLY its own ring (indexed by get_hwtnum()), so H2K_log_print takes NO lock on
+the buffering path -- fixes the self-deadlock risk when logging from the
+scheduler/interrupt path (logbuf_lock was non-reentrant).  Ring size is
+`LOGBUF_PER_HT_SIZE` (max.h, default 4KB, override with -D).
+- `logbuf_lock` is RETAINED but now serializes only the shared angel SYS_WRITE
+  console channel (live streaming), not buffering.
+- `log_enable=1` in H2K_log_init enables live per-call streaming via angel SYS_WRITE
+  (serialized by logbuf_lock); `logbuf_enable=1` enables ring buffering.  Both are
+  set by default in H2K_log_init.
+- emit_char/emit_string/num/emit_prefix all take htid as first arg now.
+- H2K_logbuf_alloc signature changed to (htid, count).
+Verified: make all_clean && make test_variant TARGET=ref ARCHV=81 -> 99/0;
+make build LOGBUF=sched compiles + links.
+
+### Log spam control (Phase 3, DONE)
+Four log-filtering primitives added; state lives in local statics in log.ref.c.
+- `H2K_log_once(ch, ...)` — fires once globally (atomic test-and-set via H2K_atomic_setbit)
+- `H2K_log_once_ht(ch, ...)` — fires once per hardware thread (lockless, per-ht only)
+- `H2K_log_throttle(ch, iv, ...)` — global rate limit (serialized by logbuf_lock)
+- `H2K_log_throttle_ht(ch, iv, ...)` — per-ht rate limit (lockless)
+Channel IDs (H2K_LOG_CH_RESCHED, H2K_LOG_CH_COPROC, H2K_LOG_CH_N) declared in
+max.h under #ifdef H2K_LOGBUF (alongside LOGBUF_PER_HT_SIZE).

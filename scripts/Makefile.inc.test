@@ -139,7 +139,7 @@ clean_libs:
 	rm -rf artifacts/v$(ARCHV)/$(MODEL); $(MAKE) clean
 
 clean_top:
-	rm -Rf test.cov_fns cov.txt $(INSTALLPATH)/cov.txt $(INSTALLPATH)/cov.rpt
+	rm -Rf test.cov_fns cov.txt $(INSTALLPATH)/cov/cov.txt $(INSTALLPATH)/cov/cov.rpt $(INSTALLPATH)/cov/cov_fns $(INSTALLPATH)/cov/cov_files
 
 
 ################################################################################

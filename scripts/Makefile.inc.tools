@@ -21,6 +21,7 @@ export RANLIB := hexagon-ranlib
 export COV := $(H2DIR)/scripts/hexagon-coverage.py
 export LLVM_COV := hexagon-llvm-cov
 export OBJDUMP := hexagon-llvm-objdump
+export DWARFDUMP := hexagon-llvm-dwarfdump
 export GMON_MERGE := hexagon-gmon-merge
 export LLVM_PROFDATA := hexagon-llvm-profdata
 export DOXYGEN := doxygen

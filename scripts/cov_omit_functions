@@ -1,0 +1,14 @@
+# Functions to omit from coverage tracking.
+#
+# Read by scripts/gen_cov_fns.pl: any function named here is dropped from the
+# generated cov_fns list, so it never appears in cov.txt / cov.rpt / cov.html.
+# Use this for functions that are intentionally untracked (e.g. trivial stubs,
+# unreachable crash/NMI paths, or anything that only adds noise to the report).
+#
+# Format: one function name per line.  Blank lines and lines starting with '#'
+# are ignored.  Leading/trailing whitespace is trimmed.
+#
+# The interactive report (install/cov.html) has a per-function "Omit" button
+# that accumulates names locally and lets you download an updated copy of this
+# file to commit here.
+h2_yield

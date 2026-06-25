@@ -21,5 +21,12 @@ void H2K_vm_stop(s32_t status, H2K_thread_context *me) __attribute((noreturn)) I
  * self-reap path to avoid leaking the vmblock when the last context exits. */
 void H2K_vmblock_finalize_if_done_locked(H2K_vmblock_t *vmblock) IN_SECTION(".text.misc.stop");
 
+/* Common teardown tail: drop the context's ASID ref, clear it (preserving
+ * vmblock_id), push it onto its vmblock's free list, and decrement num_cpus.
+ * Caller holds BKL and is responsible for the path-specific cancel/remove
+ * steps (timer/futex/intpool/ready/runlist) BEFORE calling this. */
+void H2K_free_context_locked(H2K_vmblock_t *vmblock,
+			     H2K_thread_context *ctx) IN_SECTION(".text.misc.stop");
+
 #endif
 

@@ -40,6 +40,18 @@ void H2K_vmblock_finalize_if_done_locked(H2K_vmblock_t *vmblock)
 	}
 }
 
+/* See stop.h.  The five-step "return a context to its free list" tail shared
+ * by reap_one_locked, vm_stop_locked, H2K_thread_stop, and resched's
+ * self_reap_locked. */
+void H2K_free_context_locked(H2K_vmblock_t *vmblock, H2K_thread_context *ctx)
+{
+	H2K_asid_table_dec(ctx->ssr_asid);
+	H2K_thread_context_clear(ctx);  /* preserves vmblock_id */
+	ctx->next = vmblock->free_threads;
+	vmblock->free_threads = ctx;
+	vmblock->num_cpus--;
+}
+
 /* Cancel pending waits and return one context to its vmblock's free list.
  * Caller holds BKL.  Decrements num_cpus on success.
  * Skips H2K_STATUS_RUNNING contexts: those are executing on another HW thread
@@ -76,11 +88,7 @@ static int reap_one_locked(H2K_thread_context *ctx)
 	default:
 		return 0;
 	}
-	H2K_asid_table_dec(ctx->ssr_asid);
-	H2K_thread_context_clear(ctx);
-	ctx->next = vmblock->free_threads;
-	vmblock->free_threads = ctx;
-	vmblock->num_cpus--;
+	H2K_free_context_locked(vmblock, ctx);
 	return 1;
 }
 
@@ -92,17 +100,12 @@ static void vm_stop_locked(s32_t status, H2K_thread_context *me)
 	H2K_vmblock_t *vmblock = me->vmblock;
 	u32_t i;
 
-	vmblock->main_context = NULL;
 	vmblock->exiting = 1;
 
 	/* Per-me cleanup. */
 	H2K_timer_cancel_withlock(me);
 	H2K_runlist_remove(me);
-	H2K_asid_table_dec(me->ssr_asid);
-	H2K_thread_context_clear(me);
-	me->next = vmblock->free_threads;
-	vmblock->free_threads = me;
-	vmblock->num_cpus--;
+	H2K_free_context_locked(vmblock, me);
 	vmblock->status = status;
 
 	/* Pass 1: reap every non-DEAD, non-RUNNING context immediately. */
@@ -138,19 +141,12 @@ void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 	 */
 	H2K_timer_cancel_withlock(me);
 	H2K_runlist_remove(me);
-	H2K_asid_table_dec(me->ssr_asid);
-	H2K_thread_context_clear(me);
-	me->next = vmblock->free_threads;
-	vmblock->free_threads = me;
-	vmblock->num_cpus--;
+	H2K_free_context_locked(vmblock, me);
 	vmblock->status = status;
 
-	/* If main is exiting, drop the main_context reference so the
-	 * all-blocked reaper below can finalize a headless VM cleanly. */
-	if (me == vmblock->main_context) vmblock->main_context = NULL;
-
 	if (!vmblock->exiting && status == 0 && vmblock->num_cpus > 0) {
-		/* Non-main thread exit: keep the conservative all-blocked-with-no-
+		/* A thread exited cleanly with siblings remaining (main and
+		 * workers alike): keep the conservative all-blocked-with-no-
 		 * armed-timer reaper.  A non-zero ctx->timeout means a timer is
 		 * queued; that thread will be woken when it fires, so do not reap. */
 		int all_blocked = 1;

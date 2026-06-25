@@ -19,9 +19,11 @@ void H2K_futex_cancel(H2K_thread_context *dest)
 
 void H2K_futex_init()
 {
+#ifdef TESTING
 	int i;
 	for (i = 0; i < FUTEX_HASHSIZE; i++) {
 		H2K_gp->futexhash[i] = NULL;
 	}
+#endif
 }
 

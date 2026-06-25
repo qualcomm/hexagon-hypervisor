@@ -221,9 +221,13 @@ ASFLAGS += $(EXTRA_ASFLAGS)
 ifdef RECOMPILE_SRCS_PREFS
 VPATH += $(RECOMPILE_DIRS)
 ifeq ($(BUILD_TYPE),ref)
-OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),$(m).ref.o)
+OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),\
+  $(if $(wildcard $(addsuffix /$(m).ref.c,$(RECOMPILE_DIRS)) $(addsuffix /$(m).ref.S,$(RECOMPILE_DIRS))),\
+    $(m).ref.o,$(m).v$(ARCHV)opt.o))
 else
-OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),$(m).v$(ARCHV)opt.o)
+OBJS += $(foreach m,$(RECOMPILE_SRCS_PREFS),\
+  $(if $(wildcard $(addsuffix /$(m).v$(ARCHV)opt.S,$(RECOMPILE_DIRS)) $(addsuffix /$(m).v$(ARCHV)opt.c,$(RECOMPILE_DIRS))),\
+    $(m).v$(ARCHV)opt.o,$(m).ref.o))
 endif
 endif
 

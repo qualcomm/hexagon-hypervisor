@@ -77,6 +77,48 @@ body { font-family: sans-serif; display: flex; height: 100vh; overflow: hidden; 
 .mode-btn:hover { color: #ddd; }
 .mode-btn.active { color: #fff; border-bottom-color: #0e7; background: #2a2d2e; }
 
+/* Omit button (detail pane) + omit bar (sidebar) */
+.omit-btn { margin-left: auto; color: #f99; }
+.omit-btn:hover:not(:disabled) { color: #fbb; border-bottom-color: #6e1a1a; }
+.omit-btn:disabled { color: #555; cursor: default; }
+.omit-btn.is-omitted { color: #d18616; }
+.omit-btn.is-omitted:hover:not(:disabled) { color: #f0a93a; border-bottom-color: #d18616; }
+#omit-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 6px 10px; background: #2a1a1a; border-bottom: 1px solid #5a2a2a;
+  font-size: 0.78em; color: #f99; flex-shrink: 0;
+}
+#omit-count { margin-right: auto; font-family: monospace; }
+.omit-action {
+  background: #3c2222; color: #fbb; border: 1px solid #6e1a1a;
+  border-radius: 3px; padding: 2px 8px; font-size: 0.95em; cursor: pointer;
+}
+.omit-action:hover { background: #5a2a2a; color: #fff; }
+/* View/restore panel listing every session-omitted function */
+#omit-panel {
+  flex: 1 1 100%; order: 9; max-height: 220px; overflow-y: auto;
+  margin-top: 4px; border-top: 1px solid #5a2a2a;
+}
+.omit-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 2px; color: #c99; font-family: sans-serif; font-size: 0.95em;
+}
+.omit-restore-all {
+  background: #3c2222; color: #fbb; border: 1px solid #6e1a1a;
+  border-radius: 3px; padding: 1px 6px; font-size: 0.95em; cursor: pointer;
+}
+.omit-restore-all:hover { background: #5a2a2a; color: #fff; }
+.omit-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 2px; font-family: monospace; white-space: nowrap;
+}
+.omit-restore {
+  background: #243a24; color: #8f8; border: 1px solid #1a4a1a;
+  border-radius: 3px; padding: 0 5px; font-size: 1em; cursor: pointer; line-height: 1.4;
+}
+.omit-restore:hover { background: #1a4a1a; color: #fff; }
+.omit-item-name { overflow: hidden; text-overflow: ellipsis; color: #ddd; }
+
 /* File tree (Files mode) */
 #file-tree { overflow-y: auto; flex: 1; font-family: monospace; font-size: 0.82em; }
 .tree-row {
@@ -209,9 +251,14 @@ function svgRootNode(x, y, name, pct) {
   var pcol   = hit ? pctColor(pct) : '#555';
   var pctStr = pct !== undefined ? pct+'%' : '?';
   var safe   = name.replace(/'/g, "\\'");
+  var omitted = isOmitted(name);
+  var stroke  = omitted ? '#d18616' : '#9cdcfe';
+  var dash    = omitted ? ' stroke-dasharray="5,3"' : '';
+  var flag    = omitted ? '<title>omitted</title>' : '';
   return '<g transform="translate(' + x + ',' + y + ')" onclick="show(\'' + safe + '\')" style="cursor:pointer">'
-    + '<rect width="' + NW + '" height="' + NH + '" rx="4" fill="#0d3a5c" stroke="#9cdcfe" stroke-width="2"/>'
-    + '<text x="8" y="20" font-family="monospace" font-size="11" fill="#9cdcfe">' + escSvg(label) + '</text>'
+    + flag
+    + '<rect width="' + NW + '" height="' + NH + '" rx="4" fill="#0d3a5c" stroke="' + stroke + '" stroke-width="2"' + dash + '/>'
+    + '<text x="8" y="20" font-family="monospace" font-size="11" fill="#9cdcfe">' + escSvg(label) + (omitted ? ' ⊘' : '') + '</text>'
     + '<text x="' + (NW-6) + '" y="20" text-anchor="end" font-family="monospace" font-size="11" fill="' + pcol + '">' + pctStr + '</text>'
     + '</g>';
 }
@@ -244,15 +291,18 @@ function renderSubtree(node, isLeft, rowOff, originX, originY,
   var pcol    = pctColor(pct);
   var pctStr  = pct !== undefined ? pct+'%' : '?';
   var label   = node.name.length > 26 ? node.name.slice(0,23)+'…' : node.name;
+  var omitted = isOmitted(node.name);
   var fill    = node.isCycle ? '#1e1e2e' : '#252526';
-  var stroke  = node.isCycle ? '#4a4a9a' : '#444';
+  var stroke  = omitted ? '#d18616' : node.isCycle ? '#4a4a9a' : '#444';
   var tfill   = node.isCycle ? '#7070c0' : '#ccc';
+  var dash    = omitted ? ' stroke-dasharray="5,3"' : '';
   var safe    = node.name.replace(/'/g, "\\'");
   var click   = node.isCycle ? '' : ' onclick="show(\'' + safe + '\')" style="cursor:pointer"';
   nodes.push('<g transform="translate(' + x + ',' + y + ')"' + click + '>'
-    + '<rect width="' + NW + '" height="' + NH + '" rx="4" fill="' + fill + '" stroke="' + stroke + '"/>'
+    + (omitted ? '<title>omitted</title>' : '')
+    + '<rect width="' + NW + '" height="' + NH + '" rx="4" fill="' + fill + '" stroke="' + stroke + '"' + dash + '/>'
     + '<text x="8" y="20" font-family="monospace" font-size="11" fill="' + tfill + '">'
-      + escSvg(label) + (node.isCycle ? ' ↩' : '') + '</text>'
+      + escSvg(label) + (node.isCycle ? ' ↩' : '') + (omitted ? ' ⊘' : '') + '</text>'
     + '<text x="' + (NW-6) + '" y="20" text-anchor="end" font-family="monospace" font-size="11" fill="' + pcol + '">' + pctStr + '</text>'
     + '</g>');
 
@@ -425,8 +475,9 @@ function onTestChange() {
   entries.forEach(function(el) {
     var fname = el.dataset.fn;
     var p = currentTest === '__global__' ? fnPcts[fname] : pcts[fname];
-    // hidden if: not exercised by this test, above threshold, or filtered by search
-    var hide = (p === undefined) || (p > maxPct)
+    // hidden if: omitted this session, not exercised by this test, above
+    // threshold, or filtered by search
+    var hide = isOmitted(fname) || (p === undefined) || (p > maxPct)
              || (q && fname.toLowerCase().indexOf(q) < 0);
     el.style.display = hide ? 'none' : '';
     if (p !== undefined) {
@@ -436,7 +487,9 @@ function onTestChange() {
     }
   });
 
-  // re-sort visible entries by per-test pct (ascending: red first, then yellow, then green)
+  // re-sort visible entries by pct ascending, then name — a total order, so it
+  // matches the initial server-side sort and is independent of prior DOM order
+  // (otherwise omit/restore would leave entries stranded out of place).
   var sidebar = document.getElementById('fn-list');
   if (sidebar) {
     var visibleEntries = Array.from(entries).filter(function(el) {
@@ -447,7 +500,8 @@ function onTestChange() {
       var pb = pcts[b.dataset.fn];
       if (pa === undefined) pa = currentTest === '__global__' ? fnPcts[a.dataset.fn] : 0;
       if (pb === undefined) pb = currentTest === '__global__' ? fnPcts[b.dataset.fn] : 0;
-      return pa - pb;
+      if (pa !== pb) return pa - pb;
+      return a.dataset.fn < b.dataset.fn ? -1 : a.dataset.fn > b.dataset.fn ? 1 : 0;
     });
     visibleEntries.forEach(function(el) { sidebar.appendChild(el); });
   }
@@ -501,6 +555,8 @@ function show(name) {
     '<div id="detail-tabs">'
     + '<button class="tab-btn active" data-tab="disasm" onclick="showTab(\'disasm\')">Disasm</button>'
     + '<button class="tab-btn" data-tab="graph" onclick="showTab(\'graph\')">Call Graph</button>'
+    + '<button id="omit-btn" class="tab-btn omit-btn" onclick="omitCurrent()" '
+    + 'title="Hide this function and add it to the omit list">⊘ Omit</button>'
     + '</div>'
     + '<div id="detail-content">'
     + '<div id="disasm-tab">' + disasmHtml + '</div>'
@@ -519,6 +575,7 @@ function show(name) {
   document.querySelectorAll('#file-tree .tree-fn').forEach(function(el) {
     el.classList.toggle('active', el.dataset.fn === name);
   });
+  refreshOmitUi();
 }
 
 // ── file tree (Files mode) ─────────────────────────────────────────────
@@ -529,6 +586,7 @@ function show(name) {
 function buildFileTree(pkts, visible) {
   var root = { name: '', path: '', dirs: {}, files: {}, exec: 0, total: 0 };
   Object.keys(fnSrc).forEach(function(fn) {
+    if (isOmitted(fn)) return;             // omitted this session
     if (visible && !visible[fn]) return;
     if (curPct(fn) > maxPct) return;       // above coverage threshold
     var pc = pkts[fn];
@@ -645,11 +703,182 @@ function setSidebarMode(mode) {
   if (mode === 'files') renderFileTree();
 }
 
+// ── omit list (Omit button) ─────────────────────────────────────────────
+// committedOmit / omitHeader come from scripts/cov_omit_functions (embedded at
+// build time).  localOmit holds picks made in this browser via the Omit button,
+// persisted in localStorage so they survive reloads of this report.  A static
+// file:// page can't write back to scripts/, so the workflow is: omit here to
+// preview, then "Download omit list" and commit the file.
+var OMIT_KEY = 'h2cov_omit';
+var localOmit = {};
+try { localOmit = JSON.parse(localStorage.getItem(OMIT_KEY) || '{}') || {}; } catch (e) { localOmit = {}; }
+
+function isOmitted(fn) { return !!localOmit[fn]; }
+
+function saveLocalOmit() {
+  try { localStorage.setItem(OMIT_KEY, JSON.stringify(localOmit)); } catch (e) {}
+}
+
+function localOmitNames() { return Object.keys(localOmit).filter(function(k){ return localOmit[k]; }); }
+
+// Full omit set for download = committed ∪ local, sorted & de-duped.
+function fullOmitList() {
+  var s = {};
+  committedOmit.forEach(function(n){ s[n] = 1; });
+  localOmitNames().forEach(function(n){ s[n] = 1; });
+  return Object.keys(s).sort();
+}
+
+function omitCurrent() {
+  if (!currentFunc) return;
+  if (isOmitted(currentFunc)) return;
+  if (!confirm('Omit "' + currentFunc + '" from coverage tracking?\n\n'
+             + 'It will be hidden from the function list now (still shown, flagged, '
+             + 'in the call graph). To make it permanent, use "Download omit list" '
+             + 'and commit scripts/cov_omit_functions.'))
+    return;
+  // find the next visible sibling so we can move there after hiding this one
+  var entry = document.querySelector('.fn-entry[data-fn="' + cssEsc(currentFunc) + '"]');
+  var nextFn = null;
+  if (entry) {
+    var sib = entry.nextElementSibling;
+    while (sib && sib.style.display === 'none') sib = sib.nextElementSibling;
+    if (sib) nextFn = sib.dataset.fn;
+  }
+  localOmit[currentFunc] = 1;
+  saveLocalOmit();
+  refreshOmitUi();
+  onTestChange();        // re-filters: the entry is now hidden (not destroyed)
+  refreshDetail();       // re-render graph so the node picks up its omitted flag
+  if (nextFn) show(nextFn);
+}
+
+// Restore a single session-omitted function (live — no reload needed).
+function restoreOmit(fn) {
+  delete localOmit[fn];
+  saveLocalOmit();
+  refreshOmitUi();
+  renderOmitPanel();
+  onTestChange();
+  refreshDetail();
+}
+
+function cssEsc(s) { return String(s).replace(/(["\\])/g, '\\$1'); }
+
+// Update the small omit indicator (count + view/download/clear controls).
+function refreshOmitUi() {
+  var n   = localOmitNames().length;
+  var bar = document.getElementById('omit-bar');
+  if (!bar) return;
+  if (n === 0) {
+    bar.style.display = 'none';
+    var panel = document.getElementById('omit-panel');
+    if (panel) panel.style.display = 'none';
+    refreshOmitBtn();
+    return;
+  }
+  bar.style.display = '';
+  var cnt = document.getElementById('omit-count');
+  if (cnt) cnt.textContent = '• ' + n + ' omitted this session';
+  if (document.getElementById('omit-panel') &&
+      document.getElementById('omit-panel').style.display !== 'none')
+    renderOmitPanel();
+  refreshOmitBtn();
+}
+
+// Reflect the current function's omit state on the detail-pane Omit button.
+function refreshOmitBtn() {
+  var btn = document.getElementById('omit-btn');
+  if (!btn) return;
+  var omitted = currentFunc ? isOmitted(currentFunc) : false;
+  btn.disabled = !currentFunc;
+  btn.classList.toggle('is-omitted', omitted);
+  if (omitted) {
+    btn.textContent = '↺ Restore';
+    btn.onclick = function() { restoreOmit(currentFunc); };
+  } else {
+    btn.textContent = '⊘ Omit';
+    btn.onclick = omitCurrent;
+  }
+}
+
+// Toggle the "view / restore" panel listing every session-omitted function.
+function toggleOmitPanel() {
+  var panel = document.getElementById('omit-panel');
+  if (!panel) return;
+  if (panel.style.display === 'none' || !panel.style.display) {
+    renderOmitPanel();
+    panel.style.display = '';
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// Render the omitted-function list: each row has a ↺ restore button so the user
+// can selectively keep some omitted and bring others back.
+function renderOmitPanel() {
+  var panel = document.getElementById('omit-panel');
+  if (!panel) return;
+  var names = localOmitNames().sort();
+  if (!names.length) { panel.innerHTML = ''; panel.style.display = 'none'; return; }
+  var rows = names.map(function(fn) {
+    var p    = curPct(fn);
+    var pcls = (p !== undefined && p !== null) ? pctClass(p) : 'pct-red';
+    var pstr = (p !== undefined && p !== null) ? p + '%' : '–';
+    var safe = cssEsc(fn);
+    return '<div class="omit-item">'
+      + '<button class="omit-restore" title="Restore this function" '
+      + 'onclick="restoreOmit(\'' + safe + '\')">↺</button>'
+      + '<span class="pct ' + pcls + '">' + pstr + '</span>'
+      + '<span class="omit-item-name" title="' + escSvg(fn) + '">' + escSvg(fn) + '</span>'
+      + '</div>';
+  }).join('');
+  panel.innerHTML =
+    '<div class="omit-panel-head">Omitted this session — ↺ to restore'
+    + '<button class="omit-restore-all" onclick="restoreAllOmit()">Restore all</button></div>'
+    + rows;
+}
+
+function restoreAllOmit() {
+  if (!localOmitNames().length) return;
+  if (!confirm('Restore all session-omitted functions?')) return;
+  localOmit = {};
+  saveLocalOmit();
+  refreshOmitUi();
+  renderOmitPanel();
+  onTestChange();
+  refreshDetail();
+}
+
+function downloadOmitList() {
+  var body = omitHeader + fullOmitList().join('\n') + '\n';
+  var blob = new Blob([body], {type: 'text/plain'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'cov_omit_functions';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function clearLocalOmit() {
+  if (!localOmitNames().length) return;
+  if (!confirm('Clear all session omits?')) return;
+  localOmit = {};
+  saveLocalOmit();
+  refreshOmitUi();
+  renderOmitPanel();
+  onTestChange();
+  refreshDetail();
+}
+
 // ── search + init ──────────────────────────────────────────────────────
 // search delegates to onTestChange, which applies search + threshold + test together
 document.getElementById('search').addEventListener('input', onTestChange);
 window.addEventListener('load', function() {
-  var first = document.querySelector('.fn-entry');
+  // apply any session omits saved from a previous visit
+  if (localOmitNames().length) onTestChange();
+  refreshOmitUi();
+  var first = document.querySelector('.fn-entry:not([style*="display: none"]):not([style*="display:none"])');
   if (first) show(first.dataset.fn);
 });
 """
@@ -770,10 +999,14 @@ def render_detail(funcname, pct, lines, tracked_fns):
             + parts[-1])
 
 
-def build_html(funcs, cov_data, test_covs, fn_src):
+def build_html(funcs, cov_data, test_covs, fn_src, omit_names=None, omit_header=''):
     """test_covs: list of (test_name, cov_data_dict) — per-test datasets.
-    fn_src: { funcname: "repo/relative/source.c" } for the file-tree view."""
+    fn_src: { funcname: "repo/relative/source.c" } for the file-tree view.
+    omit_names: set of already-committed omitted function names.
+    omit_header: leading comment block of cov_omit_functions, reused verbatim
+    when the report's "Omit" button reproduces a downloadable copy of the file."""
     h = html.escape
+    omit_names = omit_names or set()
 
     sidebar_items = []
     for pct, name in funcs:
@@ -802,6 +1035,11 @@ def build_html(funcs, cov_data, test_covs, fn_src):
     fn_src_js     = 'var fnSrc = '          + json.dumps(fn_src)      + ';'
     callee_js     = 'var calleeGraph = '    + json.dumps(callees)     + ';'
     caller_js     = 'var callerGraph = '    + json.dumps(callers)     + ';'
+
+    # Omit list: the committed names plus the file header, so the "Omit" button
+    # can persist new picks (localStorage) and reproduce a full file to commit.
+    omit_js        = 'var committedOmit = ' + json.dumps(sorted(omit_names)) + ';'
+    omit_header_js = 'var omitHeader = '    + json.dumps(omit_header)        + ';'
 
     # per-test disasm: { test_name: { funcname: rendered_html } }
     # only functions with >0 executed packets are included
@@ -875,7 +1113,24 @@ def build_html(funcs, cov_data, test_covs, fn_src):
         '</div>'
     )
 
+    # Omit bar — appears once functions are omitted this session.  Lets the user
+    # view/restore individual omits, download an updated cov_omit_functions to
+    # commit, or clear all session omits.
+    omit_bar = (
+        '<div id="omit-bar" style="display:none;">'
+        '<span id="omit-count">• 0 omitted this session</span>'
+        '<button class="omit-action" onclick="toggleOmitPanel()" '
+        'title="View and selectively restore omitted functions">View</button>'
+        '<button class="omit-action" onclick="downloadOmitList()" '
+        'title="Download an updated cov_omit_functions to commit">Download</button>'
+        '<button class="omit-action" onclick="clearLocalOmit()" '
+        'title="Restore every function omitted this session">Clear</button>'
+        '<div id="omit-panel" style="display:none;"></div>'
+        '</div>'
+    )
+
     script = (f'<script>{fn_data_js}\n{fn_pcts_js}\n{fn_packets_js}\n{fn_src_js}\n'
+              f'{omit_js}\n{omit_header_js}\n'
               f'{callee_js}\n{caller_js}\n'
               f'{test_cov_js}\n{test_pcts_js}\n{test_packets_js}\n'
               f'{test_callee_js}\n{test_caller_js}\n{_JS}</script>')
@@ -899,6 +1154,7 @@ def build_html(funcs, cov_data, test_covs, fn_src):
         test_selector,
         threshold,
         mode_toggle,
+        omit_bar,
         '<input id="search" type="text" placeholder="Filter functions…">',
         '<div id="fn-list">',
         '\n'.join(sidebar_items),
@@ -929,6 +1185,32 @@ def parse_fn_files(path):
     return fn_src
 
 
+def parse_omit(path):
+    """Parse scripts/cov_omit_functions.
+
+    Returns (names, header) where names is the set of omitted function names and
+    header is the leading comment block (kept verbatim so the report's "Download
+    omit list" button can reproduce a file in the same style).
+    """
+    names = set()
+    header_lines = []
+    in_header = True
+    with open(path, errors='replace') as f:
+        for raw in f:
+            line = raw.rstrip('\n')
+            stripped = line.split('#', 1)[0].strip()
+            if in_header and (not line.strip() or line.lstrip().startswith('#')):
+                header_lines.append(line)
+                continue
+            in_header = False
+            if stripped:
+                names.add(stripped)
+    header = '\n'.join(header_lines).rstrip('\n')
+    if header:
+        header += '\n'
+    return names, header
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--rpt',      required=True,  metavar='FILE')
@@ -936,6 +1218,9 @@ def main():
     ap.add_argument('--output',   required=True,  metavar='FILE')
     ap.add_argument('--fn-files', metavar='FILE', dest='fn_files', default=None,
                     help='function->source map (from gen_cov_files.py) for the file-tree view.')
+    ap.add_argument('--omit-file', metavar='FILE', dest='omit_file', default=None,
+                    help='committed omit list (scripts/cov_omit_functions); shown in the '
+                         'report and seeded into the "Omit" button download.')
     ap.add_argument('--test-cov', action='append', metavar='FILE', default=[],
                     dest='test_covs',
                     help='Per-test cov.txt path; may be repeated. Test name derived from path.')
@@ -944,10 +1229,32 @@ def main():
     funcs    = parse_rpt(args.rpt)
     cov_data = parse_cov(args.cov)
     fn_src   = parse_fn_files(args.fn_files) if args.fn_files else {}
+    omit_names, omit_header = parse_omit(args.omit_file) if args.omit_file else (set(), '')
 
     if not funcs:
         print('cov_html_report: no functions found in rpt file', file=sys.stderr)
         sys.exit(1)
+
+    # Committed omits (scripts/cov_omit_functions) are "just not in the coverage":
+    # drop them from funcs entirely so they never appear as a sidebar entry, a
+    # call-graph node/edge, per-test data, or a restorable item.  gen_cov_fns.pl
+    # already strips them upstream; doing it here too keeps the report self-
+    # consistent if it is ever run against a cov.rpt that still lists them.  Only
+    # session omits (the in-page "Omit" button) remain restorable.
+    if omit_names:
+        present = {n for _, n in funcs} & omit_names
+        if present:
+            funcs = [(p, n) for p, n in funcs if n not in omit_names]
+            print(f'[cov_html_report] dropped {len(present)} committed-omit functions',
+                  file=sys.stderr)
+
+    func_minimal_packet_length = 1
+    trivial = {name for _, name in funcs
+               if packet_counts(cov_data.get(name, []))[1] <= func_minimal_packet_length}
+    if trivial:
+        funcs = [(p, n) for p, n in funcs if n not in trivial]
+        print(f'[cov_html_report] filtered {len(trivial)} trivial (<=1 packet) functions',
+              file=sys.stderr)
 
     # load per-test datasets — derive name from path, e.g.
     # .../build/tests/kernel/data/readylist/test/cov.txt → kernel/data/readylist/test
@@ -960,7 +1267,7 @@ def main():
         test_covs.append((tname, parse_cov(path)))
 
     with open(args.output, 'w') as f:
-        f.write(build_html(funcs, cov_data, test_covs, fn_src))
+        f.write(build_html(funcs, cov_data, test_covs, fn_src, omit_names, omit_header))
 
     print(f'[cov_html_report] {len(funcs)} functions, {len(test_covs)} tests → {args.output}')
 

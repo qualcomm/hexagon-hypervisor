@@ -582,6 +582,16 @@ All three were fallout from the out-of-tree build migration:
 - [ ] Run coverage for all four ARCHVs and compare function lists
 - [ ] Consider integrating a coverage summary into the unified `testall` report
 
+### Tracked function set + omit list
+
+The tracked functions are every `F`-type `H2K_*` / `h2_*` symbol from `libh2kernel.a`
+and `libh2.a` (scanned by `gen_cov_fns.pl`). `scripts/cov_omit_functions` is the
+source-controlled list of functions we deliberately do *not* cover — they are dropped
+from `cov_fns` and so never appear in `cov.txt` / `cov.rpt` / `cov.html`. Everything
+else is covered: the report only filters out trivial functions with `<= 1` packet
+(always 0% or 100%, no signal), so we are actually covering all functions with more
+than 1 packet.
+
 ## Architecture Versions (ARCHV)
 - v3/v4/v5: older versions, different interrupt mask conventions.
 - v60, v65, v68, v73, v81+: modern versions.  Key differences:

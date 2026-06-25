@@ -19,6 +19,10 @@ RESULT_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/results.txt, $(SUBDIRS))
 # Coverage result files — per-test cov.txt generated alongside gmon data.
 COV_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/cov.txt, $(SUBDIRS))
 
+# Committed list of functions to omit from coverage tracking.  gen_cov_fns.pl
+# drops these; the cov.html "Omit" button produces an updated copy to commit.
+COV_OMIT = $(H2DIR)/scripts/cov_omit_functions
+
 all:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
 
@@ -64,10 +68,11 @@ $(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns
 # checked-in cov_fns snapshot).  gen_cov_fns.pl scans libh2kernel.a and libh2.a
 # for every F-type H2K_*/h2_* symbol.  Depends on manifest (not the libs
 # directly) because manifest carries the build rule and changes whenever the
-# install is rebuilt.
-$(INSTALLPATH)/cov/cov_fns: $(INSTALLPATH)/manifest
+# install is rebuilt.  Also depends on COV_OMIT so editing the omit list
+# regenerates the function list.
+$(INSTALLPATH)/cov/cov_fns: $(INSTALLPATH)/manifest $(COV_OMIT)
 	mkdir -p $(INSTALLPATH)/cov
-	${H2DIR}/scripts/gen_cov_fns.pl $(INSTALLPATH) > $@
+	${H2DIR}/scripts/gen_cov_fns.pl $(INSTALLPATH) $(COV_OMIT) > $@
 
 # Generate the function -> source-file map for the HTML report's file-tree view.
 # Derived from the same just-built libraries (objdump symbols + DWARF compile-unit
@@ -89,10 +94,10 @@ $(INSTALLPATH)/cov/cov.txt: $(COV_FILES) $(INSTALLPATH)/cov/cov_fns
 $(INSTALLPATH)/cov/cov.rpt: $(INSTALLPATH)/cov/cov.txt
 	${H2DIR}/scripts/cov_rpt_tool $< > $@
 
-$(INSTALLPATH)/cov.html: $(INSTALLPATH)/cov/cov.rpt $(INSTALLPATH)/cov/cov_files
+$(INSTALLPATH)/cov.html: $(INSTALLPATH)/cov/cov.rpt $(INSTALLPATH)/cov/cov_files $(COV_OMIT)
 	$(PYTHON) ${H2DIR}/scripts/cov_html_report.py \
 	    --rpt $< --cov $(INSTALLPATH)/cov/cov.txt \
-	    --fn-files $(INSTALLPATH)/cov/cov_files --output $@ \
+	    --fn-files $(INSTALLPATH)/cov/cov_files --omit-file $(COV_OMIT) --output $@ \
 	    $(patsubst %,--test-cov %,$(COV_FILES))
 
 # Collect per-test results.txt into a clean PASS/FAIL summary and append to TESTOUT.

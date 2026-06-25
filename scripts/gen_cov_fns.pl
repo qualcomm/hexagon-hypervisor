@@ -12,12 +12,28 @@
 # Build with OPTIMIZE='-fno-inline' (i.e. TARGET=ref_cov/opt_cov) so inline
 # functions appear as normal symbols and can be tracked.
 #
-# Usage: gen_cov_fns.pl [installpath]   (installpath defaults to ./install)
+# Usage: gen_cov_fns.pl [installpath] [omitfile]
+#   installpath  defaults to ./install
+#   omitfile     optional list of function names to drop (one per line; blank
+#                lines and '#' comments ignored).  See scripts/cov_omit_functions.
 
 use strict;
 use warnings;
 
 my $installpath = $ARGV[0] || "./install";
+my $omitfile    = $ARGV[1];
+
+my %omit;
+if (defined $omitfile && -f $omitfile) {
+  open(my $fh, '<', $omitfile) or die "cannot open omit file $omitfile: $!";
+  while (my $line = <$fh>) {
+    $line =~ s/\s*#.*//;      # strip comments
+    $line =~ s/^\s+|\s+$//g;  # trim
+    next if $line eq '';
+    $omit{$line} = 1;
+  }
+  close($fh);
+}
 
 my %funclist;
 
@@ -35,6 +51,8 @@ foreach my $line (@syms) {
     # These also get dropped later by cov_rpt_tool's \w-only header regex, so
     # excluding them here keeps cov_fns and cov.rpt in agreement.
     next if $name =~ /\./;
+    # Skip functions explicitly listed in the omit file.
+    next if $omit{$name};
     $funclist{$name}=1;
   }
 }

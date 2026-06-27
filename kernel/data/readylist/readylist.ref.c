@@ -5,9 +5,9 @@
 
 #include <readylist.h>
 
-void H2K_readylist_init(void) 
+void H2K_readylist_init(void)
 {
-	/* EJP: FIXME: global_init already zeroes. */
+#ifdef TESTING
 	u32_t i;
 	for (i = 0; i < MAX_PRIOS; i++) {
 		H2K_gp->ready[i] = NULL;
@@ -15,4 +15,5 @@ void H2K_readylist_init(void)
 	for (i = 0; i < MAX_PRIOS/64; i++) {
 		H2K_gp->ready_valids[i] = 0;
 	}
+#endif
 }

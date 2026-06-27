@@ -233,7 +233,7 @@ typedef struct elf_section_struct {
 	Elf32_Addr sh_addr;
 	Elf32_Off sh_offset;
 	Elf32_Word sh_size;
-	Elf32_Word sh_line;
+	Elf32_Word sh_link;
 	Elf32_Word sh_info;
 	Elf32_Word sh_addralign;
 	Elf32_Word sh_entsize;

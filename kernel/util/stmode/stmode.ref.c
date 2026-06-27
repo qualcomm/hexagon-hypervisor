@@ -22,7 +22,7 @@ s32_t H2K_stmode_begin()
 	/* check modectl */
 	tmp = H2K_get_modectl();
 	/* Compute threads that are ON and not WAITing */
-	tmp = (tmp & ((~tmp)>>16)) & 0x0000ffff;
+	tmp = tmp & ((~tmp) >> MODECTL_W_BITS);
 	/* Remove Least Significant Set Bit */
 	tmp = tmp & (tmp-1);
 	/* Are we in ST mode? */

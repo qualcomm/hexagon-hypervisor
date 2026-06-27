@@ -1,0 +1,25 @@
+DB     := $(H2DIR)/compile_commands.json
+OUT    := $(H2DIR)/.vscode/settings.json
+
+CLANG_PATH     := $(shell PKW_VERSIONS="hexagon-tools=$(TOOLS_FLAVOR) arch=$(ARCH_FLAVOR)" pkw --which hexagon-clang 2>/dev/null)
+CLANGD_PATH := $(dir $(CLANG_PATH))hexagon-clangd
+VSCODE_QUERY_DRIVER := $(shell echo '$(CLANG_PATH)' | cut -d/ -f1-5)/**/hexagon-clang
+
+.PHONY: all clean
+
+all: $(OUT)
+
+$(DB):
+	$(MAKE) -C $(H2DIR) all_clean
+	bear -- $(MAKE) -C $(H2DIR) TARGET=$(TARGET) ARCHV=$(ARCHV)
+	bear --append -- $(MAKE) -C $(H2DIR) TARGET=$(TARGET) ARCHV=$(ARCHV) test_variant
+
+$(OUT): $(DB)
+	@test -x "$(CLANGD_PATH)" || { echo "ERROR: hexagon-clangd not found at '$(CLANGD_PATH)'"; echo "       (pkw --which hexagon-clang resolved to '$(CLANG_PATH)')"; exit 1; }
+	@mkdir -p $(dir $(OUT))
+	@printf '{\n    "clangd.enable": true,\n    "clangd.path": "%s",\n    "clangd.arguments": [\n        "--compile-commands-dir=$${workspaceFolder}",\n        "--query-driver=%s",\n        "--background-index",\n        "--clang-tidy=false"\n    ],\n    "C_Cpp.intelliSenseEngine": "disabled"\n}\n' '$(CLANGD_PATH)' '$(VSCODE_QUERY_DRIVER)' > $(OUT)
+	@echo "Next: in VSCode run  Ctrl+Shift+P -> 'Developer: Reload Window'"
+
+clean:
+	@rm -f $(DB) $(OUT)
+	@rm -rf $(H2DIR)/.cache/clangd

@@ -87,11 +87,18 @@ typedef int fd_t;
 typedef unsigned int t_mode_t;
 typedef int okay_t;
 
-struct dirent
+typedef struct dirent_internal
 {
     long  d_ino;
     char  d_name[255]; /* Should be variable size */
-};
+}dirent_internal;
+
+
+#ifndef __PICOLIBC__
+typedef dirent_internal dirent;
+#else
+
+#endif
 
 struct heap_info {	/* heap information */
 	int heap_base;

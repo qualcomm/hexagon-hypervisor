@@ -109,7 +109,7 @@ Multicore: cores > 0 copy the boot image to their memory region, then synchroniz
 - `ARCHV=xx`: select architecture version (65, 68, 73, 81 are primary).  Default is 81.
 - `make.inc` files scattered through the tree are auto-discovered and included.
 - Per-architecture optimized assembly files (e.g., `dosched.v81opt.S`).
-- Final artifacts in `artifacts/v$(ARCHV)/$(T)/install/`: `bin/booter`, `lib/libh2.a`, etc.
+- Final artifacts in `artifacts/v$(ARCHV)/$(TARGET)/install/`: `bin/booter`, `lib/libh2.a`, etc.
   Each ARCHV+variant (opt/ref) has its own install directory.
 - Intermediate .o files in `kernel/build/obj/v$(ARCHV)/opt|ref/` and similarly for libs.
   Ref archives now in `kernel/build/ref_v$(ARCHV)/` and `libs/*/build/ref_v$(ARCHV)/`.
@@ -145,7 +145,7 @@ in-source build artifacts.
 4. **Test build artifacts are in-source.** Tests build object files, ELFs, and log
    files directly in their source directories. Parallel multi-arch test runs will
    conflict. Low priority — address after library build isolation is complete.
-   FIXED (2026-04-23): Test artifacts now land in `artifacts/v$(ARCHV)/$(T)/build/tests/<test-path>/`.
+   FIXED (2026-04-23): Test artifacts now land in `artifacts/v$(ARCHV)/$(TARGET)/build/tests/<test-path>/`.
    `Makefile.coverage` creates a build dir per test, symlinks all source files (excluding
    `Makefile.inc`), generates a `Makefile.inc` with absolute H2DIR, and runs `make -C $$BDIR`.
    `clean` target now does `rm -rf $(TEST_BUILD_ROOT)` instead of per-subdir iteration.
@@ -180,7 +180,7 @@ in-source build artifacts.
 ## Unified Build Directory Plan (COMPLETED 2026-04-24)
 
 **Goal achieved:** All intermediate build artifacts (object files, intermediate archives,
-booter/qurt/angel .o files) are now under `artifacts/v$(ARCHV)/$(T)/build/`.
+booter/qurt/angel .o files) are now under `artifacts/v$(ARCHV)/$(TARGET)/build/`.
 
 **Approach:** `BUILD_DIR := $(patsubst %/install,%/build/COMPONENT,$(INSTALLPATH))` in each
 Makefile. For kernel, an `ifeq ($(findstring /ref/,$(BUILD_DIR)),/ref/)` conditional picks
@@ -254,7 +254,7 @@ The correct invocation pattern is:
     make ARCHV=XX TARGET=ref test
 
 Added `make all_clean` target (nukes the entire `artifacts/` directory) to
-complement the per-variant `make clean` (which only removes `artifacts/v$(ARCHV)/$(T)`).
+complement the per-variant `make clean` (which only removes `artifacts/v$(ARCHV)/$(TARGET)`).
 
 ### testall fix (2026-04-27) — FIXED AND VALIDATED
 
@@ -320,7 +320,7 @@ root cause; the `+` and `MODEL` bugs are secondary.
   `JFLAG` more carefully so it doesn't propagate to contexts where it causes
   goal-ordering problems.
 - Also fix the `${INSTALLPATH}` fallback recipe: remove the `+` prefix from
-  the continuation line, and make it use `$(T)` or `TARGET` rather than
+  the continuation line, and make it use `$(TARGET)` or `TARGET` rather than
   `MODEL` so it builds the correct variant.
 
 ### Potential future improvement: file-based make DAG
@@ -512,9 +512,12 @@ artifacts, and the two `stake/` intermediates.
 Two coverage mechanisms exist in the codebase:
 
 1. **Legacy gmon-based** (working): The Hexagon simulator produces `gmon.out` /
-   `gmon-0x*.out` profiling files during test runs.  `hexagon-coverage` converts these
+   `gmon-0x*.out` profiling files during test runs.  `hexagon-coverage.py` converts these
    to `cov.txt` per-test, `merge_cov.py` aggregates them, and `cov_rpt_tool` produces
-   the human-readable `cov.rpt`.  This works for both C and assembly.
+   the human-readable `cov.rpt`.  This works for both C and assembly.  The pipeline
+   also produces an interactive `cov.html` report with a collapsible file-tree view,
+   per-test drill-down, disassembly with packet-level hit/miss coloring, and a call
+   graph tab.
 
 2. **LLVM instrumentation** (partially wired, not working): `TARGET=llvm_cov` adds
    `-fprofile-instr-generate -fcoverage-mapping` to CFLAGS, producing `default.profraw`
@@ -525,17 +528,17 @@ Two coverage mechanisms exist in the codebase:
 
 ### How to run legacy coverage
 
-```
-make TARGET=opt_cov opt cov ARCHV=81
-```
+make TARGET=ref_cov/opt_cov cov ARCHV=XX
+
+
 
 This:
-1. Rebuilds with `-fno-inline` (`OPTIMIZE_COV`)
-2. Runs all tests via `h2_cov` → `Makefile.coverage all` (TARG=all per test), generating
-   gmon files and per-test `cov.txt` in `artifacts/v81/opt/build/tests/<test-path>/`
-3. Merges all per-test `cov.txt` files into a root-level `cov.txt` via `merge_cov.py`
-4. Generates `cov.rpt` via `cov_rpt_tool`
-5. Generates `$(INSTALLPATH)/test_report.html`
+1. Rebuilds with `-fno-inline`
+2. Runs all tests, generating gmon files and per-test `cov.txt` in
+   `artifacts/v81/ref_cov/build/tests/<test-path>/`
+3. Merges all per-test `cov.txt` files into `$(INSTALLPATH)/cov/cov.txt` via `merge_cov.py`
+4. Generates `$(INSTALLPATH)/cov/cov.rpt` via `cov_rpt_tool`
+5. Generates `$(INSTALLPATH)/cov.html` — the interactive coverage report
 
 ### Bugs fixed to get coverage working (2026-04-28)
 
@@ -554,31 +557,14 @@ All three were fallout from the out-of-tree build migration:
    every instruction; `match` can be `None`.  Added `match and` guard before
    `match.group(1)`.  Pre-existing bug; not triggered until coverage was actually run.
 
-### v81/opt coverage results (2026-04-28, 220 tracked kernel functions)
+### Current coverage state (2026-06-25, 660 tracked functions across libh2kernel.a + libh2.a)
 
-- **133 functions at 100%** (60%)
-- **77 functions at 0%** (35%) — see list in `cov.rpt`
-- **10 functions partially covered** (1–99%)
-
-Notable 0% functions (potential test gaps):
-`H2K_asid_match`, `H2K_asid_table_eviction`, `H2K_fatal_crash`, `H2K_futex_cancel`,
-`H2K_handle_nmi`, `H2K_handle_rsvd`, `H2K_vmop_boot`, `H2K_vmop_free`, `H2K_vmop_status`,
-`H2K_mem_physread_dword`, `H2K_intpool_cancel`, `H2K_tree_remove`, `H2K_varadix_update`,
-and many low-level accessor stubs (`H2K_get_*`, `H2K_set_*`, `H2K_dccleana`, etc.)
-
-Some 0% functions are expected to be hard to reach (NMI handler, fatal paths, rsvd traps).
-Others like `futex_cancel`, `vmop_boot/free/status`, `tree_remove` may indicate real gaps.
+- **464 functions hit** (70%)
+- **383 functions at 100%** (58%)
+- **81 functions at 0%** (12%)
+- **196 functions partially covered** (1–99%)
 
 ### Known issues / noise
-
-- **merge_cov.py diagnostic messages go to stdout**, not stderr.  They get mixed into
-  `cov.txt` and then into `cov.rpt` (where `cov_rpt_tool` ignores non-matching lines).
-  Should redirect those `print()` calls to `sys.stderr`.
-
-- **`cov.txt` not removed on Make failure** (no `.DELETE_ON_ERROR`).  If `merge_cov.py`
-  fails, a zero-byte `cov.txt` is left behind.  Make won't rebuild it next run.
-  Workaround: `rm cov.txt` before retrying.  Fix: add `.DELETE_ON_ERROR` or check for
-  empty output.
 
 - **"additional pc / parse bit mismatch" warnings**: The `--offset_pc` normalization
   subtracts the function's load address to produce position-independent PCs.  When
@@ -588,43 +574,179 @@ Others like `futex_cancel`, `vmop_boot/free/status`, `tree_remove` may indicate 
 
 - **Coverage pipeline not integrated with `testall`**: `make testall` runs opt+ref for
   all four ARCHVs but does not run coverage.  Coverage must be triggered manually with
-  `make TARGET=opt_cov opt cov ARCHV=81`.
+  `make TARGET=ref_cov cov ARCHV=81`.
 
 ### Future coverage tasks
 
-- [x] Redirect `merge_cov.py` diagnostics to stderr (done 2026-04-28: added `file=sys.stderr` to three print() calls in set_offset/add_data)
-- [x] Add `.DELETE_ON_ERROR` or empty-output guard to `cov.txt` target (done 2026-04-28: moved to Makefile.coverage as `$(INSTALLPATH)/cov.txt` with `.DELETE_ON_ERROR`)
-- [x] File-based DAG for coverage pipeline (done 2026-04-28):
-      - `cov.txt`/`cov.rpt` moved to `$(INSTALLPATH)/` (no longer written to source root)
-      - `COV_FILES` + `$(TEST_BUILD_ROOT)/%/cov.txt` pattern rule in `Makefile.coverage`
-      - `h2_cov` drives `$(INSTALLPATH)/cov.rpt` directly — no `prepare`/`all` sub-makes
-      - `T ?= opt` + `export T` fix: fallback rules now use `$(T)` not `$(TARGET)`, so
-        `TARGET=opt_cov` no longer tries `make opt_cov` (invalid target)
-      - `cov_rpt_tool` now accepts a file path argument (was hardcoded to `cov.txt`)
-      - Incremental: second `make TARGET=opt_cov cov` is a true no-op
-- [x] v81/opt coverage results (2026-04-28, after pipeline fixes): 353 tracked functions
-      (vs 220 before — old pipeline was corrupted by stdout diagnostics)
-      - **45 functions at 0%**, **249 functions at 100%**, ~59 partial
-- [ ] Investigate 0% functions: which are genuine test gaps vs. intentionally untestable?
-      Initial analysis of the 45 zero-coverage functions:
-      - **~5 false negatives** (`H2K_tree_remove`, `H2K_id_from_context`, `H2K_mem_tlb_read`,
-        `H2K_mem_tlboc`, `H2K_ring_next`): `static inline` wrappers — inlined everywhere,
-        no standalone symbol. E.g. `tree_remove` calls `tree_remove_key` which IS 100%.
-      - **~8 asm functions**: `H2K_fatal_crash`, `H2K_handle_nmi`, `H2K_handle_rsvd`,
-        `H2K_popup_cancel`, `H2K_ext_context_restore`, timer asm (`get_freq`,
-        `get_resolution`, `delta_timeout`). Hard-to-reach (crash/NMI paths) or
-        timer VM trap handlers not called by current tests.
-      - **Confirmed genuine gap**: `H2K_timer_get_freq`, `H2K_timer_get_resolution`,
-        `H2K_timer_delta_timeout` — these are registered timer vmtrap dispatch
-        functions (freq/resolution/delta queries). The timer tests only use
-        `h2_time_get_time()`/`h2_time_set_timeout()` and never invoke these traps.
-      - **~32 other C functions**: mix of further gaps (`H2K_intpool_cancel`,
-        `H2K_varadix_update/mktrans/walk`, `H2K_trap_hwconfig_*`) and
-        intentionally hard paths (HVX coprocessor context, TLB management ops)
-      Priority candidates for new tests: timer vmtraps (freq/resolution/delta),
-      `futex_cancel`, `vmop_boot/free/status`, `intpool_cancel`, `varadix_update`
+- [ ] Investigate uncovered functions.
 - [ ] Run coverage for all four ARCHVs and compare function lists
 - [ ] Consider integrating a coverage summary into the unified `testall` report
+
+### Tracked function set + omit list
+
+The tracked functions are every `F`-type `H2K_*` / `h2_*` symbol from `libh2kernel.a`
+and `libh2.a` (scanned by `gen_cov_fns.pl`). `scripts/cov_omit_functions` is the
+source-controlled list of functions we deliberately do *not* cover — they are dropped
+from `cov_fns` and so never appear in `cov.txt` / `cov.rpt` / `cov.html`. Everything
+else is covered: the report only filters out trivial functions with `<= 1` packet
+(always 0% or 100%, no signal), so we are actually covering all functions with more
+than 1 packet.
+## dlopen / shared library printf investigation — DONE (2026-06-10)
+
+This work spans two sessions (sys_mmap commit 328e12ca, then this session).
+The goal: get shared libraries to call libc functions (like printf) that are statically
+linked into the main binary.  **This now works end-to-end.**
+
+### Problem
+`french.so` (compiled `-fPIC -shared`) has `printf` as an undefined PLT symbol.
+At `dlopen` time, the rtld needs to find `printf` from a loaded object.  In a standard
+Linux environment the main binary exports symbols via `.dynsym`, but the h2 environment
+uses a statically-linked main binary with no `.dynsym` by default.
+
+### dlinit — what it is
+`dlinit(argc, argv)` is NOT standard POSIX.  It is Hexagon/BSD-rtld-specific.
+It initializes the library-mode rtld.  The `argv` list names "builtin" shared libraries
+that are pre-loaded as part of the main binary.  For the builtins mechanism to work, the
+main binary must export those symbols via `.dynsym`.
+`-rdynamic`, `-Wl,--export-dynamic`: silently ignored by the Hexagon LLD for static
+binaries — no `.dynsym` is created.
+
+### Solution: --force-dynamic + hexagon-clang++ for linking
+
+`-Wl,--force-dynamic -Wl,-E` forces the Hexagon LLD to create `.dynsym` with all global
+symbols exported.  This makes `dlinit(5, builtin)` find `printf` and C++ runtime symbols
+successfully.
+
+**Problem with --force-dynamic**: the binary acquires `.ctors`/`.dtors`/`_init` sections.
+The h2 startup calls `_init` before `main()`, which iterates `.ctors` and calls a
+constructor (likely `__register_frame_info_base` at ~0xe088) that crashes silently.
+The VM runs ~48k instructions and produces no output.
+
+**Fix**: link with `hexagon-clang++` instead of `hexagon-clang`.  The C++ driver
+properly links the full C++ runtime (libc++, libc++abi) which provides working
+implementations of `__register_frame_info_base` and related frame-registration
+functions.  With `hexagon-clang++` the ctors run without crashing and `main()` is
+reached normally.  No `noinit.c` stub needed.
+
+**Note on earlier workaround**: a `noinit.c` providing no-op `_init`/`_fini` also worked
+for C-only use, but it silently suppresses ALL main-binary constructors.  The
+`hexagon-clang++` fix is correct — it lets real C++ ctors run.
+
+### C++ constructor/destructor support (2026-06-10)
+
+Both main-binary and shared-library C++ static constructors and destructors work.
+
+**Main binary ctors**: link with `hexagon-clang++`; add `.cpp` objects to the link.
+Hexagon compilers use `.ctors`/`.dtors` (not `.init_array`).  The h2 startup calls
+`_init` which iterates `.ctors`.
+
+**Shared library ctors**: `hexagon-clang++` builds a fully-functional shared library with
+`DT_INIT` pointing to an `_init` that iterates `.ctors`.  The rtld calls it on `dlopen`.
+
+**NEEDED resolution for C++ .so files**: `cppso.so` built with `hexagon-clang++` has
+NEEDED entries for `libc++.so.1`, `libc++abi.so.1`, and `libgcc.so`.  These are
+satisfied via dlinit builtins (the rtld resolves their symbols from the main binary's
+exported symbol table rather than loading them as files).  Key requirements:
+- Add `"libc++.so.1"` and `"libc++abi.so.1"` to the dlinit builtins list.
+- Link `libc_eh.a` with `--whole-archive` into the main binary — it provides
+  `_Get_eh_data` (needed by libc++abi) which is not pulled in by `-moslib=h2`.
+  Without `--whole-archive` the linker drops it since no main-binary code calls it.
+- `libhexagon.so` is NOT needed; `libc_eh.a` covers all the EH symbols.
+
+**Separate CC/CXX compilation**: `.c` files compile with `hexagon-clang`; `.cpp` files
+with `hexagon-clang++`; final link uses `hexagon-clang++`.  This avoids C++ strict-typing
+errors on the C files while still using the C++ driver for linking.
+
+**crtbeginS.o / crtendS.o note**: these exist under `.../v73/G0/pic/` but use
+non-PIC relocations and cannot be linked into a `-shared` binary.  The `hexagon-clang++`
+driver handles the shared library startup correctly without them when invoked without
+`-nostartfiles`.
+
+### Bug fixed: fake fstat st_ino collision
+
+`dltest/fstat.c` had `buf->st_ino = fd`.  The rtld uses `st_dev`+`st_ino` to detect
+already-loaded libraries.  If two `.so` files are opened on the same fd number (e.g.,
+both on fd 3 at different times), both get identical `st_ino`, and the rtld returns the
+cached handle for the first library instead of loading the second.
+**Fix**: use a static counter for `st_ino` so every `fstat` call returns a unique inode.
+
+### Bug fixed earlier: booter elf_get_specials for dynamic binaries
+`libs/h2_compat/elf/h2_elf.ref.c` `elf_get_specials()` picked up `.dynstr` instead of
+`.strtab` for dynamic binaries (`.dynstr` comes first in section order; both are
+`SHT_STRTAB`).  Fix: use `sh_link` to look up the
+correct string table for the symbol table section.
+
+### Other findings during investigation
+
+- **`--dynamic-linker=` (empty)**: has no effect; the booter ignores `PT_INTERP`.
+- **No GOT/PLT**: lld does not create GOT/PLT for a fully-static `--force-dynamic`
+  binary.  All symbol references are pre-resolved at link time.
+- **libdl.a must match the target arch**: using v68 `libdl.a` in a v73 binary causes
+  `dlinit` to hang (jump-to-self).  Always use the matching arch version.
+- **Do NOT add `-G0` to CC**: with `-moslib=h2`, adding `-G0` silently breaks output
+  (printf produces nothing).  The h2 startup manages GP correctly without it.
+- **rtld requires absolute paths**: `dlopen("./foo.so")` fails with "abs pathname
+  required".  `dlopen("foo.so")` (bare name) works if `dlinit` listed it as a builtin.
+- **Real libc.so cannot be dlopen'd directly**: the prebuilt `libc.so` has its own
+  `_init` that crashes in the h2/booter environment (jump-to-self).  The builtins
+  mechanism avoids loading it as a file.
+- **Toolchain reference example**: `dltest/example/` contains the canonical standalone
+  (non-h2) dlopen example from the toolchain, adapted for v73 + archsim.  It uses
+  `--whole-archive libc.a` + `--force-dynamic -E` + fake fstat.  Confirmed working.
+  The key structural difference from the h2 approach: standalone uses
+  `crt0_standalone.o + libstandalone.a`; h2 uses `-moslib=h2`.
+
+### Working configuration (dltest/)
+
+C and C++ objects compiled separately, linked with `hexagon-clang++`:
+
+```makefile
+CC  = hexagon-clang   -mv73
+CXX = hexagon-clang++ -mv73
+
+# C++ .so — full clang++ build, DT_INIT set automatically
+cppso.so: cppso.cpp
+    $(CXX) -fPIC -Wl,-Bsymbolic -shared -o cppso.so cppso.cpp
+
+# Main binary — link with CXX to get correct C++ runtime
+libdltest: libdltest.o fstat.o sys_mmap.o cpptest.o
+    $(CXX) -moslib=h2 -Wl,-Bsymbolic -Wl,--export-dynamic -Wl,--force-dynamic \
+        -Wl,--dynamic-linker= -Wl,--allow-multiple-definition \
+        -L.../artifacts/v73/opt/install/lib \
+        -o libdltest ... $(LIBDL) \
+        -Wl,--whole-archive $(LIBC_EH) -Wl,--no-whole-archive
+```
+
+dlinit builtins: `{"libgcc.so", "libc.so", "libstdc++.so", "libc++.so.1", "libc++abi.so.1"}`
+
+Run: `PKW_arch=v73_stable archsim --quiet .../booter libdltest`
+
+Output:
+```
+C++ ctor: main binary       ← static global in cpptest.cpp, fires before main()
+faux @ 28150
+Hello from library!
+faux returned: Barre.
+C++ ctor: cppso.so          ← static global in cppso.cpp, fires at dlopen() time
+cppfunc returned: Hello from C++ shared library!
+C++ dtor: cppso.so          ← fires at exit / dlclose
+C++ dtor: main binary       ← fires at exit
+```
+
+### dltest/ directory layout
+- `dltest/french.c` — C shared lib: `faux()` calls `printf`, returns `"Barre."`
+- `dltest/cppso.cpp` — C++ shared lib: static `SoCtor` global (ctor/dtor), `cppfunc()`
+- `dltest/libdltest.c` — main: `dlinit(5, builtins)`, dlopen/dlsym both .so files
+- `dltest/cpptest.cpp` — C++ static global in main binary to test main-binary ctors
+- `dltest/fstat.c` — fake `fstat`: uses `sys_flen` + unique `st_ino` counter
+- `dltest/sys_mmap.c` — mmap via angel (also in libs/syscall/angel)
+- `dltest/Makefile` — separate CC/CXX compile, CXX link, v73 libdl.a + libc_eh.a
+- `dltest/example/` — standalone (non-h2) reference: works under both hexagon-sim
+  and archsim; uses `crt0_standalone.o + libstandalone.a + --whole-archive libc.a`
+
+### Next tasks
+- Integrate dlopen support into the main test infrastructure
+- Consider promoting `sys_mmap` and fake `fstat` to a proper h2 library
 
 ## Architecture Versions (ARCHV)
 - v3/v4/v5: older versions, different interrupt mask conventions.

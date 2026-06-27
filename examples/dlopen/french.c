@@ -3,3 +3,11 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
+#include <stdio.h>
+
+const char *faux()
+{
+	printf("Bonjour, le monde!!\n");
+	return "Barre.";
+}
+

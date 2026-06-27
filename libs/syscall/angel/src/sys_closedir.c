@@ -5,5 +5,10 @@
 
 #include "allsyscalls.h"
 
-errno_t sys_closedir(int dir) { return ANGEL(SYS_CLOSEDIR,dir,0); }
+sys_call_ret_t sys_closedir_internal(int dir) {
+	return angel_with_err(SYS_CLOSEDIR, (void *)(uintptr_t)dir, 0);
+}
 
+errno_t sys_closedir(int dir) {
+	return sys_closedir_internal(dir).ret_value;
+}

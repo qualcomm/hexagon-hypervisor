@@ -7,6 +7,14 @@
 #include <max.h>
 
 /*
+ * ready_valids[] = 256-bit priority bitmap, stored as 4 x u64_t (8 bytes per chunk).
+ * Each chunk covers 64 priority levels; bit i = "thread ready at priority i".
+ */
+#define READY_CHUNK_1       8    /* priorities 64..127  */
+#define READY_CHUNK_2       16   /* priorities 128..191 */
+#define READY_CHUNK_3       24   /* priorities 192..255 */
+
+/*
 H2K_check_sanity, v3 optimized
 
 Registers clobbered:
@@ -34,12 +42,12 @@ Worst case:  17 cycles + 1 cycle mispredict penalty
 
 FUNC_START H2K_check_sanity_unlock .text.core.sanity .p2align 5
 	{
-		R9:8 = memd(H2K_GP+#KG_ready_valids)       // H2K_gp->ready_valids[0]
-		R3:2 = memd(H2K_GP+#KG_ready_valids + 8)   // H2K_gp->ready_valids[1]
+		R9:8 = memd(H2K_GP+#KG_ready_valids)                 // H2K_gp->ready_valids[0]
+		R3:2 = memd(H2K_GP+#KG_ready_valids + READY_CHUNK_1) // H2K_gp->ready_valids[1]
 	}
 	{
-		R5:4 = memd(H2K_GP+#KG_ready_valids + 16)  // H2K_gp->ready_valids[2]
-		R7:6 = memd(H2K_GP+#KG_ready_valids + 24)  // H2K_gp->ready_valids[3]
+		R5:4 = memd(H2K_GP+#KG_ready_valids + READY_CHUNK_2) // H2K_gp->ready_valids[2]
+		R7:6 = memd(H2K_GP+#KG_ready_valids + READY_CHUNK_3) // H2K_gp->ready_valids[3]
 		R8 = ct0(R8)
 	}
 	{
@@ -199,12 +207,12 @@ FUNC_END H2K_check_sanity_unlock
 //  crappy cut and paste until we figure out what to do exactly.
 FUNC_START H2K_check_sanity .text.core.sanity .p2align 5
 	{
-		R9:8 = memd(H2K_GP+#KG_ready_valids)       // H2K_gp->ready_valids[0]
-		R3:2 = memd(H2K_GP+#KG_ready_valids + 8)   // H2K_gp->ready_valids[1]
+		R9:8 = memd(H2K_GP+#KG_ready_valids)                 // H2K_gp->ready_valids[0]
+		R3:2 = memd(H2K_GP+#KG_ready_valids + READY_CHUNK_1) // H2K_gp->ready_valids[1]
 	}
 	{
-		R5:4 = memd(H2K_GP+#KG_ready_valids + 16)  // H2K_gp->ready_valids[2]
-		R7:6 = memd(H2K_GP+#KG_ready_valids + 24)  // H2K_gp->ready_valids[3]
+		R5:4 = memd(H2K_GP+#KG_ready_valids + READY_CHUNK_2) // H2K_gp->ready_valids[2]
+		R7:6 = memd(H2K_GP+#KG_ready_valids + READY_CHUNK_3) // H2K_gp->ready_valids[3]
 		R8 = ct0(R8)
 	}
 	{

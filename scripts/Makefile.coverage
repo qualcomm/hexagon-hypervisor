@@ -19,6 +19,10 @@ RESULT_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/results.txt, $(SUBDIRS))
 # Coverage result files — per-test cov.txt generated alongside gmon data.
 COV_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/cov.txt, $(SUBDIRS))
 
+# Committed list of functions to omit from coverage tracking.  gen_cov_fns.pl
+# drops these; the cov.html "Omit" button produces an updated copy to commit.
+COV_OMIT = $(H2DIR)/scripts/cov_omit_functions
+
 all:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
 
@@ -44,8 +48,9 @@ $(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
 
 # Build and run one test for coverage (TARG=all), producing per-test cov.txt.
 # Also produces results.txt as a side effect of running the simulator with --profile.
-# Depends on manifest so tests only re-run when the build actually changes.
-$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest
+# Depends on manifest so tests only re-run when the build actually changes, and on
+# cov_fns so the function list exists before a multi-gmon test invokes merge_cov.py.
+$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns
 	mkdir -p "$(TEST_BUILD_ROOT)/$*"
 	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc \
 	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
@@ -58,15 +63,42 @@ $(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest
 	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
 	    exit $$TSTAT
 
+# Generate the coverage function list from the just-built kernel libraries so the
+# set of tracked functions always matches the binaries under test (no stale,
+# checked-in cov_fns snapshot).  gen_cov_fns.pl scans libh2kernel.a and libh2.a
+# for every F-type H2K_*/h2_* symbol.  Depends on manifest (not the libs
+# directly) because manifest carries the build rule and changes whenever the
+# install is rebuilt.  Also depends on COV_OMIT so editing the omit list
+# regenerates the function list.
+$(INSTALLPATH)/cov/cov_fns: $(INSTALLPATH)/manifest $(COV_OMIT)
+	mkdir -p $(INSTALLPATH)/cov
+	${H2DIR}/scripts/gen_cov_fns.pl $(INSTALLPATH) $(COV_OMIT) > $@
+
+# Generate the function -> source-file map for the HTML report's file-tree view.
+# Derived from the same just-built libraries (objdump symbols + DWARF compile-unit
+# paths), so it always matches the binaries under test.  Depends on manifest for
+# the same reason as cov_fns.
+$(INSTALLPATH)/cov/cov_files: $(INSTALLPATH)/manifest
+	mkdir -p $(INSTALLPATH)/cov
+	$(PYTHON) ${H2DIR}/scripts/gen_cov_files.py \
+	    --installpath $(INSTALLPATH) --repo $(H2DIR) \
+	    --objdump "$(OBJDUMP)" --dwarfdump "$(DWARFDUMP)" > $@
+
 # Merge all per-test cov.txt files into a single file under the install directory.
 # .DELETE_ON_ERROR ensures a failed merge_cov.py run does not leave a stale output.
 .DELETE_ON_ERROR:
-$(INSTALLPATH)/cov.txt: $(COV_FILES)
+$(INSTALLPATH)/cov/cov.txt: $(COV_FILES) $(INSTALLPATH)/cov/cov_fns
 	find $(TEST_BUILD_ROOT) -name "cov.txt" | $(PYTHON) ${H2DIR}/scripts/merge_cov.py \
 	    --offset_pc --dir $(H2DIR) --installpath $(INSTALLPATH) > $@
 
-$(INSTALLPATH)/cov.rpt: $(INSTALLPATH)/cov.txt
+$(INSTALLPATH)/cov/cov.rpt: $(INSTALLPATH)/cov/cov.txt
 	${H2DIR}/scripts/cov_rpt_tool $< > $@
+
+$(INSTALLPATH)/cov.html: $(INSTALLPATH)/cov/cov.rpt $(INSTALLPATH)/cov/cov_files $(COV_OMIT)
+	$(PYTHON) ${H2DIR}/scripts/cov_html_report.py \
+	    --rpt $< --cov $(INSTALLPATH)/cov/cov.txt \
+	    --fn-files $(INSTALLPATH)/cov/cov_files --omit-file $(COV_OMIT) --output $@ \
+	    $(patsubst %,--test-cov %,$(COV_FILES))
 
 # Collect per-test results.txt into a clean PASS/FAIL summary and append to TESTOUT.
 # Called after tst completes; each test's full output is in <test-dir>/make.log.

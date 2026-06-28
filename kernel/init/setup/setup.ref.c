@@ -97,6 +97,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	H2K_lowprio_init();
 	H2K_futex_init();
 	H2K_intconfig_init(ssbase);
+	H2K_set_schedcfg(SCHEDCFG_EN | SCHEDCFG_INTNO(RESCHED_INT));
 	H2K_thread_init();
 	H2K_asid_table_init();
 

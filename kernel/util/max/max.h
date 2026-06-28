@@ -79,6 +79,11 @@
 #define MAX_PRIO ((MAX_PRIOS) - 1)
 #define BEST_PRIO 0
 
+#define BESTWAIT_MASK 0x1ff
+
+#define SCHEDCFG_EN (1u << 8)
+#define SCHEDCFG_INTNO(n) ((n) & 0xf)
+
 #if ARCHV <= 3
 #define ASID_BITS 5
 #else

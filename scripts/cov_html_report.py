@@ -137,6 +137,12 @@ body { font-family: sans-serif; display: flex; height: 100vh; overflow: hidden; 
 .tree-fn.active .tree-label { color: #fff; }
 .tree-root { background: #252526; font-weight: bold; border-bottom: 1px solid #444; }
 .tree-root .tree-label { color: #ccc; }
+.tree-omit-btn {
+  margin-left: auto; background: transparent; border: none;
+  color: #a44; font-size: 0.85em; cursor: pointer; padding: 0 4px;
+  border-radius: 3px; line-height: 1; flex-shrink: 0;
+}
+.tree-omit-btn:hover { color: #f99; background: #3c2222; }
 
 #detail { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 16px 20px; background: #1e1e1e; color: #ccc; }
 #detail h2 { font-size: 1em; margin-bottom: 10px; color: #9cdcfe; border-bottom: 1px solid #333; padding-bottom: 6px; flex-shrink: 0; }
@@ -618,14 +624,15 @@ function nodePct(n) {
 }
 
 // Collapse single-child directory chains (a/b/c → a/b/c) for compactness.
-function treeRowHtml(label, pct, depth, kind, key, isOpen, dataAttr) {
+function treeRowHtml(label, pct, depth, kind, key, isOpen, dataAttr, extra) {
   var pad   = 10 + depth * 14;
   var arrow = kind === 'leaf' ? '' :
     '<span class="tree-arrow">' + (isOpen ? '▾' : '▸') + '</span>';
   var badge = '<span class="pct ' + pctClass(pct) + '">' + pct + '%</span>';
   return '<div class="tree-row tree-' + kind + '" style="padding-left:' + pad + 'px;" '
     + dataAttr + '>' + arrow + badge
-    + '<span class="tree-label">' + escSvg(label) + '</span></div>';
+    + '<span class="tree-label">' + escSvg(label) + '</span>'
+    + (extra || '') + '</div>';
 }
 
 function renderTreeNode(node, depth, out) {
@@ -649,8 +656,11 @@ function renderTreeNode(node, depth, out) {
   fileKeys.forEach(function(k) {
     var f = node.files[k];
     var isOpen = !treeCollapsed[f.path];
+    var safePath = f.path.replace(/'/g, "\\'");
+    var omitBtn = '<button class="tree-omit-btn" title="Omit all functions in this file" '
+      + 'onclick="event.stopPropagation();omitFile(\'' + safePath + '\')">⊘</button>';
     out.push(treeRowHtml(f.name, nodePct(f), depth, 'file', f.path, isOpen,
-                         'onclick="toggleTreeNode(\'' + f.path.replace(/'/g, "\\'") + '\')"'));
+                         'onclick="toggleTreeNode(\'' + safePath + '\')"', omitBtn));
     if (isOpen) {
       // functions in this file, sorted by pct asc
       f.fns.slice().sort(function(a, b) {
@@ -751,6 +761,23 @@ function omitCurrent() {
   onTestChange();        // re-filters: the entry is now hidden (not destroyed)
   refreshDetail();       // re-render graph so the node picks up its omitted flag
   if (nextFn) show(nextFn);
+}
+
+// Omit all functions belonging to a given source file path.
+function omitFile(filePath) {
+  var fns = Object.keys(fnSrc).filter(function(fn) { return fnSrc[fn] === filePath; });
+  var visible = fns.filter(function(fn) { return !isOmitted(fn); });
+  if (!visible.length) return;
+  if (!confirm('Omit all ' + visible.length + ' function(s) in ' + filePath + '?')) return;
+  visible.forEach(function(fn) { localOmit[fn] = 1; });
+  saveLocalOmit();
+  refreshOmitUi();
+  onTestChange();
+  refreshDetail();
+  if (currentFunc && isOmitted(currentFunc)) {
+    var first = document.querySelector('.fn-entry:not([style*="display: none"]):not([style*="display:none"])');
+    if (first) show(first.dataset.fn);
+  }
 }
 
 // Restore a single session-omitted function (live — no reload needed).
@@ -1027,6 +1054,10 @@ def build_html(funcs, cov_data, test_covs, fn_src, omit_names=None, omit_header=
         execd, total = packet_counts(lines)
         fn_packets[name] = [execd, total]
 
+    total_exec_pkts = sum(v[0] for v in fn_packets.values())
+    total_pkts      = sum(v[1] for v in fn_packets.values())
+    pkt_pct         = round(100 * total_exec_pkts / total_pkts) if total_pkts else 0
+
     callees, callers = build_call_graphs(cov_data, tracked_fns)
 
     fn_data_js    = 'var fnData = {\n'      + ',\n'.join(fn_data_entries) + '\n};'
@@ -1149,7 +1180,8 @@ def build_html(funcs, cov_data, test_covs, fn_src, omit_names=None, omit_header=
         '<div id="sidebar">',
         '<div id="sidebar-header">',
         '  <strong>Coverage Report</strong><br>',
-        f'  {total} functions &nbsp;·&nbsp; {covered_any} hit &nbsp;·&nbsp; {covered_100} at 100%',
+        f'  {total} functions &nbsp;·&nbsp; {covered_any} hit &nbsp;·&nbsp; {covered_100} at 100%<br>',
+        f'  {total_exec_pkts} / {total_pkts} packets &nbsp;·&nbsp; {pkt_pct}% coverage',
         '</div>',
         test_selector,
         threshold,
@@ -1224,6 +1256,8 @@ def main():
     ap.add_argument('--test-cov', action='append', metavar='FILE', default=[],
                     dest='test_covs',
                     help='Per-test cov.txt path; may be repeated. Test name derived from path.')
+    ap.add_argument('--min-packets', type=int, default=1, metavar='N', dest='min_packets',
+                    help='Filter functions with <= N packets (default 1).')
     args = ap.parse_args()
 
     funcs    = parse_rpt(args.rpt)
@@ -1248,7 +1282,7 @@ def main():
             print(f'[cov_html_report] dropped {len(present)} committed-omit functions',
                   file=sys.stderr)
 
-    func_minimal_packet_length = 1
+    func_minimal_packet_length = args.min_packets
     trivial = {name for _, name in funcs
                if packet_counts(cov_data.get(name, []))[1] <= func_minimal_packet_length}
     if trivial:

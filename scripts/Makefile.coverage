@@ -23,6 +23,11 @@ COV_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/cov.txt, $(SUBDIRS))
 # drops these; the cov.html "Omit" button produces an updated copy to commit.
 COV_OMIT = $(H2DIR)/scripts/cov_omit_functions
 
+# Minimum packet count threshold: functions with <= N packets are excluded from
+# the HTML report (they are too small to produce meaningful coverage signal).
+# Override on the command line:  make cov TARGET=ref_cov COV_MIN_PACKETS=3
+# Default is 1 (only single-packet stubs are filtered).
+
 all:
 	$(MAKE) -f scripts/Makefile.coverage $(SUBDIRS) TARG=all
 
@@ -98,7 +103,8 @@ $(INSTALLPATH)/cov.html: $(INSTALLPATH)/cov/cov.rpt $(INSTALLPATH)/cov/cov_files
 	$(PYTHON) ${H2DIR}/scripts/cov_html_report.py \
 	    --rpt $< --cov $(INSTALLPATH)/cov/cov.txt \
 	    --fn-files $(INSTALLPATH)/cov/cov_files --omit-file $(COV_OMIT) --output $@ \
-	    $(patsubst %,--test-cov %,$(COV_FILES))
+	    $(patsubst %,--test-cov %,$(COV_FILES)) \
+	    $(if $(COV_MIN_PACKETS),--min-packets $(COV_MIN_PACKETS))
 
 # Collect per-test results.txt into a clean PASS/FAIL summary and append to TESTOUT.
 # Called after tst completes; each test's full output is in <test-dir>/make.log.

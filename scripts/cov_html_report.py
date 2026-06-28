@@ -1256,6 +1256,8 @@ def main():
     ap.add_argument('--test-cov', action='append', metavar='FILE', default=[],
                     dest='test_covs',
                     help='Per-test cov.txt path; may be repeated. Test name derived from path.')
+    ap.add_argument('--min-packets', type=int, default=1, metavar='N', dest='min_packets',
+                    help='Filter functions with <= N packets (default 1).')
     args = ap.parse_args()
 
     funcs    = parse_rpt(args.rpt)
@@ -1280,7 +1282,7 @@ def main():
             print(f'[cov_html_report] dropped {len(present)} committed-omit functions',
                   file=sys.stderr)
 
-    func_minimal_packet_length = 1
+    func_minimal_packet_length = args.min_packets
     trivial = {name for _, name in funcs
                if packet_counts(cov_data.get(name, []))[1] <= func_minimal_packet_length}
     if trivial:

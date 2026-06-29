@@ -76,6 +76,15 @@ __attribute__((weak)) int mkdir(const char *path, mode_t mode) {
 	return ret;
 }
 
+sys_call_ret_t sys_rmdir_internal(const char *name);
+
+__attribute__((weak)) int rmdir(const char *path) {
+	sys_call_ret_t res = sys_rmdir_internal(path);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	return ret;
+}
+
 sys_call_ret_t sys_ftell_internal(fd_t fd);
 
 static int tell_internal(int fd) {

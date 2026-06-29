@@ -185,6 +185,10 @@ LDFLAGS += ${LLVM_COV_LDFLAGS}
 endif
 ifdef LOGBUF
 CFLAGS += -DH2K_LOG_PRINTF
+_logbuf_one_level := $(subst ],,$(word 2,$(subst [, ,$(LOGBUF))))
+ifneq ($(_logbuf_one_level),)
+CFLAGS += -DH2K_LOG_LEVEL=$(_logbuf_one_level)
+endif
 endif
 
 else # non-STANDALONE

@@ -95,7 +95,7 @@ static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hth
 		}
 	} else {
 		if (head_xe) {
-			H2K_log_once_ht(H2K_LOG_CH_COPROC, "hthread %d  update_coprocs: add xe\n", hthread);
+			H2K_log_once_ht("hthread %d  update_coprocs: add xe\n", hthread);
 		}
 	}
 	if (hthread_xe2) {
@@ -220,7 +220,7 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 	H2K_thread_context *ret;
 	u32_t prio;
 
-	H2K_log_throttle_ht(H2K_LOG_CH_RESCHED, 1000000, "hthread %d  getbest\n", hthread);
+	H2K_log_throttle_ht(1000000, "hthread %d  getbest\n", hthread);
 	prio = H2K_ready_best_prio();
 	if (prio >= MAX_PRIOS) {  // !H2K_ready_any_valid(), go to sleep
 #ifdef CLUSTER_SCHED

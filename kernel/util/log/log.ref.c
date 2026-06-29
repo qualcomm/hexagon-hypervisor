@@ -23,28 +23,6 @@
 #endif
 static u32_t log_level = H2K_LOG_LEVEL;
 
-static u32_t strcpy(char *dest, const char *src)
-{
-	u32_t count = 1;
-
-	while ('\0' != (*dest++ = *src++)) {
-		count++;
-	}
-
-	return count;
-}
-
-static u32_t strlen(const char *src)
-{
-	u32_t count = 0;
-
-	while ('\0' != (*src++)) {
-		count++;
-	}
-
-	return count;
-}
-
 static u32_t logbuf_space(u32_t htid) {
 
 	return LOGBUF_PER_HT_SIZE - H2K_gp->logbuf_pos[htid] - 1;
@@ -97,27 +75,41 @@ char *H2K_logbuf_alloc(u32_t htid, u32_t count) {
 	return ret;
 }
 
-u32_t H2K_do_log_string(const char *string) {
+static u32_t emit_string(u32_t htid, const char *s);
+static u32_t emit_prefix(u32_t htid, u32_t level, const char *file, u32_t line);
+
+u32_t H2K_do_log_string_at(u32_t level, const char *file, u32_t line, const char *string) {
 
 	u32_t htid = get_hwtnum();
-	u32_t len = strlen(string);
-	s32_t ret = len;
+	char *buf;
+	u32_t start;
+	u32_t len = 0;
 
-	if (H2K_gp->logbuf_enable) {
-		strcpy(H2K_logbuf_alloc(htid, len + 1), string);
-	}
+	if (!H2K_gp->logbuf_enable && !H2K_gp->log_enable)
+		return 0;
+
+	if (level > log_level)
+		return 0;
+
+	buf = H2K_gp->logbuf[htid];
+	start = H2K_gp->logbuf_pos[htid];
+
+	len += emit_prefix(htid, level, file, line);
+	len += emit_string(htid, string);
 
 	if (H2K_gp->log_enable) {
-		/* the angel SYS_WRITE channel is shared hardware: serialize it */
 		H2K_spinlock_lock(&H2K_gp->logbuf_lock);
-		ret = H2K_write(1, (const u8_t *)"H2K: ", 5);
-		if (ret >= 0) {
-			ret = H2K_write(1, (const u8_t *)string, len);
+		if (H2K_gp->logbuf_pos[htid] < start) {
+			s32_t ret = H2K_write(1, (const u8_t *)(buf + start), LOGBUF_PER_HT_SIZE - start - 1);
+			if (ret >= 0)
+				H2K_write(1, (const u8_t *)buf, len - (LOGBUF_PER_HT_SIZE - start - 1));
+		} else {
+			H2K_write(1, (const u8_t *)(buf + start), len);
 		}
 		H2K_spinlock_unlock(&H2K_gp->logbuf_lock);
 	}
 
-	return ret;
+	return len;
 }
 
 /* Append one char to htid's ring, keeping a trailing NUL for string reads. */
@@ -170,7 +162,7 @@ u32_t num(u32_t htid, u64_t n, u32_t base, u32_t width, u32_t neg) {
 }
 
 /* Indexed by H2K_LOG_* severity level. */
-static const char level_char[] = { 'E', 'W', 'I', 'D' };
+static const char *level_str[] = { "ERROR", "WARN", "INFO", "DEBUG" };
 
 /*
  * Emit prefix into htid's ring and return its length:
@@ -180,7 +172,7 @@ static u32_t emit_prefix(u32_t htid, u32_t level, const char *file, u32_t line) 
 	const char *base = file;
 	const char *p = file;
 	u32_t len = 0;
-	char sev = (level < sizeof(level_char)) ? level_char[level] : '?';
+	const char *sev = (level < sizeof(level_str) / sizeof(level_str[0])) ? level_str[level] : "?";
 
 	/* keep the basename only, dropping any leading directory path */
 	while ('\0' != *p) {
@@ -191,7 +183,7 @@ static u32_t emit_prefix(u32_t htid, u32_t level, const char *file, u32_t line) 
 	len += emit_string(htid, "[ht");
 	len += num(htid, (u64_t)htid, 10, 0, 0);
 	len += emit_string(htid, "][");
-	emit_char(htid, sev); len++;
+	len += emit_string(htid, sev);
 	len += emit_string(htid, "][");
 	len += num(htid, H2K_get_pcycle_reg(), 10, 0, 0);
 	len += emit_string(htid, "][");
@@ -331,6 +323,15 @@ s32_t H2K_log_print(u32_t level, const char *file, u32_t line, const char *fmt, 
 
 /* GLOBAL once: atomic test-and-set on the callsite flag.
  * H2K_atomic_setbit returns 1 when the bit was clear (first setter wins). */
+/* Undefine the once/throttle macros so the function definitions below are not
+ * expanded by the preprocessor — the macros use parenthesized calls like
+ * (H2K_log_once)() to call through, but the definitions themselves must not
+ * be subject to macro substitution. */
+#undef H2K_log_once
+#undef H2K_log_once_ht
+#undef H2K_log_throttle
+#undef H2K_log_throttle_ht
+
 u32_t H2K_log_once(u32_t *flag) {
 	return H2K_atomic_setbit(flag, 0);
 }
@@ -388,6 +389,28 @@ char *H2K_log_init() {
 	H2K_spinlock_init(&H2K_gp->logbuf_lock);
 
 	return H2K_gp->logbuf[0];
+}
+
+#endif
+
+#ifdef H2K_LOG_PRINTF
+
+u32_t H2K_printf_log_once(int *flag) {
+	return H2K_atomic_setbit((u32_t *)flag, 0);
+}
+
+u32_t H2K_printf_log_throttle(u64_t *last, u64_t interval) {
+	static H2K_spinlock_t lock = 0;
+	u64_t now = H2K_get_pcycle_reg();
+	u32_t go = 0;
+
+	H2K_spinlock_lock(&lock);
+	if (now - *last >= interval) {
+		*last = now;
+		go = 1;
+	}
+	H2K_spinlock_unlock(&lock);
+	return go;
 }
 
 #endif

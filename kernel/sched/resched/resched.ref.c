@@ -17,9 +17,9 @@
 #include <stop.h>
 
 static inline void resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum) {
-	if (me != NULL) {
+	if (likely(me != NULL)) {
 		H2K_runlist_remove(me);
-		if (me->vmblock != NULL && me->vmblock->exiting) {
+		if (unlikely(me->vmblock != NULL && me->vmblock->exiting)) {
 			/* VM is tearing down (a peer called H2K_vm_stop and IPI'd us
 			 * via CLUSTER_RESCHED_INT): reap self instead of requeuing,
 			 * and hand dosched a NULL "previous" so our context isn't saved. */

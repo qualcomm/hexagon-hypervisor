@@ -9,12 +9,20 @@ _BOOTVM_BUILD_DIR := $(if $(BUILD_DIR),$(BUILD_DIR),.)
 
 VAPA_KERNEL_X_IN := $(INSTALLPATH)/scripts/vapa_kernel.x.in
 VAPA_KERNEL := $(_BOOTVM_BUILD_DIR)/vapa_kernel.x
+ifeq ($(PICOLIBC),1)
+VAPA_BOOTVM := $(INSTALLPATH)/scripts/vapa_bootvm_picolibc.x
+else
 VAPA_BOOTVM := $(INSTALLPATH)/scripts/vapa_bootvm.x
+endif
 BOOTVM_S := $(INSTALLPATH)/src/bootvm.S
 BOOTVM_O := $(_BOOTVM_BUILD_DIR)/bootvm.o
 BOOTVM_IMAGE := $(_BOOTVM_BUILD_DIR)/bootvm_image
 BOOTVM_IMAGE_BIN := $(_BOOTVM_BUILD_DIR)/bootvm_image.bin
+ifeq ($(PICOLIBC),1)
+BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry_picolibc.S
+else
 BOOTVM_ENTRY_S := $(INSTALLPATH)/src/bootvm_entry.S
+endif
 BOOTVM_ENTRY_O := $(_BOOTVM_BUILD_DIR)/bootvm_entry.o
 BOOTVM_SYMBOLS := $(_BOOTVM_BUILD_DIR)/bootvm_image.sym
 BOOTVM_PROG_TMP := $(BOOTVM_PROG)_tmp

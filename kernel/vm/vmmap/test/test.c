@@ -32,6 +32,13 @@ void H2K_fatal_thread()
 
 H2K_kg_t H2K_kg;
 
+/* TH_test_started: see kernel/traps/config/test for rationale.  The kernel
+ * boot path (H2K_thread_boot -> H2K_init_setup) calls H2K_asid_table_inc
+ * (and may exercise other paths) before main() runs.  Stubs in this file
+ * early-return safe defaults until main() flips this flag.
+ */
+u32_t TH_test_started = 0;
+
 u32_t TH_expected_stlb_invasid = 0;
 u32_t TH_expected_tlb_invasid = 0;
 u32_t TH_expected_stlb_inv_va = 0;
@@ -46,6 +53,7 @@ u32_t TH_newasid = 0;
 
 void H2K_mem_stlb_invalidate_asid(u32_t asid)
 {
+	if (!TH_test_started) return;
 	if (TH_expected_stlb_invasid == 0) FAIL("Unexpected invalidate stlb");
 	TH_expected_stlb_invasid = 0;
 	if (asid != TH_oldasid) FAIL("unexpected asid inv stlb");
@@ -53,6 +61,7 @@ void H2K_mem_stlb_invalidate_asid(u32_t asid)
 }
 
 void H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) {
+	if (!TH_test_started) return;
 	if (TH_expected_stlb_inv_va == 0) FAIL("Unexpected invalidate stlb va");
 	TH_expected_stlb_inv_va = 0;
 	if (asid != TH_oldasid) FAIL("unexpected asid inv stlb");
@@ -61,6 +70,7 @@ void H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_co
 
 void H2K_mem_tlb_invalidate_asid(u32_t asid)
 {
+	if (!TH_test_started) return;
 	if (TH_expected_tlb_invasid == 0) FAIL("Unexpected invalidate tlb");
 	TH_expected_tlb_invasid = 0;
 	if (asid != TH_oldasid) FAIL("unexpected asid inv tlb");
@@ -68,6 +78,7 @@ void H2K_mem_tlb_invalidate_asid(u32_t asid)
 }
 
 void H2K_mem_tlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me) {
+	if (!TH_test_started) return;
 	if (TH_expected_tlb_inv_va == 0) FAIL("Unexpected invalidate tlb va");
 	TH_expected_tlb_inv_va = 0;
 	if (asid != TH_oldasid) FAIL("unexpected asid inv tlb");
@@ -81,6 +92,11 @@ u32_t TH_saw_table_dec = 0;
 
 s32_t H2K_asid_table_inc(u32_t newptb, translation_type type, tlb_invalidate_flag flag, u32_t extra, H2K_vmblock_t *vmblock)
 {
+	if (!TH_test_started) {
+		/* Boot's H2K_init_setup_bootvm calls this once with the boot
+		 * vm's offset translation; any nonzero return is a valid ASID. */
+		return 1;
+	}
 	if (TH_expected_table_inc == 0) FAIL("Unexpected inc");
 	TH_expected_table_inc = 0;
 	if (newptb != a.r00) FAIL("newptb arg");
@@ -93,6 +109,7 @@ s32_t H2K_asid_table_inc(u32_t newptb, translation_type type, tlb_invalidate_fla
 
 void H2K_asid_table_dec(u32_t asid)
 {
+	if (!TH_test_started) return;
 	if (TH_expected_table_dec == 0) FAIL("Unexpected inc");
 	if (asid != TH_oldasid) FAIL("Wrong ASID");
 	TH_saw_table_dec = 1;
@@ -101,6 +118,7 @@ void H2K_asid_table_dec(u32_t asid)
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	TH_test_started = 1;
 
 	a.vmblock = &av;
 

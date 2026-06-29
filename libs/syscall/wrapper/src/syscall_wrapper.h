@@ -20,6 +20,8 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <dirent.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <time.h>
 
 #ifdef __PICOLIBC_ERRNO_FUNCTION

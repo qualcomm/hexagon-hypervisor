@@ -43,7 +43,51 @@ jobs:
         run: |
           make -O USE_PKW=0 NULL_ANGEL_TRAP=1 testall
 
+      - name: Upload test suite artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: test-results
+          path: |
+            artifacts/test_report.html
+            artifacts/test.out
+            artifacts/**/test_results.json
+            artifacts/**/test_report.html
+            artifacts/**/test.out
+          if-no-files-found: warn
+
+      - name: Build loadlinux
+        run: |
+          make -O USE_PKW=0 NULL_ANGEL_TRAP=1 ARCHV="$ARCHV" -C linux loadlinux
+
+      - name: Package test suite archive
+        if: always()
+        run: |
+          tar --create --xz -h \
+            --exclude='*.o' --exclude='*.d' --exclude='*.log' \
+            --file artifacts/test-suite.tar.xz \
+            --transform 's|^|test-suite/|' \
+            artifacts/v*/*/build/tests \
+            artifacts/v*/*/install/bin/booter \
+            scripts/timer_v*.cfg \
+            scripts/devsim_v*.cfg \
+            linux/loadlinux
+
+      - name: Upload test suite archive
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: test-suite
+          path: artifacts/test-suite.tar.xz
+          if-no-files-found: error
+
+      - name: Upload loadlinux artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: loadlinux
+          path: linux/loadlinux
+          if-no-files-found: error
+
       - name: Coverage build and verify
         run: |
           make -O USE_PKW=0 NULL_ANGEL_TRAP=1 ARCHV="$ARCHV" TARGET=ref_cov cov
-          

@@ -41,12 +41,18 @@ Count coprocessor (context) instances
 */
 int h2_coproc_set(h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_unit_entry entry_type, unsigned int unit_mask, unsigned int num, unsigned int enable);
 
+typedef enum {
+	H2_COPROC_INIT_OK       =  0,
+	H2_COPROC_INIT_OLDSTYLE =  1,
+	H2_COPROC_INIT_ERROR    = -1,
+} h2_coproc_init_result_t;
+
 /**
 Initialize coprocessor data
-@returns 0 on success; 1 to indicate absence of multi-unit configuration; -1 on error
+@returns H2_COPROC_INIT_OK on success; H2_COPROC_INIT_OLDSTYLE if multi-unit configuration is absent; H2_COPROC_INIT_ERROR on error
 @dependencies None
 */
-int h2_coproc_init();
+h2_coproc_init_result_t h2_coproc_init();
 
 /** @} */
 

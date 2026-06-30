@@ -79,6 +79,9 @@ typedef struct H2K_vmblock_struct {
 	/* Pointer to thread context storage */
 	H2K_thread_context *contexts;
 
+	/* Set under BKL when main is exiting; gates self-reap in resched. */
+	u32_t exiting;
+
 	union {
 		u32_t flags;
 		struct {

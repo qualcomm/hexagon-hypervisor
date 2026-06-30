@@ -13,11 +13,23 @@
 #include <resched.h>
 #include <globals.h>
 #include <log.h>
+#include <timer.h>
+#include <stop.h>
 
 static inline void resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum) {
-	if (me != NULL) {
+	if (likely(me != NULL)) {
 		H2K_runlist_remove(me);
-		H2K_ready_append(me);
+		if (unlikely(me->vmblock != NULL && me->vmblock->exiting)) {
+			/* VM is tearing down (a peer called H2K_vm_stop and IPI'd us
+			 * via CLUSTER_RESCHED_INT): reap self instead of requeuing,
+			 * and hand dosched a NULL "previous" so our context isn't saved. */
+			H2K_timer_cancel_withlock(me);
+			H2K_free_context_locked(me->vmblock, me);
+			H2K_vmblock_finalize_if_done_locked(me->vmblock);
+			me = NULL;
+		} else {
+			H2K_ready_append(me);
+		}
 	} else {
 		/* Interrupted WAIT mode */
 		H2K_gp->wait_mask = Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);

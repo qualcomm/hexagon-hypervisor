@@ -10,6 +10,8 @@
 #include <context.h>
 #include <h2_common_vm.h>
 
+s32_t H2K_vmop(vmop_t op, u32_t val1, u32_t val2, u32_t val3, u32_t val4, u32_t val5, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");
+
 s32_t H2K_vmop_boot(vmop_t unused0, u32_t pc, u32_t sp, u32_t arg1, u32_t prio, u32_t vm, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");
 
 s32_t H2K_vmop_status(vmop_t unused0, u32_t, u32_t vm, u32_t unused3, u32_t unused4, u32_t unused5, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");

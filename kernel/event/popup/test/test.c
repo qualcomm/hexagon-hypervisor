@@ -343,6 +343,32 @@ int main()
 	a.vmstatus = 0;
 	H2K_runlist_remove(&a);
 
+	/* popup_cancel: thread was waiting on interrupt i; cancel must clear the
+	 * handler slot and reset r00 to -1. */
+	{
+		int i;
+		for (i = 0; i < MAX_INTERRUPTS; i++) {
+#if ARCHV >= 4
+			if (i == L2_CORE_INTERRUPT) continue;
+#endif
+			TH_clear_popups();
+			H2K_runlist_push(&a);
+			/* Simulate the state popup_wait leaves: INTBLOCKED, r00=intnum, handler set */
+			a.status = H2K_STATUS_INTBLOCKED;
+			a.r0100 = i;
+			H2K_gp->inthandlers[i].handler = H2K_popup_int;
+			H2K_gp->inthandlers[i].param = &a;
+
+			BKL_LOCK();
+			H2K_popup_cancel(&a);
+			BKL_UNLOCK();
+
+			if (H2K_gp->inthandlers[i].raw != 0) FAIL("cancel: handler not cleared");
+			if (a.r00 != (u32_t)-1) FAIL("cancel: r00 not reset");
+			H2K_runlist_remove(&a);
+		}
+	}
+
 	puts("TEST PASSED\n");
 	return 0;
 }

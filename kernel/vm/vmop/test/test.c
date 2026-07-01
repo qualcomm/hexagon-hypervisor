@@ -323,6 +323,38 @@ int main()
 		if (me_block.status != 0x55) FAIL("self-sentinel: vmblock->status not stamped");
 	}
 
+	puts("dispatch");
+
+	puts("U");
+	/* OOB op codes must return -1 without dispatching */
+	if (H2K_vmop((vmop_t)-1,   0,0,0,0,0, me) != -1) FAIL("op=-1 not rejected");
+	if (H2K_vmop((vmop_t)100,  0,0,0,0,0, me) != -1) FAIL("op=100 not rejected");
+	if (H2K_vmop(VMOP_MAX,     0,0,0,0,0, me) != -1) FAIL("op=VMOP_MAX not rejected");
+
+	puts("V");
+	/* Dispatch VMOP_KILL_THREAD through the table: target READY, same result as case K */
+	TH_reset(target, H2K_STATUS_READY, 0);
+	ret = H2K_vmop(VMOP_KILL_THREAD, tid.raw, 0,0,0,0, me);
+	if (ret != 0) FAIL("disp KILL_THREAD ret");
+	if (!(target->vmstatus & H2K_VMSTATUS_KILL)) FAIL("disp KILL_THREAD no KILL");
+	if (!(target->vmstatus & H2K_VMSTATUS_VMWORK)) FAIL("disp KILL_THREAD no VMWORK");
+
+	puts("W");
+	/* Dispatch VMOP_KILL_VM through the table: cpu0 RUNNING, cpu1 DEAD */
+	target_threads[0].status = H2K_STATUS_RUNNING;
+	target_threads[0].vmstatus = 0;
+	target_threads[1].status = H2K_STATUS_DEAD;
+	target_threads[1].vmstatus = 0;
+	target_block.waiting_cpus = 0;
+	target_block.status = 0;
+	TH_saw_ipi = TH_saw_popup_cancel = TH_saw_futex_cancel = 0;
+	ret = H2K_vmop(VMOP_KILL_VM, TARGET_VMIDX, 0x77, 0,0,0, me);
+	if (ret != 0) FAIL("disp KILL_VM ret");
+	if (!(target_threads[0].vmstatus & H2K_VMSTATUS_KILL)) FAIL("disp KILL_VM cpu0 no KILL");
+	if (TH_saw_ipi != 1) FAIL("disp KILL_VM cpu0 no IPI");
+	if (target_threads[1].vmstatus & H2K_VMSTATUS_KILL) FAIL("disp KILL_VM cpu1 (DEAD) touched");
+	if (target_block.status != 0x77) FAIL("disp KILL_VM status not stamped");
+
 	puts("TEST PASSED");
 	return 0;
 }

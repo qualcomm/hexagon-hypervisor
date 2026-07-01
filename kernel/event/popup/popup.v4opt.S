@@ -253,7 +253,7 @@ FUNC_START H2K_popup_cancel .text.int.popup
 		LLZERO = #0
 	}
 	{
-		memd(INTHANDLERS+INTNO<<#2) = LLZERO
+		memd(INTHANDLERS+INTNO<<#3) = LLZERO
 		memw(DEST+#CONTEXT_r00) = #-1
 		jumpr r31
 	}

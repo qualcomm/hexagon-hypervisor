@@ -5,33 +5,6 @@
 
 
 
-H2K_vm_do_work
---------------
-
-.. c:function:: s32_t H2K_vm_do_work(H2K_thread_context *me)
-
-	:param me: Pointer to the current thread context
-
-
-Description
-~~~~~~~~~~~
-
-This function handles work that is deferred, typically because
-the work was done on another hardware thread or while the VCPU
-was unscheduled.
-
-The BKL must NOT be held on entry.  ``H2K_vm_do_work`` acquires the BKL,
-calls :c:func:`H2K_vm_do_work_withlock()`, and releases the BKL on return.
-Callers that already hold the BKL must call
-:c:func:`H2K_vm_do_work_withlock()` directly.
-
-Functionality
-~~~~~~~~~~~~~
-
-Acquires the BKL, invokes :c:func:`H2K_vm_do_work_withlock()`, and releases
-the BKL.  The actual work is documented under that function.
-
-
 H2K_vm_do_work_withlock
 -----------------------
 
@@ -43,10 +16,11 @@ H2K_vm_do_work_withlock
 Description
 ~~~~~~~~~~~
 
-The body of :c:func:`H2K_vm_do_work()` for callers that already hold the
-BKL.  Notable callers include the deferred-work hook in ``H2K_switch``
-(between :c:func:`H2K_dosched()` and ``H2K_check_sanity_unlock``) and
-:c:func:`H2K_vmtrap_vmwait()`.
+Handles deferred VM work for the current thread.  The BKL must be held
+by the caller.  Notable callers include the deferred-work hook in
+``H2K_switch`` (between :c:func:`H2K_dosched()` and
+``H2K_check_sanity_unlock``), :c:func:`H2K_vmtrap_vmwait()`, and
+:c:func:`H2K_vm_ipi_do()`.
 
 INPUT_ASSERT(kernel_locked)
 

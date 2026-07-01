@@ -4,7 +4,6 @@
  */
 
 #include <c_std.h>
-#include <hw.h>
 #include <vmint.h>
 #include <vmwork.h>
 #include <vmevent.h>

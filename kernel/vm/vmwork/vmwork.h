@@ -8,7 +8,6 @@
 
 #include <context.h>
 
-s32_t H2K_vm_do_work(H2K_thread_context *me) IN_SECTION(".text.vm.work");
 s32_t H2K_vm_do_work_withlock(H2K_thread_context *me) IN_SECTION(".text.vm.work");
 
 #endif

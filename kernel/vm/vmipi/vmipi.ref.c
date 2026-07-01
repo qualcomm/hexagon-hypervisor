@@ -10,7 +10,6 @@
 #include <globals.h>
 #include <atomic.h>
 #include <vmwork.h>
-#include <hw.h>
 #include <h2_common_defs.h>
 #include <sample.h>
 
@@ -33,7 +32,9 @@ void H2K_vm_ipi_do(u32_t intno, H2K_thread_context *me, u32_t hthread) {
 	H2K_sample(hthread, me);
 #endif
 	if (me != NULL) {
-		H2K_vm_do_work(me);
+		BKL_LOCK();
+		H2K_vm_do_work_withlock(me);
+		BKL_UNLOCK();
 	}
 }
 

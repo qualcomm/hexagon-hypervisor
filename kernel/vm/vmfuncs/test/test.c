@@ -65,11 +65,16 @@ void H2K_sched_yield(H2K_thread_context *me)
 }
 
 u32_t TH_expected_stop = 0;
-void H2K_thread_stop(u32_t status, H2K_thread_context *me)
+void H2K_thread_stop_withlock(u32_t status, H2K_thread_context *me)
 {
 	if (!TH_expected_stop) FAIL("Didn't expect stop");
 	TH_expected_stop = 0;
 	longjmp(env,1);
+}
+
+void H2K_thread_stop(u32_t status, H2K_thread_context *me)
+{
+	H2K_thread_stop_withlock(status, me);
 }
 
 u32_t TH_expected_dosched = 0;
@@ -98,7 +103,7 @@ u32_t H2K_thread_create_no_squash(u32_t pc, u32_t sp, u32_t arg, u32_t prio, H2K
 
 u32_t TH_expected_work = 0;
 u32_t TH_work_ret = 0;
-u32_t H2K_vm_do_work(H2K_thread_context *me)
+u32_t H2K_vm_do_work_withlock(H2K_thread_context *me)
 {
 	if (!TH_expected_work) FAIL("Didn't expect work");
 	TH_expected_work = 0;

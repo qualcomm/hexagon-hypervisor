@@ -845,3 +845,826 @@ Qualcomm-internal tool wrapper infrastructure.  A symlink named after each tool
 (e.g., `hexagon-clang`) points to PKW, which reads environment variables or config
 files to locate the correct tool installation.  Set `USE_PKW=1` in the build to
 enable it.
+
+## Thread-kill API design (2026-06-24) — VMOP_KILL_THREAD implemented
+
+Wire up `H2K_VMSTATUS_KILL` (already defined, already handled in
+`kernel/vm/vmwork/vmwork.ref.c:18`) into a cross-thread "kill" mechanism so one
+thread can terminate another.  Also a stepping stone for a future "kill VM"
+operation.
+
+### Existing infrastructure
+- `H2K_VMSTATUS_KILL` (bit 1 of `atomic_status_word`, `kernel/util/vmdefs/vmdefs.h:33`).
+- `H2K_vm_do_work` already checks the bit and calls `H2K_thread_stop` if set.
+- `H2K_vm_do_work` runs on: context switch (`switch.ref.S:285`), IPI delivery
+  (`vmipi.ref.c:36`), futex wake (`futex_classic`, `futex_pi`), vmwait
+  (`vmfuncs.ref.c:115`).
+- `H2K_thread_stop` does full teardown: timer cancel, runlist remove, asid dec,
+  context clear, parent signal via `H2K_VM_CHILDINT`.
+- `H2K_vm_int_deliver_locked` (`vmint.ref.c:28`) is the canonical "wake from
+  any state" routine.  Handles VMWAIT / RUNNING / INTBLOCKED / BLOCKED / READY
+  / DEAD.  Has an IE-guard that we don't want for kill.
+
+### Design decisions
+1. **API surface**: new `VMOP_KILL_THREAD` appended to `vmop_t` in
+   `libs/h2/common/h2_common_vm.h`, dispatch entry added to
+   `kernel/vm/vmop/vmop.ref.c`.  Arg layout: `(unused0, id, ...)`.
+   Returns 0 / -1.
+2. **Permissions**: same as `H2K_vmop_status` — caller must be in the target's
+   VM (self) or be the target's parent VM.
+3. **IE override**: kill ignores guest IE; it's forceful.
+4. **State handling**: duplicate the state-switch logic from
+   `H2K_vm_int_deliver_locked` (we discussed refactoring into a shared helper
+   but chose to duplicate to keep the asm version untouched).  Add a top-of-file
+   FIXME noting that a future "thread cancellation" primitive could unify the
+   two state machines.
+5. **DEAD = success**.  Also "vmblock pointer is NULL" (whole VM gone) = success.
+   Malformed ID (out-of-range vmidx/cpuidx) returns -1 naturally; deferred.
+6. **Exit status**: fixed sentinel `0xd1edd1ed` (kill-by-other), distinct from
+   `0xd1eed1ee` (self-kill via vmwork).  Caller-supplied exit codes deferred
+   until needed by `kill_child`.
+7. **Self-kill**: target == me goes through the same path; the RUNNING case
+   sends a self-IPI which fires on trap return and runs `vm_do_work`.  No
+   special-case in the kill helper.
+8. **Concurrent kills / kill racing with voluntary stop**: BKL serializes;
+   bit-set is atomic; whoever loses finds DEAD and returns success.
+
+### Implementation steps (one per session per CLAUDE.md guidance)
+1. **DONE 2026-06-24**: `H2K_vmop_kill_thread` added to
+   `kernel/vm/vmop/vmop.ref.c`; `VMOP_KILL_THREAD` enum entry in
+   `libs/h2/common/h2_common_vm.h`; declaration in `kernel/vm/vmop/vmop.h`;
+   spec entry in `kernel/vm/vmop/vmop.spec`.  Builds clean on opt and ref
+   variants (v81).  The implementation kept sentinel `0xd1eed1ee` — the
+   target's exit status is still whatever `vmwork.ref.c` passes to
+   `H2K_thread_stop`, since the natural-handling design means a separate
+   "kill-by-other" sentinel needs either a second bit or a stashed status word.
+   Deferred unless `VMOP_KILL_CHILD` actually needs it.
+2. **DONE 2026-06-24**: Test added at `kernel/vm/vmop/test/test.c` (replaces
+   the placeholder "Tested by thread/create/test"). Mocks
+   `H2K_vm_ipi_send_withlock`, `H2K_popup_cancel`, `H2K_futex_cancel`; uses the
+   real `H2K_ready_append` (it just touches the readylist globals). Covers
+   permissions (me==NULL, VM-gone, unrelated VM, OOB cpuidx), DEAD short-
+   circuit, all five non-DEAD states (VMWAIT/RUNNING/INTBLOCKED/BLOCKED/READY),
+   IE-clear variants for the kill-ignores-IE invariant, and self-kill. Passes
+   on v81/opt as part of the 99-test suite.
+
+   Side cleanup: the `target_id.vmidx >= H2K_ID_MAX_VMS` check in
+   `H2K_vmop_kill_thread` was dead code (the field is a 6-bit bitfield, so it
+   can only hold 0..63 == 0..H2K_ID_MAX_VMS-1). Removed.
+3. **DONE 2026-06-24**: `H2K_vmop_kill_child` added. Refactor was tiny: pulled
+   the BKL-locked body of `H2K_vmop_kill_thread` into static
+   `kill_thread_locked(vmblock, target)` and called it once from kill_thread,
+   in a loop from kill_child. Permission is **parent-only** (caller's
+   `id.vmidx == vmblock->parent.vmidx`); the calling VM cannot use this op to
+   kill its own threads (use `VMOP_KILL_THREAD` for self). VM-already-gone =
+   success, matching kill_thread. We let `H2K_thread_stop` write
+   `vmblock->status` naturally as each vcpu drains, rather than stamping a
+   "being killed" status up-front. Coverage report shows zero uncovered lines
+   across all three functions; full v81/opt suite still 99/99.
+4. **(Future)** refactor `H2K_vm_int_deliver_locked` and `kill_thread_locked`
+   to share a common "wake-from-any-state" primitive; update the asm.
+
+## VMOP_KILL_VM + pthread exit tests (2026-06-25) — IN PROGRESS
+
+### What was done this session
+
+**1. Ported pthread test suite from `kernel_thread_stop_reap_blocked` PR**
+
+`git checkout origin/kernel_thread_stop_reap_blocked -- libs/posix/pthread/test_h2/ makefile scripts/Makefile.coverage scripts/Makefile.inc.test scripts/testlist.v61`
+
+36 new tests in `libs/posix/pthread/test_h2/`. Three categories:
+- Basic pthread tests (join, mutex, cond, barrier, rwlock, sem, TLS, attrs) — `join_basic`, `mutex_recursive`, etc.
+- `stuck_in_*` tests — main returns while worker threads are blocked in various syscalls. Pass only if the VM-exit reaper kills stuck threads.
+- `exit1_*` tests — main calls `exit(1)` with stuck workers. Pass if VM exits on non-zero status.
+
+Also ported: `makefile` change (leading `-` on test rules so one failure doesn't stop the run), `scripts/Makefile.coverage` symlink filtering fix, `scripts/Makefile.inc.test` `.PHONY` additions, `scripts/testlist.v61` registration of all 36 tests.
+
+**2. Baseline test results (pre-fix, v81/opt)**
+
+- **22 basic tests**: all PASS
+- **`stuck_in_rwlock_rd/wr`**: PASS (rwlock is ENOSYS stub, threads don't actually block)
+- **`stuck_in_barrier`**: PASS (barrier uses INTBLOCKED state which the "all-blocked" heuristic in `H2K_thread_stop` handles)
+- **`exit1_main_mutex`, `exit1_main_cond_wait`, `exit1_worker_cond_wait`, `exit1_detached_worker_with_stuck`**: PASS (non-zero exit status triggers parent signal in existing `H2K_thread_stop`)
+- **`stuck_in_mutex`, `stuck_in_join`, `stuck_in_cond_wait`, `stuck_in_sem_wait`, `stuck_in_sem_timedwait`, `stuck_in_cond_timedwait`, `stuck_in_pthread_exit_joined`**: **HANG** (ulimit-killed, exit 137) — these 7 are the target
+- **`neg_cond_wait_no_mutex`**: FAIL with "NO PASS/FAIL/ERROR in log" (probes UB, simulator crashes before main finishes)
+
+**3. VMOP_KILL_CHILD → VMOP_KILL_VM rename + self-kill**
+
+Goal: let `sys_exit` call `VMOP_KILL_VM(SELF)` to reap stuck sibling threads before the calling thread exits.
+
+Files changed:
+- `libs/h2/common/h2_common_vm.h`: renamed `VMOP_KILL_CHILD` → `VMOP_KILL_VM`; added `#define VMOP_KILL_VM_SELF 0` (sentinel, consistent with `VMOP_STATUS_VMIDX_SELF 0`)
+- `kernel/vm/vmop/vmop.h`: renamed `H2K_vmop_kill_child` → `H2K_vmop_kill_vm`
+- `kernel/vm/vmop/vmop.ref.c`: renamed function + dispatch table entry; added SELF sentinel handling (`if (vm == VMOP_KILL_VM_SELF) vmblock = me->vmblock`); expanded permission check to allow self-VM (`me->id.vmidx == vmblock->vmidx`) OR parent-of-child (`me->id.vmidx == vmblock->parent.vmidx`)
+- `libs/h2/vm/h2_vm.h`: added `int h2_vmkill(unsigned int vm)` declaration
+- `libs/h2/vm/h2_vm_imp.ref.c`: added `int h2_vmkill(unsigned int vm) { return h2_vmop_trap(VMOP_KILL_VM, vm, 0, 0, 0, 0); }`
+- `libs/syscall/angel/src/sys_exit.c`: added `#include <h2_vm.h>`, `#include <h2_common_vm.h>`, `#include <stdio.h>`; added `h2_vmkill(VMOP_KILL_VM_SELF)` call + debug printf at top of `sys_exit`
+- `kernel/vm/vmop/test/test.c`: updated test P (self-kill now expected to SUCCEED, caller gets KILL set); updated test comment header; added test T (VMOP_KILL_VM_SELF sentinel with two live threads); renamed all `H2K_vmop_kill_child` → `H2K_vmop_kill_vm`
+
+**4. Build system gotcha — important for future sessions**
+
+The libs build has a two-phase install/compile pattern:
+- `libs/h2/common/h2_common_vm.h` is a source file but ALSO gets installed to `artifacts/v81/opt/install/include/h2_common_vm.h` during `make build`
+- `libs/h2/vm/h2_vm_imp.ref.c` compiles with `-I$(INSTALLPATH)/include` — it reads from the **installed** header, not the source file
+- If the installed header is stale (not yet installed after a source change), `h2_vm_imp.ref.c` will fail to compile with "use of undeclared identifier 'VMOP_KILL_VM'"
+- Workaround: `cp libs/h2/common/h2_common_vm.h artifacts/v81/opt/install/include/` before rebuilding
+- **Permanent fix**: delete all of `artifacts/` and rebuild from scratch — this is what we did at the end of the session
+
+**5. Current state (end of session)**
+
+- `rm -rf artifacts/` + `make ARCHV=81 TARGET=opt build` completed successfully (exit 0)
+- `h2_vmkill` at offset 0x30 confirmed in `artifacts/v81/opt/install/lib/libh2.a`
+- Debug strings "sys_exit(%d): killing vm" and "sys_exit: vm killed, exiting thread" confirmed in `sys_exit.o`
+- **Tests have NOT been run yet on the clean build**
+
+### Next session: run tests and interpret results
+
+```
+make ARCHV=81 TARGET=opt test_variant
+```
+
+Then check results:
+```
+grep "^exit status" artifacts/v81/opt/build/tests/./libs/posix/pthread/test_h2/stuck_in_mutex/make.log
+```
+
+For each of the 7 previously-hanging tests (`stuck_in_mutex`, `stuck_in_join`, `stuck_in_cond_wait`, `stuck_in_sem_wait`, `stuck_in_sem_timedwait`, `stuck_in_cond_timedwait`, `stuck_in_pthread_exit_joined`) — look for `exit status == 0`.
+
+The debug prints in `sys_exit` will show in `test.log` if `sys_exit` is being called and whether `h2_vmkill` returns before the hang.
+
+If tests still hang: look at the output after "sys_exit: vm killed, exiting thread" — if that line doesn't appear at all, `sys_exit` is not being reached (check if C runtime calls `_exit` instead of `sys_exit`). If it appears but simulator keeps running, the kill happened but `H2K_thread_stop` on the main thread isn't signaling the parent (check `vmblock->num_cpus` race).
+
+### Key mechanism (how the fix should work)
+
+1. `main()` returns 0 → C runtime calls `sys_exit(0)`
+2. `sys_exit` calls `h2_vmkill(0)` → `VMOP_KILL_VM` with SELF sentinel
+3. Kernel: `H2K_vmop_kill_vm(0, 0=SELF, ...)` → loops over vmblock's contexts → calls `kill_thread_locked` on each:
+   - BLOCKED threads (waiting on futex): `H2K_futex_cancel` + `H2K_ready_append` + sets KILL+VMWORK
+   - RUNNING thread (self): sets KILL+VMWORK + sends self-IPI
+4. `h2_vmkill` returns to `sys_exit`
+5. `sys_exit` calls `pthread_exit(0)` (via hook, main thread is detached so no ack-wait)
+6. `pthread_exit` → `H2_TRAP_THREAD_STOP` → `H2K_thread_stop(0, main)`
+7. `H2K_thread_stop`: `num_cpus--`, `vmblock->status=0`. If `num_cpus > 0` and `status == 0`, no parent signal yet. Calls `H2K_dosched`.
+8. Scheduler runs READY sibling threads. Each one: context switch → `switch.v4opt.S` sees VMWORK → calls `H2K_vm_do_work` → sees KILL → `H2K_thread_stop(0xd1eed1ee, sibling)`
+9. `H2K_thread_stop(0xd1eed1ee != 0, ...)` → signals parent via `H2K_VM_CHILDINT`
+10. Booter wakes, sees VM exited → simulator exits
+
+### Remove debug prints before committing
+
+The `printf` calls added to `sys_exit.c` are temporary debug aids. Remove them before the final commit:
+
+```c
+// Remove these two lines:
+printf("sys_exit(%d): killing vm\n", (int)status);
+printf("sys_exit: vm killed, exiting thread\n");
+// And remove #include <stdio.h>
+```
+
+## VMOP_KILL_VM working end-to-end (2026-06-25 evening) — TESTS PASSING
+
+### TL;DR
+
+`stuck_in_mutex` and 3 other previously-hanging pthread tests now PASS.  The
+hang was a BKL re-acquire deadlock that the previous session's notes did not
+identify.  Root cause fixed by splitting `H2K_thread_stop` and `H2K_vm_do_work`
+into wrapper / `_withlock` variants.  `h2_vmkill` now takes a `status` parameter,
+and the kill loop skips the caller so it can unwind through its own exit path.
+
+### The actual bug (previous session got close but stopped)
+
+Previous session's debug printfs in `sys_exit.c` used `printf` and never
+appeared in the test log — they almost certainly would have, because `sys_exit`
+*was* being reached.  The reason they didn't show up: after `exit()` runs
+stdio cleanup, the printf buffers are torn down, so anything `sys_exit` writes
+through stdio is lost.  Using `sys_writec`/`SYS_WRITECREG` (no buffering) made
+the trace visible.  Also `sys_write0` printed pointer bytes instead of the
+string in the v81 sim — `__sys_write_mode__` defaults to 0, which apparently
+interprets the trap argument as a value rather than a pointer.  Avoid
+`sys_write0`; loop over chars with `SYS_WRITECREG`.
+
+The deadlock:
+
+1. `main` returns 0 → `sys_exit(0)` → `h2_vmkill(SELF)` reaps siblings + self.
+2. Main exits via self-IPI → `H2K_vm_do_work` → `H2K_thread_stop` → posts
+   CHILDINT, calls `H2K_dosched` while still holding BKL (per spec, dosched
+   requires BKL held; BKL is released later by `H2K_check_sanity_unlock`).
+3. `dosched` picks a sibling (KILL+VMWORK), jumps to `H2K_switch`.
+4. `switch.v4opt.S:383` sees VMWORK and calls `H2K_vm_do_work` **with BKL
+   still held**.
+5. `H2K_vm_do_work` sees KILL, calls `H2K_thread_stop` → which starts with
+   `BKL_LOCK` → **deadlock** (k0lock on already-held lock).
+
+Pre-commit-7b5abe11 `H2K_vm_do_work` only called `H2K_vm_check_interrupts`
+(BKL-fluid), so it was safe with or without BKL held.  Commit 7b5abe11 added
+the KILL → `thread_stop` branch and broke the contract.  The `dosched` and
+`stop` specs were unambiguous about BKL state but `vmwork.spec` was silent —
+that's now fixed.
+
+### Fix
+
+**1. Split lock-aware variants** (matches existing `_withlock`/`_locked`
+convention used elsewhere in the kernel):
+
+- `kernel/thread/stop/stop.{c,h,spec}` — `H2K_thread_stop_withlock` (assumes
+  BKL held); `H2K_thread_stop` is a wrapper that does `BKL_LOCK` then calls it.
+- `kernel/vm/vmwork/vmwork.{c,h,spec}` — `H2K_vm_do_work_withlock` likewise.
+
+**2. Update BKL-held callers to call `_withlock` directly:**
+- `kernel/sched/switch/switch.v4opt.S:383` → `H2K_vm_do_work_withlock`
+- `kernel/sched/switch/switch.ref.S:285` → same
+- `kernel/vm/vmfuncs/vmfuncs.ref.c:115` → same
+- `kernel/vm/vmfuncs/vmfuncs.v4opt.S:167` → same
+
+Other callers (futex_classic, futex_pi, vmipi) keep using the wrapper — they
+explicitly unlock before calling and the wrapper re-acquiring is harmless.
+
+**3. Status parameter and skip-self for `h2_vmkill`:**
+
+- `h2_vmkill(unsigned int vm, int status)` — user-side; 2nd arg sets
+  `vmblock->status` before the kill loop.
+- `H2K_vmop_kill_vm(..., u32_t vm, u32_t status, ...)` — kernel side.
+- Skip self in the kill loop (caller continues, unwinds via its own exit path).
+- `H2K_vm_do_work_withlock`'s KILL branch passes `me->vmblock->status` to
+  `H2K_thread_stop_withlock` (instead of the old hardcoded `0xd1eed1ee`).
+
+The user accepted the asymmetry: "kill_vm of self skips one; kill_vm of a
+child kills all."  Reasoning: caller-that-also-wants-to-die can explicitly
+call `h2_thread_stop` after `h2_vmkill`.  The hardcoded `0xd1eed1ee` marker
+is no longer used — if you want it, pass it as the `status` argument.
+
+### Two important build/diagnostic gotchas (do not re-burn time on these)
+
+**Kernel logging is off by default in opt builds.**  `H2K_log()` and
+`H2K_log_string()` expand to nothing unless the kernel is compiled with
+`-DH2K_LOGBUF`.  That macro is gated by `LOGBUF` on the make command line:
+
+    make ARCHV=81 TARGET=opt LOGBUF=1 build
+
+Without `LOGBUF=1`, kernel-side log calls are silent and you'll waste time
+wondering why your prints aren't showing up.
+
+**libs incremental build is broken when sources change but timestamps look
+ok.**  Editing `libs/syscall/angel/src/sys_exit.c` does not always cause
+`sys_exit.o` and `libh2.a` to rebuild — even with newer source timestamps.
+Workaround that's reliable:
+
+    find artifacts/v81/opt -name 'sys_exit.o' -delete
+    find artifacts/v81/opt -name 'libh2.a' -delete
+    find artifacts/v81/opt -name 'manifest*' -delete
+    make ARCHV=81 TARGET=opt LOGBUF=1 build
+
+ALWAYS confirm a rebuild happened by checking `strings libh2.a` for a string
+you just edited.  This bug bit the previous session multiple times and made
+them think their changes weren't working when in fact the binary was stale.
+
+### Fast iteration: run one test in ~30 seconds
+
+`ULIMIT` defaults to 600 (CPU seconds) — way too long for debug iterations.
+Override per-run:
+
+    H2DIR=$(pwd) INSTALLPATH=$(pwd)/artifacts/v81/opt/install \
+      make -f scripts/Makefile.coverage ARCHV=81 TARGET=opt ULIMIT=30 \
+        $(pwd)/artifacts/v81/opt/build/tests/<test-path>/results.txt
+
+Hanging tests are killed in ~30s of CPU time.  Pass = `results.txt` contains
+`TEST PASSED` and `make.log` has `exit status == 0`.
+
+### What's left (next session start here)
+
+**Cleanup before committing:**
+
+1. Remove debug instrumentation from kernel:
+   - `kernel/vm/vmop/vmop.ref.c`: H2K_log calls in `H2K_vmop_kill_vm` and
+     `kill_thread_locked`.
+   - `kernel/vm/vmwork/vmwork.ref.c`: H2K_log calls in `H2K_vm_do_work*`.
+   - `kernel/thread/stop/stop.ref.c`: H2K_log calls in `H2K_thread_stop*`.
+   - Drop the `#include <log.h>` lines added to those files (unused after).
+2. Remove `dbg_write` helper and its calls from `libs/syscall/angel/src/sys_exit.c`.
+3. The previous session's `printf` + `#include <stdio.h>` are already replaced
+   by `dbg_write` and should be gone after step 2.
+
+**Verification still to do:**
+
+1. Run the remaining stuck_in_* tests we haven't tried yet:
+   `stuck_in_sem_timedwait`, `stuck_in_cond_timedwait`,
+   `stuck_in_pthread_exit_joined`.  Expected: PASS.
+2. Run the full `make ARCHV=81 TARGET=opt test_variant` to make sure we
+   didn't break anything that was passing.  Watch especially for tests that
+   exercise BKL (futex, scheduler) since we touched those paths.
+3. Confirm `neg_cond_wait_no_mutex` still behaves the same way it did
+   before (it was already FAILing with "NO PASS/FAIL/ERROR in log" — that's
+   a different issue, not regressed by our changes).
+
+**Design follow-ups (optional, defer):**
+
+- The `_withlock` naming was extended to `H2K_thread_stop_withlock` and
+  `H2K_vm_do_work_withlock`; spec files updated.  But the project also uses
+  `_locked` (e.g. `H2K_vm_cpuint_post_locked`).  Conventions split between
+  `_withlock` and `_locked` historically — not worth normalizing in this PR.
+- `VMOP_KILL_VM_SELF == 0` sentinel sharing space with vmidx 0 (booter).
+  Cannot ever target the booter VM through this vmop.  Booter shouldn't be
+  killable anyway, so deferred.
+- The previous session's whole "vmkill(SELF) kills the caller" model proved
+  wrong — skip-self is cleaner.  The old test T was rewritten to verify
+  skip-self semantics + status stamping.
+
+## VMOP_KILL_VM session 2 (2026-06-25 night) — 134/136 PASSING
+
+### TL;DR (continuing the morning session)
+
+Started this session at 67/136 because of test.log corruption.  After a
+full diagnosis + cleanup pass we're at 134/136 v81/opt.  The two remaining
+fails are isolated and well-understood (see "Next session" below).
+
+### What was wrong with the morning's 67/136
+
+Two layered bugs hid the real test results:
+
+1. **`dbg_write` in `sys_exit` polluted standalone test logs with binary
+   characters.**  The previous session added `dbg_write` using
+   `SYS_WRITECREG` to debug the deadlock.  Even after cleanup, our new
+   `h2_vmkill` call in `sys_exit` was being issued from STANDALONE kernel
+   tests (kernel/*/test/*) which run in monitor mode with no h2 hypervisor
+   underneath.  The TRAP1 (`h2_vmop_trap`) goes to a simulator that doesn't
+   recognize the SWI — archsim emits `I don't know that swi request: 0x20148`
+   and writes 3 stray bytes (`L\300\0`) to stdout.  The trailing NUL flipped
+   `grep` into "binary file matches" mode, so `results.txt` was a 0-byte file
+   for every standalone test even though they all printed "TEST PASSED".
+
+2. **Cleanup of session 1's debug instrumentation** was not done.  The
+   morning's first runs still had the H2K_log calls in
+   `vmop.ref.c`/`vmwork.ref.c`/`stop.ref.c` and the `dbg_write` helper in
+   `sys_exit.c`.  All removed this session.
+
+### Fix #1: standalone-aware sys_exit
+
+`sys_exit` now gates the `h2_vmkill` + pthread_exit hook on the existing
+`__h2_thread_stop_hook__ != 0xfffffff0` sentinel.  Standalone builds
+(linked with `-Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0` in
+`scripts/Makefile.inc.test:174,180`) now go straight to `ANGEL(SYS_EXIT)`,
+exactly as they did before VMOP_KILL_VM existed.  Code:
+
+```c
+void sys_exit(okay_t status)
+{
+    /* Sentinel hook (0xfffffff0) means standalone build (no h2 hypervisor
+     * underneath, e.g. kernel-level tests).  TRAP1-based h2 calls would
+     * go nowhere, so skip the vm reap and the pthread_exit hook. */
+    if ((void (*)(int))0xfffffff0 != __h2_thread_stop_hook__) {
+        h2_vmkill(VMOP_KILL_VM_SELF, (int)status);
+        if (0 == status) {
+            __h2_thread_stop_hook__(status);
+        }
+    }
+    ANGEL(SYS_EXIT,status,status);
+}
+```
+
+Watch the comment: a `kernel/*` glob in a C block comment looks like a
+nested `/*` to Werror=comment.  Use `kernel-level` instead.
+
+### Fix #2: split vmwork.ref.c and stop.ref.c
+
+`H2K_vm_do_work` and `H2K_vm_do_work_withlock` lived in the same .o file,
+which broke three tests that stub one of those names: archive linking pulls
+both symbols and the test's strong def collides with the archive's strong
+def.  Same for `H2K_thread_stop`/`H2K_thread_stop_withlock`.
+
+Splits created:
+- `kernel/vm/vmwork/vmwork_lock.ref.c` — wrapper `H2K_vm_do_work` only.
+- `kernel/vm/vmwork/vmwork.ref.c` — `H2K_vm_do_work_withlock` only.
+- `kernel/thread/stop/stop_lock.ref.c` — wrapper `H2K_thread_stop` only.
+- `kernel/thread/stop/stop.ref.c` — `H2K_thread_stop_withlock` only.
+
+The wrapper files include `<hw.h>` for `BKL_LOCK`/`BKL_UNLOCK`.  The
+`*.ref.c` glob in `kernel/build/make/make.inc.default` picks up the new
+files automatically.
+
+### Fix #3: rename test stubs
+
+Tests that mocked the old names now mock the `_withlock` variants because
+that's what production calls from BKL-held contexts after the split:
+- `kernel/vm/vmwork/test/test.c`:
+  - stub `H2K_thread_stop` → `H2K_thread_stop_withlock`
+  - call site `H2K_vm_do_work(x)` → `H2K_vm_do_work_withlock(x)`
+- `kernel/vm/vmfuncs/test/test.c`:
+  - stub `H2K_vm_do_work` → `H2K_vm_do_work_withlock`
+  - stub `H2K_thread_stop` → `H2K_thread_stop_withlock`
+- `kernel/vm/vmipi/test/test.c`: no change (vmipi.ref.c still calls the
+  unlocked wrapper — that's correct, the path comes from futex/vmipi with
+  BKL not held).
+
+### Current state (v81/opt, full clean rebuild + test_variant)
+
+- **134 passed, 2 failed**.
+
+Remaining failures:
+
+1. **`kernel/vm/vmfuncs/test`** — hangs silently (`test.log` is empty, exit
+   137 from ULIMIT).  `test.elf` links fine; the symbol table shows
+   `H2K_vm_do_work_withlock` and `H2K_thread_stop_withlock` resolved to
+   the test stubs.  Cause not yet diagnosed.  Hypotheses:
+   - The wrapper `H2K_thread_stop` from `stop_lock.ref.o` is pulled in
+     (visible at 0x8294) — something references it (likely
+     `h2_thread_stop_trap` in libh2.a).  If a path runs it, the wrapper
+     does `BKL_LOCK()` + calls `_withlock` (test stub).  But the test
+     stub `H2K_thread_stop_withlock` longjmps out — never returning to the
+     wrapper's never-was BKL_UNLOCK.  After such a path, BKL is held but
+     longjmp escapes, next BKL_LOCK deadlocks.
+   - The earlier vmtraps (vmversion, setvec, setie, getie, etc.) don't
+     touch BKL or thread_stop — they should run cleanly.  The first
+     vmtrap_wait test case (TH_work_ret=1, intno=1, else branch) should
+     also be fast.
+   - The lack of ANY output (test.log == 50 bytes, only the
+     `probably ulimit` line — nothing from boot or the test) suggests the
+     hang is very early.  Possibly in startup before `main()` prints
+     anything.  Worth checking: does the test link in something new now
+     because of the split?  `hexagon-nm test.elf` shows the wrapper
+     `H2K_thread_stop` at 0x8294 — that wasn't there before.  Trace what
+     references it.
+2. **`libs/posix/pthread/test_h2/pthread_workers_return`** — known
+   not-fixed by this PR.  Test has main calling `pthread_exit(NULL)` and
+   joinable workers that return from start routine; the pthread library
+   makes them wait at `pthread_sem_wait_np(&self->joined)` for a join that
+   never comes (main is dead).  Needs an "all-threads-blocked-or-dead"
+   reaper in the kernel — separate feature from VMOP_KILL_VM (which
+   activates only from sys_exit).  Defer; document as expected fail.
+
+### Files modified this session
+
+- `libs/syscall/angel/src/sys_exit.c` — sentinel gate around h2_vmkill+hook,
+  comment fixed (`kernel/*` → `kernel-level`).
+- `kernel/vm/vmop/vmop.ref.c` — removed all `H2K_log*`, removed `<log.h>`.
+- `kernel/vm/vmwork/vmwork.ref.c` — removed wrapper, removed `H2K_log*`,
+  removed `<log.h>`.  Now only contains `H2K_vm_do_work_withlock`.
+- `kernel/vm/vmwork/vmwork_lock.ref.c` — NEW.  Wrapper only.
+- `kernel/thread/stop/stop.ref.c` — removed wrapper, removed `H2K_log*`,
+  removed `<log.h>`.  Now only contains `H2K_thread_stop_withlock`.
+- `kernel/thread/stop/stop_lock.ref.c` — NEW.  Wrapper only.
+- `kernel/vm/vmwork/test/test.c` — stub renamed, call site renamed.
+- `kernel/vm/vmfuncs/test/test.c` — two stubs renamed.
+
+### Reproducer for the morning's confusion (in case it happens again)
+
+If you see "tons of standalone tests failing with `FAIL - Empty/No
+results.txt`", grep one of the test.logs with `od -c`.  Look for trailing
+NUL bytes or other non-printable characters.  If found, search the kernel
+and libs for any new direct `ANGEL(...)` / `sys_writec` / `sys_write0`
+calls or trap-1 invocations from standalone-test code paths.  The angel
+SYS_WRITE0 in particular has the v81-sim bug noted in session 1
+(`__sys_write_mode__ == 0` interprets the trap arg as a value, not a
+pointer — printing pointer bytes).
+
+`gen_test_results.py` reads `results.txt` content; 0-byte `results.txt`
+counts as a failure even though `test.log` may say "TEST PASSED".  The
+rule at `Makefile.inc.test:494` uses `grep` which switches to "binary
+file matches" mode the moment test.log contains a NUL, and that mode
+prints to stderr (in this build of grep) so `results.txt > $@` ends up
+empty.
+
+### alive_count fix for pthread_workers_return (2026-06-26) — DONE
+
+Added `static atomic_u32_t alive_count = 1` to `pthread_thread.ref.c`:
+- Incremented in `pthread_create` after successful thread creation.
+- Decremented in `pthread_exit` (via `h2_atomic_sub32`) before the
+  joined-wait.  If the decrement reaches 0, this thread is the last
+  live one: call `h2_vmkill(VMOP_KILL_VM_SELF, 0)` to reap any zombies,
+  then skip both the `joined` wait and the `exiting/ack` handshake (no
+  joiner will ever come).
+- `alive_count = 1` covers main; main goes through `pthread_mainthread_setup`
+  (not `pthread_create`), so no explicit increment needed.  Main is set
+  DETACHED, so it never blocks on joined regardless.
+- Uses `h2_atomic_add32`/`h2_atomic_sub32` from `h2_atomic.h` (already
+  accessible via `h2if.h`), consistent with `pthread_once.ref.c`'s use of
+  `h2_atomic_compare_swap32`.
+- Added `#include <h2_common_vm.h>` for `VMOP_KILL_VM_SELF`.
+
+Result: `pthread_workers_return` now passes.  v81/opt: **135/136**.
+
+### Current state (2026-06-26 morning)
+
+- **136 passed, 0 failed** (v81/opt). DONE (2026-06-26).
+
+### vmfuncs/test fix (2026-06-26) — DONE
+
+The actual issue was `stop_lock.ref.o` (wrapper `H2K_thread_stop`) being
+pulled in — not `vmwork_lock.ref.o` as predicted.  After the stop split,
+something in the vmfuncs test link chain referenced `H2K_thread_stop` by
+name.  The wrapper does `BKL_LOCK` → test stub `_withlock` → `longjmp`
+escape → BKL never released → deadlock before any output.
+
+Fix: added `H2K_thread_stop` stub to `kernel/vm/vmfuncs/test/test.c` that
+forwards to `H2K_thread_stop_withlock` (no locking).  This prevents
+`stop_lock.ref.o` from being pulled in at all.
+
+Also recombined `stop_lock.ref.c` back into `stop.ref.c` (deleted
+`stop_lock.ref.c`) since the stub in the test now blocks the wrapper from
+being pulled from the archive in both `vmfuncs/test` and `vmwork/test`.
+
+### NEXT TASK: run all 4 ARCHVs × {opt, ref} to confirm no regressions, then commit.
+
+### pthread_workers_return — decision direction (2026-06-25 night)
+
+Discussed at end of session.  **Kernel reaper ("all threads blocked → reap
+the VM") is OUT** — too easy a footgun (a legitimate wait-for-external-
+interrupt VM would silently disappear), and external wakers like vm
+interrupts complicate the "no possible waker" check.
+
+Two acceptable directions, to choose tomorrow:
+
+a) **Userspace fix in pthread_exit**: when a thread enters
+   `pthread_sem_wait_np(&self->joined)` to wait for a join, it's
+   effectively a zombie.  Have `pthread_exit` (before blocking) sweep the
+   TCB list and join any already-waiting zombies, OR maintain a
+   "live-thread" counter and have the last live thread call `sys_exit(0)`
+   instead of blocking on join (sys_exit then triggers VMOP_KILL_VM,
+   which reaps the joinables stuck on the semaphore).  The counter
+   approach is closer to what glibc's NPTL does.
+
+b) **Modify or skip the test.**  Document it as testing a feature h2
+   doesn't provide (and arguably shouldn't, per strict POSIX — creating
+   joinable threads and never joining them is user error).  Possibly
+   replace with a variant that uses detached workers only, or has main
+   call `exit(0)` after releasing workers instead of `pthread_exit`.
+
+Also worth noting on inspection: our `pthread_exit` body blocks the
+calling thread on `pthread_sem_wait_np(&self->joined)` unconditionally
+when `!detached`.  For `main()` this means main itself blocks waiting for
+a join that will never come (main is joinable by default).  That's
+probably a pthread library bug independent of the test — the initial
+thread should be treated specially.  Worth investigating separately.
+
+## v68/opt pi-test HANG investigation (2026-06-29) — RACE confirmed, root-causing
+
+### Symptom
+`kernel/futex/futex/test/tests/pi` HANGS on **v68/opt only** (v68/ref PASS,
+v81/opt PASS).  Test logic completes ("TEST PASSED" + "Handoff Successful")
+then `exit(0)` never finishes → ulimit kill (exit 137).
+
+### Ruled out
+- **Stack smash**: doubled THREAD_STACK_SIZE 256→512, confirmed rebuild, still
+  hung.  Not a stack overflow.
+
+### Confirmed: it's a RACE (Heisenbug)
+- Interactive PA dump of the hung build: `H2K_kg.ready_valids` (offset 0,
+  4×u64 @ 0xff00c000) ALL ZERO → nothing runnable anywhere, incl. booter.
+  Booter is asleep waiting for a child wakeup that never came.
+- Adding **kernel LOGBUF logging** perturbed timing → test stopped hanging but
+  FAILed "t2 not spinning" (test.c:261) — a timing-dependent assertion in the
+  PI handoff.  So kernel logging is too heavy; it moves the race window.
+- **Userspace-only** instrumentation (SYS_WRITECREG in sys_exit + raw __angel
+  trace in pthread_exit) is light enough: test PASSES and shows a clean
+  teardown.  So any logging in the kernel scheduler path hides the bug.
+
+### Key structural findings
+- Spinners call `h2_thread_stop(0)` → tailcalls `pthread_exit` →
+  `pthread_safe_death` → `trap0(H2_TRAP_THREAD_STOP)` → kernel
+  `H2K_thread_stop` → `thread_stop_withlock`.
+- **alive_count "last thread" logic is effectively dead code for this test.**
+  Only ~4 threads ever run userspace `pthread_exit`; alive_count never reaches
+  0 (bottoms ~0x1a).  The 38 spinners are reaped IN-KERNEL by main's
+  `exit(0)`→`h2_vmkill(SELF,0)` (skip-self), bypassing pthread_exit entirely.
+- Teardown completion depends ENTIRELY on: main `exit(0)` → `h2_vmkill(SELF,0)`
+  stamps vmblock->status=0, marks all others KILL+VMWORK, skips self → spinners
+  reaped via `do_work_withlock`→`thread_stop_withlock(status=0)`.  With status=0
+  the CHILDINT-post condition `status!=0 || num_cpus==0` is FALSE for every
+  spinner reap (num_cpus bottoms at 1 because main is skipped).  CHILDINT to
+  booter is posted ONLY when the genuinely-last thread brings num_cpus to 0.
+
+### Leading hypothesis (the "am I last to exit" race)
+The CHILDINT to booter (`H2K_vm_cpuint_post_locked` in stop_withlock, fired
+only at num_cpus==0) either isn't delivered to booter's VM, or races with
+booter's wait loop, on v68/opt specifically.
+
+- booter waits via `h2_anysignal_wait(&wake_sig, WAKE_CHILD|WAKE_TIMER)`
+  (futex-backed, LEVEL-latched — SIGNALS bit persists, so a set-before-wait
+  returns immediately; intra-booter lost-wakeup is unlikely).
+- booter_isr sets WAKE_CHILD on CHILDINT.  If the CHILDINT interrupt never
+  reaches booter_isr (delivery race in cpuint post to a parent context that's
+  mid-transition), wake_sig stays 0 and booter sleeps forever → matches
+  ready_valids==0.
+- v68-specific angle: switch.v4opt.S has a v68-only dmresume/dm0 block
+  (lines ~360-362); the opt path also gates the vm_do_work call on
+  `if (P_VMWORK)`.  Worth checking whether a KILL-marked thread can reach the
+  switch with VMWORK somehow not set on v68, or whether cpuint delivery
+  to booter races with the reaper.
+
+### NEXT STEP
+Trace the CHILDINT post→deliver→booter_isr path (H2K_vm_cpuint_post_locked and
+vmint delivery, incl. vmint.v4opt.S) for the num_cpus==0 case.  Confirm whether
+the final CHILDINT is (a) never posted, (b) posted but not delivered, or
+(c) delivered but booter missed it.  Lightweight signal only — kernel logging
+moves the race.  Consider: does main reliably become the last thread, and does
+ITS stop post CHILDINT?
+
+### Instrumentation currently in tree (REMOVE before commit)
+- `libs/syscall/angel/src/sys_exit.c`: `dbg()` SYS_WRITECREG tracer + calls.
+- `libs/posix/pthread/thread/pthread_thread.ref.c`: `pe_dbg`/`pe_dbg_hex` raw
+  __angel tracer + calls; `extern __angel` decl.
+- `kernel/vm/vmop/vmop.ref.c`, `kernel/thread/stop/stop.ref.c`,
+  `kernel/vm/vmwork/vmwork.ref.c`: H2K_log() DBG lines + `#include <log.h>`.
+- `kernel/futex/futex/test/tests/pi/test.c`: `info("TEST DONE...")` line.
+
+### Refinement (2026-06-29 cont.): wait/wake protocol traced, BKL intact
+
+Traced the full CHILDINT post→deliver→booter-wake protocol:
+- POST: `thread_stop_withlock` (num_cpus==0 case) → `H2K_vm_cpuint_post_locked`
+  (cpuint.ref.c:32).  Sets pending bit (intno=14=CHILDINT in low u16
+  `cpuint_pending`; `cpuint_enabled` is high u16).  If `pending & enabled`,
+  calls `H2K_vm_int_deliver_locked`.
+- DELIVER: `vmint.ref.c:28`.  If booter is VMWAIT → clear waiting_cpus bit,
+  set r00=intno, `H2K_ready_append`, `H2K_check_sanity`.  Wakes booter.
+  Other booter states (RUNNING/READY/INTBLOCKED/BLOCKED) only act if IE set.
+- WAIT: booter `H2K_vmtrap_wait` (ref vmfuncs.ref.c:107 / opt vmfuncs.v4opt.S).
+  Under BKL: `do_work_withlock`→check_interrupts; if pending returns intno (no
+  sleep); else set VMWAIT + waiting_cpus + dosched.
+
+Both post and wait hold BKL (k0lock), so the basic post-vs-sleep ordering is
+serialized and race-free in BOTH ref and opt.  The opt vmtrap_wait holds
+k0lock across do_work + VMWAIT transition + jump to dosched — same contract
+as ref.  So it's NOT a simple BKL gap.
+
+Booter's userspace wait is `h2_anysignal_wait` (futex-backed, LEVEL-latched
+SIGNALS word) — set-before-wait returns immediately, so intra-booter lost
+wakeup is unlikely.  booter_isr sets WAKE_CHILD on CHILDINT guestint.
+
+So the remaining suspects for v68/opt-only:
+1. The CHILDINT cpuint is delivered to booter's kernel context (ready_append)
+   but the actual guest interrupt (booter_isr) is never injected — i.e. the
+   gap is between "booter VCPU readied" and "booter_isr actually runs the
+   WAKE_CHILD set".  If booter was readied for some OTHER reason, ran, checked
+   child status (still alive), and went back to VMWAIT, and the CHILDINT
+   pending bit got consumed/cleared without injecting the guest int...
+2. A v68opt-specific asm path: cpuint.v68opt.S / vmint has a v68 variant?
+   Check whether vmint delivery or the guest-int injection has a v68opt
+   assembly version that differs from ref.
+3. Whether `H2K_check_sanity` (called from deliver) vs `check_sanity_unlock`
+   interacts with the opt switch's v68 dmresume/dm0 block.
+
+NEXT: check for vmint/guest-int-injection v68opt asm; and add a SINGLE
+lightweight marker (not in scheduler hot path) at the num_cpus==0 CHILDINT
+post to confirm in a HANGING run whether the post even happens.  Need a way to
+log that doesn't perturb — maybe a memory breadcrumb (write a sentinel to a
+known PA) rather than angel output, then dump it via the interactive PA peek.
+
+### Finding (2026-06-29 cont.): v68/opt uses HAND-WRITTEN asm vmint/cpuint
+
+v68/opt compiles `vmint.v68opt.S` + `cpuint.v68opt.S` (NOT the .ref.c).
+v68/ref uses .ref.c.  This is the "C and ASM out of sync" surface.
+
+DIVERGENCE FOUND (but probably NOT the v68-specific cause):
+`H2K_vm_int_deliver_locked` ref C (vmint.ref.c:31-34) clears
+`vmblock->waiting_cpus` bit for the woken cpu in the VMWAIT case.  The opt asm
+does NOT — confirmed by grep, NONE of vmint.v{4,55,5,60,65,68,73,81}opt.S
+reference waiting_cpus at all.  Since v81/opt also omits it yet PASSES, this
+divergence is long-standing and consistent, so it doesn't by itself explain
+v68-only hang.  (Still worth fixing/understanding separately — possible latent
+bug; waiting_cpus is used to route shared ints to waiting cpus first.)
+
+NEXT: diff vmint.v68opt.S vs vmint.v81opt.S deliver_locked (and the cpuint
+v68 vs v81) to find what's actually DIFFERENT between the passing and hanging
+opt variants.  Also the v68-only dmresume/dm0 block in switch.v4opt.S
+(lines ~360-362) remains a prime suspect for a v68-specific timing/register
+issue around the kill/reap switch.
+
+## VMWORK contract: libs/ caller audit (2026-06-30)
+
+Audited every guest-side caller of the block primitives in libs/ to confirm
+they treat a -1 (or any unexpected) return from the block trap as a spurious
+failure that must be retried.  Result: all clean -- no caller treats -1 as
+success or fatal, every site has a "reload condition, jump back to trap0"
+retry loop.
+
+futex_wait callers (trap0 #H2_TRAP_FUTEX_WAIT):
+- libs/posix/pthread/sem/pthread_sem.ref.S:148 -- `.Ldo_block` retry loop
+- libs/posix/pthread/barrier/pthread_barrier.ref.S:109 -- `.Lblock_again`
+- libs/posix/pthread/cond/pthread_cond.ref.S:157 -- label `2:` retry
+- libs/posix/pthread/rwlock/pthread_rwlock.ref.S:118 -- `.Lrd_wait` (read)
+- libs/posix/pthread/rwlock/pthread_rwlock.ref.S:176 -- `.Lwr_wait` (write)
+- libs/h2_compat/signal/h2_signal.ref.S:43 -- jumps back to h2_signal_wait_any
+- libs/h2_compat/signal/h2_signal.ref.S:79 -- jumps back to h2_signal_wait_all
+- libs/h2_compat/anysignal/h2_anysignal.ref.S:42 -- explicit "spurrious wakeup"
+  comment in code (existing)
+- libs/h2_compat/allsignal/h2_allsignal.ref.S:70 -- "should not happen" comment
+  but the retry is present
+
+futex_lock_pi callers (trap0 #H2_TRAP_FUTEX_LOCK_PI):
+- libs/posix/pthread/plainmutex/pthread_plainmutex.ref.S:37 -- leaf primitive
+  has `_canfail` suffix and returns kernel r0 directly.  Its C wrapper at
+  libs/posix/pthread/plainmutex/pthread_plainmutex_imp.ref.c:15 wraps in
+  `while (lock_id_canfail_np(...) != 0)` -- proper retry.
+
+popup_wait callers: ZERO call sites in libs/ -- popup primitive defined but
+not consumed.
+
+intpool_wait callers: ZERO call sites in libs/ -- same.  Both are exposed
+through libs/h2/intpool/ but not wired up to any higher-level API today.
+
+Conclusion: the VMWORK gate fix can return -1 spuriously from every block
+primitive without breaking any existing guest caller.  popup/intpool callers
+are nonexistent in-tree, so their fix is purely defensive (per the
+"all block points honor VMWORK" contract in vmdefs.spec).
+
+Minor observation: pthread_cond_imp.ref.c:25 already has a comment noting
+that futex can fail spuriously ("we can request a new timer event and that
+will cause the futex to fail").  The retry mindset already exists in the
+codebase; we are just formalizing the kernel-side guarantee.
+
+## VMWORK contract: futex unit test pre-fix failure (2026-06-30)
+
+Confirmed kernel/futex/futex/test/tests/vmwork/test.c fails pre-fix with the
+expected gate-doesn't-fire signature.  Test extended to add two new cases:
+VMWORK alone (case B, assertion flipped from old broken behavior) and
+VMWORK|KILL (case C, the actual kill-thread scenario from VMKILL_race.md).
+
+Pre-fix run (v81/opt default, archsim standalone):
+
+	FAIL: B: VMWORK alone must gate (wait)
+	FAIL: B: VMWORK alone must gate (lock_pi)
+	FAIL: C: VMWORK|KILL must gate (wait)
+	FAIL: C: VMWORK|KILL must gate (lock_pi)
+	FAIL
+	exit status == 0    [simulator success; test program exited via exit(1)]
+	make: *** [...:495: results.txt] Error 1
+
+Test was refactored from halt-on-first-FAIL to non-fatal CHECK that records
+failures and continues, so we see all four failing sub-assertions in a single
+run.  Case A (VMWORK|IE) passes both pre- and post-fix because the existing
+gate `VMWORK && IE` already handles that path correctly -- there is no
+behavior regression to test for there.
+
+Failure root cause: the current gate at
+kernel/futex/futex_classic/futex_classic.ref.c:27 is
+`(VMWORK & vmstatus) && (IE & vmstatus)` -- requires BOTH bits.  With only
+VMWORK set (case B) or VMWORK|KILL (case C, no IE) the gate falls through
+to safemem, vm_do_work is never called, TH_saw_do_work stays 0.
+
+Post-fix (gate on VMWORK alone) the test should print only "TEST PASSED".
+
+### Post-fix confirmation (2026-06-30)
+
+After applying the gate fix to kernel/futex/futex_classic/futex_classic.ref.c
+and kernel/futex/futex_pi/futex_pi.ref.c -- VMWORK-only gate, and calling
+H2K_vm_do_work_withlock directly (no unlock-then-relock around the wrapper) --
+the test prints "TEST PASSED".
+
+Two non-obvious things needed to actually exercise the change:
+
+- The standalone test links against `artifacts/v$(ARCHV)/$(TARGET)/install/lib/libh2kernel.a`.
+  TARGET defaults to opt (Makefile.inc.config:55), which builds futex_classic
+  from `.v4opt.S` -- the .ref.c is not in the opt library.  To exercise the
+  ref C path, build with `TARGET=ref make` from the project root and run
+  the test from its directory.
+
+- The test stubs `H2K_vm_do_work`.  Switching futex_classic to call
+  `H2K_vm_do_work_withlock` (correct: BKL is already held) requires the
+  test to stub that name instead; otherwise the real `withlock` impl is
+  linked in and dereferences `me->vmblock->status` on a zero-initialized
+  stub context -> hang/crash.
+
+### Opt-path fix confirmed (2026-06-30)
+
+After applying the same changes to kernel/futex/futex_classic/futex_classic.v4opt.S
+and kernel/futex/futex_pi/futex_pi.v4opt.S (mask = VMWORK alone; call
+H2K_vm_do_work_withlock with BKL held, then k0unlock, then return -1),
+the vmwork unit test prints "TEST PASSED" against both targets:
+
+  TARGET=ref make   # ref C path
+  make              # default TARGET=opt; exercises v4opt.S asm
+
+Both paths now exercise the new VMWORK-alone gate.  The fix for the
+v68/opt pi-test hang requires both halves -- the asm change is the one
+that actually closes the production race; the ref change keeps the C
+reference in sync.
+
+## vmkill_vm userspace-deadlock fix (2026-06-30)
+
+Second root cause found after the VMWORK gate fix: after VMOP_KILL_VM_SELF,
+some threads die (via IPI/kill) without going through pthread_exit, so they
+never decrement alive_count.  When main's pthread_exit runs, last==false,
+and it blocks waiting for threads that are already dead.  VM never drains.
+
+Final fix: removed "if (target == me) continue" from H2K_vmop_kill_vm kill
+loop.  Caller now gets KILL|VMWORK + IPI like all other RUNNING threads.
+IPI fires on first userspace instruction after vmkill returns; caller cannot
+reach any mutex before being killed.
+
+pthread_exit defense-in-depth (libs/posix/pthread/thread/pthread_thread.ref.c):
+in last==true branch, after h2_vmkill, call h2_thread_stop_trap(0).  Now
+redundant (IPI fires first) but kept as belt-and-suspenders.
+
+## Session summary (2026-06-30): 1224 passed, 0 failed across 9 variants
+
+Two root causes closed for v68/opt pi-test hang (TEST PASSED but never drained):
+
+1. VMWORK gate fix: futex_classic + futex_pi (ref .c and .v4opt.S).
+   Gate changed from VMWORK&&IE to VMWORK alone.  Directed unit test added.
+
+2. vmop_kill_vm caller-kill: removed caller-skip from kill loop.  Caller gets
+   IPI with siblings; IPI fires before any blocking call can be made.
+
+Specs updated: vmdefs.spec, vmwork.spec, futex_classic/pi/popup/intpool specs,
+vmop.spec.
+
+Open for next session: #4 vmwork unconditional-clear test; #7 PI owner/waiter
+audit; #11 retry backstop; vmwork.ref.c unconditional clear (spec already done).

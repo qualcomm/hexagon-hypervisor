@@ -29,14 +29,36 @@ tst: $(RESULT_FILES)
 # Build and run one test, producing its results.txt.
 # Depends on $(INSTALLPATH)/manifest (sha256 of key install files, updated only when
 # content changes) so tests re-run iff the build actually changed something.
+# The leading '-' on the inner make line makes the rule succeed even when the
+# test fails; PASS/FAIL is captured in results.txt content (read by check-fail
+# and gen_test_results.py).  Without this, .DELETE_ON_ERROR would remove the
+# FAIL details and abort tst, blocking unified report generation.
+# The find whitelists only source-file extensions (so stale outputs from
+# in-source builds — *.elf, *.o, *.log, results.txt, gmon*, etc. — are NOT
+# symlinked into the per-variant build dir).  Without this, every variant
+# would write through the same symlink to the source tree and clobber each
+# other's results, leaving only the last writer's result in the report.
+# Named exclusions cover generator outputs whose extension matches a source
+# extension (scenarios.h from scenarios.py, generated_tests.dat from
+# gentests.py, threadmap.py from a perf tool).
 $(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
 	mkdir -p "$(TEST_BUILD_ROOT)/$*"
-	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc \
+	find "$(H2DIR)/$*" -maxdepth 1 -type f \
+	    \( -name 'Makefile' -o -name 'tested_functions' \
+	       -o -name '*.c' -o -name '*.h' \
+	       -o -name '*.S' -o -name '*.s' \
+	       -o -name '*.cpp' -o -name '*.cc' \
+	       -o -name '*.py' -o -name '*.dat' \
+	       -o -name '*.cfg' \
+	    \) \
+	    ! -name 'scenarios.h' \
+	    ! -name 'generated_tests.dat' \
+	    ! -name 'threadmap.py' \
 	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
 	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
 	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
 	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
-	$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" tst TEST="$*" 2>&1 | \
+	-$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" tst TEST="$*" 2>&1 | \
 	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
 	    TSTAT=$${PIPESTATUS[0]}; \
 	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \

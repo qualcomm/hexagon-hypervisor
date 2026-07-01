@@ -19,11 +19,16 @@
 
 void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 {
+	BKL_LOCK();
+	H2K_thread_stop_withlock(status, me);
+}
+
+void H2K_thread_stop_withlock(s32_t status, H2K_thread_context *me)
+{
 	H2K_vmblock_t *vmblock = me->vmblock;
 	H2K_thread_context *parent_context;
 	H2K_vmblock_t *parent_vmblock;
 
-	BKL_LOCK(&H2K_bkl);
 	H2K_timer_cancel_withlock(me);
 	H2K_runlist_remove(me);
 	H2K_asid_table_dec(me->ssr_asid);
@@ -42,10 +47,9 @@ void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 		} else if (vmblock->num_cpus == 0) { // no parent; just deallocate.
 			/* Can't free immediately because H2K_switch reads from *me */
 			/* EJP: I think this is OK now if we dosched(NULL,htnum)? */
-			H2K_mem_alloc_free(vmblock);  
+			H2K_mem_alloc_free(vmblock);
 		}
 	}
 	/* If we dosched(NULL,get_hwtnum()) I think we can remove special cases in free() */
 	H2K_dosched(NULL,get_hwtnum());
 }
-

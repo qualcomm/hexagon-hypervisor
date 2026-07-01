@@ -24,6 +24,11 @@ If the value has changed, the kernel returns -1.
 
 If the thread went to sleep, the kernel returns 0.
 
+Per the VMWORK contract (see :doc:`../../util/vmdefs/vmdefs`), -1 may
+also be returned spuriously when VMWORK is observed after the BKL is
+acquired.  Callers must treat -1 as "did not block -- re-check the
+wait condition and retry."
+
 Functionality
 ~~~~~~~~~~~~~
 

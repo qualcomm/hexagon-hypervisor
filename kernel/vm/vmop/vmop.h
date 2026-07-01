@@ -16,4 +16,8 @@ s32_t H2K_vmop_status(vmop_t unused0, u32_t, u32_t vm, u32_t unused3, u32_t unus
 
 s32_t H2K_vmop_free(vmop_t unused0, u32_t vm, u32_t unused2, u32_t unused3, u32_t unused4, u32_t unused5, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");
 
+s32_t H2K_vmop_kill_thread(vmop_t unused0, u32_t id, u32_t unused2, u32_t unused3, u32_t unused4, u32_t unused5, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");
+
+s32_t H2K_vmop_kill_vm(vmop_t unused0, u32_t vm, u32_t status, u32_t unused3, u32_t unused4, u32_t unused5, H2K_thread_context *me) IN_SECTION(".text.misc.vmboot");
+
 #endif

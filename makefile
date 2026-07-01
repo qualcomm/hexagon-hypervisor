@@ -39,7 +39,7 @@ endif
 	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
+	echo "v$(ARCHV) $(TARGET) ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
 	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \

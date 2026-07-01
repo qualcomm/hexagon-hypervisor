@@ -461,6 +461,7 @@ endif
 .PHONY: try_gmon_out
 
 try_gmon_out: test.log
+	rm -f gmon.out; \
 	find . -maxdepth 1 | egrep -q 'gmon\.t_'; \
 	if [ $$? -eq 0 ]; then \
 		${GMON_MERGE} -o gmon.out gmon.t_*; \

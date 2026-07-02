@@ -73,7 +73,37 @@ FUNC_START start .entry .p2align 12
 	jump .Lpast_mbox
 	.space 0x200  // FIXME: needs to be enough for all angel mailboxes but still fit all code in 4K
 
+	/*
+	 * Boot parameter block: lives at a fixed offset in the entry page
+	 * so that boot firmware or external tooling can locate and patch
+	 * it.  The first two words capture r1:0 as they were at reset on
+	 * the boot thread; bootloaders pass the device tree blob physical
+	 * address there for forwarding to a guest.  The remaining pad is
+	 * reserved for future parameters or a patched-in platform-specific
+	 * boot stub.
+	 */
+	.p2align 3
+	.globl h2_boot_params
+h2_boot_params:
+	.word 0		// r0 at entry (e.g. DTB physical address, low)
+	.word 0		// r1 at entry (e.g. DTB physical address, high)
+	.space 0x38	// reserved
+
 .Lpast_mbox:
+	/*
+	 * Capture r1:0 into the boot parameter block before anything
+	 * clobbers them.  Only the boot thread's values are meaningful;
+	 * secondary hardware threads also enter here when started later.
+	 */
+	r10 = HTID
+	{
+		p0 = cmp.eq(r10,#0)
+		if (!p0.new) jump:nt .Lpast_bootparam_capture
+	}
+	r10 = add(PC,##h2_boot_params@PCREL)
+	memd(r10+#0) = r1:0
+	dccleana(r10)	// reach memory before the cache kill below
+.Lpast_bootparam_capture:
 
 #ifdef CRASH_DEBUG
 	r7 = PC

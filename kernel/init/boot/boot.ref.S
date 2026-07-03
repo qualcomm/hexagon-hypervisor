@@ -70,6 +70,14 @@
 #define CORE_DONE 0x1
 
 FUNC_START start .entry .p2align 12
+	/*
+	 * STANDALONE test links pull this object in solely for
+	 * h2_boot_params (referenced by info.ref.c) and supply their own
+	 * `start' via crt0_standalone.o.  Weak lets that definition win
+	 * instead of colliding; real (non-STANDALONE) links still resolve
+	 * to this one, since it's the only definition present there.
+	 */
+	.weak start
 	jump .Lpast_mbox
 	.space 0x200  // FIXME: needs to be enough for all angel mailboxes but still fit all code in 4K
 

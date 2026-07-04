@@ -810,3 +810,32 @@ Qualcomm-internal tool wrapper infrastructure.  A symlink named after each tool
 (e.g., `hexagon-clang`) points to PKW, which reads environment variables or config
 files to locate the correct tool installation.  Set `USE_PKW=1` in the build to
 enable it.
+
+### V85 L2VIC / VID registers & direct-to-guest (from "V85 spec Rev AB.pdf")
+Source: V85 System spec (80-V9418-400 Rev AB) at project root. §6 Interrupts, §5.13/5.14 direct-to-guest.
+
+**VID register layout (the crux of multi-VIC support):**
+- Core supports up to 4 L2 VICs, each 1024 prioritized sources.
+- VIC0=L1 int#2 (lowest-prio L1), VIC1=#3, VIC2=#4, VIC3=#5.  Matches max.h.
+- TWO control registers hold FOUR 10-bit VID fields (0-1023, source within that VIC):
+    VID  (S21): VID0 = bits [9:0],  VID1 = bits [25:16]
+    VID1 (S22): VID2 = bits [9:0],  VID3 = bits [25:16]
+- Current asm (interrupt.ref.S:67 `VIDVAL = VID; INTNO = add(VIDVAL,#32)`) reads the
+  RAW VID register -- only correct while VIC1 field (bits 25:16) is zero, i.e. VIC1-3 unused.
+- ciad on an L1 line ALSO handshakes the attached L2 controller (lets it present next VID).
+  So ciad must target the actual L1 line that fired, per-VIC.
+- Writing VID needs isync after; a CR write to VID writes >1 field (VID0+VID1 together).
+
+**Direct-to-guest interrupts (§6.3) -- CHOSEN design for VIC1-3:**
+- Only VIC1/VIC2/VIC3 can be taken directly to Guest mode. VIC0 is ALWAYS monitor-mode.
+- CCR bits: VV1=[29], VV2=[30], VV3=[31] enable virtualization of VIC1/2/3.
+  (context.h already models ccr_vv1/vv2/vv3 and gevb.)
+- If any thread sets VVx for an interface, that interrupt is NOT taken in monitor mode.
+- Gated by: IAD, IMASK, SSR.EX, SSR.IE, SYSCFG.G, thread not in Monitor mode, CCR.GIE.
+- On take (hardware, no hypervisor involvement):
+    GSR.CAUSE = VIDx;  IPEND/IAD bits cleared automatically
+    GSR.UM=~SSR.GM; GSR.SS=SSR.SS; GSR.GIE=CCR.GIE; SSR.GM=1; SSR.SS=0; CCR.GIE=0
+    PC = GEVB + (0x10<<2)   // event #16, cause = VID value ("Virtualized VIC interrupt")
+- NOT priority steered (unlike monitor interrupts).
+- So for VIC1-3 the hypervisor mostly CONFIGURES (VVx, GEVB word16 vector, VID) and stays
+  out of the per-interrupt hot path; the guest handles them directly.

@@ -197,6 +197,16 @@ int main()
 	h2_init(NULL);
 	pthread_init();
 
+	/*
+	 * BOOT_THREAD_CCR enables VV1-3 (direct-to-guest for the L2VIC1-3
+	 * interfaces, i.e. L1 ints 3-5).  This test raises those L1 ints via swi
+	 * and expects them delivered through the Monitor-mode popup path, so clear
+	 * VV here before any other thread is created/started -- CCR is inherited at
+	 * thread creation, so clearing it on the boot thread first propagates it.
+	 */
+	H2K_set_ccr(H2K_get_ccr() & ~CCR_VV_ALL_MASK);
+	
+
 	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
 
 	/* set URWX in monitor TLB entry permissions, to allow futex access */

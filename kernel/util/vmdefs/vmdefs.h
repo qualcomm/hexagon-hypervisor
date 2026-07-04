@@ -20,6 +20,9 @@
 #define DEBUG_GEVB_OFFSET (3*4)
 #define TRAP0_GEVB_OFFSET (5*4)
 #define INTERRUPT_GEVB_OFFSET (7*4)
+/* Direct-to-guest VIC1-3 interrupt: hardware jumps here (event #16) with
+ * GSR.CAUSE = VIDx.  See V85 spec §6.3 / §5.14.2 and notes.md. */
+#define VIRT_INTERRUPT_GEVB_OFFSET (16*4)
 
 #define H2K_GSSR_UM_BIT 31
 #define H2K_GSSR_IE_BIT 30

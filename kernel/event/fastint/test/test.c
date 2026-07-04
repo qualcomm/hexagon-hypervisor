@@ -36,7 +36,7 @@ void TH_regcheck_fail()
 	FAIL("regcheck");
 }
 
-unsigned int ackbuf[MAX_INTERRUPTS/32] __attribute__((aligned(2*MAX_INTERRUPTS/8)));
+unsigned int ackbuf[MAX_INTERRUPTS/32] __attribute__((aligned(MAX_L2_INTERRUPTS/8)));
 
 //void TH_call_fastint_check(u32_t intno);
 void TH_call_fastint_intpending(u32_t intno, H2K_thread_context *me, u32_t int2, void *param);

@@ -41,7 +41,7 @@ int main()
 	h2_init(NULL);
 	set_vectors();
 	h2_vmtrap_setie(1);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN,12,0);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN,H2K_TIME_GUESTINT,0);
 	start = h2_time_get_time();
 	for (i = 0; i < SPINS; i++) asm volatile ("nop");
 	end = h2_time_get_time();
@@ -82,7 +82,7 @@ int main()
 	printf("  approx %f ticks\n",delta);
 
 	h2_vmtrap_setie(1);
-	h2_vmtrap_intop(H2K_INTOP_GLOBEN,12,0);
+	h2_vmtrap_intop(H2K_INTOP_GLOBEN,H2K_TIME_GUESTINT,0);
 	saw_interrupt = 0;
 
 	end2 = h2_time_get_time();

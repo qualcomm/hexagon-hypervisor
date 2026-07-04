@@ -30,9 +30,6 @@
  * 
  */
 
-#define MAX_TEST_THREADS 8
-#define MAX_TEST_INTERRUPTS 512
-
 #include <c_std.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +39,8 @@
 #include <shint.h>
 #include <max.h>
 
+#define MAX_TEST_THREADS 8
+
 void FAIL(const char *str)
 {
 	puts("FAIL");
@@ -50,9 +49,9 @@ void FAIL(const char *str)
 }
 
 H2K_thread_context TH_threads[MAX_TEST_THREADS];
-u32_t TH_pending_storage[MAX_TEST_INTERRUPTS/32];
-u32_t TH_enable_storage[MAX_TEST_INTERRUPTS/32];
-u32_t TH_localdis_storage[MAX_TEST_THREADS][MAX_TEST_INTERRUPTS/32];
+u32_t TH_pending_storage[MAX_INTERRUPTS/32];
+u32_t TH_enable_storage[MAX_INTERRUPTS/32];
+u32_t TH_localdis_storage[MAX_TEST_THREADS][MAX_INTERRUPTS/32];
 u32_t *TH_localdis_ptr_storage[MAX_TEST_THREADS];
 
 H2K_vm_int_opinfo_t info[2];
@@ -117,11 +116,11 @@ void TH_init_vmblock()
 	memset(&TH_vmblock,0,sizeof(TH_vmblock));
 	TH_vmblock.contexts = &TH_threads[0];
 	TH_vmblock.max_cpus = MAX_TEST_THREADS;
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
+	TH_vmblock.num_ints = MAX_INTERRUPTS;
 	TH_vmblock.pending = &TH_pending_storage[0];
 	TH_vmblock.enable = &TH_enable_storage[0];
 	TH_vmblock.percpu_mask = &TH_localdis_ptr_storage[0];
-	for (i = 0; i < MAX_TEST_INTERRUPTS/32; i++) {
+	for (i = 0; i < MAX_INTERRUPTS/32; i++) {
 		TH_pending_storage[i] = 0;
 		TH_enable_storage[i] = 0;
 	}
@@ -130,7 +129,7 @@ void TH_init_vmblock()
 		TH_threads[i].id.cpuidx = i;
 		TH_threads[i].status = H2K_STATUS_RUNNING;
 		TH_localdis_ptr_storage[i] = &TH_localdis_storage[i][0];
-		for (j = 0; j < MAX_TEST_INTERRUPTS/32; j++) {
+		for (j = 0; j < MAX_INTERRUPTS/32; j++) {
 			TH_localdis_storage[i][j] = 0;
 		}
 	}
@@ -162,7 +161,7 @@ void TH_setup_intmask()
 {
 	u32_t i,j;
 	for (i = 0; i < MAX_TEST_THREADS; i++) {
-		for (j = 0; j < MAX_TEST_INTERRUPTS; j += primes[i]) {
+		for (j = 0; j < MAX_INTERRUPTS; j += primes[i]) {
 			TH_localdis_storage[i][j/32] |= (1<<(j % 32));
 		}
 	}
@@ -171,8 +170,8 @@ void TH_setup_intmask()
 void TH_clear_data()
 {
 	u32_t i,j;
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
-	for (j = 0; j < MAX_TEST_INTERRUPTS; j+=32) {
+	TH_vmblock.num_ints = MAX_INTERRUPTS;
+	for (j = 0; j < MAX_INTERRUPTS; j+=32) {
 		TH_pending_storage[j/32] = 0;
 		TH_enable_storage[j/32] = 0;
 		for (i = 0; i < MAX_TEST_THREADS; i++) {
@@ -210,12 +209,12 @@ void TH_test_maskfuncs()
 {
 	u32_t i,j;
 	TH_clear_data();
-	for (j = 0; j < MAX_TEST_INTERRUPTS; j++) {
+	for (j = 0; j < MAX_INTERRUPTS; j++) {
 		/* Test enable/disable */
 		if ((TH_enable_storage[j/32] & (1<<(j % 32))) != 0) {
 			FAIL("Interrupt not cleared correctly");
 		}
-		if(j == MAX_TEST_INTERRUPTS/2) {
+		if(j == MAX_INTERRUPTS/2) {
 			H2K_vm_shint_nop(&TH_vmblock,&TH_threads[0],j,info);
 		}
 		H2K_vm_shint_enable(&TH_vmblock,&TH_threads[0],j,info);
@@ -429,7 +428,7 @@ void TH_test_status()
 {
 	int i;
 	u32_t tmp;
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
+	TH_vmblock.num_ints = MAX_INTERRUPTS;
 	for (i = 0; i < TH_vmblock.num_ints/32; i++) {
 		TH_vmblock.enable[i] = 0;
 		TH_vmblock.percpu_mask[0][i] = 0;
@@ -458,10 +457,10 @@ void TH_test_status()
 void TH_test_nexts()
 {
 	H2K_thread_context *me = &TH_threads[0];
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS+1;
+	TH_vmblock.num_ints = MAX_INTERRUPTS+1;
 #define TEST_NEXT(OP) \
 	TH_expected_next.OP = 1; \
-	H2K_vm_shint_ops.OP(&TH_vmblock,me,MAX_TEST_INTERRUPTS,info); \
+	H2K_vm_shint_ops.OP(&TH_vmblock,me,MAX_INTERRUPTS,info); \
 	if (TH_expected_next.raw != 0) FAIL("Didn't get next " #OP);
 
 	TEST_NEXT(enable)
@@ -491,7 +490,7 @@ int main()
 	TH_setup_intmask();
 
 	/* Set up for interrupt disabled checks */
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
+	TH_vmblock.num_ints = MAX_INTERRUPTS;
 	TH_vmstatus_setting = 0;
 	TH_expected_ipi = 0;
 	puts("A");
@@ -514,13 +513,13 @@ int main()
 
 	/* Test interrupt get */
 	TH_vmblock.max_cpus = MAX_TEST_THREADS;
-	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;
-	for (j = 0; j < MAX_TEST_INTERRUPTS; j+=32) {
+	TH_vmblock.num_ints = MAX_INTERRUPTS;
+	for (j = 0; j < MAX_INTERRUPTS; j+=32) {
 		TH_vmblock.pending[j/32] = 0;
 		TH_vmblock.enable[j/32] = 0;
 	}
 	for (i = 0; i < MAX_TEST_THREADS; i++) {
-		for (j = 0; j < MAX_TEST_INTERRUPTS; j++) {
+		for (j = 0; j < MAX_INTERRUPTS; j++) {
 			TH_test_interrupt_get(i,j);
 		}
 	}

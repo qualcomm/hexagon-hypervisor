@@ -18,6 +18,7 @@
 #include <checker_ready.h>
 #include <setjmp.h>
 #include <globals.h>
+#include <max.h>
 #include <passthru.h>
 #include <vmint.h>
 #include <string.h>
@@ -72,13 +73,13 @@ void TH_init_vmblock()
 	memset(&TH_vmblock,0,sizeof(TH_vmblock));
 	TH_vmblock.contexts = &a;
 	TH_vmblock.max_cpus = 1;
-	TH_vmblock.num_ints = 31;
+	TH_vmblock.num_ints = MAX_L2_INTERRUPTS;
 	TH_vmblock.intinfo = TH_intinfo;
 	H2K_kg.vmblocks[2] = &TH_vmblock;
 	a.vmblock = &TH_vmblock;
 	a.id.cpuidx = 0;
 	a.id.vmidx = 2;
-	TH_intinfo[0].num_ints = 32;
+	TH_intinfo[0].num_ints = MAX_L2_INTERRUPTS;
 	TH_intinfo[0].handlers = &TH_ops;
 }
 
@@ -90,42 +91,42 @@ int main()
 	tmpid.raw = a.id.raw;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	/* Valid */
-	for (i = 0; i < 30; i++) {
+	for (i = 0; i < MAX_L2_INTERRUPTS; i++) {
 		tmpid.reserved = i;
-		H2K_gp->inthandlers[32+i].param = (void *)tmpid.raw;
+		H2K_gp->inthandlers[L2_INTERRUPT_START + i].param = (void *)tmpid.raw;
 	}
-	for (i = 0; i < 30; i++) {
+	for (i = 0; i < MAX_L2_INTERRUPTS; i++) {
 		TH_saw_int = 0;
 		TH_intno = i;
-		H2K_passthru(32+i,NULL,0);
+		H2K_passthru(L2_INTERRUPT_START + i,NULL,0);
 		if (TH_saw_int != 1) FAIL("Didn't get passthrough int");
 	}
 
 	/* Invalid CPU */
 	tmpid.cpuidx = 1;
-	for (i = 0; i < 30; i++) {
+	for (i = 0; i < MAX_L2_INTERRUPTS; i++) {
 		tmpid.reserved = i;
-		H2K_gp->inthandlers[32+i].param = (void *)tmpid.raw;
+		H2K_gp->inthandlers[L2_INTERRUPT_START + i].param = (void *)tmpid.raw;
 	}
-	for (i = 0; i < 30; i++) {
+	for (i = 0; i < MAX_L2_INTERRUPTS; i++) {
 		TH_saw_int = 0;
 		TH_intno = -1;
-		H2K_passthru(32+i,NULL,0);
+		H2K_passthru(L2_INTERRUPT_START + i,NULL,0);
 		if (TH_saw_int != 0) FAIL("Didn't get passthrough int");
 	}
 
 	/* Invalid VM */
 	tmpid.cpuidx = 0;
 	tmpid.vmidx = 4;
-	for (i = 0; i < 30; i++) {
+	for (i = 0; i < MAX_L2_INTERRUPTS; i++) {
 		tmpid.reserved = i;
 		tmpid.cpuidx = 0;
-		H2K_gp->inthandlers[32+i].param = (void *)tmpid.raw;
+		H2K_gp->inthandlers[L2_INTERRUPT_START + i].param = (void *)tmpid.raw;
 	}
-	for (i = 0; i < 30; i++) {
+	for (i = 0; i < MAX_L2_INTERRUPTS; i++) {
 		TH_saw_int = 0;
 		TH_intno = -1;
-		H2K_passthru(32+i,NULL,0);
+		H2K_passthru(L2_INTERRUPT_START + i,NULL,0);
 		if (TH_saw_int != 0) FAIL("Didn't get passthrough int");
 	}
 	printf("TEST PASSED\n");

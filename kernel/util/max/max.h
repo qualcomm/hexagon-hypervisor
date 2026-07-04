@@ -203,14 +203,18 @@
 #define H2K_L2_CONTROL 1
 #define L2_INTERRUPT_START 32
 #if ARCHV >= 65
-#define L2_CORE_INTERRUPT 2
+#define L2_CORE_INTERRUPT   2  // L2VIC0 on L1 int 2
+#define L2_CORE_INTERRUPT_1 3  // L2VIC1 on L1 int 3
+#define L2_CORE_INTERRUPT_2 4  // L2VIC2 on L1 int 4
+#define L2_CORE_INTERRUPT_3 5  // L2VIC3 on L1 int 5
+#define NUM_L2VICS 4
 #define L1_INTERRUPTS 8
 #else
 #define L2_CORE_INTERRUPT 31
 #define L1_INTERRUPTS 32
 #endif
-#define MAX_L2_INTERRUPTS 480
-#define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
+#define MAX_L2_INTERRUPTS 1024
+#define MAX_INTERRUPTS (L2_INTERRUPT_START + MAX_L2_INTERRUPTS)
 #endif
 
 #define RESCHED_INT 1
@@ -276,6 +280,16 @@
 #define CCR_COPROC_BIT 3
 #define CCR_COPROC_BIT_MASK BITS_MASK(1, CCR_COPROC_BIT)
 
+/* Virtualize VIC1-3: when set, that VIC's interrupts are taken direct-to-guest
+ * instead of in Monitor mode.  VIC0 is always Monitor mode.  V85 spec §6.3. */
+#define CCR_VV1_BIT 29
+#define CCR_VV1_BIT_MASK BITS_MASK(1, CCR_VV1_BIT)
+#define CCR_VV2_BIT 30
+#define CCR_VV2_BIT_MASK BITS_MASK(1, CCR_VV2_BIT)
+#define CCR_VV3_BIT 31
+#define CCR_VV3_BIT_MASK BITS_MASK(1, CCR_VV3_BIT)
+#define CCR_VV_ALL_MASK (CCR_VV1_BIT_MASK | CCR_VV2_BIT_MASK | CCR_VV3_BIT_MASK)
+
 #define VWCTRL_EN_BIT 31
 #define VWCTRL_HI_BITS 16
 #define VWCTRL_HI_NBITS 12
@@ -303,6 +317,9 @@
 #define BOOT_THREAD_SSR (0x01c60000 | (1<<SSR_GUEST_BIT))
 #if ARCHV == 60
 #define BOOT_THREAD_CCR 0x00130000	// for istariv1
+#elif ARCHV >= 65
+/* Enable direct-to-guest delivery for VIC1-3 (VV1/VV2/VV3). VIC0 stays Monitor. */
+#define BOOT_THREAD_CCR (0x00170000 | CCR_VV_ALL_MASK)
 #else
 #define BOOT_THREAD_CCR 0x00170000
 #endif

@@ -6,6 +6,10 @@
 #include <asm_std.h>
 #include <max.h>
 
+#if MAX_HTHREADS > 8
+#error "check_sanity.v68opt.S supports at most 8 HW threads"
+#endif
+
 /*
 H2K_check_sanity, optimized for cores with up to 8 HW threads.
 

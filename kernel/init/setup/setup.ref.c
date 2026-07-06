@@ -161,7 +161,25 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 	boot->ssr_asid = (u8_t)asid;
 	BKL_LOCK();
 
-#ifdef HTHREADS_MASK
+#ifdef ALL_HTHREADS
+
+#if defined(NUM_HTHREADS) || defined(HTHREADS_MASK)
+#error "Can't define ALL_HTHREADS with NUM_HTHREADS or HTHREADS_MASK."
+#endif
+
+	if (0x65 < H2K_gp->arch) {
+		H2K_gp->hthreads_mask = H2K_cfg_table(CFG_TABLE_HTHREADS_MASK);
+		H2K_gp->hthreads_mask &= MAX_HTHREADS_MASK;
+	} else {
+		H2K_gp->hthreads_mask = MAX_HTHREADS_MASK;
+	}
+	H2K_start_threads(H2K_gp->hthreads_mask);
+	H2K_isync();
+	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
+	H2K_gp->hthreads_mask &= MAX_HTHREADS_MASK;
+	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
+
+#elif defined(HTHREADS_MASK)
 
 #if (HTHREADS_MASK >> MAX_HTHREADS)
 #error "(HTHREADS_MASK >> MAX_HTHREADS) > 0."
@@ -178,9 +196,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 	H2K_gp->hthreads_mask &= MODECTL_E_MASK;
 	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 
-#else
-
-#ifdef NUM_HTHREADS
+#elif defined(NUM_HTHREADS)
 
 #if (0 >= NUM_HTHREADS || NUM_HTHREADS > MAX_HTHREADS)
 #error "Bad NUM_HTHREADS."
@@ -218,8 +234,6 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 	/* boot VM will start the rest */
 	H2K_gp->hthreads = 1;
 	H2K_gp->hthreads_mask = 0x1;
-
-#endif
 
 #endif
 

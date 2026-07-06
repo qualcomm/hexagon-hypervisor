@@ -6,6 +6,10 @@
 #include <asm_std.h>
 #include <max.h>
 
+#if MAX_HTHREADS > 6
+#error "check_sanity.v3opt.S supports at most 6 HW threads"
+#endif
+
 /*
  * ready_valids[] = 256-bit priority bitmap, stored as 4 x u64_t (8 bytes per chunk).
  * Each chunk covers 64 priority levels; bit i = "thread ready at priority i".

@@ -6,6 +6,10 @@
 #include <asm_std.h>
 #include <max.h>
 
+#if MAX_HTHREADS > 16
+#error "check_sanity.v81opt.S supports at most 16 HW threads"
+#endif
+
 /*
 H2K_check_sanity, optimized for cores with up to 16 HW threads.
 

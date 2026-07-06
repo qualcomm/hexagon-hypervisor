@@ -6,6 +6,10 @@
 #include <asm_std.h>
 #include <max.h>
 
+#if MAX_HTHREADS > 4
+#error "check_sanity.v4opt.S supports at most 4 HW threads"
+#endif
+
 /*
 H2K_check_sanity, optimized for cores with up to 4 HW threads.
 

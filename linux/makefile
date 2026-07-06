@@ -105,6 +105,10 @@ ifneq ($(INT_SHIFT),)
 CFLAGS += -DINT_SHIFT
 endif
 
+ifneq ($(ALL_HTHREADS),)
+CFLAGS += -DALL_HTHREADS
+endif
+
 LINUX = 1
 
 ifneq ($(LINUX),)

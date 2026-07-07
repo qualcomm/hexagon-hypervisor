@@ -839,3 +839,36 @@ Source: V85 System spec (80-V9418-400 Rev AB) at project root. ยง6 Interrupts, ย
 - NOT priority steered (unlike monitor interrupts).
 - So for VIC1-3 the hypervisor mostly CONFIGURES (VVx, GEVB word16 vector, VID) and stays
   out of the per-interrupt hot path; the guest handles them directly.
+
+### CCR.GIE as authoritative guest-interrupt-enable state (session, replaces prior plan)
+
+With `BOOT_THREAD_CCR` now setting `CCR_GUEST_MASK` (GRE bit), hardware intercepts
+`trap1(#1/#3/#4/#6)` (VMRTE/VMSETIE/VMGETIE/VMSPSWAP) directly in guest mode, bypassing
+`H2K_vmtrap_setie`/`H2K_vmtrap_return`. This means `H2K_enable/disable_guest_interrupts`
+(which set/clear the software `me->vmstatus & H2K_VMSTATUS_IE` bit) never run for guest
+threads -- the software bit goes stale. Fix applied: for callsites that check the
+*currently running* thread's own IE state, read the live hardware bit directly via
+`H2K_get_ccr() & CCR_GIE_BIT_MASK` instead of the software bit. Ref-only for now (`.ref.c`):
+- `H2K_vm_check_interrupts` (vmint.ref.c), `H2K_vm_do_work` (vmwork.ref.c),
+  `H2K_vm_event` (vmevent.ref.c), `H2K_vmtrap_getie` (vmfuncs.ref.c),
+  `H2K_futex_wait`/`H2K_futex_lock_pi` (futex_classic.ref.c, futex_pi.ref.c)
+  -- all correct, since `me`/`H2K_get_ccr()` are always "self, right now".
+
+For `H2K_vm_int_deliver_locked` (vmint.ref.c) -- delivering an interrupt to `thread`, which
+is NOT necessarily the caller/current CPU (cross-CPU IPI/shint delivery from cpuint.ref.c,
+shint.ref.c) -- `H2K_get_ccr()` would read the *wrong* CPU's CCR. Fixed by reading
+`thread->ccr_gie` instead (the bitfield already in `H2K_thread_context`'s ccr union,
+context.h ~line 200), i.e. the snapshot from `thread`'s last `H2K_context_save`. Known
+limitation (FIXME, not fixed this session): if `thread` is RUNNING elsewhere and enabled
+interrupts via a GRE-intercepted VMSETIE since its last trap entry, this snapshot is stale
+until it traps in again. Narrower window than the bug this replaces (that path requires an
+actual concurrent cross-CPU race, not just "any guest thread calls vmtrap_setie").
+
+`H2K_vmtrap_setie`/`H2K_vmtrap_return` (vmfuncs.ref.c) are effectively dead code for
+guest-mode threads now (hardware intercepts trap1 #1/#3 before reaching them) but left in
+place as the fallback for non-guest-mode / GRE-disabled configurations.
+
+Next task: check whether `H2K_vm_ipi_send_withlock`/popup/futex_cancel paths that get
+called after `thread->ccr_gie` is true need anything else updated, and re-run
+`kernel/time/timer/test_h2_multi/test` + `kernel/vm/vmint` tests to confirm the hang is
+gone (build was not run this session per user instruction).

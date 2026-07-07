@@ -5,8 +5,12 @@
 
 #include "allsyscalls.h"
 
-int sys_rmdir(const char *name) {
+sys_call_ret_t sys_rmdir_internal(const char *name) {
 	clean_str(name);
-	return ANGEL(SYS_RENAME, name, 0);
+	return angel_const_with_err(SYS_RENAME, name, 0);
+}
+
+int sys_rmdir(const char *name) {
+	return sys_rmdir_internal(name).ret_value;
 }
 

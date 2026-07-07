@@ -811,46 +811,22 @@ Qualcomm-internal tool wrapper infrastructure.  A symlink named after each tool
 files to locate the correct tool installation.  Set `USE_PKW=1` in the build to
 enable it.
 
-### Selective logging (LOGBUF) + log severity levels
+### Selective logging (LOGBUF) + log severity levels + spam control
+
 `H2K_log` is gated per-translation-unit by the `LOGBUF` make variable:
 - `make LOGBUF=1`                       -- enable logging everywhere (legacy)
 - `make LOGBUF=sched`                   -- whole subtree (dir token)
 - `make LOGBUF=sched/resched/resched.ref.c` -- single file (file token)
 - `make LOGBUF=data/globals,sched/dosched`  -- comma-separated mix
-Util/log/ and init/setup/ are always force-flagged when LOGBUF is
-set, because they hold H2K_log_print (the impl) and H2K_log_init (the bootstrap);
-without them the selected callsites fail to link / the logbuf is never allocated.
-A token matching no sources emits a $(warning).
 
-Severity levels (kernel/util/log/log.h): H2K_log_err/warn/info/dbg map to
-H2K_LOG_ERR/WARN/INFO/DBG (0..3).  Plain `H2K_log` is an alias for `_dbg`.
-Runtime threshold `log_level` (static in log.ref.c, default
-H2K_LOG_DBG) drops messages with level > threshold.  Each line gets a
-prefix assembled in H2K_log_print: `[ht<id>][<sev>][<pcycle>][file:line] msg`,
-using get_hwtnum() and H2K_get_pcycle_reg().
+Severity levels (kernel/util/log/log.h): H2K_log_err/warn/info/dbg map to H2K_LOG_ERR/WARN/INFO/DBG (0..3). Plain `H2K_log` is an alias for `_dbg`. Runtime threshold `log_level` (static in log.ref.c, default H2K_LOG_DBG) drops messages with level > threshold. Each line gets a prefix: `[ht<id>][<sev>][<pcycle>][file:line] msg`.
 
-### Per-hthread lockless log rings (Phase 2, done)
-globals.h now holds `logbuf[MAX_HTHREADS]`, `logbuf_pos[MAX_HTHREADS]`,
-`logbuf_enable`, `log_enable` instead of a single buffer.  Each hthread writes
-ONLY its own ring (indexed by get_hwtnum()), so H2K_log_print takes NO lock on
-the buffering path -- fixes the self-deadlock risk when logging from the
-scheduler/interrupt path (logbuf_lock was non-reentrant).  Ring size is
-`LOGBUF_PER_HT_SIZE` (max.h, default 4KB, override with -D).
-- `logbuf_lock` is RETAINED but now serializes only the shared angel SYS_WRITE
-  console channel (live streaming), not buffering.
-- `log_enable=1` in H2K_log_init enables live per-call streaming via angel SYS_WRITE
-  (serialized by logbuf_lock); `logbuf_enable=1` enables ring buffering.  Both are
-  set by default in H2K_log_init.
-- emit_char/emit_string/num/emit_prefix all take htid as first arg now.
-- H2K_logbuf_alloc signature changed to (htid, count).
-Verified: make all_clean && make test_variant TARGET=ref ARCHV=81 -> 99/0;
-make build LOGBUF=sched compiles + links.
+**Phase 2 (per-hthread lockless log rings):** globals.h holds `logbuf[MAX_HTHREADS]`, `logbuf_pos[MAX_HTHREADS]`, `logbuf_enable`, `log_enable`. Each hthread writes only its own ring (indexed by get_hwtnum()), so H2K_log_print takes NO lock on the buffering path — fixes self-deadlock risk when logging from scheduler/interrupt path. Ring size is `LOGBUF_PER_HT_SIZE` (max.h, default 4KB). `logbuf_lock` now serializes only the shared angel SYS_WRITE console channel (live streaming), not buffering.
 
-### Log spam control (Phase 3, DONE)
-Four log-filtering primitives added; state lives in local statics in log.ref.c.
-- `H2K_log_once(ch, ...)` — fires once globally (atomic test-and-set via H2K_atomic_setbit)
-- `H2K_log_once_ht(ch, ...)` — fires once per hardware thread (lockless, per-ht only)
-- `H2K_log_throttle(ch, iv, ...)` — global rate limit (serialized by logbuf_lock)
-- `H2K_log_throttle_ht(ch, iv, ...)` — per-ht rate limit (lockless)
-Channel IDs (H2K_LOG_CH_RESCHED, H2K_LOG_CH_COPROC, H2K_LOG_CH_N) declared in
-max.h under #ifdef H2K_LOGBUF (alongside LOGBUF_PER_HT_SIZE).
+**Phase 3 (spam control + improvements, 2026-07-07):**
+- Four log-filtering primitives: `H2K_log_once()` (global, atomic test-and-set), `H2K_log_once_ht()` (per-HT, lockless), `H2K_log_throttle()` (global rate limit), `H2K_log_throttle_ht()` (per-HT rate limit).
+- **Symbolic level names:** `LOGBUF=sched[warn]` now accepts symbolic names (`err`/`warn`/`info`/`dbg`) instead of numeric (0–3). Kernel/Makefile and scripts/Makefile.inc.test map names to levels.
+- **H2K_LOG_NO_SPAM flag:** New build flag disables spam-control macros (once/throttle) to eliminate static state. When set, `H2K_log_once*()` and `H2K_log_throttle*()` become no-ops.
+- **Per-HT once-flag optimization:** `H2K_log_once_ht()` now uses a single u32 bitmask (1 bit per HT) instead of an array, reducing per-callsite storage from 4×MAX_HTHREADS to 4 bytes.
+
+**Files changed:** kernel/Makefile (level mapping), kernel/util/log/log.h (H2K_LOG_NO_SPAM conditional), kernel/util/log/log.ref.c (bitmask-based once_ht), scripts/Makefile.inc.test (level mapping for standalone tests), kernel/util/log/log.spec (new API reference and build configuration documentation).

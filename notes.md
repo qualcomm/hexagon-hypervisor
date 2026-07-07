@@ -810,3 +810,23 @@ Qualcomm-internal tool wrapper infrastructure.  A symlink named after each tool
 (e.g., `hexagon-clang`) points to PKW, which reads environment variables or config
 files to locate the correct tool installation.  Set `USE_PKW=1` in the build to
 enable it.
+
+### Selective logging (LOGBUF) + log severity levels + spam control
+
+`H2K_log` is gated per-translation-unit by the `LOGBUF` make variable:
+- `make LOGBUF=1`                       -- enable logging everywhere (legacy)
+- `make LOGBUF=sched`                   -- whole subtree (dir token)
+- `make LOGBUF=sched/resched/resched.ref.c` -- single file (file token)
+- `make LOGBUF=data/globals,sched/dosched`  -- comma-separated mix
+
+Severity levels (kernel/util/log/log.h): H2K_log_err/warn/info/dbg map to H2K_LOG_ERR/WARN/INFO/DBG (0..3). Plain `H2K_log` is an alias for `_dbg`. Runtime threshold `log_level` (static in log.ref.c, default H2K_LOG_DBG) drops messages with level > threshold. Each line gets a prefix: `[ht<id>][<sev>][<pcycle>][file:line] msg`.
+
+**Phase 2 (per-hthread lockless log rings):** globals.h holds `logbuf[MAX_HTHREADS]`, `logbuf_pos[MAX_HTHREADS]`, `logbuf_enable`, `log_enable`. Each hthread writes only its own ring (indexed by get_hwtnum()), so H2K_log_print takes NO lock on the buffering path — fixes self-deadlock risk when logging from scheduler/interrupt path. Ring size is `LOGBUF_PER_HT_SIZE` (max.h, default 4KB). `logbuf_lock` now serializes only the shared angel SYS_WRITE console channel (live streaming), not buffering.
+
+**Phase 3 (spam control + improvements, 2026-07-07):**
+- Four log-filtering primitives: `H2K_log_once()` (global, atomic test-and-set), `H2K_log_once_ht()` (per-HT, lockless), `H2K_log_throttle()` (global rate limit), `H2K_log_throttle_ht()` (per-HT rate limit).
+- **Symbolic level names:** `LOGBUF=sched[warn]` now accepts symbolic names (`err`/`warn`/`info`/`dbg`) instead of numeric (0–3). Kernel/Makefile and scripts/Makefile.inc.test map names to levels.
+- **H2K_LOG_NO_SPAM flag:** New build flag disables spam-control macros (once/throttle) to eliminate static state. When set, `H2K_log_once*()` and `H2K_log_throttle*()` become no-ops.
+- **Per-HT once-flag optimization:** `H2K_log_once_ht()` now uses a single u32 bitmask (1 bit per HT) instead of an array, reducing per-callsite storage from 4×MAX_HTHREADS to 4 bytes.
+
+**Files changed:** kernel/Makefile (level mapping), kernel/util/log/log.h (H2K_LOG_NO_SPAM conditional), kernel/util/log/log.ref.c (bitmask-based once_ht), scripts/Makefile.inc.test (level mapping for standalone tests), kernel/util/log/log.spec (new API reference and build configuration documentation).

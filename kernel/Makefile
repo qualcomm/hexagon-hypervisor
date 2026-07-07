@@ -50,10 +50,6 @@ ifdef NO_DEVICES
 CFLAGS += -DNO_DEVICES
 endif
 
-ifdef LOGBUF
-CFLAGS += -DH2K_LOGBUF
-endif
-
 ifdef MULTICORE
 CFLAGS += -DMULTICORE
 endif
@@ -137,6 +133,34 @@ endef
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
 ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
+
+ifdef LOGBUF
+_logbuf_one_mod   := $(word 1,$(subst [, ,$(LOGBUF)))
+_logbuf_one_level := $(subst ],,$(word 2,$(subst [, ,$(LOGBUF))))
+ifeq ($(_logbuf_one_mod),1)
+CFLAGS += -DH2K_LOGBUF
+ifneq ($(_logbuf_one_level),)
+CFLAGS += -DH2K_LOG_LEVEL=$(_logbuf_one_level)
+endif
+else
+_logbuf_comma := ,
+
+$(foreach _tok,$(subst $(_logbuf_comma), ,$(LOGBUF)),\
+  $(eval _ll_mod   := $(word 1,$(subst [, ,$(_tok))))\
+  $(eval _ll_level := $(subst ],,$(word 2,$(subst [, ,$(_tok)))))\
+  $(eval _logbuf_hits := $(filter %/$(basename $(_ll_mod)).o,$(ALL_OFILES)))\
+  $(if $(_logbuf_hits),,\
+    $(eval _logbuf_hits := $(foreach _o,$(ALL_OFILES),$(if $(findstring /$(_ll_mod)/,$(_o)),$(_o)))))\
+  $(if $(_logbuf_hits),\
+    $(eval $(_logbuf_hits) : CFLAGS += -DH2K_LOGBUF)\
+    $(if $(_ll_level),$(eval $(_logbuf_hits) : CFLAGS += -DH2K_LOG_LEVEL=$(_ll_level))),\
+    $(warning LOGBUF: token '$(_ll_mod)' matched no kernel sources)))
+
+$(foreach _o,$(ALL_OFILES),\
+  $(if $(findstring /util/log/,$(_o)),$(eval $(_o) : CFLAGS += -DH2K_LOGBUF)) \
+  $(if $(findstring /init/setup/,$(_o)),$(eval $(_o) : CFLAGS += -DH2K_LOGBUF)))
+endif
+endif
 
 $(ALL_OFILES): $(DEST_HFILES)
 

@@ -273,7 +273,7 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 			BKL_LOCK();
 			if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
 				// block as if we got resched interrupt
-				H2K_log("hthread %d  hlxbits: task 0x%08x  setting xe3\n", me->hthread, me);
+				H2K_log("hthread %d  hlxbits: task 0x%08x  setting xe3\n", me->hthread, (u32_t)me);
 				me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 				me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
 				me->r00 = 0;
@@ -286,7 +286,7 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 				u32_t hthread_xe2 = ((me->ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
 
 				xex(me->hthread, hthread_xe, hthread_xe2, 0, hthread_xe, hthread_xe2, 1);
-				H2K_log("hthread %d  hlxbits: task 0x%08x  clearing xe3\n", me->hthread, me);
+				H2K_log("hthread %d  hlxbits: task 0x%08x  clearing xe3\n", me->hthread, (u32_t)me);
 			}
 			BKL_UNLOCK();
 		}
@@ -309,7 +309,7 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t un
 			BKL_LOCK();
 			if (xe2 && !(me->ssr & SSR_XE2_BIT_MASK)) {  // turning xe2 on
 				// block as if we got resched interrupt
-				H2K_log("hthread %d  hmxbits: task 0x%08x  setting xe2\n", me->hthread, me);
+				H2K_log("hthread %d  hmxbits: task 0x%08x  setting xe2\n", me->hthread, (u32_t)me);
 				// me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
 				me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
 				me->r00 = 0;
@@ -322,7 +322,7 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t un
 				u32_t hthread_xe3 = ((me->ccr & CCR_XE3_BIT_MASK) ? 1 : 0);
 
 				xex(me->hthread, hthread_xe, 0, hthread_xe3, hthread_xe, 1, hthread_xe3);
-				H2K_log("hthread %d  hmxbits: task 0x%08x  clearing xe2\n", me->hthread, me);
+				H2K_log("hthread %d  hmxbits: task 0x%08x  clearing xe2\n", me->hthread, (u32_t)me);
 			}
 			BKL_UNLOCK();
 		}
@@ -346,7 +346,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 		BKL_LOCK();
 		if (xe && !(me->ssr & SSR_XE_BIT_MASK)) {  // turning xe on
 			// block as if we got resched interrupt
-			H2K_log("hthread %d  extbits:  task 0x%08x  setting xe\n", me->hthread, me);
+			H2K_log("hthread %d  extbits:  task 0x%08x  setting xe\n", me->hthread, (u32_t)me);
 
 			if ((xa < EXT_HVX_XA_START || xa >= EXT_HVX_XA_START + H2K_gp->coproc_contexts)  // not in HVX range
 #ifdef DO_EXT_SWITCH
@@ -368,7 +368,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 				u32_t hthread_xe3 = ((me->ccr & CCR_XE3_BIT_MASK) ? 1 : 0);
 
 				xex(me->hthread, 0, hthread_xe2, hthread_xe3, 1, hthread_xe2, hthread_xe3);
-			H2K_log("hthread %d  extbits: task 0x%08x  clearing xe\n", me->hthread, me);
+			H2K_log("hthread %d  extbits: task 0x%08x  clearing xe\n", me->hthread, (u32_t)me);
 		}
 		BKL_UNLOCK();
 	}

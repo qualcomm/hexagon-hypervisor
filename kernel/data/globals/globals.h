@@ -170,8 +170,8 @@ typedef struct {
 	u32_t noc_sbase;  // 4k pages
 
 	H2K_spinlock_t logbuf_lock;
-	char *logbuf;
-	u32_t logbuf_pos;  // first free byte
+	char *logbuf[MAX_HTHREADS];
+	u32_t logbuf_pos[MAX_HTHREADS];
 	u32_t logbuf_enable;
 	u32_t log_enable;
 	H2K_spinlock_t angel_lock;

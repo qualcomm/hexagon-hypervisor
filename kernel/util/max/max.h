@@ -453,4 +453,7 @@
 #define CORECFG_PRESENT_STRIDE_PREFETCHER_MASK 0x4
 #define CORECFG_PRESENT_DPM_VOLTLMTMGMT_MASK   0x8
 
-#define LOGBUF_SIZE (32 * 1024)  // bytes
+
+#ifndef LOGBUF_PER_HT_SIZE
+#define LOGBUF_PER_HT_SIZE (4 * 1024)  // bytes, per hardware thread
+#endif

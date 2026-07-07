@@ -38,18 +38,18 @@ s32_t H2K_vm_int_deliver_locked(H2K_vmblock_t *vmblock, H2K_thread_context *thre
 		H2K_check_sanity(0);
 		return 0;
 	case H2K_STATUS_RUNNING:
-		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
+		if (thread->ccr_gie) {
 			return H2K_vm_ipi_send_withlock(thread);
 		}
 		break;
 	case H2K_STATUS_INTBLOCKED:
-		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
+		if (thread->ccr_gie) {
 			H2K_popup_cancel(thread);
 			goto enqueue;
 		}
 		break;
 	case H2K_STATUS_BLOCKED:
-		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
+		if (thread->ccr_gie) {
 			H2K_futex_cancel(thread);
 			goto enqueue;
 		}
@@ -200,7 +200,7 @@ s32_t H2K_vm_check_interrupts(H2K_thread_context *me) {
 
 	s32_t intno;
 	
-	if (me->vmstatus & H2K_VMSTATUS_IE) {
+	if (H2K_get_ccr() & CCR_GIE_BIT_MASK) {
 		/* Try to get interrupt */
 		intno = H2K_vm_interrupt_get(me->vmblock, me);
 		if (intno != -1) {

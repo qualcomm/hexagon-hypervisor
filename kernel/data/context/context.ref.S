@@ -88,6 +88,8 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	//cs0 = r20
 	//cs1 = r21
 	ccr = r11
+	r11 = memw(r7+#CONTEXT_gevb)
+	gevb = r11
 	//r29:28 = memd(r7+#CONTEXT_gssr_gelr)
 	//r27:26 = memd(r7+#CONTEXT_gbadva_gosp)
 	//g1:0 = r29:28

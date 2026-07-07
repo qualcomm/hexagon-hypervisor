@@ -32,7 +32,7 @@ void H2K_vm_event(u32_t gbadva, u32_t cause, u32_t vec_offset, H2K_thread_contex
 	}
 
 	/* save IE status and disable */
-	if (me->vmstatus & H2K_VMSTATUS_IE) {
+	if(H2K_get_ccr() & CCR_GIE_BIT_MASK) {
 		me->gssr |= H2K_GSSR_IE;
 	} else {
 		me->gssr &= ~H2K_GSSR_IE;

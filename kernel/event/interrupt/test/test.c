@@ -254,7 +254,7 @@ int main()
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		/* For each interrupt, try to do the interrupt */
 #if ARCHV >= 4
-		if (i == L2_CORE_INTERRUPT) continue;
+		if (i == L2_CORE_INTERRUPT_0) continue;
 #endif
 		printf("i=%d\n",i);
 		fill_srcdata(i);

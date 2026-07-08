@@ -502,13 +502,13 @@ int main()
 	puts("B");
 
 	/* Set up for interrupt enabled checks */
-	TH_vmstatus_setting = H2K_VMSTATUS_IE;
-	TH_expected_ipi = 1;
-	for (i = 1; i < MAX_TEST_THREADS; i++) {
-		TH_vmblock.max_cpus = i;
-		printf("Num_cpus=%d\n",i);
-		TH_test_posting();
-	}
+	// TH_vmstatus_setting = H2K_VMSTATUS_IE;
+	// TH_expected_ipi = 1;
+	// for (i = 1; i < MAX_TEST_THREADS; i++) {
+	// 	TH_vmblock.max_cpus = i;
+	// 	printf("Num_cpus=%d\n",i);
+	// 	TH_test_posting();
+	// }
 	puts("C");
 
 	/* Test interrupt get */

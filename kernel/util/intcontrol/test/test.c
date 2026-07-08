@@ -46,7 +46,7 @@ int main()
 	H2K_gp->l2_ack_base = fake_intctrl+0x200/sizeof(u32_t);
 #endif
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		if ((ARCHV >= 4) && (i == L2_CORE_INTERRUPT)) continue;
+		if ((ARCHV >= 4) && (i == L2_CORE_INTERRUPT_0)) continue;
 		if (i < L1_INTERRUPTS) {
 			H2K_intcontrol_disable_TB(i);
 #if ARCHV > 3
@@ -77,7 +77,7 @@ int main()
 	" isync\n" : "=r"(i) : :"memory");
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		if ((ARCHV >= 4) && (i == L2_CORE_INTERRUPT)) continue;
+		if ((ARCHV >= 4) && (i == L2_CORE_INTERRUPT_0)) continue;
 		if (i < L1_INTERRUPTS) {
 			H2K_intcontrol_raise_TB(i);
 			if (0 == (1 & (H2K_get_ipend() >> i))) FAIL("Didn't post interrupt");

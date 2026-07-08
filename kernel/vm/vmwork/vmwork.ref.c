@@ -12,6 +12,7 @@
 #include <atomic.h>
 #include <sample.h>
 #include <h2_common_defs.h>
+#include <hw.h>
 
 s32_t H2K_vm_do_work(H2K_thread_context *me)
 {
@@ -24,7 +25,7 @@ s32_t H2K_vm_do_work(H2K_thread_context *me)
 
        /* Need to leave vmwork bit set if interrupts are disabled in case we go to
 		vmwait before re-enabling */
-       if (me->vmstatus & H2K_VMSTATUS_IE) {
+       if (H2K_get_ccr() & CCR_GIE_BIT_MASK) {
 	       H2K_atomic_clrbit(&me->atomic_status_word,H2K_VMSTATUS_VMWORK_BIT);
        }
 

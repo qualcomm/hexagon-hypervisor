@@ -254,7 +254,7 @@ static u32_t H2K_config_vmblock_init_map_phys_intr(H2K_vmblock_t *vmblock, u32_t
 				 || (virt_int == H2K_TIME_GUESTINT)
 				 || (physint == H2K_gp->timer_intnum)
 #ifdef H2K_L2_CONTROL
-				 || (physint == L2_CORE_INTERRUPT)
+				 || (physint == L2_CORE_INTERRUPT_0)
 #endif
 				 || (virt_int == 0) // reserved for large vint#
 				 )) {

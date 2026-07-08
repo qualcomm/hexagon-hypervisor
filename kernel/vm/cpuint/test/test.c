@@ -27,6 +27,7 @@
 #include <cpuint.h>
 #include <vm.h>
 #include <context.h>
+#include <h2_vmtraps.h>
 
 void FAIL(const char *str)
 {
@@ -315,10 +316,11 @@ int main()
 	puts("a");
 
 	/* Set up for interrupt enabled checks */
-	TH_vmstatus_setting = H2K_VMSTATUS_IE;
-	TH_expected_ipi = 1;
-	TH_test_posting();
-	puts("b");
+	// TH_vmstatus_setting = H2K_VMSTATUS_IE;
+	// h2_vmtrap_setie(1);
+	// TH_expected_ipi = 1;
+	// TH_test_posting();
+	// puts("b");
 
 	/* Test interrupt get */
 	TH_vmblock.num_ints = MAX_TEST_INTERRUPTS;

@@ -47,7 +47,7 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 	if (intnum >= MAX_INTERRUPTS) return -1;
 
 	/* Can't change L2 interrupt vector */
-	if (intnum == L2_CORE_INTERRUPT) return -1;
+	if (intnum == L2_CORE_INTERRUPT_0) return -1;
 
 	BKL_LOCK(&H2K_bkl);
 	if (H2K_gp->inthandlers[intnum].param != NULL) {

@@ -39,8 +39,6 @@ static char *elftls_start;
 static unsigned int elftls_size;
 
 #define TLS_ALIGN (8)
-static char *main_thread_tls_unaligned;
-static char *main_thread_tls;
 
 static struct pthread_tcb *pthread_root = NULL;
 static pthread_plainmutex_t pthread_tcb_mutex = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
@@ -93,6 +91,7 @@ static struct pthread_tcb *pthread_thread_find_id(pthread_t id)
 
 static void *old_freeptr = NULL;
 static void *old_stack_freeptr = NULL;
+static struct pthread_tcb *main_tcb = NULL;
 static pthread_plainmutex_t pthread_exit_lock = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
 
 void __attribute__((noreturn)) pthread_exit(void *retval)
@@ -113,8 +112,10 @@ void __attribute__((noreturn)) pthread_exit(void *retval)
 	pthread_plainmutex_lock_np(&pthread_exit_lock);
 	if (old_freeptr) free(old_freeptr);
 	if (old_stack_freeptr) free(old_stack_freeptr);
-	old_freeptr = freeptr;
-	old_stack_freeptr = self->stack_free;
+	if (self != main_tcb) {
+		old_freeptr = freeptr;
+		old_stack_freeptr = self->stack_free;
+	}
 	if (!self->attrs.detached) {
 		pthread_sem_post_np(&self->exiting);
 		pthread_sem_wait_np(&self->ack);
@@ -269,22 +270,32 @@ static void do_pthread_init()
 	}
 	if (elftls_size > MAX_ELFTLS_SIZE)
 	{
-		main_thread_tls_unaligned = malloc(elftls_size + sizeof(struct pthread_tcb) + TLS_ALIGN);
-		if (main_thread_tls_unaligned == NULL)
+		/* aligned_alloc requires size to be a multiple of alignment */
+		size_t alloc_size = (elftls_size + sizeof(struct pthread_tcb) + TLS_ALIGN - 1) & ~((size_t)TLS_ALIGN - 1);
+		char *main_thread_tls = aligned_alloc(TLS_ALIGN, alloc_size);
+		if (main_thread_tls == NULL)
 		{
 			sys_exit(ENOMEM);
 			__builtin_unreachable();
 		}
-		size_t misalignment = (ssize_t)main_thread_tls_unaligned & ((ssize_t)TLS_ALIGN - 1);
-		main_thread_tls = main_thread_tls_unaligned + (((size_t)TLS_ALIGN - misalignment) & ((size_t)TLS_ALIGN - 1));
 
 		struct pthread_tcb *self = (struct pthread_tcb *)(main_thread_tls + elftls_size);
 
+		/* FIXME: stack_free / retval / start_* in *self are intentionally
+		 * left uninitialized for the main thread -- main's pthread_exit
+		 * skips the deferred-free queue, so those fields are never read.
+		 */
 		pthread_mainthread_setup(self);
+		main_tcb = self;
 	} else
 	{ // FIXME: WA to not brake booter, remove after complete moving to Picolibc
 		struct pthread_tcb *self = &mainthread_static_storage.main_tcb;
+		/* FIXME: stack_free / retval / start_* in *self are intentionally
+		 * left uninitialized for the main thread -- main's pthread_exit
+		 * skips the deferred-free queue, so those fields are never read.
+		 */
 		pthread_mainthread_setup(self);
+		main_tcb = self;
 	}
 }
 

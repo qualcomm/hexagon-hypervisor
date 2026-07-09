@@ -101,8 +101,8 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_cputime_get // 6
 	}
 	{
-		r0 = sgp
-		jump H2K_thread_id // 7 // jumpr r31?
+		r1 = sgp
+		jump H2K_vm_stop // 7
 	}
 	{
 		r2 = sgp

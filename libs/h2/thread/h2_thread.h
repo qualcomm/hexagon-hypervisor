@@ -34,6 +34,16 @@ Terminate the current thread with the given status.
 void h2_thread_stop_trap(int status);
 
 /**
+Tear down the entire VM with the given exit status (POSIX exit() semantics).
+All other contexts in the calling thread's vmblock are reaped regardless of
+state, then the parent VM is signaled.  Caller does not return.
+@param[in] status  Termination status value
+@returns None; Does not return.
+@dependencies None
+*/
+void h2_vm_stop_trap(int status) __attribute__((noreturn));
+
+/**
 Obtain the ID of the calling thread
 @returns ID of the calling thread
 @dependencies None

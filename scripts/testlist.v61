@@ -112,6 +112,7 @@
 ./libs/posix/pthread/test_h2/exit1_detached_worker_with_stuck
 ./libs/posix/pthread/test_h2/pthread_exit_main
 ./libs/posix/pthread/test_h2/pthread_workers_return
+./libs/posix/pthread/test_h2/exit_vs_futex_block
 ./libs/posix/pthread/test_h2/join_basic
 ./libs/posix/pthread/test_h2/join_invalid
 ./libs/posix/pthread/test_h2/detach_states

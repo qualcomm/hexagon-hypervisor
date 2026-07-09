@@ -445,7 +445,7 @@ ifeq ($(USE_PKW),1)
 	echo PKW_arch $(PKW_arch) >> $@
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
 endif
-	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee $@; \
+	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} ${GUEST_ARGS} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	echo exit status == $$CODE; \
 	if [ "$$CODE" -eq 137 ]; then \

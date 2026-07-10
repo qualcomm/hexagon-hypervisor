@@ -6,8 +6,10 @@
 #include <pthread.h>
 #include <pthread_internal_misc.h>
 #include <h2if.h>
+#include <h2_common_vm.h>
 #include <string.h>
 #include <stdio.h>
+
 
 /* EJP: should pthread_self return H2 TID or pthread TCB? */
 /* pthread tcb is in UGP, we can make h2 tid a ELFTLS variable */
@@ -94,6 +96,7 @@ static struct pthread_tcb *pthread_thread_find_id(pthread_t id)
 static void *old_freeptr = NULL;
 static void *old_stack_freeptr = NULL;
 static pthread_plainmutex_t pthread_exit_lock = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
+static atomic_u32_t alive_count = 1;
 
 void __attribute__((noreturn)) pthread_exit(void *retval)
 {
@@ -102,7 +105,19 @@ void __attribute__((noreturn)) pthread_exit(void *retval)
 	/* EJP: FIXME? Maybe? If we wake up someone joining us, does that mean that our stack should be available? */
 	self->retval = retval;
 	pthread_sem_post_np(&self->waiters);
-	if (!self->attrs.detached) {
+	int last = (h2_atomic_sub32(&alive_count, 1) == 0);
+	if (last) {
+		h2_vmkill(VMOP_KILL_VM_SELF, 0);
+		/* After vmkill, sibling threads are being reaped from arbitrary
+		 * states -- any one of them may have been killed while holding
+		 * pthread_exit_lock or any other mutex.  No mutex is safe to
+		 * acquire from here on.  Hard-exit straight into the kernel;
+		 * the address space is going away and the deferred-free/TLS
+		 * cleanup below has no consumer left to read it. */
+		h2_thread_stop_trap(0);
+		/* unreachable */
+	}
+	if (!self->attrs.detached && !last) {
 		pthread_sem_wait_np(&self->joined);
 	}
 	if (self->attrs.extra_dtor) self->attrs.extra_dtor(self->attrs.extra);
@@ -115,7 +130,7 @@ void __attribute__((noreturn)) pthread_exit(void *retval)
 	if (old_stack_freeptr) free(old_stack_freeptr);
 	old_freeptr = freeptr;
 	old_stack_freeptr = self->stack_free;
-	if (!self->attrs.detached) {
+	if (!self->attrs.detached && !last) {
 		pthread_sem_post_np(&self->exiting);
 		pthread_sem_wait_np(&self->ack);
 	}
@@ -234,6 +249,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 		free(tmpptr);
 		return EAGAIN;
 	}
+	h2_atomic_add32(&alive_count, 1);
 	dest->id = *thread;
 	pthread_tcb_add(dest);
 	pthread_sem_post_np(&dest->ack);	/* Child OK to start */

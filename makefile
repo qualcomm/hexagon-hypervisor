@@ -39,7 +39,7 @@ endif
 	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
+	echo "v$(ARCHV) $(TARGET) ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
 	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
@@ -98,9 +98,12 @@ ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifac
 
 # One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
 # generating test_results.json which testall aggregates into the unified report.
+# The leading '-' lets the unified report build even when test_variant exits
+# non-zero (its check-fail step fails on test failures); the JSON file is still
+# produced by h2_test inside test_variant before check-fail runs.
 define ARCHV_VARIANT_TEST_RULE
 artifacts/v$(1)/$(2)/install/test_results.json:
-	$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
+	-$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
 endef
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_TEST_RULE,$a,$v))))
 
@@ -136,9 +139,9 @@ h2_test: # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
 #$(MAKE) -C ucos sim 2>&1 | tee make.log
-	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
@@ -204,10 +207,3 @@ lldb-setup:
 
 lldb-setup-clean:
 	$(MAKE) -f scripts/Makefile.lldb_setup clean
-
-.PHONY: vscode vscode_clean
-vscode:
-	$(MAKE) -f scripts/Makefile.vscode TOOLS_FLAVOR=$(TOOLS_FLAVOR) ARCH_FLAVOR=$(ARCH_FLAVOR) ARCHV=$(ARCHV) TARGET=$(TARGET)
-
-vscode_clean:
-	$(MAKE) -f scripts/Makefile.vscode clean

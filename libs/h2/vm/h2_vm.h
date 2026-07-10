@@ -20,5 +20,6 @@ int h2_vmop_trap(vmop_t op, unsigned int arg1, unsigned int arg2, unsigned int a
 int h2_vmboot(void *pc, void *stack, unsigned int arg, unsigned int prio, unsigned int vm);
 int h2_vmstatus(vmop_status_t op, unsigned int vm);
 int h2_vmfree(unsigned int vm);
+int h2_vmkill(unsigned int vm, int status);
 
 #endif

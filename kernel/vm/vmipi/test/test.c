@@ -28,10 +28,11 @@ H2K_thread_context a;
 
 u32_t TH_saw_do_work;
 
-void H2K_vm_do_work(H2K_thread_context *me)
+s32_t H2K_vm_do_work_withlock(H2K_thread_context *me)
 {
 	if (me != &a) FAIL("wrong thread passed as vm_do_work argument");
 	TH_saw_do_work = 1;
+	return -1;
 }
 
 #define TEST_THREAD 1

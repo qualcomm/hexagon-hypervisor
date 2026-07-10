@@ -66,9 +66,9 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 	} x;
 	pa_t pa;
 	BKL_LOCK();
-	if ((me->vmstatus & H2K_VMSTATUS_VMWORK) && (me->vmstatus & H2K_VMSTATUS_IE)) {
+	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
+		H2K_vm_do_work_withlock(me);
 		BKL_UNLOCK();
-		H2K_vm_do_work(me);
 		return -1;
 	}
 	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_RW,&pa,me)) {

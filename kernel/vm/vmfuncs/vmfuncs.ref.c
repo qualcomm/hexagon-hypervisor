@@ -112,7 +112,7 @@ void H2K_vmtrap_wait(H2K_thread_context *me)
 	s32_t intno;
 
 	BKL_LOCK();
-	intno = H2K_vm_do_work(me);
+	intno = H2K_vm_do_work_withlock(me);
 
 	if (intno == -1) {
 		/* nothing pending; wait  */

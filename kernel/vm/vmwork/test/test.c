@@ -40,7 +40,7 @@ void H2K_vm_event(u32_t badva, u32_t b, u32_t c, H2K_thread_context *d)
 	TH_saw_vm_event = 1;
 }
 
-void H2K_thread_stop(u32_t status, H2K_thread_context *me)
+void H2K_thread_stop_withlock(u32_t status, H2K_thread_context *me)
 {
 	TH_saw_thread_stop = 1;
 	longjmp(env,1);
@@ -79,7 +79,7 @@ s32_t H2K_vm_check_interrupts(H2K_thread_context *me) {
 void TH_call_vm_do_work(H2K_thread_context *x)
 {
 	if (setjmp(env) == 0) {
-		H2K_vm_do_work(x);
+		H2K_vm_do_work_withlock(x);
 	}
 }
 
@@ -111,7 +111,8 @@ int main()
 	if (TH_saw_interrupt_get) FAIL("Saw interrupt get while !IE");
 	if (!TH_saw_interrupt_peek) FAIL("Didn't see interrupt peek while !IE");
 	if (TH_saw_vm_event) FAIL("Did a VM event");
-	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = 0;
+	if (a.vmstatus & H2K_VMSTATUS_VMWORK) FAIL("VMWORK not cleared (no IE)");
+	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = TH_saw_interrupt_peek = 0;
 
 	a.vmstatus = H2K_VMSTATUS_IE | H2K_VMSTATUS_VMWORK;
 	TH_interrupt_get_retval = -1;
@@ -119,6 +120,7 @@ int main()
 	if (TH_saw_thread_stop) FAIL("Killed thread?");
 	if (!TH_saw_interrupt_get) FAIL("Didn't see interrupt get");
 	if (TH_saw_vm_event) FAIL("Did a VM event");
+	if (a.vmstatus & H2K_VMSTATUS_VMWORK) FAIL("VMWORK not cleared (IE, no int)");
 	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = 0;
 
 	a.vmstatus = H2K_VMSTATUS_IE | H2K_VMSTATUS_VMWORK;
@@ -127,6 +129,7 @@ int main()
 	if (TH_saw_thread_stop) FAIL("Killed thread?");
 	if (!TH_saw_interrupt_get) FAIL("Didn't see interrupt get");
 	if (!TH_saw_vm_event) FAIL("Didn't do a VM event / 0");
+	if (a.vmstatus & H2K_VMSTATUS_VMWORK) FAIL("VMWORK not cleared (IE, int 0)");
 	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = 0;
 
 	a.vmstatus = H2K_VMSTATUS_IE | H2K_VMSTATUS_VMWORK;
@@ -135,6 +138,7 @@ int main()
 	if (TH_saw_thread_stop) FAIL("Killed thread?");
 	if (!TH_saw_interrupt_get) FAIL("Didn't see interrupt get");
 	if (!TH_saw_vm_event) FAIL("Didn't do a VM event / 1");
+	if (a.vmstatus & H2K_VMSTATUS_VMWORK) FAIL("VMWORK not cleared (IE, int 1)");
 	TH_saw_thread_stop = TH_saw_vm_event = TH_saw_interrupt_get = 0;
 
 	puts("TEST PASSED");

@@ -10,6 +10,8 @@ typedef enum {
 	VMOP_BOOT,
 	VMOP_STATUS,
 	VMOP_FREE,
+	VMOP_KILL_THREAD,
+	VMOP_KILL_VM,
 	VMOP_MAX
 } vmop_t;
 
@@ -20,5 +22,6 @@ typedef enum {
 } vmop_status_t;
 
 # define VMOP_STATUS_VMIDX_SELF 0
+# define VMOP_KILL_VM_SELF 0
 
 #endif

@@ -9,6 +9,7 @@
 #include <context.h>
 
 void H2K_thread_stop(s32_t status, H2K_thread_context *me) __attribute((noreturn)) IN_SECTION(".text.misc.stop");
+void H2K_thread_stop_withlock(s32_t status, H2K_thread_context *me) __attribute((noreturn)) IN_SECTION(".text.misc.stop");
 
 #endif
 

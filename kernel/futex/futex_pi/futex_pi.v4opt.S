@@ -42,7 +42,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		allocframe(#16)
 		ME_LOCK = combine(r1,r0)
-		DEST = #H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_IE
+		DEST = #H2K_VMSTATUS_VMWORK
 	}
 	k0lock
 	{
@@ -328,11 +328,11 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 		dealloc_return
 	}
 .Llpi_unlock_retfail_vmwork:
-	k0unlock
 	{
-		call H2K_vm_do_work
+		call H2K_vm_do_work_withlock
 		r0 = ME
 	}
+	k0unlock
 	{
 		r0 = #-1
 		dealloc_return

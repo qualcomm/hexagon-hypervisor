@@ -8,7 +8,7 @@
 void H2K_lowprio_init()
 {
 #ifdef TESTING
-	H2K_gp->priomask = H2K_gp->wait_mask = 0;
+	H2K_gp->wait_mask = 0;
 #endif
 }
 

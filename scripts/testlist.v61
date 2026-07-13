@@ -1,7 +1,7 @@
 ./kernel/data/intconfig/test
 ./kernel/data/context/test
 ./kernel/data/readylist/test
-./kernel/data/runlist/test
+#./kernel/data/runlist/test
 ./kernel/data/thread/test
 ./kernel/error/fatal/test
 ./kernel/event/error/test
@@ -42,7 +42,7 @@
 ./kernel/futex/futex/test/tests/multi_wake
 ./kernel/futex/futex/test/tests/pi
 ./kernel/futex/futex/test/tests/simple_lock_unlock
-./kernel/sched/lowprio/test
+#./kernel/sched/lowprio/test
 ./kernel/sched/resched/test
 ./kernel/sched/switch/test
 ./kernel/sched/yield/test

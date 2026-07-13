@@ -14,7 +14,7 @@ s32_t checker_runlist()
 {
 	u32_t i;
 	for (i = 0; i < H2K_gp->hthreads; i++) {
-		if (0 <= H2K_gp->runlist_prios[i] && H2K_gp->runlist_prios[i] <= MAX_PRIO) {
+		if (0 <= H2K_gp->runlist_prios[i] && H2K_gp->runlist_prios[i] <= MAX_READY_PRIO) {
 			if (H2K_gp->runlist_prios[i] != H2K_gp->runlist[i]->prio) FAIL("runlist_prios does not match priority of scheduled thread");
 		} else {
 			if (H2K_gp->runlist[i]) FAIL("Priority out of range but readylist non-null");

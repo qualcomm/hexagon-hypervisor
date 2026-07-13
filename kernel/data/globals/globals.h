@@ -146,6 +146,8 @@ typedef struct {
 #endif
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
+	H2K_thread_context *wip_dummy_runlist[MAX_HTHREADS];
+	s16_t wip_dummy_runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
 	u32_t phys_offset;
 	u32_t build_id;

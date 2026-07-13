@@ -16,7 +16,8 @@
 
 static inline void resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum) {
 	if (me != NULL) {
-		H2K_runlist_remove(me);
+		H2K_runlist_remove(me); // This is kept for the same reason described 
+								// in kernel/sched/dosched/dosched.ref.c at the H2K_rnulist_push callsite.
 		H2K_ready_append(me);
 	} else {
 		/* Interrupted WAIT mode */

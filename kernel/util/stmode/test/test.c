@@ -59,7 +59,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 		extra = H2K_gp->asid_table[me->ssr_asid].fields.extra;
 	}
 
-	if (prio > MAX_PRIO) return -1;
+	if (prio > MAX_READY_PRIO) return -1;
 	if (prio < bestprio) return -1;
 	if ((sp & 7) != 0) return -1;
 	if ((pc & 3) != 0) return -1;

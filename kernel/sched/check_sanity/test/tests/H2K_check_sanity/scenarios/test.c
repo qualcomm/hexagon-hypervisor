@@ -30,9 +30,6 @@ struct thread_state {
 
 struct scenario {
 	struct thread_state thread[NUM_THREADS_IN_SCENARIOS];
-	int priomask;
-	int wait_mask;
-	int expected_priomask;
 	int should_resched;
 	int hthreads;
 };
@@ -71,9 +68,6 @@ static void print_scenario(struct scenario *scenario)
 		prio = scenario->thread[i].prio;
 		printf("t%-5d  %s  %-7d  %d\n", i, status_string[status], hthread, prio);
 	}
-	printf("priomask = 0x%x\n", scenario->priomask);
-	printf("wait_mask = 0x%x\n", scenario->wait_mask);
-	printf("expected_priomask = 0x%x\n", scenario->expected_priomask);
 	printf("should_resched = %d\n", scenario->should_resched);
 }
 
@@ -104,8 +98,6 @@ static void setup(struct scenario *scenario)
 
 	H2K_clear_ipend(0xffffffff);
 	H2K_readylist_init();
-	H2K_runlist_init();
-	H2K_lowprio_init();
 	H2K_set_schedcfg(SCHEDCFG_EN | SCHEDCFG_INTNO(RESCHED_INT));
 	for (i = 0; i < num_threads; i++) {
 		status = scenario->thread[i].status;
@@ -137,28 +129,11 @@ static void setup(struct scenario *scenario)
 	H2K_set_bestwait(BESTWAIT_MASK);
 	asm volatile ("stid = %0;" : : "r"((u32_t)worst_running_prio << 16));
 	H2K_clear_ipend(0xffffffff);
-	H2K_kg.priomask = scenario->priomask;
-	H2K_kg.wait_mask = scenario->wait_mask;
 }
 
 /* Checks to see that H2K_check_sanity did its job, given the scenario. */
 static void check(struct scenario *scenario)
 {
-	int i;
-	if (scenario->priomask == 0) {
-		if ((H2K_kg.priomask & scenario->expected_priomask) == 0) {
-			FAIL("priomask not set for worst priority thread", scenario);
-		}
-		for (i = 0; i < H2K_kg.hthreads; i++) {
-			if (H2K_kg.priomask & 1 << i && get_imask(i) != 0) {
-				FAIL("failed to clear imask", scenario);
-			}
-		}
-	} else {
-		if (H2K_kg.priomask != scenario->priomask) {
-			FAIL("mucked with non-zero priomask", scenario);
-		}
-	}
 	if (scenario->should_resched && !resched_requested()) {
 		FAIL("failed to raise resched interrupt", scenario);
 	}

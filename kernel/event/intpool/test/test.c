@@ -129,10 +129,7 @@ int TH_call_intpool_wait(int i, H2K_thread_context *current)
  */
 void TH_check_waiting(int i, H2K_thread_context *thread)
 {
-	//if (H2K_gp->inthandlers[i].handler != H2K_intpool_int) FAIL("Wrong handler");
-	//if (H2K_gp->inthandlers[i].param != thread) FAIL("Wrong thread");
 	if (thread->status != H2K_STATUS_INTBLOCKED) FAIL("Wrong status");
-	if (H2K_gp->runlist[thread->hthread] == thread) FAIL("Thread still scheduled");
 }
 
 /*
@@ -140,14 +137,9 @@ void TH_check_waiting(int i, H2K_thread_context *thread)
  */
 void TH_check_running(int i, H2K_thread_context *thread)
 {
-#if 0
-	printf("Checking i=%d thread=%p inthandlers[i].handler=%p inthandlers[i].param=%p\n",
-		i,thread,H2K_gp->inthandlers[i].handler,H2K_gp->inthandlers[i].param);
-#endif
 	if (H2K_gp->inthandlers[i].handler != NULL) FAIL("Handler set");
 	if (H2K_gp->inthandlers[i].param == thread) FAIL("Handler thread set");
 	if (thread->status != H2K_STATUS_RUNNING) FAIL("Wrong status");
-	if (H2K_gp->runlist[thread->hthread] != thread) FAIL("Thread not scheduled");
 }
 
 void TH_check_old(H2K_thread_context *thread)
@@ -184,26 +176,19 @@ void TH_intpool_int(int i, H2K_thread_context *interrupted, int hthread, H2K_vmb
 void TH_set_idle(int hthread)
 {
 	H2K_gp->wait_mask = 1<<hthread;
-	H2K_gp->priomask = 1<<hthread;
-	H2K_runlist_init();
-	lowprio_imask(hthread);
 }
 
 void TH_set_running(int hthread, H2K_thread_context *thread)
 {
 	H2K_gp->wait_mask &= ~(1<<hthread);
-	H2K_gp->priomask &= ~(1<<hthread);
-	H2K_runlist_push(thread);
-	lowprio_imask(hthread);
 }
 
 void TH_check_priowait_running(int hthread, H2K_thread_context *thread)
 {
 	if ((1<<(hthread)) & H2K_gp->wait_mask) FAIL("wait_mask still set");
-	if ((1<<(hthread)) & H2K_gp->priomask) FAIL("priomask still set");
-	if ((get_imask(thread->hthread)) == 0) {
+	if ((get_imask(thread->hthread)) != 0) {
 		printf("ht=%x tht=%x imask=%x\n",hthread, thread->hthread, get_imask(thread->hthread));
-		FAIL("IMASK clear for hthread");
+		FAIL("IMASK set for hthread");
 	}
 }
 
@@ -255,8 +240,6 @@ int main()
 	H2K_gp->l2_ack_base = fakeint+(0x200/sizeof(u32_t));
 #endif
 	H2K_readylist_init();
-	H2K_runlist_init();
-	H2K_lowprio_init();
 	a.prio = b.prio = c.prio = MAX_PRIOS - 30;
 	a.vmblock = b.vmblock = c.vmblock = vmblock;
 

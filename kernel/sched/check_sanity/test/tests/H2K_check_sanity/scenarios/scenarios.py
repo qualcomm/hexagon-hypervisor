@@ -19,14 +19,8 @@ MAX_PRIOS = 256  # must match max.h
 # MAX_HTHREADS RUNNING threads, and each RUNNING thread must have a valid
 # hthread.  No two RUNNING threads may have the same hthread.
 #
-# In addition to thread states, we generate a priomask and a wait_mask to be set
-# before entering H2K_check_sanity.
 #
-# We also generate an expected output priomask and whether the resched interrupt
-# should be raised.  The output priomask does not have to exactly match the
-# expected output priomask.  If the input priomask is zero, then at least one
-# bit of the output priomask should be set that is also set in the expected
-# output priomask.
+# We also generate whether the resched interrupt should be raised.  
 
 with open('scenarios.h', 'w') as outfile:
 	random.seed(0)
@@ -55,7 +49,7 @@ with open('scenarios.h', 'w') as outfile:
 				available_threads.remove(hthread)
 				prio = random.randrange(MAX_PRIOS)
 				# We record the hthread and prio of each RUNNING thread in order to later compute
-				# the worst RUNNING prio and a valid priomask.
+				# the worst RUNNING prio.
 				running_hthreads.append(hthread)
 				running_prios.append(prio)
 				# We then print out the state of the RUNNING thread.
@@ -64,14 +58,12 @@ with open('scenarios.h', 'w') as outfile:
 				else:
 					outfile.write('\t  ')
 				print('{ RUNNING, %2d, %8d },' % (hthread, prio), file=outfile)
-			# Next we determine the hthread and prio of each READY thread.  We record the ready_valids
-			# and best READY prio in order to later compute whether the resched interrupt should be raised.
-			ready_valids = 0
+			# Next we determine the hthread and prio of each READY thread.  We record the READY prio
+			# and best in order to later compute whether the resched interrupt should be raised.
 			best_ready_prio = MAX_PRIOS
 			for thread_id in range(num_ready_threads):
 				hthread = random.randrange(-5, 20)
 				prio = random.randrange(MAX_PRIOS)
-				ready_valids |= 1 << prio
 				if prio < best_ready_prio:
 					best_ready_prio = prio
 				# We then print out the state of the READY thread.
@@ -91,24 +83,9 @@ with open('scenarios.h', 'w') as outfile:
 				if running_prios[j] == worst_running_prio:
 					worst_prio_running_threads.append(running_hthreads[j])
 				non_running_threads.remove(running_hthreads[j])
-			# Then we compute a possible valid input priomask and the expected output priomask.
-			priomask = 0
-			expected_priomask = 0
-			for worst_prio_running_thread in worst_prio_running_threads:
-				if random.choice((True, False)):
-					priomask |= 1 << worst_prio_running_thread
-				expected_priomask |= 1 << worst_prio_running_thread
-			# Then we compute a possible valid wait_mask.
-			wait_mask = 0
-			for non_running_thread in non_running_threads:
-				if random.choice((True, False)):
-					wait_mask |= 1 << non_running_thread
 			# We then compute whether the resched interrupt should be raised.
-			should_resched = (worst_running_prio > best_ready_prio or (wait_mask != 0 and ready_valids != 0))
+			should_resched = (worst_running_prio > best_ready_prio)
 			# Finally, we print out the remaining input and output state.
-			print('\t 0x%x, // priomask' % priomask, file=outfile)
-			print('\t 0x%x, // wait_mask' % wait_mask, file=outfile)
-			print('\t 0x%x, // expected_priomask' % expected_priomask, file=outfile)
 			print('\t %d, // should_resched' % should_resched, file=outfile)
 			print('\t %d, // hthreads' % MAX_HTHREADS, file=outfile)
 			print('\t},', file=outfile)
@@ -119,8 +96,5 @@ with open('scenarios.h', 'w') as outfile:
 	for i in range(1, NUM_THREADS_IN_SCENARIOS):
 		print('\t  { BLOCKED, %2d, %8d },' % (i, i), file=outfile)
 	print("""	 },
-	 0x0, // priomask
-	 0x0, // wait_mask
-	 0x1, // expected_priomask
 	 0, // should_resched
 	}""", file=outfile)

@@ -13,24 +13,24 @@
 
 /* Notify a low priority thread that it is the new lowest priority if necessary */
 /* H2K_gp->priomask should be non-zero */
-static inline void H2K_lowprio_notify()
-{
-	u32_t hthread;
-	hthread = H2K_runlist_worst_prio_hthread();
-	H2K_gp->priomask |= 1<<hthread;
-	change_imask(hthread,0);
-}
+// static inline void H2K_lowprio_notify()
+// {
+// 	u32_t hthread;
+// 	hthread = H2K_runlist_worst_prio_hthread();
+// 	H2K_gp->priomask |= 1<<hthread;
+// 	change_imask(hthread,0);
+// }
 
-/* Notify the current lowprio thread that he is no longer the worst */
-/* Note that if threads are waiting, this should not be called, you are
- * going to get into trouble if you raise the priority of a waiting thread */
-static inline void H2K_raise_lowprio()
-{
-	u32_t mask = H2K_gp->priomask;
-	if (H2K_gp->wait_mask) return; // just a sanity check... should be an error
-	H2K_gp->priomask = 0;
-	change_imask((u32_t)Q6_R_ct0_R(mask),(u32_t)-1);
-}
+// /* Notify the current lowprio thread that he is no longer the worst */
+// /* Note that if threads are waiting, this should not be called, you are
+//  * going to get into trouble if you raise the priority of a waiting thread */
+// static inline void H2K_raise_lowprio()
+// {
+// 	u32_t mask = H2K_gp->priomask;
+// 	if (H2K_gp->wait_mask) return; // just a sanity check... should be an error
+// 	H2K_gp->priomask = 0;
+// 	change_imask((u32_t)Q6_R_ct0_R(mask),(u32_t)-1);
+// }
 
 void H2K_lowprio_init() IN_SECTION(".text.init.lowprio");
 

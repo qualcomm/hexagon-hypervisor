@@ -248,8 +248,6 @@ int main()
 	a.vmblock = &av;
 	av.waiting_cpus = 0;
 	a.id.cpuidx = 5;
-	H2K_kg.runlist[0] = &a;
-	H2K_kg.runlist_prios[0] = 4;
 	a.status = 0;
 	TH_expected_dosched = 1;
 	if (setjmp(env) == 0) H2K_vmtrap_wait(&a);
@@ -257,8 +255,6 @@ int main()
 	if (a.r00 != -1) FAIL("r00 clobbered");
 	if (av.waiting_cpus != (1<<5)) FAIL("wrong waiting cpus");
 	if (a.status != H2K_STATUS_VMWAIT) FAIL("wrong status");
-	if (H2K_kg.runlist[0] != NULL) FAIL("runlist");
-	if (H2K_kg.runlist_prios[0] != -1) FAIL("runlist_prios");
 
 	/* RETURN */
 

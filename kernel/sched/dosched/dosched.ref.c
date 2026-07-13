@@ -19,7 +19,8 @@ void H2K_dosched(H2K_thread_context *me,u32_t hthread)
 	new = H2K_ready_getbest(hthread);
 	if (new == NULL) {
 		change_imask(hthread,0); //This is not needed actually. 
-								// Thing is that if we dont put this here-it is not working.
+								// Thing is that if we dont put this here-it is not working, 
+								// see comment next to H2K_runlist_push below.
 		/* GO TO SLEEP */
 		/* FIXME: temporary ugly hack for broken 8.7+ compiler -- investigate
 		 * whether this is still needed and if a proper direct call can be

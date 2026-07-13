@@ -27,17 +27,10 @@ void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_threa
 		return;
 	}
 	if (me != NULL) {
-		H2K_runlist_remove(me);
 		H2K_ready_append(me);
 	} else {
 		H2K_gp->wait_mask = (u32_t)Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
 	}
-	/* Assume woken is better than interrupted thread.  
-	 * If not, check_sanity will detect. 
-	 * Let check_sanity find the new lowprio thread also...
-	 */
-	H2K_gp->priomask = (u32_t)Q6_R_clrbit_RR(H2K_gp->priomask,hwtnum);
-	highprio_imask(hwtnum);
 	H2K_runlist_push(woken);
 	H2K_switch(me,woken);
 }
@@ -62,7 +55,6 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 	}
 	H2K_gp->inthandlers[intnum].param = me;
 	H2K_gp->inthandlers[intnum].handler = H2K_popup_int;
-	H2K_runlist_remove(me);
 	me->status = H2K_STATUS_INTBLOCKED;
 	me->r0100 = intnum;
 	H2K_intcontrol_enable(intnum);

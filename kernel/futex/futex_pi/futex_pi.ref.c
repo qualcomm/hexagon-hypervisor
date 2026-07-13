@@ -45,9 +45,6 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		/* Sync hardware STID.PRIO so BESTWAIT sees the boosted priority
 		 * immediately -- avoids spurious preemption of the holder. */
 		set_thread_stid_prio(dest->hthread, prio);
-		if (H2K_gp->priomask & (1<<dest->hthread)) {
-			H2K_raise_lowprio();
-		}
 		/* Need to update lowprio */
 	} else if (dest->status == H2K_STATUS_INTBLOCKED) {
 		/* Waiting on interrupt, but we want it to have high priority when it starts up */
@@ -95,7 +92,6 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 	}
 	H2K_futex_pi_raise(me->prio,x.dest);
 	me->futex_ptr = pa;
-	H2K_runlist_remove(me);
 	me->r0100 = 0;
 	me->status = H2K_STATUS_BLOCKED;
 	H2K_futex_hash_add_ring(&H2K_gp->futexhash[FUTEX_HASHVAL(pa)],me);

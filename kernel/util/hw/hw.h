@@ -60,7 +60,7 @@ static inline u32_t get_imask(u32_t thread)
  * Mirrors setimask -- uses predicate register to name the target thread. */
 static inline void set_thread_stid_prio(u32_t thread, u32_t prio)
 {
-	asm volatile (" p0 = %0\n setprio(p0,%1)" : : "r"(thread),"r"(prio):"p0");
+	asm volatile (" p0 = %0\n setprio(p0,%1); isync;" : : "r"(thread),"r"(prio):"p0");
 }
 
 static inline void iassignw(u32_t intno, u32_t threadmask)
@@ -101,29 +101,6 @@ static inline void cluster_resched_int()
 {
 	asm(" swi(%0) // cluster resched" : : "r"(CLUSTER_RESCHED_INT_INTMASK));
 }
-
-#if (ARCHV <= 2)
-static inline void highprio_imask(u32_t hthread)
-{
-	asm(" imask = %0 // set to high priority " : : "r"((-1)-(HW_TH_0_INTMASK << (hthread))));
-}
-
-static inline void lowprio_imask(u32_t hthread)
-{
-	asm(" imask = %0 // set to low priority " : : "r"(HW_TH_ALL_INTMASK ^ (HW_TH_0_INTMASK << (hthread))));
-}
-#elif (ARCHV >= 3)
-static inline void highprio_imask(u32_t hthread)
-{
-	asm(" imask = %0 // set to high priority " : : "r"(-1));
-}
-
-static inline void lowprio_imask(u32_t hthread)
-{
-	asm(" imask = %0 // set to low priority " : : "r"(0));
-}
-
-#endif
 
 static inline u32_t H2K_get_ssr()
 {

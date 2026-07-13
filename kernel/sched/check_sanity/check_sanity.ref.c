@@ -15,10 +15,6 @@
 
 u64_t H2K_check_sanity(const u64_t retval)
 {
-    if (H2K_gp->priomask == 0) {
-        H2K_lowprio_notify();
-    }
-
     u32_t best = H2K_ready_best_prio();
     H2K_set_bestwait(best); // This is blind for waiting thread- with prio -1, ie 255, and ready thread with prio 255- This won't fire an interrupt
 

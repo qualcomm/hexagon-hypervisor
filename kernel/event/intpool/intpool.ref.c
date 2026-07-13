@@ -35,13 +35,10 @@ void H2K_intpool_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_vmb
 	H2K_ring_remove(&vmblock->intpool,woken);
 	woken->r00 = intnum;
 	if (me != NULL) {
-		H2K_runlist_remove(me);
 		H2K_ready_append(me);
 	} else {
 		H2K_gp->wait_mask = (u32_t)Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
 	}
-	H2K_gp->priomask = (u32_t)Q6_R_clrbit_RR(H2K_gp->priomask,hwtnum);
-	highprio_imask(hwtnum);
 	H2K_runlist_push(woken);
 	H2K_switch(me,woken);
 }
@@ -88,7 +85,6 @@ int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 		}
 	}
 	/* FIXME: check pending intpool interrupts */
-	H2K_runlist_remove(me);
 	H2K_ring_append(&vmblock->intpool,me);
 	me->status = H2K_STATUS_INTBLOCKED;	/* OR INTPOOL_BLOCKED? */
 	me->r00 = (u32_t)-1;

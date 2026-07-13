@@ -55,9 +55,8 @@ typedef void (* testsetup_t)(phase_t phase);
 void TB_reset()
 {
 	TB_saw_switch = 0;
-	H2K_runlist_init();
 	H2K_readylist_init();
-	H2K_lowprio_init();
+	H2K_gp->wait_mask = 0;
 }
 
 void TB_setup_common()
@@ -91,92 +90,54 @@ void TB_do_call()
 void TB_fiddle_prio_low_to_low(phase_t phase)
 {
 	if (phase == SETUP) {
-		/* Setup for call */
-		if (H2K_gp->wait_mask == 0) {
-			H2K_gp->priomask = H2K_gp->wait_mask;
-		} else {
-			H2K_gp->priomask = 0x1;
-		}
 		H2K_runlist_push(&h);
 		H2K_ready_append(&m);
 		TB_me = &l;
 	} else {
 		/* Check expected values */
 		if (TB_to != &m) FAIL("Unexpected thread scheduled");
-		if (H2K_gp->wait_mask == 0) {
-			if ((H2K_gp->priomask & 1) == 0) FAIL("low_to_low did not switch to lowprio");
-		}
 	}
 }
 
 void TB_fiddle_prio_low_to_high(phase_t phase)
 {
 	if (phase == SETUP) {
-		/* Setup for call */
-		if (H2K_gp->wait_mask == 0) {
-			H2K_gp->priomask = H2K_gp->wait_mask;
-		} else {
-			H2K_gp->priomask = 0x1;
-		}
 		H2K_runlist_push(&m);
 		H2K_ready_append(&h);
 		TB_me = &l;
 	} else {
 		/* Check expected values */
 		if (TB_to != &h) FAIL("Unexpected thread scheduled");
-		if ((H2K_gp->priomask & 1) == 1) FAIL("low_to_high did not switch from lowprio");
 	}
 }
 
 void TB_fiddle_prio_high_to_low(phase_t phase)
 {
 	if (phase == SETUP) {
-		/* Setup for call */
-		if (H2K_gp->wait_mask == 0) {
-			H2K_gp->priomask = H2K_gp->wait_mask;
-		} else {
-			H2K_gp->priomask = 0x2;
-		}
 		H2K_runlist_push(&m);
 		H2K_ready_append(&l);
 		TB_me = &h;
 	} else {
 		/* Check expected values */
 		if (TB_to != &l) FAIL("Unexpected thread scheduled");
-		if (H2K_gp->wait_mask == 0) {
-			if ((H2K_gp->priomask & 1) == 0) FAIL("high_to_low did not switch to lowprio");
-		}
 	}
 }
 
 void TB_fiddle_prio_high_to_high(phase_t phase)
 {
 	if (phase == SETUP) {
-		/* Setup for call */
-		if (H2K_gp->wait_mask == 0) {
-			H2K_gp->priomask = H2K_gp->wait_mask;
-		} else {
-			H2K_gp->priomask = 0x2;
-		}
 		H2K_runlist_push(&l);
 		H2K_ready_append(&m);
 		H2K_ready_append(&h);
 		TB_me = &h;
 	} else {
 		if (TB_to != &h) FAIL("Unexpected thread scheduled");
-		if ((H2K_gp->priomask & 1) != 0) FAIL( " Unexpected switch to lowprio");
 	}
 }
 
 void TB_fiddle_prio_high_to_wait(phase_t phase)
 {
 	if (phase == SETUP) {
-		/* Setup for call */
-		if (H2K_gp->wait_mask == 0) {
-			H2K_gp->priomask = H2K_gp->wait_mask;
-		} else {
-			H2K_gp->priomask = 0x2;
-		}
 		TB_me = &h;
 	} else {
 		/* Check expected values */
@@ -187,12 +148,6 @@ void TB_fiddle_prio_high_to_wait(phase_t phase)
 void TB_fiddle_prio_low_to_wait(phase_t phase)
 {
 	if (phase == SETUP) {
-		/* Setup for call */
-		if (H2K_gp->wait_mask == 0) {
-			H2K_gp->priomask = H2K_gp->wait_mask;
-		} else {
-			H2K_gp->priomask = 0x1;
-		}
 		TB_me = &l;
 	} else {
 		/* Check expected values */
@@ -207,20 +162,9 @@ void TB_fiddle_prio_wait_to_high(phase_t phase)
 		TB_me = NULL;
 		H2K_runlist_push(&l);
 		H2K_ready_append(&h);
-		if (H2K_gp->wait_mask == 0) {
-			H2K_gp->priomask = 0;
-			H2K_lowprio_notify();
-		} else {
-			H2K_gp->priomask = H2K_gp->wait_mask;
-		}
 	} else {
 		/* Check expected values */
 		if (H2K_ready_any_valid()) FAIL("didn't find ready thread");
-		if (H2K_gp->runlist[h.hthread] != &h) FAIL("Didn't insert h thread");
-		if (H2K_gp->runlist_prios[h.hthread] != h.prio) FAIL("Didn't insert h thread");
-		if (H2K_gp->wait_mask == 0) {
-			if (H2K_gp->priomask == 0x1) FAIL("set myself to lowprio?");
-		}
 	}
 }
 
@@ -232,20 +176,9 @@ void TB_fiddle_prio_wait_to_low(phase_t phase)
 		TB_me = NULL;
 		H2K_runlist_push(&h);
 		H2K_ready_append(&l);
-		if (H2K_gp->wait_mask == 0) {
-			H2K_gp->priomask = 0;
-			H2K_lowprio_notify();
-		} else {
-			H2K_gp->priomask = H2K_gp->wait_mask;
-		}
 	} else {
 		/* Check expected values */
 		if (H2K_ready_any_valid()) FAIL("didn't find ready thread");
-		if (H2K_gp->runlist[l.hthread] != &l) FAIL("Didn't insert l thread");
-		if (H2K_gp->runlist_prios[l.hthread] != l.prio) FAIL("Didn't insert l thread");
-		if (H2K_gp->wait_mask == 0) {
-			if (H2K_gp->priomask != 0x1) FAIL("Didn't set myself to lowprio");
-		}
 	}
 }
 

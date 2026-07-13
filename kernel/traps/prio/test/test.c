@@ -24,7 +24,7 @@ int main()
 {
 	u32_t i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	for (i = 0; i < MAX_PRIOS; i++) {
+	for (i = 0; i <= MAX_READY_PRIO; i++) {
 		a.base_prio = i;
 		if (H2K_prio_get(0,&a) != i) FAIL("prio_get");
 	}
@@ -32,12 +32,14 @@ int main()
 	H2K_prio_set(&a,0,&a);
 	if (a.base_prio != 0) FAIL("prio_set_null");
 	a.vmblock = &vmblock;
-	for (i = 0; i < MAX_PRIOS-1; i++) {
-		a.vmblock->bestprio = i+1;
+	for (i = 0; i <= MAX_READY_PRIO; i++) {
+		a.vmblock->bestprio = i;
 		H2K_prio_set(&a,a.vmblock->bestprio,&a);
 		if (a.base_prio != a.vmblock->bestprio) FAIL("prio_set_mid");
 	}
-	if (H2K_prio_set(&a,MAX_PRIOS,&a) != -1) FAIL("prio_set_limit");
+	for (i = MAX_READY_PRIO + 1; i <= MAX_PRIOS; i++) {
+		if(H2K_prio_set(&a,i,&a) != -1) FAIL("prio_set_limit");
+	}
 	puts("TEST PASSED\n");
 	return 0;
 }

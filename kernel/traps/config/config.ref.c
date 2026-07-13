@@ -226,7 +226,7 @@ static u32_t H2K_config_vmblock_init_set_fences(H2K_vmblock_t *vmblock, u32_t vm
 
 static u32_t H2K_config_vmblock_init_prio_trapmask(H2K_vmblock_t *vmblock, u32_t vm, u32_t unused, u32_t arg1, u32_t arg2, H2K_thread_context *me)
 {
-	if (arg1 > MAX_PRIO) return 0; /* bad arg */
+	if (arg1 > MAX_READY_PRIO) return 0; /* bad arg */
 	vmblock->bestprio = (u8_t)arg1;
 	vmblock->trapmask = (u32_t)arg2;
 	if (vmblock->bestprio > 200) vmblock->tlbidxmask = 0x0f; /* EJP: KLUDGE */

@@ -30,9 +30,7 @@ u32_t TH_init_seen;
 u32_t TH_switch_seen;
 
 enum {
-	runlist_init = 0,
-	readylist_init,
-	lowprio_init,
+	readylist_init = 0,
 	futex_init,
 	intconfig_init,
 	kg_init,
@@ -89,9 +87,9 @@ u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t
 
 #define HELPER_FUNC(X) void H2K_##X() { TH_init_seen |= 1<< X; }
 
-HELPER_FUNC(runlist_init)
+
 HELPER_FUNC(readylist_init)
-HELPER_FUNC(lowprio_init)
+
 HELPER_FUNC(futex_init)
 //HELPER_FUNC(intconfig_init)
 void H2K_intconfig_init(u32_t ssbase) { TH_init_seen |= 1<< intconfig_init; }
@@ -144,16 +142,12 @@ void H2K_thread_boot();
 int main()
 {
 	u32_t i;
-	u32_t found_thread;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	H2K_gp->logbuf_enable = 0;
 
 	H2K_gp->hthreads = get_hthreads();
 
-	for (i = 0; i < H2K_gp->hthreads; i++) {
-		H2K_gp->runlist[i] = 0;
-	}
 	TH_init_seen = 0;
 	TH_switch_seen = 0;
 	if (setjmp(env) == 0) {
@@ -166,14 +160,6 @@ int main()
 	}
 	if (boot->continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");
 	if (boot->trapmask != 0xffffffffU) FAIL("boot thread trapmask");
-	found_thread = 0;
-	for (i = 0; i < H2K_gp->hthreads; i++) {
-		if (H2K_gp->runlist[i] == boot) {
-			if (H2K_gp->runlist_prios[i] != 0) FAIL("Didn't push into runlist (0)");
-			found_thread = 1;
-		}
-	}
-	if (!found_thread) FAIL("Didn't push into runlist (1)");
 	puts("TEST PASSED\n");
 	exit(0);
 }

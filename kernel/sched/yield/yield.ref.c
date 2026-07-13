@@ -22,7 +22,9 @@ void H2K_sched_yield(H2K_thread_context *me)
 		BKL_UNLOCK(&H2K_bkl);
 		return;
 	}
-	H2K_runlist_remove(me);
+	H2K_runlist_remove(me); // This is kept for the same reason described 
+							// in kernel/sched/dosched/dosched.ref.c at the H2K_rnulist_push callsite.
+		
 	H2K_ready_append(me);
 	H2K_dosched(me,me->hthread);
 }

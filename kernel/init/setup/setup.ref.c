@@ -92,9 +92,8 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	H2K_l2cache_init();
 	H2K_tcm_copy(last_tlb_index);
 	H2K_trace_init();
-	H2K_runlist_init();
 	H2K_readylist_init();
-	H2K_lowprio_init();
+	H2K_gp->wait_mask = 0;
 	H2K_futex_init();
 	H2K_intconfig_init(ssbase);
 	H2K_set_schedcfg(SCHEDCFG_EN | SCHEDCFG_INTNO(RESCHED_INT));
@@ -227,7 +226,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 #ifdef CLUSTER_SCHED
 	H2K_cluster_config();
 #endif
-	H2K_runlist_push(boot);
+	H2K_runlist_push(boot); //removing this will make kernel/time/timer/test_h2 to fail
 	H2K_mutex_unlock_tlb();
 	H2K_switch(NULL,boot);
 }

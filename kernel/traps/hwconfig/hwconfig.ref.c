@@ -277,7 +277,6 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 				me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 				me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
 				me->r00 = 0;
-				H2K_runlist_remove(me);
 				H2K_ready_append(me);
 				H2K_dosched(me, me->hthread);
 			}
@@ -313,7 +312,6 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t un
 				// me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
 				me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
 				me->r00 = 0;
-				H2K_runlist_remove(me);
 				H2K_ready_append(me);
 				H2K_dosched(me, me->hthread);
 			}
@@ -359,7 +357,6 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 			}
 			/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
 			me->r00 = 0;
-			H2K_runlist_remove(me);
 			H2K_ready_append(me);
 			H2K_dosched(me, me->hthread);
 		}

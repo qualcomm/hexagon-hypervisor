@@ -51,7 +51,7 @@ int main()
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_readylist_init();
 	H2K_runlist_init();
-	H2K_lowprio_init();
+	H2K_gp->wait_mask = 0;
 	a.prio = b.prio = c.prio = d.prio = 2;
 	a.hthread = 0;
 	b.hthread = 2;
@@ -73,7 +73,7 @@ int main()
 	BKL_UNLOCK();
 	H2K_readylist_init();
 	H2K_runlist_init();
-	H2K_lowprio_init();
+	H2K_gp->wait_mask = 0;
 	H2K_runlist_push(&a);
 	H2K_runlist_push(&c);
 	H2K_runlist_push(&d);

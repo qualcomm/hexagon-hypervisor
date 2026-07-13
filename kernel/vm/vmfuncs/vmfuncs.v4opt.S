@@ -161,7 +161,7 @@ FUNC_START H2K_vmtrap_wait .text.vm.funcs .falign
 #define NEWMASK r7:6
 #define RUNLIST r8
 #define RUNLIST_PRIOS r9
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		RET_MESAV = combine(r31,ME)
 		call H2K_vm_do_work_withlock
@@ -196,7 +196,7 @@ FUNC_START H2K_vmtrap_wait .text.vm.funcs .falign
 		memh(RUNLIST_PRIOS+HTHREAD<<#1) = r10
 	}
 9:
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		memw(MESAV+#CONTEXT_r00) = r0
 		jumpr RET

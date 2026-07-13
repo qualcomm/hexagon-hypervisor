@@ -27,6 +27,7 @@
 #include <cpuint.h>
 #include <vm.h>
 #include <context.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -34,6 +35,8 @@ void FAIL(const char *str)
 	puts(str);
 	exit(1);
 }
+
+H2K_kg_t H2K_kg;
 
 H2K_vmblock_t TH_vmblock;
 H2K_thread_context a;
@@ -294,6 +297,7 @@ void TH_test_status()
 int main()
 {
 	int j;
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	puts("0");
 	TH_init_vmblock();
 

@@ -27,9 +27,7 @@ FUNC_START H2K_resched  .text.core.resched  .p2align 3
 	{
 		ciad(r0)                                        // clear IAD
 	}
-	{
-		k0lock                                          // BKL_LOCK(&H2K_bkl)
-	}
+	ASM_BKL_LOCK(r6, r7, r8, p0)                               // BKL_LOCK(&H2K_bkl)
 	{
 		if (!p0) jump .H2K_resched_NOTWAIT		// if (me != NULL) then JUMP
 		r3 = clrbit(r3,r2)                              // mask = clrbit(-1, hwtnum)

@@ -24,7 +24,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 #define LOCKVAL r17
 #define TMP r6
 #define MASK r7
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		TMP = memub(ME+#CONTEXT_vmstatus)
 		r1 = #SAFEMEM_R
@@ -99,7 +99,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 		jump H2K_dosched
 	}
 .Lwait_fail:
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		r0 = #-1
 		dealloc_return
@@ -109,7 +109,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 		r0 = ME
 		call H2K_vm_do_work_withlock
 	}
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		r0 = #-1
 		dealloc_return
@@ -175,7 +175,7 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 		RING = tableidxw(HASH,#FUTEX_HASHBITS,#32-FUTEX_HASHBITS)
 		PA_LO_SAV = PA_LO
 	}
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		TMP = memw(RING)
 	}
@@ -208,7 +208,7 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 		jump H2K_check_sanity_unlock
 	}
 .Lresume_unlock_null:
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 .Lresume_null:
 	{
 		r0 = #0

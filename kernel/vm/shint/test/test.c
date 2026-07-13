@@ -41,6 +41,7 @@
 #include <string.h>
 #include <shint.h>
 #include <max.h>
+#include <globals.h>
 
 void FAIL(const char *str)
 {
@@ -48,6 +49,8 @@ void FAIL(const char *str)
 	puts(str);
 	exit(1);
 }
+
+H2K_kg_t H2K_kg;
 
 H2K_thread_context TH_threads[MAX_TEST_THREADS];
 u32_t TH_pending_storage[MAX_TEST_INTERRUPTS/32];
@@ -477,6 +480,7 @@ void TH_test_nexts()
 int main()
 {
 	int i,j;
+	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	TH_init_vmblock();
 
 	/* Check status */

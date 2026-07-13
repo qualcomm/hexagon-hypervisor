@@ -318,7 +318,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r8 = setbit(r8,r5)
 	memw(H2K_GP+#KG_wait_mask) = r9
 	memw(H2K_GP+#KG_priomask) = r8
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	// set SGP to NULL
 	sgp0 = r1
 

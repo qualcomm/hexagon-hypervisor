@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <h2.h>
+#include <hw.h>
 
 void FAIL(const char *str)
 {
@@ -16,7 +17,8 @@ void FAIL(const char *str)
 
 void PASS(const char *msg)
 {
-	asm volatile (" k0unlock; tlbunlock; \n");
+	BKL_UNLOCK();
+	H2K_mutex_unlock_tlb();
 	if (msg == NULL) FAIL("bad arg");
 	puts(msg);
 	puts("OK?");

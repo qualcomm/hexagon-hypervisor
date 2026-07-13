@@ -748,6 +748,45 @@ C++ dtor: main binary       ← fires at exit
 - Integrate dlopen support into the main test infrastructure
 - Consider promoting `sys_mmap` and fake `fstat` to a proper h2 library
 
+## Soft BKL (SOFT_BKL) — BKL cutover to software ticket lock
+
+### What was done (2026-07-10)
+
+Redirect all BKL lock/unlock sites to an abstract macro layer, with the
+in-memory ticket spinlock implementation gated on `SOFT_BKL`.
+
+**C-side changes:**
+- `kernel/data/globals/globals.h`: added `H2K_spinlock_t bkl` to `H2K_kg_t`
+  under `#ifdef SOFT_BKL`.
+- `kernel/util/hw/hw.h`: `BKL_LOCK`/`BKL_UNLOCK` macros redirect to
+  `H2K_spinlock_lock/unlock(&H2K_gp->bkl)` under `SOFT_BKL`; keep
+  `k0lock`/`k0unlock` otherwise.  Macros are variadic so existing call sites
+  passing `&H2K_bkl` compile without change (arg is discarded).
+- `kernel/checkers/checker_kernel_locked/checker_kernel_locked.check.c`:
+  `SOFT_BKL` branch checks `H2K_gp->bkl` word instead of the k0 syscfg bit.
+
+**Assembly-side changes:**
+- `kernel/util/std/asm_std.h`: added `ASM_BKL_LOCK(tmp0,tmp1,tmp_pred)` and
+  `ASM_BKL_UNLOCK(tmp0,tmp1,tmp_pred)` macros.  Under `SOFT_BKL` these expand
+  to an LL/SC spinlock on `KG_bkl`; otherwise they expand to `K0LOCK`/`K0UNLOCK`
+  (uppercase bypasses the poison `#define` but assembles identically).
+- `kernel/Makefile`: always passes `-Dk0lock=DO_NOT_USE_K0LOCK
+  -Dk0unlock=DO_NOT_USE_K0UNLOCK` to enforce that all `.S` files go through the
+  macro.  `SOFT_BKL=1` on the make command line enables the soft-lock build.
+- All 16 unique opt `.S` files and all 4 `.ref.S` files converted from bare
+  `k0lock`/`k0unlock` to `ASM_BKL_LOCK`/`ASM_BKL_UNLOCK` with appropriate
+  scratch registers.  Braces removed from solo `{ k0lock }` / `{ k0unlock }`
+  packets as required by macro expansion.
+
+**Crash path special case:**
+- `event/error/error.ref.S` L94: marked with `FIXME SOFT_BKL` — the crash
+  path must NOT block on the BKL if the lock may already be held.  Deferred.
+
+### Next task
+
+`offsets.ref.c` needs `PRINT_KG_OFFSET(bkl)` added under `#ifdef SOFT_BKL`
+so `KG_bkl` is available to the assembler.
+
 ## Architecture Versions (ARCHV)
 - v3/v4/v5: older versions, different interrupt mask conventions.
 - v60, v65, v68, v73, v81+: modern versions.  Key differences:
@@ -1633,3 +1672,52 @@ vmop.spec.
 
 Open for next session: #4 vmwork unconditional-clear test; #7 PI owner/waiter
 audit; #11 retry backstop; vmwork.ref.c unconditional clear (spec already done).
+
+## SOFT_BKL test run (2026-07-10) — resolved
+
+### Infrastructure fixes
+
+1. **`scripts/Makefile.inc.test`**: add `ifdef SOFT_BKL` block after
+   `endif #STANDALONE` so test sub-makes inherit the flag.  Without this, test
+   stubs called hardware `k0unlock` while the library used the in-memory
+   spinlock -> lock word stuck -> spin forever.  Fixed 20 hangs.
+
+2. **`kernel/vm/cpuint/test/test.c`** and **`kernel/vm/shint/test/test.c`**: add
+   `#include <globals.h>`, `H2K_kg_t H2K_kg;`, and r28 init at top of `main()`.
+   These STANDALONE tests call BKL-locked code via `cpuint_post`/`shint_post`;
+   under SOFT_BKL `BKL_LOCK()` dereferences `H2K_gp` (r28), which was not set
+   up.  Pattern matches `vmfuncs/test/test.c`.  Fixed 2 hangs.
+
+### PI futex test -- starvation under contention -> ticket lock
+
+The pi test demonstrated CPU starvation with the trivial LL/SC spinlock: under
+high contention spinner threads starved pi_caller threads indefinitely (confirmed
+via interactive PA peek -- `ready_valids` non-zero, BKL cycling, no forward
+progress).  Replaced with a fair ticket lock.
+
+**Ticket lock design (32-bit packed):** upper 16 bits = `next` ticket dispenser,
+lower 16 bits = `now_serving`.  Lock: LL/SC increments `next`, spins on `memuh`
+until `now_serving` matches.  Unlock: LL/SC increments `now_serving` via `vaddh`
+(halfword add, no inter-half carry).  `dccleana` removed from acquire path.
+`IS_BKL_LOCKED()` updated to compare halfwords.
+
+CPP trick: `# ## #` in a `#define` emits a literal `##` into assembler output --
+used in `add(tmp1, ##0x10000)` for the Hexagon extended-immediate prefix.
+
+### stmode test -- two root causes in boot path
+
+`stmode/test` starts all hthreads simultaneously and hung before `main()`.
+
+1. `r31` is undefined at EVB entry (`H2K_handle_reset` has no prior `call`).
+   With the LL/SC lock each hthread wrote `r31` as a token; `r31 == 0` meant
+   the store wrote the "unlocked" value and all hthreads entered simultaneously.
+   **Fix:** `call 1f` / `1:` at top of `H2K_handle_reset` sets `r31` to a
+   known non-zero PC before the first `ASM_BKL_LOCK`.
+
+2. `H2K_gp` (r28) not initialized when `BKL_LOCK()` is first called from the
+   h2-compat path (`h2_init()` was `jumpr r31`).  r28 pointed into instruction
+   memory -> read non-zero -> spinlock spun forever thinking it was held.
+   **Fix:** `SETCONST(H2K_GP, H2K_kg)` added to `h2_init()` so every
+   INC_KERNEL test gets r28 set before any `BKL_LOCK()`.
+
+**Result:** `make testall SOFT_BKL=1` -> **1224 passed, 0 failed**.

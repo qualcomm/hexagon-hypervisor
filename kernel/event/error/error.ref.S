@@ -91,7 +91,8 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	{
 		memw(H2K_GP+#KG_is_nmi_soft) = #1
 	}
-	k0lock
+	// FIXME SOFT_BKL: crash path must NOT block on BKL if lock is already held
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	r2 = htid
 	r3 = #-1
 	r3 = togglebit(r3,r2)
@@ -127,7 +128,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	syscfg = r1
 	// We should now be in "Single Thread Mode": only one thread active, and that's the one executing here
 	// Did we possibly nmi a thread holding a lock? We can fix it!
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	tlbunlock
 	// Bit 1: Save off TLB and flush caches
 	// EJP: for now, let's do this all the time.

@@ -415,8 +415,27 @@ static inline void H2K_gregs_restore(H2K_thread_context *me) {
 }
 #endif
 
+#ifdef SOFT_BKL
+#define BKL_LOCK(...) H2K_spinlock_lock(&H2K_gp->bkl)
+#define BKL_UNLOCK(...) H2K_spinlock_unlock(&H2K_gp->bkl)
+#else
 #define BKL_LOCK(...) H2K_mutex_lock_k0()
 #define BKL_UNLOCK(...) H2K_mutex_unlock_k0()
+#endif /* SOFT_BKL */
+
+/* For testing and assertions only — not a reliable check in production paths.
+ * Under SOFT_BKL reads the in-memory ticket spinlock word; locked when the
+ * upper half (next ticket) != lower half (now serving). Otherwise reads syscfg
+ * bit 12 (the k0lock hardware bit). */
+static inline int IS_BKL_LOCKED(void)
+{
+#ifdef SOFT_BKL
+	u32_t v = H2K_gp->bkl;
+	return (u16_t)(v >> 16) != (u16_t)v;
+#else
+	return (H2K_get_syscfg() & (1 << 12)) != 0;
+#endif
+}
 #endif
 
 #if (ARCHV >= 3)

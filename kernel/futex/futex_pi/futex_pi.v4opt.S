@@ -44,7 +44,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 		ME_LOCK = combine(r1,r0)
 		DEST = #H2K_VMSTATUS_VMWORK
 	}
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		TMP = memub(ME+#CONTEXT_vmstatus)
 		r1 = #SAFEMEM_RW
@@ -316,13 +316,13 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 		deallocframe
 	}
 .Ldone:
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		r0 = #0
 		dealloc_return
 	}
 .Llpi_unlock_retfail:
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		r0 = #-1
 		dealloc_return
@@ -332,7 +332,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 		call H2K_vm_do_work_withlock
 		r0 = ME
 	}
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		r0 = #-1
 		dealloc_return
@@ -370,7 +370,7 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 		allocframe(#8)
 		ME_LOCK = combine(r1,r0)
 	}
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		r1 = #SAFEMEM_RW
 		r3:2 = combine(ME,r29)

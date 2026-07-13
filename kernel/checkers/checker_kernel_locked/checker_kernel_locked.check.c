@@ -10,27 +10,17 @@
 
 s32_t checker_kernel_locked()
 {
-#if ARCHV >= 3
-	u32_t syscfg = H2K_get_syscfg();
-	if ((syscfg & (1<<12)) == 0) {
+	if (!IS_BKL_LOCKED()) {
 		FAIL("checker_kernel_locked: Kernel not locked.");
 	}
-#else
-#error support less than v3
-#endif
 	return 1;
 }
 
 s32_t checker_kernel_unlocked()
 {
-#if ARCHV >= 3
-	u32_t syscfg = H2K_get_syscfg();
-	if ((syscfg & (1<<12)) != 0) {
+	if (IS_BKL_LOCKED()) {
 		FAIL("checker_kernel_unlocked: Kernel is Locked.");
 	}
-#else
-#error support less than v3
-#endif
 	return 1;
 }
 

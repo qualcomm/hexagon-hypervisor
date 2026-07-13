@@ -196,9 +196,7 @@ FUNC_START H2K_timer_int .text.time.timer
 		r1 = add(H2K_GP,#KG_time_timeouts)
 		DEVPTR = add(DEVPTR,#HW_COUNT_LO)
 	}
-	{
-		k0lock
-	}
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		TIMER_INTNUM = memw(H2K_GP+#KG_timer_intnum)
 		r2 = memw(r1)
@@ -248,9 +246,7 @@ FUNC_START H2K_timer_int .text.time.timer
 #undef NEXTTICKS_LO
 #undef ROOT
 #undef LEFTPTR
-	{
-		k0unlock
-	}
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 
 #define VICBASE r7
 #define L2VICWORD r6
@@ -401,7 +397,7 @@ FUNC_START H2K_timer_set_timeout_tick .text.time.timer
 		ME = r4
 		ZERO = #0
 	}
-	k0lock
+	ASM_BKL_LOCK(r12, r13, r14, p0)
 	{
 		p0 = cmp.gtu(TIMEOUT_TICK,LAST_TICKS)
 		if (!p0.new) TIMEOUT_TICK = ZERO
@@ -455,7 +451,7 @@ FUNC_START H2K_timer_set_timeout_tick .text.time.timer
 	}
 	.falign
 .Lskip_hw_set:
-	k0unlock
+	ASM_BKL_UNLOCK(r12, r13, r14, p0)
 	{
 		r1:0 = mpyu(TIMEOUT_TICK_LO,NSEC_PER_TICK)
 		ME_DEVPTR = memd(r29+#0)

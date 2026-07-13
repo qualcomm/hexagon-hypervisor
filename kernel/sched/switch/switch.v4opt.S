@@ -427,8 +427,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		memw(H2K_GP+#KG_priomask) |= r0
 		r0 = ##0x00040000 // insert(r5,#3,#16)
 	}
-		k0unlock
-		IMASK = r3
+	ASM_BKL_UNLOCK(r4, r5, r6, p0)
+	IMASK = r3
 	{
 		ssr = r0
 	}

@@ -59,7 +59,7 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 		extra = H2K_gp->asid_table[me->ssr_asid].fields.extra;
 	}
 
-	if (prio > MAX_READY_PRIO) return -1;
+	if (prio > MAX_PRIO) return -1;
 	if (prio < bestprio) return -1;
 	if ((sp & 7) != 0) return -1;
 	if ((pc & 3) != 0) return -1;
@@ -109,8 +109,9 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	vmblock->num_cpus++;
 	tmp->vmblock = vmblock;
 
-	H2K_ready_append(tmp);
-	return (s32_t)H2K_check_sanity_unlock(H2K_id_from_context(tmp).raw);
+	H2K_ready_append_arm(tmp);
+	BKL_UNLOCK();
+	return (s32_t)H2K_id_from_context(tmp).raw;
 }
 
 void FAIL(const char *str)

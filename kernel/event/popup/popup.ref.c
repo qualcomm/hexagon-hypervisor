@@ -6,7 +6,6 @@
 #include <c_std.h>
 #include <context.h>
 #include <hw.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <dosched.h>
 #include <resched.h>
@@ -27,11 +26,13 @@ void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_threa
 		return;
 	}
 	if (me != NULL) {
-		H2K_ready_append(me);
+		H2K_ready_append_arm(me);
 	} else {
+#if CLUSTER_SCHED
 		H2K_gp->wait_mask = (u32_t)Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
+#endif
 	}
-	H2K_runlist_push(woken);
+	woken->status = H2K_STATUS_RUNNING;
 	H2K_switch(me,woken);
 }
 

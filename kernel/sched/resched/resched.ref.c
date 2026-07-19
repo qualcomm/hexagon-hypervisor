@@ -6,22 +6,20 @@
 #include <c_std.h>
 #include <context.h>
 #include <hw.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <dosched.h>
-#include <lowprio.h>
 #include <resched.h>
 #include <globals.h>
 #include <log.h>
 
 static inline void resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum) {
 	if (me != NULL) {
-		H2K_runlist_remove(me); // This is kept for the same reason described 
-								// in kernel/sched/dosched/dosched.ref.c at the H2K_rnulist_push callsite.
-		H2K_ready_append(me);
+		H2K_ready_append_arm(me);
 	} else {
 		/* Interrupted WAIT mode */
+#if CLUSTER_SCHED
 		H2K_gp->wait_mask = Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
+#endif
 	}
 	H2K_dosched(me, hwtnum);
 }

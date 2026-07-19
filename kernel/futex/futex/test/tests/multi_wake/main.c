@@ -221,7 +221,7 @@ void vmmain(void *unused)
 
 	/*  Figure out the max priority that can be woken up  */
 	k = nr_to_wake;
-	for (j=0; j<MAX_READY_PRIO; j++) {
+	for (j=0; j<MAX_PRIO; j++) {
 		for (i=0; i<max_consumers; i++) {
 			if ((thread_info[i] >> 16) == j) {
 				k--;

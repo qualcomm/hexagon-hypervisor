@@ -56,8 +56,6 @@ static inline u32_t get_imask(u32_t thread)
 	return imask;
 }
 
-/* Write STID.PRIO for a named hardware thread (cross-thread, Monitor only).
- * Mirrors setimask -- uses predicate register to name the target thread. */
 static inline void set_thread_stid_prio(u32_t thread, u32_t prio)
 {
 	asm volatile (" p0 = %0\n setprio(p0,%1); isync;" : : "r"(thread),"r"(prio):"p0");

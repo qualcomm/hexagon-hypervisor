@@ -6,9 +6,7 @@
 #include <c_std.h>
 #include <context.h>
 #include <stop.h>
-#include <runlist.h>
 #include <readylist.h>
-#include <lowprio.h>
 #include <thread.h>
 #include <hw.h>
 #include <string.h>
@@ -66,23 +64,7 @@ void TH_vm_init()
 	H2K_kg.vmblocks[2] = &TH_vm.vm;
 }
 
-u32_t TH_saw_check_sanity = 0;
 H2K_thread_context *TH_me = NULL;
-
-u64_t H2K_check_sanity_unlock(u64_t x)
-{
-	TH_saw_check_sanity++;
-	checker_kernel_locked();
-	BKL_UNLOCK();
-	return x;
-}
-
-u64_t H2K_check_sanity(u64_t x)
-{
-	TH_saw_check_sanity++;
-	checker_kernel_locked();
-	return x;
-}
 
 u64_t H2K_check_sched_mask(u64_t x)
 {
@@ -107,7 +89,9 @@ int main()
 	H2K_vmblock_t *vmblock = &TH_vm.vm;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_readylist_init();
-	 H2K_gp->wait_mask = 0;
+#if CLUSTER_SCHED
+	H2K_gp->wait_mask = 0;
+#endif
 	H2K_thread_init();
 	H2K_asid_table_init();
 	TH_vm_init();
@@ -143,11 +127,8 @@ int main()
 	if (H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,902,vmblock,a) 
 		!= 0xffffffff) FAIL("Created thread w/ bad prio");
 
-	if (TH_saw_check_sanity != 0) FAIL("Called check_sanity on failure");
-
 	if (gpcall_H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,2,vmblock,a) 
 		!= (b->id.raw)) FAIL("Failed to create expected thread");
-	if (TH_saw_check_sanity == 0) FAIL("Did not call check_sanity");
 	if (H2K_gp->ready[2] != b) FAIL("Thread inserted incorrectly into ready list");
 	if (b->prio != 2) FAIL("thread priority set wrong");
 	if (b->status == H2K_STATUS_DEAD) FAIL("status field incorrect");
@@ -158,62 +139,11 @@ int main()
 	if (b->gp != a->gp) FAIL("Incorrect inheritance of GP");
 	if (b->vmblock != vmblock) FAIL("vmblock is non-NULL");
 
-	TH_saw_check_sanity = 0;
 	vmblock->pmap = 0x12345678;
 	if (H2K_thread_create(((u32_t)test_thread), (u32_t)&stack,0xdeadbeef,2,vmblock,a) 
 		!= (c->id.raw)) FAIL("Failed to create expected thread");
 	if (c->ssr_asid != a->ssr_asid) FAIL("wrong asid");
 
-#if 0
-	vm.max_cpus = 2;
-	vm.num_cpus = 2; // initially full
-	vm.bestprio = 5;
-	vm.trapmask = 0xfa1a1a1a;
-	vm.cpu_contexts = vmcontext;
-	vm.pmap = 0xb1ab1ab1;
-	vm.pmap_type = H2K_ASID_TRANS_TYPE_TABLE;
-
-	/* so we can check if properly decremented */
-	asid = H2K_asid_table_inc(vm.pmap, H2K_ASID_TRANS_TYPE_TABLE, H2K_ASID_TLB_INVALIDATE_FALSE, 0, vmblock);
-
-	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
-	/* asid count should have gone to 2 and then back to 1 */
-	if (H2K_mem_asid_table[asid].fields.count != 1) FAIL("Bad asid count");
-	if (ret != -1) FAIL("Exceeded max_cpus");
-
-	vm.num_cpus = 1;
-#warning Need to reenable this test and fix when audio becomes unbroken
-	//ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,4,&vm,&a);
-	//if (ret != -1) FAIL("Exceeded vm bestprio");
-
-	/* should succeed */
-	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
-	if (ret == -1) FAIL("Unexpected error");
-
-	if (c->trapmask != 0xfa1a1a1a) FAIL("Bad vm trapmask");
-	/* asid should be that of the calling thread, because we're starting an additional vcpu */
-	if (c->ssr_asid != a->ssr_asid) FAIL("Bad vm asid 1");
-	if (vm.num_cpus != 2) FAIL("Bad vm num_cpus");
-	//if (c->vmcpu != 1) FAIL("Bad vmcpu"); /* EJP: now cpuidx field in id */
-	if (vmcontext[1] != &c) FAIL("Bad vm context");
-	if (c->vmblock != &vm) FAIL("Bad vmblock");
-
-	vm.num_cpus = 0;
-	/* should succeed */
-	ret = H2K_thread_create_no_squash(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,6,&vm,&a);
-	if (ret == -1) FAIL("Unexpected error");
-
-	/* asid should come from vmblock->pmap when num_cpus == 0 */
-	if (d.ssr_asid != asid) FAIL("Bad vm asid 2");
-
-	TH_saw_check_sanity = 0;
-	if (H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,2,0x0,&a) 
-		!= (u32_t)(&e)) FAIL("Failed to create expected thread");
-	if (TH_saw_check_sanity == 0) FAIL("Did not call check_sanity");
-
-	if (H2K_thread_create((u32_t)test_thread,((u32_t)(&stack)),0xdeadbeef,2,0x0,&a) 
-		!= 0xffffffff) FAIL("Created thread w/o storage");
-#endif
 	puts("TEST PASSED\n");
 	return 0;
 }

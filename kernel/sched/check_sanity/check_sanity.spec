@@ -104,7 +104,6 @@ Samples
 * input	MAX_PRIOS		number of priority levels available (default 256)
 * input	MAX_HTHREADS		number of hardware threads available (default 6)
 * input	H2K_kg.ready_valids	priorities with ready jobs
-* input	H2K_kg.runlist_prios	priorities of currently running threads
 * input	H2K_kg.waitmask		indicates hardware threads which are in wait
 * output	ipend			shows interrupts pending (see H2K_resched_int())
 * i/o	H2K_kg.priomask		indicates lowest priority mask (see H2K_lowprio_notify)
@@ -117,10 +116,6 @@ Important cases
 
 * H2K_kg.waitmask == 0
 * H2K_kg.waitmask != 0
-* MAX(H2K_kg.runlist_prios) > CL0(H2K_kg.ready_valids)
-* MAX(H2K_kg.runlist_prios) <= CL0(H2K_kg.ready_valids)
-* H2K_kg.priomask == 0
-* H2K_kg.priomask != 0
 
 
 Harness

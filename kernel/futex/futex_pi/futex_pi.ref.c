@@ -7,7 +7,6 @@
 #include <futex.h>
 #include <dosched.h>
 #include <hw.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <ring.h>
 #include <check_sanity.h>
@@ -15,7 +14,6 @@
 #include <globals.h>
 #include <atomic.h>
 #include <safemem.h>
-#include <lowprio.h>
 #include <id.h>
 #include <vmwork.h>
 
@@ -41,9 +39,7 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		dest->prio = (u8_t)prio;
 		H2K_ready_insert(dest);
 	} else if (dest->status == H2K_STATUS_RUNNING) {
-		H2K_runlist_set_thread_prio(dest, prio);
-		/* Sync hardware STID.PRIO so BESTWAIT sees the boosted priority
-		 * immediately -- avoids spurious preemption of the holder. */
+		dest->prio = (u8_t)prio;
 		set_thread_stid_prio(dest->hthread, prio);
 		/* Need to update lowprio */
 	} else if (dest->status == H2K_STATUS_INTBLOCKED) {
@@ -119,6 +115,8 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	hashval = FUTEX_HASHVAL(pa);
 	ring = &H2K_gp->futexhash[hashval];
 	pos = *ring;
+	me->prio = me->base_prio;
+	set_thread_stid_prio(me->hthread, me->base_prio);
 	/* FIXME: pass full PA when supported */
 	ret = H2K_futex_hash_remove_one((u32_t)pa,ring,&pos);
 	if (ret == NULL) {
@@ -129,10 +127,6 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 		H2K_atomic_swap(lock,H2K_id_from_context(ret).raw+1);
 	}
 	H2K_safemem_unlock();
-	/* Restore priority in software and hardware atomically -- BESTWAIT
-	 * comparator reads STID.PRIO; without the hardware sync the stale
-	 * boosted value hides me from the comparator causing a priority inversion. */
-	H2K_runlist_set_thread_prio(me, me->base_prio);
-	set_thread_stid_prio(me->hthread, me->base_prio);
-	return (s32_t)H2K_check_sanity_unlock(0);
+	BKL_UNLOCK();
+	return 0;
 }

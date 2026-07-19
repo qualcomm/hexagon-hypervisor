@@ -8,7 +8,6 @@
 #include <hw.h>
 #include <thread.h>
 #include <dosched.h>
-#include <runlist.h>
 #include <asid.h>
 #include <stop.h>
 #include <timer.h>

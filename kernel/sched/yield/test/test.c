@@ -6,8 +6,6 @@
 #include <c_std.h>
 #include <context.h>
 #include <readylist.h>
-#include <runlist.h>
-#include <lowprio.h>
 #include <context.h>
 #include <hw.h>
 #include <stdio.h>
@@ -50,16 +48,15 @@ int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_readylist_init();
-	H2K_runlist_init();
+#if CLUSTER_SCHED
 	H2K_gp->wait_mask = 0;
+#endif
 	a.prio = b.prio = c.prio = d.prio = 2;
 	a.hthread = 0;
 	b.hthread = 2;
 	c.hthread = 1;
 	d.hthread = 2;
 	TB_in = &a;
-	H2K_runlist_push(&a);
-	H2K_runlist_push(&c);
 	TH_sched_yield(TB_in);
 	if (TB_saw_dosched != 0) FAIL("Did a resched");
 	H2K_ready_append(&b);
@@ -72,11 +69,9 @@ int main()
 	if (TB_saw_dosched == 0) FAIL("Did not do a resched");
 	BKL_UNLOCK();
 	H2K_readylist_init();
-	H2K_runlist_init();
+#if CLUSTER_SCHED
 	H2K_gp->wait_mask = 0;
-	H2K_runlist_push(&a);
-	H2K_runlist_push(&c);
-	H2K_runlist_push(&d);
+#endif
 	H2K_ready_append(&b);
 	TB_in = &a;
 	TH_sched_yield(TB_in);

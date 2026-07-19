@@ -5,12 +5,10 @@
 
 #include <c_std.h>
 #include <max.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <thread.h>
 #include <futex.h>
 #include <switch.h>
-#include <lowprio.h>
 #include <intconfig.h>
 #include <fatal.h>
 #include <asid.h>
@@ -93,7 +91,9 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	H2K_tcm_copy(last_tlb_index);
 	H2K_trace_init();
 	H2K_readylist_init();
+#if CLUSTER_SCHED
 	H2K_gp->wait_mask = 0;
+#endif
 	H2K_futex_init();
 	H2K_intconfig_init(ssbase);
 	H2K_set_schedcfg(SCHEDCFG_EN | SCHEDCFG_INTNO(RESCHED_INT));
@@ -223,10 +223,10 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	H2K_cluster_config();
 #endif
-	H2K_runlist_push(boot); //removing this will make kernel/time/timer/test_h2 to fail
+	boot->status = H2K_STATUS_RUNNING;
 	H2K_mutex_unlock_tlb();
 	H2K_switch(NULL,boot);
 }

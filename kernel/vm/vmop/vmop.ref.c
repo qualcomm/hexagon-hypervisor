@@ -117,18 +117,18 @@ static void kill_thread_locked(H2K_vmblock_t *vmblock, H2K_thread_context *targe
 		if (target->id.cpuidx < bits(long_bitmask_t)) {
 			vmblock->waiting_cpus &= ~(0x1ULL << target->id.cpuidx);
 		}
-		H2K_ready_append(target);
+		H2K_ready_append_arm(target);
 		break;
 	case H2K_STATUS_RUNNING:
 		H2K_vm_ipi_send_withlock(target);
 		break;
 	case H2K_STATUS_INTBLOCKED:
 		H2K_popup_cancel(target);
-		H2K_ready_append(target);
+		H2K_ready_append_arm(target);
 		break;
 	case H2K_STATUS_BLOCKED:
 		H2K_futex_cancel(target);
-		H2K_ready_append(target);
+		H2K_ready_append_arm(target);
 		break;
 	case H2K_STATUS_READY:
 		break;

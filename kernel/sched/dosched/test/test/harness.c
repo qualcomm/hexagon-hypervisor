@@ -6,13 +6,10 @@
 #include <c_std.h>
 #include <dosched.h>
 #include <readylist.h>
-#include <runlist.h>
 #include <context.h>
 #include <setjmp.h>
-#include <lowprio.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <checker_runlist.h>
 #include <checker_ready.h>
 #include <globals.h>
 
@@ -56,7 +53,9 @@ void TB_reset()
 {
 	TB_saw_switch = 0;
 	H2K_readylist_init();
+#if CLUSTER_SCHED
 	H2K_gp->wait_mask = 0;
+#endif
 }
 
 void TB_setup_common()
@@ -69,7 +68,6 @@ void TB_check_common()
 {
 	if (TB_saw_switch == 0) FAIL("No switch?");
 	checker_ready();
-	checker_runlist();
 }
 
 /* Do call to dosched, longjmp can bring us back */
@@ -90,7 +88,6 @@ void TB_do_call()
 void TB_fiddle_prio_low_to_low(phase_t phase)
 {
 	if (phase == SETUP) {
-		H2K_runlist_push(&h);
 		H2K_ready_append(&m);
 		TB_me = &l;
 	} else {
@@ -102,7 +99,6 @@ void TB_fiddle_prio_low_to_low(phase_t phase)
 void TB_fiddle_prio_low_to_high(phase_t phase)
 {
 	if (phase == SETUP) {
-		H2K_runlist_push(&m);
 		H2K_ready_append(&h);
 		TB_me = &l;
 	} else {
@@ -114,7 +110,6 @@ void TB_fiddle_prio_low_to_high(phase_t phase)
 void TB_fiddle_prio_high_to_low(phase_t phase)
 {
 	if (phase == SETUP) {
-		H2K_runlist_push(&m);
 		H2K_ready_append(&l);
 		TB_me = &h;
 	} else {
@@ -126,7 +121,6 @@ void TB_fiddle_prio_high_to_low(phase_t phase)
 void TB_fiddle_prio_high_to_high(phase_t phase)
 {
 	if (phase == SETUP) {
-		H2K_runlist_push(&l);
 		H2K_ready_append(&m);
 		H2K_ready_append(&h);
 		TB_me = &h;
@@ -160,7 +154,6 @@ void TB_fiddle_prio_wait_to_high(phase_t phase)
 	if (phase == SETUP) {
 		/* Setup for call */
 		TB_me = NULL;
-		H2K_runlist_push(&l);
 		H2K_ready_append(&h);
 	} else {
 		/* Check expected values */
@@ -174,7 +167,6 @@ void TB_fiddle_prio_wait_to_low(phase_t phase)
 	if (phase == SETUP) {
 		/* Setup for call */
 		TB_me = NULL;
-		H2K_runlist_push(&h);
 		H2K_ready_append(&l);
 	} else {
 		/* Check expected values */
@@ -208,6 +200,7 @@ testsetup_t TB_fiddle_prio[] = {
 };
 
 /* Set up or check wait mask */
+#if CLUSTER_SCHED
 void TB_fiddle_wait_mask_zero(phase_t phase)
 {
 	if (phase == SETUP) {
@@ -236,6 +229,7 @@ testsetup_t TB_fiddle_wait_mask[] = {
 	TB_fiddle_wait_mask_nonzero,
 	NULL
 };
+#endif
 
 H2K_kg_t H2K_kg;
 
@@ -261,6 +255,7 @@ int main()
 	h2.prio =  2;
 	h2.hthread = 0;
 
+#if CLUSTER_SCHED
 	/* For each wait mask type... */
 	for (i = 0; TB_fiddle_wait_mask[i] != NULL; i++) {
 		/* For each change type... */
@@ -283,6 +278,7 @@ int main()
 			TB_fiddle_prio[j](CHECK);
 		}
 	}
+#endif
 	puts("TEST PASSED\n");
 	return 0;
 }

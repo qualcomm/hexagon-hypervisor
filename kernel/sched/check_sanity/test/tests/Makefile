@@ -1,4 +1,4 @@
 
-SUBDIRS+=H2K_check_sanity
+SUBDIRS+=H2K_bestwait
 
 include Makefile.inc

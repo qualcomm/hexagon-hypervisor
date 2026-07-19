@@ -23,7 +23,7 @@ int h2_config_fatal_hook(unsigned int funcaddr, unsigned int arg)
 	return h2_config_trap(CONFIG_FATAL_HOOK,funcaddr,arg,0,0);
 }
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 int h2_config_cluster_sched(unsigned int enable) {
 
 	return h2_config_trap(CONFIG_CLUSTER_SCHED, enable, 0, 0, 0);

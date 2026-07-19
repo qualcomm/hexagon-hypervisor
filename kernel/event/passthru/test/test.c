@@ -6,15 +6,12 @@
 #include <c_std.h>
 #include <context.h>
 #include <readylist.h>
-#include <runlist.h>
-#include <lowprio.h>
 #include <context.h>
 #include <hw.h>
 #include <popup.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <checker_kernel_locked.h>
-#include <checker_runlist.h>
 #include <checker_ready.h>
 #include <setjmp.h>
 #include <globals.h>

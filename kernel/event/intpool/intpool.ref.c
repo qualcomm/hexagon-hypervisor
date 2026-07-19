@@ -9,7 +9,6 @@
 #include <hw.h>
 #include <intcontrol.h>
 #include <ring.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <switch.h>
 #include <dosched.h>
@@ -35,11 +34,13 @@ void H2K_intpool_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_vmb
 	H2K_ring_remove(&vmblock->intpool,woken);
 	woken->r00 = intnum;
 	if (me != NULL) {
-		H2K_ready_append(me);
+		H2K_ready_append_arm(me);
 	} else {
+#if CLUSTER_SCHED
 		H2K_gp->wait_mask = (u32_t)Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
+#endif
 	}
-	H2K_runlist_push(woken);
+	woken->status = H2K_STATUS_RUNNING;
 	H2K_switch(me,woken);
 }
 

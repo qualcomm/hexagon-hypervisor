@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(hthreads_mask);
 	PRINT_KG_OFFSET(hthreads);
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	PRINT_KG_OFFSET(cluster_clusters);
 	PRINT_KG_OFFSET(cluster_hthreads);
 	PRINT_KG_OFFSET(cluster_mask);

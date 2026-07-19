@@ -97,7 +97,7 @@ typedef struct {
 	pa_t gpio_reg;
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	u32_t cluster_clusters;   // number of clusters
 	u32_t cluster_hthreads;   // hardware threads per cluster
 	u32_t cluster_mask[4];    // bitmask of threads in cluster
@@ -146,8 +146,6 @@ typedef struct {
 #endif
 	H2K_thread_context *runlist[MAX_HTHREADS];
 	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
-	H2K_thread_context *wip_dummy_runlist[MAX_HTHREADS];
-	s16_t wip_dummy_runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
 	u32_t phys_offset;
 	u32_t build_id;
@@ -218,7 +216,7 @@ static inline H2K_kg_t PURITY *H2K_gp_llvm()
 #undef PURITY
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 
 static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 	return (hthread / H2K_gp->cluster_hthreads);

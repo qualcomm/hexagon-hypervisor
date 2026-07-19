@@ -7,9 +7,7 @@
 #include <max.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <runlist.h>
 #include <readylist.h>
-#include <lowprio.h>
 #include <futex.h>
 #include <intconfig.h>
 #include <thread.h>

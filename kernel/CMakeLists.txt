@@ -16,7 +16,6 @@ set(
   "data/readylist/readylist.ref.c"
   "data/intconfig/intconfig.ref.c"
   "data/stacks/stacks.ref.S"
-  "data/runlist/runlist.ref.c"
   "data/globals/globals.ref.c"
   "data/context/context.v${ARCHV}opt.S"
   "data/vm/vm.ref.c"

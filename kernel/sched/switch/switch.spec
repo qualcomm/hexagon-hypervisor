@@ -50,13 +50,6 @@ register, load the saved r1:0 (which contain a return value from the blocking
 function), and set or clear the PMU bit for the current hardware thread, depending 
 on whether it is enabled for the software thread.  
 
-Finally, we jump to :c:func:`H2K_check_sanity_unlock()`.
-:c:func:`H2K_check_sanity_unlock()` will return to the continuation.
-
-
-
-
-
 
 Testing
 -------
@@ -67,12 +60,10 @@ Samples
 * Input: from, which may be NULL
 * Input: to, which may be NULL
 
-* Flow: If to is non-NULL, we should arrive at :c:func:`H2K_check_sanity_unlock()` with the return address 
-    set to the continuation value in "to"
+* Flow: If to is non-NULL, we should return the address set to the continuation value in "to"
 * Ouptut: If to is NULL, we should unlock the kernel lock, 
 * Flow: if to is NULL, we should jump to H2K_wait_forever
 * I/O: H2K_wait_mask bit set for our hardware thread only if to is NULL
-* I/O: H2K_priomask bit set for our hardware thread only if to is NULL
 * Output: if to is NULL, we should additionally have the machine configured to be in WAIT mode:
   * The kernel is unlocked
   * SGP for our hardware thread is set to NULL

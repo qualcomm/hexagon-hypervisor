@@ -77,7 +77,7 @@
 
 #define MAX_PRIOS 256
 #define WAITING_PRIO ((MAX_PRIOS) - 1)
-#define MAX_READY_PRIO ((MAX_PRIOS) - 2)
+#define MAX_PRIO ((MAX_PRIOS) - 2)
 #define BEST_PRIO 0
 
 #define BESTWAIT_MASK 0x1ff

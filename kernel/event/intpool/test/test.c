@@ -6,8 +6,6 @@
 #include <c_std.h>
 #include <context.h>
 #include <readylist.h>
-#include <runlist.h>
-#include <lowprio.h>
 #include <context.h>
 #include <hw.h>
 #include <intpool.h>
@@ -15,7 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <checker_kernel_locked.h>
-#include <checker_runlist.h>
 #include <checker_ready.h>
 #include <setjmp.h>
 #include <globals.h>
@@ -266,19 +263,16 @@ int main()
 #if ARCHV >= 4
 		if (i == 31) continue;
 #endif
-		H2K_runlist_push(&a);
 		TH_clear_intpool();
 		if (TH_call_intpool_wait(i,&a) != 0) {
 			FAIL("Couldn't wait");
 		}
 		TH_check_waiting(i,&a);
-		H2K_runlist_push(&b);
 		if (TH_call_intpool_wait(i,&b) != 0) {
 			FAIL("Couldn't set second thread");
 		}
 		TH_clear_intpool();
 		//TH_check_running(i,&b);
-		//H2K_runlist_remove(&b);
 	}
 
 	/*
@@ -351,7 +345,6 @@ int main()
 	}
 
 	/* Case B: VMWORK alone -- gate must fire and return -1 without INTBLOCKED */
-	H2K_runlist_push(&a);
 	a.status = H2K_STATUS_RUNNING;
 	a.vmstatus = H2K_VMSTATUS_VMWORK;
 	TH_saw_do_work = 0;
@@ -359,10 +352,8 @@ int main()
 	if (!TH_saw_do_work) FAIL("B: VMWORK alone must call vm_do_work");
 	if (a.status == H2K_STATUS_INTBLOCKED) FAIL("B: must not set INTBLOCKED");
 	a.vmstatus = 0;
-	H2K_runlist_remove(&a);
 
 	/* Case C: VMWORK|KILL -- killed thread racing into intpool_wait */
-	H2K_runlist_push(&a);
 	a.status = H2K_STATUS_RUNNING;
 	a.vmstatus = H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_KILL;
 	TH_saw_do_work = 0;
@@ -370,7 +361,6 @@ int main()
 	if (!TH_saw_do_work) FAIL("C: VMWORK|KILL must call vm_do_work");
 	if (a.status == H2K_STATUS_INTBLOCKED) FAIL("C: must not set INTBLOCKED");
 	a.vmstatus = 0;
-	H2K_runlist_remove(&a);
 
 	puts("TEST PASSED\n");
 	return 0;

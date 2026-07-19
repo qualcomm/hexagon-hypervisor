@@ -6,9 +6,7 @@
 #include <c_std.h>
 #include <context.h>
 #include <stop.h>
-#include <runlist.h>
 #include <readylist.h>
-#include <lowprio.h>
 #include <thread.h>
 #include <hw.h>
 #include <stdio.h>
@@ -76,7 +74,9 @@ int main()
 	H2K_vmblock_t *vmblock = &myblock;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	H2K_readylist_init();
+#if CLUSTER_SCHED
 	H2K_gp->wait_mask = 0;
+#endif
 	H2K_thread_init();
 
 	a.prio = 2;
@@ -91,8 +91,6 @@ int main()
 	//puts("C");
 	vmblock->free_threads = NULL;
 	if (vmblock->free_threads != NULL) FAIL("free threads not clear");
-	H2K_runlist_push(&a);
-	H2K_runlist_push(&b);
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
@@ -125,9 +123,6 @@ int main()
 	c.prio = 2;
 	vmblock->free_threads = NULL;
 	if (vmblock->free_threads != NULL) FAIL("free threads not clear");
-	H2K_runlist_push(&a);
-	H2K_runlist_push(&b);
-	H2K_runlist_push(&c);
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;

@@ -40,7 +40,7 @@ static inline u32_t H2K_ready_any_valid()
 /* Check whether a thread at a given priority is ready */
 static inline u32_t H2K_ready_prio_valid(u32_t prio)
 {
-	if (prio > WAITING_PRIO) return 0;
+	if (prio > MAX_PRIO) return 0;
 	return (H2K_gp->ready_valids[prio >> 6] & (1ULL << (prio & 0x3f))) != 0;
 }
 

@@ -19,6 +19,9 @@
 #include <h2_common_linear.h>
 #include <h2_prof.h>
 #include <angel.h>
+#include <boot.h>
+#include <bootvm_entry.h>
+#include <symbols.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -91,6 +94,8 @@ enum {
 
 #define GUESS_HEAP_SIZE 0x4000000 /* 64MB */
 #define GUESS_STACK_SIZE 0x100000 /* 1MB */
+
+#define GUEST_WINDOW_PAGES 5 /* number of 16M pages reserved for the guest image */
 
 #define FENCE_HI_MAX 0xfffff000
 
@@ -539,6 +544,81 @@ void dcclean_range(unsigned long start, long range) {
 		p += 32;
 		range -= 32;
 	} while (range >= 0); 
+}
+
+void booter_self_map(void) {
+
+	H2K_linear_fmt_t *table;
+	unsigned long page_size;
+	unsigned long image_base;
+	unsigned long heap_size;
+	unsigned long stack_size;
+	unsigned long footprint;
+	unsigned long npages;
+	unsigned long guest_npages;
+	unsigned long va;
+	unsigned long long pa;
+	unsigned long i;
+
+	page_size = 1UL << (PAGE_BITS + BOOT_TLB_PGSIZE * 2);  // size in bytes of one booter TLB page (BOOT_TLB_PGSIZE encodes size as a power-of-4 step above the minimum page)
+	image_base = (unsigned long)__bootvm_entry_point & -page_size;  // round entry point down to a page boundary so the mapping starts on an aligned page
+
+	heap_size = ((unsigned long)&HEAP_SIZE == 0) ? GUESS_HEAP_SIZE : (unsigned long)&HEAP_SIZE;
+	stack_size = ((unsigned long)&STACK_SIZE == 0) ? GUESS_STACK_SIZE : (unsigned long)&STACK_SIZE;
+
+	// Total footprint: image (from the aligned base up to the linker's "end" symbol) + heap + stack,
+	// rounded up to a whole number of pages so every byte the booter itself uses is covered.
+	footprint = H2_ALIGN_UP(((unsigned long)&end - image_base) + heap_size + stack_size, page_size);
+	npages = footprint / page_size;
+
+	/* Separate entries covering the guest image address range, since load_vm()
+	 * accesses guest physical memory directly through the booter's own map. */
+	guest_npages = GUEST_WINDOW_PAGES;  // fixed-size window of 16M pages; typical guest images are well under this
+
+	// +1 for the booter's own footprint entries, +guest_npages for the guest window, +1 for the null (end-marker) entry
+	if (NULL == (table = (H2K_linear_fmt_t *)malloc(sizeof(H2K_linear_fmt_t) * (npages + guest_npages + 1)))) {
+		error("malloc booter_self_map table", NULL);
+	}
+
+	va = image_base >> PAGE_BITS;  // table entries store page numbers, not byte addresses
+	pa = ((unsigned long long)image_base + __boot_net_phys_offset__) >> PAGE_BITS;  // matching PA: same offset the old OFFSET translation used
+
+	for (i = 0; i < npages; i++) {
+		table[i].raw = 0ULL;
+		table[i].ppn = pa;
+		table[i].cccc = BOOT_CACHE_ATTR;
+		table[i].xwru = URWX;
+		table[i].vpn = va;
+		table[i].size = BOOT_TLB_PGSIZE;
+
+		va += 1 << (BOOT_TLB_PGSIZE * 2);  // advance by one page's worth of page-numbers (size field is a log4 step, hence *2)
+		pa += 1 << (BOOT_TLB_PGSIZE * 2);
+	}
+
+	// Guest window: maps H2K_GUEST_START upward in 16M pages so the booter can read/write guest
+	// physical memory directly (memcpy/read/memset in load_vm()) the same way OFFSET translation
+	// allowed before this table replaced it.
+	va = H2K_GUEST_START >> PAGE_BITS;
+	pa = ((unsigned long long)H2K_GUEST_START + __boot_net_phys_offset__) >> PAGE_BITS;
+
+	for (i = 0; i < guest_npages; i++) {
+		table[npages + i].raw = 0ULL;
+		table[npages + i].ppn = pa;
+		table[npages + i].cccc = BOOT_CACHE_ATTR;
+		table[npages + i].xwru = URWX;
+		table[npages + i].vpn = va;
+		table[npages + i].size = SIZE_16M;
+
+		va += 1 << (SIZE_16M * 2);  // advance by one 16M page's worth of page-numbers
+		pa += 1 << (SIZE_16M * 2);
+	}
+	table[npages + guest_npages].raw = 0ULL;  // end marker (zero raw entry terminates the table)
+
+	dcclean_range((unsigned long)table, sizeof(H2K_linear_fmt_t) * (npages + guest_npages + 1));
+
+	if (h2_vmtrap_newmap(table, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_TRUE) < 0) {
+		FAIL("booter_self_map: h2_vmtrap_newmap", "");
+	}
 }
 
 void set_cmdline(unsigned int idx, long offset) {
@@ -2405,6 +2485,8 @@ int main(int argc, char **argv)
 	tcm_size = h2_info(INFO_TCM_SIZE);
 	clade_base = h2_info(INFO_CLADE_BASE);
 	guest_base = H2K_GUEST_START;
+
+	booter_self_map();
 
 	h2_galloc_init(&tcm_alloc, (unsigned int)tcm_base, (unsigned int)tcm_size, NULL);
 

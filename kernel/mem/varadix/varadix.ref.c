@@ -36,6 +36,7 @@ static inline H2K_translation_t H2K_varadix_mktrans(u32_t vpn, u32_t entry, u32_
 	ret.raw = 0;
 	ret.xwru = entry >> VARADIX_XWRU_OFFSET;
 	ret.cccc = entry >> VARADIX_CCCC_OFFSET;
+	ret.weak_ccc = entry >> VARADIX_WEAK_CCC_OFFSET;
 	entry &= entry-1;	// clear least significant set bit
 	/* Must preserve all low order bits in case pages get smaller (by stage2 translation or odd size) */
 	mypn = Q6_R_extractu_RP(entry,Q6_P_combine_RR(VARADIX_PN_BITS-size,1+size));
@@ -47,36 +48,38 @@ static inline H2K_translation_t H2K_varadix_mktrans(u32_t vpn, u32_t entry, u32_
 	return ret;
 }
 
-/*
- * EJP: FIXME: optimization: can keep last valid translation to sometimes skip
- * H2K_translate call during walk but, this requires more args to an already
- * pretty full signature.  Converting from recursive to iterative might help,
- * but makes complexity somewhat higher.
- */
-static inline H2K_translation_t H2K_varadix_walk(
-	u32_t vpn, 
-	u32_t tablebase, 
-	u32_t tablesize, 
-	u32_t startbit, 
-	H2K_vmblock_t *vmblock)
+static inline H2K_translation_t H2K_varadix_walk(u32_t vpn, u32_t tablebase, u32_t tablesize, u32_t startbit, H2K_vmblock_t *vmblock)
 {
-	H2K_translation_t tmp;
 	u32_t entry;
-	u32_t nextsize;
-	u32_t index = Q6_R_extractu_RP(vpn,Q6_P_combine_RR(tablesize,startbit));
-	u32_t tableaddr32 = Q6_R_insert_RP(tablebase,index,Q6_P_combine_RR(tablesize,0));
-	pa_t tableaddr = (pa_t)tableaddr32 << 2;
-	if (vmblock->guestmap.raw) {
-		tmp = H2K_translate_default(tableaddr);
-		tmp = H2K_translate(tmp,vmblock->guestmap);
-		if ((tmp.xwru & 2) == 0) return H2K_translate_bad();
-		tableaddr = Q6_P_insert_PII(tableaddr,tmp.pn,24,12);
+	u32_t index;
+	u32_t tableaddr32;
+	pa_t  tableaddr;
+	H2K_translation_t tmp;
+	u32_t size;
+
+	while (1) {
+		index = Q6_R_extractu_RP(vpn, Q6_P_combine_RR(tablesize, startbit));
+		tableaddr32 = Q6_R_insert_RP(tablebase, index, Q6_P_combine_RR(tablesize, 0));
+		tableaddr = (pa_t)tableaddr32 << 2;
+
+		if (vmblock->guestmap.raw) {
+			tmp = H2K_translate_default(tableaddr);
+			tmp = H2K_translate(tmp, vmblock->guestmap);
+			if ((tmp.xwru & 2) == 0) return H2K_translate_bad();
+			tableaddr = Q6_P_insert_PII(tableaddr, tmp.pn, 24, 12);
+		}
+
+		entry = H2K_mem_physread_word(tableaddr);
+		size  = H2K_varadix_entry_size(entry);
+
+		if (unlikely(size > startbit)) return H2K_translate_bad();
+		if (size == startbit) break; 
+		
+		tablebase = entry;
+		tablesize = size + 1;
+		startbit -= size + 1;
 	}
-	entry = H2K_mem_physread_word(tableaddr);
-	nextsize = H2K_varadix_entry_size(entry);
-	if (unlikely(nextsize > startbit)) return H2K_translate_bad();
-	if (nextsize == startbit) return H2K_varadix_mktrans(vpn,entry,nextsize,0,vmblock);
-	return H2K_varadix_walk(vpn,entry,nextsize+1,startbit-(nextsize+1),vmblock);
+	return H2K_varadix_mktrans(vpn, entry, size, 0, vmblock);
 }
 
 H2K_translation_t H2K_varadix_translate(H2K_translation_t in, H2K_asid_entry_t info)

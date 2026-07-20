@@ -13,9 +13,14 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/times.h>
+#include <sys/wait.h>
+#include <sys/resource.h>
+#include <sys/statvfs.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <dirent.h>
+#include <time.h>
 
 #ifdef __PICOLIBC_ERRNO_FUNCTION
 #define SET_LTS_ERROR(err)

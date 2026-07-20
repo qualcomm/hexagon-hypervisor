@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libncurses5
 
       - name: Cache Hexagon SDK
         id: cache-sdk
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /opt/hexagon-sdk
           key: hexagon-sdk-v6.4.0.2
@@ -39,10 +39,9 @@ jobs:
       - name: Add SDK to PATH
         run: echo "$SDK_ROOT/bin" >> "$GITHUB_PATH"
 
-      - name: Build
-        run: make USE_PKW=0 ARCHV=$ARCHV TARGET=opt -j"$(nproc)"
+      # - name: Build
+      #   run: make USE_PKW=0 ARCHV=$ARCHV TARGET=opt -j"$(nproc)"
 
       - name: Regression test
         run: |
-          make -O test USE_PKW=0 ARCHV=$ARCHV
-
+          make -O USE_PKW=0 NULL_ANGEL_TRAP=1 testall

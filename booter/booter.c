@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-//#include <max.h>
+#include <max.h>
 #include <h2.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -23,8 +23,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "../kernel/include/max.h"
-#include "../kernel/include/hw.h"
+#include <hw.h>
 #include <syscall_defs.h>
 
 #define VM_BEST_PRIO 0
@@ -346,7 +345,7 @@ void usage()
 #endif
 	BOOTER_PRINTF("  --num_shared_ints <int>\n\tNumber of shared interrupts.  Default 0.\n");
 	BOOTER_PRINTF("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
-	BOOTER_PRINTF("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C (0xa == L1WB_L2CWB_AUX).\n");
+	BOOTER_PRINTF("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C.\n");
 	BOOTER_PRINTF("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
 	BOOTER_PRINTF("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
 	BOOTER_PRINTF("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default lowest mapped physical page.\n");

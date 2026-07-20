@@ -18,12 +18,7 @@ export CXX := hexagon-clang++
 export AS := hexagon-clang
 export AR := hexagon-ar
 export RANLIB := hexagon-ranlib
-ifeq (1, $(USE_PKW))
-export COV := $(shell PKW_VERSIONS=hexagon-tools=8.6.07 pkw --which hexagon-coverage)
-else
-# without pkw, rely on shell path
-export COV := hexagon-coverage
-endif
+export COV := $(H2DIR)/scripts/hexagon-coverage.py
 export LLVM_COV := hexagon-llvm-cov
 export OBJDUMP := hexagon-llvm-objdump
 export GMON_MERGE := hexagon-gmon-merge
@@ -79,8 +74,8 @@ LIB_CFLAGS += -Wimplicit-int-conversion
 endif
 else
 ifeq (68, $(ARCHV))
-TOOLS_FLAVOR ?= 8.6
-TOOLS_FLAVOR_KERNEL ?= 8.6
+TOOLS_FLAVOR ?= 19.0.07
+TOOLS_FLAVOR_KERNEL ?= 19.0.07
 ARCH_FLAVOR ?= v68_latest
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion
@@ -88,8 +83,8 @@ DEVSIM := archsim
 ELFCOPY := hexagon-llvm-objcopy
 else
 ifeq (73, $(ARCHV))
-TOOLS_FLAVOR ?= 8.8.07
-TOOLS_FLAVOR_KERNEL ?= 8.8.07
+TOOLS_FLAVOR ?= 19.0.07
+TOOLS_FLAVOR_KERNEL ?= 19.0.07
 ARCH_FLAVOR ?= v73_stable
 KERNEL_CFLAGS += -mhvx -mhvx-length=128B -Wimplicit-int-conversion
 LIB_CFLAGS += -Wimplicit-int-conversion
@@ -124,7 +119,7 @@ endif
 
 export RUN_DEVSIM := $(DEVSIM) $(DEVSIM_EXTRA) --quiet $(MAGIC_ANGEL) --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(DEVICE_CONFIG)
 
-export RUN_TOOLSIM := hexagon-sim --simulated_returnval --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
+export RUN_TOOLSIM := hexagon-sim $(TOOLSIM_EXTRA) --nullptr 0 --simulated_returnval --subsystem_base $(SUBSYSTEM_BASE_TOOLSIM) --cosim_file $(H2DIR)/scripts/timer_v${ARCHV}.cfg
 #export RUN_TOOLSIM := hexagon-sim 
 
 export TOOLARCH := $(ARCHV)

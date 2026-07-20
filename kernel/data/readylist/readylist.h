@@ -122,12 +122,12 @@ static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hth
 /* Return head of ready list at prio */
 static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	H2K_thread_context *head = H2K_gp->ready[prio];
-	H2K_thread_context *ret = head;
 
 #ifdef CLUSTER_SCHED
 	if ((!H2K_gp->cluster_sched) || H2K_gp->coproc_max == -1) {
-		return ret;
+		return head;
 	}
+	H2K_thread_context *ret = head;
 
 	u32_t ssr = H2K_get_ssr();
 	u32_t ccr = H2K_get_ccr();
@@ -183,8 +183,7 @@ static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 			iassignw(CLUSTER_RESCHED_INT, ~(0x1 << victim));  // steer the interrupt
 			cluster_resched_int();    // get victim hthread to pick up what we skipped
 			/* This hthread is going to sleep, so no longer using xe/xe2/xe3 */
-			ssr &= ~SSR_XE_BIT_MASK;
-			ssr &= ~SSR_XE2_BIT_MASK;
+			ssr &= ~(SSR_XE_BIT_MASK | SSR_XE2_BIT_MASK);
 			ccr &= ~CCR_XE3_BIT_MASK;
 
 			H2K_set_ssr(ssr);
@@ -235,8 +234,7 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 		u32_t hthread_xe2 = ((ssr & SSR_XE2_BIT_MASK) ? 1 : 0);
 		u32_t hthread_xe3 = ((ccr & CCR_XE3_BIT_MASK) ? 1 : 0);
 		/* This hthread is goint to sleep, so no longer using xe/xe2 */
-		ssr &= ~SSR_XE_BIT_MASK;
-		ssr &= ~SSR_XE2_BIT_MASK;
+		ssr &= ~(SSR_XE_BIT_MASK | SSR_XE2_BIT_MASK);
 		ccr &= ~CCR_XE3_BIT_MASK;
 		H2K_set_ssr(ssr);
 		H2K_set_ccr(ccr);

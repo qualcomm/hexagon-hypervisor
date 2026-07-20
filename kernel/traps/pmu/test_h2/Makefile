@@ -5,6 +5,7 @@ OBJS+=test.o
 EXEC=test.elf
 
 DEVSIM_EXTRA=--timing
+TOOLSIM_EXTRA=--timing
 
 include Makefile.inc
 

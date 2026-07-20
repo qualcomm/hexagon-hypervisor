@@ -3,7 +3,7 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -Iinclude -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+CFLAGS := -I$(INSTALLPATH)/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -73,7 +73,8 @@ OPT_V81_CFILES :=
 OPT_V81_SFILES := 
 OPT_V81_OFILES := 
 
-BUILD_DIR := .
+BUILD_DIR := $(INSTALLPATH)/../build/libs/h2
+CFLAGS += -I$(BUILD_DIR)/include
 
 MKINCLUDES := $(shell find . -name make.inc)
 
@@ -124,23 +125,26 @@ ifeq ($(ARCHV),81)
 OPT_OFILES := $(OPT_V81_OFILES)
 endif
 
-build/ref/libh2.a: $(REF_OFILES)
+ifeq ($(findstring /ref/,$(BUILD_DIR)),/ref/)
+$(BUILD_DIR)/libh2.a: $(REF_OFILES)
 	mkdir -p $(dir $@); \
 	$(AR) cru $@ $(sort $(REF_OFILES))
-
-build/opt_v$(ARCHV)/libh2.a: $(OPT_V$(ARCHV)_OFILES)
-	echo $(OPT_V$(ARCHV)_OFILES); \
+else
+$(BUILD_DIR)/libh2.a: $(OPT_OFILES)
 	mkdir -p $(dir $@); \
-	$(AR) cru $@ $(sort $(OPT_V$(ARCHV)_OFILES))
+	$(AR) cru $@ $(sort $(OPT_OFILES))
+endif
 
-%.o : %.c
+$(BUILD_DIR)/%.o : %.c
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-%.o : %.S
+$(BUILD_DIR)/%.o : %.S
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(ALL_OFILES) $(DEST_HFILES) $(CLEAN_EXTRAS) build/ref build/opt*
+	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include
 
 dummy:
 	@echo $(REF_CFILES)
@@ -152,6 +156,6 @@ dummy:
 
 includes: $(DEST_HFILES)
 
-ref: build/ref/libh2.a
+ref: $(BUILD_DIR)/libh2.a
 
-opt: build/opt_v$(ARCHV)/libh2.a
+opt: $(BUILD_DIR)/libh2.a

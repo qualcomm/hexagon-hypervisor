@@ -10,8 +10,10 @@ ifeq ($(KERNELPATH),)
 export KERNELPATH := $(H2DIR)/kernel
 endif
 
+# All intermediate build artifacts go here.
+BUILD_DIR := $(INSTALLPATH)/../build/stake
 
-all: kernel_tmp
+all: $(BUILD_DIR)/kernel_tmp
 
 include ../scripts/Makefile.inc.config
 include ../scripts/Makefile.inc.opensource
@@ -26,30 +28,17 @@ CFLAGS += -DH2K_KERNEL_PGSIZE=$(H2K_KERNEL_PGSIZE) -DH2K_KERNEL_ADDRBITS=$(H2K_K
 
 SCRIPTS = $(CONSTS) $(SYMS) vapa_bootvm.x vapa_kernel.x.in
 SRCFILES = bootvm_entry.S bootvm.S min_crt0.S
-BINFILES = kernel_tmp
+BINFILES = $(BUILD_DIR)/kernel_tmp
 FILES := $(SCRIPTS) $(SRCFILES) $(BINFILES)
 
-%.o: %.c
-	${CC} ${CFLAGS} -c -o $@ $<
-
-%.o: %.S
-	${CC} ${CFLAGS} -c -o $@ $<
-
-vapa_kernel_tmp.x: vapa_kernel.x.in
-	cat $< | perl -p -i -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/0x0/;' > $@
+$(BUILD_DIR)/vapa_kernel_tmp.x: vapa_kernel.x.in
+	mkdir -p $(dir $@)
+	cat $< | perl -p -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/0x0/;' > $@
 
 # so we can calculate the number of kernel pages
-kernel_tmp: vapa_kernel_tmp.x $(INSTALLPATH)/lib/libh2kernel.a
-	${CC} $(CFLAGS) -nostartfiles -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--defsym=__bootvm_entry=0x0, -Wl,--defsym=__bootvm_entry_point=0x0  -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=0x0 -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -Wl,--script=vapa_kernel_tmp.x -Wl,--entry=$(H2K_LOAD_ADDR) -Wl,-mv$(TOOLARCH) -o kernel_tmp
-
-# $(INSTALLPATH)/stake/kernel_tmp: kernel_tmp
-# 	mkdir -p $(INSTALLPATH)/stake
-# 	cp kernel_tmp $(INSTALLPATH)/stake
-
-# $(INSTALLPATH)/scripts/vapa_kernel.x.in: vapa_kernel.x.in
-# 	mkdir -p $(INSTALLPATH)/scripts
-# 	cp vapa.kernel.x.in $(INSTALLPATH)/scripts
-
+$(BUILD_DIR)/kernel_tmp: $(BUILD_DIR)/vapa_kernel_tmp.x $(INSTALLPATH)/lib/libh2kernel.a
+	mkdir -p $(dir $@)
+	${CC} $(CFLAGS) -nostartfiles -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--defsym=__bootvm_entry=0x0, -Wl,--defsym=__bootvm_entry_point=0x0  -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=0x0 -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LOAD_ADDR) -Wl,--script=$(BUILD_DIR)/vapa_kernel_tmp.x -Wl,--entry=$(H2K_LOAD_ADDR) -Wl,-mv$(TOOLARCH) -o $@
 
 install: $(FILES)
 	mkdir -p $(INSTALLPATH)/scripts
@@ -60,4 +49,4 @@ install: $(FILES)
 	cp $(BINFILES) $(INSTALLPATH)/stake
 
 clean:
-	rm -f vapa_kernel.x vapa_kernel_tmp.x kernel_tmp
+	rm -rf $(BUILD_DIR)

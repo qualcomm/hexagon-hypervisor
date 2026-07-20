@@ -125,6 +125,17 @@ static inline u32_t H2K_get_ssr()
 	return ret;
 }
 
+static inline H2K_thread_context *H2K_get_sgp()
+{
+	H2K_thread_context *me;
+#if ARCHV <= 3
+	asm volatile (" %0 = sgp\n" : "=r"(me));
+#else
+	asm volatile (" %0 = sgp0\n" : "=r"(me));
+#endif
+	return me;
+}
+
 static inline void H2K_set_ssr(u32_t val)
 {
 	asm volatile (" ssr = %0 // set ssr" : : "r"(val));

@@ -12,6 +12,7 @@
 #include <setjmp.h>
 #include <max.h>
 #include <globals.h>
+#include <hw.h>
 
 H2K_thread_context *TH_me;
 u32_t TH_intno;
@@ -59,12 +60,8 @@ int TH_good_interrupt(u32_t intno)
 	if ((u32_t)(sp_check - ((u32_t)(&H2K_fastint_contexts[0]))) > ((u32_t)FASTINT_CONTEXT_SIZE)) {
 		FAIL("Not fastint context sp");
 	}
-#if ARCHV <= 3
-	asm ( " %0 = sgp " : "=r"(sgp_check));
-#else
-	asm ( " %0 = sgp0 " : "=r"(sgp_check));
-#endif
-	if ((u32_t)(sgp_check) != ((u32_t)(&H2K_fastint_contexts[0]))) {
+	sgp_check = (u32_t)H2K_get_sgp();
+	if (sgp_check != ((u32_t)(&H2K_fastint_contexts[0]))) {
 		FAIL("Not fastint context sgp");
 	}
 	return 0;
@@ -79,12 +76,8 @@ int TH_good_interrupt_ackl2(u32_t intno)
 	if ((u32_t)(sp_check - ((u32_t)(&H2K_fastint_contexts[0]))) > ((u32_t)FASTINT_CONTEXT_SIZE)) {
 		FAIL("Not fastint context sp");
 	}
-#if ARCHV <= 3
-	asm ( " %0 = sgp " : "=r"(sgp_check));
-#else
-	asm ( " %0 = sgp0 " : "=r"(sgp_check));
-#endif
-	if ((u32_t)(sgp_check) != ((u32_t)(&H2K_fastint_contexts[0]))) {
+	sgp_check = (u32_t)H2K_get_sgp();
+	if (sgp_check != ((u32_t)(&H2K_fastint_contexts[0]))) {
 		FAIL("Not fastint context sgp");
 	}
 	return 1;

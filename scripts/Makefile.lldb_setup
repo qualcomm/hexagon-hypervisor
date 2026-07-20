@@ -1,0 +1,21 @@
+OUT  := $(H2DIR)/lldb-setup
+
+LLDB_PORT ?= 1234
+
+.PHONY: all clean FORCE
+all: $(OUT)
+
+$(OUT): FORCE
+	@printf '%s\n' \
+		'target module add $(H2DIR)/booter/booter' \
+		'target module load --file $(H2DIR)/booter/booter --slide 0x0' \
+		'target module add $(H2DIR)/booter/bootvm_image' \
+		'target module load --file $(H2DIR)/booter/bootvm_image --slide 0x0' \
+		'gdb-remote $(LLDB_PORT)' > $(OUT)
+	@echo "Wrote $(OUT) (gdb port $(LLDB_PORT))"
+
+clean:
+	@rm -f $(OUT)
+	@echo "Removed $(OUT)"
+
+FORCE:

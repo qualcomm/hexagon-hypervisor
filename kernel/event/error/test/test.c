@@ -6,6 +6,7 @@
 #include <c_std.h>
 #include <context.h>
 #include <max.h>
+#include <hw.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -106,11 +107,7 @@ void TH_call_error()
 int main()
 {
 	h2_init(NULL);
-#if ARCHV <= 3
-	asm (" %0 = sgp\n" : "=r"(me));
-#else
-	asm (" %0 = sgp0\n" : "=r"(me));
-#endif
+	me = H2K_get_sgp();
 	/* 
 	 * Put ourselves in guest mode, but don't have an EVB registered.
 	 * We expect this to call thread_fatal

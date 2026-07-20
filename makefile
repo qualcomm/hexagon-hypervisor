@@ -1,148 +1,68 @@
 include scripts/Makefile.inc.config
 include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
-
-ARCHV_LIST ?= 68 73 81
-TESTOUT ?= test.out
-
-TARGET ?= opt
-ARCHV ?= 81
-
-ifneq ($(findstring $(ARCHV),65,66,67),)
-override ARCHV := 65
-endif
-
-ifneq ($(findstring $(ARCHV),68,71),)
-override ARCHV := 68
-endif
-
-ifneq ($(findstring $(ARCHV),73,75,77,79),)
-override ARCHV := 73
-endif
-
-ifneq ($(findstring $(ARCHV),81,83,85,87,89,91),)
-override ARCHV := 81
-endif
-
-export USE_PKW
-
 include scripts/Makefile.inc.tools
 
+# Enable parallel builds by default.  Use the number of available CPUs so we
+# don't overwhelm shared machines.  A user-supplied -jN on the command line
+# takes precedence because command-line flags are processed after the Makefile.
+ifeq ($(findstring -j,$(MAKEFLAGS)),)
+MAKEFLAGS += -j$(shell nproc)
+endif
 
 JFLAG ?= -j
-OPT_JFLAG := $(JFLAG)
-REF_JFLAG := $(JFLAG)
 TEST_JFLAG ?= -j 8
 
-ifeq ($(TARGET), 8960)
-T := opt
-ARCHV := 4
-H2K_KERNEL_PGSIZE ?= 3
-H2K_ALLOC_HEAP_SIZE ?= 0xb000
-export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
-endif
+NULLSTRING :=
+define nl
 
-ifeq ($(TARGET), 8974)
-T := opt
-ARCHV := 5
-H2K_KERNEL_PGSIZE ?= 3
-H2K_ALLOC_HEAP_SIZE ?= 0xb000
-export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
-export USE_TCM ?= 1
-endif
+$(NULLSTRING)
+endef
 
-ifeq ($(TARGET), zebu_v60)
-T := opt
-ARCHV := 60
-H2K_KERNEL_PGSIZE ?= 3
-H2K_ALLOC_HEAP_SIZE ?= 0xb000
-export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
-#export USE_TCM ?= 1
-endif
-
-ifeq ($(TARGET), zebu_v65)
-T := opt
-ARCHV := 65
-H2K_KERNEL_PGSIZE ?= 3
-H2K_ALLOC_HEAP_SIZE ?= 0xb000
-export H2K_EXTRA_CFLAGS += -DCOUNT_TLB_EVENTS
-#export USE_TCM ?= 1
-endif
-
-ifeq ($(TARGET), opt)
-T := opt
-#OPT_JFLAG :=
-endif
-
-ifeq ($(TARGET), opt_cov)
-T := opt
-OPT_JFLAG :=
-export OPT_ADD := $(OPTIMIZE_COV)
-endif
-
-ifeq ($(TARGET), llvm_cov)
-T := opt
-OPT_JFLAG :=
-export EN_LLVM_COV := 1
-endif
-
-ifeq ($(TARGET), opt_snap)
-T := opt
-#OPT_JFLAG :=
-export H2K_LOAD_ADDR=0x00400000 
-export H2K_EXTRA_CFLAGS+=-DNMI_STOP
-endif
-
-ifeq ($(TARGET), opt_tiny_snap)
-override ARCHV := 65  # because some things call make with ARCHV=66t
-T := opt
-#OPT_JFLAG :=
-export TINY_CORE=1
-export H2K_LOAD_ADDR=0x00400000
-export H2K_EXTRA_CFLAGS+=-DNMI_STOP
-endif
-
-ifeq ($(TARGET), ref)
-T := ref
-#REF_JFLAG :=
-endif
-
-ifeq ($(TARGET), ref_cov)
-T := ref
-REF_JFLAG :=
-export OPT_ADD := $(OPTIMIZE_COV)
-endif
-
-ifeq ($(TARGET), debug)
-T := ref
-REF_JFLAG :=
-export OPTIMIZE := $(OPTIMIZE_DEBUG)
-endif
-
-ifeq ($(TARGET), opt_si)
-T := opt
-#OPT_JFLAG :=
-export H2K_LOAD_ADDR=0x84c00000
-export H2K_GUEST_START=0x87000000
-export NULL_ANGEL_TRAP=1
-export MAGIC_ANGEL=--magic_angel
-endif
-
-# FIXME: Remove when cluster sched ported to opt
-export OMIT_OPT=dosched resched
-
+tab := $(shell printf '\011')
 
 .PHONY: all
 all:
-	$(MAKE) $(JFLAG) $(T)
+	$(MAKE) $(JFLAG) build
+
+.PHONY: build
+build:
+ifeq ($(USE_PKW),1)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
+	pkw --which $(CC)
+endif
+	$(MAKE) $(JFLAG) -C kernel ARCHV=$(ARCHV) install && \
+	$(MAKE) $(JFLAG) -C libs ARCHV=$(ARCHV) install && \
+	$(MAKE) $(JFLAG) -C stake ARCHV=$(ARCHV) install
+	$(MAKE) $(JFLAG) -C booter ARCHV=$(ARCHV) install
+	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
+	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
+	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
+	$(MAKE) $(JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
+	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
+	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
+	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
+	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
+	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
+	    > $(INSTALLPATH)/manifest.tmp; \
+	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
+	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
+	rm -f $(INSTALLPATH)/manifest.tmp
+
+
+.PHONY: buildall
+$(eval buildall:$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(nl)$(tab)$$(MAKE) ARCHV=$(a) TARGET=$(v))))
+
+all_clean:
+	rm -rf artifacts/
 
 distclean: clean docclean gtagsclean
 
-clean: covclean booterclean docclean qurtclean # ucosclean 
+clean: covclean booterclean docclean qurtclean # ucosclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
-	rm -Rf size test.exe stats.txt install kernel/stats.txt
+	rm -Rf size test.exe stats.txt artifacts/v$(ARCHV)/$(TARGET) kernel/stats.txt
 
 booterclean:
 	$(MAKE) -C booter ARCHV=$(ARCHV) clean
@@ -162,40 +82,6 @@ qurtclean:
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) clean
 	$(MAKE) -f scripts/Makefile.qurt clean_top
 
-opt:
-ifeq ($(USE_PKW),1)
-	@echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which $(CC)
-endif
-	$(MAKE) $(OPT_JFLAG) -C kernel ARCHV=$(ARCHV) opt_install && \
-	$(MAKE) $(OPT_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=opt && \
-	$(MAKE) $(OPT_JFLAG) -C stake ARCHV=$(ARCHV) install
-	$(MAKE) $(OPT_JFLAG) -C booter ARCHV=$(ARCHV) install
-	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
-	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
-	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
-	$(MAKE) $(OPT_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
-	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
-	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
-
-ref:
-ifeq ($(USE_PKW),1)
-	@echo PKW_VERSIONS $(PKW_VERSIONS)
-	pkw --which $(CC)
-endif
-	$(MAKE) $(REF_JFLAG) -C kernel ARCHV=$(ARCHV) ref_install && \
-	$(MAKE) $(REF_JFLAG) -C libs ARCHV=$(ARCHV) install IMPL=ref && \
-	$(MAKE) $(REF_JFLAG) -C stake ARCHV=$(ARCHV) install
-	$(MAKE) $(REF_JFLAG) -C booter ARCHV=$(ARCHV) install
-	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
-	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
-	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
-	$(MAKE) $(REF_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
-	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
-	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
-
 sim: ref
 	$(CC) -mv$(TOOLARCH) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
 	$(RUN) $(SIMF) -- test.exe;
@@ -207,43 +93,65 @@ size:
 # t:
 # 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
-.PHONY: testall testall_prepare
-testall: testall_prepare $(ARCHV_LIST)
+# All per-variant test result JSON paths — one per ARCHV×variant combination.
+ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifacts/v$a/$v/install/test_results.json))
 
-testall_prepare:
-	git clean -dxf -e 'jenkins[0-9]*'
+# One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
+# generating test_results.json which testall aggregates into the unified report.
+define ARCHV_VARIANT_TEST_RULE
+artifacts/v$(1)/$(2)/install/test_results.json:
+	$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
+endef
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_TEST_RULE,$a,$v))))
 
-.PHONY: $(ARCHV_LIST)
-$(ARCHV_LIST):
-	@echo '/// $@ opt ///' | tee -a $(TESTOUT)
-	$(MAKE) ARCHV=$@ TARGET=opt all test
-	git clean -dxf -e $(TESTOUT) -e 'jenkins[0-9]*'
-	@echo '/// $@ ref ///' | tee -a $(TESTOUT)
-	$(MAKE) ARCHV=$@ TARGET=ref all test
-	git clean -dxf -e $(TESTOUT)  -e 'jenkins[0-9]*'
+# Unified test report: one section per ARCHV×variant, driven by all JSON files.
+# Building this target drives the full build+test DAG for every combination.
+artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
+	@mkdir -p artifacts
+	python3 $(H2DIR)/scripts/gen_test_report.py \
+	    --inputs $(ARCHV_VARIANT_JSONS) \
+	    --output $@ \
+	    --summary-out artifacts/test.out
 
-test:	h2_test check-fail
+.PHONY: testall test
+testall: artifacts/test_report.html
+
+# 'make test' runs all ARCHV×variant combinations (same as testall).
+# Use 'make test_variant' to run a single variant (ARCHV=XX TARGET=yy).
+test: testall
+
+# NO_TEST_RESET=1 suppresses TESTOUT truncation in 'make test_variant' when the
+# caller wants to accumulate results across multiple runs.
+NO_TEST_RESET ?= 0
+
+test_variant:
+ifneq ($(NO_TEST_RESET),1)
+	@if [ -d "$(dir $(TESTOUT))" ]; then > "$(TESTOUT)"; fi
+endif
+	$(MAKE) h2_test
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) test_summary
+	$(MAKE) check-fail
 
 h2_test: all # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee -a $(TESTOUT)
-#$(MAKE) -C ucos sim 2>&1 | tee make.log | tee -a $(TESTOUT)
-	[ `fgrep -v "WARNING: Overriding currently set revid" $(TESTOUT) | fgrep -c -i warning:` -eq 0 ]
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
-	head -n -1 h2_report.html > report.html
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
+#$(MAKE) -C ucos sim 2>&1 | tee make.log
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
 
 bigtest: test
 	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/pass/x86_64/master/pass.pl --retrycount 1 --results ./passout --html ./passout --q6v v$(ARCHV) --arch v$(ARCHV)_stable --tld STANDALONE=0 --tld TRACES=0 --flaglist v$(ARCHV)_flags.list --flags MARGIN=12 --flags PLMARGIN=180 --tld NOTIMING --tld CHECKIN=1 --flags PLIMIT= --flags WARN=--warn --flags Q6_RTOS_INSTALL=$(INSTALLPATH)
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee $(TESTOUT)
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee $(TESTOUT); exit $${PIPESTATUS[0]}
 #	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
-	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_report.html
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) $(INSTALLPATH)/qurt_report.html
 
 qurt_test_single: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee $(TESTOUT)
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee $(TESTOUT); exit $${PIPESTATUS[0]}
 	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
 
 qurt_test_libs:
@@ -251,16 +159,11 @@ qurt_test_libs:
 
 #cov: h2_test
 cov: h2_cov
-	head -n -1 h2_report.html > report.html
 #	tail -n +2 qurt_report.html >> report.html
 
 h2_cov:
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) all
-#	$(MAKE) -C ucos sim 2>&1 | tee make.log
-#	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) coverage_report
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) cov.rpt
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) h2_report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/cov.rpt
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 
 .PHONY: check-fail test-check cov-check cov_fns
 
@@ -317,3 +220,19 @@ cov_fns:
  q6testinstallenvs:
 	export Q6TESTINSTALL_MAKEJOBS=1
 	export Q6TESTINSTALL_TESTTARGET='testall'
+
+LLDB_PORT ?= 1234
+
+.PHONY: lldb-setup lldb-setup-clean
+lldb-setup:
+	$(MAKE) -f scripts/Makefile.lldb_setup LLDB_PORT=$(LLDB_PORT)
+
+lldb-setup-clean:
+	$(MAKE) -f scripts/Makefile.lldb_setup clean
+
+.PHONY: vscode vscode_clean
+vscode:
+	$(MAKE) -f scripts/Makefile.vscode TOOLS_FLAVOR=$(TOOLS_FLAVOR) ARCH_FLAVOR=$(ARCH_FLAVOR) ARCHV=$(ARCHV) TARGET=$(TARGET)
+
+vscode_clean:
+	$(MAKE) -f scripts/Makefile.vscode clean

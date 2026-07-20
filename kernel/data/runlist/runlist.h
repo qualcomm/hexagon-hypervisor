@@ -56,6 +56,12 @@ static inline void H2K_runlist_remove(H2K_thread_context *thread)
 	H2K_gp->runlist_prios[hthread] = -1;
 }
 
+static inline void H2K_runlist_set_thread_prio(H2K_thread_context *thread, u32_t new_prio)
+{
+	thread->prio = (u8_t)new_prio;
+	H2K_gp->runlist_prios[thread->hthread] = (s16_t)new_prio;
+}
+
 void H2K_runlist_init(void) IN_SECTION(".text.init.runlist");
 
 #endif

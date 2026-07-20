@@ -24,22 +24,30 @@ tst_single: qurt_test_libs
 	$(MAKE) -f scripts/Makefile.qurt $(TEST) TARG=tst
 
 clean:
-	$(MAKE) -f scripts/Makefile.qurt $(SUBDIRS) TARG=clean
+	rm -rf "$(TEST_BUILD_ROOT)"
 
 qurt_test_libs: $(QURT_TEST_LIBS)
 
+# FIXME: $(QURT_TEST_LIBS):: still builds qurt test support libraries in-source
+# (cd $@; make ...).  Needs out-of-tree treatment similar to the $(SUBDIRS) rule below.
 $(QURT_TEST_LIBS)::
 	cd $@;\
 	$(MAKE) clean_qurt_test_libs;\
 	$(MAKE) qurt_test_libs
 
+# Mirror the h2 test pattern from Makefile.coverage: create a per-test build dir
+# under TEST_BUILD_ROOT, symlink all source files in, then run make -C there so
+# all artifacts (make.log, test.elf, results.txt, test.log) land out-of-tree.
 $(SUBDIRS)::
-	cd $@;\
-	if [ "$(TARG)" != "clean" ]; then \
-	(echo; echo; echo "##########   $@   ##########") > make.log; \
-	fi; \
-	$(MAKE) -f $(H2DIR)/scripts/Makefile.qurt_test $(TARG) TEST=$@ 2>&1 | tee -a make.log; TSTAT=$${PIPESTATUS[0]}; \
-	if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi;
+	mkdir -p "$(TEST_BUILD_ROOT)/$@"
+	find "$(H2DIR)/$@" -maxdepth 1 -type f \
+	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$@/" ';'
+	(echo; echo; echo "##########   $@   ##########") > "$(TEST_BUILD_ROOT)/$@/make.log"
+	$(MAKE) -C "$(TEST_BUILD_ROOT)/$@" \
+	    -f $(H2DIR)/scripts/Makefile.qurt_test \
+	    $(TARG) TEST=$@ 2>&1 | \
+	    tee -a "$(TEST_BUILD_ROOT)/$@/make.log"; \
+	    TSTAT=$${PIPESTATUS[0]}; if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi
 
 .PHONY: $(SUBDIRS) tst qurt_test_libs
 

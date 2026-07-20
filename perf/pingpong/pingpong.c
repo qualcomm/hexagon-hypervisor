@@ -7,11 +7,13 @@
 #include <stdio.h>
 
 #define MAX_THREADS 8
+#define STACK_SIZE 128
+//#define DEBUG 1
 
 qurt_sem_t pingsem[MAX_THREADS];
 qurt_sem_t tomain;
 
-unsigned long long int stacks[MAX_THREADS][64];
+unsigned long long int stacks[MAX_THREADS][STACK_SIZE];
 
 #ifdef DEBUG
 #define ITERS 10
@@ -80,7 +82,7 @@ int main() {
 	qurt_sem_init_val(&tomain,0);
 	for (i = 0; i < MAX_THREADS; i++) {
 		qurt_sem_init_val(&pingsem[i],0);
-		my_thread_create(ping,&stacks[i][64],64*8,(void *)i,100);
+		my_thread_create(ping,&stacks[i][STACK_SIZE],STACK_SIZE*8,(void *)i,100);
 		qurt_sem_down(&tomain);
 	}
 	start = qurt_get_core_pcycles();

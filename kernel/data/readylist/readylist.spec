@@ -333,7 +333,7 @@ Base Functions (H2K_ready_append, H2K_ready_insert, H2K_ready_remove, H2K_ready_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Samples
-^^^^^^^
+~~~~~~~
 
 * Input: H2K_kg.ready_valids
 * Input: H2K_kg.ready array
@@ -344,7 +344,7 @@ Samples
 
 
 Important Cases
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 * H2K_ready_getbest when ready list is empty
 * H2K_ready_getbest when ready list has one thread
@@ -361,7 +361,7 @@ Important Cases
 * Check H2K_ready_init clears out randomized values
 
 Harness
-^^^^^^^
+~~~~~~~
 
 The readylist module is reasonably self-contained, so the test harness will only
 use the header file and object file.

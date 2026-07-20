@@ -134,7 +134,7 @@ int main()
 
 	DPRINTF("SET_PRIO_TRAPMASK\n\n");
 	/* SET_PRIO_TRAPMASK bad prio */
-	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PRIO_TRAPMASK, WAITING_PRIO + 1, 0, NULL);
+	ret = H2K_trap_config(CONFIG_VMBLOCK_INIT, vm, SET_PRIO_TRAPMASK, MAX_PRIO + 1, 0, NULL);
 	if (ret!= 0) FAIL("Missed bad prio");
 
 	/* SET_PRIO_TRAPMASK */

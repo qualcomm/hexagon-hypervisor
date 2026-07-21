@@ -46,6 +46,20 @@ u32_t H2K_trap_hwconfig_getvwctrl(u32_t unused, void *unusedp, u32_t unused2, u3
 u32_t H2K_trap_hwconfig_setvwctrl(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_get_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me)IN_SECTION(".text.config.hwconfig");
 u32_t H2K_trap_hwconfig_set_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me)IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getccr(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setccr(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getsyscfg(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setsyscfg(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getlivelock(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setlivelock(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getturkey(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setturkey(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getduck(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setduck(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getchicken(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setchicken(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_getrgdr(u32_t unused, void *unusedp, u32_t unused2, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
+u32_t H2K_trap_hwconfig_setrgdr(u32_t unused, void *unusedp, u32_t val, u32_t unused3, H2K_thread_context *me) IN_SECTION(".text.config.hwconfig");
 
 #endif
 

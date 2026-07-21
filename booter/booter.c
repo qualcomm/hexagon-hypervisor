@@ -23,7 +23,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <hw.h>
 #include <syscall_defs.h>
 
 #define VM_BEST_PRIO 0
@@ -797,7 +796,7 @@ void clade_setup(unsigned int idx, long offset) {
 
 		h2_hwconfig_clade_set_reg(CLADE_REG_REGION, region_hi);
 		clade_region = region_hi;
-		H2K_set_syscfg(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
+		h2_hwconfig_syscfg_set(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
 	} else if (region_hi != clade_region) {  // has to be identical for all concurrent clade guests
 			FAIL("\tCLADE region address mismatch", "");
 	}
@@ -1157,10 +1156,10 @@ void boot_vm(unsigned int idx) {
 	BOOTER_PRINTF("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
 
 	if (~0L != vm_params[idx].ccr) {
-		regval = H2K_get_ccr();
+		regval = h2_hwconfig_ccr_get();
 		BOOTER_PRINTF("\told value for ccr: 0x%08x\n",regval);
-		H2K_set_ccr(vm_params[idx].ccr);
-		regval = H2K_get_ccr();
+		h2_hwconfig_ccr_set(vm_params[idx].ccr);
+		regval = h2_hwconfig_ccr_get();
 		BOOTER_PRINTF("\tnew value for ccr: 0x%08x\n",regval);
 	}
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
@@ -1389,7 +1388,7 @@ void run(unsigned int idx) {
 		}
 	} while (!done);
 
-	H2K_set_syscfg(h2_info(INFO_SYSCFG) & ~SYSCFG_CLADEN);  // disable clade
+	h2_hwconfig_syscfg_set(h2_info(INFO_SYSCFG) & ~SYSCFG_CLADEN);  // disable clade
 	pd_num = 0;  // reset
 	h2_galloc_reset(&tcm_alloc, 0);
 
@@ -1692,9 +1691,9 @@ typedef struct {
 } syscfg_field;
 
 syscfg_field syscfg[] = {
-	{"BQ", SYSCFG_BQ_BIT, SYSCFG_BQ_LEN, H2K_set_syscfg},
-	{"DMT", SYSCFG_DMT_BIT, SYSCFG_DMT_LEN, H2K_set_syscfg},
-	{"CLADEN", SYSCFG_CLADEN_BIT, SYSCFG_CLADEN_LEN, H2K_set_syscfg},
+	{"BQ", SYSCFG_BQ_BIT, SYSCFG_BQ_LEN, (void (*)(unsigned int))h2_hwconfig_syscfg_set},
+	{"DMT", SYSCFG_DMT_BIT, SYSCFG_DMT_LEN, (void (*)(unsigned int))h2_hwconfig_syscfg_set},
+	{"CLADEN", SYSCFG_CLADEN_BIT, SYSCFG_CLADEN_LEN, (void (*)(unsigned int))h2_hwconfig_syscfg_set},
 	{"L2WB", SYSCFG_L2WB_BIT, SYSCFG_L2WB_LEN, set_l2wb},
 	{NULL, 0, 0}
 };
@@ -1784,7 +1783,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			regval = h2_info(INFO_SYSCFG);
 			BOOTER_PRINTF("Old value for syscfg: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_syscfg(regval);
+			h2_hwconfig_syscfg_set(regval);
 			regval = h2_info(INFO_SYSCFG);
 			BOOTER_PRINTF("New value for syscfg: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
@@ -1795,7 +1794,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			regval = h2_info(INFO_LIVELOCK);
 			BOOTER_PRINTF("Old value for livelock: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_livelock(regval);
+			h2_hwconfig_livelock_set(regval);
 			regval = h2_info(INFO_LIVELOCK);
 			BOOTER_PRINTF("New value for livelock: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
@@ -1803,55 +1802,55 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 
 		} else if (0 == strcmp(argv[0],"--turkey")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_turkey();
+			regval = h2_hwconfig_turkey_get();
 			BOOTER_PRINTF("Old value for turkey: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_turkey(regval);
-			regval = H2K_get_turkey();
+			h2_hwconfig_turkey_set(regval);
+			regval = h2_hwconfig_turkey_get();
 			BOOTER_PRINTF("New value for turkey: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--turkey")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_turkey();
+			regval = h2_hwconfig_turkey_get();
 			printf("Old value for turkey: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_turkey(regval);
-			regval = H2K_get_turkey();
+			h2_hwconfig_turkey_set(regval);
+			regval = h2_hwconfig_turkey_get();
 			printf("New value for turkey: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--duck")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_duck();
+			regval = h2_hwconfig_duck_get();
 			BOOTER_PRINTF("Old value for duck: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_duck(regval);
-			regval = H2K_get_duck();
+			h2_hwconfig_duck_set(regval);
+			regval = h2_hwconfig_duck_get();
 			BOOTER_PRINTF("New value for duck: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--chicken")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_chicken();
+			regval = h2_hwconfig_chicken_get();
 			BOOTER_PRINTF("Old value for chicken: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_chicken(regval);
-			regval = H2K_get_chicken();
+			h2_hwconfig_chicken_set(regval);
+			regval = h2_hwconfig_chicken_get();
 			BOOTER_PRINTF("New value for chicken: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--rgdr")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_rgdr();
+			regval = h2_hwconfig_rgdr_get();
 			BOOTER_PRINTF("Old value for rgdr: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_rgdr(regval);
-			regval = H2K_get_rgdr();
+			h2_hwconfig_rgdr_set(regval);
+			regval = h2_hwconfig_rgdr_get();
 			BOOTER_PRINTF("New value for rgdr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;

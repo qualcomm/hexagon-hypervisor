@@ -240,6 +240,7 @@
 #define H2K_PAGESIZE (1 << ((PAGE_BITS) + ((H2K_KERNEL_PGSIZE) * 2)))
 
 #define SSR_IE_BIT 18
+#define SSR_UM_BIT 16
 
 #if ARCHV <= 3
 #define RESCHED_INT_INTMASK (0x80000000 >> RESCHED_INT)

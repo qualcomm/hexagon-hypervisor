@@ -1633,3 +1633,31 @@ vmop.spec.
 
 Open for next session: #4 vmwork unconditional-clear test; #7 PI owner/waiter
 audit; #11 retry backstop; vmwork.ref.c unconditional clear (spec already done).
+
+## Session (2026-07-21): intpool L2VIC trigger-config off-by-one-slice (branch intpool_investigate)
+
+Symptom: intpool test_h2 FAILed on time-out.  Interrupts 70/80/81/86/96 (the
+old FIXME "doesn't work" list in test_h2/test.c) were silently lost -- raised
+but never seen/pending/saw.
+
+Root cause: H2K_intconfig_l2_init (kernel/data/intconfig/intconfig.ref.c)
+computed the L2VIC register-array word as (IRQ/32), but the L2VIC arrays are
+indexed from L2_INTERRUPT_START (int 32) everywhere else -- intcontrol.h uses
+(intno-32)>>5 for enable/disable/raise, and interrupts 56-69 delivered fine
+through that path.  So every summary-line TYPE-clear landed one slice too high,
+shifting the cleared interrupt by +32:
+  TLMM 38 -> 70, SPMI-periph 48 -> 80, SPMI-ee 49 -> 81, USB 54 -> 86, SPI 64 -> 96.
+Those interrupts got wrongly marked level-triggered; a software RAISE writes the
+0x480 INT_SOFT reg (edge pulse), which never latches on a level-triggered input,
+so PEND stayed 0 and the interrupt vanished.  (Also a latent real-HW bug: the
+actual summary lines 38/48/49/54/64 were left edge-triggered.)
+
+Fix (KEPT): added one function-like macro L2VIC_WORD(irq) =
+((irq)-L2_INTERRUPT_START)/32 and routed all *used* *_WORD macros through it.
+The unused LPASS_IPC_*_WORD macros were left on plain /32 (dead code; their IRQs
+8/18 are <32 and would go negative).  Verified: 70 now delivers.
+
+Test change: test_h2/test.c INT_START moved to 65 (= max configured summary IRQ
+64, +1) so the swept range 65-80 sits entirely above the genuine level-triggered
+lines and software-RAISE works for all of them.
+

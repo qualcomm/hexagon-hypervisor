@@ -13,18 +13,9 @@ h2_sem_t int_received_sem;
 volatile int stop_threads;
 
 #define NUM_INT (16)
-#define INT_START 48
+#define INT_START 65 
 #define INT_LAST (INT_START + NUM_INT)
 #define TIMEOUT_SPINS (1024*1024*4)
-
-// FIXME: investigate the reason of these failures
-//#define NUM_INT (1)
-//#define INT_START 70  // doesn't work 0x46 0b01000110
-//#define INT_START 80  // doesn't work 0x50 0b01010000
-//#define INT_START 81  // doesn't work 0x51 0b01010001
-//#define INT_START 86  // doesn't work 0x56 0b01010110
-//#define INT_START 96  // doesn't work 0x60 0b01100000
-//#define INT_START 128 // doesn't work 0x80 0b10000000
 
 //#define USE_DETACHED_THREADS
 

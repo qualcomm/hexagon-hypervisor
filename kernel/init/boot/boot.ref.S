@@ -336,8 +336,11 @@ boot_continuation:
 	isync
 
 .Lno_multicore:
+	/* Single-core or non-multicore path: initialize shift/TCM to zero */
+	SHIFT = #0
+	TCM_VAL = #0
 #endif
-	
+
 	/* Setup EVB */
 	SETCONST(TMP,H2K_event_vectors)
 	evb = TMP

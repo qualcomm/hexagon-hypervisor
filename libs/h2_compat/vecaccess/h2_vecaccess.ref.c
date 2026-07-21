@@ -10,14 +10,14 @@
 #include "h2_vecaccess.h"
 
 int h2_vecaccess_unit_init(h2_vecaccess_state_t *vacc, unsigned int req, h2_coproc_type_t type, h2_coproc_subtype_t subtype, h2_cfg_unit_entry entry_type, unsigned int unit_mask) {
-	int ret;
+	h2_coproc_init_result_t ret;
 
 	/* Block by default if init fails */
 	h2_sem_init_val(&vacc->sem, 0);
 
 	if ((ret = h2_coproc_init()) < 0) return ret;
 
-	if (1 == ret) {  // old style
+	if (H2_COPROC_INIT_OLDSTYLE == ret) {
 
 		unsigned long native_vlength = h2_info(INFO_HVX_VLENGTH);
 
@@ -42,20 +42,27 @@ int h2_vecaccess_unit_init(h2_vecaccess_state_t *vacc, unsigned int req, h2_copr
 			if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_128)) <0) return ret;
 			vacc->ext = H2_VECACCESS_EXT_HVX;
 			vacc->length = H2_VECACCESS_VLENGTH_128;
-			h2_sem_init_val(&vacc->sem, h2_info(INFO_COPROC_CONTEXTS) / (128 / native_vlength));
+			h2_sem_init_val(&vacc->sem, h2_info(INFO_COPROC_CONTEXTS) / (H2_VECACCESS_MAX_VLENGTH_BYTES / native_vlength));
 			break;
 
 		default:
 			return -1;
 		}
 	} else {
-		switch(req) {  // still old style
+		switch(req) {
 		case H2_VECACCESS_SILVER:
 		case H2_VECACCESS_SILVER_MAX:
 			if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_MIN)) <0) return ret;
 			vacc->ext = H2_VECACCESS_EXT_SILVER;
 			vacc->length = H2_VECACCESS_VLENGTH_128;
-			h2_sem_init_val(&vacc->sem, h2_info(INFO_COPROC_CONTEXTS));
+			h2_sem_init_val(&vacc->sem, h2_coproc_count(type, subtype, entry_type, unit_mask));
+			break;
+
+		case H2_VECACCESS_HVX_64:
+			if ((ret = h2_hwconfig_vlength(H2_VECACCESS_VLENGTH_64)) <0) return ret;
+			vacc->ext = H2_VECACCESS_EXT_HVX;
+			vacc->length = H2_VECACCESS_VLENGTH_64;
+			h2_sem_init_val(&vacc->sem, h2_coproc_count(type, subtype, entry_type, unit_mask));
 			break;
 
 		case H2_VECACCESS_HVX_128:
@@ -113,10 +120,13 @@ h2_vecaccess_ret_t h2_vecaccess_acquire(h2_vecaccess_state_t *vacc) {
 int h2_vecaccess_release(h2_vecaccess_state_t *vacc, int idx) {
 	int ret;
 
+	if (!(vacc->active & (1u << idx))) {
+		return -1;
+	}
+
 	/* TURN OFF VECTORS */
-	ret = h2_hwconfig_extbits(0, 0);
-	ret = h2_coproc_set(vacc->type, vacc->subtype, vacc->entry_type, vacc->unit_mask, 0, 0);
-	h2_atomic_clrbit32(&vacc->active,idx);
+	ret = h2_coproc_set(vacc->type, vacc->subtype, vacc->entry_type, vacc->unit_mask, idx, 0);
+	h2_atomic_clrbit32(&vacc->active, idx);
 	h2_sem_up(&vacc->sem);
 
 	return ret;

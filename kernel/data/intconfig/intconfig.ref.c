@@ -95,7 +95,7 @@ static void H2K_intconfig_l2_init(u32_t ssbase)
 #endif
 
 /* irq must be in [L2_INTERRUPT_START, MAX_INTERRUPTS) */
-#define L2VIC_WORD(irq)	__extension__({ \
+#define L2VIC_WORD(irq) ({ \
 	_Static_assert((irq) >= L2_INTERRUPT_START && (irq) < MAX_INTERRUPTS, \
 		"irq must be between L2_INTERRUPT_START and MAX_INTERRUPTS"); \
 	((irq) - L2_INTERRUPT_START)/32; \

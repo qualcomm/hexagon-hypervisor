@@ -12,9 +12,9 @@ atomic_u32_t seen;
 h2_sem_t int_received_sem;
 volatile int stop_threads;
 
-#define NUM_INT (16)
-#define INT_START 65 
-#define INT_LAST (INT_START + NUM_INT)
+#define INT_START 65
+#define INT_LAST 512
+#define NUM_INT (INT_LAST - INT_START)
 #define TIMEOUT_SPINS (1024*1024*4)
 
 //#define USE_DETACHED_THREADS

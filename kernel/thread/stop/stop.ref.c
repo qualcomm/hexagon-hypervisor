@@ -8,7 +8,6 @@
 #include <hw.h>
 #include <thread.h>
 #include <dosched.h>
-#include <runlist.h>
 #include <asid.h>
 #include <stop.h>
 #include <timer.h>
@@ -30,7 +29,6 @@ void H2K_thread_stop_withlock(s32_t status, H2K_thread_context *me)
 	H2K_vmblock_t *parent_vmblock;
 
 	H2K_timer_cancel_withlock(me);
-	H2K_runlist_remove(me);
 	H2K_asid_table_dec(me->ssr_asid);
 	H2K_thread_context_clear(me);
 	me->next = vmblock->free_threads;

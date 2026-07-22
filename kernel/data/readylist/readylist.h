@@ -13,7 +13,6 @@
 #include <globals.h>
 #include <hw.h>
 #include <log.h>
-#include <runlist.h>
 
 /* Get the best ready priority */
 static inline u32_t H2K_ready_best_prio()
@@ -86,7 +85,29 @@ static inline void H2K_ready_remove(H2K_thread_context *thread)
 	if (H2K_gp->ready[prio] == NULL) H2K_ready_clear_prio(prio);
 }
 
-#ifdef CLUSTER_SCHED
+static inline void H2K_ready_append_arm(H2K_thread_context *thread)
+{
+	H2K_ready_append(thread);
+	H2K_set_bestwait(H2K_ready_best_prio());
+}
+
+/* Take the thread and place it in the ready structure,
+ * the first thread to be scheduled at its priority */
+static inline void H2K_ready_insert_arm(H2K_thread_context *thread)
+{
+	H2K_ready_insert(thread);
+	H2K_set_bestwait(H2K_ready_best_prio());
+}
+
+/* Remove a specific thread from the ready list */
+/* The caller guarantees that the thread is actually in the ready list correctly */
+static inline void H2K_ready_remove_arm(H2K_thread_context *thread)
+{
+	H2K_ready_remove(thread);
+	H2K_set_bestwait(H2K_ready_best_prio());
+}
+
+#if CLUSTER_SCHED
 static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t hthread_xe3,u32_t head_xe, u32_t head_xe2, u32_t head_xe3) {
 	xex(hthread, head_xe, head_xe2, head_xe3, hthread_xe, hthread_xe2, hthread_xe3);
 	if (hthread_xe) {
@@ -123,7 +144,7 @@ static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hth
 static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread) {
 	H2K_thread_context *head = H2K_gp->ready[prio];
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	if ((!H2K_gp->cluster_sched) || H2K_gp->coproc_max == -1) {
 		return head;
 	}
@@ -223,7 +244,7 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 	H2K_log("hthread %d  getbest\n", hthread);
 	prio = H2K_ready_best_prio();
 	if (prio >= MAX_PRIOS) {  // !H2K_ready_any_valid(), go to sleep
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		if (!H2K_gp->cluster_sched) {
 			return NULL;
 		}
@@ -246,7 +267,7 @@ static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
 
 	ret = H2K_ready_head(prio, hthread);
 	if (ret != NULL) {
-		H2K_ready_remove(ret);
+		H2K_ready_remove_arm(ret);
 	}
 	return ret;
 }

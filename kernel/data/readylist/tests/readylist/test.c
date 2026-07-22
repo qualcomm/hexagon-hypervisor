@@ -90,7 +90,7 @@ H2K_thread_context *H2K_ready_getbest_TB()
 	return H2K_ready_getbest(CURRENT_HTHREAD);
 }
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 void H2K_ready_REG_SSR_XE_CLEAR_TB()
 {
 	H2K_set_ssr(H2K_get_ssr() & ~SSR_XE_BIT_MASK);
@@ -230,7 +230,7 @@ __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	if (H2K_ready_getbest_TB() != &c) FAIL("ready_best_prio failed (c) ");
 	if (H2K_ready_getbest_TB() != NULL) FAIL("ready_best_prio failed (empty) ");
 
-# ifdef CLUSTER_SCHED
+# if CLUSTER_SCHED
 	
 	u32_t hthreadmask = H2K_cfg_table(CFG_TABLE_HTHREADS_MASK);
 	u32_t hthreads = (u32_t)Q6_R_popcount_P(hthreadmask);

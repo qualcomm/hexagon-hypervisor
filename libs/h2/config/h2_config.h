@@ -54,7 +54,7 @@ int h2_config_stlb_alloc(void);
 
 int h2_config_fatal_hook(unsigned int funcaddr, unsigned int arg);
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 int h2_config_cluster_sched(unsigned int enable);
 #endif
 

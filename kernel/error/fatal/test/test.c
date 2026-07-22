@@ -6,8 +6,6 @@
 #include <c_std.h>
 #include <context.h>
 #include <readylist.h>
-#include <runlist.h>
-#include <lowprio.h>
 #include <context.h>
 #include <hw.h>
 #include <stdio.h>

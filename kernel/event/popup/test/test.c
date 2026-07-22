@@ -6,15 +6,12 @@
 #include <c_std.h>
 #include <context.h>
 #include <readylist.h>
-#include <runlist.h>
-#include <lowprio.h>
 #include <context.h>
 #include <hw.h>
 #include <popup.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <checker_kernel_locked.h>
-#include <checker_runlist.h>
 #include <checker_ready.h>
 #include <setjmp.h>
 #include <globals.h>
@@ -130,7 +127,6 @@ void TH_check_waiting(int i, H2K_thread_context *thread)
 	if (H2K_gp->inthandlers[i].handler != H2K_popup_int) FAIL("Wrong handler");
 	if (H2K_gp->inthandlers[i].param != thread) FAIL("Wrong thread");
 	if (thread->status != H2K_STATUS_INTBLOCKED) FAIL("Wrong status");
-	if (H2K_gp->runlist[thread->hthread] == thread) FAIL("Thread still scheduled");
 }
 
 /*
@@ -145,7 +141,6 @@ void TH_check_running(int i, H2K_thread_context *thread)
 	if (H2K_gp->inthandlers[i].handler != NULL) FAIL("Handler set");
 	if (H2K_gp->inthandlers[i].param == thread) FAIL("Handler thread set");
 	if (thread->status != H2K_STATUS_RUNNING) FAIL("Wrong status");
-	if (H2K_gp->runlist[thread->hthread] != thread) FAIL("Thread not scheduled");
 }
 
 void TH_check_old(H2K_thread_context *thread)
@@ -189,10 +184,9 @@ void TH_popup_int(int i, H2K_thread_context *interrupted, int hthread, H2K_threa
  */
 void TH_set_idle(int hthread)
 {
+#if CLUSTER_SCHED
 	H2K_gp->wait_mask = 1<<hthread;
-	H2K_gp->priomask = 1<<hthread;
-	H2K_runlist_init();
-	lowprio_imask(hthread);
+#endif
 }
 
 /*
@@ -200,10 +194,9 @@ void TH_set_idle(int hthread)
  */
 void TH_set_running(int hthread, H2K_thread_context *thread)
 {
+#if CLUSTER_SCHED
 	H2K_gp->wait_mask &= ~(1<<hthread);
-	H2K_gp->priomask &= ~(1<<hthread);
-	H2K_runlist_push(thread);
-	lowprio_imask(hthread);
+#endif
 }
 
 /*
@@ -211,9 +204,10 @@ void TH_set_running(int hthread, H2K_thread_context *thread)
  */
 void TH_check_priowait_running(int hthread, H2K_thread_context *thread)
 {
+#if CLUSTER_SCHED
 	if ((1<<(hthread)) & H2K_gp->wait_mask) FAIL("wait_mask still set");
-	if ((1<<(hthread)) & H2K_gp->priomask) FAIL("priomask still set");
-	if ((get_imask(thread->hthread)) == 0) FAIL("IMASK clear for hthread");
+#endif
+	if ((get_imask(thread->hthread)) != 0) FAIL("IMASK set for hthread");
 }
 
 /*
@@ -262,8 +256,6 @@ int main()
 	H2K_gp->l2_ack_base = fakeint+(0x200/sizeof(u32_t));
 #endif
 	H2K_readylist_init();
-	H2K_runlist_init();
-	H2K_lowprio_init();
 	a.prio = b.prio = c.prio = MAX_PRIOS - 30;
 
 	/* First, test wait */
@@ -282,19 +274,16 @@ int main()
 #if ARCHV >= 4
 		if (L2_CORE_INTERRUPT == i) continue;
 #endif
-		H2K_runlist_push(&a);
 		TH_clear_popups();
 		if (TH_call_popup_wait(i,&a) != 0) {
 			FAIL("Couldn't wait");
 		}
 		TH_check_waiting(i,&a);
-		H2K_runlist_push(&b);
 		if (TH_call_popup_wait(i,&b) == 0) {
 			FAIL("Set popup for int twice");
 		}
 		TH_clear_popups();
 		TH_check_running(i,&b);
-		H2K_runlist_remove(&b);
 	}
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
@@ -322,7 +311,6 @@ int main()
 		TH_clear_ready(&a);
 	}
 	/* Case B: VMWORK alone -- gate must fire and return -1 without INTBLOCKED */
-	H2K_runlist_push(&a);
 	a.status = H2K_STATUS_RUNNING;
 	a.vmstatus = H2K_VMSTATUS_VMWORK;
 	TH_saw_do_work = 0;
@@ -330,10 +318,8 @@ int main()
 	if (!TH_saw_do_work) FAIL("B: VMWORK alone must call vm_do_work");
 	if (a.status == H2K_STATUS_INTBLOCKED) FAIL("B: must not set INTBLOCKED");
 	a.vmstatus = 0;
-	H2K_runlist_remove(&a);
 
 	/* Case C: VMWORK|KILL -- killed thread racing into popup_wait */
-	H2K_runlist_push(&a);
 	a.status = H2K_STATUS_RUNNING;
 	a.vmstatus = H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_KILL;
 	TH_saw_do_work = 0;
@@ -341,7 +327,6 @@ int main()
 	if (!TH_saw_do_work) FAIL("C: VMWORK|KILL must call vm_do_work");
 	if (a.status == H2K_STATUS_INTBLOCKED) FAIL("C: must not set INTBLOCKED");
 	a.vmstatus = 0;
-	H2K_runlist_remove(&a);
 
 	/* popup_cancel: thread was waiting on interrupt i; cancel must clear the
 	 * handler slot and reset r00 to -1. */
@@ -352,7 +337,6 @@ int main()
 			if (i == L2_CORE_INTERRUPT) continue;
 #endif
 			TH_clear_popups();
-			H2K_runlist_push(&a);
 			/* Simulate the state popup_wait leaves: INTBLOCKED, r00=intnum, handler set */
 			a.status = H2K_STATUS_INTBLOCKED;
 			a.r0100 = i;
@@ -365,7 +349,6 @@ int main()
 
 			if (H2K_gp->inthandlers[i].raw != 0) FAIL("cancel: handler not cleared");
 			if (a.r00 != (u32_t)-1) FAIL("cancel: r00 not reset");
-			H2K_runlist_remove(&a);
 		}
 	}
 

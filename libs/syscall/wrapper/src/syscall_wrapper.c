@@ -176,8 +176,28 @@ __attribute__((weak)) off_t lseek(int fd, off_t offset, int whence) {
 	return sys_ftell(fd);
 }
 
-__attribute__((weak)) int fstat(int fd, struct stat *statbuf) {
-	return sys_fstat(fd, statbuf);
+sys_call_ret_t sys_fstat_internal(int fd, void *buffer);
+
+__attribute__((weak)) int fstat(int fd, struct stat *__sbuf) {
+
+	struct __sys_stat hexstat;
+	sys_call_ret_t res = sys_fstat_internal(fd, &hexstat);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	if(ret >= 0)
+        {
+          memset(__sbuf, 0, sizeof(*__sbuf));
+          __sbuf->st_dev = hexstat.dev;
+          __sbuf->st_ino = hexstat.ino;
+          __sbuf->st_mode = hexstat.mode;
+          __sbuf->st_nlink = hexstat.nlink;
+          __sbuf->st_rdev = hexstat.rdev;
+          __sbuf->st_size = hexstat.size;
+          __sbuf->st_atime = hexstat.atime;
+          __sbuf->st_mtime = hexstat.mtime;
+          __sbuf->st_ctime = hexstat.ctime;
+        }
+	return ret;
 }
 
 __attribute__((weak)) void _exit(int status) {
@@ -222,9 +242,23 @@ __attribute__((weak)) int get_cmdline(char *buffer, int count) {
 sys_call_ret_t sys_stat_internal(const char *name, void *buffer);
 
 __attribute__((weak)) int stat(const char    *__restrict __path, struct stat    *__restrict __sbuf) {
-	sys_call_ret_t res = sys_stat_internal(__path, __sbuf);
+	struct __sys_stat hexstat;
+	sys_call_ret_t res = sys_stat_internal(__path, &hexstat);
 	int ret = (int)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	if(ret >= 0)
+        {
+          memset(__sbuf, 0, sizeof(*__sbuf));
+          __sbuf->st_dev = hexstat.dev;
+          __sbuf->st_ino = hexstat.ino;
+          __sbuf->st_mode = hexstat.mode;
+          __sbuf->st_nlink = hexstat.nlink;
+          __sbuf->st_rdev = hexstat.rdev;
+          __sbuf->st_size = hexstat.size;
+          __sbuf->st_atime = hexstat.atime;
+          __sbuf->st_mtime = hexstat.mtime;
+          __sbuf->st_ctime = hexstat.ctime;
+        }
 	return ret;
 }
 

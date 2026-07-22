@@ -155,9 +155,9 @@ FUNC_END H2K_vm_int_deliver_locked
 
 FUNC_START H2K_vm_int_deliver .text.vm.int .p2align 2
 	allocframe(#0)
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	call H2K_vm_int_deliver_locked
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	dealloc_return
 FUNC_END H2K_vm_int_deliver
 

@@ -77,7 +77,7 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .falign
 	{
 		callr r4
 	}
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		r1:0 = combine(#0,#0)
 		jump H2K_switch

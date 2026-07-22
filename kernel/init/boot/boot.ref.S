@@ -535,10 +535,13 @@ boot_tcm_offset:
 	.word 0x0
 
 FUNC_START h2_init .text.init.boot .p2align 2
+	SETCONST(H2K_GP, H2K_kg)
 	jumpr r31
 FUNC_END h2_init
 
 FUNC_START H2K_handle_reset .text.init.boot .p2align 2
+	call 1f				// initialize r31 for future mutex lock
+1:
 	SETCONST(TMP,_SDA_BASE_)
 	gp = TMP
 
@@ -549,6 +552,6 @@ FUNC_START H2K_handle_reset .text.init.boot .p2align 2
 	STACK_SIZE = #KERNEL_STACK_SIZE
 	SP += mpyi(STACK_SIZE, TMP)
 	r1:0 = #0
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	jump H2K_switch
 FUNC_END H2K_handle_reset

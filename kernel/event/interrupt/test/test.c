@@ -11,6 +11,7 @@
 #include <setjmp.h>
 #include <max.h>
 #include <globals.h>
+#include <hw.h>
 #include <trace.h>
 
 /*
@@ -97,7 +98,7 @@ void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 {
 	if (from != NULL) FAIL("Unexpected FROM");
 	if (to != NULL) FAIL("Unexpected TO");
-	asm volatile (" k0unlock ");
+	BKL_UNLOCK();
 	longjmp(env,1);
 }
 

@@ -178,9 +178,7 @@ FUNC_START H2K_interrupted_waitmode_or_preempt .text.core.interrupt .p2align 5
 		jumpr r31
 	}
 1:						// We were idle, go back to sleep
-	{
-		k0lock
-	}
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		r1:0 = #0
 		jump H2K_switch

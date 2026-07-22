@@ -7,24 +7,23 @@
 #include <asm_std.h>
 
 FUNC_START H2K_spinlock_lock .text.util.spinlock .p2align 5
-	r1 = memw_locked(r0)
-	if (r1!=#0) jump:nt H2K_spinlock_lock
-	memw_locked(r0,p0) = r31
-	if (!p0) jump H2K_spinlock_lock
-	{
-		dccleana(r0)
-		r0 = #0
-		jumpr r31
-	}
+	ASM_TICKET_LOCK(r0,r2,r3,p0)
+	jumpr r31
 FUNC_END H2K_spinlock_lock
 
 FUNC_START H2K_spinlock_trylock .text.util.spinlock .p2align 5
 	r1 = memw_locked(r0)
-	if (r1!=#0) jump:nt .Lfail
-	memw_locked(r0,p0) = r31
+	{
+		r2 = lsr(r1,#16)
+		r1 = add(r1,##0x10000)
+	}
+	{
+		p0 = cmph.eq(r1,r2)
+		if (!p0.new) jump:nt .Lfail
+	}
+	memw_locked(r0,p0) = r1
 	if (!p0) jump H2K_spinlock_trylock
 	{
-		dccleana(r0)
 		r0 = #0
 		jumpr r31
 	}
@@ -36,12 +35,7 @@ FUNC_START H2K_spinlock_trylock .text.util.spinlock .p2align 5
 FUNC_END H2K_spinlock_trylock
 
 FUNC_START H2K_spinlock_unlock .text.util.spinlock .p2align 5
-	r1 = #0
-	memw(r0) = r1
-	{
-		dccleana(r0)
-		r0 = #0
-		jumpr r31
-	}
+	ASM_TICKET_UNLOCK(r0,r2,r3,p0)
+	jumpr r31
 FUNC_END H2K_spinlock_unlock
 

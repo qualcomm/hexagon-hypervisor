@@ -25,7 +25,7 @@ FUNC_START H2K_popup_int .text.int.popup .p2align 5
 #define NEGONE r13
 #define NEWPRIO r14
 #define PRIO r15
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		WAIT_PRIOMASKS = memd(H2K_GP+#KG_lowprio_masks)		// share w/ priomask?
 		HANDLERBASE = add(H2K_GP,#KG_inthandlers)
@@ -98,7 +98,7 @@ FUNC_START H2K_popup_int .text.int.popup .p2align 5
 		if (!p1) memd(ME) = PREV_HEAD
 	}
 .Lnohandler:
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	jumpr r31
 #undef INTNO
 #undef ME
@@ -147,7 +147,7 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 		p1 = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 		if (p1.new) jump:nt 9f
 	}
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 #define TMP INTHANDLERS_ADDR
 	{
 		TMP = memub(ME+#CONTEXT_vmstatus)
@@ -208,7 +208,7 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 		jump H2K_dosched
 	}
 8:
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 9:
 	{
 		r0 = #-1
@@ -219,7 +219,7 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 		r0 = ME
 		call H2K_vm_do_work_withlock
 	}
-	k0unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		r0 = #-1
 		dealloc_return

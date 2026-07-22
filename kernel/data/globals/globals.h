@@ -134,6 +134,9 @@ typedef struct {
 	u32_t tlb_size_dma;
 	u32_t dma_tlb_start;
 #endif
+#ifdef SOFT_BKL
+	H2K_spinlock_t bkl;
+#endif
 	H2K_spinlock_t tmpmap_lock;
 	H2K_spinlock_t asid_spinlock;
 	u64_t oncpu_start[MAX_HTHREADS];

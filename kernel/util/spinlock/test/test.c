@@ -19,22 +19,18 @@ H2K_spinlock_t lock;
 
 volatile int x;
 
+/* True when the ticket lock is held: next ticket != now serving. */
+static inline int spinlock_is_locked(H2K_spinlock_t v)
+{
+	return (u16_t)(v >> 16) != (u16_t)v;
+}
+
 void thread_func(void *unused)
 {
 	H2K_spinlock_lock(&lock);
 	while (1) x = 1;
 }
 
-/*
- * For each test:
- *   * Build up the tree
- *   * Verify the tree is OK
- *   * 10 times:
- *      * Remove the head, verify tree
- *      * Add the former head back into the tree, verify tree
- *   * Bisect the tree 
- *   * Destructive Iterate the tree, freeing nodes
- */
 int main()
 {
 	int i;
@@ -42,15 +38,15 @@ int main()
 	H2K_spinlock_init(&lock);
 	if (lock != 0) FAIL("init");
 	H2K_spinlock_lock(&lock);
-	if (lock == 0) FAIL("lock");
+	if (!spinlock_is_locked(lock)) FAIL("lock");
 	if (H2K_spinlock_trylock(&lock) == 0) FAIL("trylock");
 	H2K_spinlock_unlock(&lock);
-	if (lock != 0) FAIL("unlock");
-	if (H2K_spinlock_trylock(&lock) != 0) FAIL("trylock");
+	if (spinlock_is_locked(lock)) FAIL("unlock");
+	if (H2K_spinlock_trylock(&lock) != 0) FAIL("trylock2");
 	H2K_spinlock_unlock(&lock);
 	x = 0;
 	H2K_spinlock_lock(&lock);
-	if (lock == 0) FAIL("lock");
+	if (!spinlock_is_locked(lock)) FAIL("lock2");
 	for (i = 0; i < 10000; i++) {
 		asm volatile ( "nop" : : :"memory");
 	}

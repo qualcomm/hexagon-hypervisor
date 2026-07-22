@@ -181,7 +181,7 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	p0 = cmp.eq(INTINFO_FN,#0)	// really, we shouldn't get NULL interrupt handlers, but if we do...
 	if (!p0) callr INTINFO_FN
 	r1:0 = #0
-	k0lock
+	ASM_BKL_LOCK(r6, r7, r8, p0)
 	jump H2K_switch
 
 FUNC_END H2K_interrupted_waitmode

@@ -201,6 +201,11 @@ CFLAGS += -I ${INSTALLPATH}/include
 ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${INSTALLPATH}/include
 endif #STANDALONE
 
+ifdef SOFT_BKL
+CFLAGS  += -DSOFT_BKL
+ASFLAGS += -DSOFT_BKL
+endif
+
 LDFLAGS+= -mv${TOOLARCH} -Qunused-arguments
 #  Turn on call() support for assertion checking
 #CFLAGS += -DDEBUG

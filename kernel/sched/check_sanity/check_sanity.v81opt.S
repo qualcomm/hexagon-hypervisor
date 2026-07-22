@@ -145,9 +145,7 @@ FUNC_START H2K_check_sanity_unlock .text.core.sanity .p2align 5
 	}
 	.falign
 2:
-	{
-		k0unlock
-	}
+	ASM_BKL_UNLOCK(r2, r3, r4, p0)
 	{
 		jumpr R31
 	}
@@ -164,6 +162,6 @@ FUNC_START H2K_check_sanity .text.core.sanity .p2align 3
 		allocframe(#0)
 		call H2K_check_sanity_unlock
 	}
-	k0lock
+	ASM_BKL_LOCK(r2, r3, r4, p0)
 	dealloc_return
 FUNC_END H2K_check_sanity

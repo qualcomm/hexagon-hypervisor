@@ -94,12 +94,12 @@ static void H2K_intconfig_l2_init(u32_t ssbase)
 	u32_t spmi_arb_periph_irq, spmi_arb_periph_word, spmi_arb_ee_irq, spmi_arb_ee_word;
 #endif
 
-/* irq must be in [L2_INTERRUPT_START, MAX_INTERRUPTS): the sizeof(char[...])
- * gives a negative array size (hard compile error) if it is out of range, and
- * evaluates to 1, so the "- 1" leaves the computed word value unchanged. */
-#define L2VIC_WORD(irq)	\
-	((int)sizeof(char[((irq) >= L2_INTERRUPT_START && (irq) < MAX_INTERRUPTS) ? 1 : -1]) - 1 \
-	 + ((irq) - L2_INTERRUPT_START)/32)
+/* irq must be in [L2_INTERRUPT_START, MAX_INTERRUPTS) */
+#define L2VIC_WORD(irq)	__extension__({ \
+	_Static_assert((irq) >= L2_INTERRUPT_START && (irq) < MAX_INTERRUPTS, \
+		"irq must be between L2_INTERRUPT_START and MAX_INTERRUPTS"); \
+	((irq) - L2_INTERRUPT_START)/32; \
+})
 
 #if ARCHV == 4
 	/*  8960 SPI and TLMM summary apparently are level (high) triggered */

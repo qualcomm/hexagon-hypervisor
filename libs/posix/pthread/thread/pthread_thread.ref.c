@@ -37,6 +37,18 @@ struct pthread_tcb {
 extern char TLS_START __attribute__((weak));
 extern char TLS_END __attribute__((weak));
 
+/*
+ * ELF TLS initialization image, provided by the linker script:
+ *   - .tdata is the initialized portion; its file image lives at
+ *     __tdata_source and is __tdata_size bytes long.
+ *   - .tbss is the zero-initialized portion, __tbss_size bytes long,
+ *     laid out immediately after .tdata. It is NOBITS: it has no valid
+ *     source bytes in the file and MUST be zero-filled, never copied.
+ */
+extern char __tdata_source __attribute__((weak));
+extern char __tdata_size __attribute__((weak));
+extern char __tbss_size __attribute__((weak));
+
 static char *elftls_start;
 static unsigned int elftls_size;
 
@@ -185,15 +197,24 @@ int pthread_join(pthread_t thread, void **retval)
 static struct pthread_tcb *pthread_create_common(struct pthread_tcb *dst)
 {
 	char *elftls_area;
+	size_t tdata_size = (size_t)&__tdata_size;
+	size_t tbss_size = (size_t)&__tbss_size;
 	/* init semaphores */
 	pthread_sem_init_np(&dst->joined,0,0);
 	pthread_sem_init_np(&dst->waiters,0,0);
 	pthread_sem_init_np(&dst->exiting,0,0);
 	pthread_sem_init_np(&dst->ack,0,0);
-	/* Copy ELF TLS area */
+	/* Initialize the ELF TLS area per the TLS spec: copy the initialized
+	 * .tdata image, then zero-fill the .tbss portion. .tbss is NOBITS and
+	 * has no valid source bytes, so it must be memset, not memcpy'd --
+	 * otherwise thread-locals such as __cxa_eh_globals inherit garbage.
+	 */
 	elftls_area = (char *)dst;
 	elftls_area -= elftls_size;
-	memcpy(elftls_area,elftls_start,elftls_size);
+	if (tdata_size != 0)
+		memcpy(elftls_area, &__tdata_source, tdata_size);
+	if (tbss_size != 0)
+		memset(elftls_area + tdata_size, 0, tbss_size);
 	return dst;
 }
 

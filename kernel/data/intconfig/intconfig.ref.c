@@ -94,12 +94,21 @@ static void H2K_intconfig_l2_init(u32_t ssbase)
 	u32_t spmi_arb_periph_irq, spmi_arb_periph_word, spmi_arb_ee_irq, spmi_arb_ee_word;
 #endif
 
+/* irq must be in [L2_INTERRUPT_START, MAX_INTERRUPTS) */
+#define L2VIC_WORD(irq) ({ \
+	_Static_assert((irq) >= L2_INTERRUPT_START && (irq) < MAX_INTERRUPTS, \
+		"irq must be between L2_INTERRUPT_START and MAX_INTERRUPTS"); \
+	((irq) - L2_INTERRUPT_START)/32; \
+})
+
 #if ARCHV == 4
 	/*  8960 SPI and TLMM summary apparently are level (high) triggered */
+	/* L2VIC register-array words are indexed from L2_INTERRUPT_START (int 32),
+	 * matching the (intno - 32) >> 5 used in intcontrol.h. */
 #define SPI_IRQ		65
-#define SPI_WORD	(SPI_IRQ/32)
+#define SPI_WORD	L2VIC_WORD(SPI_IRQ)
 #define TLMM_IRQ	38
-#define TLMM_WORD	(TLMM_IRQ/32)
+#define TLMM_WORD	L2VIC_WORD(TLMM_IRQ)
 
 	spi_irq = SPI_IRQ;
 	spi_word = SPI_WORD;
@@ -109,28 +118,28 @@ static void H2K_intconfig_l2_init(u32_t ssbase)
 
 #if ARCHV >= 5
 #define MSS_SPI_IRQ		245
-#define MSS_SPI_WORD	(MSS_SPI_IRQ/32)
+#define MSS_SPI_WORD	L2VIC_WORD(MSS_SPI_IRQ)
 #define MSS_TLMM_IRQ	239
-#define MSS_TLMM_WORD	(MSS_TLMM_IRQ/32)
+#define MSS_TLMM_WORD	L2VIC_WORD(MSS_TLMM_IRQ)
 
 #define MSS_SPMI_ARB_PERIPH_IRQ	75
-#define MSS_SPMI_ARB_PERIPH_WORD	(MSS_SPMI_ARB_PERIPH_IRQ/32)
+#define MSS_SPMI_ARB_PERIPH_WORD	L2VIC_WORD(MSS_SPMI_ARB_PERIPH_IRQ)
 #define MSS_SPMI_ARB_EE_IRQ		76
-#define MSS_SPMI_ARB_EE_WORD	(MSS_SPMI_ARB_EE_IRQ/32)
+#define MSS_SPMI_ARB_EE_WORD	L2VIC_WORD(MSS_SPMI_ARB_EE_IRQ)
 
 		/*  8974 SPI ("blsp1_qup1") and "summary_irq_sensors"  */
 #define LPASS_SPI_IRQ		64
-#define LPASS_SPI_WORD	(LPASS_SPI_IRQ/32)
+#define LPASS_SPI_WORD	L2VIC_WORD(LPASS_SPI_IRQ)
 #define LPASS_TLMM_IRQ	38
-#define LPASS_TLMM_WORD	(LPASS_TLMM_IRQ/32)
+#define LPASS_TLMM_WORD	L2VIC_WORD(LPASS_TLMM_IRQ)
 
 #define LPASS_SPMI_ARB_PERIPH_IRQ	48
-#define LPASS_SPMI_ARB_PERIPH_WORD	(LPASS_SPMI_ARB_PERIPH_IRQ/32)
+#define LPASS_SPMI_ARB_PERIPH_WORD	L2VIC_WORD(LPASS_SPMI_ARB_PERIPH_IRQ)
 #define LPASS_SPMI_ARB_EE_IRQ		49
-#define LPASS_SPMI_ARB_EE_WORD	(LPASS_SPMI_ARB_EE_IRQ/32)
+#define LPASS_SPMI_ARB_EE_WORD	L2VIC_WORD(LPASS_SPMI_ARB_EE_IRQ)
 //#define LPASS_USB1_HS_IRQ	44
 #define LPASS_USB1_HS_IRQ	54
-#define LPASS_USB1_HS_WORD	(LPASS_USB1_HS_IRQ/32)
+#define LPASS_USB1_HS_WORD	L2VIC_WORD(LPASS_USB1_HS_IRQ)
 
 #define LPASS_IPC_0_IRQ		18
 #define LPASS_IPC_0_WORD	(LPASS_IPC_0_IRQ/32)
@@ -217,9 +226,11 @@ void H2K_intconfig_init(u32_t ssbase)
 {
 	int i;
 	H2K_thread_context *tmp;
+#ifdef TESTING
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->inthandlers[i].raw = 0;
 	}
+#endif
 	H2K_gp->inthandlers[RESCHED_INT].param = (void *)1; // mark interrupt taken
 	H2K_gp->inthandlers[RESCHED_INT].handler = H2K_resched;
 

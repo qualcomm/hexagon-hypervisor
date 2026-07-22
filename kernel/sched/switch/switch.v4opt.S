@@ -380,7 +380,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		if (P_FROMWAIT) memd(KG_WAITCYCLES+HTNUM<<#3) = r3:2  // waitcycles
 		memb(DST+#CONTEXT_hthread) = HTNUM
 		r0 = DST
-		if (P_VMWORK) call H2K_vm_do_work
+		if (P_VMWORK) call H2K_vm_do_work_withlock
 	}
 	{
 		r31 = memw(DST+#CONTEXT_continuation)

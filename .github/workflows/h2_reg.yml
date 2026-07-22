@@ -39,9 +39,11 @@ jobs:
       - name: Add SDK to PATH
         run: echo "$SDK_ROOT/bin" >> "$GITHUB_PATH"
 
-      # - name: Build
-      #   run: make USE_PKW=0 ARCHV=$ARCHV TARGET=opt -j"$(nproc)"
-
       - name: Regression test
         run: |
           make -O USE_PKW=0 NULL_ANGEL_TRAP=1 testall
+
+      - name: Coverage build and verify
+        run: |
+          make -O USE_PKW=0 NULL_ANGEL_TRAP=1 ARCHV="$ARCHV" TARGET=ref_cov cov
+          

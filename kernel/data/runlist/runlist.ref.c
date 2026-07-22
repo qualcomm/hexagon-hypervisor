@@ -5,13 +5,15 @@
 
 #include <runlist.h>
 
-void H2K_runlist_init(void) 
+void H2K_runlist_init(void)
 {
 	u32_t i;
 	for (i = 0; i < sizeof(H2K_gp->runlist_prios)/sizeof(H2K_gp->runlist_prios[0]); i++) {
-		if (i < H2K_gp->hthreads) { /* EJP: FIXME: why is this needed? */
+#ifdef TESTING
+		if (i < H2K_gp->hthreads) {
 			H2K_gp->runlist[i] = NULL;
 		}
+#endif
 		H2K_gp->runlist_prios[i] = -1;
 	}
 }

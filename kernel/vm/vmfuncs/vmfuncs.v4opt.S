@@ -164,7 +164,7 @@ FUNC_START H2K_vmtrap_wait .text.vm.funcs .falign
 	k0lock
 	{
 		RET_MESAV = combine(r31,ME)
-		call H2K_vm_do_work
+		call H2K_vm_do_work_withlock
 	}
 	{
 		p0 = cmp.eq(r0,#-1)

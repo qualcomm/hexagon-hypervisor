@@ -19,12 +19,21 @@
 #include <checker_ready.h>
 #include <setjmp.h>
 #include <globals.h>
+#include <vmdefs.h>
 
 void FAIL(const char *str)
 {
 	puts("FAIL");
 	puts(str);
 	exit(1);
+}
+
+static int TH_saw_do_work;
+
+int H2K_vm_do_work_withlock(H2K_thread_context *me)
+{
+	TH_saw_do_work = 1;
+	return -1;
 }
 
 H2K_thread_context *TB_in;
@@ -357,6 +366,28 @@ int main()
 		if (i != H2K_intpool_wait(i,&a)) FAIL("pending intpool wait");
 		if ((fakeint[i/32+0x200/sizeof(u32_t)-1] & (1<<(i&0x1f))) == 0) FAIL("not acked");
 	}
+
+	/* Case B: VMWORK alone -- gate must fire and return -1 without INTBLOCKED */
+	H2K_runlist_push(&a);
+	a.status = H2K_STATUS_RUNNING;
+	a.vmstatus = H2K_VMSTATUS_VMWORK;
+	TH_saw_do_work = 0;
+	if (TH_call_intpool_wait(0, &a) >= 0) FAIL("B: intpool_wait should fail with VMWORK set");
+	if (!TH_saw_do_work) FAIL("B: VMWORK alone must call vm_do_work");
+	if (a.status == H2K_STATUS_INTBLOCKED) FAIL("B: must not set INTBLOCKED");
+	a.vmstatus = 0;
+	H2K_runlist_remove(&a);
+
+	/* Case C: VMWORK|KILL -- killed thread racing into intpool_wait */
+	H2K_runlist_push(&a);
+	a.status = H2K_STATUS_RUNNING;
+	a.vmstatus = H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_KILL;
+	TH_saw_do_work = 0;
+	if (TH_call_intpool_wait(0, &a) >= 0) FAIL("C: intpool_wait should fail with VMWORK|KILL");
+	if (!TH_saw_do_work) FAIL("C: VMWORK|KILL must call vm_do_work");
+	if (a.status == H2K_STATUS_INTBLOCKED) FAIL("C: must not set INTBLOCKED");
+	a.vmstatus = 0;
+	H2K_runlist_remove(&a);
 
 	puts("TEST PASSED\n");
 	return 0;

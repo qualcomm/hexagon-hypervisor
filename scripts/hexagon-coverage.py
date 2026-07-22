@@ -237,8 +237,8 @@ def read_ver(installpath):
                     return f"{m.group(1)} {m.group(2)}"
     except OSError:
         pass
-    # derive from installpath structure: .../artifacts/vNN/(ref|opt)/install
-    m = re.search(r'(v\d+)[/\\](ref|opt)[/\\]', installpath)
+    # derive from installpath structure: .../artifacts/vNN/(ref|opt)[_cov]/install
+    m = re.search(r'(v\d+)[/\\](ref|opt)', installpath)
     if m:
         return f"{m.group(1)} {m.group(2)}"
     sys.exit(f"hexagon-coverage: cannot determine version from {installpath!r} "

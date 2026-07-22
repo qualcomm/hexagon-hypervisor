@@ -39,7 +39,7 @@ endif
 	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) $(JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
-	echo "v$(ARCHV) $@ ${MAKEFLAGS}" > $(INSTALLPATH)/ver
+	echo "v$(ARCHV) $(TARGET) ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
 	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
@@ -98,9 +98,12 @@ ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifac
 
 # One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
 # generating test_results.json which testall aggregates into the unified report.
+# The leading '-' lets the unified report build even when test_variant exits
+# non-zero (its check-fail step fails on test failures); the JSON file is still
+# produced by h2_test inside test_variant before check-fail runs.
 define ARCHV_VARIANT_TEST_RULE
 artifacts/v$(1)/$(2)/install/test_results.json:
-	$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
+	-$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
 endef
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_TEST_RULE,$a,$v))))
 
@@ -132,13 +135,24 @@ endif
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) test_summary
 	$(MAKE) check-fail
 
-h2_test: # ucosclean
+h2_test: all # ucosclean
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
 #$(MAKE) -C ucos sim 2>&1 | tee make.log
-	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
+
+abigtest:
+	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/pass/x86_64/master/pass.pl --retrycount 1 --results ./passout/$(ARCHV)/$(TARGET) --html ./passout/$(ARCHV)/$(TARGET) --q6v v$(ARCHV) --arch v$(ARCHV)_stable --tld STANDALONE=0 --tld TRACES=0 --flaglist v$(ARCHV)_flags.list --flags MARGIN=12 --flags PLMARGIN=180 --tld NOTIMING --tld CHECKIN=1 --flags PLIMIT= --flags WARN=--warn --flags Q6_RTOS_INSTALL=$(INSTALLPATH)
+
+$(eval $(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),$(nl).PHONY: bigtest-$(a)-$(v)$(nl)bigtest-$(a)-$(v):$(nl)$(tab)@echo $(a) $(v)$(nl)$(tab)$$(MAKE) ARCHV=$(a) TARGET=$(v) abigtest)))
+
+.PHONY: all_bigtests
+$(eval all_bigtests:$(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),bigtest-$(a)-$(v) )))
+
+bigtest: test
+	$(MAKE) $(JFLAG) all_bigtests
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
@@ -159,10 +173,10 @@ cov: h2_cov
 #	tail -n +2 qurt_report.html >> report.html
 
 h2_cov:
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/cov.rpt
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/cov.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 
-.PHONY: check-fail test-check cov-check cov_fns
+.PHONY: check-fail test-check cov-check
 
 check-fail test-check cov-check:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check-fail
@@ -190,28 +204,6 @@ htags: gtags
 
 gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML
-
-cov_fns:
-	# $(MAKE) clean ref ARCHV=v4 OPTIMIZE='-Os -fno-inline';
-	# ./scripts/gen_cov_fns.pl > ./scripts/v4ref_cov_fns;
-	# $(MAKE) clean opt ARCHV=v4 OPTIMIZE='-Os -fno-inline';
-	# ./scripts/gen_cov_fns.pl > ./scripts/v4opt_cov_fns;
-	# $(MAKE) clean ref ARCHV=v5 OPTIMIZE='-Os -fno-inline';
-	# ./scripts/gen_cov_fns.pl > ./scripts/v5ref_cov_fns;
-	# $(MAKE) clean opt ARCHV=v5 OPTIMIZE='-Os -fno-inline';
-	# ./scripts/gen_cov_fns.pl > ./scripts/v5opt_cov_fns;
-	$(MAKE) clean ref ARCHV=60 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v60ref_cov_fns;
-	$(MAKE) clean opt ARCHV=60 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v60opt_cov_fns;
-	$(MAKE) clean ref ARCHV=65 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v65ref_cov_fns;
-	$(MAKE) clean opt ARCHV=65 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v65opt_cov_fns;
-	$(MAKE) clean ref ARCHV=68 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v68ref_cov_fns;
-	$(MAKE) clean opt ARCHV=68 OPTIMIZE="$(OPTIMIZE_COV)";
-	./scripts/gen_cov_fns.pl > ./scripts/v68opt_cov_fns;
 
 .PHONY: q6testinstallenvs
  q6testinstallenvs:

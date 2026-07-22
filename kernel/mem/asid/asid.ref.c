@@ -127,10 +127,11 @@ void H2K_asid_table_dec(u32_t asid)
 
 void H2K_asid_table_init()
 {
-	/* FIXME: not necessary, globals already zeroed */
+#ifdef TESTING
 	int i;
 	for (i = 0; i < MAX_ASIDS; i++) {
 		H2K_gp->asid_table[i].raw = 0;
 	}
+#endif
 }
 

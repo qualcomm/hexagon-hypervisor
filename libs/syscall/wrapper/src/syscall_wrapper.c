@@ -76,6 +76,63 @@ __attribute__((weak)) int mkdir(const char *path, mode_t mode) {
 	return ret;
 }
 
+sys_call_ret_t sys_rmdir_internal(const char *name);
+
+__attribute__((weak)) int rmdir(const char *path) {
+	sys_call_ret_t res = sys_rmdir_internal(path);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	return ret;
+}
+
+/* lstat: the Angel/semihosting filesystem has no symbolic links, so lstat is
+ * equivalent to stat (it never has to avoid following a link). */
+sys_call_ret_t sys_stat_internal(const char *name, void *buffer);
+
+__attribute__((weak)) int lstat(const char *__restrict __path, struct stat *__restrict __sbuf) {
+	sys_call_ret_t res = sys_stat_internal(__path, __sbuf);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	return ret;
+}
+
+errno_t sys_tmpnam(char *buffer, unsigned char target, count_t count);
+
+__attribute__((weak)) char *tmpnam(char *s) {
+	static char buf[L_tmpnam];
+	char *out = s ? s : buf;
+	if (sys_tmpnam(out, 0, L_tmpnam) != 0) {
+		SET_LTS_ERROR(-1, ENOENT);
+		return NULL;
+	}
+	return out;
+}
+
+okay_t sys_system(const char *command);
+
+__attribute__((weak)) int system(const char *command) {
+	/* A NULL command is the POSIX query for a command processor; report none. */
+	if (!command)
+		return 0;
+	return sys_system(command);
+}
+
+void *sys_mmap(void *addr, size_t len, int prot, int flags, int fildes, long off);
+int sys_munmap(void *addr, size_t len);
+int sys_mprotect(void *addr, size_t len, int prot);
+
+__attribute__((weak)) void *mmap(void *addr, size_t len, int prot, int flags, int fildes, off_t off) {
+	return sys_mmap(addr, len, prot, flags, fildes, (long)off);
+}
+
+__attribute__((weak)) int munmap(void *addr, size_t len) {
+	return sys_munmap(addr, len);
+}
+
+__attribute__((weak)) int mprotect(void *addr, size_t len, int prot) {
+	return sys_mprotect(addr, len, prot);
+}
+
 sys_call_ret_t sys_ftell_internal(fd_t fd);
 
 static int tell_internal(int fd) {
@@ -331,9 +388,6 @@ __attribute__((weak)) int dup2(int oldfd, int newfd) {
 	return -1;
 }
 
-static char *__h2_empty_environ[] = { NULL };
-__attribute__((weak)) char **environ = __h2_empty_environ;
-
 __attribute__((weak)) uid_t getuid(void) {
 	return 0;
 }
@@ -386,3 +440,96 @@ __attribute__((weak)) int fstatvfs(int fd, struct statvfs *buf) {
 	SET_LTS_ERROR(-1, ENOSYS);
 	return -1;
 }
+
+__attribute__((weak)) long sysconf(int name) {
+	(void)name;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int truncate(const char *path, off_t length) {
+	(void)path;
+	(void)length;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) char *realpath(const char *__restrict path, char *__restrict resolved_path) {
+	(void)path;
+	(void)resolved_path;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return NULL;
+}
+
+__attribute__((weak)) int openat(int dirfd, const char *pathname, int flags, ...) {
+	(void)dirfd;
+	(void)pathname;
+	(void)flags;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int unlinkat(int dirfd, const char *pathname, int flags) {
+	(void)dirfd;
+	(void)pathname;
+	(void)flags;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int fchmod(int fd, mode_t mode) {
+	(void)fd;
+	(void)mode;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int fchmodat(int dirfd, const char *pathname, mode_t mode, int flags) {
+	(void)dirfd;
+	(void)pathname;
+	(void)mode;
+	(void)flags;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int utimes(const char *path, const struct timeval times[2]) {
+	(void)path;
+	(void)times;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int link(const char *path1, const char *path2) {
+	(void)path1;
+	(void)path2;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) int symlink(const char *name1, const char *name2) {
+	(void)name1;
+	(void)name2;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) ssize_t readlink(const char *__restrict path, char *__restrict buf, size_t bufsize) {
+	(void)path;
+	(void)buf;
+	(void)bufsize;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return -1;
+}
+
+__attribute__((weak)) DIR *fdopendir(int fd) {
+	(void)fd;
+	SET_LTS_ERROR(-1, ENOSYS);
+	return NULL;
+}
+
+/* libh2.a is still compiled with older libc which defines errno as a macro that
+ * expands to _Geterrno we can scrap this symbol once we start building H2 with
+ * Picolibc
+ */
+int _Geterrno(void) { return errno; }

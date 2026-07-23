@@ -145,6 +145,27 @@ void boot_ucos() {
 #endif
 }
 
+/*
+ * The platform bootloader may have passed a device tree blob address in
+ * r1:0 at reset; h2 captures those registers in its entry page.  Return
+ * the DTB physical address if one was passed and looks valid, else 0.
+ */
+static unsigned long boot_dtb_addr(void) {
+
+	unsigned long r0 = h2_info(INFO_BOOT_R00);
+	unsigned long r1 = h2_info(INFO_BOOT_R01);
+
+	if (r1 != 0 || r0 == 0 || (r0 & 3) != 0)
+		return 0;
+
+	if (*(volatile unsigned long *)r0 != 0xedfe0dd0) { /* FDT magic, LE view */
+		PRINTF("linux: no FDT magic at 0x%08lx\n", r0);
+		return 0;
+	}
+
+	return r0;
+}
+
 unsigned long boot_linux(char fname[]) {
 
 	unsigned long linux_vm = 0;
@@ -198,8 +219,11 @@ unsigned long boot_linux(char fname[]) {
 		 );
 #endif
 
+	unsigned long dtb = boot_dtb_addr();
+	PRINTF("linux: dtb at 0x%08lx\n", dtb);
+
 	if (h2_vmboot(linux_stext, &linux_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
-								0, LINUX_VM_PRIO, linux_vm) == -1) FAIL("linux vmboot");
+								dtb, LINUX_VM_PRIO, linux_vm) == -1) FAIL("linux vmboot");
 
 	PRINTF ("linux: booted\n");
 #endif

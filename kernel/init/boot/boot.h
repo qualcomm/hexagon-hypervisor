@@ -50,4 +50,12 @@
 #define SBIT_SIZE 1
 #endif
 
+#if !defined(ASM) && !defined(__ASSEMBLER__)
+/*
+ * Boot parameter block in the entry page (see boot.ref.S): r1:0 as
+ * captured at reset on the boot thread, followed by reserved pad.
+ */
+extern unsigned int h2_boot_params[];
+#endif
+
 #endif

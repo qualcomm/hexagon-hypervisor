@@ -95,8 +95,6 @@ enum {
 #define GUESS_HEAP_SIZE 0x4000000 /* 64MB */
 #define GUESS_STACK_SIZE 0x100000 /* 1MB */
 
-#define GUEST_WINDOW_PAGES 5 /* number of 16M pages reserved for the guest image */
-
 #define FENCE_HI_MAX 0xfffff000
 
 #define WAKE_TIMER 0x1
@@ -546,19 +544,43 @@ void dcclean_range(unsigned long start, long range) {
 	} while (range >= 0); 
 }
 
+/* Fill npages consecutive LINEAR table entries starting at entries[0]. va/pa are
+ * page numbers (already shifted), not byte addresses. Shared by add_linear_trans()
+ * (per-guest pmap) and booter_self_map() (the booter's own TLB). */
+void fill_linear_entries(H2K_linear_fmt_t *entries, unsigned long va, unsigned long long pa, int page_size, int npages) {
+
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		entries[i].raw = 0ULL;
+		entries[i].ppn = pa;
+		entries[i].cccc = L1WB_L2C;
+		entries[i].xwru = URWX;
+		entries[i].vpn = va;
+		entries[i].size = page_size;
+
+		va += 1 << (page_size * 2);  // advance by one page's worth of page-numbers (size field is a log4 step, hence *2)
+		pa += 1 << (page_size * 2);
+	}
+}
+
+/* The booter's own LINEAR table. Built once by booter_self_map() with footprint-only
+ * entries, then grown on demand by booter_grow_guest_window() as load_vm() discovers
+ * how much guest physical memory it actually needs to read/write directly. */
+static H2K_linear_fmt_t *booter_table = NULL;
+static unsigned long booter_table_entries = 0;      /* valid entries, excluding end marker */
+static unsigned long long guest_window_hi = 0;      /* guest PA covered so far by the window; 0 == nothing yet */
+
 void booter_self_map(void) {
 
-	H2K_linear_fmt_t *table;
 	unsigned long page_size;
 	unsigned long image_base;
 	unsigned long heap_size;
 	unsigned long stack_size;
 	unsigned long footprint;
 	unsigned long npages;
-	unsigned long guest_npages;
 	unsigned long va;
 	unsigned long long pa;
-	unsigned long i;
 
 	page_size = 1UL << (PAGE_BITS + BOOT_TLB_PGSIZE * 2);  // size in bytes of one booter TLB page (BOOT_TLB_PGSIZE encodes size as a power-of-4 step above the minimum page)
 	image_base = (unsigned long)__bootvm_entry_point & -page_size;  // round entry point down to a page boundary so the mapping starts on an aligned page
@@ -571,54 +593,60 @@ void booter_self_map(void) {
 	footprint = H2_ALIGN_UP(((unsigned long)&end - image_base) + heap_size + stack_size, page_size);
 	npages = footprint / page_size;
 
-	/* Separate entries covering the guest image address range, since load_vm()
-	 * accesses guest physical memory directly through the booter's own map. */
-	guest_npages = GUEST_WINDOW_PAGES;  // fixed-size window of 16M pages; typical guest images are well under this
-
-	// +1 for the booter's own footprint entries, +guest_npages for the guest window, +1 for the null (end-marker) entry
-	if (NULL == (table = (H2K_linear_fmt_t *)malloc(sizeof(H2K_linear_fmt_t) * (npages + guest_npages + 1)))) {
+	// +1 for the null (end-marker) entry. The guest window is added later by
+	// booter_grow_guest_window(), once load_vm() knows how much guest memory is needed.
+	if (NULL == (booter_table = (H2K_linear_fmt_t *)malloc(sizeof(H2K_linear_fmt_t) * (npages + 1)))) {
 		error("malloc booter_self_map table", NULL);
 	}
 
 	va = image_base >> PAGE_BITS;  // table entries store page numbers, not byte addresses
 	pa = ((unsigned long long)image_base + __boot_net_phys_offset__) >> PAGE_BITS;  // matching PA: same offset the old OFFSET translation used
+	fill_linear_entries(booter_table, va, pa, BOOT_TLB_PGSIZE, npages);
 
-	for (i = 0; i < npages; i++) {
-		table[i].raw = 0ULL;
-		table[i].ppn = pa;
-		table[i].cccc = BOOT_CACHE_ATTR;
-		table[i].xwru = URWX;
-		table[i].vpn = va;
-		table[i].size = BOOT_TLB_PGSIZE;
+	booter_table_entries = npages;
+	booter_table[booter_table_entries].raw = 0ULL;  // end marker (zero raw entry terminates the table)
 
-		va += 1 << (BOOT_TLB_PGSIZE * 2);  // advance by one page's worth of page-numbers (size field is a log4 step, hence *2)
-		pa += 1 << (BOOT_TLB_PGSIZE * 2);
-	}
-
-	// Guest window: maps H2K_GUEST_START upward in 16M pages so the booter can read/write guest
-	// physical memory directly (memcpy/read/memset in load_vm()) the same way OFFSET translation
-	// allowed before this table replaced it.
-	va = H2K_GUEST_START >> PAGE_BITS;
-	pa = ((unsigned long long)H2K_GUEST_START + __boot_net_phys_offset__) >> PAGE_BITS;
-
-	for (i = 0; i < guest_npages; i++) {
-		table[npages + i].raw = 0ULL;
-		table[npages + i].ppn = pa;
-		table[npages + i].cccc = BOOT_CACHE_ATTR;
-		table[npages + i].xwru = URWX;
-		table[npages + i].vpn = va;
-		table[npages + i].size = SIZE_16M;
-
-		va += 1 << (SIZE_16M * 2);  // advance by one 16M page's worth of page-numbers
-		pa += 1 << (SIZE_16M * 2);
-	}
-	table[npages + guest_npages].raw = 0ULL;  // end marker (zero raw entry terminates the table)
-
-	dcclean_range((unsigned long)table, sizeof(H2K_linear_fmt_t) * (npages + guest_npages + 1));
-
-	if (h2_vmtrap_newmap(table, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_TRUE) < 0) {
+	if (h2_vmtrap_newmap(booter_table, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_TRUE) < 0) {
 		FAIL("booter_self_map: h2_vmtrap_newmap", "");
 	}
+}
+
+/* Grow the booter's own guest-window mapping so that [H2K_GUEST_START, hi) is covered,
+ * using page_size (a SIZE_* encoding, same as vm_params[idx].page_size) as the
+ * granularity for any newly-added entries. Safe to call repeatedly with a
+ * non-decreasing hi as load_vm() discovers how much guest memory it needs; a call
+ * whose range is already covered is a no-op. */
+void booter_grow_guest_window(unsigned long long hi, int page_size) {
+
+	unsigned long long page_bytes = 1ULL << (PAGE_BITS + page_size * 2);
+	unsigned long long lo = guest_window_hi ? guest_window_hi : H2K_GUEST_START;
+	unsigned long long lo_aligned = lo & -page_bytes;
+	unsigned long long hi_aligned;
+	unsigned long added_pages;
+	unsigned long va;
+	unsigned long long pa;
+
+	if (hi <= lo) return;  // already covered
+
+	hi_aligned = H2_ALIGN_UP(hi, page_bytes);
+	added_pages = (hi_aligned - lo_aligned) / page_bytes;
+
+	if (NULL == (booter_table = (H2K_linear_fmt_t *)realloc(booter_table,
+			sizeof(H2K_linear_fmt_t) * (booter_table_entries + added_pages + 1)))) {
+		error("realloc booter_table", NULL);
+	}
+
+	va = (unsigned long)(lo_aligned >> PAGE_BITS);
+	pa = (lo_aligned + __boot_net_phys_offset__) >> PAGE_BITS;
+	fill_linear_entries(&booter_table[booter_table_entries], va, pa, page_size, added_pages);
+
+	booter_table_entries += added_pages;
+	booter_table[booter_table_entries].raw = 0ULL;  // end marker
+
+	if (h2_vmtrap_newmap(booter_table, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_TRUE) < 0) {
+		FAIL("booter_grow_guest_window: h2_vmtrap_newmap", "");
+	}
+	guest_window_hi = hi_aligned;
 }
 
 void set_cmdline(unsigned int idx, long offset) {
@@ -730,7 +758,6 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	h2_guest_pmap_t *pmap = vm_params[idx].pmap;
 	H2K_linear_fmt_t *base;
 	int end = 0;
-	int i;
 
 	if (NULL != pmap) {
 		if (!vm_params[idx].pmap_added) {
@@ -758,20 +785,9 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	/* append translations */
 	va >>= H2K_KERNEL_ADDRBITS;
 	pa >>= H2K_KERNEL_ADDRBITS;
-		
-	for (i = 0; i < npages; i++) {
-		//		BOOTER_PRINTF("trans 0x%08lx -> 0x%09llx\n", va << H2K_KERNEL_ADDRBITS, pa << H2K_KERNEL_ADDRBITS);
-		base[end + i].raw = 0ULL;
-		base[end + i].ppn = pa;
-		base[end + i].cccc = L1WB_L2C;
-		base[end + i].xwru = URWX;
-		base[end + i].vpn = va;
-		base[end + i].size = page_size;
 
-		va += 1 << (page_size * 2);
-		pa += 1 << (page_size * 2);
-	}
-	base[end + i].raw = 0LL;  // end marker
+	fill_linear_entries(&base[end], va, pa, page_size, npages);
+	base[end + npages].raw = 0ULL;  // end marker
 }
 
 void clade_setup(unsigned int idx, long offset) {
@@ -953,10 +969,11 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
 		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
-		if (NULL != vm_params[clone].pmap && !vm_params[clone].pmap_added) { 
+		if (NULL != vm_params[clone].pmap && !vm_params[clone].pmap_added) {
 			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
+		booter_grow_guest_window(vm_params[clone].end_pa + prev_size, vm_params[idx].page_size);
 		copy_vm(clone, prev_size);
 		set_net_phys_offset(idx, total_offset);
 
@@ -982,7 +999,42 @@ void load_vm(unsigned int idx) {
 		}
 
 		vm_params[idx].entry = (void *)ehdr.e_entry;
-	
+
+		/* Grow the booter's guest window to the actual size this image needs before the
+		 * phdr loop below writes into guest physical memory. "start" (min phdr p_vaddr)
+		 * isn't known until the loop runs, so this omits it and uses heap_start (which
+		 * already incorporates the guest's _end symbol) + heap + stack as the size --
+		 * since start is always >= 0, this is a safe over-approximation of the real
+		 * total_size computed after the loop below. */
+		{
+			unsigned long pre_heap_size, pre_heap_start, pre_stack_size, pre_end, pre_total_size;
+
+			pre_heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
+			if (0 == pre_heap_size || -1 == pre_heap_size) {
+				pre_heap_size = (0 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr
+						|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr)
+					? GUESS_HEAP_SIZE : vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr;
+			}
+
+			if (-1 == (pre_end = vm_params[idx].specials[SPECIAL__end].addr)) {
+				FAIL("\tCan't find end symbol", "");
+			}
+
+			pre_heap_start = vm_params[idx].specials[SPECIAL_HEAP_START].addr;
+			if (0 == pre_heap_start || -1 == pre_heap_start) {
+				pre_heap_start = pre_end + 4;
+			}
+
+			pre_stack_size = vm_params[idx].specials[SPECIAL_STACK_SIZE].addr;
+			if (0 == pre_stack_size || -1 == pre_stack_size) {
+				pre_stack_size = (0 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr
+						|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr)
+					? GUESS_STACK_SIZE : vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr;
+			}
+
+			pre_total_size = H2_ALIGN_UP(pre_heap_start + pre_heap_size + pre_stack_size, one_page);
+			booter_grow_guest_window(guest_base + pre_total_size, vm_params[idx].page_size);
+		}
 
 		for (i = 0; i < ehdr.e_phnum; i++) {
 			if (elf_get_phdr(fdesc, i, &phdr, &ehdr) < 0) continue;
@@ -1129,6 +1181,7 @@ void load_vm(unsigned int idx) {
 			vm_params[idx].stash_addr = __boot_net_phys_offset__ + guest_base;
 			guest_base += vm_params[idx].end_pa - vm_params[idx].start_pa;
 			guest_base = H2_ALIGN_UP(guest_base, one_page);
+			booter_grow_guest_window(vm_params[idx].stash_addr + (vm_params[idx].end_pa - vm_params[idx].start_pa), vm_params[idx].page_size);
 			copy_vm(idx, vm_params[idx].stash_addr - vm_params[idx].start_pa);
 		}
 	}  // else not a clone

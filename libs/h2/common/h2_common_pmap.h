@@ -24,6 +24,17 @@
 #define PAGE_SIZE_MAX SIZE_1G
 #endif
 
+#define SIZE_4K_MASK   0xfff
+#define SIZE_16K_MASK  0x3fff
+#define SIZE_64K_MASK  0xffff
+#define SIZE_256K_MASK 0x3ffff
+#define SIZE_1M_MASK   0xfffff
+#define SIZE_4M_MASK   0x3fffff
+#define SIZE_16M_MASK  0xffffff
+#define SIZE_64M_MASK  0x3ffffff
+#define SIZE_256M_MASK 0xfffffff
+#define SIZE_1G_MASK   0x3fffffff
+
 #define L1WB_L2UC 0
 #define L1WT_L2UC 1
 #define DEVICE_TYPE_SFC 2

@@ -397,10 +397,10 @@ boot_continuation:
 	TLB_PHYS = PHYS_ADDR
 
 	TLB_INDEX = sub(LAST_TLB, NPAGES)
-#ifdef NULL_ANGEL_TRAP	
-	TLB_INDEX = add(TLB_INDEX, #-1)
+#ifdef NULL_ANGEL_TRAP
+	TLB_INDEX = add(TLB_INDEX, #-2)  // -2 for l2regs and device page: starting index for pinned entries
 #else
-	TLB_INDEX = add(TLB_INDEX, #-2)  // -2 for angel and device page: starting index for pinned entries
+	TLB_INDEX = add(TLB_INDEX, #-3)  // -3 for angel, l2regs, and device page: starting index for pinned entries
 #endif
 	LAST_TLB = add(TLB_INDEX, #-1) // last free entry
 	COUNTER = #0
@@ -432,6 +432,17 @@ boot_continuation:
 	// apply offet to get PUB_BASE
 	SS_BASE = add(SS_BASE, ##-QDSP6SS_PUB_PRIV_OFFSET)
 	MAKE_TLBLO_DEV(TLB_LO, SS_BASE, TLB_TMP)
+	DO_TLBW
+
+	// entry for L2 config/QOS registers
+	TLB_INDEX = add(TLB_INDEX, #1)
+	MAKE_TLBHI(TLB_HI, L2CFG_BASE_VA, BOOT_TLB_OFFSET_BITS_1M, BOOT_TLB_SHIFT_1M)
+	FROM = cfgbase
+	FROM = asl(FROM, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
+	TO = #CFG_TABLE_L2REGS
+	TO = memw_phys(TO, FROM)
+	TO = asl(TO, #CFG_TABLE_SHIFT)
+	MAKE_TLBLO_DEV(TLB_LO, TO, TLB_TMP)
 	DO_TLBW
 
 #ifndef NULL_ANGEL_TRAP

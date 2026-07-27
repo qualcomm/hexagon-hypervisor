@@ -96,39 +96,33 @@ u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t
 }
 
 static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
-	u32_t va;
 	pa_t base;
+	u32_t page_off;
 	u32_t volatile *reg;
-	u32_t ret;
 
 	offset &= -4;
 
 	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
+	page_off = base & SIZE_1M_MASK;
+	reg = (u32_t volatile *) (L2CFG_BASE_VA + page_off + offset);
 
-	va = H2K_tmpmap_add_and_lock(base, UNCACHED, SIZE_DEFAULT);
-	reg = (u32_t *) (va + offset);
-	ret = *reg;
-	H2K_tmpmap_remove_and_unlock();
-
-	return ret;
+	return *reg;
 }
 
 static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
-	u32_t va;
 	pa_t base;
+	u32_t page_off;
 	u32_t volatile *reg;
 	u32_t ret;
 
 	offset &= -4;
 
 	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
-
-	va = H2K_tmpmap_add_and_lock(base, UNCACHED, SIZE_DEFAULT);
-	reg = (u32_t *) (va + offset);
+	page_off = base & SIZE_1M_MASK;
+	reg = (u32_t volatile *) (L2CFG_BASE_VA + page_off + offset);
 	ret = *reg;
 	*reg = val;
 	H2K_dccleana((void *)reg);
-	H2K_tmpmap_remove_and_unlock();
 
 	return ret;
 }

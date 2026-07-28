@@ -94,7 +94,6 @@
 /* Hardware threads this build supports; never start or account beyond it. */
 #define MAX_HTHREADS_MASK ((1U << MAX_HTHREADS) - 1)
 
-#define L2CFG_BASE_VA 0xffb00000  // leaves at most 3M for tmpmap at 0xff800000
 
 /* QDSP6SS_PRIV_BASE is the subsystem base value read from cfg_table, but we
 	 map QDSP6SS_PUB_BASE to Q6_SS_BASE_VA so we can get at the public registers.
@@ -102,10 +101,12 @@
 
 #define DEVICE_PAGE_SIZE SIZE_1M
 
-#define Q6_SS_BASE_VA 0xffc00000
+#define Q6_SS_BASE_VA 0xffc00000  // leaves at most 3M for tmpmap at 0xff800000
 #define QDSP6SS_PUB_PRIV_OFFSET 0x80000
 
-#define ANGEL_VA 0xffd00000
+#define L2CFG_BASE_VA 0xffd00000
+
+#define ANGEL_VA 0xffe00000
 #define ANGEL_PG_SIZE SIZE_4K
 
 #if ARCHV == 4

@@ -97,7 +97,7 @@ typedef struct {
 	pa_t gpio_reg;
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	u32_t cluster_clusters;   // number of clusters
 	u32_t cluster_hthreads;   // hardware threads per cluster
 	u32_t cluster_mask[4];    // bitmask of threads in cluster
@@ -216,7 +216,7 @@ static inline H2K_kg_t PURITY *H2K_gp_llvm()
 #undef PURITY
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 
 static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 	return (hthread / H2K_gp->cluster_hthreads);

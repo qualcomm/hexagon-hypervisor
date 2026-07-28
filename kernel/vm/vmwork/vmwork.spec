@@ -18,8 +18,8 @@ Description
 
 Handles deferred VM work for the current thread.  The BKL must be held
 by the caller.  Notable callers include the deferred-work hook in
-``H2K_switch`` (between :c:func:`H2K_dosched()` and
-``H2K_check_sanity_unlock``), :c:func:`H2K_vmtrap_vmwait()`, and
+``H2K_switch`` (between :c:func:`H2K_dosched()` and BKL_UNLOCK()), 
+:c:func:`H2K_vmtrap_vmwait()`, and
 :c:func:`H2K_vm_ipi_do()`.
 
 INPUT_ASSERT(kernel_locked)

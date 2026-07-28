@@ -7,7 +7,6 @@
 #include <futex.h>
 #include <dosched.h>
 #include <hw.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <ring.h>
 #include <check_sanity.h>
@@ -15,7 +14,6 @@
 #include <globals.h>
 #include <atomic.h>
 #include <safemem.h>
-#include <lowprio.h>
 #include <id.h>
 #include <vmwork.h>
 
@@ -41,10 +39,8 @@ static inline void H2K_futex_pi_raise(u32_t prio, H2K_id_t destid)
 		dest->prio = (u8_t)prio;
 		H2K_ready_insert(dest);
 	} else if (dest->status == H2K_STATUS_RUNNING) {
-		H2K_runlist_set_thread_prio(dest, prio);
-		if (H2K_gp->priomask & (1<<dest->hthread)) {
-			H2K_raise_lowprio();
-		}
+		dest->prio = (u8_t)prio;
+		set_thread_stid_prio(dest->hthread, prio);
 		/* Need to update lowprio */
 	} else if (dest->status == H2K_STATUS_INTBLOCKED) {
 		/* Waiting on interrupt, but we want it to have high priority when it starts up */
@@ -92,7 +88,6 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 	}
 	H2K_futex_pi_raise(me->prio,x.dest);
 	me->futex_ptr = pa;
-	H2K_runlist_remove(me);
 	me->r0100 = 0;
 	me->status = H2K_STATUS_BLOCKED;
 	H2K_futex_hash_add_ring(&H2K_gp->futexhash[FUTEX_HASHVAL(pa)],me);
@@ -120,6 +115,8 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	hashval = FUTEX_HASHVAL(pa);
 	ring = &H2K_gp->futexhash[hashval];
 	pos = *ring;
+	me->prio = me->base_prio;
+	set_thread_stid_prio(me->hthread, me->base_prio);
 	/* FIXME: pass full PA when supported */
 	ret = H2K_futex_hash_remove_one((u32_t)pa,ring,&pos);
 	if (ret == NULL) {
@@ -130,8 +127,6 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 		H2K_atomic_swap(lock,H2K_id_from_context(ret).raw+1);
 	}
 	H2K_safemem_unlock();
-	/* Restore my priority */
-	H2K_runlist_set_thread_prio(me, me->base_prio);
-	return (s32_t)H2K_check_sanity_unlock(0);
+	BKL_UNLOCK();
+	return 0;
 }
-

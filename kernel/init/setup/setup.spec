@@ -22,7 +22,6 @@ The :c:func:`H2K_init_setup()` function initializes kernel state at boot time.
 This function calls other initialization functions:
 
 * :c:func:`H2K_ready_init()`
-* :c:func:`H2K_runlist_init()`
 * :c:func:`H2K_lowprio_init()`
 * :c:func:`H2K_futex_init()`
 * :c:func:`H2K_intconfig_init()`
@@ -47,9 +46,8 @@ Next, we set up the boot thread context.  Specifically:
 * Continuation should point to :c:func:`H2K_interrupt_restore()`
 * Trapmask should be initialized to all 1's.
 
-Once we have set up the boot thread context and placed it into the runlist, we
-switch to the thread.  This will cause the kernel to go to the continuation
-function, and will end up at qdsp6_pre_main, in crt0.
+Once we have set up the boot thread context, we switch to the thread. 
+This will cause the kernel to go to the continuation function, and will end up at qdsp6_pre_main, in crt0.
 
 Testing
 -------

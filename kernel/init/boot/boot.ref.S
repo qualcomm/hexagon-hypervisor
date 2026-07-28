@@ -348,10 +348,10 @@ boot_continuation:
 	SETCONST(H2K_GP,H2K_kg)
 
 	/* Set up rising edge triggered */
-	TMP = #-1
-	/* Set imask to -1, since we are not lowest priority at boot */
- 	/* (other idle threads) */
+	/* Set imask to 0, enabling hardware interrupt steering */
+ 	TMP = #0
 	imask = TMP
+	TMP = #-1
 #if ARCHV < 65
 	iel = TMP
 	iahl = TMP

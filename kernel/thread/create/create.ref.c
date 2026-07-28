@@ -19,6 +19,7 @@
 #include <asid.h>
 #include <vm.h>
 #include <id.h>
+#include <log.h>
 
 void H2K_interrupt_restore();
 
@@ -106,8 +107,9 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 	vmblock->num_cpus++;
 	tmp->vmblock = vmblock;
 
-	H2K_ready_append(tmp);
-	return (s32_t)H2K_check_sanity_unlock(H2K_id_from_context(tmp).raw);
+	H2K_ready_append_arm(tmp);
+	BKL_UNLOCK();
+	return (s32_t)H2K_id_from_context(tmp).raw;
 }
 
 IN_SECTION(".text.misc.create") s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me)

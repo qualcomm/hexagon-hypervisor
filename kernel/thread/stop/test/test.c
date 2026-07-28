@@ -6,9 +6,7 @@
 #include <c_std.h>
 #include <context.h>
 #include <stop.h>
-#include <runlist.h>
 #include <readylist.h>
-#include <lowprio.h>
 #include <thread.h>
 #include <hw.h>
 #include <stdio.h>
@@ -75,9 +73,10 @@ int main()
 	H2K_vmblock_t myblock;
 	H2K_vmblock_t *vmblock = &myblock;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	H2K_runlist_init();
 	H2K_readylist_init();
-	H2K_lowprio_init();
+#if CLUSTER_SCHED
+	H2K_gp->wait_mask = 0;
+#endif
 	H2K_thread_init();
 
 	a.prio = 2;
@@ -92,10 +91,6 @@ int main()
 	//puts("C");
 	vmblock->free_threads = NULL;
 	if (vmblock->free_threads != NULL) FAIL("free threads not clear");
-	H2K_runlist_push(&a);
-	if (H2K_gp->runlist[a.hthread] != &a) FAIL("Thread not in expected place in runlist (0)");
-	H2K_runlist_push(&b);
-	if (H2K_gp->runlist[b.hthread] != &b) FAIL("Thread not in expected place in runlist (1)");
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
@@ -111,7 +106,6 @@ int main()
 	//puts("h");
 	if (a.next != 0) FAIL("Free thread list incorrect");
 	//puts("i");
-	if (H2K_gp->runlist[a.hthread] == &a) FAIL("Thread not removed from runlist");
 	//puts("B");
 	TH_saw_dosched = 0;
 	TH_me = &b;
@@ -121,12 +115,7 @@ int main()
 	if (b.prev != 0) FAIL("thread not cleared");
 	if (vmblock->free_threads != &b) FAIL("free thread list incorrect");
 	if (b.next != &a) FAIL("Free thread list incorrect");
-	if (H2K_gp->runlist[b.hthread] == &b) FAIL("Thread not removed from runlist");
-	if (H2K_gp->runlist[a.hthread] != NULL) FAIL("Unexpected runlist");
-	if (H2K_gp->runlist[b.hthread] != NULL) FAIL("Unexpected runlist");
 	puts("A");
-	H2K_runlist_init();
-	H2K_lowprio_init();
 	H2K_readylist_init();
 	H2K_thread_init();
 	a.prio = 2;
@@ -134,12 +123,6 @@ int main()
 	c.prio = 2;
 	vmblock->free_threads = NULL;
 	if (vmblock->free_threads != NULL) FAIL("free threads not clear");
-	H2K_runlist_push(&a);
-	if (H2K_gp->runlist[a.hthread] != &a) FAIL("Thread not in expected place in runlist (2)");
-	H2K_runlist_push(&b);
-	if (H2K_gp->runlist[b.hthread] != &b) FAIL("Thread not in expected place in runlist (3)");
-	H2K_runlist_push(&c);
-	if (H2K_gp->runlist[c.hthread] != &c) FAIL("Thread not in expected place in runlist (4)");
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
@@ -149,9 +132,7 @@ int main()
 	if (a.prev != 0) FAIL("thread not cleared");
 	if (vmblock->free_threads != &a) FAIL("free thread list incorrect");
 	if (a.next != 0) FAIL("Free thread list incorrect");
-	if (H2K_gp->runlist[a.hthread] == &a) FAIL("Thread not removed from runlist");
 
 	puts("TEST PASSED\n");
 	return 0;
 }
-

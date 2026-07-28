@@ -26,14 +26,12 @@ return immediately after releasing the BKL.  (EJP: can we do this outside the BK
 Another thread might be inserting itself into the ready list.  Can we spec the function
 so that it does a best effort?)
 
-Next, the :c:func:`H2K_sched_yield()` function removes the current thread from the runlist, and
-appends it on the end of the ready list.  
+Next, the :c:func:`H2K_sched_yield()` function appends the thread to the end of the ready list.  
 
 We can then call :c:func:`H2K_dosched()` to pick a new thread to run.
 
 As an optimization, we can instead remove the thread at the head of the
-readylist at the same priority, and insert it into the runlist.  We switch to
-the thread inserted into the runlist.
+readylist at the same priority and switch to it.
 
 
 
@@ -47,14 +45,13 @@ Samples
 
 * Input: me, which may or may not have a valid thread
 * Input: correct ready queue, which may or may not have ready threads
-* I/O: runlist, which is updated if there is a new thread to schedule
 * I/O: waitmask, modified if new is NULL
 
 Important cases
 ~~~~~~~~~~~~~~~
 
-* Runlist has no valid threads at current thread's priority
-* Runlist has valid threads at current thread's priority
+* No valid threads at current thread's priority
+* There are valid threads at current thread's priority
 
 Harness
 ~~~~~~~
@@ -62,8 +59,8 @@ Harness
 Link with H2 kernel library.
 
 If valid threads exist at the current priority, :c:func:`H2K_sched_yield()` should lock
-the kernel, remove the current thread from the runlist, append the current
-thread to the ring at the current thread priority, and call :c:func:`H2K_dosched()`.
+the kernel, append the current thread to the ring at the current thread priority,
+and call :c:func:`H2K_dosched()`.
 
 If no valid threads exist at the current priority, :c:func:`H2K_sched_yield()` may
 return immediately.  Since this optimization may be important for performance

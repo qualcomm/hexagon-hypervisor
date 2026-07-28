@@ -136,9 +136,6 @@ Inside the Monitor:
 
 TBD:
 	* How do we make "in_ready_queue(owner_context)" fast?
-	* How can we change prio and have thread still take itself out of
-	  runlist efficiently?
-	* Change runlist?
 
 Caveats:
 	* Futex_resume may not be right place to always change back prio

@@ -69,7 +69,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 		have_hvx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HVX_MASK) != 0;
 		have_silver = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_SILVER_MASK) != 0;
 		H2K_kg.coproc_contexts = (have_hvx || have_silver ? H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS) : 0);
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		/* FIXME: need a cfg_table entry for this */
 		H2K_kg.cluster_clusters = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) > 8 ? 4 : 2); // hack
 		H2K_kg.cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / H2K_kg.cluster_clusters);
@@ -144,7 +144,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 		H2K_kg.hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_INT8_RATE) != 0);  // exists?
 		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_kg.hmx_units > 0);
 #endif
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		H2K_kg.coproc_max_save = ((H2K_kg.coproc_contexts + H2K_kg.hmx_units) / H2K_kg.cluster_clusters) + (((H2K_kg.coproc_contexts + H2K_kg.hmx_units) % H2K_kg.cluster_clusters) != 0);
 		H2K_kg.coproc_max_save = (H2K_kg.coproc_max < CLUSTER_SCHED_MIN_COPROCS ? CLUSTER_SCHED_MIN_COPROCS : H2K_kg.coproc_max);
 #endif	
@@ -230,7 +230,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 
 }
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 void H2K_cluster_config(void) {
 	u32_t i;
 

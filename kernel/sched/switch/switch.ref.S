@@ -16,7 +16,7 @@
  * We don't care about any registers
  * Handle any tracing and profiling
  * If switching to NULL, go to sleep
- * Otherwise, load continuation into LR and jump to check_sanity_unlock
+ * Otherwise, load continuation into LR
  */
 
 FUNC_START H2K_switch .text.core.switch .p2align 5
@@ -279,6 +279,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #else
 	stid = r4
 #endif
+	isync	
 
 	r17 = r1
 	r0 = r17
@@ -286,7 +287,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r1:0 = memd(r17+#CONTEXT_r0100)
 	r31 = memw(r17+#CONTEXT_continuation)
 	r31 = and(r31,#-4)				// ignore LSBs
-	jump H2K_check_sanity_unlock
+	k0unlock
+	jumpr r31
 
 .Lto_sleep:
 	memd(r9) = r19:18
@@ -313,20 +315,14 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		//ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 
 	r9 = memw(H2K_GP+#KG_wait_mask)
-	r8 = memw(H2K_GP+#KG_priomask)
 	r9 = setbit(r9,r5)
-	r8 = setbit(r8,r5)
 	memw(H2K_GP+#KG_wait_mask) = r9
-	memw(H2K_GP+#KG_priomask) = r8
-	k0unlock
+
 	// set SGP to NULL
 	sgp0 = r1
 
-	// set IMASK to receive most interrupts
-	r0 = imask
-	r1.h = #HI(0)
-	r1.l = #LO(0)
-	r0 = and(r0,r1)
+	// set IMASK to receive all interrupts
+	r0 = #0
 	imask = r0
 
 	// set TID to special value (-1)
@@ -336,6 +332,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 #else
 	stid = r1
 #endif
+	isync	
+	k0unlock
 
 	// set SSR to enable interrupts
 	// NOTE: should be the last thing before going to WAIT mode, we may get an interrupt

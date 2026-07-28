@@ -57,7 +57,7 @@ H2K_thread_context *H2K_futex_hash_remove_one(u32_t locklo, H2K_thread_context *
 		if (cur->futex_ptr_lo == locklo) {
 			tmp = cur->next;
 			H2K_ring_remove(ring,cur);
-			H2K_ready_append(cur);
+			H2K_ready_append_arm(cur);
 			*pos = tmp;
 			return cur;
 		} else {

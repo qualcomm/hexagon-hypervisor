@@ -14,7 +14,7 @@ typedef enum {
 	CONFIG_VMBLOCK_INIT,
 	CONFIG_STLB_ALLOC,
 	CONFIG_FATAL_HOOK,
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	CONFIG_CLUSTER_SCHED,
 #endif
 	CONFIG_NOC,  // FIXME: hack for setting noc table addresses

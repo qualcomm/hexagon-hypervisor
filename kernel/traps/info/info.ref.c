@@ -147,7 +147,7 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 			return 0;
 		}
 	case INFO_MAX_CLUSTER_COPROC:
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		return H2K_gp->coproc_max;
 #else
 		return H2K_gp->coproc_contexts;

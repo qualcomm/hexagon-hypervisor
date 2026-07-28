@@ -7,7 +7,6 @@
 #include <futex.h>
 #include <dosched.h>
 #include <hw.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <ring.h>
 #include <check_sanity.h>
@@ -15,7 +14,6 @@
 #include <globals.h>
 #include <atomic.h>
 #include <safemem.h>
-#include <lowprio.h>
 #include <id.h>
 #include <vmwork.h>
 
@@ -42,7 +40,6 @@ s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 		return -1;
 	}
 	me->futex_ptr = pa;
-	H2K_runlist_remove(me);
 	me->r0100 = 0;
 	me->status = H2K_STATUS_BLOCKED;
 	H2K_futex_hash_add_ring(&H2K_gp->futexhash[FUTEX_HASHVAL(pa)],me);
@@ -87,6 +84,8 @@ s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 			break;
 		}
 	} while (n_woken < n_to_wake);
-	return (s32_t)H2K_check_sanity_unlock(n_woken);
+
+	BKL_UNLOCK();
+	return (s32_t)n_woken;
 }
 

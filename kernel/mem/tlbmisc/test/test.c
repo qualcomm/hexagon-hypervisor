@@ -84,12 +84,29 @@ int main()
     }
     
     u64_t tlb_entry = H2K_mem_tlb_read(tlb_index_last_used);  // tlb entry as template
-    u32_t va = H2K_LINK_ADDR;  // VA set H2K_LINK_ADDR OK to use if just within a unit test 
+    /* Use a guest VA that is NOT in the kernel's TLB.  H2K_LINK_ADDR (0xff000000)
+     * cannot be used: the kernel's boot TLB entries for that address have the
+     * GLOBAL bit set, so H2K_mem_tlb_probe() finds the kernel's own entry
+     * (global entries match any ASID) and H2K_mem_tlb_invalidate_va() then
+     * zeroes it, causing an instruction TLB miss and a fatal crash.
+     * 0x02000000 is the default H2K_GUEST_START -- never mapped by the kernel. */
+    u32_t va = 0x02000000;
     volatile u32_t asid = 0; // ASID set for running thread
     __asm__ __volatile(
         " %0 = ssr \n"
         " %0 = extractu(%0,#7,#8)\n" 
         : "=r"(asid));
+
+    /* Clear the global bit from the template so the entry is ASID-specific.
+     * Kernel boot entries have global=1; writing a global entry for a guest VA
+     * would make tlbp match it regardless of ASID, which is not what we want
+     * to test here. */
+    {
+        H2K_mem_tlbfmt_t entry_fmt;
+        entry_fmt.raw = tlb_entry;
+        entry_fmt.global = 0;
+        tlb_entry = entry_fmt.raw;
+    }
     
     tlb_entry = update_tlb_entry_va_asid(tlb_entry, va, asid);  // ensure tlb entry not duplicate va by update  
     set_tlb_entry_at_table_index(tlb_index_first_free, tlb_entry);  // overwrite free tlb index's entry with va update

@@ -4,7 +4,10 @@ ifndef MAKE_INC_CONSTANTS
 MAKE_INC_CONSTANTS := 1
 
 CONSTS := $(INSTALLPATH)/scripts/consts.pl
-PARAMS := $(H2K_KERNEL_ADDRBITS) $(H2K_KERNEL_PGSIZE) $(H2K_HEAP_SIZE) $(H2K_STACK_SIZE) $(H2K_ALLOC_HEAP_SIZE) $(H2K_LINK_ADDR) $(H2K_LOAD_ADDR)
+# Use deferred expansion (=) so a test Makefile can override H2K_HEAP_SIZE,
+# H2K_STACK_SIZE, etc., AFTER `include Makefile.inc` and have the new value
+# flow into consts.pl when it computes H2K_KERNEL_NPAGES at link time.
+PARAMS = $(H2K_KERNEL_ADDRBITS) $(H2K_KERNEL_PGSIZE) $(H2K_HEAP_SIZE) $(H2K_STACK_SIZE) $(H2K_ALLOC_HEAP_SIZE) $(H2K_LINK_ADDR) $(H2K_LOAD_ADDR)
 KERNEL_TMP := $(INSTALLPATH)/stake/kernel_tmp
 
 # EXEC is set when building a test, which might be linked in kernel space and so

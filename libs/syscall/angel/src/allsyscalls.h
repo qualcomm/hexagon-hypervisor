@@ -6,8 +6,9 @@
 #ifndef H2_ALLSYSCALLS_H
 #define H2_ALLSYSCALLS_H 1
 #include <angel.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define ALIGN32_DOWN(X) ((X) & -32)
 #define ALIGN32_UP(X) (((X) + 31) & -32)

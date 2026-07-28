@@ -5,9 +5,15 @@
 
 #include "allsyscalls.h"
 #include <sys/mman.h>
+#ifdef __PICOLIBC__
+#include <malloc.h>
+#endif
 
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
+#endif
+#ifndef MAP_ANON
+#define MAP_ANON MAP_ANONYMOUS
 #endif
 
 count_t sys_read(fd_t fd, char *buffer, count_t count);

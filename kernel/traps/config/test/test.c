@@ -60,8 +60,15 @@ H2K_thread_context a;
 s32_t asid;
 
 int TH_expected_intinfo_ints = 0;
+/* TH_test_started: when the kernel boot path (H2K_init_setup_bootvm) runs
+ * before main(), it calls H2K_trap_config(SET_CPUS_INTS) with the boot vm's
+ * default values, which would otherwise trip the assertion below.  main()
+ * sets this flag so only test-driven calls are checked.
+ */
+int TH_test_started = 0;
 void H2K_vm_int_intinfo_init(H2K_vmblock_t *vmblock, u32_t num_ints)
 {
+	if (!TH_test_started) return;
 	if (num_ints != TH_expected_intinfo_ints) FAIL("intinfo ints");
 }
 
@@ -69,6 +76,7 @@ int main()
 {
 	u32_t i, vm, ret;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	TH_test_started = 1;
 	H2K_thread_init();
 	H2K_trace_init();
 	H2K_mem_alloc_init(Heap, DEFAULT_ALLOC_HEAP_SIZE);

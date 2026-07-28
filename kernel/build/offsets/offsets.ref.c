@@ -191,6 +191,7 @@ int main(int argc, char **argv)
 	fprintf(outfile, "#define STATUS_INTBLOCKED %d\n",H2K_STATUS_INTBLOCKED);
 	fprintf(outfile, "#define STATUS_VMWAIT     %d\n",H2K_STATUS_VMWAIT);
 
+	fclose(outfile);
 	return 0;
 }
 

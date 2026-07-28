@@ -1,9 +1,16 @@
 
 ALL: dummy
 
+# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-elf --cstdlib=picolibc
+ifeq ($(PICOLIBC),1)
+TARGET_FLAG = --target=hexagon-h2-elf --cstdlib=picolibc
+else
+TARGET_FLAG =
+endif
+
 OPTIMIZE := -Os
 
-CFLAGS := -I$(INSTALLPATH)/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+CFLAGS := $(TARGET_FLAG) -I$(INSTALLPATH)/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG

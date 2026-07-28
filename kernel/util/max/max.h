@@ -101,7 +101,7 @@
 
 #define DEVICE_PAGE_SIZE SIZE_1M
 
-#define Q6_SS_BASE_VA 0xffc00000  // leaves at most 3M for tmpmap at 0xff800000
+#define Q6_SS_BASE_VA 0xffc00000  // leaves at most 4M for tmpmap at 0xff800000
 #define QDSP6SS_PUB_PRIV_OFFSET 0x80000
 
 #define L2CFG_BASE_VA 0xffd00000

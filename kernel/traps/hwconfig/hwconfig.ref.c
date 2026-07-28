@@ -96,39 +96,33 @@ u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t
 }
 
 static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
-	u32_t va;
 	pa_t base;
+	u32_t page_off;
 	u32_t volatile *reg;
-	u32_t ret;
 
 	offset &= -4;
 
 	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
+	page_off = base & SIZE_1M_MASK;
+	reg = (u32_t volatile *) (L2CFG_BASE_VA + page_off + offset);
 
-	va = H2K_tmpmap_add_and_lock(base, UNCACHED, SIZE_DEFAULT);
-	reg = (u32_t *) (va + offset);
-	ret = *reg;
-	H2K_tmpmap_remove_and_unlock();
-
-	return ret;
+	return *reg;
 }
 
 static u32_t setxreg(u32_t cfg_offset, u32_t offset, u32_t val) {
-	u32_t va;
 	pa_t base;
+	u32_t page_off;
 	u32_t volatile *reg;
 	u32_t ret;
 
 	offset &= -4;
 
 	base = H2K_cfg_table(cfg_offset) << CFG_TABLE_SHIFT;
-
-	va = H2K_tmpmap_add_and_lock(base, UNCACHED, SIZE_DEFAULT);
-	reg = (u32_t *) (va + offset);
+	page_off = base & SIZE_1M_MASK;
+	reg = (u32_t volatile *) (L2CFG_BASE_VA + page_off + offset);
 	ret = *reg;
 	*reg = val;
 	H2K_dccleana((void *)reg);
-	H2K_tmpmap_remove_and_unlock();
 
 	return ret;
 }
@@ -557,8 +551,7 @@ u32_t H2K_trap_hwconfig_hwintop(u32_t unused, void *unusedp, u32_t op_and_int, u
 
 u32_t H2K_trap_hwconfig_hwthreads_mask(u32_t unused, void *unusedp, u32_t mask, u32_t unused3, H2K_thread_context *me) {
 
-	mask |= 0x1;  // thread 0 stays on
-	H2K_start_threads(mask);
+	H2K_start_threads((mask & MAX_HTHREADS_MASK) | 0x1); // thread 0 stays on
 	H2K_isync();
 
 	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
@@ -598,7 +591,7 @@ u32_t H2K_trap_hwconfig_hwthreads_num(u32_t unused, void *unusedp, u32_t num, u3
 	} else {  // thread numbers are contiguous for ARCHV <= 65
 		H2K_gp->hthreads_mask = (1 << num) - 1;
 	}
-	H2K_start_threads(H2K_gp->hthreads_mask);
+	H2K_start_threads(H2K_gp->hthreads_mask & MAX_HTHREADS_MASK);
 	H2K_isync();
 	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
 	H2K_gp->hthreads_mask &= MODECTL_E_MASK;

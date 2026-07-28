@@ -45,15 +45,21 @@ interrupt disabled, we allow it to pend while the popup thread executes.
 H2K_popup_int
 -------------
 
-.. c:function:: H2K_popup_wait(u32_t intno, H2K_thread_context *me)
+.. c:function:: int H2K_popup_wait(u32_t intno, H2K_thread_context *me)
 
 	:param intno: Interrupt number
 	:param me: Context for the current thread
+	:returns: the interrupt number on wake, -1 on failure (including spurious VMWORK bail or cancel)
 
 Description
 ~~~~~~~~~~~
 
 This function blocks a thread to waiting for an interrupt.
+
+Per the VMWORK contract (see :doc:`../../util/vmdefs/vmdefs`), -1 may
+be returned spuriously when VMWORK is observed after the BKL is
+acquired.  Callers must treat -1 as "did not block -- re-check the
+wait condition and retry."
 
 Functionality
 ~~~~~~~~~~~~~

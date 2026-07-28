@@ -138,13 +138,26 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 #define MASK r13
 #define RETURN_PAIR r15:14
 	{
+		allocframe(#0)
+		HWTNUM = memub(ME+#CONTEXT_hthread)
+	}
+	{
 		p0 = cmp.gtu(INTNO,#MAX_INTERRUPTS-1)
 		if (p0.new) jump:nt 9f
 		p1 = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 		if (p1.new) jump:nt 9f
-		HWTNUM = memub(ME+#CONTEXT_hthread)
 	}
 	k0lock
+#define TMP INTHANDLERS_ADDR
+	{
+		TMP = memub(ME+#CONTEXT_vmstatus)
+		MASK = #H2K_VMSTATUS_VMWORK
+	}
+	{
+		p0 = bitsset(TMP,MASK)
+		if (p0.new) jump:nt .Lpopup_wait_vmwork
+	}
+#undef TMP
 	{
 		PARAM_HANDLER = combine(ME,##H2K_popup_int)
 		INTHANDLERS_ADDR = add(H2K_GP,#KG_inthandlers)
@@ -199,7 +212,17 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 9:
 	{
 		r0 = #-1
-		jumpr r31
+		dealloc_return
+	}
+.Lpopup_wait_vmwork:
+	{
+		r0 = ME
+		call H2K_vm_do_work_withlock
+	}
+	k0unlock
+	{
+		r0 = #-1
+		dealloc_return
 	}
 #undef INTNO
 #undef ME
@@ -230,7 +253,7 @@ FUNC_START H2K_popup_cancel .text.int.popup
 		LLZERO = #0
 	}
 	{
-		memd(INTHANDLERS+INTNO<<#2) = LLZERO
+		memd(INTHANDLERS+INTNO<<#3) = LLZERO
 		memw(DEST+#CONTEXT_r00) = #-1
 		jumpr r31
 	}

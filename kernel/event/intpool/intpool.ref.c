@@ -13,6 +13,7 @@
 #include <readylist.h>
 #include <switch.h>
 #include <dosched.h>
+#include <vmwork.h>
 
 /*
  * EJP: FIXME: Should there be a single intpool for a vmblock? 
@@ -72,6 +73,11 @@ int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 		H2K_intcontrol_enable(int_ack_num);
 	}
 	BKL_LOCK(&H2K_bkl);
+	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
+		H2K_vm_do_work_withlock(me);
+		BKL_UNLOCK(&H2K_bkl);
+		return -1;
+	}
 	if (unlikely(vmblock->intpool_anypending)) {
 		if ((intno = get_pending_interrupt(vmblock)) >= 0) {
 			BKL_UNLOCK(&H2K_bkl);

@@ -171,7 +171,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 #error "Can't define both NUM_HTHREADS and HTHREADS_MASK."
 #endif
 
-	H2K_start_threads(HTHREADS_MASK | 0x1); // thread 0 stays on
+	H2K_start_threads((HTHREADS_MASK & MAX_HTHREADS_MASK) | 0x1); // thread 0 stays on
 	H2K_isync();
 
 	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
@@ -208,7 +208,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 	} else {  // thread numbers are contiguous for ARCHV <= 65
 		H2K_gp->hthreads_mask = (1 << H2K_gp->hthreads) - 1;
 	}
-	H2K_start_threads(H2K_gp->hthreads_mask);
+	H2K_start_threads(H2K_gp->hthreads_mask & MAX_HTHREADS_MASK);
 	H2K_isync();
 	asm ( " %0 = modectl " :"=r"(H2K_gp->hthreads_mask));
 	H2K_gp->hthreads_mask &= MODECTL_E_MASK;

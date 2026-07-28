@@ -9,6 +9,7 @@ H2K_thread_stop
 
 .. c:function:: void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 
+	:param status: The status value to record in ``vmblock->status``
 	:param me: The pointer to the current thread context
 
 Description
@@ -20,23 +21,52 @@ child-event interrupt to the virtual cpu (parent) that created the calling VM.
 If the parent no longer exists, deallocate storage for the calling VM if the
 CPU count has reached 0.  Does not return.
 
+The BKL must NOT be held on entry.  ``H2K_thread_stop`` acquires the BKL and
+then calls :c:func:`H2K_thread_stop_withlock()`.  Callers that already hold
+the BKL must call :c:func:`H2K_thread_stop_withlock()` directly.
+
 Functionality
 ~~~~~~~~~~~~~
 
-First, we acquire the BKL and attempt to post the child-event interrupt if the
-new vcpu count is 0, or the status is non-zero, and the parent context can be
-found and its status is not H2K_STATUS_DEAD.  Else, when the vcpu count is 0,
-we call :c:func: `H2K_mem_alloc_release()` to mark the vmblock as freeable (will
-not be freed until we relinquish BKL).
+First, we acquire the BKL.  The remainder of the work is performed by
+:c:func:`H2K_thread_stop_withlock()`.
 
-Next, we cancel associated timers and remove the current thread from the
-runlist.  We then clear the thread context.  This has the effect of setting the
-valid field to DEAD.
 
-We then insert the thread into the H2K_kg.free_threads list.
+H2K_thread_stop_withlock
+------------------------
 
-Finally, we call :c:func:`H2K_dosched()` to pick a new thread.  The current thread
-should be specified as NULL, rather than as the now-dead thread context pointer.
+.. c:function:: void H2K_thread_stop_withlock(s32_t status, H2K_thread_context *me)
+
+	:param status: The status value to record in ``vmblock->status``
+	:param me: The pointer to the current thread context
+
+Description
+~~~~~~~~~~~
+
+The body of :c:func:`H2K_thread_stop()` for callers that already hold the
+BKL.  Used by paths such as :c:func:`H2K_vm_do_work_withlock()` that are
+entered with the BKL held (for example, the deferred-work hook in
+``H2K_switch``).  Does not return.
+
+INPUT_ASSERT(kernel_locked)
+
+Functionality
+~~~~~~~~~~~~~
+
+Attempts to post the child-event interrupt if the new vcpu count is 0, or
+the status is non-zero, and the parent context can be found and its status
+is not ``H2K_STATUS_DEAD``.  Else, when the vcpu count is 0, calls
+:c:func:`H2K_mem_alloc_release()` to mark the vmblock as freeable (will not
+be freed until we relinquish BKL).
+
+Cancels associated timers and removes the current thread from the runlist.
+Clears the thread context (which sets the valid field to DEAD), then
+inserts the thread into the H2K_kg.free_threads list.
+
+Finally, calls :c:func:`H2K_dosched()` to pick a new thread.  The current
+thread is specified as NULL, rather than as the now-dead thread context
+pointer.  ``H2K_dosched()`` consumes the BKL (released by
+``H2K_check_sanity_unlock`` at the tail of ``H2K_switch``).
 
 
 

@@ -15,6 +15,7 @@
 #include <switch.h>
 #include <max.h>
 #include <intcontrol.h>
+#include <vmwork.h>
 
 void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_thread_context *woken)
 {
@@ -50,6 +51,11 @@ int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 	if (intnum == L2_CORE_INTERRUPT) return -1;
 
 	BKL_LOCK(&H2K_bkl);
+	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
+		H2K_vm_do_work_withlock(me);
+		BKL_UNLOCK(&H2K_bkl);
+		return -1;
+	}
 	if (H2K_gp->inthandlers[intnum].param != NULL) {
 		BKL_UNLOCK(&H2K_bkl);
 		return -1;

@@ -282,7 +282,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	r17 = r1
 	r0 = r17
-	call H2K_vm_do_work
+	call H2K_vm_do_work_withlock
 	r1:0 = memd(r17+#CONTEXT_r0100)
 	r31 = memw(r17+#CONTEXT_continuation)
 	r31 = and(r31,#-4)				// ignore LSBs

@@ -51,15 +51,21 @@ Note that this functionality is very similar to H2K_popup_int
 H2K_intpool_int
 ---------------
 
-.. c:function:: H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
+.. c:function:: int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 
 	:param int_ack_num: Interrupt to enable, or -1 for no interrupt
 	:param me: Context for the current thread
+	:returns: the interrupt number on wake, -1 on failure (including spurious VMWORK bail)
 
 Description
 ~~~~~~~~~~~
 
 This function optionally enables an interrupt, and then waits for an interrupt to arrive.
+
+Per the VMWORK contract (see :doc:`../../util/vmdefs/vmdefs`), -1 may
+be returned spuriously when VMWORK is observed after the BKL is
+acquired.  Callers must treat -1 as "did not block -- re-check the
+wait condition and retry."
 
 Functionality
 ~~~~~~~~~~~~~

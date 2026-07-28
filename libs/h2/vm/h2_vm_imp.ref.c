@@ -23,3 +23,7 @@ int h2_vmstatus(vmop_status_t op, unsigned int vm) {
 int h2_vmfree(unsigned int vm) {
 	return h2_vmop_trap(VMOP_FREE, vm, 0, 0, 0, 0);
 }
+
+int h2_vmkill(unsigned int vm, int status) {
+	return h2_vmop_trap(VMOP_KILL_VM, vm, (unsigned int)status, 0, 0, 0);
+}

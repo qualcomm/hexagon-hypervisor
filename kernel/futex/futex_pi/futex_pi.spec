@@ -18,7 +18,10 @@ This function implements a priority-inheritance simple mutex lock on the kernel 
 If the lock is held by a thread, that thread will be boosted to the current thread priority,
 if the current thread is a better priority.
 
-Returns 0 on success, nonzero on failure.
+Returns 0 on success, nonzero on failure.  Per the VMWORK contract
+(see :doc:`../../util/vmdefs/vmdefs`), -1 may also be returned
+spuriously when VMWORK is observed after the BKL is acquired; the
+caller must re-check the lock state and retry.
 
 Functionality
 ~~~~~~~~~~~~~

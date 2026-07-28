@@ -91,6 +91,10 @@
 #define MODECTL_W_BITS 16
 #define MODECTL_W_MASK 0xffff0000
 
+/* Hardware threads this build supports; never start or account beyond it. */
+#define MAX_HTHREADS_MASK ((1U << MAX_HTHREADS) - 1)
+
+
 /* QDSP6SS_PRIV_BASE is the subsystem base value read from cfg_table, but we
 	 map QDSP6SS_PUB_BASE to Q6_SS_BASE_VA so we can get at the public registers.
 	 FIXME? Is the QDSP6SS_PUB_PRIV_OFFSET the same for all subsystems? */
@@ -100,7 +104,9 @@
 #define Q6_SS_BASE_VA 0xffc00000  // leaves at most 4M for tmpmap at 0xff800000
 #define QDSP6SS_PUB_PRIV_OFFSET 0x80000
 
-#define ANGEL_VA 0xffd00000
+#define L2CFG_BASE_VA 0xffd00000
+
+#define ANGEL_VA 0xffe00000
 #define ANGEL_PG_SIZE SIZE_4K
 
 #if ARCHV == 4

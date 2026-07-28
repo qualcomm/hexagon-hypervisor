@@ -29,7 +29,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 		TMP = memub(ME+#CONTEXT_vmstatus)
 		r1 = #SAFEMEM_R
 		r3:2 = combine(r2,r29)
-		MASK = #H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_IE
+		MASK = #H2K_VMSTATUS_VMWORK
 	}
 	{
 		p0 = bitsset(TMP,MASK)
@@ -105,11 +105,11 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 		dealloc_return
 	}
 .Lwait_fail_vmwork:
-	k0unlock
 	{
 		r0 = ME
-		call H2K_vm_do_work
+		call H2K_vm_do_work_withlock
 	}
+	k0unlock
 	{
 		r0 = #-1
 		dealloc_return

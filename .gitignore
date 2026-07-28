@@ -1,4 +1,7 @@
 .*
+!.github/
+!.gitignore
+!.gitattributes
 *~
 *.so
 *.i

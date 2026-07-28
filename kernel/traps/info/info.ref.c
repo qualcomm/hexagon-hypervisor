@@ -195,7 +195,13 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 	
 	case INFO_NOC_SBASE:
 	return H2K_gp->noc_sbase;
-	
+
+	case INFO_LOCAL_MEM_SIZE:
+	return H2K_gp->local_mem_size;
+
+	case INFO_LOCAL_MEM_BASE:
+	return H2K_gp->local_mem_base;
+
 default:
 		return -1;
 	}

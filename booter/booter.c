@@ -1033,7 +1033,11 @@ void load_vm(unsigned int idx) {
 			}
 
 			pre_total_size = H2_ALIGN_UP(pre_heap_start + pre_heap_size + pre_stack_size, one_page);
-			booter_grow_guest_window(guest_base + pre_total_size, vm_params[idx].page_size);
+			/* Add in 64 bits: guest_base + pre_total_size can exceed 32 bits for
+			 * high guest_base values (e.g. opt_si's 0x87000000), and wrapping here
+			 * before widening to booter_grow_guest_window()'s unsigned long long
+			 * parameter would silently under-grow (or no-op) the guest window. */
+			booter_grow_guest_window((unsigned long long)guest_base + pre_total_size, vm_params[idx].page_size);
 		}
 
 		for (i = 0; i < ehdr.e_phnum; i++) {

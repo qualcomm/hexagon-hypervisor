@@ -7,8 +7,8 @@
 #define H2K_SAFEMEM_H 1
 
 /* Assembly-compatible permission constants */
-#define SAFEMEM_R  (R)
-#define SAFEMEM_RW (R|W)
+#define SAFEMEM_R  (R)   //fixme: this will be removed after review of ref while implementing opt. It is just for testing.
+#define SAFEMEM_RW (R|W) //fixme: this will be removed after review of ref while implementing opt. It is just for testing.
 
 #ifndef ASM
 #include <c_std.h>

@@ -112,6 +112,13 @@ u32_t H2K_vm_do_work_withlock(H2K_thread_context *me)
 	return TH_work_ret;
 }
 
+u32_t H2K_safemem_check_perms(void *user_va, u32_t perms, H2K_thread_context *me)
+{
+	/* Mock: always succeed for test addresses */
+	// fixme: wrap the original function with ifdef testing instead of current solution
+	return 1;
+}
+
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));

@@ -29,7 +29,7 @@ s32_t H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me)
 		BKL_UNLOCK();
 		return -1;
 	}
-	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_R,&pa,me)) {
+	if (!H2K_safemem_check_and_lock(lock,R,&pa,me)) {
 		BKL_UNLOCK();
 		return -1;
 	}
@@ -66,7 +66,7 @@ s32_t H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me)
 	if (n_to_wake == 0) return 0;
 
 	/* Need to do the read, but only because we need the PA */
-	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_R,&pa,me)) return -1;
+	if (!H2K_safemem_check_and_lock(lock,R,&pa,me)) return -1;
 	H2K_safemem_unlock();
 	pa >>= 2;
 	hashval = FUTEX_HASHVAL(pa);

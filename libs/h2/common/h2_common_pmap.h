@@ -52,17 +52,17 @@
 #define W 4
 #define X 8
 
-#define RW (R|W)
-#define RX (R|X)
-#define WX (W|X)
-#define RWX (R|W|X)
-#define UR (U|R)
-#define UW (U|W)
-#define UX (U|X)
-#define URW (U|R|W)
-#define URX (U|R|X)
-#define UWX (U|W|X)
-#define URWX (U|R|W|X)
+#define RW (R|W)       // 6
+#define RX (R|X)	   // 10
+#define WX (W|X)	   // 12
+#define RWX (R|W|X)    // 14
+#define UR (U|R)	   // 3
+#define UW (U|W)	   // 5
+#define UX (U|X)	   // 9
+#define URW (U|R|W)	   // 7
+#define URX (U|R|X)	   // 11
+#define UWX (U|W|X)	   // 13
+#define URWX (U|R|W|X) // 15
 
 #define NONE 0
 

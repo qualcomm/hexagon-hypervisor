@@ -71,7 +71,7 @@ s32_t H2K_futex_lock_pi(u32_t *lock, H2K_thread_context *me)
 		BKL_UNLOCK();
 		return -1;
 	}
-	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_RW,&pa,me)) {
+	if (!H2K_safemem_check_and_lock(lock,RW,&pa,me)) {
 		BKL_UNLOCK();
 		return -1;
 	}
@@ -112,7 +112,7 @@ s32_t H2K_futex_unlock_pi(u32_t *lock, H2K_thread_context *me)
 	/* Lock */
 	BKL_LOCK();
 	/* Get best thread */
-	if (!H2K_safemem_check_and_lock(lock,SAFEMEM_RW,&pa,me)) {
+	if (!H2K_safemem_check_and_lock(lock,RW,&pa,me)) {
 		BKL_UNLOCK();
 		return -1;
 	}

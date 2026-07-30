@@ -25,6 +25,7 @@
 #include <vmint.h>
 #include <dosched.h>
 #include <vmwork.h>
+#include <safemem.h>
 
 /* 1 */
 void H2K_vmtrap_return(H2K_thread_context *me)
@@ -64,7 +65,12 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 /* 2 */
 void H2K_vmtrap_setvec(H2K_thread_context *me)
 {
-	me->gevb = (void *)((u32_t)(me->r00));
+	if (!H2K_safemem_check_perms((void *)me->r00, RX, me) || me->r00 == 0) {
+		me->r00 = -1;
+		return;
+	}
+
+	me->gevb = (void *)me->r00;
 	me->r00 = 0;
 }
 

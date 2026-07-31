@@ -321,8 +321,8 @@ u32_t H2K_trap_config_noc(u32_t unused, u32_t master, u32_t slave, u32_t unused3
 	return 0;
 }
 
-u32_t H2K_trap_config_local_mem(u32_t unused, u32_t base, u32_t size, u32_t unused3, u32_t unused4, H2K_thread_context *me) {
-	H2K_gp->local_mem_base = base;
+u32_t H2K_trap_config_local_mem(u32_t unused, u32_t base, u32_t size, u32_t stride, u32_t unused4, H2K_thread_context *me) {
+	H2K_gp->local_mem_base = base + (stride * H2K_gp->core_id);
 	H2K_gp->local_mem_size = size;
 
 	return 0;

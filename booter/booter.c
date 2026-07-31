@@ -2065,7 +2065,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			continue;
 		} else if (0 == strcmp(argv[0], "--local_mem")) {
 			if (argc < 4) die_usage();
-			if (h2_config_set_local_mem(strtoull(argv[1], NULL, 0), strtoull(argv[2], NULL, 0), NULL, 0), strtoull(argv[3], NULL, 0)) == -1) {
+			if (h2_config_set_local_mem(strtoull(argv[1], NULL, 0), strtoull(argv[2], NULL, 0), strtoull(argv[3], NULL, 0)) == -1) {
 				FAIL("CONFIG_LOCAL_MEM", "");
 			}
 			argc -= 4; argv += 4;

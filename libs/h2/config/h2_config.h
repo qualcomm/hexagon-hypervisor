@@ -64,8 +64,8 @@ static inline int h2_config_set_noc(unsigned int master, unsigned int slave) {
 	return h2_config_trap(CONFIG_NOC, master, slave, 0, 0);
 }
 
-static inline int h2_config_set_local_mem(unsigned int base, unsigned int size) {
-	return h2_config_trap(CONFIG_LOCAL_MEM, base, size, 0, 0);
+static inline int h2_config_set_local_mem(unsigned int base, unsigned int size, unsigned int stride) {
+	return h2_config_trap(CONFIG_LOCAL_MEM, base, size, stride, 0);
 }
 /** @} */
 

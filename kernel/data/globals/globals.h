@@ -171,8 +171,8 @@ typedef struct {
 	u32_t tcm_offset;
 	u32_t noc_mbase;  // 4k pages
 	u32_t noc_sbase;  // 4k pages
-	u32_t local_mem_base;
-	u32_t local_mem_size;
+	u32_t local_mem_base;  // 4k page number
+	u32_t local_mem_size;  // 4k pages
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf[MAX_HTHREADS];

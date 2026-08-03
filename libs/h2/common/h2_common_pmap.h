@@ -76,4 +76,7 @@
 
 #define MEMORY_MAP(VPN,PERM,CFIELD,PGSIZE,PPN) MEMORY_MAP2(VPN, PERM, CFIELD, PGSIZE, PPN, 0)
 
+#define TEMP_MAP_PG_MASK(size) (0xffffffff << (PAGE_BITS + (size * 2)))
+#define TEMP_MAP_OFF_MASK(size) (~(TEMP_MAP_PG_MASK(size)))
+
 #endif

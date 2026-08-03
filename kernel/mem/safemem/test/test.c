@@ -64,20 +64,12 @@ int main()
 			FAIL("check_and_lock: Shouldn't have perms");
 		}
 		checker_tlb_unlocked();
-		if (H2K_safemem_check_perms((void *)0x90000000,i,&a)) {
-			FAIL("check_perms: Shouldn't have perms");
-		}
-		checker_tlb_unlocked();
 	}
 	puts("b");
 	a.ssr_guest = 1;
 	for (i = 1; i < 16; i++) {
 		if (H2K_safemem_check_and_lock((void *)0x90000000,i,&pa,&a)) {
 			FAIL("check_and_lock: Shouldn't have perms");
-		}
-		checker_tlb_unlocked();
-		if (H2K_safemem_check_perms((void *)0x90000000,i,&a)) {
-			FAIL("check_perms: Shouldn't have perms");
 		}
 		checker_tlb_unlocked();
 	}
@@ -89,10 +81,6 @@ int main()
 				FAIL("check_and_lock: Shouldn't have guest perms");
 			}
 			checker_tlb_unlocked();
-			if (H2K_safemem_check_perms((void *)0x90000000 + (j << 24),i,&a)) {
-				FAIL("check_perms: Shouldn't have guest perms");
-			}
-			checker_tlb_unlocked();
 		}
 	}
 	puts("d");
@@ -101,10 +89,6 @@ int main()
 			if ((j & i) == i) continue;
 			if (H2K_safemem_check_and_lock((void *)0x90000000 + (j << 24),i,&pa,&a)) {
 				FAIL("check_and_lock: Shouldn't have perms");
-			}
-			checker_tlb_unlocked();
-			if (H2K_safemem_check_perms((void *)0x90000000 + (j << 24),i,&a)) {
-				FAIL("check_perms: Shouldn't have perms");
 			}
 			checker_tlb_unlocked();
 		}
@@ -124,11 +108,6 @@ int main()
 			}
 			H2K_safemem_unlock();
 			checker_tlb_unlocked();
-			if (!H2K_safemem_check_perms((void *)0x90000000 + (j << 24),i,&a)) {
-				printf("check_perms: j=%x i=%x\n",j,i);
-				FAIL("check_perms: Should have perms");
-			}
-			checker_tlb_unlocked();
 		}
 	}
 	puts("f");
@@ -147,11 +126,6 @@ int main()
 				FAIL("Wrong PA");
 			}
 			H2K_safemem_unlock();
-			checker_tlb_unlocked();
-			if (!H2K_safemem_check_perms((void *)0x90000000 + (j << 24),i,&a)) {
-				printf("check_perms: j=%x i=%x\n",j,i);
-				FAIL("check_perms: Should have perms");
-			}
 			checker_tlb_unlocked();
 		}
 	}

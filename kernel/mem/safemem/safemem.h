@@ -6,10 +6,6 @@
 #ifndef H2K_SAFEMEM_H
 #define H2K_SAFEMEM_H 1
 
-/* Assembly-compatible permission constants */
-#define SAFEMEM_R  (R)   //fixme: this will be removed after review of ref while implementing opt. It is just for testing.
-#define SAFEMEM_RW (R|W) //fixme: this will be removed after review of ref while implementing opt. It is just for testing.
-
 #ifndef ASM
 #include <c_std.h>
 #include <context.h>
@@ -21,9 +17,7 @@ u32_t H2K_safemem_check_and_lock(void *user_va, u32_t perms, pa_t *pa_out, H2K_t
 
 static inline void H2K_safemem_unlock() { H2K_mutex_unlock_tlb(); }
 
-u32_t H2K_safemem_check_perms(void *user_va, u32_t perms, H2K_thread_context *me);
-
-static inline u32_t H2K_safemem_check_perms_locked(u32_t user_va, u32_t perms, H2K_mem_tlbfmt_t *entry, H2K_thread_context *me)
+static inline u32_t H2K_safemem_check_perms_withlock(u32_t user_va, u32_t perms, H2K_mem_tlbfmt_t *entry, H2K_thread_context *me)
 {
 	s32_t idx;
 	u32_t eperms;
@@ -37,7 +31,6 @@ static inline u32_t H2K_safemem_check_perms_locked(u32_t user_va, u32_t perms, H
 	eperms = H2K_mem_tlbfmt_get_perms(*entry);
 	/* Check for user permission if we're user */
 	if (!((me->ssr_guest) || (eperms & U))) return 0;
-
 	/* Check for other permissions */
 	if ((perms & eperms) != perms) return 0;
 	// Success

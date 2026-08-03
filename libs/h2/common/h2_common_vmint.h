@@ -18,7 +18,8 @@ typedef enum {
 	H2K_INTOP_STATUS,
 	H2K_INTOP_POST,
 	H2K_INTOP_CLEAR,
-	H2K_INTOP_FIRST_INVALID_OP
+	H2K_INTOP_FIRST_INVALID_OP, 
+	
 } intop_type;
 
 typedef enum {

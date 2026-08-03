@@ -25,7 +25,6 @@
 #include <vmint.h>
 #include <dosched.h>
 #include <vmwork.h>
-#include <safemem.h>
 
 /* 1 */
 void H2K_vmtrap_return(H2K_thread_context *me)
@@ -65,11 +64,6 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 /* 2 */
 void H2K_vmtrap_setvec(H2K_thread_context *me)
 {
-	if (!H2K_safemem_check_perms((void *)me->r00, RX, me) || me->r00 == 0) {
-		me->r00 = -1;
-		return;
-	}
-
 	me->gevb = (void *)me->r00;
 	me->r00 = 0;
 }
@@ -77,8 +71,13 @@ void H2K_vmtrap_setvec(H2K_thread_context *me)
 /* 3 */
 void H2K_vmtrap_setie(H2K_thread_context *me)
 {
+	if (me->r00 >= H2K_IE_END) {
+		me->r00 = -1;
+		return;
+	}
+	
 	u32_t prev;
-	if (me->r00 & 0x1) {
+	if (me->r00 & H2K_IE_ENABLE) {
 		prev = H2K_enable_guest_interrupts(me);
 	} else {
 		prev = H2K_disable_guest_interrupts(me);
@@ -149,8 +148,6 @@ void H2K_vmtrap_yield(H2K_thread_context *me)
 /* 18 */
 void H2K_vmtrap_start(H2K_thread_context *me)
 {
-	/* FIXME: need to pass arg1?  use vmblock bestprio instead of base_prio? */
-	                               /*      pc       sp  arg1 */
 	me->r00 = H2K_thread_create_no_squash(me->r00, me->r01, 0, me->base_prio, me->vmblock, me);
 }
 

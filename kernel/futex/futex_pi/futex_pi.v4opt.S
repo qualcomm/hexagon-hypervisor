@@ -47,7 +47,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		TMP = memub(ME+#CONTEXT_vmstatus)
-		r1 = #SAFEMEM_RW
+		r1 = #RW
 		r3:2 = combine(ME,r29)
 	}
 	{
@@ -372,7 +372,7 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 	}
 	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
-		r1 = #SAFEMEM_RW
+		r1 = #RW
 		r3:2 = combine(ME,r29)
 		call H2K_safemem_check_and_lock
 	}

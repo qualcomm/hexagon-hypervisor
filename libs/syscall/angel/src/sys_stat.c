@@ -11,7 +11,7 @@ sys_call_ret_t sys_stat_internal(const char *name, void *buffer) {
 		void *buf;
 	} x;
 	x.n = ANGEL_OFFSET_PTR(name);
-	x.buf = buffer;
+	x.buf = ANGEL_OFFSET_PTR(buffer);
 	clean_str(name);
 	clean(buffer, sizeof(struct __sys_stat) / 4);
 	clean(&x, 2);

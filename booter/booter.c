@@ -327,6 +327,7 @@ void usage()
 
 	// FIXME: hack for setting noc table addresses
 	BOOTER_PRINTF("  --noc <master int> <slave int>\n\tSet NOC master and slave widget offsets from TCM base.\n");
+	BOOTER_PRINTF("  --local_mem <base page number> <size> <stride>\n\tSet local memory base page number, size and stride (4K pages).\n");
 
 #ifdef MULTICORE
 	BOOTER_PRINTF("  --quiet <core bitmap>\n\tSuppress output from cores.\n");
@@ -1422,6 +1423,8 @@ void print_infos() {
 	BOOTER_PRINTF("\t\tTCM base offset per core: 0x%08x\n", h2_info(INFO_TCM_OFFSET));
 	BOOTER_PRINTF("\t\tNOC master LUT base: 0x%08x\n", tcm_base + h2_info(INFO_NOC_MBASE));
 	BOOTER_PRINTF("\t\tNOC slave LUT base:  0x%08x\n", tcm_base + h2_info(INFO_NOC_SBASE));
+	BOOTER_PRINTF("\tCore local memory base page number: 0x%08x\n (4K pages)", h2_info(INFO_LOCAL_MEM_BASE));
+	BOOTER_PRINTF("\tCore local memory size: 0x%08x\n (4K pages)", h2_info(INFO_LOCAL_MEM_SIZE));
 #endif
 
 	BOOTER_PRINTF("\tCoprocessors:\n");
@@ -2059,6 +2062,13 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 				FAIL("CONFIG_NOC", "");
 			}
 			argc -= 3; argv += 3;
+			continue;
+		} else if (0 == strcmp(argv[0], "--local_mem")) {
+			if (argc < 4) die_usage();
+			if (h2_config_set_local_mem(strtoull(argv[1], NULL, 0), strtoull(argv[2], NULL, 0), strtoull(argv[3], NULL, 0)) == -1) {
+				FAIL("CONFIG_LOCAL_MEM", "");
+			}
+			argc -= 4; argv += 4;
 			continue;
 
 		} else if (0 == strcmp(argv[0], "--help")) {

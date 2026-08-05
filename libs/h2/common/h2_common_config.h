@@ -18,6 +18,7 @@ typedef enum {
 	CONFIG_CLUSTER_SCHED,
 #endif
 	CONFIG_NOC,  // FIXME: hack for setting noc table addresses
+	CONFIG_LOCAL_MEM,
 	CONFIG_MAX
 } config_type_t;
 

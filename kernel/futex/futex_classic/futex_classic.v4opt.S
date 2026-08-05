@@ -27,7 +27,7 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		TMP = memub(ME+#CONTEXT_vmstatus)
-		r1 = #R
+		r1 = #SAFEMEM_R
 		r3:2 = combine(r2,r29)
 		MASK = #H2K_VMSTATUS_VMWORK
 	}
@@ -150,7 +150,7 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 		if (p0.new) jump:nt .Lresume_null
 	}
 	{
-		r1 = #R
+		r1 = #SAFEMEM_R
 		r3:2 = combine(r2,r29)
 		memw(r29+#12) = N_TO_WAKE
 		call H2K_safemem_check_and_lock

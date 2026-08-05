@@ -48,13 +48,14 @@ void TH_call_debug()
 	}
 }
 
-int main()
+int main() 
 {
 	u32_t asid;
 	h2_init(NULL);
+	set_vectors();
 	asm volatile (
 	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n"
+	" %0 = extractu(%0,#7,#8)\n" 
 	: "=r"(asid));
 	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
 	if (tlb_index == 0x80000000) {
@@ -67,7 +68,6 @@ int main()
 	tlb_entry |= 0xfULL << 28;
 #endif
 	H2K_mem_tlb_write(tlb_index, tlb_entry);
-	set_vectors();
 
 	TH_usermode();
 

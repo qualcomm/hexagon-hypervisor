@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <hw.h>
 #include <vmdefs.h>
+#include <h2_common_vmint.h>
 
 void FAIL(const char *str)
 {
@@ -112,13 +113,6 @@ u32_t H2K_vm_do_work_withlock(H2K_thread_context *me)
 	return TH_work_ret;
 }
 
-u32_t H2K_safemem_check_perms(void *user_va, u32_t perms, H2K_thread_context *me)
-{
-	/* Mock: always succeed for test addresses */
-	// fixme: wrap the original function with ifdef testing instead of current solution
-	return 1;
-}
-
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
@@ -170,6 +164,14 @@ int main()
 	if (TH_expected_enable) FAIL("Enable not called. Probably bad");
 	TH_expected_enable = 0;
 	if (a.vmstatus != H2K_VMSTATUS_IE) FAIL("setie/1/0/vmstatus");
+
+	/* VMSETIE: out-of-range op must fail without enabling/disabling */
+	a.r00 = H2K_IE_END;
+	a.vmstatus = 0;
+	TH_expected_enable = TH_expected_disable = 0;
+	H2K_vmtrap_setie(&a);
+	if (a.r00 != -1) FAIL("setie/END/didn't fail");
+	if (a.vmstatus != 0) FAIL("setie/END/vmstatus");
 
 	/* VMGETIE */
 	a.vmstatus = 0;

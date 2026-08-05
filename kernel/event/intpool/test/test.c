@@ -45,28 +45,6 @@ static H2K_thread_context a,b,c;
 
 static H2K_vmblock_t vm;
 
-#if 0
-void H2K_dosched(H2K_thread_context *in, int hthread)
-{
-	if (in != TB_in) FAIL("Unexpected thread passed to dosched");
-	if (TB_in && hthread != TB_in->hthread) FAIL("Unexpected hardware thread");
-	if (H2K_gp->wait_mask != 0) FAIL("Set bit in wait_mask");
-	TB_saw_dosched ++;
-	checker_kernel_locked();
-	BKL_UNLOCK();
-	checker_runlist();
-	checker_ready();
-	longjmp(env,1);
-}
-
-void TH_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
-{
-	if (setjmp(env) == 0) {
-		H2K_resched(unused,me,hwtnum);
-	}
-}
-#endif
-
 static int TH_saw_dosched  = 0;
 static int TH_saw_switch  = 0;
 static H2K_thread_context *TH_switch_old;
@@ -281,7 +259,7 @@ int main()
 	 */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 #if ARCHV >= 4
-		if (i == 31) continue;
+		if (i == L2_CORE_INTERRUPT) continue;
 #endif
 		H2K_runlist_push(&a);
 		TH_clear_intpool();
@@ -303,7 +281,7 @@ int main()
 	 */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 #if ARCHV >= 4
-		if (i == 31) continue;
+		if (i == L2_CORE_INTERRUPT) continue;
 #endif
 		/* Interrupt from idle */
 		TH_clear_intpool();

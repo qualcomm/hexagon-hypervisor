@@ -43,13 +43,13 @@ u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t
 	case 12: H2K_set_pmustid1(newval); return 0;
 
 #ifdef COUNT_TLB_EVENTS
-	case -2: me->vmblock->tlbmissx_lo = newval;
-	case -3: me->vmblock->tlbmissx_hi = newval;
-	case -4: me->vmblock->tlbmissrw_lo = newval;
-	case -5: me->vmblock->tlbmissrw_hi = newval;
+	case -2: me->vmblock->tlbmissx_lo = newval; return 0;
+	case -3: me->vmblock->tlbmissx_hi = newval; return 0;
+	case -4: me->vmblock->tlbmissrw_lo = newval; return 0;
+	case -5: me->vmblock->tlbmissrw_hi = newval; return 0;
 
-	case -6: me->vmblock->stlbmiss_lo = newval;
-	case -7: me->vmblock->stlbmiss_hi = newval;
+	case -6: me->vmblock->stlbmiss_lo = newval; return 0;
+	case -7: me->vmblock->stlbmiss_hi = newval; return 0;
 #endif
 
 	case 0: H2K_set_pmucnt0(newval); return 0;

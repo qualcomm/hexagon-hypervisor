@@ -33,24 +33,12 @@ extern void set_vectors();
 volatile unsigned int *timerbase = (void *)0xFFEA0000;
 volatile unsigned int *l2vicbase = (void *)0xFFE90000;
 
-int main()
+int main() 
 {
 	int i;
 	u64_t start,end,end2;
 	float delta;
-	u32_t asid;
 	h2_init(NULL);
-	asm volatile (
-	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n"
-	: "=r"(asid));
-	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
-	if (tlb_index == 0x80000000) {
-		FAIL("Can't find monitor TLB entry");
-	}
-	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-	tlb_entry |= 0xfULL << 28;
-	H2K_mem_tlb_write(tlb_index, tlb_entry);
 	set_vectors();
 	h2_vmtrap_setie(1);
 	h2_vmtrap_intop(H2K_INTOP_GLOBEN,12,0);

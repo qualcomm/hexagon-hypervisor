@@ -125,10 +125,10 @@ int main()
 
 	TH_oldasid = a.ssr_asid = 0x12;
 	a.r00 = 0x10000;
-	a.r01 = 0x12345;
-	a.r02 = 0;
+	a.r01 = 0x0;
+	a.r02 = H2K_ASID_TLB_INVALIDATE_XXX_LAST;
 	H2K_vmtrap_newmap(&a);
-	if (a.r00 != -1) FAIL("bad trans type didn't fail");
+	if (a.r00 != -1) FAIL("bad flag didn't fail");
 
 	TH_oldasid = a.ssr_asid = 0x12;
 	a.r00 = 0x10000;

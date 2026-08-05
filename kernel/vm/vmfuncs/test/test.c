@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <hw.h>
 #include <vmdefs.h>
+#include <h2_common_vmint.h>
 
 void FAIL(const char *str)
 {
@@ -163,6 +164,14 @@ int main()
 	if (TH_expected_enable) FAIL("Enable not called. Probably bad");
 	TH_expected_enable = 0;
 	if (a.vmstatus != H2K_VMSTATUS_IE) FAIL("setie/1/0/vmstatus");
+
+	/* VMSETIE: out-of-range op must fail without enabling/disabling */
+	a.r00 = H2K_IE_END;
+	a.vmstatus = 0;
+	TH_expected_enable = TH_expected_disable = 0;
+	H2K_vmtrap_setie(&a);
+	if (a.r00 != -1) FAIL("setie/END/didn't fail");
+	if (a.vmstatus != 0) FAIL("setie/END/vmstatus");
 
 	/* VMGETIE */
 	a.vmstatus = 0;

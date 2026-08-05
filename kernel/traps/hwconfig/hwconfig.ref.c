@@ -222,6 +222,7 @@ u32_t H2K_trap_hwconfig_partitions(u32_t unused, void *unusedp, u32_t whatcache,
 {
 	u32_t syscfg;
 	u64_t insertval;
+	if (whatcache >= HWCONFIG_PARTITION_MAX) return -1;
 	insertval = (2ULL << 32) | (25+(2*whatcache));
 	BKL_LOCK();
 	syscfg = H2K_get_syscfg();
@@ -247,8 +248,8 @@ u32_t H2K_trap_hwconfig_prefetch(u32_t unused, void *unusedp, u32_t whatcache, u
 		case HWCONFIG_PREFETCH_HF_I: me->ccr = Q6_R_insert_RII(me->ccr,configval,1,16); break;
 		case HWCONFIG_PREFETCH_HF_D: me->ccr = Q6_R_insert_RII(me->ccr,configval,1,17); break;
 		case HWCONFIG_PREFETCH_SF_D: me->ccr = Q6_R_insert_RII(me->ccr,configval,1,20); break;
-		case HWCONFIG_PREFETCH_HF_I_L2: me->ccr = Q6_R_insert_RII(me->ccr,configval,1,18); break;
-		case HWCONFIG_PREFETCH_SF_D_L2: me->ccr = Q6_R_insert_RII(me->ccr,configval,1,19); break;
+		case HWCONFIG_PREFETCH_HF_I_L2: me->ccr = Q6_R_insert_RII(me->ccr,configval,1,18); break; //fixme: not in spec
+		case HWCONFIG_PREFETCH_SF_D_L2: me->ccr = Q6_R_insert_RII(me->ccr,configval,1,19); break; //fixme: not in spec
 	}
 #endif
 	return 0;
@@ -269,7 +270,7 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 				// block as if we got resched interrupt
 				H2K_log("hthread %d  hlxbits: task 0x%08x  setting xe3\n", me->hthread, (u32_t)me);
 				me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
-				me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+				me->ccr = Q6_R_insert_RII(me->ccr, xe3, CCR_XE3_NBITS, CCR_XE3_BIT);
 				me->r00 = 0;
 				H2K_runlist_remove(me);
 				H2K_ready_append(me);
@@ -286,7 +287,7 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 		}
 # endif
 		me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
-		me->ccr = Q6_R_insert_RII(me->ccr, xe3, 1, CCR_XE3_BIT);
+		me->ccr = Q6_R_insert_RII(me->ccr, xe3, CCR_XE3_NBITS, CCR_XE3_BIT);
 		return 0;
 	}
 	return -1;
@@ -305,7 +306,7 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t un
 				// block as if we got resched interrupt
 				H2K_log("hthread %d  hmxbits: task 0x%08x  setting xe2\n", me->hthread, (u32_t)me);
 				// me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
-				me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
+				me->ssr = Q6_R_insert_RII(me->ssr, xe2, SSR_XE2_NBITS, SSR_XE2_BIT);
 				me->r00 = 0;
 				H2K_runlist_remove(me);
 				H2K_ready_append(me);
@@ -322,7 +323,7 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t un
 		}
 #endif
 		// me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
-		me->ssr = Q6_R_insert_RII(me->ssr, xe2, 1, SSR_XE2_BIT);
+		me->ssr = Q6_R_insert_RII(me->ssr, xe2, SSR_XE2_NBITS, SSR_XE2_BIT);
 		return 0;
 	}
 	return -1;
@@ -348,7 +349,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 #endif
 					) {
 				me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
-				me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+				me->ssr = Q6_R_insert_RII(me->ssr, xe, SSR_XE_NBITS, SSR_XE_BIT);
 				H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
 			}
 			/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
@@ -374,7 +375,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 #endif
 			) {
 		me->ssr = Q6_R_insert_RII(me->ssr, xa, SSR_XA_NBITS, SSR_XA_BITS);
-		me->ssr = Q6_R_insert_RII(me->ssr, xe, 1, SSR_XE_BIT);
+		me->ssr = Q6_R_insert_RII(me->ssr, xe, SSR_XE_NBITS, SSR_XE_BIT);
 		H2K_atomic_clrbit(&me->atomic_status_word, H2K_VMSTATUS_SAVEXT_BIT);
 	}
 	/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
@@ -452,7 +453,7 @@ u32_t H2K_trap_hwconfig_extpower(u32_t unused, void *unusedp, u32_t state, u32_t
 u32_t H2K_trap_hwconfig_getl2reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
 	if (offset > L2REGS_MAX) {  // out of range
 		H2K_gp->kernel_error = KERROR_HWCONFIG_L2REG_RANGE;
-		return 0;
+		return -1;
 	}
 
 	return getxreg(CFG_TABLE_L2REGS, offset);
@@ -496,6 +497,7 @@ u32_t H2K_trap_hwconfig_setcladereg(u32_t unused, void *unusedp, u32_t offset, u
 
 u32_t H2K_trap_hwconfig_l2locka(u32_t unused, void *addr, u32_t len, u32_t unused3, H2K_thread_context *me)
 {
+	u32_t ret = -1;
 #if ARCHV >= 56
 #if ARCHV >= 60
 #define L2LINESIZE 64
@@ -506,8 +508,7 @@ u32_t H2K_trap_hwconfig_l2locka(u32_t unused, void *addr, u32_t len, u32_t unuse
 	char *caddr = addr;
 	u32_t off;
 	u32_t count;
-	u32_t ret = 1;
-	if (!H2K_safemem_check_and_lock(addr,SAFEMEM_RW,&pa,me)) return 1;
+	if (!H2K_safemem_check_and_lock(addr,SAFEMEM_RW,&pa,me)) return ret;
 	/* EJP: FIXME: need to check for every page */
 	for (off = 0; off < len; off += L2LINESIZE) {
 		count = 0;
@@ -520,7 +521,7 @@ fail:
 	H2K_safemem_unlock();
 	return ret;
 #else
-	return 1;
+	return ret;
 #endif
 }
 
@@ -531,7 +532,7 @@ u32_t H2K_trap_hwconfig_l2unlock(u32_t unused, void *addr, u32_t len, u32_t unus
 	H2K_l2unlock();
 	return 0;
 #else
-	return 1;
+	return -1;
 #endif
 }
 
@@ -641,20 +642,20 @@ u32_t H2K_trap_hwconfig_l2gclean(u32_t unused, void *unusedp, u32_t inv, u32_t u
 }
 
 u32_t H2K_trap_hwconfig_getstrideprefetcherreg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
-	if ((offset > H2K_gp->hthreads * 4) 
+	if ((offset >= H2K_gp->hthreads * 4) 
 			|| ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_STRIDE_PREFETCHER_MASK) == 0)) {  // out of range: reg0 + per-thread regs
 		H2K_gp->kernel_error = KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE;
-		return 0;
+		return -1;
 	}
 
 	return getxreg(CFG_TABLE_CORECFG_BASE, CORECFG_STRIDE_PREFETCHER_BASE + offset);
 }
 
 u32_t H2K_trap_hwconfig_setstrideprefetcherreg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
-	if ((offset > H2K_gp->hthreads * 4) 
+	if ((offset >= H2K_gp->hthreads * 4) 
 			|| ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_STRIDE_PREFETCHER_MASK) == 0)) {  // out of range: reg0 + per-thread regs
 		H2K_gp->kernel_error = KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE;
-		return 0;
+		return -1;
 	}
 
 	return setxreg(CFG_TABLE_CORECFG_BASE, CORECFG_STRIDE_PREFETCHER_BASE + offset, val);
@@ -731,7 +732,7 @@ u32_t H2K_trap_hwconfig_l2cp(u32_t unused, void *unusedp, u32_t configval, u32_t
 u32_t H2K_trap_hwconfig_geteccreg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
 	if (offset > ECCREGS_MAX) {  // out of range
 		H2K_gp->kernel_error = KERROR_HWCONFIG_ECCREG_RANGE;
-		return 0;
+		return -1;
 	}
 
 	return getxreg(CFG_TABLE_ECC_BASE, offset);
@@ -767,30 +768,32 @@ u32_t H2K_trap_hwconfig_setvwctrl(u32_t unused, void *unusedp, u32_t val, u32_t 
 
 u32_t H2K_trap_hwconfig_get_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
   if (0x79 <= H2K_gp->arch) {  // hthreads_mask in cfg_table
-    
-    if ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_DPM_VOLTLMTMGMT_MASK) == 0) {  // out of range: reg0 + per-thread regs
+
+    if ((offset > CORECFG_DPM_VOLTLMTMGMT_MAX)
+        || ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_DPM_VOLTLMTMGMT_MASK) == 0)) {  // out of range: reg0 + per-thread regs
       H2K_gp->kernel_error = KERROR_HWCONFIG_DPM_VOLTLMTMGMT_RANGE;
-      return 0;
+      return -1;
     }
-    
+
     return getxreg(CFG_TABLE_CORECFG_BASE, CORECFG_DPM_VOLTLMTMGMT_BASE + offset);
   }
   else {
-    return 0;
+    return -1;
   }
 }
 
 u32_t H2K_trap_hwconfig_set_dpm_voltlimitmgmt_reg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
   if (0x79 <= H2K_gp->arch) {  // hthreads_mask in cfg_table
 
-    if ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_DPM_VOLTLMTMGMT_MASK) == 0) {  // out of range: reg0 + per-thread regs
+    if ((offset > CORECFG_DPM_VOLTLMTMGMT_MAX)
+        || ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_DPM_VOLTLMTMGMT_MASK) == 0)) {  // out of range: reg0 + per-thread regs
       H2K_gp->kernel_error = KERROR_HWCONFIG_DPM_VOLTLMTMGMT_RANGE;
-      return 0;
+      return -1;
     }
-    
+
     return setxreg(CFG_TABLE_CORECFG_BASE, CORECFG_DPM_VOLTLMTMGMT_BASE + offset, val);
   }
   else {
-    return 0;
+    return -1;
   }
 }

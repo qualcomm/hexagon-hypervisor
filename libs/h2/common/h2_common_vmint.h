@@ -6,6 +6,7 @@
 #ifndef H2_COMMON_VMINT_H
 #define H2_COMMON_VMINT_H 1
 
+#ifndef ASM
 typedef enum {
 	H2K_INTOP_NOP,
 	H2K_INTOP_GLOBEN,
@@ -26,5 +27,10 @@ typedef enum {
 	H2K_IE_ENABLE,
 	H2K_IE_END
 } ie_type;
+#else
+#define H2K_IE_DISABLE 0
+#define H2K_IE_ENABLE 1
+#define H2K_IE_END 2
+#endif
 
 #endif

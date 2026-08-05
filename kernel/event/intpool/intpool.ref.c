@@ -69,9 +69,10 @@ int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 	u32_t hthread = me->hthread;
 	int intno;
 	H2K_vmblock_t *vmblock = me->vmblock;
-	if (int_ack_num < MAX_INTERRUPTS) {
+	if (int_ack_num < MAX_INTERRUPTS & int_ack_num != L2_CORE_INTERRUPT) {
 		H2K_intcontrol_enable(int_ack_num);
 	}
+
 	BKL_LOCK(&H2K_bkl);
 	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
 		H2K_vm_do_work_withlock(me);
@@ -97,6 +98,10 @@ int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 
 int H2K_intpool_configure(u32_t intno, u32_t enable, H2K_thread_context *me)
 {
+	if (intno >= MAX_INTERRUPTS) return -1;
+	/* Can't change L2 interrupt vector */
+	if (intno == L2_CORE_INTERRUPT) return -1;
+
 	BKL_LOCK(&H2K_bkl);
 	if (enable) {
 		H2K_gp->inthandlers[intno].param = me->vmblock;

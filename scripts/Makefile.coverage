@@ -16,6 +16,21 @@ TEST_BUILD_ROOT ?= $(patsubst %/install,%/build/tests,$(INSTALLPATH))
 # so make can track what is up-to-date and skip unnecessary work.
 RESULT_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/results.txt, $(SUBDIRS))
 
+# Source-file extensions that make up a test.  Must stay in sync with the file
+# whitelist in the results.txt recipe's `find` below (they select the same set).
+TEST_SRC_EXTS := c h S s cpp cc py dat cfg
+
+# $(call test_src_deps,<test-subdir>) -> the test's own source files under
+# $(H2DIR)/<test-subdir>.  Used as extra prerequisites (via .SECONDEXPANSION) so
+# a test re-runs when ITS OWN sources change, not only when the kernel/lib
+# manifest changes.  Before this, results.txt depended solely on manifest, so
+# editing a test's test.c/Makefile left the stale results.txt "up to date" and
+# the test was never rebuilt on an incremental run — the reason a full
+# clean_build_test was needed as a workaround.  The exclusions mirror the
+# generator-output exclusions in the recipe's find (scenarios.h, etc.).
+test_src_deps = $(filter-out %/scenarios.h %/generated_tests.dat %/threadmap.py,\
+    $(wildcard $(addprefix $(H2DIR)/$(1)/,Makefile tested_functions $(addprefix *.,$(TEST_SRC_EXTS)))))
+
 # Coverage result files — per-test cov.txt generated alongside gmon data.
 COV_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/cov.txt, $(SUBDIRS))
 
@@ -50,7 +65,12 @@ tst: $(RESULT_FILES)
 # Named exclusions cover generator outputs whose extension matches a source
 # extension (scenarios.h from scenarios.py, generated_tests.dat from
 # gentests.py, threadmap.py from a perf tool).
-$(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
+#
+# The $$(call test_src_deps,$$*) prerequisite (resolved via .SECONDEXPANSION
+# below) adds the test's own source files so an incremental run re-runs a test
+# when its sources change — not only when the kernel/lib manifest changes.
+.SECONDEXPANSION:
+$(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest $$(call test_src_deps,$$*)
 	mkdir -p "$(TEST_BUILD_ROOT)/$*"
 	find "$(H2DIR)/$*" -maxdepth 1 -type f \
 	    \( -name 'Makefile' -o -name 'tested_functions' \
@@ -77,7 +97,9 @@ $(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
 # Also produces results.txt as a side effect of running the simulator with --profile.
 # Depends on manifest so tests only re-run when the build actually changes, and on
 # cov_fns so the function list exists before a multi-gmon test invokes merge_cov.py.
-$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns
+# The test_src_deps prerequisite (via .SECONDEXPANSION) also re-runs coverage for a
+# test when its own sources change, matching the results.txt rule above.
+$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns $$(call test_src_deps,$$*)
 	mkdir -p "$(TEST_BUILD_ROOT)/$*"
 	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc ! -name 'cov.txt' ! -name 'cov-*.txt' \
 	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'

@@ -64,7 +64,7 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 /* 2 */
 void H2K_vmtrap_setvec(H2K_thread_context *me)
 {
-	me->gevb = (void *)me->r00;
+	me->gevb = (void *)((u32_t)(me->r00));
 	me->r00 = 0;
 }
 

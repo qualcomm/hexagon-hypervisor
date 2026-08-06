@@ -6,9 +6,28 @@
 #ifndef H2_POSIX_TIME_H
 #define H2_POSIX_TIME_H 1
 
-#define _PROVIDE_POSIX_TIME_DECLS 1
-#include <time.h> // dinkumware time.h, if we change c libraries we probably need to nuke this
+#if defined(__has_include)
+#if __has_include(<picolibc.h>)
+#include <picolibc.h>
+#endif
+#endif
 
+#ifdef __PICOLIBC__
+#ifndef _POSIX_CPUTIME
+#define _POSIX_CPUTIME 1
+#endif
+#ifndef _POSIX_THREAD_CPUTIME
+#define _POSIX_THREAD_CPUTIME 1
+#endif
+#ifndef _POSIX_MONOTONIC_CLOCK
+#define _POSIX_MONOTONIC_CLOCK 200112L
+#endif
+#else
+#define _PROVIDE_POSIX_TIME_DECLS 1
+#endif
+#include <time.h>
+
+#ifndef __PICOLIBC__
 /* In case time.h was included early without defining
 	 _PROVIDE_POSIX_TIME_DECLS. This can happen as a side-effect when
 	 applications include other system includes before including h2.h, pthread.h,
@@ -41,6 +60,8 @@ int clock_gettime(clockid_t clock_id, struct timespec *tp);
 
 #ifdef __cplusplus
 } /* extern "C" */
+#endif
+
 #endif
 
 #endif

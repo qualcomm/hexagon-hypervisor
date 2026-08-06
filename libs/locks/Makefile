@@ -19,8 +19,6 @@ ifeq ($(EN_LLVM_COV), 1)
 CFLAGS += ${LLVM_COV_CFLAGS}
 endif
 
-CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
-
 BUILD_DIR := $(INSTALLPATH)/../build/libs/locks
 
 ASM_FILES = 

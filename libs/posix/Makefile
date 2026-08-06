@@ -3,7 +3,14 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-elf --cstdlib=picolibc
+ifeq ($(PICOLIBC),1)
+TARGET_FLAG := --target=hexagon-h2-elf --cstdlib=picolibc
+else
+TARGET_FLAG :=
+endif
+
+CFLAGS := $(TARGET_FLAG) -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -157,5 +164,4 @@ includes: $(DEST_HFILES)
 ref: $(BUILD_DIR)/libposix.a
 
 opt: $(BUILD_DIR)/libposix.a
-
 

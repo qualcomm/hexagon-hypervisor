@@ -23,7 +23,13 @@ POSIX_DIR=posix/
 #MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a
 MOST_LIBS= $(ANGEL_LIB) $(QURT_LIB)
 
-# Picolibc support: if PICOLIBC=1, build syscall wrapper and locks
+# Picolibc support: if PICOLIBC=1, build syscall wrapper and locks.
+# The Picolibc compiler flags themselves live in each of those component
+# Makefiles (posix, syscall/wrapper, locks) via their own TARGET_FLAG.  They are
+# intentionally NOT applied to h2, h2_compat, qurt, or syscall/angel: those are
+# combined into the aggregate libh2.a that is linked into ordinary
+# (default-libc) guest programs, where a Picolibc-specific ABI (e.g. TLS errno)
+# would fail to resolve.
 ifeq ($(PICOLIBC),1)
 export PICOLIBC
 SYS_WRAPPER_LIB = $(INSTALLPATH)/../build/libs/syscall/wrapper/libsyscall_wrapper.a

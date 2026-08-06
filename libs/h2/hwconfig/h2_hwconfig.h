@@ -318,6 +318,111 @@ Set DPM volt limits management register.
 */
 int h2_hwconfig_dpm_voltlmtmgmt_set_reg(unsigned int offset, unsigned int val);
 
+/**
+Get CCR (Compute Code Register).
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_ccr_get(void);
+
+/**
+Set CCR (Compute Code Register).
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_ccr_set(unsigned int val);
+
+/**
+Get SYSCFG register.
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_syscfg_get(void);
+
+/**
+Set SYSCFG register.
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_syscfg_set(unsigned int val);
+
+/**
+Get livelock detection register (s35).
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_livelock_get(void);
+
+/**
+Set livelock detection register (s35).
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_livelock_set(unsigned int val);
+
+/**
+Get turkey register (s61).
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_turkey_get(void);
+
+/**
+Set turkey register (s61).
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_turkey_set(unsigned int val);
+
+/**
+Get duck register (s62).
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_duck_get(void);
+
+/**
+Set duck register (s62).
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_duck_set(unsigned int val);
+
+/**
+Get chicken register (s63).
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_chicken_get(void);
+
+/**
+Set chicken register (s63).
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_chicken_set(unsigned int val);
+
+/**
+Get RGDR register (s60).
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_rgdr_get(void);
+
+/**
+Set RGDR register (s60).
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_rgdr_set(unsigned int val);
+
 #endif
 
 /** @} */

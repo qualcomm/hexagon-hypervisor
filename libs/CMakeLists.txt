@@ -10,7 +10,6 @@ file(
   "./h2_compat/context/*.[cS]"
   "./h2_compat/debug/*.[cS]"
   "./h2_compat/error/*.[cS]"
-  "./h2_compat/fastint/*.[cS]"
   "./h2_compat/kerror/*.[cS]"
   "./h2_compat/pipe/*.[cS]"
   "./h2_compat/printf/*.[cS]"

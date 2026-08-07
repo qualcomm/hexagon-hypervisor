@@ -44,9 +44,6 @@ pointer.
 - Extended (HVX vector) register context.  Stored separately from main context.
 - Contains vregs (vector registers) and qregs (predicate vector registers).
 
-### `H2K_fastint_context`
-- Fast interrupt context: a thread context + small kernel stack (16 u64 words).
-
 ## Key Mechanisms
 
 ### Continuation-Based Context Switch

@@ -56,7 +56,6 @@ set(
   "event/trap/trap.v${ARCHV}opt.S"
   "event/passthru/passthru.ref.c"
   "event/preempt/preempt.v${ARCHV}opt.S"
-  "event/fastint/fastint.v${ARCHV}opt.S"
   "event/intpool/intpool.ref.c"
   "event/vectors/vectors.ref.S"
   "init/setup/setup.ref.c"

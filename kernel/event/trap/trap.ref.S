@@ -97,8 +97,8 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_id // 7 // jumpr r31?
 	}
 	{
-		r2 = r7
-		jump H2K_register_fastint // 8
+		r0 = r7
+		jump H2K_thread_id // 8 (was H2K_register_fastint, now unused)
 	}
 	{
 		r2 = r7

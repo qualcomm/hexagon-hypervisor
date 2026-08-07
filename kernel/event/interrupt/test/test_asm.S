@@ -116,25 +116,6 @@ TH_do_preempt:
 	H2K_GP.l = #lo(H2K_kg)
 	jump H2K_handle_int
 
-/* This is our implementation of the H2_interrupted_fastint_check
- * that may be called.  We set things up and call back to the C
- * function TH_interrupted_fastint_check 
- */
-	.global H2K_interrupted_fastint_check
-H2K_interrupted_fastint_check:
-	r31:30 = memd(r0+#CONTEXT_r3130)
-	r29:28 = memd(r0+#CONTEXT_r2928)
-	r29 = add(r0,#FASTINT_CONTEXT_SIZE)
-	crswap(r0,sgp0)
-	jump TH_interrupted_fastint_check
-
-/*
- * H2K_fastint returns immediately 
- */
-	.global H2K_fastint
-H2K_fastint:
-	jumpr r31
-
 /*
  * TH_save_sgp takes the SGP value and saves it into a global memory location 
  * for later restoration 

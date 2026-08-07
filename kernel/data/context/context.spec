@@ -126,24 +126,6 @@ Description
 		Other register storage for user general purpose and control registers
 
 
-H2K_fastint_context
--------------------
-
-A fastint context contains a normal thread context, and additionally has extra
-padding on the end for use for the fast interrupt stack.
-
-
-.. c:type:: H2K_fastint_context
-
-	.. c:member:: H2K_thread_context context
-
-		Normal thread context
-
-	.. c:member:: u64_t **stack_XXX**
-
-		Area to use as a Fast Interrupt stack
-
-
 H2K_context_save
 ----------------
 

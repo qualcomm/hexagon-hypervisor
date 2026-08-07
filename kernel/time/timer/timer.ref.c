@@ -229,7 +229,6 @@ void H2K_timer_init(u32_t devpage_offset) {
 #ifndef NO_DEVICES
 
 	u32_t timer_base = Q6_SS_BASE_VA + devpage_offset + TIMER_OFFSET;
-	/* Register fastint */
 	H2K_gp->time.timeouts = NULL;
 
 	if (H2K_gp->time.devptr == NULL) H2K_gp->time.devptr = (void *)(timer_base);

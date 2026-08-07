@@ -18,20 +18,16 @@
 
 	.. c:member:: u32_t priomask
 
-		A mask for which thread or threads are marked as the lowest priority.  
-		These threads will be interruptible.  Like :c:member:`wait_mask`, 
-		Hardware thread *n* corresponds to bit *n* in the mask.  If a bit 
-		is set in :c:member:`wait_mask`, it should also be set in 
+		A mask for which thread or threads are marked as the lowest priority.
+		These threads will be interruptible.  Like :c:member:`wait_mask`,
+		Hardware thread *n* corresponds to bit *n* in the mask.  If a bit
+		is set in :c:member:`wait_mask`, it should also be set in
 		:c:member:`priomask`.
 
 	.. c:member:: u32_t wait_mask
 
 		A mask for which threads are in wait mode.  Hardware thread 0
 		corresponds to bit 0, hardware thread 1 to bit 1, and so on.
-
-	.. c:member:: u32_t fastint_gp
-
-		Global value for the GP value to use during fast interurpts.
 
 	.. c:member:: u64_t oncpu_start[MAX_HTHREADS]
 

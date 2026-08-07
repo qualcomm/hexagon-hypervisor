@@ -22,7 +22,6 @@ extern "C" {
 #include "h2_cache.h"
 #include "h2_cond.h"
 #include "h2_error.h"
-#include "h2_fastint.h"
 #include "h2_intwait.h"
 #include "h2_libkernel.h"
 #include "h2_mutex.h"

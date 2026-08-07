@@ -148,16 +148,6 @@ static inline int blast_ack_interrupt(int intno)
 	return 0;
 }
 
-static inline void blast_register_fastint(int intno, int (*fn)(int))
-{
-	h2_register_fastint(32+intno,fn);
-}
-
-static inline void blast_deregister_fastint(int intno)
-{
-	h2_deregister_fastint(32+intno);
-}
-
 static inline void blast_exit(int status)
 {
 	exit(status);
@@ -172,8 +162,6 @@ static inline void blast_anysignal_destroy(blast_anysignal_t *signal)
 }
 
 unsigned int blast_get_my_anysignal();
-
-//void blast_deregister_fastint(int intno);
 
 //  Not really a part of the BLAST API, but it needs to happen somewhere.
 void l2_controller_init(void);

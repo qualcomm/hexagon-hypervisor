@@ -19,7 +19,7 @@
  * EJP: FIXME: Should there be a single intpool for a vmblock? 
  * Maybe we should allow multiple intpools?
  * The second argument could point to an intpool struct instead of a vmblock.
- * This might make it more efficient to support both qurt interrupts and fastint replacements with intpool
+ * This might make it more efficient to support both qurt interrupts with intpool
  */
 void H2K_intpool_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_vmblock_t *vmblock)
 {

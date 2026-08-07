@@ -226,7 +226,6 @@ typedef struct _h2_thread_context
 	};
 	/* Context required for interrupts... everything else */
 	/* Note: SR really needed for any context switch.  */
-	/* Note: Fast Interrupt contexts don't need these (can't be interrupted) */
 	// 128
 	u64_t r1514;	// OK FOR DCZEROA
 	u64_t r1312;
@@ -298,24 +297,5 @@ typedef struct {
 	u32_t qregs[32];
 } __attribute__((aligned(H2K_EXTCONTEXT_ALIGN))) H2K_ext_context;
 
-typedef struct {
-	H2K_thread_context context;
-	u64_t stack120;
-	u64_t stack112;
-	u64_t stack104;
-	u64_t stack096;
-	u64_t stack088;
-	u64_t stack080;
-	u64_t stack072;
-	u64_t stack064;
-	u64_t stack056;
-	u64_t stack048;
-	u64_t stack040;
-	u64_t stack032;
-	u64_t stack024;
-	u64_t stack016;
-	u64_t stack008;
-	u64_t stack000;
-} H2K_fastint_context;
 
 #endif

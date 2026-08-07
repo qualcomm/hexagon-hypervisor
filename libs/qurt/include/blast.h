@@ -137,11 +137,6 @@ int blast_thread_create(void *pc, void *stack, void *arg,
 #define blast_app_heap_obj_t        qurt_app_heap_obj_t
 #define blast_get_env_object        qurt_get_env_object
 
-#define blast_register_fastint              qurt_fastint_register
-#define blast_deregister_fastint            qurt_fastint_deregister
-#define blast_isr_deregister                qurt_isr_deregister
-#define blast_isr_register                  qurt_isr_register
-
 #define blast_futex_wake                    qurt_futex_wake
 #define blast_futex_wait                    qurt_futex_wait
 

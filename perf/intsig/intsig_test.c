@@ -8,7 +8,7 @@
 
 /*
  * This test runs background threads that continually bump counters.
- * A fast interrupt handler causes user thread to wake up, which will also bump a counter.
+ * An interrupt handler causes user thread to wake up, which will also bump a counter.
  * Once the "end" interrupt is asserted, we read out the counters and print results.
  * Threads that increment their counters less are running less.
  */
@@ -75,8 +75,7 @@ int main()
 	unsigned int copied_counts[MAX_THREADS];
 	h2_init(NULL);
 	h2_config_add_thread_storage(thread_storage,sizeof(thread_storage));
-	h2_register_fastint(4,tick_interrupt);
-	h2_register_fastint(5,done_interrupt);
+	/* FIXME: fast interrupt support was removed; this test needs rework to trigger interrupts another way */
 	h2_sem_init_val(&donesem,0);
 	h2_sem_init_val(&startsem,0);
 	for (i = 0; i < MAX_THREADS; i++) background_counts[i] = 0;

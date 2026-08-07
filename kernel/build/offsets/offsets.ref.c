@@ -95,7 +95,6 @@ int main(int argc, char **argv)
 #ifdef DO_EXT_SWITCH
 	fprintf(outfile, "#define EXT_CONTEXT_SIZE %d\n",sizeof(H2K_ext_context));
 #endif
-	fprintf(outfile, "#define FASTINT_CONTEXT_SIZE %d\n",sizeof(H2K_fastint_context));
 
 	PRINT_KG_OFFSET(ready_valids);
 	PRINT_KG_OFFSET(priomask);
@@ -103,8 +102,6 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(oncpu_start);
 	PRINT_KG_OFFSET(oncpu_wait);
 	PRINT_KG_OFFSET(waitcycles);
-	PRINT_KG_OFFSET(fastint_gp);
-	PRINT_KG_OFFSET(fastint_gp_ssr);
 	PRINT_KG_OFFSET(runlist);
 	PRINT_KG_OFFSET(runlist_prios);
 	PRINT_KG_OFFSET(ready);

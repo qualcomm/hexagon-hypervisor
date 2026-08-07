@@ -20,9 +20,7 @@
 #define DO_PROFILE 1
 
 #ifndef MAX_HTHREADS
-#if ARCHV <= 3
-#define MAX_HTHREADS 6
-#elif ARCHV <= 65
+#if ARCHV <= 65
 #define MAX_HTHREADS 4
 #elif ARCHV == 68
 #define MAX_HTHREADS 8

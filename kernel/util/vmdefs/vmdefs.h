@@ -6,10 +6,6 @@
 #ifndef H2K_VMDEFS_H
 #define H2K_VMDEFS_H 1
 
-#if ARCHV <= 3
-#else
-#endif
-
 /* Version supported */
 
 #define H2K_VM_VERSION 0x00000800

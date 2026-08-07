@@ -130,24 +130,11 @@ typedef struct _h2_thread_context
 				u32_t ssr;
 				struct {
 					u8_t ssr_cause;  //7
-#if ARCHV <= 3
-					u8_t ssr_asid:5;
-					u8_t ssr_guest:1; /* Fake guest bit using a bit of ASID */
-					u8_t ssr_asid_byte_unused:2;  //15
-#else
 					u8_t ssr_asid:7;
 					u8_t ssr_asid_byte_unused:1;  //15
-#endif
 					u8_t ssr_um:1;
 					u8_t ssr_ex:1;
 					u8_t ssr_ie:1;
-#if ARCHV <= 3
-					u8_t ssr_tnum:3;
-					u8_t ssr_hfi:1;
-					u8_t ssr_hfd:1;
-					u8_t ssr_sfd:1;
-					u8_t ssr_hi_rsvd1:7;
-#else
 					u8_t ssr_guest:1;
 					u8_t ssr_badva_v0:1;
 					u8_t ssr_badva_v1:1;
@@ -166,8 +153,6 @@ typedef struct _h2_thread_context
 					u8_t ssr_xe:1;
 #else
 					u8_t ssr_unused:1;
-#endif
-
 #endif
 				};
 			};

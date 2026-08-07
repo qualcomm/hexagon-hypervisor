@@ -42,9 +42,7 @@
 	.size \name,.-\name
 .endm
 
-#if ARCHV >= 4
 #define sgp sgp0
-#endif
 
 /* BKL is an in-memory ticket spinlock at KG_bkl.  Three scratch registers and a
  * predicate register are required; all four are clobbered. */

@@ -47,11 +47,7 @@ FUNC_START TH_error_handler .text .p2align 2
 	jump TH_error_check
 FUNC_END TH_do_error
 
-#if ARCHV <= 3
-#define SSR_BIT 13
-#else
 #define SSR_BIT 19
-#endif
 
 /* Go in and out of "Guest" vs "user" mode */
 

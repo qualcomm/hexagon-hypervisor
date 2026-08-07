@@ -52,10 +52,8 @@ int main()
 		break;
 	}
 
-#if ARCHV >= 4
 	H2K_gp->l2_int_base = TH_l2int_cfg;
 	H2K_gp->l2_ack_base = TH_l2int_cfg + 0x80;
-#endif
 	H2K_gp->timer_intnum = timer_int;
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {

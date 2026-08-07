@@ -242,9 +242,7 @@ int main()
 	printf("MAX_INTERRUPTS=%d\n",MAX_INTERRUPTS);
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		/* For each interrupt, try to do the interrupt */
-#if ARCHV >= 4
 		if (i == L2_CORE_INTERRUPT) continue;
-#endif
 		printf("i=%d\n",i);
 		fill_srcdata(i);
 		a.continuation = TH_continuation_fail;

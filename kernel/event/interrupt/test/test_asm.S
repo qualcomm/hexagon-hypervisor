@@ -26,7 +26,6 @@ TH_do_interrupt:
 	r4 = insert(r5,#8,#0)
 	r4 = insert(r2,#5,#0)
 	ssr = r4
-#if ARCHV >= 4
 	p0 = cmp.geu(r2, #L2_INTERRUPT_START)
 	if (!p0) jump 1f
 	r5 = #L2_CORE_INTERRUPT
@@ -36,7 +35,6 @@ TH_do_interrupt:
 	r4 = and(r4,##0x3ff)
 	VID = r4
 1:
-#endif
 
 	/* Put dest into r1 */
 	sgp0 = r1
@@ -97,7 +95,6 @@ TH_do_preempt:
 	r4 = insert(r5,#8,#0)
 	r4 = insert(r2,#5,#0)
 	ssr = r4
-#if ARCHV >= 4
 	p0 = cmp.geu(r2, #L2_INTERRUPT_START)
 	if (!p0) jump 1f
 	r5 = #L2_CORE_INTERRUPT
@@ -107,7 +104,6 @@ TH_do_preempt:
 	r4 = and(r4,##0x3ff)
 	VID = r4
 1:
-#endif
 
 	r0 = #1
 	sgp0 = r0

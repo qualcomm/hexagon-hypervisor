@@ -1,7 +1,7 @@
 # Smaller kludge here
 
 ifeq ($(ARCHV),)
-export ARCHV := 3
+export ARCHV := 68
 endif
 
 SHELL=/bin/bash

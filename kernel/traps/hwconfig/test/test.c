@@ -55,31 +55,6 @@ int TH_test_l2locka(int len) {
 
 #endif
 
-#if ARCHV <= 3
-void TH_test_pf()
-{
-	u32_t checkval = 0;
-	a.ssr = 0;
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,1,&a);
-	checkval |= 1<<22;
-	if (a.ssr != checkval) FAIL("HF_I");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,1,&a);
-	checkval |= 1<<23;
-	if (a.ssr != checkval) FAIL("HF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,1,&a);
-	checkval |= 1<<24;
-	if (a.ssr != checkval) FAIL("SF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,0,&a);
-	checkval ^= 1<<22;
-	if (a.ssr != checkval) FAIL("!HF_I");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,0,&a);
-	checkval ^= 1<<23;
-	if (a.ssr != checkval) FAIL("!HF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,0,&a);
-	checkval ^= 1<<24;
-	if (a.ssr != checkval) FAIL("!SF_D");
-}
-#else
 void TH_test_pf()
 {
 	u32_t checkval = 0;
@@ -103,7 +78,6 @@ void TH_test_pf()
 	checkval ^= 1<<20;
 	if (a.ccr != checkval) FAIL("!SF_D");
 }
-#endif
 
 int main()
 {
@@ -188,13 +162,11 @@ int main()
 		syscfg = H2K_get_syscfg();
 		if (((syscfg >> 25) & 3) != i) FAIL("Bad partition config (D)");
 	}
-#if ARCHV >= 4
 	for (i = 0; i < 4; i++) {
 		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_L2,i,&a);
 		syscfg = H2K_get_syscfg();
 		if (((syscfg >> 29) & 3) != i) FAIL("Bad partition config (L2)");
 	}
-#endif
 
 	/* Check for PF bits */
 	TH_test_pf();

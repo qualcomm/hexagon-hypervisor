@@ -106,9 +106,6 @@ TH_imask:
 	.global TH_pend_int
 TH_pend_int:
 	r1 = #1
-#if ARCHV <= 3
-	r1 = brev(r1)
-#endif
 	swi(r1)
 	jumpr r31
 

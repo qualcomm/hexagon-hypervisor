@@ -54,7 +54,6 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	//memd(r7+#CONTEXT_m1m0) = r15:14
 	//memd(r7+#CONTEXT_ssrelr) = r13:12
 	memw(r7+#CONTEXT_ssr) = r13
-#if ARCHV >= 4
 	//r27:26 = g1:0
 	//r29:28 = g3:2
 	//memd(r7+#CONTEXT_gssr_gelr) = r27:26
@@ -67,13 +66,6 @@ FUNC_START H2K_context_save .text.core.context .p2align 2
 	r28 = HTID
 	r29 = #KERNEL_STACK_SIZE
 	r29 = add(##H2K_stacks,mpyi(r28,r29))
-#else
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
-	r28 = extractu(r13,#3,#19)
-	r11 = #KERNEL_STACK_SIZE
-	r29 += mpyi(r28,r11)
-#endif
 	r9:8 = combine(r28,r13)
 	H2K_GP.h = #hi(H2K_kg)
 	H2K_GP.l = #lo(H2K_kg)
@@ -82,7 +74,6 @@ FUNC_END H2K_context_save
 
 FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	r7 = sgp0
-#if ARCHV >= 4
 	//r21:20 = memd(r7+#CONTEXT_cs1cs0)
 	r11 = memw(r7+#CONTEXT_ccr)
 	//cs0 = r20
@@ -92,7 +83,6 @@ FUNC_START H2K_context_restore_return .text.core.context .p2align 2
 	//r27:26 = memd(r7+#CONTEXT_gbadva_gosp)
 	//g1:0 = r29:28
 	//g3:2 = r27:26
-#endif
 	r12 = memw(r7+#CONTEXT_ssr)
 	//r15:14 = memd(r7+#CONTEXT_m1m0)
 	//r17:16 = memd(r7+#CONTEXT_lc1sa1)

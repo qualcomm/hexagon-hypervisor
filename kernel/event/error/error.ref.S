@@ -50,27 +50,6 @@ H2K_error_nonxe:
 	/* EJP: Dead Code! */
 	/* Set up KSP and jump to fatal_thread */
 
-//#if ARCHV <= 3
-//	r29.h = #hi(H2K_stacks)
-//	r29.l = #lo(H2K_stacks)
-//	r28 = ssr
-//	r28 = extractu(r28,#3,#19)
-//	r2 = #KERNEL_STACK_SIZE
-//	r29 += mpyi(r28,r2)
-//#else
-//	r28 = HTID
-//	r29 = #KERNEL_STACK_SIZE
-//	r29 = add(##H2K_stacks,mpyi(r28,r29))
-//#endif
-//	r4 = r28
-//	r28.h = #hi(H2K_kg)
-//	r28.l = #lo(H2K_kg)
-//	r0 = #-3
-//	r1 = r24
-//	r3:2 = #0
-//	crswap(r24,sgp)
-//	jump H2K_fatal_thread
-
 FUNC_END H2K_handle_error
 
 /*

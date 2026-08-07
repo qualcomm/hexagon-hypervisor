@@ -250,10 +250,8 @@ int main()
 
 	H2K_vmblock_t *vmblock = &vm;
 
-#if ARCHV >= 4
 	H2K_gp->l2_int_base = fakeint;
 	H2K_gp->l2_ack_base = fakeint+(0x200/sizeof(u32_t));
-#endif
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();
@@ -269,9 +267,7 @@ int main()
 	if ((TH_call_intpool_wait(-1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 	if ((TH_call_intpool_wait(MAX_INTERRUPTS,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 	if ((TH_call_intpool_wait(MAX_INTERRUPTS+1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
-#if ARCHV >= 4
 	if ((TH_call_intpool_wait(31,&a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
-#endif
 #endif
 
 	TH_intpool_check_priorities(&a,&b);
@@ -280,9 +276,7 @@ int main()
 	 * For each interrupt, try to wait for the interrupt
 	 */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-#if ARCHV >= 4
 		if (i == 31) continue;
-#endif
 		H2K_runlist_push(&a);
 		TH_clear_intpool();
 		if (TH_call_intpool_wait(i,&a) != 0) {
@@ -302,9 +296,7 @@ int main()
 	 * For each interrupt, try to deliver an interrupt for either idle or running a task
 	 */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-#if ARCHV >= 4
 		if (i == 31) continue;
-#endif
 		/* Interrupt from idle */
 		TH_clear_intpool();
 		TH_set_intpool(i,&b);

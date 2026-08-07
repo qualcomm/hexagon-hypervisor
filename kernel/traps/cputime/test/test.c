@@ -30,10 +30,7 @@ u64_t contexts[3*sizeof(H2K_thread_context)/sizeof(u64_t)] __attribute__((aligne
 /* OVERHEAD is the rough cycle count to save state, swap to another thread, and swap back */
 /* it needs to have enough headroom for -Os and -Os -fno-inline versions of h2.           */
 
-#if ARCHV == 3
-#define PCYCLES_PER_TCYCLE 6
-#define OVERHEAD 1024
-#elif ARCHV == 4
+#if ARCHV == 4
 #define PCYCLES_PER_TCYCLE 3
 #define OVERHEAD 1024
 #elif ARCHV == 5

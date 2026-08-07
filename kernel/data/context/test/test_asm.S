@@ -11,16 +11,9 @@
 	r0.l = #lo(VAL); \
 	REGNO = r0;
 
-#if ARCHV <= 3
-#define GET_HTID(REG) \
-	REG = ssr; \
-	REG = extractu(REG,#3,#19);
-
-#else
 #define GET_HTID(REG) \
 	REG = HTID;
 
-#endif
 
 #define TEST_ONE_PAIR(REGHI,REGLO,PAIRNAME,UNIQ) \
 	SET_REG(r0,UNIQ); \
@@ -124,11 +117,9 @@ TEST_ONE_PAIR(lc0,sa0,lc0sa0,100)
 //TEST_ONE_PAIR(m1,m0,m1m0,104)
 TEST_ONE_PAIR(usr,p3:0,usrp30,(-0xDEA00000))
 //TEST_ONE_PAIR(gp,ugp,gpugp,0x01000000)
-#if ARCHV >= 4
 //TEST_ONE_PAIR(cs1,cs0,cs1cs0,108)
 //TEST_ONE_PAIR(g1,g0,gssr_gelr,112)
 //TEST_ONE_PAIR(g3,g2,gbadva_gosp,114)
-#endif
 	/* RESTORE r31:30 */
 	r0.h = #hi(SAVE)
 	r0.l = #lo(SAVE)

@@ -257,10 +257,8 @@ int main()
 	int i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
-#if ARCHV >= 4
 	H2K_gp->l2_int_base = fakeint;
 	H2K_gp->l2_ack_base = fakeint+(0x200/sizeof(u32_t));
-#endif
 	H2K_readylist_init();
 	H2K_runlist_init();
 	H2K_lowprio_init();
@@ -279,9 +277,7 @@ int main()
 	TH_popup_check_priorities(&a,&b);
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-#if ARCHV >= 4
 		if (L2_CORE_INTERRUPT == i) continue;
-#endif
 		H2K_runlist_push(&a);
 		TH_clear_popups();
 		if (TH_call_popup_wait(i,&a) != 0) {
@@ -298,9 +294,7 @@ int main()
 	}
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-#if ARCHV >= 4
 		if (i == 31) continue;
-#endif
 		TH_clear_popups();
 		TH_set_idle(0);
 		TH_popup_int(i,NULL,0,NULL);
@@ -348,9 +342,7 @@ int main()
 	{
 		int i;
 		for (i = 0; i < MAX_INTERRUPTS; i++) {
-#if ARCHV >= 4
 			if (i == L2_CORE_INTERRUPT) continue;
-#endif
 			TH_clear_popups();
 			H2K_runlist_push(&a);
 			/* Simulate the state popup_wait leaves: INTBLOCKED, r00=intnum, handler set */

@@ -106,11 +106,7 @@ void gen_int(int which)
 void hw_gen_int(int which)
 {
 	int intno = int_num;
-#if ARCHV >= 4
 	swi(1<<intno);
-#else
-	swi(0x80000000UL>>intno);
-#endif
 	h2_sem_up(&int_done);
 }
 
@@ -212,11 +208,7 @@ int main()
 		FAIL("Can't find monitor TLB entry");
 	}
 	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-#if ARCHV <= 3
-	tlb_entry |= 0x7ULL << 29;
-#else
 	tlb_entry |= 0xfULL << 28;
-#endif
 	H2K_mem_tlb_write(tlb_index, tlb_entry);
 	spawn_vm(vmmain);
 	while (1) {

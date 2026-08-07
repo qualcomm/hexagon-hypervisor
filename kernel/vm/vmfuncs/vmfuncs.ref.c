@@ -42,14 +42,12 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 	me->elr = me->gelr;
 	H2K_set_elr(me->elr);
 
-#if ARCHV >= 4
 	/* If guest wants to single step, set in SSR */
 	if (me->gssr & H2K_GSSR_SS) {
 		me->ssr_ss = 1;
 	} else {
 		me->ssr_ss = 0;
 	}
-#endif
 	ints_enabled = (me->gssr & H2K_GSSR_IE);
 	H2K_gregs_restore(me);
 

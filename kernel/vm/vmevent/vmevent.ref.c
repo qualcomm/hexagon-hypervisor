@@ -38,7 +38,6 @@ void H2K_vm_event(u32_t gbadva, u32_t cause, u32_t vec_offset, H2K_thread_contex
 		me->gssr &= ~H2K_GSSR_IE;
 	}
 
-#if ARCHV >= 4
 	/* Save Single Step status and disable */
 	if (me->ssr_ss) {
 		me->gssr |= H2K_GSSR_SS;
@@ -46,7 +45,6 @@ void H2K_vm_event(u32_t gbadva, u32_t cause, u32_t vec_offset, H2K_thread_contex
 	} else {
 		me->gssr &= ~H2K_GSSR_SS;
 	}
-#endif
 	H2K_gregs_restore(me);
 	H2K_disable_guest_interrupts(me);
 }

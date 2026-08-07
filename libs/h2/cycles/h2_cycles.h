@@ -25,9 +25,7 @@ Get run time in pcycles
 
 unsigned long long int h2_get_pcycles(void);
 
-#if ARCHV <= 3
-#define H2_CYCLES__PER_THREAD 6
-#elif ARCHV >= 4 && ARCHV < 60
+#if ARCHV < 60
 #define H2_CYCLES__PER_THREAD 3
 #elif ARCHV >= 60
 #define H2_CYCLES__PER_THREAD 4

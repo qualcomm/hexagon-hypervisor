@@ -128,9 +128,7 @@ int main()
 	me->gevb = (TH_guest_vectors);
 	me->gssr = 0;
 	me->gosp = (u32_t)(&guest_stack[128]);
-#if ARCHV >= 4
 	asm volatile (" g2 = %0 " : :"r"(me->gosp));
-#endif
 	TH_expect_fatal = 0;
 	TH_saw_fatal = 0;
 	TH_stack_switch = 0;
@@ -145,9 +143,7 @@ int main()
 	me->gevb = (TH_guest_vectors);
 	me->gssr = 0;
 	me->gosp = (u32_t)(&guest_stack[128]);
-#if ARCHV >= 4
 	asm volatile (" g2 = %0 " : :"r"(me->gosp));
-#endif
 	TH_expect_fatal = 0;
 	TH_saw_fatal = 0;
 	TH_stack_switch = 0;

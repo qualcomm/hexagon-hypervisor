@@ -79,11 +79,7 @@
 #define MAX_PRIO ((MAX_PRIOS) - 1)
 #define BEST_PRIO 0
 
-#if ARCHV <= 3
-#define ASID_BITS 5
-#else
 #define ASID_BITS 7
-#endif
 
 #define MAX_ASIDS (1<<(ASID_BITS))
 
@@ -202,10 +198,6 @@
 
 #define PERCPU_INTERRUPTS 16
 
-#if ARCHV <= 3
-#define MAX_INTERRUPTS 32
-
-#else
 #define H2K_L2_CONTROL 1
 #define L2_INTERRUPT_START 32
 #if ARCHV >= 65
@@ -217,7 +209,6 @@
 #endif
 #define MAX_L2_INTERRUPTS 480
 #define MAX_INTERRUPTS (32+MAX_L2_INTERRUPTS)
-#endif
 
 #define RESCHED_INT 1
 #define VM_IPI_INT 0
@@ -244,17 +235,11 @@
 
 #define SSR_IE_BIT 18
 
-#if ARCHV <= 3
-#define RESCHED_INT_INTMASK (0x80000000 >> RESCHED_INT)
-#define VM_IPI_INTMASK (0x80000000 >> VM_IPI_INT)
-#define SSR_GUEST_BIT 13
-#else
 #define RESCHED_INT_INTMASK (0x00000001 << RESCHED_INT)
 #define CLUSTER_RESCHED_INT_INTMASK (0x00000001 << CLUSTER_RESCHED_INT)
 #define VM_IPI_INTMASK (0x00000001 << VM_IPI_INT)
 #define SSR_GUEST_BIT 19
 #define SSR_SS_BIT 30
-#endif
 
 #define CLUSTER_SCHED_MIN_COPROCS 2  // allow at least this many coprocs per cluster
 #define CLUSTER_MAX_CLUSTERS 4  // max clusters per processor

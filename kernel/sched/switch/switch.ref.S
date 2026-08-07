@@ -28,12 +28,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	p0 = cmp.eq(r19,r5)
 	if (!p0) jump H2K_switch
 
-#if (ARCHV) <= 3
-	r5 = ssr
-	r5 = extractu(r5,#3,#19)
-#else
 	r5 = HTID
-#endif
 	r7:6 = combine(r5,r18)
 	r0 = #3
 	r3:2 = r19:18
@@ -79,7 +74,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r0+#CONTEXT_lc1sa1) = r21:20
 	memd(r0+#CONTEXT_m1m0) = r25:24
 
-#if ARCHV >= 4
 	r27:26 = g3:2
 	r25:24 = g1:0
 	r21 = cs1
@@ -87,7 +81,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r0+#CONTEXT_gbadva_gosp) = r27:26
 	memd(r0+#CONTEXT_gssr_gelr) = r25:24
 	memd(r0+#CONTEXT_cs1cs0) = r21:20
-#endif
 
 #if ARCHV >= 60
 	r21:20 = c19:18 // pktcount
@@ -225,7 +218,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = memw(r1+ #CONTEXT_vwctrl)
 	s12 = r14
 #endif
-#if ARCHV >= 4
 	r14 = memw(r1+#CONTEXT_ssr)
 	r21:20 = memd(r1+#CONTEXT_cs1cs0)
 	r25:24 = memd(r1+#CONTEXT_gssr_gelr)
@@ -235,7 +227,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	cs1 = r21
 	g1:0 = r25:24
 	g3:2 = r27:26
-#endif
 #if ARCHV >= 68
 	r14 = memw(r1 + #CONTEXT_dm0)
 	dmresume(r14)
@@ -274,11 +265,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	sgp0 = r1
 	r4 = memw(r1+#CONTEXT_status_prio_hthread_tid)
-#if (ARCHV <= 3)
-	tid = r4
-#else
 	stid = r4
-#endif
 
 	r17 = r1
 	r0 = r17
@@ -290,12 +277,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 .Lto_sleep:
 	memd(r9) = r19:18
-#if (ARCHV) <= 3
-	r5 = ssr
-	r5 = extractu(r5,#3,#19)
-#else
 	r5 = HTID
-#endif
 	r27:26 = combine(r5,r18)
 
 //	r14 = #H2K_TRACE_SWITCH
@@ -331,11 +313,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	// set TID to special value (-1)
 	r1 = #-1
-#if (ARCHV <= 3)
-	tid = r1
-#else
 	stid = r1
-#endif
 
 	// set SSR to enable interrupts
 	// NOTE: should be the last thing before going to WAIT mode, we may get an interrupt

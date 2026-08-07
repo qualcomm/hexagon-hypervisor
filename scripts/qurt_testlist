@@ -49,17 +49,6 @@
 ./qurt/test/testcases/qurt_condvar_t1/app1/src
 ./qurt/test/testcases/qurt_condvar_t2/app1/src
 ./qurt/test/testcases/qurt_exc_override/app1/src
-./qurt/test/testcases/qurt_fastint_idle.benchmark/app1/src
-./qurt/test/testcases/qurt_fastint_preempt.benchmark/app1/src
-./qurt/test/testcases/qurt_fastint_spurious.benchmark/app1/src
-./qurt/test/testcases/qurt_fastint_t1/app1/src
-./qurt/test/testcases/qurt_fastint_t2/app1/src
-./qurt/test/testcases/qurt_fastint_t3/app1/src
-./qurt/test/testcases/qurt_fastint_t4/app1/src
-./qurt/test/testcases/qurt_fastint_t5/app1/src
-./qurt/test/testcases/qurt_fastint_t6/app1/src
-./qurt/test/testcases/qurt_fastint_t7/app1/src
-./qurt/test/testcases/qurt_fastint_t8/app1/src
 ./qurt/test/testcases/qurt_futex_t1/app1/src
 ./qurt/test/testcases/qurt_futex_t2/app1/src
 ./qurt/test/testcases/qurt_int_idle.benchmark/app1/src

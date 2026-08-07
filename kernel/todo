@@ -64,8 +64,6 @@ Inside the Monitor:
                 - single CPU simplification
                 - affine interrupts only simplification (for no-scheduler guest)
 
-* Investigate Popup Threads vs. Fast Interrupts
-
 * Optimization
 * Trace
 * Profiling?

@@ -186,7 +186,7 @@ FUNC_END H2K_fatal_crash
  * 1) Single thread mode
  * 2) Save TLB entries
  * 3) Clean caches
- * 4) invoke SW routine.  reuse fastint context?
+ * 4) invoke SW routine.  
  */
 FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 #ifdef NMI_STOP

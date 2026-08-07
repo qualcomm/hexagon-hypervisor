@@ -52,18 +52,11 @@ TBD:
 
 
 Interrupt:
-	* Fastint --> take fastint
 	* Resched --> take resched
 	* IPI --> check sanity
 
 Are those are the only two options from interrupt handler?
 
-Fastint --> take fastint (in "init" context) --> VMSWI for virtual-machine
-  destined interrupts?
-	+ removes L2 interrupt controller, non-fastint handlers from kernel
-	+ Deciding Phys Int -- Virt Int mapping outside kernel
-	- Potentially slower 
-	- Potentially don't want VMSWI trap in fastint context
 
 VMSWI --> VM event
   Just a first stab:

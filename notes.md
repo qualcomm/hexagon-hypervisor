@@ -1,4 +1,4 @@
-# H2 Hexagon Hypervisor - Project Notes
+ H2 Hexagon Hypervisor - Project Notes
 
 ## Project Summary
 
@@ -63,9 +63,8 @@ When switching back to a thread, H2K_check_sanity is called, then the continuati
 ### Interrupt Handling (`kernel/event/`)
 Three interrupt categories:
 1. **Reschedule interrupt**: causes lowest-priority thread to reschedule.
-2. **Fast interrupts**: run in monitor mode, very limited functionality
-   (non-blocking only; futex resume recommended).  Have their own context.
-3. **VM-style interrupts**: delivered as VM events to guest threads.
+2. **VM-style interrupts**: delivered as VM events to guest threads.
+3. **Popup Threads**: normal threads that can wait for an interrupt
 
 ### Memory Management (`kernel/mem/`)
 - TLB management: fill, miss handling, ASID management.

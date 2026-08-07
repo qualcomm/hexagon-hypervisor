@@ -57,7 +57,6 @@ IN_SECTION(".text.vm.int")
 static void H2K_vm_shint_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno)
 {
 	u32_t i;
-	/* FIXME: what is cpuidx in fastint context?  Always 0? */
 	u32_t cpu = me->id.cpuidx;
 
 	/* start with first waiting cpu */

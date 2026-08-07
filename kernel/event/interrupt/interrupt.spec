@@ -33,12 +33,8 @@ If the preemption point was interrupted, we detect the case as early as possible
 and skip the remainder of the context save.  If we have interrupted at the 
 preemption point, we do not care about saving the values of the registers.
 
-Interrupts can be handled by calling the reschedule function, or calling the
-function to handle fast interrupts.  The fast interrupt handler may be called
-before saving the registers saved by the ABI to improve performance.
-
-What function to call is determined by the table H2K_kg.inthandlers.  The format
-of each inthandler should be::
+Interrupts can be handled in several ways.  What function to call is determined
+by the table H2K_kg.inthandlers.  The format of each inthandler should be::
 
 	H2K_handler(u32_t intno, H2K_thread_context *me, u32_t hwtnum)
 

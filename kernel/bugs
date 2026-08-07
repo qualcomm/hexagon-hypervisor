@@ -11,7 +11,7 @@ sure continuation was set to return address?
 hwtnum was not being set when a thread was scheduled
 ====================================================
 
-Fix: add to thread_switch (is that correct place?  What about fastints?)
+Fix: add to thread_switch (is that correct place?)
 
 Testing: Add input assertion for all functions taking hwtnum that it is correct,
 	and at all functions containing me that me->hthread == hwtnum 

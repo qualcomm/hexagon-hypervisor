@@ -2,8 +2,8 @@ name: Future Build and Test
 
 on:
   pull_request:
-  push:
-    branches: [master]
+#  push:
+#    branches: [master]
   workflow_dispatch:
 
 env:

@@ -1,0 +1,32 @@
+name: Future Build and Test
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  PKW_VERSIONS: "git=2.38.0"
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: [ self-hosted, Linux, X64 ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Update PATH
+        run: |
+          echo "$SDK_ROOT/bin" >> "$GITHUB_PATH"
+          echo "/prj/qct/coredev/hexagon/sitelinks/arch/bin" >> "$GITHUB_PATH"
+          echo "/prj/qct/coredev/hexagon/sitelinks/arch/scripts" >> "$GITHUB_PATH"
+
+      - name: Regression test
+        run: |
+          make -O testall
+
+      # - name: Coverage build and verify
+      #   run: |
+      #     make -O USE_PKW=0 NULL_ANGEL_TRAP=1 ARCHV="$ARCHV" TARGET=ref_cov cov

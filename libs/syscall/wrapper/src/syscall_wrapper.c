@@ -50,7 +50,7 @@ __attribute__((weak)) ssize_t read(int fd, void *buf, size_t count) {
 	sys_call_ret_t res = sys_read_internal(fd, buf, count);
 	int ret = (ssize_t)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
-	return count - ret; // According to documentation there should be, but doesn't work: return ret == 0 ? count : 0;
+	return ret < 0 ? ret : count - ret;
 }
 
 sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count);
@@ -59,7 +59,7 @@ __attribute__((weak)) ssize_t write(int fd, const void *buf, size_t count) {
 	sys_call_ret_t res = sys_write_internal(fd, buf, count);
 	int ret = (ssize_t)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
-	return count - ret; // According to documentation there should be, but doesn't work: return ret == 0 ? count : 0;
+	return ret < 0 ? ret : count - ret;
 }
 
 sys_call_ret_t sys_flen_internal(fd_t fd);
@@ -110,18 +110,6 @@ __attribute__((weak)) int lstat(const char *__restrict __path, struct stat *__re
 	if (ret >= 0)
 		map_stat(__sbuf, &hexstat);
 	return ret;
-}
-
-errno_t sys_tmpnam(char *buffer, unsigned char target, count_t count);
-
-__attribute__((weak)) char *tmpnam(char *s) {
-	static char buf[L_tmpnam];
-	char *out = s ? s : buf;
-	if (sys_tmpnam(out, 0, L_tmpnam) != 0) {
-		SET_LTS_ERROR(-1, ENOENT);
-		return NULL;
-	}
-	return out;
 }
 
 okay_t sys_system(const char *command);

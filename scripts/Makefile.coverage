@@ -67,7 +67,7 @@ $(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
 	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
 	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
 	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
-	-$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" tst TEST="$*" 2>&1 | \
+	-$(BSUB) $(MAKE) -C "$(TEST_BUILD_ROOT)/$*" tst TEST="$*" 2>&1 | \
 	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
 	    TSTAT=$${PIPESTATUS[0]}; \
 	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
@@ -84,7 +84,7 @@ $(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns
 	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
 	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
 	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
-	$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" all TEST="$*" 2>&1 | \
+	$(BSUB) $(MAKE) -C "$(TEST_BUILD_ROOT)/$*" all TEST="$*" 2>&1 | \
 	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
 	    TSTAT=$${PIPESTATUS[0]}; \
 	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \

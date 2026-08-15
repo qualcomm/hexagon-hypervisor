@@ -3,15 +3,20 @@ include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
 include scripts/Makefile.inc.tools
 
+JFLAG ?= -j
+TEST_JFLAG ?= -j8
+
+ifeq ($(BATCH),1)
+export BSUB := bsub -I -q short
+export BATCH := 1
+else
 # Enable parallel builds by default.  Use the number of available CPUs so we
 # don't overwhelm shared machines.  A user-supplied -jN on the command line
 # takes precedence because command-line flags are processed after the Makefile.
 ifeq ($(findstring -j,$(MAKEFLAGS)),)
 MAKEFLAGS += -j$(shell nproc)
 endif
-
-JFLAG ?= -j
-TEST_JFLAG ?= -j 8
+endif
 
 NULLSTRING :=
 define nl
@@ -23,7 +28,7 @@ tab := $(shell printf '\011')
 
 .PHONY: all
 all:
-	$(MAKE) $(JFLAG) build
+	$(BSUB) $(MAKE) $(JFLAG) build
 
 .PHONY: build
 build:
@@ -117,7 +122,8 @@ artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
 	    --summary-out artifacts/test.out
 
 .PHONY: testall test
-testall: artifacts/test_report.html
+testall:
+	$(MAKE) -j artifacts/test_report.html
 
 # 'make test' runs all ARCHV×variant combinations (same as testall).
 # Use 'make test_variant' to run a single variant (ARCHV=XX TARGET=yy).
@@ -136,9 +142,9 @@ endif
 	$(MAKE) check-fail
 
 h2_test: all # ucosclean
-	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
-#$(MAKE) -C ucos sim 2>&1 | tee make.log
+#	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage BSUB="$(BSUB)" ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
+#	$(MAKE) -C ucos sim 2>&1 | tee make.log
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
 	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]

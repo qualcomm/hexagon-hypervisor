@@ -25,7 +25,7 @@ jobs:
 
       - name: Regression test
         run: |
-          make -O testall
+          make -O BATCH=1 testall
 
       # - name: Coverage build and verify
       #   run: |

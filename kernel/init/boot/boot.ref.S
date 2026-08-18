@@ -334,11 +334,13 @@ boot_continuation:
 	syscfg = SYSCFG  // re-enable caches
 	syncht
 	isync
+	jump .Lmulticore
 
 .Lno_multicore:
-	/* Single-core or non-multicore path: initialize shift/TCM to zero */
+	/* Single-core: initialize shift/TCM to zero */
 	SHIFT = #0
 	TCM_VAL = #0
+.Lmulticore
 #endif
 
 	/* Setup EVB */

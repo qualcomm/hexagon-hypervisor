@@ -340,7 +340,7 @@ boot_continuation:
 	/* Single-core: initialize shift/TCM to zero */
 	SHIFT = #0
 	TCM_VAL = #0
-.Lmulticore
+.Lmulticore:
 #endif
 
 	/* Setup EVB */

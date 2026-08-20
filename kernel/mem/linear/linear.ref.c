@@ -45,7 +45,12 @@ H2K_translation_t H2K_linear_translate(H2K_translation_t in, H2K_asid_entry_t in
 			if (vmblock->guestmap.raw) {
 				tmp.pn = list_gpn;
 				tmp = H2K_translate(tmp,vmblock->guestmap);
-				list_ppn = tmp.pn;
+				/* tmp.pn is only the base of the matched block when
+				 * tmp.size > 0 (e.g. a size>0 LINEAR guestmap entry) -
+				 * unlike a hardware TLB fill, this result is used directly
+				 * as a software read address below, so the low-order bits
+				 * within the block must be restored here. */
+				list_ppn = tmp.pn | (list_gpn & ((1u << (tmp.size*2)) - 1));
 				if ((tmp.xwru & 0x2) == 0) break;	/* NO R PERMISSION */
 			} else {
 				list_ppn = list_gpn;

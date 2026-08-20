@@ -96,11 +96,19 @@ s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_fla
 			H2K_mem_stlb_invalidate_asid((u32_t)asid);
 		}
 	} else if ((tmp = H2K_asid_table_eviction(ptb)) != NULL) {
-		tmp->ptb = ptb;
-		tmp->fields.type = type;
-		tmp->fields.vmid = vmidx;
-		tmp->fields.count = 1;
-		tmp->fields.extra = extra;
+		H2K_asid_entry_t newval;
+		/* Build the full 64-bit entry off to the side and commit it with a
+		 * single store. Readers (H2K_mem_tlb_fill, H2K_asid_table_search) take
+		 * no lock, so writing ptb/type/vmid/count/extra as separate fields
+		 * lets an interrupt-time reader observe a torn mix of the old and new
+		 * entry (e.g. new ptb paired with stale/zero type). */
+		newval.ptb = ptb;
+		newval.fields.type = type;
+		newval.fields.vmid = vmidx;
+		newval.fields.count = 1;
+		newval.fields.extra = extra;
+		newval.fields.log_maxhops = tmp->fields.log_maxhops;
+		tmp->raw = newval.raw;
 		asid = tmp - H2K_gp->asid_table;
 		H2K_mem_tlb_invalidate_asid((u32_t)asid);
 		H2K_mem_stlb_invalidate_asid((u32_t)asid);

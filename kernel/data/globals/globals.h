@@ -171,6 +171,8 @@ typedef struct {
 	u32_t tcm_offset;
 	u32_t noc_mbase;  // 4k pages
 	u32_t noc_sbase;  // 4k pages
+	u32_t boot_r0;    // r0 as captured at reset on the boot thread
+	u32_t boot_r1;    // r1 as captured at reset on the boot thread
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf[MAX_HTHREADS];

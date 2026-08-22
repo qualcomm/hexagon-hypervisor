@@ -195,7 +195,13 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 	
 	case INFO_NOC_SBASE:
 	return H2K_gp->noc_sbase;
-	
+
+	case INFO_BOOT_R00:
+		return H2K_gp->boot_r0;
+
+	case INFO_BOOT_R01:
+		return H2K_gp->boot_r1;
+
 default:
 		return -1;
 	}

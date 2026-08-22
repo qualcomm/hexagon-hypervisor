@@ -40,6 +40,8 @@
 
 #define BOOT_CACHE_ATTR L1WB_L2C
 
+#define BOOT_PARAMS_WORDS 16
+
 #if ARCHV <= 3
 #define BOOT_TLBLO ((BOOT_TLB_PGSIZE << TLB_ENTRY_SIZE_BITS) | (BOOT_CACHE_ATTR << TLB_ENTRY_C_BITS) | ((BOOT_TLB_PERM >> 1) << 29))
 #define SBIT_SIZE 0
@@ -48,6 +50,14 @@
 #define BOOT_TLBLO_DEV ((1 << SIZE_1M) | (DEVICE_TYPE << TLB_ENTRY_C_BITS) | (BOOT_TLB_PERM << 28))
 #define BOOT_TLBLO_ANGEL ((1 << SIZE_4K) | (DEVICE_TYPE << TLB_ENTRY_C_BITS) | (BOOT_TLB_PERM << 28))
 #define SBIT_SIZE 1
+#endif
+
+#if !defined(ASM) && !defined(__ASSEMBLER__)
+/*
+ * Boot parameter block (see boot.ref.S): r1:0 as
+ * captured at reset on the boot thread, followed by reserved pad.
+ */
+extern unsigned int H2K_boot_params[];
 #endif
 
 #endif

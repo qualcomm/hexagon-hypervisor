@@ -88,6 +88,15 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
 	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);		/* Kernel Globals first! */
+
+	/*
+	 * Publish the boot registers captured in the entry page.  This has to
+	 * happen after H2K_kg_init(), which zeroes the globals.  Copying them
+	 * here rather than reading H2K_boot_params from the info trap keeps
+	 * boot.ref.o out of the link for tests that stub the boot path out.
+	 */
+	H2K_gp->boot_r0 = H2K_boot_params[0];
+	H2K_gp->boot_r1 = H2K_boot_params[1];
 	H2K_tmpmap_init();
 	H2K_l2cache_init();
 	H2K_tcm_copy(last_tlb_index);

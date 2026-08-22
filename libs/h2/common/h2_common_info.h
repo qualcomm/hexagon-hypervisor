@@ -53,6 +53,8 @@ typedef enum {
 	INFO_TCM_OFFSET,  /**< Multicore TCM base offset */
 	INFO_NOC_MBASE,   /**< Multicore NOC master widget base */
 	INFO_NOC_SBASE,   /**< Multicore NOC slave widget base */
+	INFO_BOOT_R00,    /**< r0 at reset on the boot thread (e.g. DTB address, low) */
+	INFO_BOOT_R01,    /**< r1 at reset on the boot thread (e.g. DTB address, high) */
 	INFO_MAX
 } info_type;
 

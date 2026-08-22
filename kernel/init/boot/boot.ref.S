@@ -74,6 +74,20 @@ FUNC_START start .entry .p2align 12
 	.space 0x200  // FIXME: needs to be enough for all angel mailboxes but still fit all code in 4K
 
 .Lpast_mbox:
+	/*
+	 * Capture r1:0 into the boot parameter block before anything
+	 * clobbers them.  Only the boot thread's values are meaningful;
+	 * secondary hardware threads also enter here when started later.
+	 */
+	r10 = HTID
+	{
+		p0 = cmp.eq(r10,#0)
+		if (!p0.new) jump:nt .Lpast_bootparam_capture
+	}
+	r10 = add(PC,##H2K_boot_params@PCREL)
+	memd(r10+#0) = r1:0
+	dccleana(r10)	// reach memory before the cache kill below
+.Lpast_bootparam_capture:
 
 #ifdef CRASH_DEBUG
 	r7 = PC

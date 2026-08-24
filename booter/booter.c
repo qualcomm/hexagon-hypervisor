@@ -351,7 +351,7 @@ void usage()
 	BOOTER_PRINTF("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
 	BOOTER_PRINTF("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C.\n");
 	BOOTER_PRINTF("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
-	BOOTER_PRINTF("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
+	BOOTER_PRINTF("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default LINEAR unless overridden here (only OFFSET can be forced from cmdline right now; LINEAR is used automatically otherwise, or via guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
 	BOOTER_PRINTF("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default lowest mapped physical page.\n");
 	BOOTER_PRINTF("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default heap_start + heap size + stack size.\n");
 	BOOTER_PRINTF("  --load_offset <int>\n\tOffset for loading ELF image.  Default (guest_base - <first_program_header_addr>).\n");
@@ -520,7 +520,10 @@ void clone_vm(unsigned int idx, unsigned int num) {
 	}
 }
 
-void get_pmap(unsigned int idx, long offset) {
+/* forward decl: definition is below, once the aperture machinery it wraps is declared */
+void *booter_guest_ptr(unsigned long long pa);
+
+void get_pmap(unsigned int idx, unsigned long long offset) {
 
 	unsigned long addr;
 
@@ -529,7 +532,7 @@ void get_pmap(unsigned int idx, long offset) {
 	} else {
 		BOOTER_PRINTF("\t__guest_pmap__ found @ 0x%08lx\n",addr);
 
-		vm_params[idx].pmap = (h2_guest_pmap_t *)(addr + offset);
+		vm_params[idx].pmap = (h2_guest_pmap_t *)booter_guest_ptr(addr + offset);
 	}
 }
 
@@ -548,15 +551,15 @@ void dcclean_range(unsigned long start, long range) {
 /* Fill npages consecutive LINEAR table entries starting at entries[0]. va/pa are
  * page numbers (already shifted), not byte addresses. Shared by add_linear_trans()
  * (per-guest pmap) and booter_self_map() (the booter's own TLB). */
-void fill_linear_entries(H2K_linear_fmt_t *entries, unsigned long va, unsigned long long pa, int page_size, int npages) {
+void fill_linear_entries(H2K_linear_fmt_t *entries, unsigned long va, unsigned long long pa, int page_size, int npages, int cccc, int xwru) {
 
 	int i;
 
 	for (i = 0; i < npages; i++) {
 		entries[i].raw = 0ULL;
 		entries[i].ppn = pa;
-		entries[i].cccc = L1WB_L2C;
-		entries[i].xwru = URWX;
+		entries[i].cccc = cccc;
+		entries[i].xwru = xwru;
 		entries[i].vpn = va;
 		entries[i].size = page_size;
 
@@ -653,7 +656,7 @@ void booter_self_map(void) {
 
 	va = image_base >> PAGE_BITS;  // table entries store page numbers, not byte addresses
 	pa = ((unsigned long long)image_base + __boot_net_phys_offset__) >> PAGE_BITS;  // matching PA: same offset the old OFFSET translation used
-	fill_linear_entries(booter_table, va, pa, BOOT_TLB_PGSIZE, npages);
+	fill_linear_entries(booter_table, va, pa, BOOT_TLB_PGSIZE, npages, L1WB_L2C, URWX);
 
 	booter_table_entries = npages;
 	booter_table[booter_table_entries].raw = 0ULL;  // end marker (zero raw entry terminates the table)
@@ -702,7 +705,7 @@ void booter_grow_guest_window(unsigned long long lo, unsigned long long hi, int 
 
 		va = (unsigned long)(id_lo_aligned >> PAGE_BITS);
 		pa = (id_lo_aligned + __boot_net_phys_offset__) >> PAGE_BITS;
-		fill_linear_entries(&booter_table[booter_table_entries], va, pa, page_size, added_pages);
+		fill_linear_entries(&booter_table[booter_table_entries], va, pa, page_size, added_pages, L1WB_L2C, URWX);
 
 		booter_table_entries += added_pages;
 		guest_window_hi = id_hi_aligned;
@@ -736,7 +739,7 @@ void booter_grow_guest_window(unsigned long long lo, unsigned long long hi, int 
 
 			va = (unsigned long)((BOOTER_APERTURE_VA + (ap_lo_aligned - aperture_lo_pa)) >> PAGE_BITS);
 			pa = (ap_lo_aligned + __boot_net_phys_offset__) >> PAGE_BITS;
-			fill_linear_entries(&booter_table[booter_table_entries], va, pa, page_size, added_pages);
+			fill_linear_entries(&booter_table[booter_table_entries], va, pa, page_size, added_pages, L1WB_L2C, URWX);
 
 			booter_table_entries += added_pages;
 			aperture_hi_pa = ap_hi_aligned;
@@ -753,7 +756,7 @@ void booter_grow_guest_window(unsigned long long lo, unsigned long long hi, int 
 	}
 }
 
-void set_cmdline(unsigned int idx, long offset) {
+void set_cmdline(unsigned int idx, unsigned long long offset) {
 
 	int i;
 	char *dst;
@@ -766,7 +769,7 @@ void set_cmdline(unsigned int idx, long offset) {
 	} else {
 		BOOTER_PRINTF("\t__boot_cmdline__ found @ 0x%08x\n", (unsigned int)addr);
 	}
-	dst = (char *)(addr + offset);
+	dst = (char *)booter_guest_ptr(addr + offset);
 	dst[0] = 0;
 	for (i = 0; i < vm_params[idx].argc; i++) {
 		if ((len += strlen(vm_params[idx].argv[i])) >= SIZE__boot_cmdline__) {
@@ -779,7 +782,7 @@ void set_cmdline(unsigned int idx, long offset) {
 	BOOTER_PRINTF("\tcmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);
 }
 
-void set_string(unsigned int idx, int sym, char *string, int maxlen, long offset) {
+void set_string(unsigned int idx, int sym, char *string, int maxlen, unsigned long long offset) {
 
 	char *dst;
 	unsigned long addr;
@@ -797,13 +800,13 @@ void set_string(unsigned int idx, int sym, char *string, int maxlen, long offset
 		BOOTER_PRINTF("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
 	}
 
-	dst = (char *)(addr + offset);
+	dst = (char *)booter_guest_ptr(addr + offset);
 	strcpy(dst, string);
 
 	BOOTER_PRINTF("\t%s at 0x%08x set to <<%s>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, dst);
 }
 
-void set_var(unsigned int idx, int sym, int val, long offset) {
+void set_var(unsigned int idx, int sym, int val, unsigned long long offset) {
 
 	int *dst;
 	unsigned long addr;
@@ -815,13 +818,13 @@ void set_var(unsigned int idx, int sym, int val, long offset) {
 		BOOTER_PRINTF("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
 	}
 
-	dst = (int *)(addr + offset);
+	dst = (int *)booter_guest_ptr(addr + offset);
 	*dst = val;
 
 	BOOTER_PRINTF("\t%s at 0x%08x set to <<0x%08x>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, *dst);
 }
 
-unsigned long get_var(unsigned int idx, int sym, long offset) {
+unsigned long get_var(unsigned int idx, int sym, unsigned long long offset) {
 
 	int *dst;
 	unsigned long addr;
@@ -831,11 +834,11 @@ unsigned long get_var(unsigned int idx, int sym, long offset) {
 		return 0;
 	}
 
-	dst = (int *)(addr + offset);
+	dst = (int *)booter_guest_ptr(addr + offset);
 	return *dst;
 }
 
-void set_net_phys_offset(unsigned int idx, long offset) {  // called with total_offset
+void set_net_phys_offset(unsigned int idx, unsigned long long offset) {  // called with total_offset
 
 	long *dst;
 	unsigned long addr;
@@ -846,7 +849,7 @@ void set_net_phys_offset(unsigned int idx, long offset) {  // called with total_
 	} else {
 		BOOTER_PRINTF("\t__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
 	}
-	dst = (long *)(addr + offset);
+	dst = (long *)booter_guest_ptr(addr + offset);
 
 	/* FIXME: If __boot_net_phys_offset__ is used for anything except ANGEL_OFFSET_PTR() then va_angel needs to be handled differently */
 	if (vm_params[idx].va_angel) {
@@ -858,7 +861,7 @@ void set_net_phys_offset(unsigned int idx, long offset) {  // called with total_
 	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int) *dst);
 }
 
-void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages) {
+void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages, int cccc, int xwru) {
 	h2_guest_pmap_t *pmap = vm_params[idx].pmap;
 	H2K_linear_fmt_t *base;
 	int end = 0;
@@ -890,11 +893,11 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	va >>= H2K_KERNEL_ADDRBITS;
 	pa >>= H2K_KERNEL_ADDRBITS;
 
-	fill_linear_entries(&base[end], va, pa, page_size, npages);
+	fill_linear_entries(&base[end], va, pa, page_size, npages, cccc, xwru);
 	base[end + npages].raw = 0ULL;  // end marker
 }
 
-void clade_setup(unsigned int idx, long offset) {
+void clade_setup(unsigned int idx, unsigned long long offset) {
 
 	unsigned long region_hi, comp, ex_lo_small, ex_lo_large, ex_hi_start, ex_hi_end, ex_hi_size, dict_start;
 	h2_u32_t *from, *to;
@@ -967,16 +970,16 @@ void clade_setup(unsigned int idx, long offset) {
 			FAIL("\tgalloc ex_hi", "");
 		}
 		//		BOOTER_PRINTF("memcpy(0x%08x, 0x%08lx, 0x%08lx\n", vm_params[idx].clade_ex_hi, ex_hi_start + offset, ex_hi_size);
-		memcpy((void *)(vm_params[idx].clade_ex_hi), (void *)ex_hi_start + offset, ex_hi_size);
+		memcpy((void *)(vm_params[idx].clade_ex_hi), booter_guest_ptr(ex_hi_start + offset), ex_hi_size);
 	} else {
 		vm_params[idx].clade_ex_hi = ex_hi_start + offset;  // should never be referenced, but point it at something kind of meaningful
 	}
 
 	/* g->p translations for program */
-	add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages);
+	add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages, L1WB_L2C, URWX);
 
 	/* g->p translations for clade region */
-	add_linear_trans(idx, region_hi, region_hi + CLADE_REGION_LEN * vm_params[idx].clade_pd, SIZE_16M, CLADE_REGION_LEN / 0x01000000);
+	add_linear_trans(idx, region_hi, region_hi + CLADE_REGION_LEN * vm_params[idx].clade_pd, SIZE_16M, CLADE_REGION_LEN / 0x01000000, L1WB_L2C, URWX);
 
 	/* Set up clade regs */
 	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_COMP, comp + offset);
@@ -1007,16 +1010,15 @@ void clade_setup(unsigned int idx, long offset) {
 	BOOTER_PRINTF("\tCLADE not enabled\n");
 }
 
-/* FIXME: offset is unsigned int (32-bit), so a displacement derived from a
- * >4GB guest_base (e.g. prev_size in a clone chain, or stash_addr - start_pa)
- * truncates here. Fixing this requires the booter to dereference guest memory
- * through a VA aperture rather than treating guest PA as its own native
- * pointer -- see notes.md. */
-void copy_vm(unsigned int idx, unsigned int offset) {
+void copy_vm(unsigned int idx, unsigned long long offset) {
 
-BOOTER_PRINTF("\tCopying from VM index %d:\n\t0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].start_pa, vm_params[idx].start_pa + offset, vm_params[idx].end_pa - vm_params[idx].start_pa);
-	memcpy((void *)(vm_params[idx].start_pa) + offset, (void *)(vm_params[idx].start_pa), vm_params[idx].end_pa - vm_params[idx].start_pa);
-	dcclean_range((unsigned long)vm_params[idx].start_pa + offset, vm_params[idx].end_pa - vm_params[idx].start_pa);
+	void *dst = booter_guest_ptr(vm_params[idx].start_pa + offset);
+	void *src = booter_guest_ptr(vm_params[idx].start_pa);
+	unsigned long long size = vm_params[idx].end_pa - vm_params[idx].start_pa;
+
+	BOOTER_PRINTF("\tCopying from VM index %d:\n\t0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].start_pa, vm_params[idx].start_pa + offset, size);
+	memcpy(dst, src, size);
+	dcclean_range((unsigned long)dst, size);
 }
 
 void load_vm(unsigned int idx) {
@@ -1248,13 +1250,9 @@ void load_vm(unsigned int idx) {
 		close(fdesc);
 
 		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
-		/* FIXME: set_cmdline/set_net_phys_offset/set_var/set_string/get_pmap/
-		 * clade_setup below all take a 32-bit "long offset" and dereference
-		 * addr + offset as a native booter pointer. The phdr-loop's version of
-		 * this issue (above) is now fixed via seg_pa/booter_guest_ptr(); these
-		 * writers are the explicit next task -- same fix shape, using the
-		 * aperture machinery booter_grow_guest_window()/booter_guest_ptr() now
-		 * provide, plus widening this "long offset" parameter to 64-bit. */
+		/* set_cmdline/set_net_phys_offset/set_var/set_string/get_pmap/clade_setup
+		 * below now take a 64-bit offset and dereference addr + offset via
+		 * booter_guest_ptr(), same fix shape as the phdr-loop's seg_pa above. */
 		set_cmdline(idx, total_offset);
 		set_net_phys_offset(idx, total_offset);
 		if (vm_params[idx].use_dir_prefix) {
@@ -1278,7 +1276,7 @@ void load_vm(unsigned int idx) {
 
 		vm_params[idx].start_pa = start + total_offset;
 		vm_params[idx].end_pa = end + total_offset;
-		dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
+		dcclean_range((unsigned long)booter_guest_ptr(vm_params[idx].start_pa), vm_params[idx].end_pa - vm_params[idx].start_pa);
 
 		heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
 		if (0 == heap_size || -1 == heap_size) {
@@ -1390,14 +1388,16 @@ void config_vm(unsigned int idx) {
 		  base.raw = vm_params[idx].pmap->base.raw;
 			BOOTER_PRINTF("\tGuest pmap type %s\n", trans_name[trans]);
 			BOOTER_PRINTF("\tGuest pmap base 0x%08x\n", base.raw);
-		} else {  // default
-			trans = H2K_ASID_TRANS_TYPE_OFFSET;
-			BOOTER_PRINTF("\tTranslation type offset\n");
-			BOOTER_PRINTF("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
-			BOOTER_PRINTF("\t\tCCCC  0x%1x\n", base.cccc);
-			BOOTER_PRINTF("\t\tXWRU  0x%1x\n", base.xwru);
-			BOOTER_PRINTF("\t\tPAGES 0x%1x\n", base.pages);
-			BOOTER_PRINTF("\t\tRAW   0x%1x\n", base.raw);
+		} else {  // default: build a LINEAR extent table covering the whole VM
+			add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages, vm_params[idx].cccc, vm_params[idx].xwru);
+			trans = vm_params[idx].pmap->type;
+			base.raw = vm_params[idx].pmap->base.raw;
+			BOOTER_PRINTF("\tTranslation type linear\n");
+			BOOTER_PRINTF("\t\tPage size %d (%s)\n", vm_params[idx].page_size, pagesize_name[vm_params[idx].page_size]);
+			BOOTER_PRINTF("\t\tCCCC  0x%1x\n", vm_params[idx].cccc);
+			BOOTER_PRINTF("\t\tXWRU  0x%1x\n", vm_params[idx].xwru);
+			BOOTER_PRINTF("\t\tPAGES 0x%08x\n", vm_params[idx].pages);
+			BOOTER_PRINTF("\t\tBASE  0x%08x\n", base.raw);
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
@@ -1662,8 +1662,8 @@ void run(unsigned int idx) {
 						}
 						if (vm_params[i].stash) {
 							BOOTER_PRINTF("Restoring VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].stash_addr, vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
-							memcpy((void *)(vm_params[idx].start_pa), (void *)(vm_params[idx].stash_addr), vm_params[idx].end_pa - vm_params[idx].start_pa);
-							dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
+							memcpy(booter_guest_ptr(vm_params[idx].start_pa), booter_guest_ptr(vm_params[idx].stash_addr), vm_params[idx].end_pa - vm_params[idx].start_pa);
+							dcclean_range((unsigned long)booter_guest_ptr(vm_params[idx].start_pa), vm_params[idx].end_pa - vm_params[idx].start_pa);
 							/* if this vm was cloned from another, need to set its net phys offset again (overwritten by restore from stash) */
 							set_net_phys_offset(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);  // i.e. set_net_phys_offset(idx, total_offset)
 						}

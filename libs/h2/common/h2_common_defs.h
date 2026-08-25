@@ -1,0 +1,144 @@
+/*
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
+/* defines only */
+
+#ifndef H2_COMMON_DEFS_H
+#define H2_COMMON_DEFS_H 1
+
+#define CLUSTER_SCHED 0
+
+#if ((ARCHV >= 60) && !TINY_CORE)
+#define HAVE_EXTENSIONS 1
+#define DO_EXT_SWITCH 1
+#endif
+
+#define PAGE_BITS 12 /* Minimum page size: 4K */
+
+#define DO_PROFILE 1
+
+#ifndef MAX_HTHREADS
+#if ARCHV <= 65
+#define MAX_HTHREADS 4
+#elif ARCHV == 68
+#define MAX_HTHREADS 8
+#elif ARCHV == 73
+#define MAX_HTHREADS 8
+#elif ARCHV >= 81
+#define MAX_HTHREADS 16
+#endif
+#endif
+
+#define SYSCFG_M_BIT 0
+#define SYSCFG_M_LEN 1
+#define SYSCFG_M (((0x1 << SYSCFG_M_LEN) - 1) << SYSCFG_M_BIT)
+#define SYSCFG_I_BIT 1
+#define SYSCFG_I_LEN 1
+#define SYSCFG_I (((0x1 << SYSCFG_I_LEN) - 1) << SYSCFG_I_BIT)
+#define SYSCFG_D_BIT 2
+#define SYSCFG_D_LEN 1
+#define SYSCFG_D (((0x1 << SYSCFG_D_LEN) - 1) << SYSCFG_D_BIT)
+#define SYSCFG_T_BIT 3
+#define SYSCFG_T_LEN 1
+#define SYSCFG_T (((0x1 << SYSCFG_T_LEN) - 1) << SYSCFG_T_BIT)
+#define SYSCFG_G_BIT 4
+#define SYSCFG_G_LEN 1
+#define SYSCFG_G (((0x1 << SYSCFG_G_LEN) - 1) << SYSCFG_G_BIT)
+#define SYSCFG_R_BIT 5
+#define SYSCFG_R_LEN 1
+#define SYSCFG_R (((0x1 << SYSCFG_R_LEN) - 1) << SYSCFG_R_BIT)
+#define SYSCFG_C_BIT 6
+#define SYSCFG_C_LEN 1
+#define SYSCFG_C (((0x1 << SYSCFG_C_LEN) - 1) << SYSCFG_C_BIT)
+
+#ifdef HAVE_EXTENSIONS
+#define SYSCFG_V2X_BIT 7
+#define SYSCFG_V2X_LEN 1
+#define SYSCFG_V2X (((0x1 << SYSCFG_V2X_LEN) - 1) << SYSCFG_V2X_BIT)
+#define V2X_LENGTH 7
+#endif
+
+#define SYSCFG_IDA_BIT 8
+#define SYSCFG_IDA_LEN 1
+#define SYSCFG_IDA (((0x1 << SYSCFG_IDA_LEN) - 1) << SYSCFG_IDA_BIT)
+#define SYSCFG_PM_BIT 9
+#define SYSCFG_PM_LEN 1
+#define SYSCFG_PM (((0x1 << SYSCFG_PM_LEN) - 1) << SYSCFG_PM_BIT)
+#define SYSCFG_TE_LEN 1
+#define SYSCFG_TE_BIT 10
+#define SYSCFG_TE (((0x1 << SYSCFG_TE_BIT) - 1) << SYSCFG_TE_BIT)
+#define SYSCFG_TL_BIT 11
+#define SYSCFG_TL_LEN 1
+#define SYSCFG_TL (((0x1 << SYSCFG_TL_LEN) - 1) << SYSCFG_TL_BIT)
+#define SYSCFG_KL_BIT 12
+#define SYSCFG_KL_LEN 1
+#define SYSCFG_KL (((0x1 << SYSCFG_KL_LEN) - 1) << SYSCFG_KL_BIT)
+#define SYSCFG_BQ_BIT 13
+#define SYSCFG_BQ_LEN 1
+#define SYSCFG_BQ (((0x1 << SYSCFG_BQ_LEN) - 1) << SYSCFG_BQ_BIT)
+#define SYSCFG_PRIO_BIT 14
+#define SYSCFG_PRIO_LEN 1
+#define SYSCFG_PRIO (((0x1 << SYSCFG_PRIO_LEN) - 1) << SYSCFG_PRIO_BIT)
+#define SYSCFG_DMT_BIT 15
+#define SYSCFG_DMT_LEN 1
+#define SYSCFG_DMT (((0x1 << SYSCFG_DMT_LEN) - 1) << SYSCFG_DMT_BIT)
+
+#define SYSCFG_L2CFG_BITS 16
+#define SYSCFG_L2CFG_LEN 3
+#define SYSCFG_L2CFG (((0x1 << SYSCFG_L2CFG_LEN) - 1) << SYSCFG_L2CFG_BITS)
+#define SYSCFG_L2CFG_MAX 6  // l2cfg bits 110 mean 'max cache' for tag size 1536 and 2048
+
+#define SYSCFG_ITCM_BIT 19
+#define SYSCFG_ITCM_LEN 1
+#define SYSCFG_ITCM (((0x1 << SYSCFG_ITCM_LEN) - 1) << SYSCFG_ITCM_BIT)
+
+#define SYSCFG_CLADEN_BIT 20
+#define SYSCFG_CLADEN_LEN 1
+#define SYSCFG_CLADEN (((0x1 << SYSCFG_CLADEN_LEN) - 1) << SYSCFG_CLADEN_BIT)
+
+#define SYSCFG_L2NWA_BIT 21
+#define SYSCFG_L2NWA_LEN 1
+#define SYSCFG_L2NWA (((0x1 << SYSCFG_L2NWA_LEN) - 1) << SYSCFG_L2NWA_BIT)
+#define SYSCFG_L2NRA_BIT 22
+#define SYSCFG_L2NRA_LEN 1
+#define SYSCFG_L2NRA (((0x1 << SYSCFG_L2NRA_LEN) - 1) << SYSCFG_L2NRA_BIT)
+
+#define SYSCFG_L2WB_BIT 23
+#define SYSCFG_L2WB_LEN 1
+#define SYSCFG_L2WB (((0x1 << SYSCFG_L2WB_LEN) - 1) << SYSCFG_L2WB_BIT)
+#define SYSCFG_L2P_BIT 24
+#define SYSCFG_L2P_LEN 1
+#define SYSCFG_L2P (((0x1 << SYSCFG_L2P_LEN) - 1) << SYSCFG_L2P_BIT)
+#define SYSCFG_L1DP_BITS 25
+#define SYSCFG_L1DP_LEN 2
+#define SYSCFG_L1DP (((0x1 << SYSCFG_L1DP_LEN) - 1) << SYSCFG_L1DP_BIT)
+#define SYSCFG_L1IP_BITS 27
+#define SYSCFG_L1IP_LEN 2
+#define SYSCFG_L1IP (((0x1 << SYSCFG_L1IP_LEN) - 1) << SYSCFG_L1IP_BIT)
+#define SYSCFG_L2PART_BITS 29
+#define SYSCFG_L2PART_LEN 2
+#define SYSCFG_L2PART (((0x1 << SYSCFG_L2PART_LEN) - 1) << SYSCFG_L2PART_BIT)
+
+#define CLADE_REG_REGION 0x0
+#define CLADE_REG_PD_CHUNK 0x10
+#define CLADE_REG_COMP 0x10
+#define CLADE_REG_EX_HI 0x14
+#define CLADE_REG_EX_LO_SMALL 0x18
+#define CLADE_REG_EX_LO_LARGE 0x1c
+
+#define CLADE_NUM_PDS 4
+#define CLADE_DICT_OFFSET 0x2000
+#define CLADE_DICT_LEN 0x2000
+#define CLADE_NUM_DICTS 3
+#define CLADE_REGION_LEN 0x08000000
+#define CLADE_INVALID_ADDRESS 0xffffffff
+
+#define H2K_TIME_GUESTINT 12
+#define H2K_VM_CHILDINT 14
+
+#define EXT_HVX_XA_START 0
+#define EXT_NO_EXT 0
+
+#endif

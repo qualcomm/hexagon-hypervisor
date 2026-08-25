@@ -90,7 +90,7 @@ typedef struct {
 	pa_t gpio_reg;
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	u32_t cluster_clusters;   // number of clusters
 	u32_t cluster_hthreads;   // hardware threads per cluster
 	u32_t cluster_mask[4];    // bitmask of threads in cluster
@@ -214,7 +214,7 @@ static inline H2K_kg_t PURITY *H2K_gp_llvm()
 #undef PURITY
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 
 static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 	return (hthread / H2K_gp->cluster_hthreads);
@@ -246,8 +246,8 @@ static inline void xex(u32_t hthread, u32_t new_xe, u32_t new_xe2, u32_t new_xe3
 
 void H2K_cluster_config(void) IN_SECTION(".text.init.globals");
 
-void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) IN_SECTION(".text.init.globals");
-
 #endif
+
+void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) IN_SECTION(".text.init.globals");
 
 #endif

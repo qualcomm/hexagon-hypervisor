@@ -152,7 +152,7 @@ int pmu_idx = 0;
 int gpio_toggle = 0;
 int set_dmactrl = 0;
 int dmactrl;
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 int cluster_sched = 1;
 #endif
 unsigned int getl2reg = 0;
@@ -321,7 +321,7 @@ void usage()
 	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
 	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
 	BOOTER_PRINTF("  --cycles\n\tPrint pcycles during boot.\n");
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 1.\n");
 #endif
 
@@ -1471,7 +1471,7 @@ void print_infos() {
 		BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
 #endif
 	}
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	unsigned int max_coprocs = h2_info(INFO_MAX_CLUSTER_COPROC);
 	if (max_coprocs == -1) {
 			BOOTER_PRINTF("\tCluster scheduling disabled\n");
@@ -1580,7 +1580,7 @@ void kernel_setup() {
 	}
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	if (cluster_sched) {
 		if (h2_config_cluster_sched(1) < 0) {
 			FAIL("Cluster sched", "");
@@ -2048,7 +2048,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		} else if (0 == strcmp(argv[0], "--cluster_sched")) {
 			if (argc < 2) die_usage();
 			cluster_sched = strtoul(argv[1],NULL,0);

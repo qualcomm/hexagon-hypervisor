@@ -223,7 +223,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	H2K_cluster_config();
 #endif
 	H2K_runlist_push(boot);

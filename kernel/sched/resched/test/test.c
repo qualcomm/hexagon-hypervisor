@@ -64,7 +64,7 @@ void TH_resched_cluster(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 int main() 
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	H2K_gp->cluster_sched = 1;
 #endif
 	H2K_readylist_init();

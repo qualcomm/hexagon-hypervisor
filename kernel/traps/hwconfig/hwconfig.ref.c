@@ -23,7 +23,7 @@
 #include <atomic.h>
 #include <tlb.h>
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 #include <readylist.h>
 #include <runlist.h>
 #include <dosched.h>
@@ -254,7 +254,7 @@ u32_t H2K_trap_hwconfig_coproc_bits(u32_t unused, void *unusedp,  u32_t coproc, 
 u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t xe3, H2K_thread_context *me) {
 #if (ARCHV >= 81 && defined(HMX_HLX_SUPPORT))
 	if (0 < H2K_gp->hlx_contexts) { // exists
-# ifdef CLUSTER_SCHED
+# if CLUSTER_SCHED
 		if (H2K_gp->cluster_sched) {
 			BKL_LOCK();
 			if (xe3 && !(me->ccr & CCR_XE3_BIT_MASK)) {  // turning xe3 on
@@ -290,7 +290,7 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t unused3, H2K_thread_context *me) {
 #if (ARCHV >= 68 && defined(HMX_HLX_SUPPORT))
 	if (0 < H2K_gp->hmx_units) {  // exists
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		if (H2K_gp->cluster_sched) {
 			BKL_LOCK();
 			if (xe2 && !(me->ssr & SSR_XE2_BIT_MASK)) {  // turning xe2 on
@@ -327,7 +327,7 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 	/* FIXME: should check for allowed XA values here (maybe?) */
 	/* EJP: Always allow XE/XA to be set if only for silver tests working also */
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	if (H2K_gp->cluster_sched) {
 		BKL_LOCK();
 		if (xe && !(me->ssr & SSR_XE_BIT_MASK)) {  // turning xe on
@@ -550,7 +550,7 @@ u32_t H2K_trap_hwconfig_hwthreads_mask(u32_t unused, void *unusedp, u32_t mask, 
 	H2K_gp->hthreads_mask &= MODECTL_E_MASK;
 	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	H2K_cluster_config();
 #endif
 	return H2K_gp->hthreads_mask;
@@ -589,7 +589,7 @@ u32_t H2K_trap_hwconfig_hwthreads_num(u32_t unused, void *unusedp, u32_t num, u3
 	H2K_gp->hthreads_mask &= MODECTL_E_MASK;
 	H2K_gp->hthreads = Q6_R_popcount_P(H2K_gp->hthreads_mask);
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	H2K_cluster_config();
 #endif
 	return H2K_gp->hthreads;

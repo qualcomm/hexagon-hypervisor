@@ -214,7 +214,7 @@ gtagsclean:
 .PHONY: q6testinstallenvs
  q6testinstallenvs:
 	export Q6TESTINSTALL_MAKEJOBS=1
-	export Q6TESTINSTALL_TESTTARGET='testall'
+	export Q6TESTINSTALL_TESTTARGET=bigtest
 
 LLDB_PORT ?= 1234
 

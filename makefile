@@ -122,7 +122,7 @@ artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
 	    --summary-out artifacts/test.out
 
 .PHONY: testall test
-testall:
+testall: all
 	$(MAKE) -j artifacts/test_report.html
 
 # 'make test' runs all ARCHV×variant combinations (same as testall).
@@ -141,7 +141,7 @@ endif
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) test_summary
 	$(MAKE) check-fail
 
-h2_test: all # ucosclean
+h2_test: # ucosclean
 #	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage BSUB="$(BSUB)" ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log

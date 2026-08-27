@@ -122,7 +122,7 @@ artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
 	    --summary-out artifacts/test.out
 
 .PHONY: testall test
-testall: all
+testall: buildall
 	$(MAKE) -j artifacts/test_report.html
 
 # 'make test' runs all ARCHV×variant combinations (same as testall).
@@ -157,7 +157,7 @@ $(eval $(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),$(nl).PHONY: bi
 .PHONY: all_bigtests
 $(eval all_bigtests:$(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),bigtest-$(a)-$(v) )))
 
-bigtest: all
+bigtest: testall
 	$(MAKE) $(JFLAG) all_bigtests
 
 qurt_test: ./qurt/test/testcases

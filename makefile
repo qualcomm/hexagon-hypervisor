@@ -7,7 +7,7 @@ JFLAG ?= -j
 TEST_JFLAG ?= -j8
 
 ifeq ($(BATCH),1)
-export BSUB := bsub -I -q short
+export BSUB := bsub -I
 export BATCH := 1
 else
 # Enable parallel builds by default.  Use the number of available CPUs so we

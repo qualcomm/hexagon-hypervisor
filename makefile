@@ -157,7 +157,7 @@ $(eval $(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),$(nl).PHONY: bi
 .PHONY: all_bigtests
 $(eval all_bigtests:$(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),bigtest-$(a)-$(v) )))
 
-bigtest: test
+bigtest: all
 	$(MAKE) $(JFLAG) all_bigtests
 
 qurt_test: ./qurt/test/testcases

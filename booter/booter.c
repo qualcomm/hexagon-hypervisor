@@ -898,8 +898,8 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	base = (H2K_linear_fmt_t *)(pmap->base.raw);
 
 	/* append translations */
-	va >>= H2K_KERNEL_ADDRBITS;
-	pa >>= H2K_KERNEL_ADDRBITS;
+	va >>= PAGE_BITS;
+	pa >>= PAGE_BITS;
 
 	fill_linear_entries(&base[end], va, pa, page_size, npages, cccc, xwru);
 	base[end + npages].raw = 0ULL;  // end marker
@@ -1068,7 +1068,7 @@ void load_vm(unsigned int idx) {
 		 load first, and to load we need to align guest_base to the page size. It's
 		 sufficient to use a page size that is as least as big as the one in the
 		 __guest_pmap__; at most we waste some space. */
-	page_shift = ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS);
+	page_shift = ((vm_params[idx].page_size * 2) + PAGE_BITS);
 	one_page = 1ULL << page_shift;
 
 	/* Align the guest base up to the current guest's page size */

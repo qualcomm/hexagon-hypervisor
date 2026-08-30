@@ -690,9 +690,17 @@ void booter_grow_guest_window(unsigned long long lo, unsigned long long hi, int 
 	int grew = 0;
 
 	/* Identity portion: below BOOTER_IDENTITY_LIMIT, va == pa's own page number, exactly
-	 * as before this change. */
+	 * as before this change. Also capped at BOOTER_APERTURE_VA, since for a guest placed
+	 * >= 4GB this sweep would otherwise run all the way to BOOTER_IDENTITY_LIMIT and
+	 * plant a stale va==pa entry at BOOTER_APERTURE_VA itself -- which, being added
+	 * before the aperture portion below runs, permanently shadows the correct aperture
+	 * entry for that VA (H2K_linear_translate() returns on the first matching VPN),
+	 * silently aliasing every booter_guest_ptr() aperture access to the wrong physical
+	 * page. Nothing legitimately needs identity mapping at/above BOOTER_APERTURE_VA, so
+	 * this cap is always safe. */
 	id_lo = guest_window_hi ? guest_window_hi : H2K_GUEST_START;
 	id_hi = (hi < BOOTER_IDENTITY_LIMIT) ? hi : BOOTER_IDENTITY_LIMIT;
+	if (id_hi > BOOTER_APERTURE_VA) id_hi = BOOTER_APERTURE_VA;
 	if (id_hi > id_lo) {
 		id_lo_aligned = id_lo & -page_bytes;
 		id_hi_aligned = H2_ALIGN_UP(id_hi, page_bytes);

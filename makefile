@@ -5,6 +5,7 @@ include scripts/Makefile.inc.tools
 
 JFLAG ?= -j
 TEST_JFLAG ?= -j8
+BATCH ?= 1
 
 ifeq ($(BATCH),1)
 export BSUB := bsub -I
@@ -36,14 +37,14 @@ ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
 endif
-	$(MAKE) $(JFLAG) -C kernel ARCHV=$(ARCHV) install && \
-	$(MAKE) $(JFLAG) -C libs ARCHV=$(ARCHV) install && \
-	$(MAKE) $(JFLAG) -C stake ARCHV=$(ARCHV) install
-	$(MAKE) $(JFLAG) -C booter ARCHV=$(ARCHV) install
+	$(MAKE) -C kernel ARCHV=$(ARCHV) install && \
+	$(MAKE) -C libs ARCHV=$(ARCHV) install && \
+	$(MAKE) -C stake ARCHV=$(ARCHV) install
+	$(MAKE) -C booter ARCHV=$(ARCHV) install
 	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
 	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
 	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
-	$(MAKE) $(JFLAG) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $(TARGET) ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
@@ -54,9 +55,18 @@ endif
 	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
 	rm -f $(INSTALLPATH)/manifest.tmp
 
+BUILDS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),build-$(a)-$(v)))
+
+define build_instance
+.PHONY: build-$(1)-$(2)
+build-$(1)-$(2):
+	$$(MAKE) ARCHV=$(1) TARGET=$(2) all
+endef
+
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call build_instance,$a,$v))))
 
 .PHONY: buildall
-$(eval buildall:$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(nl)$(tab)$$(MAKE) ARCHV=$(a) TARGET=$(v))))
+buildall: $(BUILDS)
 
 all_clean:
 	rm -rf artifacts/
@@ -123,7 +133,7 @@ artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
 
 .PHONY: testall test
 testall: buildall
-	$(MAKE) -j artifacts/test_report.html
+	$(MAKE) artifacts/test_report.html
 
 # 'make test' runs all ARCHV×variant combinations (same as testall).
 # Use 'make test_variant' to run a single variant (ARCHV=XX TARGET=yy).
@@ -143,14 +153,14 @@ endif
 
 h2_test: # ucosclean
 #	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
-	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.coverage BSUB="$(BSUB)" ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
+	$(MAKE) -f scripts/Makefile.coverage BSUB="$(BSUB)" ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
-	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -c -i warning:` -eq 0 ]
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -v "warning: jobserver" | fgrep -c -i warning:` -eq 0 ]
 
 abigtest:
-	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/pass/x86_64/master/pass.pl --retrycount 1 --results ./passout/$(ARCHV)/$(TARGET) --html ./passout/$(ARCHV)/$(TARGET) --q6v v$(ARCHV) --arch v$(ARCHV)_stable --tld STANDALONE=0 --tld TRACES=0 --flaglist v$(ARCHV)_flags.list --flags MARGIN=12 --flags PLMARGIN=180 --tld NOTIMING --tld CHECKIN=1 --flags PLIMIT= --flags WARN=--warn --flags Q6_RTOS_INSTALL=$(INSTALLPATH)
+	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/pass/x86_64/master/pass.pl --long --retrycount 1 --results ./passout/$(ARCHV)/$(TARGET) --html ./passout/$(ARCHV)/$(TARGET) --q6v v$(ARCHV) --arch v$(ARCHV)_stable --tld STANDALONE=0 --tld TRACES=0 --flaglist v$(ARCHV)_flags.list --flags MARGIN=12 --flags PLMARGIN=180 --tld NOTIMING --tld CHECKIN=1 --flags PLIMIT= --flags WARN=--warn --flags Q6_RTOS_INSTALL=$(INSTALLPATH)
 
 $(eval $(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),$(nl).PHONY: bigtest-$(a)-$(v)$(nl)bigtest-$(a)-$(v):$(nl)$(tab)@echo $(a) $(v)$(nl)$(tab)$$(MAKE) ARCHV=$(a) TARGET=$(v) abigtest)))
 
@@ -158,7 +168,7 @@ $(eval $(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),$(nl).PHONY: bi
 $(eval all_bigtests:$(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),bigtest-$(a)-$(v) )))
 
 bigtest: testall
-	$(MAKE) $(JFLAG) all_bigtests
+	$(MAKE) all_bigtests
 
 qurt_test: ./qurt/test/testcases
 	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
@@ -213,7 +223,7 @@ gtagsclean:
 
 .PHONY: q6testinstallenvs
  q6testinstallenvs:
-	export Q6TESTINSTALL_MAKEJOBS=1
+#	export Q6TESTINSTALL_MAKEJOBS=8
 	export Q6TESTINSTALL_TESTTARGET=bigtest
 
 LLDB_PORT ?= 1234

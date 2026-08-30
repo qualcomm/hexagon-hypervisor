@@ -27,10 +27,6 @@ include $(H2DIR)/scripts/Makefile.inc.version
 include $(H2DIR)/scripts/Makefile.inc.constants
 include $(H2DIR)/scripts/Makefile.inc.tools
 
-ifeq ($(USE_PKW),1)
-export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
-endif
-
 ifeq ($(MODEL),)
    MODEL = ref
    MODELSTR = ${MODEL}

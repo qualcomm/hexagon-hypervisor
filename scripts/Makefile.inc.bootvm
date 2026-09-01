@@ -44,11 +44,11 @@ BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) | constants
 BOOTVM_DEPS = $(VAPA_KERNEL) $(INSTALLPATH)/lib/libh2kernel.a | constants
 
 
-$(_BOOTVM_BUILD_DIR)/%.o: %.c
+$(_BOOTVM_BUILD_DIR)/%.o: %.c | constants
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(_BOOTVM_BUILD_DIR)/%.o: %.S
+$(_BOOTVM_BUILD_DIR)/%.o: %.S | constants
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -64,7 +64,7 @@ $(VAPA_KERNEL): $(VAPA_KERNEL_X_IN) $(KERNEL_TMP) | constants
 	mkdir -p $(dir $@)
 	cat $< | perl -p -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/$(H2K_BOOTVM_OFFSET)/;' > $@
 
-$(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S)
+$(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S) | constants
 	mkdir -p $(dir $@)
 	${CC} ${CFLAGS} -c -o $@ $<
 

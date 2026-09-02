@@ -221,11 +221,6 @@ htags: gtags
 gtagsclean:
 	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML
 
-.PHONY: q6testinstallenvs
- q6testinstallenvs:
-#	export Q6TESTINSTALL_MAKEJOBS=8
-	export Q6TESTINSTALL_TESTTARGET=bigtest
-
 LLDB_PORT ?= 1234
 
 .PHONY: lldb-setup lldb-setup-clean

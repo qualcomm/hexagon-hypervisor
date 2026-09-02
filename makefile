@@ -5,5 +5,11 @@
 # of that is that you can't 'export VAR' anything from the top-level
 # make to your submakes. :/
 
+.PHONY: q6testinstallenvs
+q6testinstallenvs:
+#	export Q6TESTINSTALL_MAKEJOBS=8
+	export Q6TESTINSTALL_TESTTARGET=bigtest
+
+
 %:
 	$(MAKE) -f makefile.real $@

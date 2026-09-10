@@ -141,3 +141,4 @@
 ./perf/pingpong
 ./perf/mutex
 ./perf/mutex2
+./libs/virtio/test_h2_mt

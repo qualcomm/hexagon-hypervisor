@@ -5,12 +5,17 @@
 
 #include "allsyscalls.h"
 #include "syscall_defs.h"
-#include <pthread.h>
 
 extern char H2_ANGEL_write_buf[];
 extern unsigned int H2_ANGEL_write_buf_idx;
 extern const unsigned int H2_ANGEL_write_buf_size;
 
+
+int __sys_write_mode__;
+
+#ifdef H2_STDOUT_STDERR_DEBUG_RING_BUFFER
+
+#include <pthread.h>
 /*
  * Serializes the H2_ANGEL_write_buf mirror ring below.  Any multithreaded
  * guest has concurrent fd<=2 writers here; each writer only serializes with
@@ -24,18 +29,16 @@ extern const unsigned int H2_ANGEL_write_buf_size;
  */
 static pthread_plainmutex_t angel_mirror_lock = PTHREAD_PLAINMUTEX_INITIALIZER_NP;
 
-int __sys_write_mode__;
+#ifndef DCACHE_LINE_SIZE
+#define DCACHE_LINE_SIZE 64U  //FIXME: get it from a header
+#endif
 
 static inline void dccleana(const void *addr)
 {
 	asm volatile (" dccleana(%0)" : : "r"(addr));
 }
 
-#ifndef DCACHE_LINE_SIZE
-#define DCACHE_LINE_SIZE 64U
-#endif
-
-void dccleana_range(const void *addr, count_t count)
+static inline void dccleana_range(const void *addr, count_t count)
 {
 	if (count == 0)
 		return;
@@ -52,6 +55,7 @@ void dccleana_range(const void *addr, count_t count)
 		first += DCACHE_LINE_SIZE;
 	} while (first <= last);
 }
+#endif
 
 sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count)
 {
@@ -76,6 +80,8 @@ sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count)
 	clean(buffer,count/4+3);
 	clean(&x,3);
 	angel_ret = angel_with_err(SYS_WRITE,&x,0);
+
+#ifdef H2_STDOUT_STDERR_DEBUG_RING_BUFFER
 	if (fd > 2) return angel_ret;
 	/* count_t is signed: nothing to mirror, and the copies below want count > 0 */
 	if (count <= 0) return angel_ret;
@@ -114,6 +120,7 @@ sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count)
 	}
 	dccleana(&H2_ANGEL_write_buf_idx);
 	pthread_plainmutex_unlock_np(&angel_mirror_lock);
+#endif	
 	return angel_ret;
 }
 

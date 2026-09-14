@@ -255,7 +255,7 @@ static const char *announce_transport(unsigned int stream_id)
 	 *
 	 * int rc, ready;
 	 *
-	 * rc = virtio_console_setup(VIRTIO_CONSOLE_ADDR, VIRTIO_WINDOW);
+	 * rc = virtio_console_setup(VIRTIO_CONSOLE_ADDR, VIRTIO_WINDOW);  //FIXME: move it to booter or libc startup
 	 * ready = virtio_console_ready();
 	 * if (0 == rc && ready) {
 	 *	atomic_printf("VC_MT_TRANSPORT stream=%u transport=" XPORT_VIRTIO

@@ -9,12 +9,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <h2_vm.h>
 #include <ctype.h>
 #include <h2_common_pmap.h>
 #include <h2_common_config.h>
 #include <h2_common_error.h>
 #include <h2_common_defs.h>
+#include <h2_common_coproc.h>
 #include <h2_kerror.h>
 #include <h2_common_linear.h>
 #include <h2_prof.h>
@@ -905,6 +907,34 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	base[end + npages].raw = 0ULL;  // end marker
 }
 
+void add_vtcm_trans(unsigned int idx) {
+	unsigned int unitlink = h2_info(INFO_UNIT_START);
+
+	if (0 != unitlink) {
+		while ((unitlink != 0) && (h2_info_unit(unitlink, CFG_UNIT_ID) == CFG_TYPE_VXU0)) {
+			unsigned int vtcm_base = h2_info_unit(unitlink, CFG_VTCM_BASE) << 16;
+			unsigned int vtcm_size = h2_info_unit(unitlink, CFG_VTCM_SIZE);
+
+			assert(vtcm_base != -1);
+			assert(vtcm_base != 0);
+
+			vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
+			add_linear_trans(idx, vtcm_base, vtcm_base, SIZE_4K, vtcm_size >> PAGE_BITS, L1WB_L2C, URWX);
+
+			unitlink = h2_info_unit(unitlink, CFG_UNIT_NEXT);
+		}
+	} else {
+		unsigned int vtcm_base = h2_info(INFO_VTCM_BASE);
+		unsigned int vtcm_size = h2_info(INFO_VTCM_SIZE);
+
+		assert(vtcm_base != -1);
+		assert(vtcm_base != 0);
+
+		vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
+		add_linear_trans(idx, vtcm_base, vtcm_base, SIZE_4K, vtcm_size >> PAGE_BITS, L1WB_L2C, URWX);
+	}
+}
+
 void clade_setup(unsigned int idx, unsigned long long offset) {
 
 	unsigned long region_hi, comp, ex_lo_small, ex_lo_large, ex_hi_start, ex_hi_end, ex_hi_size, dict_start;
@@ -1398,6 +1428,7 @@ void config_vm(unsigned int idx) {
 			BOOTER_PRINTF("\tGuest pmap base 0x%08x\n", base.raw);
 		} else {  // default: build a LINEAR extent table covering the whole VM
 			add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages, vm_params[idx].cccc, vm_params[idx].xwru);
+			add_vtcm_trans(idx);
 			trans = vm_params[idx].pmap->type;
 			base.raw = vm_params[idx].pmap->base.raw;
 			BOOTER_PRINTF("\tTranslation type linear\n");

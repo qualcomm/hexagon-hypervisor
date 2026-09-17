@@ -45,10 +45,12 @@ void H2K_popup_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_threa
 int H2K_popup_wait(u32_t intnum, H2K_thread_context *me)
 {
 	u32_t hthread = me->hthread;
-	if (intnum >= MAX_INTERRUPTS) return -1;
 
-	/* Can't change L2 interrupt vector */
-	if (intnum == L2_CORE_INTERRUPT) return -1;
+	if (!((L1_FIRST_AVAILABLE_INTERRUPT <= intnum && intnum < L1_INTERRUPTS)
+		 || (L2_FIRST_AVAILABLE_INTERRUPT <= intnum && intnum < MAX_INTERRUPTS)))
+	{
+		return -1;
+	}
 
 	BKL_LOCK(&H2K_bkl);
 	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
@@ -78,4 +80,3 @@ void H2K_popup_cancel(H2K_thread_context *dest)
 	dest->r00 = (u32_t)-1;
 	/* intcontrol_disable intnum? */
 }
-

@@ -10,16 +10,14 @@
 #include <context.h>
 #include <max.h>
 #include <hw.h>
-//#include <globals.h>
 #include <h2.h>
 #include <h2_vm.h>
 #include <tlbfmt.h>
 #include <tlbmisc.h>
+#include <intcontrol.h>
 
 #define SPINS (1024*1024)
 #define STACK_SIZE 128
-
-// #define SIMULATOR_PMU_SUPPORT 1
 
 h2_sem_t sem_call,sem_ret,sem_done;
 int t0id,t1id;
@@ -47,9 +45,8 @@ void delay()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-/* FIXME: These interrupts could be needed for l2vic2-3 */
-#define INTERRUPT_T0 4
-#define INTERRUPT_T1 5
+#define INTERRUPT_T0 L1_FIRST_AVAILABLE_INTERRUPT
+#define INTERRUPT_T1 L2_FIRST_AVAILABLE_INTERRUPT
 
 static volatile int counter0;
 static volatile int counter1;
@@ -98,7 +95,7 @@ h2_sem_t int_done;
 
 void gen_int(int which)
 {
-	int_num = INTERRUPT_T0 + which;
+	int_num = which ? INTERRUPT_T1 : INTERRUPT_T0;
 	h2_sem_up(&int_sem);
 	h2_sem_down(&int_done);
 }
@@ -106,7 +103,7 @@ void gen_int(int which)
 void hw_gen_int(int which)
 {
 	int intno = int_num;
-	swi(1<<intno);
+	H2K_intcontrol_raise(intno);
 	h2_sem_up(&int_done);
 }
 

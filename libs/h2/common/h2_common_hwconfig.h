@@ -67,7 +67,8 @@ Constants for choosing a cache to change partitioning on
 enum {
 	HWCONFIG_PARTITION_D,	/**< Select the Data Cache */
 	HWCONFIG_PARTITION_I,	/**< Select the Instruction Cache */
-	HWCONFIG_PARTITION_L2	/**< Select the L2 Cache */
+	HWCONFIG_PARTITION_L2,  /**< Select the L2 Cache */
+	HWCONFIG_PARTITION_MAX
 };
 
 /** 

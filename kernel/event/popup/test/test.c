@@ -273,11 +273,19 @@ int main()
 	if ((TH_call_popup_wait(MAX_INTERRUPTS,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 	if ((TH_call_popup_wait(MAX_INTERRUPTS+1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
 	if ((TH_call_popup_wait(L2_CORE_INTERRUPT, &a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
+	if ((TH_call_popup_wait(VM_IPI_INT, &a)) >= 0) FAIL("Reserved L1 interrupt shouldn't pass");
+	if ((TH_call_popup_wait(RESCHED_INT, &a)) >= 0) FAIL("Reserved L1 interrupt shouldn't pass");
+	if ((TH_call_popup_wait(CLUSTER_RESCHED_INT, &a)) >= 0) FAIL("Reserved L1 interrupt shouldn't pass");
+	if ((TH_call_popup_wait(L1_INTERRUPTS, &a)) >= 0) FAIL("Unwired L1 gap interrupt shouldn't pass");
+	if ((TH_call_popup_wait(L2_FIRST_AVAILABLE_INTERRUPT - 1, &a)) >= 0) FAIL("Unwired L1 gap interrupt shouldn't pass");
 
 	TH_popup_check_priorities(&a,&b);
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		if (L2_CORE_INTERRUPT == i) continue;
+		if ((i < L1_FIRST_AVAILABLE_INTERRUPT)
+				|| (i >= L1_INTERRUPTS && i < L2_FIRST_AVAILABLE_INTERRUPT)) {
+			continue;
+		}
 		H2K_runlist_push(&a);
 		TH_clear_popups();
 		if (TH_call_popup_wait(i,&a) != 0) {
@@ -320,7 +328,7 @@ int main()
 	a.status = H2K_STATUS_RUNNING;
 	a.vmstatus = H2K_VMSTATUS_VMWORK;
 	TH_saw_do_work = 0;
-	if (TH_call_popup_wait(0, &a) >= 0) FAIL("B: popup_wait should fail with VMWORK set");
+	if (TH_call_popup_wait(L1_FIRST_AVAILABLE_INTERRUPT, &a) >= 0) FAIL("B: popup_wait should fail with VMWORK set");
 	if (!TH_saw_do_work) FAIL("B: VMWORK alone must call vm_do_work");
 	if (a.status == H2K_STATUS_INTBLOCKED) FAIL("B: must not set INTBLOCKED");
 	a.vmstatus = 0;
@@ -331,7 +339,7 @@ int main()
 	a.status = H2K_STATUS_RUNNING;
 	a.vmstatus = H2K_VMSTATUS_VMWORK | H2K_VMSTATUS_KILL;
 	TH_saw_do_work = 0;
-	if (TH_call_popup_wait(0, &a) >= 0) FAIL("C: popup_wait should fail with VMWORK|KILL");
+	if (TH_call_popup_wait(L1_FIRST_AVAILABLE_INTERRUPT, &a) >= 0) FAIL("C: popup_wait should fail with VMWORK|KILL");
 	if (!TH_saw_do_work) FAIL("C: VMWORK|KILL must call vm_do_work");
 	if (a.status == H2K_STATUS_INTBLOCKED) FAIL("C: must not set INTBLOCKED");
 	a.vmstatus = 0;

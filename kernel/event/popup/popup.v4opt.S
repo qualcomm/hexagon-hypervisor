@@ -138,22 +138,24 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 #define MASK r13
 #define RETURN_PAIR r15:14
 	{
-		allocframe(#0)
-		HWTNUM = memub(ME+#CONTEXT_hthread)
+		p0 = !cmp.gtu(INTNO, #MAX_INTERRUPTS-1)
+		p0 = cmp.gtu(INTNO, #L2_FIRST_AVAILABLE_INTERRUPT-1)
+		p1 = cmp.gtu(INTNO, #L1_FIRST_AVAILABLE_INTERRUPT-1)
+		p1 = !cmp.gtu(INTNO, #L1_INTERRUPTS-1)
 	}
 	{
-		p0 = cmp.gtu(INTNO,#MAX_INTERRUPTS-1)
-		if (p0.new) jump:nt 9f
-		p1 = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
-		if (p1.new) jump:nt 9f
+		p2 = or(p0,p1)
+		if (!p2.new) jump:nt 8f
 	}
 	ASM_BKL_LOCK(r6, r7, r8, p0)
 #define TMP INTHANDLERS_ADDR
 	{
+		allocframe(#0)
 		TMP = memub(ME+#CONTEXT_vmstatus)
 		MASK = #H2K_VMSTATUS_VMWORK
 	}
 	{
+		if (!p0.new) HWTNUM = memub(ME+#CONTEXT_hthread)
 		p0 = bitsset(TMP,MASK)
 		if (p0.new) jump:nt .Lpopup_wait_vmwork
 	}
@@ -170,7 +172,7 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 	}
 	{
 		p0 = cmp.eq(OLDPARAM,#0)
-		if (!p0.new) jump:nt 8f
+		if (!p0.new) jump:nt 9f
 		if (p0.new) memd(INTHANDLERS_ADDR+INTNO<<#3) = PARAM_HANDLER
 	}
 #undef OLDPARAM_HANDLER
@@ -208,8 +210,12 @@ FUNC_START H2K_popup_wait .text.int.popup .falign
 		jump H2K_dosched
 	}
 8:
-	ASM_BKL_UNLOCK(r6, r7, r8, p0)
+	{
+		r0 = #-1
+		jumpr r31
+	}
 9:
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		r0 = #-1
 		dealloc_return

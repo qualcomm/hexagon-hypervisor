@@ -80,7 +80,10 @@ static s64_t H2K_tlb_tlbfree(u32_t unused0, u32_t index, u64_t unused32, H2K_thr
 	if (index >= H2K_gp->tlb_size - ((u32_t)&H2K_KERNEL_NPAGES + 1)) return -1;
 
 	H2K_mutex_lock_tlb();
-	if (index <= H2K_gp->last_tlb_index) return -1;
+	if (index <= H2K_gp->last_tlb_index) {
+		H2K_mutex_unlock_tlb();
+		return -1;
+	}
 	H2K_mem_tlb_write(index,0);
 	H2K_gp->pinned_tlb_mask &= ~(1ULL<<(maskidx));	/* Clear Bit */
 	/* While free spots at the end, grow replaceable section */

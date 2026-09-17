@@ -45,28 +45,6 @@ static H2K_thread_context a,b,c;
 
 static H2K_vmblock_t vm;
 
-#if 0
-void H2K_dosched(H2K_thread_context *in, int hthread)
-{
-	if (in != TB_in) FAIL("Unexpected thread passed to dosched");
-	if (TB_in && hthread != TB_in->hthread) FAIL("Unexpected hardware thread");
-	if (H2K_gp->wait_mask != 0) FAIL("Set bit in wait_mask");
-	TB_saw_dosched ++;
-	checker_kernel_locked();
-	BKL_UNLOCK();
-	checker_runlist();
-	checker_ready();
-	longjmp(env,1);
-}
-
-void TH_resched(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
-{
-	if (setjmp(env) == 0) {
-		H2K_resched(unused,me,hwtnum);
-	}
-}
-#endif
-
 static int TH_saw_dosched  = 0;
 static int TH_saw_switch  = 0;
 static H2K_thread_context *TH_switch_old;
@@ -262,13 +240,16 @@ int main()
 	a.hthread = 0;
 	b.hthread = 0;
 
-#if 0
 	/* Check bad cases */
-	if ((TH_call_intpool_wait(-1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
-	if ((TH_call_intpool_wait(MAX_INTERRUPTS,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
-	if ((TH_call_intpool_wait(MAX_INTERRUPTS+1,&a)) >= 0) FAIL("Invalid interrupt didn't fail");
-	if ((TH_call_intpool_wait(31,&a)) >= 0) FAIL("V4 L2 interrupt registration shouldn't pass");
-#endif
+	if (H2K_intpool_configure(-1, 1, &a) >= 0) FAIL("Invalid interrupt didn't fail");
+	if (H2K_intpool_configure(MAX_INTERRUPTS, 1, &a) >= 0) FAIL("Invalid interrupt didn't fail");
+	if (H2K_intpool_configure(MAX_INTERRUPTS+1, 1, &a) >= 0) FAIL("Invalid interrupt didn't fail");
+	if (H2K_intpool_configure(L2_CORE_INTERRUPT, 1, &a) >= 0) FAIL("L2 core interrupt registration shouldn't pass");
+	if (H2K_intpool_configure(VM_IPI_INT, 1, &a) >= 0) FAIL("Reserved L1 interrupt shouldn't pass");
+	if (H2K_intpool_configure(RESCHED_INT, 1, &a) >= 0) FAIL("Reserved L1 interrupt shouldn't pass");
+	if (H2K_intpool_configure(CLUSTER_RESCHED_INT, 1, &a) >= 0) FAIL("Reserved L1 interrupt shouldn't pass");
+	if (H2K_intpool_configure(L1_INTERRUPTS, 1, &a) >= 0) FAIL("Unwired L1 gap interrupt shouldn't pass");
+	if (H2K_intpool_configure(L2_FIRST_AVAILABLE_INTERRUPT - 1, 1, &a) >= 0) FAIL("Unwired L1 gap interrupt shouldn't pass");
 
 	TH_intpool_check_priorities(&a,&b);
 
@@ -276,7 +257,9 @@ int main()
 	 * For each interrupt, try to wait for the interrupt
 	 */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		if (i == 31) continue;
+#if ARCHV >= 4
+		if (i == L2_CORE_INTERRUPT) continue;
+#endif
 		H2K_runlist_push(&a);
 		TH_clear_intpool();
 		if (TH_call_intpool_wait(i,&a) != 0) {
@@ -296,7 +279,9 @@ int main()
 	 * For each interrupt, try to deliver an interrupt for either idle or running a task
 	 */
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
-		if (i == 31) continue;
+#if ARCHV >= 4
+		if (i == L2_CORE_INTERRUPT) continue;
+#endif
 		/* Interrupt from idle */
 		TH_clear_intpool();
 		TH_set_intpool(i,&b);

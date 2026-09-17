@@ -331,75 +331,69 @@ $(INSTALLPATH)/qurt_report.html: $(RESULT_FILES)
 	done;\
 	echo "</table></body></html>" >> $@
 
-check-fail:
-	@((((for SUBDIR in ${SUBDIRS}; do\
-	   echo -n "$$SUBDIR: "; \
-	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
-	      echo FAIL - Empty/No results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "ERROR" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - ERROR detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "FAIL" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - FAIL detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "status 0xaaafa7a1" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -ne 0 ]; then\
-	      echo FAIL - No PASS detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   echo; \
-	done 2>&1; echo $? >&3) | tee -a $(TESTOUT) >&4) 3>&1) | (read stat; exit $$stat)) 4>&1
+# Recorded failures from the last scan: one "<test> - <reason>" line per failing
+# test.  Lives in the per-variant build root so parallel ARCHV/variant runs do
+# not share it.
+CHECK_FAIL_LIST = $(TEST_BUILD_ROOT)/check_failures.txt
 
-check:
-	@for SUBDIR in ${SUBDIRS}; do\
-	   echo -n "$$SUBDIR: "; \
-	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
-	      echo FAIL - Empty/No results.txt; \
-	      echo; \
-	      continue;\
-	   fi;\
-	   grep "ERROR" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - ERROR detected in results.txt; \
-	      echo; \
-	      continue;\
-	   fi;\
-	   grep "FAIL" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - FAIL detected in results.txt; \
-	      echo; \
-	      continue;\
-	   fi;\
-	   grep "status 0xaaafa7a1" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -ne 0 ]; then\
-	      echo FAIL - No PASS detected in results.txt; \
-	      echo; \
-	      continue;\
-	   fi;\
+# Shared results scanner used by both 'check' and 'check-fail'.  It walks EVERY
+# subdir — a timeout, crash or missing results.txt in one test must never hide
+# the results of the remaining tests — printing one verdict line per test plus
+# the matching detail lines, and recording each failure in CHECK_FAIL_LIST.  The
+# caller decides what to do with the list: 'check' just reports, 'check-fail'
+# exits non-zero after the full listing has been printed.
+# Every line ends in "; \" so the expansion stays a single shell command.
+define SCAN_RESULTS
+	mkdir -p $(TEST_BUILD_ROOT); \
+	rm -f $(CHECK_FAIL_LIST); \
+	touch $(CHECK_FAIL_LIST); \
+	NTEST=0; \
+	for SUBDIR in ${SUBDIRS}; do \
+	   RESULTS=$(TEST_BUILD_ROOT)/$$SUBDIR/results.txt; \
+	   NTEST=$$((NTEST+1)); \
+	   printf '%s: ' "$$SUBDIR"; \
+	   REASON=""; \
+	   if [ ! -s $$RESULTS ]; then \
+	      REASON="Empty/No results.txt"; \
+	   elif grep -q "ERROR" $$RESULTS; then \
+	      grep "ERROR" $$RESULTS; \
+	      REASON="ERROR detected in results.txt"; \
+	   elif grep -q "FAIL" $$RESULTS; then \
+	      grep "FAIL" $$RESULTS; \
+	      REASON="FAIL detected in results.txt"; \
+	   elif grep -q "status 0xaaafa7a1" $$RESULTS; then \
+	      grep "status 0xaaafa7a1" $$RESULTS; \
+	      REASON="status 0xaaafa7a1 detected in results.txt"; \
+	   elif ! grep -q "TEST PASSED" $$RESULTS; then \
+	      REASON="No PASS detected in results.txt"; \
+	   fi; \
+	   if [ -n "$$REASON" ]; then \
+	      echo "FAIL - $$REASON"; \
+	      echo "$$SUBDIR - $$REASON" >> $(CHECK_FAIL_LIST); \
+	   else \
+	      grep "TEST PASSED" $$RESULTS; \
+	   fi; \
 	   echo; \
-	done
+	done; \
+	NFAIL=`wc -l < $(CHECK_FAIL_LIST)`; \
+	if [ $$NFAIL -eq 0 ]; then \
+	   echo "CHECK v$(ARCHV)/$(TARGET): all $$NTEST tests passed"; \
+	else \
+	   echo "CHECK v$(ARCHV)/$(TARGET): $$NFAIL of $$NTEST tests FAILED:"; \
+	   sed 's/^/    /' $(CHECK_FAIL_LIST); \
+	fi
+endef
+
+# Report every test, then fail once at the end if anything failed.  The exit
+# status is taken from CHECK_FAIL_LIST (a file, not the pipeline) so it survives
+# the 'tee' subshell.
+check-fail:
+	@{ $(SCAN_RESULTS); } 2>&1 | tee -a $(TESTOUT)
+	@if [ -s $(CHECK_FAIL_LIST) ]; then exit 1; fi
+
+# Same listing, but always succeeds — for interactive use.
+check:
+	@{ $(SCAN_RESULTS); } 2>&1
 
 
 else

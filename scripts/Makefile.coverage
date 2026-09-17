@@ -99,6 +99,12 @@ $(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest $$(call test_src_deps,
 # cov_fns so the function list exists before a multi-gmon test invokes merge_cov.py.
 # The test_src_deps prerequisite (via .SECONDEXPANSION) also re-runs coverage for a
 # test when its own sources change, matching the results.txt rule above.
+# The leading '-' on the inner make line serves the same purpose as in the
+# results.txt rule: a failing test (build error, crash, ulimit timeout — exit
+# 137) must not abort the coverage sweep over the remaining tests, nor stop
+# cov.html/test_report.html/test_results.json from being generated afterwards.
+# PASS/FAIL still comes from results.txt, which the test writes either way; a
+# test that dies before dumping gmon data simply contributes no cov.txt.
 $(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns $$(call test_src_deps,$$*)
 	mkdir -p "$(TEST_BUILD_ROOT)/$*"
 	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc ! -name 'cov.txt' ! -name 'cov-*.txt' \
@@ -106,7 +112,7 @@ $(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns
 	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
 	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
 	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
-	$(BSUB) $(MAKE) -C "$(TEST_BUILD_ROOT)/$*" all TEST="$*" 2>&1 | \
+	-$(BSUB) $(MAKE) -C "$(TEST_BUILD_ROOT)/$*" all TEST="$*" 2>&1 | \
 	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
 	    TSTAT=$${PIPESTATUS[0]}; \
 	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \

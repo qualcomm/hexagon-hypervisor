@@ -914,24 +914,42 @@ void add_vtcm_trans(unsigned int idx) {
 		while ((unitlink != 0) && (h2_info_unit(unitlink, CFG_UNIT_ID) == CFG_TYPE_VXU0)) {
 			unsigned int vtcm_base = h2_info_unit(unitlink, CFG_VTCM_BASE) << 16;
 			unsigned int vtcm_size = h2_info_unit(unitlink, CFG_VTCM_SIZE);
+			int page_size;
 
 			assert(vtcm_base != -1);
 			assert(vtcm_base != 0);
 
 			vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
-			add_linear_trans(idx, vtcm_base, vtcm_base, SIZE_4K, vtcm_size >> PAGE_BITS, L1WB_L2C, URWX);
+
+			/* find smallest page size that can contain VTCM in a single page */
+			for (page_size = SIZE_4K; page_size <= SIZE_16M; page_size++) {
+				unsigned long page_bytes = 1UL << (PAGE_BITS + page_size * 2);
+				if (vtcm_size <= page_bytes)
+					break;
+			}
+
+			add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
 
 			unitlink = h2_info_unit(unitlink, CFG_UNIT_NEXT);
 		}
 	} else {
 		unsigned int vtcm_base = h2_info(INFO_VTCM_BASE);
 		unsigned int vtcm_size = h2_info(INFO_VTCM_SIZE);
+		int page_size;
 
 		assert(vtcm_base != -1);
 		assert(vtcm_base != 0);
 
 		vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
-		add_linear_trans(idx, vtcm_base, vtcm_base, SIZE_4K, vtcm_size >> PAGE_BITS, L1WB_L2C, URWX);
+
+		/* find smallest page size that can contain VTCM in a single page */
+		for (page_size = SIZE_4K; page_size <= SIZE_16M; page_size++) {
+			unsigned long page_bytes = 1UL << (PAGE_BITS + page_size * 2);
+			if (vtcm_size <= page_bytes)
+				break;
+		}
+
+		add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
 	}
 }
 

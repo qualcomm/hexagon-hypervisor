@@ -1178,12 +1178,13 @@ void load_vm(unsigned int idx) {
 
 		/* Grow the booter's guest window to the actual size this image needs before the
 		 * phdr loop below writes into guest physical memory. "start" (min phdr p_vaddr)
-		 * isn't known until the loop runs, so this omits it and uses heap_start (which
-		 * already incorporates the guest's _end symbol) + heap + stack as the size --
-		 * since start is always >= 0, this is a safe over-approximation of the real
-		 * total_size computed after the loop below. */
+		 * isn't known until the loop runs, so use the linked guest start as a lower bound
+		 * for a safe over-approximation of the real total_size computed after the loop.
+		 * Keep the linked absolute high address separate from the relative image size so
+		 * guest_base is added exactly once, including when --guest_base relocates the VM. */
 		{
-			unsigned long pre_heap_size, pre_heap_start, pre_stack_size, pre_end, pre_total_size;
+			unsigned long pre_heap_size, pre_heap_start, pre_stack_size, pre_end;
+			unsigned long long pre_image_hi, pre_total_size;
 
 			pre_heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
 			if (0 == pre_heap_size || -1 == pre_heap_size) {
@@ -1208,7 +1209,8 @@ void load_vm(unsigned int idx) {
 					? GUESS_STACK_SIZE : vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr;
 			}
 
-			pre_total_size = H2_ALIGN_UP(pre_heap_start + pre_heap_size + pre_stack_size, one_page);
+			pre_image_hi = (unsigned long long)pre_heap_start + pre_heap_size + pre_stack_size;
+			pre_total_size = H2_ALIGN_UP(pre_image_hi - H2K_GUEST_START, one_page);
 			booter_grow_guest_window(guest_base, guest_base + pre_total_size, vm_params[idx].page_size);
 		}
 

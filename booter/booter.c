@@ -907,6 +907,19 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 	base[end + npages].raw = 0ULL;  // end marker
 }
 
+static int get_vtcm_page_size(unsigned long vtcm_size) {
+	int page_size;
+
+	/* find smallest page size that can contain VTCM in a single page */
+	for (page_size = SIZE_4K; page_size <= SIZE_16M; page_size++) {
+		unsigned long page_bytes = 1UL << (PAGE_BITS + page_size * 2);
+		if (vtcm_size <= page_bytes)
+			break;
+	}
+
+	return page_size;
+}
+
 void add_vtcm_trans(unsigned int idx) {
 	unsigned int unitlink = h2_info(INFO_UNIT_START);
 
@@ -920,13 +933,7 @@ void add_vtcm_trans(unsigned int idx) {
 			assert(vtcm_base != 0);
 
 			vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
-
-			/* find smallest page size that can contain VTCM in a single page */
-			for (page_size = SIZE_4K; page_size <= SIZE_16M; page_size++) {
-				unsigned long page_bytes = 1UL << (PAGE_BITS + page_size * 2);
-				if (vtcm_size <= page_bytes)
-					break;
-			}
+			page_size = get_vtcm_page_size(vtcm_size);
 
 			add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
 
@@ -941,13 +948,7 @@ void add_vtcm_trans(unsigned int idx) {
 		assert(vtcm_base != 0);
 
 		vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
-
-		/* find smallest page size that can contain VTCM in a single page */
-		for (page_size = SIZE_4K; page_size <= SIZE_16M; page_size++) {
-			unsigned long page_bytes = 1UL << (PAGE_BITS + page_size * 2);
-			if (vtcm_size <= page_bytes)
-				break;
-		}
+		page_size = get_vtcm_page_size(vtcm_size);
 
 		add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
 	}

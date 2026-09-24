@@ -4,6 +4,7 @@ ALL: dummy
 H2DIR ?= ..
 
 include ../scripts/Makefile.inc.tools
+include ../scripts/Makefile.inc.install
 
 ifeq ($(USE_PKW),1)
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
@@ -131,6 +132,17 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
+# The 'offsets' probe (build/offsets/make.inc) is compiled and then RUN to
+# generate asm_offsets.h, so it needs the copied headers first.  Declared here,
+# not in that make.inc, because prerequisites expand where written and
+# DEST_HFILES is only complete after the includes above.  asm_offsets.h itself is
+# filtered out: it is this chain's own output.
+#
+# Deliberately a blanket dependency on every kernel header, unlike the objects
+# below: assembly hardcodes the offsets it computes, so a stale asm_offsets.h is
+# not a slow build, it is silently wrong code.  Regenerating it is cheap.
+$(BUILD_DIR)/offsets: $(filter-out $(BUILD_DIR)/include/asm_offsets.h,$(DEST_HFILES))
+
 ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
 
 ifdef LOGBUF
@@ -161,7 +173,8 @@ $(foreach _o,$(ALL_OFILES),\
 endif
 endif
 
-$(ALL_OFILES): $(DEST_HFILES)
+# Order-only (|): headers must exist before compiling; the .d files carry the edges.
+$(ALL_OFILES): | $(DEST_HFILES)
 
 ifeq ($(ARCHV),4)
 OPT_OFILES := $(OPT_V4_OFILES)
@@ -211,11 +224,11 @@ $(BUILD_DIR)/libh2check.a: $(CHECK_OFILES)
 
 $(BUILD_DIR)/%.o : %.c
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 $(BUILD_DIR)/%.o : %.S
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include \
@@ -232,12 +245,11 @@ dummy:
 
 includes: $(DEST_HFILES)
 
-install: info $(BUILD_DIR)/libh2kernel.a check
-	mkdir -p $(INSTALLPATH)/lib
-	mkdir -p $(INSTALLPATH)/include
-	cp $(BUILD_DIR)/libh2kernel.a $(INSTALLPATH)/lib
-	cp $(BUILD_DIR)/libh2check.a $(INSTALLPATH)/lib
-	cp $(BUILD_DIR)/include/asm_offsets.h $(INSTALLPATH)/include # for state trap
+# Must precede 'install': prerequisites expand at parse, so populate them first.
+$(call install_files,$(INSTALLPATH)/lib,$(BUILD_DIR)/libh2kernel.a $(BUILD_DIR)/libh2check.a)
+$(call install_files,$(INSTALLPATH)/include,$(BUILD_DIR)/include/asm_offsets.h)
+
+install: info $(INSTALL_TARGETS)
 
 .PHONY: info
 info :
@@ -248,3 +260,5 @@ endif
 
 check: $(BUILD_DIR)/libh2check.a
 
+# Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+-include $(ALL_OFILES:.o=.d)

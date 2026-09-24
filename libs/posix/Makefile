@@ -88,7 +88,8 @@ $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
 ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
 
-$(ALL_OFILES): $(DEST_HFILES)
+# Order-only (|): headers must exist before compiling; the .d files carry the edges.
+$(ALL_OFILES): | $(DEST_HFILES)
 
 ifeq ($(ARCHV),4)
 OPT_OFILES := $(OPT_V4_OFILES)
@@ -130,11 +131,11 @@ endif
 
 $(BUILD_DIR)/%.o : %.c
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 $(BUILD_DIR)/%.o : %.S
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include
@@ -153,3 +154,5 @@ ref: $(BUILD_DIR)/libposix.a
 
 opt: $(BUILD_DIR)/libposix.a
 
+# Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+-include $(ALL_OFILES:.o=.d)

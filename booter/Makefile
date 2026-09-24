@@ -2,6 +2,7 @@
 H2DIR ?= ..
 
 include $(H2DIR)/scripts/Makefile.inc.tools
+include $(H2DIR)/scripts/Makefile.inc.install
 
 ifeq ($(INSTALLPATH),)
 export INSTALLPATH := $(H2DIR)/artifacts/v$(ARCHV)/opt/install
@@ -50,9 +51,9 @@ $(BOOTVM_IMAGE): $(BUILD_DIR)/booter.o $(BUILD_DIR)/booter_event.o $(BOOTVM_IMAG
 test: $(BUILD_DIR)/hello $(BOOTVM_PROG)
 	$(SIM) -- $(BOOTVM_PROG) $(BUILD_DIR)/hello
 
-install: all
-	mkdir -p $(INSTALLPATH)/bin
-	cp $(BOOTVM_PROG) $(INSTALLPATH)/bin
+$(call install_files,$(INSTALLPATH)/bin,$(BOOTVM_PROG))
+
+install: all $(INSTALL_TARGETS)
 
 clean:
 	rm -f $(BOOTVM_CLEAN) pmu_statsfile.txt

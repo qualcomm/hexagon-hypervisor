@@ -33,9 +33,12 @@ $(BUILD_DIR)/libangel.a: $(O_FILES)
 
 $(BUILD_DIR)/%.o: %.c
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 $(BUILD_DIR)/%.o: %.S
 	mkdir -p $(dir $@)
-	$(CC) $(ASFLAGS) -c -o $@ $<
+	$(CC) $(ASFLAGS) $(DEPFLAGS) -c -o $@ $<
 
+
+# Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+-include $(O_FILES:.o=.d)

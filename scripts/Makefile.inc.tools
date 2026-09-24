@@ -150,4 +150,9 @@ export LLVM_COV_LDFLAGS := -fprofile-instr-generate
 export OPTIMIZE_COV := -fno-inline
 export OPTIMIZE_DEBUG := -O0 -fno-inline
 
+# -MMD writes a .d beside each object listing every header it actually opened,
+# transitively and across directory boundaries.  -MP adds a bodiless target per
+# header, so a deleted header does not leave a stale .d that kills make.
+export DEPFLAGS := -MMD -MP
+
 endif

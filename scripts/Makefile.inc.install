@@ -1,0 +1,28 @@
+ifndef MAKE_INC_INSTALL
+MAKE_INC_INSTALL := 1
+
+INSTALL_TARGETS :=
+
+_install_dirs :=
+
+define _install_dir
+ifeq (,$(filter $(1),$(_install_dirs)))
+_install_dirs += $(1)
+$(1):
+	mkdir -p $$@
+endif
+endef
+
+define _install_one
+$(1)/$(notdir $(2)): $(2) | $(1)
+	cp -p $$< $$@
+INSTALL_TARGETS += $(1)/$(notdir $(2))
+endef
+
+install_files = $(eval $(call _install_dir,$(1)))\
+$(foreach _f,$(2),$(eval $(call _install_one,$(1),$(_f))))
+
+H2_INSTALL_ARTIFACTS = $(addprefix $(INSTALLPATH)/lib/,libh2kernel.a libh2.a libh2check.a) \
+                       $(INSTALLPATH)/bin/booter
+
+endif

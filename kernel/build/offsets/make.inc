@@ -8,11 +8,12 @@ else
 	$(RUN) $< $@
 endif
 
-$(BUILD_DIR)/offsets: $(DIR)offsets.ref.c includes
+
+$(BUILD_DIR)/offsets: $(DIR)offsets.ref.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ $<
 
-DEST_HFILES += $(BUILD_DIR)/include/asm_offsets.h
-
 CLEAN_EXTRAS += $(BUILD_DIR)/offsets
+
+DEST_HFILES += $(BUILD_DIR)/include/asm_offsets.h
 

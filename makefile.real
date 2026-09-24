@@ -2,6 +2,7 @@ include scripts/Makefile.inc.config
 include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
 include scripts/Makefile.inc.tools
+include scripts/Makefile.inc.install
 
 JFLAG ?= -j
 TEST_JFLAG ?= -j8
@@ -19,6 +20,8 @@ MAKEFLAGS += -j$(shell nproc)
 endif
 endif
 
+export H2_INSIDE_TOPLEVEL_MAKE := 1
+
 NULLSTRING :=
 define nl
 
@@ -32,7 +35,15 @@ all:
 	$(BSUB) $(MAKE) $(JFLAG) build
 
 .PHONY: build
-build:
+# The files the top level installs itself are ordinary prerequisites: the config
+# fragments each generated per-test Makefile.inc includes, and the simulator
+# device configs.  Several devsim_v*.cfg are symlinks into a shared config; cp
+# follows the link and make stats through it, so they need no special handling.
+$(call install_files,$(INSTALLPATH)/scripts,\
+    scripts/Makefile.inc.config scripts/Makefile.inc.opensource \
+    $(wildcard scripts/devsim_v*.cfg))
+
+build: $(INSTALL_TARGETS)
 ifeq ($(USE_PKW),1)
 	@echo PKW_VERSIONS $(PKW_VERSIONS)
 	pkw --which $(CC)
@@ -41,19 +52,10 @@ endif
 	$(MAKE) -C libs ARCHV=$(ARCHV) install && \
 	$(MAKE) -C stake ARCHV=$(ARCHV) install
 	$(MAKE) -C booter ARCHV=$(ARCHV) install
-	cp scripts/Makefile.inc.config $(INSTALLPATH)/scripts
-	cp scripts/Makefile.inc.opensource $(INSTALLPATH)/scripts
-	cp scripts/devsim_v*.cfg $(INSTALLPATH)/scripts
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
 	echo "v$(ARCHV) $(TARGET) ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
-	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
-	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
-	    > $(INSTALLPATH)/manifest.tmp; \
-	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
-	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
-	rm -f $(INSTALLPATH)/manifest.tmp
 
 BUILDS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),build-$(a)-$(v)))
 
@@ -143,9 +145,16 @@ test: testall
 # caller wants to accumulate results across multiple runs.
 NO_TEST_RESET ?= 0
 
+# FORCE_BUILD=1 runs a top-level 'build' before the test, for callers who can't
+# rely on h2_test's own bootstrap (e.g. re-testing after only touching sources).
+FORCE_BUILD ?= 0
+
 test_variant:
 ifneq ($(NO_TEST_RESET),1)
 	@if [ -d "$(dir $(TESTOUT))" ]; then > "$(TESTOUT)"; fi
+endif
+ifeq ($(FORCE_BUILD),1)
+	$(MAKE) build
 endif
 	$(MAKE) h2_test
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) test_summary

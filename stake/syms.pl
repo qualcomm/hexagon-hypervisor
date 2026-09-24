@@ -40,7 +40,7 @@ close ADD;
 open(OUT, ">$outfile")
 	or die "Can't open $outfile for write";
 
-foreach my $s (keys %add_syms) {
+foreach my $s (sort keys %add_syms) {
 	print OUT "--defsym=$s=$add_syms{$s}\n";
 }
 close OUT;

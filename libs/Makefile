@@ -1,5 +1,7 @@
 # Smaller kludge here
 
+include ../scripts/Makefile.inc.install
+
 ifeq ($(ARCHV),)
 export ARCHV := 68
 endif
@@ -58,26 +60,38 @@ MAKE_LIB=${MAKE} -C $(dir $@)
 $(TMP_DIR):
 	mkdir -p $@
 
-$(H2_LIB):
+# $(call lib_sources,<dir>) -> every source file under a sub-library.
+#
+# Only the sub-make knows a library's real file list; it is spread over the
+# make.inc fragments under each module directory.  Every file under the library's
+# directory is a superset of that list, which errs the safe way: the parent may
+# consult a child that had nothing to do (it no-ops, its archive's mtime does not
+# move, nothing downstream is invalidated), but never misses a real edit.
+lib_sources = $(shell find $(1) -type f ! -name '*.o' ! -name '*.a' ! -name '*.d')
+
+$(H2_LIB): $(call lib_sources,$(H2_DIR))
 	+${MAKE} -C $(H2_DIR) $(BUILD_TYPE)
 
-$(POSIX_LIB): $(H2_LIB)
+# Ordinary prerequisites, not order-only: posix, h2_compat, qurt and angel compile
+# against each other's generated headers, and a child is only consulted when its
+# own directory changed -- order-only would hide h2 header edits from them.
+$(POSIX_LIB): $(H2_LIB) $(call lib_sources,$(POSIX_DIR))
 	+${MAKE} -C posix $(BUILD_TYPE)
 
-$(H2_COMPAT_LIB): $(H2_LIB) $(POSIX_LIB)
+$(H2_COMPAT_LIB): $(H2_LIB) $(POSIX_LIB) $(call lib_sources,$(H2_COMPAT_DIR))
 	+${MAKE} -C $(H2_COMPAT_DIR) $(BUILD_TYPE)
 
-$(QURT_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
+$(QURT_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB) $(call lib_sources,qurt)
 	+${MAKE} -C qurt
 
-$(ANGEL_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
+$(ANGEL_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB) $(call lib_sources,syscall/angel)
 	+${MAKE} -C syscall/angel
 
 ifeq ($(PICOLIBC),1)
-$(SYS_WRAPPER_LIB):
+$(SYS_WRAPPER_LIB): $(call lib_sources,syscall/wrapper)
 	+${MAKE} -C syscall/wrapper
 
-$(LOCKS_LIB):
+$(LOCKS_LIB): $(call lib_sources,locks)
 	+${MAKE} -C locks
 endif
 
@@ -100,10 +114,10 @@ $(TMP_DIR)/libh2.a: ${ALL_LIBS} | $(TMP_DIR)
 #  tar is used instead of cp so we can recursively copy and also exclude CVS
 #  Also, /pkg/gnu/bin/tar doesn't seem to work right.
 
-install: $(TMP_DIR)/libh2.a $(SYS_WRAPPER_LIB) $(LOCKS_LIB)
-	mkdir -p $(INSTALLPATH)/lib;
+$(call install_files,$(INSTALLPATH)/lib,$(TMP_DIR)/libh2.a $(SYS_WRAPPER_LIB) $(LOCKS_LIB))
+
+install: $(INSTALL_TARGETS)
 	mkdir -p $(INSTALLPATH)/include;
-	cp $^ $(INSTALLPATH)/lib;
 	for dir in $(_H2_HDR_DIR) $(_POSIX_HDR_DIR) $(_H2COMPAT_HDR_DIR) syscall/angel/include qurt/include; do\
 		if [ -d "$$dir" ]; then \
 			pushd $$dir;\

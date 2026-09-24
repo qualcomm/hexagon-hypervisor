@@ -2,8 +2,10 @@
 #  This behaves kind of like a SUBDIRS makefile.
 #  It is meant to be run from the top level ob directory.
 
+# For $(H2_INSTALL_ARTIFACTS): the installed files the tests are built against.
+include $(H2DIR)/scripts/Makefile.inc.install
+
 SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/\s*\#.*//;')
-#SUBDIRS_ALL:=$(shell cat ./scripts/testlist.v* | sort | uniq | perl -p -e 's/^\s*\#.*//;')
 
 TESTOUT ?= $(INSTALLPATH)/test.out
 
@@ -20,14 +22,10 @@ RESULT_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/results.txt, $(SUBDIRS))
 # whitelist in the results.txt recipe's `find` below (they select the same set).
 TEST_SRC_EXTS := c h S s cpp cc py dat cfg
 
-# $(call test_src_deps,<test-subdir>) -> the test's own source files under
-# $(H2DIR)/<test-subdir>.  Used as extra prerequisites (via .SECONDEXPANSION) so
-# a test re-runs when ITS OWN sources change, not only when the kernel/lib
-# manifest changes.  Before this, results.txt depended solely on manifest, so
-# editing a test's test.c/Makefile left the stale results.txt "up to date" and
-# the test was never rebuilt on an incremental run — the reason a full
-# clean_build_test was needed as a workaround.  The exclusions mirror the
-# generator-output exclusions in the recipe's find (scenarios.h, etc.).
+# $(call test_src_deps,<test-subdir>) -> the test's own sources.  Extra
+# prerequisites (via .SECONDEXPANSION) so a test re-runs on its own edits, not
+# only when the kernel or libs it links were rebuilt.  Exclusions mirror the
+# generator-output exclusions in the recipe's find.
 test_src_deps = $(filter-out %/scenarios.h %/generated_tests.dat %/threadmap.py,\
     $(wildcard $(addprefix $(H2DIR)/$(1)/,Makefile tested_functions $(addprefix *.,$(TEST_SRC_EXTS)))))
 
@@ -51,8 +49,9 @@ all:
 tst: $(RESULT_FILES)
 
 # Build and run one test, producing its results.txt.
-# Depends on $(INSTALLPATH)/manifest (sha256 of key install files, updated only when
-# content changes) so tests re-run iff the build actually changed something.
+# Depends on $(H2_INSTALL_ARTIFACTS) -- the installed archives and booter the
+# test is built against.  Each is a real target whose mtime moves only when the
+# bytes behind it were rebuilt, so a test re-runs iff something it links changed.
 # The leading '-' on the inner make line makes the rule succeed even when the
 # test fails; PASS/FAIL is captured in results.txt content (read by check-fail
 # and gen_test_results.py).  Without this, .DELETE_ON_ERROR would remove the
@@ -68,9 +67,9 @@ tst: $(RESULT_FILES)
 #
 # The $$(call test_src_deps,$$*) prerequisite (resolved via .SECONDEXPANSION
 # below) adds the test's own source files so an incremental run re-runs a test
-# when its sources change — not only when the kernel/lib manifest changes.
+# when its sources change — not only when the kernel or libs change.
 .SECONDEXPANSION:
-$(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest $$(call test_src_deps,$$*)
+$(TEST_BUILD_ROOT)/%/results.txt: $(H2_INSTALL_ARTIFACTS) $$(call test_src_deps,$$*)
 	mkdir -p "$(TEST_BUILD_ROOT)/$*"
 	find "$(H2DIR)/$*" -maxdepth 1 -type f \
 	    \( -name 'Makefile' -o -name 'tested_functions' \
@@ -95,17 +94,12 @@ $(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest $$(call test_src_deps,
 
 # Build and run one test for coverage (TARG=all), producing per-test cov.txt.
 # Also produces results.txt as a side effect of running the simulator with --profile.
-# Depends on manifest so tests only re-run when the build actually changes, and on
-# cov_fns so the function list exists before a multi-gmon test invokes merge_cov.py.
+# Depends on the install artifacts so tests only re-run when the build actually
+# changed, and on cov_fns so the function list exists before a multi-gmon test
+# invokes merge_cov.py.
 # The test_src_deps prerequisite (via .SECONDEXPANSION) also re-runs coverage for a
 # test when its own sources change, matching the results.txt rule above.
-# The leading '-' on the inner make line serves the same purpose as in the
-# results.txt rule: a failing test (build error, crash, ulimit timeout — exit
-# 137) must not abort the coverage sweep over the remaining tests, nor stop
-# cov.html/test_report.html/test_results.json from being generated afterwards.
-# PASS/FAIL still comes from results.txt, which the test writes either way; a
-# test that dies before dumping gmon data simply contributes no cov.txt.
-$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns $$(call test_src_deps,$$*)
+$(TEST_BUILD_ROOT)/%/cov.txt: $(H2_INSTALL_ARTIFACTS) $(INSTALLPATH)/cov/cov_fns $$(call test_src_deps,$$*)
 	mkdir -p "$(TEST_BUILD_ROOT)/$*"
 	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc ! -name 'cov.txt' ! -name 'cov-*.txt' \
 	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
@@ -121,19 +115,18 @@ $(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns
 # Generate the coverage function list from the just-built kernel libraries so the
 # set of tracked functions always matches the binaries under test (no stale,
 # checked-in cov_fns snapshot).  gen_cov_fns.pl scans libh2kernel.a and libh2.a
-# for every F-type H2K_*/h2_* symbol.  Depends on manifest (not the libs
-# directly) because manifest carries the build rule and changes whenever the
-# install is rebuilt.  Also depends on COV_OMIT so editing the omit list
-# regenerates the function list.
-$(INSTALLPATH)/cov/cov_fns: $(INSTALLPATH)/manifest $(COV_OMIT)
+# for every F-type H2K_*/h2_* symbol.  Depends on the installed archives it
+# scans, so it is regenerated whenever they are rebuilt.  Also depends on
+# COV_OMIT so editing the omit list regenerates the function list.
+$(INSTALLPATH)/cov/cov_fns: $(H2_INSTALL_ARTIFACTS) $(COV_OMIT)
 	mkdir -p $(INSTALLPATH)/cov
 	${H2DIR}/scripts/gen_cov_fns.pl $(INSTALLPATH) $(COV_OMIT) > $@
 
 # Generate the function -> source-file map for the HTML report's file-tree view.
 # Derived from the same just-built libraries (objdump symbols + DWARF compile-unit
-# paths), so it always matches the binaries under test.  Depends on manifest for
-# the same reason as cov_fns.
-$(INSTALLPATH)/cov/cov_files: $(INSTALLPATH)/manifest
+# paths), so it always matches the binaries under test.  Depends on the same
+# installed archives as cov_fns, for the same reason.
+$(INSTALLPATH)/cov/cov_files: $(H2_INSTALL_ARTIFACTS)
 	mkdir -p $(INSTALLPATH)/cov
 	$(PYTHON) ${H2DIR}/scripts/gen_cov_files.py \
 	    --installpath $(INSTALLPATH) --repo $(H2DIR) \

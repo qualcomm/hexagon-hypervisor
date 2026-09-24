@@ -66,7 +66,10 @@ OPT_V81_SFILES :=
 OPT_V81_OFILES := 
 
 BUILD_DIR := $(INSTALLPATH)/../build/libs/h2
-CFLAGS += -I$(BUILD_DIR)/include
+# Must precede -I$(INSTALLPATH)/include above: both trees hold these headers, but
+# the install copy is only refreshed AFTER these objects compile, so a depfile
+# naming it would make every header edit land one build late.
+CFLAGS := -I$(BUILD_DIR)/include $(CFLAGS)
 
 MKINCLUDES := $(shell find . -name make.inc)
 
@@ -83,7 +86,8 @@ $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
 ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
 
-$(ALL_OFILES): $(DEST_HFILES)
+# Order-only (|): headers must exist before compiling; the .d files carry the edges.
+$(ALL_OFILES): | $(DEST_HFILES)
 
 ifeq ($(ARCHV),4)
 OPT_OFILES := $(OPT_V4_OFILES)
@@ -125,11 +129,11 @@ endif
 
 $(BUILD_DIR)/%.o : %.c
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 $(BUILD_DIR)/%.o : %.S
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include
@@ -147,3 +151,6 @@ includes: $(DEST_HFILES)
 ref: $(BUILD_DIR)/libh2.a
 
 opt: $(BUILD_DIR)/libh2.a
+
+# Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+-include $(ALL_OFILES:.o=.d)

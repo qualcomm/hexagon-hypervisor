@@ -106,7 +106,7 @@ def parse_gmon(path):
     idx = 0
     magic, idx = _u32(data, idx)
     if magic != GMON_MAGIC:
-        sys.exit(f"hexagon-coverage: {path}: bad gmon magic 0x{magic:08x}")
+        sys.exit("hexagon-coverage: {}: bad gmon magic 0x{:08x}".format(path, magic))
     _version, idx = _u32(data, idx)
     for _ in range(3):
         _, idx = _u32(data, idx)
@@ -122,7 +122,7 @@ def parse_gmon(path):
         elif tag == GMON_TAG_BB_COUNT:
             idx = _parse_bb_counts(data, idx)
         else:
-            sys.exit(f"hexagon-coverage: {path}: unknown gmon tag {tag}")
+            sys.exit("hexagon-coverage: {}: unknown gmon tag {}".format(path, tag))
     return histinfo, scale
 
 
@@ -234,15 +234,15 @@ def read_ver(installpath):
             for line in f:
                 m = re.match(r'(v\d+)\s+(ref|opt)', line)
                 if m:
-                    return f"{m.group(1)} {m.group(2)}"
+                    return "{} {}".format(m.group(1), m.group(2))
     except OSError:
         pass
     # derive from installpath structure: .../artifacts/vNN/(ref|opt)[_cov]/install
     m = re.search(r'(v\d+)[/\\](ref|opt)', installpath)
     if m:
-        return f"{m.group(1)} {m.group(2)}"
-    sys.exit(f"hexagon-coverage: cannot determine version from {installpath!r} "
-             f"and {ver_path!r} not found; pass --installpath or set INSTALLPATH")
+        return "{} {}".format(m.group(1), m.group(2))
+    sys.exit("hexagon-coverage: cannot determine version from {!r} "
+             "and {!r} not found; pass --installpath or set INSTALLPATH".format(installpath, ver_path))
 
 
 # ---------------------------------------------------------------------------
@@ -327,7 +327,7 @@ def write_cov(out, version, funcs, disasm, histinfo, scale=1.0):
 
     for funcname, (func_addr, pcs) in sorted(
             best_inst.items(), key=lambda x: x[1][0], reverse=True):
-        out.write(f'{func_addr:08x} <{funcname}>:\n')
+        out.write('{:08x} <{}>:\n'.format(func_addr, funcname))
         if not pcs:
             out.write('No data!\n')
         counts     = canon_counts.get(funcname, {})
@@ -338,11 +338,11 @@ def write_cov(out, version, funcs, disasm, histinfo, scale=1.0):
             lines = disasm[pc]
             first_pc, first_insn = lines[0]
             if count:
-                out.write(f'{int(count * scale):10d} 1.0  {first_pc:16x}: {first_insn}\n')
+                out.write('{:10d} 1.0  {:16x}: {}\n'.format(int(count * scale), first_pc, first_insn))
             else:
-                out.write(f'**       0 cycles  {first_pc:16x}: {first_insn}\n')
+                out.write('**       0 cycles  {:16x}: {}\n'.format(first_pc, first_insn))
             for sub_pc, sub_insn in lines[1:]:
-                out.write(f'                        {sub_pc:16x}: {sub_insn}\n')
+                out.write('                        {:16x}: {}\n'.format(sub_pc, sub_insn))
         out.write('\n')
 
 

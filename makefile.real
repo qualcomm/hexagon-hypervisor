@@ -197,7 +197,7 @@ qurt_test_libs:
 cov: h2_cov
 #	tail -n +2 qurt_report.html >> report.html
 
-h2_cov:
+h2_cov: build
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/cov.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 

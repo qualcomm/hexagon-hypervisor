@@ -259,6 +259,11 @@
 #define SSR_XE2_NBITS 1
 #define SSR_XE2_BIT_MASK BITS_MASK(SSR_XE2_NBITS, SSR_XE2_BIT)
 
+// HMX XA2; CCR[4] is defined by the ISS but missing from the HVM spec.
+#define CCR_XA2_BITS 4
+#define CCR_XA2_NBITS 1
+#define CCR_XA2_BITS_MASK BITS_MASK(CCR_XA2_NBITS, CCR_XA2_BITS)
+
 //HLX XA3/XE3
 #define CCR_XE3_BIT 28
 #define CCR_XE3_NBITS 1

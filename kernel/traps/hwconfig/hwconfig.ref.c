@@ -288,7 +288,7 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 #endif
 }
 
-u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t unused3, H2K_thread_context *me) {
+u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa2, H2K_thread_context *me) {
 #if (ARCHV >= 68 && defined(HMX_HLX_SUPPORT))
 	if (0 < H2K_gp->hmx_units) {  // exists
 #if CLUSTER_SCHED
@@ -297,7 +297,7 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t un
 			if (xe2 && !(me->ssr & SSR_XE2_BIT_MASK)) {  // turning xe2 on
 				// block as if we got resched interrupt
 				H2K_log("hthread %d  hmxbits: task 0x%08x  setting xe2\n", me->hthread, (u32_t)me);
-				// me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
+				me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
 				me->ssr = Q6_R_insert_RII(me->ssr, xe2, SSR_XE2_NBITS, SSR_XE2_BIT);
 				me->r00 = 0;
 				H2K_runlist_remove(me);
@@ -314,7 +314,7 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t un
 			BKL_UNLOCK();
 		}
 #endif
-		// me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
+		me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
 		me->ssr = Q6_R_insert_RII(me->ssr, xe2, SSR_XE2_NBITS, SSR_XE2_BIT);
 		return 0;
 	}

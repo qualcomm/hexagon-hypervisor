@@ -930,12 +930,14 @@ void add_vtcm_trans(unsigned int idx) {
 			int page_size;
 
 			assert(vtcm_base != -1);
-			assert(vtcm_base != 0);
 
-			vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
-			page_size = get_vtcm_page_size(vtcm_size);
+			/* no VTCM configured for this core: nothing to map */
+			if (vtcm_base != 0) {
+				vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
+				page_size = get_vtcm_page_size(vtcm_size);
 
-			add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
+				add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
+			}
 
 			unitlink = h2_info_unit(unitlink, CFG_UNIT_NEXT);
 		}
@@ -945,12 +947,14 @@ void add_vtcm_trans(unsigned int idx) {
 		int page_size;
 
 		assert(vtcm_base != -1);
-		assert(vtcm_base != 0);
 
-		vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
-		page_size = get_vtcm_page_size(vtcm_size);
+		/* no VTCM configured for this core: nothing to map */
+		if (vtcm_base != 0) {
+			vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
+			page_size = get_vtcm_page_size(vtcm_size);
 
-		add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
+			add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
+		}
 	}
 }
 

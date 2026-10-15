@@ -21,7 +21,9 @@
 #include <errno.h>
 #include <angel.h>
 
-char errstr[ERRSTR_LEN];
+// booter link fails when -fno-common is used as booter has this same global
+// marked it static as nothing external uses it
+static char errstr[ERRSTR_LEN];
 
 void elf_error(char *str1, char *str2) {
 	int err = sys_errno();

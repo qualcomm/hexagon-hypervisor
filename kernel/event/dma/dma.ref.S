@@ -26,7 +26,7 @@ FUNC_START H2K_handle_dma .text.core.dma .p2align 2
 	r3:2 = memd_locked(r10)
 	r3:2 = add(r3:2, r5:4)
 	memd_locked(r10, p0) = r3:2
-	if !p0 jump .Lagain
+	if (!p0) jump .Lagain
 #endif
 	r2 = badva  // expected by tlbmiss_common
 	jump H2K_tlbmiss_common

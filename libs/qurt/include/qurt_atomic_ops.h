@@ -119,7 +119,7 @@ qurt_atomic_set(unsigned int* target, unsigned int value)
     __asm__ __volatile__(
         "1:     %0 = memw_locked(%2)\n"
         "       memw_locked(%2, p0) = %3\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (tmp),"+m" (*target)
         : "r" (target), "r" (value)
         : "p0");
@@ -136,7 +136,7 @@ qurt_atomic_and(unsigned int* target, unsigned int mask)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = and(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target),"r" (mask)
         : "p0");
@@ -151,7 +151,7 @@ qurt_atomic_and_return(unsigned int* target, unsigned int mask)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = and(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -168,7 +168,7 @@ qurt_atomic_or(unsigned int* target, unsigned int mask)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = or(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -183,7 +183,7 @@ qurt_atomic_or_return(unsigned int* target, unsigned int mask)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = or(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -200,7 +200,7 @@ qurt_atomic_xor(unsigned int* target, unsigned int mask)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = xor(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -215,7 +215,7 @@ qurt_atomic_xor_return(unsigned int* target, unsigned int mask)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = xor(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -237,7 +237,7 @@ qurt_atomic_set_bit(unsigned int *target, unsigned int bit)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = setbit(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*wtarget)
         : "r" (wtarget), "r" (sbit)
         : "p0");
@@ -255,7 +255,7 @@ qurt_atomic_clear_bit(unsigned int *target, unsigned int bit)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = clrbit(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*wtarget)
         : "r" (wtarget), "r" (sbit)
         : "p0");
@@ -273,7 +273,7 @@ qurt_atomic_change_bit(unsigned int *target, unsigned int bit)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = togglebit(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*wtarget)
         : "r" (wtarget),"r" (sbit)
         : "p0");
@@ -289,7 +289,7 @@ qurt_atomic_add(unsigned int *target, unsigned int v)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = add(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (v)
         : "p0");
@@ -304,7 +304,7 @@ qurt_atomic_add_return(unsigned int *target, unsigned int v)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = add(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (v)
         : "p0");
@@ -321,7 +321,7 @@ qurt_atomic_sub(unsigned int *target, unsigned int v)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = sub(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (v)
         : "p0");
@@ -336,7 +336,7 @@ qurt_atomic_sub_return(unsigned int *target, unsigned int v)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = sub(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (v)
         : "p0");
@@ -353,7 +353,7 @@ qurt_atomic_inc(unsigned int *target)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = add(%0, #1)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target)
         : "p0");
@@ -368,7 +368,7 @@ qurt_atomic_inc_return(unsigned int *target)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = add(%0, #1)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target)
         : "p0");
@@ -385,7 +385,7 @@ qurt_atomic_dec(unsigned int *target)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = add(%0, #-1)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target)
         : "p0");
@@ -400,7 +400,7 @@ qurt_atomic_dec_return(unsigned int *target)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = add(%0, #-1)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target)
         : "p0");
@@ -420,9 +420,9 @@ qurt_atomic_compare_and_set(unsigned int* target,
     __asm__ __volatile__(
         "1:     %0 = memw_locked(%2)\n"
         "       p0 = cmp.eq(%0, %3)\n"
-        "       if !p0 jump 2f\n"
+        "       if (!p0) jump 2f\n"
         "       memw_locked(%2, p0) = %4\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         "2:\n"
         : "=&r" (current_val),"+m" (*target)
         : "r" (target), "r" (old_val), "r" (new_val)
@@ -484,7 +484,7 @@ qurt_atomic64_set(unsigned long long* target, unsigned long long value)
     __asm__ __volatile__(
         "1:     %0 = memd_locked(%2)\n"
         "       memd_locked(%2, p0) = %3\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (tmp),"+m" (*target)
         : "r" (target), "r" (value)
         : "p0");
@@ -501,7 +501,7 @@ qurt_atomic64_and(unsigned long long* target, unsigned long long mask)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = and(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target),"r" (mask)
         : "p0");
@@ -516,7 +516,7 @@ qurt_atomic64_and_return(unsigned long long* target, unsigned long long mask)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = and(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -533,7 +533,7 @@ qurt_atomic64_or(unsigned long long* target, unsigned long long mask)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = or(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -548,7 +548,7 @@ qurt_atomic64_or_return(unsigned long long* target, unsigned long long mask)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = or(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -565,7 +565,7 @@ qurt_atomic64_xor(unsigned long long* target, unsigned long long mask)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = xor(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -580,7 +580,7 @@ qurt_atomic64_xor_return(unsigned long long* target, unsigned long long mask)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = xor(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (mask)
         : "p0");
@@ -605,7 +605,7 @@ qurt_atomic64_set_bit(unsigned long long *target, unsigned int bit)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = setbit(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*wtarget)
         : "r" (wtarget), "r" (sbit)
         : "p0");
@@ -625,7 +625,7 @@ qurt_atomic64_clear_bit(unsigned long long *target, unsigned int bit)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = clrbit(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*wtarget)
         : "r" (wtarget), "r" (sbit)
         : "p0");
@@ -645,7 +645,7 @@ qurt_atomic64_change_bit(unsigned long long *target, unsigned int bit)
         "1:     %0 = memw_locked(%2)\n"
         "       %0 = togglebit(%0, %3)\n"
         "       memw_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*wtarget)
         : "r" (wtarget),"r" (sbit)
         : "p0");
@@ -661,7 +661,7 @@ qurt_atomic64_add(unsigned long long *target, unsigned long long v)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = add(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (v)
         : "p0");
@@ -676,7 +676,7 @@ qurt_atomic64_add_return(unsigned long long *target, unsigned long long v)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = add(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (v)
         : "p0");
@@ -693,7 +693,7 @@ qurt_atomic64_sub(unsigned long long *target, unsigned long long v)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = sub(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (v)
         : "p0");
@@ -708,7 +708,7 @@ qurt_atomic64_sub_return(unsigned long long *target, unsigned long long v)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = sub(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target), "r" (v)
         : "p0");
@@ -726,7 +726,7 @@ qurt_atomic64_inc(unsigned long long *target)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = add(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target),"r" (inc)
         : "p0");
@@ -742,7 +742,7 @@ qurt_atomic64_inc_return(unsigned long long *target)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = add(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target),"r" (inc)
         : "p0");
@@ -760,7 +760,7 @@ qurt_atomic64_dec(unsigned long long *target)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = add(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target),"r" (minus1)
         : "p0");
@@ -776,7 +776,7 @@ qurt_atomic64_dec_return(unsigned long long *target)
         "1:     %0 = memd_locked(%2)\n"
         "       %0 = add(%0, %3)\n"
         "       memd_locked(%2, p0) = %0\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         : "=&r" (result),"+m" (*target)
         : "r" (target),"r" (minus1)
         : "p0");
@@ -796,9 +796,9 @@ qurt_atomic64_compare_and_set(unsigned long long *target,
     __asm__ __volatile__(
         "1:     %0 = memd_locked(%2)\n"
         "       p0 = cmp.eq(%0, %3)\n"
-        "       if !p0 jump 2f\n"
+        "       if (!p0) jump 2f\n"
         "       memd_locked(%2, p0) = %4\n"
-        "       if !p0 jump 1b\n"
+        "       if (!p0) jump 1b\n"
         "2:\n"
         : "=&r" (current_val),"+m" (*target)
         : "r" (target), "r" (old_val), "r" (new_val)

@@ -14,8 +14,12 @@
 
 static inline H2K_translation_t H2K_linear_translate_update(H2K_translation_t in, H2K_linear_fmt_t entry)
 {
+	u32_t mask = (1u << (entry.size * 2)) - 1;
+	u32_t ppn = entry.extend ? entry.ppn_ext : entry.ppn;
+
 	in.size = min(in.size,entry.size);
-	in.pn = (entry.extend ? entry.ppn_ext : entry.ppn);
+	/* Retain the offset within this entry for a later, smaller mapping. */
+	in.pn = (in.pn & mask) | (ppn & ~mask);
 	if (in.weak_ccc) in.cccc = (entry.extend ? entry.cccc_ext : entry.cccc);
 	in.xwru &= entry.xwru;
 	in.weak_ccc = (entry.extend ? entry.weak_ccc_ext : entry.weak_ccc);

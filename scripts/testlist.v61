@@ -20,6 +20,7 @@
 ./kernel/mem/alloc/test
 ./kernel/mem/asid/test
 ./kernel/mem/linear/test
+./kernel/mem/linear/test_h2
 ./kernel/mem/pagefault/test
 ./kernel/mem/pagewalk/test
 ./kernel/mem/physread/test

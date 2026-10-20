@@ -7,9 +7,10 @@
 
 .PHONY: q6testinstallenvs
 q6testinstallenvs:
-#	export Q6TESTINSTALL_MAKEJOBS=8
 	export Q6TESTINSTALL_TESTTARGET=bigtest
 
 
 %:
 	$(MAKE) -f makefile.real $@
+
+POST_INSTALL_CMD=$(MAKE) -f makefile.real PKG_INSTALL_PATH=$(PKG_INSTALL_PATH) q6installall

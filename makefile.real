@@ -70,6 +70,31 @@ $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call build_instance,$
 .PHONY: buildall
 buildall: $(BUILDS)
 
+Q6INSTALLDIR := $(shell basename $(PKG_INSTALL_PATH))
+BRANCH := $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
+
+q6install:
+	cd $(PKG_INSTALL_PATH) && \
+	cp -a artifacts/v$(ARCHV)/$(TARGET)/build/booter/bootvm_image artifacts/v$(ARCHV)/$(TARGET)/install/bin &&\
+	rm -f ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest && \
+	ln -s $(Q6INSTALLDIR)/artifacts/v$(ARCHV)/$(TARGET)/install ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest && \
+	ln -s v$(ARCHV)_$(BRANCH)_$(TARGET)_latest ../v$(ARCHV)_$(BRANCH)_$(TARGET)_tested
+
+Q6INSTALLS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),q6install-$(a)-$(v)))
+
+define q6install_instance
+.PHONY: q6install-$(1)-$(2)
+q6install-$(1)-$(2):
+	$$(MAKE) ARCHV=$(1) TARGET=$(2) PKG_INSTALL_PATH=$(PKG_INSTALL_PATH) q6install
+endef
+
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),$(eval $(call q6install_instance,$a,$v))))
+
+.PHONY: q6installall
+q6installall: $(Q6INSTALLS)
+	cd $(PKG_INSTALL_PATH) && \
+	rm -rf AGENTS.md booter ciconfig CLAUDE.md CMakeLists.txt CODE-OF-CONDUCT.md CONTRIBUTING.md docs examples hvm_spec kernel libs LICENSE.txt linux makefile makefile.real notes.md perf README.md scripts SECURITY.md skip_pkg_install stake toolchain.cmake
+
 all_clean:
 	rm -rf artifacts/
 

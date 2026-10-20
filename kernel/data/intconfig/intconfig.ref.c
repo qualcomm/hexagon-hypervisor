@@ -124,7 +124,7 @@ static void H2K_intconfig_l2_init(u32_t ssbase)
 #define LPASS_IPC_3_WORD	(LPASS_IPC_3_IRQ/32)
 
 	/* Ew ew ew */
-	if (ssbase == QDSP6SS_PRIV_BASE_MSS - QDSP6SS_PUB_PRIV_OFFSET) {
+	if (ssbase == QDSP6SS_PRIV_BASE_MSS) {
 		spi_irq = MSS_SPI_IRQ;
 		spi_word = MSS_SPI_WORD;
 		tlmm_irq = MSS_TLMM_IRQ;
@@ -169,7 +169,7 @@ static void H2K_intconfig_l2_init(u32_t ssbase)
 		}
 
 		/* Ew ew ew, part deux */
-		if (ssbase != QDSP6SS_PRIV_BASE_MSS - QDSP6SS_PUB_PRIV_OFFSET) {
+		if (ssbase != QDSP6SS_PRIV_BASE_MSS) {
 			if (i == LPASS_USB1_HS_WORD) {
 				intbase[(0x280/4) + i] &= (u32_t)(~(1<<(LPASS_USB1_HS_IRQ % 32)));
 			}

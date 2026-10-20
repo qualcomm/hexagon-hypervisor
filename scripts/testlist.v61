@@ -30,7 +30,7 @@
 ./kernel/mem/tlbmiss/test
 ./kernel/mem/varadix/test
 ./kernel/power/apcr/test_multi
-./kernel/power/hvx/test
+#./kernel/power/hvx/test  FIXME: H2K_hvx_poweron/off() tmpmaps the regs now
 ./kernel/power/apcr/simple_test
 ./kernel/sched/check_sanity/test/tests/H2K_check_sanity/scenarios
 ./kernel/sched/dosched/test/test

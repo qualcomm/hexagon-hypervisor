@@ -148,20 +148,14 @@ FUNC_START H2K_timer_get_ticks  .text.time.timer  .falign
 FUNC_END H2K_timer_get_ticks
 
 FUNC_START H2K_timer_init  .text.time.timer  .falign	// init(devpage_offset)
-
+#define ZERO r5	
 #ifndef NO_DEVICES
 	{
 		allocframe(#0)
-		r5:4 = #0
-		r1 = memw(H2K_GP+#KG_time_devptr)
+		ZERO = #0
 	}
 	{
-		p0 = cmp.eq(r1,#0)
-		if (p0.new) r1 = add(r0,##Q6_SS_BASE_VA+TIMER_OFFSET)
-		memd(H2K_GP+#KG_time_timeouts) = r5:4
-	}
-	{
-		memw(H2K_GP+#KG_time_devptr) = r1
+		memw(H2K_GP+#KG_time_timeouts) = ZERO
 		call H2K_timer_hw_init
 	}
 	{
@@ -171,7 +165,7 @@ FUNC_START H2K_timer_init  .text.time.timer  .falign	// init(devpage_offset)
 #else
 	jumpr r31
 #endif
-
+#undef ZERO
 FUNC_END H2K_timer_init
 
 /* H2K_timer_dotimeout(H2K_treenode_t *treenode, void *me) */

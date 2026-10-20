@@ -49,7 +49,7 @@
 #define FROM        r11
 #define TO          r12
 #define TMP2        r13
-#define SS_BASE     r14  // *public* subsystem base
+#define SS_BASE     r14  // subsystem base from cfg_table
 #define SHIFT       r15  // multicore shift - offset translation for boot VM
 #define LAST_TLB    r16  // last replaceable TLB index
 #define PHYS_ADDR   r17  // where we are loaded, page-aligned
@@ -433,9 +433,7 @@ boot_continuation:
 
 	// entry for L2 interrupt controller
 	MAKE_TLBHI(TLB_HI, Q6_SS_BASE_VA, BOOT_TLB_OFFSET_BITS_1M, BOOT_TLB_SHIFT_1M)
-	// SS_BASE == SSBASE (PRIV_BASE)
-	// apply offet to get PUB_BASE
-	SS_BASE = add(SS_BASE, ##-QDSP6SS_PUB_PRIV_OFFSET)
+	// SS_BASE == private base
 	MAKE_TLBLO_DEV(TLB_LO, SS_BASE, TLB_TMP)
 	DO_TLBW
 

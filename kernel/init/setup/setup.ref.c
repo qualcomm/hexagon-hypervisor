@@ -72,22 +72,19 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup_bootvm()
 	return H2K_gp->vmblocks[vm];
 }
 
-#define DEVICE_PAGE_OFFSET(ADDR) ((ADDR) & ((0x1 << (H2K_KERNEL_ADDRBITS + (2 * DEVICE_PAGE_SIZE))) - 1))
-
 IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multicore_shift, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
 	/* FIXME: The allocator heap can just go at the end of data once boot VM is
 		 moved out of monitor space */
 	void *heap_top;
 	void *stack_base;
 	u32_t alloc_heap_size;
-	u32_t devpage_priv_offset = DEVICE_PAGE_OFFSET(ssbase + QDSP6SS_PUB_PRIV_OFFSET);
-	u32_t devpage_pub_offset = DEVICE_PAGE_OFFSET(ssbase);
+	u32_t devpage_priv_offset = DEVICE_PAGE_OFFSET(ssbase);  // likely 0
 
 	heap_top = (void *)((((u32_t)&HEAP_SIZE == 0 ? DEFAULT_HEAP_SIZE : (u32_t)&HEAP_SIZE) + (u32_t)&end + 15) & (u32_t)-16);
 	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & (u32_t)-16);
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
-	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);		/* Kernel Globals first! */
+	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, ssbase, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);		/* Kernel Globals first! */
 	H2K_tmpmap_init();
 	H2K_l2cache_init();
 	H2K_tcm_copy(last_tlb_index);
@@ -104,8 +101,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	H2K_stlb_tcmcrash_init();
 #endif
 
-	H2K_timer_init(devpage_priv_offset);
-	H2K_hvx_init(devpage_pub_offset);
+	H2K_timer_init();
 	H2K_hmx_init(devpage_priv_offset);
 	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);
 	H2K_sample_init();

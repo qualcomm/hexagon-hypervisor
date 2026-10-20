@@ -62,10 +62,10 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 		return (u32_t)&H2K_KERNEL_NPAGES;
 
 	case INFO_L2VIC_BASE:
-		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + L2VIC_OFFSET;
+		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_gp->l2vic_offset;
 
 	case INFO_TIMER_BASE:
-		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + TIMER_OFFSET;
+		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_gp->timer_offset;
 
 	case INFO_TIMER_INT:
 		return H2K_gp->timer_intnum;

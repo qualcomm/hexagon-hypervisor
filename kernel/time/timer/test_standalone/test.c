@@ -281,17 +281,12 @@ int main()
 	set_count(0x0);
 	mydev[ENABLE] = 0x0;
 	mydev[3] = 0x0;
-	H2K_timer_init(0);
+	H2K_timer_init();
 	if (get_match() == 0x12345) FAIL("init/match");
 	if (get_count() != 0x0) FAIL("init/count");
 	if (mydev[ENABLE] != 0x1) FAIL("init/enable");
 	if (H2K_gp->time.timeouts != NULL) FAIL("init/timeouts");
 	if (H2K_gp->time.last_ticks != 0) FAIL("ticks");
-
-	H2K_gp->time.devptr = NULL;
-	H2K_timer_init(0);
-	if (H2K_gp->time.devptr != ((void *)(Q6_SS_BASE_VA + TIMER_OFFSET))) FAIL("reset devptr");
-	H2K_gp->time.devptr = mydev;
 
 	/* Test timer interrupt -- wrapping ticks when 32-bit timer wraps around */
 	TH_reset();

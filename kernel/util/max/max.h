@@ -42,6 +42,7 @@
 #define CORE_V87 0x87
 #define CORE_V89 0x89
 #define CORE_V91 0x91
+#define CORE_V93 0x93
 
 #define CORE_V6_A 0x0
 #define CORE_V6_B 0x1
@@ -96,9 +97,11 @@
 	 FIXME? Is the QDSP6SS_PUB_PRIV_OFFSET the same for all subsystems? */
 
 #define DEVICE_PAGE_SIZE SIZE_1M
+#define DEVICE_PAGE_OFFSET(ADDR) ((ADDR) & ((0x1 << (H2K_KERNEL_ADDRBITS + (2 * DEVICE_PAGE_SIZE))) - 1))
 
 #define Q6_SS_BASE_VA 0xffc00000  // leaves at most 4M for tmpmap at 0xff800000
 #define QDSP6SS_PUB_PRIV_OFFSET 0x80000
+#define QDSP6SS_PUB_PRIV_OFFSET_V89 0x100000
 
 #define L2CFG_BASE_VA 0xffd00000
 
@@ -121,6 +124,9 @@
 
 #define L2VIC_OFFSET 0x10000
 #define TIMER_OFFSET 0x20000
+
+#define L2VIC_OFFSET_V89 0x10000
+#define TIMER_OFFSET_V89 0x40000
 
 #ifdef HAVE_EXTENSIONS
 

@@ -65,17 +65,6 @@ typedef struct {
 	};
 #endif
 	u32_t timer_intnum;
-	u32_t *hvx_clock;
-	u32_t *hvx_reset;
-	u32_t *hvx_power;
-#if ARCHV >= 65
-	u32_t *hvx_bhs_status;
-	u32_t *hvx_bhs_cfg;
-	u32_t *hvx_bhs_cmd;
-	u32_t *hvx_cpmem_cfg;
-	u32_t *hvx_cpmem_cmd;
-	u32_t *hvx_cpmem_status;
-#endif
 	u32_t hvx_state;
 	u32_t hvx_vlength;   // native vector length
 	u32_t coproc_contexts;  // # of native length (HVX or SILVER)
@@ -166,6 +155,10 @@ typedef struct {
 	u32_t noc_sbase;  // 4k pages
 	u32_t local_mem_base;  // 4k page number
 	u32_t local_mem_size;  // 4k pages
+	u32_t ssbase;          // subsystem private base
+	u32_t ss_pub_offset;   // public base = private base - ss_pub_offset
+	u32_t l2vic_offset;    // from ssbase
+	u32_t timer_offset;    // from ssbase
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf[MAX_HTHREADS];
@@ -248,6 +241,6 @@ void H2K_cluster_config(void) IN_SECTION(".text.init.globals");
 
 #endif
 
-void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) IN_SECTION(".text.init.globals");
+void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t ssbase, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) IN_SECTION(".text.init.globals");
 
 #endif

@@ -10,6 +10,7 @@
 #include <hw.h>
 #include <bzero.h>
 #include <cfg_table.h>
+#include <hvx.h>
 #include <hmx.h>
 #include <log.h>
 
@@ -17,8 +18,9 @@ H2K_kg_t H2K_kg;
 
 extern void _end();
 
-void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
-	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
+void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t ssbase, u32_t devpage_priv_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
+	u32_t l2vic_base;
+	u32_t timer_base;
 #ifdef HAVE_EXTENSIONS
 	u32_t have_hvx;
 	u32_t have_silver;
@@ -27,6 +29,20 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 	H2K_bzero(&H2K_kg,sizeof(H2K_kg));
 
 	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
+
+	H2K_kg.ssbase = ssbase;
+	if (CORE_V89 > H2K_kg.arch) {
+		H2K_kg.ss_pub_offset = QDSP6SS_PUB_PRIV_OFFSET;
+		H2K_kg.l2vic_offset = L2VIC_OFFSET;
+		H2K_kg.timer_offset = TIMER_OFFSET;
+	} else {
+		H2K_kg.ss_pub_offset = QDSP6SS_PUB_PRIV_OFFSET_V89;
+		H2K_kg.l2vic_offset = L2VIC_OFFSET_V89;
+		H2K_kg.timer_offset = TIMER_OFFSET_V89;
+	}
+	l2vic_base = Q6_SS_BASE_VA + devpage_priv_offset + H2K_kg.l2vic_offset;
+	timer_base = Q6_SS_BASE_VA + devpage_priv_offset + H2K_kg.timer_offset;
+	H2K_kg.time.devptr = (void *)(timer_base);
 
 	H2K_kg.phys_offset = phys_offset;
 	H2K_kg.multicore_shift = multicore_shift;
@@ -63,6 +79,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 	H2K_kg.info_boot_flags.boot_have_hlx = have_hlx;
 	H2K_kg.hlx_contexts = (have_hlx ? (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HLX_CONTEXTS))) : 0);
 
+	H2K_kg.hvx_state = H2K_HVX_STATE_OFF;
 #ifdef HAVE_EXTENSIONS
 	/* HVX present? */
 	if (CORE_V65 < H2K_kg.arch) {

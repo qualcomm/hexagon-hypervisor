@@ -38,7 +38,7 @@ int main() {
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	u32_t phys_offset=0, devpage_offset=0, last_tlb_index=125, tlb_size=128;
-	H2K_kg_init(phys_offset, 0, devpage_offset, last_tlb_index, tlb_size, 0, 0, 0);
+	H2K_kg_init(phys_offset, 0, 0, devpage_offset, last_tlb_index, tlb_size, 0, 0, 0);
 	H2K_l2cache_init();
 	H2K_mem_alloc_init(Heap, alloc_heap_size);
 	if (H2K_mem_stlb_alloc() == -1) FAIL("STLB alloc");
@@ -100,10 +100,10 @@ int main() {
 	val = (u32_t)&H2K_KERNEL_NPAGES;
 	if (H2K_trap_info(INFO_H2K_NPAGES, 0, 0, &a) != val) FAIL("H2K_NPAGES");
 
-	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + L2VIC_OFFSET);
+	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_kg.l2vic_offset);
 	if (H2K_trap_info(INFO_L2VIC_BASE, 0, 0, &a) != val) FAIL("L2VIC_BASE");
 
-	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + TIMER_OFFSET);
+	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_kg.timer_offset);
 	if (H2K_trap_info(INFO_TIMER_BASE, 0, 0, &a) != val) FAIL("TIMER_BASE");
 
 #if ARCHV >= 60

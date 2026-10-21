@@ -15,9 +15,14 @@ ifeq ($(findstring -j,$(MAKEFLAGS)),)
 MAKEFLAGS += $(TEST_JFLAG)
 endif
 else  # not batch
+export IGNOREFAIL ?= 1
 ifeq ($(findstring -j,$(MAKEFLAGS)),)
 MAKEFLAGS += -j$(shell nproc)
 endif
+endif
+
+ifeq ($(IGNOREFAIL),1)
+export IGNOREFAILDASH := -
 endif
 
 export H2_INSIDE_TOPLEVEL_MAKE := 1
@@ -70,10 +75,9 @@ $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call build_instance,$
 .PHONY: buildall
 buildall: $(BUILDS)
 
-Q6INSTALLDIR := $(shell basename $(PKG_INSTALL_PATH))
-BRANCH := $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
-
 q6install:
+	Q6INSTALLDIR := $(shell basename $(PKG_INSTALL_PATH))
+	BRANCH := $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
 	cd $(PKG_INSTALL_PATH) && \
 	cp -a artifacts/v$(ARCHV)/$(TARGET)/build/booter/bootvm_image artifacts/v$(ARCHV)/$(TARGET)/install/bin &&\
 	rm -f ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest && \
@@ -145,7 +149,7 @@ ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifac
 # produced by h2_test inside test_variant before check-fail runs.
 define ARCHV_VARIANT_TEST_RULE
 artifacts/v$(1)/$(2)/install/test_results.json:
-	-$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
+	$(IGNOREFAILDASH)$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
 endef
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_TEST_RULE,$a,$v))))
 

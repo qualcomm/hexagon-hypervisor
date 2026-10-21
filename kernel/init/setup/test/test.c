@@ -109,7 +109,6 @@ HELPER_FUNC(stlb_tcmcrash_init)
 
 //HELPER_FUNC(mem_stlb_init)
 HELPER_FUNC(tcm_copy)
-HELPER_FUNC(hvx_init)
 HELPER_FUNC(hmx_init)
 
 	void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t ssbase, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) { TH_init_seen |= 1<< kg_init; }

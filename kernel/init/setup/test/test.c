@@ -46,7 +46,6 @@ enum {
 	//asid_table_init,
 	//mem_stlb_init,
 	tcm_copy,
-	hvx_init,
 	hmx_init,
 
 #ifdef CRASH_DEBUG

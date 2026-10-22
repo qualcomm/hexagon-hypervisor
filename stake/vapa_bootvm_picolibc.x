@@ -267,7 +267,7 @@ SECTIONS
   __heap_start = .;
   .heap (NOLOAD) :
   {
-    . += (DEFINED(HEAP_SIZE) ? HEAP_SIZE : 0x10000);
+    . += HEAP_SIZE;
   }
   __heap_end = .;
   /* ------------------------------------------------------------------ */

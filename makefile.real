@@ -80,7 +80,7 @@ q6install: BRANCH := $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
 q6install:
 	cd $(PKG_INSTALL_PATH) && \
 	cp -a artifacts/v$(ARCHV)/$(TARGET)/build/booter/bootvm_image artifacts/v$(ARCHV)/$(TARGET)/install/bin &&\
-	rm -f ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest && \
+	rm -f ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest ../v$(ARCHV)_$(BRANCH)_$(TARGET)_tested && \
 	ln -s $(Q6INSTALLDIR)/artifacts/v$(ARCHV)/$(TARGET)/install ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest && \
 	ln -s v$(ARCHV)_$(BRANCH)_$(TARGET)_latest ../v$(ARCHV)_$(BRANCH)_$(TARGET)_tested
 

@@ -62,9 +62,12 @@ be freed until we relinquish BKL).
 Cancels associated timers, clears the thread context (which sets the valid field to DEAD),
 then inserts the thread into the H2K_kg.free_threads list.
 
-Finally, calls :c:func:`H2K_dosched()` to pick a new thread.  The current
-thread is specified as NULL, rather than as the now-dead thread context
-pointer.  ``H2K_dosched()`` consumes the BKL (released at the tail of ``H2K_switch``).
+Finally, calls :c:func:`H2K_dosched_reset_stack()` to restore the hardware
+thread's kernel stack pointer before tail-calling :c:func:`H2K_dosched()`.
+This prevents repeated stop, schedule, switch, and deferred-work cycles from
+growing the kernel stack during a mass VM kill.  The current thread is
+specified as NULL, rather than as the now-dead thread context pointer.
+``H2K_dosched()`` consumes the BKL (released at the tail of ``H2K_switch``).
 
 
 
@@ -90,11 +93,13 @@ Harness
 
 We link directly with the stop object file.
 
-The test harness defines :c:func:`H2K_dosched()` to set a flag indicating that the dosched
-routine was called.
+The test harness defines :c:func:`H2K_dosched_reset_stack()` to set a distinct
+flag and call its :c:func:`H2K_dosched()` mock, which sets another flag indicating
+that the dosched routine was called.
 
-The test harness calls :c:func:`H2K_thread_stop()` with a thread context pointer.  We
-check to make sure :c:func:`H2K_dosched()` was called, and that the thread was added to the
-free thread list, and that the values were cleared.
+The test harness calls :c:func:`H2K_thread_stop()` with a thread context pointer.
+We check that :c:func:`H2K_dosched_reset_stack()` and :c:func:`H2K_dosched()` were
+called, that the thread was added to the free thread list, and that the values
+were cleared.
 
 

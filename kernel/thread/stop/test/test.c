@@ -28,6 +28,7 @@ void FAIL(const char *str)
 static H2K_thread_context a,b,c;
 
 u32_t TH_saw_dosched = 0;
+u32_t TH_saw_dosched_reset_stack = 0;
 H2K_thread_context *TH_me = NULL;
 
 H2K_mem_alloc_tag_t *H2K_mem_alloc_release(u32_t *unused)
@@ -58,6 +59,12 @@ void H2K_dosched(H2K_thread_context *me, u32_t hwtnum)
 	checker_kernel_locked();
 	BKL_UNLOCK();
 	longjmp(env,1);
+}
+
+void H2K_dosched_reset_stack(void)
+{
+	TH_saw_dosched_reset_stack = 1;
+	H2K_dosched(NULL, get_hwtnum());
 }
 
 void TH_thread_stop(H2K_thread_context *me)
@@ -94,11 +101,13 @@ int main()
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
+	TH_saw_dosched_reset_stack = 0;
 	//puts("D");
 	TH_thread_stop(TH_me);
 	//puts("E");
 
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
+	if (TH_saw_dosched_reset_stack == 0) FAIL("Dosched did not reset stack");
 	//puts("f");
 	if (a.prev != 0) FAIL("thread not cleared");
 	//puts("g");
@@ -108,10 +117,12 @@ int main()
 	//puts("i");
 	//puts("B");
 	TH_saw_dosched = 0;
+	TH_saw_dosched_reset_stack = 0;
 	TH_me = &b;
 	b.prev = &b;
 	TH_thread_stop(TH_me);
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
+	if (TH_saw_dosched_reset_stack == 0) FAIL("Dosched did not reset stack");
 	if (b.prev != 0) FAIL("thread not cleared");
 	if (vmblock->free_threads != &b) FAIL("free thread list incorrect");
 	if (b.next != &a) FAIL("Free thread list incorrect");
@@ -126,9 +137,11 @@ int main()
 	TH_me = &a;
 	a.prev = &a;
 	TH_saw_dosched = 0;
+	TH_saw_dosched_reset_stack = 0;
 	TH_thread_stop(TH_me);
 
 	if (TH_saw_dosched == 0) FAIL("Dosched not called");
+	if (TH_saw_dosched_reset_stack == 0) FAIL("Dosched did not reset stack");
 	if (a.prev != 0) FAIL("thread not cleared");
 	if (vmblock->free_threads != &a) FAIL("free thread list incorrect");
 	if (a.next != 0) FAIL("Free thread list incorrect");

@@ -5,9 +5,8 @@
 
 #include <c_std.h>
 #include <context.h>
-#include <hw.h>
 #include <thread.h>
-#include <dosched.h>
+#include <switch.h>
 #include <asid.h>
 #include <stop.h>
 #include <timer.h>
@@ -48,6 +47,6 @@ void H2K_thread_stop_withlock(s32_t status, H2K_thread_context *me)
 			H2K_mem_alloc_free(vmblock);
 		}
 	}
-	/* If we dosched(NULL,get_hwtnum()) I think we can remove special cases in free() */
-	H2K_dosched(NULL,get_hwtnum());
+	/* Break the reap recursion before scheduling another dying thread. */
+	H2K_dosched_reset_stack();
 }

@@ -14,13 +14,13 @@
 void H2K_hvx_poweron(void) {
 #ifndef NO_DEVICES
 #ifdef HAVE_EXTENSIONS
-	volatile u32_t delay;
-	u32_t va = H2K_tmpmap_add_and_lock((pa_t)H2K_gp->ssbase - H2K_gp->ss_pub_offset, DEVICE_TYPE, DEVICE_PAGE_SIZE);
-	u32_t volatile *hvx_clock = (u32_t *)(va + QDSP6SS_CP_CLK_CTL);
-
 	if (!H2K_gp->info_boot_flags.boot_have_hvx) {
 		return;
 	}
+
+	volatile u32_t delay;
+	u32_t va = H2K_tmpmap_add_and_lock((pa_t)H2K_gp->ssbase - H2K_gp->ss_pub_offset, DEVICE_TYPE, DEVICE_PAGE_SIZE);
+	u32_t volatile *hvx_clock = (u32_t *)(va + QDSP6SS_CP_CLK_CTL);
 
 	BKL_LOCK();
 	if (H2K_gp->hvx_state == H2K_HVX_STATE_ON) {  // already on
@@ -145,12 +145,12 @@ void H2K_hvx_poweron(void) {
 void H2K_hvx_poweroff(void) {
 #ifndef NO_DEVICES
 #ifdef HAVE_EXTENSIONS
-	u32_t va = H2K_tmpmap_add_and_lock((pa_t)H2K_gp->ssbase - H2K_gp->ss_pub_offset, DEVICE_TYPE, DEVICE_PAGE_SIZE);
-	u32_t volatile *hvx_clock = (u32_t *)(va + QDSP6SS_CP_CLK_CTL);
-
 	if (!H2K_gp->info_boot_flags.boot_have_hvx) {
 		return;
 	}
+
+	u32_t va = H2K_tmpmap_add_and_lock((pa_t)H2K_gp->ssbase - H2K_gp->ss_pub_offset, DEVICE_TYPE, DEVICE_PAGE_SIZE);
+	u32_t volatile *hvx_clock = (u32_t *)(va + QDSP6SS_CP_CLK_CTL);
 
 	BKL_LOCK();
 

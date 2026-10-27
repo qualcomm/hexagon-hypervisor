@@ -30,7 +30,9 @@ void elf_error(char *str1, char *str2) {
 
 	strncat(errstr, ": ", ERRSTR_LEN - strlen(errstr) - 1);
 	strncat(errstr, str1, ERRSTR_LEN - strlen(errstr) - 1);
-	strncat(errstr, str2, ERRSTR_LEN - strlen(errstr) - 1);
+	if (str2 != NULL) {
+		strncat(errstr, str2, ERRSTR_LEN - strlen(errstr) - 1);
+	}
 	errno = err;
 	perror(errstr);
 

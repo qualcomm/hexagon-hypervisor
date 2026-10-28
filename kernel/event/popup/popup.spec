@@ -31,12 +31,6 @@ If the popup thread is NULL, we merely unlock and return.
 If a thread was interrupted, we unschedule it and put it in the ready queue.
 Otherwise, the thread was idle, and so we mark ourselves as no longer idle.
 
-We clear the low-priority status of the current thread, change our IMASK
-appropriately, and place the woken thread directly into the runlist and switch
-to it.  This is speculative; the woken thread may not be higher priority than 
-the interrupted thread.  However we expect this to be likely, and if it is incorrect
-it will be remedied by :c:func:`H2K_check_sanity()`.
-
 Note that we do not re-enable the interrupt at this time.  The interrupt is only
 re-enabled when the thread blocks waiting for another interrupt.  By keeping the 
 interrupt disabled, we allow it to pend while the popup thread executes.
@@ -73,7 +67,7 @@ return error.
 
 Set the interrupt handler to popup_int, and the extra interrupt argument to the thread context.
 
-Do the work of blocking: take the thread out of the runlist, mark it as BLOCKED, and 
+Do the work of blocking: mark thread's state as BLOCKED, and 
 set the return value to a successful return of the interrupt.
 
 Finally, enable the interrupt and select a new thread to schedule.

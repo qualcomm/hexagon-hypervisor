@@ -102,7 +102,3 @@ Matching threads, up to n_to_wake, are removed from the futex hash bucket and
 added to the ready queue.  Threads have their `status` field modified to be
 `H2K_STATUS_READY`.
 
-Finally, we sibcall to :c:func:`H2K_check_sanity_unlock()`, asking it to return
-the number of woken threads.
-
-

@@ -238,7 +238,6 @@ FUNC_START H2K_ext_context_restore .text.core.context .p2align 2
 	r12 = setbit(r11, #H2K_VMSTATUS_SAVEXT_BIT)
 	memw_locked(r10, p0) = r12
 	if (!p0) jump 1b
-
 	jump H2K_context_restore_return
 
 FUNC_END H2K_ext_context_restore

@@ -10,47 +10,42 @@
 #include <safemem.h>
 #include <vmdefs.h>
 
-/* H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) */
-FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
-	{
-		allocframe(#16)
-		r17:16 = combine(r1,r0)
-		r18 = r2
-		r19 = memub(r2+#CONTEXT_hthread)
-	}
-#define ME r18
-#define HTHREAD r19
-#define LOCKPTR r16
-#define LOCKVAL r17
 #define TMP r6
 #define MASK r7
-	ASM_BKL_LOCK(r6, r7, r8, p0)
-	{
-		TMP = memub(ME+#CONTEXT_vmstatus)
-		r1 = #SAFEMEM_R
-		r3:2 = combine(r2,r29)
-		MASK = #H2K_VMSTATUS_VMWORK
-	}
-	{
-		p0 = bitsset(TMP,MASK)
-		if (p0.new) jump:nt .Lwait_fail_vmwork
-	}
-	{
-		call H2K_safemem_check_and_lock
-	}
-#undef TMP
-#define LOCKPTR r16
-#define LOCKVAL r17
 #define ME r18
 #define HTHREAD r19
+#define LOCKPTR r16
+#define LOCKVAL r17
+#define LOCKVAL_LOCKPTR r17:16
+
+/* H2K_futex_wait(u32_t *lock, u32_t val, H2K_thread_context *me) */
+FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
+	ASM_BKL_LOCK(r6, r7, r8, p0)
+	{
+		MASK = #H2K_VMSTATUS_VMWORK
+		TMP = memub(r2+#CONTEXT_vmstatus)
+		HTHREAD = memub(r2+#CONTEXT_hthread)
+		ME = r2
+	}
+	{
+		LOCKVAL_LOCKPTR = combine(r1,r0)
+		p0 = bitsset(TMP,MASK)
+		if (p0.new) jump:nt .Lwait_fail_vmwork
+		allocframe(#16)
+	}
+	{
+		r1 = #SAFEMEM_R
+		r3:2 = combine(r2,r29)
+		call H2K_safemem_check_and_lock
+	} 
+#undef TMP
+#undef MASK
 #define HASH r2
 #define TMP r3
 #define ZEROPAIR r9:8
 #define ZERO_NEGONE r5:4
 #define ZERO r5
 #define NEGONE r4
-#define RUNLIST r7
-#define RUNLIST_PRIOS r6
 #define PA r11:10
 #define PA_HI r11
 #define PA_LO r10
@@ -67,28 +62,21 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 	{
 		p0 = cmp.eq(TMP,LOCKVAL)
 		if (!p0.new) jump:nt .Lwait_fail
-		ZERO_NEGONE = combine(#0,#-1)
 		RING = add(H2K_GP,#KG_futexhash)
 		PA = lsr(PA,#2)
+		if (p0.new) memd(ME+#CONTEXT_r0100) = ZEROPAIR
 	}
 	{
 		memw(ME+#CONTEXT_futex_ptr_hi) |= PA_HI
 		HASH =+mpyi(PA_LO,##FUTEX_PRIME)
 	}
 	{
-		RUNLIST = add(H2K_GP,#KG_runlist)
-		RUNLIST_PRIOS = add(H2K_GP,#KG_runlist_prios)
-		memd(ME+#CONTEXT_r0100) = ZEROPAIR
-		memw(ME+#CONTEXT_futex_ptr_lo) = PA_LO
-	}
-	{
-		r1 = ME
 		HASH ^= asl(PA_HI,#32-FUTEX_HASHBITS)
+		memw(ME+#CONTEXT_futex_ptr_lo) = PA_LO
 		memb(ME+#CONTEXT_status) = #STATUS_BLOCKED
 	}
 	{
-		memw(RUNLIST+HTHREAD<<#2) = ZERO
-		memh(RUNLIST_PRIOS+HTHREAD<<#1) = NEGONE
+		r1 = ME
 		RING = tableidxw(HASH,#FUTEX_HASHBITS,#32-FUTEX_HASHBITS)
 		call H2K_futex_hash_add_ring
 	}
@@ -128,8 +116,6 @@ FUNC_START H2K_futex_wait  .text.core.futex  .p2align  5
 #undef ZERO
 #undef NEGONE
 #undef HASH
-#undef RUNLIST
-#undef RUNLIST_PRIOS
 FUNC_END H2K_futex_wait
 
 /* H2K_futex_resume(u32_t *lock, u32_t n_to_wake, H2K_thread_context *me) */
@@ -202,10 +188,10 @@ FUNC_START H2K_futex_resume .text.core.futex .falign
 		p0 = cmp.eq(r0,#0)
 		if (!p0.new) N_TO_WAKE = add(N_TO_WAKE,#1)	// adjust woken count
 	}
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	{
 		r0 = sub(r0,N_TO_WAKE)			// number woken = orig n_to_wake - cur
-		deallocframe
-		jump H2K_check_sanity_unlock
+		dealloc_return
 	}
 .Lresume_unlock_null:
 	ASM_BKL_UNLOCK(r6, r7, r8, p0)

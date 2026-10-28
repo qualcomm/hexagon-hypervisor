@@ -195,19 +195,12 @@ FUNC_START H2K_vmtrap_wait .text.vm.funcs .falign
 	{
 		p0 = cmp.gt(ID,#63)
 		WAITING |= asl(NEWMASK,ID)
-		RUNLIST = add(H2K_GP,#KG_runlist)
-		RUNLIST_PRIOS = add(H2K_GP,#KG_runlist_prios)
 	}
 	{
 		if (!p0) memd(VMBLOCK+#VMBLOCK_waiting_cpus) = WAITING
 		memb(MESAV+#CONTEXT_status) = #STATUS_VMWAIT
-		r11:10 = combine(#0,#-1)
-	}
-	{
 		jump H2K_dosched
 		r1:0 = combine(HTHREAD,MESAV)
-		memw(RUNLIST+HTHREAD<<#2) = r11
-		memh(RUNLIST_PRIOS+HTHREAD<<#1) = r10
 	}
 9:
 	ASM_BKL_UNLOCK(r6, r7, r8, p0)

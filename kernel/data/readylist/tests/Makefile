@@ -1,6 +1,4 @@
 
-
-SUBDIRS += scenarios
+SUBDIRS+=readylist
 
 include Makefile.inc
-

@@ -237,7 +237,7 @@ $(BUILD_DIR)/%.o : %.S
 
 clean:
 	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include \
-	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h \
+	util/intcontrol/intcontrol_debug.h \
 	pmu_statsfile.txt
 
 dummy:

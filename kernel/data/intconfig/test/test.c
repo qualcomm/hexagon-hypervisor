@@ -69,10 +69,14 @@ int main()
 		if (i == RESCHED_INT) {
 			if (H2K_gp->inthandlers[i].handler != H2K_resched)
 				FAIL("wrong resched handler");
-		} else if (i == CLUSTER_RESCHED_INT) {
+		} 
+#if CLUSTER_SCHED
+		else if (i == CLUSTER_RESCHED_INT) {
 			if (H2K_gp->inthandlers[i].handler != H2K_resched_cluster)
 				FAIL("wrong cluster resched handler");
-		} else if (i == VM_IPI_INT) {
+		}
+#endif
+		 else if (i == VM_IPI_INT) {
 			if (H2K_gp->inthandlers[i].handler != H2K_vm_ipi_do)
 				FAIL("wrong ipi handler");
 		} else if (i == timer_int) {

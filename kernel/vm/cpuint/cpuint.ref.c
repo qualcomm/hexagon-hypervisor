@@ -14,7 +14,6 @@
 #include <globals.h>
 #include <hw.h>
 #include <readylist.h>
-#include <check_sanity.h>
 #include <vmwork.h>
 #include <vmevent.h>
 #include <intcontrol.h>

@@ -16,13 +16,7 @@
 		and so on.  If the bit *n* is set, H2K_ready[*n*] must be valid.  If bit 
 		*n* is clear, H2K_ready[*n*] must be NULL.
 
-	.. c:member:: u32_t priomask
-
-		A mask for which thread or threads are marked as the lowest priority.
-		These threads will be interruptible.  Like :c:member:`wait_mask`,
-		Hardware thread *n* corresponds to bit *n* in the mask.  If a bit
-		is set in :c:member:`wait_mask`, it should also be set in
-		:c:member:`priomask`.
+	When ``CLUSTER_SCHED`` is enabled:
 
 	.. c:member:: u32_t wait_mask
 
@@ -43,16 +37,6 @@
 
 		Total accumulated cycle count spent in wait mode, for each
 		hardware thread.
-
-	.. c:member:: H2K_thread_context *runlist[MAX_HTHREADS]
-
-		This array contains pointers to the threads running on each hardware
-		thread.  If a hardware thread is in wait mode, its pointer should be NULL.
-
-	.. c:member:: s16_t runlist_prios[(MAX_HTHREADS+7)/8*8]
-
-		This array contains the priorities of threads running on each hardware
-		thread.  If a hardware thread is in wait mode, its value should be -1.
 
 	.. c:member:: H2K_thread_context *ready[MAX_PRIOS]
 

@@ -49,7 +49,7 @@ Interrupts fall into one of the following categories:
 The Reschedule interrupt is used within H2 to cause the lowest priority
 thread to reschedule.
 
-Popup threads wait for a specific interrupt.  They are a fairly efficient 
+Popup threads wait for a specific interrupt.  They are a fairly efficient
 way to handle interrupts.
 
 

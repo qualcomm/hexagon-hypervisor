@@ -90,13 +90,16 @@ FUNC_START H2K_futex_hash_remove_one  .text.core.futex  .p2align  5
 #define WIDX_BITNO r13:12
 #define WIDX r13
 #define BITNO r12
+#define BESTWAIT r14
 	{
 		CUR = memw(POSPTR)
 		START = memw(RINGPTR)
 		READY = ADD(H2K_GP,#KG_ready)
 		READYVALIDS = add(H2K_GP,#KG_ready_valids)
 	}
+#define TMP r15
 	{
+		TMP=#0
 		p0 = cmp.eq(START,#0)
 		if (p0.new) jump:nt .Lrm_bad
 		if (!p0.new) CURLOCK = memw(CUR+#CONTEXT_futex_ptr_lo)
@@ -126,7 +129,6 @@ FUNC_START H2K_futex_hash_remove_one  .text.core.futex  .p2align  5
 		p0 = cmp.eq(CUR,START)				// removing head?
 	}
 #undef POSPTR
-#define TMP r2
 	{
 		memw(PREV+#CONTEXT_next) = NEXT
 		memw(NEXT+#CONTEXT_prev) = PREV
@@ -137,29 +139,35 @@ FUNC_START H2K_futex_hash_remove_one  .text.core.futex  .p2align  5
 		if (p0) memw(RINGPTR) = NEXT
 		NEWPRIO = memub(CUR+#CONTEXT_prio)
 		PREV_NEXT = combine(CUR,CUR)	// in case empty
+		BESTWAIT = bestwait
 	}
 	{
+		BESTWAIT = minu(BESTWAIT, NEWPRIO)
 		memb(CUR+#CONTEXT_status) = #STATUS_READY
 		READYHEAD = memw(READY+NEWPRIO<<#2)
 		WIDX_BITNO = bitsplit(NEWPRIO,#5)
 	}
 	{
 		p0 = cmp.eq(READYHEAD,#0)
+		if (p0.new) jump:t .Lnot_empty
 		if (!p0.new) PREV = memw(READYHEAD+#CONTEXT_prev)
 		if (!p0.new) NEXT = READYHEAD
-		TMP = memw(READYVALIDS+WIDX<<#2)
 	}
+	{
+		memw(NEXT+#CONTEXT_prev) = CUR
+		memw(PREV+#CONTEXT_next) = CUR
+	}
+.Lnot_empty:
+#define TMP2 r2
 	{
 		if (p0) memw(READY+NEWPRIO<<#2) = CUR
 		memd(CUR+#CONTEXT_next) = PREV_NEXT
 		TMP = setbit(TMP,BITNO)
+		TMP2 = addasl(READYVALIDS, WIDX, #2)
 	}
 	{
-		if (!p0) memw(NEXT+#CONTEXT_prev) = CUR
-		if (!p0) memw(PREV+#CONTEXT_next) = CUR
-	}
-	{
-		memw(READYVALIDS+WIDX<<#2) = TMP
+		bestwait = BESTWAIT
+		memw(TMP2) |= TMP
 		r0 = CUR
 		jumpr r31
 	}

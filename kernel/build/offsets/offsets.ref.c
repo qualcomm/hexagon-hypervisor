@@ -100,17 +100,15 @@ int main(int argc, char **argv)
 #endif
 
 	PRINT_KG_OFFSET(ready_valids);
-	PRINT_KG_OFFSET(priomask);
+#if CLUSTER_SCHED
 	PRINT_KG_OFFSET(wait_mask);
+#endif
 	PRINT_KG_OFFSET(oncpu_start);
 	PRINT_KG_OFFSET(oncpu_wait);
 	PRINT_KG_OFFSET(waitcycles);
-	PRINT_KG_OFFSET(runlist);
-	PRINT_KG_OFFSET(runlist_prios);
 	PRINT_KG_OFFSET(ready);
 	PRINT_KG_OFFSET(futexhash);
 	PRINT_KG_OFFSET(inthandlers);
-	PRINT_KG_OFFSET(lowprio_masks);
 	PRINT_KG_OFFSET(stlbptr);
 	PRINT_KG_OFFSET(vmblocks);
 	PRINT_KG_OFFSET(phys_offset);

@@ -20,7 +20,6 @@
 #include <id.h>
 #include <thread.h>
 #include <create.h>
-#include <runlist.h>
 #include <fatal.h>
 #include <vmint.h>
 #include <dosched.h>
@@ -73,7 +72,7 @@ void H2K_vmtrap_setie(H2K_thread_context *me)
 		me->r00 = -1;
 		return;
 	}
-	
+
 	u32_t prev;
 	if (me->r00 & H2K_IE_ENABLE) {
 		prev = H2K_enable_guest_interrupts(me);
@@ -125,7 +124,6 @@ void H2K_vmtrap_wait(H2K_thread_context *me)
 		if (me->id.cpuidx < sizeof(long_bitmask_t) * 8) {
 			me->vmblock->waiting_cpus |= (0x1 << me->id.cpuidx);
 		}
-		H2K_runlist_remove(me);
 		H2K_dosched(me,me->hthread);
 	} else {
 		/* Interrupt pending; either it was taken or interrupts are disabled.  In

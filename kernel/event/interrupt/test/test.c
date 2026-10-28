@@ -12,6 +12,7 @@
 #include <max.h>
 #include <globals.h>
 #include <hw.h>
+#include <hw.h>
 #include <trace.h>
 
 /*

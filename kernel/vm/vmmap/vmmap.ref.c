@@ -20,7 +20,6 @@
 #include <id.h>
 #include <thread.h>
 #include <create.h>
-#include <runlist.h>
 #include <fatal.h>
 #include <vmint.h>
 #include <dosched.h>

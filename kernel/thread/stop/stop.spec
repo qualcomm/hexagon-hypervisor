@@ -59,14 +59,12 @@ is not ``H2K_STATUS_DEAD``.  Else, when the vcpu count is 0, calls
 :c:func:`H2K_mem_alloc_release()` to mark the vmblock as freeable (will not
 be freed until we relinquish BKL).
 
-Cancels associated timers and removes the current thread from the runlist.
-Clears the thread context (which sets the valid field to DEAD), then
-inserts the thread into the H2K_kg.free_threads list.
+Cancels associated timers, clears the thread context (which sets the valid field to DEAD),
+then inserts the thread into the H2K_kg.free_threads list.
 
 Finally, calls :c:func:`H2K_dosched()` to pick a new thread.  The current
 thread is specified as NULL, rather than as the now-dead thread context
-pointer.  ``H2K_dosched()`` consumes the BKL (released by
-``H2K_check_sanity_unlock`` at the tail of ``H2K_switch``).
+pointer.  ``H2K_dosched()`` consumes the BKL (released at the tail of ``H2K_switch``).
 
 
 
@@ -90,10 +88,10 @@ Important cases
 Harness
 ~~~~~~~
 
-We link directly with the stop object file, and also the runlist object file.
+We link directly with the stop object file.
 
 The test harness defines :c:func:`H2K_dosched()` to set a flag indicating that the dosched
-routine was called.  It also adds test threads correctly into the runlist.
+routine was called.
 
 The test harness calls :c:func:`H2K_thread_stop()` with a thread context pointer.  We
 check to make sure :c:func:`H2K_dosched()` was called, and that the thread was added to the

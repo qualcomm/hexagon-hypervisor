@@ -34,12 +34,6 @@ If we soft pend the interrupt, we are done.
 If a thread was interrupted, we unschedule it and put it in the ready queue.
 Otherwise, the thread was idle, and so we mark ourselves as no longer idle.
 
-We clear the low-priority status of the current thread, change our IMASK
-appropriately, and place the woken thread directly into the runlist and switch
-to it.  This is speculative; the woken thread may not be higher priority than 
-the interrupted thread.  However we expect this to be likely, and if it is incorrect
-it will be remedied by :c:func:`H2K_check_sanity()`.
-
 Note that we do not re-enable the interrupt at this time.  The interrupt is only
 re-enabled when a thread explicitly calls to enable the interrupt, or waits with 
 the int_ack field set to a valid interrupt.  By keeping the interrupt disabled,

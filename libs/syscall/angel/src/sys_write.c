@@ -71,7 +71,7 @@ sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count)
 		sys_call_ret_t angel_ret = {0};
 		return angel_ret;
 	}
-	
+
 	struct { fd_t fd; const char *buf; count_t c; } x;
 	sys_call_ret_t angel_ret;
 	x.fd = fd;
@@ -120,7 +120,7 @@ sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count)
 	}
 	dccleana(&H2_ANGEL_write_buf_idx);
 	pthread_plainmutex_unlock_np(&angel_mirror_lock);
-#endif	
+#endif
 	return angel_ret;
 }
 

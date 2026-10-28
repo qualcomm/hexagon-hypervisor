@@ -30,13 +30,9 @@ typedef	union {
 typedef struct {
 	u64_t ready_valids[MAX_PRIOS/64] __attribute__((aligned(MAX_PRIOS/8)));
 	H2K_timeinfo_t time;
-	union {
-		u64_t lowprio_masks;
-		struct {
-			u32_t priomask;
-			u32_t wait_mask;
-		};
-	};
+#if CLUSTER_SCHED
+	u32_t wait_mask;
+#endif
 	union {
 		u64_t syscfg_stlbptr;
 		struct {
@@ -129,8 +125,6 @@ typedef struct {
 	u32_t prof_sample_pending;
 	H2K_spinlock_t prof_sample_lock;
 #endif
-	H2K_thread_context *runlist[MAX_HTHREADS];
-	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
 	u32_t phys_offset;
 	u32_t build_id;

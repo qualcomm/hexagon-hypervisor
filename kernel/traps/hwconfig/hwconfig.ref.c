@@ -25,7 +25,6 @@
 
 #if CLUSTER_SCHED
 #include <readylist.h>
-#include <runlist.h>
 #include <dosched.h>
 #endif
 
@@ -84,7 +83,7 @@ static const clade_reg_t clade_regs[] = {
 
 u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
 {
-	if (configtype >= HWCONFIG_MAX) 
+	if (configtype >= HWCONFIG_MAX)
 	{
 		return -1;
 	}
@@ -92,7 +91,7 @@ u32_t H2K_trap_hwconfig(hwconfig_type_t configtype, void *ptr, u32_t val2, u32_t
 	{
 		return H2K_hwconfigtab[configtype](0, ptr, val2, val3, me);
 	}
-	
+
 }
 
 static u32_t getxreg (u32_t cfg_offset, u32_t offset) {
@@ -168,7 +167,7 @@ u32_t H2K_trap_do_hwconfig_l2cache(u32_t unused, u32_t ecc_enable, u32_t size, u
 	syscfg |= size << SYSCFG_L2CFG_BITS;
 	syscfg |= use_wb << SYSCFG_L2WB_BIT;
 	syscfg |= cur_nwa | cur_nra;
-	
+
 	/* ECC */
 	if (ecc_enable != H2K_gp->ecc_enable) {
 		for (i = 0; i < ECCREGS_NREGS; i++) {
@@ -264,7 +263,6 @@ u32_t H2K_trap_hwconfig_hlxbits(u32_t unused, void *unusedp,  u32_t xa3, u32_t x
 				me->ccr = Q6_R_insert_RII(me->ccr, xa3, CCR_XA3_NBITS, CCR_XA3_BITS);
 				me->ccr = Q6_R_insert_RII(me->ccr, xe3, CCR_XE3_NBITS, CCR_XE3_BIT);
 				me->r00 = 0;
-				H2K_runlist_remove(me);
 				H2K_ready_append(me);
 				H2K_dosched(me, me->hthread);
 			}
@@ -300,7 +298,6 @@ u32_t H2K_trap_hwconfig_hmxbits(u32_t unused, void *unusedp, u32_t xe2, u32_t xa
 				me->ccr = Q6_R_insert_RII(me->ccr, xa2, CCR_XA2_NBITS, CCR_XA2_BITS);
 				me->ssr = Q6_R_insert_RII(me->ssr, xe2, SSR_XE2_NBITS, SSR_XE2_BIT);
 				me->r00 = 0;
-				H2K_runlist_remove(me);
 				H2K_ready_append(me);
 				H2K_dosched(me, me->hthread);
 			}
@@ -346,7 +343,6 @@ u32_t H2K_trap_hwconfig_extbits(u32_t unused, void *unusedp, u32_t xa, u32_t xe,
 			}
 			/* else (when in hvx range and do_ext) kernel is managing xa/xe, so do nothing here */
 			me->r00 = 0;
-			H2K_runlist_remove(me);
 			H2K_ready_append(me);
 			H2K_dosched(me, me->hthread);
 		}
@@ -379,7 +375,7 @@ u32_t H2K_trap_hwconfig_vlength(u32_t unused, void *unusedp, u32_t vlength, u32_
 #ifdef HAVE_EXTENSIONS
 
 	u32_t cur, new;
-	
+
 /* FIXME: This needs to be virtualized */
 
 	BKL_LOCK();
@@ -634,7 +630,7 @@ u32_t H2K_trap_hwconfig_l2gclean(u32_t unused, void *unusedp, u32_t inv, u32_t u
 }
 
 u32_t H2K_trap_hwconfig_getstrideprefetcherreg(u32_t unused, void *unusedp, u32_t offset, u32_t unused3, H2K_thread_context *me) {
-	if ((offset >= H2K_gp->hthreads * 4) 
+	if ((offset >= H2K_gp->hthreads * 4)
 			|| ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_STRIDE_PREFETCHER_MASK) == 0)) {  // out of range: reg0 + per-thread regs
 		H2K_gp->kernel_error = KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE;
 		return -1;
@@ -644,7 +640,7 @@ u32_t H2K_trap_hwconfig_getstrideprefetcherreg(u32_t unused, void *unusedp, u32_
 }
 
 u32_t H2K_trap_hwconfig_setstrideprefetcherreg(u32_t unused, void *unusedp, u32_t offset, u32_t val, H2K_thread_context *me) {
-	if ((offset >= H2K_gp->hthreads * 4) 
+	if ((offset >= H2K_gp->hthreads * 4)
 			|| ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_STRIDE_PREFETCHER_MASK) == 0)) {  // out of range: reg0 + per-thread regs
 		H2K_gp->kernel_error = KERROR_HWCONFIG_STRIDE_PREFETCHER_RANGE;
 		return -1;
@@ -674,7 +670,7 @@ u32_t H2K_trap_hwconfig_set_hmx_power_off_start_addr(u32_t unused, void *unusedp
 u32_t H2K_trap_hwconfig_gpio_toggle(u32_t unused, void *unusedp, u32_t on, u32_t unused3, H2K_thread_context *me) {
 #if ARCHV >= 68
 	if (0 == H2K_gp->gpio_reg) return -1;  // not set
-	
+
 	u32_t volatile *reg = (u32_t *)GPIO_VA;
 	u32_t val = ((*reg) & ~(0x3c)) | 0x200;
 

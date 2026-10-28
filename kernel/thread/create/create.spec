@@ -72,8 +72,7 @@ If vmblock is non-NULL, these actions are added:
 * The vmblock pointer of the new thread is inherited from the caller.
 
 
-We then add the new thread to the readylist, and call :c:func:`H2K_check_sanity_unlock()`
-before returning.
+We then add the new thread to the readylist.
 
 For security, we need to assure that no values are in registers incorrectly.
 We accomplish this by clearing the thread context during initialization and 
@@ -112,8 +111,6 @@ Harness
 ~~~~~~~
 
 We link directly with the create object file, and also the readylist object file.
-
-We define :c:func:`H2K_check_sanity_unlock()` to set a flag indicating that the function was called.
 
 The test harness will call :c:func:`H2K_thread_create()` with various inputs and check to make sure
 that the appropriate action was taken:

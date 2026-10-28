@@ -119,24 +119,6 @@ void H2K_vm_event(u32_t x, u32_t cause, u32_t offset, H2K_thread_context *me)
 	TH_saw_event = 1;
 }
 
-u32_t TH_expected_sanity = 0;
-u32_t TH_saw_sanity = 0;
-
-u64_t H2K_check_sanity_unlock(u64_t ret)
-{
-	if (TH_expected_sanity == 0) FAIL("Didn't expect sanity");
-	TH_saw_sanity = 1;
-	BKL_UNLOCK();
-	return ret;
-}
-
-u64_t H2K_check_sanity(u64_t ret)
-{
-	if (TH_expected_sanity == 0) FAIL("Didn't expect sanity");
-	TH_saw_sanity = 1;
-	return ret;
-}
-
 u32_t TH_expected_popup_cancel = 0;
 u32_t TH_saw_popup_cancel = 0;
 void H2K_popup_cancel(H2K_thread_context *me)
@@ -324,14 +306,10 @@ int main()
 	puts("B");
 	t0->vmstatus = 0;
 	t0->status = H2K_STATUS_VMWAIT;
-	TH_expected_sanity = 1;
 	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
 	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_READY) FAIL("status");
 	if (t0->vmstatus != 0) FAIL("vmstatus");
-	if (TH_saw_sanity != 1) FAIL("no sanity check");
-	TH_saw_sanity = 0;
-	TH_expected_sanity = 0;
 	
 
 	puts("C");
@@ -373,7 +351,6 @@ int main()
 	t0->vmstatus = H2K_VMSTATUS_IE;
 	t0->status = H2K_STATUS_INTBLOCKED;
 	TH_expected_popup_cancel = 1;
-	TH_expected_sanity = 1;
 	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
 	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_READY) FAIL("status");
@@ -381,10 +358,6 @@ int main()
 	if (TH_saw_popup_cancel != 1) FAIL("Didn't see popup cancel");
 	TH_expected_popup_cancel = 0;
 	TH_saw_popup_cancel = 0;
-	if (TH_saw_sanity != 1) FAIL("no sanity check");
-	TH_saw_sanity = 0;
-	TH_expected_sanity = 0;
-	
 
 	puts("G");
 	t0->vmstatus = 0;
@@ -403,7 +376,6 @@ int main()
 	t0->vmstatus = H2K_VMSTATUS_IE;
 	t0->status = H2K_STATUS_BLOCKED;
 	TH_expected_futex_cancel = 1;
-	TH_expected_sanity = 1;
 	ret = H2K_vm_int_deliver(&TH_vmblock,t0,0);
 	if (ret != 0) FAIL("error code");
 	if (t0->status != H2K_STATUS_READY) FAIL("status");
@@ -411,9 +383,6 @@ int main()
 	if (TH_saw_futex_cancel != 1) FAIL("Didn't see popup cancel");
 	TH_expected_futex_cancel = 0;
 	TH_saw_futex_cancel = 0;
-	if (TH_saw_sanity != 1) FAIL("no sanity check");
-	TH_saw_sanity = 0;
-	TH_expected_sanity = 0;
 	
 
 	puts("I");

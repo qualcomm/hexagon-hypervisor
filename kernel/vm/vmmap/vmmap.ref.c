@@ -56,7 +56,7 @@ void H2K_vmtrap_newmap(H2K_thread_context *me)
 	u32_t extra = me->r03;
 
 	
-	if (me->r02 >= H2K_ASID_TLB_INVALIDATE_XXX_LAST) { // bad type
+	if (unlikely(me->r02 >= H2K_ASID_TLB_INVALIDATE_XXX_LAST)) { // bad type
 		me->r00 = -1;
 		return;
 	}

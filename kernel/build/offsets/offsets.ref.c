@@ -41,6 +41,9 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(elr);
 	PRINT_CONTEXT_OFFSET(r29);
 	PRINT_CONTEXT_OFFSET(r00);
+	PRINT_CONTEXT_OFFSET(r01);
+	PRINT_CONTEXT_OFFSET(r02);
+	PRINT_CONTEXT_OFFSET(r03);
 	PRINT_CONTEXT_OFFSET(gpugp);
 	PRINT_CONTEXT_OFFSET(r3130);
 	PRINT_CONTEXT_OFFSET(r2928);
@@ -112,6 +115,7 @@ int main(int argc, char **argv)
 	PRINT_KG_OFFSET(vmblocks);
 	PRINT_KG_OFFSET(phys_offset);
 	PRINT_KG_OFFSET(core_rev);
+	PRINT_KG_OFFSET(mask_for_ipi);
 	PRINT_KG_OFFSET(timer_intnum);
 	PRINT_KG_OFFSET(hthreads_mask);
 	PRINT_KG_OFFSET(hthreads);
@@ -158,6 +162,7 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(contexts);
 	PRINT_VMBLOCK_OFFSET(intinfo);
 	PRINT_VMBLOCK_OFFSET(parent);
+	PRINT_VMBLOCK_OFFSET(status);
 	PRINT_VMBLOCK_OFFSET(waiting_cpus);
 	PRINT_VMBLOCK_OFFSET(pending);
 	PRINT_VMBLOCK_OFFSET(enable);

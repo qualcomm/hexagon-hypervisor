@@ -1,39 +1,27 @@
 # Yo.  -*- Makefile -*-
 
-# offsets is a target-side generator program (run under simulator) and uses
-# libc headers like <stdio.h>. When building with PICOLIBC, select the picolibc
-# sysroot via --target and --cstdlib flags.
-ifeq ($(PICOLIBC),1)
-OFFSETS_TARGET_FLAG := --target=hexagon-none-elf --cstdlib=picolibc
-else
-OFFSETS_TARGET_FLAG :=
-endif
+# asm_offsets.h is generated at build time without running anything on the
+# target: offsets.ref.c is compiled to assembly only, and its
+# ".ascii \"->SYM value\"" markers are turned into #defines (the technique
+# Linux uses for asm-offsets). Hexagon prints immediates as "#value", so
+# strip a leading '#' (or '$').
 
-ifeq ($(PICOLIBC),1)
-# Provide heap symbols and default memory layout expected by picolibc's libc.
-# Use the linker script from the selected toolchain sysroot.
-ifneq ($(TOOLCHAIN_BIN),)
-OFFSETS_LDSCRIPT := -Wl,-T,$(abspath $(TOOLCHAIN_BIN)/../target/hexagon-unknown-none-picolibc/lib/v$(ARCHV)/G0/picolibc.ld)
-else
-OFFSETS_LDSCRIPT := -Wl,-T,$(shell $(CC) $(OFFSETS_TARGET_FLAG) -print-file-name=picolibc.ld)
-endif
-else
-OFFSETS_LDSCRIPT :=
-endif
+define sed-offsets
+	's:^[[:space:]]*\.ascii[[:space:]]*"->\([^ ]*\) [#$$]*\([^"]*\)".*:#define \1 \2:p'
+endef
 
-$(BUILD_DIR)/include/asm_offsets.h: $(BUILD_DIR)/offsets
+$(BUILD_DIR)/include/asm_offsets.h: $(BUILD_DIR)/offsets.s
 	mkdir -p $(dir $@)
-ifeq ($(RUN), $(RUN_TOOLSIM))
-	$(RUN) $< -- $@
-else
-	$(RUN) $< $@
-endif
+	{ echo '/* Generated from offsets.ref.c; do not edit. */'; \
+	  sed -n $(sed-offsets) $<; } > $@.tmp
+	grep -q '^#define CONTEXT_SIZE ' $@.tmp
+	mv $@.tmp $@
 
-
-$(BUILD_DIR)/offsets: $(DIR)offsets.ref.c
+# Also depends on every other installed header; see kernel/Makefile.
+$(BUILD_DIR)/offsets.s: $(DIR)offsets.ref.c
 	mkdir -p $(dir $@)
-	$(CC) $(OFFSETS_TARGET_FLAG) $(OFFSETS_LDSCRIPT) $(CFLAGS) -o $@ $<
-
-CLEAN_EXTRAS += $(BUILD_DIR)/offsets
+	$(CC) $(CFLAGS) -S -o $@ $<
 
 DEST_HFILES += $(BUILD_DIR)/include/asm_offsets.h
+
+CLEAN_EXTRAS += $(BUILD_DIR)/offsets.s $(BUILD_DIR)/include/asm_offsets.h.tmp

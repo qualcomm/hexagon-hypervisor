@@ -137,7 +137,7 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
-# The 'offsets' probe (build/offsets/make.inc) is compiled and then RUN to
+# The 'offsets' probe (build/offsets/make.inc) is compiled to assembly to
 # generate asm_offsets.h, so it needs the copied headers first.  Declared here,
 # not in that make.inc, because prerequisites expand where written and
 # DEST_HFILES is only complete after the includes above.  asm_offsets.h itself is
@@ -146,7 +146,8 @@ $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 # Deliberately a blanket dependency on every kernel header, unlike the objects
 # below: assembly hardcodes the offsets it computes, so a stale asm_offsets.h is
 # not a slow build, it is silently wrong code.  Regenerating it is cheap.
-$(BUILD_DIR)/offsets: $(filter-out $(BUILD_DIR)/include/asm_offsets.h,$(DEST_HFILES))
+$(BUILD_DIR)/offsets.s: \
+	$(filter-out $(BUILD_DIR)/include/asm_offsets.h,$(DEST_HFILES))
 
 ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
 

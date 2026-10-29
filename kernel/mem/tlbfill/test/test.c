@@ -15,6 +15,8 @@
 #include <globals.h>
 
 u32_t TH_saw_mempagefault;
+H2K_vmblock_t TH_vmblock;	/* VM 2: no guest map */
+u64_t TH_empty_list __attribute__((aligned(8)));	/* linear table holding only its terminating zero entry */
 
 void FAIL(const char *str)
 {
@@ -57,7 +59,12 @@ int main()
 
 	TH_saw_mempagefault = 0;
 	H2K_kg.stlbptr = NULL;
+	/* No translation via the asid table: a linear entry for VM 2 whose table is empty */
+	H2K_kg.vmblocks[2] = &TH_vmblock;
 	H2K_kg.asid_table[H2K_tc.ssr_asid].raw = 0;
+	H2K_kg.asid_table[H2K_tc.ssr_asid].ptb = (u32_t)&TH_empty_list;
+	H2K_kg.asid_table[H2K_tc.ssr_asid].fields.vmid = 2;
+	H2K_kg.asid_table[H2K_tc.ssr_asid].fields.type = H2K_ASID_TRANS_TYPE_LINEAR;
 	TH_mem_tlb_fill(va, &H2K_tc);
 	if (TH_saw_mempagefault == 0) FAIL("Didn't call mem page fault when no stlb entry and no translate via asid table");
 

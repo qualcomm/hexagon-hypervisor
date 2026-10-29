@@ -5,7 +5,8 @@ include $(H2DIR)/scripts/Makefile.inc.tools
 include $(H2DIR)/scripts/Makefile.inc.install
 
 ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(H2DIR)/artifacts/v$(ARCHV)/opt/install
+ARTIFACTS_DIR ?= $(if $(filter 1,$(PICOLIBC)),artifacts/picolibc,artifacts)
+export INSTALLPATH := $(H2DIR)/$(ARTIFACTS_DIR)/v$(ARCHV)/opt/install
 endif
 
 ifeq ($(KERNELPATH),)
@@ -22,17 +23,7 @@ BOOTVM_IMAGE_HEAP_SIZE := 0x1000000
 
 all: $(BUILD_DIR)/hello $(BUILD_DIR)/should_crash $(BUILD_DIR)/should_pagefault $(BUILD_DIR)/bigio $(BOOTVM_PROG)
 
-ifeq ($(PICOLIBC),1)
-OSLIB_CFLAGS  = --target=hexagon-h2-elf --cstdlib=picolibc
-OSLIB_LDFLAGS = --target=hexagon-h2-elf --cstdlib=picolibc
-# Derive template path from the resolved compiler location: bin/../templates/staticExecutable/
-PICOLIBC_LCS := $(abspath $(dir $(shell which $(CC)))/../templates/staticExecutable/static-executable-h2-picolibc.lcs.template)
-GUEST_LDSCRIPT = -Wl,--script=$(PICOLIBC_LCS)
-else
-OSLIB_CFLAGS  =
-OSLIB_LDFLAGS = -moslib=h2
-GUEST_LDSCRIPT =
-endif
+include $(H2DIR)/scripts/Makefile.inc.libc
 
 CFLAGS = $(OSLIB_CFLAGS) $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -g -I. -I$(INSTALLPATH)/include -I$(KERNEL_BUILD_DIR)/include
 LDFLAGS = -L$(INSTALLPATH)/lib $(OSLIB_LDFLAGS) -Qunused-arguments

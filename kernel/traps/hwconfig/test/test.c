@@ -122,7 +122,8 @@ int main()
 	u32_t syscfg,cur_size,cur_wb,i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	__asm__ __volatile(" imask = %0 " : : "r"(-1));
-	H2K_set_syscfg(0x7f);
+	/* Clear the L2 and partition fields checked below; leave translation and caches as they are */
+	H2K_set_syscfg(H2K_get_syscfg() & 0x7f);
 
 	/* Check base functionality for l2cache hwconfig */
 	TH_saw_l2_cleaninv = 0;

@@ -116,6 +116,7 @@ u32_t H2K_vm_do_work_withlock(H2K_thread_context *me)
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	H2K_set_syscfg(H2K_get_syscfg() | SYSCFG_C);  /* GETPCYCLES below needs a running cycle counter */
 
 	/* VMVERSION */
 	H2K_vmtrap_version(&a);

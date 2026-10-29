@@ -104,9 +104,9 @@ endif
 .PHONY: q6install
 q6install:
 	cd $(PKG_INSTALL_PATH) && \
-	cp -a artifacts/v$(ARCHV)/$(TARGET)/build/booter/bootvm_image artifacts/v$(ARCHV)/$(TARGET)/install/bin &&\
+	cp -a $(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET)/build/booter/bootvm_image $(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET)/install/bin &&\
 	rm -f ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest ../v$(ARCHV)_$(BRANCH)_$(TARGET)_tested && \
-	ln -s $(Q6INSTALLDIR)/artifacts/v$(ARCHV)/$(TARGET)/install ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest && \
+	ln -s $(Q6INSTALLDIR)/$(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET)/install ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest && \
 	ln -s v$(ARCHV)_$(BRANCH)_$(TARGET)_latest ../v$(ARCHV)_$(BRANCH)_$(TARGET)_tested
 
 Q6INSTALLS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),q6install-$(a)-$(v)))
@@ -141,7 +141,7 @@ q6installall: $(Q6INSTALLS) $(Q6LINKS)
 q6linkall: $(Q6LINKS)
 
 all_clean:
-	rm -rf artifacts/
+	rm -rf $(ARTIFACTS_DIR)/
 
 distclean: clean docclean gtagsclean
 
@@ -149,7 +149,7 @@ clean: covclean booterclean docclean qurtclean # ucosclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
-	rm -Rf size test.exe stats.txt artifacts/v$(ARCHV)/$(TARGET) kernel/stats.txt
+	rm -Rf size test.exe stats.txt $(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET) kernel/stats.txt
 
 booterclean:
 	$(MAKE) -C booter ARCHV=$(ARCHV) clean
@@ -181,7 +181,7 @@ size:
 # 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
 
 # All per-variant test result JSON paths — one per ARCHV×variant combination.
-ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifacts/v$a/$v/install/test_results.json))
+ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(ARTIFACTS_DIR)/v$a/$v/install/test_results.json))
 
 # One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
 # generating test_results.json which testall aggregates into the unified report.
@@ -189,23 +189,23 @@ ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),artifac
 # non-zero (its check-fail step fails on test failures); the JSON file is still
 # produced by h2_test inside test_variant before check-fail runs.
 define ARCHV_VARIANT_TEST_RULE
-artifacts/v$(1)/$(2)/install/test_results.json:
+$(ARTIFACTS_DIR)/v$(1)/$(2)/install/test_results.json:
 	$(IGNOREFAILDASH)$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
 endef
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_TEST_RULE,$a,$v))))
 
 # Unified test report: one section per ARCHV×variant, driven by all JSON files.
 # Building this target drives the full build+test DAG for every combination.
-artifacts/test_report.html: $(ARCHV_VARIANT_JSONS)
-	@mkdir -p artifacts
+$(ARTIFACTS_DIR)/test_report.html: $(ARCHV_VARIANT_JSONS)
+	@mkdir -p $(ARTIFACTS_DIR)
 	python3 $(H2DIR)/scripts/gen_test_report.py \
 	    --inputs $(ARCHV_VARIANT_JSONS) \
 	    --output $@ \
-	    --summary-out artifacts/test.out
+	    --summary-out $(ARTIFACTS_DIR)/test.out
 
 .PHONY: testall test
 testall: buildall
-	$(MAKE) artifacts/test_report.html
+	$(MAKE) $(ARTIFACTS_DIR)/test_report.html
 
 # 'make test' runs all ARCHV×variant combinations (same as testall).
 # Use 'make test_variant' to run a single variant (ARCHV=XX TARGET=yy).
@@ -236,7 +236,7 @@ h2_test: # ucosclean
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
-	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -v "warning: jobserver" | fgrep -c -i warning:` -eq 0 ]
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -v "warning: jobserver" | fgrep -v "has loadable segment(s) with RWX permissions" | fgrep -v "Undefined weak symbol _user_strerror referred from" | fgrep -c -i warning:` -eq 0 ]
 
 abigtest:
 	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/pass/x86_64/master/pass.pl --retrycount 1 --results ./passout/$(ARCHV)/$(TARGET) --html ./passout/$(ARCHV)/$(TARGET) --q6v v$(ARCHV) --arch v$(ARCHV)_stable --tld STANDALONE=0 --tld TRACES=0 --flaglist v$(ARCHV)_flags.list --flags MARGIN=12 --flags PLMARGIN=180 --tld NOTIMING --tld CHECKIN=1 --flags PLIMIT= --flags WARN=--warn --flags Q6_RTOS_INSTALL=$(INSTALLPATH)

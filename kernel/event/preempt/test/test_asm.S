@@ -5,6 +5,7 @@
 
 #include <asm_std.h>
 #include <asm_offsets.h>
+#include <max.h>
 
 	.text
 	.p2align 12
@@ -95,6 +96,12 @@ TH_prepare:
 #endif
 	cswi(r1)
 	ciad(r1)
+
+	/* Global interrupt enable */
+	r0 = syscfg
+	r0 = setbit(r0,#SYSCFG_G_BIT)
+	syscfg = r0
+	isync
 
 	jumpr r31
 

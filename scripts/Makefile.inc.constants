@@ -17,10 +17,16 @@ endif
 
 .PHONY: constants
 
+# consts.pl runs hexagon-nm.  GNU make before 4.4 does not pass exported
+# variables to $(shell), so the PATH that Makefile.inc.tools prepends
+# TOOLCHAIN_BIN to has to be handed over explicitly.  Recursive (=) so PATH is
+# read at use time, after Makefile.inc.tools has been included.
+CONSTS_RUN = PATH="$(PATH)" $(CONSTS)
+
 constants: $(END_SYM_FROM)
-	$(eval export H2K_BOOTVM_OFFSET := $(shell $(CONSTS) bootvm_offset $(END_SYM_FROM) $(PARAMS)))
-	$(eval export H2K_BOOTVM_START := $(shell $(CONSTS) bootvm_start $(END_SYM_FROM) $(PARAMS)))
-	$(eval export H2K_V2P_OFFSET := $(shell $(CONSTS) v2p_offset $(END_SYM_FROM) $(PARAMS)))
-	$(eval export H2K_KERNEL_NPAGES = $(shell $(CONSTS) kernel_npages $(END_SYM_FROM) $(PARAMS)))
+	$(eval export H2K_BOOTVM_OFFSET := $(shell $(CONSTS_RUN) bootvm_offset $(END_SYM_FROM) $(PARAMS)))
+	$(eval export H2K_BOOTVM_START := $(shell $(CONSTS_RUN) bootvm_start $(END_SYM_FROM) $(PARAMS)))
+	$(eval export H2K_V2P_OFFSET := $(shell $(CONSTS_RUN) v2p_offset $(END_SYM_FROM) $(PARAMS)))
+	$(eval export H2K_KERNEL_NPAGES = $(shell $(CONSTS_RUN) kernel_npages $(END_SYM_FROM) $(PARAMS)))
 
 endif

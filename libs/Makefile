@@ -75,6 +75,10 @@ $(H2_LIB): $(call lib_sources,$(H2_DIR))
 # Ordinary prerequisites, not order-only: posix, h2_compat, qurt and angel compile
 # against each other's generated headers, and a child is only consulted when its
 # own directory changed -- order-only would hide h2 header edits from them.
+# FIXME: a header-only edit in h2/ leaves $(H2_LIB) unchanged (only the generated
+# header copy moves), so posix/h2_compat/qurt/angel are never re-consulted and
+# keep objects built against the old header.  Depending on the h2 sources as
+# well would fix it.
 $(POSIX_LIB): $(H2_LIB) $(call lib_sources,$(POSIX_DIR))
 	+${MAKE} -C posix $(BUILD_TYPE)
 

@@ -130,6 +130,16 @@ int main() {
 	val = H2K_cfg_table(CFG_TABLE_CLADEREGS) << CFG_TABLE_SHIFT;
 	if (H2K_trap_info(INFO_CLADE_BASE, 0, 0, &a) != val) FAIL("CLADE_BASE");
 
+	val = H2K_cfg_table(CFG_TABLE_CLADE2REGS) << CFG_TABLE_SHIFT;
+	if (H2K_trap_info(INFO_CLADE2_BASE, 0, 0, &a) != val) FAIL("CLADE2_BASE");
+
+	if (H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_CLADE3_MASK) {
+		val = (H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT) + (H2K_cfg_table(CFG_TABLE_CLADE3REGS) << 10);
+	} else {
+		val = 0;
+	}
+	if (H2K_trap_info(INFO_CLADE3_BASE, 0, 0, &a) != val) FAIL("CLADE3_BASE");
+
 	val = H2K_get_cfgbase();
 	if (H2K_trap_info(INFO_CFGBASE, 0, 0, &a) != val) FAIL("CFGBASE");
 

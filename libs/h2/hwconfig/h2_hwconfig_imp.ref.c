@@ -30,6 +30,26 @@ int h2_hwconfig_clade_set_reg(unsigned int offset, unsigned int val)
 	return h2_hwconfig_trap(HWCONFIG_SETCLADEREG, NULL, offset, val);
 }
 
+int h2_hwconfig_clade2_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETCLADE2REG, NULL, offset, 0);
+}
+
+int h2_hwconfig_clade2_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETCLADE2REG, NULL, offset, val);
+}
+
+int h2_hwconfig_clade3_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETCLADE3REG, NULL, offset, 0);
+}
+
+int h2_hwconfig_clade3_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETCLADE3REG, NULL, offset, val);
+}
+
 int h2_hwconfig_l2cache_size(unsigned int sizeval, unsigned int use_wb)
 {
 	return h2_hwconfig_trap(HWCONFIG_L2CACHE, NULL, sizeval, use_wb);

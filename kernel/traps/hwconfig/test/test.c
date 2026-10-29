@@ -13,6 +13,8 @@
 #include <globals.h>
 #include <cache.h>
 #include <hw.h>
+#include <cfg_table.h>
+#include <h2_common_kerror.h>
 
 void FAIL(const char *str)
 {
@@ -77,6 +79,42 @@ void TH_test_pf()
 	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,0,&a);
 	checkval ^= 1<<20;
 	if (a.ccr != checkval) FAIL("!SF_D");
+}
+
+void TH_test_clade_range()
+{
+	/* Out-of-range offsets must fail before touching any register */
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_GETCLADEREG, NULL, CLADEREGS_MAX + 4, 0, &a) != 0) FAIL("CLADE get range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADEREG_RANGE) FAIL("CLADE get range kerror");
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_SETCLADEREG, NULL, CLADEREGS_MAX + 4, 0, &a) != 0) FAIL("CLADE set range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADEREG_RANGE) FAIL("CLADE set range kerror");
+
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_GETCLADE2REG, NULL, CLADE2REGS_MAX + 4, 0, &a) != 0) FAIL("CLADE2 get range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE2REG_RANGE) FAIL("CLADE2 get range kerror");
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_SETCLADE2REG, NULL, CLADE2REGS_MAX + 4, 0, &a) != 0) FAIL("CLADE2 set range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE2REG_RANGE) FAIL("CLADE2 set range kerror");
+
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_GETCLADE3REG, NULL, CLADE3REGS_MAX + 4, 0, &a) != 0) FAIL("CLADE3 get range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE3REG_RANGE) FAIL("CLADE3 get range kerror");
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_SETCLADE3REG, NULL, CLADE3REGS_MAX + 4, 0, &a) != 0) FAIL("CLADE3 set range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE3REG_RANGE) FAIL("CLADE3 set range kerror");
+
+	/* CLADE3 not present: even an in-range offset must fail */
+	if ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_CLADE3_MASK) == 0) {
+		H2K_kg.kernel_error = KERROR_NONE;
+		if (H2K_trap_hwconfig(HWCONFIG_GETCLADE3REG, NULL, 0, 0, &a) != 0) FAIL("CLADE3 get not present ret");
+		if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE3REG_RANGE) FAIL("CLADE3 get not present kerror");
+		H2K_kg.kernel_error = KERROR_NONE;
+		if (H2K_trap_hwconfig(HWCONFIG_SETCLADE3REG, NULL, 0, 0, &a) != 0) FAIL("CLADE3 set not present ret");
+		if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE3REG_RANGE) FAIL("CLADE3 set not present kerror");
+	}
+	H2K_kg.kernel_error = KERROR_NONE;
 }
 
 int main()
@@ -173,6 +211,8 @@ int main()
 
 	TH_test_l2locka(64);
 	TH_test_l2locka(128);
+
+	TH_test_clade_range();
 
 	puts("TEST PASSED\n");
 	return 0;

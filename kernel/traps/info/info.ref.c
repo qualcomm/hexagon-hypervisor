@@ -85,6 +85,16 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 	case INFO_CLADE_BASE:
 		return H2K_cfg_table(CFG_TABLE_CLADEREGS) << CFG_TABLE_SHIFT;
 
+	case INFO_CLADE2_BASE:
+		return H2K_cfg_table(CFG_TABLE_CLADE2REGS) << CFG_TABLE_SHIFT;
+
+	case INFO_CLADE3_BASE:
+		if (H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_CLADE3_MASK) {
+			return (H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT) + (H2K_cfg_table(CFG_TABLE_CLADE3REGS) << 10);  // entry in KB from L2TCM
+		} else {
+			return 0;
+		}
+
 	case INFO_CFGBASE:
 		return H2K_get_cfgbase();
 

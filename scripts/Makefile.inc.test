@@ -480,10 +480,10 @@ ${COVFILE}: ${DUMP} try_gmon_out ignore_fns
 	fi; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
-CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${EXEC_TMP} ${COVFILE} cov*.txt* ${GMON_FILES} ${DUMP} make.log test.log results.txt h2 threadmap.py
+CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} *.ref.o *.v*opt.o ${EXEC} ${EXEC_TMP} ${COVFILE} cov*.txt* ${GMON_FILES} ${DUMP} make.log test.log results.txt h2 threadmap.py
 CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt pmu_stats.txt default.profraw
 
-clean:
+clean clean_source:
 	rm -rf ${CLEANUP}
 
 #  Pretty much a binary yes/no if the test passed or failed.

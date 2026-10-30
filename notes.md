@@ -1,5 +1,33 @@
  H2 Hexagon Hypervisor - Project Notes
 
+## Test source artifact cleanup (2026-10-30) — DONE
+
+Reproduced the direct-test debug workflow with
+`make -C kernel/data/intconfig/test ARCHV=81 TARGET=opt tst`. It created
+`test.o`, `intconfig.ref.o`, `test.elf*`, `test.log`, `results.txt`, gmon output,
+and PMU output in the source directory. The existing top-level `testclean`
+removed only `artifacts/.../build/tests`, leaving all source artifacts behind.
+
+Fixed `scripts/Makefile.coverage` so its `clean` target enumerates the union of
+all `scripts/testlist.v*` entries and invokes each test's `clean_source` target
+with an absolute `H2DIR`. Added `clean_source` as an alias of the terminal-test
+cleanup recipe in `scripts/Makefile.inc.test` so this recursion cannot trigger a
+test Makefile's normal top-level bootstrap. The cleanup also sweeps `*.ref.o`
+and `*.v*opt.o`, covering orphan objects no longer present in the current
+`OBJS` expansion.
+
+Negative/positive verification:
+- Before the fix, `testclean` left every reproduced intconfig source artifact.
+- After the fix, `testclean` removed both the out-of-tree test build root and all
+  reproduced intconfig source artifacts.
+- A fresh v81/opt `test_variant` compiled and executed all 137 tests from the
+  out-of-tree build directories; intconfig rebuilt and passed. Overall result
+  was 136 passed, 1 failed: pre-existing `kernel/traps/info/test` failed its
+  Build ID assertion. An incremental rerun reproduced the same sole failure.
+
+**Next task:** Investigate the independent `kernel/traps/info/test` Build ID
+failure if requested; it is unrelated to source artifact cleanup.
+
 ## Project Summary
 
 H2 is a minimal, efficient hypervisor/monitor-mode software for Qualcomm Hexagon

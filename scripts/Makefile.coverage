@@ -6,6 +6,8 @@
 include $(H2DIR)/scripts/Makefile.inc.install
 
 SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/\s*\#.*//;')
+# Source-directory debug builds can come from any architecture's test list.
+SUBDIRS_ALL:=$(sort $(shell cat ./scripts/testlist.v* | perl -p -e 's/\s*\#.*//;'))
 
 TESTOUT ?= $(INSTALLPATH)/test.out
 
@@ -165,6 +167,9 @@ test_summary:
 
 clean:
 	rm -rf "$(TEST_BUILD_ROOT)"
+	@for SUBDIR in $(SUBDIRS_ALL); do \
+		$(MAKE) -C "$(H2DIR)/$$SUBDIR" H2DIR=$(H2DIR) clean_source TEST=$$SUBDIR || exit $$?; \
+	done
 
 $(INSTALLPATH)/merged.profraw: tst
 	echo '[COVERAGE] Merging:' $(shell find ${H2DIR}/kernel ${H2DIR}/libs -name "default.profraw")

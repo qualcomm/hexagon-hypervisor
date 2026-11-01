@@ -352,6 +352,120 @@ Set DPM volt limits management register.
 */
 int h2_hwconfig_dpm_voltlmtmgmt_set_reg(unsigned int offset, unsigned int val);
 
+/**
+Get CCR register.
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_ccr_get(void);
+
+/**
+Set CCR register.
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_ccr_set(unsigned int val);
+
+/**
+Get SYSCFG register.
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_syscfg_get(void);
+
+/**
+Set SYSCFG register.
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_syscfg_set(unsigned int val);
+
+/**
+Get LIVELOCK register.
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_livelock_get(void);
+
+/**
+Set LIVELOCK register.
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_livelock_set(unsigned int val);
+
+/**
+Get TURKEY register.
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_turkey_get(void);
+
+/**
+Set TURKEY register.
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_turkey_set(unsigned int val);
+
+/**
+Get DUCK register.
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_duck_get(void);
+
+/**
+Set DUCK register.
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_duck_set(unsigned int val);
+
+/**
+Get CHICKEN register.
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_chicken_get(void);
+
+/**
+Set CHICKEN register.
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_chicken_set(unsigned int val);
+
+/**
+Get RGDR register.
+@returns register value
+@dependencies None
+*/
+unsigned int h2_hwconfig_rgdr_get(void);
+
+/**
+Set RGDR register.
+@param[in] val  Value to write
+@returns 0 on success
+@dependencies None
+*/
+int h2_hwconfig_rgdr_set(unsigned int val);
+
+#ifdef TESTING
+/**
+Return the calling thread to Monitor mode for white-box tests only.
+@returns 0 on success, -1 if the kernel does not enable this test API
+@dependencies Requires the kernel handler compiled with TESTING
+*/
+int h2_enter_monitor(void);
+#endif
+
 #endif
 
 /** @} */

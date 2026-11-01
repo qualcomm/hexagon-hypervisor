@@ -10,6 +10,7 @@
 #include <context.h>
 #include <max.h>
 #include <h2.h>
+#include <h2_hwconfig.h>
 #include <setjmp.h>
 #include <h2_vm.h>
 #include <tlbfmt.h>
@@ -52,6 +53,11 @@ int main()
 {
 	u32_t asid;
 	h2_init(NULL);
+#ifdef TESTING
+	if (h2_enter_monitor() != 0) FAIL("Could not enter Monitor mode");
+#else
+	FAIL("Should run test with TESTING cflag");
+#endif
 	set_vectors();
 	asm volatile (
 	" %0 = ssr \n"

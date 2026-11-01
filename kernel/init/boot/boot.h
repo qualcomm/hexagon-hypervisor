@@ -9,11 +9,7 @@
 #include <max.h>
 #include <h2_common_pmap.h>
 
-#if (H2K_LINK_ADDR != 0)
-#define BOOT_TLB_PERM  0x0
-#else
-#define BOOT_TLB_PERM  0xf
-#endif
+#define BOOT_TLB_PERM  URWX
 
 #define BOOT_TLB_PGSIZE H2K_KERNEL_PGSIZE
 

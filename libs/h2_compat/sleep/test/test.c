@@ -49,7 +49,9 @@ int main()
 
 	printf("Expect %d < delta < %d\n", DELTA_MIN, DELTA_MAX);
 
-	h2_thread_create(sleeper, &stack[STACKSIZE], NULL, 0);
+	if (h2_thread_create(sleeper, &stack[STACKSIZE], NULL, 1) == -1) {
+		FAIL("Could not create sleeper thread\n");
+	}
 
 	while ( 0 == flag && i < COUNT_MAX) i++;
 

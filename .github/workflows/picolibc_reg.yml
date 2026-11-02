@@ -1,0 +1,75 @@
+name: Picolibc Build and Test
+
+on:
+  pull_request:
+
+env:
+  # Nightly toolchain.  The job copies it without the Dinkumware sysroots, so a
+  # build that misses --cstdlib=picolibc fails instead of silently using them.
+  TOOLCHAIN_SRC: /prj/qct/llvm/release/internal/HEXAGON/branch-25.0/linux64/latest/Tools
+  # The runner's pkw wrapper otherwise picks git 2.15.1 for actions/checkout, whose
+  # libcurl is broken there.  Same pin as h2_future_reg.yml.
+  PKW_VERSIONS: "git=2.38.0"
+
+jobs:
+  picolibc-build-and-test:
+    name: Picolibc Build and Test
+    runs-on: [ self-hosted, Linux, X64 ]
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check GNU make version
+        run: |
+          ver="$(/usr/bin/make --version | sed -n '1s/.* \([0-9][0-9.]*\).*/\1/p')"
+          [[ "$(printf '%s\n' 4.2 "$ver" | sort -V | head -1)" == "4.2" ]] \
+            || { echo "GNU make >= 4.2 required, found $ver"; exit 1; }
+
+      - name: Create Picolibc toolchain copy
+        run: |
+          dest="$(mktemp -d /tmp/picolibc-toolchain.XXXXXX)"
+          echo "PICOLIBC_TOOLCHAIN=$dest" >> "$GITHUB_ENV"
+          tar -C "$TOOLCHAIN_SRC" \
+              --exclude=./target/hexagon \
+              --exclude=./target/hexagon-unknown-qurt-dw \
+              --exclude=./target/qnx \
+              -cf - . | tar -C "$dest" -xf -
+          test -x "$dest/bin/hexagon-clang"
+          test -d "$dest/target/picolibc"
+          test ! -e "$dest/target/hexagon"
+
+      - name: Clean Picolibc artifacts
+        run: rm -rf artifacts/picolibc
+
+      - name: Regression test
+        run: |
+          /usr/bin/make -O BATCH=0 USE_PKW=0 NULL_ANGEL_TRAP=1 PICOLIBC=1 \
+            TOOLCHAIN_BIN="$PICOLIBC_TOOLCHAIN/bin" testall
+
+      - name: Check test results
+        run: |
+          summary=artifacts/picolibc/test.out
+          test -f "$summary" || { echo "no test summary at $summary"; exit 1; }
+          grep '^SUMMARY:' "$summary" || true
+          ntests="$(perl -p -e 's/\s*\#.*//;' scripts/testlist.v81 | grep -c '\S')"
+          expected=$(( ntests * 3 * 3 ))   # tests x ARCHV bases x variants
+          passed="$(sed -n 's/^SUMMARY: \([0-9]*\) passed, .*/\1/p' "$summary")"
+          failed="$(sed -n 's/^SUMMARY: [0-9]* passed, \([0-9]*\) failed.*/\1/p' "$summary")"
+          if [[ "${failed:-1}" -ne 0 ]]; then
+              grep '^    FAILED' "$summary" || true
+              echo "${failed} test(s) failed"
+              exit 1
+          fi
+          if [[ "${passed:-0}" -ne "$expected" ]]; then
+              echo "${passed:-0} test(s) passed, expected $expected"
+              exit 1
+          fi
+
+      - name: Remove toolchain copy
+        if: always()
+        run: |
+          if [ -n "${PICOLIBC_TOOLCHAIN:-}" ]; then rm -rf "$PICOLIBC_TOOLCHAIN"; fi

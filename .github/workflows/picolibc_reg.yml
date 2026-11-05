@@ -4,8 +4,9 @@ on:
   pull_request:
 
 env:
-  # Nightly toolchain.  The job copies it without the Dinkumware sysroots, so a
-  # build that misses --cstdlib=picolibc fails instead of silently using them.
+  # Nightly toolchain.  The job copies it without the Dinkumware sysroots (see the
+  # toolchain step), so a build that misses --cstdlib=picolibc fails instead of
+  # silently using them.
   TOOLCHAIN_SRC: /prj/qct/llvm/release/internal/HEXAGON/branch-23.0/linux64/latest/Tools
   # The runner's pkw wrapper otherwise picks git 2.15.1 for actions/checkout, whose
   # libcurl is broken there.  Same pin as h2_future_reg.yml.
@@ -29,21 +30,25 @@ jobs:
           [[ "$(printf '%s\n' 4.2 "$ver" | sort -V | head -1)" == "4.2" ]] \
             || { echo "GNU make >= 4.2 required, found $ver"; exit 1; }
 
-      - name: Create Picolibc toolchain copy
+      - name: Create Picolibc toolchain
         run: |
+          src="$TOOLCHAIN_SRC"
           dest="$(mktemp -d /tmp/picolibc-toolchain.XXXXXX)"
           echo "PICOLIBC_TOOLCHAIN=$dest" >> "$GITHUB_ENV"
-          tar -C "$TOOLCHAIN_SRC" \
-              --exclude=./target/hexagon \
-              --exclude=./target/hexagon-unknown-qurt-dw \
-              --exclude=./target/qnx \
-              -cf - . | tar -C "$dest" -xf -
+          # Copy the toolchain without its Dinkumware sysroots, so a build that
+          # misses --cstdlib=picolibc fails instead of silently using them.
+          tar -C "$src" \
+            --exclude=./target/hexagon \
+            --exclude=./target/hexagon-unknown-qurt-dw \
+            --exclude=./target/qnx \
+            -cf - . | tar -C "$dest" -xf -
           test -x "$dest/bin/hexagon-clang"
+          test -f "$dest/templates/staticExecutable/static-executable-h2-picolibc.lcs.template"
           test -d "$dest/target/picolibc"
-          test ! -e "$dest/target/hexagon"
+          for t in hexagon hexagon-unknown-qurt-dw qnx; do test ! -e "$dest/target/$t"; done
 
       - name: Clean Picolibc artifacts
-        run: rm -rf artifacts/picolibc
+        run: rm -rf artifacts_picolibc
 
       - name: Regression test
         run: |
@@ -52,16 +57,29 @@ jobs:
 
       - name: Check test results
         run: |
-          summary=artifacts/picolibc/test.out
+          summary=artifacts_picolibc/test.out
           test -f "$summary" || { echo "no test summary at $summary"; exit 1; }
           grep '^SUMMARY:' "$summary" || true
-          ntests="$(perl -p -e 's/\s*\#.*//;' scripts/testlist.v81 | grep -c '\S')"
-          expected=$(( ntests * 3 * 3 ))   # tests x ARCHV bases x variants
-          passed="$(sed -n 's/^SUMMARY: \([0-9]*\) passed, .*/\1/p' "$summary")"
+          # The expected numbers come from make's configuration, not from this file.
+          archs="$(/usr/bin/make -s -f makefile.real PICOLIBC=1 printvar-ARCHV_LIST | cut -d= -f2)"
+          variants="$(/usr/bin/make -s -f makefile.real PICOLIBC=1 printvar-VARIANTS | cut -d= -f2)"
+          [[ -n "$archs" && -n "$variants" ]] || { echo "make reports no ARCHV_LIST or VARIANTS"; exit 1; }
+          nvariants=$(( $(wc -w <<< "$archs") * $(wc -w <<< "$variants") ))
+          ntests=0
+          for a in $archs; do
+            ntests=$(( ntests + $(perl -p -e 's/\s*\#.*//;' "scripts/testlist.v$a" | grep -c '\S') ))
+          done
+          expected=$(( ntests * $(wc -w <<< "$variants") ))
           failed="$(sed -n 's/^SUMMARY: [0-9]* passed, \([0-9]*\) failed.*/\1/p' "$summary")"
+          passed="$(sed -n 's/^SUMMARY: \([0-9]*\) passed, .*/\1/p' "$summary")"
+          reported="$(sed -n 's/^SUMMARY: .* across \([0-9]*\) variant.*/\1/p' "$summary")"
           if [[ "${failed:-1}" -ne 0 ]]; then
               grep '^    FAILED' "$summary" || true
               echo "${failed} test(s) failed"
+              exit 1
+          fi
+          if [[ "${reported:-0}" -ne "$nvariants" ]]; then
+              echo "${reported:-0} variant(s) reported, expected $nvariants"
               exit 1
           fi
           if [[ "${passed:-0}" -ne "$expected" ]]; then

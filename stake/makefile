@@ -23,11 +23,10 @@ include ../scripts/Makefile.inc.bootvm
 CONSTS := ./consts.pl
 SYMS := ./syms.pl
 
-ifeq ($(PICOLIBC),1)
-OSLIB_FLAG = --target=hexagon-h2-elf --cstdlib=picolibc
-else
-OSLIB_FLAG = -moslib=h2
-endif
+include ../scripts/Makefile.inc.libc
+# The libc selection as a compile flag: -moslib=h2 for Dinkumware, the Picolibc
+# target and cstdlib otherwise (Makefile.inc.libc keeps both in OSLIB_LDFLAGS).
+OSLIB_FLAG = $(OSLIB_LDFLAGS)
 
 CFLAGS = $(OPTIMIZE) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Werror -g $(OSLIB_FLAG) -I$(INSTALLPATH)/include -I$(KERNELPATH)/include -L$(INSTALLPATH)/lib
 

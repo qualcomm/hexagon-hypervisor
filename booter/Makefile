@@ -5,7 +5,7 @@ include $(H2DIR)/scripts/Makefile.inc.tools
 include $(H2DIR)/scripts/Makefile.inc.install
 
 ifeq ($(INSTALLPATH),)
-ARTIFACTS_DIR ?= $(if $(filter 1,$(PICOLIBC)),artifacts/picolibc,artifacts)
+ARTIFACTS_DIR ?= $(if $(filter 1,$(PICOLIBC)),artifacts_picolibc,artifacts)
 export INSTALLPATH := $(H2DIR)/$(ARTIFACTS_DIR)/v$(ARCHV)/opt/install
 endif
 

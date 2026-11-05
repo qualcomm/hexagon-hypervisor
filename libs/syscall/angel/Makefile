@@ -4,13 +4,12 @@ H2_BUILD_DIR      := $(INSTALLPATH)/../build/libs/h2
 H2_COMPAT_BUILD_DIR := $(INSTALLPATH)/../build/libs/h2_compat
 POSIX_BUILD_DIR   := $(INSTALLPATH)/../build/libs/posix
 
-# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-elf --cstdlib=picolibc
+# C library selection (the Picolibc target and cstdlib) comes from Makefile.inc.libc.
+include ../../../scripts/Makefile.inc.libc
+TARGET_FLAG = $(OSLIB_CFLAGS)
 ifeq ($(PICOLIBC),1)
-TARGET_FLAG = --target=hexagon-h2-elf --cstdlib=picolibc
 # _STD_END/_STD_BEGIN are Dinkumware-specific macros; define them as no-ops
 TARGET_FLAG += -D_STD_END= -D_STD_BEGIN=
-else
-TARGET_FLAG =
 endif
 
 CFLAGS = $(TARGET_FLAG) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -Wno-builtin-requires-header -Werror -I$(H2_BUILD_DIR)/include -I$(H2_COMPAT_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include -g $(OPTIMIZE) $(OPT_ADD) -G0

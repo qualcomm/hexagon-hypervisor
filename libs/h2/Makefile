@@ -1,12 +1,9 @@
 
 ALL: dummy
 
-# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-elf --cstdlib=picolibc
-ifeq ($(PICOLIBC),1)
-TARGET_FLAG = --target=hexagon-h2-elf --cstdlib=picolibc
-else
-TARGET_FLAG =
-endif
+# C library selection (the Picolibc target and cstdlib) comes from Makefile.inc.libc.
+include ../../scripts/Makefile.inc.libc
+TARGET_FLAG = $(OSLIB_CFLAGS)
 
 OPTIMIZE := -Os
 

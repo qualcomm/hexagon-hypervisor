@@ -35,12 +35,17 @@ include $(H2DIR)/scripts/Makefile.inc.libc
 # on top of its own.  Keep them local to each make.
 unexport CFLAGS ASFLAGS LDFLAGS
 
-# LDFLAGS must be recursively expanded: it references $(H2K_KERNEL_NPAGES),
-# which the 'constants' rule only computes after the test.elf_tmp link.  If
-# LDFLAGS is not in the environment, 'unexport' above leaves it defined as an
-# empty simple variable, and every 'LDFLAGS +=' below then expands immediately,
-# freezing NPAGES at its default of 0.  Re-define it recursively, keeping any
-# value passed in from outside.
+# The flags must be recursively expanded: they reference variables that are only
+# computed later (LDFLAGS: $(H2K_KERNEL_NPAGES), by the 'constants' rule after the
+# test.elf_tmp link; CFLAGS: $(H2K_BOOTVM_OFFSET), likewise).  If a flag is not in
+# the environment, 'unexport' above leaves it defined as an empty simple variable,
+# and every 'X +=' below then expands immediately: NPAGES freezes at 0 and
+# BOOTVM_OFFSET is passed as an empty define.  Re-define each one recursively,
+# keeping any value passed in from outside.
+_CFLAGS_IN := $(CFLAGS)
+CFLAGS = $(_CFLAGS_IN)
+_ASFLAGS_IN := $(ASFLAGS)
+ASFLAGS = $(_ASFLAGS_IN)
 _LDFLAGS_IN := $(LDFLAGS)
 LDFLAGS = $(_LDFLAGS_IN)
 

@@ -1,11 +1,8 @@
 
-# Picolibc support: if PICOLIBC=1, use --target=hexagon-h2-elf --cstdlib=picolibc
-# Clang driver uses --cstdlib=picolibc to add correct include paths to Picolibc headers
-ifeq ($(PICOLIBC),1)
-TARGET_FLAG = --target=hexagon-h2-elf --cstdlib=picolibc
-else
-TARGET_FLAG =
-endif
+# C library selection (the Picolibc target and cstdlib) comes from Makefile.inc.libc.
+# The clang driver's --cstdlib=picolibc adds the Picolibc include paths.
+include ../../../scripts/Makefile.inc.libc
+TARGET_FLAG = $(OSLIB_CFLAGS)
 
 CFLAGS = $(TARGET_FLAG) -H -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -I../angel/include -Wall -Wno-builtin-requires-header -Werror -I../../h2/include -I../../h2_compat/include -I../../posix/include -g $(OPTIMIZE) -G0
 ASFLAGS = $(TARGET_FLAG) -H -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -I../angel/include -Wall -I../../h2/include -I../../posix/include

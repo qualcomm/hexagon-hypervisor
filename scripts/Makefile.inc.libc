@@ -38,7 +38,16 @@ GUEST_LDSCRIPT := -Wl,--undefined=__retarget_lock_init -Wl,-l:liblocks.a -Wl,--s
 # interrupts, cycle counter); the tests that need some of it set it up
 # themselves.
 STANDALONE_LIBC_CFLAGS := --target=hexagon-none-elf --cstdlib=picolibc
-STANDALONE_LIBC_LDFLAGS = $(STANDALONE_LIBC_CFLAGS) -Wl,--defsym=__flash_size=0x00880000 -Wl,--defsym=__ram=0x01000000 -Wl,--defsym=__ram_size=0x04000000 -Wl,-T,$(shell $(PICOLIBC_CC_PATH) $(STANDALONE_LIBC_CFLAGS) -mv$(TOOLARCH) -G0 -print-file-name=picolibc.ld)
+# picolibc.ld for -mv$(TOOLARCH), looked up once per STANDALONE test.  TOOLARCH
+# comes from Makefile.inc.tools, which is included before this file.  A missing
+# file is reported here, not as a link error.
+ifdef STANDALONE
+STANDALONE_PICOLIBC_LD := $(shell $(PICOLIBC_CC_PATH) $(STANDALONE_LIBC_CFLAGS) -mv$(TOOLARCH) -G0 -print-file-name=picolibc.ld)
+ifeq ($(wildcard $(STANDALONE_PICOLIBC_LD)),)
+$(error picolibc.ld not found: '$(STANDALONE_PICOLIBC_LD)' (compiler $(PICOLIBC_CC_PATH), -mv$(TOOLARCH)))
+endif
+endif
+STANDALONE_LIBC_LDFLAGS := $(STANDALONE_LIBC_CFLAGS) -Wl,--defsym=__flash_size=0x00880000 -Wl,--defsym=__ram=0x01000000 -Wl,--defsym=__ram_size=0x04000000 -Wl,-T,$(STANDALONE_PICOLIBC_LD)
 else
 OSLIB_CFLAGS  :=
 OSLIB_LDFLAGS := -moslib=h2

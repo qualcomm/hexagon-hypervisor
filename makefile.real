@@ -1,3 +1,5 @@
+# Dear emacs, this is a -*- Makefile -*-
+
 include scripts/Makefile.inc.config
 include scripts/Makefile.inc.opensource
 include scripts/Makefile.inc.version
@@ -72,11 +74,32 @@ endef
 
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call build_instance,$a,$v))))
 
-.PHONY: buildall
-buildall: $(BUILDS)
 
-q6install: Q6INSTALLDIR := $(shell basename $(PKG_INSTALL_PATH))
-q6install: BRANCH := $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
+# link derived arch versions in artifacts for testing on corresponding sim versions
+LINKS := $(foreach a,$(ARCHV_LIST),link-$(a))
+
+define link_instance
+.PHONY: link-$(1)
+link-$(1):
+	$(foreach l,$(LINK_$(1)),ln -s v$(1) $(H2DIR)/artifacts/v$(l) &&) true
+endef
+
+$(foreach a,$(ARCHV_LIST),$(eval $(call link_instance,$a)))
+
+.PHONY: buildall
+buildall: $(BUILDS) $(LINKS)
+
+# for testing
+.PHONY: linkall
+linkall: $(LINKS)
+
+
+# targets for q6auto POST_INSTALL_CMD
+ifneq ($(PKG_INSTALL_PATH),)
+Q6INSTALLDIR = $(shell basename $(PKG_INSTALL_PATH))
+BRANCH = $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
+endif
+
 q6install:
 	cd $(PKG_INSTALL_PATH) && \
 	cp -a artifacts/v$(ARCHV)/$(TARGET)/build/booter/bootvm_image artifacts/v$(ARCHV)/$(TARGET)/install/bin &&\
@@ -94,10 +117,26 @@ endef
 
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),$(eval $(call q6install_instance,$a,$v))))
 
+
+Q6LINKS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),q6link-$(a)-$(v)))
+
+define q6link_instance
+.PHONY: q6link-$(1)-$(2)
+q6link-$(1)-$(2):
+	cd $(PKG_INSTALL_PATH)/.. && \
+	$(foreach l,$(LINK_$(1)),rm -f v$(l)_$(BRANCH)_$(2)_latest v$(l)_$(BRANCH)_$(2)_tested && ln -s v$(1)_$(BRANCH)_$(2)_latest v$(l)_$(BRANCH)_$(2)_latest && ln -s v$(1)_$(BRANCH)_$(2)_tested v$(l)_$(BRANCH)_$(2)_tested && ) true
+endef
+
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),$(eval $(call q6link_instance,$a,$v))))
+
 .PHONY: q6installall
-q6installall: $(Q6INSTALLS)
+q6installall: $(Q6INSTALLS) $(Q6LINKS)
 	cd $(PKG_INSTALL_PATH) && \
-	rm -rf AGENTS.md booter ciconfig CLAUDE.md CMakeLists.txt CODE-OF-CONDUCT.md CONTRIBUTING.md docs examples hvm_spec kernel libs LICENSE.txt linux makefile makefile.real notes.md perf README.md scripts SECURITY.md skip_pkg_install stake toolchain.cmake
+	rm -rf AGENTS.md booter ciconfig CLAUDE.md CMakeLists.txt CODE-OF-CONDUCT.md CONTRIBUTING.md docs examples hvm_spec kernel libs LICENSE.txt linux makefile makefile.real notes.md perf README.md scripts SECURITY.md stake toolchain.cmake .github .gitignore .gitmail passout
+
+# for local testing
+.PHONY: q6linkall
+q6linkall: $(Q6LINKS)
 
 all_clean:
 	rm -rf artifacts/

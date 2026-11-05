@@ -106,9 +106,6 @@ q6install:
 	rm -f ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest ../v$(ARCHV)_$(BRANCH)_$(TARGET)_tested && \
 	ln -s $(Q6INSTALLDIR)/artifacts/v$(ARCHV)/$(TARGET)/install ../v$(ARCHV)_$(BRANCH)_$(TARGET)_latest && \
 	ln -s v$(ARCHV)_$(BRANCH)_$(TARGET)_latest ../v$(ARCHV)_$(BRANCH)_$(TARGET)_tested
-ifeq ($(TARGET),opt)
-	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/jenkins_helpers/x86_64/master/h2_doc_gen.py -archv $(ARCHV) -branch_type $(BRANCH)
-endif
 
 Q6INSTALLS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),q6install-$(a)-$(v)))
 

@@ -17,16 +17,16 @@ void H2K_hvx_poweron(void) {
 	if (!H2K_gp->info_boot_flags.boot_have_hvx) {
 		return;
 	}
-
-	volatile u32_t delay;
-	u32_t va = H2K_tmpmap_add_and_lock((pa_t)H2K_gp->ssbase - H2K_gp->ss_pub_offset, DEVICE_TYPE, DEVICE_PAGE_SIZE);
-	u32_t volatile *hvx_clock = (u32_t *)(va + QDSP6SS_CP_CLK_CTL);
-
+	
 	BKL_LOCK();
 	if (H2K_gp->hvx_state == H2K_HVX_STATE_ON) {  // already on
 		BKL_UNLOCK();
 		return;
 	}
+
+	u32_t va = H2K_tmpmap_add_and_lock((pa_t)H2K_gp->ssbase - H2K_gp->ss_pub_offset, DEVICE_TYPE, DEVICE_PAGE_SIZE);
+	u32_t volatile *hvx_clock = (u32_t *)(va + QDSP6SS_CP_CLK_CTL);
+	volatile u32_t delay;
 
 #if ARCHV < 66
 	u32_t volatile *hvx_reset  = (u32_t *)(va + QDSP6SS_CP_RESET);
@@ -136,6 +136,8 @@ void H2K_hvx_poweron(void) {
 #endif
 
 	H2K_gp->hvx_state = H2K_HVX_STATE_ON;
+	// Note the unlocking order- similar to the locking.
+	//  BKL_UNLOCK first allows better parallelism in the kernel. 
 	BKL_UNLOCK();
 	H2K_tmpmap_remove_and_unlock();
 #endif
@@ -149,15 +151,15 @@ void H2K_hvx_poweroff(void) {
 		return;
 	}
 
-	u32_t va = H2K_tmpmap_add_and_lock((pa_t)H2K_gp->ssbase - H2K_gp->ss_pub_offset, DEVICE_TYPE, DEVICE_PAGE_SIZE);
-	u32_t volatile *hvx_clock = (u32_t *)(va + QDSP6SS_CP_CLK_CTL);
-
 	BKL_LOCK();
 
 	if (H2K_gp->hvx_state == H2K_HVX_STATE_OFF) {  // already off
 		BKL_UNLOCK();
 		return;
 	}
+	
+	u32_t va = H2K_tmpmap_add_and_lock((pa_t)H2K_gp->ssbase - H2K_gp->ss_pub_offset, DEVICE_TYPE, DEVICE_PAGE_SIZE);
+	u32_t volatile *hvx_clock = (u32_t *)(va + QDSP6SS_CP_CLK_CTL);
 
 #if ARCHV < 66
 	u32_t volatile *hvx_reset  = (u32_t *)(va + QDSP6SS_CP_RESET);
@@ -257,7 +259,8 @@ void H2K_hvx_poweroff(void) {
 #endif
 
 	H2K_gp->hvx_state = H2K_HVX_STATE_OFF;
-
+	// Note the unlocking order- similar to the locking.
+	//  BKL_UNLOCK first allows better parallelism in the kernel. 
 	BKL_UNLOCK();
 	H2K_tmpmap_remove_and_unlock();
 #endif

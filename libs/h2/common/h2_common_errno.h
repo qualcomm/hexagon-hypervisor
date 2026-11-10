@@ -15,6 +15,7 @@
 #else
 // values from dinkumware
 #define ENOENT        0x02
+#define EAGAIN        0x0b
 #define EFAULT        0x0e
 #define ENFILE        0x17
 #define ENOTTY        0x19
@@ -37,6 +38,7 @@
 #define ENOTEMPTY     0x5d
 #define EMSGSIZE      0x61
 #define ETIMEDOUT     0x91
+#define EOVERFLOW     0x92
 #define EINPROGRESS   0x96
 #define EFPOS         0x98
 #endif

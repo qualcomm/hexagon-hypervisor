@@ -81,7 +81,8 @@ LINKS := $(foreach a,$(ARCHV_LIST),link-$(a))
 define link_instance
 .PHONY: link-$(1)
 link-$(1):
-	$(foreach l,$(LINK_$(1)),ln -s v$(1) $(H2DIR)/artifacts/v$(l) &&) true
+	mkdir -p $(H2DIR)/$(ARTIFACTS_DIR)
+	$(foreach l,$(LINK_$(1)),ln -sfn v$(1) $(H2DIR)/$(ARTIFACTS_DIR)/v$(l) &&) true
 endef
 
 $(foreach a,$(ARCHV_LIST),$(eval $(call link_instance,$a)))

@@ -113,7 +113,9 @@ void hw_gen_int(int which)
 
 void vmmain(void *unused)
 {
-	static unsigned int blargh[2] __attribute__((aligned(8)));
+	/* libc TLS (errno, _locale) lives in the bytes just below ugp */
+	static struct { unsigned int tls[4]; unsigned int blargh[2]; } vmtcb __attribute__((aligned(8)));
+	unsigned int *blargh = vmtcb.blargh;
 	blargh[0] = h2_thread_myid();
 	blargh[1] = 0;
 	asm volatile (" ugp = %0 " : :"r"(blargh) : "memory");

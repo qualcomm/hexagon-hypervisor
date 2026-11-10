@@ -104,7 +104,8 @@ endif
 
 # Picolibc installs get their own link names, so they never replace the
 # Dinkumware _latest/_tested links.
-q6install: LINKBASE = v$(ARCHV)_$(BRANCH)_$(TARGET)$(if $(filter 1,$(PICOLIBC)),_picolibc)
+PICO_LINK_SUFFIX = $(if $(filter 1,$(PICOLIBC)),_picolibc)
+q6install: LINKBASE = v$(ARCHV)_$(BRANCH)_$(TARGET)$(PICO_LINK_SUFFIX)
 .PHONY: q6install
 q6install:
 	cd $(PKG_INSTALL_PATH) && \
@@ -130,7 +131,7 @@ define q6link_instance
 .PHONY: q6link-$(1)-$(2)
 q6link-$(1)-$(2):
 	cd $(PKG_INSTALL_PATH)/.. && \
-	$(foreach l,$(LINK_$(1)),rm -f v$(l)_$(BRANCH)_$(2)_latest v$(l)_$(BRANCH)_$(2)_tested && ln -s v$(1)_$(BRANCH)_$(2)_latest v$(l)_$(BRANCH)_$(2)_latest && ln -s v$(1)_$(BRANCH)_$(2)_tested v$(l)_$(BRANCH)_$(2)_tested && ) true
+	$(foreach l,$(LINK_$(1)),rm -f v$(l)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_latest v$(l)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_tested && ln -s v$(1)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_latest v$(l)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_latest && ln -s v$(1)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_tested v$(l)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_tested && ) true
 endef
 
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),$(eval $(call q6link_instance,$a,$v))))

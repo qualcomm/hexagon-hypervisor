@@ -9,9 +9,7 @@
  *   - sem_timedwait is currently aliased to sem_wait by the impl, so it
  *     does not honor the deadline -- a successful sem_post unblocks it.
  *
- * Note: the underlying pthread_sem_add_np returns a wakeup-count (or
- * EOVERFLOW), not the POSIX 0/-1, so sem_post return code is not strictly
- * checked here -- only that it does not error fatally.
+ * sem_post returns 0 on success, so its return code is checked below.
  */
 
 #include <stdio.h>
@@ -65,12 +63,12 @@ int main(void)
 	/* small delay for waiters to enter sem_wait */
 	for (i = 0; i < (1<<20); i++) asm volatile ("nop");
 
-	(void)sem_post(&s);
+	if (sem_post(&s) != 0) FAIL("sem_post failed");
 	while (wakes == 0) asm volatile ("nop");
 	if (wakes != 1) FAIL("sem_post woke more than one");
 
-	(void)sem_post(&s);
-	(void)sem_post(&s);
+	if (sem_post(&s) != 0) FAIL("sem_post failed");
+	if (sem_post(&s) != 0) FAIL("sem_post failed");
 
 	for (i = 0; i < N_WAITERS; i++)
 		if (pthread_join(t[i], NULL) != 0) FAIL("waiter join");

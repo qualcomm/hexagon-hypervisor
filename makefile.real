@@ -251,7 +251,7 @@ h2_test: # ucosclean
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
-	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -v "warning: jobserver" | fgrep -v "has loadable segment(s) with RWX permissions" | fgrep -v "Undefined weak symbol _user_strerror referred from" | fgrep -c -i warning:` -eq 0 ]
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -v "warning: jobserver" | grep -v -E "^Warning: '(test\.elf|test\.elf_tmp)' has loadable segment\(s\) with RWX permissions$$" | grep -v -E "^Warning: Undefined weak symbol _user_strerror referred from .*libc_string_strerror\.c\.o\) is resolved to __linker_guard_weak_undef$$" | fgrep -c -i warning:` -eq 0 ]
 
 abigtest:
 	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/pass/x86_64/master/pass.pl --retrycount 1 --results ./passout/$(ARCHV)/$(TARGET) --html ./passout/$(ARCHV)/$(TARGET) --q6v v$(ARCHV) --arch v$(ARCHV)_stable --tld STANDALONE=0 --tld TRACES=0 --flaglist v$(ARCHV)_flags.list --flags MARGIN=12 --flags PLMARGIN=180 --tld NOTIMING --tld CHECKIN=1 --flags PLIMIT= --flags WARN=--warn --flags Q6_RTOS_INSTALL=$(INSTALLPATH)

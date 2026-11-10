@@ -48,7 +48,7 @@ $(BUILD_DIR)/bigio: $(BUILD_DIR)/bigio.o
 	${CC} $(LDFLAGS) $(CFLAGS) $(GUEST_LDSCRIPT) -O0 -Wl,--section-start=.start=$(H2K_GUEST_START) -o $@ $<
 
 $(BOOTVM_IMAGE): $(BUILD_DIR)/booter.o $(BUILD_DIR)/booter_event.o $(BOOTVM_IMAGE_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=$(BOOTVM_IMAGE_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -o $@ $(BUILD_DIR)/booter.o $(BUILD_DIR)/booter_event.o $(BOOTVM_ENTRY_O)
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=$(BOOTVM_IMAGE_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -o $@ $(BUILD_DIR)/booter.o $(BUILD_DIR)/booter_event.o $(BOOTVM_ENTRY_O) $(BOOTVM_LOCKS_LDFLAGS)
 
 
 test: $(BUILD_DIR)/hello $(BOOTVM_PROG)

@@ -211,7 +211,7 @@ endif
 LINKED_LIBS := ${LIBH2KERNEL} ${LIBH2CHECK}
 ifdef STANDALONE
 CFLAGS += $(STANDALONE_LIBC_CFLAGS) @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
-LDFLAGS += $(STANDALONE_LIBC_LDFLAGS) -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
+LDFLAGS += $(STANDALONE_LIBC_LDFLAGS) $(LIBC_LOCKS_LDFLAGS) -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
 ASFLAGS += $(STANDALONE_LIBC_CFLAGS) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include
 ifeq ($(EN_LLVM_COV), 1)
 CFLAGS += ${LLVM_COV_CFLAGS}
@@ -239,7 +239,7 @@ ifeq ($(PICOLIBC),1)
 # Picolibc's crt0 needs the __stack/__bss_*/__tls_*/__heap_* symbols that only
 # its linker script provides (the toolchain's H2 Picolibc template, as for
 # guests); Dinkumware links these tests without a script.
-LDFLAGS += -Wl,--script=$(PICOLIBC_LCS)
+LDFLAGS += $(LIBC_LOCKS_LDFLAGS) -Wl,--script=$(PICOLIBC_LCS)
 endif
 endif # BOOT
 

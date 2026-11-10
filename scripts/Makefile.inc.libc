@@ -25,9 +25,16 @@ OSLIB_LDFLAGS := --target=hexagon-h2-elf --cstdlib=picolibc
 # an exported PATH to $(shell), so 'which' alone may find the wrong compiler.
 PICOLIBC_CC_PATH := $(if $(TOOLCHAIN_BIN),$(TOOLCHAIN_BIN)/$(CC),$(shell which $(CC)))
 PICOLIBC_LCS := $(abspath $(dir $(PICOLIBC_CC_PATH))/../templates/staticExecutable/static-executable-h2-picolibc.lcs.template)
-# Guest-only: the retargetable-lock implementation, as in h2-picolibc.cfg.  Not
-# part of OSLIB_LDFLAGS, which is also used for the kernel+booter image link.
-GUEST_LDSCRIPT := -Wl,--undefined=__retarget_lock_init -Wl,-l:liblocks.a -Wl,--script=$(PICOLIBC_LCS)
+# Retargetable locks: liblocks.a has the real lock code.  Every Picolibc link of
+# a guest, kernel-space or STANDALONE test takes it, before libh2 (it calls
+# pthread_mutex_lock) and before the implicit libc.a.  The --undefined forces its
+# member in, so libc.a's member (strong no-op locks) is never pulled.  Linking it
+# also links the H2 pthread runtime, whose main-thread TLS must follow the linker's
+# TLS layout (pthread_thread.ref.c).  The bootvm images take it as well, through
+# BOOTVM_LOCKS_LDFLAGS: booter's bootvm links no -moslib=h2, so it also needs -lh2.
+LIBC_LOCKS_LDFLAGS := -Wl,--undefined=__retarget_lock_init -Wl,-l:liblocks.a
+BOOTVM_LOCKS_LDFLAGS := $(LIBC_LOCKS_LDFLAGS) -lh2
+GUEST_LDSCRIPT := $(LIBC_LOCKS_LDFLAGS) -Wl,--script=$(PICOLIBC_LCS)
 # STANDALONE tests run bare-metal in monitor mode, without H2 underneath, so
 # they use Picolibc's bare-metal target: semihosting crt0/libsemihost and the
 # sysroot's picolibc.ld.  Its default layout is too small for these tests, so
@@ -51,6 +58,8 @@ STANDALONE_LIBC_LDFLAGS := $(STANDALONE_LIBC_CFLAGS) -Wl,--defsym=__flash_size=0
 else
 OSLIB_CFLAGS  :=
 OSLIB_LDFLAGS := -moslib=h2
+LIBC_LOCKS_LDFLAGS :=
+BOOTVM_LOCKS_LDFLAGS :=
 GUEST_LDSCRIPT :=
 STANDALONE_LIBC_CFLAGS :=
 STANDALONE_LIBC_LDFLAGS :=

@@ -34,8 +34,8 @@ struct pthread_tcb {
 	pthread_attr_t attrs;
 };
 
-extern char TLS_START __attribute__((weak));
-extern char TLS_END __attribute__((weak));
+/* PT_TLS memsz of the image, from the linker script (0 if the image has no TLS) */
+extern char __tls_space_size __attribute__((weak));
 
 /*
  * ELF TLS initialization image, provided by the linker script:
@@ -49,7 +49,6 @@ extern char __tdata_source __attribute__((weak));
 extern char __tdata_size __attribute__((weak));
 extern char __tbss_size __attribute__((weak));
 
-static char *elftls_start;
 static unsigned int elftls_size;
 
 #define TLS_ALIGN (8)
@@ -277,10 +276,8 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 	return 0;
 }
 
-static struct {
-	unsigned long long int tls_storage[MAX_ELFTLS_SIZE/8];
-	struct pthread_tcb main_tcb;
-} mainthread_static_storage;
+/* Main thread TLS block followed by its TCB; ugp = TCB */
+static unsigned long long int mainthread_static_storage[(MAX_ELFTLS_SIZE + sizeof(struct pthread_tcb) + 7) / 8];
 
 void pthread_mainthread_setup(struct pthread_tcb *self)
 {
@@ -295,15 +292,10 @@ void sys_exit(int status); // FIXME: check why it is not possible to include ang
 
 static void do_pthread_init()
 {
-	char *elftls_end = &TLS_END;
-	elftls_start = &TLS_START;
-	elftls_size = elftls_end - elftls_start;
+	/* Linker places TLS at ugp - memsz, so ugp = block base + memsz (as Picolibc's
+	 * _set_tls() does).  Only the block base needs alignment, not memsz. */
+	elftls_size = (unsigned int)(size_t)&__tls_space_size;
 
-	if ((elftls_size & ((unsigned int)TLS_ALIGN - 1)) != 0)
-	{
-		sys_exit(ENOEXEC);
-		__builtin_unreachable();
-	}
 	if (elftls_size > MAX_ELFTLS_SIZE)
 	{
 		main_thread_tls_unaligned = malloc(elftls_size + sizeof(struct pthread_tcb) + TLS_ALIGN);
@@ -319,8 +311,8 @@ static void do_pthread_init()
 
 		pthread_mainthread_setup(self);
 	} else
-	{ // FIXME: WA to not brake booter, remove after complete moving to Picolibc
-		struct pthread_tcb *self = &mainthread_static_storage.main_tcb;
+	{
+		struct pthread_tcb *self = (struct pthread_tcb *)((char *)mainthread_static_storage + elftls_size);
 		pthread_mainthread_setup(self);
 	}
 }

@@ -194,6 +194,8 @@ size:
 
 # All per-variant test result JSON paths — one per ARCHV×variant combination.
 ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(ARTIFACTS_DIR)/v$a/$v/install/test_results.json))
+# Phony: every report request defers to test_variant, whose per-test rules decide what reruns.
+.PHONY: $(ARCHV_VARIANT_JSONS)
 
 # One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
 # generating test_results.json which testall aggregates into the unified report.
@@ -216,8 +218,9 @@ $(ARTIFACTS_DIR)/test_report.html: $(ARCHV_VARIANT_JSONS)
 	    --summary-out $(ARTIFACTS_DIR)/test.out
 
 .PHONY: testall test
+# -f makefile.real: the top-level makefile (%: rule) would otherwise answer for an existing report.
 testall: buildall
-	$(MAKE) $(ARTIFACTS_DIR)/test_report.html
+	$(MAKE) -f makefile.real $(ARTIFACTS_DIR)/test_report.html
 
 # 'make test' runs all ARCHV×variant combinations (same as testall).
 # Use 'make test_variant' to run a single variant (ARCHV=XX TARGET=yy).

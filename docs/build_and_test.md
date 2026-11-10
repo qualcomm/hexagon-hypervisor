@@ -68,7 +68,8 @@ The primary ones that we want to consider for now:
 * 73
 * 81
 
-however this is likely to grow to more architectures.
+however this is likely to grow to more architectures.  The test matrix currently
+runs ARCHV 68, 73 and 81.
 
 # Output Files
 
@@ -97,8 +98,9 @@ written by `make testall`.
 
 # Artifacts
 
-By default we compile files in-place, and artifacts in "install" after they are
-built and collected.
+Build output goes under `artifacts/` (or `artifacts_picolibc/` with `PICOLIBC=1`):
+objects are under `build/`, and `install/` holds the files collected after they are
+built.
 
 In the `install/bin` directory is `booter`, our binary that loads up other programs 
 into their own VM to execute.  This is the primary workhorse for running tests.
@@ -129,6 +131,28 @@ make lldb-setup-clean            # remove generated file
 ```
 
 The generated file is gitignored; each developer generates their own.
+
+# Picolibc
+
+`PICOLIBC=1` builds against Picolibc instead of Dinkumware, into `artifacts_picolibc/`
+(a sibling of `artifacts/`).  `make all_clean` removes only the tree that `PICOLIBC`
+selects.
+
+    /usr/bin/make -O BATCH=0 USE_PKW=0 NULL_ANGEL_TRAP=1 PICOLIBC=1 TOOLCHAIN_BIN=<toolchain>/bin testall
+
+`TOOLCHAIN_BIN` is put first on `PATH`.  The directory above it must contain
+`templates/` and `target/picolibc/`.  Use GNU make 4.2 or newer (`/usr/bin/make` is
+4.3; a plain `make` may be 3.81).  `BATCH=0` runs locally, and `USE_PKW=0` runs the
+tests on the toolchain's simulator instead of the pkw devsim.  The local and CI
+commands pass `NULL_ANGEL_TRAP=1` for every variant; the Makefile sets it itself only
+for `opt_si`.  With `BATCH=0`, `IGNOREFAIL` defaults to 1, so read
+`artifacts_picolibc/test.out`, not the exit status.
+
+A passing run reports `SUMMARY: 1224 passed, 0 failed across 9 variant(s)`: 136 tests
+for each of ARCHV 68, 73, 81 and each of the variants opt, ref, opt_si.
+
+CI runs this on a toolchain copy without `target/hexagon`, `target/hexagon-unknown-qurt-dw`
+and `target/qnx`, so a build that misses `--cstdlib=picolibc` fails.
 
 # Build and Test todo
 

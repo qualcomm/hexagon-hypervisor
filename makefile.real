@@ -102,6 +102,13 @@ Q6INSTALLDIR = $(shell basename $(PKG_INSTALL_PATH))
 BRANCH = $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
 endif
 
+# Checked at parse time: the q6installall prerequisites run before its recipe.
+ifneq ($(filter q6%,$(MAKECMDGOALS)),)
+ifeq ($(PKG_INSTALL_PATH),)
+$(error PKG_INSTALL_PATH is not set)
+endif
+endif
+
 # Picolibc installs get their own link names, so they never replace the
 # Dinkumware _latest/_tested links.
 PICO_LINK_SUFFIX = $(if $(filter 1,$(PICOLIBC)),_picolibc)

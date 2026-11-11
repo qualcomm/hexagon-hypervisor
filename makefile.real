@@ -88,6 +88,7 @@ $(foreach a,$(ARCHV_LIST),$(eval $(call link_instance,$a)))
 
 .PHONY: buildall
 buildall: $(BUILDS) $(LINKS)
+	$(MAKE) doc
 
 # for testing
 .PHONY: linkall
@@ -100,6 +101,7 @@ Q6INSTALLDIR = $(shell basename $(PKG_INSTALL_PATH))
 BRANCH = $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
 endif
 
+.PHONY: q6install
 q6install:
 	cd $(PKG_INSTALL_PATH) && \
 	cp -a artifacts/v$(ARCHV)/$(TARGET)/build/booter/bootvm_image artifacts/v$(ARCHV)/$(TARGET)/install/bin &&\
@@ -279,7 +281,9 @@ check:
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check
 #	$(MAKE) -C ucos check
 
+.PHONY: doc
 doc:
+	@echo XXX DOC
 	$(MAKE) -C libs/docs/dox
 	$(MAKE) -f scripts/docs/Makefile.sphinx prepare
 	$(MAKE) -f scripts/docs/Makefile.sphinx doctest html

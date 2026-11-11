@@ -143,16 +143,18 @@ selects.
 `TOOLCHAIN_BIN` is put first on `PATH`.  The directory above it must contain
 `templates/` and `target/picolibc/`.  Use GNU make 4.2 or newer (`/usr/bin/make` is
 4.3; a plain `make` may be 3.81).  `BATCH=0` runs locally, and `USE_PKW=0` runs the
-tests on the toolchain's simulator instead of the pkw devsim.  The local and CI
-commands pass `NULL_ANGEL_TRAP=1` for every variant; the Makefile sets it itself only
-for `opt_si`.  With `BATCH=0`, `IGNOREFAIL` defaults to 1, so read
-`artifacts_picolibc/test.out`, not the exit status.
+tests on the toolchain's simulator instead of the pkw devsim.  The local commands
+pass `NULL_ANGEL_TRAP=1` for every variant; the Makefile sets it itself only for
+`opt_si`.  CI runs with `USE_PKW=1` (archsim, the pkw devsim) and passes
+`MAGIC_ANGEL=--magic_angel` for every variant.  With `BATCH=0`, `IGNOREFAIL` defaults
+to 1, so read `artifacts_picolibc/test.out`, not the exit status.
 
 A passing run reports `SUMMARY: 1224 passed, 0 failed across 9 variant(s)`: 136 tests
 for each of ARCHV 68, 73, 81 and each of the variants opt, ref, opt_si.
 
-CI runs this on a toolchain copy without `target/hexagon`, `target/hexagon-unknown-qurt-dw`
-and `target/qnx`, so a build that misses `--cstdlib=picolibc` fails.
+CI takes the toolchain from pkw (`hexagon-tools=23.0`) and copies it without
+`target/hexagon`, `target/hexagon-unknown-qurt-dw` and `target/qnx`, so a build that
+misses `--cstdlib=picolibc` fails.
 
 # Build and Test todo
 

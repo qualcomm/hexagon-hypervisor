@@ -4,10 +4,11 @@ on:
   pull_request:
 
 env:
-  # Nightly toolchain.  The job copies it without the Dinkumware sysroots (see the
-  # toolchain step), so a build that misses --cstdlib=picolibc fails instead of
-  # silently using them.
-  TOOLCHAIN_SRC: /prj/qct/llvm/release/internal/HEXAGON/branch-23.0/linux64/latest/Tools
+  # The Picolibc toolchain is the pkw release of PICOLIBC_TOOLS (see the resolve step).
+  # The job copies it without the Dinkumware sysroots (see the toolchain step), so a
+  # build that misses --cstdlib=picolibc fails instead of silently using them.
+  PICOLIBC_TOOLS: "23.0"
+  PKW_BIN: /prj/qct/coredev/hexagon/sitelinks/arch/bin
   # The runner's pkw wrapper otherwise picks git 2.15.1 for actions/checkout, whose
   # libcurl is broken there.  Same pin as h2_future_reg.yml.
   PKW_VERSIONS: "git=2.38.0"
@@ -29,6 +30,15 @@ jobs:
           ver="$(/usr/bin/make --version | sed -n '1s/.* \([0-9][0-9.]*\).*/\1/p')"
           [[ "$(printf '%s\n' 4.2 "$ver" | sort -V | head -1)" == "4.2" ]] \
             || { echo "GNU make >= 4.2 required, found $ver"; exit 1; }
+
+      - name: Resolve the Picolibc toolchain with pkw
+        run: |
+          clang="$(PKW_VERSIONS="hexagon-tools=$PICOLIBC_TOOLS" "$PKW_BIN/pkw" --which hexagon-clang | tail -n 1)"
+          test -x "$clang"
+          version="$("$clang" --version | sed -n '1p')"
+          echo "$version"
+          case "$version" in *"version $PICOLIBC_TOOLS"*) ;; *) echo "expected $PICOLIBC_TOOLS, got: $version"; exit 1 ;; esac
+          echo "TOOLCHAIN_SRC=$(dirname "$(dirname "$clang")")" >> "$GITHUB_ENV"
 
       - name: Create Picolibc toolchain
         run: |
@@ -52,7 +62,12 @@ jobs:
 
       - name: Regression test
         run: |
-          /usr/bin/make -O BATCH=0 USE_PKW=0 NULL_ANGEL_TRAP=1 PICOLIBC=1 \
+          # archsim needs --magic_angel for every variant (the Makefile sets it only for
+          # opt_si).  TOOLS_FLAVOR and TOOLS_FLAVOR_KERNEL select the pkw tools for every
+          # ARCHV and for the kernel.
+          PATH="$PKW_BIN:$PATH" /usr/bin/make -O BATCH=0 USE_PKW=1 NULL_ANGEL_TRAP=1 \
+            MAGIC_ANGEL=--magic_angel PICOLIBC=1 \
+            TOOLS_FLAVOR="$PICOLIBC_TOOLS" TOOLS_FLAVOR_KERNEL="$PICOLIBC_TOOLS" \
             TOOLCHAIN_BIN="$PICOLIBC_TOOLCHAIN/bin" testall
 
       - name: Check test results

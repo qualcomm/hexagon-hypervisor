@@ -6,7 +6,7 @@ on:
 env:
   # Nightly toolchain.  The job copies it without the Dinkumware sysroots, so a
   # build that misses --cstdlib=picolibc fails instead of silently using them.
-  TOOLCHAIN_SRC: /prj/qct/llvm/release/internal/HEXAGON/branch-25.0/linux64/latest/Tools
+  TOOLCHAIN_SRC: /prj/qct/llvm/release/internal/HEXAGON/branch-23.0/linux64/latest/Tools
   # The runner's pkw wrapper otherwise picks git 2.15.1 for actions/checkout, whose
   # libcurl is broken there.  Same pin as h2_future_reg.yml.
   PKW_VERSIONS: "git=2.38.0"

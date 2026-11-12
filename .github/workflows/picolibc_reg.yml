@@ -66,9 +66,11 @@ jobs:
         run: |
           # archsim needs --magic_angel for every variant (the Makefile sets it only for
           # opt_si).  TOOLS_FLAVOR and TOOLS_FLAVOR_KERNEL select the pkw tools for every
-          # ARCHV and for the kernel.
-          PATH="$PKW_BIN:$PATH" /usr/bin/make -O BATCH=0 USE_PKW=1 NULL_ANGEL_TRAP=1 \
-            MAGIC_ANGEL=--magic_angel PICOLIBC=1 \
+          # ARCHV and for the kernel.  BATCH=1 runs each build and test as a bsub -I job,
+          # as h2_future_reg does.  IGNOREFAIL=1 keeps the report and the check step as
+          # the gate.
+          PATH="$PKW_BIN:$PATH" /usr/bin/make -O BATCH=1 USE_PKW=1 NULL_ANGEL_TRAP=1 \
+            MAGIC_ANGEL=--magic_angel PICOLIBC=1 IGNOREFAIL=1 \
             TOOLS_FLAVOR="$PICOLIBC_TOOLS" TOOLS_FLAVOR_KERNEL="$PICOLIBC_TOOLS" \
             TOOLCHAIN_BIN="$PICOLIBC_TOOLCHAIN/bin" testall
 

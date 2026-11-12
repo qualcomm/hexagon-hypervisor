@@ -145,9 +145,11 @@ selects.
 4.3; a plain `make` may be 3.81).  `BATCH=0` runs locally, and `USE_PKW=0` runs the
 tests on the toolchain's simulator instead of the pkw devsim.  The local commands
 pass `NULL_ANGEL_TRAP=1` for every variant; the Makefile sets it itself only for
-`opt_si`.  CI runs with `USE_PKW=1` (archsim, the pkw devsim) and passes
-`MAGIC_ANGEL=--magic_angel` for every variant.  With `BATCH=0`, `IGNOREFAIL` defaults
-to 1, so read `artifacts_picolibc/test.out`, not the exit status.
+`opt_si`.  CI runs with `USE_PKW=1` (archsim, the pkw devsim) and `BATCH=1`, so each
+build and test is a `bsub -I` job.  It passes `MAGIC_ANGEL=--magic_angel` for every
+variant and `IGNOREFAIL=1`, so the report is always written and the check step is the
+gate.  With `BATCH=0`, `IGNOREFAIL` defaults to 1, so read `artifacts_picolibc/test.out`,
+not the exit status.
 
 A passing run reports `SUMMARY: 1224 passed, 0 failed across 9 variant(s)`: 136 tests
 for each of ARCHV 68, 73, 81 and each of the variants opt, ref, opt_si.

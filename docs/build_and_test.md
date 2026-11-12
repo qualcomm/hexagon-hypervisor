@@ -154,7 +154,8 @@ for each of ARCHV 68, 73, 81 and each of the variants opt, ref, opt_si.
 
 CI takes the toolchain from pkw (`hexagon-tools=23.0`) and copies it without
 `target/hexagon`, `target/hexagon-unknown-qurt-dw` and `target/qnx`, so a build that
-misses `--cstdlib=picolibc` fails.
+misses `--cstdlib=picolibc` fails.  The copy lives in `RUNNER_TEMP`, under the runner's
+`_work` directory with the checkout, rather than in `/tmp`, which is local to the runner host.
 
 # Build and Test todo
 

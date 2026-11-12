@@ -43,7 +43,9 @@ jobs:
       - name: Create Picolibc toolchain
         run: |
           src="$TOOLCHAIN_SRC"
-          dest="$(mktemp -d /tmp/picolibc-toolchain.XXXXXX)"
+          # RUNNER_TEMP is under the runner's _work directory, next to the checkout.  /tmp is
+          # local to the runner host, and a job that runs on another host cannot read it.
+          dest="$(mktemp -d "$RUNNER_TEMP/picolibc-toolchain.XXXXXX")"
           echo "PICOLIBC_TOOLCHAIN=$dest" >> "$GITHUB_ENV"
           # Copy the toolchain without its Dinkumware sysroots, so a build that
           # misses --cstdlib=picolibc fails instead of silently using them.

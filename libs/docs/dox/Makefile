@@ -1,7 +1,7 @@
 include $(H2DIR)/scripts/Makefile.inc.config
 include $(H2DIR)/scripts/Makefile.inc.tools
 
-DOX_HEADERS ?= $(H2DIR)/artifacts/v$(ARCHV)/$(TARGET)/install/include
+DOX_HEADERS ?= $(H2DIR)/$(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET)/install/include
 
 all:
 	mkdir -p $(H2DIR)/artifacts/docs/html/h2

@@ -134,7 +134,7 @@ $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),$(eval $(call q6link_i
 .PHONY: q6installall
 q6installall: $(Q6INSTALLS) $(Q6LINKS)
 	cd $(PKG_INSTALL_PATH) && \
-	rm -rf AGENTS.md booter ciconfig CLAUDE.md CMakeLists.txt CODE-OF-CONDUCT.md CONTRIBUTING.md docs examples hvm_spec kernel libs LICENSE.txt linux makefile makefile.real notes.md perf README.md scripts SECURITY.md stake toolchain.cmake .github .gitignore .gitmail passout
+	rm -rf AGENTS.md booter ciconfig CLAUDE.md CMakeLists.txt CODE-OF-CONDUCT.md CONTRIBUTING.md docs examples hvm_spec kernel libs LICENSE.txt linux makefile makefile.real notes.md perf README.md scripts SECURITY.md stake toolchain.cmake .github .gitignore .gitmail passout conf.py index.spec
 
 # for local testing
 .PHONY: q6linkall
@@ -283,7 +283,6 @@ check:
 
 .PHONY: doc
 doc:
-	@echo XXX DOC
 	$(MAKE) -C libs/docs/dox
 	$(MAKE) -f scripts/docs/Makefile.sphinx prepare
 	$(MAKE) -f scripts/docs/Makefile.sphinx doctest html

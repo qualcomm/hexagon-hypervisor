@@ -7,7 +7,6 @@
 #define H2K_BADINT_H 1
 
 #include <c_std.h>
-#include <vm.h>
 #include <context.h>
 #include <vmint.h>
 

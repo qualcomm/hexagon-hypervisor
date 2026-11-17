@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <context.h>
-#include <vm.h>
 #include <vmop.h>
 #include <vmdefs.h>
 #include <hw.h>

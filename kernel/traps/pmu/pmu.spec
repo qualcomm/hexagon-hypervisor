@@ -1,146 +1,48 @@
-
-:mod:`pmu` -- Performance Monitor Unit Management
-=================================================
+:mod:`pmu` -- Performance Monitor Unit access
+===============================================
 
 .. module:: pmu
 
-
-This module contains routines to manage the Performance Monitor Unit.
-
 H2K_trap_pmuctrl
-------------------
+----------------
 
-.. c:function:: u32_t H2K_trap_pmuctrl(u32_t configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_pmuctrl(pmuop_type configtype, u32_t val1, u32_t val2, u32_t val3, H2K_thread_context *me)
 
-	:param configtype: Configuration operation to do
-	:param val1: Operation-dependent value
-	:param val2: Operation-dependent value
-	:param val3: Operation-dependent value
-	:param me: Pointer to the current thread context
-	:returns: The return code for the configuration option.
+	:param configtype: PMU operation
+	:param val1: Register selector or operation value
+	:param val2: Operation value
+	:param val3: Operation value
+	:param me: Current thread context
+	:returns: 0 on success, -1 for an unsupported operation or register
 
-
-Description
-~~~~~~~~~~~
-
-Trap handler for PMU configuration.
-
-Functionality
-~~~~~~~~~~~~~
-
-The configtype parameter determines which configuration routine is called.
-If an invalid configtype parameter is given, we return imediately.
-
-We look up which configuration routine in H2K_pmuctrltab, and jump to the 
-appropriate routine.
-
-
-REMOVED: trap_pmuctrl_threadset
------------------------------------
-
-.. c:function:: u32_t trap_pmuctrl_threadset(u32_t unused, u32_t vdest, u32_t turnon, u32_t unused3, H2K_thread_context *me)
-
-	:param unused: Unused paramater
-	:param vdest: thread ID to change PMU configuration for
-	:param turnon: 0 to disable PMU monitoring, 1 to enable
-	:param unused3: Unused parameter
-	:param me: Pointer to the current thread context
-	:returns: zero on success, nonzero otherwise
-
-Description
-~~~~~~~~~~~
-
-Enables or disables performance monitoring for a software thread
-
-Functionality
-~~~~~~~~~~~~~
-
-Acquire the BKL.
-
-If the thread is dead or invalid, return nonzero.
-
-Set the pmu_on field in dest according to the parameter.  This must be done
-atomically, as pmu_on is in the atomic word.  
-
-If dest is RUNNING mode, we set or clear the PMUCFG register according to 
-the parameter.
-
-We then release the BKL and return.
+Dispatches PMU register reads and writes.  ``PMUCTRL_THREADSET`` is retained
+as a removed operation and returns -1.
 
 
 H2K_trap_pmuctrl_setreg
--------------------------
+-----------------------
 
 .. c:function:: u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t newval, H2K_thread_context *me)
 
-	:param unused: Unused paramater
-	:param unused2: Unused parameter
-	:param whichreg: 0-3 :PMUCNT0-3; -1: PMUEVTCFG; -2: TLBMISSX_LO; -3: TLBMISSX_HI; -4: TLBMISSRW_LO; -5: TLBMISSRW_HI; -6: STLBMISS_LO; -7: STLBMISS_HI.
-	:param newval: new value for the register
-	:param me: Pointer to the current thread context
-	:returns: zero on success, nonzero otherwise
+	:param whichreg: PMU or VM TLB-event register selector
+	:param newval: Value to write
+	:param me: Current thread context
+	:returns: 0 on success, -1 for an unsupported selector
 
-Description
-~~~~~~~~~~~
+Writes PMU registers 0 through 7, event/configuration registers 8 through 12,
+and, when ``COUNT_TLB_EVENTS`` is enabled, the current VM's low and high words
+for execute-TLB, read/write-TLB, and STLB miss counters using selectors -2
+through -7.
 
-Sets a PMU register
-
-Functionality
-~~~~~~~~~~~~~
-
-Write the PMU register
 
 H2K_trap_pmuctrl_getreg
--------------------------
+-----------------------
 
-.. c:function:: u32_t H2K_trap_pmuctrl_setreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_pmuctrl_getreg(u32_t unused, u32_t unused2, u32_t whichreg, u32_t unused3, H2K_thread_context *me)
 
-	:param unused: Unused paramater
-	:param unused2: Unused parameter
-	:param whichreg: 0-3 :PMUCNT0-3; -1: PMUEVTCFG; -2: TLBMISSX_LO; -3: TLBMISSX_HI; -4: TLBMISSRW_LO; -5: TLBMISSRW_HI; -6: STLBMISS_LO; -7: STLBMISS_HI.
-	:param unused3: Unused parameter
-	:param me: Pointer to the current thread context
-	:returns: zero on success, nonzero otherwise
+	:param whichreg: PMU or VM TLB-event register selector
+	:param me: Current thread context
+	:returns: Selected register value, or -1 for an unsupported selector
 
-Description
-~~~~~~~~~~~
-
-Reads a PMU register
-
-Functionality
-~~~~~~~~~~~~~
-
-Read the PMU register
-
-
-
-
-Testing
--------
-
-Samples
-~~~~~~~
-
-* Input: various registers
-* Input: setting self / other threads
-
-Important Cases
-~~~~~~~~~~~~~~~
-
-* Invalid register
-
-Harness
-~~~~~~~
-
-Standalone environment, but linked with h2kernel.
-
-We try several calls to H2K_trap_pmuctrl, and check that the registers are read/written
-correctly, or that the PMU enable field is managed correctly in the destination thread.
-
-
-
-
-
-
-
-
+Reads the same PMU and optional VM TLB-event registers supported by
+:c:func:`H2K_trap_pmuctrl_setreg()`.

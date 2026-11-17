@@ -10,7 +10,6 @@
 #include <c_std.h>
 #include <context.h>
 #include <futex.h>
-#include <vm.h>
 #include <stlb.h>
 #include <asid_types.h>
 #include <spinlock.h>

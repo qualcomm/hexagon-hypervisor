@@ -1,123 +1,102 @@
-
-:mod:`config` -- runtime kernel configuration
-=============================================
+:mod:`config` -- Runtime kernel configuration
+===============================================
 
 .. module:: config
-
-This module contains the runtime kernel configuration routines.
-
 
 H2K_trap_config
 ---------------
 
-.. c:function:: u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_config(config_type_t configtype, u32_t val1, u32_t val2, u32_t val3, u32_t val4, H2K_thread_context *me)
 
-	:param configtype: Configuration operation to do
-	:param ptr: Operation-dependent pointer value
-	:param val2: Operation-dependent value
-	:param val3: Operation-dependent value
-	:param me: Pointer to the current thread context
-	:returns: The return code for the configuration option.
+	:param configtype: Configuration operation
+	:param val1: Operation-specific value
+	:param val2: Operation-specific value
+	:param val3: Operation-specific value
+	:param val4: Operation-specific value
+	:param me: Current thread context
+	:returns: Operation result, or zero for an invalid operation
 
-Description
-~~~~~~~~~~~
+Dispatches the configuration request through the configuration table.
 
-Trap handler for kernel configuration.
-
-Functionality
-~~~~~~~~~~~~~
-
-The configtype parameter determines which configuration routine is called.
-If an invalid configtype parameter is given, we return imediately.
-
-We look up which configuration routine in H2K_configtab, and jump to the 
-appropriate routine.
-
-
-H2K_trap_config_setfatal
-------------------------
-
-.. c:function:: u32_t H2K_trap_config_setfatal(u32_t unused, void *handler, u32_t unused2, u32_t unused3, H2K_thread_context *me)
-
-
-	:param unused: Unused parameter
-	:param handler: Function to be called in the event of a fatal error
-	:param unused2: Unused parameter
-	:param unused3: Unused parameter
-	:param me: Pointer to the current thread context
-	:returns: zero
-
-Description
-~~~~~~~~~~~
-
-Configures the kernel fatal error handler function.
-
-
-Functionality
-~~~~~~~~~~~~~
-
-Set H2K_fatal_kernel_handler to handler.
 
 H2K_trap_config_vmblock_init
 ----------------------------
 
-.. c:function:: u32_t H2K_trap_config_vmblock_init(u32_t unused, void *ptr, vmblock_init_op_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
+.. c:function:: u32_t H2K_trap_config_vmblock_init(u32_t unused, u32_t vm, u32_t op, u32_t arg1, u32_t arg2, H2K_thread_context *me)
 
-	:param unused: Unused parameter
-	:param ptr: Actually a u32_t containing the VM ID
-	:param op: Initialization operations to perform
-	:param arg1: First parameter for operation
-	:param arg2: Second parameter for operation
-	:param me: Pointer to current thread context
-	:returns: Valid VM ID, or 0 on error
+	:param vm: VM ID for an existing VM, or ignored for ``SET_CPUS_INTS``
+	:param op: VM initialization operation
+	:param arg1: First operation argument
+	:param arg2: Second operation argument
+	:param me: Calling thread, used for authorization and parent mapping
+	:returns: VM ID, or zero on failure
 
-Description
-~~~~~~~~~~~
+Creates a VM block or changes an existing stopped VM.  ``SET_CPUS_INTS`` must
+be called first; later operations require an existing VM with no running CPUs
+and a caller from its parent VM.
 
-Performs the requested initialization operation on a VM block.  These operations are allowed only to create a new VM block, or to modify an existing VM block that was previously created by the caller.  Modification is allowed only for a VM that has 0 started CPUs.  The valid operations are:
-
-* SET_CPUS_INTS: Allocate storage for VM and associated CPU contexts (always creates a new VM block).  Set max number of virtual CPUs (arg1) and set number active to 0; set number of virtual interrupts (arg2) and clear enable/pending for each.  Initialize CPU contexts for the given number of cpus.  Ignore VM ID parameter.
-* SET_PMAP_TYPE: Set page-map pointer (arg1).  If arg1 is NULL, use ptb of current thread as page map.  Set page-map translation type (linear, page tables, or offset) (arg2).  If type is 'offset', then arg1 contains an offset descriptor, [pages (20 bits) : xwru (4 bits) : cccc (4 bits) : size (4 bits)], that is used to generate translations on the fly.  The offset is an unsigned value; negative offsets are specified as large positive values that wrap around: (0xffffffff - offset).
-* SET_FENCES: For the offset translation type, set the low (arg1) and high (arg2) physical address of the memory region accessible by the VM.  These are stored as page numbers in the vmblock.
-* SET_PRIO_TRAPMASK: Set best allowed priority (arg1); set mask for allowed traps (arg2).
-* MAP_PHYS_INTR: Map virtual interrrupt number (arg1) to [physical interrupt number (16 bits) : virtual CPU index (16 bits)] (arg2).  Also sets up the passthru interrupt handler for the given physical interrupt, which will post the virtual interrupt (to the given CPU index in the case of a per-CPU interrupt).  If the virtual interrupt number is not in the per-CPU range, then the CPU-index argument is ignored.  
-
-SET_CPUS_INTS must be the first operation invoked.  Subesequent operations should use the ID value returned by SET_CPUS_INTS .  Other operations may be invoked in arbitrary order.
-
-Functionality
-~~~~~~~~~~~~~
-
-For all operations, check for bad args where possible, initialize VM block with given values.
+Supported operations configure CPU and interrupt storage, the page-map type,
+physical fences, priority and trap mask, and virtual-to-physical interrupt
+mappings.  Invalid arguments, a running VM, an unauthorized caller, or an
+unavailable VM ID returns zero.
 
 
+H2K_trap_config_stlb_alloc
+--------------------------
 
-Testing
--------
+.. c:function:: u32_t H2K_trap_config_stlb_alloc(u32_t unused, u32_t sets, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)
 
-Samples
-~~~~~~~
+	:returns: STLB allocation result
 
-* Input: Storage size
-* Input: Alignment of pointer
-* Output: H2K_kg.free_threads
-* For setfatal: handler function
-
-Important Cases
-~~~~~~~~~~~~~~~
-
-* Invalid config parameter
-* Aligned pointer
-* Misaligned pointer
-* Insufficient storage for any threads
-* Sufficient storage for one thread
-* Sufficient storage for many threads
-
-Harness
-~~~~~~~
-
-Standalone environment, but linked with h2kernel.
-
-We try several calls to H2K_trap_config, and check that H2K_kg.free_threads is
-updated to hold the appropriate values, or that fatal_kernel_handler is changed.
+Allocates and initializes the software TLB.  The extra arguments are unused.
 
 
+H2K_trap_config_fatal_hook
+--------------------------
+
+.. c:function:: u32_t H2K_trap_config_fatal_hook(u32_t unused, u32_t funcaddr, u32_t arg, u32_t unused3, u32_t unused4, H2K_thread_context *me)
+
+	:param funcaddr: Fatal-hook function address
+	:param arg: Argument saved for the fatal hook
+	:returns: Zero
+
+Stores the fatal-hook address, argument, current ASID status, and kernel global
+pointer in the global fatal-hook state.
+
+
+H2K_trap_config_cluster_sched
+-----------------------------
+
+.. c:function:: u32_t H2K_trap_config_cluster_sched(u32_t unused, u32_t enable, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me)
+
+	:param enable: Cluster-scheduling enable value
+	:returns: Zero
+
+Sets the cluster-scheduling enable flag.  Available when ``CLUSTER_SCHED`` is
+enabled.
+
+
+H2K_trap_config_noc
+-------------------
+
+.. c:function:: u32_t H2K_trap_config_noc(u32_t unused, u32_t master, u32_t slave, u32_t unused3, u32_t unused4, H2K_thread_context *me)
+
+	:param master: NoC master base
+	:param slave: NoC slave base
+	:returns: Zero
+
+Stores the NoC master and slave base values.
+
+
+H2K_trap_config_local_mem
+-------------------------
+
+.. c:function:: u32_t H2K_trap_config_local_mem(u32_t unused, u32_t base, u32_t size, u32_t stride, u32_t unused4, H2K_thread_context *me)
+
+	:param base: Local-memory base
+	:param size: Local-memory size
+	:param stride: Per-core address stride
+	:returns: Zero
+
+Stores the local-memory size and computes this core's base as
+``base + stride * H2K_gp->core_id``.

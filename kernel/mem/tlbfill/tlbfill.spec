@@ -7,29 +7,27 @@
 H2K_mem_tlb_insert_unlock
 -------------------------
 
-.. c:function:: static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry)
+.. c:function:: static inline void H2K_mem_tlb_insert_unlock(H2K_mem_tlbfmt_t entry, H2K_thread_context *me)
 
-	:param entry: TLB entry
+	:param entry: TLB entry to insert
+	:param me: Current thread context, used for the TLB index mask
 
 
 Description
 ~~~~~~~~~~~
 
-Inserts an entry into the TLB at the next index to be replaced and releases the TLB lock.
+Inserts an entry into the TLB at the next replacement index and releases the
+TLB lock.
 
 Functionality
 ~~~~~~~~~~~~~
 
-First, we obtain the index, increment to the next appropriate replacement 
-value, and store the next replacement index.
-
-This function uses the architecture-specific code to insert an entry into the
-TLB.  For V3 and earlier, the TLBHI, TLBLO, and TLBIDX registers must be used
-to read, write, and probe TLB entries.  If the entry is being filled in
-response to a guest miss, we set the guest bit in the ASID of the entry.  For
-V4 and later, registers can be used directly.
-
-Call :c:func:`H2K_mutex_unlock_tlb()`.
+For DMA-address-space entries on V73 and later, the DMA-TLB replacement index
+and limit are selected; otherwise the regular TLB values are used.  The
+current index is masked by ``me->tlbidxmask`` and passed to
+:c:func:`H2K_mem_tlb_insert_index()`.  If insertion succeeds, the selected
+replacement index is advanced and wrapped to zero at its last usable index.
+The TLB lock is then released.
 
 
 H2K_mem_tlb_fill
@@ -43,18 +41,17 @@ H2K_mem_tlb_fill
 Description
 ~~~~~~~~~~~
 
-This code finds a translation for a TLB miss, and inserts it into the TLB. 
+Finds a translation for a TLB miss and inserts it into the TLB.
 
 Functionality
 ~~~~~~~~~~~~~
 
-First, we check the STLB (if available).  If the STLB returns a vaild
-translation, we insert it into the TLB and return.
+The function first looks up the virtual address in the STLB.  If a valid
+entry is found, it is inserted into the TLB and the function returns.
 
-Otherwise, we use the appropriate handler function to search the translation
-backing store.  If a translation is found there, we insert it into the TLB 
-and return. 
-
-Finally, if we can not find a translation, we call to
-:c:func:`H2K_mem_pagefault()` and return.
+On an STLB miss, the ASID translation entry is used to resolve the address
+through the configured translation chain.  On V73 and later, the DMA TLB size
+is supplied when converting the translation to TLB format.  If conversion
+fails, :c:func:`H2K_mem_pagefault()` is called.  Otherwise, the resulting entry
+is added to the STLB and inserted into the TLB.
 

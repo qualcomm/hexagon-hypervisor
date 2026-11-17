@@ -6,7 +6,6 @@
 #include <c_std.h>
 #include <context.h>
 
-#include <vm.h>
 #include <cpuint.h>
 #include <vmipi.h>
 #include <atomic.h>

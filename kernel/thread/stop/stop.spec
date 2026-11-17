@@ -1,6 +1,5 @@
-
-:mod:`thread_stop` -- terminate thread
-======================================
+:mod:`thread_stop` -- terminate a thread
+=========================================
 
 .. module:: thread_stop
 
@@ -9,27 +8,19 @@ H2K_thread_stop
 
 .. c:function:: void H2K_thread_stop(s32_t status, H2K_thread_context *me)
 
-	:param status: The status value to record in ``vmblock->status``
-	:param me: The pointer to the current thread context
+	:param status: Status to record for the VM
+	:param me: Current thread context
 
 Description
 ~~~~~~~~~~~
 
-Terminate the calling thread and decrement the count of running virtual CPUs
-for the calling VM.  If the new count is 0 or the status is non-zero, post the
-child-event interrupt to the virtual cpu (parent) that created the calling VM.
-If the parent no longer exists, deallocate storage for the calling VM if the
-CPU count has reached 0.  Does not return.
-
-The BKL must NOT be held on entry.  ``H2K_thread_stop`` acquires the BKL and
-then calls :c:func:`H2K_thread_stop_withlock()`.  Callers that already hold
-the BKL must call :c:func:`H2K_thread_stop_withlock()` directly.
+Stops the current thread and does not return.  The BKL must not be held on
+entry.
 
 Functionality
 ~~~~~~~~~~~~~
 
-First, we acquire the BKL.  The remainder of the work is performed by
-:c:func:`H2K_thread_stop_withlock()`.
+Acquires the BKL and calls :c:func:`H2K_thread_stop_withlock()`.
 
 
 H2K_thread_stop_withlock
@@ -37,69 +28,30 @@ H2K_thread_stop_withlock
 
 .. c:function:: void H2K_thread_stop_withlock(s32_t status, H2K_thread_context *me)
 
-	:param status: The status value to record in ``vmblock->status``
-	:param me: The pointer to the current thread context
+	:param status: Status to record for the VM
+	:param me: Current thread context
 
 Description
 ~~~~~~~~~~~
 
-The body of :c:func:`H2K_thread_stop()` for callers that already hold the
-BKL.  Used by paths such as :c:func:`H2K_vm_do_work_withlock()` that are
-entered with the BKL held (for example, the deferred-work hook in
-``H2K_switch``).  Does not return.
-
-INPUT_ASSERT(kernel_locked)
+Stops a thread when the caller already holds the BKL.  Does not return.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Attempts to post the child-event interrupt if the new vcpu count is 0, or
-the status is non-zero, and the parent context can be found and its status
-is not ``H2K_STATUS_DEAD``.  Else, when the vcpu count is 0, calls
-:c:func:`H2K_mem_alloc_release()` to mark the vmblock as freeable (will not
-be freed until we relinquish BKL).
+Decrements the VM CPU count, notifies the parent when required, and marks the
+VM for release when no CPUs remain.  It cancels timers, removes the thread from
+the runlist, clears its context, adds it to the free-thread list, and calls
+:c:func:`H2K_dosched()` with no current thread.
 
-Cancels associated timers, clears the thread context (which sets the valid field to DEAD),
-then inserts the thread into the H2K_kg.free_threads list.
+.. note::
 
-Finally, calls :c:func:`H2K_dosched_reset_stack()` to restore the hardware
-thread's kernel stack pointer before tail-calling :c:func:`H2K_dosched()`.
-This prevents repeated stop, schedule, switch, and deferred-work cycles from
-growing the kernel stack during a mass VM kill.  The current thread is
-specified as NULL, rather than as the now-dead thread context pointer.
-``H2K_dosched()`` consumes the BKL (released at the tail of ``H2K_switch``).
-
-
+	Callers that already hold the BKL must use this function.  The wrapper
+	:c:func:`H2K_thread_stop()` is for callers that do not hold it.
 
 
 Testing
 -------
 
-
-Samples
-~~~~~~~
-
-* Input: `me` 
-
-Important cases
-~~~~~~~~~~~~~~~
-
-* Valid thread as input
-* Free thread list is empty
-* Free thread list is non-empty
-
-Harness
-~~~~~~~
-
-We link directly with the stop object file.
-
-The test harness defines :c:func:`H2K_dosched_reset_stack()` to set a distinct
-flag and call its :c:func:`H2K_dosched()` mock, which sets another flag indicating
-that the dosched routine was called.
-
-The test harness calls :c:func:`H2K_thread_stop()` with a thread context pointer.
-We check that :c:func:`H2K_dosched_reset_stack()` and :c:func:`H2K_dosched()` were
-called, that the thread was added to the free thread list, and that the values
-were cleared.
-
-
+Verify that stopping a thread clears its context, places it on the free list,
+and calls :c:func:`H2K_dosched()`.

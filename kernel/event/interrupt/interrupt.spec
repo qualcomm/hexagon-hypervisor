@@ -46,22 +46,6 @@ We leave to execute the interrupt handler that calls a stub routine.  This stub
 routine saves the return address in the continuation field before jumping to
 the appropriate location.
 
-H2K_int_context_restore
------------------------
-
-.. c:function:: H2K_int_context_restore()
-
-Description
-~~~~~~~~~~~
-
-This routine returns to an interrupted thread.  It restores the registers from
-the thread context and returns to the thread in the appropriate place.
-
-Functionality
-~~~~~~~~~~~~~
-
-The int_context_restore routine restores registers from the thread context and returns.
-
 
 H2K_interrupted_waitmode
 ------------------------

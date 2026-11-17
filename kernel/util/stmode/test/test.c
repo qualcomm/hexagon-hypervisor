@@ -16,7 +16,6 @@
 #include <readylist.h>
 #include <thread.h>
 #include <asid.h>
-#include <vm.h>
 #include <id.h>
 #include <hwconfig.h>
 

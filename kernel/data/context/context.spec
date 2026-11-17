@@ -52,17 +52,17 @@ Description
 
 		Pointer to the previous thread context in a ring
 
-	.. c:member:: u8_t prio
+	.. c:member:: u8_t tid
 
-		Current priority of the thread
-
-	.. c:member:: u8_t base_prio
-
-		Priority of the thread to be restored after inherited priority is finished
+		Software Thread ID value
 
 	.. c:member:: u8_t hthread
 
 		If the thread is running, this is the hardware thread it is scheduled on.
+
+	.. c:member:: u8_t prio
+
+		Current priority of the thread
 
 	.. c:member:: u8_t status
 
@@ -72,38 +72,50 @@ Description
 
 		Current Virtual Machine status of the thread (OK, NEEDS_WORK).
 
-	.. c:member:: u8_t tid
+	.. c:member:: u8_t base_prio
 
-		Software Thread ID value
+		Priority of the thread to be restored after inherited priority is finished
+
+	.. c:member:: u8_t tlbidxmask
+
+		Defensive value alue to be masking tlb indices with.
+
+	.. c:member:: u32_t id
+
+		Index of cpu and vm.
+
+	.. c:member:: u32_t vmblock
+
+		Pointer to the struct holding the data of current running vmblock.
+
+	.. c:member:: u32_t trapmask
+
+		Mask of which traps are valid for this thread to execute.
+
+	.. c:member:: u32_t elr
+
+		Event Link Register for the thread.
+
+	.. c:member:: u64_t timeout
+
+		Accumulative value for flagging a timeout.
+
+	.. c:member:: u32_t cpuint_enabled_pending
+
+		L1 interrupts flags for pending or enabled.
 
 	.. c:member:: void *gevb
 
 		Guest Event Vector Base, used as a base address for errors, VM exceptions, VM
 		interrupts, and other events.
 
-	.. c:member:: u32_t trapmask
-
-		Mask of which traps are valid for this thread to execute.
-
-	.. c:member:: u32_t gbadva
-
-		Guest Bad Virtual Address Register
-
-	.. c:member:: u32_t gelr
-
-		Guest Event Link Register
-
-	.. c:member:: u32_t gosp
-
-		Guest Other Stack Pointer register
-
-	.. c:member:: u32_t gssr
-
-		Guest System Status Register
-
 	.. c:member:: u64_t totalcycles
 
 		Total accumulated cycle count for this thread.
+
+	.. c:member:: u64_t pktcount
+
+		Total accumulated packet count for this thread.
 
 	.. c:member:: u32_t futex_ptr
 
@@ -117,13 +129,25 @@ Description
 
 		System Status Register and Cache Control Register for the thread
 
-	.. c:member:: u34_t elr
-
-		Event Link Register for the thread
-
 	.. c:member:: u64_t **other_register_storage**
 
 		Other register storage for user general purpose and control registers
+
+	.. c:member:: u32_t gelr
+
+		Guest Event Link Register
+
+	.. c:member:: u32_t gssr
+
+		Guest System Status Register
+
+	.. c:member:: u32_t gosp
+
+		Guest Other Stack Pointer register
+
+	.. c:member:: u32_t gbadva
+
+		Guest Bad Virtual Address Register
 
 
 H2K_context_save

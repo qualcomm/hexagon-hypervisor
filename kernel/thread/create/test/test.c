@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <checker_kernel_locked.h>
 #include <globals.h>
-#include <vm.h>
 #include <asid.h>
 #include <create.h>
 #include <linear.h>

@@ -5,8 +5,6 @@
 
 #include <c_std.h>
 #include <context.h>
-
-#include <vm.h>
 #include <vmint.h>
 #include <shint.h>
 #include <vmipi.h>

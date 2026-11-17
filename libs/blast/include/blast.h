@@ -128,14 +128,15 @@ int blast_thread_create(void *pc, void *stack, void *arg,
 
 void blast_thread_exit(int status);
 
-static inline int blast_prio_get(unsigned int threadid)
+/* Priority operations apply to the calling thread. */
+static inline int blast_prio_get(void)
 {
-	return -1; 
+	return h2_get_prio();
 }
 
-static inline int blast_prio_set(unsigned int threadid,unsigned int newprio)
+static inline int blast_prio_set(unsigned int newprio)
 {
-	return h2_set_prio(threadid,newprio);
+	return h2_set_prio(newprio);
 }
 
 int blast_register_interrupt(int int_num, 

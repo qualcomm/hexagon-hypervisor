@@ -1,86 +1,143 @@
-/*
- * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
+:mod:`log` -- Kernel logging facility
+=========================================
 
-# H2K Logging Specification
+.. module:: log
 
-## Build Configuration
+Logging is selected at build time.  ``H2K_LOGBUF`` enables per-hardware-thread
+ring buffers and optional live output; ``H2K_LOG_PRINTF`` selects a printf
+backend when ``H2K_LOGBUF`` is not enabled.  With neither option, the logging
+macros expand to no-ops.  ``H2K_LOG_LEVEL`` defaults to ``H2K_LOG_DBG`` and
+filters messages whose level is numerically greater than the configured level.
 
-### LOGBUF Syntax
+Severity constants are ``H2K_LOG_ERR`` (0), ``H2K_LOG_WARN`` (1),
+``H2K_LOG_INFO`` (2), and ``H2K_LOG_DBG`` (3).
 
-```
-make LOGBUF=<target>[<level>]
-```
 
-- `<target>`: `1` (all), `<module>` (dir), `<file>` (filename), or comma-separated list
-- `<level>`: `0`/`err`, `1`/`warn`, `2`/`info`, `3`/`dbg` (default: `3`)
+H2K_write
+---------
 
-Examples:
-```
-make LOGBUF=1[warn]              # whole kernel, WARN+
-make LOGBUF=sched[info]          # sched module, INFO+
-make LOGBUF=sched[warn],futex[err]  # mixed levels
-```
+.. c:function:: s32_t H2K_write(u32_t fd, const u8_t *buf, u32_t len)
 
-### H2K_LOG_NO_SPAM
+	:param fd: Angel output file descriptor
+	:param buf: Buffer to write
+	:param len: Number of bytes
+	:returns: ``len`` on success, or a negative Angel error
 
-Disables spam-control macros (once/throttle) to eliminate static state:
-```
-make LOGBUF=1[warn] H2K_LOG_NO_SPAM=1
-```
+Writes the buffer through the Angel trap, retrying until all bytes are
+transferred.  Returns an error immediately if a write fails.
 
-When enabled, `H2K_log_once*()` and `H2K_log_throttle*()` become no-ops.
 
-## API
+H2K_logbuf_alloc
+----------------
 
-### Base Logging
-```c
-H2K_log(fmt, ...)        // DEBUG
-H2K_log_err(fmt, ...)    // ERROR
-H2K_log_warn(fmt, ...)   // WARN
-H2K_log_info(fmt, ...)   // INFO
-H2K_log_dbg(fmt, ...)    // DEBUG
-```
+.. c:function:: char *H2K_logbuf_alloc(u32_t htid, u32_t count)
 
-### Spam Control
-```c
-H2K_log_once*(fmt, ...)           // emit once per callsite (4 bytes)
-H2K_log_once_ht*(fmt, ...)        // emit once per HT (4 bytes, bitmask)
-H2K_log_throttle*(interval, ...)  // rate-limited (8 bytes)
-H2K_log_throttle_ht*(interval, ...)  // per-HT rate-limited (8×MAX_HTHREADS bytes)
-```
+	:param htid: Hardware-thread ring to use
+	:param count: Number of bytes to reserve
+	:returns: Start of the reserved region
 
-All combinations of severity (`_err`, `_warn`, `_info`, `_dbg`) available.
+Reserves ``count`` bytes in the selected hardware thread's log ring.  If the
+remaining space is insufficient, wraps the position to the beginning.  The
+ring is lockless because each hardware thread owns its own write position.
 
-### String Variants
-```c
-H2K_log_string*(S)              // pre-formatted string
-H2K_log_string_once*(S)         // with spam control
-H2K_log_string_throttle*(interval, S)
-```
 
-## Output Format
+H2K_do_log_string_at
+--------------------
 
-```
-[ht<id>][<LEVEL>][<pcycles>][<file>:<line>] message
-```
+.. c:function:: u32_t H2K_do_log_string_at(u32_t level, const char *file, u32_t line, const char *string)
 
-Example: `[ht0][WARN][12345678][sched.c:42] reschedule timeout`
+	:returns: Number of message bytes emitted, or 0 when logging is disabled or filtered
 
-## Memory
+Formats the standard ``[ht][LEVEL][pcycles][file:line]`` prefix and the supplied
+string into the current hardware thread's ring.  When live output is enabled,
+serializes writes through ``logbuf_lock`` and streams the message through
+:c:func:`H2K_write()`.
 
-| Macro | Storage |
-|-------|---------|
-| `H2K_log_once()` | 4 bytes (u32 flag) |
-| `H2K_log_once_ht()` | 4 bytes (u32 bitmask, 1 bit per HT) |
-| `H2K_log_throttle()` | 8 bytes (u64 timestamp) |
-| `H2K_log_throttle_ht()` | 8 × MAX_HTHREADS bytes |
 
-With `H2K_LOG_NO_SPAM=1`: no static state for spam-control macros.
+H2K_log_print
+-------------
 
-## Implementation
+.. c:function:: s32_t H2K_log_print(u32_t level, const char *file, u32_t line, const char *format, ...)
 
-- **H2K_LOGBUF**: lockless per-HT ring buffers, atomic setbit for once, spinlock for throttle
-- **H2K_LOG_PRINTF**: printf-based, static inline prefix helpers, same spam-control logic
-- **Silent**: all macros are no-ops (default when neither flag set)
+	:returns: Formatted message length, or the live-output write result
+
+Formats the supported printf conversions ``%``, ``%x``, ``%d``, ``%s``, optional
+zero-padding width, and ``l``/``ll`` integer modifiers.  It applies the same
+enablement and severity filtering as :c:func:`H2K_do_log_string_at()`.
+
+
+H2K_log_once / H2K_log_once_ht
+------------------------------
+
+.. c:function:: u32_t H2K_log_once(u32_t *flag)
+.. c:function:: u32_t H2K_log_once_ht(u32_t *flags)
+
+The global form atomically returns 1 only for the first caller that sets
+``flag`` bit zero.  The per-hardware-thread form uses the current hardware
+thread's element in ``flags[MAX_HTHREADS]`` and returns 1 only once for that
+thread.
+
+
+H2K_log_throttle / H2K_log_throttle_ht
+--------------------------------------
+
+.. c:function:: u32_t H2K_log_throttle(u64_t *last, u64_t interval)
+.. c:function:: u32_t H2K_log_throttle_ht(u64_t *last, u64_t interval)
+
+Compare the current pcycle count with the previous timestamp.  Return 1 and
+update the timestamp when at least ``interval`` cycles have elapsed; otherwise
+return 0.  The global form serializes access with ``logbuf_lock``.  The
+per-hardware-thread form uses one timestamp per hardware thread without a lock.
+
+
+H2K_log_init
+------------
+
+.. c:function:: char *H2K_log_init(void)
+
+	:returns: The first allocated log buffer, or ``NULL`` if allocation fails
+
+Allocates and clears one ``LOGBUF_PER_HT_SIZE`` buffer per hardware thread,
+resets positions, enables buffered/live logging, loads ``H2K_LOG_LEVEL``, and
+initializes the log-buffer lock.
+
+
+Logging macros
+--------------
+
+When logging is enabled, ``H2K_log_err``, ``H2K_log_warn``, ``H2K_log_info``,
+``H2K_log_dbg``, and ``H2K_log`` call ``H2K_log_print`` with the corresponding
+severity.  The ``H2K_log_string*`` family calls ``H2K_do_log_string_at``.
+Each severity has ``once``, ``once_ht``, ``throttle``, and ``throttle_ht``
+variants, plus string variants.  These macros keep their gating state in
+static call-site storage.  In the disabled build they evaluate to no-ops.
+
+With ``H2K_LOG_PRINTF``, the same macro families print a prefix containing
+severity, pcycles, basename, and source line; their gating uses the printf
+backend helpers.
+
+
+H2K_printf_log_once
+-------------------
+
+.. c:function:: u32_t H2K_printf_log_once(int *flag)
+
+	:param flag: Call-site once flag
+	:returns: 1 for the first caller, otherwise 0
+
+The printf-backend equivalent of :c:func:`H2K_log_once()`.  It atomically
+sets bit zero of the call-site flag.
+
+
+H2K_printf_log_throttle
+-----------------------
+
+.. c:function:: u32_t H2K_printf_log_throttle(u64_t *last, u64_t interval)
+
+	:param last: Shared last-emission timestamp
+	:param interval: Minimum pcycle interval
+	:returns: 1 when emission is allowed, otherwise 0
+
+The printf-backend equivalent of :c:func:`H2K_log_throttle()`.  It serializes
+access to the timestamp with a private spinlock and allows emission once the
+specified number of cycles has elapsed.

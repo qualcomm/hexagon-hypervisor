@@ -13,7 +13,6 @@
 #include <globals.h>
 #include <pmu.h>
 #include <hw.h>
-#include <vm.h>
 
 void FAIL(const char *str)
 {

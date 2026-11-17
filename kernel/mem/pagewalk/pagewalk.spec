@@ -1,120 +1,38 @@
-
-:mod:`pagewalk` -- Memory Map Page Table Walking
-================================================
+:mod:`pagewalk` -- Page-table translation
+============================================
 
 .. module:: pagewalk
 
-H2K_mem_get_pagetable
----------------------------
+H2K_pagewalk_translate
+----------------------
 
-.. c:function:: H2K_mem_tlbfmt_t H2K_mem_get_pagetable(u32_t badva, H2K_thread_context *me)
+.. c:function:: H2K_translation_t H2K_pagewalk_translate(H2K_translation_t in, H2K_asid_entry_t info)
 
-	:param badva: Virtual Address to translate
-	:param me: Context of the current thread
-	:returns: TLB format of the translation
-
-Description
-~~~~~~~~~~~
-
-The :c:func:`H2K_mem_get_pagetable()` function walks the page tables, finding
-an entry corresponding to the virtual address.  If no such valid translation exists,
-we return all zeros; an invalid TLB entry.
-
-An invalid translation can be due to an L1 PTE with an invalid size (7), or no r, w, or x 
-permissions.
-
-Functionality
-~~~~~~~~~~~~~
-
-The page tables are located at me->gptb.
-
-
-
-H2K_mem_pagewalk
-----------------
-
-.. c:function:: H2K_pte_t H2K_mem_pagewalk(u32_t badva, H2K_thread_context *me)
-
-	:param badva: Virtual Address to translate
-	:param me: Context of the current thread
-	:returns: PTE format of the translation
+	:param in: Incoming translation values, including the virtual page number
+	:param info: ASID entry identifying the page tables and guest
+	:returns: The refined translation, or a zero translation when the mapping is invalid
 
 Description
 ~~~~~~~~~~~
 
-The :c:func:`H2K_mem_pagewalk()` function walks the page tables, finding
-an entry corresponding to the virtual address.  If no such valid translation exists,
-we return all zeros.
-
-An invalid translation can be due to an L1 PTE with an invalid size (7), or no r, w, or x 
-permissions.
+Translates an address by walking the guest's level-1 and, when required,
+level-2 page tables.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Look up the page-table base in the ASID table.  Call :c:func:`H2K_mem_pagewalk_l1()`.
+The level-1 page-table base is taken from ``info.ptb``.  When the VM has a
+guest mapping, the page-table address is translated through that mapping and
+must have read permission.  The level-1 entry is read from physical memory.
 
+For a level-1 entry that points to a level-2 table, the relevant level-2 entry
+is located using the incoming virtual page number.  The level-2 table address
+is translated through the VM mapping when one exists and must also be readable.
+The level-2 page-size field is replaced with the level-1 page size before the
+entry is used.
 
-H2K_mem_translate_pagetable
----------------------------
-
-.. c:function:: static inline H2K_translation_t H2K_mem_translate_pagetable(H2K_pte_t entry, u32_t va)
-
-	:param entry: Page table entry
-	:param va: Address to translate
-
-Description
-~~~~~~~~~~~
-
-Translate an address using the given entry.  Provides both the fully translated
-address as well as the page attributes of the translation.
-
-Functionality
-~~~~~~~~~~~~~
-
-Form the translated address and store in return struct.  Copy attributes to
-return struct.
-
-
-H2K_mem_pagewalk_l1
--------------------
-
-.. c:function:: H2K_pte_t H2K_mem_pagewalk_l1(u32_t va, u32_t baseaddr, H2K_vmblock_t *vmblock)
-
-	:param va: Address to translate
-	:param baseaddr: Page table base address
-	:param vmblock: vmblock pointer
-
-Description
-~~~~~~~~~~~
-
-Return the page-table entry for the given address.
-
-Functionality
-~~~~~~~~~~~~~
-
-Calculate the physical address of the entry and read.  For a level-2 entry, call :c:func:`H2K_mem_pagewalk_l2()`.
-
-
-H2K_mem_pagewalk_l2
--------------------
-
-.. c:function:: static inline H2K_pte_t H2K_mem_pagewalk_l2(u32_t va, u32_t l2addr, u32_t tablesize, u32_t pagesize, H2K_vmblock_t *vmblock)
-
-	:param va: Address to translate
-	:param l2addr: Guest address of level-2 page table
-	:param tablesize: Size of level-2 table
-	:param pagesize: page size from level-1 table
-	:param vmblock: vmblock pointer
-
-Description
-~~~~~~~~~~~
-
-Return the page-table entry for the given address.
-
-Functionality
-~~~~~~~~~~~~~
-
-First translate the guest address of the level-2 table to a physical address,
-using the vmblock's translations.  If this fails, return an invalid
-translation.  Calculate the physical address of the entry, read and return.
+An invalid level-1 page size or an inaccessible page-table mapping produces a
+zero PTE.  Otherwise, the selected PTE refines the incoming translation's
+page number, page size, permissions, cache attribute, and shared attribute.
+If the result is not shared and the VM has a guest mapping, the refined
+translation is passed through that mapping before it is returned.

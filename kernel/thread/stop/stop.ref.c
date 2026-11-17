@@ -10,7 +10,6 @@
 #include <asid.h>
 #include <stop.h>
 #include <timer.h>
-#include <vm.h>
 #include <cpuint.h>
 #include <id.h>
 #include <alloc.h>

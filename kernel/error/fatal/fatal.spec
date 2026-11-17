@@ -4,6 +4,25 @@
 
 .. module:: fatal
 
+H2K_fatal_sim_exit
+-------------------
+
+.. c:function:: static void H2K_fatal_sim_exit(u32_t why)
+
+	:param why: Simulator exit reason
+
+Description
+~~~~~~~~~~~
+
+Terminates execution using trap interface.
+
+Functionality
+~~~~~~~~~~~~~
+
+Builds the exit arguments, sets the required status bits, and issues
+``trap0(#0)``.  If the trap returns, execution remains in an infinite loop.
+
+
 .. c:function:: void H2K_fatal_kernel(s16_t error_id, H2K_thread_context *me, u32_t info0, u32_t info1, u32_t hthread)
 
 	:param error_id: Unique ID of the error that happened

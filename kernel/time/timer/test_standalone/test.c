@@ -10,7 +10,6 @@
 #include <string.h>
 #include <globals.h>
 #include <hw.h>
-#include <vm.h>
 #include <timeinfo.h>
 #include <timer.h>
 #include <trace.h>

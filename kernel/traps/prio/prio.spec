@@ -1,68 +1,44 @@
-
-:mod:`prio` -- managing priorities
-==================================
+:mod:`prio` -- Calling-thread priority management
+==================================================
 
 .. module:: prio
 
-Priority Management Trap Handlers
-
+The priority traps operate only on the calling thread.  They do not accept or
+resolve a destination thread ID.
 
 H2K_prio_get
 ------------
 
 .. c:function:: u32_t H2K_prio_get(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
-	:returns: Returns the priority
+	:param me: Calling thread context
+	:returns: Calling thread's base priority
 
 Description
 ~~~~~~~~~~~
 
-Gets the priority for the current thread context.
+Returns ``me->base_prio``.
 
-Functionality
-~~~~~~~~~~~~~
-
-Reads the priority field out of the thread context and returns the resulting value.
 
 H2K_prio_set
 ------------
 
-.. c:function:: u32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
+.. c:function:: s32_t H2K_prio_set(u32_t prio, H2K_thread_context *me)
 
-	:param dest: Destination thread
-	:param prio: new priority
-	:param me: Pointer to the current thread context
-	:returns: -1
+	:param prio: New base priority for the calling thread
+	:param me: Calling thread context
+	:returns: Previous base priority, or -1 for an invalid priority
 
 Description
 ~~~~~~~~~~~
 
-UNIMPLEMENTED.  Returns -1.
+Sets the calling thread's base priority.  A priority outside the valid range,
+or better than the VM's permitted ``bestprio``, is rejected.
 
+Functionality
+~~~~~~~~~~~~~
 
-Testing
--------
-
-Samples
-~~~~~~~
-
-* Priority of a thread
-
-Important Cases
-~~~~~~~~~~~~~~~
-
-* All priorities
-
-Harness
-~~~~~~~
-
-We only link with the library.
-
-After setting the priority field in a thread context, we check that
-:c:func:`H2K_prio_get()` returns the correct priority.
-
-We also check that :c:func:`H2K_prio_set()` returns -1.
-
-
-
+Updates ``base_prio``.  If the new base priority is better than the current
+effective priority, the effective priority is improved immediately.  An
+existing priority-inheritance boost that is better than the new base priority
+is preserved.

@@ -50,9 +50,7 @@ physical address.  It is assumed to be L1 and L2 cacheable.
 Functionality
 ~~~~~~~~~~~~~
 
-For V4, we use two memw_phys instructions.  For V3, we set up a temporary mapping
-in monitor memory space (upper 16MB) and read from there.
-
+Use two memw_phys instructions.
 
 Testing
 -------

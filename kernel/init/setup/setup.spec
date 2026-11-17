@@ -21,11 +21,31 @@ The :c:func:`H2K_init_setup()` function initializes kernel state at boot time.
 
 This function calls other initialization functions:
 
+* :c:func:`H2K_kg_init()`
+* :c:func:`H2K_tmpmap_init()`
+* :c:func:`H2K_l2cache_init()`
+* :c:func:`H2K_tcm_copy()`
+* :c:func:`H2K_trace_init()`
+* :c:func:`H2K_runlist_init()`
+* :c:func:`H2K_readylist_init()`
 * :c:func:`H2K_ready_init()`
 * :c:func:`H2K_lowprio_init()`
 * :c:func:`H2K_futex_init()`
 * :c:func:`H2K_intconfig_init()`
 * :c:func:`H2K_thread_init()`
+* :c:func:`H2K_asid_table_init()`
+* :c:func:`H2K_stlb_tcmcrash_init()`
+* :c:func:`H2K_timer_init()`
+* :c:func:`H2K_hvx_init()`
+* :c:func:`H2K_hmx_init()`
+* :c:func:`H2K_mem_alloc_init()`
+* :c:func:`H2K_sample_init()`
+* :c:func:`H2K_angel_init()`
+* :c:func:`H2K_log_init()`
+* :c:func:`H2K_log_string()`
+* :c:func:`H2K_init_setup_bootvm()`
+
+Note: These init funcitons do not zero mem chunks in production, H2K_kg_init does that for all kernel struct.
 
 
 H2K_thread_boot

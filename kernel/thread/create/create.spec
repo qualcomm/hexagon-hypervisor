@@ -1,127 +1,63 @@
-
-:mod:`thread_create` -- create a new thread
-===========================================
+:mod:`thread_create` -- Create a virtual CPU thread
+======================================================
 
 .. module:: thread_create
 
-H2K_thread_create
------------------
+H2K_thread_create_no_squash
+---------------------------
 
-.. c:function:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me)
+.. c:function:: s32_t H2K_thread_create_no_squash(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me)
 
-	:param pc: The PC that the new thread should start at
-	:param sp: The SP that the new thread should start with
-	:param arg: A value for r0 for the new thread
-	:param prio: The priority for the new thread
-	:param vmblock: Pointer to VM if this thread is a virtual CPU
-	:param me: Pointer to the current thread context
-	:returns: the thread ID of the new thread, or -1 on failure.
+	:param pc: Initial program counter
+	:param sp: Initial stack pointer
+	:param arg1: Initial value for ``r0``
+	:param prio: Requested priority
+	:param vmblock: VM block for the new thread
+	:param me: Current thread context
+	:returns: New thread ID, or -1 on failure
 
 Description
 ~~~~~~~~~~~
 
-The :c:func:`H2K_thread_create()` function creates a new thread.  The calling
-thread specifies attributes for the thread, and the new thread is created with
-those attributes.
-
-The vmblock pointer is forced to NULL when vectored through H2K_handle_trap0.
-In this case the new thread inherits the trap mask of the calling thread, and
-the requested priority may be at best equal to the base priority of the calling
-thread, else an error is returned.
-
-If vmblock is non-NULL, then the trap mask is taken from the VM block, as is
-the best allowed priority.
-
-The call to thread_create will return -1 on error, or an ID for the
-thread on success.
-
+Allocates and initializes a thread context for the supplied VM.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Arguments should be checked:
-* Priority should be less than MAX_PRIO
-* SP must be 8-byte aligned
+Rejects an out-of-range priority, a priority better than the VM's
+``bestprio``, an unaligned stack, or an unaligned PC.  Under the BKL, it takes
+a context from ``vmblock->free_threads`` and initializes its registers,
+priority, trap mask, TLB index mask, continuation, guest entry state, and
+address-space ID.  The first CPU gets an identity offset mapping; later CPUs
+inherit the current thread's translation information.
 
-Any incorrect argument causes -1 to be returned.
-
-If the arguments are correct, we acquire the Big Kernel Lock.
-
-If H2K_free_threads is NULL, we free the BKL and -1 is returned (there are no
-available threads to create).
-
-Otherwise, we pop a thread off the H2K_free_threads list to use as a new thread.
-
-As a convenience, the new thread inherits GP and UGP from the calling thread.
-The thread is free to change these values if desired.
-
-We then set the following parameters in the new thread context:
-
-* SP is set to the SP argument value
-* SSR is set to the Kernel Default SSR Value
-* ELR is set to the PC argument value
-* R0 is set to the arg argument value
-* priority is set to the prio argument value subject to limits of caller or vmblock
-* trap mask is set to vmblock->trapmask, or inherited from caller if vmblock == NULL
-* valid is set to VALID
-* The continuation is set to interrupt restore continuation
-
-If vmblock is non-NULL, these actions are added:
-
-* The vmstatus of the new thread is initialized
-* The vmblock pointer of the new thread is inherited from the caller.
+The new context is attached to the VM, the VM CPU count is incremented, and
+the context is appended to the ready list.  Failure to allocate an ASID
+returns the context to the free list and returns -1.
 
 
-We then add the new thread to the readylist.
+H2K_thread_create
+-----------------
 
-For security, we need to assure that no values are in registers incorrectly.
-We accomplish this by clearing the thread context during initialization and 
-at :c:func:`H2K_thread_stop()` time.  This allows for faster :c:func:`H2K_thread_create()` calls.
+.. c:function:: s32_t H2K_thread_create(u32_t pc, u32_t sp, u32_t arg1, u32_t prio, H2K_vmblock_t *vmblock, H2K_thread_context *me)
 
+	:param pc: Initial program counter
+	:param sp: Initial stack pointer
+	:param arg1: Initial value for ``r0``
+	:param prio: Requested priority
+	:param vmblock: Ignored; the new thread uses ``me->vmblock``
+	:param me: Current thread context
+	:returns: New thread ID, or -1 on failure
 
+Description
+~~~~~~~~~~~
+
+Creates a thread in the current thread's VM by forwarding to
+:c:func:`H2K_thread_create_no_squash()` with ``me->vmblock``.
 
 Testing
 -------
 
-
-Samples
-~~~~~~~
-
-* Input: new thread PC
-* Input: new thread SP
-* Input: new thread argument
-* Input: new thread priority
-* Input: new thread trapmask
-* Input: Pointer to current thread context
-
-Important cases
-~~~~~~~~~~~~~~~
-
-* Free thread list is empty
-* Free thread list is non-empty
-
-* PC misaligned
-* Stack Pointer misaligned
-* Invalid thread priority
-
-* Ready threads at new thread priority
-* No ready threads at new thread priority
-
-Harness
-~~~~~~~
-
-We link directly with the create object file, and also the readylist object file.
-
-The test harness will call :c:func:`H2K_thread_create()` with various inputs and check to make sure
-that the appropriate action was taken:
-
-* Check appropriate input arguments, return -1 if obviously erroneous
-* If available, a thread should be dequeued from the free thread list.  Otherwise return -1.
-* Check that the appropriate fields in the new thread were set correctly:
-	* Priority and valid fields
-	* SSR and ELR values
-	* Argument and Stack Pointer values
-	* Trap Mask
-	* Continuation
-* Check to make sure the thread was inserted into the ready queue at the appropriate location.
-
+Important cases include invalid priority, priority above the VM limit,
+unaligned PC or stack, an empty free-thread list, ASID allocation failure, and
+successful initialization and insertion into the ready list.

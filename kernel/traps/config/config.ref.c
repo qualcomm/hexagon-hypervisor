@@ -8,7 +8,6 @@
 #include <thread.h>
 #include <globals.h>
 #include <hw.h>
-#include <vm.h>
 #include <max.h>
 #include <intconfig.h>
 #include <asid.h>

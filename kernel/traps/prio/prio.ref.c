@@ -6,25 +6,18 @@
 #include <prio.h>
 #include <hw.h>
 
-
-s32_t H2K_prio_set(H2K_thread_context *dest, u32_t prio, H2K_thread_context *me)
+s32_t H2K_prio_set(u32_t prio, H2K_thread_context *me)
 {
 	s32_t ret = me->base_prio;
 	if (prio > MAX_PRIO) return -1;
 	if ((me->vmblock != NULL) && (prio < me->vmblock->bestprio)) return -1;
 	me->base_prio = (u8_t)prio;
-	BKL_LOCK();
-	if (prio < me->prio)
-	{
-		me->prio = (u8_t)prio;
-		set_thread_stid_prio(me->hthread, prio);
-	}
-	BKL_UNLOCK();
+	if (me->base_prio < me->prio) me->prio = me->base_prio;
 	return ret;
 }
 
-u32_t H2K_prio_get(unsigned int threadid_in, H2K_thread_context *me)
+
+u32_t H2K_prio_get(H2K_thread_context *me)
 {
-	/* Return this, or base prio? */
 	return me->base_prio;
 }

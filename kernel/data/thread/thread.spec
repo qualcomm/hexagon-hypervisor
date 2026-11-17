@@ -23,6 +23,23 @@ Functionality
 
 Sets every bit in the thread context to zero.
 
+H2K_ext_context_clear
+---------------------
+
+.. c:function:: void H2K_ext_context_clear(H2K_ext_context *ext)
+
+	:param ext: pointer to an extended thread context
+
+Description
+~~~~~~~~~~~
+
+Zeros an extended thread context when ``DO_EXT_SWITCH`` is enabled.
+
+Functionality
+~~~~~~~~~~~~~
+
+Treats the context as an array of 64-bit values and sets every value to zero.
+
 H2K_thread_init
 ---------------
 
@@ -35,6 +52,5 @@ Initializes thread-related data structures.
 
 Functionality
 ~~~~~~~~~~~~~
-
-Clears out the H2K_boot_context by calling :c:func:`H2K_thread_context_clear()`.
+Empty function body.
 

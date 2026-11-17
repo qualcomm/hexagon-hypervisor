@@ -95,11 +95,11 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_id // 8 (was H2K_register_fastint, now unused)
 	}
 	{
-		r2 = sgp0
+		r1 = sgp0
 		jump H2K_prio_set // 9
 	}
 	{
-		r1 = sgp0
+		r0 = sgp0
 		jump H2K_prio_get // 10
 	}
 	{

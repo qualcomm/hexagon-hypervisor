@@ -26,19 +26,19 @@ int main()
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	for (i = 0; i <= MAX_PRIO; i++) {
 		a.base_prio = i;
-		if (H2K_prio_get(0,&a) != i) FAIL("prio_get");
+		if (H2K_prio_get(&a) != i) FAIL("prio_get");
 	}
 	a.vmblock = NULL;
-	H2K_prio_set(&a,0,&a);
+	H2K_prio_set(0,&a);
 	if (a.base_prio != 0) FAIL("prio_set_null");
 	a.vmblock = &vmblock;
 	for (i = 0; i <= MAX_PRIO; i++) {
 		a.vmblock->bestprio = i;
-		H2K_prio_set(&a,a.vmblock->bestprio,&a);
+		H2K_prio_set(a.vmblock->bestprio,&a);
 		if (a.base_prio != a.vmblock->bestprio) FAIL("prio_set_mid");
 	}
 	for (i = MAX_PRIO + 1; i <= MAX_PRIOS; i++) {
-		if(H2K_prio_set(&a,i,&a) != -1) FAIL("prio_set_limit");
+		if(H2K_prio_set(i,&a) != -1) FAIL("prio_set_limit");
 	}
 	puts("TEST PASSED\n");
 	return 0;

@@ -47,10 +47,10 @@ We find the highest priority ready thread by using the CT0 instruction to find
 the highest priority that has a ready thread.  We then can remove the thread in
 the corresponding list.
 
-H2K_ready_init
---------------
+H2K_readylist_init
+------------------
 
-.. c:function:: void H2K_ready_init()
+.. c:function:: void H2K_readylist_init(void)
 
 Description
 ~~~~~~~~~~~
@@ -60,7 +60,8 @@ Initializes the H2K_kg.ready structures.
 Functionality
 ~~~~~~~~~~~~~
 
-Set all elements of H2K_kg.ready to NULL, and set H2K_kg.ready_valids to zero.
+In testing builds, sets all elements of H2K_kg.ready to NULL and
+H2K_kg.ready_valids to zero.  Production builds require no runtime work.
 
 
 H2K_ready_best_prio
@@ -271,35 +272,75 @@ to immediately close the disarmed window after a hardware reschedule interrupt
 fires (which resets BESTWAIT to 0x1FF).
 
 
-H2K_ready_getbest
------------------
+.. c:function:: static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t hthread_xe3, u32_t head_xe, u32_t head_xe2, u32_t head_xe3)
 
-.. c:function:: static inline H2K_thread_context *H2K_ready_getbest()
-
-	:returns: the best priority ready thread, which has been removed from
-		the ready list.  Or, if no threads are ready, returns NULL.
+	:param hthread: Hardware thread whose coprocessor use is changing
+	:param hthread_xe: Current XE state
+	:param hthread_xe2: Current XE2 state
+	:param hthread_xe3: Current XE3 state
+	:param head_xe: Required XE state
+	:param head_xe2: Required XE2 state
+	:param head_xe3: Required XE3 state
 
 Description
 ~~~~~~~~~~~
 
+H2K_update_coprocs
+------------------
+Updates the cluster's coprocessor count for a hardware thread switching to the
+requirements of a selected ready thread.  This helper is present only when
+``CLUSTER_SCHED`` is enabled.
+
+
+H2K_ready_head
+--------------
+
+.. c:function:: static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread)
+
+	:param prio: Priority whose ready ring is examined
+	:param hthread: Hardware thread selecting work
+	:returns: A thread to schedule, or NULL when work is handed to another hardware thread
+
+Description
+~~~~~~~~~~~
+
+Selects a thread from the head priority while accounting for cluster
+coprocessor limits.
 Removes the best priority thread from the ready list and re-arms BESTWAIT.
 
 Functionality
 ~~~~~~~~~~~~~
 
-If there are no ready threads (!:c:func:`H2K_ready_any_valid()`), we return NULL.
+Without cluster scheduling, the head of the priority ring is returned.  With
+cluster scheduling, the function selects work that fits available coprocessor
+capacity, may signal a waiting hardware thread in a less-loaded cluster, and
+updates coprocessor accounting for the selected work.
 
-We call :c:func:`H2K_ready_best_prio()` to obtain the priority of the best priority ready thread.
 
-We then get the thread pointed to by the H2K_kg.ready pointer at the correct priority.
+H2K_ready_getbest
+-----------------
 
+.. c:function:: static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
+
+	:param hthread: Hardware thread selecting work
+	:returns: the selected ready thread after removal from the ready list, or NULL
+
+Description
+~~~~~~~~~~~
+
+Removes the best-priority eligible thread from the ready list.
+
+Functionality
+~~~~~~~~~~~~~
+
+The function finds the best ready priority and calls :c:func:`H2K_ready_head()`
+to account for cluster scheduling.  A selected thread is removed with
+:c:func:`H2K_ready_remove()`.  If no thread is available, the function returns
+NULL and, with cluster scheduling enabled, releases the hardware thread's
+coprocessor accounting before it sleeps.
 This thread is removed from the ready list by calling :c:func:`H2K_ready_remove_arm()`,
 which also re-arms BESTWAIT with the new best priority (or 0x1FF if no threads remain),
 and the thread is returned.
-
-
-
-
 
 
 Testing

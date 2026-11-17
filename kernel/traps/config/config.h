@@ -8,7 +8,6 @@
 
 #include <c_std.h>
 #include <context.h>
-#include <vm.h>
 #include <vmint.h>
 #include <max.h>
 #include <h2_common_config.h>

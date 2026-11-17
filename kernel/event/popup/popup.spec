@@ -36,7 +36,7 @@ re-enabled when the thread blocks waiting for another interrupt.  By keeping the
 interrupt disabled, we allow it to pend while the popup thread executes.
 
 
-H2K_popup_int
+H2K_popup_wait
 -------------
 
 .. c:function:: int H2K_popup_wait(u32_t intno, H2K_thread_context *me)

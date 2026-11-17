@@ -1,212 +1,125 @@
-
-:mod:`hw` -- hardware interface intrinsics
-==========================================
+:mod:`hw` -- Hardware interface helpers
+===========================================
 
 .. module:: hw
 
-This unit contains intrinsics which implement interfaces
-to hardware.
+This module wraps Hexagon special registers, interrupt instructions, cache and
+TLB synchronization instructions, hardware locks, and assembly helpers.  The
+inline functions operate on the current processor unless a thread or mask is
+explicitly supplied.
 
 
-ciad
-----
+Interrupt and assignment helpers
+---------------------------------
 
-.. c:function:: static inline void ciad(u32_t mask)
+``ciad(mask)`` clears interrupt-auto-disable bits; ``siad(mask)`` sets them;
+``swi(mask)`` raises software interrupts.  ``iassignw(intno, threadmask)``
+writes interrupt assignment and ``iassignr(intno)`` reads it.
+``hthreads_mask()`` writes and reads the assignment mask for all threads, and
+``get_hthreads()`` returns the hardware-thread count (popcount on ARCHV >= 5;
+the architecture-specific fallback on ARCHV 4).
 
-	:param mask: A mask of which interrupts to clear.  It is
-		implementation-defined on which interrupts in the mask correspond to which
-		hardawre interrupts.
+``change_imask(thread, imask)`` writes a thread's IMASK and
+``get_imask(thread)`` reads it.  ``resched_int()`` and
+``cluster_resched_int()`` raise the configured reschedule interrupts.
+``highprio_imask(hthread)`` and ``lowprio_imask(hthread)`` install the masks
+used for high- and low-priority scheduling; the current implementation writes
+all ones and zero respectively.
 
-Description
-~~~~~~~~~~~
 
-Clears the Interrupt Auto Disable register using the specified mask.
+Special-register accessors
+--------------------------
 
-Functionality
-~~~~~~~~~~~~~
+The following accessors read or write their named special register:
 
-We invoke the CIAD instruction with the designated mask.
+``H2K_get_ssr`` / ``H2K_set_ssr``, ``H2K_get_syscfg`` / ``H2K_set_syscfg``,
+``H2K_get_livelock`` / ``H2K_set_livelock``, ``H2K_get_turkey`` /
+``H2K_set_turkey``, ``H2K_get_duck`` / ``H2K_set_duck``,
+``H2K_get_chicken`` / ``H2K_set_chicken``, ``H2K_get_rgdr`` /
+``H2K_set_rgdr``, ``H2K_get_vwctrl`` / ``H2K_set_vwctrl``,
+``H2K_get_tid_reg`` / ``H2K_set_tid_reg``, ``H2K_get_elr`` /
+``H2K_set_elr``, ``H2K_get_gp`` / ``H2K_set_gp``, and
+``H2K_get_ccr`` / ``H2K_set_ccr``.  ``H2K_get_cfgbase`` reads CFGBASE;
+``H2K_get_modectl`` reads MODECTL; ``get_hwtnum`` reads HTID; and
+``H2K_get_sgp`` reads the saved guest pointer.
 
+``H2K_get_pcycle_reg`` and ``H2K_get_timer_reg`` read processor cycles and the
+hardware timer.  The timer helper returns zero on architectures where the
+register is unavailable.
 
-change_imask
-------------
+``H2K_get_ipend`` and ``H2K_get_iad`` read pending and interrupt-auto-disable
+state, with architecture-specific register selection.  ``H2K_clear_ipend``
+clears pending interrupts for a hardware-thread mask.
 
-.. c:function:: static inline void change_imask(u32_t thread, u32_t imask)
 
-	:param thread: The thread to change
-	:param imask: The IMASK value to write
+Global interrupt and synchronization helpers
+---------------------------------------------
 
-Description
-~~~~~~~~~~~
+``H2K_clear_gie`` clears and ``H2K_set_gie`` sets the global interrupt-enable
+bit in SYSCFG, followed by an instruction synchronization.  ``H2K_isync``,
+``H2K_syncht``, and ``H2K_ickill`` issue their corresponding synchronization or
+kill instructions.  ``H2K_l2kill`` and, on ARCHV >= 60, ``H2K_l2gcleaninv`` /
+``H2K_l2gclean`` perform L2 maintenance.
 
-Changes the IMASK register for the specified thread to ``imask``
+``H2K_mutex_lock_k0`` / ``H2K_mutex_unlock_k0`` operate the K0 hardware lock;
+``H2K_mutex_lock_tlb`` / ``H2K_mutex_unlock_tlb`` operate the TLB lock.
+``H2K_gregs_save(me)`` copies guest registers into the context and
+``H2K_gregs_restore(me)`` writes them back.
 
-Functionality
-~~~~~~~~~~~~~
+``BKL_LOCK`` and ``BKL_UNLOCK`` select the software ticket BKL or K0 lock.
+``IS_BKL_LOCKED`` is a diagnostic check, not a production synchronization
+primitive.
 
-The destination thread is put in a predicate register, and then we use the
-SETIMASK instruction to modify the IMASK for the thread.
 
+Cache, TLB, and memory helpers
+------------------------------
 
-get_imask
----------
+``H2K_dccleana(ptr)`` and ``H2K_dccleaninva(ptr)`` clean or clean-and-invalidate
+a data-cache line.  ``H2K_l2locka(ptr)`` attempts to lock an L2 line and
+returns the hardware predicate result; ``H2K_l2unlock()`` releases the L2
+lock.
 
-.. c:function:: static inline u32_t get_imask(u32_t thread)
+On ARCHV >= 68, ``H2K_dmtlbsynch()`` synchronizes DMA TLB state,
+``H2K_dmcfgrd(index)`` reads DMA configuration, and
+``H2K_dmcfgwr(index, data)`` writes it.
 
-	:param thread: The thread to fetch the imask of
 
-Description
-~~~~~~~~~~~
+Thread control
+--------------
 
-Get the IMASK register for the specified thread
+.. c:function:: void H2K_start_threads(unsigned int mask)
 
-Returns the imask of the desired hardware thread
+Starts the hardware threads selected by ``mask`` using the ``start``
+instruction.
 
-Functionality
-~~~~~~~~~~~~~
 
-The source thread is put in a predicate register, and then we use the
-GETIMASK instruction to retrieve the IMASK.
+Configuration-table helpers
+---------------------------
 
+.. c:data:: H2K_unit_offsets
 
-resched_int
------------
+The generated offset table maps configuration unit type, subtype, and entry to
+the physical configuration-table offset.
 
-.. c:function:: static inline void resched_int()
+.. c:function:: static inline u32_t H2K_cfg_table(u32_t entry)
 
-Description
-~~~~~~~~~~~
+	:param entry: Configuration-table byte offset
+	:returns: Word read from the configuration table
 
-This function raises the reschedule interrupt.
+Reads a word at ``CFGBASE << CFG_TABLE_SHIFT`` plus ``entry`` through
+:c:func:`H2K_mem_physread_word()`.
 
 
-Functionality
-~~~~~~~~~~~~~
+.. c:function:: static inline u32_t H2K_cfg_table_unit_entry(u32_t unit, h2_cfg_unit_entry entry)
 
-The constant RESCHED_INT_INTMASK is placed into a register, and the SWI
-instruction is invoked with that register.
 
-get_ssr
--------
+	:param unit: Unit offset in the configuration table
+	:param entry: Unit entry selector
+	:returns: Requested unit-entry word
 
-.. c:function:: static inline u32_t get_ssr()
-
-Description
-~~~~~~~~~~~
-
-Returns the value of the SSR register.
-
-Returns the value of the SSR register
-
-Functionality
-~~~~~~~~~~~~~
-
-The SSR value is transfered to a temporary value that is returned.
-
-
-
-get_hwtnum
-----------
-
-.. c:function:: static inline u32_t get_hwtnum()
-
-Description
-~~~~~~~~~~~
-
-Returns the current hardware thread number.
-
-Returns the current hardware thread number.
-
-Functionality
-~~~~~~~~~~~~~
-
-For V3 and earlier, we extract the TNUM field from SSR.  For V4, we use the HTNUM register.
-
-
-
-H2K_mutex_lock_k0
------------------
-
-.. c:function:: static inline void H2K_mutex_lock_k0()
-
-AVAILABILITY(ARCH >= 3)
-
-Description
-~~~~~~~~~~~
-
-Lock the K0 hardware lock.
-
-Functionality
-~~~~~~~~~~~~~
-
-This merely executes the K0LOCK instruction.
-
-
-
-
-H2K_mutex_unlock_k0
--------------------
-
-.. c:function:: static inline void H2K_mutex_unlock_k0()
-
-AVAILABILITY(ARCH >= 3)
-
-Description
-~~~~~~~~~~~
-
-Unlock the K0 hardware lock.
-
-Functionality
-~~~~~~~~~~~~~
-
-This merely executes the K0UNLOCK instruction.
-
-
-H2K_clear_gie
--------------
-
-.. c:function::  static inline void H2K_clear_gie()
-
-Description
-~~~~~~~~~~~
-
-This function clears the global interrupt enable bit in SYSCFG, turning all interrupts off.
-
-
-H2K_set_gie
------------
-
-.. c:function::  static inline void H2K_set_gie()
-
-Description
-~~~~~~~~~~~
-
-This function sets the global interrupt enable bit in SYSCFG.
-
-
-H2K_get_ipend
--------------
-
-.. c:function::  static inline u32_t H2K_get_ipend()
-
-Description
-~~~~~~~~~~~
-
-This function retrieves the contents of the IPEND status register.
-
-
-H2K_clear_ipend
----------------
-
-.. c:function::  static inline void H2K_clear_ipend(u32_t mask)
-
-	:param mask:  Mask of bits to clear out of IPEND
-
-Description
-~~~~~~~~~~~
-
-This function retrieves clears the contents of the IPEND status register.
-
+Reads the unit type and subtype, looks up the corresponding offset in
+``H2K_unit_offsets``, and reads that unit entry through
+:c:func:`H2K_mem_physread_word()`.
 
 H2K_get_bestwait
 ----------------
@@ -264,7 +177,4 @@ Description
 This function writes the SCHEDCFG register, used to enable the hardware
 reschedule interrupt feature and select which interrupt it raises.  See the
 hardware reschedule interrupt in conjunction with the BESTWAIT register.
-
-
-
 

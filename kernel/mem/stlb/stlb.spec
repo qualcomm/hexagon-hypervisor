@@ -48,7 +48,7 @@ result in many duplicated pages for larger pages.
 H2K_mem_stlb_asid_info_t
 ------------------------
 
-.. c:type:: H2K_mem_stlb_asid_t
+.. c:type:: H2K_mem_stlb_asid_info_t
 
 	stlb information for asid
 
@@ -69,15 +69,48 @@ H2K_mem_stlb_asid_info_t
 	        Pointer to available memory
 
 
-H2K_mem_stlb_alloc
-------------------
+H2K_mem_stlb_init
+-----------------
 
-.. c:function:: void H2K_mem_stlb_alloc()
+.. c:function:: s32_t H2K_mem_stlb_init(H2K_mem_stlb_asid_info_t *asid_info, void *bulk)
+
+	:param asid_info: Per-ASID STLB metadata storage
+	:param bulk: STLB translation-entry storage
+	:returns: Number of STLB entries initialized
 
 Description
 ~~~~~~~~~~~
 
-This function allocates and initilizes the stlb information.
+Initializes the STLB metadata and translation storage.
+
+Functionality
+~~~~~~~~~~~~~
+
+Installs the per-ASID metadata pointer, clears each ASID's valid bits, assigns
+its translation storage, enables all replacement ways, and sets the default
+page-size hint.  It also records the STLB dimensions in the global STLB
+information and marks the STLB enabled.
+
+
+H2K_mem_stlb_alloc
+------------------
+
+.. c:function:: s32_t H2K_mem_stlb_alloc(void)
+
+	:returns: Number of STLB entries initialized, or -1 if allocation fails
+
+Description
+~~~~~~~~~~~
+
+Allocates and initializes the STLB metadata and translation storage.
+
+Functionality
+~~~~~~~~~~~~~
+
+Allocates the per-ASID metadata and bulk translation storage separately.  If
+either allocation fails, releases any storage already allocated and returns
+-1.  Otherwise, initializes both regions with :c:func:`H2K_mem_stlb_init()`.
+
 
 H2K_mem_stlb_lookup
 -------------------
@@ -135,22 +168,25 @@ with "entry".
 H2K_mem_stlb_invalidate_va
 --------------------------
 
-.. c:function:: void H2K_mem_stlb_invalidate_va(u32_t va, u32_t asid, H2K_thread_context *me)
+.. c:function:: void H2K_mem_stlb_invalidate_va(u32_t va, u32_t count, u32_t asid, H2K_thread_context *me)
 
 	:param va: virtual address to look up
+	:param count: number of pages to invalidate
 	:param asid: address space to look up
 	:param me: pointer to the current thread context
 
 Description
 ~~~~~~~~~~~
 
-This function looks for a translation in the STLB.  If one is found, it is cleared.
+This function looks for translations in the STLB over the requested page
+range.  Any matching translations are cleared.
 
 Behavior
 ~~~~~~~~
 
-The same lookup behavior as :c:func:`H2K_mem_stlb_lookup()` is used, but if a match is 
-found, we clear the translation instead of returning the value.
+For each page in the range beginning at ``va`` and spanning ``count`` pages,
+the same lookup behavior as :c:func:`H2K_mem_stlb_lookup()` is used.  If a
+match is found, the translation is cleared instead of returned.
 
 H2K_mem_stlb_invalidate_asid
 ----------------------------
@@ -168,8 +204,26 @@ This function marks all translations for an ASID as invalid.
 Behavior
 ~~~~~~~~
 
-The valid bits are cleared using DCZEROA for large numbers of 
-sets, or stores for small numbers of sets.
+The valid-bit array for the ASID is cleared.  This invalidates all
+translations belonging to that ASID.
+
+
+H2K_stlb_tcmcrash_init
+----------------------
+
+.. c:function:: void H2K_stlb_tcmcrash_init(void)
+
+Description
+~~~~~~~~~~~
+
+Initializes STLB metadata and storage in the crash TCM area.  Available only
+when ``CRASH_DEBUG`` is enabled.
+
+Functionality
+~~~~~~~~~~~~~
+
+Uses the crash TCM address for the per-ASID metadata and places the bulk STLB
+storage immediately after it, then calls :c:func:`H2K_mem_stlb_init()`.
 
 
 Testing

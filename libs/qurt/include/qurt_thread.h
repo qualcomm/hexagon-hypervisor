@@ -579,54 +579,43 @@ static inline void qurt_thread_stop(void) { qurt_thread_exit(0); }
  */
 int qurt_thread_join(unsigned int tid, int *status);
 
-/**@ingroup func_qurt_thread_get_priority 
-   Gets the priority of the specified thread. \n 
-   Returns the thread priority of the specified thread.\n
+/**@ingroup func_qurt_thread_get_priority
+   Gets the calling thread's base priority. \n
    Thread priorities are specified as numeric values in a range as large as 0-255, with lower
    values representing higher priorities. 0 represents the highest possible thread priority. \n
    @note1hang QuRT can be configured to have different priority ranges.
 
-   @datatypes
-   #qurt_thread_t
-  
-   @param[in]  threadid	   Thread identifier.	
-
    @return
-   -1 -- Invalid thread identifier. \n
-   0-255 -- Thread priority value.
+   0-255 -- Calling thread's base priority.
 
    @dependencies
    None.
  */
-static inline int qurt_thread_get_priority (qurt_thread_t threadid)
+static inline int qurt_thread_get_priority (void)
 {
-	return h2_get_prio(threadid);// hopefully it's the calling thread! :-)
+	return h2_get_prio();
 }
 
 /**@ingroup func_qurt_thread_set_priority
-   Sets the priority of the specified thread.\n
+   Sets the calling thread's base priority.\n
    Thread priorities are specified as numeric values in a range as large as 0-255, with lower
    values representing higher priorities. 0 represents the highest possible thread priority.
 
    @note1hang QuRT can be configured to have different priority ranges. For more
               information see Section @xref{sec:AppDev}.
-   
-   @datatypes
-   #qurt_thread_t
 
-   @param[in] threadid	    Thread identifier.	
-   @param[in] newprio 	    New thread priority value.
+   @param[in] newprio      New base priority for the calling thread.
 
    @return
-   0 -- Priority successfully set. \n
-   -1 -- Invalid thread identifier. \n 
-   
+   Previous base priority -- Success. \n
+   -1 -- Invalid priority. \n
+
    @dependencies
    None.
  */
-static inline int qurt_thread_set_priority (qurt_thread_t threadid, unsigned short newprio)
+static inline int qurt_thread_set_priority (unsigned short newprio)
 {
-	return h2_set_prio(threadid,newprio);
+	return h2_set_prio(newprio);
 }
 
 /*

@@ -50,6 +50,7 @@ typedef struct H2K_vmblock_struct {
 		 ... fence_hi (in pages of size given in offset).  phys == guest +
 		 phys_offset.  fence_hi == 0 means all memory. Signed values so we can use
 		 -1 as uninitialized value */
+	//fixme: remove from struct's memory when offset is deprecated
 	s32_t fence_lo;
 	s32_t fence_hi;
 
@@ -70,7 +71,7 @@ typedef struct H2K_vmblock_struct {
 	u32_t num_cpus;
 	u32_t bestprio; 	/* best allowed priority */
 
-	H2K_thread_context *intpool;
+	H2K_thread_context *intpool;  //fixme: intpool isnt used. Delete or ifdef the storage?
 	unsigned int intpool_anypending;
 	u32_t intpool_pending[MAX_INTERRUPTS/32];
 

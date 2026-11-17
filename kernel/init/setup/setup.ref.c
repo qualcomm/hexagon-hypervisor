@@ -15,7 +15,6 @@
 #include <stlb.h>
 #include <thread.h>
 #include <hw.h>
-#include <vm.h>
 #include <id.h>
 #include <config.h>
 #include <timer.h>

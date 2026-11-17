@@ -34,7 +34,6 @@
 #include <shint.h>
 #include <cpuint.h>
 #include <badint.h>
-#include <vm.h>
 #include <hw.h>
 #include <context.h>
 #include <string.h>

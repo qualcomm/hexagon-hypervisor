@@ -1,33 +1,44 @@
-
-:mod:`std` -- standard environment definitions
-==============================================
+:mod:`std` -- C and assembly environment definitions
+========================================================
 
 .. module:: std
 
-This unit defines our standard C environment, including data types.
+The standard utility headers provide the fixed-width aliases, compiler helpers,
+and assembly section macros used throughout the kernel.
 
 
-NULL: `(void *)0`
+C definitions
+-------------
 
-u8_t: `unsigned char`
+``c_std.h`` defines ``NULL``, ``ARCHV`` fallback detection, and these aliases:
 
-u16_t: `unsigned short`
+* ``u8_t``, ``u16_t``, ``u32_t``, ``u64_t`` — unsigned 8-, 16-, 32-, and 64-bit types
+* ``s8_t``, ``s16_t``, ``s32_t``, ``s64_t`` — signed 8-, 16-, 32-, and 64-bit types
+* ``pa_t`` — physical address type, aliased to ``u64_t``
 
-u32_t: `unsigned int`
+It also defines ``likely`` and ``unlikely`` compiler branch hints,
+``IN_SECTION`` for placing declarations in a named section, ``offsetof``,
+``member_size``, ``containerof``, ``bits``, ``max``, ``min``, and
+``__barrier``.  ``H2K_LANG_IS_C`` is defined as 1.
 
-u64_t: `unsigned long long int`
-
-s8_t: `char`
-
-s16_t: `short`
-
-s32_t: `int`
-
-s64_t: `long long int`
+``containerof(type, element, ptr)`` computes the containing object from a
+pointer to one of its members.  ``__barrier()`` is a compiler memory barrier;
+it does not emit a processor synchronization instruction.
 
 
-c_std.h are the definitions for C, and asm_std.h are the definitions for assembly.
+Assembly definitions
+---------------------
 
-asm_std.h are the definitions for assembly, which additionally include function
-begin and end macros.
+``asm_std.h`` defines ``ASM``, ``H2K_GP`` as ``R28``, ``NULL`` as zero, and
+``H2K_LANG_IS_ASM`` as 1.  It provides:
 
+* ``FUNC_START`` / ``FUNC_END`` — declare and size global assembly functions;
+* ``DATA_START`` / ``DATA_END`` — declare and size global assembly objects;
+* ``ASM_TICKET_LOCK`` / ``ASM_TICKET_UNLOCK`` — acquire and release the
+  software ticket BKL when ``SOFT_BKL`` is enabled;
+* ``ASM_BKL_LOCK`` / ``ASM_BKL_UNLOCK`` — select the software ticket lock or
+  hardware K0 lock according to ``SOFT_BKL``.
+
+The ticket-lock macros use the upper 16 bits as the next-ticket counter and the
+lower 16 bits as the serving-ticket counter.  Their scratch registers and
+predicate arguments are clobbered as specified by the macro invocation.

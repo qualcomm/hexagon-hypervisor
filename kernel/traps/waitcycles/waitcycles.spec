@@ -10,12 +10,12 @@ H2K_waitcycles_get
 
 	:param htid: the hardware thread of interest
 	:param me: pointer to the context for the current thread
-	:returns: the total cycles the hadware thread has spent in wait mode
+	:returns: the total cycles the hardware thread has spent in wait mode
 
 Description
 ~~~~~~~~~~~
 
-Get the total cycles a hadware thread has spent in wait mode
+Get the total cycles a hardware thread has spent in wait mode
 
 Functionality
 ~~~~~~~~~~~~~

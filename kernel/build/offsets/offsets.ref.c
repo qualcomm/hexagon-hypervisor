@@ -7,7 +7,6 @@
 #include <stddef.h>
 #include <globals.h>
 #include <stlb.h>
-#include <vm.h>
 
 /*
  * Compiled with -S only, never run: each DEFINE() leaves a

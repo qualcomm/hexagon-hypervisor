@@ -4,7 +4,6 @@
  */
 
 #include <c_std.h>
-#include <vm.h>
 #include <vmdefs.h>
 #include <max.h>
 #include <vmevent.h>

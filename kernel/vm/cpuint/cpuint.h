@@ -7,7 +7,6 @@
 #define H2K_CPUINT_H 1
 
 #include <c_std.h>
-#include <vm.h>
 #include <context.h>
 #include <vmint.h>
 

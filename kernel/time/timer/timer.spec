@@ -1,223 +1,91 @@
-
-:mod:`timer` -- managing timer hardware
-==========================================
+:mod:`timer` -- Timer hardware and timeout services
+===================================================
 
 .. module:: timer
 
-Timer Management
+H2K_timer_init
+--------------
+
+.. c:function:: void H2K_timer_init(u32_t devpage_offset)
+
+	:param devpage_offset: Subsystem device-page offset
+
+Initializes the timer device, timeout tree, timer registers, and timer
+interrupt when devices are enabled.
+
 
 H2K_timer_int
 -------------
 
-.. c:function:: void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
+.. c:function:: void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 
-	:param unused: Unused parameter
-	:param me: pointer to the thread that was interrupted
-	:param hwtnum: Hardware thread currently executing
+	:param intnum: Timer interrupt number
+	:param me: Interrupted thread
+	:param hwtnum: Hardware-thread number
+
+Reads the current timer, expires all due thread timeouts, programs the next
+expiry, and re-enables the timer interrupt.
 
 
-Description
-~~~~~~~~~~~
+H2K_timer_cancel_withlock
+-------------------------
 
-This function is called when the timer interrupt triggers
+.. c:function:: static inline void H2K_timer_cancel_withlock(H2K_thread_context *me)
 
-Functionality
-~~~~~~~~~~~~~
+	:param me: Thread whose timeout is cancelled
 
-Expire all timers before or near the current time.  Update the current time.
-Reprogram the timer device for the next expiry.
+Removes the thread's timeout from the timeout tree.  The caller must hold the
+BKL.
+
+
+H2K_timer_cancel
+----------------
+
+.. c:function:: static inline void H2K_timer_cancel(H2K_thread_context *me)
+
+	:param me: Thread whose timeout is cancelled
+
+Acquires the BKL, calls :c:func:`H2K_timer_cancel_withlock()`, and releases the
+BKL.
+
 
 H2K_timer_trap
 --------------
 
 .. c:function:: u64_t H2K_timer_trap(u32_t traptype, u64_t arg, H2K_thread_context *me)
 
-	:param traptype: Which trap to do
-	:param arg: For setting a timeout, the "nsec" absolute time of the timeout
-	:param me: Pointer to the current context
+	:param traptype: Timer operation
+	:param arg: Operation argument
+	:param me: Current thread
+	:returns: Operation result, or ``~0ULL`` for an invalid operation
 
-Description
-~~~~~~~~~~~
+Dispatches timer operations for frequency, resolution, current time, timeout
+query, absolute timeout, and relative timeout.
 
-If an invalid request is made, -1 is returned.  
-
-Otherwise, this function calls a handler function.
-
-0) Get Frequency
-1) Get Resolution
-2) Get Rough Time
-3) Get Time
-4) Get Timeout
-5) Set Timeout
-6) Set Active Timeout to Sooner Time
-
-Functionality
-~~~~~~~~~~~~~
-
-We use a look up table of pointers to handler functions, described below.
 
 H2K_vmtrap_timer
 ----------------
 
 .. c:function:: void H2K_vmtrap_timer(H2K_thread_context *me)
 
-	:param me: Pointer to the current context
+	:param me: Current thread
 
+Passes ``me->r00`` and ``me->r0302`` to :c:func:`H2K_timer_trap()` and stores
+the result in ``me->r0100``.
 
-Description
-~~~~~~~~~~~
 
-Handles timer operations 
+Timer operations
+----------------
 
-Functionality
-~~~~~~~~~~~~~
+The timer trap handlers provide these operations:
 
-Calls :c:func:`H2K_timer_trap()` using r00 for the traptype and r0302 as the arg.
+* frequency: exact timer nanoseconds-per-second value;
+* resolution: nanoseconds per hardware tick;
+* time: current time since boot in nanoseconds;
+* timeout: current thread's active timeout, or zero;
+* set timeout: set an absolute nanosecond deadline;
+* delta timeout: set a relative timeout.
 
-
-H2K_timer_get_freq
-~~~~~~~~~~~~~~~~~~
-
-.. c:function:: u64_t H2K_timer_get_freq(u32_t unused, u64_t unused2, H2K_thread_context *me)
-
-	:param unused: not used
-	:param unused2: not used
-	:param me: pointer to the current context
-
-Description
-~~~~~~~~~~~
-
-This function returns the exact number of "nsecs" per second.  If exact time is needed,
-this can be used to compensate if nsecs are not exactly nanoseconds.
-
-
-H2K_timer_get_resolution
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. c:function:: u64_t H2K_timer_get_resolution(u32_t unused, u64_t unused2, H2K_thread_context *me)
-
-	:param unused: not used
-	:param unused2: not used
-	:param me: pointer to the current context
-
-Description
-~~~~~~~~~~~
-
-This function returns the resolution of the timer.  All nsec times in a resolution-sized
-chunk are equivalent times.
-
-Note that this does not describe any guarantee of when the timer expiry will be observed
-with respect to the time, however expiration accuracy better than the
-granularity is impossible.
-
-Additionally, it will be observed that calls to :c:func:`H2K_timer_get_time()` are always
-a multiple of the granularity.
-
-
-H2K_timer_get_time
-~~~~~~~~~~~~~~~~~~
-
-.. c:function:: u64_t H2K_timer_get_time(u32_t unused, u64_t unused2, H2K_thread_context *me)
-
-	:param unused: not used
-	:param unused2: not used
-	:param me: pointer to the current context
-	:returns: The current time
-
-Description
-~~~~~~~~~~~
-
-Returns the number of nsecs since boot
-
-
-H2K_timer_get_roughtime
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. c:function:: u64_t H2K_timer_get_roughtime(u32_t unused, u64_t unused2, H2K_thread_context *me)
-
-	:param unused: not used
-	:param unused2: not used
-	:param me: pointer to the current context
-	:returns: An approximation of the time
-
-
-Description
-~~~~~~~~~~~
-
-Gives an approximation of the time based on the last time the timer hardware
-was interacted with, but does not query the actual timer hardware.  This is
-useful if the timer hardware is extremely slow.
-
-H2K_timer_get_timeout
-~~~~~~~~~~~~~~~~~~~~~
-
-.. c:function:: u64_t H2K_timer_get_timeout(u32_t unused, u64_t unused2, H2K_thread_context *me)
-
-	:param unused: not used
-	:param unused2: not used
-	:param me: pointer to the current context
-	:returns: The time of the timer expiration, or 0 if no timer is active
-
-Description
-~~~~~~~~~~~
-
-If no timeout is active, returns 0.  Otherwise, returns the time of the next timeout.
-
-
-H2K_timer_set_timeout
-~~~~~~~~~~~~~~~~~~~~~
-
-.. c:function:: u64_t H2K_timer_set_timeout(u32_t unused, u64_t timeout, H2K_thread_context *me)
-
-	:param unused: not used
-	:param timeout: Requested time for timeout
-	:param me: pointer to the current context
-	:returns: The time of the set timeout, or 0 if the timeout can not be set
-
-
-Description
-~~~~~~~~~~~
-
-This function changes the timeout request.
-
-If a previous timeout is active, it is disabled.
-
-If the new timeout request time is acceptable, the timeout is activated and the
-corresponding time is returned.
-
-If the new timeout request time is not acceptable, 0 is returned and no timeout 
-is activated.
-
-Request times can be invalid for the following reasons:
-	* The time is in the past
-	* The time is too close to the present to activate a timer
-	* The time is too far in the future to ever expire
-
-Timeouts can be disactivated by requesting an invalid time, such as the time 0.
-
-
-H2K_timer_init
-~~~~~~~~~~~~~~
-
-
-.. c:function:: void H2K_timer_init()
-
-Description
-~~~~~~~~~~~
-
-This function initializes the timer state.
-
-
-
-H2K_timer_dotimeout
-~~~~~~~~~~~~~~~~~~~
-
-
-
-
-
-
-
-
-
-
+Invalid or expired deadlines deactivate the timeout.  The timeout tree is
+updated under the BKL, and the hardware timer is reprogrammed when the new
+deadline is earlier than the current programmed deadline.

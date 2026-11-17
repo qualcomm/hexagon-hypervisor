@@ -113,7 +113,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	// EJP: for now, let's do this all the time.
 9:
 	{
-		p0 = tstbit(WORK,#1)
+		//p0 = tstbit(WORK,#1)
 		//if (!p0.new) jump:nt 9f
 	}
 
@@ -127,7 +127,6 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		memd(r2++#8) = r5:4
 		r3 = add(r3,#1)
 	}:endloop0
-	nop
 
 	call H2K_intconfig_l2vic_crash
 	call H2K_tcm_crash_copy
@@ -143,9 +142,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		if (!p0.new) jump:nt 9f
 	}
 	syncht
-	nop
 	stop(r0)
-	nop
 9:
 	dealloc_return
 FUNC_END H2K_fatal_crash

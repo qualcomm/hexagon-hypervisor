@@ -114,6 +114,7 @@ typedef struct {
 #ifdef SOFT_BKL
 	H2K_spinlock_t bkl;
 #endif
+	H2K_spinlock_t timer_lock;
 	H2K_spinlock_t tmpmap_lock;
 	H2K_spinlock_t asid_spinlock;
 	u64_t oncpu_start[MAX_HTHREADS];

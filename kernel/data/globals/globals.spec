@@ -287,6 +287,11 @@
 		Big Kernel Lock, used to serialize kernel execution across
 		hardware threads.  Only present when ``SOFT_BKL`` is defined, otherwise hardware lock is used.
 
+	.. c:member:: H2K_spinlock_t timer_lock
+
+		Spinlock protecting timer state, timeout-tree updates, and timer
+		register programming.
+
 	.. c:member:: H2K_spinlock_t tmpmap_lock
 
 		Spinlock protecting use of the temporary mapping used for
@@ -572,4 +577,3 @@ limit.
 	We use a register to hold the address of the global data structure
 	across function calls.  This needs to be set up on each entry into the
 	kernel.
-

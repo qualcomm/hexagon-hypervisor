@@ -252,7 +252,7 @@ static u32_t H2K_config_vmblock_init_map_phys_intr(H2K_vmblock_t *vmblock, u32_t
 	if (! ((physint == RESCHED_INT)
 				 || (physint == VM_IPI_INT)
 				 || (virt_int == H2K_TIME_GUESTINT)
-				 || (physint == H2K_gp->timer_intnum)
+				 || (physint == TIMER_INT_CORE)
 #ifdef H2K_L2_CONTROL
 				 || (physint == L2_CORE_INTERRUPT)
 #endif

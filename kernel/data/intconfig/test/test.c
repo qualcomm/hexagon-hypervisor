@@ -30,31 +30,11 @@ void FAIL(const char *str)
 int main()
 {
 	int i;
-	u32_t timer_int;
-	u32_t rev;
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
-	__asm__ __volatile("%0 = rev " : "=r"(rev));
-
-	rev &= 0xff;
-	switch (rev) {
-	case CORE_V4:
-		timer_int = TIMER_INT_CORE_V4;
-		break;
-	case CORE_V5:
-		timer_int = TIMER_INT_CORE_V5;
-		break;
-	case CORE_V61:
-		timer_int = TIMER_INT_CORE_V61;
-		break;
-	default:
-		timer_int = TIMER_INT_CORE_V60;
-		break;
-	}
 
 	H2K_gp->l2_int_base = TH_l2int_cfg;
 	H2K_gp->l2_ack_base = TH_l2int_cfg + 0x80;
-	H2K_gp->timer_intnum = timer_int;
 
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		H2K_gp->inthandlers[i].handler = BAD;
@@ -79,7 +59,7 @@ int main()
 		 else if (i == VM_IPI_INT) {
 			if (H2K_gp->inthandlers[i].handler != H2K_vm_ipi_do)
 				FAIL("wrong ipi handler");
-		} else if (i == timer_int) {
+		} else if (i == TIMER_INT_CORE) {
 			if (H2K_gp->inthandlers[i].handler != H2K_timer_int)
 				FAIL("wrong timer int handler");
 		} else {

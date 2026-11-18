@@ -155,7 +155,7 @@ int main(void)
 #ifdef SOFT_BKL
 	PRINT_KG_OFFSET(bkl);
 #endif
-
+	PRINT_KG_OFFSET(timer_lock);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,next_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_pcycles);

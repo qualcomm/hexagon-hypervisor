@@ -17,25 +17,15 @@ interrupt when devices are enabled.
 H2K_timer_int
 -------------
 
-.. c:function:: void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
+.. c:function:: void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 
-	:param intnum: Timer interrupt number
+	:param unused: Unused parameter
 	:param me: Interrupted thread
 	:param hwtnum: Hardware-thread number
 
 Reads the current timer, expires all due thread timeouts, programs the next
-expiry, and re-enables the timer interrupt.
-
-
-H2K_timer_cancel_withlock
--------------------------
-
-.. c:function:: static inline void H2K_timer_cancel_withlock(H2K_thread_context *me)
-
-	:param me: Thread whose timeout is cancelled
-
-Removes the thread's timeout from the timeout tree.  The caller must hold the
-BKL.
+expiry, and re-enables the timer interrupt.  It acquires the BKL before
+``timer_lock`` to preserve the kernel lock order.
 
 
 H2K_timer_cancel
@@ -45,8 +35,8 @@ H2K_timer_cancel
 
 	:param me: Thread whose timeout is cancelled
 
-Acquires the BKL, calls :c:func:`H2K_timer_cancel_withlock()`, and releases the
-BKL.
+Acquires ``timer_lock``, removes the thread's timeout from the timeout tree,
+and releases the lock.
 
 
 H2K_timer_trap
@@ -86,6 +76,6 @@ The timer trap handlers provide these operations:
 * set timeout: set an absolute nanosecond deadline;
 * delta timeout: set a relative timeout.
 
-Invalid or expired deadlines deactivate the timeout.  The timeout tree is
-updated under the BKL, and the hardware timer is reprogrammed when the new
-deadline is earlier than the current programmed deadline.
+Invalid or expired deadlines deactivate the timeout.  Timer state and the
+timeout tree are updated under ``timer_lock``; the hardware timer is
+reprogrammed when a new deadline is earlier than the current deadline.

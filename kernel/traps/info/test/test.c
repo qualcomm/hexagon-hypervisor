@@ -106,13 +106,7 @@ int main() {
 	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_kg.timer_offset);
 	if (H2K_trap_info(INFO_TIMER_BASE, 0, 0, &a) != val) FAIL("TIMER_BASE");
 
-#if ARCHV >= 60
-	val = TIMER_INT_CORE_V60;
-#elif ARCHV >= 5
-	val = TIMER_INT_CORE_V5;
-#else
-	val = TIMER_INT_CORE_V4;
-#endif
+	val = TIMER_INT_CORE;
 	if (H2K_trap_info(INFO_TIMER_INT, 0, 0, &a) != val) FAIL("TIMER_INT");
 
 	val = H2K_kg.kernel_error;

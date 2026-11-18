@@ -213,8 +213,8 @@ void H2K_intconfig_init(u32_t ssbase)
 	H2K_gp->inthandlers[VM_IPI_INT].param = (void *)1;
 	H2K_gp->inthandlers[VM_IPI_INT].handler = H2K_vm_ipi_do;
 
-	H2K_gp->inthandlers[H2K_gp->timer_intnum].param = (void *)1;
-	H2K_gp->inthandlers[H2K_gp->timer_intnum].handler = H2K_timer_int;
+	H2K_gp->inthandlers[TIMER_INT_CORE].param = (void *)1;
+	H2K_gp->inthandlers[TIMER_INT_CORE].handler = H2K_timer_int;
 
 	(H2K_intconfig_l2_init(ssbase));
 }

@@ -206,21 +206,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t ssbase, u32_t d
 	H2K_kg.info_boot_flags.boot_have_sample = 0;
 #endif
 
-	switch(H2K_kg.arch) {
-	case CORE_V4:
-		H2K_kg.timer_intnum = TIMER_INT_CORE_V4;
-		break;
-	case CORE_V5:
-		H2K_kg.timer_intnum = TIMER_INT_CORE_V5;
-		break;
-	case CORE_V61:
-		H2K_kg.timer_intnum = TIMER_INT_CORE_V61;
-		break;
-	default:
-		H2K_kg.timer_intnum = TIMER_INT_CORE_V60;
-		break;
-	}
-
 	H2K_kg.tcm_base = (H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT) >> PAGE_BITS;
 	// H2K_kg.tcm_size set in H2K_trap_do_hwconfig_l2cache()
 

@@ -68,7 +68,7 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_gp->timer_offset;
 
 	case INFO_TIMER_INT:
-		return H2K_gp->timer_intnum;
+		return TIMER_INT_CORE;
 
 	case INFO_ERROR:
 		return H2K_gp->kernel_error;

@@ -18,79 +18,6 @@
 
 /* ***************** HW INTERFACES ********************* */
 
-#if ARCHV <= 4
-
-#define HW_COUNT 1
-#define HW_MATCH 0
-#define HW_ENABLE 2
-#define TICK_GRANULARITY 64
-
-#define TIMERHW_TICK_REALFREQ	27000000
-#define TIMERHW_NSEC_PER_TICK 	37
-
-#define TIMERHW_NSEC_FREQ 	(TIMERHW_TICK_REALFREQ * TIMERHW_NSEC_PER_TICK)
-#define TIMERHW_NS2TICKS(X)	((X)/(TIMERHW_NSEC_PER_TICK))
-#define TIMERHW_TICKS2NS(X)	((X)*TIMERHW_NSEC_PER_TICK)
-
-static inline void H2K_timer_hw_soft_raise()
-{
-	H2K_intcontrol_raise(H2K_gp->timer_intnum);
-}
-
-static inline ticks_t H2K_timer_hw_read_count()
-{
-	u32_t counter = H2K_gp->time.devptr[HW_COUNT];
-	u64_t ticks = H2K_gp->time.last_ticks;
-	u32_t lastcounter = ticks;
-	if (counter < lastcounter) {
-		ticks += (1ULL << 32);
-	}
-	ticks &= 0xFFFFFFFF00000000ULL;
-	ticks |= counter;
-	return ticks;
-}
-
-/*
- * Set HW counter: 
- *  * If in the past or close to now, raise the timer interrupt ourselves.
- *  * If far in the future, set the timer interrupt sooner to avoid overflow.
- *    The interrupt will reenable for the appropriate time.
- */
-
-/* EJP: FIXME: what sets time? set nextticks & hw ?? */
-
-/* EJP: probably want to hold the lock while you do this */
-static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
-{
-	u64_t nowticks;
-	u64_t max_future;
-	nowticks = H2K_timer_hw_read_count();
-	max_future = nowticks + 0x0F0000000ULL;
-	if (nextticks < nowticks) nextticks = nowticks;
-	if (nextticks > max_future) nextticks = max_future;
-	H2K_gp->time.devptr[HW_MATCH] = nextticks;
-	H2K_gp->time.next_ticks = nextticks;
-	__barrier(); // make sure we don't read again early
-	nowticks = H2K_timer_hw_read_count();
-	if ((nowticks + TICK_GRANULARITY) >= nextticks) {
-		/* TOO CLOSE, NOW+SMALL > NEXT... EXPIRE NOW SW */
-		H2K_timer_hw_soft_raise();
-	}
-}
-
-#ifndef NO_DEVICES
-static void H2K_timer_hw_init()
-{
-	H2K_gp->time.last_ticks = H2K_TIME_BIGBANG;
-	H2K_gp->time.last_pcycles = 0;
-	H2K_timer_hw_set_timeout(H2K_TIME_FOREVER);
-	H2K_gp->time.devptr[HW_ENABLE] = 1;
-        H2K_intcontrol_enable(H2K_gp->timer_intnum);
-}
-#endif
-
-#else /* <= V4 TIMERS */
-
 #define HW_COUNT_LO (0x1000/4)
 #define HW_COUNT_HI (0x1004/4)
 #define HW_MATCH_LO (0x1020/4)
@@ -111,6 +38,9 @@ static void H2K_timer_hw_init()
 
 static inline ticks_t H2K_timer_hw_read_count()
 {
+#ifndef TESTING
+	return H2K_get_timer_reg();
+#else
 	u32_t tmphi;
 	union {
 		u64_t pair;
@@ -119,19 +49,13 @@ static inline ticks_t H2K_timer_hw_read_count()
 			u32_t hi;
 		};
 	} ticktmp;
-
-#ifndef TESTING
-	if (H2K_gp->arch >= CORE_V61) { // use core timer regs
-		return H2K_get_timer_reg();
-	}
-#endif
-
 	do {
 		tmphi = H2K_gp->time.devptr[HW_COUNT_HI];
 		ticktmp.lo = H2K_gp->time.devptr[HW_COUNT_LO];
 		ticktmp.hi = H2K_gp->time.devptr[HW_COUNT_HI];
 	} while (tmphi != ticktmp.hi);
 	return ticktmp.pair;
+#endif
 }
 
 /*
@@ -146,19 +70,19 @@ static inline void H2K_timer_hw_set_timeout(u64_t nextticks)
 }
 
 #ifndef NO_DEVICES
-static void H2K_timer_hw_init()
+static void H2K_timer_hw_init() //I think this should be lock free, since this is init code.
 {
+#ifdef TESTING // H2K_bzero already zeros all kernel struct.
 	H2K_gp->time.last_ticks = H2K_TIME_BIGBANG;
 	H2K_gp->time.last_pcycles = 0;
+#endif
 	H2K_timer_hw_set_timeout(H2K_TIME_FOREVER);
 	H2K_gp->time.devptr[HW_CNTSR] = ~0;
 	H2K_gp->time.devptr[HW_CNTACR] = ~0;
 	H2K_gp->time.devptr[HW_CNTFRQ] = 19200000;
 	H2K_gp->time.devptr[HW_ENABLE] = 1;
-	H2K_intcontrol_enable(H2K_gp->timer_intnum);
+	H2K_intcontrol_enable(TIMER_INT_CORE);
 }
-
-#endif
 #endif
 
 /* ***************** KERNEL INFRASTRUCTURE ********************* */
@@ -173,11 +97,9 @@ static inline void H2K_timer_update_time(ticks_t nowticks)
 
 static inline void H2K_timer_update_timeout(ticks_t nextticks)
 {
-	BKL_LOCK();
 	if (H2K_gp->time.next_ticks > nextticks) {
 		H2K_timer_hw_set_timeout(nextticks);
 	};
-	BKL_UNLOCK();
 }
 
 /* 
@@ -199,18 +121,23 @@ static void H2K_timer_dotimeout(H2K_treenode_t *treenode, void *me)
 	H2K_vm_cpuint_post_locked(dest->vmblock,dest,H2K_TIME_GUESTINT,dest->vmblock->intinfo);
 }
 
-void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
+void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum)
 {
 	u64_t ticks,nextticks;
 	H2K_treenode_t *timedout = NULL;
 	H2K_treenode_t *newtimeout = NULL;
 
+	/* This looks a bit weird at first. The BKL is needed to assure the
+	 * right order of lock acquisition. H2K_thread_stop_withlock holds
+	 * the BKL and calls H2K_timer_cancel, which locks timer_lock. So the
+	 * order which needs to be preserved is: lock(BKL) -> lock(timer_lock).
+	 */
+	BKL_LOCK();
+	H2K_spinlock_lock(&H2K_gp->timer_lock);
 	/* Get time off the device, or assume it's the next time? */
 	ticks = H2K_timer_get_ticks();
 	ticks += TICK_GRANULARITY;
 	/* Bisect tree according to time */
-
-	BKL_LOCK();
 	H2K_tree_bisect(&timedout,&H2K_gp->time.timeouts,H2K_gp->time.timeouts,ticks);
 	newtimeout = H2K_tree_min(H2K_gp->time.timeouts);
 
@@ -221,15 +148,19 @@ void H2K_timer_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum)
 	/* Do Timeouts.  Make preemptible? cpu_offline? Better be fast, at least. */
 	H2K_tree_destructive_iterate(timedout,me,H2K_timer_dotimeout);
 	BKL_UNLOCK();
-	H2K_intcontrol_enable(intnum);
+	H2K_spinlock_unlock(&H2K_gp->timer_lock);
+	H2K_intcontrol_enable(TIMER_INT_CORE);
 }
 
 void H2K_timer_init() {
-
+#ifdef TESTING
+	H2K_spinlock_init(&H2K_gp->timer_lock); // H2K_bzero already zeros all kernel struct.
+#endif
 #ifndef NO_DEVICES
-
+#ifdef TESTING
 	H2K_gp->time.timeouts = NULL;
-
+#endif
+  
 	H2K_timer_hw_init();
 	H2K_timer_get_ticks();
 
@@ -250,7 +181,10 @@ static u64_t H2K_timer_get_resolution(u32_t unused, u64_t unused2, H2K_thread_co
 
 static u64_t H2K_timer_get_time(u32_t unused, u64_t unused2, H2K_thread_context *me)
 {
-	return H2K_timer_get_ticks() * TIMERHW_NSEC_PER_TICK;
+	H2K_spinlock_lock(&H2K_gp->timer_lock);
+	u64_t time = H2K_timer_get_ticks() * TIMERHW_NSEC_PER_TICK;
+	H2K_spinlock_unlock(&H2K_gp->timer_lock);
+	return time;
 }
 
 static u64_t H2K_timer_get_timeout(u32_t unused, u64_t unused2, H2K_thread_context *me)
@@ -258,11 +192,10 @@ static u64_t H2K_timer_get_timeout(u32_t unused, u64_t unused2, H2K_thread_conte
 	return me->timeout * TIMERHW_NSEC_PER_TICK;
 }
 
-static u64_t H2K_timer_set_timeout_tick(u32_t unused, u64_t timeout_tick, H2K_thread_context *me)
+static u64_t H2K_timer_set_timeout_tick_unlock(u32_t unused, u64_t timeout_tick, H2K_thread_context *me)
 {
 	/* If already registered for a timer, remove from tree */
 	if (timeout_tick <= H2K_gp->time.last_ticks) timeout_tick = H2K_TIME_BIGBANG;
-	BKL_LOCK();
 	if (me->timeout) H2K_tree_remove(&H2K_gp->time.timeouts,&me->tree);
 	me->timeout = timeout_tick;
 	/* 
@@ -271,9 +204,14 @@ static u64_t H2K_timer_set_timeout_tick(u32_t unused, u64_t timeout_tick, H2K_th
 	 */
 	me->tree.rightleft = 0;
 	if (timeout_tick != H2K_TIME_BIGBANG) H2K_tree_add(&H2K_gp->time.timeouts,&me->tree);
-	BKL_UNLOCK();
 	H2K_timer_update_timeout(timeout_tick);
+	H2K_spinlock_unlock(&H2K_gp->timer_lock);
 	return TIMERHW_TICKS2NS(timeout_tick);
+}
+static u64_t H2K_timer_set_timeout_tick(u32_t unused, u64_t timeout_tick, H2K_thread_context *me)
+{
+	H2K_spinlock_lock(&H2K_gp->timer_lock);
+	return H2K_timer_set_timeout_tick_unlock(unused, timeout_tick, me);
 }
 
 static u64_t H2K_timer_set_timeout(u32_t unused, u64_t timeout, H2K_thread_context *me)
@@ -287,9 +225,10 @@ static u64_t H2K_timer_set_timeout(u32_t unused, u64_t timeout, H2K_thread_conte
 static u64_t H2K_timer_delta_timeout(u32_t unused, u64_t delta, H2K_thread_context *me)
 {
 	u64_t delta_ticks = max(TIMERHW_NS2TICKS(delta),TICK_GRANULARITY);
+	H2K_spinlock_lock(&H2K_gp->timer_lock);
 	u64_t timeout_ticks = H2K_timer_get_ticks() + delta_ticks;
 	if (delta == H2K_TIME_FOREVER) timeout_ticks = H2K_TIME_BIGBANG;
-	return H2K_timer_set_timeout_tick(0,timeout_ticks,me);
+	return H2K_timer_set_timeout_tick_unlock(0,timeout_ticks,me);
 }
 
 typedef u64_t (*H2K_timer_handler_t)(u32_t unused, u64_t arg, H2K_thread_context *me);

@@ -53,7 +53,24 @@ IN_SECTION(".text.misc.create") s32_t H2K_thread_create_no_squash(u32_t pc, u32_
 		type = H2K_gp->asid_table[me->ssr_asid].fields.type;
 		extra = H2K_gp->asid_table[me->ssr_asid].fields.extra;
 	}
-
+	
+	// FIXME: We had an issue with a thread running at priority 0 entering exception
+	// mode (SSR.EX = 1).
+	// The problem is that once we enter exception mode, the effective priority
+	// (the one seen by the HW scheduler) is hardcoded by the RTL to 1. This means
+	// that a thread running at priority 0 effectively downgrades itself by entering
+	// exception mode.
+	// To avoid that, we currently add 2 to every user-supplied priority. The
+	// relative ordering between priorities is preserved, and priority 0 is no
+	// longer affected by the RTL behavior.
+	// Note: adding 1 would also fix the problem. We add 2 because we want the
+	// effective priority in exception mode to be strictly better than the thread's
+	// regular priority.
+	// A HW fix is planned for ARCH93. With that fix, a HW thread running at
+	// priority 0 will keep an effective priority of 0 when entering exception
+	// mode. Once ARCH93 becomes the oldest supported architecture, this workaround
+	// can be removed.
+	prio += TMP_PRIO_BUMP;
 	if (prio > MAX_PRIO) return -1;        // bad prio
 	if (prio < bestprio) return -1;	       // priority better than allowed
 

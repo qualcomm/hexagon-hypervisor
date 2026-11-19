@@ -81,6 +81,7 @@
 #define WAITING_PRIO ((MAX_PRIOS) - 1)
 #define MAX_PRIO ((MAX_PRIOS) - 2)
 #define BEST_PRIO 0
+#define TMP_PRIO_BUMP 2
 
 #define BESTWAIT_MASK 0x1ff
 #define SCHEDCFG_EN (1u << 8)

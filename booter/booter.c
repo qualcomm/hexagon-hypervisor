@@ -30,7 +30,7 @@
 
 #include <syscall_defs.h>
 
-#define VM_BEST_PRIO 1
+#define VM_BEST_PRIO 0
 
 #define BUFSIZE 256
 
@@ -357,7 +357,7 @@ void usage()
 	BOOTER_PRINTF("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default heap_start + heap size + stack size.\n");
 	BOOTER_PRINTF("  --load_offset <int>\n\tOffset for loading ELF image.  Default (guest_base - <first_program_header_addr>).\n");
 	BOOTER_PRINTF("  --skip_load (0|1)\n\tSkip program loading (e.g. if loaded by simulator with --extra_elf).  Default 0.\n");
-	BOOTER_PRINTF("  --bestprio <int>\n\tBest allowed priority for a virtual CPU.  Default 1.\n");
+	BOOTER_PRINTF("  --bestprio <int>\n\tBest allowed priority for a virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --trapmask <int>\n\tBitmask of allowed trap0 numbers.  Default 0xffffffff (all allowed).\n");
 	BOOTER_PRINTF("  --stack <int>\n\tStack pointer VA for first virtual CPU.  Default 0xfeffff8.\n");
 	BOOTER_PRINTF("  --arg <int>\n\tInitial argument (R0) for first virtual CPU.  Default 0.\n");
@@ -373,7 +373,7 @@ void usage()
 	BOOTER_PRINTF("  --pmu_overflow (0|1)\n\tUse 64-bit PMU counters in sweep.  Default 0.\n");
 	BOOTER_PRINTF("  --sys_write_mode [ 0 == normal, 1 == suppress stdout, 2 == allow only stdout, 3 == suppress all ]\n\tMode for sys_write().  Default 0.\n");
 	BOOTER_PRINTF("  --va_angel (0|1)\n\tUse virtual addresses in angel calls.  Default 0.\n");
-	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 1.\n");
+	BOOTER_PRINTF("  --startprio <int>\n\tInitial priority of first virtual CPU.  Default 0.\n");
 	BOOTER_PRINTF("  --dir_prefix <string>\n\tPrepend <string> to relative paths when opening files. Default null string.\n");
 	BOOTER_PRINTF("  --file_suffix <string>\n\tAppend <string> to file names when opening files write-only. Default null string.\n");
 }		

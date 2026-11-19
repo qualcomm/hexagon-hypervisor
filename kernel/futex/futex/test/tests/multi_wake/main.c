@@ -29,7 +29,6 @@
 
 #define PRODUCER_ITERATIONS (1<<14)
 
-#define MIN_TEST_PRIO 1
 #define MAX_DUMMY_THREADS 32
 #define MAX_TEST_THREADS  64
 #define THREAD_STACK_SIZE 256
@@ -182,7 +181,7 @@ void vmmain(void *unused)
 		if (h2_thread_create(dummy_thread,
 			&stack_space[next_tnum][THREAD_STACK_SIZE],
 			0,
-			MIN_TEST_PRIO + next_tnum) == -1) {
+			next_tnum) == -1) {
 			error("Could not create thread\n");
 		}
 	}
@@ -200,7 +199,7 @@ void vmmain(void *unused)
 	/*  Spawn off multiple consumer threads waiting for test_lock */
 
 	for (i=0; i<max_consumers; i++) {
-		prio = MIN_TEST_PRIO + rand() % 8;
+		prio = rand() % 8;
 		thread_info[i] = 0 | prio << 16;
 		if (h2_thread_create(consumer_thread,
 			&stack_space[next_tnum++][THREAD_STACK_SIZE],
@@ -222,7 +221,7 @@ void vmmain(void *unused)
 
 	/*  Figure out the max priority that can be woken up  */
 	k = nr_to_wake;
-	for (j=MIN_TEST_PRIO; j<MAX_PRIO; j++) {
+	for (j=0; j<MAX_PRIO - TMP_PRIO_BUMP; j++) {
 		for (i=0; i<max_consumers; i++) {
 			if ((thread_info[i] >> 16) == j) {
 				k--;
@@ -243,7 +242,7 @@ void vmmain(void *unused)
 	if (h2_thread_create(producer_thread,
 		&stack_space[next_tnum++][THREAD_STACK_SIZE],
 		0,
-		MIN_TEST_PRIO + rand() % 32) == -1) {
+		rand() % 32) == -1) {
 		error("Could not create producer thread\n");
 	}
 

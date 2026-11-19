@@ -128,8 +128,8 @@ int main()
 
 	if (gpcall_H2K_thread_create(((u32_t)test_thread),((u32_t)(&stack)),0xdeadbeef,2,vmblock,a) 
 		!= (b->id.raw)) FAIL("Failed to create expected thread");
-	if (H2K_gp->ready[2] != b) FAIL("Thread inserted incorrectly into ready list");
-	if (b->prio != 2) FAIL("thread priority set wrong");
+	if (H2K_gp->ready[2 + TMP_PRIO_BUMP] != b) FAIL("Thread inserted incorrectly into ready list");
+	if (b->prio != 2 + TMP_PRIO_BUMP) FAIL("thread priority set wrong");
 	if (b->status == H2K_STATUS_DEAD) FAIL("status field incorrect");
 	if (b->r0100 != 0x00000000deadbeefULL) FAIL("Incorrect argument");
 	if (b->trapmask != 0x55ffffff) FAIL("Incorrect trap mask");

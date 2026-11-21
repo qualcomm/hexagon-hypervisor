@@ -8,6 +8,7 @@ include scripts/Makefile.inc.install
 
 TEST_JFLAG ?= -j8
 BATCH ?= 1
+export DOCS ?= 1
 
 ifeq ($(BATCH),1)
 export BSUB := bsub -I
@@ -102,7 +103,9 @@ $(foreach a,$(ARCHV_LIST),$(eval $(call link_instance,$a)))
 
 .PHONY: buildall
 buildall: $(BUILDS) $(LINKS)
+ifeq ($(DOCS),1)
 	$(MAKE) doc
+endif
 
 # for testing
 .PHONY: linkall

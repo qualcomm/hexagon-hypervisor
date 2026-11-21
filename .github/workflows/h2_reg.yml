@@ -45,5 +45,5 @@ jobs:
 
       - name: Coverage build and verify
         run: |
-          make -O BATCH=0 USE_PKW=0 DOC=0 NULL_ANGEL_TRAP=1 ARCHV="$ARCHV" TARGET=ref_cov cov
+          make -O BATCH=0 USE_PKW=0 DOCS=0 NULL_ANGEL_TRAP=1 ARCHV="$ARCHV" TARGET=ref_cov cov
           

@@ -1819,3 +1819,89 @@ After clean rebuild (`rm -rf artifacts/` + `make testall BATCH=0`):
 
 Ready to commit once all tests pass (which they do). The VTCM mapping is now complete
 and fully tested across all architecture variants.
+## Build/test incremental dependency fix (2026-09-03 .. 09-09)
+
+The test infra had two opposite bugs, both from the same root cause: **the
+dependency graph lied.**  A no-op build re-ran all 138 tests, and a kernel `.S`
+edit re-ran none of them and never even recompiled the object.
+
+`test_variant` never invoked a build at all.  Everything funnelled through
+`results.txt: $(INSTALLPATH)/manifest`, and the manifest rule had no
+prerequisites, so once the file existed it looked current forever.  Meanwhile
+every `install:` target used a plain `cp`, bumping the destination's mtime even
+when the bytes matched, which cascaded all the way to `booter` and invalidated
+the suite.  `booter` genuinely did change every build, too: `stake/syms.pl`
+walked `keys %add_syms` unsorted, and Perl randomizes hash order per process, so
+722 `--defsym=` lines came out in a different order each run.
+
+The manifest was a sha256 of the install tree — a content check bolted on to
+recover information the timestamps were destroying.  Fixing the timestamps let
+it go away entirely.
+
+### What the fix looks like
+
+`scripts/Makefile.inc.install` provides `install_files`, which turns each
+installed file into a real target with the built file as its prerequisite and
+copies with `cp -p`.  An installed artifact's mtime now moves only when its bytes
+were rebuilt, so everything keyed off it — `kernel_tmp`, `booter`, each test's
+`test.elf`, `results.txt` — is invalidated only by real change.  Every directory
+installs through this now.
+
+Headers are tracked properly: `DEPFLAGS := -MMD -MP` on every object compile,
+with the `.d` files `-include`d at the bottom of each Makefile.  The old blanket
+`$(ALL_OFILES): $(DEST_HFILES)` became order-only.  This fixed both directions —
+editing one header used to recompile everything, while headers outside
+`DEST_HFILES` (`libs/h2/common`) were tracked by nothing at all.
+
+`FORCE` is gone from `libs/Makefile`.  A parent can't know whether a child has
+work without asking, but `$(call lib_sources,<dir>)` — every file under the
+library, a safe superset of its real sources — answers well enough.
+
+`sort keys %add_syms` in `stake/syms.pl` makes booter byte-reproducible.
+
+### Worth knowing
+
+* **Include order matters now.** Both the build tree and the install tree hold
+  the same headers, but the install copy is refreshed *after* the objects
+  compile.  A depfile naming the install copy makes every header edit land one
+  build late.  `-I$(BUILD_DIR)/include` must come first — hence the
+  `CFLAGS := ... $(CFLAGS)` prepends in `libs/h2` and `libs/h2_compat`.
+* Never `-MMD` without `-MP`.  Without the phony header targets, deleting a
+  header leaves a stale `.d` demanding a prerequisite with no rule and make dies.
+* `hexagon-ar` defaults to `D` (zero timestamps), so archive bytes depend only on
+  the code.  That's why comment-only edits correctly re-run nothing.
+* Many kernel `*.vNNopt.S` files are **symlinks** to an older variant
+  (`tree.v81opt.S` -> `tree.v73opt.S` -> ... -> `tree.v4opt.S`).  Appending to
+  one writes through to the real file — watch `git status` when probing.
+* `offsets` must not depend on the `includes` target.  No file by that name is
+  created, so it's permanently out of date, and it's circular: `includes` pulls
+  in all of `DEST_HFILES`, which contains the `asm_offsets.h` that `offsets`
+  generates.
+
+### Expected behaviour
+
+No-op is a true no-op.  A kernel/libs/booter change re-runs every test, which is
+correct — `libh2kernel.a` links into all of them.  A single test's own sources
+re-run only that test.  Whitespace-only changes re-run nothing.
+
+## Scheduler specification maintenance (2026-10-28) — DONE
+
+Reviewed the four `kernel/sched/**/*.spec` files while updating the BESTWAIT
+scheduler work.  Made only three small corrections:
+
+- `dosched.spec` removes the obsolete runlist precondition and records that the
+  selected thread is marked RUNNING before the non-returning switch.
+- `resched.spec` documents the existing `CLUSTER_SCHED`
+  `H2K_resched_cluster()` entry point and its interrupt-disable behavior.
+- `switch.spec` removes stale cycle-accounting TBDs; the preceding behavior
+  description already documents the implemented accounting.
+
+`yield.spec` already matches its implementation and was intentionally unchanged.
+The documentation-only diff passes `git diff --check` for the modified spec
+files; no scheduler build or test is needed for this comment/specification work.
+
+### Next task
+
+Continue the BESTWAIT hardware-steering work already present on the branch:
+resolve and remove the documented scheduler timing shims/lost-wakeup race before
+making broader scheduler changes.

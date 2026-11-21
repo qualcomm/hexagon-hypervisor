@@ -47,7 +47,7 @@ H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 	ret.raw = 0;
 
 	/* This looks a bit weird at start. The only need to BKL_LOCK is for
-	 * assurnig correctness of mem_alloc_free, avoiding case of freeing the same
+	 * assuring correctness of mem_alloc_free, avoiding case of freeing the same
 	 * mem block which is in use in switch. With that being said, we need to also
 	 * assure right order of lock acquisition. H2K_vm_do_work_withlock holds BKL
 	 * and calls H2K_thread_stop_withlock which may end up calling H2K_mem_alloc_free

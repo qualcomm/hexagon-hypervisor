@@ -70,15 +70,17 @@ H2K_mem_alloc_free
 Description
 ~~~~~~~~~~~
 
-Free the given region and return a pointer to its boundary tag.
+Mark the given region as freeable, return a pointer to its boundary tag.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Acquire ``alloc_heap_lock``, mark the block free, merge it with adjacent free
-regions, update the boundary tags, and release ``alloc_heap_lock``.  The
-caller must pass a pointer previously returned by
-:c:func:`H2K_mem_alloc_get()`.
+Under ``alloc_heap_lock``, mark the block as freeable and merge it with
+adjacent free regions.  The pointer must come from
+:c:func:`H2K_mem_alloc_get()`.  The BKL is not taken, so callers such as
+:c:func:`H2K_thread_stop()` may hold it.  Blocks tagged ``released`` are
+instead reclaimed later by :c:func:`H2K_mem_alloc_get()` under the BKL, once
+:c:func:`H2K_switch()` is done with them.
 
 
 H2K_mem_alloc_init

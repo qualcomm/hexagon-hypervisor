@@ -56,16 +56,16 @@ FUNC_START H2K_ring_insert_real .text.core.ring .falign
 	{
 		r2 = memw(r0)
 		r5:4 = combine(r1,r1) // for case of empty 
-	}
-	{
-		p0 = cmp.eq(r2,#0)
-		memd(r1) = r5:4      // store in case empty -- dummy if not null
 		memw(r0) = r1 // now points to inserted value
 	}
 	{
-		if (!p0) r3 = memw(r2+#PREV) // get ring->prev if not null
-		if (p0) jumpr r31     // ring was empty, return
-		if (!p0) memw(r2+#PREV) = r1	// *ring->prev = node
+		memd(r1) = r5:4      // store in case empty -- dummy if not null
+	}
+	{
+		p0 = cmp.eq(r2,#0)
+		if (!p0.new) r3 = memw(r2+#PREV) // get ring->prev if not null
+		if (p0.new) jumpr:nt r31     // ring was empty, return
+		if (!p0.new) memw(r2+#PREV) = r1	// *ring->prev = node
 	}
 	{
 		memw(r3+#NEXT) = r1		// *ring->prev->next = node

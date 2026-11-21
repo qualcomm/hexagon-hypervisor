@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Test (public)
 
 on:
   pull_request:
@@ -41,9 +41,9 @@ jobs:
 
       - name: Regression test
         run: |
-          make -O BATCH=0 USE_PKW=0 NULL_ANGEL_TRAP=1 testall
+          make -O BATCH=0 USE_PKW=0 DOC=0 NULL_ANGEL_TRAP=1 testall
 
       - name: Coverage build and verify
         run: |
-          make -O BATCH=0 USE_PKW=0 NULL_ANGEL_TRAP=1 ARCHV="$ARCHV" TARGET=ref_cov cov
+          make -O BATCH=0 USE_PKW=0 DOC=0 NULL_ANGEL_TRAP=1 ARCHV="$ARCHV" TARGET=ref_cov cov
           

@@ -321,6 +321,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r3 = #4
 	r2 = insert(r3,#3,#16)
 	ssr = r2
+	isync
 	jump H2K_wait_forever
 FUNC_END H2K_switch
 

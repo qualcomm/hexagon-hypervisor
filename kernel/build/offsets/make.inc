@@ -18,7 +18,7 @@ $(BUILD_DIR)/include/asm_offsets.h: $(BUILD_DIR)/offsets.s
 	mv $@.tmp $@
 
 # Also depends on every other installed header; see kernel/Makefile.
-$(BUILD_DIR)/offsets.s: $(DIR)offsets.ref.c
+$(BUILD_DIR)/offsets.s: $(DIR)offsets.ref.c $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -S -o $@ $<
 

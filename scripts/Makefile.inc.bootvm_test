@@ -24,8 +24,10 @@ $(BOOTVM_IMAGE): $(OBJS) $(CRT0_O) $(BOOTVM_IMAGE_DEPS)
 
 # Suppress warnings about changing the recipe for $(EXEC)
 $(EXEC) : private CC = true
-test.log: | symlink
-test.objdump: | symlink
+# $(EXEC) is a symlink to $(BOOTVM_PROG), made after it is linked; depend on the
+# real ELF so a relink reruns the simulator.
+test.log: $(BOOTVM_PROG) | symlink
+test.objdump: $(BOOTVM_PROG) | symlink
 
 .PHONY: symlink
 symlink: $(BOOTVM_PROG)

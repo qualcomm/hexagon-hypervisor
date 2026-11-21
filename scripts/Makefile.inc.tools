@@ -37,7 +37,6 @@ export DOXYGEN := doxygen
 ELFCOPY := hexagon-elfcopy
 
 
-export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
 export LD := hexagon-clang
 
 export COM_CFLAGS := -Werror

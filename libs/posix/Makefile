@@ -67,6 +67,7 @@ OPT_V81_SFILES :=
 OPT_V81_OFILES := 
 
 BUILD_DIR := $(INSTALLPATH)/../build/libs/posix
+FLAGS_STAMP := $(BUILD_DIR)/flags.stamp
 H2_BUILD_DIR := $(INSTALLPATH)/../build/libs/h2
 CFLAGS += -I$(BUILD_DIR)/include -I$(H2_BUILD_DIR)/include
 
@@ -119,18 +120,20 @@ endif
 ifeq ($(findstring /ref/,$(BUILD_DIR)),/ref/)
 $(BUILD_DIR)/libposix.a: $(REF_OFILES)
 	mkdir -p $(dir $@); \
+	rm -f $@
 	$(AR) cru $@ $(sort $(REF_OFILES))
 else
 $(BUILD_DIR)/libposix.a: $(OPT_OFILES)
 	mkdir -p $(dir $@); \
+	rm -f $@
 	$(AR) cru $@ $(sort $(OPT_OFILES))
 endif
 
-$(BUILD_DIR)/%.o : %.c
+$(BUILD_DIR)/%.o : %.c $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/%.o : %.S
+$(BUILD_DIR)/%.o : %.S $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
@@ -151,5 +154,8 @@ ref: $(BUILD_DIR)/libposix.a
 
 opt: $(BUILD_DIR)/libposix.a
 
+include $(H2DIR)/scripts/Makefile.inc.flagstamp
+
 # Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+# Last, so a rule from a .d file never becomes the default goal.
 -include $(ALL_OFILES:.o=.d)

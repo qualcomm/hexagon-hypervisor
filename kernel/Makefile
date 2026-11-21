@@ -119,6 +119,7 @@ OPT_V81_OFILES :=
 # e.g. artifacts/v81/opt/install → artifacts/v81/opt/build/kernel
 #      install-my               → install-my/../build/kernel
 BUILD_DIR := $(INSTALLPATH)/../build/kernel
+FLAGS_STAMP := $(BUILD_DIR)/flags.stamp
 
 # Add per-ARCHV/variant include dir so asm_offsets.h (generated into
 # BUILD_DIR/include/) is found by all kernel compilation units.
@@ -210,14 +211,17 @@ ifeq ($(ARCHV),81)
 OPT_OFILES := $(OPT_V81_OFILES)
 endif
 
+# rm -f first: ar cru never drops members whose source went away.
 ifeq ($(BUILD_TYPE),ref)
 $(BUILD_DIR)/libh2kernel.a: $(REF_OFILES)
 	mkdir -p $(dir $@)
+	rm -f $@
 	$(AR) cru $@ $(sort $(REF_OFILES))
 else ifeq ($(BUILD_TYPE),opt)
 $(BUILD_DIR)/libh2kernel.a: $(OPT_OFILES)
 	@echo $(OPT_OFILES)
 	mkdir -p $(dir $@)
+	rm -f $@
 	$(AR) cru $@ $(sort $(OPT_OFILES))
 else
 	$(error BUILD_TYPE == $(value BUILD_TYPE))
@@ -225,14 +229,15 @@ endif
 
 $(BUILD_DIR)/libh2check.a: $(CHECK_OFILES)
 	mkdir -p $(dir $@)
+	rm -f $@
 	$(AR) cru $@ $(sort $(CHECK_OFILES))
 
 
-$(BUILD_DIR)/%.o : %.c
+$(BUILD_DIR)/%.o : %.c $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/%.o : %.S
+$(BUILD_DIR)/%.o : %.S $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
@@ -266,5 +271,8 @@ endif
 
 check: $(BUILD_DIR)/libh2check.a
 
+include $(H2DIR)/scripts/Makefile.inc.flagstamp
+
 # Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+# Last, so a rule from a .d file never becomes the default goal.
 -include $(ALL_OFILES:.o=.d)

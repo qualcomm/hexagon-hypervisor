@@ -1,0 +1,30 @@
+# Dear emacs, this is a -*- Makefile -*-
+#
+# $(FLAGS_STAMP) records the build flags and is rewritten only when they
+# change; list it as a prerequisite to rebuild on a flag change.
+# FLAGS_STAMP_VARS: the variables recorded (target-specific values are not seen).
+# FLAGS_STAMP_MASK: recorded by name only (the consts.pl values, which
+# Makefile.inc.constants tracks).
+#
+# FIXME(build-dag): CFLAGS carries -DH2K_GIT_COMMIT, so every commit rebuilds
+# the kernel and reruns every test.
+
+ifndef MAKE_INC_FLAGSTAMP
+MAKE_INC_FLAGSTAMP := 1
+
+FLAGS_STAMP ?= $(if $(BUILD_DIR),$(BUILD_DIR),.)/flags.stamp
+FLAGS_STAMP_VARS += CC AS AR CFLAGS ASFLAGS LDFLAGS
+FLAGS_STAMP_MASK += H2K_BOOTVM_OFFSET H2K_BOOTVM_START H2K_V2P_OFFSET H2K_KERNEL_NPAGES
+
+# $(call _fs_masked,mask-list,var): $(var) with each masked variable bound to its name.
+_fs_masked = $(if $(1),$(foreach $(firstword $(1)),$(firstword $(1)),$(call _fs_masked,$(wordlist 2,$(words $(1)),$(1)),$(2))),$($(2)))
+_fs_text = $(foreach v,$(FLAGS_STAMP_VARS),$(v)=[$(call _fs_masked,$(FLAGS_STAMP_MASK),$(v))])
+
+.PHONY: FORCE
+FORCE:
+# $(file) runs when the recipe is expanded, before any line, hence $(shell mkdir).
+$(FLAGS_STAMP): FORCE
+	$(shell mkdir -p $(@D))$(file >$@.tmp,$(_fs_text))
+	@cmp -s $@.tmp $@ || mv -f $@.tmp $@; rm -f $@.tmp
+
+endif

@@ -14,6 +14,9 @@
 
 # Build and Test
 
+* Register tests only in `scripts/testlist.v61`.  The other testlists are
+  git symlinks chaining back to it; `sed -i` or a loop over `testlist.v*`
+  replaces them with regular files (restore with `git checkout`).
 
 # Important Documents
 

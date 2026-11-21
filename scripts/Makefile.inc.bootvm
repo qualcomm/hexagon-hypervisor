@@ -29,6 +29,9 @@ BOOTVM_PROG_TMP := $(BOOTVM_PROG)_tmp
 BOOTVM_CLEAN := $(BOOTVM_IMAGE) $(BOOTVM_IMAGE_BIN) $(BOOTVM_SYMBOLS) $(VAPA_KERNEL) $(BOOTVM_PROG) $(BOOTVM_PROG_TMP)
 
 SYMS := $(INSTALLPATH)/scripts/syms.pl
+FLAGS_STAMP ?= $(_BOOTVM_BUILD_DIR)/flags.stamp
+# Target-specific LDFLAGS (Makefile.inc.bootvm_test) are not seen by the stamp.
+FLAGS_STAMP_VARS += BOOTVM_LDFLAGS BOOTVM_CFLAGS BOOTVM_IMAGE_CFLAGS
 
 include $(H2DIR)/scripts/Makefile.inc.constants
 
@@ -49,32 +52,32 @@ BOOTVM_IMAGE_CFLAGS = -Wl,--section-start=.entry=$(H2K_BOOTVM_OFFSET) -Wl,--scri
 
 BOOTVM_CFLAGS = -nostartfiles -Wl,--whole-archive $(INSTALLPATH)/lib/libh2kernel.a -Wl,-no-whole-archive -Wl,--section-start=.entry=$(H2K_LINK_ADDR) -Wl,--section-start=.bootvm=$(H2K_BOOTVM_START) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--script=$(VAPA_KERNEL) -Wl,--defsym=__entry=$(H2K_LOAD_ADDR) -Wl,--entry=__entry -Wl,--defsym=__bootvm_entry_point=$(H2K_BOOTVM_OFFSET) -Wl,-mv$(TOOLARCH) # -Wl,--just-symbols=$(BOOTVM_SYMBOLS)
 
-BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) | constants
+BOOTVM_IMAGE_DEPS = $(VAPA_BOOTVM) $(BOOTVM_ENTRY_O) $(CONSTS_STAMP) $(FLAGS_STAMP)
 
-BOOTVM_DEPS = $(VAPA_KERNEL) $(INSTALLPATH)/lib/libh2kernel.a | constants
+BOOTVM_DEPS = $(VAPA_KERNEL) $(INSTALLPATH)/lib/libh2kernel.a $(CONSTS_STAMP) $(FLAGS_STAMP)
 
 
-$(_BOOTVM_BUILD_DIR)/%.o: %.c | constants
+$(_BOOTVM_BUILD_DIR)/%.o: %.c $(CONSTS_STAMP) $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(_BOOTVM_BUILD_DIR)/%.o: %.S | constants
+$(_BOOTVM_BUILD_DIR)/%.o: %.S $(CONSTS_STAMP) $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(CRT0_O): $(CRT0_S)
+$(CRT0_O): $(CRT0_S) $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BOOTVM_O): $(BOOTVM_S) $(BOOTVM_IMAGE_BIN)
+$(BOOTVM_O): $(BOOTVM_S) $(BOOTVM_IMAGE_BIN) $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	${CC} ${CFLAGS} -DBOOTVM_IMAGE_BIN_PATH='"$(BOOTVM_IMAGE_BIN)"' -c -o $@ $<
 
-$(VAPA_KERNEL): $(VAPA_KERNEL_X_IN) $(KERNEL_TMP) | constants
+$(VAPA_KERNEL): $(VAPA_KERNEL_X_IN) $(KERNEL_TMP) $(CONSTS_STAMP)
 	mkdir -p $(dir $@)
 	cat $< | perl -p -e 's/0xxxxxxxxx/$(H2K_LOAD_ADDR)/;' -e 's/0xyyyyyyyy/$(H2K_BOOTVM_OFFSET)/;' > $@
 
-$(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S) | constants
+$(BOOTVM_ENTRY_O): $(BOOTVM_ENTRY_S) $(CONSTS_STAMP) $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	${CC} ${CFLAGS} -c -o $@ $<
 
@@ -89,5 +92,7 @@ $(BOOTVM_SYMBOLS): $(BOOTVM_IMAGE) $(BOOTVM_PROG_TMP)
 
 $(BOOTVM_PROG): $(BOOTVM_O) $(BOOTVM_SYMBOLS) $(BOOTVM_DEPS)
 	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_CFLAGS) -Wl,@$(BOOTVM_SYMBOLS) -o $@ $(BOOTVM_O)
+
+include $(H2DIR)/scripts/Makefile.inc.flagstamp
 
 endif

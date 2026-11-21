@@ -25,5 +25,6 @@ clean:
 	rm -f libblast.a src/*.o
 
 libblast.a: $(O_FILES)
+	rm -f $@
 	$(AR) cru $@ $(sort $(O_FILES))
 

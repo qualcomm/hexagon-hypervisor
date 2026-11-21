@@ -1,0 +1,36 @@
+# Dear emacs, this is a -*- Makefile -*-
+#
+# One install rule per guest header, into $(INSTALLPATH)/include.
+# Used by libs/Makefile and scripts/Makefile.coverage.
+#  - libs/{h2,posix,h2_compat}: *.h next to each make.inc, flattened.
+#  - libs/{syscall/angel,qurt}/include: every file, subdirs kept.
+# asm_offsets.h is installed by kernel/Makefile.  A header deleted from the
+# source stays installed until the variant is cleaned.
+
+INSTALL_INC := $(INSTALLPATH)/include
+
+_HDR_FLAT_LIBS := h2 posix h2_compat
+_HDR_TREE_DIRS := syscall/angel/include qurt/include
+
+# "src:dest" pairs; dest is relative to $(INSTALL_INC).
+_HDR_PAIRS := \
+	$(foreach h,$(foreach d,$(shell cd $(H2DIR)/libs && find $(_HDR_FLAT_LIBS) -name make.inc -printf '%h\n'),$(wildcard $(H2DIR)/libs/$(d)/*.h)),$(h):$(notdir $(h))) \
+	$(foreach d,$(_HDR_TREE_DIRS),$(foreach f,$(shell cd $(H2DIR)/libs/$(d) && find . -type f ! -path '*CVS*' -printf '%P\n'),$(H2DIR)/libs/$(d)/$(f):$(f)))
+
+_HDR_DESTS := $(foreach p,$(_HDR_PAIRS),$(lastword $(subst :, ,$(p))))
+ifneq ($(words $(_HDR_DESTS)),$(words $(sort $(_HDR_DESTS))))
+$(error Makefile.inc.headers: two source headers install to the same name: $(shell printf '%s\n' $(_HDR_DESTS) | sort | uniq -d))
+endif
+
+INSTALLED_HEADERS := $(addprefix $(INSTALL_INC)/,$(_HDR_DESTS))
+
+# Plain cp (not -p): the copy is newer than anything compiled against the old one.
+define _INSTALL_HDR_RULE
+$(INSTALL_INC)/$(2): $(1)
+	@mkdir -p $$(@D)
+	cp $$< $$@
+endef
+$(foreach p,$(_HDR_PAIRS),$(eval $(call _INSTALL_HDR_RULE,$(firstword $(subst :, ,$(p))),$(lastword $(subst :, ,$(p))))))
+
+.PHONY: install_headers
+install_headers: $(INSTALLED_HEADERS)

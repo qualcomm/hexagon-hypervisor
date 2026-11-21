@@ -70,6 +70,7 @@ OPT_V81_SFILES :=
 OPT_V81_OFILES := 
 
 BUILD_DIR := $(INSTALLPATH)/../build/libs/h2
+FLAGS_STAMP := $(BUILD_DIR)/flags.stamp
 # Must precede -I$(INSTALLPATH)/include above: both trees hold these headers, but
 # the install copy is only refreshed AFTER these objects compile, so a depfile
 # naming it would make every header edit land one build late.
@@ -124,18 +125,20 @@ endif
 ifeq ($(findstring /ref/,$(BUILD_DIR)),/ref/)
 $(BUILD_DIR)/libh2.a: $(REF_OFILES)
 	mkdir -p $(dir $@); \
+	rm -f $@
 	$(AR) cru $@ $(sort $(REF_OFILES))
 else
 $(BUILD_DIR)/libh2.a: $(OPT_OFILES)
 	mkdir -p $(dir $@); \
+	rm -f $@
 	$(AR) cru $@ $(sort $(OPT_OFILES))
 endif
 
-$(BUILD_DIR)/%.o : %.c
+$(BUILD_DIR)/%.o : %.c $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/%.o : %.S
+$(BUILD_DIR)/%.o : %.S $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
@@ -156,5 +159,8 @@ ref: $(BUILD_DIR)/libh2.a
 
 opt: $(BUILD_DIR)/libh2.a
 
+include $(H2DIR)/scripts/Makefile.inc.flagstamp
+
 # Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+# Last, so a rule from a .d file never becomes the default goal.
 -include $(ALL_OFILES:.o=.d)

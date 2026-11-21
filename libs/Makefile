@@ -42,58 +42,39 @@ endif
 ALL_LIBS= $(H2_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
 LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPPER_LIB) $(LOCKS_LIB))
 
-# Source directories used for installing headers (not build dirs).
-HEADER_DIRS = $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) syscall/angel/ qurt/
-
 TMP_DIR := $(INSTALLPATH)/../build/libs/tmp
 
-# Per-variant header dirs for the three generated-header sub-libs.
-_H2_HDR_DIR       := $(INSTALLPATH)/../build/libs/h2/include
-_POSIX_HDR_DIR    := $(INSTALLPATH)/../build/libs/posix/include
-_H2COMPAT_HDR_DIR := $(INSTALLPATH)/../build/libs/h2_compat/include
-
 MAKE_LIB=${MAKE} -C $(dir $@)
+
+# The sub-makes know their sources, so always run them (FORCE); an archive is
+# only rewritten when something in it changed.
+.PHONY: FORCE
+FORCE:
 
 
 $(TMP_DIR):
 	mkdir -p $@
 
-# $(call lib_sources,<dir>) -> every source file under a sub-library.
-#
-# Only the sub-make knows a library's real file list; it is spread over the
-# make.inc fragments under each module directory.  Every file under the library's
-# directory is a superset of that list, which errs the safe way: the parent may
-# consult a child that had nothing to do (it no-ops, its archive's mtime does not
-# move, nothing downstream is invalidated), but never misses a real edit.
-lib_sources = $(shell find $(1) -type f ! -name '*.o' ! -name '*.a' ! -name '*.d')
-
-$(H2_LIB): $(call lib_sources,$(H2_DIR))
+$(H2_LIB): FORCE
 	+${MAKE} -C $(H2_DIR) $(BUILD_TYPE)
 
-# Ordinary prerequisites, not order-only: posix, h2_compat, qurt and angel compile
-# against each other's generated headers, and a child is only consulted when its
-# own directory changed -- order-only would hide h2 header edits from them.
-# FIXME: a header-only edit in h2/ leaves $(H2_LIB) unchanged (only the generated
-# header copy moves), so posix/h2_compat/qurt/angel are never re-consulted and
-# keep objects built against the old header.  Depending on the h2 sources as
-# well would fix it.
-$(POSIX_LIB): $(H2_LIB) $(call lib_sources,$(POSIX_DIR))
+$(POSIX_LIB): $(H2_LIB) FORCE
 	+${MAKE} -C posix $(BUILD_TYPE)
 
-$(H2_COMPAT_LIB): $(H2_LIB) $(POSIX_LIB) $(call lib_sources,$(H2_COMPAT_DIR))
+$(H2_COMPAT_LIB): $(H2_LIB) $(POSIX_LIB) FORCE
 	+${MAKE} -C $(H2_COMPAT_DIR) $(BUILD_TYPE)
 
-$(QURT_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB) $(call lib_sources,qurt)
+$(QURT_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB) FORCE
 	+${MAKE} -C qurt
 
-$(ANGEL_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB) $(call lib_sources,syscall/angel)
+$(ANGEL_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB) FORCE
 	+${MAKE} -C syscall/angel
 
 ifeq ($(PICOLIBC),1)
-$(SYS_WRAPPER_LIB): $(call lib_sources,syscall/wrapper)
+$(SYS_WRAPPER_LIB): FORCE
 	+${MAKE} -C syscall/wrapper
 
-$(LOCKS_LIB): $(call lib_sources,locks)
+$(LOCKS_LIB): FORCE
 	+${MAKE} -C locks
 endif
 
@@ -106,24 +87,17 @@ clean:
 # Combine all component archives into a single libh2.a.  All paths are
 # absolute so cd $(TMP_DIR) doesn't invalidate them.
 $(TMP_DIR)/libh2.a: ${ALL_LIBS} | $(TMP_DIR)
-	rm -f $(TMP_DIR)/*.o
+	rm -f $(TMP_DIR)/*.o $(TMP_DIR)/libh2.a
 	cd $(TMP_DIR); \
 	for lib in $(ALL_LIBS); do \
 		hexagon-ar x $$lib; \
 	done; \
 	hexagon-ar cru libh2.a *.o
 
-#  tar is used instead of cp so we can recursively copy and also exclude CVS
-#  Also, /pkg/gnu/bin/tar doesn't seem to work right.
 
+include $(H2DIR)/scripts/Makefile.inc.headers
+
+# Before 'install', which expands $(INSTALL_TARGETS) when parsed.
 $(call install_files,$(INSTALLPATH)/lib,$(TMP_DIR)/libh2.a $(SYS_WRAPPER_LIB) $(LOCKS_LIB))
 
-install: $(INSTALL_TARGETS)
-	mkdir -p $(INSTALLPATH)/include;
-	for dir in $(_H2_HDR_DIR) $(_POSIX_HDR_DIR) $(_H2COMPAT_HDR_DIR) syscall/angel/include qurt/include; do\
-		if [ -d "$$dir" ]; then \
-			pushd $$dir;\
-			/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
-			popd;\
-		fi;\
-	done;
+install: $(INSTALL_TARGETS) $(INSTALLED_HEADERS)

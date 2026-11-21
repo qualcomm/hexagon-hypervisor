@@ -45,7 +45,7 @@ $(SUBDIRS)::
 	(echo; echo; echo "##########   $@   ##########") > "$(TEST_BUILD_ROOT)/$@/make.log"
 	$(MAKE) -C "$(TEST_BUILD_ROOT)/$@" \
 	    -f $(H2DIR)/scripts/Makefile.qurt_test \
-	    $(TARG) TEST=$@ 2>&1 | \
+	    $(TARG) TEST=$@ $(if $(filter all,$(TARG)),PROFILE=--profile) 2>&1 | \
 	    tee -a "$(TEST_BUILD_ROOT)/$@/make.log"; \
 	    TSTAT=$${PIPESTATUS[0]}; if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi
 

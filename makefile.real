@@ -6,19 +6,26 @@ include scripts/Makefile.inc.version
 include scripts/Makefile.inc.tools
 include scripts/Makefile.inc.install
 
-JFLAG ?= -j
 TEST_JFLAG ?= -j8
 BATCH ?= 1
 
 ifeq ($(BATCH),1)
 export BSUB := bsub -I
 export BATCH := 1
-ifeq ($(findstring -j,$(MAKEFLAGS)),)
+# Seconds to wait after the bsub'd tests before reading their results: this
+# host's NFS attribute cache can be up to 60 s stale.  0 disables.
+NFS_SETTLE ?= 75
+# The bsub'd build runs on another host, outside our jobserver.
+JFLAG ?= -j
+ifeq ($(findstring -j,$(shell printenv MAKEFLAGS)),)
 MAKEFLAGS += $(TEST_JFLAG)
 endif
 else  # not batch
 export IGNOREFAIL ?= 1
-ifeq ($(findstring -j,$(MAKEFLAGS)),)
+# Default -j$(nproc), unless a -j was inherited.  make 4.3 hides -j from
+# $(MAKEFLAGS) while parsing, so check the environment; adding -j in a
+# sub-make would start a new jobserver at every level.
+ifeq ($(findstring -j,$(shell printenv MAKEFLAGS)),)
 MAKEFLAGS += -j$(shell nproc)
 endif
 endif
@@ -63,6 +70,12 @@ endif
 	echo "v$(ARCHV) $(TARGET) ${MAKEFLAGS}" > $(INSTALLPATH)/ver
 	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
 	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
+	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
+	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
+	    > $(INSTALLPATH)/manifest.tmp; \
+	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
+	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
+	rm -f $(INSTALLPATH)/manifest.tmp
 
 BUILDS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),build-$(a)-$(v)))
 
@@ -161,7 +174,7 @@ clean: covclean booterclean docclean qurtclean # ucosclean
 	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
 	$(MAKE) -C stake ARCHV=$(ARCHV) clean
 	$(MAKE) -C libs ARCHV=$(ARCHV) clean
-	rm -Rf size test.exe stats.txt $(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET) kernel/stats.txt
+	rm -Rf test.exe stats.txt $(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET) kernel/stats.txt
 
 booterclean:
 	$(MAKE) -C booter ARCHV=$(ARCHV) clean
@@ -185,9 +198,16 @@ sim: ref
 	$(CC) -mv$(TOOLARCH) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
 	$(RUN) $(SIMF) -- test.exe;
 
-size:
-	hexagon-objdump -h $(INSTALLPATH)/lib/*.a | $(SIZE_TOOL) text > size && \
-	cat size;
+# Size report baseline: SIZE_BASELINE (an install dir, {archv} substituted), else
+# the pkw h2 release when USE_PKW=1.
+SIZE_BASELINE ?=
+SIZE_BASELINE_ARG := $(if $(SIZE_BASELINE),--baseline '$(SIZE_BASELINE)',$(if $(filter 1,$(USE_PKW)),--pkw))
+size_report = $(if $(SIZE_BASELINE_ARG),python3 $(H2DIR)/scripts/size_report.py $(SIZE_BASELINE_ARG) $(1),\
+	@echo "size_report: no baseline; set SIZE_BASELINE or USE_PKW=1"; exit 1)
+
+# Size report for this variant; see "size_report.md" in docs/build_and_test.md.
+size: build
+	$(call size_report,--output $(INSTALLPATH)/size_report.md --print $(INSTALLPATH))
 
 # t:
 # 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
@@ -199,11 +219,14 @@ ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(ARTIF
 
 # One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
 # generating test_results.json which testall aggregates into the unified report.
-# The leading '-' lets the unified report build even when test_variant exits
-# non-zero (its check-fail step fails on test failures); the JSON file is still
-# produced by h2_test inside test_variant before check-fail runs.
+# FORCE: test_variant does the dependency checking and rewrites the json only
+# when a result changed, so a no-op run regenerates no report.
+# $(IGNOREFAILDASH) ('-' with IGNOREFAIL=1, the non-BATCH default) lets the
+# unified report build when tests fail; the json is written before check-fail.
+.PHONY: FORCE
+FORCE:
 define ARCHV_VARIANT_TEST_RULE
-$(ARTIFACTS_DIR)/v$(1)/$(2)/install/test_results.json:
+$(ARTIFACTS_DIR)/v$(1)/$(2)/install/test_results.json: FORCE
 	$(IGNOREFAILDASH)$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
 endef
 $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_TEST_RULE,$a,$v))))
@@ -216,6 +239,18 @@ $(ARTIFACTS_DIR)/test_report.html: $(ARCHV_VARIANT_JSONS)
 	    --inputs $(ARCHV_VARIANT_JSONS) \
 	    --output $@ \
 	    --summary-out $(ARTIFACTS_DIR)/test.out
+
+# Size report for every ARCHV, opt only (the baseline is an opt install).
+# Not part of testall.  Always reruns (cheap).
+.PHONY: sizeall
+sizeall: $(ARTIFACTS_DIR)/size_report.md
+# With a test goal on the same command line, wait for it instead of building:
+# the tests build the opt variants too, and two makes must not build one at once.
+SIZE_INSTALLS := $(foreach a,$(ARCHV_LIST),$(ARTIFACTS_DIR)/v$a/opt/install)
+SIZE_AFTER := $(filter testall test $(ARTIFACTS_DIR)/test_report.html,$(MAKECMDGOALS))
+$(ARTIFACTS_DIR)/size_report.md: $(or $(SIZE_AFTER),$(foreach a,$(ARCHV_LIST),build-$a-opt)) FORCE
+	@mkdir -p $(ARTIFACTS_DIR)
+	$(call size_report,--output $@ $(SIZE_INSTALLS))
 
 .PHONY: testall test
 # -f makefile.real: the top-level makefile (%: rule) would otherwise answer for an existing report.
@@ -248,6 +283,9 @@ endif
 h2_test: # ucosclean
 #	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
 	$(MAKE) -f scripts/Makefile.coverage BSUB="$(BSUB)" ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
+ifneq ($(filter-out 0,$(NFS_SETTLE)),)
+	sleep $(NFS_SETTLE)
+endif
 #	$(MAKE) -C ucos sim 2>&1 | tee make.log
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
 	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json

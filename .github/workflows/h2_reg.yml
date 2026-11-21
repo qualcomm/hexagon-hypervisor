@@ -41,7 +41,7 @@ jobs:
 
       - name: Regression test
         run: |
-          make -O BATCH=0 USE_PKW=0 DOC=0 NULL_ANGEL_TRAP=1 testall
+          make -O BATCH=0 USE_PKW=0 DOCS=0 NULL_ANGEL_TRAP=1 testall
 
       - name: Coverage build and verify
         run: |

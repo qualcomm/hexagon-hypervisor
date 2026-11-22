@@ -1,81 +1,31 @@
-
-
-:mod:`stmode` -- Single Thread Mode Assistance
-==============================================
+:mod:`stmode` -- Single-thread mode assistance
+================================================
 
 .. module:: stmode
 
-This module contains assist functions for entering and leaving Single Thread
-Mode, where only one thread is active.  This mode is required for certain 
-core reconfiguration services.
+Single-thread mode temporarily disables global interrupts while the kernel
+checks whether only one non-waiting hardware thread remains active.  The BKL
+serializes the entry check.
+
 
 H2K_stmode_begin
 ----------------
 
-.. c:function:: s32_t H2K_stmode_begin()
+.. c:function:: s32_t H2K_stmode_begin(void) IN_SECTION(".text.misc.stmode")
 
-	:returns: 0 on success, nonzero on failure
+	:returns: 0 when single-thread mode is entered, otherwise ``-1``
 
-Description
-~~~~~~~~~~~
-
-This function attempts to enter single thread mode.  If single thread mode
-cannot be entered, a nonzero value is returned.  Single thread mode can only
-be entered when no other threads or interrupts are being processed.
-
-Functionality
-~~~~~~~~~~~~~
-
-The BKL is acquired.  We then globally disable interrupts.
-
-If the MODECTL register indicates that only one thread is active, then we free
-the BKL and return success.
-
-Otherwise, we reenable interrupts globally, free the BKL, and return failure.
+Acquires the BKL and clears global interrupt enable.  It examines ``MODECTL``
+and removes waiting threads from the active-thread mask.  If no more than one
+thread remains active, returns 0 after releasing the BKL, leaving global
+interrupts disabled.  Otherwise restores global interrupt enable, releases the
+BKL, and returns ``-1``.
 
 
 H2K_stmode_end
 --------------
 
-.. c:function:: void H2K_stmode_end()
+.. c:function:: void H2K_stmode_end(void) IN_SECTION(".text.misc.stmode")
 
-
-Description
-~~~~~~~~~~~
-
-This function leaves single thread mode.
-
-Functionality
-~~~~~~~~~~~~~
-
-Reenables global interrupts and returns.
-
-
-Testing
--------
-
-Samples
-~~~~~~~
-
-* I/O: SYSCFG.G
-* Input: number of running threads
-* I/O: BKL should be acquired & freed
-
-Important cases
-~~~~~~~~~~~~~~~
-
-* Only one thread on: H2K_stmode_begin should succeed
-* One thread on, at least one thread waiting: H2K_stmode_begin should succeed
-* One thread on, at least one thread running: H2K_stmode_begin should fail
-
-Harness
-~~~~~~~
-
-Configure SYSCFG, number of running/waiting threads appropriately.  Then call
-H2K_stmode_begin() and check that the expected return value was returned.  Also
-check SYSCFG.G bit is set to the expected value.
-
-Check that H2K_stmode_end sets the SYSCFG.G bit to the expected value.
-
-
-
+Restores global interrupt enable by setting the global-interrupt bit in
+``SYSCFG``.

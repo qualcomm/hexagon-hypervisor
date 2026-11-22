@@ -56,8 +56,6 @@ Description
 :c:func:`H2K_safemem_unlock()` unlocks the TLB that has been temporarily locked 
 in order to allow the monitor to read or write a user-defined pointer safely.
 
-Insert TLB-Locked assertion here?
-
 Functionality
 ~~~~~~~~~~~~~
 

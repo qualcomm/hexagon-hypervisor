@@ -6,18 +6,20 @@
 H2K_translate
 -------------
 
-.. c:function:: H2K_translation_t H2K_translate(u32_t addr, H2K_vmblock_t *vmblock)
+.. c:function:: H2K_translation_t H2K_translate(H2K_translation_t in, H2K_asid_entry_t info)
 
-	:param addr: Address to translate
-	:param vmblock: vmblock pointer
+	:param in: Incoming translation
+	:param info: ASID entry selecting the translation method
+	:returns: Translated result, or zero if invalid
 
 Description
 ~~~~~~~~~~~
 
-Translates the given address using translation base and type from vmblock.
+Dispatches the translation through the method selected by
+``info.fields.type``.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Call the appropriate lookup function according to translation type.  If successful, call the corresponding translation function and return its result.  Else return 0 (invalid translation).
-
+Calls the corresponding linear, page-table, offset, or varadix translator
+with ``in`` and ``info`` and returns its result.

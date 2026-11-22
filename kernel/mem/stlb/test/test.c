@@ -52,16 +52,6 @@ void TH_mem_stlb_init()
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].vpn = rand() % (1U<<20);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].global = rand() % (1U<<1);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].valid = rand() % (1U<<1);
-#if ARCHV <= 3
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].ppn = rand() % (1U<<20);
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].size = rand() % (1U<<4);
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].part = rand() % (1U<<2);
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].ccc = rand() % (1U<<3);
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].xwr = rand() % (1U<<3);
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].guestonly = rand() % (1U<<1);
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].unused = rand() % (1U<<2);
-			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].unused2 = rand() % (1U<<2);
-#else
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].ppd = rand() % (1U<<24);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].cccc = rand() % (1U<<4);
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].xwru = rand() % (1U<<4);
@@ -71,7 +61,6 @@ void TH_mem_stlb_init()
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa3637 = rand() % (1U<<2);
 #endif
 			TH_mem_stlb[i*(STLB_MAX_SETS/MAX_ASIDS)][j].pa35 = rand() % (1U<<1);
-#endif
 		}
 	}
 	H2K_kg.stlbptr = TH_mem_stlb_asid_infos;
@@ -101,22 +90,12 @@ int main()
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	srand(TEST_SEED);
-#if ARCHV <= 3
-	entry.ppn = 0;
-	entry.ccc = 0;
-	entry.xwr = 0x7;
-	entry.size = 0;
-	entry.valid = 1;
-	entry.asid = 0;
-	entry.vpn = 0;
-#else
 	entry.ppd = 1;
 	entry.cccc = 0;
 	entry.xwru = 0xf;
 	entry.valid = 1;
 	entry.asid = 0;
 	entry.vpn = 0;
-#endif
 
         /* No storage */
 	H2K_asid_table_init();

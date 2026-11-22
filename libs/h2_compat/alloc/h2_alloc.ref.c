@@ -6,6 +6,9 @@
 #include <h2_alloc.h>
 #include <h2_plainmutex.h>
 #include <stdlib.h>
+#if defined(__has_include) && __has_include(<picolibc.h>)
+#include <malloc.h>
+#endif
 
 /*
  * h2_alloc.c

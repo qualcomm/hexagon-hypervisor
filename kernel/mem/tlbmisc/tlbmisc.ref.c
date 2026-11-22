@@ -5,13 +5,7 @@
 
 #include <c_std.h>
 #include <tlbmisc.h>
-/* #include <tlbfmt.h> */
-/* #include <max.h> */
 #include <hw.h>
-/* #include <symbols.h> */
-/* #include <asid.h> */
-/* #include <linear.h> */
-/* #include <pagewalk.h> */
 #include <globals.h>
 
 void H2K_mem_tlb_invalidate_asid(u32_t asid) {

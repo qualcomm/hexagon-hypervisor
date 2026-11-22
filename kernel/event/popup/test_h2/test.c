@@ -10,16 +10,16 @@
 #include <context.h>
 #include <max.h>
 #include <hw.h>
-//#include <globals.h>
 #include <h2.h>
 #include <h2_vm.h>
+#include <h2_hwconfig.h>
+#include <h2_tlb.h>
 #include <tlbfmt.h>
 #include <tlbmisc.h>
+#include <intcontrol.h>
 
 #define SPINS (1024*1024)
 #define STACK_SIZE 128
-
-// #define SIMULATOR_PMU_SUPPORT 1
 
 h2_sem_t sem_call,sem_ret,sem_done;
 int t0id,t1id;
@@ -47,9 +47,8 @@ void delay()
 	" { nop; }:endloop0 \n" : : "r"(SPINS) :"lc0");
 }
 
-/* FIXME: These interrupts could be needed for l2vic2-3 */
-#define INTERRUPT_T0 4
-#define INTERRUPT_T1 5
+#define INTERRUPT_T0 L1_FIRST_AVAILABLE_INTERRUPT
+#define INTERRUPT_T1 L2_FIRST_AVAILABLE_INTERRUPT
 
 static volatile int counter0;
 static volatile int counter1;
@@ -98,7 +97,7 @@ h2_sem_t int_done;
 
 void gen_int(int which)
 {
-	int_num = INTERRUPT_T0 + which;
+	int_num = which ? INTERRUPT_T1 : INTERRUPT_T0;
 	h2_sem_up(&int_sem);
 	h2_sem_down(&int_done);
 }
@@ -106,17 +105,17 @@ void gen_int(int which)
 void hw_gen_int(int which)
 {
 	int intno = int_num;
-#if ARCHV >= 4
-	swi(1<<intno);
-#else
-	swi(0x80000000UL>>intno);
-#endif
+	if (h2_hwconfig_hwintop(HWCONFIG_HWINTOP_RAISE, intno, 0) != 0) {
+		FAIL("Could not raise hardware interrupt");
+	}
 	h2_sem_up(&int_done);
 }
 
 void vmmain(void *unused)
 {
-	static unsigned int blargh[2] __attribute__((aligned(8)));
+	/* libc TLS (errno, _locale) lives in the bytes just below ugp */
+	static struct { unsigned int tls[4]; unsigned int blargh[2]; } vmtcb __attribute__((aligned(8)));
+	unsigned int *blargh = vmtcb.blargh;
 	blargh[0] = h2_thread_myid();
 	blargh[1] = 0;
 	asm volatile (" ugp = %0 " : :"r"(blargh) : "memory");
@@ -192,32 +191,19 @@ void spawn_vm(void *pc)
 
 int main() 
 {
-	u32_t asid;
-
 	h2_init(NULL);
 	pthread_init();
 
 	h2_hwconfig_hwthreads_mask(-1);  // start all hw threads
 
 	/* set URWX in monitor TLB entry permissions, to allow futex access */
-	/* not really necessary to find our asid since the TLB entry will be global
-		 anyway, but... */
-	asm volatile (
-	" %0 = ssr \n"
-	" %0 = extractu(%0,#7,#8)\n" 
-	: "=r"(asid));
-
-	u32_t tlb_index = H2K_mem_tlb_probe(H2K_LINK_ADDR, asid);
-	if (tlb_index == 0x80000000) {
+	int tlb_index = h2_tlb_query(H2K_LINK_ADDR);
+	if (tlb_index < 0) {
 		FAIL("Can't find monitor TLB entry");
 	}
-	u64_t tlb_entry = H2K_mem_tlb_read(tlb_index);
-#if ARCHV <= 3
-	tlb_entry |= 0x7ULL << 29;
-#else
+	u64_t tlb_entry = h2_tlb_read(tlb_index);
 	tlb_entry |= 0xfULL << 28;
-#endif
-	H2K_mem_tlb_write(tlb_index, tlb_entry);
+	h2_tlb_write(tlb_index, tlb_entry);
 	spawn_vm(vmmain);
 	while (1) {
 		h2_sem_down(&int_sem);

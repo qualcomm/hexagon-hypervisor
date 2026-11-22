@@ -28,26 +28,20 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 #define DESTPRIO r4
 #define DESTSTATUS r3
 #define DEST_HTHREAD r2
-
+#define ZEROPAIR r13:12
 #define TMPPAIR r15:14
-#define ZERO_NEGONE r13:12
-#define ZERO r13
-#define NEGONE r12
 #define VM r11
 #define VCPU r10
-#define RUNLIST r9
 #define MYID r8
-#define RUNLIST_PRIOS r1
-
 	{
 		allocframe(#16)
 		ME_LOCK = combine(r1,r0)
 		DEST = #H2K_VMSTATUS_VMWORK
+		r1 = #SAFEMEM_RW
 	}
 	ASM_BKL_LOCK(r6, r7, r8, p0)
 	{
 		TMP = memub(ME+#CONTEXT_vmstatus)
-		r1 = #SAFEMEM_RW
 		r3:2 = combine(ME,r29)
 	}
 	{
@@ -57,7 +51,6 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		PA_LO_SAV = memw(ME+#CONTEXT_continuation)		// read out continuation ptr
 		call H2K_safemem_check_and_lock
-		DEST = #0
 	}
 	.falign
 	{
@@ -69,16 +62,13 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	}
 	{
 		PA |= lsr(TMPPAIR,#2)					// make PA + continuation
+		ZEROPAIR = #0
+		MYID = or(MYID,#1)
 	}
-#undef TMPPAIR
-#define ZEROPAIR r15:14
 	.falign
 1:
 	{
 		TMP = memw_locked(LOCK)
-		ZEROPAIR = #0
-		ZERO_NEGONE = combine(#0,#-1)
-		MYID = or(MYID,#1)
 	}
 	{
 		TMP = or(TMP,#1)
@@ -89,15 +79,13 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		memw_locked(LOCK,p2) = TMP
 		VM = add(##H2K_kg+KG_vmblocks,asl(VM,#2))
-		RUNLIST = add(H2K_GP,#KG_runlist)
 	}
 	{
+		memd(ME+#CONTEXT_futex_ptr_64) = PA		// EJP: This is safe since we also have continuation
 		if (!p2) jump 1b
 		p1 = and(p2,p0)
 		if (p1.new) memw(LOCK) = MYID
-		memd(ME+#CONTEXT_futex_ptr_64) = PA		// EJP: This is safe since we also have continuation
 	}
-	tlbunlock
 #undef LOCK
 #define PRIO r18
 #undef MYID
@@ -105,22 +93,23 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		if (p1) jump .Ldone
 		if (!p1) memd(ME+#CONTEXT_r0100) = ZEROPAIR
-		VM = memw(VM)
+		if (!p1) VM = memw(VM)
+		DEST = #0
+	}
+	tlbunlock // tlb is locked since we called H2K_safemem_check_and_lock.
+			  // Unlocking after conditional jump to .Ldone,
+			  // this way we can do bkl_unlock and after that tlbunlock.
+			  // It is preferred to unlock bkl fist, because probably
+			  // it has more contenders, and this way we allow better parallelism 
+	{
+		memb(ME+#CONTEXT_status) = #STATUS_BLOCKED
+		p0 = cmp.eq(VM,#0)
+		if (!p0.new) DEST = memw(VM+#VMBLOCK_contexts)
 		TMP = #0
 	}
 	{
-		memb(ME+#CONTEXT_status) = #STATUS_BLOCKED
-		HTHREAD = memub(ME+#CONTEXT_hthread)
-		p0 = cmp.eq(VM,#0)
-	}
-	{
 		if (!p0) TMP = memw(VM+#VMBLOCK_max_cpus)
-		if (!p0) DEST = memw(VM+#VMBLOCK_contexts)
-		RUNLIST_PRIOS = add(H2K_GP,#KG_runlist_prios)
-	}
-	{
 		DEST += mpyi(VCPU,##CONTEXT_SIZE)
-		memw(RUNLIST+HTHREAD<<#2) = ZERO			// not part of raise
 		PRIO = memub(ME+#CONTEXT_prio)
 	}
 
@@ -128,18 +117,18 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	{
 		p0 = cmp.gtu(TMP,VCPU)
 		if (!p0.new) jump:nt .Lraise_done			// invalid ID
-		memh(RUNLIST_PRIOS+HTHREAD<<#1) = NEGONE		// not part of raise
 		if (p0.new) DESTPRIO = memub(DEST+#CONTEXT_prio)	// Get dest prio
+		if (p0.new) DEST_HTHREAD = memub(DEST+#CONTEXT_hthread)
 	}
 	{
+
 		p0 = cmp.gt(DESTPRIO,PRIO)
 		if (!p0.new) jump:nt .Lraise_done
-		DESTSTATUS = memub(DEST+#CONTEXT_status)
+		if (p0.new) DESTSTATUS = memub(DEST+#CONTEXT_status)
 		if (p0.new) memb(DEST+#CONTEXT_prio) = PRIO
+		p3 = DEST_HTHREAD
 	}
 #undef ZEROPAIR
-#undef ZERO_NEGONE
-#undef ZERO
 #undef VM
 #undef VCPU
 
@@ -149,27 +138,19 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 		p1 = cmp.eq(DESTSTATUS,#STATUS_READY)
 		if (p1.new) jump:nt .Lraise_ready
 		p2 = cmp.eq(DESTSTATUS,#STATUS_RUNNING)
-		DEST_HTHREAD = memub(DEST+#CONTEXT_hthread)
 	}
-
 	{
 		if (!p2) jump .Lraise_done
-		TMP = memw(H2K_GP+#KG_priomask)
-		p3 = DEST_HTHREAD
 	}
 	{
-		TMP = clrbit(TMP,DEST_HTHREAD)
-		setimask(p3,NEGONE)
+		setprio(p3, PRIO)
 	}
+	isync
 	{
 		jump .Lraise_done
-		memw(H2K_GP+#KG_priomask) = TMP
-		memh(RUNLIST_PRIOS+DEST_HTHREAD<<#1) = DESTPRIO
 	}
-#undef NEGONE
 #undef DESTSTATUS
 #undef DEST_HTHREAD
-#undef RUNLIST_PRIOS
 #define DESTPA r15:14
 #define DESTPA_HI r15
 #define DESTPA_LO r14
@@ -317,6 +298,7 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 	}
 .Ldone:
 	ASM_BKL_UNLOCK(r6, r7, r8, p0)
+	tlbunlock
 	{
 		r0 = #0
 		dealloc_return
@@ -347,7 +329,6 @@ FUNC_START H2K_futex_lock_pi .text.core.futex .p2align 5
 #undef NEXT
 #undef PREV_NEXT
 #undef TMP
-#undef RUNLIST
 #undef HTHREAD
 FUNC_END H2K_futex_lock_pi
 
@@ -356,13 +337,11 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 #define ME_LOCK r19:18
 #define ME r19
 #define LOCK r18
-#define PA_LO_SAV r17
-#define HTHREAD r16
+#define HTHREAD r17
 #define PA r9:8
 #define PA_HI r9
 #define PA_LO r8
 #define BASEPRIO r7
-#define RUNLIST_PRIOS r6
 #define RING r5
 #define HASH r4
 #define TMP r3
@@ -385,24 +364,28 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 	/* EJP: maybe resched a bit? */
 	{
 		PA = lsr(PA,#2)
+		HTHREAD = memub(ME+#CONTEXT_hthread)
+		BASEPRIO = memub(ME+#CONTEXT_base_prio)
 	}
 	{
 		HASH =+mpyi(PA_LO,##FUTEX_PRIME)
-		HTHREAD = memub(ME+#CONTEXT_hthread)
 		PA_HI = and(PA_HI,#3)
+		p3 = HTHREAD
 	}
 	{
 		HASH ^= asl(PA_HI,#32-FUTEX_HASHBITS)
-		PA_LO_SAV = PA_LO
+		memb(ME+#CONTEXT_prio) = BASEPRIO
+		setprio(p3, BASEPRIO)
+		r2 = r29
 	}
+	isync
 	{
 		RING = tableidxw(HASH,#FUTEX_HASHBITS,#32-FUTEX_HASHBITS)
-		r2 = r29
 	}
 	{
 		TMP = memw(RING)
 		memw(r29) = TMP.new
-		r1:0 = combine(RING,PA_LO_SAV)
+		r1:0 = combine(RING,PA_LO)
 		call H2K_futex_hash_remove_one
 	}
 	{
@@ -420,23 +403,18 @@ FUNC_START H2K_futex_unlock_pi .text.core.futex .p2align 5
 	}
 	{
 		if (!p0) jump 1b
-		BASEPRIO = memub(ME+#CONTEXT_base_prio)
-		RUNLIST_PRIOS = add(H2K_GP,#KG_runlist_prios)
 	}
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 	tlbunlock
 	{
-		memh(RUNLIST_PRIOS+HTHREAD<<#1) = BASEPRIO
-		memb(ME+#CONTEXT_prio) = BASEPRIO
-		r1:0 = #0
-		jump H2K_check_sanity_unlock
+		r0 = #0
+		jumpr r31
 	}
 #undef TMP
 #undef ME
 #undef LOCK
 #undef PA
-#undef HTHREAD
 #undef BASEPRIO
-#undef RUNLIST_PRIOS
 #undef RING
 #undef HASH
 FUNC_END H2K_futex_unlock_pi

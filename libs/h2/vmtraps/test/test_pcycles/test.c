@@ -19,10 +19,7 @@
 #define SPINS (1024*1024)
 
 //OVERHEAD is how long it takes to return from trap, add, and trap again.
-#if ARCHV == 3
-#define PCYCLES_PER_TCYCLE 6
-#define OVERHEAD 1024
-#elif ARCHV == 4
+#if ARCHV == 4
 #define PCYCLES_PER_TCYCLE 3
 #define OVERHEAD 1024
 #elif ARCHV == 5

@@ -1,42 +1,35 @@
-
-:mod:`timeinfo` -- Time Information definition
-==============================================
+:mod:`timeinfo` -- Timer state
+================================
 
 .. module:: timeinfo
-
-This module contains the definition of the information required to keep track of time.
 
 H2K_timeinfo_t
 --------------
 
-Description
-~~~~~~~~~~~
-
 .. c:type:: H2K_timeinfo_t
 
-	Time Information Block
+	Per-kernel timer state, aligned to 32 bytes.
 
-	.. c:member:: H2K_spinlock_t lock
+	.. c:member:: ticks_t next_ticks
 
-		spinlock for atomic accesses to the time information
+		Hardware tick value programmed for the next timer interrupt.
 
-	.. c:member:: H2K_treenode_t *timeouts
+	.. c:member:: ticks_t last_ticks
 
-		Tree of all threads requesting a timeout
-
-	.. c:member:: u64_t last_ticks
-
-		Last update in ticks
+		Tick value recorded at the last time update.
 
 	.. c:member:: u64_t last_pcycles
 
-		Processor Cycle Count of the last time update
+		Processor-cycle value recorded at the last time update.
 
-	.. c:member:: u64_t next_ticks
+	.. c:member:: H2K_treenode_t *timeouts
 
-		Hardware counter information for the next interrupt
+		Root of the tree containing active thread timeouts.
 
 	.. c:member:: volatile u32_t *devptr
 
-		Pointer to the hardware timer device
+		Pointer to the timer device registers.
 
+The time interface uses ``nsec_t`` and ``ticks_t``, both represented as
+``u64_t``.  ``H2K_TIME_FOREVER`` disables a timeout, and
+``H2K_TIME_BIGBANG`` represents an expired or inactive timeout.

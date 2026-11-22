@@ -64,8 +64,6 @@ Inside the Monitor:
                 - single CPU simplification
                 - affine interrupts only simplification (for no-scheduler guest)
 
-* Investigate Popup Threads vs. Fast Interrupts
-
 * Optimization
 * Trace
 * Profiling?
@@ -136,9 +134,6 @@ Inside the Monitor:
 
 TBD:
 	* How do we make "in_ready_queue(owner_context)" fast?
-	* How can we change prio and have thread still take itself out of
-	  runlist efficiently?
-	* Change runlist?
 
 Caveats:
 	* Futex_resume may not be right place to always change back prio

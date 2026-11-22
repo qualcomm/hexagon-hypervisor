@@ -50,27 +50,6 @@ H2K_error_nonxe:
 	/* EJP: Dead Code! */
 	/* Set up KSP and jump to fatal_thread */
 
-//#if ARCHV <= 3
-//	r29.h = #hi(H2K_stacks)
-//	r29.l = #lo(H2K_stacks)
-//	r28 = ssr
-//	r28 = extractu(r28,#3,#19)
-//	r2 = #KERNEL_STACK_SIZE
-//	r29 += mpyi(r28,r2)
-//#else
-//	r28 = HTID
-//	r29 = #KERNEL_STACK_SIZE
-//	r29 = add(##H2K_stacks,mpyi(r28,r29))
-//#endif
-//	r4 = r28
-//	r28.h = #hi(H2K_kg)
-//	r28.l = #lo(H2K_kg)
-//	r0 = #-3
-//	r1 = r24
-//	r3:2 = #0
-//	crswap(r24,sgp)
-//	jump H2K_fatal_thread
-
 FUNC_END H2K_handle_error
 
 /*
@@ -134,7 +113,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 	// EJP: for now, let's do this all the time.
 9:
 	{
-		p0 = tstbit(WORK,#1)
+		//p0 = tstbit(WORK,#1)
 		//if (!p0.new) jump:nt 9f
 	}
 
@@ -148,7 +127,6 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		memd(r2++#8) = r5:4
 		r3 = add(r3,#1)
 	}:endloop0
-	nop
 
 	call H2K_intconfig_l2vic_crash
 	call H2K_tcm_crash_copy
@@ -164,9 +142,7 @@ FUNC_START H2K_fatal_crash .text.vm.error .p2align 2
 		if (!p0.new) jump:nt 9f
 	}
 	syncht
-	nop
 	stop(r0)
-	nop
 9:
 	dealloc_return
 FUNC_END H2K_fatal_crash
@@ -186,7 +162,7 @@ FUNC_END H2K_fatal_crash
  * 1) Single thread mode
  * 2) Save TLB entries
  * 3) Clean caches
- * 4) invoke SW routine.  reuse fastint context?
+ * 4) invoke SW routine.
  */
 FUNC_START H2K_handle_nmi .text.vm.error .p2align 2
 #ifdef NMI_STOP

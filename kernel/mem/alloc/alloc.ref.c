@@ -46,22 +46,30 @@ H2K_mem_alloc_block_t H2K_mem_alloc_get(u32_t request) {
 
 	ret.raw = 0;
 
+	/* This looks a bit weird at start. The only need to BKL_LOCK is for
+	 * assuring correctness of mem_alloc_free, avoiding case of freeing the same
+	 * mem block which is in use in switch. With that being said, we need to also
+	 * assure right order of lock acquisition. H2K_vm_do_work_withlock holds BKL
+	 * and calls H2K_thread_stop_withlock which may end up calling H2K_mem_alloc_free
+	 * which locks alloc_heap_lock. So the order which is needed to be preserved is:
+	 * lock(BKL) -> lock(alloc_heap_lock).
+	 */
+	BKL_LOCK();  // can't free until H2K_switch() is done with the block
 	H2K_spinlock_lock(&(H2K_gp->alloc_heap_lock));
 	while (1) {
 		if (tag->released) {  // try to free
-			BKL_LOCK();  // can't free until H2K_switch() is done with the block
 			tag = H2K_mem_alloc_free_spinlocked((u32_t *)tag + 1);
-			BKL_UNLOCK();
 		}
-
 		if (!(tag + tag->size)->free || BYTES(tag->size - 1) < request) {
 			tag += tag->size;
 			if (tag->size == 0) { // all out of bacon today
+				BKL_UNLOCK();
 				H2K_spinlock_unlock(&(H2K_gp->alloc_heap_lock));
 				return ret;
 			}
 		} else break;
 	}
+	BKL_UNLOCK();
 
 	/* Now we have a free block that's big enough */
 	request_units = UNITS(WORDS(request));

@@ -64,6 +64,7 @@ def main():
     sections = []
     total_passed = 0
     total_failed = 0
+    failures = []
     errors = []
 
     for path in args.inputs:
@@ -79,6 +80,9 @@ def main():
 
         total_passed += data.get('summary', {}).get('passed', 0)
         total_failed += data.get('summary', {}).get('failed', 0)
+        variant = f'v{data.get("archv", "?")}/{data.get("variant", "?")}'
+        failures += [f'{variant} {t["name"]}'
+                     for t in data.get('tests', []) if t['result'] != 'PASS']
         sections.append(section_html(data))
 
     if errors:
@@ -102,10 +106,17 @@ def main():
 
     summary_line = (f'SUMMARY: {total_passed} passed, {total_failed} failed '
                     f'across {len(sections)} variant(s)')
+    # List every failure (and every unreadable input) after the summary line so
+    # the tail of a test log always shows the complete failure set, however many
+    # tests failed and whichever way they failed.
+    summary = [summary_line]
+    summary += [f'    FAILED: {f}' for f in failures]
+    summary += [f'    MISSING: {e}' for e in errors]
     if args.summary_out:
         with open(args.summary_out, 'w') as f:
-            f.write(summary_line + '\n')
+            f.write('\n'.join(summary) + '\n')
 
+    print('\n'.join(summary))
     print(f'[gen_test_report] {total_passed} passed, {total_failed} failed '
           f'({len(sections)} variants) -> {args.output}')
 

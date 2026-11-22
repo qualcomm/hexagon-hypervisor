@@ -10,11 +10,6 @@
 #include <tlbinsert.h>
 #include <tlbmisc.h>
 
-#define TEMP_MAP_VA 0xff800000  // at most 8M for kernel
-#define TEMP_MAP_PG_SIZE SIZE_4K
-#define TEMP_MAP_PG_MASK(size) (0xffffffff << (PAGE_BITS + (size * 2)))
-#define TEMP_MAP_OFF_MASK(size) (~(TEMP_MAP_PG_MASK(size)))
-
 /* Return va of pa */
 u32_t H2K_tmpmap_add_and_lock(pa_t pa, u32_t cccc, u32_t size) {
 

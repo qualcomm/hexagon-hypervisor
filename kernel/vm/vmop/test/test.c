@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <context.h>
-#include <vm.h>
 #include <vmop.h>
 #include <vmdefs.h>
 #include <hw.h>
@@ -65,9 +64,6 @@ void H2K_futex_cancel(H2K_thread_context *t)
 {
 	TH_saw_futex_cancel = 1;
 }
-
-u64_t H2K_check_sanity(u64_t r) { return r; }
-u64_t H2K_check_sanity_unlock(u64_t r) { return r; }
 
 static void TH_init_block(H2K_vmblock_t *blk, u32_t vmidx, u32_t parent_vmidx,
                           H2K_thread_context *ctx)

@@ -12,6 +12,7 @@
 #include <max.h>
 #include <globals.h>
 #include <hw.h>
+#include <hw.h>
 #include <trace.h>
 
 /*
@@ -29,7 +30,6 @@ H2K_thread_context *TH_src_context;
 H2K_thread_context *TH_dest_context;
 u32_t TH_intno;
 u32_t TH_pass;
-u32_t TH_fastint_check;
 u32_t TH_saw_continuation;
 u32_t TH_saw_preempt_call;
 
@@ -99,16 +99,6 @@ void H2K_switch(H2K_thread_context *from, H2K_thread_context *to)
 	if (from != NULL) FAIL("Unexpected FROM");
 	if (to != NULL) FAIL("Unexpected TO");
 	BKL_UNLOCK();
-	longjmp(env,1);
-}
-
-/* If TH_fastint_check was set, we clear it and longjmp back.
-   Otherwise, we fail, as we didn't expect to have a fastint_check
-   actually be called. */
-void TH_interrupted_fastint_check()
-{
-	if (TH_fastint_check == 0) FAIL("Jumped to fastint check");
-	TH_fastint_check = 0;
 	longjmp(env,1);
 }
 
@@ -251,12 +241,9 @@ int main()
 	H2K_trace_init();
 	H2K_kg.l2_int_base = H2K_kg.l2_ack_base = intdev;
 	printf("MAX_INTERRUPTS=%d\n",MAX_INTERRUPTS);
-	TH_fastint_check = 0;
 	for (i = 0; i < MAX_INTERRUPTS; i++) {
 		/* For each interrupt, try to do the interrupt */
-#if ARCHV >= 4
 		if (i == L2_CORE_INTERRUPT) continue;
-#endif
 		printf("i=%d\n",i);
 		fill_srcdata(i);
 		a.continuation = TH_continuation_fail;
@@ -267,11 +254,6 @@ int main()
 		a.continuation = TH_continuation;
 		printf("try interrupt preempt\n");
 		TH_try_preempt_interrupt(&a,i);
-		/* Test the case where we were checking for 
-		 * another interrupt before return */
-		//TH_fastint_check = 1;
-		//TH_try_interrupt((void *)(&H2K_fastint_contexts[0]),i);
-		//if (TH_fastint_check != 0) FAIL("Didn't jump to fastint check");
 	}
 	a.continuation = TH_continuation_fail;
 	printf("try interrupt 0\n");

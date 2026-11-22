@@ -11,6 +11,7 @@
 
 #include "h2_common_asm_std.h"
 #include "h2_trap_constants.h"
+#include "h2_common_errno.h"
 
 	.text
 
@@ -36,10 +37,6 @@
  * If K==1, wake 1
  * Else, wake Everyone (assume: 30000 threads is everyone)! (Or K?)
  */
-
-/* FIXME: get errno into asm... */
-#define EAGAIN 1
-#define EOVERFLOW 1
 
 FUNC_START pthread_sem_add_np .text.pthread.sem .p2align 5
 #define SEMPTR r0
@@ -86,6 +83,7 @@ FUNC_START pthread_sem_add_np .text.pthread.sem .p2align 5
 	trap0(#H2_TRAP_FUTEX_WAKE)
 	{
 		p0 = cmp.gt(r0,#-1)
+		r0 = #0					// success returns 0, not the wakeup count
 		if (p0.new) SEMPTR_AMOUNT_SAV = memd(r29)
 		if (p0.new) dealloc_return:t
 	}

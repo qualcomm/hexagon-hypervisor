@@ -3,29 +3,35 @@
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <context.h>
 #include <stddef.h>
 #include <globals.h>
 #include <stlb.h>
-#include <vm.h>
 
-#define PRINT_CONTEXT_OFFSET(x) fprintf(outfile, "#define CONTEXT_%s %d\n",#x,offsetof(H2K_thread_context,x))
-#define PRINT_KG_OFFSET(x) fprintf(outfile, "#define KG_%s %d\n",#x,offsetof(H2K_kg_t,x))
-#define PRINT_KG_SUBSTRUCT_OFFSET(x,y) fprintf(outfile, "#define KG_%s_%s %d\n",#x,#y,offsetof(H2K_kg_t,x.y))
-#define PRINT_VMBLOCK_OFFSET(x) fprintf(outfile, "#define VMBLOCK_%s %d\n",#x,offsetof(H2K_vmblock_t,x))
-#define PRINT_STLB_OFFSET(x) fprintf(outfile, "#define STLB_INFO_%s %d\n",#x,offsetof(H2K_mem_stlb_asid_info_t,x))
+/*
+ * Compiled with -S only, never run: each DEFINE() leaves a
+ * "->SYM value" marker in the assembly, which kernel/build/offsets/make.inc
+ * turns into "#define SYM value" (the technique Linux uses for asm-offsets).
+ * This keeps the build free of any target simulator.
+ */
+#define DEFINE(sym, val) \
+	asm volatile("\n.ascii \"->" #sym " %0\"" : : "i" ((long)(val)))
+#define DEFINE_STR(sym, str) \
+	asm volatile("\n.ascii \"->" #sym " " str "\"")
 
-int main(int argc, char **argv)
+#define PRINT_CONTEXT_OFFSET(x) \
+	DEFINE(CONTEXT_##x, offsetof(H2K_thread_context, x))
+#define PRINT_KG_OFFSET(x) \
+	DEFINE(KG_##x, offsetof(H2K_kg_t, x))
+#define PRINT_KG_SUBSTRUCT_OFFSET(x,y) \
+	DEFINE(KG_##x##_##y, offsetof(H2K_kg_t, x.y))
+#define PRINT_VMBLOCK_OFFSET(x) \
+	DEFINE(VMBLOCK_##x, offsetof(H2K_vmblock_t, x))
+#define PRINT_STLB_OFFSET(x) \
+	DEFINE(STLB_INFO_##x, offsetof(H2K_mem_stlb_asid_info_t, x))
+
+int main(void)
 {
-	FILE *outfile = fopen(argv[1], "w");
-	
-	if (outfile == NULL) {
-		perror(argv[1]);
-		exit(1);
-	}
-
 	PRINT_CONTEXT_OFFSET(next);
 	PRINT_CONTEXT_OFFSET(prev);
 	PRINT_CONTEXT_OFFSET(hthread);
@@ -41,6 +47,9 @@ int main(int argc, char **argv)
 	PRINT_CONTEXT_OFFSET(elr);
 	PRINT_CONTEXT_OFFSET(r29);
 	PRINT_CONTEXT_OFFSET(r00);
+	PRINT_CONTEXT_OFFSET(r01);
+	PRINT_CONTEXT_OFFSET(r02);
+	PRINT_CONTEXT_OFFSET(r03);
 	PRINT_CONTEXT_OFFSET(gpugp);
 	PRINT_CONTEXT_OFFSET(r3130);
 	PRINT_CONTEXT_OFFSET(r2928);
@@ -89,37 +98,33 @@ int main(int argc, char **argv)
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
 	PRINT_CONTEXT_OFFSET(vwctrl);
 #endif
-	fprintf(outfile, "#define CONTEXT_PSEUDO_SGP0 0xFFFFFFFF\n");
-	fprintf(outfile, "#define CONTEXT_PSEUDO_IMASK 0xFFFFFFFE\n");
-	fprintf(outfile, "#define CONTEXT_SIZE %d\n",sizeof(H2K_thread_context));
+	DEFINE_STR(CONTEXT_PSEUDO_SGP0, "0xFFFFFFFF");
+	DEFINE_STR(CONTEXT_PSEUDO_IMASK, "0xFFFFFFFE");
+	DEFINE(CONTEXT_SIZE, sizeof(H2K_thread_context));
 #ifdef DO_EXT_SWITCH
-	fprintf(outfile, "#define EXT_CONTEXT_SIZE %d\n",sizeof(H2K_ext_context));
+	DEFINE(EXT_CONTEXT_SIZE, sizeof(H2K_ext_context));
 #endif
-	fprintf(outfile, "#define FASTINT_CONTEXT_SIZE %d\n",sizeof(H2K_fastint_context));
 
 	PRINT_KG_OFFSET(ready_valids);
-	PRINT_KG_OFFSET(priomask);
+#if CLUSTER_SCHED
 	PRINT_KG_OFFSET(wait_mask);
+#endif
 	PRINT_KG_OFFSET(oncpu_start);
 	PRINT_KG_OFFSET(oncpu_wait);
 	PRINT_KG_OFFSET(waitcycles);
-	PRINT_KG_OFFSET(fastint_gp);
-	PRINT_KG_OFFSET(fastint_gp_ssr);
-	PRINT_KG_OFFSET(runlist);
-	PRINT_KG_OFFSET(runlist_prios);
 	PRINT_KG_OFFSET(ready);
 	PRINT_KG_OFFSET(futexhash);
 	PRINT_KG_OFFSET(inthandlers);
-	PRINT_KG_OFFSET(lowprio_masks);
 	PRINT_KG_OFFSET(stlbptr);
 	PRINT_KG_OFFSET(vmblocks);
 	PRINT_KG_OFFSET(phys_offset);
 	PRINT_KG_OFFSET(core_rev);
+	PRINT_KG_OFFSET(mask_for_ipi);
 	PRINT_KG_OFFSET(timer_intnum);
 	PRINT_KG_OFFSET(hthreads_mask);
 	PRINT_KG_OFFSET(hthreads);
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	PRINT_KG_OFFSET(cluster_clusters);
 	PRINT_KG_OFFSET(cluster_hthreads);
 	PRINT_KG_OFFSET(cluster_mask);
@@ -150,7 +155,7 @@ int main(int argc, char **argv)
 #ifdef SOFT_BKL
 	PRINT_KG_OFFSET(bkl);
 #endif
-
+	PRINT_KG_OFFSET(timer_lock);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,next_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_ticks);
 	PRINT_KG_SUBSTRUCT_OFFSET(time,last_pcycles);
@@ -161,6 +166,7 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(contexts);
 	PRINT_VMBLOCK_OFFSET(intinfo);
 	PRINT_VMBLOCK_OFFSET(parent);
+	PRINT_VMBLOCK_OFFSET(status);
 	PRINT_VMBLOCK_OFFSET(waiting_cpus);
 	PRINT_VMBLOCK_OFFSET(pending);
 	PRINT_VMBLOCK_OFFSET(enable);
@@ -179,20 +185,20 @@ int main(int argc, char **argv)
 	PRINT_VMBLOCK_OFFSET(tlbmissrw);
 	PRINT_VMBLOCK_OFFSET(dmatlbmiss);
 #endif
-	fprintf(outfile, "#define VMBLOCK_TOTALSIZE %d\n",sizeof(H2K_vmblock_t));
+	DEFINE(VMBLOCK_TOTALSIZE, sizeof(H2K_vmblock_t));
 
 	PRINT_STLB_OFFSET(valids);
 	PRINT_STLB_OFFSET(pagesize);
 	PRINT_STLB_OFFSET(waymask);
 	PRINT_STLB_OFFSET(baseaddr);
-	fprintf(outfile, "#define STLB_INFO_SIZE %d\n",sizeof(H2K_mem_stlb_asid_info_t));
+	DEFINE(STLB_INFO_SIZE, sizeof(H2K_mem_stlb_asid_info_t));
 
-	fprintf(outfile, "#define STATUS_DEAD       %d\n",H2K_STATUS_DEAD);
-	fprintf(outfile, "#define STATUS_READY      %d\n",H2K_STATUS_READY);
-	fprintf(outfile, "#define STATUS_RUNNING    %d\n",H2K_STATUS_RUNNING);
-	fprintf(outfile, "#define STATUS_BLOCKED    %d\n",H2K_STATUS_BLOCKED);
-	fprintf(outfile, "#define STATUS_INTBLOCKED %d\n",H2K_STATUS_INTBLOCKED);
-	fprintf(outfile, "#define STATUS_VMWAIT     %d\n",H2K_STATUS_VMWAIT);
+	DEFINE(STATUS_DEAD, H2K_STATUS_DEAD);
+	DEFINE(STATUS_READY, H2K_STATUS_READY);
+	DEFINE(STATUS_RUNNING, H2K_STATUS_RUNNING);
+	DEFINE(STATUS_BLOCKED, H2K_STATUS_BLOCKED);
+	DEFINE(STATUS_INTBLOCKED, H2K_STATUS_INTBLOCKED);
+	DEFINE(STATUS_VMWAIT, H2K_STATUS_VMWAIT);
 
 	return 0;
 }

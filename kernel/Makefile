@@ -4,6 +4,12 @@ ALL: dummy
 H2DIR ?= ..
 
 include ../scripts/Makefile.inc.tools
+include ../scripts/Makefile.inc.install
+
+# Ensure toolchain path override is honored even when kernel is built directly.
+ifneq ($(TOOLCHAIN_BIN),)
+export PATH := $(TOOLCHAIN_BIN):$(PATH)
+endif
 
 ifeq ($(USE_PKW),1)
 export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
@@ -80,15 +86,7 @@ CHECK_CFILES :=
 CHECK_SFILES := 
 CHECK_OFILES := 
 
-OPT_V2_CFILES := 
-OPT_V2_SFILES := 
-OPT_V2_OFILES := 
-
-OPT_V3_CFILES := 
-OPT_V3_SFILES := 
-OPT_V3_OFILES := 
-
-OPT_V4_CFILES := 
+OPT_V4_CFILES :=
 OPT_V4_SFILES := 
 OPT_V4_OFILES := 
 
@@ -121,6 +119,7 @@ OPT_V81_OFILES :=
 # e.g. artifacts/v81/opt/install → artifacts/v81/opt/build/kernel
 #      install-my               → install-my/../build/kernel
 BUILD_DIR := $(INSTALLPATH)/../build/kernel
+FLAGS_STAMP := $(BUILD_DIR)/flags.stamp
 
 # Add per-ARCHV/variant include dir so asm_offsets.h (generated into
 # BUILD_DIR/include/) is found by all kernel compilation units.
@@ -139,7 +138,19 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
-ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
+# The 'offsets' probe (build/offsets/make.inc) is compiled to assembly to
+# generate asm_offsets.h, so it needs the copied headers first.  Declared here,
+# not in that make.inc, because prerequisites expand where written and
+# DEST_HFILES is only complete after the includes above.  asm_offsets.h itself is
+# filtered out: it is this chain's own output.
+#
+# Deliberately a blanket dependency on every kernel header, unlike the objects
+# below: assembly hardcodes the offsets it computes, so a stale asm_offsets.h is
+# not a slow build, it is silently wrong code.  Regenerating it is cheap.
+$(BUILD_DIR)/offsets.s: \
+	$(filter-out $(BUILD_DIR)/include/asm_offsets.h,$(DEST_HFILES))
+
+ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
 
 ifdef LOGBUF
 _logbuf_one_mod   := $(word 1,$(subst [, ,$(LOGBUF)))
@@ -169,11 +180,8 @@ $(foreach _o,$(ALL_OFILES),\
 endif
 endif
 
-$(ALL_OFILES): $(DEST_HFILES)
-
-ifeq ($(ARCHV),3)
-OPT_OFILES := $(OPT_V3_OFILES)
-endif
+# Order-only (|): headers must exist before compiling; the .d files carry the edges.
+$(ALL_OFILES): | $(DEST_HFILES)
 
 ifeq ($(ARCHV),4)
 OPT_OFILES := $(OPT_V4_OFILES)
@@ -203,14 +211,17 @@ ifeq ($(ARCHV),81)
 OPT_OFILES := $(OPT_V81_OFILES)
 endif
 
+# rm -f first: ar cru never drops members whose source went away.
 ifeq ($(BUILD_TYPE),ref)
 $(BUILD_DIR)/libh2kernel.a: $(REF_OFILES)
 	mkdir -p $(dir $@)
+	rm -f $@
 	$(AR) cru $@ $(sort $(REF_OFILES))
 else ifeq ($(BUILD_TYPE),opt)
 $(BUILD_DIR)/libh2kernel.a: $(OPT_OFILES)
 	@echo $(OPT_OFILES)
 	mkdir -p $(dir $@)
+	rm -f $@
 	$(AR) cru $@ $(sort $(OPT_OFILES))
 else
 	$(error BUILD_TYPE == $(value BUILD_TYPE))
@@ -218,20 +229,21 @@ endif
 
 $(BUILD_DIR)/libh2check.a: $(CHECK_OFILES)
 	mkdir -p $(dir $@)
+	rm -f $@
 	$(AR) cru $@ $(sort $(CHECK_OFILES))
 
 
-$(BUILD_DIR)/%.o : %.c
+$(BUILD_DIR)/%.o : %.c $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/%.o : %.S
+$(BUILD_DIR)/%.o : %.S $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include \
-	sched/check_sanity/check_sanity_debug.h util/intcontrol/intcontrol_debug.h \
+	util/intcontrol/intcontrol_debug.h \
 	pmu_statsfile.txt
 
 dummy:
@@ -244,12 +256,11 @@ dummy:
 
 includes: $(DEST_HFILES)
 
-install: info $(BUILD_DIR)/libh2kernel.a check
-	mkdir -p $(INSTALLPATH)/lib
-	mkdir -p $(INSTALLPATH)/include
-	cp $(BUILD_DIR)/libh2kernel.a $(INSTALLPATH)/lib
-	cp $(BUILD_DIR)/libh2check.a $(INSTALLPATH)/lib
-	cp $(BUILD_DIR)/include/asm_offsets.h $(INSTALLPATH)/include # for state trap
+# Must precede 'install': prerequisites expand at parse, so populate them first.
+$(call install_files,$(INSTALLPATH)/lib,$(BUILD_DIR)/libh2kernel.a $(BUILD_DIR)/libh2check.a)
+$(call install_files,$(INSTALLPATH)/include,$(BUILD_DIR)/include/asm_offsets.h)
+
+install: info $(INSTALL_TARGETS)
 
 .PHONY: info
 info :
@@ -260,3 +271,8 @@ endif
 
 check: $(BUILD_DIR)/libh2check.a
 
+include $(H2DIR)/scripts/Makefile.inc.flagstamp
+
+# Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+# Last, so a rule from a .d file never becomes the default goal.
+-include $(ALL_OFILES:.o=.d)

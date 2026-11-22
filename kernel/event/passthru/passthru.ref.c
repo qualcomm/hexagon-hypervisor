@@ -4,7 +4,6 @@
  */
 
 #include <id.h>
-#include <vm.h>
 #include <context.h>
 #include <globals.h>
 #include <vmint.h>

@@ -130,24 +130,11 @@ typedef struct _h2_thread_context
 				u32_t ssr;
 				struct {
 					u8_t ssr_cause;  //7
-#if ARCHV <= 3
-					u8_t ssr_asid:5;
-					u8_t ssr_guest:1; /* Fake guest bit using a bit of ASID */
-					u8_t ssr_asid_byte_unused:2;  //15
-#else
 					u8_t ssr_asid:7;
 					u8_t ssr_asid_byte_unused:1;  //15
-#endif
 					u8_t ssr_um:1;
 					u8_t ssr_ex:1;
 					u8_t ssr_ie:1;
-#if ARCHV <= 3
-					u8_t ssr_tnum:3;
-					u8_t ssr_hfi:1;
-					u8_t ssr_hfd:1;
-					u8_t ssr_sfd:1;
-					u8_t ssr_hi_rsvd1:7;
-#else
 					u8_t ssr_guest:1;
 					u8_t ssr_badva_v0:1;
 					u8_t ssr_badva_v1:1;
@@ -166,8 +153,6 @@ typedef struct _h2_thread_context
 					u8_t ssr_xe:1;
 #else
 					u8_t ssr_unused:1;
-#endif
-
 #endif
 				};
 			};
@@ -226,7 +211,6 @@ typedef struct _h2_thread_context
 	};
 	/* Context required for interrupts... everything else */
 	/* Note: SR really needed for any context switch.  */
-	/* Note: Fast Interrupt contexts don't need these (can't be interrupted) */
 	// 128
 	u64_t r1514;	// OK FOR DCZEROA
 	u64_t r1312;
@@ -298,24 +282,5 @@ typedef struct {
 	u32_t qregs[32];
 } __attribute__((aligned(H2K_EXTCONTEXT_ALIGN))) H2K_ext_context;
 
-typedef struct {
-	H2K_thread_context context;
-	u64_t stack120;
-	u64_t stack112;
-	u64_t stack104;
-	u64_t stack096;
-	u64_t stack088;
-	u64_t stack080;
-	u64_t stack072;
-	u64_t stack064;
-	u64_t stack056;
-	u64_t stack048;
-	u64_t stack040;
-	u64_t stack032;
-	u64_t stack024;
-	u64_t stack016;
-	u64_t stack008;
-	u64_t stack000;
-} H2K_fastint_context;
 
 #endif

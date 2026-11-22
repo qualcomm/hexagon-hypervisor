@@ -83,14 +83,12 @@ static inline void setup_guest()
 	a.gevb = TH_vectors;
 	a.gosp = (u32_t)(&guest_stack[127]);
 //Write guest regs if in v4
-#if ARCHV >= 4
 	u32_t g2;
 	u64_t g32;
 	g2 = (u32_t)(&guest_stack[127]);
 	g32 = 0;
 	g32 |= g2;
 	__asm__ __volatile( " g3:2 = %0\n" : : "r"(g32) );
-#endif
 }
 
 u32_t TH_expected_guest_stack;

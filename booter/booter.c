@@ -9,21 +9,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <h2_vm.h>
 #include <ctype.h>
 #include <h2_common_pmap.h>
 #include <h2_common_config.h>
 #include <h2_common_error.h>
 #include <h2_common_defs.h>
+#include <h2_common_coproc.h>
 #include <h2_kerror.h>
 #include <h2_common_linear.h>
 #include <h2_prof.h>
 #include <angel.h>
+#include <boot.h>
+#include <bootvm_entry.h>
+#include <symbols.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <hw.h>
 #include <syscall_defs.h>
 
 #define VM_BEST_PRIO 0
@@ -124,7 +128,7 @@ unsigned int silent = 0;
 unsigned int cycles = 0;
 unsigned int use_stlb = 0;
 unsigned int tight_fence_hi = 1;
-unsigned long guest_base;
+unsigned long long guest_base;  /* widened for guests based above 4GB; see notes.md */
 h2_anysignal_t wake_sig;
 int tcm_base;
 int tcm_size;
@@ -152,7 +156,7 @@ int pmu_idx = 0;
 int gpio_toggle = 0;
 int set_dmactrl = 0;
 int dmactrl;
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 int cluster_sched = 1;
 #endif
 unsigned int getl2reg = 0;
@@ -188,7 +192,7 @@ typedef struct {
 
 	unsigned int fence_lo;
 	unsigned int fence_hi;
-	long load_offset;
+	long long load_offset;  /* widened for guests based above 4GB; see notes.md */
 	long phys_offset;
 	unsigned long long start_pa;
 	unsigned long long end_pa;
@@ -321,12 +325,13 @@ void usage()
 	BOOTER_PRINTF("  --gpio_toggle (0|1)\n\tToggle power-measurement GPIO on PMU enable/disable.  Default 0.\n");
 	BOOTER_PRINTF("  --gpio_addr <addr>\n\tSet power-measurement GPIO physical address.\n");
 	BOOTER_PRINTF("  --cycles\n\tPrint pcycles during boot.\n");
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	BOOTER_PRINTF("  --cluster_sched (0|1)\n\tEnable cluster-restricted scheduling for HVX.  Default 1.\n");
 #endif
 
 	// FIXME: hack for setting noc table addresses
 	BOOTER_PRINTF("  --noc <master int> <slave int>\n\tSet NOC master and slave widget offsets from TCM base.\n");
+	BOOTER_PRINTF("  --local_mem <base page number> <size> <stride>\n\tSet local memory base page number, size and stride (4K pages).\n");
 
 #ifdef MULTICORE
 	BOOTER_PRINTF("  --quiet <core bitmap>\n\tSuppress output from cores.\n");
@@ -347,7 +352,7 @@ void usage()
 	BOOTER_PRINTF("  --page_size [ 0 == 4K, 1 == 16K, 2 == 64K, 3 == 256K, 4 == 1M, 5 == 4M, 6 == 16M ]\n\tEncoded page size for guest->phys offset map.  Default 6 (16M).\n");
 	BOOTER_PRINTF("  --cccc <int>\n\tCache bits for guest->phys offset map.  Default L1WB_L2C.\n");
 	BOOTER_PRINTF("  --offset_pages <int>\n\tOffset (in number of pages) for guest->phys offset map.  Default matches load_offset, or 0.\n");
-	BOOTER_PRINTF("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default OFFSET (only OFFSET works from cmdline right now.  Used to override guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
+	BOOTER_PRINTF("  --translation_type [ %d == OFFSET ]\n\tTranslation type for guest->phys map.  Default LINEAR unless overridden here (only OFFSET can be forced from cmdline right now; LINEAR is used automatically otherwise, or via guest_pmap).\n", H2K_ASID_TRANS_TYPE_OFFSET);
 	BOOTER_PRINTF("  --fence_lo <int>\n\tLowest physical page accessible by guest VM.  Must be page_size-aligned.  Default lowest mapped physical page.\n");
 	BOOTER_PRINTF("  --fence_hi <int>\n\tHighest physical page accessible by guest VM.  Must be page_size-aligned.  Default heap_start + heap size + stack size.\n");
 	BOOTER_PRINTF("  --load_offset <int>\n\tOffset for loading ELF image.  Default (guest_base - <first_program_header_addr>).\n");
@@ -516,7 +521,10 @@ void clone_vm(unsigned int idx, unsigned int num) {
 	}
 }
 
-void get_pmap(unsigned int idx, long offset) {
+/* forward decl: definition is below, once the aperture machinery it wraps is declared */
+void *booter_guest_ptr(unsigned long long pa);
+
+void get_pmap(unsigned int idx, unsigned long long offset) {
 
 	unsigned long addr;
 
@@ -525,7 +533,7 @@ void get_pmap(unsigned int idx, long offset) {
 	} else {
 		BOOTER_PRINTF("\t__guest_pmap__ found @ 0x%08lx\n",addr);
 
-		vm_params[idx].pmap = (h2_guest_pmap_t *)(addr + offset);
+		vm_params[idx].pmap = (h2_guest_pmap_t *)booter_guest_ptr(addr + offset);
 	}
 }
 
@@ -541,7 +549,223 @@ void dcclean_range(unsigned long start, long range) {
 	} while (range >= 0); 
 }
 
-void set_cmdline(unsigned int idx, long offset) {
+/* Fill npages consecutive LINEAR table entries starting at entries[0]. va/pa are
+ * page numbers (already shifted), not byte addresses. Shared by add_linear_trans()
+ * (per-guest pmap) and booter_self_map() (the booter's own TLB). */
+void fill_linear_entries(H2K_linear_fmt_t *entries, unsigned long va, unsigned long long pa, int page_size, int npages, int cccc, int xwru) {
+
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		entries[i].raw = 0ULL;
+		entries[i].ppn = pa;
+		entries[i].cccc = cccc;
+		entries[i].xwru = xwru;
+		entries[i].vpn = va;
+		entries[i].size = page_size;
+
+		va += 1 << (page_size * 2);  // advance by one page's worth of page-numbers (size field is a log4 step, hence *2)
+		pa += 1 << (page_size * 2);
+	}
+}
+
+/* The booter's own LINEAR table. Built once by booter_self_map() with footprint-only
+ * entries, then grown on demand by booter_grow_guest_window() as load_vm() discovers
+ * how much guest physical memory it actually needs to read/write directly. */
+static H2K_linear_fmt_t *booter_table = NULL;
+static unsigned long booter_table_entries = 0;      /* valid entries, excluding end marker */
+static unsigned long long guest_window_hi = 0;      /* guest PA covered so far by the window; 0 == nothing yet */
+
+/* booter_grow_guest_window() maps guest PA identically (va == pa's own page number) below
+ * BOOTER_IDENTITY_LIMIT, matching this table format's hard limit: the LINEAR TLB entry's
+ * vpn/vpn_ext fields are only 20 bits wide (h2_common_linear.h), i.e. exactly a 32-bit VA
+ * space -- confirmed structural, not a software choice: kernel/mem/linear/linear.ref.c
+ * compares this against a plain 32-bit u32_t coming from an actual Hexagon address
+ * register, so a booter VA >= 4GB could never be issued by the CPU in the first place,
+ * independent of how wide ppn/ppn_ext (36/38/46-bit PA) can go on the PA side. Above that
+ * limit, guest PA is reached through a small, fixed, always-<4GB aperture instead: va is
+ * chosen from BOOTER_APERTURE_VA's range while ppn/ppn_ext still carries the real target. */
+#define BOOTER_IDENTITY_LIMIT  0x100000000ULL  /* 4GB */
+#define BOOTER_APERTURE_VA     0xf0000000ULL   /* below the booter's own image/footprint in
+                                                 * every build variant (H2K_LOAD_ADDR maxes out
+                                                 * at 0x84c00000), and below the kernel's own
+                                                 * top-of-space reservations (TEMP_MAP_VA/
+                                                 * Q6_SS_BASE_VA/ANGEL_VA at 0xff800000+, which
+                                                 * don't apply to this private self-map ASID,
+                                                 * but avoiding them costs nothing) */
+#define BOOTER_APERTURE_MAX    0x0f700000ULL   /* ends at 0xff700000 */
+static unsigned long long aperture_lo_pa = 0;  /* real PA at BOOTER_APERTURE_VA; 0 == unset */
+static unsigned long long aperture_hi_pa = 0;  /* aperture high-water mark; 0 == nothing yet */
+
+/* Scratch buffer for bouncing ELF segment reads when the destination PA is >= 4GB --
+ * unreachable by Angel's trap0, whose destination-buffer register (r1) is a plain 32-bit
+ * register with no wider-address variant anywhere in libs/syscall/angel/. This buffer's own
+ * address is always < 4GB (it lives in the booter's own image), so read() into it always
+ * goes through the ordinary Angel path. Safe to share a single static instance: load_vm()
+ * runs to completion for every VM, strictly serially, before any VM's vCPU starts running --
+ * no guest code is ever executing while this buffer is in use. */
+#define BOOTER_BOUNCE_BUF_SIZE (64 * 1024)
+static char booter_bounce_buf[BOOTER_BOUNCE_BUF_SIZE];
+
+/* Translate a real guest PA (possibly >= 4GB) into the pointer the booter actually
+ * dereferences, given whatever booter_grow_guest_window() has already mapped. For
+ * pa < BOOTER_IDENTITY_LIMIT this returns exactly the same bit pattern as a raw (char *)pa
+ * cast -- not just an equivalent value, identical -- so it can replace raw guest-PA pointer
+ * casts with zero behavioral change for anything currently below 4GB. Only valid for a pa
+ * already covered by a prior booter_grow_guest_window() call, same convention as identity
+ * mapping already required. */
+void *booter_guest_ptr(unsigned long long pa) {
+	if (pa < BOOTER_IDENTITY_LIMIT) {
+		return (void *)(unsigned long)pa;
+	}
+	/* void* is 32 bits on this target -- the cast to (unsigned long) here is safe, not a
+	 * truncation, because BOOTER_APERTURE_MAX bounds (pa - aperture_lo_pa) to well under
+	 * 4GB (enforced by booter_grow_guest_window()'s FAIL-if-exceeded check below), so
+	 * BOOTER_APERTURE_VA + (pa - aperture_lo_pa) never exceeds 0xff700000. If that bound
+	 * were ever violated, this is the line that would silently drop the high bits --
+	 * BOOTER_APERTURE_MAX is the actual correctness invariant. */
+	return (void *)(unsigned long)(BOOTER_APERTURE_VA + (pa - aperture_lo_pa));
+}
+
+void booter_self_map(void) {
+
+	unsigned long page_size;
+	unsigned long image_base;
+	unsigned long heap_size;
+	unsigned long stack_size;
+	unsigned long footprint;
+	unsigned long npages;
+	unsigned long va;
+	unsigned long long pa;
+
+	page_size = 1UL << (PAGE_BITS + BOOT_TLB_PGSIZE * 2);  // size in bytes of one booter TLB page (BOOT_TLB_PGSIZE encodes size as a power-of-4 step above the minimum page)
+	image_base = (unsigned long)__bootvm_entry_point & -page_size;  // round entry point down to a page boundary so the mapping starts on an aligned page
+
+	heap_size = ((unsigned long)&HEAP_SIZE == 0) ? GUESS_HEAP_SIZE : (unsigned long)&HEAP_SIZE;
+	stack_size = ((unsigned long)&STACK_SIZE == 0) ? GUESS_STACK_SIZE : (unsigned long)&STACK_SIZE;
+
+	// Total footprint: image (from the aligned base up to the linker's "end" symbol) + heap + stack,
+	// rounded up to a whole number of pages so every byte the booter itself uses is covered.
+	footprint = H2_ALIGN_UP(((unsigned long)&end - image_base) + heap_size + stack_size, page_size);
+	npages = footprint / page_size;
+
+	// +1 for the null (end-marker) entry. The guest window is added later by
+	// booter_grow_guest_window(), once load_vm() knows how much guest memory is needed.
+	if (NULL == (booter_table = (H2K_linear_fmt_t *)malloc(sizeof(H2K_linear_fmt_t) * (npages + 1)))) {
+		error("malloc booter_self_map table", NULL);
+	}
+
+	va = image_base >> PAGE_BITS;  // table entries store page numbers, not byte addresses
+	pa = ((unsigned long long)image_base + __boot_net_phys_offset__) >> PAGE_BITS;  // matching PA: same offset the old OFFSET translation used
+	fill_linear_entries(booter_table, va, pa, BOOT_TLB_PGSIZE, npages, L1WB_L2C, URWX);
+
+	booter_table_entries = npages;
+	booter_table[booter_table_entries].raw = 0ULL;  // end marker (zero raw entry terminates the table)
+
+	if (h2_vmtrap_newmap(booter_table, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_TRUE) < 0) {
+		FAIL("booter_self_map: h2_vmtrap_newmap", "");
+	}
+}
+
+/* Grow the booter's own guest-window mapping so that guest PA range [lo, hi) is
+ * reachable through a plain booter pointer (via booter_guest_ptr()), using page_size
+ * (a SIZE_* encoding, same as vm_params[idx].page_size) as the granularity for any
+ * newly-added entries. Splits the requested range at BOOTER_IDENTITY_LIMIT: the portion
+ * below it grows the identity-mapped window exactly as before (self-tracked via
+ * guest_window_hi, starting from H2K_GUEST_START -- lo is not needed for this portion,
+ * since H2K_GUEST_START is always a valid, known starting default). The portion at or
+ * above it grows the aperture (self-tracked via aperture_hi_pa); lo is consulted only
+ * once, to seed aperture_lo_pa the first time the aperture is touched, since guest_base
+ * can be placed arbitrarily far above 4GB via --guest_base and there is no equivalent
+ * universal starting point the way there is for the identity range. Safe to call
+ * repeatedly with a non-decreasing hi as load_vm() discovers how much guest memory it
+ * needs; a call whose range is already covered is a no-op. */
+void booter_grow_guest_window(unsigned long long lo, unsigned long long hi, int page_size) {
+
+	unsigned long long page_bytes = 1ULL << (PAGE_BITS + page_size * 2);
+	unsigned long long id_lo, id_hi, id_lo_aligned, id_hi_aligned;
+	unsigned long long ap_lo, ap_hi, ap_lo_aligned, ap_hi_aligned;
+	unsigned long added_pages;
+	unsigned long va;
+	unsigned long long pa;
+	int grew = 0;
+
+	/* Identity portion: below BOOTER_IDENTITY_LIMIT, va == pa's own page number, exactly
+	 * as before this change. Also capped at BOOTER_APERTURE_VA, since for a guest placed
+	 * >= 4GB this sweep would otherwise run all the way to BOOTER_IDENTITY_LIMIT and
+	 * plant a stale va==pa entry at BOOTER_APERTURE_VA itself -- which, being added
+	 * before the aperture portion below runs, permanently shadows the correct aperture
+	 * entry for that VA (H2K_linear_translate() returns on the first matching VPN),
+	 * silently aliasing every booter_guest_ptr() aperture access to the wrong physical
+	 * page. Nothing legitimately needs identity mapping at/above BOOTER_APERTURE_VA, so
+	 * this cap is always safe. */
+	id_lo = guest_window_hi ? guest_window_hi : H2K_GUEST_START;
+	id_hi = (hi < BOOTER_IDENTITY_LIMIT) ? hi : BOOTER_IDENTITY_LIMIT;
+	if (id_hi > BOOTER_APERTURE_VA) id_hi = BOOTER_APERTURE_VA;
+	if (id_hi > id_lo) {
+		id_lo_aligned = id_lo & -page_bytes;
+		id_hi_aligned = H2_ALIGN_UP(id_hi, page_bytes);
+		added_pages = (id_hi_aligned - id_lo_aligned) / page_bytes;
+
+		if (NULL == (booter_table = (H2K_linear_fmt_t *)realloc(booter_table,
+				sizeof(H2K_linear_fmt_t) * (booter_table_entries + added_pages + 1)))) {
+			error("realloc booter_table", NULL);
+		}
+
+		va = (unsigned long)(id_lo_aligned >> PAGE_BITS);
+		pa = (id_lo_aligned + __boot_net_phys_offset__) >> PAGE_BITS;
+		fill_linear_entries(&booter_table[booter_table_entries], va, pa, page_size, added_pages, L1WB_L2C, URWX);
+
+		booter_table_entries += added_pages;
+		guest_window_hi = id_hi_aligned;
+		grew = 1;
+	}
+
+	/* Aperture portion: at/above BOOTER_IDENTITY_LIMIT. va comes from the small, fixed,
+	 * always-<4GB BOOTER_APERTURE_VA range; pa carries the real (possibly far above 4GB)
+	 * target via ppn/ppn_ext. */
+	if (hi > BOOTER_IDENTITY_LIMIT) {
+		ap_lo = aperture_hi_pa ? aperture_hi_pa
+			: ((lo > BOOTER_IDENTITY_LIMIT ? lo : BOOTER_IDENTITY_LIMIT) & -page_bytes);
+		ap_hi = hi;
+		if (ap_hi > ap_lo) {
+			if (0 == aperture_hi_pa) {
+				aperture_lo_pa = ap_lo;
+			}
+			ap_lo_aligned = ap_lo & -page_bytes;
+			ap_hi_aligned = H2_ALIGN_UP(ap_hi, page_bytes);
+
+			if (ap_hi_aligned - aperture_lo_pa > BOOTER_APERTURE_MAX) {
+				FAIL("booter_grow_guest_window: guest image exceeds booter aperture", "");
+			}
+
+			added_pages = (ap_hi_aligned - ap_lo_aligned) / page_bytes;
+
+			if (NULL == (booter_table = (H2K_linear_fmt_t *)realloc(booter_table,
+					sizeof(H2K_linear_fmt_t) * (booter_table_entries + added_pages + 1)))) {
+				error("realloc booter_table", NULL);
+			}
+
+			va = (unsigned long)((BOOTER_APERTURE_VA + (ap_lo_aligned - aperture_lo_pa)) >> PAGE_BITS);
+			pa = (ap_lo_aligned + __boot_net_phys_offset__) >> PAGE_BITS;
+			fill_linear_entries(&booter_table[booter_table_entries], va, pa, page_size, added_pages, L1WB_L2C, URWX);
+
+			booter_table_entries += added_pages;
+			aperture_hi_pa = ap_hi_aligned;
+			grew = 1;
+		}
+	}
+
+	if (!grew) return;  // already covered
+
+	booter_table[booter_table_entries].raw = 0ULL;  // end marker
+
+	if (h2_vmtrap_newmap(booter_table, H2K_ASID_TRANS_TYPE_LINEAR, H2K_ASID_TLB_INVALIDATE_TRUE) < 0) {
+		FAIL("booter_grow_guest_window: h2_vmtrap_newmap", "");
+	}
+}
+
+void set_cmdline(unsigned int idx, unsigned long long offset) {
 
 	int i;
 	char *dst;
@@ -554,7 +778,7 @@ void set_cmdline(unsigned int idx, long offset) {
 	} else {
 		BOOTER_PRINTF("\t__boot_cmdline__ found @ 0x%08x\n", (unsigned int)addr);
 	}
-	dst = (char *)(addr + offset);
+	dst = (char *)booter_guest_ptr(addr + offset);
 	dst[0] = 0;
 	for (i = 0; i < vm_params[idx].argc; i++) {
 		if ((len += strlen(vm_params[idx].argv[i])) >= SIZE__boot_cmdline__) {
@@ -567,7 +791,7 @@ void set_cmdline(unsigned int idx, long offset) {
 	BOOTER_PRINTF("\tcmdline at 0x%08x set to <<%s>>\n", (unsigned int)dst, dst);
 }
 
-void set_string(unsigned int idx, int sym, char *string, int maxlen, long offset) {
+void set_string(unsigned int idx, int sym, char *string, int maxlen, unsigned long long offset) {
 
 	char *dst;
 	unsigned long addr;
@@ -585,13 +809,13 @@ void set_string(unsigned int idx, int sym, char *string, int maxlen, long offset
 		BOOTER_PRINTF("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
 	}
 
-	dst = (char *)(addr + offset);
+	dst = (char *)booter_guest_ptr(addr + offset);
 	strcpy(dst, string);
 
 	BOOTER_PRINTF("\t%s at 0x%08x set to <<%s>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, dst);
 }
 
-void set_var(unsigned int idx, int sym, int val, long offset) {
+void set_var(unsigned int idx, int sym, int val, unsigned long long offset) {
 
 	int *dst;
 	unsigned long addr;
@@ -603,13 +827,13 @@ void set_var(unsigned int idx, int sym, int val, long offset) {
 		BOOTER_PRINTF("\t%s found @ 0x%08x\n", vm_params[idx].specials[sym].name, (unsigned int)addr);
 	}
 
-	dst = (int *)(addr + offset);
+	dst = (int *)booter_guest_ptr(addr + offset);
 	*dst = val;
 
 	BOOTER_PRINTF("\t%s at 0x%08x set to <<0x%08x>>\n", vm_params[idx].specials[sym].name, (unsigned int)dst, *dst);
 }
 
-unsigned long get_var(unsigned int idx, int sym, long offset) {
+unsigned long get_var(unsigned int idx, int sym, unsigned long long offset) {
 
 	int *dst;
 	unsigned long addr;
@@ -619,11 +843,11 @@ unsigned long get_var(unsigned int idx, int sym, long offset) {
 		return 0;
 	}
 
-	dst = (int *)(addr + offset);
+	dst = (int *)booter_guest_ptr(addr + offset);
 	return *dst;
 }
 
-void set_net_phys_offset(unsigned int idx, long offset) {  // called with total_offset
+void set_net_phys_offset(unsigned int idx, unsigned long long offset) {  // called with total_offset
 
 	long *dst;
 	unsigned long addr;
@@ -634,7 +858,7 @@ void set_net_phys_offset(unsigned int idx, long offset) {  // called with total_
 	} else {
 		BOOTER_PRINTF("\t__boot_net_phys_offset__ found @ 0x%08x\n", (unsigned int)addr);
 	}
-	dst = (long *)(addr + offset);
+	dst = (long *)booter_guest_ptr(addr + offset);
 
 	/* FIXME: If __boot_net_phys_offset__ is used for anything except ANGEL_OFFSET_PTR() then va_angel needs to be handled differently */
 	if (vm_params[idx].va_angel) {
@@ -646,11 +870,10 @@ void set_net_phys_offset(unsigned int idx, long offset) {  // called with total_
 	BOOTER_PRINTF("\tnet phys offset at 0x%08x set to <<0x%08x>>\n", (unsigned int)dst, (unsigned int) *dst);
 }
 
-void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages) {
+void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa, int page_size, int npages, int cccc, int xwru) {
 	h2_guest_pmap_t *pmap = vm_params[idx].pmap;
 	H2K_linear_fmt_t *base;
 	int end = 0;
-	int i;
 
 	if (NULL != pmap) {
 		if (!vm_params[idx].pmap_added) {
@@ -670,31 +893,71 @@ void add_linear_trans(unsigned int idx, unsigned long va, unsigned long long pa,
 		vm_params[idx].pmap_added = 1;
 	}
 
-	if (NULL == (pmap->base.raw = (h2_u32_t)realloc((void *)(pmap->base.raw), sizeof(H2K_linear_fmt_t) * (end + npages + 1)))) {
+	if (0 == (pmap->base.raw = (h2_u32_t)realloc((void *)(pmap->base.raw), sizeof(H2K_linear_fmt_t) * (end + npages + 1)))) {
 		error("realloc pmap->base", NULL);
 	}
 	base = (H2K_linear_fmt_t *)(pmap->base.raw);
 
 	/* append translations */
-	va >>= H2K_KERNEL_ADDRBITS;
-	pa >>= H2K_KERNEL_ADDRBITS;
-		
-	for (i = 0; i < npages; i++) {
-		//		BOOTER_PRINTF("trans 0x%08lx -> 0x%09llx\n", va << H2K_KERNEL_ADDRBITS, pa << H2K_KERNEL_ADDRBITS);
-		base[end + i].raw = 0ULL;
-		base[end + i].ppn = pa;
-		base[end + i].cccc = L1WB_L2C;
-		base[end + i].xwru = URWX;
-		base[end + i].vpn = va;
-		base[end + i].size = page_size;
+	va >>= PAGE_BITS;
+	pa >>= PAGE_BITS;
 
-		va += 1 << (page_size * 2);
-		pa += 1 << (page_size * 2);
-	}
-	base[end + i].raw = 0LL;  // end marker
+	fill_linear_entries(&base[end], va, pa, page_size, npages, cccc, xwru);
+	base[end + npages].raw = 0ULL;  // end marker
 }
 
-void clade_setup(unsigned int idx, long offset) {
+static int get_vtcm_page_size(unsigned long vtcm_size) {
+	int page_size;
+
+	/* find smallest page size that can contain VTCM in a single page */
+	for (page_size = SIZE_4K; page_size <= SIZE_16M; page_size++) {
+		unsigned long page_bytes = 1UL << (PAGE_BITS + page_size * 2);
+		if (vtcm_size <= page_bytes)
+			break;
+	}
+
+	return page_size;
+}
+
+void add_vtcm_trans(unsigned int idx) {
+	unsigned int unitlink = h2_info(INFO_UNIT_START);
+
+	if (0 != unitlink) {
+		while ((unitlink != 0) && (h2_info_unit(unitlink, CFG_UNIT_ID) == CFG_TYPE_VXU0)) {
+			unsigned int vtcm_base = h2_info_unit(unitlink, CFG_VTCM_BASE) << 16;
+			unsigned int vtcm_size = h2_info_unit(unitlink, CFG_VTCM_SIZE);
+			int page_size;
+
+			assert(vtcm_base != -1);
+
+			/* no VTCM configured for this core: nothing to map */
+			if (vtcm_base != 0) {
+				vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
+				page_size = get_vtcm_page_size(vtcm_size);
+
+				add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
+			}
+
+			unitlink = h2_info_unit(unitlink, CFG_UNIT_NEXT);
+		}
+	} else {
+		unsigned int vtcm_base = h2_info(INFO_VTCM_BASE);
+		unsigned int vtcm_size = h2_info(INFO_VTCM_SIZE);
+		int page_size;
+
+		assert(vtcm_base != -1);
+
+		/* no VTCM configured for this core: nothing to map */
+		if (vtcm_base != 0) {
+			vtcm_size = vtcm_size << 10;  /* convert KB to bytes */
+			page_size = get_vtcm_page_size(vtcm_size);
+
+			add_linear_trans(idx, vtcm_base, vtcm_base, page_size, 1, L1WB_L2C, URWX);
+		}
+	}
+}
+
+void clade_setup(unsigned int idx, unsigned long long offset) {
 
 	unsigned long region_hi, comp, ex_lo_small, ex_lo_large, ex_hi_start, ex_hi_end, ex_hi_size, dict_start;
 	h2_u32_t *from, *to;
@@ -763,20 +1026,20 @@ void clade_setup(unsigned int idx, long offset) {
 	/* Copy high-prio exception data to TCM */
 	ex_hi_size = ex_hi_end - ex_hi_start;
 	if (ex_hi_size && tcm_size) {
-		if (NULL == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4096, 0))) {
+		if (0 == (vm_params[idx].clade_ex_hi = (unsigned int)h2_galloc(&tcm_alloc, ex_hi_size, 4096, 0))) {
 			FAIL("\tgalloc ex_hi", "");
 		}
 		//		BOOTER_PRINTF("memcpy(0x%08x, 0x%08lx, 0x%08lx\n", vm_params[idx].clade_ex_hi, ex_hi_start + offset, ex_hi_size);
-		memcpy((void *)(vm_params[idx].clade_ex_hi), (void *)ex_hi_start + offset, ex_hi_size);
+		memcpy((void *)(vm_params[idx].clade_ex_hi), booter_guest_ptr(ex_hi_start + offset), ex_hi_size);
 	} else {
 		vm_params[idx].clade_ex_hi = ex_hi_start + offset;  // should never be referenced, but point it at something kind of meaningful
 	}
 
 	/* g->p translations for program */
-	add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages);
+	add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages, L1WB_L2C, URWX);
 
 	/* g->p translations for clade region */
-	add_linear_trans(idx, region_hi, region_hi + CLADE_REGION_LEN * vm_params[idx].clade_pd, SIZE_16M, CLADE_REGION_LEN / 0x01000000);
+	add_linear_trans(idx, region_hi, region_hi + CLADE_REGION_LEN * vm_params[idx].clade_pd, SIZE_16M, CLADE_REGION_LEN / 0x01000000, L1WB_L2C, URWX);
 
 	/* Set up clade regs */
 	h2_hwconfig_clade_set_reg(vm_params[idx].clade_pd * CLADE_REG_PD_CHUNK + CLADE_REG_COMP, comp + offset);
@@ -797,7 +1060,7 @@ void clade_setup(unsigned int idx, long offset) {
 
 		h2_hwconfig_clade_set_reg(CLADE_REG_REGION, region_hi);
 		clade_region = region_hi;
-		H2K_set_syscfg(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
+		h2_hwconfig_syscfg_set(h2_info(INFO_SYSCFG) | SYSCFG_CLADEN);  // enable clade
 	} else if (region_hi != clade_region) {  // has to be identical for all concurrent clade guests
 			FAIL("\tCLADE region address mismatch", "");
 	}
@@ -807,11 +1070,15 @@ void clade_setup(unsigned int idx, long offset) {
 	BOOTER_PRINTF("\tCLADE not enabled\n");
 }
 
-void copy_vm(unsigned int idx, unsigned int offset) {
+void copy_vm(unsigned int idx, unsigned long long offset) {
 
-BOOTER_PRINTF("\tCopying from VM index %d:\n\t0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].start_pa, vm_params[idx].start_pa + offset, vm_params[idx].end_pa - vm_params[idx].start_pa);
-	memcpy((void *)(vm_params[idx].start_pa) + offset, (void *)(vm_params[idx].start_pa), vm_params[idx].end_pa - vm_params[idx].start_pa);
-	dcclean_range((unsigned long)vm_params[idx].start_pa + offset, vm_params[idx].end_pa - vm_params[idx].start_pa);
+	void *dst = booter_guest_ptr(vm_params[idx].start_pa + offset);
+	void *src = booter_guest_ptr(vm_params[idx].start_pa);
+	unsigned long long size = vm_params[idx].end_pa - vm_params[idx].start_pa;
+
+	BOOTER_PRINTF("\tCopying from VM index %d:\n\t0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].start_pa, vm_params[idx].start_pa + offset, size);
+	memcpy(dst, src, size);
+	dcclean_range((unsigned long)dst, size);
 }
 
 void load_vm(unsigned int idx) {
@@ -826,10 +1093,18 @@ void load_vm(unsigned int idx) {
 	int set_fence_lo = (~0L == vm_params[idx].fence_lo);
 	int set_fence_hi = (0L == vm_params[idx].fence_hi);
 
-	unsigned long heap_size, heap_start, stack_size, total_size, prev_size, end, one_page, page_shift;
+	unsigned long heap_size, heap_start, stack_size, total_size, end, page_shift;
+	/* one_page/prev_size must be 64-bit: one_page's negation feeds H2_ALIGN_UP's
+	 * mask for guest_base, and a 32-bit mask there would zero guest_base's bits
+	 * above bit 31 instead of preserving them. prev_size flows into guest_base
+	 * and load_offset (also widened) via straight addition. */
+	unsigned long long one_page, prev_size;
 	unsigned long start = ~0L;
 	int clone;
-	unsigned long total_offset;
+	unsigned long long total_offset;
+	unsigned long long seg_pa;  /* real (possibly >=4GB) destination PA for the current
+	                             * PT_LOAD segment; computed before phdr.p_paddr's 32-bit
+	                             * Elf32_Word field truncates it */
 
 	char *elf = vm_params[idx].argv[0];
 
@@ -845,8 +1120,8 @@ void load_vm(unsigned int idx) {
 		 load first, and to load we need to align guest_base to the page size. It's
 		 sufficient to use a page size that is as least as big as the one in the
 		 __guest_pmap__; at most we waste some space. */
-	page_shift = ((vm_params[idx].page_size * 2) + H2K_KERNEL_ADDRBITS);
-	one_page = 1 << page_shift;
+	page_shift = ((vm_params[idx].page_size * 2) + PAGE_BITS);
+	one_page = 1ULL << page_shift;
 
 	/* Align the guest base up to the current guest's page size */
 	guest_base = H2_ALIGN_UP(guest_base, one_page);
@@ -873,10 +1148,11 @@ void load_vm(unsigned int idx) {
 		vm_params[idx].fence_lo = vm_params[clone].fence_lo + prev_size;
 		vm_params[idx].fence_hi = vm_params[clone].fence_hi + prev_size;
 
-		if (NULL != vm_params[clone].pmap && !vm_params[clone].pmap_added) { 
+		if (NULL != vm_params[clone].pmap && !vm_params[clone].pmap_added) {
 			vm_params[idx].pmap = vm_params[clone].pmap + prev_size;
 		}
 
+		booter_grow_guest_window(vm_params[clone].start_pa + prev_size, vm_params[clone].end_pa + prev_size, vm_params[idx].page_size);
 		copy_vm(clone, prev_size);
 		set_net_phys_offset(idx, total_offset);
 
@@ -902,7 +1178,44 @@ void load_vm(unsigned int idx) {
 		}
 
 		vm_params[idx].entry = (void *)ehdr.e_entry;
-	
+
+		/* Grow the booter's guest window to the actual size this image needs before the
+		 * phdr loop below writes into guest physical memory. "start" (min phdr p_vaddr)
+		 * isn't known until the loop runs, so use the linked guest start as a lower bound
+		 * for a safe over-approximation of the real total_size computed after the loop.
+		 * Keep the linked absolute high address separate from the relative image size so
+		 * guest_base is added exactly once, including when --guest_base relocates the VM. */
+		{
+			unsigned long pre_heap_size, pre_heap_start, pre_stack_size, pre_end;
+			unsigned long long pre_image_hi, pre_total_size;
+
+			pre_heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
+			if (0 == pre_heap_size || -1 == pre_heap_size) {
+				pre_heap_size = (0 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr
+						|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr)
+					? GUESS_HEAP_SIZE : vm_params[idx].specials[SPECIAL_DEFAULT_HEAP_SIZE].addr;
+			}
+
+			if (-1 == (pre_end = vm_params[idx].specials[SPECIAL__end].addr)) {
+				FAIL("\tCan't find end symbol", "");
+			}
+
+			pre_heap_start = vm_params[idx].specials[SPECIAL_HEAP_START].addr;
+			if (0 == pre_heap_start || -1 == pre_heap_start) {
+				pre_heap_start = pre_end + 4;
+			}
+
+			pre_stack_size = vm_params[idx].specials[SPECIAL_STACK_SIZE].addr;
+			if (0 == pre_stack_size || -1 == pre_stack_size) {
+				pre_stack_size = (0 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr
+						|| -1 == vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr)
+					? GUESS_STACK_SIZE : vm_params[idx].specials[SPECIAL_DEFAULT_STACK_SIZE].addr;
+			}
+
+			pre_image_hi = (unsigned long long)pre_heap_start + pre_heap_size + pre_stack_size;
+			pre_total_size = H2_ALIGN_UP(pre_image_hi - H2K_GUEST_START, one_page);
+			booter_grow_guest_window(guest_base, guest_base + pre_total_size, vm_params[idx].page_size);
+		}
 
 		for (i = 0; i < ehdr.e_phnum; i++) {
 			if (elf_get_phdr(fdesc, i, &phdr, &ehdr) < 0) continue;
@@ -931,6 +1244,15 @@ void load_vm(unsigned int idx) {
 			if (vm_params[idx].offset_pages == -1) {
 				vm_params[idx].offset_pages = (__boot_net_phys_offset__ + total_offset) >> PAGE_BITS;
 			}
+			/* Real (possibly >=4GB) destination for this segment, computed before
+			 * phdr.p_paddr's 32-bit Elf32_Word field truncates it just below.
+			 * Resolves the previous FIXME here: read()/memset()/dcclean_range()
+			 * now dereference seg_pa (via booter_guest_ptr()), not the truncated
+			 * phdr.p_paddr. phdr.p_paddr itself keeps its truncated value only for
+			 * the fence_lo bookkeeping right below -- a separate, already-
+			 * documented, deferred guest-side OFFSET-mapping ceiling. */
+			seg_pa = (unsigned long long)phdr.p_paddr + vm_params[idx].load_offset;
+
 			phdr.p_paddr += vm_params[idx].load_offset;
 
 			if (set_fence_lo && (phdr.p_paddr < vm_params[idx].fence_lo)) {
@@ -940,19 +1262,48 @@ void load_vm(unsigned int idx) {
 			if (!vm_params[idx].skip_load) {
 				BOOTER_PRINTF("\tload VA %08lx at %08lx\n", (unsigned long)phdr.p_vaddr, (unsigned long)phdr.p_paddr + __boot_net_phys_offset__);
 				bytes_read = 0;
-				do {
-					bytes_read += ret = read(fdesc,(char *)phdr.p_paddr + bytes_read, phdr.p_filesz - bytes_read);
+				if (seg_pa + phdr.p_memsz < BOOTER_IDENTITY_LIMIT) {
+					do {
+						bytes_read += ret = read(fdesc, booter_guest_ptr(seg_pa + bytes_read), phdr.p_filesz - bytes_read);
 #ifdef BOOTVM_DEBUG
-					reads++;
-#endif					
-				} while (ret > 0);
-				if (ret == -1) {
-					error("\tCan't read() in ", elf);
+						reads++;
+#endif
+					} while (ret > 0);
+					if (ret == -1) {
+						error("\tCan't read() in ", elf);
+					}
+				} else {
+					/* Destination is beyond Angel's trap0 32-bit address limit (r1 is
+					 * a plain 32-bit register, with no wider-address variant anywhere
+					 * in libs/syscall/angel/): read each chunk into a low scratch
+					 * buffer via Angel, then memcpy() it up to the real >=4GB
+					 * destination -- a plain pointer dereference through the
+					 * booter's aperture self-map, hardware-translated, never routed
+					 * through Angel. */
+					BOOTER_PRINTF("\tload PA 0x%09llx >= 4GB; bouncing segment data through low scratch buffer\n", seg_pa);
+					while ((unsigned int)bytes_read < phdr.p_filesz) {
+						unsigned int chunk_size = phdr.p_filesz - bytes_read;
+						unsigned int chunk_off = 0;
+						if (chunk_size > BOOTER_BOUNCE_BUF_SIZE) chunk_size = BOOTER_BOUNCE_BUF_SIZE;
+						do {
+							ret = read(fdesc, booter_bounce_buf + chunk_off, chunk_size - chunk_off);
+							if (ret > 0) chunk_off += ret;
+						} while (ret > 0 && chunk_off < chunk_size);
+						if (ret == -1) {
+							error("\tCan't read() in ", elf);
+						}
+						memcpy(booter_guest_ptr(seg_pa + bytes_read), booter_bounce_buf, chunk_off);
+						bytes_read += chunk_off;
+#ifdef BOOTVM_DEBUG
+						reads++;
+#endif
+						if (0 == ret) break;
+					}
 				}
 
-				memset((char *)phdr.p_paddr + phdr.p_filesz, 0, phdr.p_memsz - phdr.p_filesz);
+				memset(booter_guest_ptr(seg_pa + phdr.p_filesz), 0, phdr.p_memsz - phdr.p_filesz);
 				/* Really, only need to clean out text sections */
-				dcclean_range(phdr.p_paddr, phdr.p_memsz);
+				dcclean_range((unsigned long)booter_guest_ptr(seg_pa), phdr.p_memsz);
 			}
 		}
 #ifdef BOOTVM_DEBUG
@@ -961,6 +1312,9 @@ void load_vm(unsigned int idx) {
 		close(fdesc);
 
 		total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
+		/* set_cmdline/set_net_phys_offset/set_var/set_string/get_pmap/clade_setup
+		 * below now take a 64-bit offset and dereference addr + offset via
+		 * booter_guest_ptr(), same fix shape as the phdr-loop's seg_pa above. */
 		set_cmdline(idx, total_offset);
 		set_net_phys_offset(idx, total_offset);
 		if (vm_params[idx].use_dir_prefix) {
@@ -984,7 +1338,7 @@ void load_vm(unsigned int idx) {
 
 		vm_params[idx].start_pa = start + total_offset;
 		vm_params[idx].end_pa = end + total_offset;
-		dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
+		dcclean_range((unsigned long)booter_guest_ptr(vm_params[idx].start_pa), vm_params[idx].end_pa - vm_params[idx].start_pa);
 
 		heap_size = vm_params[idx].specials[SPECIAL_HEAP_SIZE].addr;
 		if (0 == heap_size || -1 == heap_size) {
@@ -1049,6 +1403,7 @@ void load_vm(unsigned int idx) {
 			vm_params[idx].stash_addr = __boot_net_phys_offset__ + guest_base;
 			guest_base += vm_params[idx].end_pa - vm_params[idx].start_pa;
 			guest_base = H2_ALIGN_UP(guest_base, one_page);
+			booter_grow_guest_window(vm_params[idx].stash_addr, vm_params[idx].stash_addr + (vm_params[idx].end_pa - vm_params[idx].start_pa), vm_params[idx].page_size);
 			copy_vm(idx, vm_params[idx].stash_addr - vm_params[idx].start_pa);
 		}
 	}  // else not a clone
@@ -1057,7 +1412,7 @@ void load_vm(unsigned int idx) {
 
 	BOOTER_PRINTF("\tentry 0x%08lx\n", (unsigned long)vm_params[idx].entry);
 	BOOTER_PRINTF("\tphys_offset 0x%08lx\n", vm_params[idx].phys_offset);
-	BOOTER_PRINTF("\tload_offset 0x%08lx\n", vm_params[idx].load_offset);
+	BOOTER_PRINTF("\tload_offset 0x%016llx\n", vm_params[idx].load_offset);
 	BOOTER_PRINTF("\toffset_pages 0x%08lx\n", vm_params[idx].offset_pages);
 
 	if (vm_params[idx].pmap_added) {
@@ -1095,14 +1450,17 @@ void config_vm(unsigned int idx) {
 		  base.raw = vm_params[idx].pmap->base.raw;
 			BOOTER_PRINTF("\tGuest pmap type %s\n", trans_name[trans]);
 			BOOTER_PRINTF("\tGuest pmap base 0x%08x\n", base.raw);
-		} else {  // default
-			trans = H2K_ASID_TRANS_TYPE_OFFSET;
-			BOOTER_PRINTF("\tTranslation type offset\n");
-			BOOTER_PRINTF("\t\tPage size %d (%s)\n", base.size, pagesize_name[base.size]);
-			BOOTER_PRINTF("\t\tCCCC  0x%1x\n", base.cccc);
-			BOOTER_PRINTF("\t\tXWRU  0x%1x\n", base.xwru);
-			BOOTER_PRINTF("\t\tPAGES 0x%1x\n", base.pages);
-			BOOTER_PRINTF("\t\tRAW   0x%1x\n", base.raw);
+		} else {  // default: build a LINEAR extent table covering the whole VM
+			add_linear_trans(idx, vm_params[idx].start_va, vm_params[idx].start_pa, vm_params[idx].page_size, vm_params[idx].pages, vm_params[idx].cccc, vm_params[idx].xwru);
+			add_vtcm_trans(idx);
+			trans = vm_params[idx].pmap->type;
+			base.raw = vm_params[idx].pmap->base.raw;
+			BOOTER_PRINTF("\tTranslation type linear\n");
+			BOOTER_PRINTF("\t\tPage size %d (%s)\n", vm_params[idx].page_size, pagesize_name[vm_params[idx].page_size]);
+			BOOTER_PRINTF("\t\tCCCC  0x%1x\n", vm_params[idx].cccc);
+			BOOTER_PRINTF("\t\tXWRU  0x%1x\n", vm_params[idx].xwru);
+			BOOTER_PRINTF("\t\tPAGES 0x%08x\n", vm_params[idx].pages);
+			BOOTER_PRINTF("\t\tBASE  0x%08x\n", base.raw);
 		}
 	} else {  // translation type forced; better only be offset for now
 		if (vm_params[idx].trans_type != H2K_ASID_TRANS_TYPE_OFFSET) {
@@ -1151,16 +1509,16 @@ void boot_vm(unsigned int idx) {
 	unsigned int regval;
 	int bit = 0;
 	int shift;
-	unsigned long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
+	unsigned long long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	BOOTER_PRINTF("\n");
 	BOOTER_PRINTF("Boot VM index %d, ID %d\n", idx, vm_params[idx].id);
 
 	if (~0L != vm_params[idx].ccr) {
-		regval = H2K_get_ccr();
+		regval = h2_hwconfig_ccr_get();
 		BOOTER_PRINTF("\told value for ccr: 0x%08x\n",regval);
-		H2K_set_ccr(vm_params[idx].ccr);
-		regval = H2K_get_ccr();
+		h2_hwconfig_ccr_set(vm_params[idx].ccr);
+		regval = h2_hwconfig_ccr_get();
 		BOOTER_PRINTF("\tnew value for ccr: 0x%08x\n",regval);
 	}
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
@@ -1234,7 +1592,7 @@ void dump_pmu(int idx) {
 	int i;
 	unsigned long long int val;
 	int event;
-	unsigned long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
+	unsigned long long total_offset = vm_params[idx].phys_offset + vm_params[idx].load_offset;
 
 	if (!pmu_dump) return;
 
@@ -1367,8 +1725,8 @@ void run(unsigned int idx) {
 						}
 						if (vm_params[i].stash) {
 							BOOTER_PRINTF("Restoring VM index %d: 0x%09llx to 0x%09llx size 0x%09llx\n", idx, vm_params[idx].stash_addr, vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
-							memcpy((void *)(vm_params[idx].start_pa), (void *)(vm_params[idx].stash_addr), vm_params[idx].end_pa - vm_params[idx].start_pa);
-							dcclean_range((unsigned long)vm_params[idx].start_pa, vm_params[idx].end_pa - vm_params[idx].start_pa);
+							memcpy(booter_guest_ptr(vm_params[idx].start_pa), booter_guest_ptr(vm_params[idx].stash_addr), vm_params[idx].end_pa - vm_params[idx].start_pa);
+							dcclean_range((unsigned long)booter_guest_ptr(vm_params[idx].start_pa), vm_params[idx].end_pa - vm_params[idx].start_pa);
 							/* if this vm was cloned from another, need to set its net phys offset again (overwritten by restore from stash) */
 							set_net_phys_offset(idx, vm_params[idx].phys_offset + vm_params[idx].load_offset);  // i.e. set_net_phys_offset(idx, total_offset)
 						}
@@ -1389,7 +1747,7 @@ void run(unsigned int idx) {
 		}
 	} while (!done);
 
-	H2K_set_syscfg(h2_info(INFO_SYSCFG) & ~SYSCFG_CLADEN);  // disable clade
+	h2_hwconfig_syscfg_set(h2_info(INFO_SYSCFG) & ~SYSCFG_CLADEN);  // disable clade
 	pd_num = 0;  // reset
 	h2_galloc_reset(&tcm_alloc, 0);
 
@@ -1422,6 +1780,8 @@ void print_infos() {
 	BOOTER_PRINTF("\t\tTCM base offset per core: 0x%08x\n", h2_info(INFO_TCM_OFFSET));
 	BOOTER_PRINTF("\t\tNOC master LUT base: 0x%08x\n", tcm_base + h2_info(INFO_NOC_MBASE));
 	BOOTER_PRINTF("\t\tNOC slave LUT base:  0x%08x\n", tcm_base + h2_info(INFO_NOC_SBASE));
+	BOOTER_PRINTF("\tCore local memory base page number: 0x%08x\n (4K pages)", h2_info(INFO_LOCAL_MEM_BASE));
+	BOOTER_PRINTF("\tCore local memory size: 0x%08x\n (4K pages)", h2_info(INFO_LOCAL_MEM_SIZE));
 #endif
 
 	BOOTER_PRINTF("\tCoprocessors:\n");
@@ -1468,7 +1828,7 @@ void print_infos() {
 		BOOTER_PRINTF((boot_flags.boot_have_dma ? "true\n" : "false\n"));
 #endif
 	}
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	unsigned int max_coprocs = h2_info(INFO_MAX_CLUSTER_COPROC);
 	if (max_coprocs == -1) {
 			BOOTER_PRINTF("\tCluster scheduling disabled\n");
@@ -1577,7 +1937,7 @@ void kernel_setup() {
 	}
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	if (cluster_sched) {
 		if (h2_config_cluster_sched(1) < 0) {
 			FAIL("Cluster sched", "");
@@ -1675,26 +2035,29 @@ void set_dvlm_reg(unsigned int offset, unsigned int val) {
 }
 
 /* Need to clean when clearing L2WB */
-void set_l2wb (unsigned int val) {
+int set_l2wb (unsigned int val) {
 	unsigned int old = h2_info(INFO_SYSCFG);
+	int ret;
 
 	// Leave L2CFG unchanged
-	if (h2_hwconfig_l2cache_size((old & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, val) == -1) {
+	ret = h2_hwconfig_l2cache_size((old & SYSCFG_L2CFG) >> SYSCFG_L2CFG_BITS, val);
+	if (ret == -1) {
 		FAIL("HWCONFIG_L2CACHE", "");
 	}
+	return ret;
 }
 
 typedef struct {
 	const char *name;
 	int pos;
 	int len;  // bits
-	void (* handler)(unsigned int);
+	int (* handler)(unsigned int);
 } syscfg_field;
 
 syscfg_field syscfg[] = {
-	{"BQ", SYSCFG_BQ_BIT, SYSCFG_BQ_LEN, H2K_set_syscfg},
-	{"DMT", SYSCFG_DMT_BIT, SYSCFG_DMT_LEN, H2K_set_syscfg},
-	{"CLADEN", SYSCFG_CLADEN_BIT, SYSCFG_CLADEN_LEN, H2K_set_syscfg},
+	{"BQ", SYSCFG_BQ_BIT, SYSCFG_BQ_LEN, h2_hwconfig_syscfg_set},
+	{"DMT", SYSCFG_DMT_BIT, SYSCFG_DMT_LEN, h2_hwconfig_syscfg_set},
+	{"CLADEN", SYSCFG_CLADEN_BIT, SYSCFG_CLADEN_LEN, h2_hwconfig_syscfg_set},
 	{"L2WB", SYSCFG_L2WB_BIT, SYSCFG_L2WB_LEN, set_l2wb},
 	{NULL, 0, 0}
 };
@@ -1784,7 +2147,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			regval = h2_info(INFO_SYSCFG);
 			BOOTER_PRINTF("Old value for syscfg: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_syscfg(regval);
+			h2_hwconfig_syscfg_set(regval);
 			regval = h2_info(INFO_SYSCFG);
 			BOOTER_PRINTF("New value for syscfg: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
@@ -1795,7 +2158,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			regval = h2_info(INFO_LIVELOCK);
 			BOOTER_PRINTF("Old value for livelock: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_livelock(regval);
+			h2_hwconfig_livelock_set(regval);
 			regval = h2_info(INFO_LIVELOCK);
 			BOOTER_PRINTF("New value for livelock: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
@@ -1803,55 +2166,55 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 
 		} else if (0 == strcmp(argv[0],"--turkey")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_turkey();
+			regval = h2_hwconfig_turkey_get();
 			BOOTER_PRINTF("Old value for turkey: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_turkey(regval);
-			regval = H2K_get_turkey();
+			h2_hwconfig_turkey_set(regval);
+			regval = h2_hwconfig_turkey_get();
 			BOOTER_PRINTF("New value for turkey: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--turkey")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_turkey();
+			regval = h2_hwconfig_turkey_get();
 			printf("Old value for turkey: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_turkey(regval);
-			regval = H2K_get_turkey();
+			h2_hwconfig_turkey_set(regval);
+			regval = h2_hwconfig_turkey_get();
 			printf("New value for turkey: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--duck")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_duck();
+			regval = h2_hwconfig_duck_get();
 			BOOTER_PRINTF("Old value for duck: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_duck(regval);
-			regval = H2K_get_duck();
+			h2_hwconfig_duck_set(regval);
+			regval = h2_hwconfig_duck_get();
 			BOOTER_PRINTF("New value for duck: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--chicken")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_chicken();
+			regval = h2_hwconfig_chicken_get();
 			BOOTER_PRINTF("Old value for chicken: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_chicken(regval);
-			regval = H2K_get_chicken();
+			h2_hwconfig_chicken_set(regval);
+			regval = h2_hwconfig_chicken_get();
 			BOOTER_PRINTF("New value for chicken: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
 
 		} else if (0 == strcmp(argv[0],"--rgdr")) {
 			if (argc < 2) die_usage();
-			regval = H2K_get_rgdr();
+			regval = h2_hwconfig_rgdr_get();
 			BOOTER_PRINTF("Old value for rgdr: 0x%08x\n",regval);
 			regval = strtoul(argv[1],NULL,0);
-			H2K_set_rgdr(regval);
-			regval = H2K_get_rgdr();
+			h2_hwconfig_rgdr_set(regval);
+			regval = h2_hwconfig_rgdr_get();
 			BOOTER_PRINTF("New value for rgdr: 0x%08x\n",regval);
 			argc -= 2; argv += 2;
 			continue;
@@ -1967,7 +2330,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 
 		} else if (0 == strcmp(argv[0], "--guest_base")) {
 			if (argc < 2) die_usage();
-			guest_base = strtoul(argv[1],NULL,0);
+			guest_base = strtoull(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 
@@ -2045,7 +2408,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 			argc -= 2; argv += 2;
 			continue;
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		} else if (0 == strcmp(argv[0], "--cluster_sched")) {
 			if (argc < 2) die_usage();
 			cluster_sched = strtoul(argv[1],NULL,0);
@@ -2059,6 +2422,13 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 				FAIL("CONFIG_NOC", "");
 			}
 			argc -= 3; argv += 3;
+			continue;
+		} else if (0 == strcmp(argv[0], "--local_mem")) {
+			if (argc < 4) die_usage();
+			if (h2_config_set_local_mem(strtoull(argv[1], NULL, 0), strtoull(argv[2], NULL, 0), strtoull(argv[3], NULL, 0)) == -1) {
+				FAIL("CONFIG_LOCAL_MEM", "");
+			}
+			argc -= 4; argv += 4;
 			continue;
 
 		} else if (0 == strcmp(argv[0], "--help")) {
@@ -2141,7 +2511,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 
 		} else if (0 == strcmp(argv[0], "--load_offset")) {
 			if (argc < 2) die_usage();
-			vm_params[idx].load_offset = strtoul(argv[1],NULL,0);
+			vm_params[idx].load_offset = strtoull(argv[1],NULL,0);
 			argc -= 2; argv += 2;
 			continue;
 
@@ -2309,6 +2679,7 @@ unsigned int process_line(int argc, char **argv, unsigned int idx) {
 	return idx;
 }
 
+#if !defined(__has_include) || !__has_include(<picolibc.h>)
 size_t getline(char **lineptr, size_t *n, FILE *stream) {
 
 	char *buf = NULL;
@@ -2361,6 +2732,7 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
 
 	return p - buf - 1;
 }
+#endif /* !picolibc */
 
 int main(int argc, char **argv)
 {
@@ -2405,6 +2777,8 @@ int main(int argc, char **argv)
 	tcm_size = h2_info(INFO_TCM_SIZE);
 	clade_base = h2_info(INFO_CLADE_BASE);
 	guest_base = H2K_GUEST_START;
+
+	booter_self_map();
 
 	h2_galloc_init(&tcm_alloc, (unsigned int)tcm_base, (unsigned int)tcm_size, NULL);
 

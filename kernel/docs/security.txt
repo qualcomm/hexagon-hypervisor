@@ -147,16 +147,7 @@ RTOS environments can use Virtual Machine-style interrupts.
 Alternatively, a Guest can wait for an interrupt to occur.  This causes the
 thread to block until an interrupt arrives, at which point execution resumes.  
 
-Finally, fast interrupt handlers can be configured. However, these run in
-monitor mode, and should be considered as code with monitor priviledge.  They
-are also constrained in the features they can have, and require very short
-execution times to keep interrupt latency short.  However, fast interrupt
-handlers which increment a semaphore or set a flag may be appropriate
-monitor-level handlers to provide efficient guest-level interrupt
-implementations.  
-
-Registration of a fast interrupt handler should thus be one of the 
-trap capabilities that is removed early in the setup process.
+Popup threads are a low overhead way to wait for an interrupt.
 
 ===Other Events===
 

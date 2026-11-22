@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <globals.h>
 #include <hwconfig.h>
+#include <h2_hwconfig.h>
 
 void h2_init();
 
@@ -21,6 +22,12 @@ void FAIL(const char *str)
 int main()
 {
 	u32_t tmp,i;
+
+#ifdef TESTING
+	if (h2_enter_monitor() != 0) FAIL("Could not enter Monitor mode");
+#else
+	FAIL("Should run test with TESTING cflag");
+#endif
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 

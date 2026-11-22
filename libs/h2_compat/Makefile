@@ -3,7 +3,11 @@ ALL: dummy
 
 OPTIMIZE := -Os
 
-CFLAGS := -I$(INSTALLPATH)/include -I../../libs/syscall/angel/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
+# C library selection (the Picolibc target and cstdlib) comes from Makefile.inc.libc.
+include ../../scripts/Makefile.inc.libc
+TARGET_FLAG = $(OSLIB_CFLAGS)
+
+CFLAGS := $(TARGET_FLAG) -I$(INSTALLPATH)/include -I../../libs/syscall/angel/include -G0 $(OPTIMIZE) $(OPT_ADD) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Wall -Wno-builtin-requires-header -Werror -g
 
 ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -34,15 +38,7 @@ CHECK_CFILES :=
 CHECK_SFILES := 
 CHECK_OFILES := 
 
-OPT_V2_CFILES := 
-OPT_V2_SFILES := 
-OPT_V2_OFILES := 
-
-OPT_V3_CFILES := 
-OPT_V3_SFILES := 
-OPT_V3_OFILES := 
-
-OPT_V4_CFILES := 
+OPT_V4_CFILES :=
 OPT_V4_SFILES := 
 OPT_V4_OFILES := 
 
@@ -71,9 +67,13 @@ OPT_V81_SFILES :=
 OPT_V81_OFILES := 
 
 BUILD_DIR := $(INSTALLPATH)/../build/libs/h2_compat
+FLAGS_STAMP := $(BUILD_DIR)/flags.stamp
 H2_BUILD_DIR    := $(INSTALLPATH)/../build/libs/h2
 POSIX_BUILD_DIR := $(INSTALLPATH)/../build/libs/posix
-CFLAGS += -I$(BUILD_DIR)/include -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include
+# Must precede -I$(INSTALLPATH)/include above: both trees hold these h2/posix
+# headers, but the install copies are only refreshed AFTER this library compiles,
+# so a depfile naming them would make every header edit land one build late.
+CFLAGS := -I$(BUILD_DIR)/include -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include $(CFLAGS)
 
 MKINCLUDES := $(shell find . -name make.inc)
 
@@ -88,13 +88,10 @@ endef
 
 $(foreach MODPATH,$(MKINCLUDES),$(eval $(DO_INCLUDE)))
 
-ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V2_OFILES) $(OPT_V3_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
+ALL_OFILES := $(REF_OFILES) $(CHECK_OFILES) $(OPT_V4_OFILES) $(OPT_V5_OFILES) $(OPT_V60_OFILES) $(OPT_V65_OFILES) $(OPT_V68_OFILES) $(OPT_V73_OFILES) $(OPT_V81_OFILES)
 
-$(ALL_OFILES): $(DEST_HFILES)
-
-ifeq ($(ARCHV),3)
-OPT_OFILES := $(OPT_V3_OFILES)
-endif
+# Order-only (|): headers must exist before compiling; the .d files carry the edges.
+$(ALL_OFILES): | $(DEST_HFILES)
 
 ifeq ($(ARCHV),4)
 OPT_OFILES := $(OPT_V4_OFILES)
@@ -127,20 +124,22 @@ endif
 ifeq ($(findstring /ref/,$(BUILD_DIR)),/ref/)
 $(BUILD_DIR)/libh2_compat.a: $(REF_OFILES)
 	mkdir -p $(dir $@); \
+	rm -f $@
 	$(AR) cru $@ $(sort $(REF_OFILES))
 else
 $(BUILD_DIR)/libh2_compat.a: $(OPT_OFILES)
 	mkdir -p $(dir $@); \
+	rm -f $@
 	$(AR) cru $@ $(sort $(OPT_OFILES))
 endif
 
-$(BUILD_DIR)/%.o : %.c
+$(BUILD_DIR)/%.o : %.c $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/%.o : %.S
+$(BUILD_DIR)/%.o : %.S $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf $(DEST_HFILES) $(CLEAN_EXTRAS) $(BUILD_DIR) include
@@ -158,3 +157,9 @@ includes: $(DEST_HFILES)
 ref: $(BUILD_DIR)/libh2_compat.a
 
 opt: $(BUILD_DIR)/libh2_compat.a
+
+include $(H2DIR)/scripts/Makefile.inc.flagstamp
+
+# Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+# Last, so a rule from a .d file never becomes the default goal.
+-include $(ALL_OFILES:.o=.d)

@@ -1,87 +1,54 @@
-
-:mod:`trace` -- kernel logging facility
-=========================================
+:mod:`trace` -- Hardware trace emission
+==========================================
 
 .. module:: trace
 
-SUMMARY
--------
+The current trace implementation emits a 32-bit hardware trace word.  The
+word is represented by ``H2K_trace_entry_t``:
 
-The kernel provides a logging facility for kernel information.
+* ``what``: 8-bit trace type in bits 0-7
+* ``info``: 24-bit trace information in bits 8-31
 
-Kernel logging is not an optional feature. 
+The current reference implementation does not encode ``pcyclelo`` or
+``hwtnum`` into the word; those arguments are retained by the interface for
+compatibility with other implementations.
 
-In V4, we will use the ETM for kernel logging.  V4 will allow the ETM to be
-read by software during a crash.  For V3, we will log to a small memory.
-
-For both V3 and V4, the trace format is a 32-bit word.  It has the structure::
-
-	typedef union {
-		u32_t raw;
-		struct {
-			s16_t delta;
-			u8_t tid;
-			u8_t hwtnum:4;
-			s8_t id:4;
-		};
-	} H2K_trace_entry_t;
-
-The buffer is defined as:
-
-Fatal Kernel Errors have negative Trace IDs.  Informational kernel messages
-have positive Trace IDs.  MAX_TRACE_LEVEL may be used to filter out kernel
-messages.  Recommended MAX_TRACE_LEVEL values are zero for maximum performance,
-or 15 for maximum tracing.
-
-The delta (in processor cycles) between the last trace event and the current
-trace event is logged in the "delta" field.  The value is kept in a signed 
-16-bit field, as events from different threads in close proximity may be placed
-in the buffer in different order than their pcycle capture time.
-
-If the delta time does not fit in a signed, 16-bit value, the delta is saturated
-to signed 16-bits.  The delta time is compted only from pcyclelo, events spaced
-more than a few seconds apart may have incorrect deltas.  
-
-Time may also not be counted while all threads are in wait mode if clock 
-gating is enabled.
 
 H2K_trace
 ---------
 
-.. c:function:: void H2K_trace(s8_t id, u8_t hwtnum, u8_t tid, u16_t pcyclelo)
+.. c:function:: void H2K_trace(s8_t type, u32_t info, u32_t pcyclelo, u8_t hwtnum) IN_SECTION(".text.misc.trace")
 
-	:param id: Message ID.  See Message ID Format below.
-	:param hwtnum: Hardware thread number
-	:param tid: Software Thread ID for the current thread, interrupt number, or special value
-	:param pcyclelo: Cycle information
+	:param type: Trace type stored in the 8-bit ``what`` field
+	:param info: Trace information; the low 24 bits are stored
+	:param pcyclelo: Cycle value retained for interface compatibility
+	:param hwtnum: Hardware-thread number retained for interface compatibility
 
-Description
-~~~~~~~~~~~
+Builds a ``H2K_trace_entry_t`` from ``type`` and ``info`` and emits its raw word
+through :c:func:`H2K_hw_trace()`.  ``pcyclelo`` and ``hwtnum`` are not read by
+the reference implementation.
 
-If an event is less than MAX_TRACE_LEVEL, log a kernel event.
-
-.. fixme InputAssert::
-	assert(H2K_kg.trace_info.index < H2K_kg.trace_info.entries)
-
-
-Functionality
-~~~~~~~~~~~~~
-
-If type is greater than max_trace_level, do nothing.
-
-H2K_kg.trace_info.index points to the next trace entry to write.  We read the value, 
-increment it, reset to zero if greater than trace_entries, and store the
-pointer back atomically.  We use the old value to compute the pointer to the
-trace entry to write.  
-
-The first argument contains the Message ID, which is really a signed 5-bit
-value.  We combine this with the hardware thread number.  The resulting value
-is the most significant byte of the trace entry.  The next byte is the TID 
-of the appropriate thread.  The final sixteen bits are low-order bits from 
-PCYCLELO.
-
-In V3, this word is added to the trace buffer in memory.  In V4, this word is
-added to the ETM trace.
+Trace constants include ``H2K_TRACE_SWITCH``,
+``H2K_TRACE_SWITCH_FROM_SLEEP``, ``H2K_TRACE_SWITCH_TO_SLEEP``,
+``H2K_TRACE_INTERRUPT``, ``H2K_TRACE_FATAL_THREAD``, and
+``H2K_TRACE_FATAL_KERNEL``.
 
 
+H2K_trace_init
+--------------
 
+.. c:function:: void H2K_trace_init(void) IN_SECTION(".text.init.trace")
+
+The current reference implementation performs no initialization.
+
+
+ASM_INLINE_TRACE
+----------------
+
+.. c:macro:: ASM_INLINE_TRACE(MSG, HTNUM_PCYCLELO, HTNUM, PCYCLELO, ENTRIES_BUFADDR, ENTRIES, BUFADDR, PRED, OLDIDX, NEWIDX, IDXADDR, EXTRAINSNS0, EXTRAINSNS1)
+
+This assembly-only macro emits ``trace(MSG)`` in the active implementation.
+The remaining arguments are retained for compatibility with the older inline
+trace-buffer implementation, which allocated a trace-buffer slot with an
+atomic index and stored a hardware-thread/pcycle pair.  The macro may only be
+included from assembly because ``trace_asm_macro.h`` requires ``ASM``.

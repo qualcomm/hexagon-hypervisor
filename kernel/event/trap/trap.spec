@@ -39,10 +39,8 @@ should have no effect (other than clobbered registers) for a node not connected 
 an appropriate semihosting provider.
 
 We then check to ensure that the thread can use the requested trap.  This is
-used to reduce capabilities of less-priviledged threads, and is also used to
-assert that fast interrupt handlers cannot block.  If a user-mode thread cannot
-execute the trap, we call :c:func:`H2K_fatal_thread()`.  If a fast interrupt cannot
-execute the trap, we call :c:func:`H2K_fatal_kernel()`.
+used to reduce capabilities of less-priviledged threads.  If a user-mode thread cannot
+execute the trap, we call :c:func:`H2K_fatal_thread()`.
 
 We then call a stub that saves the return value into the continuation field, 
 and jump to the traptab entry for the requested trap.  
@@ -81,7 +79,7 @@ is used wherever empty traptab spaces exist.  The table is as follows:
  - 0x05 :c:func:`H2K_thread_stop()`: Stop and recycle the current thread
  - 0x06 :c:func:`H2K_cputime_get()`: Get CPU time
  - 0x07 :c:func:`H2K_thread_id()`: Get the thread ID
- - 0x08 :c:func:`H2K_register_fastint()`: Register a fast interrupt handler
+ - 0x08 :c:func:`H2K_thread_id()`: Unused (was H2K_register_fastint, fast interrupt support removed)
  - 0x09 :c:func:`H2K_prio_set()`: Change priority
  - 0x0A :c:func:`H2K_prio_get()`: Get priority
  - 0x0B :c:func:`H2K_popup_wait()`: Block, waiting on an interrupt

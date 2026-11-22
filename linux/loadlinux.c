@@ -176,7 +176,6 @@ unsigned long boot_linux(char fname[]) {
 
 	/* FIXME: set up I$ prefetch and DMT for linux */
 	unsigned long val;
-#if ARCHV >= 4
 	__asm__ __volatile__ 
 		(
 		 /* " %0 = usr\n" */
@@ -188,16 +187,6 @@ unsigned long boot_linux(char fname[]) {
 		 " syscfg = %0\n"
 		 : "=&r" (val)
 		 );
-#else
-	__asm__ __volatile__ 
-		(
-		 " %0 = ssr\n"
-		 " %0 = setbit(%0, #22)\n"  // I$ prefetch
-		 " ssr = %0\n"
-		 : "=&r" (val)
-		 );
-#endif
-
 	if (h2_vmboot(linux_stext, &linux_vcpu_stacks[0][VCPU_STACK_SIZE - 1],
 								0, LINUX_VM_PRIO, linux_vm) == -1) FAIL("linux vmboot");
 

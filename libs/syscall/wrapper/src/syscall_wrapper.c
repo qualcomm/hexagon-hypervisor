@@ -13,6 +13,19 @@ static int sys_error_translation(errno_t err) {
 	return err;
 }
 
+static void map_stat(struct stat *statbuf, const struct __sys_stat *hexstat) {
+	memset(statbuf, 0, sizeof(*statbuf));
+	statbuf->st_dev = hexstat->dev;
+	statbuf->st_ino = hexstat->ino;
+	statbuf->st_mode = hexstat->mode;
+	statbuf->st_nlink = hexstat->nlink;
+	statbuf->st_rdev = hexstat->rdev;
+	statbuf->st_size = hexstat->size;
+	statbuf->st_atime = hexstat->atime;
+	statbuf->st_mtime = hexstat->mtime;
+	statbuf->st_ctime = hexstat->ctime;
+}
+
 sys_call_ret_t sys_open_internal(const char *name, t_mode_t mode);
 
 __attribute__((weak)) int open(const char *pathname, int flags, ...) {
@@ -37,7 +50,7 @@ __attribute__((weak)) ssize_t read(int fd, void *buf, size_t count) {
 	sys_call_ret_t res = sys_read_internal(fd, buf, count);
 	int ret = (ssize_t)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
-	return count - ret; // According to documentation there should be, but doesn't work: return ret == 0 ? count : 0;
+	return ret < 0 ? ret : count - ret;
 }
 
 sys_call_ret_t sys_write_internal(fd_t fd, const char *buffer, count_t count);
@@ -46,7 +59,7 @@ __attribute__((weak)) ssize_t write(int fd, const void *buf, size_t count) {
 	sys_call_ret_t res = sys_write_internal(fd, buf, count);
 	int ret = (ssize_t)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
-	return count - ret; // According to documentation there should be, but doesn't work: return ret == 0 ? count : 0;
+	return ret < 0 ? ret : count - ret;
 }
 
 sys_call_ret_t sys_flen_internal(fd_t fd);
@@ -90,22 +103,13 @@ __attribute__((weak)) int rmdir(const char *path) {
 sys_call_ret_t sys_stat_internal(const char *name, void *buffer);
 
 __attribute__((weak)) int lstat(const char *__restrict __path, struct stat *__restrict __sbuf) {
-	sys_call_ret_t res = sys_stat_internal(__path, __sbuf);
+	struct __sys_stat hexstat;
+	sys_call_ret_t res = sys_stat_internal(__path, &hexstat);
 	int ret = (int)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	if (ret >= 0)
+		map_stat(__sbuf, &hexstat);
 	return ret;
-}
-
-errno_t sys_tmpnam(char *buffer, unsigned char target, count_t count);
-
-__attribute__((weak)) char *tmpnam(char *s) {
-	static char buf[L_tmpnam];
-	char *out = s ? s : buf;
-	if (sys_tmpnam(out, 0, L_tmpnam) != 0) {
-		SET_LTS_ERROR(-1, ENOENT);
-		return NULL;
-	}
-	return out;
 }
 
 okay_t sys_system(const char *command);
@@ -176,8 +180,27 @@ __attribute__((weak)) off_t lseek(int fd, off_t offset, int whence) {
 	return sys_ftell(fd);
 }
 
-__attribute__((weak)) int fstat(int fd, struct stat *statbuf) {
-	return sys_fstat(fd, statbuf);
+sys_call_ret_t sys_fstat_internal(int fd, void *buffer);
+
+__attribute__((weak)) int fstat(int fd, struct stat *__sbuf) {
+	struct __sys_stat hexstat;
+	sys_call_ret_t res = sys_fstat_internal(fd, &hexstat);
+	int ret = (int)res.ret_value;
+	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	if(ret >= 0)
+        {
+          memset(__sbuf, 0, sizeof(*__sbuf));
+          __sbuf->st_dev = hexstat.dev;
+          __sbuf->st_ino = hexstat.ino;
+          __sbuf->st_mode = hexstat.mode;
+          __sbuf->st_nlink = hexstat.nlink;
+          __sbuf->st_rdev = hexstat.rdev;
+          __sbuf->st_size = hexstat.size;
+          __sbuf->st_atime = hexstat.atime;
+          __sbuf->st_mtime = hexstat.mtime;
+          __sbuf->st_ctime = hexstat.ctime;
+        }
+	return ret;
 }
 
 __attribute__((weak)) void _exit(int status) {
@@ -222,9 +245,23 @@ __attribute__((weak)) int get_cmdline(char *buffer, int count) {
 sys_call_ret_t sys_stat_internal(const char *name, void *buffer);
 
 __attribute__((weak)) int stat(const char    *__restrict __path, struct stat    *__restrict __sbuf) {
-	sys_call_ret_t res = sys_stat_internal(__path, __sbuf);
+	struct __sys_stat hexstat;
+	sys_call_ret_t res = sys_stat_internal(__path, &hexstat);
 	int ret = (int)res.ret_value;
 	SET_LTS_ERROR(ret, (errno_t)res.err_value);
+	if(ret >= 0)
+        {
+          memset(__sbuf, 0, sizeof(*__sbuf));
+          __sbuf->st_dev = hexstat.dev;
+          __sbuf->st_ino = hexstat.ino;
+          __sbuf->st_mode = hexstat.mode;
+          __sbuf->st_nlink = hexstat.nlink;
+          __sbuf->st_rdev = hexstat.rdev;
+          __sbuf->st_size = hexstat.size;
+          __sbuf->st_atime = hexstat.atime;
+          __sbuf->st_mtime = hexstat.mtime;
+          __sbuf->st_ctime = hexstat.ctime;
+        }
 	return ret;
 }
 
@@ -493,9 +530,3 @@ __attribute__((weak)) DIR *fdopendir(int fd) {
 	SET_LTS_ERROR(-1, ENOSYS);
 	return NULL;
 }
-
-/* libh2.a is still compiled with older libc which defines errno as a macro that
- * expands to _Geterrno we can scrap this symbol once we start building H2 with
- * Picolibc
- */
-int _Geterrno(void) { return errno; }

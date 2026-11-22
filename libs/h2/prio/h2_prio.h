@@ -7,28 +7,25 @@
 #define H2_PRIO_H 1
 
 /** @file h2_prio.h
- @brief Mutexes allow at most one thread to hold the mutex at a time
+ @brief Get or set the calling thread's base priority.
 */
 /** @addtogroup h2 
 @{ */
 
 /**
-Get the current base priority.
-@param[in] threadid	Thread ID for thread to get priority
+Get the calling thread's base priority.
 @returns Current priority
 @dependencies None
 */
-int h2_get_prio(unsigned int threadid);
+int h2_get_prio(void);
 
 /**
-Set the priority for a thread.
-@param[in] threadid	Thread ID for thread to change priority
-@param[in] newprio	New priority for the thread
-@returns Zero on success, nonzero on failure
+Set the calling thread's base priority.
+@param[in] newprio	New priority for the calling thread
+@returns Previous priority, or -1 on failure
 @dependencies None
-@note Not currently implemented.
 */
-int h2_set_prio(unsigned int threadid, unsigned int newprio);
+int h2_set_prio(unsigned int newprio);
 
 /** @} */
 

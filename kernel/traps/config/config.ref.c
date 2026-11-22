@@ -8,7 +8,6 @@
 #include <thread.h>
 #include <globals.h>
 #include <hw.h>
-#include <vm.h>
 #include <max.h>
 #include <intconfig.h>
 #include <asid.h>
@@ -31,10 +30,11 @@ static const configptr_t H2K_configtab[CONFIG_MAX] IN_SECTION(".data.config.conf
 	H2K_trap_config_vmblock_init,
 	H2K_trap_config_stlb_alloc,
 	H2K_trap_config_fatal_hook,
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	H2K_trap_config_cluster_sched,
 #endif
-	H2K_trap_config_noc
+	H2K_trap_config_noc,
+	H2K_trap_config_local_mem
 };
 
 u32_t H2K_trap_config(config_type_t configtype, u32_t val1, u32_t val2, u32_t val3, u32_t val4,  H2K_thread_context *me)
@@ -252,7 +252,7 @@ static u32_t H2K_config_vmblock_init_map_phys_intr(H2K_vmblock_t *vmblock, u32_t
 	if (! ((physint == RESCHED_INT)
 				 || (physint == VM_IPI_INT)
 				 || (virt_int == H2K_TIME_GUESTINT)
-				 || (physint == H2K_gp->timer_intnum)
+				 || (physint == TIMER_INT_CORE)
 #ifdef H2K_L2_CONTROL
 				 || (physint == L2_CORE_INTERRUPT)
 #endif
@@ -305,7 +305,7 @@ u32_t H2K_trap_config_stlb_alloc(u32_t unused, u32_t sets, u32_t unused2, u32_t 
 	return H2K_mem_stlb_alloc();
 }
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 u32_t H2K_trap_config_cluster_sched(u32_t unused, u32_t enable, u32_t unused2, u32_t unused3, u32_t unused4, H2K_thread_context *me) {
 
 	H2K_gp->cluster_sched = enable;
@@ -316,6 +316,13 @@ u32_t H2K_trap_config_cluster_sched(u32_t unused, u32_t enable, u32_t unused2, u
 u32_t H2K_trap_config_noc(u32_t unused, u32_t master, u32_t slave, u32_t unused3, u32_t unused4, H2K_thread_context *me) {
 	H2K_gp->noc_mbase = master;
 	H2K_gp->noc_sbase = slave;
+
+	return 0;
+}
+
+u32_t H2K_trap_config_local_mem(u32_t unused, u32_t base, u32_t size, u32_t stride, u32_t unused4, H2K_thread_context *me) {
+	H2K_gp->local_mem_base = base + (stride * H2K_gp->core_id);
+	H2K_gp->local_mem_size = size;
 
 	return 0;
 }

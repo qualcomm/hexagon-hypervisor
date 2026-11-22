@@ -5,8 +5,6 @@
 
 #ifndef H2K_VMOP_H
 #define H2K_VMOP_H 1
-
-#include <vm.h>
 #include <context.h>
 #include <h2_common_vm.h>
 

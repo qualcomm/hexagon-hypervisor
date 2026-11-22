@@ -69,6 +69,19 @@ void set_tlb_entry_at_table_index(u32_t tlb_index, u64_t tlb_entry) {
     H2K_spinlock_unlock(&H2K_kg.tmpmap_lock);  // for tmpmap
 }
 
+u64_t get_tlb_entry_template(u32_t tlb_index) {
+    H2K_mem_tlbfmt_t entry;
+    entry.raw = H2K_mem_tlb_read(tlb_index);
+    if (entry.valid) return entry.raw;
+    /* No TLB entry installed (e.g. a bare-metal start): use a valid 4KB entry */
+    entry.raw = 0;
+    entry.ppd = 1;  // 4KB page: the lowest set bit of ppd gives the size
+    entry.cccc = 7;
+    entry.xwru = 0xf;
+    entry.valid = 1;
+    return entry.raw;
+}
+
 int main()
 {
     __asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
@@ -83,7 +96,7 @@ int main()
         FAIL("TLB free index not found to attempt set and invalidate va");
     }
     
-    u64_t tlb_entry = H2K_mem_tlb_read(tlb_index_last_used);  // tlb entry as template
+    u64_t tlb_entry = get_tlb_entry_template(tlb_index_last_used);  // tlb entry as template
     u32_t va = H2K_LINK_ADDR;  // VA set H2K_LINK_ADDR OK to use if just within a unit test 
     volatile u32_t asid = 0; // ASID set for running thread
     __asm__ __volatile(

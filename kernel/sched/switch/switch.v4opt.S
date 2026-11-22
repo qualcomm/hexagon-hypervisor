@@ -16,7 +16,7 @@
  * We don't care about any registers
  * Handle any tracing and profiling
  * If switching to NULL, go to sleep
- * Otherwise, load continuation into LR and jump to check_sanity_unlock
+ * Otherwise, load continuation into LR
  */
 
 #define KG_CPUSTART r6
@@ -336,7 +336,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		r0 = memw(DST+#CONTEXT_elr)
 		START = sub(NOW,START)			// pcycles - oncpu wait
 	}
-		STID = TIDVAL
+		stid = TIDVAL
+		isync
 	{
 		r3:2 = add(r3:2,START)			// waitcycles + pcycles - oncpu wait
 		r25:24 = memd(DST+#CONTEXT_gssr_gelr)
@@ -388,8 +389,10 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		r31 = and(r31,#-4)
-		jump H2K_check_sanity_unlock
 	}
+
+		ASM_BKL_UNLOCK(r6, r7, r8, p0)
+		jumpr r31
 
 #define TRACE r4
 #define DATA r5
@@ -415,16 +418,18 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	}
 	{
 		DATA = insert(TRACE, #8, #0)
+#if CLUSTER_SCHED
 		memw(H2K_GP+#KG_wait_mask) |= r0
+#endif
 		r3:2 = combine(#0,#-1)
 	}
 	trace(DATA)
 #undef TRACE
 #undef DATA
-	STID = r2
 	SGP0 = DST
+	stid = r2
+	isync 
 	{
-		memw(H2K_GP+#KG_priomask) |= r0
 		r0 = ##0x00040000 // insert(r5,#3,#16)
 	}
 	ASM_BKL_UNLOCK(r4, r5, r6, p0)
@@ -432,6 +437,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	{
 		ssr = r0
 	}
+	isync
 	{
 		jump H2K_wait_forever
 	}

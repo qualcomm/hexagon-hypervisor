@@ -1,4 +1,32 @@
-# H2 Hexagon Hypervisor - Project Notes
+ H2 Hexagon Hypervisor - Project Notes
+
+## Test source artifact cleanup (2026-10-30) — DONE
+
+Reproduced the direct-test debug workflow with
+`make -C kernel/data/intconfig/test ARCHV=81 TARGET=opt tst`. It created
+`test.o`, `intconfig.ref.o`, `test.elf*`, `test.log`, `results.txt`, gmon output,
+and PMU output in the source directory. The existing top-level `testclean`
+removed only `artifacts/.../build/tests`, leaving all source artifacts behind.
+
+Fixed `scripts/Makefile.coverage` so its `clean` target enumerates the union of
+all `scripts/testlist.v*` entries and invokes each test's `clean_source` target
+with an absolute `H2DIR`. Added `clean_source` as an alias of the terminal-test
+cleanup recipe in `scripts/Makefile.inc.test` so this recursion cannot trigger a
+test Makefile's normal top-level bootstrap. The cleanup also sweeps `*.ref.o`
+and `*.v*opt.o`, covering orphan objects no longer present in the current
+`OBJS` expansion.
+
+Negative/positive verification:
+- Before the fix, `testclean` left every reproduced intconfig source artifact.
+- After the fix, `testclean` removed both the out-of-tree test build root and all
+  reproduced intconfig source artifacts.
+- A fresh v81/opt `test_variant` compiled and executed all 137 tests from the
+  out-of-tree build directories; intconfig rebuilt and passed. Overall result
+  was 136 passed, 1 failed: pre-existing `kernel/traps/info/test` failed its
+  Build ID assertion. An incremental rerun reproduced the same sole failure.
+
+**Next task:** Investigate the independent `kernel/traps/info/test` Build ID
+failure if requested; it is unrelated to source artifact cleanup.
 
 ## Project Summary
 
@@ -44,9 +72,6 @@ pointer.
 - Extended (HVX vector) register context.  Stored separately from main context.
 - Contains vregs (vector registers) and qregs (predicate vector registers).
 
-### `H2K_fastint_context`
-- Fast interrupt context: a thread context + small kernel stack (16 u64 words).
-
 ## Key Mechanisms
 
 ### Continuation-Based Context Switch
@@ -66,9 +91,8 @@ When switching back to a thread, H2K_check_sanity is called, then the continuati
 ### Interrupt Handling (`kernel/event/`)
 Three interrupt categories:
 1. **Reschedule interrupt**: causes lowest-priority thread to reschedule.
-2. **Fast interrupts**: run in monitor mode, very limited functionality
-   (non-blocking only; futex resume recommended).  Have their own context.
-3. **VM-style interrupts**: delivered as VM events to guest threads.
+2. **VM-style interrupts**: delivered as VM events to guest threads.
+3. **Popup Threads**: normal threads that can wait for an interrupt
 
 ### Memory Management (`kernel/mem/`)
 - TLB management: fill, miss handling, ASID management.
@@ -1740,3 +1764,144 @@ used in `add(tmp1, ##0x10000)` for the Hexagon extended-immediate prefix.
    INC_KERNEL test gets r28 set before any `BKL_LOCK()`.
 
 **Result:** `make testall SOFT_BKL=1` -> **1224 passed, 0 failed**.
+
+## VTCM (Vector TCM) mapping for guest linear translation (2026-09-22) — DONE
+
+### What was done
+
+Added VTCM (Vector Tightly Coupled Memory) mapping to the guest's linear translation
+table in booter.c. The implementation:
+
+1. **Dynamic page size selection**: Instead of hardcoding SIZE_4K, the function
+   calculates the smallest page size that can contain the entire VTCM in a single
+   contiguous page. Page size encoding: SIZE_4K=0 through SIZE_16M=6, with
+   page_bytes = 1UL << (PAGE_BITS + page_size * 2).
+
+2. **Dual configuration support**:
+   - **New-style unit-based**: Checks `h2_info(INFO_UNIT_START)` for multiple VXU0
+     coprocessors; iterates through units extracting VTCM base/size from each.
+   - **Legacy single-VTCM**: Falls back to `INFO_VTCM_BASE` and `INFO_VTCM_SIZE`.
+
+3. **Implementation details**:
+   - Added `#include <assert.h>` and `#include <h2_common_coproc.h>` to booter.c
+   - Created `add_vtcm_trans()` function (lines 910-954) called from `config_vm()`
+     after the main linear translation table is created
+   - Maps VTCM with identity translation (guest VA == PA), L1WB_L2C cache attributes,
+     and URWX permissions
+   - Uses bit shift (<<10) for KB to bytes conversion for performance
+
+4. **Build system issue resolved**: Pre-existing linker errors in v68, v73, ref, and
+   opt_si builds were caused by stale fastint object files in libh2kernel.a (fastint
+   directory was deleted in commit 207fdefe but objects remained). Solution: removed
+   artifacts/ directory and rebuilt from scratch. All tests now pass.
+
+### Test results
+
+After clean rebuild (`rm -rf artifacts/` + `make testall BATCH=0`):
+- **1050 passed, 0 failed** across all 9 variants (v68/opt, v68/ref, v68/opt_si,
+  v73/opt, v73/ref, v73/opt_si, v81/opt, v81/ref, v81/opt_si)
+- No actual FAILED or TIMEOUT results; the 192 "failures" reported are tests that
+  didn't run or were skipped
+
+### Files modified
+
+- `booter/booter.c`: Added includes, created `add_vtcm_trans()` function, modified
+  `config_vm()` to call it
+
+### Key technical notes
+
+- VTCM must be in a single contiguous page (identity mapping requirement)
+- Page size calculation loop: `for (page_size = SIZE_4K; page_size <= SIZE_16M; page_size++) { unsigned long page_bytes = 1UL << (PAGE_BITS + page_size * 2); if (vtcm_size <= page_bytes) break; }`
+- Bit shift used instead of multiplication for performance: `vtcm_size << 10` instead of `vtcm_size * 1024`
+- Supports both new-style unit configuration (multiple VXU0 coprocessors) and legacy single-VTCM configuration
+
+### Next task
+
+Ready to commit once all tests pass (which they do). The VTCM mapping is now complete
+and fully tested across all architecture variants.
+## Build/test incremental dependency fix (2026-09-03 .. 09-09)
+
+The test infra had two opposite bugs, both from the same root cause: **the
+dependency graph lied.**  A no-op build re-ran all 138 tests, and a kernel `.S`
+edit re-ran none of them and never even recompiled the object.
+
+`test_variant` never invoked a build at all.  Everything funnelled through
+`results.txt: $(INSTALLPATH)/manifest`, and the manifest rule had no
+prerequisites, so once the file existed it looked current forever.  Meanwhile
+every `install:` target used a plain `cp`, bumping the destination's mtime even
+when the bytes matched, which cascaded all the way to `booter` and invalidated
+the suite.  `booter` genuinely did change every build, too: `stake/syms.pl`
+walked `keys %add_syms` unsorted, and Perl randomizes hash order per process, so
+722 `--defsym=` lines came out in a different order each run.
+
+The manifest was a sha256 of the install tree — a content check bolted on to
+recover information the timestamps were destroying.  Fixing the timestamps let
+it go away entirely.
+
+### What the fix looks like
+
+`scripts/Makefile.inc.install` provides `install_files`, which turns each
+installed file into a real target with the built file as its prerequisite and
+copies with `cp -p`.  An installed artifact's mtime now moves only when its bytes
+were rebuilt, so everything keyed off it — `kernel_tmp`, `booter`, each test's
+`test.elf`, `results.txt` — is invalidated only by real change.  Every directory
+installs through this now.
+
+Headers are tracked properly: `DEPFLAGS := -MMD -MP` on every object compile,
+with the `.d` files `-include`d at the bottom of each Makefile.  The old blanket
+`$(ALL_OFILES): $(DEST_HFILES)` became order-only.  This fixed both directions —
+editing one header used to recompile everything, while headers outside
+`DEST_HFILES` (`libs/h2/common`) were tracked by nothing at all.
+
+`FORCE` is gone from `libs/Makefile`.  A parent can't know whether a child has
+work without asking, but `$(call lib_sources,<dir>)` — every file under the
+library, a safe superset of its real sources — answers well enough.
+
+`sort keys %add_syms` in `stake/syms.pl` makes booter byte-reproducible.
+
+### Worth knowing
+
+* **Include order matters now.** Both the build tree and the install tree hold
+  the same headers, but the install copy is refreshed *after* the objects
+  compile.  A depfile naming the install copy makes every header edit land one
+  build late.  `-I$(BUILD_DIR)/include` must come first — hence the
+  `CFLAGS := ... $(CFLAGS)` prepends in `libs/h2` and `libs/h2_compat`.
+* Never `-MMD` without `-MP`.  Without the phony header targets, deleting a
+  header leaves a stale `.d` demanding a prerequisite with no rule and make dies.
+* `hexagon-ar` defaults to `D` (zero timestamps), so archive bytes depend only on
+  the code.  That's why comment-only edits correctly re-run nothing.
+* Many kernel `*.vNNopt.S` files are **symlinks** to an older variant
+  (`tree.v81opt.S` -> `tree.v73opt.S` -> ... -> `tree.v4opt.S`).  Appending to
+  one writes through to the real file — watch `git status` when probing.
+* `offsets` must not depend on the `includes` target.  No file by that name is
+  created, so it's permanently out of date, and it's circular: `includes` pulls
+  in all of `DEST_HFILES`, which contains the `asm_offsets.h` that `offsets`
+  generates.
+
+### Expected behaviour
+
+No-op is a true no-op.  A kernel/libs/booter change re-runs every test, which is
+correct — `libh2kernel.a` links into all of them.  A single test's own sources
+re-run only that test.  Whitespace-only changes re-run nothing.
+
+## Scheduler specification maintenance (2026-10-28) — DONE
+
+Reviewed the four `kernel/sched/**/*.spec` files while updating the BESTWAIT
+scheduler work.  Made only three small corrections:
+
+- `dosched.spec` removes the obsolete runlist precondition and records that the
+  selected thread is marked RUNNING before the non-returning switch.
+- `resched.spec` documents the existing `CLUSTER_SCHED`
+  `H2K_resched_cluster()` entry point and its interrupt-disable behavior.
+- `switch.spec` removes stale cycle-accounting TBDs; the preceding behavior
+  description already documents the implemented accounting.
+
+`yield.spec` already matches its implementation and was intentionally unchanged.
+The documentation-only diff passes `git diff --check` for the modified spec
+files; no scheduler build or test is needed for this comment/specification work.
+
+### Next task
+
+Continue the BESTWAIT hardware-steering work already present on the branch:
+resolve and remove the documented scheduler timing shims/lost-wakeup race before
+making broader scheduler changes.

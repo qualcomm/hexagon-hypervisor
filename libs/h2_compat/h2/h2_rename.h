@@ -87,11 +87,6 @@ REDEF_FUNCTION(void, profile_get_idle_pcycles,(unsigned long long *pcycles),(pcy
 REDEF_FUNCTION(void, profile_get_thread_pcycles,(int thread_id, unsigned long long *pcycles),(thread_id, pcycles));
 #endif
 
-/*  "blast_fastint.h"  */
-
-// REDEF_FUNCTION(void ,register_fastint,(int intno, int (*fn)(int)),(intno,fn));
-// REDEF_FUNCTION(void ,deregister_fastint,(int intno),(intno));
-
 /*  "blast_futex.h"  */
 
 REDEF_FUNCTION(int ,futex_wait,(void *lock, int val),(lock,val));
@@ -152,7 +147,7 @@ REDEF_FUNCTION(void ,set_prefetch,(unsigned int settings),(settings));
 
 // Check the names on these
 //REDEF_FUNCTION(int ,get_prio,(void),());
-//REDEF_FUNCTION(int ,set_prio,(unsigned int threadid, unsigned int newprio),(threadid,newprio));
+//REDEF_FUNCTION(int ,set_prio,(unsigned int newprio),(newprio));
 
 /*  "blast_rmutex.h"  */
 

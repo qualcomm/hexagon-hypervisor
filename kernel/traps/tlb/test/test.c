@@ -198,7 +198,7 @@ int main()
 	u32_t tlb_size       = LEGACY_JTLB_SIZE;
 #endif
 	u32_t last_tlb_index = tlb_size - TEST_PINNED_COUNT - 1;
-	H2K_kg_init(0, 0, 0, last_tlb_index, tlb_size, 0, 0, 0);
+	H2K_kg_init(0, 0, 0, 0, last_tlb_index, tlb_size, 0, 0, 0);
 	printf("initted!\n");
 	unsigned long long expected_mask = (~0ULL) << ((last_tlb_index + 1) & (ALLOC_WINDOW - 1));
 	if (H2K_gp->pinned_tlb_mask != expected_mask) {

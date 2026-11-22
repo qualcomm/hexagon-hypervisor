@@ -9,11 +9,11 @@
 #ifndef ASM
 
 #include <c_std.h>
-#include <vm.h>
 #include <context.h>
 #include <h2_common_vmint.h>
+#include <vmblock.h>
 
-typedef s32_t (*H2K_vm_int_op_fn_t)(H2K_vmblock_t *vmblock, 
+typedef s32_t (*H2K_vm_int_op_fn_t)(H2K_vmblock_t *vmblock,
 		H2K_thread_context *me, u32_t intno, struct H2K_vm_int_opinfo_struct *info);
 
 #if 0

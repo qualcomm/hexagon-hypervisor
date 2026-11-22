@@ -1,11 +1,20 @@
 
 BUILD_DIR         := $(INSTALLPATH)/../build/libs/syscall/angel
+FLAGS_STAMP := $(BUILD_DIR)/flags.stamp
 H2_BUILD_DIR      := $(INSTALLPATH)/../build/libs/h2
 H2_COMPAT_BUILD_DIR := $(INSTALLPATH)/../build/libs/h2_compat
 POSIX_BUILD_DIR   := $(INSTALLPATH)/../build/libs/posix
 
-CFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -Wno-builtin-requires-header -Werror -I$(H2_BUILD_DIR)/include -I$(H2_COMPAT_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include -g $(OPTIMIZE) $(OPT_ADD) -G0
-ASFLAGS = -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include
+# C library selection (the Picolibc target and cstdlib) comes from Makefile.inc.libc.
+include ../../../scripts/Makefile.inc.libc
+TARGET_FLAG = $(OSLIB_CFLAGS)
+ifeq ($(PICOLIBC),1)
+# _STD_END/_STD_BEGIN are Dinkumware-specific macros; define them as no-ops
+TARGET_FLAG += -D_STD_END= -D_STD_BEGIN=
+endif
+
+CFLAGS = $(TARGET_FLAG) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -Wno-builtin-requires-header -Werror -I$(H2_BUILD_DIR)/include -I$(H2_COMPAT_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include -g $(OPTIMIZE) $(OPT_ADD) -G0
+ASFLAGS = $(TARGET_FLAG) -mv$(TOOLARCH) -DARCHV=$(ARCHV) -Iinclude -Wall -I$(H2_BUILD_DIR)/include -I$(POSIX_BUILD_DIR)/include
 
 CFLAGS += $(LIB_CFLAGS) $(H2_EXTRA_CFLAGS)
 
@@ -22,6 +31,10 @@ C_FILES = $(wildcard src/*.c)
 
 O_FILES = $(addprefix $(BUILD_DIR)/,$(ASM_FILES:.S=.o) $(C_FILES:.c=.o))
 
+# Track header dependencies so edits to a .h rebuild the objects that use it.
+CFLAGS += -MMD -MP
+ASFLAGS += -MMD -MP
+
 all: $(BUILD_DIR)/libangel.a
 
 clean:
@@ -29,13 +42,19 @@ clean:
 
 $(BUILD_DIR)/libangel.a: $(O_FILES)
 	mkdir -p $(dir $@)
+	rm -f $@
 	$(AR) cru $@ $(sort $(O_FILES))
 
-$(BUILD_DIR)/%.o: %.c
+$(BUILD_DIR)/%.o: %.c $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/%.o: %.S
+$(BUILD_DIR)/%.o: %.S $(FLAGS_STAMP)
 	mkdir -p $(dir $@)
-	$(CC) $(ASFLAGS) -c -o $@ $<
+	$(CC) $(ASFLAGS) $(DEPFLAGS) -c -o $@ $<
 
+include $(H2DIR)/scripts/Makefile.inc.flagstamp
+
+# Per-object header deps from $(DEPFLAGS); '-' tolerates a clean tree with no .d.
+# Last, so a rule from a .d file never becomes the default goal.
+-include $(O_FILES:.o=.d)

@@ -4,6 +4,25 @@
 
 .. module:: readylist
 
+Overview
+--------
+
+The readylist API is split into two groups:
+
+* **Base functions** (:c:func:`H2K_ready_append`, :c:func:`H2K_ready_insert`,
+  :c:func:`H2K_ready_remove`) — manipulate the ready list without touching the
+  hardware BESTWAIT comparator. Used at mid-reschedule sites where a following
+  :c:func:`H2K_dosched()` call on the same HW thread will re-arm BESTWAIT.
+
+* **Arming variants** (:c:func:`H2K_ready_append_arm`, :c:func:`H2K_ready_remove_arm`) — 
+  manipulate the ready list AND arm the hardware BESTWAIT comparator with the new best ready priority. 
+  Used at wake/sleep-transition sites where the thread is switched to immediately, 
+  or at :c:func:`H2K_ready_getbest()` to ensure BESTWAIT is always re-armed after removing the best thread.
+
+The BESTWAIT comparator is a hardware mechanism that raises a reschedule interrupt
+whenever any HW thread's STID.PRIO is strictly worse (higher number) than the armed
+BESTWAIT value. 
+
 H2K_kg.ready and H2K_kg.ready_valids
 ------------------------------------
 
@@ -28,10 +47,10 @@ We find the highest priority ready thread by using the CT0 instruction to find
 the highest priority that has a ready thread.  We then can remove the thread in
 the corresponding list.
 
-H2K_ready_init
---------------
+H2K_readylist_init
+------------------
 
-.. c:function:: void H2K_ready_init()
+.. c:function:: void H2K_readylist_init(void)
 
 Description
 ~~~~~~~~~~~
@@ -41,7 +60,8 @@ Initializes the H2K_kg.ready structures.
 Functionality
 ~~~~~~~~~~~~~
 
-Set all elements of H2K_kg.ready to NULL, and set H2K_kg.ready_valids to zero.
+In testing builds, sets all elements of H2K_kg.ready to NULL and
+H2K_kg.ready_valids to zero.  Production builds require no runtime work.
 
 
 H2K_ready_best_prio
@@ -200,37 +220,134 @@ more elements in the ring, we call :c:func:`H2K_ready_clear_prio()` with the
 thread's priority.
 
 
-H2K_ready_getbest
------------------
+H2K_ready_append_arm
+--------------------
 
-.. c:function:: static inline H2K_thread_context *H2K_ready_getbest()
+.. c:function:: static inline void H2K_ready_append_arm(H2K_thread_context *thread)
 
-	:returns: the best priority ready thread, which has been removed from
-		the ready list.  Or, if no threads are ready, returns NULL.
+	:param thread: the thread to add
 
 Description
 ~~~~~~~~~~~
 
-Removes the best priority thread from the ready list.
+Appends the thread to the ready list and arms the hardware BESTWAIT comparator.
 
 Functionality
 ~~~~~~~~~~~~~
 
-If there are no ready threads (!:c:func:`H2K_ready_any_valid()`), we return NULL.
+Calls :c:func:`H2K_ready_append()` to add the thread to the ready list, then
+calls :c:func:`H2K_set_bestwait()` with the result of :c:func:`H2K_ready_best_prio()`
+to arm the hardware reschedule-interrupt comparator with the best ready priority.
 
-We call :c:func:`H2K_ready_best_prio()` to obtain the priority of the best priority ready thread.
-
-We then get the thread pointed to by the H2K_kg.ready pointer at the correct priority.
-
-This thread is removed from the ready list by calling :c:func:`H2K_ready_remove()`, and returned.
-
-
+Used at wake/sleep-transition sites where a thread is being placed on the ready 
+list and will be switched to immediately or returned without a following :c:func:`H2K_dosched()`
+call on the same HW thread. The BESTWAIT arm ensures the hardware comparator is active to
+trigger a reschedule interrupt if a running thread's priority becomes worse than
+the newly-ready thread's priority.
 
 
+
+H2K_ready_remove_arm
+--------------------
+
+.. c:function:: static inline void H2K_ready_remove_arm(H2K_thread_context *thread)
+
+	:param thread: the thread to remove
+
+Description
+~~~~~~~~~~~
+
+Removes the thread from the ready list and arms the hardware BESTWAIT comparator.
+
+Functionality
+~~~~~~~~~~~~~
+
+Calls :c:func:`H2K_ready_remove()` to remove the thread from the ready list, then
+calls :c:func:`H2K_set_bestwait()` with the result of :c:func:`H2K_ready_best_prio()`
+to arm the hardware reschedule-interrupt comparator with the best ready priority.
+
+Used in :c:func:`H2K_ready_getbest()` to ensure BESTWAIT is always re-armed after
+removing the best thread from the ready list. Also used in :c:func:`H2K_resched()`
+to immediately close the disarmed window after a hardware reschedule interrupt
+fires (which resets BESTWAIT to 0x1FF).
+
+
+.. c:function:: static inline void H2K_update_coprocs(u32_t hthread, u32_t hthread_xe, u32_t hthread_xe2, u32_t hthread_xe3, u32_t head_xe, u32_t head_xe2, u32_t head_xe3)
+
+	:param hthread: Hardware thread whose coprocessor use is changing
+	:param hthread_xe: Current XE state
+	:param hthread_xe2: Current XE2 state
+	:param hthread_xe3: Current XE3 state
+	:param head_xe: Required XE state
+	:param head_xe2: Required XE2 state
+	:param head_xe3: Required XE3 state
+
+Description
+~~~~~~~~~~~
+
+H2K_update_coprocs
+------------------
+Updates the cluster's coprocessor count for a hardware thread switching to the
+requirements of a selected ready thread.  This helper is present only when
+``CLUSTER_SCHED`` is enabled.
+
+
+H2K_ready_head
+--------------
+
+.. c:function:: static inline H2K_thread_context *H2K_ready_head(u32_t prio, u32_t hthread)
+
+	:param prio: Priority whose ready ring is examined
+	:param hthread: Hardware thread selecting work
+	:returns: A thread to schedule, or NULL when work is handed to another hardware thread
+
+Description
+~~~~~~~~~~~
+
+Selects a thread from the head priority while accounting for cluster
+coprocessor limits.
+Removes the best priority thread from the ready list and re-arms BESTWAIT.
+
+Functionality
+~~~~~~~~~~~~~
+
+Without cluster scheduling, the head of the priority ring is returned.  With
+cluster scheduling, the function selects work that fits available coprocessor
+capacity, may signal a waiting hardware thread in a less-loaded cluster, and
+updates coprocessor accounting for the selected work.
+
+
+H2K_ready_getbest
+-----------------
+
+.. c:function:: static inline H2K_thread_context *H2K_ready_getbest(u32_t hthread)
+
+	:param hthread: Hardware thread selecting work
+	:returns: the selected ready thread after removal from the ready list, or NULL
+
+Description
+~~~~~~~~~~~
+
+Removes the best-priority eligible thread from the ready list.
+
+Functionality
+~~~~~~~~~~~~~
+
+The function finds the best ready priority and calls :c:func:`H2K_ready_head()`
+to account for cluster scheduling.  A selected thread is removed with
+:c:func:`H2K_ready_remove()`.  If no thread is available, the function returns
+NULL and, with cluster scheduling enabled, releases the hardware thread's
+coprocessor accounting before it sleeps.
+This thread is removed from the ready list by calling :c:func:`H2K_ready_remove_arm()`,
+which also re-arms BESTWAIT with the new best priority (or 0x1FF if no threads remain),
+and the thread is returned.
 
 
 Testing
 -------
+
+Base Functions (H2K_ready_append, H2K_ready_insert, H2K_ready_remove, H2K_ready_getbest)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Samples
 ~~~~~~~
@@ -264,6 +381,12 @@ Harness
 ~~~~~~~
 
 The readylist module is reasonably self-contained, so the test harness will only
-use the header file and object file.  
+use the header file and object file.
 
 
+BESTWAIT Arming Functions (H2K_ready_append_arm, H2K_ready_remove_arm)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `_arm` variants are tested separately in the H2K_bestwait test suite
+(``kernel/data/readylist/tests/H2K_bestwait/test.c``), which validates the
+hardware BESTWAIT/SCHEDCFG comparator behavior and the arming discipline.

@@ -25,7 +25,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <cpuint.h>
-#include <vm.h>
 #include <context.h>
 #include <globals.h>
 

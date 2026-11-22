@@ -44,6 +44,7 @@ FUNC_START H2K_vm_int_deliver_locked .text.vm.int .p2align 2 // deliver(vmblock,
 #define READY r13
 #define READYVALIDS r12
 #define MASK r11
+#define BESTWAIT r8 
 #define PREV_NEXT r7:6
 #define PREV r7
 #define NEXT r6
@@ -55,6 +56,7 @@ FUNC_START H2K_vm_int_deliver_locked .text.vm.int .p2align 2 // deliver(vmblock,
 		READYVALIDS = add(H2K_GP,#KG_ready_valids)
 	}
 	{
+		BESTWAIT = bestwait
 		WORDIDX_BITIDX = bitsplit(PRIO,#5)
 		PREV_NEXT = combine(THREAD,THREAD)
 		READYHEAD = memw(READY+PRIO<<#2)
@@ -62,22 +64,38 @@ FUNC_START H2K_vm_int_deliver_locked .text.vm.int .p2align 2 // deliver(vmblock,
 	{
 		MASK = memw(READYVALIDS+WORDIDX<<#2)
 		PTMP = cmp.eq(READYHEAD,#0)
-		if (!PTMP.new) NEXT = READYHEAD
-		if (!PTMP.new) PREV = memw(READYHEAD+#CONTEXT_prev)
+		if (PTMP.new) jump:nt .Lforward
+		r0 = #0
+		BESTWAIT = minu(BESTWAIT, PRIO)
+
 	}
+	{
+		NEXT = READYHEAD
+		PREV = memw(READYHEAD+#CONTEXT_prev)
+		MASK = setbit(MASK,BITIDX)
+		memd(THREAD+#CONTEXT_next) = PREV_NEXT
+	}
+	{
+		memw(PREV+#CONTEXT_next) = THREAD
+	}
+	{
+		bestwait = BESTWAIT
+		memw(NEXT+#CONTEXT_prev) = THREAD
+		memw(READYVALIDS+WORDIDX<<#2) = MASK
+		jumpr r31
+	}
+.Lforward:
 	{
 		MASK = setbit(MASK,BITIDX)
 		memd(THREAD+#CONTEXT_next) = PREV_NEXT
-		if (PTMP) memw(READY+PRIO<<#2) = THREAD
+		memw(READY+PRIO<<#2) = THREAD
 	}
+		BESTWAIT = bestwait
+		BESTWAIT = minu(BESTWAIT, PRIO)
 	{
-		if (!PTMP) memw(PREV+#CONTEXT_next) = THREAD
-		if (!PTMP) memw(NEXT+#CONTEXT_prev) = THREAD
-	}
-	{
-		r1:0 = #0
 		memw(READYVALIDS+WORDIDX<<#2) = MASK
-		jump H2K_check_sanity
+		bestwait = BESTWAIT
+		jumpr r31
 	}
 #undef WORDIDX_BITIDX
 #undef WORDIDX
@@ -85,6 +103,7 @@ FUNC_START H2K_vm_int_deliver_locked .text.vm.int .p2align 2 // deliver(vmblock,
 #undef READY
 #undef READYVALIDS
 #undef MASK
+#undef BESTWAIT
 #undef PREV_NEXT
 #undef PREV
 #undef NEXT

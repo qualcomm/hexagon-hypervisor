@@ -9,7 +9,7 @@
 #include <asid_types.h>
 #include <c_std.h>
 #include <max.h>
-#include <vm.h>
+#include <vmblock.h>
 
 //s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock) IN_SECTION(".text.mem.asid");
 s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, u32_t extra, H2K_vmblock_t *vmblock) IN_SECTION(".text.mem.asid");

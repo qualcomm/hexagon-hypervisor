@@ -1,51 +1,35 @@
-:mod:`vmfuncs` -- Various VM Functionalities
-============================================
+:mod:`vmfuncs` -- VM trap functions
+====================================
 
 .. module:: vmfuncs
+
+These functions operate on the current virtual CPU context.  Results are
+returned by updating registers in ``me`` rather than through the C return value.
+
 
 H2K_vmtrap_version
 ------------------
 
 .. c:function:: void H2K_vmtrap_version(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Places ``H2K_VM_VERSION`` in ``me->r00``.
 
-This function handles the "vmversion" virtual instruction, to select/identify
-VM architecture versions.
-
-Functionality
-~~~~~~~~~~~~~
-
-This function sets r0 to the only supported virtual machine version.
 
 H2K_vmtrap_return
 -----------------
 
 .. c:function:: void H2K_vmtrap_return(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
-
-This function handles the "vmreturn" virtual instruction, to return
-from an event.
-
-Functionality
-~~~~~~~~~~~~~
-
-This function uses the Guest registers GELR, GSSR, and (potentially) GOSP to
-switch from guest mode back to either guest or user mode.
-
-If the IE (interrupt enable), SS (single step), or UM (User Mode) bits are set,
-the appropriate settings are made to the virtual machine state, including
-values desinted for the Hexagon system architecture registers.
-
-If interrupts are being enabled, we call :c:func:`H2K_enable_guest_interrupts()` 
-to handle the change.
+Restores the guest register state and returns from a VM event using the saved
+``GELR`` and ``GSSR`` values.  When the saved user-mode bit is set, swaps the
+guest and kernel stack pointers and clears the guest-mode bit in the live SSR.
+It also restores the saved single-step state.  If guest interrupts were enabled
+in the saved state, re-enables them through
+:c:func:`H2K_enable_guest_interrupts()`.
 
 
 H2K_vmtrap_setvec
@@ -53,98 +37,58 @@ H2K_vmtrap_setvec
 
 .. c:function:: void H2K_vmtrap_setvec(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
+Sets ``me->gevb`` from ``me->r00`` and sets ``me->r00`` to zero on success.
 
-Description
-~~~~~~~~~~~
-
-This function sets the guest event vector base to the specified value.
-
-Functionality
-~~~~~~~~~~~~~
-
-Change the GEVB in the thread context to the value in R00, and set r00
-to zero for success.
 
 H2K_vmtrap_setie
 ----------------
 
 .. c:function:: void H2K_vmtrap_setie(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Sets the virtual interrupt-enable state according to ``me->r00`` and returns
+the previous state in ``me->r00``.  If the requested value is outside the
+supported ``H2K_IE`` range, returns ``-1`` in ``me->r00`` without changing the
+state.  Otherwise, the ``H2K_IE_ENABLE`` bit selects
+:c:func:`H2K_enable_guest_interrupts()` or
+:c:func:`H2K_disable_guest_interrupts()`.
 
-This function enables or disables interrupts, returning the previous value in r0.
-
-Functionality
-~~~~~~~~~~~~~
-
-First, we get the current interrupt enabled state.  We then call 
-:c:func:`H2K_enable_guest_interrupts()` or :c:func:`H2K_disable_guest_interrupts()` 
-depending on the value of r0.  Finally, we set r00 to the former interrupt 
-state and return.
 
 H2K_vmtrap_getie
 ----------------
 
 .. c:function:: void H2K_vmtrap_getie(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
+Places the current virtual interrupt-enable state in ``me->r00``.
 
-Description
-~~~~~~~~~~~
-
-This function returns the current state of interrupts, enabled or disabled.
-
-Functionality
-~~~~~~~~~~~~~
-
-Returns the IE status for the virtual CPU in the context r0.
 
 H2K_vmtrap_get_pcycles
 ----------------------
 
 .. c:function:: void H2K_vmtrap_get_pcycles(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Places the current virtual CPU time in ``me->r0100`` and the current hardware
+pcycle value in ``me->r0302``.
 
-Returns the cpu time for the current virtual CPU in r1:0, and the hardware PMU counters in r3:2.
-
-Functionality
-~~~~~~~~~~~~~
-
-This function uses :c:func:`H2K_cputime_get()` to get the CPU time, places
-the result in the context r0100, and copies pcycle registers to r0302.
 
 H2K_vmtrap_set_pcycles
 ----------------------
 
 .. c:function:: void H2K_vmtrap_set_pcycles(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
-
-This function sets the cpu time for the current virtual CPU.
-
-Functionality
-~~~~~~~~~~~~~
-
-This function resets the oncpu_start value for the current hardware thread to 
-the current pcycle count, and sets the totalcycles value for the current
-thread context to the value specified in r0100.
-
-NOTE: This function should be deprecated.  The guest can keep track of a delta itself.
-
-
+Sets ``me->totalcycles`` from ``me->r0100`` and resets the current hardware
+thread's ``oncpu_start`` value to the current pcycle register.  This operation
+is retained for compatibility; a guest can otherwise track elapsed time using
+deltas from :c:func:`H2K_vmtrap_get_pcycles()`.
 
 
 H2K_vmtrap_wait
@@ -152,174 +96,112 @@ H2K_vmtrap_wait
 
 .. c:function:: void H2K_vmtrap_wait(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Runs pending VM work while holding the BKL.  If work produces an interrupt,
+returns its number in ``me->r00`` and releases the BKL.  If no work is pending,
+marks the virtual CPU as ``VMWAIT``, records it as waiting when its CPU index is
+within the tracked waiting-CPU mask, removes it from the run list, and
+reschedules it.  The blocked path does not return immediately to the caller.
 
-This function waits for an interrupt.
-
-Functionality
-~~~~~~~~~~~~~
-
-If an interrupt is pending, the function returns immediately with the interrupt
-that was pending.  Otherwise, it blocks until an interrupt is enabled.
-
-We keep track of the VCPUs that are waiting so that they can be favored for
-wakeup if shared interrupts come in.
 
 H2K_vmtrap_yield
 ----------------
 
 .. c:function:: void H2K_vmtrap_yield(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Calls :c:func:`H2K_sched_yield()` and places zero in ``me->r00``.
 
-Yields to another VCPU at the current priority.
-
-Functionality
-~~~~~~~~~~~~~
-
-Calls :c:func:`H2K_sched_yield()` and puts 0 for success in r00.
 
 H2K_vmtrap_start
 ----------------
 
 .. c:function:: void H2K_vmtrap_start(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Creates a VCPU by calling :c:func:`H2K_thread_create_no_squash()`.  The new
+VCPU's start address is ``me->r00``, stack pointer is ``me->r01``, argument is
+zero, and priority is the caller's base priority.  The new VCPU belongs to the
+caller's VM block.  The creation result is returned in ``me->r00``.
 
-Starts another VCPU.
-
-Functionality
-~~~~~~~~~~~~~
-
-Calls :c:func:`H2K_thread_create_no_squash()` using r0 as the start address, r1
-as the stack pointer, and with the same priority as the calling VCPU.
 
 H2K_vmtrap_stop
 ---------------
 
 .. c:function:: void H2K_vmtrap_stop(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Calls :c:func:`H2K_thread_stop()` for the thread identifier in ``me->r00``.
 
-Terminates the current thread and makes it ready for reallocation by 
-:c:func:`H2K_vmtrap_start()`.
-
-Functionality
-~~~~~~~~~~~~~
-
-Calls :c:func:`H2K_thread_stop()`.
 
 H2K_vmtrap_vmpid
 ----------------
 
 .. c:function:: void H2K_vmtrap_vmpid(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Places the raw virtual-CPU identifier returned by
+:c:func:`H2K_id_from_context()` in ``me->r00``.
 
-Returns a unique ID for the current Virtual CPU.
-
-Functionality
-~~~~~~~~~~~~~
-
-Places the ID into r00.
 
 H2K_vmtrap_setregs
 ------------------
 
 .. c:function:: void H2K_vmtrap_setregs(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Copies the guest register pair values from ``me->r0100`` and ``me->r0302``
+into the saved guest state: ``GELR/GSSR`` and ``GOSP/GBADVA``, respectively.
+Then restores the guest register state.
 
-Sets the Guest registers g0-g3 with the values in r0-r3.
-
-Functionality
-~~~~~~~~~~~~~
-
-Sets GELR with r0, GSSR with r1, GOSP with r2, and GBADVA with r3.
 
 H2K_vmtrap_getregs
 ------------------
 
 .. c:function:: void H2K_vmtrap_getregs(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Saves the current guest register state and returns ``GELR/GSSR`` in
+``me->r0100`` and ``GOSP/GBADVA`` in ``me->r0302``.
 
-Sets the registers r0-r3 with the values in Guest registers g0-g3.
-
-Functionality
-~~~~~~~~~~~~~
-
-Sets r0 with GELR, r1 with GSSR, r2 with GOSP, and r3 with GBADVA.
 
 H2K_vmtrap_pmuctrl
 ------------------
 
 .. c:function:: void H2K_vmtrap_pmuctrl(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Normally forwards ``r00`` through ``r03`` to
+:c:func:`H2K_trap_pmuctrl()` and places its result in ``r00``.  For
+``PMUCTRL_THREADSET`` with a raw VCPU identifier of zero, applies the operation
+to every VCPU in the current VM block, ignores errors from dead VCPUs, and
+returns the number of successful operations in ``r00``.
 
-Call H2K_trap_pmuctrl()
-
-Functionality
-~~~~~~~~~~~~~
-
-If r0 == PMUCTRL_THREADSET (enable/disable PMU for CPU) and r1 == 0 (thread
-ID 0) then call :c:func:`H2K_trap_pmuctrl()` with the given arguments for each
-thread ID in the current vmblock.  Return the number of successful calls in r0.
-
-Else return the result of :c:func:`H2K_trap_pmuctrl()` in r0.
 
 H2K_vmtrap_info
 ---------------
 
 .. c:function:: void H2K_vmtrap_info(H2K_thread_context *me)
 
-	:param me: Pointer to the current thread context
+	:param me: Current thread context
 
-Description
-~~~~~~~~~~~
+Forwards ``r00``, ``r01``, and ``r02`` to
+:c:func:`H2K_trap_info()` as the information selector, selector argument, and
+configuration-unit entry, respectively.  Places the result in ``me->r00``.
 
-Call H2K_trap_info()
-
-Functionality
-~~~~~~~~~~~~~
-Return the result of :c:func:`H2K_trap_info()` in r0;
 
 Testing
 -------
 
-Call the various functions and check expected values.
-
-The most interesting functions are:
-
-* :c:func:`H2K_vmtrap_return()`
-* :c:func:`H2K_vmtrap_wait()`
-* :c:func:`H2K_vmtrap_setie()`
-
-These functions have the most complexity and need to manipulate registers or
-other state in interesting ways.
-
+Test the register results and state changes for each operation.  In particular,
+exercise VM return state restoration, interrupt enable/disable and invalid
+input, wait with and without pending work, VCPU creation and stopping, guest
+register transfer, and the PMU and information forwarding paths.

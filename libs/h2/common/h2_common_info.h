@@ -53,6 +53,10 @@ typedef enum {
 	INFO_TCM_OFFSET,  /**< Multicore TCM base offset */
 	INFO_NOC_MBASE,   /**< Multicore NOC master widget base */
 	INFO_NOC_SBASE,   /**< Multicore NOC slave widget base */
+	INFO_LOCAL_MEM_SIZE,   /**< Multicore local memory size */
+	INFO_LOCAL_MEM_BASE,   /**< Multicore local memory base address */
+	INFO_CLADE2_BASE, /**< CLADE2 regs base */
+	INFO_CLADE3_BASE, /**< CLADE3 regs base (0 if not present) */
 	INFO_MAX
 } info_type;
 

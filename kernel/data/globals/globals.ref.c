@@ -10,6 +10,7 @@
 #include <hw.h>
 #include <bzero.h>
 #include <cfg_table.h>
+#include <hvx.h>
 #include <hmx.h>
 #include <log.h>
 
@@ -17,8 +18,9 @@ H2K_kg_t H2K_kg;
 
 extern void _end();
 
-void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
-	u32_t l2vic_base = Q6_SS_BASE_VA + devpage_offset + L2VIC_OFFSET;
+void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t ssbase, u32_t devpage_priv_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
+	u32_t l2vic_base;
+	u32_t timer_base;
 #ifdef HAVE_EXTENSIONS
 	u32_t have_hvx;
 	u32_t have_silver;
@@ -27,6 +29,20 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 	H2K_bzero(&H2K_kg,sizeof(H2K_kg));
 
 	asm volatile ( "%0 = rev\n" : "=r" (H2K_kg.core_rev));
+
+	H2K_kg.ssbase = ssbase;
+	if (CORE_V89 > H2K_kg.arch) {
+		H2K_kg.ss_pub_offset = QDSP6SS_PUB_PRIV_OFFSET;
+		H2K_kg.l2vic_offset = L2VIC_OFFSET;
+		H2K_kg.timer_offset = TIMER_OFFSET;
+	} else {
+		H2K_kg.ss_pub_offset = QDSP6SS_PUB_PRIV_OFFSET_V89;
+		H2K_kg.l2vic_offset = L2VIC_OFFSET_V89;
+		H2K_kg.timer_offset = TIMER_OFFSET_V89;
+	}
+	l2vic_base = Q6_SS_BASE_VA + devpage_priv_offset + H2K_kg.l2vic_offset;
+	timer_base = Q6_SS_BASE_VA + devpage_priv_offset + H2K_kg.timer_offset;
+	H2K_kg.time.devptr = (void *)(timer_base);
 
 	H2K_kg.phys_offset = phys_offset;
 	H2K_kg.multicore_shift = multicore_shift;
@@ -63,13 +79,14 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 	H2K_kg.info_boot_flags.boot_have_hlx = have_hlx;
 	H2K_kg.hlx_contexts = (have_hlx ? (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HLX_CONTEXTS))) : 0);
 
+	H2K_kg.hvx_state = H2K_HVX_STATE_OFF;
 #ifdef HAVE_EXTENSIONS
 	/* HVX present? */
 	if (CORE_V65 < H2K_kg.arch) {
 		have_hvx = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_HVX_MASK) != 0;
 		have_silver = (H2K_cfg_table(CFG_TABLE_COPROC_TYPE) & CFG_TABLE_COPROC_TYPE_SILVER_MASK) != 0;
 		H2K_kg.coproc_contexts = (have_hvx || have_silver ? H2K_cfg_table(CFG_TABLE_COPROC_CONTEXTS) : 0);
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		/* FIXME: need a cfg_table entry for this */
 		H2K_kg.cluster_clusters = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) > 8 ? 4 : 2); // hack
 		H2K_kg.cluster_hthreads = (u32_t)(Q6_R_popcount_P(H2K_cfg_table(CFG_TABLE_HTHREADS_MASK)) / H2K_kg.cluster_clusters);
@@ -144,7 +161,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 		H2K_kg.hmx_units = (H2K_cfg_table(CFG_TABLE_HMX_INT8_RATE) != 0);  // exists?
 		H2K_kg.info_boot_flags.boot_have_hmx = (H2K_kg.hmx_units > 0);
 #endif
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		H2K_kg.coproc_max_save = ((H2K_kg.coproc_contexts + H2K_kg.hmx_units) / H2K_kg.cluster_clusters) + (((H2K_kg.coproc_contexts + H2K_kg.hmx_units) % H2K_kg.cluster_clusters) != 0);
 		H2K_kg.coproc_max_save = (H2K_kg.coproc_max < CLUSTER_SCHED_MIN_COPROCS ? CLUSTER_SCHED_MIN_COPROCS : H2K_kg.coproc_max);
 #endif	
@@ -189,21 +206,6 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 	H2K_kg.info_boot_flags.boot_have_sample = 0;
 #endif
 
-	switch(H2K_kg.arch) {
-	case CORE_V4:
-		H2K_kg.timer_intnum = TIMER_INT_CORE_V4;
-		break;
-	case CORE_V5:
-		H2K_kg.timer_intnum = TIMER_INT_CORE_V5;
-		break;
-	case CORE_V61:
-		H2K_kg.timer_intnum = TIMER_INT_CORE_V61;
-		break;
-	default:
-		H2K_kg.timer_intnum = TIMER_INT_CORE_V60;
-		break;
-	}
-
 	H2K_kg.tcm_base = (H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT) >> PAGE_BITS;
 	// H2K_kg.tcm_size set in H2K_trap_do_hwconfig_l2cache()
 
@@ -230,7 +232,7 @@ void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset,
 
 }
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 void H2K_cluster_config(void) {
 	u32_t i;
 

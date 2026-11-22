@@ -14,8 +14,12 @@
 
 static inline H2K_translation_t H2K_linear_translate_update(H2K_translation_t in, H2K_linear_fmt_t entry)
 {
+	u32_t mask = (1u << (entry.size * 2)) - 1;
+	u32_t ppn = entry.extend ? entry.ppn_ext : entry.ppn;
+
 	in.size = min(in.size,entry.size);
-	in.pn = (entry.extend ? entry.ppn_ext : entry.ppn);
+	/* Retain the offset within this entry for a later, smaller mapping. */
+	in.pn = (in.pn & mask) | (ppn & ~mask);
 	if (in.weak_ccc) in.cccc = (entry.extend ? entry.cccc_ext : entry.cccc);
 	in.xwru &= entry.xwru;
 	in.weak_ccc = (entry.extend ? entry.weak_ccc_ext : entry.weak_ccc);
@@ -45,7 +49,12 @@ H2K_translation_t H2K_linear_translate(H2K_translation_t in, H2K_asid_entry_t in
 			if (vmblock->guestmap.raw) {
 				tmp.pn = list_gpn;
 				tmp = H2K_translate(tmp,vmblock->guestmap);
-				list_ppn = tmp.pn;
+				/* tmp.pn is only the base of the matched block when
+				 * tmp.size > 0 (e.g. a size>0 LINEAR guestmap entry) -
+				 * unlike a hardware TLB fill, this result is used directly
+				 * as a software read address below, so the low-order bits
+				 * within the block must be restored here. */
+				list_ppn = tmp.pn | (list_gpn & ((1u << (tmp.size*2)) - 1));
 				if ((tmp.xwru & 0x2) == 0) break;	/* NO R PERMISSION */
 			} else {
 				list_ppn = list_gpn;

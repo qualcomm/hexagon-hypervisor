@@ -21,7 +21,7 @@ void FAIL(const char *str)
 
 static H2K_thread_context a;
 
-int main() 
+int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	a.tid = 3;

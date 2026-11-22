@@ -58,10 +58,12 @@ FUNC_START H2K_trap_angel .text.trap.angel .p2align 2
 .Lwait:
 	{ nop }:endloop0
 
+#ifndef ANGEL_HANDSHAKE_HACK
 	dccleaninva(r6)
 	r8 = memw(r6+#12)
 	p0 = cmp.eq(r8, #0)
-	if (!p0) jump .Lpoll	
+	if (!p0) jump .Lpoll
+#endif
 
 	dccleaninva(r6)
 	r11:10 = memd(r6+#0)

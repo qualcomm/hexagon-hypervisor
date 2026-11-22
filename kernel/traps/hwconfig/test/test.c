@@ -13,6 +13,8 @@
 #include <globals.h>
 #include <cache.h>
 #include <hw.h>
+#include <cfg_table.h>
+#include <h2_common_kerror.h>
 
 void FAIL(const char *str)
 {
@@ -55,31 +57,6 @@ int TH_test_l2locka(int len) {
 
 #endif
 
-#if ARCHV <= 3
-void TH_test_pf()
-{
-	u32_t checkval = 0;
-	a.ssr = 0;
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,1,&a);
-	checkval |= 1<<22;
-	if (a.ssr != checkval) FAIL("HF_I");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,1,&a);
-	checkval |= 1<<23;
-	if (a.ssr != checkval) FAIL("HF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,1,&a);
-	checkval |= 1<<24;
-	if (a.ssr != checkval) FAIL("SF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_I,0,&a);
-	checkval ^= 1<<22;
-	if (a.ssr != checkval) FAIL("!HF_I");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_HF_D,0,&a);
-	checkval ^= 1<<23;
-	if (a.ssr != checkval) FAIL("!HF_D");
-	H2K_trap_hwconfig(2,NULL,HWCONFIG_PREFETCH_SF_D,0,&a);
-	checkval ^= 1<<24;
-	if (a.ssr != checkval) FAIL("!SF_D");
-}
-#else
 void TH_test_pf()
 {
 	u32_t checkval = 0;
@@ -103,14 +80,50 @@ void TH_test_pf()
 	checkval ^= 1<<20;
 	if (a.ccr != checkval) FAIL("!SF_D");
 }
-#endif
+
+void TH_test_clade_range()
+{
+	/* Out-of-range offsets must fail before touching any register */
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_GETCLADEREG, NULL, CLADEREGS_MAX + 4, 0, &a) != 0) FAIL("CLADE get range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADEREG_RANGE) FAIL("CLADE get range kerror");
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_SETCLADEREG, NULL, CLADEREGS_MAX + 4, 0, &a) != 0) FAIL("CLADE set range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADEREG_RANGE) FAIL("CLADE set range kerror");
+
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_GETCLADE2REG, NULL, CLADE2REGS_MAX + 4, 0, &a) != 0) FAIL("CLADE2 get range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE2REG_RANGE) FAIL("CLADE2 get range kerror");
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_SETCLADE2REG, NULL, CLADE2REGS_MAX + 4, 0, &a) != 0) FAIL("CLADE2 set range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE2REG_RANGE) FAIL("CLADE2 set range kerror");
+
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_GETCLADE3REG, NULL, CLADE3REGS_MAX + 4, 0, &a) != 0) FAIL("CLADE3 get range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE3REG_RANGE) FAIL("CLADE3 get range kerror");
+	H2K_kg.kernel_error = KERROR_NONE;
+	if (H2K_trap_hwconfig(HWCONFIG_SETCLADE3REG, NULL, CLADE3REGS_MAX + 4, 0, &a) != 0) FAIL("CLADE3 set range ret");
+	if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE3REG_RANGE) FAIL("CLADE3 set range kerror");
+
+	/* CLADE3 not present: even an in-range offset must fail */
+	if ((H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_CLADE3_MASK) == 0) {
+		H2K_kg.kernel_error = KERROR_NONE;
+		if (H2K_trap_hwconfig(HWCONFIG_GETCLADE3REG, NULL, 0, 0, &a) != 0) FAIL("CLADE3 get not present ret");
+		if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE3REG_RANGE) FAIL("CLADE3 get not present kerror");
+		H2K_kg.kernel_error = KERROR_NONE;
+		if (H2K_trap_hwconfig(HWCONFIG_SETCLADE3REG, NULL, 0, 0, &a) != 0) FAIL("CLADE3 set not present ret");
+		if (H2K_kg.kernel_error != KERROR_HWCONFIG_CLADE3REG_RANGE) FAIL("CLADE3 set not present kerror");
+	}
+	H2K_kg.kernel_error = KERROR_NONE;
+}
 
 int main()
 {
 	u32_t syscfg,cur_size,cur_wb,i;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	__asm__ __volatile(" imask = %0 " : : "r"(-1));
-	H2K_set_syscfg(0x7f);
+	/* Clear the L2 and partition fields checked below; leave translation and caches as they are */
+	H2K_set_syscfg(H2K_get_syscfg() & 0x7f);
 
 	/* Check base functionality for l2cache hwconfig */
 	TH_saw_l2_cleaninv = 0;
@@ -188,19 +201,19 @@ int main()
 		syscfg = H2K_get_syscfg();
 		if (((syscfg >> 25) & 3) != i) FAIL("Bad partition config (D)");
 	}
-#if ARCHV >= 4
 	for (i = 0; i < 4; i++) {
 		H2K_trap_hwconfig(1,NULL,HWCONFIG_PARTITION_L2,i,&a);
 		syscfg = H2K_get_syscfg();
 		if (((syscfg >> 29) & 3) != i) FAIL("Bad partition config (L2)");
 	}
-#endif
 
 	/* Check for PF bits */
 	TH_test_pf();
 
 	TH_test_l2locka(64);
 	TH_test_l2locka(128);
+
+	TH_test_clade_range();
 
 	puts("TEST PASSED\n");
 	return 0;

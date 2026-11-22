@@ -1,3 +1,8 @@
+# Dear emacs, this is a -*- Makefile -*-
+
+include $(H2DIR)/scripts/Makefile.inc.config
+include $(H2DIR)/scripts/Makefile.inc.tools
+
 # Makefile for Sphinx documentation
 #
 
@@ -5,7 +10,7 @@
 SPHINXOPTS    = 
 SPHINXBUILD   = sphinx-build
 PAPER         =
-BUILDDIR      = docs
+BUILDDIR      = $(H2DIR)/artifacts/docs
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4

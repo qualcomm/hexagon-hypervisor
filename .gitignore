@@ -54,8 +54,11 @@ docs/doctest/
 docs/doctrees/
 docs/html/
 artifacts/
+artifacts_picolibc/
 kernel/sched/check_sanity/check_sanity_debug.h
 kernel/util/intcontrol/intcontrol_debug.h
 __pycache__/
 git_update.bat
 lldb-setup
+*.d
+*.stamp

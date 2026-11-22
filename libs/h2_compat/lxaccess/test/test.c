@@ -150,7 +150,7 @@ int main()
 	h2_sem_init_val(&done, 0);
 
 	h2_thread_create(blocker, &helper_stack[HELPER_STACK],
-					 (void *)&args, h2_get_prio(pthread_self()));
+					 (void *)&args, h2_get_prio());
 	h2_sem_down(&ready);
 
 	if (h2_lxaccess_release(&lxacc, ret[0]) != 0) {

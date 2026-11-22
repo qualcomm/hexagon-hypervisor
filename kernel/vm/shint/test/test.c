@@ -36,7 +36,6 @@
 #include <c_std.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <vm.h>
 #include <context.h>
 #include <string.h>
 #include <shint.h>

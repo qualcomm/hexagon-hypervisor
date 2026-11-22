@@ -5,19 +5,16 @@
 
 #include <c_std.h>
 #include <max.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <thread.h>
 #include <futex.h>
 #include <switch.h>
-#include <lowprio.h>
 #include <intconfig.h>
 #include <fatal.h>
 #include <asid.h>
 #include <stlb.h>
 #include <thread.h>
 #include <hw.h>
-#include <vm.h>
 #include <id.h>
 #include <config.h>
 #include <timer.h>
@@ -72,31 +69,28 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup_bootvm()
 	return H2K_gp->vmblocks[vm];
 }
 
-#define DEVICE_PAGE_OFFSET(ADDR) ((ADDR) & ((0x1 << (H2K_KERNEL_ADDRBITS + (2 * DEVICE_PAGE_SIZE))) - 1))
-
 IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multicore_shift, u32_t ssbase, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) {
 	/* FIXME: The allocator heap can just go at the end of data once boot VM is
 		 moved out of monitor space */
 	void *heap_top;
 	void *stack_base;
 	u32_t alloc_heap_size;
-	u32_t devpage_priv_offset = DEVICE_PAGE_OFFSET(ssbase + QDSP6SS_PUB_PRIV_OFFSET);
-	u32_t devpage_pub_offset = DEVICE_PAGE_OFFSET(ssbase);
+	u32_t devpage_priv_offset = DEVICE_PAGE_OFFSET(ssbase);  // likely 0
 
 	heap_top = (void *)((((u32_t)&HEAP_SIZE == 0 ? DEFAULT_HEAP_SIZE : (u32_t)&HEAP_SIZE) + (u32_t)&end + 15) & (u32_t)-16);
 	stack_base = (void *)((((u32_t)&STACK_SIZE == 0 ? DEFAULT_STACK_SIZE : (u32_t)&STACK_SIZE) +(u32_t)heap_top) & (u32_t)-16);
 	alloc_heap_size = ((u32_t)&H2K_ALLOC_HEAP_SIZE == 0 ? DEFAULT_ALLOC_HEAP_SIZE : (u32_t)&H2K_ALLOC_HEAP_SIZE);
 
-	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);		/* Kernel Globals first! */
+	H2K_kg_init(H2K_LINK_ADDR - multicore_shift - H2K_LOAD_ADDR, multicore_shift, ssbase, devpage_priv_offset, last_tlb_index, tlb_size, core_id, core_count, tcm_offset);		/* Kernel Globals first! */
 	H2K_tmpmap_init();
 	H2K_l2cache_init();
 	H2K_tcm_copy(last_tlb_index);
 	H2K_trace_init();
-	H2K_runlist_init();
 	H2K_readylist_init();
-	H2K_lowprio_init();
 	H2K_futex_init();
 	H2K_intconfig_init(ssbase);
+	H2K_set_bestwait(BESTWAIT_MASK);
+	H2K_set_schedcfg(SCHEDCFG_EN | SCHEDCFG_INTNO(RESCHED_INT));
 	H2K_thread_init();
 	H2K_asid_table_init();
 
@@ -104,8 +98,7 @@ IN_SECTION(".text.init.setup") static H2K_vmblock_t *H2K_init_setup(u32_t multic
 	H2K_stlb_tcmcrash_init();
 #endif
 
-	H2K_timer_init(devpage_priv_offset);
-	H2K_hvx_init(devpage_pub_offset);
+	H2K_timer_init();
 	H2K_hmx_init(devpage_priv_offset);
 	H2K_mem_alloc_init((H2K_mem_alloc_tag_t *)((((u32_t)stack_base + 31) / 32) * 32), alloc_heap_size);
 	H2K_sample_init();
@@ -137,7 +130,7 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 	boot->base_prio = boot->prio = (u8_t)(bootvm->bestprio);
 	boot->gpugp = BOOT_THREAD_GPUGP;
 	boot->usr = BOOT_THREAD_USR;
-	boot->ssr = (BOOT_THREAD_SSR);
+	boot->ssr = BOOT_THREAD_SSR;
 #if ARCHV >= 73  // FIXME: Make this 79 if there is a separate build
 	boot->vwctrl = H2K_get_vwctrl();
 #endif
@@ -223,10 +216,10 @@ IN_SECTION(".text.init.boot") void H2K_thread_boot(u32_t multicore_shift, u32_t 
 
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	H2K_cluster_config();
 #endif
-	H2K_runlist_push(boot);
+	boot->status = H2K_STATUS_RUNNING;
 	H2K_mutex_unlock_tlb();
 	H2K_switch(NULL,boot);
 }

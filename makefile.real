@@ -1,0 +1,374 @@
+# Dear emacs, this is a -*- Makefile -*-
+
+include scripts/Makefile.inc.config
+include scripts/Makefile.inc.opensource
+include scripts/Makefile.inc.version
+include scripts/Makefile.inc.tools
+include scripts/Makefile.inc.install
+
+TEST_JFLAG ?= -j8
+BATCH ?= 1
+export DOCS ?= 1
+
+ifeq ($(BATCH),1)
+export BSUB := bsub -I
+export BATCH := 1
+# Seconds to wait after the bsub'd tests before reading their results: this
+# host's NFS attribute cache can be up to 60 s stale.  0 disables.
+NFS_SETTLE ?= 75
+# The bsub'd build runs on another host, outside our jobserver.
+JFLAG ?= -j
+ifeq ($(findstring -j,$(shell printenv MAKEFLAGS)),)
+MAKEFLAGS += $(TEST_JFLAG)
+endif
+else  # not batch
+export IGNOREFAIL ?= 1
+# Default -j$(nproc), unless a -j was inherited.  make 4.3 hides -j from
+# $(MAKEFLAGS) while parsing, so check the environment; adding -j in a
+# sub-make would start a new jobserver at every level.
+ifeq ($(findstring -j,$(shell printenv MAKEFLAGS)),)
+MAKEFLAGS += -j$(shell nproc)
+endif
+endif
+
+ifeq ($(IGNOREFAIL),1)
+export IGNOREFAILDASH := -
+endif
+
+export H2_INSIDE_TOPLEVEL_MAKE := 1
+
+NULLSTRING :=
+define nl
+
+$(NULLSTRING)
+endef
+
+tab := $(shell printf '\011')
+
+.PHONY: all
+all:
+	$(BSUB) $(MAKE) $(JFLAG) build
+
+.PHONY: build
+# The files the top level installs itself are ordinary prerequisites: the config
+# fragments each generated per-test Makefile.inc includes, and the simulator
+# device configs.  Several devsim_v*.cfg are symlinks into a shared config; cp
+# follows the link and make stats through it, so they need no special handling.
+$(call install_files,$(INSTALLPATH)/scripts,\
+    scripts/Makefile.inc.config scripts/Makefile.inc.opensource \
+    $(wildcard scripts/devsim_v*.cfg))
+
+build: $(INSTALL_TARGETS)
+ifeq ($(USE_PKW),1)
+	@echo PKW_VERSIONS $(PKW_VERSIONS)
+	pkw --which $(CC)
+endif
+	$(MAKE) -C kernel ARCHV=$(ARCHV) install && \
+	$(MAKE) -C libs ARCHV=$(ARCHV) install && \
+	$(MAKE) -C stake ARCHV=$(ARCHV) install
+	$(MAKE) -C booter ARCHV=$(ARCHV) install
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare;
+	echo "v$(ARCHV) $(TARGET) ${MAKEFLAGS}" > $(INSTALLPATH)/ver
+	echo "sha_short $(H2K_GIT_COMMIT)" >> $(INSTALLPATH)/ver
+	echo "sha_long $(H2K_GIT_COMMIT_LONG)" >> $(INSTALLPATH)/ver
+	sha256sum $(INSTALLPATH)/lib/libh2kernel.a $(INSTALLPATH)/lib/libh2.a \
+	    $(INSTALLPATH)/lib/libh2check.a $(INSTALLPATH)/bin/booter \
+	    > $(INSTALLPATH)/manifest.tmp; \
+	cmp -s $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest || \
+	    cp $(INSTALLPATH)/manifest.tmp $(INSTALLPATH)/manifest; \
+	rm -f $(INSTALLPATH)/manifest.tmp
+
+BUILDS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),build-$(a)-$(v)))
+
+define build_instance
+.PHONY: build-$(1)-$(2)
+build-$(1)-$(2):
+	$$(MAKE) ARCHV=$(1) TARGET=$(2) all
+endef
+
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call build_instance,$a,$v))))
+
+
+# link derived arch versions in artifacts for testing on corresponding sim versions
+LINKS := $(foreach a,$(ARCHV_LIST),link-$(a))
+
+define link_instance
+.PHONY: link-$(1)
+link-$(1):
+	mkdir -p $(H2DIR)/$(ARTIFACTS_DIR)
+	$(foreach l,$(LINK_$(1)),ln -sfn v$(1) $(H2DIR)/$(ARTIFACTS_DIR)/v$(l) &&) true
+endef
+
+$(foreach a,$(ARCHV_LIST),$(eval $(call link_instance,$a)))
+
+.PHONY: buildall
+buildall: $(BUILDS) $(LINKS)
+ifeq ($(DOCS),1)
+	$(MAKE) doc
+endif
+
+# for testing
+.PHONY: linkall
+linkall: $(LINKS)
+
+
+# targets for q6auto POST_INSTALL_CMD
+ifneq ($(PKG_INSTALL_PATH),)
+Q6INSTALLDIR = $(shell basename $(PKG_INSTALL_PATH))
+BRANCH = $(shell echo $(Q6INSTALLDIR) | sed 's/.*_//')
+endif
+
+# Checked at parse time: the q6installall prerequisites run before its recipe.
+ifneq ($(filter q6%,$(MAKECMDGOALS)),)
+ifeq ($(PKG_INSTALL_PATH),)
+$(error PKG_INSTALL_PATH is not set)
+endif
+endif
+
+# Picolibc installs get their own link names, so they never replace the
+# Dinkumware _latest/_tested links.
+PICO_LINK_SUFFIX = $(if $(filter 1,$(PICOLIBC)),_picolibc)
+q6install: LINKBASE = v$(ARCHV)_$(BRANCH)_$(TARGET)$(PICO_LINK_SUFFIX)
+.PHONY: q6install
+q6install:
+	cd $(PKG_INSTALL_PATH) && \
+	cp -a $(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET)/build/booter/bootvm_image $(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET)/install/bin &&\
+	rm -f ../$(LINKBASE)_latest ../$(LINKBASE)_tested && \
+	ln -s $(Q6INSTALLDIR)/$(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET)/install ../$(LINKBASE)_latest && \
+	ln -s $(LINKBASE)_latest ../$(LINKBASE)_tested
+
+Q6INSTALLS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),q6install-$(a)-$(v)))
+
+define q6install_instance
+.PHONY: q6install-$(1)-$(2)
+q6install-$(1)-$(2):
+	$$(MAKE) ARCHV=$(1) TARGET=$(2) PKG_INSTALL_PATH=$(PKG_INSTALL_PATH) q6install
+endef
+
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),$(eval $(call q6install_instance,$a,$v))))
+
+
+Q6LINKS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),q6link-$(a)-$(v)))
+
+define q6link_instance
+.PHONY: q6link-$(1)-$(2)
+q6link-$(1)-$(2):
+	cd $(PKG_INSTALL_PATH)/.. && \
+	$(foreach l,$(LINK_$(1)),rm -f v$(l)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_latest v$(l)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_tested && ln -s v$(1)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_latest v$(l)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_latest && ln -s v$(1)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_tested v$(l)_$(BRANCH)_$(2)$(PICO_LINK_SUFFIX)_tested && ) true
+endef
+
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(INSTALL_VARIANTS),$(eval $(call q6link_instance,$a,$v))))
+
+.PHONY: q6installall
+q6installall: $(Q6INSTALLS) $(Q6LINKS)
+	cd $(PKG_INSTALL_PATH) && \
+	rm -rf AGENTS.md booter ciconfig CLAUDE.md CMakeLists.txt CODE-OF-CONDUCT.md CONTRIBUTING.md docs examples hvm_spec kernel libs LICENSE.txt linux makefile makefile.real notes.md perf README.md scripts SECURITY.md stake toolchain.cmake .github .gitignore .gitmail passout conf.py index.spec
+
+# for local testing
+.PHONY: q6linkall
+q6linkall: $(Q6LINKS)
+
+all_clean:
+	rm -rf $(ARTIFACTS_DIR)/
+
+distclean: clean docclean gtagsclean
+
+clean: covclean booterclean docclean qurtclean # ucosclean
+	$(MAKE) -C kernel ARCHV=$(ARCHV) clean
+	$(MAKE) -C stake ARCHV=$(ARCHV) clean
+	$(MAKE) -C libs ARCHV=$(ARCHV) clean
+	rm -Rf test.exe stats.txt $(ARTIFACTS_DIR)/v$(ARCHV)/$(TARGET) kernel/stats.txt
+
+booterclean:
+	$(MAKE) -C booter ARCHV=$(ARCHV) clean
+
+docclean:
+	$(MAKE) -C libs/docs/dox ARCHV=$(ARCHV) clean
+	$(MAKE) -f scripts/docs/Makefile.sphinx clean
+
+testclean covclean: qurtclean # ucosclean
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) clean && \
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) clean_top
+
+# ucosclean:
+# 	$(MAKE) -C ucos clean
+
+qurtclean:
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) clean
+	$(MAKE) -f scripts/Makefile.qurt clean_top
+
+sim: ref
+	$(CC) -mv$(TOOLARCH) -moslib=h2 -moslib=h2kernel -I$(INSTALLPATH)/include -L$(INSTALLPATH)/lib tst/test.c -o test.exe && \
+	$(RUN) $(SIMF) -- test.exe;
+
+# Size report baseline: SIZE_BASELINE (an install dir, {archv} substituted), else
+# the pkw h2 release when USE_PKW=1.
+SIZE_BASELINE ?=
+SIZE_BASELINE_ARG := $(if $(SIZE_BASELINE),--baseline '$(SIZE_BASELINE)',$(if $(filter 1,$(USE_PKW)),--pkw))
+size_report = $(if $(SIZE_BASELINE_ARG),python3 $(H2DIR)/scripts/size_report.py $(SIZE_BASELINE_ARG) $(1),\
+	@echo "size_report: no baseline; set SIZE_BASELINE or USE_PKW=1"; exit 1)
+
+# Size report for this variant; see "size_report.md" in docs/build_and_test.md.
+size: build
+	$(call size_report,--output $(INSTALLPATH)/size_report.md --print $(INSTALLPATH))
+
+# t:
+# 	/prj/dsp/qdsp6/arch/scripts/test_h2.pl $(TEST_H2_OPTS)
+
+# All per-variant test result JSON paths — one per ARCHV×variant combination.
+ARCHV_VARIANT_JSONS := $(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(ARTIFACTS_DIR)/v$a/$v/install/test_results.json))
+# Phony: every report request defers to test_variant, whose per-test rules decide what reruns.
+.PHONY: $(ARCHV_VARIANT_JSONS)
+
+# One rule per ARCHV×variant: 'test_variant' builds and tests a single variant,
+# generating test_results.json which testall aggregates into the unified report.
+# FORCE: test_variant does the dependency checking and rewrites the json only
+# when a result changed, so a no-op run regenerates no report.
+# $(IGNOREFAILDASH) ('-' with IGNOREFAIL=1, the non-BATCH default) lets the
+# unified report build when tests fail; the json is written before check-fail.
+.PHONY: FORCE
+FORCE:
+define ARCHV_VARIANT_TEST_RULE
+$(ARTIFACTS_DIR)/v$(1)/$(2)/install/test_results.json: FORCE
+	$(IGNOREFAILDASH)$$(MAKE) ARCHV=$(1) TARGET=$(2) test_variant
+endef
+$(foreach a,$(ARCHV_LIST),$(foreach v,$(VARIANTS),$(eval $(call ARCHV_VARIANT_TEST_RULE,$a,$v))))
+
+# Unified test report: one section per ARCHV×variant, driven by all JSON files.
+# Building this target drives the full build+test DAG for every combination.
+$(ARTIFACTS_DIR)/test_report.html: $(ARCHV_VARIANT_JSONS)
+	@mkdir -p $(ARTIFACTS_DIR)
+	python3 $(H2DIR)/scripts/gen_test_report.py \
+	    --inputs $(ARCHV_VARIANT_JSONS) \
+	    --output $@ \
+	    --summary-out $(ARTIFACTS_DIR)/test.out
+
+# Size report for every ARCHV, opt only (the baseline is an opt install).
+# Not part of testall.  Always reruns (cheap).
+.PHONY: sizeall
+sizeall: $(ARTIFACTS_DIR)/size_report.md
+# With a test goal on the same command line, wait for it instead of building:
+# the tests build the opt variants too, and two makes must not build one at once.
+SIZE_INSTALLS := $(foreach a,$(ARCHV_LIST),$(ARTIFACTS_DIR)/v$a/opt/install)
+SIZE_AFTER := $(filter testall test $(ARTIFACTS_DIR)/test_report.html,$(MAKECMDGOALS))
+$(ARTIFACTS_DIR)/size_report.md: $(or $(SIZE_AFTER),$(foreach a,$(ARCHV_LIST),build-$a-opt)) FORCE
+	@mkdir -p $(ARTIFACTS_DIR)
+	$(call size_report,--output $@ $(SIZE_INSTALLS))
+
+.PHONY: testall test
+# -f makefile.real: the top-level makefile (%: rule) would otherwise answer for an existing report.
+testall: buildall
+	$(MAKE) -f makefile.real $(ARTIFACTS_DIR)/test_report.html
+
+# 'make test' runs all ARCHV×variant combinations (same as testall).
+# Use 'make test_variant' to run a single variant (ARCHV=XX TARGET=yy).
+test: testall
+
+# NO_TEST_RESET=1 suppresses TESTOUT truncation in 'make test_variant' when the
+# caller wants to accumulate results across multiple runs.
+NO_TEST_RESET ?= 0
+
+# FORCE_BUILD=1 runs a top-level 'build' before the test, for callers who can't
+# rely on h2_test's own bootstrap (e.g. re-testing after only touching sources).
+FORCE_BUILD ?= 0
+
+test_variant:
+ifneq ($(NO_TEST_RESET),1)
+	@if [ -d "$(dir $(TESTOUT))" ]; then > "$(TESTOUT)"; fi
+endif
+ifeq ($(FORCE_BUILD),1)
+	$(MAKE) build
+endif
+	$(MAKE) h2_test
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) test_summary
+	$(MAKE) check-fail
+
+h2_test: # ucosclean
+#	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) prepare
+	$(MAKE) -f scripts/Makefile.coverage BSUB="$(BSUB)" ARCHV=$(ARCHV) tst 2>&1 | tee $(INSTALLPATH)/make.log; exit $${PIPESTATUS[0]}
+ifneq ($(filter-out 0,$(NFS_SETTLE)),)
+	sleep $(NFS_SETTLE)
+endif
+#	$(MAKE) -C ucos sim 2>&1 | tee make.log
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_results.json
+	[ `fgrep -v "WARNING: Overriding currently set revid" $(INSTALLPATH)/make.log | fgrep -v "warning: -j" | fgrep -v "warning: jobserver" | grep -v -E "^Warning: '(test\.elf|test\.elf_tmp)' has loadable segment\(s\) with RWX permissions$$" | grep -v -E "^Warning: Undefined weak symbol _user_strerror referred from .*libc_string_strerror\.c\.o\) is resolved to __linker_guard_weak_undef$$" | fgrep -c -i warning:` -eq 0 ]
+
+abigtest:
+	/prj/qct/coredev/hexagon/sitelinks/arch/pkg/pass/x86_64/master/pass.pl --retrycount 1 --results ./passout/$(ARCHV)/$(TARGET) --html ./passout/$(ARCHV)/$(TARGET) --q6v v$(ARCHV) --arch v$(ARCHV)_stable --tld STANDALONE=0 --tld TRACES=0 --flaglist v$(ARCHV)_flags.list --flags MARGIN=12 --flags PLMARGIN=180 --tld NOTIMING --tld CHECKIN=1 --flags PLIMIT= --flags WARN=--warn --flags Q6_RTOS_INSTALL=$(INSTALLPATH)
+
+$(eval $(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),$(nl).PHONY: bigtest-$(a)-$(v)$(nl)bigtest-$(a)-$(v):$(nl)$(tab)@echo $(a) $(v)$(nl)$(tab)$$(MAKE) ARCHV=$(a) TARGET=$(v) abigtest)))
+
+.PHONY: all_bigtests
+$(eval all_bigtests:$(foreach a,$(ARCHV_LIST),$(foreach v,$(BIGTEST_VARIANTS),bigtest-$(a)-$(v) )))
+
+bigtest: testall
+	$(MAKE) all_bigtests
+
+qurt_test: ./qurt/test/testcases
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) tst 2>&1 | tee $(TESTOUT); exit $${PIPESTATUS[0]}
+#	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) $(INSTALLPATH)/qurt_report.html
+
+qurt_test_single: ./qurt/test/testcases
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) prepare
+	$(MAKE) $(TEST_JFLAG) -f scripts/Makefile.qurt ARCHV=$(ARCHV) TEST=$(TEST) tst_single 2>&1 | tee $(TESTOUT); exit $${PIPESTATUS[0]}
+	[ `fgrep -c -i warning: $(TESTOUT)` -eq 0 ]
+
+qurt_test_libs:
+	$(MAKE) -f scripts/Makefile.qurt ARCHV=$(ARCHV) qurt_test_libs
+
+#cov: h2_test
+cov: h2_cov
+#	tail -n +2 qurt_report.html >> report.html
+
+h2_cov: build
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/cov.html
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) $(INSTALLPATH)/test_report.html
+
+.PHONY: check-fail test-check cov-check
+
+check-fail test-check cov-check:
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check-fail
+#	$(MAKE) -C ucos check
+
+check:
+	$(MAKE) -f scripts/Makefile.coverage ARCHV=$(ARCHV) TESTOUT=$(TESTOUT) check
+#	$(MAKE) -C ucos check
+
+.PHONY: doc
+doc:
+	$(MAKE) -C libs/docs/dox
+	$(MAKE) -f scripts/docs/Makefile.sphinx prepare
+	$(MAKE) -f scripts/docs/Makefile.sphinx doctest html
+
+compat:
+	cd install/lib ; ln -s libh2kernel.a libblastkernel.a ; ln -s libh2.a libblast.a
+
+.PHONY: gtags gtagsclean htags
+
+gtags:
+	find booter examples kernel libs linux perf qurt scripts stake tst -path libs/syscall/angel/include -o -path kernel/include -prune -o -path "libs/*/include" -prune -o -type f -print | gtags -I -w -v -f -
+
+htags: gtags
+	htags -ahnosTxvF --show-position --auto-completion --tree-view=filetree
+
+gtagsclean:
+	rm -rf GPATH GRTAGS GSYMS GTAGS ID HTML
+
+LLDB_PORT ?= 1234
+
+.PHONY: lldb-setup lldb-setup-clean
+lldb-setup:
+	$(MAKE) -f scripts/Makefile.lldb_setup LLDB_PORT=$(LLDB_PORT)
+
+lldb-setup-clean:
+	$(MAKE) -f scripts/Makefile.lldb_setup clean
+
+.PHONY: vscode vscode_clean
+vscode:
+	$(MAKE) -f scripts/Makefile.vscode TOOLS_FLAVOR=$(TOOLS_FLAVOR) ARCH_FLAVOR=$(ARCH_FLAVOR) ARCHV=$(ARCHV) TARGET=$(TARGET)
+
+vscode_clean:
+	$(MAKE) -f scripts/Makefile.vscode clean

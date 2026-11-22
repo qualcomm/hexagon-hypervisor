@@ -88,21 +88,6 @@ void test_ptr_rok(void *ptr)
 }
 
 #if 0
-#if ARCHV <= 3
-static H2K_mem_tlbfmt_t make_entry(u32_t va, u32_t pa, u32_t size, u32_t perms, u32_t asid)
-{
-	H2K_mem_tlbfmt_t ret;
-	ret.raw = 0;
-	ret.xwr = perms >> 1;
-	ret.guestonly = ~(perms & 1);
-	ret.asid = asid;
-	ret.size = size;
-	ret.ppn = pa >> 12;
-	ret.vpn = va >> 12;
-	ret.valid = 1;
-	return ret;
-}
-#else
 static H2K_mem_tlbfmt_t make_entry(u32_t va, u32_t pa, u32_t size, u32_t perms, u32_t asid)
 {
 	H2K_mem_tlbfmt_t ret;
@@ -117,7 +102,6 @@ static H2K_mem_tlbfmt_t make_entry(u32_t va, u32_t pa, u32_t size, u32_t perms, 
 	ret.valid = 1;
 	return ret;
 }
-#endif
 #endif
 
 void touser()

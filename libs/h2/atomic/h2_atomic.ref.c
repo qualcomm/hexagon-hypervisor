@@ -102,7 +102,7 @@ atomic_u32_t h2_atomic_add32(atomic_u32_t *word, atomic_u32_t val) {
 			 "1: %0 = memw_locked(%3)\n"
 			 "   %0 = add(%0, %2)\n"
 			 "   memw_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -115,7 +115,7 @@ atomic_u32_t h2_atomic_sub32(atomic_u32_t *word, atomic_u32_t val) {
 			 "1: %0 = memw_locked(%3)\n"
 			 "   %0 = sub(%0, %2)\n"
 			 "   memw_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -128,7 +128,7 @@ atomic_u32_t h2_atomic_bus32(atomic_u32_t *word, atomic_u32_t val) {
 			 "1: %0 = memw_locked(%3)\n"
 			 "   %0 = sub(%2, %0)\n"
 			 "   memw_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -141,7 +141,7 @@ atomic_u32_t h2_atomic_or32(atomic_u32_t *word, atomic_u32_t val) {
 			 "1: %0 = memw_locked(%3)\n"
 			 "   %0 = or(%0, %2)\n"
 			 "   memw_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -154,7 +154,7 @@ atomic_u32_t h2_atomic_and32(atomic_u32_t *word, atomic_u32_t val) {
 			 "1: %0 = memw_locked(%3)\n"
 			 "   %0 = and(%0, %2)\n"
 			 "   memw_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -167,7 +167,7 @@ atomic_u32_t h2_atomic_xor32(atomic_u32_t *word, atomic_u32_t val) {
 			 "1: %0 = memw_locked(%3)\n"
 			 "   %0 = xor(%0, %2)\n"
 			 "   memw_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -254,7 +254,7 @@ atomic_u64_t h2_atomic_add64(atomic_u64_t *word, atomic_u64_t val) {
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = add(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -267,7 +267,7 @@ atomic_u64_t h2_atomic_sub64(atomic_u64_t *word, atomic_u64_t val) {
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = sub(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -280,7 +280,7 @@ atomic_u64_t h2_atomic_bus64(atomic_u64_t *word, atomic_u64_t val) {
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = sub(%2, %0)\n"
 			 "   memd_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -293,7 +293,7 @@ atomic_u64_t h2_atomic_or64(atomic_u64_t *word, atomic_u64_t val) {
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = or(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -306,7 +306,7 @@ atomic_u64_t h2_atomic_and64(atomic_u64_t *word, atomic_u64_t val) {
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = and(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -319,7 +319,7 @@ atomic_u64_t h2_atomic_xor64(atomic_u64_t *word, atomic_u64_t val) {
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = xor(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");

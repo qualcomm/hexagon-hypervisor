@@ -5,8 +5,6 @@
 
 #include <c_std.h>
 #include <context.h>
-
-#include <vm.h>
 #include <vmint.h>
 #include <shint.h>
 #include <vmipi.h>
@@ -15,7 +13,6 @@
 #include <globals.h>
 #include <hw.h>
 #include <readylist.h>
-#include <check_sanity.h>
 #include <vmwork.h>
 #include <vmevent.h>
 #include <intcontrol.h>
@@ -57,7 +54,6 @@ IN_SECTION(".text.vm.int")
 static void H2K_vm_shint_deliver(H2K_vmblock_t *vmblock, H2K_thread_context *me, u32_t intno)
 {
 	u32_t i;
-	/* FIXME: what is cpuidx in fastint context?  Always 0? */
 	u32_t cpu = me->id.cpuidx;
 
 	/* start with first waiting cpu */

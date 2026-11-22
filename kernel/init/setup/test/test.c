@@ -7,9 +7,7 @@
 #include <max.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <runlist.h>
 #include <readylist.h>
-#include <lowprio.h>
 #include <futex.h>
 #include <intconfig.h>
 #include <thread.h>
@@ -30,9 +28,7 @@ u32_t TH_init_seen;
 u32_t TH_switch_seen;
 
 enum {
-	runlist_init = 0,
-	readylist_init,
-	lowprio_init,
+	readylist_init = 0,
 	futex_init,
 	intconfig_init,
 	kg_init,
@@ -46,7 +42,6 @@ enum {
 	//asid_table_init,
 	//mem_stlb_init,
 	tcm_copy,
-	hvx_init,
 	hmx_init,
 
 #ifdef CRASH_DEBUG
@@ -89,9 +84,9 @@ u32_t H2K_trap_config(u32_t configtype, void *ptr, u32_t val2, u32_t val3, u32_t
 
 #define HELPER_FUNC(X) void H2K_##X() { TH_init_seen |= 1<< X; }
 
-HELPER_FUNC(runlist_init)
+
 HELPER_FUNC(readylist_init)
-HELPER_FUNC(lowprio_init)
+
 HELPER_FUNC(futex_init)
 //HELPER_FUNC(intconfig_init)
 void H2K_intconfig_init(u32_t ssbase) { TH_init_seen |= 1<< intconfig_init; }
@@ -110,10 +105,9 @@ HELPER_FUNC(stlb_tcmcrash_init)
 
 //HELPER_FUNC(mem_stlb_init)
 HELPER_FUNC(tcm_copy)
-HELPER_FUNC(hvx_init)
 HELPER_FUNC(hmx_init)
 
-	void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) { TH_init_seen |= 1<< kg_init; }
+	void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t ssbase, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) { TH_init_seen |= 1<< kg_init; }
 
 H2K_thread_context *boot;
 
@@ -144,16 +138,12 @@ void H2K_thread_boot();
 int main()
 {
 	u32_t i;
-	u32_t found_thread;
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 
 	H2K_gp->logbuf_enable = 0;
 
 	H2K_gp->hthreads = get_hthreads();
 
-	for (i = 0; i < H2K_gp->hthreads; i++) {
-		H2K_gp->runlist[i] = 0;
-	}
 	TH_init_seen = 0;
 	TH_switch_seen = 0;
 	if (setjmp(env) == 0) {
@@ -166,14 +156,6 @@ int main()
 	}
 	if (boot->continuation != (H2K_interrupt_restore)) FAIL("Incorrect continuation");
 	if (boot->trapmask != 0xffffffffU) FAIL("boot thread trapmask");
-	found_thread = 0;
-	for (i = 0; i < H2K_gp->hthreads; i++) {
-		if (H2K_gp->runlist[i] == boot) {
-			if (H2K_gp->runlist_prios[i] != 0) FAIL("Didn't push into runlist (0)");
-			found_thread = 1;
-		}
-	}
-	if (!found_thread) FAIL("Didn't push into runlist (1)");
 	puts("TEST PASSED\n");
 	exit(0);
 }

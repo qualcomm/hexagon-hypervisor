@@ -55,17 +55,21 @@ Important cases
 4. H2K_handle_tlbmissx
 5. Invalid input.
 6. H2K_handle_tlbmissrw
+#if ARCHV < 73
 7. Invalid input.
+#else
+7. H2K_handle_dma
+#endif
 8. H2K_handle_trap0
 9. H2K_handle_trap1
-10. Invalid input.
-11. Invalid input.
+10. H2K_handle_error
+11. H2K_handle_debug
 12. Invalid input.
 13. Invalid input.
 14. Invalid input.
 15. Invalid input.
 
-16-48 should jump to :c:func:`H2K_handle_int()`.
+16-31 should jump to :c:func:`H2K_handle_int()`.
 
 Harness
 ~~~~~~~

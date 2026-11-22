@@ -52,54 +52,48 @@ suitable block (in address order) is used, and split if the remainder is at
 least 32 bytes.  Since we allocate in units of 32 bytes, the only possible
 remainders are >=32 or 0.
 
+The allocator acquires the BKL before ``alloc_heap_lock`` while searching for
+and reclaiming released blocks.  This order must be preserved because
+thread-stop paths may hold the BKL while freeing a VM block.  The BKL is
+released after the search/reclamation phase; ``alloc_heap_lock`` remains held
+while the allocation metadata is updated.  If no suitable block exists, both
+locks are released before returning a zero-valued result.
+
 
 H2K_mem_alloc_free
 ------------------
 
-.. c:function:: u32_t H2K_mem_alloc_free(u32_t *ptr)
+.. c:function:: H2K_mem_alloc_tag_t *H2K_mem_alloc_free(void *ptr)
 
-	 :param ptr: Pointer to region to be freed
-
-Description
-~~~~~~~~~~~
-
-Free the given region. Return pointer to tag of the freed region.
-
-Functionality
-~~~~~~~~~~~~~
-
-Merge with any adjacent free regions.
-
-
-H2K_mem_alloc_release
----------------------
-
-.. c:function:: void H2K_mem_alloc_release(u32_t *ptr)
-
-	 :param ptr: Pointer to region to be released
+	 :param ptr: Pointer to the allocated region to be freed
 
 Description
 ~~~~~~~~~~~
 
-Mark the given region as freeable.  Must be called with BKL held.  The region
-can be accessed until BKL_UNLOCK().
+Mark the given region as freeable, return a pointer to its boundary tag.
 
 Functionality
 ~~~~~~~~~~~~~
 
-Set the released bit in the tag for the given block.  The next time that
-H2K_mem_alloc_get() encounters the block, it will free it under the BKL---after
-the caller of H2K_mem_alloc_release() has finished using the block and
-unlocked.  This is used by H2K_thread_stop(), which may release a vmblock
-before it enters H2K_switch(), which reads from the block before unlocking.
+Under ``alloc_heap_lock``, mark the block as freeable and merge it with
+adjacent free regions.  The pointer must come from
+:c:func:`H2K_mem_alloc_get()`.  The BKL is not taken, so callers such as
+:c:func:`H2K_thread_stop()` may hold it.  Blocks tagged ``released`` are
+instead reclaimed later by :c:func:`H2K_mem_alloc_get()` under the BKL, once
+:c:func:`H2K_switch()` is done with them.
 
 
 H2K_mem_alloc_init
 ------------------
 
-.. c:function:: void H2K_mem_alloc_init()
+.. c:function:: void H2K_mem_alloc_init(H2K_mem_alloc_tag_t addr[], u32_t size)
+
+	 :param addr: Start of the allocator's backing region
+	 :param size: Size of the backing region in allocator tag words
 
 Description
 ~~~~~~~~~~~
 
-Initialize the allocation space.
+Initialize the allocation space and its heap lock.  The backing region is
+initialized as one free block with a sentinel tag at its end.  This function
+must run before any allocation or free operation.

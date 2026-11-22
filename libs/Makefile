@@ -1,7 +1,9 @@
 # Smaller kludge here
 
+include ../scripts/Makefile.inc.install
+
 ifeq ($(ARCHV),)
-export ARCHV := 3
+export ARCHV := 68
 endif
 
 SHELL=/bin/bash
@@ -23,7 +25,11 @@ POSIX_DIR=posix/
 #MOST_LIBS= qube/libqube.a syscall/angel/libangel.a qurt/libqurt.a
 MOST_LIBS= $(ANGEL_LIB) $(QURT_LIB)
 
-# Picolibc support: if PICOLIBC=1, build syscall wrapper and locks
+# Picolibc support: if PICOLIBC=1, every library is built against Picolibc (flags
+# from scripts/Makefile.inc.libc, OSLIB_CFLAGS, through each component's
+# TARGET_FLAG), and this build also builds the syscall wrapper and locks.  The
+# Picolibc tree is separate from the Dinkumware one, so the aggregate libh2.a only
+# ever links Picolibc guests.
 ifeq ($(PICOLIBC),1)
 export PICOLIBC
 SYS_WRAPPER_LIB = $(INSTALLPATH)/../build/libs/syscall/wrapper/libsyscall_wrapper.a
@@ -36,42 +42,39 @@ endif
 ALL_LIBS= $(H2_LIB) $(POSIX_LIB) $(H2_COMPAT_LIB) $(MOST_LIBS)
 LIB_DIRS= $(dir $(MOST_LIBS) $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) $(SYS_WRAPPER_LIB) $(LOCKS_LIB))
 
-# Source directories used for installing headers (not build dirs).
-HEADER_DIRS = $(H2_DIR) $(POSIX_DIR) $(H2_COMPAT_DIR) syscall/angel/ qurt/
-
 TMP_DIR := $(INSTALLPATH)/../build/libs/tmp
 
-# Per-variant header dirs for the three generated-header sub-libs.
-_H2_HDR_DIR       := $(INSTALLPATH)/../build/libs/h2/include
-_POSIX_HDR_DIR    := $(INSTALLPATH)/../build/libs/posix/include
-_H2COMPAT_HDR_DIR := $(INSTALLPATH)/../build/libs/h2_compat/include
-
 MAKE_LIB=${MAKE} -C $(dir $@)
+
+# The sub-makes know their sources, so always run them (FORCE); an archive is
+# only rewritten when something in it changed.
+.PHONY: FORCE
+FORCE:
 
 
 $(TMP_DIR):
 	mkdir -p $@
 
-$(H2_LIB):
+$(H2_LIB): FORCE
 	+${MAKE} -C $(H2_DIR) $(BUILD_TYPE)
 
-$(POSIX_LIB): $(H2_LIB)
+$(POSIX_LIB): $(H2_LIB) FORCE
 	+${MAKE} -C posix $(BUILD_TYPE)
 
-$(H2_COMPAT_LIB): $(H2_LIB) $(POSIX_LIB)
+$(H2_COMPAT_LIB): $(H2_LIB) $(POSIX_LIB) FORCE
 	+${MAKE} -C $(H2_COMPAT_DIR) $(BUILD_TYPE)
 
-$(QURT_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
+$(QURT_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB) FORCE
 	+${MAKE} -C qurt
 
-$(ANGEL_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB)
+$(ANGEL_LIB): $(H2_LIB) $(H2_COMPAT_LIB) $(POSIX_LIB) FORCE
 	+${MAKE} -C syscall/angel
 
 ifeq ($(PICOLIBC),1)
-$(SYS_WRAPPER_LIB):
+$(SYS_WRAPPER_LIB): FORCE
 	+${MAKE} -C syscall/wrapper
 
-$(LOCKS_LIB):
+$(LOCKS_LIB): FORCE
 	+${MAKE} -C locks
 endif
 
@@ -84,24 +87,17 @@ clean:
 # Combine all component archives into a single libh2.a.  All paths are
 # absolute so cd $(TMP_DIR) doesn't invalidate them.
 $(TMP_DIR)/libh2.a: ${ALL_LIBS} | $(TMP_DIR)
-	rm -f $(TMP_DIR)/*.o
+	rm -f $(TMP_DIR)/*.o $(TMP_DIR)/libh2.a
 	cd $(TMP_DIR); \
 	for lib in $(ALL_LIBS); do \
 		hexagon-ar x $$lib; \
 	done; \
 	hexagon-ar cru libh2.a *.o
 
-#  tar is used instead of cp so we can recursively copy and also exclude CVS
-#  Also, /pkg/gnu/bin/tar doesn't seem to work right.
 
-install: $(TMP_DIR)/libh2.a $(SYS_WRAPPER_LIB) $(LOCKS_LIB)
-	mkdir -p $(INSTALLPATH)/lib;
-	mkdir -p $(INSTALLPATH)/include;
-	cp $^ $(INSTALLPATH)/lib;
-	for dir in $(_H2_HDR_DIR) $(_POSIX_HDR_DIR) $(_H2COMPAT_HDR_DIR) syscall/angel/include qurt/include; do\
-		if [ -d "$$dir" ]; then \
-			pushd $$dir;\
-			/bin/tar cf - * | /bin/tar xvf - -C $(INSTALLPATH)/include --exclude '*CVS*';\
-			popd;\
-		fi;\
-	done;
+include $(H2DIR)/scripts/Makefile.inc.headers
+
+# Before 'install', which expands $(INSTALL_TARGETS) when parsed.
+$(call install_files,$(INSTALLPATH)/lib,$(TMP_DIR)/libh2.a $(SYS_WRAPPER_LIB) $(LOCKS_LIB))
+
+install: $(INSTALL_TARGETS) $(INSTALLED_HEADERS)

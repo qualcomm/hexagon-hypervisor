@@ -46,7 +46,7 @@ FUNC_START H2K_handle_tlbmissx .text.mem.tlbmiss .p2align 2
 	r3:2 = memd_locked(r10)
 	r3:2 = add(r3:2, r5:4)
 	memd_locked(r10, p0) = r3:2
-	if !p0 jump 2b
+	if (!p0) jump 2b
 3:
 #endif
 
@@ -76,7 +76,7 @@ FUNC_START H2K_handle_tlbmissrw .text.mem.tlbmiss .p2align 2
 	r3:2 = memd_locked(r10)
 	r3:2 = add(r3:2, r5:4)
 	memd_locked(r10, p0) = r3:2
-	if !p0 jump 4b
+	if (!p0) jump 4b
 5:
 #endif
 

@@ -9,7 +9,6 @@
 #include <c_std.h>
 #include <max.h>
 
-void H2K_hvx_init(u32_t devpage_offset) IN_SECTION(".text.init.subsystem");
 void H2K_hmx_init(u32_t devpage_offset) IN_SECTION(".text.init.subsystem");
 
 #endif

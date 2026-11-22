@@ -56,6 +56,26 @@ volatile int TH_shutdown_now = 0;
 volatile int TH_done = 0;
 volatile int TH_caller_woke = 0;
 
+typedef struct {
+	u64_t start;
+	u64_t end;
+} cycle_timer_t;
+
+static void timer_start(cycle_timer_t *t)
+{
+	t->start = h2_get_core_pcycles();
+}
+
+static void timer_end(cycle_timer_t *t)
+{
+	t->end = h2_get_core_pcycles();
+}
+
+static u64_t timer_elapsed(cycle_timer_t *t)
+{
+	return t->end - t->start;
+}
+
 #define info(...) { h2_printf("INFO:  "); h2_printf(__VA_ARGS__);}
 #define warn(...) { h2_printf("WARNING:  "); h2_printf(__VA_ARGS__);}
 #define debug(...) { h2_printf("DEBUG:  "); h2_printf(__VA_ARGS__);}
@@ -173,7 +193,9 @@ void spawn_pi_caller(int tnum, int prio, int *futex_addr)
 
 int main(int argc, char **argv)
 {
+	cycle_timer_t total_timer, phase_timer;
 	h2_handle_errors(0);
+
 	futex1 = futex0 = h2_thread_myid();
 
 	h2_sem_init_val(&startup_sem,0);
@@ -183,7 +205,10 @@ int main(int argc, char **argv)
 	h2_sem_init_val(&blocker2.sem,0);
 	info("main() starting\n");
 
+	timer_start(&total_timer);
+
 	/* Start up two low priority spinner threads */
+	timer_start(&phase_timer);
 	spawn_spinner(0,31);
 	spawn_spinner(1,30);
 	/* Start up a blocking spinner */
@@ -191,6 +216,8 @@ int main(int argc, char **argv)
 	spawn_blocker(2,29,&blocker);
 	blocker2.threadid = 3;
 	spawn_blocker(3,28,&blocker2);
+	timer_end(&phase_timer);
+	info("Phase: Initial thread spawn - %llu cycles\n", timer_elapsed(&phase_timer));
 
 	/* Check spin status */
 	if (!still_spinning(&spinner_arr[0])) FAIL("t0 not spinning");
@@ -199,52 +226,28 @@ int main(int argc, char **argv)
 	if (still_spinning(&spinner_arr[3])) FAIL("t3 spinning");
 
 	/* Priority inherit blocked thread */
+	timer_start(&phase_timer);
 	futex0 = thread_ids[2];
 	spawn_pi_caller(4,4,&futex0);
 
 	/* Priority inherit running thread */
 	futex1 = thread_ids[1];
 	spawn_pi_caller(5,5,&futex1);
+	timer_end(&phase_timer);
+	info("Phase: Priority inherit setup - %llu cycles\n", timer_elapsed(&phase_timer));
 
 	/* Generate middlish spinners */
-
-	spawn_spinner(8,16);
-	spawn_spinner(9,16);
-	spawn_spinner(10,16);
-	spawn_spinner(11,16);
-	spawn_spinner(12,16);
-	spawn_spinner(13,16);
-	spawn_spinner(14,16);
-	spawn_spinner(15,16);
-	spawn_spinner(16,16);
-	spawn_spinner(17,16);
-	spawn_spinner(18,16);
-	spawn_spinner(19,16);
-	spawn_spinner(20,16);
-	spawn_spinner(21,16);
-	spawn_spinner(22,16);
-	spawn_spinner(23,16);
-	spawn_spinner(24,16);
-	spawn_spinner(25,16);
-	spawn_spinner(26,16);
-	spawn_spinner(27,16);
-	spawn_spinner(28,16);
-	spawn_spinner(29,16);
-	spawn_spinner(30,16);
-	spawn_spinner(31,16);
-	spawn_spinner(32,16);
-	spawn_spinner(33,16);
-	spawn_spinner(34,16);
-	spawn_spinner(35,16);
-	spawn_spinner(36,16);
-	spawn_spinner(37,16);
-	spawn_spinner(38,16);
-	spawn_spinner(39,16);
+	timer_start(&phase_timer);
+	for (u32_t tnum = 8; tnum < 50; tnum++){
+		spawn_spinner(tnum, 16);
+	}
+	timer_end(&phase_timer);
+	info("Phase: Middle spinners spawn - %llu cycles\n", timer_elapsed(&phase_timer));
 
 	info("Middle Spinners Launched\n");
 
 	/* Check that previous priority inheritance worked */
-	
+	timer_start(&phase_timer);
 	if (still_spinning(&spinner_arr[0])) FAIL("t0 spinning");
 	if (!still_spinning(&spinner_arr[1])) FAIL("t1 not spinning");
 	if (still_spinning(&spinner_arr[2])) FAIL("t2 spinning");
@@ -254,20 +257,26 @@ int main(int argc, char **argv)
 
 	TH_shutdown_now = 1;
 	TH_nextstep_id = thread_ids[1];
-	while (TH_nextstep_id != 0) /* SPIN */;
-
+	while (TH_nextstep_id != 0) {
+		/* SPIN */
+	}
+	info("cp1\n");
 	h2_sem_up(&blocker.sem);
+	info("cp2\n");
 	wait(1000);
+	info("cp3\n");
 	if (!still_spinning(&spinner_arr[2])) FAIL("t2 not spinning");
 	if (still_spinning(&spinner_arr[3])) FAIL("t3 spinning");
-	
+
 
 	info("Blocked thread inherited OK, shutting down that test thread\n");
 	/* EJP: Add extra test case: additional blocked thread in same bin */
 
 	TH_shutdown_now = 1;
 	TH_nextstep_id = thread_ids[2];
-	while (TH_nextstep_id != 0) /* SPIN */;
+	while (TH_nextstep_id != 0) {
+		/* SPIN */
+	}
 
 	/* priority inherit ready thread */
 	futex0 = thread_ids[0];
@@ -277,15 +286,22 @@ int main(int argc, char **argv)
 	if (!still_spinning(&spinner_arr[0])) FAIL("t0 not spinning");
 
 	info("Waiting thread inherited OK, going to next step (handoff)\n");
+	timer_end(&phase_timer);
+	info("Phase: Priority inheritance tests - %llu cycles\n", timer_elapsed(&phase_timer));
 
 	TH_shutdown_now = 0;
 	TH_expected_futex_wakeup_thread = thread_ids[4];
 	TH_expected_futex_wakeup_val = FUTEX_PASS;
 
+	timer_start(&phase_timer);
 	TH_nextstep_id = thread_ids[0];
-	while (TH_nextstep_id != 0) /* SPIN */;
+	while (TH_nextstep_id != 0) {
+		/* SPIN */
+	}
 
-	while (TH_caller_woke == 0) /* SPIN */;
+	while (TH_caller_woke == 0) {
+		/* SPIN */
+	}
 	TH_caller_woke = 0;
 
 	wait(1000);
@@ -296,7 +312,9 @@ int main(int argc, char **argv)
 	TH_expected_futex_wakeup_thread = thread_ids[6];
 	TH_expected_futex_wakeup_val = FUTEX_PASS;
 	h2_futex_unlock_pi(&futex0);
-	while (TH_caller_woke == 0) /* SPIN */;
+	while (TH_caller_woke == 0) {
+		/* SPIN */
+	}
 	TH_caller_woke = 0;
 
 	TH_expected_futex_wakeup_thread = thread_ids[6];
@@ -307,13 +325,20 @@ int main(int argc, char **argv)
 	TH_expected_futex_wakeup_thread = thread_ids[5];
 	TH_expected_futex_wakeup_val = FUTEX_PASS;
 	h2_futex_unlock_pi(&futex1);
-	while (TH_caller_woke == 0) /* SPIN */;
+	while (TH_caller_woke == 0) {
+		/* SPIN */
+	}
 	TH_caller_woke = 0;
 	if ((futex1 & -2) != TH_expected_futex_wakeup_thread) FAIL("Futex should PASS");
 
 	h2_sem_up(&blocker2.sem);
 	TH_shutdown_now = 1;
 	TH_done = 1;
+	timer_end(&phase_timer);
+	info("Phase: Futex unlock/handoff - %llu cycles\n", timer_elapsed(&phase_timer));
+
+	timer_end(&total_timer);
+	info("TOTAL TEST TIME: %llu cycles\n", timer_elapsed(&total_timer));
 	puts("TEST PASSED");
 	exit(0);
 }

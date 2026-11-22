@@ -1,1 +1,0 @@
-check_sanity.v4opt.S

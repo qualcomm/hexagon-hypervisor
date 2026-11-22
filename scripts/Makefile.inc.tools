@@ -5,6 +5,15 @@ MAKE_INC_TOOLS := 1
 
 export SHELL := /bin/bash
 
+# Toolchain location override.
+# If TOOLCHAIN_BIN is provided, prefer its hexagon-* tools.
+TOOLCHAIN_BIN ?=
+ifneq ($(TOOLCHAIN_BIN),)
+# Ensure sub-makes inherit toolchain bin directory.
+export TOOLCHAIN_BIN
+export PATH := $(TOOLCHAIN_BIN):$(PATH)
+endif
+
 ifneq (,${Q6VERSION})
 export ARCHV := $(patsubst 6%,60,$(subst v,,$(Q6VERSION)))
 else
@@ -28,7 +37,6 @@ export DOXYGEN := doxygen
 ELFCOPY := hexagon-elfcopy
 
 
-export SIZE_TOOL := /prj/dsp/qdsp6/arch/scripts/section_size.py
 export LD := hexagon-clang
 
 export COM_CFLAGS := -Werror
@@ -115,7 +123,7 @@ DEVSIM ?= devsim
 DEVICE_CONFIG ?= $(H2DIR)/scripts/devsim_v$(ARCHV).cfg
 
 ifeq ($(USE_PKW),1)
-export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR) arch=$(ARCH_FLAVOR)
+export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR) arch=$(ARCH_FLAVOR) python3=3.14.0_rel01 doxygen=1.16.1
 endif
 
 export RUN_DEVSIM := $(DEVSIM) $(DEVSIM_EXTRA) --quiet $(MAGIC_ANGEL) --subsystem_base $(SUBSYSTEM_BASE_ARCHSIM) --device_config $(DEVICE_CONFIG)
@@ -149,5 +157,10 @@ export LLVM_COV_CFLAGS := -fprofile-instr-generate -fcoverage-mapping
 export LLVM_COV_LDFLAGS := -fprofile-instr-generate
 export OPTIMIZE_COV := -fno-inline
 export OPTIMIZE_DEBUG := -O0 -fno-inline
+
+# -MMD writes a .d beside each object listing every header it actually opened,
+# transitively and across directory boundaries.  -MP adds a bodiless target per
+# header, so a deleted header does not leave a stale .d that kills make.
+export DEPFLAGS := -MMD -MP
 
 endif

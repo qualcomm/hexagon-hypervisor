@@ -8,6 +8,7 @@
 #include <max.h>
 #include <vmdefs.h>
 #include <idtype.h>
+#include <h2_common_vmint.h>
 
 #define ME r0
 
@@ -75,7 +76,14 @@ FUNC_START H2K_vmtrap_setie .text.vm.funcs .falign
 	{
 		r1 = memw(ME+#CONTEXT_r00)
 		r2 = add(ME,#CONTEXT_atomic_status_word)
-		if (tstbit(r1.new,#0)) jump:nt 2f
+	}
+	{
+		p1 = cmp.gtu(r1,#(H2K_IE_END-1))	// r00 >= H2K_IE_END ?
+		if (p1.new) jump:nt 3f
+		p2 = tstbit(r1,#0)
+	}
+	{
+		if (p2) jump:nt 2f
 	}
 1:
 	{
@@ -101,6 +109,12 @@ FUNC_START H2K_vmtrap_setie .text.vm.funcs .falign
 	{
 		jumpr r17
 		memw(r16+#CONTEXT_r00) = r0
+	}
+3:
+	{
+		r1 = #-1
+		jumpr r31
+		memw(ME+#CONTEXT_r00) = r1.new
 	}
 FUNC_END H2K_vmtrap_setie
 
@@ -181,19 +195,12 @@ FUNC_START H2K_vmtrap_wait .text.vm.funcs .falign
 	{
 		p0 = cmp.gt(ID,#63)
 		WAITING |= asl(NEWMASK,ID)
-		RUNLIST = add(H2K_GP,#KG_runlist)
-		RUNLIST_PRIOS = add(H2K_GP,#KG_runlist_prios)
 	}
 	{
 		if (!p0) memd(VMBLOCK+#VMBLOCK_waiting_cpus) = WAITING
 		memb(MESAV+#CONTEXT_status) = #STATUS_VMWAIT
-		r11:10 = combine(#0,#-1)
-	}
-	{
 		jump H2K_dosched
 		r1:0 = combine(HTHREAD,MESAV)
-		memw(RUNLIST+HTHREAD<<#2) = r11
-		memh(RUNLIST_PRIOS+HTHREAD<<#1) = r10
 	}
 9:
 	ASM_BKL_UNLOCK(r6, r7, r8, p0)

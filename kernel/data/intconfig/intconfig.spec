@@ -7,48 +7,24 @@
 H2K_intconfig_init
 ------------------
 
-.. c:function:: void H2K_intconfig_init()
+.. c:function:: void H2K_intconfig_init(u32_t ssbase)
+
+	:param ssbase: Subsystem private-register base used to select the L2 interrupt configuration
 
 Description
 ~~~~~~~~~~~
 
-H2K_intconfig_init initializes the interrupt configuration data and fast interrupt contexts
+H2K_intconfig_init initializes the interrupt configuration data.
 
 Functionality
 ~~~~~~~~~~~~~
 
-All handler pointers are initialized to NULL.  The fastint mask is initialized 
-to zeros.  The handler for reschedule is initialized to :c:func:`H2K_resched()`.
-
-Next, we initialize all fastint contexts to zeros.  We then update the hthread
-fields to the correct hardware thread that will be using the fastint context, 
-and the trapmask to exclude any trap may not be called by the fast interrupt
-handler.
-
-
-
-H2K_register_fastint
---------------------
-
-.. c:function:: void H2K_register_fastint(u32_t whatint, int (*fastint_handler)(u32_t x), H2K_thread_context *me)
-
-	:param whatint: which interrupt to register
-	:param fastint_handler: Address of the fast interrupt handler
-	:param me: Context of the calling thread
-
-Description
-~~~~~~~~~~~
-
-Modifies the interrupt configuration data to register or deregister a fast interrupt handler.
-
-Functionality
-~~~~~~~~~~~~~
-
-When a valid function pointer is passed, the fastint_handler is placed in the
-param field for the interrupt, and H2K_fastint is placed in the handler field.
-
-When a NULL function pointer is passed, we deregister the associated interrupt.
-We set the entries in the inthandlers array to NULL.  
+All handler pointers are initialized to NULL.  The reschedule,
+cluster-reschedule, VM IPI, and timer interrupt handlers are initialized to
+:c:func:`H2K_resched()`, :c:func:`H2K_resched_cluster()`,
+:c:func:`H2K_vm_ipi_do()`, and :c:func:`H2K_timer_int()`, respectively.  The
+function then calls :c:func:`H2K_intconfig_l2_init()` to initialize the L2
+interrupt controller when H2 controls that controller and devices are enabled.
 
 
 H2K_register_passthru
@@ -75,21 +51,49 @@ larger than the range accommodated by the reserved bits, the value 0 is used to
 indicate that the mapping is stored in the vmblock.
 
 
-Testing -------
+H2K_intconfig_l2_init
+---------------------
+
+.. c:function:: static void H2K_intconfig_l2_init(u32_t ssbase)
+
+	:param ssbase: Subsystem base used to select MSS or LPASS interrupts
+
+Description
+~~~~~~~~~~~
+
+Initializes the L2 interrupt controller when H2 controls it and devices are
+enabled.  Otherwise, this function does nothing.
+
+Functionality
+~~~~~~~~~~~~~
+
+Disables and clears all L2 interrupts, configures them as rising-edge triggered,
+and changes the required SPI, TLMM, SPMI, and LPASS USB interrupts to level-high
+triggering.  ``ssbase`` selects the MSS or LPASS (default is LPASS, if MSS is not specified)
+interrupt numbers on V5 and later.  Finally, the function enables L2 interrupts.
+
+
+H2K_intconfig_l2vic_crash
+-------------------------
+
+.. c:function:: void H2K_intconfig_l2vic_crash()
+
+Description
+~~~~~~~~~~~
+
+Saves L2 interrupt-controller state for crash diagnostics when ``CRASH_DEBUG``
+is enabled.
+
+Functionality
+~~~~~~~~~~~~~
+
+Copies each L2 controller word's enabled and pending registers into
+``H2K_gp->crash_l2vic_enabled`` and ``H2K_gp->crash_l2vic_pending``.
+
+
+Testing
+-------
 
 For H2K_intconfig_init, we check to make sure that the array has been
 initialized after the call.
-
-For H2K_register_fastint, we call with a valid function pointer check and make
-sure the fastint is registered correctly.  We then call with a NULL function
-pointer and ensure the fastint is deregistered correctly.
-
-Samples
-~~~~~~~
-
-* Input: fastint_handler
-* Input: whatint
-* Output: H2K_inthandlers[whatint].param
-* Output: H2K_inthandlers[whatint].handler
-* Output: IAD bit for interrupt whatint cleared
 

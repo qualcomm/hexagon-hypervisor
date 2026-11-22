@@ -42,11 +42,11 @@ FUNC_START H2K_handle_trap0 .text.core.trap0 .p2align 2
 	.falign
 H2K_trap_done:
 	r17 = sgp0
-	{
-		memd(r17+#CONTEXT_r0100) = r1:0
-		jump H2K_context_restore_return
-	}
+	memd(r17+#CONTEXT_r0100) = r1:0		// save return value in case of preemption
+	call H2K_preempt			// try to take interrupt before returning
 
+H2K_guest_return:
+	jump H2K_context_restore_return
 	.falign
 .Lreturn_to_guest:
 	{
@@ -91,15 +91,15 @@ FUNC_START H2K_traptab .text.core.trap0 .p2align 8
 		jump H2K_thread_id // 7 // jumpr r31?
 	}
 	{
-		r2 = sgp0
-		jump H2K_register_fastint // 8
-	}
-	{
-		r2 = sgp0
-		jump H2K_prio_set // 9
+		r0 = sgp0
+		jump H2K_thread_id // 8 (was H2K_register_fastint, now unused)
 	}
 	{
 		r1 = sgp0
+		jump H2K_prio_set // 9
+	}
+	{
+		r0 = sgp0
 		jump H2K_prio_get // 10
 	}
 	{

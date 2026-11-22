@@ -6,8 +6,16 @@
 #ifndef H2_COMMON_ERRNO_H
 #define H2_COMMON_ERRNO_H 1
 
+#if defined(__has_include) && __has_include(<picolibc.h>)
+/*
+ * Picolibc: errno values must match the libc the guest links against.  Its
+ * <sys/errno.h> contains only macros, so assembly sources can include it too.
+ */
+#include <sys/errno.h>
+#else
 // values from dinkumware
 #define ENOENT        0x02
+#define EAGAIN        0x0b
 #define EFAULT        0x0e
 #define ENFILE        0x17
 #define ENOTTY        0x19
@@ -30,7 +38,9 @@
 #define ENOTEMPTY     0x5d
 #define EMSGSIZE      0x61
 #define ETIMEDOUT     0x91
+#define EOVERFLOW     0x92
 #define EINPROGRESS   0x96
 #define EFPOS         0x98
+#endif
 
 #endif

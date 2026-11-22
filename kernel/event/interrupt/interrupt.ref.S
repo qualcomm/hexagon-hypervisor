@@ -62,7 +62,6 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	/* R9 = HTID, r8=SSR, r7 = thread context */
 	INTNO = and(SSRVAL,#0x1f)
 
-#if ARCHV >= 4
 	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 
@@ -94,7 +93,6 @@ FUNC_START H2K_handle_int .text.core.interrupt .p2align 2
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
 	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
-#endif
 
 	TMP = #H2K_TRACE_INTERRUPT
 	TMP |= asl(INTNO,#8)
@@ -132,19 +130,9 @@ H2K_interrupt_restore:
 FUNC_END H2K_handle_int
 
 FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
-#if ARCHV <= 3
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
-	HTNUM = ssr
-	HTNUM = extractu(HTNUM,#3,#19)
-	TMP = #KERNEL_STACK_SIZE
-	r29 += mpyi(HTNUM,TMP)
-#else
 	HTNUM = HTID
 	r29 = #KERNEL_STACK_SIZE
 	r29 = add(##H2K_stacks,mpyi(HTNUM,r29))
-#endif
-	
 	H2K_GP.h = #hi(H2K_kg)
 	H2K_GP.l = #lo(H2K_kg)
 
@@ -164,13 +152,11 @@ FUNC_START H2K_interrupted_waitmode .text.core.interrupt .p2align 2
 	trace(TMP)
 #endif
 
-#if ARCHV >= 4
 	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
 	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
-#endif
 	r1 = #0		// thread context == NULL
 	KG_INTHANDLERS = add(H2K_GP,#KG_inthandlers)
 	KG_INTHANDLERS = addasl(KG_INTHANDLERS,INTNO,#3)
@@ -202,28 +188,17 @@ FUNC_START H2K_interrupted_preempt .text.core.interrupt .p2align 2
 	 * 
 	 * Also restore ELR 
 	 */
-#if ARCHV <= 3
-	r29.h = #hi(H2K_stacks)
-	r29.l = #lo(H2K_stacks)
-	HTNUM = ssr
-	HTNUM = extractu(HTNUM,#3,#19)
-	TMP = #KERNEL_STACK_SIZE
-	r29 += mpyi(HTNUM,TMP)
-#else
 	HTNUM = HTID
 	r29 = #KERNEL_STACK_SIZE
 	r29 = add(##H2K_stacks,mpyi(HTNUM,r29))
-#endif
 	/* Stack set up, execute interrupt handler */
 	SSRVAL = ssr
 	INTNO = and(SSRVAL,#0x1f)
-#if ARCHV >= 4
 	ISL2INT = cmp.eq(INTNO, #L2_CORE_INTERRUPT)
 	VIDVAL = VID
 	if (ISL2INT) INTNO = add(VIDVAL,#32)
 	CIADVAL = mux(ISL2INT, ##(0x1 << L2_CORE_INTERRUPT), #0)
 	ciad(CIADVAL)
-#endif
 	H2K_GP.h = #hi(H2K_kg)
 	H2K_GP.l = #lo(H2K_kg)
 

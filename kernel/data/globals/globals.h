@@ -10,7 +10,6 @@
 #include <c_std.h>
 #include <context.h>
 #include <futex.h>
-#include <vm.h>
 #include <stlb.h>
 #include <asid_types.h>
 #include <spinlock.h>
@@ -30,20 +29,9 @@ typedef	union {
 typedef struct {
 	u64_t ready_valids[MAX_PRIOS/64] __attribute__((aligned(MAX_PRIOS/8)));
 	H2K_timeinfo_t time;
-	union {
-		u64_t lowprio_masks;
-		struct {
-			u32_t priomask;
-			u32_t wait_mask;
-		};
-	};
-	union {
-		u64_t fastint_gp_ssr;
-		struct {
-			u32_t fastint_ssr;
-			u32_t fastint_gp;
-		};
-	};
+#if CLUSTER_SCHED
+	u32_t wait_mask;
+#endif
 	union {
 		u64_t syscfg_stlbptr;
 		struct {
@@ -72,17 +60,6 @@ typedef struct {
 	};
 #endif
 	u32_t timer_intnum;
-	u32_t *hvx_clock;
-	u32_t *hvx_reset;
-	u32_t *hvx_power;
-#if ARCHV >= 65
-	u32_t *hvx_bhs_status;
-	u32_t *hvx_bhs_cfg;
-	u32_t *hvx_bhs_cmd;
-	u32_t *hvx_cpmem_cfg;
-	u32_t *hvx_cpmem_cmd;
-	u32_t *hvx_cpmem_status;
-#endif
 	u32_t hvx_state;
 	u32_t hvx_vlength;   // native vector length
 	u32_t coproc_contexts;  // # of native length (HVX or SILVER)
@@ -97,7 +74,7 @@ typedef struct {
 	pa_t gpio_reg;
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 	u32_t cluster_clusters;   // number of clusters
 	u32_t cluster_hthreads;   // hardware threads per cluster
 	u32_t cluster_mask[4];    // bitmask of threads in cluster
@@ -137,6 +114,7 @@ typedef struct {
 #ifdef SOFT_BKL
 	H2K_spinlock_t bkl;
 #endif
+	H2K_spinlock_t timer_lock;
 	H2K_spinlock_t tmpmap_lock;
 	H2K_spinlock_t asid_spinlock;
 	u64_t oncpu_start[MAX_HTHREADS];
@@ -147,8 +125,6 @@ typedef struct {
 	u32_t prof_sample_pending;
 	H2K_spinlock_t prof_sample_lock;
 #endif
-	H2K_thread_context *runlist[MAX_HTHREADS];
-	s16_t runlist_prios[(MAX_HTHREADS+7)/8*8] __attribute__((aligned(8)));
 	H2K_vmblock_t *vmblocks[H2K_ID_MAX_VMS];
 	u32_t phys_offset;
 	u32_t build_id;
@@ -171,6 +147,12 @@ typedef struct {
 	u32_t tcm_offset;
 	u32_t noc_mbase;  // 4k pages
 	u32_t noc_sbase;  // 4k pages
+	u32_t local_mem_base;  // 4k page number
+	u32_t local_mem_size;  // 4k pages
+	u32_t ssbase;          // subsystem private base
+	u32_t ss_pub_offset;   // public base = private base - ss_pub_offset
+	u32_t l2vic_offset;    // from ssbase
+	u32_t timer_offset;    // from ssbase
 
 	H2K_spinlock_t logbuf_lock;
 	char *logbuf[MAX_HTHREADS];
@@ -219,7 +201,7 @@ static inline H2K_kg_t PURITY *H2K_gp_llvm()
 #undef PURITY
 #endif
 
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 
 static inline u32_t H2K_hthread_cluster(u32_t hthread) {
 	return (hthread / H2K_gp->cluster_hthreads);
@@ -251,8 +233,8 @@ static inline void xex(u32_t hthread, u32_t new_xe, u32_t new_xe2, u32_t new_xe3
 
 void H2K_cluster_config(void) IN_SECTION(".text.init.globals");
 
-void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) IN_SECTION(".text.init.globals");
-
 #endif
+
+void H2K_kg_init(u32_t phys_offset, u32_t multicore_shift, u32_t ssbase, u32_t devpage_offset, u32_t last_tlb_index, u32_t tlb_size, u32_t core_id, u32_t core_count, u32_t tcm_offset) IN_SECTION(".text.init.globals");
 
 #endif

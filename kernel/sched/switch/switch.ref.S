@@ -16,7 +16,7 @@
  * We don't care about any registers
  * Handle any tracing and profiling
  * If switching to NULL, go to sleep
- * Otherwise, load continuation into LR and jump to check_sanity_unlock
+ * Otherwise, load continuation into LR
  */
 
 FUNC_START H2K_switch .text.core.switch .p2align 5
@@ -28,12 +28,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	p0 = cmp.eq(r19,r5)
 	if (!p0) jump H2K_switch
 
-#if (ARCHV) <= 3
-	r5 = ssr
-	r5 = extractu(r5,#3,#19)
-#else
 	r5 = HTID
-#endif
 	r7:6 = combine(r5,r18)
 	r0 = #3
 	r3:2 = r19:18
@@ -79,7 +74,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r0+#CONTEXT_lc1sa1) = r21:20
 	memd(r0+#CONTEXT_m1m0) = r25:24
 
-#if ARCHV >= 4
 	r27:26 = g3:2
 	r25:24 = g1:0
 	r21 = cs1
@@ -87,7 +81,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	memd(r0+#CONTEXT_gbadva_gosp) = r27:26
 	memd(r0+#CONTEXT_gssr_gelr) = r25:24
 	memd(r0+#CONTEXT_cs1cs0) = r21:20
-#endif
 
 #if ARCHV >= 60
 	r21:20 = c19:18 // pktcount
@@ -225,7 +218,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r14 = memw(r1+ #CONTEXT_vwctrl)
 	s12 = r14
 #endif
-#if ARCHV >= 4
 	r14 = memw(r1+#CONTEXT_ssr)
 	r21:20 = memd(r1+#CONTEXT_cs1cs0)
 	r25:24 = memd(r1+#CONTEXT_gssr_gelr)
@@ -235,7 +227,6 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	cs1 = r21
 	g1:0 = r25:24
 	g3:2 = r27:26
-#endif
 #if ARCHV >= 68
 	r14 = memw(r1 + #CONTEXT_dm0)
 	dmresume(r14)
@@ -274,11 +265,8 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 
 	sgp0 = r1
 	r4 = memw(r1+#CONTEXT_status_prio_hthread_tid)
-#if (ARCHV <= 3)
-	tid = r4
-#else
 	stid = r4
-#endif
+	isync
 
 	r17 = r1
 	r0 = r17
@@ -286,16 +274,12 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r1:0 = memd(r17+#CONTEXT_r0100)
 	r31 = memw(r17+#CONTEXT_continuation)
 	r31 = and(r31,#-4)				// ignore LSBs
-	jump H2K_check_sanity_unlock
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
+	jumpr r31
 
 .Lto_sleep:
 	memd(r9) = r19:18
-#if (ARCHV) <= 3
-	r5 = ssr
-	r5 = extractu(r5,#3,#19)
-#else
 	r5 = HTID
-#endif
 	r27:26 = combine(r5,r18)
 
 //	r14 = #H2K_TRACE_SWITCH
@@ -312,30 +296,23 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 		trace(r15)
 		//ASM_INLINE_TRACE(r14,r27:26,r27,r26,r25:24,r25,r24,p0,r21,r20,r31,,)
 
+#if CLUSTER_SCHED
 	r9 = memw(H2K_GP+#KG_wait_mask)
-	r8 = memw(H2K_GP+#KG_priomask)
 	r9 = setbit(r9,r5)
-	r8 = setbit(r8,r5)
 	memw(H2K_GP+#KG_wait_mask) = r9
-	memw(H2K_GP+#KG_priomask) = r8
-	ASM_BKL_UNLOCK(r6, r7, r8, p0)
+#endif
 	// set SGP to NULL
 	sgp0 = r1
 
-	// set IMASK to receive most interrupts
-	r0 = imask
-	r1.h = #HI(0)
-	r1.l = #LO(0)
-	r0 = and(r0,r1)
+	// set IMASK to receive all interrupts
+	r0 = #0
 	imask = r0
 
 	// set TID to special value (-1)
 	r1 = #-1
-#if (ARCHV <= 3)
-	tid = r1
-#else
 	stid = r1
-#endif
+	isync
+	ASM_BKL_UNLOCK(r6, r7, r8, p0)
 
 	// set SSR to enable interrupts
 	// NOTE: should be the last thing before going to WAIT mode, we may get an interrupt
@@ -344,6 +321,7 @@ FUNC_START H2K_switch .text.core.switch .p2align 5
 	r3 = #4
 	r2 = insert(r3,#3,#16)
 	ssr = r2
+	isync
 	jump H2K_wait_forever
 FUNC_END H2K_switch
 

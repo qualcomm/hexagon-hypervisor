@@ -182,7 +182,7 @@ void vmmain(void *unused)
 			&stack_space[next_tnum][THREAD_STACK_SIZE],
 			0,
 			next_tnum) == -1) {
-			info("Could not create thread\n");
+			error("Could not create thread\n");
 		}
 	}
 
@@ -205,7 +205,7 @@ void vmmain(void *unused)
 			&stack_space[next_tnum++][THREAD_STACK_SIZE],
 			(void *)&thread_info[i],
 			prio) == -1) {
-			info("Could not create consumer thread\n");
+			error("Could not create consumer thread\n");
 		}
 		/* 
 		 * put a small delay in here to make sure the thread launches and
@@ -221,7 +221,7 @@ void vmmain(void *unused)
 
 	/*  Figure out the max priority that can be woken up  */
 	k = nr_to_wake;
-	for (j=0; j<MAX_PRIO; j++) {
+	for (j=0; j<MAX_PRIO - TMP_PRIO_BUMP; j++) {
 		for (i=0; i<max_consumers; i++) {
 			if ((thread_info[i] >> 16) == j) {
 				k--;
@@ -243,7 +243,7 @@ void vmmain(void *unused)
 		&stack_space[next_tnum++][THREAD_STACK_SIZE],
 		0,
 		rand() % 32) == -1) {
-		info("Could not create producer thread\n");
+		error("Could not create producer thread\n");
 	}
 
 	info("Waiting for done\n");

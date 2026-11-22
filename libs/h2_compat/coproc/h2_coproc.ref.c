@@ -9,10 +9,10 @@
 /* Number of context bits in a unit's context mask (one unsigned int). */
 #define COPROC_BITS_PER_UNIT (sizeof(unsigned int) * 8)
 
-static unsigned int *configs[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {NULL};
-static unsigned int nunits[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {0};
-static unsigned int *counts[CFG_TYPE_MAX][CFG_SUBTYPE_MAX][CFG_MAX] = {NULL};
-static unsigned char *bitpos[CFG_TYPE_MAX][CFG_SUBTYPE_MAX][CFG_MAX] = {NULL};
+static unsigned int *configs[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {{NULL}};
+static unsigned int nunits[CFG_TYPE_MAX][CFG_SUBTYPE_MAX] = {{0}};
+static unsigned int *counts[CFG_TYPE_MAX][CFG_SUBTYPE_MAX][CFG_MAX] = {{{NULL}}};
+static unsigned char *bitpos[CFG_TYPE_MAX][CFG_SUBTYPE_MAX][CFG_MAX] = {{{NULL}}};
 static unsigned int oldstyle = 0;
 static unsigned int init_done = 0;
 

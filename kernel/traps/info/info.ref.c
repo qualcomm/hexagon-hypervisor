@@ -62,13 +62,13 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 		return (u32_t)&H2K_KERNEL_NPAGES;
 
 	case INFO_L2VIC_BASE:
-		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + L2VIC_OFFSET;
+		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_gp->l2vic_offset;
 
 	case INFO_TIMER_BASE:
-		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + TIMER_OFFSET;
+		return (H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_gp->timer_offset;
 
 	case INFO_TIMER_INT:
-		return H2K_gp->timer_intnum;
+		return TIMER_INT_CORE;
 
 	case INFO_ERROR:
 		return H2K_gp->kernel_error;
@@ -84,6 +84,16 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 
 	case INFO_CLADE_BASE:
 		return H2K_cfg_table(CFG_TABLE_CLADEREGS) << CFG_TABLE_SHIFT;
+
+	case INFO_CLADE2_BASE:
+		return H2K_cfg_table(CFG_TABLE_CLADE2REGS) << CFG_TABLE_SHIFT;
+
+	case INFO_CLADE3_BASE:
+		if (H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_CLADE3_MASK) {
+			return (H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT) + (H2K_cfg_table(CFG_TABLE_CLADE3REGS) << 10);  // entry in KB from L2TCM
+		} else {
+			return 0;
+		}
 
 	case INFO_CFGBASE:
 		return H2K_get_cfgbase();
@@ -147,7 +157,7 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 			return 0;
 		}
 	case INFO_MAX_CLUSTER_COPROC:
-#ifdef CLUSTER_SCHED
+#if CLUSTER_SCHED
 		return H2K_gp->coproc_max;
 #else
 		return H2K_gp->coproc_contexts;
@@ -195,7 +205,13 @@ u32_t H2K_trap_info(info_type op, u32_t unit, h2_cfg_unit_entry entry, H2K_threa
 	
 	case INFO_NOC_SBASE:
 	return H2K_gp->noc_sbase;
-	
+
+	case INFO_LOCAL_MEM_SIZE:
+	return H2K_gp->local_mem_size;
+
+	case INFO_LOCAL_MEM_BASE:
+	return H2K_gp->local_mem_base;
+
 default:
 		return -1;
 	}

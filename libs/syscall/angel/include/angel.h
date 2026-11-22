@@ -94,10 +94,8 @@ typedef struct dirent_internal
 }dirent_internal;
 
 
-#ifndef __PICOLIBC__
+#if !defined(__has_include) || !__has_include(<picolibc.h>)
 typedef dirent_internal dirent;
-#else
-
 #endif
 
 struct heap_info {	/* heap information */
@@ -106,7 +104,6 @@ struct heap_info {	/* heap information */
 	int stack_base;
 	int stack_limit;
 	};
-
 struct __sys_stat
 {
     unsigned long long int dev;
@@ -121,6 +118,7 @@ struct __sys_stat
     unsigned long ctime;
     unsigned long __pad2;
 }__attribute__ ((aligned (8)));
+
 
 	/* SYSTEM CALL FUNCTIONS */
 errno_t sys_clock(void);
@@ -151,4 +149,3 @@ void sys_write0(const char *);
 #endif
 
 #endif
-

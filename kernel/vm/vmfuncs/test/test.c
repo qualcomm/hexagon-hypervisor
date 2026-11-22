@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <hw.h>
 #include <vmdefs.h>
+#include <h2_common_vmint.h>
 
 void FAIL(const char *str)
 {
@@ -115,6 +116,7 @@ u32_t H2K_vm_do_work_withlock(H2K_thread_context *me)
 int main()
 {
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
+	H2K_set_syscfg(H2K_get_syscfg() | SYSCFG_C);  /* GETPCYCLES below needs a running cycle counter */
 
 	/* VMVERSION */
 	H2K_vmtrap_version(&a);
@@ -163,6 +165,14 @@ int main()
 	if (TH_expected_enable) FAIL("Enable not called. Probably bad");
 	TH_expected_enable = 0;
 	if (a.vmstatus != H2K_VMSTATUS_IE) FAIL("setie/1/0/vmstatus");
+
+	/* VMSETIE: out-of-range op must fail without enabling/disabling */
+	a.r00 = H2K_IE_END;
+	a.vmstatus = 0;
+	TH_expected_enable = TH_expected_disable = 0;
+	H2K_vmtrap_setie(&a);
+	if (a.r00 != -1) FAIL("setie/END/didn't fail");
+	if (a.vmstatus != 0) FAIL("setie/END/vmstatus");
 
 	/* VMGETIE */
 	a.vmstatus = 0;
@@ -248,8 +258,6 @@ int main()
 	a.vmblock = &av;
 	av.waiting_cpus = 0;
 	a.id.cpuidx = 5;
-	H2K_kg.runlist[0] = &a;
-	H2K_kg.runlist_prios[0] = 4;
 	a.status = 0;
 	TH_expected_dosched = 1;
 	if (setjmp(env) == 0) H2K_vmtrap_wait(&a);
@@ -257,8 +265,6 @@ int main()
 	if (a.r00 != -1) FAIL("r00 clobbered");
 	if (av.waiting_cpus != (1<<5)) FAIL("wrong waiting cpus");
 	if (a.status != H2K_STATUS_VMWAIT) FAIL("wrong status");
-	if (H2K_kg.runlist[0] != NULL) FAIL("runlist");
-	if (H2K_kg.runlist_prios[0] != -1) FAIL("runlist_prios");
 
 	/* RETURN */
 

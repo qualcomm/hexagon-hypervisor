@@ -20,7 +20,6 @@
 #include <id.h>
 #include <thread.h>
 #include <create.h>
-#include <runlist.h>
 #include <fatal.h>
 #include <vmint.h>
 #include <dosched.h>
@@ -42,14 +41,12 @@ void H2K_vmtrap_return(H2K_thread_context *me)
 	me->elr = me->gelr;
 	H2K_set_elr(me->elr);
 
-#if ARCHV >= 4
 	/* If guest wants to single step, set in SSR */
 	if (me->gssr & H2K_GSSR_SS) {
 		me->ssr_ss = 1;
 	} else {
 		me->ssr_ss = 0;
 	}
-#endif
 	ints_enabled = (me->gssr & H2K_GSSR_IE);
 	H2K_gregs_restore(me);
 
@@ -71,8 +68,13 @@ void H2K_vmtrap_setvec(H2K_thread_context *me)
 /* 3 */
 void H2K_vmtrap_setie(H2K_thread_context *me)
 {
+	if (me->r00 >= H2K_IE_END) {
+		me->r00 = -1;
+		return;
+	}
+
 	u32_t prev;
-	if (me->r00 & 0x1) {
+	if (me->r00 & H2K_IE_ENABLE) {
 		prev = H2K_enable_guest_interrupts(me);
 	} else {
 		prev = H2K_disable_guest_interrupts(me);
@@ -122,7 +124,6 @@ void H2K_vmtrap_wait(H2K_thread_context *me)
 		if (me->id.cpuidx < sizeof(long_bitmask_t) * 8) {
 			me->vmblock->waiting_cpus |= (0x1 << me->id.cpuidx);
 		}
-		H2K_runlist_remove(me);
 		H2K_dosched(me,me->hthread);
 	} else {
 		/* Interrupt pending; either it was taken or interrupts are disabled.  In
@@ -143,8 +144,6 @@ void H2K_vmtrap_yield(H2K_thread_context *me)
 /* 18 */
 void H2K_vmtrap_start(H2K_thread_context *me)
 {
-	/* FIXME: need to pass arg1?  use vmblock bestprio instead of base_prio? */
-	                               /*      pc       sp  arg1 */
 	me->r00 = H2K_thread_create_no_squash(me->r00, me->r01, 0, me->base_prio, me->vmblock, me);
 }
 

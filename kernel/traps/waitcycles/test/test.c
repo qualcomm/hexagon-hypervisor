@@ -6,6 +6,7 @@
 #include <c_std.h>
 #include <context.h>
 #include <h2.h>
+#include <h2_hwconfig.h>
 #include <hw.h>
 #include <hexagon_protos.h>
 #include <max.h>
@@ -58,7 +59,14 @@ int main()
 	u64_t total_time;
 	u64_t waitcycles[MAX_HTHREADS];
 	int i;
-	int hthreads = get_hthreads();
+	int hthreads;
+
+#ifdef TESTING
+	if (h2_enter_monitor() != 0) fail("Could not enter Monitor mode");
+#else
+	fail("Should run test with TESTING cflag");
+#endif
+	hthreads = get_hthreads();
 
 	h2_init(NULL);
 

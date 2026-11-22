@@ -10,6 +10,8 @@
 #include <spinlock.h>
 #include <tree.h>
 
+#ifndef ASM
+
 typedef u64_t nsec_t;
 typedef u64_t ticks_t;
 
@@ -20,6 +22,8 @@ typedef struct {
 	H2K_treenode_t *timeouts;	/* all timeouts */
 	u32_t volatile *devptr;
 } __attribute__((aligned(32))) H2K_timeinfo_t;
+
+#endif
 
 #define H2K_TIME_FOREVER (~0ULL)
 #define H2K_TIME_BIGBANG 0ULL

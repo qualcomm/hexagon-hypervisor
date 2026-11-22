@@ -101,7 +101,7 @@ static inline u32_t H2K_atomic_add(u32_t *word, u32_t val) {
 			 "1: %0 = memw_locked(%3)\n"
 			 "   %0 = add(%0, %2)\n"
 			 "   memw_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -117,7 +117,7 @@ static inline u32_t H2K_atomic_or(u32_t *word, u32_t val) {
 			 "1: %0 = memw_locked(%3)\n"
 			 "   %0 = or(%0, %2)\n"
 			 "   memw_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");
@@ -131,7 +131,7 @@ static inline u64_t H2K_atomic_add64(u64_t *word, u64_t val) {
 			 "1: %0 = memd_locked(%3)\n"
 			 "   %0 = add(%0, %2)\n"
 			 "   memd_locked(%3, p0) = %0\n"
-			 "   if !p0 jump 1b\n"
+			 "   if (!p0) jump 1b\n"
 			 : "=&r"(t),"+m"(*word)
 			 : "r"(val),"r"(word)
 			 : "p0");

@@ -5,6 +5,13 @@
 
 #include <readylist.h>
 
+#if CLUSTER_SCHED
+H2K_thread_context *H2K_ready_getbest_asm(u32_t hthread)
+{
+	return H2K_ready_getbest(hthread);
+}
+#endif
+
 void H2K_readylist_init(void)
 {
 #ifdef TESTING

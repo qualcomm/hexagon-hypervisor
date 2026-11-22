@@ -9,7 +9,6 @@
 #include <hw.h>
 #include <intcontrol.h>
 #include <ring.h>
-#include <runlist.h>
 #include <readylist.h>
 #include <switch.h>
 #include <dosched.h>
@@ -19,7 +18,7 @@
  * EJP: FIXME: Should there be a single intpool for a vmblock? 
  * Maybe we should allow multiple intpools?
  * The second argument could point to an intpool struct instead of a vmblock.
- * This might make it more efficient to support both qurt interrupts and fastint replacements with intpool
+ * This might make it more efficient to support both qurt interrupts with intpool
  */
 void H2K_intpool_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_vmblock_t *vmblock)
 {
@@ -35,14 +34,13 @@ void H2K_intpool_int(u32_t intnum, H2K_thread_context *me, u32_t hwtnum, H2K_vmb
 	H2K_ring_remove(&vmblock->intpool,woken);
 	woken->r00 = intnum;
 	if (me != NULL) {
-		H2K_runlist_remove(me);
-		H2K_ready_append(me);
+		H2K_ready_append_arm(me);
 	} else {
+#if CLUSTER_SCHED
 		H2K_gp->wait_mask = (u32_t)Q6_R_clrbit_RR(H2K_gp->wait_mask,hwtnum);
+#endif
 	}
-	H2K_gp->priomask = (u32_t)Q6_R_clrbit_RR(H2K_gp->priomask,hwtnum);
-	highprio_imask(hwtnum);
-	H2K_runlist_push(woken);
+	woken->status = H2K_STATUS_RUNNING;
 	H2K_switch(me,woken);
 }
 
@@ -69,9 +67,11 @@ int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 	u32_t hthread = me->hthread;
 	int intno;
 	H2K_vmblock_t *vmblock = me->vmblock;
-	if (int_ack_num < MAX_INTERRUPTS) {
+	if ((L1_FIRST_AVAILABLE_INTERRUPT <= int_ack_num && int_ack_num < L1_INTERRUPTS)
+			|| (L2_FIRST_AVAILABLE_INTERRUPT <= int_ack_num && int_ack_num < MAX_INTERRUPTS)) {
 		H2K_intcontrol_enable(int_ack_num);
 	}
+
 	BKL_LOCK(&H2K_bkl);
 	if (me->vmstatus & H2K_VMSTATUS_VMWORK) {
 		H2K_vm_do_work_withlock(me);
@@ -88,7 +88,6 @@ int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 		}
 	}
 	/* FIXME: check pending intpool interrupts */
-	H2K_runlist_remove(me);
 	H2K_ring_append(&vmblock->intpool,me);
 	me->status = H2K_STATUS_INTBLOCKED;	/* OR INTPOOL_BLOCKED? */
 	me->r00 = (u32_t)-1;
@@ -97,6 +96,12 @@ int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
 
 int H2K_intpool_configure(u32_t intno, u32_t enable, H2K_thread_context *me)
 {
+	if (!((L1_FIRST_AVAILABLE_INTERRUPT <= intno && intno < L1_INTERRUPTS)
+		 || (L2_FIRST_AVAILABLE_INTERRUPT <= intno && intno < MAX_INTERRUPTS)))
+	{
+		return -1;
+	}
+
 	BKL_LOCK(&H2K_bkl);
 	if (enable) {
 		H2K_gp->inthandlers[intno].param = me->vmblock;

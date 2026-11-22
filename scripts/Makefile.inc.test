@@ -17,6 +17,9 @@ MAKE_INC_TEST := 1
 
 default-target: all
 
+# Its rule is in Makefile.inc.flagstamp, included at the end.
+FLAGS_STAMP ?= ./flags.stamp
+
 # overrides for tests linked in kernel space
 H2K_HEAP_SIZE =  0x00010000
 H2K_STACK_SIZE = 0x00001000
@@ -26,10 +29,28 @@ include $(H2DIR)/scripts/Makefile.inc.opensource
 include $(H2DIR)/scripts/Makefile.inc.version
 include $(H2DIR)/scripts/Makefile.inc.constants
 include $(H2DIR)/scripts/Makefile.inc.tools
+include $(H2DIR)/scripts/Makefile.inc.libc
 
-ifeq ($(USE_PKW),1)
-export PKW_VERSIONS := hexagon-tools=$(TOOLS_FLAVOR_KERNEL) arch=$(ARCH_FLAVOR)
-endif
+# The flag variables below are accumulated by every makefile that includes this
+# one, including the Makefile.coverage driver.  If they arrive from the shell
+# environment (e.g. an empty LDFLAGS=), make re-exports the accumulated value to
+# each per-test sub-make, which then links with the driver's kernel-space flags
+# on top of its own.  Keep them local to each make.
+unexport CFLAGS ASFLAGS LDFLAGS
+
+# The flags must be recursively expanded: they reference variables that are only
+# computed later (LDFLAGS: $(H2K_KERNEL_NPAGES), by the 'constants' rule after the
+# test.elf_tmp link; CFLAGS: $(H2K_BOOTVM_OFFSET), likewise).  If a flag is not in
+# the environment, 'unexport' above leaves it defined as an empty simple variable,
+# and every 'X +=' below then expands immediately: NPAGES freezes at 0 and
+# BOOTVM_OFFSET is passed as an empty define.  Re-define each one recursively,
+# keeping any value passed in from outside.
+_CFLAGS_IN := $(CFLAGS)
+CFLAGS = $(_CFLAGS_IN)
+_ASFLAGS_IN := $(ASFLAGS)
+ASFLAGS = $(_ASFLAGS_IN)
+_LDFLAGS_IN := $(LDFLAGS)
+LDFLAGS = $(_LDFLAGS_IN)
 
 ifeq ($(MODEL),)
    MODEL = ref
@@ -43,7 +64,7 @@ else
 endif
 
 ifeq ($(INSTALLPATH),)
-export INSTALLPATH := $(H2DIR)/artifacts/v$(ARCHV)/$(MODEL)/install
+export INSTALLPATH := $(H2DIR)/$(ARTIFACTS_DIR)/v$(ARCHV)/$(MODEL)/install
 endif
 
 # T is the build variant (opt or ref).  Exported from the top-level makefile when
@@ -71,6 +92,9 @@ BUSPENALTY ?= --buspenalty 50
 
 ULIMIT ?= 600
 
+# --profile doubles simulator time; only the coverage rules (TARG=all) set it.
+PROFILE ?=
+
 _BASIC_SIMF=$(TIMING) --simulated_returnval $(BUSPENALTY)
 
 ifeq (hexagon-sim, $(notdir $(firstword ${RUN})))
@@ -97,35 +121,40 @@ LIBH2KERNEL_DIR=${INSTALLPATH}/lib
 LIBH2KERNEL=${LIBH2KERNEL_DIR}/libh2kernel.a
 # libh2check.a is now built and installed by kernel ref_install/opt_install.
 LIBH2CHECK=${INSTALLPATH}/lib/libh2check.a
+ifdef BOOT
+BOOTER=${INSTALLPATH}/bin/booter
+endif
 
 #  Needs to have the tools already in path...
 #SIMPATH=/pkg/qct/software/hexagon/releases/tools/1.2/qc/bin
 #TOOLPATH=/pkg/qct/software/hexagon/releases/tools/1.2/gnu/bin
 #COVPATH=/pkg/qct/software/hexagon/releases/tools/1.2/examples/utils/bin
 
-${LIBH2KERNEL}: ${INSTALLPATH}
+${LIBH2KERNEL}: | ${INSTALLPATH}
 
 # libh2check.a is installed as part of the full build (ref_install/opt_install).
-${LIBH2CHECK}: ${INSTALLPATH}
+${LIBH2CHECK}: | ${INSTALLPATH}
 
-${LIBH2}:  ${INSTALLPATH}
+${LIBH2}: | ${INSTALLPATH}
+
+# Build this variant's install.  env -u: the test values of H2K_HEAP_SIZE and
+# H2K_STACK_SIZE above are exported; passed on, they would change the booter's
+# flags and every testall would relink it and rerun every test.
+H2_BUILD = +env -u H2K_HEAP_SIZE -u H2K_STACK_SIZE $(MAKE) -C $(H2DIR) -f makefile.real TARGET=$(TARGET) ARCHV=$(ARCHV) build
 
 ${INSTALLPATH}:
-	cd ${H2DIR} && $(MAKE) TARGET=$(TARGET) ARCHV=${ARCHV}
+	$(H2_BUILD)
 
-# $(INSTALLPATH)/ver is written by opt/ref recipes as a version/git-info record.
-# It is no longer used as a test dependency — $(INSTALLPATH)/manifest replaced it.
+# Version record written by the build; tests depend on the manifest instead.
 $(INSTALLPATH)/ver:
-	cd ${H2DIR} && $(MAKE) TARGET=$(TARGET) ARCHV=${ARCHV}
+	$(H2_BUILD)
 
-# $(INSTALLPATH)/manifest is written by opt/ref after all install artifacts land.
-# sha256sums of libh2kernel.a, libh2.a, libh2check.a, and booter — only updated
-# when content changes, so tests re-run iff something actually changed.
-# If manifest is missing, auto-build the install.
+# sha256 of the installed libs and booter, rewritten by the build only when
+# they change.  Built here if missing; Makefile.coverage adds FORCE.
 $(INSTALLPATH)/manifest:
-	cd ${H2DIR} && $(MAKE) TARGET=$(TARGET) ARCHV=${ARCHV}
+	$(H2_BUILD)
 
-${BOOTER}: ${INSTALLPATH}
+${BOOTER}: | ${INSTALLPATH}
 
 
 # (_8^(|)  d'oh!
@@ -136,7 +165,7 @@ prepare: ${LIBH2} ${LIBH2CHECK} ${LIBH2KERNEL} ${BOOTER}
 
 clean_libs:
 	cd ${H2DIR};\
-	rm -rf artifacts/v$(ARCHV)/$(MODEL); $(MAKE) clean
+	rm -rf $(ARTIFACTS_DIR)/v$(ARCHV)/$(MODEL); $(MAKE) clean
 
 clean_top:
 	rm -Rf test.cov_fns cov.txt $(INSTALLPATH)/cov/cov.txt $(INSTALLPATH)/cov/cov.rpt $(INSTALLPATH)/cov/cov_fns $(INSTALLPATH)/cov/cov_files
@@ -160,25 +189,52 @@ KERNEL_INCLUDES := -I $(KERNEL_BUILD_DIR)/include -I ${H2DIR}/libs/h2/common
 
 H2K_KERNEL_NPAGES ?= 0
 
-LDFLAGS += -Wl,--defsym=__bootvm_entry_point=hexagon_pre_main -Wl,--defsym=__bootvm_entry=qdsp6_pre_main -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=start # -Wl,--defsym=__entry=$(H2K_LOAD_ADDR)
+# Kernel-space tests boot straight into the C runtime.  Dinkumware's CRT entry
+# points are hexagon_pre_main/qdsp6_pre_main; Picolibc's is _start.
+ifeq ($(PICOLIBC),1)
+CRT_ENTRY := _start
+else
+CRT_ENTRY := hexagon_pre_main
+CRT_ENTRY_ALT := qdsp6_pre_main
+endif
+
+# Image entry: kernel-space images boot through the kernel's reset path
+# ('start' in boot.ref.S).  Booter-loaded guests and STANDALONE tests enter the
+# C runtime directly; Dinkumware calls that 'start' too, Picolibc only provides
+# '_start'.
+ifeq ($(PICOLIBC),1)
+IMAGE_ENTRY := $(if $(BOOT)$(STANDALONE),_start,start)
+else
+IMAGE_ENTRY := start
+endif
+
+LDFLAGS += -Wl,--defsym=__bootvm_entry_point=$(CRT_ENTRY) -Wl,--defsym=__bootvm_entry=$(or $(CRT_ENTRY_ALT),$(CRT_ENTRY)) -Wl,--defsym=H2K_KERNEL_NPAGES=$(H2K_KERNEL_NPAGES) -Wl,--defsym=H2K_LOAD_ADDR=$(H2K_LINK_ADDR) -Wl,-e=$(IMAGE_ENTRY) # -Wl,--defsym=__entry=$(H2K_LOAD_ADDR)
 
 ifdef BOOT
-BOOTER=${INSTALLPATH}/bin/booter
 CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_GUEST_START=${H2K_GUEST_START} -Wall -Wno-builtin-requires-header -g
 LDFLAGS += -Wl,--section-start=.start=$(H2K_GUEST_START)
 else
 CFLAGS += $(OPTIMIZE) -mv${TOOLARCH} -DARCHV=${ARCHV} -DH2K_LINK_ADDR=$(H2K_LINK_ADDR) -Wall -Wno-builtin-requires-header -g
 ifndef STANDALONE
 
+# Heap size for kernel-space images.  The Picolibc template takes it from
+# __heap_size_min and assigns HEAP_SIZE itself.  It also fixes the stack at
+# 0x1000, so H2K_STACK_SIZE must stay 0x00001000 when PICOLIBC=1.
+ifeq ($(PICOLIBC),1)
+KERNEL_HEAP_DEFSYM := -Wl,--defsym=__heap_size_min=$(H2K_HEAP_SIZE)
+else
+KERNEL_HEAP_DEFSYM := -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE)
+endif
+
 # 0xfffffff0 means don't call the hook
-LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -Wl,--section-start=.start=$(H2K_LINK_ADDR) -Wl,--defsym=HEAP_SIZE=$(H2K_HEAP_SIZE) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
+LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -Wl,--section-start=.start=$(H2K_LINK_ADDR) $(KERNEL_HEAP_DEFSYM) -Wl,--defsym=STACK_SIZE=$(H2K_STACK_SIZE) -Wl,--defsym=H2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
 endif
 endif
 
 ifdef STANDALONE
-CFLAGS += @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
-LDFLAGS += -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
-ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include
+CFLAGS += $(STANDALONE_LIBC_CFLAGS) @${H2DIR}/kernel/build/flags/abi @${H2DIR}/kernel/build/flags/testabi $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include -DH2K_GIT_COMMIT=$(H2K_GIT_COMMIT) -DH2K_ALLOC_HEAP_SIZE=$(H2K_ALLOC_HEAP_SIZE)
+LDFLAGS += $(STANDALONE_LIBC_LDFLAGS) $(LIBC_LOCKS_LDFLAGS) -Wl,--defsym=__h2_handle_errors_hook__=0xfffffff0 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
+ASFLAGS += $(STANDALONE_LIBC_CFLAGS) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -Wno-builtin-requires-header $(KERNEL_INCLUDES) -I ${INSTALLPATH}/include
 ifeq ($(EN_LLVM_COV), 1)
 CFLAGS += ${LLVM_COV_CFLAGS}
 LDFLAGS += ${LLVM_COV_LDFLAGS}
@@ -192,17 +248,23 @@ endif
 endif
 
 else # non-STANDALONE
-OSLIB=-moslib=h2
+OSLIB=$(OSLIB_LDFLAGS)
 
 ifdef BOOT # use booter
-LDFLAGS +=${OSLIB} -L ${INSTALLPATH}/lib
+LDFLAGS +=${OSLIB} $(GUEST_LDSCRIPT) -L ${INSTALLPATH}/lib
 
 else # run in place of booter
 LDFLAGS +=${OSLIB} -lh2kernel -lh2 -lh2check -L ${INSTALLPATH}/lib
+ifeq ($(PICOLIBC),1)
+# Picolibc's crt0 needs the __stack/__bss_*/__tls_*/__heap_* symbols that only
+# its linker script provides (the toolchain's H2 Picolibc template, as for
+# guests); Dinkumware links these tests without a script.
+LDFLAGS += $(LIBC_LOCKS_LDFLAGS) -Wl,--script=$(PICOLIBC_LCS)
+endif
 endif # BOOT
 
-CFLAGS += -I ${INSTALLPATH}/include
-ASFLAGS += -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${INSTALLPATH}/include
+CFLAGS += $(OSLIB_CFLAGS) -I ${INSTALLPATH}/include
+ASFLAGS += $(OSLIB_CFLAGS) -mv${TOOLARCH} -DARCHV=${ARCHV} -Wall -I ${INSTALLPATH}/include
 endif #STANDALONE
 
 ifdef SOFT_BKL
@@ -335,75 +397,69 @@ $(INSTALLPATH)/qurt_report.html: $(RESULT_FILES)
 	done;\
 	echo "</table></body></html>" >> $@
 
-check-fail:
-	@((((for SUBDIR in ${SUBDIRS}; do\
-	   echo -n "$$SUBDIR: "; \
-	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
-	      echo FAIL - Empty/No results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "ERROR" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - ERROR detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "FAIL" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - FAIL detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "status 0xaaafa7a1" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -ne 0 ]; then\
-	      echo FAIL - No PASS detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   echo; \
-	done 2>&1; echo $? >&3) | tee -a $(TESTOUT) >&4) 3>&1) | (read stat; exit $$stat)) 4>&1
+# Recorded failures from the last scan: one "<test> - <reason>" line per failing
+# test.  Lives in the per-variant build root so parallel ARCHV/variant runs do
+# not share it.
+CHECK_FAIL_LIST = $(TEST_BUILD_ROOT)/check_failures.txt
 
-check:
-	@for SUBDIR in ${SUBDIRS}; do\
-	   echo -n "$$SUBDIR: "; \
-	   if [ ! -s $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt ]; then\
-	      echo FAIL - Empty/No results.txt; \
-	      echo; \
-	      continue;\
-	   fi;\
-	   grep "ERROR" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - ERROR detected in results.txt; \
-	      echo; \
-	      continue;\
-	   fi;\
-	   grep "FAIL" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - FAIL detected in results.txt; \
-	      echo; \
-	      continue;\
-	   fi;\
-	   grep "status 0xaaafa7a1" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -eq 0 ]; then\
-	      echo FAIL - status 0xaaafa7a1 detected in results.txt; \
-	      echo; \
-	      exit 1;\
-	   fi;\
-	   grep "TEST PASSED" $(TEST_BUILD_ROOT)/$$SUBDIR/results.txt;\
-	   if [ $$? -ne 0 ]; then\
-	      echo FAIL - No PASS detected in results.txt; \
-	      echo; \
-	      continue;\
-	   fi;\
+# Shared results scanner used by both 'check' and 'check-fail'.  It walks EVERY
+# subdir — a timeout, crash or missing results.txt in one test must never hide
+# the results of the remaining tests — printing one verdict line per test plus
+# the matching detail lines, and recording each failure in CHECK_FAIL_LIST.  The
+# caller decides what to do with the list: 'check' just reports, 'check-fail'
+# exits non-zero after the full listing has been printed.
+# Every line ends in "; \" so the expansion stays a single shell command.
+define SCAN_RESULTS
+	mkdir -p $(TEST_BUILD_ROOT); \
+	rm -f $(CHECK_FAIL_LIST); \
+	touch $(CHECK_FAIL_LIST); \
+	NTEST=0; \
+	for SUBDIR in ${SUBDIRS}; do \
+	   RESULTS=$(TEST_BUILD_ROOT)/$$SUBDIR/results.txt; \
+	   NTEST=$$((NTEST+1)); \
+	   printf '%s: ' "$$SUBDIR"; \
+	   REASON=""; \
+	   if [ ! -s $$RESULTS ]; then \
+	      REASON="Empty/No results.txt"; \
+	   elif grep -q "ERROR" $$RESULTS; then \
+	      grep "ERROR" $$RESULTS; \
+	      REASON="ERROR detected in results.txt"; \
+	   elif grep -q "FAIL" $$RESULTS; then \
+	      grep "FAIL" $$RESULTS; \
+	      REASON="FAIL detected in results.txt"; \
+	   elif grep -q "status 0xaaafa7a1" $$RESULTS; then \
+	      grep "status 0xaaafa7a1" $$RESULTS; \
+	      REASON="status 0xaaafa7a1 detected in results.txt"; \
+	   elif ! grep -q "TEST PASSED" $$RESULTS; then \
+	      REASON="No PASS detected in results.txt"; \
+	   fi; \
+	   if [ -n "$$REASON" ]; then \
+	      echo "FAIL - $$REASON"; \
+	      echo "$$SUBDIR - $$REASON" >> $(CHECK_FAIL_LIST); \
+	   else \
+	      grep "TEST PASSED" $$RESULTS; \
+	   fi; \
 	   echo; \
-	done
+	done; \
+	NFAIL=`wc -l < $(CHECK_FAIL_LIST)`; \
+	if [ $$NFAIL -eq 0 ]; then \
+	   echo "CHECK v$(ARCHV)/$(TARGET): all $$NTEST tests passed"; \
+	else \
+	   echo "CHECK v$(ARCHV)/$(TARGET): $$NFAIL of $$NTEST tests FAILED:"; \
+	   sed 's/^/    /' $(CHECK_FAIL_LIST); \
+	fi
+endef
+
+# Report every test, then fail once at the end if anything failed.  The exit
+# status is taken from CHECK_FAIL_LIST (a file, not the pipeline) so it survives
+# the 'tee' subshell.
+check-fail:
+	@{ $(SCAN_RESULTS); } 2>&1 | tee -a $(TESTOUT)
+	@if [ -s $(CHECK_FAIL_LIST) ]; then exit 1; fi
+
+# Same listing, but always succeeds — for interactive use.
+check:
+	@{ $(SCAN_RESULTS); } 2>&1
 
 
 else
@@ -411,50 +467,55 @@ else
 DUMP:= $(patsubst %.elf,%.objdump,$(EXEC))
 EXEC_TMP := ${EXEC}_tmp
 
+# Relink when an installed library changes (installs use cp -p).
+TEST_LIB_DEPS := ${LIBH2} ${LIBH2KERNEL} ${LIBH2CHECK}
+
+# Header deps; the .d files are included at the end of this branch.
+CFLAGS += -MMD -MP
+ASFLAGS += -MMD -MP
+
 ################################################################################
 #  These are for actual terminal directories
 ################################################################################
+# On failure: record FAIL in test.log, remove the partial output, stop.
+STEP_FAIL = { echo -e "FAIL ${TEST}\n$(1) fail" | tee test.log; rm -f $@; exit 1; }
+
 %.objdump: %.elf
-	${OBJDUMP} -d ${@:.objdump=.elf} ${BOOTER} > $@; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ndisassm fail"|tee test.log; fi
+	${OBJDUMP} -d ${@:.objdump=.elf} ${BOOTER} > $@ || $(call STEP_FAIL,disassm)
 
 ifdef PYTHON_GENERATOR_SCRIPT
 ${PYTHON_GENERATED_FILES}: ${PYTHON_GENERATOR_SCRIPT}
-	${PYTHON} $<; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
+	${PYTHON} $< || $(call STEP_FAIL,build)
 endif
 
-%.o: %.c ${PYTHON_GENERATED_FILES}
-	${CC} ${CFLAGS} -c -o $@ $<; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
+%.o: %.c ${PYTHON_GENERATED_FILES} $(FLAGS_STAMP)
+	${CC} ${CFLAGS} -c -o $@ $< || $(call STEP_FAIL,build)
 
-%.o: %.S ${PYTHON_GENERATED_FILES}
-	${CC} ${ASFLAGS} -c -o $@ $<; \
-	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
+%.o: %.S ${PYTHON_GENERATED_FILES} $(FLAGS_STAMP)
+	${CC} ${ASFLAGS} -c -o $@ $< || $(call STEP_FAIL,build)
 
-${EXEC_TMP}: ${OBJS}
 # How's this for an ugly hack?
-	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
-	CODE=$${PIPESTATUS[0]}; \
-	if [ "$$CODE" -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
+TEST_LINK = ${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
+	[ $${PIPESTATUS[0]} -eq 0 ] || $(call STEP_FAIL,build)
 
-${EXEC}: ${EXEC_TMP} | constants
-# How's this for an ugly hack?
-	${CC} -o $@ ${OBJS} ${LDFLAGS} 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//'; \
-	CODE=$${PIPESTATUS[0]}; \
-	if [ "$$CODE" -ne 0 ]; then echo -e "FAIL ${TEST}\nbuild fail"|tee test.log; fi
+${EXEC_TMP}: ${OBJS} ${TEST_LIB_DEPS} $(FLAGS_STAMP)
+	$(TEST_LINK)
+
+${EXEC}: ${EXEC_TMP} ${TEST_LIB_DEPS} $(CONSTS_STAMP) $(FLAGS_STAMP)
+	$(TEST_LINK)
 
 ignore_fns: ${OBJS}
 	${H2DIR}/scripts/gen_ignore_fns.pl ${OBJS} > $@
 
-test.log: ${EXEC}
+test.log: ${EXEC} ${BOOTER}
+	rm -f ${GMON_FILES}
 	> $@
 ifeq ($(USE_PKW),1)
 	echo PKW_VERSIONS $(PKW_VERSIONS) >> $@
 	echo PKW_arch $(PKW_arch) >> $@
 	echo PKW_hexagon-tools $(PKW_hexagon-tools) >> $@
 endif
-	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} --profile -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee $@; \
+	ulimit -t ${ULIMIT} && ${RUN} ${SIMF} ${PROFILE} -- ${BOOTER} ${BOOTER_ARGS} ${EXEC} | tee $@; \
 	CODE=$${PIPESTATUS[0]}; \
 	echo exit status == $$CODE; \
 	if [ "$$CODE" -eq 137 ]; then \
@@ -498,10 +559,10 @@ ${COVFILE}: ${DUMP} try_gmon_out ignore_fns
 	fi; \
 	if [ $$? -ne 0 ]; then echo -e "FAIL ${TEST}\ncoverage fail"; exit 1; fi
 
-CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} ${EXEC} ${EXEC_TMP} ${COVFILE} cov*.txt* ${GMON_FILES} ${DUMP} make.log test.log results.txt h2 threadmap.py
+CLEANUP=${PYTHON_GENERATED_FILES} ${OBJS} *.ref.o *.v*opt.o ${EXEC} ${EXEC_TMP} ${COVFILE} cov*.txt* ${GMON_FILES} ${DUMP} make.log test.log results.txt h2 threadmap.py
 CLEANUP += stats.txt stats_help.txt ihist.txt prof.txt ignore_fns pmu_statsfile.txt pmu_stats.txt default.profraw
 
-clean:
+clean clean_source:
 	rm -rf ${CLEANUP}
 
 #  Pretty much a binary yes/no if the test passed or failed.
@@ -521,10 +582,44 @@ results.txt: test.log
 	echo "NO PASS/FAIL/ERROR in log" > $@; \
 	exit 1;
 
+ifdef H2_INSIDE_TOPLEVEL_MAKE
 all: results.txt ${COVFILE}
 tst: results.txt
 test: results.txt
+else
+# Run by hand in a test build dir: build the variant first.
+all tst test:
+	$(H2_BUILD)
+	$(MAKE) H2_INSIDE_TOPLEVEL_MAKE=1 $@
+endif
 .PHONY: test tst all
+
+# Writes test.deps: sources under $(H2DIR) named in the .d files (except
+# installed headers, which have rules already) as prerequisites of this test's
+# results.txt/cov.txt, spelled as Makefile.coverage names them (JOB_DIR).
+# Each also gets an empty rule, like -MP.
+TEST_DEPS = cat *.d 2>/dev/null | tr ' \\' '\n\n' | \
+	    sed 's/:$$//' | grep '^$(H2DIR)/' | grep -v '^$(H2DIR)/$(ARTIFACTS_DIR)/' | sort -u | \
+	    awk -v t="$(JOB_DIR)" '{ print t "/results.txt " t "/cov.txt: " $$0; print $$0 ":" }' \
+	    > test.deps
+
+# One test run as Makefile.coverage starts it (under $(BSUB) when BATCH=1), so
+# everything here happens on the host that ran the test.  Clear the old results
+# (a failed build must not leave a stale PASS), make $(JOB_TARG) (tst, or all
+# for coverage), write a FAIL line if no results.txt came out, write test.deps.
+.PHONY: job
+job:
+	@rm -f results.txt test.log $(if $(filter all,$(JOB_TARG)),$(COVFILE))
+	@$(MAKE) $(JOB_TARG); STAT=$$?; \
+	if [ ! -s results.txt ]; then echo "FAIL - make exit status $$STAT, see make.log" > results.txt; fi; \
+	$(TEST_DEPS); \
+	exit $$STAT
+
+# OBJS too: dropping an object must relink.
+FLAGS_STAMP_VARS += OBJS
+include $(H2DIR)/scripts/Makefile.inc.flagstamp
+
+-include $(wildcard *.d)
 
 
 endif

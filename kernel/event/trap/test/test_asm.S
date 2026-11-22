@@ -13,11 +13,7 @@ call_trap0:
 	r10 = ssr
 	r10 = insert(r0,#8,#0)
 	ssr = r10
-#if ARCHV <= 3
-	sgp = r1
-#else
 	sgp0 = r1
-#endif
 	r11.h = #hi(1f)
 	r11.l = #lo(1f)
 	elr = r11

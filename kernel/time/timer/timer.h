@@ -13,18 +13,13 @@
 #include <h2_common_timer.h>
 
 void H2K_timer_int(u32_t unused, H2K_thread_context *me, u32_t hwtnum);
-void H2K_timer_init(u32_t devpage_offset);
-
-static inline void H2K_timer_cancel_withlock(H2K_thread_context *me)
-{
-	if (me->timeout) H2K_tree_remove(&H2K_gp->time.timeouts,&me->tree);
-}
+void H2K_timer_init(void);
 
 static inline void H2K_timer_cancel(H2K_thread_context *me)
 {
-	BKL_LOCK();
-	H2K_timer_cancel_withlock(me);
-	BKL_UNLOCK();
+	H2K_spinlock_lock(&H2K_gp->timer_lock);
+	if (me->timeout) H2K_tree_remove(&H2K_gp->time.timeouts,&me->tree);
+	H2K_spinlock_unlock(&H2K_gp->timer_lock);
 }
 
 u64_t H2K_timer_trap(u32_t traptype, u64_t arg, H2K_thread_context *me);

@@ -55,13 +55,25 @@ Returns 0 on success, nonzero on failure.
 Functionality
 ~~~~~~~~~~~~~
 
-Modifications outside the kernel are only allowed using atomic primitives, and only 
+Modifications outside the kernel are only allowed using atomic primitives, and only
 if the modification is from 0 (free, no waiters) to TID, or from TID to 0 (for unlock).
 
-We pick the highest priority waiting thread.  If no threads are waiting, we set
-the lock to zero.  Otherwise, we place the woken thread in the ready queue.  We
-then set the lock to that thread ID and set the LSB to indicate that there may
+We translate "lock" to a physical address and look in the corresponding futex
+hash bucket for a thread blocked on that address, starting from the head of
+the bucket's ring via :c:func:`H2K_futex_hash_remove_one()`.  Buckets are kept
+sorted by priority: :c:func:`H2K_futex_lock_pi()` inserts each blocked thread
+in priority order, and :c:func:`H2K_futex_pi_raise()` re-sorts a thread's
+position if its priority is boosted while blocked.  Because of this
+invariant, the first matching thread found is the highest-priority thread
+waiting on this particular lock; :c:func:`H2K_futex_hash_remove_one()` removes
+it from the ring and places it in the ready queue.
+
+If no matching thread is found, we set the lock to zero.  Otherwise, we set
+the lock to the woken thread's ID and set the LSB to indicate that there may
 be additional threads waiting.
+
+Finally, we restore the calling thread's own priority to its base priority,
+since it may have been boosted by a waiter while it held the lock.
 
 
 Testing

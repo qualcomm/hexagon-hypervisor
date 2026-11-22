@@ -8,6 +8,7 @@
 import argparse
 import html
 import json
+import os
 import re
 import sys
 
@@ -1292,12 +1293,19 @@ def main():
 
     # load per-test datasets — derive name from path, e.g.
     # .../build/tests/kernel/data/readylist/test/cov.txt → kernel/data/readylist/test
+    # A test that failed or was killed (ulimit timeout) dumps no gmon data and so
+    # has no cov.txt; skip it with a warning rather than failing the whole report.
     test_covs = []
     for path in args.test_covs:
         norm = path.replace('\\', '/')
         # strip everything up to and including /tests/
         idx = norm.find('/tests/')
         tname = norm[idx + len('/tests/'):].removesuffix('/cov.txt') if idx >= 0 else path
+        if not os.path.exists(path):
+            print(f'[cov_html_report] Warning: no coverage data for {tname} '
+                  f'({path} missing) — test failed or was killed',
+                  file=sys.stderr)
+            continue
         test_covs.append((tname, parse_cov(path)))
 
     with open(args.output, 'w') as f:

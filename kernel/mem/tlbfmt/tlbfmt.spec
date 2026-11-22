@@ -1,6 +1,5 @@
-
-:mod:`tlbfmt` -- Hardware TLB Entry Format Services
-===================================================
+:mod:`tlbfmt` -- Hardware TLB entry format
+=============================================
 
 .. module:: tlbfmt
 
@@ -9,207 +8,134 @@ H2K_mem_tlbfmt_t
 
 .. c:type:: H2K_mem_tlbfmt_t
 
-        Pagetable format (<= V3)
-	
+	Native 64-bit hardware TLB entry format.
+
 	.. c:member:: u64_t raw
 
-	          Provides raw access to the entire structure.
-		  Include "low" and "high"
+		Raw access to the complete TLB entry.
 
-                  .. c:member:: u32_t low
+	.. c:member:: u32_t low
 
-	                    Provides raw access to the "low" portion of the table.
+		Raw access to the low 32 bits of the entry.
 
-		            .. c:member:: u32_t ppn
-			    
-			              Physical Page Number to which the corresponding Virtual Page maps.
-				      20 bits;
+	.. c:member:: u32_t ppd
 
-			    .. c:member:: u32_t size
+		Physical page description, including the physical page number and page-size
+		encoding.
 
-			              Page size: 4K to 16M (see bootmap.ref.c)
-				      4 bits; Only the 3 least significant are used.
-	
-			    .. c:member:: u32_t part
+	.. c:member:: u32_t cccc
 
-			              Partition bit.  Turn on cache partitioning.
-				      2 bits; Only the least significant bit is used.
+		Cacheability attributes.
 
-			    .. c:member:: u32_t ccc
+	.. c:member:: u32_t hsv39
 
-			              Cacheability Attributes. L1WB_L2UC ... (see bootmap.ref.c)
-				      3 bits;
+		Indicates that the entry uses the V39/DMA address-space format.  Present in
+		the current format on architectures that support this field.
 
-			    .. c:member:: u32_t xwr
+	.. c:member:: u32_t xwru
 
-			              User-mode permissions. { eXecute, Write, Read }
-				      3 bits;
+		Execute, write, read, and user permission bits.
 
-                  .. c:member:: u32_t high
+	.. c:member:: u32_t high
 
-	                    Provides raw access to the "high" portion of the table.
+		Raw access to the high 32 bits of the entry.
 
-		            .. c:member:: u32_t vpn
-			    
-			              Virtual Page Number.
-				      20 bits;
+	.. c:member:: u32_t vpn
 
-			    .. c:member:: u32_t asid
+		Virtual page number.
 
-			              Address Space Identifier
-				      5 bits;
-	
-			    .. c:member:: u32_t guestonly
-			              
-			              Guest permissions vs user permissions.
-				      1 bits
+	.. c:member:: u32_t asid
 
-			    .. c:member:: u32_t unused
+		Address-space identifier.
 
-			              Unused
-				      2 bits;
+	.. c:member:: u32_t abits
 
-			    .. c:member:: u32_t global
+		Architecture-specific address bits for architectures before V73.
 
-			              Global page, ignore ASID if this is true.
-				      1 bits;
-			      
-			    .. c:member:: u32_t valid
+	.. c:member:: u32_t pa3637
 
-			              Valid bit for page.
-				      1 bit;
+		Physical-address bits 36 and 37 on V73 and later architectures.
 
-			    .. c:member:: u32_t unused2
+	.. c:member:: u32_t pa35
 
-			              Unused
-				      2 bits;
+		Physical-address bit 35.
 
-        Pagetable format (>= V4)
-	
-	.. c:member:: u64_t raw
+	.. c:member:: u32_t global
 
-	          Provides raw access to the entire structure.
-		  Include "low" and "high"
+		Global-entry bit.  A global entry does not use the ASID for matching.
 
-                  .. c:member:: u32_t low
+	.. c:member:: u32_t valid
 
-	                    Provides raw access to the "low" portion of the table.
+		Indicates that the TLB entry is valid.
 
-		            .. c:member:: u32_t ppd
-			    
-			              Physical Page Description.  Physical Address along with size information
-				      24 bits;
+H2K_mem_tlbfmt_get_perms
+------------------------
 
-			    .. c:member:: u32_t cccc
+.. c:function:: static inline u32_t H2K_mem_tlbfmt_get_perms(H2K_mem_tlbfmt_t entry)
 
-			              Cacheability Attributes. L1WB_L2UC ... (see bootmap.ref.c)
-				      4 bits;
-	
-			    .. c:member:: u32_t xwru
-
-			              Mode permissions. { eXecute, Write, Read, User }
-				      4 bits;
-
-                  .. c:member:: u32_t high
-
-	                    Provides raw access to the "high" portion of the table.
-
-		            .. c:member:: u32_t vpn
-			    
-			              Virtual Page Number.
-				      20 bits;
-
-			    .. c:member:: u32_t asid
-
-			              Address Space Identifier
-				      7 bits;
-	
-			    .. c:member:: u32_t unused
-
-			              Unused
-				      3 bits;
-
-			    .. c:member:: u32_t global
-
-			              Global page, ignore ASID if this is true.
-				      1 bit;
-			      
-			    .. c:member:: u32_t valid
-
-			              Valid bit for page.
-				      1 bit;
-
-	
-
-H2K_mem_tlbfmt_from_linear
---------------------------
-
-.. c:function:: H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_linear(H2K_linear_t linear, u32_t asid)
+	:param entry: TLB entry
+	:returns: The entry's execute, write, read, and user permission bits
 
 Description
 ~~~~~~~~~~~
 
-This function converts a linear translation table entry and ASID to the native
-Hardware TLB entry format.
-
-H2K_mem_tlbfmt_from_table
--------------------------
-
-.. c:function:: H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_table(u32_t va, u32_t asid, pte_t pte)
-
-Description
-~~~~~~~~~~~
-
-This function converts a page table entry, VA, and ASID to the native Hardware
-TLB entry format.
+Returns the permission field from a TLB entry.
 
 
 H2K_mem_tlbfmt_get_size
 -----------------------
 
-.. c:function:: u32_t H2K_mem_tlbfmt_get_size(H2K_mem_tlbfmt_t entry)
+.. c:function:: static inline u32_t H2K_mem_tlbfmt_get_size(H2K_mem_tlbfmt_t entry)
+
+	:param entry: TLB entry
+	:returns: The encoded page-size value
 
 Description
 ~~~~~~~~~~~
 
-Returns the page size of the entry:
-
-	0. 4KB Translation
-	1. 16KB Translation
-	2. 64KB Translation
-	3. 256KB Translation
-	4. 1MB Translation
-	5. 4MB Translation
-	6. 16MB Translation
-
-
-
-
-H2K_mem_tlbfmt_get_perms
-------------------------
-
-.. c:function:: u32_t H2K_mem_tlbfmt_get_perms(H2K_mem_tlbfmt_t entry)
-
-Description
-~~~~~~~~~~~
-
-Returns the OR of the permissions of the entry:
-
-        * User permission
-	* Read permission
-	* Write permission
-	* Execute permission
+Returns the page-size encoding by counting the trailing zero bits in the low
+word of the entry.
 
 
 H2K_mem_tlbfmt_get_basepa
 -------------------------
 
-.. c:function:: pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
+.. c:function:: static inline pa_t H2K_mem_tlbfmt_get_basepa(H2K_mem_tlbfmt_t entry)
+
+	:param entry: TLB entry
+	:returns: The base physical address represented by the entry
 
 Description
 ~~~~~~~~~~~
 
-Returns the base physical address of the translation.  Note that the base physical 
-address may not be aligned to the size; the caller must mask off the appropriate bits.
+Reconstructs the base physical address from the physical page description and
+the architecture-specific high physical-address bits.  The result is aligned
+according to the encoded page size.
 
 
+H2K_mem_tlbfmt_from_trans
+-------------------------
+
+.. c:function:: static inline H2K_mem_tlbfmt_t H2K_mem_tlbfmt_from_trans(H2K_translation_t trans, u32_t va, u32_t asid, u32_t tlb_size_dma)
+
+	:param trans: Translation to encode
+	:param va: Virtual address
+	:param asid: Address-space identifier
+	:param tlb_size_dma: DMA TLB size on V73 and later architectures
+	:returns: Encoded TLB entry, or a zero entry when the translation is unusable
+
+Description
+~~~~~~~~~~~
+
+Converts a software translation into the native hardware TLB-entry format.
+On architectures before V73, the function has no ``tlb_size_dma`` parameter.
+
+Functionality
+~~~~~~~~~~~~~
+
+Returns a zero entry when the translation has no read, write, or execute
+permission, or when it requests the V39/DMA address space but no DMA TLB is
+available.  Otherwise, it copies the virtual page number, ASID, permissions,
+cache attributes, and address-space information into the hardware format,
+marks the entry valid and non-global, and encodes the physical page number and
+page size in ``ppd``.

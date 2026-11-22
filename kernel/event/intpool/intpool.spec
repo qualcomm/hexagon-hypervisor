@@ -34,12 +34,6 @@ If we soft pend the interrupt, we are done.
 If a thread was interrupted, we unschedule it and put it in the ready queue.
 Otherwise, the thread was idle, and so we mark ourselves as no longer idle.
 
-We clear the low-priority status of the current thread, change our IMASK
-appropriately, and place the woken thread directly into the runlist and switch
-to it.  This is speculative; the woken thread may not be higher priority than 
-the interrupted thread.  However we expect this to be likely, and if it is incorrect
-it will be remedied by :c:func:`H2K_check_sanity()`.
-
 Note that we do not re-enable the interrupt at this time.  The interrupt is only
 re-enabled when a thread explicitly calls to enable the interrupt, or waits with 
 the int_ack field set to a valid interrupt.  By keeping the interrupt disabled,
@@ -48,7 +42,7 @@ we allow it to pend while the interrupt is being handled.
 Note that this functionality is very similar to H2K_popup_int
 
 
-H2K_intpool_int
+H2K_intpool_wait
 ---------------
 
 .. c:function:: int H2K_intpool_wait(u32_t int_ack_num, H2K_thread_context *me)
@@ -83,6 +77,50 @@ and select a new thread to schedule.
 TO INVESTIGATE: try to preempt before calling dosched in case the interrupt can be taken
 immediately?
 
+
+H2K_intpool_configure
+---------------------
+
+.. c:function:: int H2K_intpool_configure(u32_t intno, u32_t enable, H2K_thread_context *me)
+
+	:param intno: Interrupt to configure
+	:param enable: Nonzero to enable interrupt-pool handling, zero to disable it
+	:param me: Thread context whose VM owns the interrupt pool
+	:returns: 0 on success, -1 if the interrupt number is not available
+
+Description
+~~~~~~~~~~~
+
+Enables or disables interrupt-pool handling for an interrupt belonging to the
+current VM.
+
+Functionality
+~~~~~~~~~~~~~
+
+The function accepts L1 or L2 interrupt numbers in the available interrupt
+ranges.  When enabling, it installs :c:func:`H2K_intpool_int()` as the
+interrupt handler, associates the handler with ``me->vmblock``, and enables
+the interrupt.  When disabling, it disables the interrupt and clears its
+handler entry.  The configuration update is protected by the BKL.
+
+
+H2K_intpool_cancel
+------------------
+
+.. c:function:: void H2K_intpool_cancel(H2K_thread_context *dest)
+
+	:param dest: Interrupt-pool thread to cancel
+
+Description
+~~~~~~~~~~~
+
+Cancels a thread's wait in its VM's interrupt pool.
+
+Functionality
+~~~~~~~~~~~~~
+
+The caller must hold the BKL.  The function removes ``dest`` from its VM's
+interrupt-pool ring and sets its return interrupt number to ``-1``.
 
 
 Testing

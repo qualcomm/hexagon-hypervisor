@@ -5,8 +5,6 @@
 
 #include <c_std.h>
 #include <context.h>
-
-#include <vm.h>
 #include <vmint.h>
 #include <vmipi.h>
 #include <atomic.h>
@@ -14,7 +12,6 @@
 #include <globals.h>
 #include <hw.h>
 #include <readylist.h>
-#include <check_sanity.h>
 #include <vmwork.h>
 #include <vmevent.h>
 #include <popup.h>
@@ -34,8 +31,7 @@ s32_t H2K_vm_int_deliver_locked(H2K_vmblock_t *vmblock, H2K_thread_context *thre
 		}
 		thread->r00 = intno;
 	enqueue:
-		H2K_ready_append(thread);
-		H2K_check_sanity(0);
+		H2K_ready_append_arm(thread);
 		return 0;
 	case H2K_STATUS_RUNNING:
 		if (thread->atomic_status_word & H2K_VMSTATUS_IE) {
@@ -122,9 +118,9 @@ static H2K_thread_context *H2K_vmint_fixup_post(H2K_thread_context *me, u32_t *a
 		} else {
 			return NULL;
 		}
-		/* me might be NULL if called from fastint */
+		/* me might be NULL if called from fastint, although we don't have those any more. Idle? */
 		if (me != NULL
-				&& me->id.vmidx != 0			// fastint
+				&& me->id.vmidx != 0			// invalid vmidx
 				&& me->id.vmidx != vmblock->parent.vmidx  // parent -> child
 				&& me->vmblock->parent.vmidx != vm        // child -> parent
 				&& me->id.vmidx != vm) {                  // self

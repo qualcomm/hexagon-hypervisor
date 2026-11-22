@@ -18,13 +18,16 @@ $(BOOTVM_IMAGE): LDFLAGS = $(BOOTVM_LDFLAGS)
 $(BOOTVM_PROG_TMP): LDFLAGS = $(BOOTVM_LDFLAGS)
 $(BOOTVM_PROG): LDFLAGS = $(BOOTVM_LDFLAGS)
 
+# -moslib=h2 already links libh2 here, so only the lock library is added.
 $(BOOTVM_IMAGE): $(OBJS) $(CRT0_O) $(BOOTVM_IMAGE_DEPS)
-	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -o $@ $(OBJS) $(CRT0_O) $(BOOTVM_ENTRY_O) 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//';
+	${CC} $(LDFLAGS) $(CFLAGS) $(BOOTVM_IMAGE_CFLAGS) -Wl,--defsym=HEAP_SIZE=0x10000 -Wl,--defsym=STACK_SIZE=0x1000 -Wl,--defsym=__h2_thread_stop_hook__=0xfffffff0 -o $@ $(OBJS) $(CRT0_O) $(BOOTVM_ENTRY_O) $(LIBC_LOCKS_LDFLAGS) 2>&1 | perl -pe 's/.*Symbol.*__h2_.*_hook__.*is defined in both linker script and input file.*//';
 
 # Suppress warnings about changing the recipe for $(EXEC)
 $(EXEC) : private CC = true
-test.log: | symlink
-test.objdump: | symlink
+# $(EXEC) is a symlink to $(BOOTVM_PROG), made after it is linked; depend on the
+# real ELF so a relink reruns the simulator.
+test.log: $(BOOTVM_PROG) | symlink
+test.objdump: $(BOOTVM_PROG) | symlink
 
 .PHONY: symlink
 symlink: $(BOOTVM_PROG)

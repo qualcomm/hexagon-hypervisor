@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <setjmp.h>
 #include <h2.h>
+#include <h2_hwconfig.h>
 
 H2K_thread_context *me;
 
@@ -107,6 +108,11 @@ void TH_call_error()
 int main()
 {
 	h2_init(NULL);
+#ifdef TESTING
+	if (h2_enter_monitor() != 0) FAIL("Could not enter Monitor mode");
+#else
+	FAIL("Should run test with TESTING cflag");
+#endif
 	me = H2K_get_sgp();
 	/* 
 	 * Put ourselves in guest mode, but don't have an EVB registered.
@@ -128,9 +134,7 @@ int main()
 	me->gevb = (TH_guest_vectors);
 	me->gssr = 0;
 	me->gosp = (u32_t)(&guest_stack[128]);
-#if ARCHV >= 4
 	asm volatile (" g2 = %0 " : :"r"(me->gosp));
-#endif
 	TH_expect_fatal = 0;
 	TH_saw_fatal = 0;
 	TH_stack_switch = 0;
@@ -145,36 +149,13 @@ int main()
 	me->gevb = (TH_guest_vectors);
 	me->gssr = 0;
 	me->gosp = (u32_t)(&guest_stack[128]);
-#if ARCHV >= 4
 	asm volatile (" g2 = %0 " : :"r"(me->gosp));
-#endif
 	TH_expect_fatal = 0;
 	TH_saw_fatal = 0;
 	TH_stack_switch = 0;
 	TH_call_error();
 	if (TH_saw_fatal) FAIL("Called fatal");
 	if (TH_stack_switch == 0) FAIL("Should have switched stacks with guest bit clear");
-	puts("c");
-
-#if 0
-	/* EJP: FIXME: now rsvd exception calls nmi handler --> crash */
-	/* RSVD exception should call thread fatal */
-	TH_expect_fatal = 1;
-	TH_saw_fatal = 0;
-	if (setjmp(env) == 0) H2K_handle_rsvd();
-	if (TH_saw_fatal == 0) FAIL("RSVD didn't call fatal");
-	puts("d");
-
-	/* EJP: FIXME: now NMI does save and crash */
-	/* NMI exception should call thread fatal (?) */
-	TH_expect_fatal = 1;
-	TH_saw_fatal = 0;
-	if (setjmp(env) == 0) H2K_handle_nmi();
-	if (TH_saw_fatal == 0) FAIL("NMI didn't call fatal");
-	puts("e");
-
-	/* EJP: FIXME: test crashing */
-#endif
 
 	puts("TEST PASSED\n");
 	return 0;

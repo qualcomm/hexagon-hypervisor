@@ -11,7 +11,6 @@
 #include <config.h>
 #include <fatal.h>
 #include <globals.h>
-#include <vm.h>
 #include <asid.h>
 #include <alloc.h>
 #include <trace.h>

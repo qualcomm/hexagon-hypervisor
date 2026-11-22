@@ -92,10 +92,37 @@ Returns NULL if all ASIDs are busy.
 
 Updates maxhops in the bucket hashed to.
 
+H2K_do_asid_table_inc
+---------------------
+
+.. c:function:: s32_t H2K_do_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, u32_t extra, H2K_vmblock_t *vmblock)
+
+	:param ptb: Address of the translation base
+	:param type: Type of translation
+	:param flag: Invalidate TLB and STLB entries for this ASID
+	:param extra: Additional translation information
+	:param vmblock: Pointer to the guest VM block
+	:returns: ASID index, or -1 if no unused entry is available
+
+Description
+~~~~~~~~~~~
+
+Performs the locked lookup and allocation operation for the ASID table.
+
+Functionality
+~~~~~~~~~~~~~
+
+The ASID spinlock is acquired while searching for an entry matching the
+translation-table base, VM index, and translation type.  If a match exists,
+its reference count is incremented.  Otherwise, an unused entry is selected,
+initialized with the translation information, and its TLB and STLB entries
+are invalidated.  The lock is released before returning.
+
+
 H2K_asid_table_inc
 ------------------
 
-.. c:function:: s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, H2K_vmblock_t *vmblock)
+.. c:function:: s32_t H2K_asid_table_inc(u32_t ptb, translation_type type, tlb_invalidate_flag flag, u32_t extra, H2K_vmblock_t *vmblock)
 
 	:param ptb: Address of the translation base
 	:param type: Type of translation

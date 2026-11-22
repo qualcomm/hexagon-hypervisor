@@ -2,8 +2,12 @@
 #  This behaves kind of like a SUBDIRS makefile.
 #  It is meant to be run from the top level ob directory.
 
+# The manifest rule below builds the install, so the per-test makes must not.
+export H2_INSIDE_TOPLEVEL_MAKE := 1
+
 SUBDIRS:=$(shell cat ./scripts/testlist.v$(ARCHV) | perl -p -e 's/\s*\#.*//;')
-#SUBDIRS_ALL:=$(shell cat ./scripts/testlist.v* | sort | uniq | perl -p -e 's/^\s*\#.*//;')
+# Source-directory debug builds can come from any architecture's test list.
+SUBDIRS_ALL:=$(sort $(shell cat ./scripts/testlist.v* | perl -p -e 's/\s*\#.*//;'))
 
 TESTOUT ?= $(INSTALLPATH)/test.out
 
@@ -15,6 +19,17 @@ TEST_BUILD_ROOT ?= $(patsubst %/install,%/build/tests,$(INSTALLPATH))
 # File-based list of per-test result targets.  Used by tst and test_report.html
 # so make can track what is up-to-date and skip unnecessary work.
 RESULT_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/results.txt, $(SUBDIRS))
+
+# Source-file extensions that make up a test.  Must stay in sync with the file
+# whitelist in the results.txt recipe's `find` below (they select the same set).
+TEST_SRC_EXTS := c h S s cpp cc py dat cfg
+
+# $(call test_src_deps,<test-subdir>) -> the test's own sources.  Extra
+# prerequisites (via .SECONDEXPANSION) so a test re-runs on its own edits, not
+# only when the kernel or libs it links were rebuilt.  Exclusions mirror the
+# generator-output exclusions in the recipe's find.
+test_src_deps = $(filter-out %/scenarios.h %/generated_tests.dat %/threadmap.py,\
+    $(wildcard $(addprefix $(H2DIR)/$(1)/,Makefile tested_functions $(addprefix *.,$(TEST_SRC_EXTS)))))
 
 # Coverage result files — per-test cov.txt generated alongside gmon data.
 COV_FILES = $(patsubst %, $(TEST_BUILD_ROOT)/%/cov.txt, $(SUBDIRS))
@@ -35,13 +50,8 @@ all:
 .PHONY: tst
 tst: $(RESULT_FILES)
 
-# Build and run one test, producing its results.txt.
-# Depends on $(INSTALLPATH)/manifest (sha256 of key install files, updated only when
-# content changes) so tests re-run iff the build actually changed something.
-# The leading '-' on the inner make line makes the rule succeed even when the
-# test fails; PASS/FAIL is captured in results.txt content (read by check-fail
-# and gen_test_results.py).  Without this, .DELETE_ON_ERROR would remove the
-# FAIL details and abort tst, blocking unified report generation.
+# Set up the per-variant build dir for test $(1): symlinks to its sources, a
+# Makefile.inc that pulls in Makefile.inc.test, and a fresh make.log.
 # The find whitelists only source-file extensions (so stale outputs from
 # in-source builds — *.elf, *.o, *.log, results.txt, gmon*, etc. — are NOT
 # symlinked into the per-variant build dir).  Without this, every variant
@@ -50,9 +60,9 @@ tst: $(RESULT_FILES)
 # Named exclusions cover generator outputs whose extension matches a source
 # extension (scenarios.h from scenarios.py, generated_tests.dat from
 # gentests.py, threadmap.py from a perf tool).
-$(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
-	mkdir -p "$(TEST_BUILD_ROOT)/$*"
-	find "$(H2DIR)/$*" -maxdepth 1 -type f \
+define TEST_DIR_SETUP
+	mkdir -p "$(TEST_BUILD_ROOT)/$(1)"
+	find "$(H2DIR)/$(1)" -maxdepth 1 -type f \
 	    \( -name 'Makefile' -o -name 'tested_functions' \
 	       -o -name '*.c' -o -name '*.h' \
 	       -o -name '*.S' -o -name '*.s' \
@@ -63,48 +73,63 @@ $(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest
 	    ! -name 'scenarios.h' \
 	    ! -name 'generated_tests.dat' \
 	    ! -name 'threadmap.py' \
-	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
+	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$(1)/" ';'
 	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
-	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
-	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
-	-$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" tst TEST="$*" 2>&1 | \
+	    > "$(TEST_BUILD_ROOT)/$(1)/Makefile.inc"
+	(echo; echo; echo "##########   $(1)   ##########") > "$(TEST_BUILD_ROOT)/$(1)/make.log"
+endef
+
+# Build and run one test, producing its results.txt.  Prerequisites:
+#  - $(INSTALLPATH)/manifest: changes only when the installed libs or booter do.
+#  - $(INSTALLED_HEADERS): installed here, once, before any test compiles.
+#  - the test's own sources, and (test.deps, see TEST_DEPS) shared ones.
+# The 'job' target (Makefile.inc.test) clears the old results, runs the test
+# and writes a FAIL line if it produced none, on the host that ran it: under
+# BATCH=1 this host's NFS view can be stale (NFS_SETTLE in makefile.real).
+# The leading '-' keeps a failing test from aborting tst; PASS/FAIL is in
+# results.txt.
+include $(H2DIR)/scripts/Makefile.inc.headers
+
+# Always run the incremental build first; it rewrites the manifest only when
+# something changed, so a no-op build reruns no tests.  The header copies wait
+# for it so they don't race libs/Makefile installing the same files.
+.PHONY: FORCE
+FORCE:
+$(INSTALLPATH)/manifest: FORCE	# recipe: H2_BUILD in scripts/Makefile.inc.test
+$(INSTALLED_HEADERS): | $(INSTALLPATH)/manifest
+
+.SECONDEXPANSION:
+TEST_SRC_DEPS = $$(call test_src_deps,$$*)
+$(TEST_BUILD_ROOT)/%/results.txt: $(INSTALLPATH)/manifest $(INSTALLED_HEADERS) $(TEST_SRC_DEPS)
+	$(call TEST_DIR_SETUP,$*)
+	-$(BSUB) $(MAKE) -C "$(TEST_BUILD_ROOT)/$*" job JOB_TARG=tst JOB_DIR="$(TEST_BUILD_ROOT)/$*" TEST="$*" 2>&1 | \
 	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
-	    TSTAT=$${PIPESTATUS[0]}; \
-	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
-	    exit $$TSTAT
+	    exit $${PIPESTATUS[0]}
 
 # Build and run one test for coverage (TARG=all), producing per-test cov.txt.
 # Also produces results.txt as a side effect of running the simulator with --profile.
 # Depends on manifest so tests only re-run when the build actually changes, and on
 # cov_fns so the function list exists before a multi-gmon test invokes merge_cov.py.
-$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns
-	mkdir -p "$(TEST_BUILD_ROOT)/$*"
-	find "$(H2DIR)/$*" -maxdepth 1 -type f ! -name Makefile.inc ! -name 'cov.txt' ! -name 'cov-*.txt' \
-	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$*/" ';'
-	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
-	    > "$(TEST_BUILD_ROOT)/$*/Makefile.inc"
-	(echo; echo; echo "##########   $*   ##########") > "$(TEST_BUILD_ROOT)/$*/make.log"
-	$(MAKE) -C "$(TEST_BUILD_ROOT)/$*" all TEST="$*" 2>&1 | \
+$(TEST_BUILD_ROOT)/%/cov.txt: $(INSTALLPATH)/manifest $(INSTALLPATH)/cov/cov_fns $(TEST_SRC_DEPS)
+	$(call TEST_DIR_SETUP,$*)
+	-$(BSUB) $(MAKE) -C "$(TEST_BUILD_ROOT)/$*" job JOB_TARG=all JOB_DIR="$(TEST_BUILD_ROOT)/$*" TEST="$*" PROFILE=--profile 2>&1 | \
 	    tee -a "$(TEST_BUILD_ROOT)/$*/make.log"; \
-	    TSTAT=$${PIPESTATUS[0]}; \
-	    if [ $$TSTAT -eq 0 ]; then touch "$@"; fi; \
-	    exit $$TSTAT
+	    exit $${PIPESTATUS[0]}
 
 # Generate the coverage function list from the just-built kernel libraries so the
 # set of tracked functions always matches the binaries under test (no stale,
 # checked-in cov_fns snapshot).  gen_cov_fns.pl scans libh2kernel.a and libh2.a
-# for every F-type H2K_*/h2_* symbol.  Depends on manifest (not the libs
-# directly) because manifest carries the build rule and changes whenever the
-# install is rebuilt.  Also depends on COV_OMIT so editing the omit list
-# regenerates the function list.
+# for every F-type H2K_*/h2_* symbol.  Depends on the manifest (sha256 of the
+# archives it scans), so it is regenerated whenever they change.  Also depends on
+# COV_OMIT so editing the omit list regenerates the function list.
 $(INSTALLPATH)/cov/cov_fns: $(INSTALLPATH)/manifest $(COV_OMIT)
 	mkdir -p $(INSTALLPATH)/cov
 	${H2DIR}/scripts/gen_cov_fns.pl $(INSTALLPATH) $(COV_OMIT) > $@
 
 # Generate the function -> source-file map for the HTML report's file-tree view.
 # Derived from the same just-built libraries (objdump symbols + DWARF compile-unit
-# paths), so it always matches the binaries under test.  Depends on manifest for
-# the same reason as cov_fns.
+# paths), so it always matches the binaries under test.  Depends on the
+# manifest for the same reason as cov_fns.
 $(INSTALLPATH)/cov/cov_files: $(INSTALLPATH)/manifest
 	mkdir -p $(INSTALLPATH)/cov
 	$(PYTHON) ${H2DIR}/scripts/gen_cov_files.py \
@@ -144,6 +169,9 @@ test_summary:
 
 clean:
 	rm -rf "$(TEST_BUILD_ROOT)"
+	@for SUBDIR in $(SUBDIRS_ALL); do \
+		$(MAKE) -C "$(H2DIR)/$$SUBDIR" H2DIR=$(H2DIR) clean_source TEST=$$SUBDIR || exit $$?; \
+	done
 
 $(INSTALLPATH)/merged.profraw: tst
 	echo '[COVERAGE] Merging:' $(shell find ${H2DIR}/kernel ${H2DIR}/libs -name "default.profraw")
@@ -165,15 +193,10 @@ $(INSTALLPATH)/index.html: $(INSTALLPATH)/merged.profraw
 coverage_report: $(INSTALLPATH)/coverage_report.txt $(INSTALLPATH)/coverage_report.lcov #$(INSTALLPATH)/index.html
 
 $(SUBDIRS)::
-	mkdir -p "$(TEST_BUILD_ROOT)/$@"
-	find "$(H2DIR)/$@" -maxdepth 1 -type f ! -name Makefile.inc \
-	    -exec ln -sf '{}' "$(TEST_BUILD_ROOT)/$@/" ';'
-	printf 'H2DIR=$(H2DIR)\ninclude $$(H2DIR)/scripts/Makefile.inc.test\n' \
-	    > "$(TEST_BUILD_ROOT)/$@/Makefile.inc"
-	(echo; echo; echo "##########   $@   ##########") > "$(TEST_BUILD_ROOT)/$@/make.log"
-	$(MAKE) -C "$(TEST_BUILD_ROOT)/$@" $(TARG) TEST=$@ 2>&1 | \
+	$(call TEST_DIR_SETUP,$@)
+	$(MAKE) -C "$(TEST_BUILD_ROOT)/$@" $(TARG) TEST=$@ $(if $(filter all,$(TARG)),PROFILE=--profile) 2>&1 | \
 	    tee -a "$(TEST_BUILD_ROOT)/$@/make.log"; \
-	    TSTAT=$${PIPESTATUS[0]}; if [ $$TSTAT -ne 0 ]; then STAT=$$TSTAT; fi
+	    exit $${PIPESTATUS[0]}
 
 # $(SUBDIRS_ALL)::
 # 	cd $@;\
@@ -185,3 +208,7 @@ $(SUBDIRS)::
 
 
 include ./scripts/Makefile.inc.test
+
+# Per-test dependencies outside the test dir (see TEST_DEPS).  Last, so none
+# of its rules becomes the default goal.
+-include $(wildcard $(patsubst %,$(TEST_BUILD_ROOT)/%/test.deps,$(SUBDIRS)))

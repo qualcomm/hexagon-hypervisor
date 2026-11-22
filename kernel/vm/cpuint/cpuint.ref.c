@@ -6,7 +6,6 @@
 #include <c_std.h>
 #include <context.h>
 
-#include <vm.h>
 #include <cpuint.h>
 #include <vmipi.h>
 #include <atomic.h>
@@ -14,7 +13,6 @@
 #include <globals.h>
 #include <hw.h>
 #include <readylist.h>
-#include <check_sanity.h>
 #include <vmwork.h>
 #include <vmevent.h>
 #include <intcontrol.h>

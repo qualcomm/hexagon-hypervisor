@@ -23,10 +23,10 @@
 	TMPREG = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS); \
 	DST |= asl(TMPREG, #  BOOT_TLB_SHIFT+SBIT_SIZE);
 
-#define MAKE_TLBLO_DEV(DST,SRCVAL,TMPREG) \
-	SETCONST(DST,BOOT_TLBLO_DEV) ; \
-	TMPREG = lsr(SRCVAL, #  BOOT_TLB_OFFSET_BITS_1M); \
-	DST |= asl(TMPREG, #  BOOT_TLB_SHIFT_1M + SBIT_SIZE);
+#define MAKE_TLBLO_DEV(DST,SRCVAL,TMPREG,PG_SIZE) \
+	SETCONST(DST,BOOT_TLBLO_DEV(PG_SIZE)) ; \
+	TMPREG = lsr(SRCVAL, # BOOT_TLB_OFFSET_BITS_SIZE(PG_SIZE)); \
+	DST |= asl(TMPREG, # BOOT_TLB_SHIFT_SIZE(PG_SIZE) + SBIT_SIZE);
 
 #define MAKE_TLBLO_ANGEL(DST,SRCVAL,TMPREG) \
 	SETCONST(DST,BOOT_TLBLO_ANGEL) ; \
@@ -49,7 +49,7 @@
 #define FROM        r11
 #define TO          r12
 #define TMP2        r13
-#define SS_BASE     r14  // *public* subsystem base
+#define SS_BASE     r14  // subsystem base from cfg_table
 #define SHIFT       r15  // multicore shift - offset translation for boot VM
 #define LAST_TLB    r16  // last replaceable TLB index
 #define PHYS_ADDR   r17  // where we are loaded, page-aligned
@@ -334,11 +334,13 @@ boot_continuation:
 	syscfg = SYSCFG  // re-enable caches
 	syncht
 	isync
+	jump .Lmulticore
 
 .Lno_multicore:
-	/* Single-core or non-multicore path: initialize shift/TCM to zero */
+	/* Single-core: initialize shift/TCM to zero */
 	SHIFT = #0
 	TCM_VAL = #0
+.Lmulticore:
 #endif
 
 	/* Setup EVB */
@@ -351,10 +353,10 @@ boot_continuation:
 	SETCONST(H2K_GP,H2K_kg)
 
 	/* Set up rising edge triggered */
-	TMP = #-1
-	/* Set imask to -1, since we are not lowest priority at boot */
- 	/* (other idle threads) */
+	/* Set imask to 0, enabling hardware interrupt steering */
+ 	TMP = #0
 	imask = TMP
+	TMP = #-1
 #if ARCHV < 65
 	iel = TMP
 	iahl = TMP
@@ -431,10 +433,8 @@ boot_continuation:
 
 	// entry for L2 interrupt controller
 	MAKE_TLBHI(TLB_HI, Q6_SS_BASE_VA, BOOT_TLB_OFFSET_BITS_1M, BOOT_TLB_SHIFT_1M)
-	// SS_BASE == SSBASE (PRIV_BASE)
-	// apply offet to get PUB_BASE
-	SS_BASE = add(SS_BASE, ##-QDSP6SS_PUB_PRIV_OFFSET)
-	MAKE_TLBLO_DEV(TLB_LO, SS_BASE, TLB_TMP)
+	// SS_BASE == private base
+	MAKE_TLBLO_DEV(TLB_LO, SS_BASE, TLB_TMP, SIZE_1M)
 	DO_TLBW
 
 #undef SYSCFG
@@ -445,13 +445,13 @@ boot_continuation:
 #define L2_CFG_BASE r11
 
 	TLB_INDEX = add(TLB_INDEX, #1)
-	MAKE_TLBHI(TLB_HI, L2CFG_BASE_VA, BOOT_TLB_OFFSET_BITS_1M, BOOT_TLB_SHIFT_1M)
+	MAKE_TLBHI(TLB_HI, L2CFG_BASE_VA, BOOT_TLB_OFFSET_BITS_SIZE(L2CFG_BASE_PG_SIZE), BOOT_TLB_SHIFT_SIZE(L2CFG_BASE_PG_SIZE))
 	CFG_HI = cfgbase
 	CFG_HI = asl(CFG_HI, #(CFG_TABLE_SHIFT - PHYSREAD_HI_SHIFT))
 	CFG_IDX = #CFG_TABLE_L2REGS
 	L2_CFG_BASE = memw_phys(CFG_IDX, CFG_HI)
 	L2_CFG_BASE = asl(L2_CFG_BASE, #CFG_TABLE_SHIFT)
-	MAKE_TLBLO_DEV(TLB_LO, L2_CFG_BASE, TLB_TMP)
+	MAKE_TLBLO_DEV(TLB_LO, L2_CFG_BASE, TLB_TMP, L2CFG_BASE_PG_SIZE)
 	DO_TLBW
 
 #ifndef NULL_ANGEL_TRAP

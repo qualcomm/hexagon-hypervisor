@@ -30,6 +30,26 @@ int h2_hwconfig_clade_set_reg(unsigned int offset, unsigned int val)
 	return h2_hwconfig_trap(HWCONFIG_SETCLADEREG, NULL, offset, val);
 }
 
+int h2_hwconfig_clade2_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETCLADE2REG, NULL, offset, 0);
+}
+
+int h2_hwconfig_clade2_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETCLADE2REG, NULL, offset, val);
+}
+
+int h2_hwconfig_clade3_get_reg(unsigned int offset)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETCLADE3REG, NULL, offset, 0);
+}
+
+int h2_hwconfig_clade3_set_reg(unsigned int offset, unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETCLADE3REG, NULL, offset, val);
+}
+
 int h2_hwconfig_l2cache_size(unsigned int sizeval, unsigned int use_wb)
 {
 	return h2_hwconfig_trap(HWCONFIG_L2CACHE, NULL, sizeval, use_wb);
@@ -180,3 +200,80 @@ int h2_hwconfig_dpm_voltlmtmgmt_set_reg(unsigned int offset, unsigned int val)
 {
 	return h2_hwconfig_trap(HWCONFIG_SET_DPM_VOLTLMTMGMT_REG, NULL, offset, val);
 }
+
+unsigned int h2_hwconfig_ccr_get(void)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETCCR, NULL, 0, 0);
+}
+
+int h2_hwconfig_ccr_set(unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETCCR, NULL, val, 0);
+}
+
+unsigned int h2_hwconfig_syscfg_get(void)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETSYSCFG, NULL, 0, 0);
+}
+
+int h2_hwconfig_syscfg_set(unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETSYSCFG, NULL, val, 0);
+}
+
+unsigned int h2_hwconfig_livelock_get(void)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETLIVELOCK, NULL, 0, 0);
+}
+
+int h2_hwconfig_livelock_set(unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETLIVELOCK, NULL, val, 0);
+}
+
+unsigned int h2_hwconfig_turkey_get(void)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETTURKEY, NULL, 0, 0);
+}
+
+int h2_hwconfig_turkey_set(unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETTURKEY, NULL, val, 0);
+}
+
+unsigned int h2_hwconfig_duck_get(void)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETDUCK, NULL, 0, 0);
+}
+
+int h2_hwconfig_duck_set(unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETDUCK, NULL, val, 0);
+}
+
+unsigned int h2_hwconfig_chicken_get(void)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETCHICKEN, NULL, 0, 0);
+}
+
+int h2_hwconfig_chicken_set(unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETCHICKEN, NULL, val, 0);
+}
+
+unsigned int h2_hwconfig_rgdr_get(void)
+{
+	return h2_hwconfig_trap(HWCONFIG_GETRGDR, NULL, 0, 0);
+}
+
+int h2_hwconfig_rgdr_set(unsigned int val)
+{
+	return h2_hwconfig_trap(HWCONFIG_SETRGDR, NULL, val, 0);
+}
+
+#ifdef TESTING
+int h2_enter_monitor(void)
+{
+	return h2_hwconfig_trap(HWCONFIG_TEST_ENTER_MONITOR, NULL, 0, 0);
+}
+#endif

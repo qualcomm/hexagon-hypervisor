@@ -47,7 +47,6 @@ void qurt_init();
 #include "qurt_sem.h"
 #include "qurt_cond.h"
 #include "qurt_barrier.h"
-#include "qurt_fastint.h"
 #include "qurt_allsignal.h"
 #include "qurt_anysignal.h"
 #include "qurt_signal.h"

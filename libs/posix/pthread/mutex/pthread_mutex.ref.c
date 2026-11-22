@@ -16,7 +16,17 @@
 
 int pthread_mutex_lock(pthread_mutex_t *lock)
 {
-	unsigned int my_id = pthread_self();
+	unsigned int my_id;
+
+	/* FIXME: Remove this once pthreads initialized from crt0-land */
+	/* Call pthread_init() if ugp is 0 */
+	pthread_t *idp;
+	asm (" %0 = ugp " : "=r"(idp));
+	if (unlikely(NULL == idp)) {
+		pthread_init();
+	}
+
+	my_id	= pthread_self();
 	if (likely(pthread_plainmutex_trylock_id_np(&lock->mutex,my_id) == 0)) {
 		/* Trylock succeeded, set depth and owner */
 		lock->depth = 1;

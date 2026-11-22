@@ -38,7 +38,7 @@ int main() {
 
 	__asm__ __volatile(GLOBAL_REG_STR " = %0 " : : "r"(&H2K_kg));
 	u32_t phys_offset=0, devpage_offset=0, last_tlb_index=125, tlb_size=128;
-	H2K_kg_init(phys_offset, 0, devpage_offset, last_tlb_index, tlb_size, 0, 0, 0);
+	H2K_kg_init(phys_offset, 0, 0, devpage_offset, last_tlb_index, tlb_size, 0, 0, 0);
 	H2K_l2cache_init();
 	H2K_mem_alloc_init(Heap, alloc_heap_size);
 	if (H2K_mem_stlb_alloc() == -1) FAIL("STLB alloc");
@@ -100,19 +100,13 @@ int main() {
 	val = (u32_t)&H2K_KERNEL_NPAGES;
 	if (H2K_trap_info(INFO_H2K_NPAGES, 0, 0, &a) != val) FAIL("H2K_NPAGES");
 
-	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + L2VIC_OFFSET);
+	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_kg.l2vic_offset);
 	if (H2K_trap_info(INFO_L2VIC_BASE, 0, 0, &a) != val) FAIL("L2VIC_BASE");
 
-	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + TIMER_OFFSET);
+	val = ((H2K_cfg_table(CFG_TABLE_SSBASE) << CFG_TABLE_SHIFT) + H2K_kg.timer_offset);
 	if (H2K_trap_info(INFO_TIMER_BASE, 0, 0, &a) != val) FAIL("TIMER_BASE");
 
-#if ARCHV >= 60
-	val = TIMER_INT_CORE_V60;
-#elif ARCHV >= 5
-	val = TIMER_INT_CORE_V5;
-#else
-	val = TIMER_INT_CORE_V4;
-#endif
+	val = TIMER_INT_CORE;
 	if (H2K_trap_info(INFO_TIMER_INT, 0, 0, &a) != val) FAIL("TIMER_INT");
 
 	val = H2K_kg.kernel_error;
@@ -129,6 +123,16 @@ int main() {
 
 	val = H2K_cfg_table(CFG_TABLE_CLADEREGS) << CFG_TABLE_SHIFT;
 	if (H2K_trap_info(INFO_CLADE_BASE, 0, 0, &a) != val) FAIL("CLADE_BASE");
+
+	val = H2K_cfg_table(CFG_TABLE_CLADE2REGS) << CFG_TABLE_SHIFT;
+	if (H2K_trap_info(INFO_CLADE2_BASE, 0, 0, &a) != val) FAIL("CLADE2_BASE");
+
+	if (H2K_cfg_table(CFG_TABLE_CORECFG_PRESENT) & CORECFG_PRESENT_CLADE3_MASK) {
+		val = (H2K_cfg_table(CFG_TABLE_L2TCM) << CFG_TABLE_SHIFT) + (H2K_cfg_table(CFG_TABLE_CLADE3REGS) << 10);
+	} else {
+		val = 0;
+	}
+	if (H2K_trap_info(INFO_CLADE3_BASE, 0, 0, &a) != val) FAIL("CLADE3_BASE");
 
 	val = H2K_get_cfgbase();
 	if (H2K_trap_info(INFO_CFGBASE, 0, 0, &a) != val) FAIL("CFGBASE");

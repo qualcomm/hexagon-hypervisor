@@ -12,27 +12,11 @@
 
 // H2K_mem_stlb_asid_info_t *H2K_mem_stlb_asid_infos;// IN_SECTION(".data.mem.stlb"); /* MOVE TO GLOBALS */
 
-#if ARCHV <= 3
-
-static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t entry)
-{
-	u32_t mask = 0xffffffff << (2*entry.size);
-	if ((asid == entry.asid) && (((va>>PAGE_BITS) & mask) == (entry.vpn & mask)) && entry.valid) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-#else
-
 static inline u32_t H2K_mem_stlb_check(u32_t va, u32_t asid, H2K_mem_tlbfmt_t tentry)
 {
 	u32_t asid_va = (va >> PAGE_BITS) | (asid << (32 - PAGE_BITS));
 	return Q6_p_tlbmatch_PR(tentry.raw,asid_va);
 }
-
-#endif
 
 static inline u32_t H2K_mem_stlb_match_asid(u32_t asid, H2K_mem_tlbfmt_t entry)
 {
